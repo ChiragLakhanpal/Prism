@@ -316,7 +316,7 @@ class AiParseDocument:
 
     engine runs SQL on the warehouse, upload(path, data) writes a file to a volume, and fetch(url)
     returns a PDF's bytes. If day-one test 3 chooses Content Understanding, a parser with the same
-    name and parse method takes this one's place.
+    parse method joins PARSERS below, and config/models.toml names it.
     """
 
     name = "ai_parse_document"
@@ -350,6 +350,10 @@ class AiParseDocument:
             return tables_from_parsed(json.loads(result.rows[0][0]))
         except (ValueError, TypeError, AttributeError) as error:
             raise ParseFailed(f"I could not read ai_parse_document's answer for {path}: {error}") from error
+
+
+# The live layout parsers, by the name config/models.toml gives in [layout] parser.
+PARSERS = {AiParseDocument.name: AiParseDocument}
 
 
 def single_page(pdf: bytes, number: int) -> bytes:

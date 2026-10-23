@@ -149,6 +149,22 @@ def test_swapping_a_model_is_one_line(tmp_path):
     assert config.load_models(path)["agent"].deployment == "swapped-model"
 
 
+def test_the_model_file_names_the_layout_parser_and_strata_has_its_adapter():
+    """The ticket's layout parser is ai_parse_document, or Content Understanding if day-one test 3
+    failed, so a swap is one line in the model file."""
+    from strata.reader import layout
+
+    assert config.load_layout_parser() == "ai_parse_document"
+    assert config.load_layout_parser() in layout.PARSERS
+
+
+def test_swapping_the_layout_parser_is_one_line(tmp_path):
+    path = copy("models.toml", tmp_path, old='parser = "ai_parse_document"', new='parser = "content_understanding"')
+
+    assert config.load_layout_parser(path) == "content_understanding"
+    assert list(config.load_models(path)) == list(config.ROLES)
+
+
 def test_a_model_file_missing_a_role_is_refused(tmp_path):
     path = copy("models.toml", tmp_path, old="[roles.batch]", new="[roles.bulk]")
 

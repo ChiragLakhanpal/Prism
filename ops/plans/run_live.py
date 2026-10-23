@@ -12,7 +12,8 @@ its tables and the volume strata.bronze.files:
 
 It runs the same plan reader as the gate (src/strata/lakehouse/plans.py) with the live adapters: it
 fetches the project's document list and plans from the World Bank's hosts on this computer, puts
-each chosen table page in the volume as a PDF of its own, runs ai_parse_document on the SQL warehouse,
+each chosen table page in the volume as a PDF of its own, runs the layout parser that
+config/models.toml names (ai_parse_document, on the SQL warehouse, unless day-one test 3 chose another),
 and writes bronze, silver and strata.ops on the warehouse, under the daily page cap in
 config/thresholds.toml. It exits 0 when the run finished and 2 when it could not run.
 
@@ -34,7 +35,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
 
-from strata.config import load_slice  # noqa: E402
+from strata.config import load_layout_parser, load_slice  # noqa: E402
 from strata.lakehouse import plans  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
@@ -55,12 +56,18 @@ def main(argv=None) -> int:
 
     from strata.fixture.record import fetch_url
     from strata.reader.documents import LiveDocuments
-    from strata.reader.layout import AiParseDocument
+    from strata.reader.layout import PARSERS
+
+    name = load_layout_parser()
+    if name not in PARSERS:
+        print(f"config/models.toml names the layout parser {name}, and Strata has no adapter for it. "
+              f"Name one of these: {', '.join(sorted(PARSERS))}.")
+        return 2
 
     workspace = LiveWorkspace(env)
     engine = workspace.engine()
     try:
-        layout = AiParseDocument(
+        layout = PARSERS[name](
             engine, fetch=fetch_url,
             upload=lambda path, data: workspace.w.files.upload(path, io.BytesIO(data), overwrite=True))
         report = plans.run(engine, LiveDocuments(), layout, args.project)
