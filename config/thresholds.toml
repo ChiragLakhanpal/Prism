@@ -1,0 +1,32 @@
+# The thresholds file: every threshold a check, a signal or a computed value uses.
+#
+# This is the one place to change a threshold (spec, "Ten single places", item 3). Each ticket that
+# needs a threshold adds it under its section, with a comment that names its source. Code reads a
+# value with strata.config.load_thresholds().value("section.name"). A value that is missing here is
+# an error that says where to add it, never a silent default.
+
+# Plan-check thresholds: planned completion passed, days before closing, the actual-to-estimate
+# ratio and the data notes (ticket 09).
+[plan_check]
+
+# Signals on followed projects: late direct selection, closing-date moves, rating downgrades,
+# disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).
+[signals]
+
+# The review thresholds that compute review type (ticket 15).
+[review]
+
+# The market approach thresholds, per country (ticket 15).
+[market_approach]
+
+# The PPSD guidance's Table I thresholds, which decide when the Long Form applies (ticket 36).
+[ppsd_table_i]
+
+# When a data readiness measure counts as Partial or Gap (ticket 16).
+[data_readiness]
+
+# Supplier matching: when a pair merges, goes to the model or goes to a person (ticket 19).
+[supplier_matching]
+
+# The score a contract and a passage need to be linked as "appeared together" (ticket 22).
+[links]

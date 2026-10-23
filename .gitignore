@@ -27,3 +27,6 @@ data/out/*.duckdb.wal
 # Agent worktrees and the build's review notes (shared by absolute path, never committed)
 .claude/worktrees/
 .notes/
+
+# The Databricks CLI's bundle state, written where a deploy runs
+.databricks/

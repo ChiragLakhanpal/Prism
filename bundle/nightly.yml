@@ -1,0 +1,94 @@
+# The nightly job: ten tasks in docs/PLAN.md section 11's order, one at a time.
+#
+# Each task runs src/strata/lakehouse/nightly_task.py on serverless compute, which calls
+# strata.lakehouse.nightly with the task's own name. For now every task does nothing and records
+# its run in strata.ops.pipeline_runs; ticket 43 gives each one its work. The tasks form one chain,
+# so the job never runs more than one task at a time, well inside the workspace's limit of five.
+#
+# The window, 05:00 to 07:30 in Washington, and the reasons for it are in bundle/README.md. The job
+# stops at 07:30 at the latest (timeout_seconds), half an hour before review hours start at 08:00.
+
+resources:
+  jobs:
+    nightly:
+      name: strata nightly
+      description: Strata's nightly run. Each task records its run in strata.ops.pipeline_runs.
+      schedule:
+        quartz_cron_expression: "0 0 5 * * ?"
+        timezone_id: America/New_York
+        pause_status: ${var.nightly_pause_status}
+      max_concurrent_runs: 1
+      timeout_seconds: 9000
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+      tasks:
+        - task_key: fetch_by_watermark
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: bronze_to_gold
+          depends_on: [{task_key: fetch_by_watermark}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: parse_and_embed
+          depends_on: [{task_key: bronze_to_gold}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: sync_index
+          depends_on: [{task_key: parse_and_embed}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: relink
+          depends_on: [{task_key: sync_index}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: propose_lessons
+          depends_on: [{task_key: relink}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: detect_disagreements
+          depends_on: [{task_key: propose_lessons}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: score
+          depends_on: [{task_key: detect_disagreements}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: measure_data_readiness
+          depends_on: [{task_key: score}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+
+        - task_key: refresh_drafts
+          depends_on: [{task_key: measure_data_readiness}]
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/nightly_task.py
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]

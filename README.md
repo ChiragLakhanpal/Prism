@@ -36,15 +36,19 @@ It runs the steps in `gates/steps.toml`. Steps that do not depend on each other 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
 2. Run four lanes side by side:
    - The guard lane tests the guard hook.
-   - The python lane builds the fixture database from the recorded sources and prints its size. Then it runs the Python tests under `tests/`. They cover the gate, the server, the fixture and its ground truth, and the ground-truth SQL on DuckDB.
-   - The ops lane runs the Python tests under `ops/`, for the wizard and the day-one probes, on six pytest-xdist workers.
+   - The python lane builds the fixture database from the recorded sources and prints its size. Then it runs the Python tests that may read that database: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job and the bundle commands.
+   - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
    - The web lane type checks and bundles the web app, then runs the Playwright tests against it.
 
 The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
-The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
+The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Write the query in Databricks SQL, with three-part names such as `strata.ops.pipeline_runs`; the engine adapter rewrites it for DuckDB. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. A `-- param: name = value` line binds a parameter, and a `-- engines: duckdb, databricks` line marks a query that `ops/bundle/check.py same-rows` also runs on the workspace's SQL warehouse. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
+
+The fixture build also creates the strata catalog's schemas and tables from `src/strata/lakehouse/tables/`, and it stops when any table has no `public_from` column. To add a table, add one file there, `<schema>/<table>.sql`, that starts with `CREATE TABLE IF NOT EXISTS strata.<schema>.<table> (`.
 
 To add a check, add a step to `gates/steps.toml`. A step with no `lane` key runs alone. It waits for every step above it, and every step below it waits for it. To run a step side by side with others, give it a lane, such as `lane = "web"`, and put it among the steps that have lanes. It runs after the steps above it in the same lane. Use a new lane's name when the step needs nothing from the other steps. A step that needs another step's output goes in that step's lane, below it. A new pytest step names the folders it tests, and the gate's own tests check that each folder in `testpaths` in `pyproject.toml` runs in exactly one step.
+
+To run the nightly job's tasks in order on an empty DuckDB database and see the rows they write, run `uv run --frozen python -m strata.lakehouse.nightly`. To deploy the catalog and the job to the shared workspace, follow `bundle/README.md`.
 
 ## Merge a ticket
 
@@ -89,13 +93,19 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The list of recorded sources, and the recorded files | `data/fixture/sources.toml` and `data/fixture/recorded/` (see `data/fixture/README.md`) |
 | The recording command, which refetches the fixture and prints a diff | `src/strata/fixture/` (`uv run python -m strata.fixture.record`) |
 | Ground-truth SQL, and the ground-truth values with their sources | `tests/ground_truth/` (`*.sql` and `values.toml`) |
-| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (later) |
+| The engine adapter, which runs one Databricks SQL query on the SQL warehouse, in a job and on DuckDB | `src/strata/lakehouse/engine.py` |
+| The table definitions, one `CREATE TABLE IF NOT EXISTS` file per table, built by the gate and the deploy | `src/strata/lakehouse/tables/<schema>/` |
+| The nightly job's tasks | `src/strata/lakehouse/nightly.py` |
+| The bundle: the strata catalog, its schemas, the volume, the grants and the nightly job, with its notes | `databricks.yml` and `bundle/` |
+| The deploy command and the workspace checks for the bundle | `ops/bundle/` |
+| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (sources and transforms later) |
 | The document reader | `src/strata/reader/` (later) |
 | The knowledge model | `src/strata/knowledge/` (later) |
 | The tool registry and its tools | `src/strata/tools/` (later) |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |
-| The registry and config files for the change drill: sources, thresholds, the slice, models, the evidence ladder, the package form and roles | `config/` (later) |
+| The registry and config files for the change drill: the source registry, the slice file, the model file and the thresholds file, each read by one function in `src/strata/config.py` | `config/` |
+| The rest of the change drill's config files: the evidence ladder, the package form and roles | `config/` (later) |
 | The benchmark and evaluation sets | `evals/` (later) |
 | The dashboard definition | `dashboard/` (later) |
 | The credentials wizard and the day-one probes | `ops/` (ticket 03) |

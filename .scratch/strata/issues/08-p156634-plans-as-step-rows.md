@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's Check a plan wirefram
 
 **Blocked by:** 04 (The strata catalog and the bundle skeleton); 05 (Fixtures for the demo plan and the showcase project)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** data
 **Phase:** P1
 **Design review:** no
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's Check a plan wirefram
 - [ ] Data notes exist for KE-NWWDA-199461-GO-RFB (the reference says RFB, the Method column says Request for Quotations) and for KE-NWWDA-503455-CW-RFQ and KE-NWWDA-541061-CW-RFQ (Actual Amount 0.00).
 - [ ] A second run parses no new pages, and the pages parsed per route appear in strata.ops.
 - [ ] Lowering the daily page cap in configuration makes a run stop at the cap and record where it stopped.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/08-p156634-plans-as-step-rows, as soon as tickets 04 and 05 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

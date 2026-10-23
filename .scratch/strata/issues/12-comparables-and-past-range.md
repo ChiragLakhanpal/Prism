@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart, Coverage 
 - [ ] Dragging the plan line, pressing arrow keys on it, or typing a number updates the readout ("N of M signed within P months") from the returned rows; "Show the table" shows the same values; the chart has one tab stop with arrow keys between marks, and Escape closes any tooltip.
 - [ ] A fixture variant with more than 60 comparables renders 20 quantile dots.
 - [ ] The workspace matches the blueprint's Package workspace wireframe for the sticky header and the section 1 card, with the "Planning" eyebrow; loading, empty, error and abstention states are captured at 1440, 1024 and 390 px; below 768 px the chart leads with its sentence; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: from ticket 05's review. Read a comparable's signing date from the awards dataset or, when it has no row, from its Contract Award notice (KE-GAWASCO-54771-CW-RFB and KE-GAWASCO-111742-CW-RFB are signed only in notices OP00175878 and OP00191645). Read notices and awards from every project, because four still-open comparables come from P176758 and P170941. Decide whether the 3 canceled packages count as still open (4 or 7 hollow points) and keep the choice in one config line.

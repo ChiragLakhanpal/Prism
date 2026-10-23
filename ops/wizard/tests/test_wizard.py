@@ -22,6 +22,8 @@ sys.path.insert(0, str(REPO / "ops" / "dayone"))
 
 import dayone  # noqa: E402
 
+from strata.config import load_models  # noqa: E402
+
 TOKEN = "dapi-good-token-1234"
 AZURE_KEY = "azure-key-5678"
 INSIGHTS = "InstrumentationKey=ik-91;IngestionEndpoint=https://eastus-8.in.example/;ApplicationId=app-0042"
@@ -135,7 +137,6 @@ FIRST_RUN = [
     "",                                                      #    project endpoint: Enter takes the default
     "",                                                      #    Azure OpenAI endpoint: Enter takes the default
     "",                                                      # 7. Press Enter when all four are deployed
-    "", "", "", "",                                          #    four deployment names: Enter takes each default
     "y",                                                     #    all four deployed
     "",                                                      # 8. Press Enter when the budget is saved
     "",                                                      # 9. Press Enter when the string is copied
@@ -161,7 +162,7 @@ SECOND_RUN = [
                            # 4. already signed in: nothing to ask
     "y",                   # 5. already signed in to Azure: this is the subscription
     "", "", "",            # 6. project open, both endpoints kept
-    "", "", "", "", "",    # 7. deployed, four names kept; test 8 passed already, so no question
+    "",                    # 7. deployed; test 8 passed already, so no question
     "",                    # 8. budget
     "", "", "",            # 9. string copied, connection string kept, tracing connected
                            # 10. test 9 passed already: nothing to ask
@@ -169,7 +170,7 @@ SECOND_RUN = [
     "", "n", "", "2026-11-03",  # 12. page open, still not upgraded, who, date
     "n",                   # 13. no probes
 ]
-STAGE_12_AT = 17  # where the second run's answers for stage 12 start
+STAGE_12_AT = 13  # where the second run's answers for stage 12 start
 
 
 def env_values(path):
@@ -192,11 +193,9 @@ def test_a_first_run_fills_every_key_in_the_example_env_file(place):
     assert values["DATABRICKS_TOKEN"] == TOKEN
     assert values["DATABRICKS_WAREHOUSE_ID"] == "wh0123456789"
     assert values["GENIE_SPACE_ID"] == "01f0abc"
-    assert values["STRATA_CATALOG"] == "strata"
     assert values["FOUNDRY_TENANT_ID"] == "tenant-0001"
     assert values["AZURE_OPENAI_API_KEY"] == AZURE_KEY
     assert values["APPLICATIONINSIGHTS_CONNECTION_STRING"] == INSIGHTS
-    assert values["STRATA_MODEL_BATCH"] == "gpt-5.4-nano"
     assert stat.S_IMODE((place / "wizard.env").stat().st_mode) == 0o600
 
 
@@ -276,8 +275,12 @@ def test_test_sevens_evidence_says_so_when_the_user_id_cannot_be_read(place):
     assert "returned the user ID" not in evidence
 
 
-def test_stage_seven_says_azure_counts_capacity_in_thousands(place):
+def test_stage_seven_names_each_deployment_from_the_model_file_and_says_azure_counts_in_thousands(place):
     done = run_wizard(place, FIRST_RUN)
+    models = load_models()
+    assert f"Deploy {models['batch'].deployment} as Global Batch, named {models['batch'].deployment}." in done.stdout
+    assert (f"Strata asks {models['embed'].deployment} for {models['embed'].dimensions:,} dimensions in each request"
+            in done.stdout)
     assert "Azure shows capacity in thousands of tokens." in done.stdout
     assert "100 on a Global Standard deployment means 100,000 tokens per minute." in done.stdout
 

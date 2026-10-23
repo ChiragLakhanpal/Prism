@@ -37,21 +37,19 @@ budget_alert_percents = [50, 80, 100]
 budget_forecast_percent = 100
 appinsights_daily_cap_gb = 0.15
 
-# One entry per model role. The deployment name comes from the .env key named here.
+# One entry per model role, with that role's cap. The deployment's name and the embedding size
+# come from the model file, config/models.toml, which is the one place to swap a model.
 [caps.deployments.agent]
-env_key = "STRATA_MODEL_AGENT"
 deployment_type = "Global Standard"
 sku = "GlobalStandard"
 tokens_per_minute = 100000
 
 [caps.deployments.draft]
-env_key = "STRATA_MODEL_DRAFT"
 deployment_type = "Global Standard"
 sku = "GlobalStandard"
 tokens_per_minute = 30000
 
 [caps.deployments.batch]
-env_key = "STRATA_MODEL_BATCH"
 deployment_type = "Global Batch"
 sku = "GlobalBatch"
 # A Global Batch deployment limits queued tokens, so its cap is an enqueued-token limit.
@@ -61,11 +59,9 @@ enqueued_tokens = 2000000
 capacity_unit = 1000
 
 [caps.deployments.embed]
-env_key = "STRATA_MODEL_EMBED"
 deployment_type = "Global Standard"
 sku = "GlobalStandard"
 tokens_per_minute = 150000
-dimensions = 1024
 
 # Test 1: one address per host. A probe counts a host as reached when it gets an HTTP answer;
 # a 403 where this computer gets another answer counts as blocked. Each address answered 200
@@ -147,7 +143,7 @@ gap_fill = ""
 title = "The four models within the subscription's quota"
 question = "The four models deploy within the subscription's quota."
 command = "uv run --script ops/dayone/probe_caps.py --env-file .env"
-default_path = "The four deployments named in .env serve Strata, each with the cap set in `ops/dayone/dayone.toml`."
+default_path = "The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`."
 gap_fill = ""
 
 [tests.9]

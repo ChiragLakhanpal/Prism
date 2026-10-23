@@ -5,6 +5,7 @@ Azure is replaced by a fake that returns what Azure Resource Manager returns for
 
 import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -16,7 +17,11 @@ import dayone  # noqa: E402
 import probe_caps  # noqa: E402
 from dayone import Outcome, SetupError  # noqa: E402
 
+from strata.config import load_models  # noqa: E402
+
 RESULTS = REPO / "docs" / "day-one-results.md"
+# Each role's deployment, from the model file, so swapping a model there needs no change here.
+NAME = {role: model.deployment for role, model in load_models().items()}
 
 
 def deployment(name, sku, capacity, token_limit=None, state="Succeeded"):
@@ -33,10 +38,10 @@ def notification(kind, threshold):
 
 
 CAPPED = [
-    deployment("gpt-5.4-mini", "GlobalStandard", 100, 100000),
-    deployment("gpt-5.4", "GlobalStandard", 30, 30000),
-    deployment("gpt-5.4-nano", "GlobalBatch", 2000),
-    deployment("text-embedding-3-large", "GlobalStandard", 150),
+    deployment(NAME["agent"], "GlobalStandard", 100, 100000),
+    deployment(NAME["draft"], "GlobalStandard", 30, 30000),
+    deployment(NAME["batch"], "GlobalBatch", 2000),
+    deployment(NAME["embed"], "GlobalStandard", 150),
 ]
 BUDGET = {"name": "strata-monthly", "properties": {"amount": 50, "timeGrain": "Monthly", "notifications": {
     "actual_50": notification("Actual", 50), "actual_80": notification("Actual", 80),
@@ -79,10 +84,10 @@ def run(place, azure):
 def test_the_probe_prints_a_tokens_per_minute_limit_for_every_deployment(place, capsys):
     assert run(place, FakeAzure()) == 0
     shown = capsys.readouterr().out
-    assert "gpt-5.4-mini: 100,000 tokens per minute" in shown
-    assert "gpt-5.4: 30,000 tokens per minute" in shown
-    assert "text-embedding-3-large: 150,000 tokens per minute" in shown
-    batch = next(line for line in shown.splitlines() if "gpt-5.4-nano" in line)
+    assert f"{NAME['agent']}: 100,000 tokens per minute" in shown
+    assert f"{NAME['draft']}: 30,000 tokens per minute" in shown
+    assert f"{NAME['embed']}: 150,000 tokens per minute" in shown
+    batch = next(line for line in shown.splitlines() if f"{NAME['batch']}: " in line)
     assert "Global Batch" in batch and "2,000,000 enqueued tokens" in batch
 
 
@@ -94,24 +99,41 @@ def test_four_capped_deployments_pass_test_eight_and_the_caps_check(place):
     assert len(results["caps"]["Deployments"]) == 4
 
 
+def test_the_probe_checks_the_deployments_the_model_file_names(place, capsys):
+    run(place, FakeAzure())
+    shown = capsys.readouterr().out
+    for model in load_models().values():
+        assert f"    - {model.deployment}: " in shown
+
+
+def test_a_model_swapped_in_the_model_file_is_the_one_the_probe_looks_for():
+    models = load_models()
+    models["agent"] = replace(models["agent"], deployment="swapped-model")
+
+    outcome, _, _ = probe_caps.check(FakeAzure(), dayone.load_config(), models)
+
+    assert outcome.status == "failed"
+    assert "swapped-model: not found in wb-strata." in outcome.evidence
+
+
 def test_the_passed_result_holds_for_however_many_deployments_dayone_toml_lists():
     config = dayone.load_config()
     del config["caps"]["deployments"]["embed"]
-    env = dayone.load_env(REPO / ".env.example")
-    outcome, _, _ = probe_caps.check(FakeAzure(deployments=CAPPED[:3]), env, config)
+    outcome, _, _ = probe_caps.check(FakeAzure(deployments=CAPPED[:3]), config, load_models())
     assert outcome.status == "passed"
-    assert outcome.result == "Every deployment in dayone.toml exists and finished deploying."
+    assert outcome.result == "Every deployment with a cap in dayone.toml exists and finished deploying."
 
 
 def test_a_missing_deployment_fails_test_eight(place):
     assert run(place, FakeAzure(deployments=CAPPED[:3])) == 1
     test8 = dayone.read_results(place / "results.md")["test-8"]
     assert test8["Status"] == "failed"
-    assert any("text-embedding-3-large" in line and "not found" in line for line in test8["Evidence"])
+    assert any(NAME["embed"] in line and "not found" in line for line in test8["Evidence"])
 
 
 def test_a_limit_above_its_cap_leaves_the_subscription_uncapped(place):
-    loose = [deployment("gpt-5.4", "GlobalStandard", 300, 300000) if d["name"] == "gpt-5.4" else d for d in CAPPED]
+    loose = [deployment(NAME["draft"], "GlobalStandard", 300, 300000) if d["name"] == NAME["draft"] else d
+             for d in CAPPED]
     assert run(place, FakeAzure(deployments=loose)) == 1
     caps = dayone.read_results(place / "results.md")["caps"]
     assert caps["Status"] == "not capped"
@@ -119,7 +141,7 @@ def test_a_limit_above_its_cap_leaves_the_subscription_uncapped(place):
 
 
 def test_a_batch_capacity_above_its_cap_leaves_the_subscription_uncapped(place):
-    loose = [deployment("gpt-5.4-nano", "GlobalBatch", 5000) if d["name"] == "gpt-5.4-nano" else d for d in CAPPED]
+    loose = [deployment(NAME["batch"], "GlobalBatch", 5000) if d["name"] == NAME["batch"] else d for d in CAPPED]
     assert run(place, FakeAzure(deployments=loose)) == 1
     caps = dayone.read_results(place / "results.md")["caps"]
     assert caps["Status"] == "not capped"
@@ -163,7 +185,7 @@ def test_a_dry_run_writes_nothing(place, capsys):
     assert (place / "results.md").read_text() == before
     shown = capsys.readouterr().out
     assert "dry run" in shown
-    assert "gpt-5.4-nano: 2,000,000 enqueued tokens" in shown
+    assert f"{NAME['batch']}: 2,000,000 enqueued tokens" in shown
 
 
 def test_an_az_that_cannot_read_keeps_the_wizards_test_8_record(place, capsys):
