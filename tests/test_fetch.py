@@ -339,7 +339,7 @@ def test_the_nightly_job_fetches_a_frozen_source_only_while_bronze_holds_none_of
 
     def fetch(source, engine):
         asked.append(source.key)
-        return pages.recorded_pages(source)
+        return pages.recorded_pages(source) if source.cadence == "frozen" else iter(())
 
     with DuckDBEngine.open() as engine:
         catalog.build(engine)

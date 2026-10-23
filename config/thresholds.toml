@@ -13,6 +13,10 @@
 [ingestion]
 daily_page_cap = 500
 
+# Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
+# table but the documents' text and layout, as strata.ops.table_sizes records each run.
+structured_data_limit_bytes = 500_000_000
+
 # Plan-check thresholds: planned completion passed, days before closing, the actual-to-estimate
 # ratio and the data notes (ticket 09).
 [plan_check]

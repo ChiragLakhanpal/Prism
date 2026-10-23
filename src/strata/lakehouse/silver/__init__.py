@@ -2,9 +2,14 @@
 
 Each source in the registry names its silver transform, a module in this package with:
 
-- TABLES   each silver table it fills, with the columns it writes, in order
-- PENDING  a query for the bronze pages its first table has no rows from yet
-- parse()  one page's records turned into rows for each of its tables
+- TABLES      each silver table it fills, with the columns it writes, in order
+- RECORD_KEY  the columns of its first table that tell one of the source's records from another,
+              which the data readiness measures count (strata.lakehouse.readiness)
+- PENDING     a query for the bronze pages its first table has no rows from yet
+- parse()     one page's records turned into rows for each of its tables
+
+Two sources may share a transform, as the IDA credits and the IBRD loans share loans, when their
+records are the same kind of thing.
 
 The transforms are Python, not SQL, because the work is JSON and HTML: the transpile step cannot
 carry Databricks' from_json to DuckDB, and Spark SQL mangles the backslashes that a regular

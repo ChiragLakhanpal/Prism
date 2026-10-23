@@ -28,6 +28,9 @@ TABLES = {
         "contact_details_removed", "page_hash", "fetched_at", "public_from"),
 }
 
+# The columns that tell one of the source's records from another (strata.lakehouse.readiness).
+RECORD_KEY = ("notice_id",)
+
 PENDING = """
 SELECT p.page_hash, p.body, p.fetched_at
 FROM strata.bronze.api_pages AS p

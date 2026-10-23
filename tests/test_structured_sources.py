@@ -270,9 +270,9 @@ def test_every_slice_project_maps_to_one_sector_and_every_listed_code_is_mapped(
 
 
 def test_a_project_maps_to_the_major_sector_with_the_largest_share():
-    """A project's sectors each carry a share. P156634's three sectors all sit under WX, water. A
-    project split 40 to public administration (BX) and 35 plus 25 to transport (TTX, the newer
-    taxonomy) is transport, and a project that lists no sector has none."""
+    """A project's sectors each carry a share. A project split 40 to public administration (BX) and
+    35 plus 25 to transport (TTX, the newer taxonomy) is transport, and a project that lists no
+    sector has none."""
     split = dict(id="P000017", project_name="A split project", countrycode="KE", major_sectors=[
         {"major_sector": {"major_sector_code": "BX", "sectors": [{"sector_percent": "40.0"}]}},
         {"major_sector": {"major_sector_code": "TTX", "sectors": [{"sector_percent": "35.0"},
@@ -289,3 +289,101 @@ def test_a_project_maps_to_the_major_sector_with_the_largest_share():
 
     assert stored == [{"project_id": "P000017", "sector": "transport", "major_sector_code": "TTX"},
                       {"project_id": "P000018", "sector": None, "major_sector_code": None}]
+
+
+# ── Data readiness for every source ──────────────────────────────────────
+
+def reported_totals(dataset):
+    """The total each recorded file of a fixture dataset says its request has, read from the file."""
+    from strata.fixture import recorded as fmt
+
+    manifest = fmt.load_manifest()
+    totals = []
+    for entry in manifest.sources:
+        if entry.dataset == dataset and entry.kind == "json":
+            response = fmt.read(manifest.recorded / entry.file).body
+            about = response[0] if isinstance(response, list) else response
+            totals.append(int(about.get("count", about.get("total"))))
+    return totals
+
+
+def measures(db, source, subject="all"):
+    found = rows(db, "SELECT measure, kind, count, denominator, as_of, detail FROM strata.ops.data_readiness "
+                     "WHERE run_id = 'fixture' AND source = :source AND subject = :subject",
+                 source=source, subject=subject)
+    return {row["measure"]: row for row in found}
+
+
+PAGED = [key for key, source in config.load_sources().items() if source.paged]
+
+
+@pytest.mark.parametrize("key", PAGED)
+def test_each_source_s_row_count_in_ops_equals_the_total_the_api_reported(db, key):
+    """Criterion 1: the rows held for each source, counted once per request, equal the totals the
+    recorded responses report, which this test reads from the files themselves."""
+    totals = reported_totals(config.load_sources()[key].fixture_dataset)
+    coverage = measures(db, key)["coverage_rows"]
+
+    assert totals and (coverage["count"], coverage["denominator"]) == (sum(totals), sum(totals))
+    assert coverage["kind"] == "coverage"
+
+
+NEW_SOURCES = ["awards_fy2001_2016", "ieg_ratings", "ida_credits", "ibrd_loans", "ida_credit_history",
+               "ibrd_loan_history", "cpia", "wgi"]
+
+
+@pytest.mark.parametrize("key", NEW_SOURCES + ["awards", "notices", "projects"])
+def test_each_source_has_coverage_linked_and_fresh_measures_for_the_data_readiness_page(db, key):
+    found = measures(db, key)
+    kinds = {row["kind"] for row in found.values()}
+
+    assert {"coverage", "linked", "fresh"} <= kinds, key
+    assert all(row["count"] is not None and row["denominator"] for row in found.values() if row["kind"] != "fresh")
+    assert found["fresh_fetched"]["as_of"] == dt.date(2026, 10, 23)  # the day the fixture was recorded
+    assert found["fresh_fetched"]["detail"] == config.load_sources()[key].cadence
+    assert all(row["detail"] for row in found.values())
+
+
+def test_the_projects_measure_counts_the_projects_mapped_to_a_sector(db):
+    """The Kenya page lists one project with no major sector, P163538, so 92 of the 93 projects held
+    for every country map to a sector: P130164, P156634 and the 91 Kenya projects, P156634 among them."""
+    linked = measures(db, "projects")["linked_sector"]
+    unmapped = [pid for pid, project in recorded(SLICE_FILE)["projects"].items() if not project.get("major_sectors")]
+
+    assert unmapped == ["P163538"]
+    assert (linked["count"], linked["denominator"]) == (linked["denominator"] - 1, len(
+        set(recorded(SLICE_FILE)["projects"]) | {"P130164", "P156634"}))
+
+
+# ── How much room structured data takes ──────────────────────────────────
+
+def test_the_run_measures_and_records_each_table_s_size_and_structured_data_stays_under_half_a_gigabyte(db, fixture_db):
+    """Criterion 7, on the fixture: every catalog table's size is recorded in strata.ops.table_sizes,
+    the tables of documents' text are not counted as structured data, and the structured total is
+    under the thresholds file's limit and no more than the database file itself."""
+    sizes = {row["table_name"]: row for row in rows(
+        db, "SELECT table_name, structured, row_count, bytes, public_from FROM strata.ops.table_sizes "
+            "WHERE run_id = 'fixture'")}
+    defined = {definition.full_name for definition in catalog.table_definitions()}
+    limit = config.load_thresholds().value("ingestion.structured_data_limit_bytes")
+    structured = sum(row["bytes"] for row in sizes.values() if row["structured"])
+
+    assert defined <= set(sizes)
+    assert not any(sizes[name]["structured"] for name in ("strata.bronze.document_pages",
+                                                            "strata.bronze.document_texts",
+                                                            "strata.bronze.layout_pages"))
+    assert all(row["bytes"] > 0 for row in sizes.values() if row["row_count"])
+    assert 0 < structured <= fixture_db.stat().st_size and structured < limit == 500_000_000
+    assert sizes["strata.gold.contract"]["row_count"] == rows(db, "SELECT count(*) AS n FROM strata.gold.contract")[0]["n"]
+
+
+def test_the_workspace_checks_name_every_paged_source_and_the_thresholds_file_s_limit():
+    """Rule 4: the registry and the thresholds file say these once, and the ground-truth SQL that the
+    workspace check runs must say the same."""
+    from strata.lakehouse import ground_truth
+
+    complete = ground_truth.read(ROOT / "tests" / "ground_truth" / "every_source_holds_the_rows_its_api_reported.sql")
+    limit = ground_truth.read(ROOT / "tests" / "ground_truth" / "structured_data_under_the_limit.sql")
+
+    assert [source for source, _ in complete.expected[1:]] == sorted(PAGED)
+    assert int(limit.params["limit_bytes"]) == config.load_thresholds().value("ingestion.structured_data_limit_bytes")

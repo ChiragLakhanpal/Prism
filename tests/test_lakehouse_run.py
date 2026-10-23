@@ -379,8 +379,8 @@ def test_each_measure_has_the_kind_the_spec_names(gold):
                           "WHERE run_id = 'fixture' AND subject = 'KE'").rows)
 
     assert kinds == {"coverage_rows": "coverage", "coverage_years": "coverage", "linked_step_reference": "linked",
-                     "linked_notice": "linked", "linked_project": "linked", "contact_details_removed": "stripped",
-                     "fresh_fetched": "fresh", "fresh_newest_record": "fresh"}
+                     "linked_notice": "linked", "linked_project": "linked", "linked_sector": "linked",
+                     "contact_details_removed": "stripped", "fresh_fetched": "fresh", "fresh_newest_record": "fresh"}
 
 
 def test_the_ground_truth_sql_expects_the_counts_values_toml_holds():

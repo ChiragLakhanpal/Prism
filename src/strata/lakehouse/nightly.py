@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from importlib import resources
 
 from strata.config import Source, load_sources
-from strata.lakehouse import bronze, gold, pages, readiness, silver
+from strata.lakehouse import bronze, gold, pages, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, daily_start
 
@@ -86,7 +86,8 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _measure_data_readiness(run: Run) -> int:
-    return readiness.measure(run.engine, run.run_id)
+    """The data readiness measures of every source, and the room each table takes."""
+    return readiness.measure(run.engine, run.run_id) + storage.measure(run.engine, run.run_id)
 
 
 # Each task's work, by the task key the bundle uses. Each returns the number of rows it changed.
