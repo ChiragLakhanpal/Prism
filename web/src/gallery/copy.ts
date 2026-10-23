@@ -23,7 +23,7 @@ export const galleryCopy = {
     pages: {
       title: "Page header and page alerts",
       purpose:
-        "Every page starts with its title and one sentence that says what it is for. Alerts above the title say what I can't show, errors first.",
+        "Every page starts with its title and one or two sentences that say what it is for. Alerts above the title say what I can't show, errors first.",
     },
     buttons: {
       title: "Buttons",

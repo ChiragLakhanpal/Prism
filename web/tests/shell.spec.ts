@@ -10,12 +10,13 @@ const LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a03
 // The stamp writes "Oct 21" in the current year, so the tests fix today.
 const TODAY = new Date("2026-10-24T12:00:00Z");
 
-test("the navy bar carries the official World Bank logo, unaltered, 24 px tall with clear space of half its height", async ({ page }) => {
+test("the navy bar carries the official World Bank Group logo, unaltered, 24 px tall with clear space of half its height", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
-  const logo = page.getByRole("img", { name: "World Bank logo" });
+  // worldbank.org's white mark is the World Bank Group logo, so its text alternative names the Group.
+  const logo = page.getByRole("img", { name: "World Bank Group logo" });
   await expect(logo).toBeVisible();
   const file = await page.request.get(await logo.evaluate((img) => (img as HTMLImageElement).currentSrc));
   const body = await file.body();
@@ -32,7 +33,8 @@ test("the navy bar carries the official World Bank logo, unaltered, 24 px tall w
   expect(box.y - bar.y).toBeGreaterThanOrEqual(12);
   expect(bar.y + bar.height - (box.y + box.height)).toBeGreaterThanOrEqual(12);
   expect(Math.round(box.x)).toBe(72);
-  expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(12);
+  // 24 px to the wordmark, so the logo and "Strata" never read as one co-branded name.
+  expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(24);
 });
 
 test("one banner holds the Main navigation, the search landmark around the box and the stamp", async ({ page }) => {
@@ -263,6 +265,29 @@ test("the box says what Enter will do before anyone presses it, and Escape close
   await box.press("Escape");
   await expect(box).toHaveValue("");
   await expect(box).toBeFocused();
+});
+
+test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge never clips it", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/projects");
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.keyboard.press("Tab");
+
+  const row = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Packages" });
+  await expect(row).toBeFocused();
+  const ring = await row.evaluate((el) => {
+    const style = getComputedStyle(el);
+    const box = el.getBoundingClientRect();
+    const reach = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth);
+    return { left: box.left - reach, right: box.right + reach, style: style.outlineStyle };
+  });
+  expect(ring.style).toBe("solid");
+  expect(ring.left).toBe(2);
+  expect(ring.right).toBe(388);
+  // The row's text still starts on the grid margin, 28 px in at 390 px.
+  const text = await row.evaluate((el) => el.getBoundingClientRect().left + parseFloat(getComputedStyle(el).paddingLeft));
+  expect(text).toBe(28);
 });
 
 test("/ closes an open Menu and focuses the box", async ({ page }) => {

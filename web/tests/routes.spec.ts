@@ -290,7 +290,7 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
   test(`${route.path}: a skip link leads, it reflows at 320 px, and axe finds no WCAG 2.2 AA violations`, async ({ page }) => {
     await open(page, route.path, 1440);
     await page.keyboard.press("Tab");
-    const skip = page.getByRole("link", { name: "Skip to the main content" });
+    const skip = page.getByRole("link", { name: "Skip to main content", exact: true });
     await expect(skip).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("main")).toBeFocused();

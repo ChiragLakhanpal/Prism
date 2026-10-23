@@ -1,5 +1,6 @@
-// The page header (DESIGN.md section 5, Strata components): every page's h1 and, under it, one
-// sentence that says what the page is for, so someone arriving from a link is never stranded.
+// The page header (DESIGN.md section 5, Strata components): every page's h1 and, under it, one or
+// two short sentences that say what the page is for, so someone arriving from a link is never
+// stranded.
 // The h1 takes focus when a route change moves to it (tabindex -1); it is not a control, so it
 // shows no ring. An ID in the title from the address wraps after its hyphens, and anywhere as
 // a last resort, so nothing scrolls sideways at 320 px.

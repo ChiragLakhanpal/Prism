@@ -1,6 +1,6 @@
-// What each route shows until its own ticket fills it (the 06 design brief): its title, the one
-// sentence that says what it is for, and an empty-state card that says, in the first person,
-// what will appear there and what fills it. The not-found pages have no card: their purpose
+// What each route shows until its own ticket fills it (the 06 design brief): its title, one or
+// two short sentences that say what it is for, and an empty-state card that says, in the first
+// person, what the page can't show yet and what will appear there. The not-found pages have no card: their purpose
 // already says what to do, and their one link follows it.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";

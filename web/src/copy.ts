@@ -12,7 +12,7 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 
 export const copy = {
   appName: "Strata",
-  skipLink: "Skip to the main content",
+  skipLink: "Skip to main content",
   // DESIGN.md section 8, word for word.
   footer:
     "Strata is an independent demo built on World Bank open data. It is not a World Bank product, " +
@@ -20,7 +20,7 @@ export const copy = {
   // The browser tab's title: the page's h1, then the app's name.
   pageTitle: (title: string) => `${title} | Strata`,
 
-  // Every route's title, its short purpose and its empty state (the 06 design brief, with
+  // Every route's title, its purpose of one or two short sentences, and its empty state (the 06 design brief, with
   // design-lead's round 1 wording for the empty states). Until a route's own ticket fills it, a
   // page reads nothing, so its empty state says what the page can't show yet and never claims
   // what the data hold: the stamp in the band may already show a date. {pid}, {stepRef} and {id}
@@ -142,7 +142,8 @@ export const copy = {
 
   // The navy bar (DESIGN.md section 5, Top navigation). Nouns navigate.
   nav: {
-    logo: "World Bank logo",
+    // worldbank.org's white mark is the World Bank Group logo (web/src/assets/world-bank-logo.md).
+    logo: "World Bank Group logo",
     label: "Main",
     tabs: {
       packages: "Packages",

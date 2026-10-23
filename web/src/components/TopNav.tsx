@@ -1,7 +1,7 @@
 // The top navigation (DESIGN.md section 5): a navy bar, 56 px tall, with the logo, the
 // Strata wordmark (a link to Home), five tabs and the view switch. Nouns navigate.
 //
-// From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 844 px
+// From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 856 px
 // wide and the 768 grid gives 672, so below 1024 a labeled Menu button holds them in a panel
 // that pushes the page down. Below 360 px the button stacks its icon over its label.
 //
@@ -194,12 +194,15 @@ function PanelRow({
       aria-current={current ? "page" : undefined}
       onClick={onNavigate}
       data-nav-tab={section.key}
+      // Inset 6 px from each side (4 px here and 2 px on the list), so the 2 px focus ring with its
+      // 2 px offset (DESIGN.md section 10) ends 2 px inside the panel and its edge never clips it
+      // (the 06 brief). The text still starts on the grid margin.
       className={cx(
         "relative mx-1 flex h-12 items-center rounded-sm text-body font-bold text-ink-heading transition-paint duration-150",
         "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
         current ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
       )}
-      style={{ paddingInline: "calc(var(--layout-margin) - 0.25rem)" }}
+      style={{ paddingInline: "calc(var(--layout-margin) - 0.375rem)" }}
     >
       {copy.nav.tabs[section.key]}
     </a>
@@ -215,7 +218,8 @@ export function TopNav({
   menuOpen: menuOpenAtStart = false,
   viewOpen,
 }: {
-  // The logo, at least 24 px tall. The slot gives it clear space of half its height. The app and
+  // The logo, at least 24 px tall. The slot gives it clear space of half its height, and 24 px
+  // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
   // the gallery pass the World Bank's official file (web/src/assets/world-bank-logo.md).
   logo?: ReactNode;
   // The tab whose section holds the page; none on Home and the not-found page.
@@ -282,7 +286,7 @@ export function TopNav({
         <SkipLink />
         <div className="layout flex h-14 items-center">
           {logo && (
-            <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-3">
+            <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-6">
               {logo}
             </div>
           )}
@@ -330,7 +334,7 @@ export function TopNav({
         className="animate-menu-in border-b border-line bg-surface py-2 lg:hidden"
       >
         <nav aria-label={copy.nav.label}>
-          <ul>
+          <ul className="px-0.5">
             {SECTIONS.map((section) => (
               <li key={section.key}>
                 <PanelRow section={section} current={section.key === current} onNavigate={() => setMenuOpen(false)} />
