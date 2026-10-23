@@ -19,10 +19,11 @@ from strata.lakehouse import pages as source_pages
 from strata.lakehouse.engine import Engine
 
 TABLE = "strata.bronze.api_pages"
-COLUMNS = ("source", "request", "page_hash", "body", "records", "reported_total", "newest_record_on",
-           "contact_details_removed", "fetched_at", "public_from")
+COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", "reported_total",
+           "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
-NEWEST = "SELECT max(newest_record_on) AS newest FROM strata.bronze.api_pages WHERE source = :source"
+NEWEST = ("SELECT max(newest_record_on) AS newest FROM strata.bronze.api_pages "
+          "WHERE source = :source AND country_code = :country")
 
 
 def content_hash(source: Source, body: dict) -> str:
@@ -38,9 +39,9 @@ def content_hash(source: Source, body: dict) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def newest_held(engine: Engine, source: Source) -> dt.date | None:
-    """The newest record date bronze holds for a source: the live fetch's watermark."""
-    rows = engine.run(NEWEST, {"source": source.key}).rows
+def newest_held(engine: Engine, source: Source, country_code: str) -> dt.date | None:
+    """The newest record date bronze holds for one country of a source: the live fetch's watermark."""
+    rows = engine.run(NEWEST, {"source": source.key, "country": country_code}).rows
     return rows[0][0] if rows and rows[0][0] else None
 
 
@@ -54,7 +55,7 @@ def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) ->
         if page_hash in held:
             continue
         held.add(page_hash)
-        rows.append((source.key, page.request, page_hash, json.dumps(body, ensure_ascii=False),
+        rows.append((source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
                      len(source_pages.records(source, body)), source_pages.reported_total(source, body),
                      source_pages.newest_record(source, body), removed, page.fetched_at,
                      page.fetched_at.astimezone(dt.UTC).date()))

@@ -124,7 +124,7 @@ def test_the_notices_fetch_stops_at_the_first_page_older_than_what_bronze_holds(
     api = FakeAPI("procnotices", rows, "total")
     held = dt.date.fromisoformat(rows[150]["submission_date"][:10])  # bronze holds notices up to the 151st newest
 
-    fetched = list(pages.live_pages(source("notices", page_size=100), api, newest_held=held))
+    fetched = list(pages.live_pages(source("notices", page_size=100), api, newest_held=lambda country: held))
 
     assert len(fetched) == 2  # the second page reaches back past it, so the 399 notices take two pages, not four
     assert "project_ctry_name=Kenya" in api.asked[0] and "srt=submission_date&order=desc" in api.asked[0]
@@ -148,3 +148,41 @@ def test_a_live_page_loses_its_contact_details_and_a_date_after_the_fetch_falls_
 
     assert "info@nwwda.go.ke" not in body and "Abdikadir Noor Osman" not in body
     assert notice == ((dt.date(2026, 10, 13), dt.date(2026, 10, 1)),)
+
+
+class FakeCountries:
+    """Serves each country's notices a page at a time, newest first, as the search API pages them."""
+
+    def __init__(self, by_country):
+        self.by_country, self.asked = by_country, []
+
+    def __call__(self, url):
+        self.asked.append(url)
+        query = parse_qs(urlparse(url).query)
+        rows = self.by_country[query["project_ctry_name"][0]]
+        size, offset = int(query["rows"][0]), int(query["os"][0])
+        return json.dumps({"total": str(len(rows)), "procnotices": rows[offset:offset + size]}).encode()
+
+
+def test_a_country_added_to_the_registry_is_fetched_in_full_though_bronze_holds_newer_records_of_another(
+        monkeypatch):
+    """The watermark is each country's own. Bronze holds Kenya's newest notices, and every notice
+    of the added country is older than those, so a source-wide watermark would stop its first fetch
+    after one page."""
+    rows = sorted(recorded("api/notices/P156634.json")["procnotices"], key=lambda row: row["submission_date"],
+                  reverse=True)
+    kenya, added = config.FetchCountry("Kenya", "KE"), config.FetchCountry("Uganda", "UG")
+    api = FakeCountries({"Kenya": rows[:200], "Uganda": rows[200:]})
+    monkeypatch.setattr("strata.fixture.record.fetch_url", api)
+
+    with DuckDBEngine.open() as engine:
+        from strata.lakehouse import bronze, catalog
+
+        catalog.build(engine)
+        bronze.store(engine, source("notices"), nightly.fetch_live(source("notices", countries=(kenya,)), engine))
+        api.asked.clear()
+        fetched = list(nightly.fetch_live(source("notices", page_size=50, countries=(kenya, added)), engine))
+
+    uganda = [page for page in fetched if "project_ctry_name=Uganda" in page.request]
+    assert [len(page.body["procnotices"]) for page in uganda] == [50, 50, 50, 49]
+    assert {page.country_code for page in uganda} == {"UG"}

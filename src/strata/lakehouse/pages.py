@@ -6,8 +6,9 @@ Both adapters yield the same Page, so everything after the fetch runs the same w
   fixture_dataset. Each recorded file is one page, fetched on the day it was recorded.
 - live_pages() asks the source's endpoint for each country in the registry, one page at a time,
   until the source has no more. The search APIs return the newest records first by the source's
-  watermark field, so it stops at the first page whose newest record is older than the newest
-  record bronze already holds. Finances One cannot sort, so every page of an awards fetch is asked
+  watermark field, so it stops at the first page whose oldest record is older than the newest
+  record bronze already holds for that country. Each country has its own watermark, so a country
+  added to the registry is fetched in full the first time. Finances One cannot sort, so every page of an awards fetch is asked
   for, and the content hash keeps the ones already held out of bronze.
 """
 
@@ -33,6 +34,7 @@ class Page:
     request: str
     body: dict
     fetched_at: dt.datetime
+    country_code: str | None = None  # the country the request asked for; a recorded page names none
 
 
 def records(source: Source, body: dict) -> list[dict]:
@@ -82,10 +84,12 @@ def request_url(source: Source, country, offset: int) -> str:
     return f"{source.endpoint}&{scope}&{paging}"
 
 
-def live_pages(source: Source, get: Get, newest_held: dt.date | None = None,
+def live_pages(source: Source, get: Get, newest_held: Callable[[str], dt.date | None] = lambda country: None,
                clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC)) -> Iterator[Page]:
-    """Each page of each country's records, newest first where the API can sort."""
+    """Each page of each country's records, newest first where the API can sort. newest_held gives
+    the newest record date bronze holds for a country's two-letter code: its watermark."""
     for country in source.countries:
+        watermark = newest_held(country.iso2)
         offset = 0
         while True:
             url = request_url(source, country, offset)
@@ -93,13 +97,13 @@ def live_pages(source: Source, get: Get, newest_held: dt.date | None = None,
             held = records(source, body)
             if not held:
                 break
-            yield Page(source.key, url, body, clock())
+            yield Page(source.key, url, body, clock(), country.iso2)
             offset += len(held)
             total = reported_total(source, body)
             if len(held) < source.page_size or (total is not None and offset >= total):
                 break
-            if source.api == "search" and newest_held is not None:
+            if source.api == "search" and watermark is not None:
                 oldest = min((day for day in (clean.parse_date(record.get(source.watermark_field))
                                               for record in held) if day), default=None)
-                if oldest is not None and oldest < newest_held:
+                if oldest is not None and oldest < watermark:
                     break

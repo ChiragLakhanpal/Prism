@@ -42,7 +42,7 @@ Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
 def fetch_live(source: Source, engine: Engine) -> Iterable[pages.Page]:
     from strata.fixture.record import fetch_url  # it retries when a server asks it to wait
 
-    return pages.live_pages(source, fetch_url, bronze.newest_held(engine, source))
+    return pages.live_pages(source, fetch_url, lambda country: bronze.newest_held(engine, source, country))
 
 
 def fetch_recorded(source: Source, engine: Engine) -> Iterable[pages.Page]:
