@@ -109,6 +109,56 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
         assert "as_of" not in tool["parameters"]["required"]
 
 
+def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file(tmp_path):
+    """The prompt and the tool use the same numbers, so changing the thresholds file changes both."""
+    text = (ROOT / "config" / "thresholds.toml").read_text()
+    path = tmp_path / "thresholds.toml"
+    path.write_text(text.replace("\nmax_results = 20\n", "\nmax_results = 15\n"))
+
+    def limit(thresholds=None) -> str:
+        [tool] = [tool for tool in registry.agent_tools(thresholds=thresholds) if tool["name"] == "search_passages"]
+        return tool["parameters"]["properties"]["limit"]["description"]
+
+    assert limit() == "How many passages to return, from 1 to 20. Leave it out for 10."
+    assert limit(config.load_thresholds(path)) == "How many passages to return, from 1 to 15. Leave it out for 10."
+    texts = [tool["description"] for tool in registry.agent_tools()] + [
+        parameter["description"] for tool in registry.agent_tools()
+        for parameter in tool["parameters"]["properties"].values()]
+    assert [text for text in texts if "{" in text] == []
+
+
+def never_written() -> list[str]:
+    """DESIGN.md section 7, rule 19's list of words Strata never writes, read from the file, as the
+    copy lint (web/lint/copy.ts) reads it."""
+    import re
+
+    [rule] = re.findall(r"\n19\. Never write: ([^\n]+)", (ROOT / "DESIGN.md").read_text())
+    listed = re.sub(r"\([^)]*\)", "", rule[:re.search(r"\.\s+[A-Z]", rule).start()])
+    return [word.strip() for word in re.split(r"[;,]", listed) if word.strip()]
+
+
+def test_the_agents_tool_list_uses_no_word_design_md_says_strata_never_writes():
+    """The agent reads each description as its prompt and may repeat its words in an answer."""
+    import re
+
+    words = never_written()
+    texts = [tool["description"] for tool in registry.agent_tools()] + [
+        parameter["description"] for tool in registry.agent_tools()
+        for parameter in tool["parameters"]["properties"].values()]
+
+    def forms(word: str) -> str:
+        """Every form of the word: approve, approves, approved, approving; flag, flags, flagged, flagging."""
+        *first, last = word.split()
+        ending = (re.escape(last[:-1]) + "(?:e|es|ed|ing)" if last.endswith("e")
+                  else re.escape(last) + f"(?:s|es|ed|ing|{last[-1]}ed|{last[-1]}ing)?")
+        return r"\b" + r"\s+".join([*map(re.escape, first), ending]) + r"\b"
+
+    found = [(word, text) for text in texts for word in words if re.search(forms(word), text, re.I)]
+    assert "flag" in words and "approve" in words
+    assert found == []
+    assert [text for text in texts if "\u2014" in text or "!" in text] == []
+
+
 def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sources():
     questions = {question["id"]: question for question in BENCHMARK["questions"]}
     sources = config.load_sources()
@@ -119,12 +169,30 @@ def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sourc
         assert set(tool.sources) <= set(sources), f"{tool.name} reads a source the source registry lacks"
 
 
-def answered(result) -> dict[str, list[str]]:
-    """The references under each mark, in the benchmark question's shape."""
+def marked(result, question) -> dict[str, list[str]]:
+    """check_plan's answer: the references under each mark, in the benchmark question's shape."""
     found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
     for mark in ("needs_a_look", "watch", "data_note"):
         found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
     return found
+
+
+def in_top_three(result, question) -> dict[str, list[str]]:
+    """search_passages' answer: which of the expected passages are among its first three, and which
+    matched passages it left out because Prompt Shields found an attack or never screened them."""
+    top = {row["evidence_id"] for row in result["rows"][:3]}
+    left_out = [evidence for entry in result["coverage"]["not_used"]
+                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
+    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
+            "left_out": sorted(left_out)}
+
+
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three}
+
+
+def answered(result, question) -> dict[str, list[str]]:
+    """The tool's answer, in its benchmark question's shape."""
+    return ANSWERS[question["tool"]](result, question)
 
 
 def expected(question) -> dict[str, list[str]]:
@@ -135,11 +203,15 @@ def tool_questions():
     return [question for question in BENCHMARK["questions"] if "tool" in question]
 
 
+def test_each_tool_with_a_benchmark_question_has_a_way_to_read_its_answer():
+    assert {question["tool"] for question in tool_questions()} <= set(ANSWERS)
+
+
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine):
     for question in tool_questions():
         result = registry.call(question["tool"], question["arguments"], registry.Context(engine=engine, viewer=ANA))
 
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch):
@@ -152,7 +224,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch
         result = registry.call(question["tool"], arguments, registry.Context(engine=engine, viewer=ANA))
 
         assert result["as_of"] == today.isoformat()
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 @pytest.mark.parametrize("view", ["piu", "public"])
@@ -163,7 +235,7 @@ def test_each_tool_answers_under_each_view(engine, view):
                                registry.Context(engine=engine, viewer=ANA, view=view))
 
         assert result["view"] == view
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
@@ -178,14 +250,18 @@ def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
 
 
 def test_adding_a_tool_is_one_entry_and_the_agents_tool_list_grows_with_it(tmp_path):
+    import re
+
     path = copy_registry(tmp_path)
     text = path.read_text()
     start = text.index("[tools.check_plan]")
-    path.write_text(text + "\n" + text[start:].replace("tools.check_plan", "tools.check_plan_again"))
+    following = re.compile(r"^\[tools\.(?!check_plan[.\]])", re.M).search(text, start + 1)
+    entry = text[start:following.start() if following else len(text)]
+    path.write_text(text + "\n" + entry.replace("tools.check_plan", "tools.check_plan_again"))
 
     listed = registry.agent_tools(config.load_tools(path))
 
-    assert [tool["name"] for tool in listed] == ["check_plan", "check_plan_again"]
+    assert [tool["name"] for tool in listed] == [*config.load_tools(), "check_plan_again"]
 
 
 # ── check_plan on the NWWDA plan of October 9, 2026 ──────────────────────
@@ -295,8 +371,18 @@ def invent_an_abstention(call, **arguments):
     return {**adapter(call, **arguments), "rows": [], "abstention": {"reason": "plan_not_ready"}}
 
 
+def invent_a_coverage_reason(call, **arguments):
+    """check_plan saying it left a row out for a reason the registry does not list, which the coverage
+    line's copy has no sentence for: the registry must refuse it."""
+    from strata.tools.check_plan import check_plan as adapter
+    result = adapter(call, **arguments)
+    result["coverage"]["not_used"].append({"reason": "row_skipped", "count": 1,
+                                           "evidence_ids": [result["rows"][0]["evidence_id"]]})
+    return result
+
+
 @pytest.mark.parametrize("adapter", ["leak_a_later_row", "drop_an_evidence_id", "rename_a_reason",
-                                     "invent_an_abstention"])
+                                     "invent_an_abstention", "invent_a_coverage_reason"])
 def test_the_registry_refuses_a_result_that_breaks_the_tool_contract(engine, tmp_path, adapter):
     path = copy_registry(tmp_path, '"strata.tools.check_plan:check_plan"', f'"test_tools:{adapter}"')
     context = registry.Context(engine=engine, viewer=ANA)

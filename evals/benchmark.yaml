@@ -35,3 +35,22 @@ questions:
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities
       (tests/ground_truth/values.toml, plan_row wireframe_mark), and the ninth activity the
       wireframe leaves out, with no mark (values.toml, plan.also_lists).
+
+  - id: search-passages-icr-rebidding
+    kind: documents
+    tool: search_passages
+    question: >-
+      In P130164, why did so many works contracts have to go through rebidding, and what does the
+      completion report say about the estimates?
+    arguments:
+      query: works estimates market rates rebidding
+      project_id: P130164
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:31525018/v1/54]
+      left_out: []
+    ground_truth: tests/ground_truth/icr_paragraph_54_passage.sql
+    source: >-
+      The ticket's query and its known answer: ICR P130164 paragraph 54, on PDF page 23, "108 of 328
+      cases had to go through rebidding" (tests/ground_truth/values.toml, icr-para-54). No passage
+      the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out.

@@ -33,3 +33,11 @@ dimensions = 1024
 # src/strata/reader/layout.py. strata.config.load_layout_parser() reads it.
 [layout]
 parser = "ai_parse_document"
+
+# How search_passages ranks passages on the workspace (docs/PLAN.md section 5): the Delta Sync index
+# over strata.gold.passage on Databricks AI Search, and the reranker AI Search runs over the best
+# hits, reading each passage's header and text. strata.config.load_search() reads it.
+[search]
+index = "strata.gold.passage_index"
+reranker = "databricks_reranker"
+rerank_columns = ["header", "text"]

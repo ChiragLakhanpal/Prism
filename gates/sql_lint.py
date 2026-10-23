@@ -11,8 +11,9 @@ Strata's SQL runs on the workspace and on DuckDB, as each viewer, so two rules h
    statement that builds it with the comment `# sql-lint: names only`, so a reviewer can check
    that claim in one place.
 
-It reads every .sql file under src/strata and tests/ground_truth, and the Python under src/strata
-and ops/bundle: every string that holds a query, wherever it is written (passed to run(),
+It reads every .sql file under src/strata and tests/ground_truth, and the Python under src/strata,
+ops/bundle and ops/documents (the live passage run and its search check, which run SQL on the
+workspace's warehouse): every string that holds a query, wherever it is written (passed to run(),
 execute(), executemany() or sql(), held in a variable or a constant, or returned), and every
 query text that code builds with an f-string, + or %, += or %=, .format() or .replace(), or by
 joining a list or tuple whose first item is a query (" ".join([...])). A built query may
@@ -42,7 +43,7 @@ from sqlglot.errors import ParseError
 
 ROOT = Path(__file__).resolve().parents[1]
 SQL_FOLDERS = ("src/strata", "tests/ground_truth")
-PYTHON_FOLDERS = ("src/strata", "ops/bundle")
+PYTHON_FOLDERS = ("src/strata", "ops/bundle", "ops/documents")
 QUERY_CALLS = {"run", "execute", "executemany", "sql"}
 QUERY_START = re.compile(r"(SELECT|INSERT\s+INTO|MERGE\s+INTO|WITH\s+\w+\s+AS\s*\(|CREATE\s+(OR\s+REPLACE\s+)?"
                          r"(TABLE|VIEW|SCHEMA)|DELETE\s+FROM|UPDATE\s+\S+\s+SET)\b", re.I)
