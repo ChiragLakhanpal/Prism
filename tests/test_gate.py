@@ -114,6 +114,18 @@ def test_a_commit_that_leaves_its_fix_unstaged_is_blocked(repo):
     assert "Some changes to tracked files are not staged." in blocked.stdout + blocked.stderr
 
 
+def test_a_step_that_cannot_find_a_command_says_to_run_the_install(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[("Build", '["sh", "-c", "strata-no-such-command"]')]))
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+
+    done = commit(repo)
+
+    assert done.returncode != 0
+    assert head_count(repo) == 1
+    assert "Run scripts/install, then commit again." in done.stdout + done.stderr
+
+
 def test_a_clean_merge_of_a_branch_with_a_failing_check_is_blocked(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
     write(repo, "check.py", "print('ok')\n")
@@ -131,6 +143,33 @@ def test_a_clean_merge_of_a_branch_with_a_failing_check_is_blocked(repo):
     assert done.returncode != 0
     assert git(repo, "rev-parse", "HEAD").stdout == before
     assert "The merged check ran." in done.stdout + done.stderr
+
+
+def test_a_merge_the_gate_stopped_stays_in_progress_and_finishes_after_the_install(repo):
+    write(repo, ".gitignore", ".installed\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Ignore the stand-in for installed packages")
+    git(repo, "switch", "-q", "-c", "ticket")
+    needs_a_package = ("Build", '["sh", "-c", "test -f .installed || exit 127"]')
+    write(repo, "gates/steps.toml", steps_file(steps=[needs_a_package]))
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a step that needs a new package")
+    git(repo, "switch", "-q", "work")
+    before = git(repo, "rev-parse", "HEAD").stdout
+
+    stopped = git(repo, "merge", "--no-ff", "-m", "Merge the ticket", "ticket", check=False)
+
+    assert stopped.returncode != 0
+    assert "Run scripts/install, then commit again." in stopped.stdout + stopped.stderr
+    assert git(repo, "rev-parse", "HEAD").stdout == before
+    assert git(repo, "rev-parse", "-q", "--verify", "MERGE_HEAD", check=False).returncode == 0
+
+    write(repo, ".installed", "")  # what scripts/install does in a real checkout
+    finished = git(repo, "commit", "--no-edit", check=False)
+
+    assert finished.returncode == 0, finished.stdout + finished.stderr
+    assert len(git(repo, "rev-list", "--parents", "-n", "1", "HEAD").stdout.split()) == 3
 
 
 def test_the_gate_prints_its_total_time(repo):

@@ -131,8 +131,10 @@ def main():
             return 1
         if code != 0:
             print(indent(output), end="")
+            advice = ("Code 127 means the step could not find a command. Run scripts/install, then commit again."
+                      if code == 127 else "Fix what it reports and commit again.")
             print(f"The gate failed after {seconds(time.monotonic() - started)}. The step \"{step['name']}\" "
-                  f"exited with code {code}. Fix what it reports and commit again.")
+                  f"exited with code {code}. {advice}")
             return 1
         if step.get("show"):
             print(indent(output), end="")

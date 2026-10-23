@@ -6,7 +6,11 @@ Strata is an independent demo built on World Bank open data. It is not a World B
 
 ## Install
 
-You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which runs the gate and the guard hook. Then run this once after cloning, and again in each new worktree:
+You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which runs the gate and the guard hook.
+
+Clone Strata outside a temp folder such as `/tmp`. The guard hook lets agents write anywhere in a temp folder, so its own tests fail when the repo sits in one.
+
+After cloning, run this command once, and again in each new worktree:
 
     scripts/install
 
@@ -40,6 +44,16 @@ The gate tells uv, npm and Playwright to work offline, and the tests refuse any 
 
 The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment.
 
+## Merge a ticket
+
+Git runs the gate before a merge commit too. The gate tests the merged files with the packages that this checkout has installed, and a merge can bring packages that are not installed yet. To merge a ticket branch, use these steps:
+
+1. Run `git merge --no-ff --no-commit <branch>`.
+2. Run `scripts/install`, so this checkout has every package that `uv.lock` and `web/package-lock.json` name.
+3. Run `git commit --no-edit`. Git runs the gate before it makes the merge commit.
+
+If the gate stopped a merge, the merge is still in progress. Run steps 2 and 3 to finish it, or run `git merge --abort` to undo it.
+
 ## Run the app
 
     scripts/dev
@@ -54,7 +68,7 @@ To start only the server, run `uv run python -m strata.server`. It prints the ad
 
 ## Where things live
 
-Each part of the spec has one home. Folders marked "later" do not exist yet; the ticket that builds the part creates it there.
+Each part of the spec has one home. Folders marked "later" do not exist yet. The ticket that builds a part creates its folder.
 
 | Part | Where |
 |---|---|
@@ -76,7 +90,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet; the
 | The tool registry and its tools | `src/strata/tools/` (later) |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |
-| The registry and config files for the change drill (sources, thresholds, slice, models, evidence ladder, package form, roles) | `config/` (later) |
+| The registry and config files for the change drill: sources, thresholds, the slice, models, the evidence ladder, the package form and roles | `config/` (later) |
 | The benchmark and evaluation sets | `evals/` (later) |
 | The dashboard definition | `dashboard/` (later) |
 | The credentials wizard and the day-one probes | `ops/` (ticket 03) |
@@ -86,7 +100,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet; the
 | Variable | Used by | When unset |
 |---|---|---|
 | `STRATA_SERVER_PORT` | the server, and the web app's dev server to reach it | a free port |
-| `STRATA_SERVER_HOST` | the server | `127.0.0.1` |
+| `STRATA_SERVER_HOST` | the server, and the web app's dev server to reach it | `127.0.0.1` |
 | `STRATA_WEB_PORT` | the web app's dev server | a free port |
 
 The Playwright tests always pick their own free port, so they never clash with a running dev server.
