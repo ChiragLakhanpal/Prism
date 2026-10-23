@@ -170,11 +170,14 @@ AT_SIGN = re.compile(r"[A-Za-z0-9\]]@")
 PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\d{3,4}"
                    r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])"
                    r"|(?<![\d.,/-])0 7\d{2}[ -]?\d{6}(?![\d.])")
-# A number of seven digits or more written after a phone label, whatever its shape (Tel 254 20 1234567,
-# Tel.254412345678), and any digit written after a removed number with a slash, as a second mobile
-# or the last digit of a second line (0722 123 456/7) is.
-LABELLED_PHONE = re.compile(r"\b(?:tel|phone|mobile|cell|fax)\b\.?\s*(?:no\.?)?\s*[:.]?\s*\+?\(?\d[\d ().-]{6,}\d", re.I)
+# Two more patterns of this test's own. One is a number of seven digits or more written after a
+# phone label, whatever its shape (Tel 254 20 1234567, Tel.254412345678, Telephone Number: 254...,
+# Mob. No. 98123 45678). The other is any digit written after a removed number and a slash. That
+# digit may start a second mobile, or be the last digit of a second line (0722 123 456/7).
+LABELLED_PHONE = re.compile(r"\b(?:tel\w*|\w*phone|mobile|mob|cell\w*|fax)\b[^0-9\n]{0,15}?\+?\(?\d[\d ().-]{6,}\d", re.I)
 AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d")
+# An email with spaces around its "@" (JDOE @ EXAMPLE.COM) or spelled out (jdoe [at] example [dot] com).
+SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*\w+(?:(?:\.|\s*[\[(]\s*dot\s*[\])]\s*)\w+)+", re.I)
 
 
 def text_values(engine):
@@ -216,7 +219,7 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
     for where, value in text_values(gold):
         leaks += [(where, "an email or phone number")
                   for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
-                  + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value)]
+                  + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)]
         leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
     assert leaks == []
 
@@ -286,6 +289,31 @@ def test_stripping_removes_every_number_written_after_a_phone_label():
         "Tel [contact removed]. Tel.[contact removed]. PHONE: [contact removed]. TEL/FAX [contact removed]. "
         "Tel: [contact removed]. Ext. 42301. Mobile 4x4 units.")
     assert removed == 1 + 6  # the contact_phone_no field, and six replacements in the text
+
+
+def test_stripping_knows_every_common_phone_label_and_an_email_written_to_dodge_a_scan():
+    """Notices label a number in many ways. A number with a country code and no plus goes after each
+    label, an Indian mobile with no trunk zero goes after Mob, Ph, M or Contact, and an email goes
+    when its "@" has spaces around it or is written [at] or (at). A phrase that only uses a label's
+    word stays, and so does an extension. These values are made up."""
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        "Telephone Number: 254 20 1234567. Phone Number: 254722123456. Mobile Number: 254 722 123456. "
+        "Tel #: 254 20 1234567. Telefax: 254 20 1234567. Cellphone: 254722123456. "
+        "Mobile/WhatsApp: 254722123456. Mob: 9812345678. Mob. No. 98123 45678. Ph: 9812345678. "
+        "M: 9812345678. Contact: 9812345678. "
+        "Email JDOE @ EXAMPLE.COM, jdoe [at] example [dot] com or jdoe(at)example.com. "
+        "Mobile 4x4 units, 3 Mobile cranes, Fax machine 2 units. Tel: 0722 123456 Ext. 42335.")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "Telephone Number: [contact removed]. Phone Number: [contact removed]. Mobile Number: [contact removed]. "
+        "Tel #: [contact removed]. Telefax: [contact removed]. Cellphone: [contact removed]. "
+        "Mobile/WhatsApp: [contact removed]. Mob: [contact removed]. Mob. No. [contact removed]. "
+        "Ph: [contact removed]. M: [contact removed]. Contact: [contact removed]. "
+        "Email [contact removed], [contact removed] or [contact removed]. "
+        "Mobile 4x4 units, 3 Mobile cranes, Fax machine 2 units. Tel: [contact removed] Ext. 42335.")
+    assert removed == 7 + 5 + 3 + 1
 
 
 def test_stripping_removes_emails_and_numbers_run_together_with_no_spaces():

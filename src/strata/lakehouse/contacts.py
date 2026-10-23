@@ -9,12 +9,15 @@ counts what it took out:
   contact_address and contact_web_url) is replaced by [contact removed];
 - in a record's free text (notice_text and bid_description), each name, email and phone number
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
-- in the same free text, every other email address, also one typed with a stray space or a comma
-  for a dot or run into the next with no space, and every phone number written with a country
-  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456, 0 722-123456), with the last
-  digit of a second line written after it (0722 123 456/7), is replaced too;
-- every number written after a Tel, Phone, Mobile, Cell or Fax label, also one with a country code
-  and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too.
+- in the same free text, every other email address, also one typed with stray spaces (JDOE @
+  EXAMPLE.COM) or a comma for a dot, run into the next with no space, or spelled out (jdoe [at]
+  example [dot] com, jdoe(at)example.com), and every phone number written with a country code
+  (+254 20 1234567) or a trunk zero (046-1234567, 0722123456, 0 722-123456), with the last digit
+  of a second line written after it (0722 123 456/7), is replaced too;
+- every number written after a phone label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob,
+  Cell, Fax, also followed by No., Number or #, or by /Fax or /WhatsApp), also one with a country
+  code and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too, and so
+  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678).
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
@@ -34,7 +37,13 @@ REMOVED = "[contact removed]"
 
 # An email address, also when it is written untidily: one stray space after the "@" or inside the
 # domain (name@ gmail.com, name@g mail.com), or a comma for a dot (name@gmail,com).
-EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+")
+# A space may come before the "@" too (JDOE @ EXAMPLE.COM). A firm's name that writes "@" for "&"
+# (ECONOMIC @ TECHNICAL COOPERATIVE CO.) has no dot inside a word, so it stays.
+EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+ ?@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+")
+# An address spelled out to get past a scan: jdoe [at] example [dot] com, jdoe(at)example.com.
+EMAIL_SPELLED_OUT = re.compile(
+    r"[A-Za-z0-9._%+'-]+\s*[\[(]\s*at\s*[\])]\s*[A-Za-z0-9-]+(?:(?:\s*[\[(]\s*dot\s*[\])]\s*|\.)[A-Za-z0-9-]+)+",
+    re.I)
 # What is left of a second address run into the first with no space (a@x.com.b@y.com): its domain.
 AFTER_EMAIL = re.compile(re.escape(REMOVED) + r"@ ?[A-Za-z0-9-]+(?:[.,][A-Za-z0-9-]+)+")
 # A number with a country code or a trunk zero, also with a space after the zero (0 722-123456),
@@ -49,20 +58,29 @@ DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
 FISCAL_YEARS = re.compile(r"\d{1,2}-(?:19|20)\d{2}-(?:19|20)\d{2}")  # a reference's end: 03-2019-2020
 POSTAL_CODE = re.compile(r"\d{3,5}-\d{5}")  # a P.O. Box and its postal code: 05586-00100
-# A number written after a phone label (Tel, Phone, Mobile, Cell, Fax, TEL/FAX), whatever its shape:
-# a country code with no plus (Tel 254 20 1234567), or a second number after a slash
-# (Tel: [contact removed]/722123456). Award notices write firms' and contacts' numbers this way.
+# A number written after a phone label (Tel, Telephone Number, Tel #, Telefax, TEL/FAX, Phone,
+# Cellphone, Mobile/WhatsApp, Mob. No., Cell, Fax), whatever its shape: a country code with no plus
+# (Tel 254 20 1234567), or a second number after a slash (Tel: [contact removed]/722123456). Award
+# notices write firms' and contacts' numbers this way.
 NUMBER = r"(?:" + re.escape(REMOVED) + r"|[+(]?\d(?:[\d \t()–-]|\.(?=\d))*)"
 LABELLED = re.compile(
-    r"(?P<label>\b(?:tel(?:ephone)?|phone|mobile|cell|fax)\b(?:\s*/\s*fax\b)?\.?\s*(?:no\.?)?\s*[:.]?[ \t]*)"
+    r"(?P<label>\b(?:tel(?:ephone|efax)?|(?:cell|mobile)?\s?phone|mobile|mob|cell|fax)\b"
+    r"(?:\s*/\s*(?:fax|mobile|whats\s?app)\b)?\.?\s*(?:no\.?|number|#)?\s*[:.]?[ \t]*)"
     r"(?P<numbers>" + NUMBER + r"(?:[ \t]*[/,][ \t]*" + NUMBER + r")*)", re.I)
+# A ten-digit Indian mobile with no trunk zero (98123 45678, 91 9812345678) after a short label: Ph,
+# M or Contact, with a colon or No. after it. Only a mobile's shape goes here, because after these
+# words another number may be something else (pH 6.5 to 8.5).
+MOBILE_LABELLED = re.compile(
+    r"(?P<label>\b(?:ph|m|contact)\b\.?(?:\s*(?:no\.?|number)\s*:?|\s*:)[ \t]*)"
+    r"(?P<numbers>(?:\+?91[ \t-]?)?[6-9]\d{4}[ \t-]?\d{5})(?!\d)", re.I)
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
 
 def _phone(candidate: str) -> bool:
     first = candidate.split("/")[0].strip()
     digits = re.sub(r"\D", "", first)
-    shortest = 8 if first.startswith("+") else 9  # a country code and seven digits: +254 20 123
+    # with a plus, eight digits are enough: a country code and five more (+254 20 123)
+    shortest = 8 if first.startswith("+") else 9
     if not shortest <= len(digits) <= 15 or digits.startswith("000"):
         return False
     return not any(pattern.fullmatch(first) for pattern in (DATE_LIKE, AMOUNT_LIKE, FISCAL_YEARS, POSTAL_CODE))
@@ -115,10 +133,12 @@ class Stripper:
         if self.phones:
             text = self._sub(DIGIT_RUN, text, self._known_phone)
         text = self._sub(EMAIL, text)
+        text = self._sub(EMAIL_SPELLED_OUT, text)
         text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
         text = self._sub(PHONE, text, _phone)
         text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
-        return LABELLED.sub(self._labelled, text)
+        text = LABELLED.sub(self._labelled, text)
+        return MOBILE_LABELLED.sub(self._labelled, text)
 
     def _labelled(self, match: re.Match) -> str:
         numbers = match.group("numbers")
