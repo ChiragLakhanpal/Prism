@@ -1,0 +1,19 @@
+# How the Databricks App starts Strata (ticket 06). ops/app/deploy_app.py uploads this file with
+# the code, laid out as in the repo: src/strata, config and web/dist.
+#
+# The platform sets DATABRICKS_APP_PORT, DATABRICKS_HOST, and the app's own DATABRICKS_CLIENT_ID and
+# DATABRICKS_CLIENT_SECRET. It forwards each viewer's token in a header, because the deploy gives
+# the app the "sql" user authorization scope. src/strata/server/settings.py says what each one does.
+command: ["python", "-m", "strata.server"]
+env:
+  - name: PYTHONPATH
+    value: src
+  - name: STRATA_SERVER_HOST
+    value: 0.0.0.0
+  - name: STRATA_WEB_DIST
+    value: web/dist
+  # The app's resources, which the deploy sets: the SQL warehouse and the secret.
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse
+  - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+    valueFrom: appinsights
