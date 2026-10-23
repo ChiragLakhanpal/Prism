@@ -1,16 +1,20 @@
 -- The data readiness measures each run writes (GLOSSARY.md; spec, "Data readiness and the
 -- dashboard"). Each measure is a count with its denominator, or for a freshness measure a date;
--- there is no composite score. The Data readiness page (ticket 16) reads the latest run's rows for
--- each source and subject. Three writers fill it: the nightly job, from one query per source in
--- src/strata/lakehouse/readiness/, the plan reader (src/strata/lakehouse/plans.py) and the passage
--- reader (src/strata/lakehouse/passages.py).
+-- there is no composite score. The Data readiness page (ticket 16) reads, for each source, subject
+-- and measure, the row from the latest run that wrote that measure. Three writers fill it: the
+-- nightly job, from one query per source in src/strata/lakehouse/readiness/, the plan reader
+-- (src/strata/lakehouse/plans.py) and the passage reader (src/strata/lakehouse/passages.py). The plan
+-- reader and the passage reader both write the documents source for a project, under different
+-- runs, so each gives its measures names the other never uses.
 --
 -- run_id       the run that measured it; "fixture" for the nightly job's run in the gate's fixture
 --              database
 -- source       the source registry's key, such as awards or documents
 -- subject      what was measured: a country's two-letter code (KE) for the records the nightly job
---              fetches, or a project ID (P156634) for its Procurement Plans
--- measure      what was counted, such as linked_step_reference or pages_read_route_b
+--              fetches, or a project ID (P156634) for its documents: its Procurement Plans, and
+--              the reports the passage reader reads
+-- measure      what was counted, such as linked_step_reference, pages_read_route_b (the plan
+--              reader) or document_pages_route_b (the passage reader)
 -- kind         coverage, linked, read_well or fresh, or stripped for the contact details removed
 --              (the dashboard's Governance page shows personal data stripped), or screened for what
 --              Prompt Shields found in the passages

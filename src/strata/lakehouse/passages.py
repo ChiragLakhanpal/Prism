@@ -388,14 +388,14 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
         def add(name, kind, count, denominator, detail, as_of=None):
             rows.append((run_id, SOURCE, project_id, name, kind, count, denominator, as_of, detail, when, when.date()))
 
-        add("documents_read_route_a", "coverage", sum(item.held.paged for item in items), len(items),
+        add("documents_read_route_a_text", "coverage", sum(item.held.paged for item in items), len(items),
             "Documents whose published text divides into their PDF's pages, so Route A read them, of the documents "
             "chosen. The others are scans, whose pages wait for Route B.")
-        add("pages_route_a", "read_well", len(on_a), len(pages),
+        add("document_pages_route_a", "read_well", len(on_a), len(pages),
             "Pages Route A read from the published text, of every page of the documents chosen.")
-        add("pages_route_b", "read_well", len(pages) - len(on_a), len(pages),
+        add("document_pages_route_b", "read_well", len(pages) - len(on_a), len(pages),
             "Pages waiting for Route B, the layout parser: scans, data sheets and pages with no text.")
-        add("pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body), len(body),
+        add("document_pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body), len(body),
             "Pages of the body Route A read on which a paragraph the report numbers was found. An ISR numbers "
             "none of its paragraphs.")
         add("passages_linked_to_project", "linked", passages if project_id in linked else 0, passages,

@@ -126,20 +126,43 @@ def test_strata_ops_shows_pages_per_route_and_the_share_whose_paragraph_numberin
         pages = rows(db, "SELECT sum(pdf_pages) AS n FROM strata.silver.documents WHERE project_id = :p",
                      p=project_id)[0]["n"]
 
-        route_a, route_b = found["pages_route_a"], found["pages_route_b"]
+        route_a, route_b = found["document_pages_route_a"], found["document_pages_route_b"]
         assert route_a["denominator"] == route_b["denominator"] == pages
         assert route_a["count"] + route_b["count"] == pages
-        numbering = found["pages_paragraph_numbering_found"]
+        numbering = found["document_pages_paragraph_numbering_found"]
         assert 0 < numbering["count"] < numbering["denominator"] <= route_a["count"]
         assert all(row["detail"] for row in found.values())
     # P130164's 100-page PAD is a scan, so every one of its pages waits for Route B.
-    assert measured(db, "P130164")["pages_route_b"]["count"] >= 100
+    assert measured(db, "P130164")["document_pages_route_b"]["count"] >= 100
+
+
+# The table's reading rule (src/strata/lakehouse/tables/ops/data_readiness.sql): for each source,
+# subject and measure, the row from the latest run that wrote that measure.
+LATEST_PER_MEASURE = """
+SELECT measure, run_id FROM (
+  SELECT measure, run_id,
+         row_number() OVER (PARTITION BY source, subject, measure ORDER BY measured_at DESC) AS newest
+  FROM strata.ops.data_readiness WHERE source = 'documents' AND subject = :subject)
+WHERE newest = 1
+"""
+
+
+def test_the_data_readiness_rule_keeps_the_plan_readers_and_the_passage_readers_measures_for_one_project(db):
+    plan_runs = {row["run_id"] for row in rows(db, "SELECT run_id FROM strata.ops.parse_runs")}
+
+    latest = rows(db, LATEST_PER_MEASURE, subject="P156634")
+
+    by_plans = {row["measure"] for row in latest if row["run_id"] in plan_runs}
+    by_passages = {row["measure"] for row in latest if row["run_id"] not in plan_runs}
+    assert {"plan_versions_read", "pages_read_route_a", "pages_read_route_b"} <= by_plans
+    assert {"passages_screened", "document_pages_route_a", "document_pages_route_b",
+            "documents_read_route_a_text"} <= by_passages
 
 
 def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_and_how_fresh_they_are(db):
     found = measured(db, "P130164")
 
-    assert (found["documents_read_route_a"]["count"], found["documents_read_route_a"]["denominator"]) == (16, 17)
+    assert (found["documents_read_route_a_text"]["count"], found["documents_read_route_a_text"]["denominator"]) == (16, 17)
     linked = found["passages_linked_to_project"]
     assert linked["count"] == linked["denominator"] > 0  # gold.project holds P130164
     assert found["documents_fresh"]["as_of"] == value("icr-review-reissue-date")["value"]
