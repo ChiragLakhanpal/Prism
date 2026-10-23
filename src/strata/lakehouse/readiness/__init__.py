@@ -8,7 +8,10 @@ defined once, here, for the source as a whole (subject all):
 
 - coverage_rows        the source's records held, counted once in each request they came back
                        in, of the totals the source reported for those requests at its last fetch.
-                       When the two are equal, the fetch holds every record the API reported.
+                       Only the newest page of each request counts (strata.bronze.current_pages):
+                       bronze keeps every page it was sent, so a record the source dropped since
+                       stays in an older page. When the two are equal, the fetch holds every record
+                       the API reported.
 - fresh_fetched        the day of the last fetch, with the source's cadence
 - fresh_newest_record  the newest date in the source's watermark field, with its cadence
 
@@ -51,6 +54,11 @@ WITH pages AS (
   FROM strata.bronze.api_pages
   WHERE source = :source
 ),
+current_pages AS (
+  SELECT page_hash, {QUERY} AS query
+  FROM strata.bronze.current_pages
+  WHERE source = :source
+),
 reported AS (
   SELECT sum(total) AS total
   FROM (SELECT query, max_by(reported_total, fetched_at) AS total FROM pages GROUP BY query) AS per_query
@@ -60,7 +68,7 @@ held AS (
   FROM (
     SELECT p.query, count(DISTINCT concat_ws('|', {key})) AS records
     FROM {table} AS s
-    JOIN (SELECT DISTINCT page_hash, query FROM pages) AS p ON p.page_hash = s.page_hash
+    JOIN current_pages AS p ON p.page_hash = s.page_hash
     GROUP BY p.query
   ) AS per_query
 ),
