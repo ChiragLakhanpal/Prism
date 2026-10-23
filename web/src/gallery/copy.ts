@@ -208,7 +208,7 @@ export const galleryCopy = {
     cardSource: "A sample plan check made for the gallery, in STEP's columns.",
     emptyTitle: "I have nothing to brief you on yet.",
     emptyBody:
-      "Once I load plans and projects, this page lists the plans that changed, the activities that need a look and the drafts waiting for you.",
+      "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts waiting for you.",
     emptyLink: "See which data I hold",
     info: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     success: "You exported the draft to Word.",

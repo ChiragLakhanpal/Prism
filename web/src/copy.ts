@@ -20,9 +20,12 @@ export const copy = {
   // The browser tab's title: the page's h1, then the app's name.
   pageTitle: (title: string) => `${title} | Strata`,
 
-  // Every route's title, its one-sentence purpose and its empty state (the 06 design brief).
-  // {pid}, {stepRef} and {id} come from the address and show in Roboto Mono. Each page's link
-  // goes where web/src/routes.ts says; data has none, and the not-found pages have no card.
+  // Every route's title, its short purpose and its empty state (the 06 design brief, with
+  // design-lead's round 1 wording for the empty states). Until a route's own ticket fills it, a
+  // page reads nothing, so its empty state says what the page can't show yet and never claims
+  // what the data hold: the stamp in the band may already show a date. {pid}, {stepRef} and {id}
+  // come from the address and show in Roboto Mono. Each page's link goes where web/src/routes.ts
+  // says; data has none, and the not-found pages have no card.
   pages: {
     home: {
       title: "Your briefing",
@@ -31,8 +34,8 @@ export const copy = {
         "check. It comes from fixed checks on public records, and no model writes it.",
       emptyTitle: "I have nothing to brief you on yet.",
       emptyBody:
-        "Once I load plans and projects, this page lists the plans that changed, the activities that need a look " +
-        "and the drafts waiting for you.",
+        "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts " +
+        "waiting for you.",
       link: "See which data I hold",
     },
     packages: {
@@ -41,7 +44,7 @@ export const copy = {
       emptyTitle: "There are no plans or packages here yet.",
       emptyBody:
         "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of " +
-        "Exchanges in Procurement (STEP). I can check a plan once I load its records.",
+        "Exchanges in Procurement (STEP).",
       link: "See which data I hold",
     },
     package: {
@@ -49,40 +52,37 @@ export const copy = {
       purpose:
         "This page shows one package: the past range of comparable packages, a planned date for each step, its " +
         "risks and its approach options.",
-      emptyTitle: "I can't find package {id}.",
+      emptyTitle: "I can't show package {id} on this page yet.",
       emptyBody: "A package appears here after you plan it or check the plan it belongs to.",
       link: "Go to Packages",
     },
     projects: {
       title: "Projects",
       purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
-      emptyTitle: "I haven't loaded any projects yet.",
-      emptyBody: "Once I load the project records, every project appears here, and the projects you follow come first.",
+      emptyTitle: "I can't list projects on this page yet.",
+      emptyBody: "When I can, every project I hold appears here, and the projects you follow come first.",
       link: "See which data I hold",
     },
     project: {
       title: "Project {pid}",
       purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
-      emptyTitle: "I don't have records for {pid} yet.",
-      emptyBody:
-        "Once I load project records, this page shows the project's procurement, its reports in date order and its " +
-        "documents.",
+      emptyTitle: "I can't show project {pid} on this page yet.",
+      emptyBody: "When I can, this page shows the project's procurement, its reports in date order and its documents.",
       link: "Go to Projects",
     },
     activity: {
       title: "Activity {stepRef}",
       purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
-      emptyTitle: "I don't have records for {stepRef} yet.",
+      emptyTitle: "I can't trace activity {stepRef} on this page yet.",
       emptyBody:
-        "Once I load the Procurement Plan records, this page traces the activity from its plan row to its signed " +
-        "contract.",
+        "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
       link: "Go to project {pid}",
     },
     document: {
       title: "Document",
       purpose: "This page opens one project document at the page and paragraph a citation points to.",
-      emptyTitle: "I don't have this document yet.",
-      emptyBody: "Once I read the project's documents, each citation opens here at its paragraph and page.",
+      emptyTitle: "I can't open this document here yet.",
+      emptyBody: "When I can, each citation opens here at its paragraph and page.",
       link: "Go to project {pid}",
     },
     lessons: {
@@ -112,10 +112,10 @@ export const copy = {
       purpose:
         "This page shows what the data I hold are ready for, where each source comes from and its license. It also " +
         "explains how I turn records and documents into answers.",
-      emptyTitle: "I haven't loaded any data yet.",
+      emptyTitle: "I can't show data readiness on this page yet.",
       emptyBody:
-        "Once I load the first sources, this page shows what each one is ready for, how complete and fresh it is, " +
-        "and its license.",
+        "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. " +
+        "The date at the top of every page says how recent the data I hold are.",
     },
     notFound: {
       title: "Page not found",

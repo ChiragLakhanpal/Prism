@@ -26,7 +26,7 @@ export const ROUTES: Route[] = [
       "This page lists what changed in the plans and projects you work on, and the drafts waiting for you to check. It comes from fixed checks on public records, and no model writes it.",
     empty: {
       title: "I have nothing to brief you on yet.",
-      body: "Once I load plans and projects, this page lists the plans that changed, the activities that need a look and the drafts waiting for you.",
+      body: "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts waiting for you.",
       link: DATA_LINK,
     },
   },
@@ -37,7 +37,7 @@ export const ROUTES: Route[] = [
     purpose: "Check a borrower's Procurement Plan against comparable past packages, or plan a new package from one sentence.",
     empty: {
       title: "There are no plans or packages here yet.",
-      body: "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of Exchanges in Procurement (STEP). I can check a plan once I load its records.",
+      body: "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of Exchanges in Procurement (STEP).",
       link: DATA_LINK,
     },
   },
@@ -48,7 +48,7 @@ export const ROUTES: Route[] = [
     purpose:
       "This page shows one package: the past range of comparable packages, a planned date for each step, its risks and its approach options.",
     empty: {
-      title: "I can't find package KE-NWWDA-541055-CW-RFB.",
+      title: "I can't show package KE-NWWDA-541055-CW-RFB on this page yet.",
       body: "A package appears here after you plan it or check the plan it belongs to.",
       link: ["Go to Packages", "/packages"],
     },
@@ -59,8 +59,8 @@ export const ROUTES: Route[] = [
     tab: "Projects",
     purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
     empty: {
-      title: "I haven't loaded any projects yet.",
-      body: "Once I load the project records, every project appears here, and the projects you follow come first.",
+      title: "I can't list projects on this page yet.",
+      body: "When I can, every project I hold appears here, and the projects you follow come first.",
       link: DATA_LINK,
     },
   },
@@ -70,8 +70,8 @@ export const ROUTES: Route[] = [
     tab: "Projects",
     purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
     empty: {
-      title: "I don't have records for P130164 yet.",
-      body: "Once I load project records, this page shows the project's procurement, its reports in date order and its documents.",
+      title: "I can't show project P130164 on this page yet.",
+      body: "When I can, this page shows the project's procurement, its reports in date order and its documents.",
       link: ["Go to Projects", "/projects"],
     },
   },
@@ -81,8 +81,8 @@ export const ROUTES: Route[] = [
     tab: "Projects",
     purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
     empty: {
-      title: "I don't have records for IN-RRSMP-7431-CW-RFB yet.",
-      body: "Once I load the Procurement Plan records, this page traces the activity from its plan row to its signed contract.",
+      title: "I can't trace activity IN-RRSMP-7431-CW-RFB on this page yet.",
+      body: "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
       link: ["Go to project P130164", "/projects/P130164"],
     },
   },
@@ -92,8 +92,8 @@ export const ROUTES: Route[] = [
     tab: "Projects",
     purpose: "This page opens one project document at the page and paragraph a citation points to.",
     empty: {
-      title: "I don't have this document yet.",
-      body: "Once I read the project's documents, each citation opens here at its paragraph and page.",
+      title: "I can't open this document here yet.",
+      body: "When I can, each citation opens here at its paragraph and page.",
       link: ["Go to project P130164", "/projects/P130164"],
     },
   },
@@ -128,8 +128,8 @@ export const ROUTES: Route[] = [
     purpose:
       "This page shows what the data I hold are ready for, where each source comes from and its license. It also explains how I turn records and documents into answers.",
     empty: {
-      title: "I haven't loaded any data yet.",
-      body: "Once I load the first sources, this page shows what each one is ready for, how complete and fresh it is, and its license.",
+      title: "I can't show data readiness on this page yet.",
+      body: "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. The date at the top of every page says how recent the data I hold are.",
     },
   },
 ];
