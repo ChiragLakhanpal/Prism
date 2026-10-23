@@ -1,0 +1,24 @@
+# The offline gate's steps (CLAUDE.md rule 6). gates/offline.py runs them in this order,
+# from the root of the tree, with the network off. Add a step here when a seam gets its tests.
+#
+# Each step has a name and a run list. Optional keys:
+#   always = true   the step runs even when only Markdown files are staged
+#   git_env = true  the step sees the commit's git variables (the secret scan needs the commit's index)
+#   show = true     the step's output is printed when it passes, not only when it fails
+
+# The whole run fails when it takes longer than this.
+limit_seconds = 120
+
+[[step]]
+name = "Scan the staged changes and the history for secrets"
+run = ["python3", "gates/secrets.py"]
+always = true
+git_env = true
+
+[[step]]
+name = "Test the guard hook"
+run = ["python3", ".claude/hooks/test_guard.py"]
+
+[[step]]
+name = "Run the Python tests"
+run = ["uv", "run", "--frozen", "pytest"]
