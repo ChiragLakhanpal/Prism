@@ -155,3 +155,17 @@ def test_names_added_onto_a_named_query_constant_pass_when_the_statement_says_so
                              "    return engine.run(BASE + f\" ORDER BY {column}\")  # sql-lint: names only\n"})
 
     assert lint().problems(root) == []
+
+
+def test_a_value_built_onto_a_query_constant_from_another_module_is_refused(tmp_path):
+    """A query constant read through its module's name, or opening an f-string, is still a query."""
+    root = tree(tmp_path, **{
+        "src__strata__tools__queries.py": "PENDING = \"SELECT * FROM strata.gold.package WHERE source = :source\"\n",
+        "src__strata__tools__find.py":
+            "from strata.tools import queries\n"
+            "from strata.tools.queries import PENDING\n\n\n"
+            "def find(engine, reference):\n"
+            "    engine.run(f\"{PENDING} AND step_reference = '{reference}'\")\n"
+            "    return engine.run(queries.PENDING + \" AND step_reference = '\" + reference + \"'\")\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:{line}: {BUILT}" for line in (6, 7)]

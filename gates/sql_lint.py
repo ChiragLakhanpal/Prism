@@ -15,10 +15,11 @@ It reads every .sql file under src/strata and tests/ground_truth, and the Python
 and ops/bundle: every string that holds a query, wherever it is written (passed to run(),
 execute(), executemany() or sql(), held in a variable or a constant, or returned), and every
 query text that code builds with an f-string, + or %, += or %=, or .format(). A built query may
-start from a string written right there or from a name the same file gives a query
-(QUERY = "SELECT ..."), as this repo writes its queries as named constants. A string is a query
-when it starts the way a statement does (QUERY_START): a SELECT, an INSERT or MERGE into a table,
-a WITH clause, a CREATE of a table, view or schema, a DELETE, or an UPDATE that sets columns.
+start from a string written right there or from a name any of those files gives a query
+(QUERY = "SELECT ..."), read bare or through its module (queries.QUERY), as this repo writes its
+queries as named constants. A string is a query when it starts the way a statement does
+(QUERY_START): a SELECT, an INSERT or MERGE into a table, a WITH clause, a CREATE of a table, view
+or schema, a DELETE, or an UPDATE that sets columns.
 
 Two places are left out on purpose: gates/, whose fixture build loads the fixture's own copy of
 the sources into schemas of its own, and ops/dayone, ticket 03's day-one probes, which run once on
@@ -94,18 +95,23 @@ def _named_queries(tree: ast.AST) -> dict[str, str]:
 
 
 def _text(node: ast.AST, named: dict[str, str]) -> str | None:
-    """A string written right there, or the query a name holds."""
+    """A string written right there, or the query a name holds, also read through its module."""
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return node.value
+    if isinstance(node, ast.Attribute):
+        return named.get(node.attr)
     return named.get(node.id) if isinstance(node, ast.Name) else None
 
 
 def _first_text(node: ast.AST, named: dict[str, str]) -> str | None:
     """The text a built string starts with: an f-string's first part, the left end of a + or a %,
     the string .format() is called on, or the query a name holds when += or %= adds to it. A name
-    in named stands for its query wherever a written string could."""
+    in named stands for its query wherever a written string could, also as an f-string's first
+    part (f"{QUERY} AND ...")."""
     if isinstance(node, ast.JoinedStr):
         first = node.values[0] if node.values else None
+        if isinstance(first, ast.FormattedValue):
+            return _text(first.value, named)
         return first.value if isinstance(first, ast.Constant) and isinstance(first.value, str) else None
     if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mod)):
         left = node.left
@@ -119,7 +125,9 @@ def _first_text(node: ast.AST, named: dict[str, str]) -> str | None:
     return None
 
 
-def _python_problems(path: Path, relative: str) -> list[str]:
+def _python_problems(path: Path, relative: str, shared: dict[str, str] | None = None) -> list[str]:
+    """Each query in one Python file that breaks a rule. shared holds the queries other files name,
+    so a constant imported from them counts; the file's own names come first."""
     source = path.read_text()
     lines = source.splitlines()
     tree = ast.parse(source)
@@ -127,7 +135,7 @@ def _python_problems(path: Path, relative: str) -> list[str]:
     docstrings = {id(node.body[0].value) for node in ast.walk(tree)
                   if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
                   and node.body and isinstance(node.body[0], ast.Expr)}
-    named = _named_queries(tree)
+    named = {**(shared or {}), **_named_queries(tree)}
 
     def first_line(node: ast.AST) -> int:
         """The first line of the statement that holds the node."""
@@ -168,10 +176,13 @@ def problems(root: Path = ROOT) -> list[str]:
     for folder in SQL_FOLDERS:
         for path in sorted((root / folder).rglob("*.sql")):
             found += _name_problems(path.read_text(), path.relative_to(root).as_posix())
-    for folder in PYTHON_FOLDERS:
-        for path in sorted((root / folder).rglob("*.py")):
-            if "tests" not in path.relative_to(root).parts:
-                found += _python_problems(path, path.relative_to(root).as_posix())
+    python = [path for folder in PYTHON_FOLDERS for path in sorted((root / folder).rglob("*.py"))
+              if "tests" not in path.relative_to(root).parts]
+    shared = {}
+    for path in python:
+        shared.update(_named_queries(ast.parse(path.read_text())))
+    for path in python:
+        found += _python_problems(path, path.relative_to(root).as_posix(), shared)
     return found
 
 
