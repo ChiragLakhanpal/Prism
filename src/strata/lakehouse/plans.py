@@ -378,9 +378,8 @@ def parse_chosen(engine: Engine, layout: LayoutParser, project_id: str, versions
 
 # ── 5. Silver rows, steps, delays and data notes ─────────────────────────
 
-ROW_COLUMNS = ("loan_credit_no", "component", "review_type", "method", "market_approach", "procurement_process",
-               "prequalification", "high_sea_sh_risk", "procurement_document_type", "contract_type",
-               "estimated_amount_usd", "actual_amount_usd", "process_status")
+# silver.plan_rows's STEP columns after the reference and description, in STEP's order (step.COLUMNS).
+ROW_COLUMNS = tuple(key for key in step.COLUMNS.values() if key != "activity")
 
 
 @dataclass(frozen=True)

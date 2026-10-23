@@ -145,6 +145,17 @@ def test_the_october_9_plan_has_a_data_note_for_the_method_and_for_each_actual_a
     assert notes[1]["actual_amount_usd"] == notes[2]["actual_amount_usd"] == zero
 
 
+def test_each_method_the_method_note_names_is_one_of_steps_methods_word_for_word():
+    """A misspelt method in the note's list would quietly stop the note for that method."""
+    from strata.lakehouse import plans
+    from strata.reader import step
+
+    listed = re.findall(r"\('([A-Z]+)', '([^']+)'\)", plans._sql("plan_data_notes.sql"))
+
+    assert ("RFB", "Request for Bids") in listed
+    assert {method for _, method in listed} <= set(step.VALUES["method"])
+
+
 def test_each_plan_version_is_public_from_its_disclosure_date_and_in_its_agencys_series(db):
     versions = rows(db, """
         SELECT plan_date, implementing_agency, series_order, is_latest, public_from
