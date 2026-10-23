@@ -14,13 +14,12 @@ the passage texts that model has not embedded yet.
 from __future__ import annotations
 
 import hashlib
-import json
 import math
 import re
-import urllib.error
-import urllib.request
 from collections.abc import Callable
 from typing import Protocol
+
+from strata.knowledge.http import post_json
 
 
 class Embedder(Protocol):
@@ -88,16 +87,8 @@ class HashedWords:
 Transport = Callable[[str, dict, dict], dict]  # (url, headers, body) -> the parsed JSON answer
 
 
-def http_post(url: str, headers: dict, body: dict, timeout: int = 120) -> dict:
-    request = urllib.request.Request(url, method="POST", data=json.dumps(body).encode("utf-8"),
-                                     headers={**headers, "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read() or b"{}")
-    except urllib.error.HTTPError as error:
-        raise EmbedError(f"Azure OpenAI answered {error.code}: {error.read().decode(errors='replace')[:300]}") from error
-    except urllib.error.URLError as error:
-        raise EmbedError(f"I could not reach Azure OpenAI: {error.reason}") from error
+def http_post(url: str, headers: dict, body: dict) -> dict:
+    return post_json(url, headers, body, timeout=120, error=EmbedError, service="Azure OpenAI")
 
 
 class AzureOpenAIEmbeddings:

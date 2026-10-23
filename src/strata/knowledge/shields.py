@@ -14,13 +14,12 @@ measures count it, and search_passages leaves it out and says why.
 
 from __future__ import annotations
 
-import json
 import re
-import urllib.error
-import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
+
+from strata.knowledge.http import post_json
 
 
 @dataclass(frozen=True)
@@ -67,16 +66,8 @@ Transport = Callable[[str, dict, dict], dict]  # (url, headers, body) -> the par
 API_VERSION = "2024-09-01"
 
 
-def http_post(url: str, headers: dict, body: dict, timeout: int = 60) -> dict:
-    request = urllib.request.Request(url, method="POST", data=json.dumps(body).encode("utf-8"),
-                                     headers={**headers, "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read() or b"{}")
-    except urllib.error.HTTPError as error:
-        raise ShieldError(f"Prompt Shields answered {error.code}: {error.read().decode(errors='replace')[:300]}") from error
-    except urllib.error.URLError as error:
-        raise ShieldError(f"I could not reach Prompt Shields: {error.reason}") from error
+def http_post(url: str, headers: dict, body: dict) -> dict:
+    return post_json(url, headers, body, timeout=60, error=ShieldError, service="Prompt Shields")
 
 
 def content_safety_endpoint(openai_endpoint: str) -> str:

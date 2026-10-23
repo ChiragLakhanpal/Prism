@@ -17,8 +17,9 @@ Bank's hosts on this computer, reads the first ingestion.passage_documents of th
 text Route A can read (config/thresholds.toml), scans each passage with Prompt Shields on the
 Foundry resource, embeds each one, with its header, with the deployment config/models.toml names
 for the embed role, and writes bronze, silver, strata.gold.passage and strata.ops on the warehouse.
-Then it makes the Delta Sync index strata.gold.passage_index on the AI Search endpoint the env file
-names (AI_SEARCH_ENDPOINT), when it is missing, syncs it, and waits until it holds every passage.
+Then it makes the Delta Sync index that config/models.toml's [search] table names on the AI Search
+endpoint the env file names (AI_SEARCH_ENDPOINT), when it is missing, syncs it, and waits until it
+holds every passage.
 It exits 0 when the index holds every passage, 1 when the run finished but the index did not catch
 up in time, and 2 when it could not run.
 

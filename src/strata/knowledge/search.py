@@ -5,7 +5,9 @@ with how many matched. The tool (src/strata/tools/search_passages.py) then reads
 strata.gold.passage as the viewer, so the app holds every passage an answer relies on (ADR 0003).
 
 - AiSearch, live. The Delta Sync index over strata.gold.passage on Databricks AI Search, asked a hybrid
-  query (the words and the query's vector) with the reranker, run with the viewer's own token.
+  query (the words and the query's vector) with the reranker, run with the viewer's own token. The
+  index, the reranker and the columns it reads are in config/models.toml's [search] table. AI Search
+  gives back the best k and no count of every match, so when it gives back k, matched is a floor.
 - FixtureSearch, offline. The same steps over the fixture database: BM25 over the words of each
   passage's header and text, the cosine of the recorded vectors, reciprocal rank fusion of the two,
   then a rerank of the best by how many of the query's words each passage holds.
@@ -26,9 +28,9 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
+from strata.config import SearchSettings, load_search
 from strata.knowledge.embed import Embedder, HashedWords, offline, terms
 
-INDEX = "strata.gold.passage_index"  # the Delta Sync index over strata.gold.passage
 SOURCE_TABLE = "strata.gold.passage"
 FAR_FUTURE = 99991231  # gold.passage's replaced_day while a passage is current
 
@@ -60,6 +62,7 @@ class Hits:
     matched: int  # passages within the filters that matched the query
     hits: list[Hit]  # the best of them, best first
     method: str  # how they were ranked, in a sentence
+    complete: bool = True  # whether matched counts every match, or only the hits the searcher gave back
 
 
 class Searcher(Protocol):
@@ -138,8 +141,8 @@ class FixtureSearch:
         ranked = sorted(top, key=lambda i: (-covered[i], -fused[i], candidates[i]["passage_id"]))
         ranked += sorted((i for i in matched if i not in covered), key=lambda i: (-fused[i], candidates[i]["passage_id"]))
         method = ("BM25 on the words and the cosine of the vectors, fused by reciprocal rank, then the best "
-                  f"{RERANK_DEPTH} reranked by how many of the query's words each holds"
-                  if vector else "BM25 on the words, then the best reranked by how many of the query's words each holds")
+                  f"{RERANK_DEPTH} reranked by how many of the query's words each holds."
+                  if vector else "BM25 on the words, then the best reranked by how many of the query's words each holds.")
         return Hits(len(matched), [Hit(candidates[i]["passage_id"], round(fused[i], 6)) for i in ranked[:k]], method)
 
 
@@ -186,26 +189,31 @@ class AiSearch:
 
     name = "AI Search"
 
-    def __init__(self, transport: Transport, embedder: Embedder, index: str = INDEX):
-        self.transport, self.embedder, self.index = transport, embedder, index
+    def __init__(self, transport: Transport, embedder: Embedder, settings: SearchSettings | None = None):
+        self.transport, self.embedder, self.settings = transport, embedder, settings or load_search()
 
     def search(self, query: str, filters: Filters, k: int) -> Hits:
         [vector] = self.embedder.embed([query])
-        answer = self.transport("POST", f"/api/2.0/vector-search/indexes/{self.index}/query", {
+        answer = self.transport("POST", f"/api/2.0/vector-search/indexes/{self.settings.index}/query", {
             "columns": ["passage_id"],
             "query_text": query,
             "query_vector": vector,
             "query_type": "HYBRID",
             "num_results": k,
             "filters_json": json.dumps(index_filters(filters)),
-            "reranker": {"model": "databricks_reranker", "parameters": {"columns_to_rerank": ["header", "text"]}},
+            "reranker": {"model": self.settings.reranker,
+                         "parameters": {"columns_to_rerank": list(self.settings.rerank_columns)}},
         })
         columns = [column["name"] for column in (answer.get("manifest") or {}).get("columns", [])]
         rows = (answer.get("result") or {}).get("data_array") or []
         at, score = columns.index("passage_id"), columns.index("score") if "score" in columns else len(columns) - 1
         hits = [Hit(str(row[at]), float(row[score])) for row in rows]
-        return Hits(len(hits), hits, "AI Search's hybrid query, words and vector, with its reranker over the "
-                                     "header and the text")
+        method = (f"AI Search's hybrid query, words and vector, with its reranker over the "
+                  f"{' and the '.join(self.settings.rerank_columns)}")
+        if len(hits) >= k:
+            return Hits(len(hits), hits, f"{method}. AI Search returned its best {len(hits)}, so more passages "
+                                         "may match.", complete=False)
+        return Hits(len(hits), hits, f"{method}. It returned every passage that matched.")
 
 
 def index_filters(filters: Filters) -> dict:
@@ -236,10 +244,10 @@ class AiSearchIndex:
     columns = ["passage_id", "project_id", "document_type", "country_code", "sector", "header", "text",
                "public_day", "replaced_day", "embedding"]
 
-    def __init__(self, transport: Transport, endpoint: str, dimensions: int, index: str = INDEX,
+    def __init__(self, transport: Transport, endpoint: str, dimensions: int, settings: SearchSettings | None = None,
                  table: str = SOURCE_TABLE):
-        self.transport, self.endpoint, self.dimensions, self.index, self.table = (
-            transport, endpoint, dimensions, index, table)
+        self.transport, self.endpoint, self.dimensions, self.table = transport, endpoint, dimensions, table
+        self.index = (settings or load_search()).index
 
     def ensure(self, run_sql: Callable[[str], object]) -> bool:
         """Make the index if it is missing. Returns whether it made it."""

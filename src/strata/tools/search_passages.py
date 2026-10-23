@@ -27,7 +27,6 @@ from strata.reader.templates import template_for
 from strata.tools.registry import Call
 
 TABLE = "strata.gold.passage"
-SEARCH_DEPTH = 2  # the searcher is asked for this many times the most a call returns, so attacks can drop out
 
 
 def _sql(name: str) -> str:
@@ -113,8 +112,9 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
         return {**empty, "abstention": {"reason": "unknown_sector", "sector": sector}}
 
     searcher = searcher_for(call)
-    hits = searcher.search(query, filters, most * SEARCH_DEPTH)
-    search = {"searcher": searcher.name, "method": hits.method}
+    hits = searcher.search(query, filters, most * int(value("passages.search_depth")))
+    # matched_is_at_least: the searcher counted only the hits it gave back, so more passages may match.
+    search = {"searcher": searcher.name, "method": hits.method, "matched_is_at_least": not hits.complete}
     if not hits.hits:
         return {**empty, "search": search, "abstention": {"reason": "no_match", "query": query}}
 
