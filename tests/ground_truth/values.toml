@@ -1133,3 +1133,22 @@ disclosed = 2025-01-01
 says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017 (FY2017). The FY2001 to FY2016 awards dataset has no row for it and the since-FY2020 dataset has no rows for P130164, so only award notice OP00044090 records it (award-7431-signed)."
 awards = "api/awards/P130164-fy2001-2016.json"
 reference = "IN-RRSMP-7431-CW-RFB"
+
+# Kenya's rows in the fixture, counted from the recorded files apart from Strata's code. The lakehouse
+# run's data readiness measures and tests/ground_truth/kenya_contracts_with_a_step_reference.sql
+# must agree with them.
+
+[counts.kenya]
+says = "Kenya's award rows, contracts and notices in the fixture, and how many contracts carry a STEP reference and share it with a notice."
+awards = ["api/awards/P156634.json", "api/awards/P176758-P170941.json"]
+notice_files = ["api/notices/P156634.json", "api/notices/kenya-works-open-on-2026-10-09.json", "api/notices/kenya-icb-2015.json"]
+award_rows = 632
+award_rows_counted = "The rows of the two award files whose borrower_country_code is KE: all 280 and all 352, as each file's count field also says."
+contracts = 603
+contracts_counted = "The distinct wb_contract_number values among those rows. A joint venture has one row per member, so there are fewer contracts than rows."
+with_step_reference = 528
+with_step_reference_counted = "The contracts whose borrower_contract_reference_number starts like a STEP reference: two letters, an agency, digits, CW, GO, CS or NC, and a method, separated by hyphens, or by the slashes and stray spaces some rows use."
+with_notice = 239
+with_notice_counted = "The contracts with a STEP reference that a recorded notice's bid_reference_no also carries, once both are written in capitals with single hyphens."
+notices = 404
+notices_counted = "The distinct notice ids in the three notice files whose project_ctry_name is Kenya: 399 for P156634, four for the packages still open on October 9, 2026, and the 2015 ICB notice."

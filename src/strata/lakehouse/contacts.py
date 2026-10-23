@@ -10,7 +10,7 @@ counts what it took out:
 - in a record's free text (notice_text and bid_description), each name, email and phone number
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
 - in the same free text, every other email address, and every phone number written with a country
-  code (+254 20 2724292) or a trunk zero (046-2103598, 0722437748), is replaced too.
+  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456), is replaced too.
 
 Every other field stays as received: a reference number such as NWWDA-WSDP-03-2019-2020 is STEP's
 own, and the join from a notice to its package. In the free text, fiscal years at the end of a
@@ -30,7 +30,7 @@ REMOVED = "[contact removed]"
 
 EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
 # A number with a country code or a trunk zero, then any alternates written after it with a slash
-# (0722473496 / 0724841525). A letter may come right before it, as scraped text runs words together.
+# (0722123456 / 0733123456). A letter may come right before it, as scraped text runs words together.
 PHONE = re.compile(r"(?<![\d+])(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
                    r"(?:\s*/\s*\+?\d[\d \t–-]{4,}\d)*")
 DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")

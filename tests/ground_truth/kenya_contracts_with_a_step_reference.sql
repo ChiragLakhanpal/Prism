@@ -1,11 +1,9 @@
 -- Kenya's contracts in the fixture, and how many carry a STEP reference, in the run's data readiness
 -- measure and in gold.
 --
--- Counted by hand from the recorded award files (api/awards/P156634.json and
--- api/awards/P176758-P170941.json), apart from Strata's code: 603 distinct wb_contract_number
--- values, of which 528 have a borrower_contract_reference_number shaped like a STEP reference
--- (two letters, an agency, digits, CW, GO, CS or NC, and a method, separated by hyphens, or by the
--- slashes and stray spaces some rows use).
+-- The expected counts are tests/ground_truth/values.toml's [counts.kenya], counted from the
+-- recorded award files apart from Strata's code: 603 contracts (contracts = 603), of which 528
+-- carry a STEP reference (with_step_reference = 528).
 -- expect: counted_in,with_step_reference,contracts
 -- expect: gold,528,603
 -- expect: ops,528,603

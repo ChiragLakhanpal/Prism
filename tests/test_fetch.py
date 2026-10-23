@@ -169,7 +169,9 @@ def test_a_live_page_loses_its_contact_details_and_a_date_after_the_fetch_falls_
         notice = engine.run("SELECT notice_date, public_from FROM strata.silver.notices "
                             "WHERE notice_id = 'OP00474946'").rows
 
-    assert "info@nwwda.go.ke" not in body and "Abdikadir Noor Osman" not in body
+    contact = next(row for row in rows if row["id"] == "OP00146683")  # values.toml, awkward.contact_details
+    kept = [field for field in ("contact_email", "contact_name") if contact[field] and contact[field] in body]
+    assert contact["contact_email"] and contact["contact_name"] and kept == []  # never prints the details
     assert notice == ((dt.date(2026, 10, 13), dt.date(2026, 10, 1)),)
 
 

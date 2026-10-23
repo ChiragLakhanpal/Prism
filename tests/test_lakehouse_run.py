@@ -22,6 +22,7 @@ from strata.lakehouse.engine import DuckDBEngine
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
 VALUES = {value["id"]: value for value in TRUTH["value"]}
+KENYA = TRUTH["counts"]["kenya"]  # Kenya's rows, counted from the recorded files apart from Strata's code
 RECORDED = ROOT / "data" / "fixture" / "recorded"
 
 # The recorded files of the three sources this run ingests, for Kenya.
@@ -158,8 +159,8 @@ def test_each_kenya_value_appears_in_gold_with_its_public_from_date(gold, value_
 # ── Contact details ──────────────────────────────────────────────────────
 
 # This test's own idea of an email address and a phone number, written apart from the stripping
-# code: an international number (+254 20 2724292, (+254) 20 667 6999), a Kenyan or Indian number
-# with its trunk zero (046-2103598, 0141-5110520) and a Kenyan mobile (0722437748).
+# code: an international number (+254 20 1234567, (+254) 20 123 4567), a Kenyan or Indian number
+# with its trunk zero (046-1234567, 0141-1234567) and a Kenyan mobile (0722123456).
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+")
 PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\d{3,4}"
                    r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])")
@@ -187,15 +188,23 @@ def recorded_contacts():
     return found
 
 
+def awkward_contact_notice():
+    """values.toml, awkward.contact_details: the notice that carries a contact name, email and phone.
+    The test reads them from the recorded file, so this file never writes them out."""
+    awkward = TRUTH["awkward"]["contact_details"]
+    return next(notice for notice in record(awkward["record"])["procnotices"] if notice["id"] == awkward["notice"])
+
+
 def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold):
-    contacts = recorded_contacts()
-    # values.toml, awkward.contact_details: notice OP00146683 carries a contact name, email and phone.
-    assert {"info@nwwda.go.ke", "046-2103598", "Abdikadir Noor Osman"} <= contacts
+    found = recorded_contacts()
+    notice = awkward_contact_notice()
+    # Plain booleans and places, so a failure never prints the contact details themselves.
+    assert all(notice[field] in found for field in ("contact_name", "contact_email", "contact_phone_no"))
 
     leaks = []
     for where, value in text_values(gold):
-        leaks += [(where, found) for found in EMAIL.findall(value) + PHONE.findall(value)]
-        leaks += [(where, contact) for contact in contacts if contact in value]
+        leaks += [(where, "an email or phone number") for _ in EMAIL.findall(value) + PHONE.findall(value)]
+        leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
     assert leaks == []
 
 
@@ -259,14 +268,21 @@ def test_the_run_writes_kenya_s_coverage_linked_and_fresh_measures_each_count_wi
             ("awards", "linked_notice"), ("notices", "coverage_rows"), ("notices", "coverage_years"),
             ("projects", "coverage_rows"), ("projects", "coverage_years")} <= set(counts)
     assert all(numerator is not None and denominator for numerator, denominator, _, _ in counts.values())
-    # The awards files report 280 and 352 rows ("count"), and hold them all.
-    assert kenya["awards", "coverage_rows"][:2] == (632, 632)
-    # Counted from the raw award files apart from Strata's code: 603 Kenya contracts, 528 of them with
-    # a STEP reference, and 239 with a reference that a recorded notice carries.
-    assert kenya["awards", "linked_step_reference"][:2] == (528, 603)
-    assert kenya["awards", "linked_notice"][:2] == (239, 603)
-    # 399 notices for P156634, 4 for the packages still open, and the 2015 ICB notice.
-    assert kenya["notices", "coverage_rows"][:2] == (404, 404)
+    # The awards files report all their rows in their count fields, and the run holds them all.
+    assert kenya["awards", "coverage_rows"][:2] == (KENYA["award_rows"], KENYA["award_rows"])
+    assert kenya["awards", "linked_step_reference"][:2] == (KENYA["with_step_reference"], KENYA["contracts"])
+    assert kenya["awards", "linked_notice"][:2] == (KENYA["with_notice"], KENYA["contracts"])
+    assert kenya["notices", "coverage_rows"][:2] == (KENYA["notices"], KENYA["notices"])
+
+
+def test_the_ground_truth_sql_expects_the_counts_values_toml_holds():
+    """Rule 4: the counts are written once. The SQL check's expect lines must say the same."""
+    from strata.lakehouse import ground_truth
+
+    case = ground_truth.read(ROOT / "tests" / "ground_truth" / "kenya_contracts_with_a_step_reference.sql")
+
+    counts = (str(KENYA["with_step_reference"]), str(KENYA["contracts"]))
+    assert case.expected[1:] == [("gold", *counts), ("ops", *counts)]
 
 
 def test_each_source_is_fresh_as_of_its_fetch_with_its_cadence(gold):
@@ -290,7 +306,7 @@ def test_the_contact_details_removed_are_recorded_as_a_data_readiness_measure(go
     any contact detail from it, from a contact field or from its text."""
     removed, notices, _, detail = measures(gold)["notices", "contact_details_removed"]
 
-    assert notices == 404
+    assert notices == KENYA["notices"]
     assert len(kenya_notices_with_a_contact_field()) <= removed <= notices
     assert detail == ("This counts the notices that had contact names, addresses, emails, phone numbers or web "
                       "addresses removed before they were kept, out of the notices held.")
