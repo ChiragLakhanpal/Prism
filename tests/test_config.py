@@ -35,9 +35,10 @@ def copy(name, tmp_path, old=None, new=None):
 def test_the_slice_file_names_the_pilot_countries_sectors_and_fiscal_years():
     pilot = config.load_slice()
 
-    assert [country.name for country in pilot.countries] == ["Kenya", "Bangladesh", "Vietnam", "Pakistan"]
-    assert [(country.iso2, country.iso3) for country in pilot.countries] == [
-        ("KE", "KEN"), ("BD", "BGD"), ("VN", "VNM"), ("PK", "PAK")]
+    # The four pilot countries stay; adding a country is one entry and keeps the gate green.
+    pilot_countries = {("Kenya", "KE", "KEN"), ("Bangladesh", "BD", "BGD"), ("Vietnam", "VN", "VNM"),
+                       ("Pakistan", "PK", "PAK")}
+    assert pilot_countries <= {(country.name, country.iso2, country.iso3) for country in pilot.countries}
     assert pilot.sectors == ("water", "transport")
     assert (pilot.first_fiscal_year, pilot.last_fiscal_year) == (2012, 2025)
     assert list(pilot.fiscal_years) == list(range(2012, 2026))
@@ -149,6 +150,15 @@ def test_a_model_file_missing_a_role_is_refused(tmp_path):
     path = copy("models.toml", tmp_path, old="[roles.batch]", new="[roles.bulk]")
 
     with pytest.raises(ConfigError, match=r"models\.toml.*batch"):
+        config.load_models(path)
+
+
+def test_an_embedding_role_without_its_dimensions_is_refused(tmp_path):
+    """The AI Search probe and the passage index need the size, so the loader names the gap."""
+    size = config.load_models()["embed"].dimensions
+    path = copy("models.toml", tmp_path, old=f"dimensions = {size}\n", new="")
+
+    with pytest.raises(ConfigError, match=r"models\.toml.*roles\.embed\.dimensions is missing"):
         config.load_models(path)
 
 

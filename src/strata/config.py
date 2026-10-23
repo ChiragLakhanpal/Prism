@@ -277,8 +277,9 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     for role in ROLES:
         entry = _Entry(path, f"roles.{role}", roles[role])
         entry.only({"deployment", "purpose", "dimensions"})
+        # The embedding role needs its size: the passage index and the AI Search probe build vectors of it.
         models[role] = Model(role, entry.text("deployment"), entry.text("purpose"),
-                             entry.integer("dimensions", required=False))
+                             entry.integer("dimensions", required=(role == "embed")))
     return models
 
 
