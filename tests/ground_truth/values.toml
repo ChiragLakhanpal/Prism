@@ -456,6 +456,19 @@ first_lists = "KE-NWWDA-541055-CW-RFB"
 not_in = "documents/P156634/procurement-plan-2025-07-21"
 
 [[value]]
+id = "plan-wsdp-03-first-listed"
+says = "The Ministry of Water and Irrigation's plan of November 8, 2019 is the first to list NWWDA-WSDP-03-2019-2020, the consultancy for the Wajir water supply."
+value = 2019-11-08
+quote = "NWWDA-WSDP-03-2019-2020 / Consultancy Services for Comparison of Water Supply Options, Preparation of Detailed Designs, Tender Documents, Safeguards Documents and Construction Supervision of Wajir Water Supply"
+document = "documents/P156634/procurement-plan-2019-11-08"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2019-11-08
+pdf_page = 4
+first_lists = "NWWDA-WSDP-03-2019-2020"
+not_in = "documents/P156634/procurement-plan-2019-08-26"
+
+[[value]]
 id = "closing-date-p156634"
 says = "P156634 closes on October 31, 2026."
 value = 2026-10-31
@@ -581,21 +594,33 @@ wireframe_mark = "No signals"
 #
 # Each package's specific procurement notice (its first Invitation for Bids) joins its signed
 # contract on the STEP reference: the notice's bid_reference_no equals the award's
-# borrower_contract_reference_number. The fixture records P156634's notices and awards, so
-# every comparable here is from P156634 in Kenya. KE-TAVEVO-466579-GO-RFB is a works package
-# by its notice's procurement group, though its reference says GO.
+# borrower_contract_reference_number. The fixture records every notice and award for P156634,
+# so most comparables are from P156634. KE-TAVEVO-466579-GO-RFB is a works package by its
+# notice's procurement group, though its reference says GO.
 #
-# Two packages, KE-GAWASCO-54771-CW-RFB and KE-GAWASCO-111742-CW-RFB, have no row in the
-# awards dataset, but each has a Contract Award notice that gives its Contract Signature Date.
-# They are signed: their entries name the award_notice and have no contract or review_type.
-# Three packages have no award row and no award notice, so they are still open:
-# KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and KE-KIMAWASCO-377450-CW-RFB. The
-# fixture cannot tell whether any of them was canceled.
+# Each package is signed, canceled or still open:
+# - Signed (45). Most have a row in the awards dataset. KE-GAWASCO-54771-CW-RFB and
+#   KE-GAWASCO-111742-CW-RFB have none, but each has a Contract Award notice that gives its
+#   Contract Signature Date. Their entries name the award_notice and have no contract or
+#   review_type.
+# - Canceled (3). KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and
+#   KE-KIMAWASCO-377450-CW-RFB have no award row and no award notice. The agency's latest plan,
+#   of March 19, 2025, marks each one Canceled (canceled_in, pdf_page and quote), and the notice
+#   for KE-KIMAWASCO-149448-CW-RFB says so too (notice_says). By their titles, the works were
+#   advertised again and signed as KE-KIMAWASCO-158691-CW-RFB (the ablution blocks) and
+#   KE-KIMAWASCO-416959-CW-RFB (the sludge facilities). A canceled package can never be signed,
+#   so it is not still open and is never drawn hollow.
+# - Still open (4). P156634 has none. The fixture adds every notice for the four Kenya works
+#   packages under Request for Bids that were advertised by October 9, 2026 with bids due after
+#   it, found with a notices search for Kenya, works and Request for Bids on October 23, 2026,
+#   and every award row for their projects, P176758 and P170941. None of the four has an award
+#   row, an award notice or a notice that mentions a cancellation. Bids were due after the plan's
+#   date (bids_due), so none could have been signed by then.
 
 [comparables]
-says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and two only in their award notices) and three still open."
-notices = "api/notices/P156634.json"
-awards = "api/awards/P156634.json"
+says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and two only in their award notices), three canceled and four still open."
+notices = ["api/notices/P156634.json", "api/notices/kenya-works-open-on-2026-10-09.json"]
+awards = ["api/awards/P156634.json", "api/awards/P176758-P170941.json"]
 procurement_group = "CW"
 procurement_method_code = "RFB"
 country = "Kenya"
@@ -603,8 +628,9 @@ first_notice_from = 2019-07-01
 first_notice_to = 2026-10-09
 signed = 45
 signed_only_in_award_notice = 2
-still_open = 3
-narrower = "Add review type Prior. Review type comes from the award row, so a package with no award row has none and drops out: the three still open and the two signed only in their award notices."
+canceled = 3
+still_open = 4
+narrower = "Add review type Prior. Review type comes from the award row, so a package with no award row has none and drops out: the three canceled, the four still open and the two signed only in their award notices."
 narrower_review_type = "Prior"
 narrower_count = 7
 [[comparable]]
@@ -675,6 +701,10 @@ review_type = "Post"
 reference = "KE-KIMAWASCO-149448-CW-RFB"
 notice = "OP00083890"
 notice_date = 2020-02-04
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "Post Request for Bids Open - National Single Stage - One Envelope 3,000,000.00 0.00 Canceled"
+notice_says = "The Request for Bids has been cancelled."
 
 [[comparable]]
 reference = "KE-TAVEVO-151330-CW-RFB"
@@ -784,6 +814,9 @@ review_type = "Post"
 reference = "KE-KIMAWASCO-157517-CW-RFB"
 notice = "OP00124313"
 notice_date = 2021-04-07
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "Post Request for Bids Open - National Single Stage - One Envelope 1,200,000.00 0.00 Canceled"
 
 [[comparable]]
 reference = "KE-WAJWASCO-205491-CW-RFB"
@@ -923,6 +956,9 @@ review_type = "Post"
 reference = "KE-KIMAWASCO-377450-CW-RFB"
 notice = "OP00244373"
 notice_date = 2023-08-28
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "2,849,262.19 0.00 Canceled"
 
 [[comparable]]
 reference = "KE-WAJWASCO-372776-CW-RFB"
@@ -979,6 +1015,34 @@ notice_date = 2025-03-06
 contract = "1850833"
 signed = 2025-08-15
 review_type = "Post"
+
+[[comparable]]
+reference = "KE-KAJIADO COUNTY-567787-CW-RFB"
+notice = "OP00468983"
+notice_date = 2026-09-15
+project = "P176758"
+bids_due = 2026-10-13
+
+[[comparable]]
+reference = "KE-UASIN GISHU COUNTY-571338-CW-RFB"
+notice = "OP00469903"
+notice_date = 2026-09-21
+project = "P176758"
+bids_due = 2026-10-21
+
+[[comparable]]
+reference = "KE-ICTA-571738-CW-RFB"
+notice = "OP00471871"
+notice_date = 2026-09-29
+project = "P170941"
+bids_due = 2026-11-10
+
+[[comparable]]
+reference = "KE-MIGORI COUNTY-532367-CW-RFB"
+notice = "OP00474209"
+notice_date = 2026-10-09
+project = "P176758"
+bids_due = 2026-11-09
 
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the

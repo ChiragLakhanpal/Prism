@@ -3,13 +3,17 @@
 The fixture is a small, real, offline copy of the World Bank sources behind Strata's demo and showcase. Every offline test reads it, and the gate builds it into `data/out/fixture.duckdb` with no network.
 
 - The demo plan is the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634). The project has many more plan versions than the fixture holds. It keeps only the ones the tests need:
-  - four of the agency's earlier versions: April 21, 2021, the first to list KE-NWWDA-229129-CW-RFB, and March 5, 2026, the first to list KE-NWWDA-541055-CW-RFB, each with the agency's version just before it;
-  - two Ministry of Water and Irrigation versions that list NWWDA-WSDP-03-2019-2020;
-  - the Coast Water Services Board's plan of August 17, 2026, the first to list KE-CWSB-567630-CW-DIR, and its version just before it, of July 31, 2026.
+  - the agency's plan of April 21, 2021, the first to list KE-NWWDA-229129-CW-RFB, and its version just before it, of December 7, 2020;
+  - the agency's plan of March 5, 2026, the first to list KE-NWWDA-541055-CW-RFB, and its version just before it, of July 21, 2025;
+  - the Ministry of Water and Irrigation's plan of November 8, 2019, the first to list NWWDA-WSDP-03-2019-2020, its version just before it, of August 26, 2019, and its plan of April 30, 2020;
+  - the Coast Water Services Board's plan of August 17, 2026, the first to list KE-CWSB-567630-CW-DIR, and its version just before it, of July 31, 2026;
+  - the Kilifi - Mariakani Water and Sewerage Company's latest plan, of March 19, 2025, which marks three comparables Canceled.
 
   It also holds the project's PAD and its 19 ISRs, every notice and award for the project, and its credits' monthly history.
 - The showcase is the India Rajasthan Road Sector Modernization Project (P130164): its PAD (a scan), its 13 ISRs, the ICR of October 10, 2019, IEG's ICR Review of March 27, 2020 and its re-issue of May 4, 2023, its notices and its awards from the FY2001 to FY2016 dataset.
-- The comparable works packages are the 48 Kenya works packages under Request for Bids in P156634's notices and awards: 45 signed and three still open. Two of the signed ones have no row in the awards dataset, and only their award notices give the signing date. `tests/ground_truth/values.toml` lists them with the default criteria.
+- The comparable works packages are 52 Kenya works packages under Request for Bids: 45 signed, three canceled and four still open. `tests/ground_truth/values.toml` lists them with the default criteria.
+  - 48 come from P156634's notices and awards. Two of the signed ones have no row in the awards dataset, and only their award notices give the signing date. The three canceled ones are marked Canceled in their agency's plan of March 19, 2025.
+  - The four still open come from P176758 and P170941. The fixture holds every notice for each of the four and every award row for the two projects. Their bids were due after October 9, 2026, the demo plan's date.
 - CPIA and WGI cover Kenya and India. IEG ratings and IDA credits cover the two projects.
 
 ## What is here
@@ -36,6 +40,8 @@ The October 9, 2026 plan is the ground truth for the demo, and `values.toml` kee
 - KE-NWWDA-541062-CW-RFQ. The plan says Pending Implementation. The awards dataset shows contract 1903551, signed May 11, 2026.
 
 Refresh the fixture and recheck both rows' signals before the demo. Then decide whether the demo still leads with "no signed contract" for KE-NWWDA-541055-CW-RFB, or tells the story of the plan and the award row disagreeing. `values.toml` records the award rows as `award-541055-signed`, `award-541055-amount`, `award-notice-541055` and `award-541062-signed`.
+
+The four comparables still open may be signed or canceled after their bids are due in October and November 2026. A refresh then fails the comparable test for that package. Move it to signed (with `contract`, `signed` and `review_type`) or canceled in `values.toml`, and update the counts. If fewer than three stay open, record another Kenya works package under Request for Bids that was still open on the plan's date.
 
 ## Refresh it
 

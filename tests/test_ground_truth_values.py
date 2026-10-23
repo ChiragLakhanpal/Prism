@@ -109,7 +109,7 @@ FIRST_LISTED = [value for value in VALUES if "first_lists" in value]
 
 def test_every_plan_said_to_be_the_first_to_list_an_activity_has_a_check():
     assert {value["first_lists"] for value in FIRST_LISTED} == {
-        "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541055-CW-RFB", "KE-CWSB-567630-CW-DIR"}
+        "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541055-CW-RFB", "KE-CWSB-567630-CW-DIR", "NWWDA-WSDP-03-2019-2020"}
 
 
 @pytest.mark.parametrize("value", FIRST_LISTED, ids=lambda value: value["id"])
@@ -166,58 +166,100 @@ def test_each_plan_row_holds_its_values_in_its_own_row_of_the_october_9_plan(row
 
 CRITERIA = TRUTH["comparables"]
 COMPARABLES = TRUTH["comparable"]
+SIGNED = [c for c in COMPARABLES if "signed" in c]
+CANCELED = [c for c in COMPARABLES if "canceled_in" in c]
+STILL_OPEN = [c for c in COMPARABLES if "signed" not in c and "canceled_in" not in c]
 
 
 def notice_date(notice):
     return datetime.datetime.strptime(notice["noticedate"], "%d-%b-%Y").date()
 
 
+def reference_of(row, field):
+    return (row.get(field) or "").strip()
+
+
 @functools.cache
 def recorded_notices():
-    return fmt.read(RECORDED / CRITERIA["notices"]).body["procnotices"]
+    return [notice for name in CRITERIA["notices"] for notice in fmt.read(RECORDED / name).body["procnotices"]]
 
 
 @functools.cache
 def awards_by_reference():
     awards = {}
-    for row in fmt.read(RECORDED / CRITERIA["awards"]).body["data"]:
-        awards.setdefault((row["borrower_contract_reference_number"] or "").strip(), []).append(row)
+    for name in CRITERIA["awards"]:
+        for row in fmt.read(RECORDED / name).body["data"]:
+            awards.setdefault(reference_of(row, "borrower_contract_reference_number"), []).append(row)
     return awards
+
+
+def notices_for(reference):
+    return [n for n in recorded_notices() if reference_of(n, "bid_reference_no") == reference]
+
+
+def plan_row(document, pdf_page, reference):
+    """An activity's stretch of a plan page, from its reference to the next activity's, with no whitespace."""
+    text = squash(page(document, pdf_page))
+    start = text.index(squash(reference))
+    later = re.search(r"KE-[A-Z]+-\d+-", text[start + len(squash(reference)):])
+    return text[start:start + len(squash(reference)) + later.start()] if later else text[start:]
 
 
 @pytest.mark.parametrize("comparable", COMPARABLES, ids=lambda comparable: comparable["reference"])
 def test_each_comparable_joins_its_notice_to_its_signed_contract_on_the_step_reference(comparable):
     notice = next(n for n in recorded_notices() if n["id"] == comparable["notice"])
     awards = awards_by_reference().get(comparable["reference"], [])
+    award_notices = [n["id"] for n in notices_for(comparable["reference"]) if n["notice_type"] == "Contract Award"]
 
     assert notice["notice_type"] == "Invitation for Bids"
-    assert notice["bid_reference_no"].strip() == comparable["reference"]
+    assert reference_of(notice, "bid_reference_no") == comparable["reference"]
     assert notice_date(notice) == comparable["notice_date"]
+    assert notice["project_id"] == comparable.get("project", "P156634")
     if "award_notice" in comparable:
         award = next(n for n in recorded_notices() if n["id"] == comparable["award_notice"])
         signature = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>" + comparable["signed"].strftime("%Y/%m/%d")
         assert award["notice_type"] == "Contract Award"
-        assert award["bid_reference_no"].strip() == comparable["reference"]
+        assert reference_of(award, "bid_reference_no") == comparable["reference"]
         assert signature in award["notice_text"]
         assert awards == [], f"{comparable['reference']} now has an award row: give it contract and review_type"
     elif "signed" in comparable:
         assert {row["wb_contract_number"] for row in awards} == {comparable["contract"]}
         assert {row["contract_signing_date"] for row in awards} == {comparable["signed"].strftime("%d-%b-%Y")}
         assert {row["review_type"] for row in awards} == {comparable["review_type"]}
+    elif "canceled_in" in comparable:
+        row = plan_row(comparable["canceled_in"], comparable["pdf_page"], comparable["reference"])
+        assert "Canceled" in comparable["quote"] and squash(comparable["quote"]) in row, (
+            f"{comparable['reference']}: {comparable['quote']!r} is not in its row of {comparable['canceled_in']}")
+        if "notice_says" in comparable:
+            assert word_for_word(comparable["notice_says"], notice["notice_text"])
+        assert awards == [] and award_notices == [], f"{comparable['reference']} is listed as canceled but was signed"
     else:
+        canceled = [n["id"] for n in notices_for(comparable["reference"])
+                    if re.search(r"cancel", n.get("notice_text") or "", re.IGNORECASE)]
         assert awards == [], f"{comparable['reference']} is listed as still open but has an award row"
-        award_notices = [n["id"] for n in recorded_notices() if n["notice_type"] == "Contract Award"
-                         and n["bid_reference_no"].strip() == comparable["reference"]]
         assert award_notices == [], (
             f"{comparable['reference']} is listed as still open but has award notices {award_notices}")
+        assert canceled == [], f"{comparable['reference']} is listed as still open but {canceled} says it was canceled"
+        # Bids were due after the plan's date, so no contract could have been signed by then.
+        assert notice["submission_deadline_date"][:10] == comparable["bids_due"].isoformat()
+        assert comparable["bids_due"] > CRITERIA["first_notice_to"]
 
 
 def test_at_least_25_comparables_are_signed_and_at_least_3_are_still_open():
-    signed = [c for c in COMPARABLES if "signed" in c]
-    still_open = [c for c in COMPARABLES if "signed" not in c]
-    assert len(signed) == CRITERIA["signed"] >= 25
-    assert len(still_open) == CRITERIA["still_open"] >= 3
-    assert len([c for c in signed if "award_notice" in c]) == CRITERIA["signed_only_in_award_notice"]
+    assert len(SIGNED) == CRITERIA["signed"] >= 25
+    assert len(STILL_OPEN) == CRITERIA["still_open"] >= 3
+    assert len(CANCELED) == CRITERIA["canceled"]
+    assert len([c for c in SIGNED if "award_notice" in c]) == CRITERIA["signed_only_in_award_notice"]
+
+
+def test_every_canceled_plan_row_of_a_comparable_is_marked_canceled_in_the_ground_truth():
+    """A package whose plan row says Canceled can never be signed, so it is not censored as still open."""
+    for comparable in COMPARABLES:
+        for document, pdf_page in {(c["canceled_in"], c["pdf_page"]) for c in CANCELED}:
+            text = squash(page(document, pdf_page))
+            if squash(comparable["reference"]) in text:
+                row = plan_row(document, pdf_page, comparable["reference"])
+                assert ("Canceled" in row) == ("canceled_in" in comparable), comparable["reference"]
 
 
 def test_the_list_holds_every_recorded_package_that_meets_the_default_criteria():
@@ -227,7 +269,7 @@ def test_the_list_holds_every_recorded_package_that_meets_the_default_criteria()
                 and notice.get("procurement_group") == CRITERIA["procurement_group"]
                 and notice.get("procurement_method_code") == CRITERIA["procurement_method_code"]
                 and notice["project_ctry_name"] == CRITERIA["country"]):
-            reference = notice["bid_reference_no"].strip()
+            reference = reference_of(notice, "bid_reference_no")
             if reference not in first or notice_date(notice) < notice_date(first[reference]):
                 first[reference] = notice
     meets = {reference: notice["id"] for reference, notice in first.items()

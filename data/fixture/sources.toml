@@ -115,6 +115,13 @@ dataset = "notices"
 url = "https://search.worldbank.org/api/v2/procnotices?format=json&project_id=P130164&rows=500&os=0"
 about = "Every procurement notice for P130164, including the award notice for IN-RRSMP-7431-CW-RFB, signed in FY2017, which no award dataset covers."
 
+[[source]]
+file = "api/notices/kenya-works-open-on-2026-10-09.json"
+kind = "json"
+dataset = "notices"
+url = "https://search.worldbank.org/api/v2/procnotices?format=json&bid_reference_no=KE-KAJIADO%20COUNTY-567787-CW-RFB%5EKE-UASIN%20GISHU%20COUNTY-571338-CW-RFB%5EKE-ICTA-571738-CW-RFB%5EKE-MIGORI%20COUNTY-532367-CW-RFB&rows=50&os=0"
+about = "Every notice for the four Kenya works packages under Request for Bids that were advertised by October 9, 2026 with bids due after it, from P176758 and P170941: comparables still open on the demo plan's date."
+
 # Contract awards
 
 [[source]]
@@ -123,6 +130,13 @@ kind = "json"
 dataset = "awards"
 url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005&resourceId=RS00005&type=json&top=1000&skip=0&filter=project_id%3D%27P156634%27"
 about = "Every contract award row for P156634 since FY2020, one row per supplier, so a joint venture has one row per member."
+
+[[source]]
+file = "api/awards/P176758-P170941.json"
+kind = "json"
+dataset = "awards"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005&resourceId=RS00005&type=json&top=1000&skip=0&filter=project_id%20in%20(%27P176758%27,%27P170941%27)"
+about = "Every contract award row since FY2020 for P176758 and P170941, the projects of the four comparables still open, none of which has a row."
 
 [[source]]
 file = "api/awards/P130164-fy2001-2016.json"
@@ -187,6 +201,14 @@ about = "The Worldwide Governance Indicators estimate of control of corruption f
 # Documents: the published text and the text of each PDF page
 
 [[source]]
+file = "documents/P156634/procurement-plan-2019-08-26"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/722831566844626702/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/722831566844626702/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
+about = "The Ministry of Water and Irrigation's Procurement Plan of August 26, 2019 for P156634, its version just before November 8, 2019, which does not yet list NWWDA-WSDP-03-2019-2020. Documents API id 31362180."
+
+[[source]]
 file = "documents/P156634/procurement-plan-2019-11-08"
 kind = "document"
 dataset = "documents"
@@ -217,6 +239,14 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/856721618995941664/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/856721618995941664/pdf/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of April 21, 2021 for P156634, the first version that lists KE-NWWDA-229129-CW-RFB. Documents API id 33014836."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2025-03-19"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099031925071537402/text/P156634-be594812-7608-4bdd-98c0-d5d487e962a4.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099031925071537402/pdf/P156634-be594812-7608-4bdd-98c0-d5d487e962a4.pdf"
+about = "The Kilifi - Mariakani Water and Sewerage Company's Procurement Plan of March 19, 2025 for P156634, its latest version, which marks KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and KE-KIMAWASCO-377450-CW-RFB as Canceled. Documents API id 40001676."
 
 [[source]]
 file = "documents/P156634/procurement-plan-2025-07-21"
