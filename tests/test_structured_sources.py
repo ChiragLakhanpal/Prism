@@ -475,6 +475,19 @@ def test_the_sector_file_maps_every_code_the_slice_countries_projects_list():
     assert [code for code in listed if code not in config.load_sectors().codes] == []
 
 
+def test_a_passage_takes_its_project_s_one_sector_so_search_and_the_slice_agree(db):
+    """The two taxonomies map to one, so the passage reader takes each project's sector from
+    strata.gold.project rather than reading the sector codes again. A project's first sector code
+    can belong to another sector than the one its shares give it."""
+    from strata.lakehouse import passages
+
+    projects = rows(db, "SELECT project_id, sector FROM strata.gold.project")
+
+    assert projects
+    assert [(p["project_id"], passages.project(db, p["project_id"]).slice_sector) for p in projects] == [
+        (p["project_id"], p["sector"]) for p in projects]
+
+
 def test_a_project_maps_to_the_major_sector_with_the_largest_share():
     """A project's sectors each carry a share. A project split 40 to public administration (BX) and
     35 plus 25 to transport (TTX, the newer taxonomy) is transport, and a project that lists no

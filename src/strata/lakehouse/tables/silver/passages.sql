@@ -21,8 +21,9 @@
 -- printed_page        the page number printed on its first page, such as "19 of 62"
 -- language            the language of its text, as an ISO 639-1 code
 -- parse_route         A, the published text
--- sector              its project's sector in the slice file, water or transport, which search filters on;
---                     empty when its project is not in strata.gold.project (src/strata/knowledge/sectors.py)
+-- sector              its project's one sector in Strata's taxonomy (strata.gold.project.sector, from
+--                     config/sectors.toml), which search filters on; empty when its project is not in
+--                     strata.gold.project or has no sector
 -- header              the short header prepended before embedding: ICR, P130164, India, roads, III.B, ¶54, p.23
 -- text                the paragraph's words as published, each run of spaces and line breaks written as one space
 -- tokens              how many tokens the text has (strata.reader.passages.tokens)

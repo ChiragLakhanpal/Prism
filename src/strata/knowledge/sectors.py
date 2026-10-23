@@ -1,13 +1,13 @@
-"""The words a passage uses for its project's sector, from the projects API's sector codes.
+"""The word a passage's header uses for its project's sector, from the projects API's sector codes.
 
-A passage's header names the sector in a word ("ICR, P130164, India, roads, III.B, ¶54, p.23"), and
-search_passages filters on the slice's sectors (config/slice.toml: water and transport). This is the
-one place both come from. When ticket 17 maps the two sector taxonomies to one, it replaces this
-table, and the passages take their sector from that mapping.
+A passage's header names the sector in a word ("ICR, P130164, India, roads, III.B, ¶54, p.23"). The
+passage's sector, which search_passages filters on, is its project's one sector in Strata's
+taxonomy (strata.gold.project.sector, from config/sectors.toml), so this table only picks the word.
 
 Each code is the projects API's sector code (sectorcode) with its name in the 2016 taxonomy (the
-FY17 names in mjsector). A project's header word comes from its first code that is not a
-public-administration code, since those name who governs a sector rather than the work.
+FY17 names in mjsector) and the key in config/sectors.toml of the sector it belongs to. The word
+comes from the project's first code in its one sector that is not a public-administration code,
+since those name who governs a sector rather than the work, or else from its first such code.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Sector:
     name: str  # the projects API's name for the code
-    slice_sector: str  # the slice file's sector it belongs to
+    sector: str  # its sector's key in config/sectors.toml
     word: str  # the word a passage's header uses
     administration: bool = False
 
@@ -40,7 +40,10 @@ SECTORS: dict[str, Sector] = {
 }
 
 
-def main_sector(codes: str | None) -> Sector | None:
-    """A project's sector for its passages, from its sector codes as the projects API lists them."""
+def main_sector(codes: str | None, sector: str | None = None) -> Sector | None:
+    """The code whose word a passage's header uses, from a project's sector codes as the projects API
+    lists them: the first code in the project's one sector that is not a public-administration code,
+    else the first such code in any sector."""
     known = [SECTORS[code.strip()] for code in (codes or "").split(",") if code.strip() in SECTORS]
-    return next((sector for sector in known if not sector.administration), known[0] if known else None)
+    work = [found for found in known if not found.administration]
+    return next((found for found in work if found.sector == sector), next(iter(work), known[0] if known else None))
