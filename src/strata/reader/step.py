@@ -121,7 +121,7 @@ SECTION_NAMES = {squash(name): name for name in SECTIONS}
 
 # ── Route A: what a plan's text says ─────────────────────────────────────
 
-_STARTS_A_ROW = re.compile(rf"^{REFERENCE.pattern}-?$|^[A-Z][A-Z0-9]*(?:-[A-Z0-9]*){{2,}}$")
+_STARTS_A_ROW = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]*){2,}$")  # a reference, perhaps cut short by a wrap
 _TAIL = re.compile(r"^([A-Z0-9]*)\s?/(?:\s|$)")
 _WHOLE = re.compile(rf"^({REFERENCE.pattern})\s?/(?:\s|$)")
 
