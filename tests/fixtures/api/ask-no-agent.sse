@@ -1,0 +1,6 @@
+event: error
+data: {"code": "no_agent"}
+
+event: done
+data: {"run_id": "run-0001"}
+
