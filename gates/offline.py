@@ -37,7 +37,8 @@ def load_steps(path=STEPS_FILE):
     for step in steps:
         unknown = set(step) - STEP_KEYS
         if unknown or "name" not in step or not isinstance(step.get("run"), list):
-            raise SystemExit(f"The step {step.get('name', 'with no name')!r} in {path} needs a name and a run list. "
+            label = f"\"{step['name']}\"" if "name" in step else "with no name"
+            raise SystemExit(f"The step {label} in {path} needs a name and a run list. "
                              f"It can use only these keys: {', '.join(sorted(STEP_KEYS))}.")
     return float(config.get("limit_seconds", 120)), steps
 

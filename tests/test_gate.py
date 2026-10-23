@@ -126,6 +126,25 @@ def test_a_step_that_cannot_find_a_command_says_to_run_the_install(repo):
     assert "Run scripts/install, then commit again." in done.stdout + done.stderr
 
 
+def test_a_step_without_a_name_or_a_run_list_is_named_plainly(repo):
+    write(repo, "gates/steps.toml", steps_file() + '\n[[step]]\nrun = ["true"]\n\n[[step]]\nname = "Build"\n')
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+
+    unnamed = commit(repo)
+
+    assert unnamed.returncode != 0
+    assert "The step with no name in gates/steps.toml needs a name and a run list." in unnamed.stdout + unnamed.stderr
+
+    write(repo, "gates/steps.toml", steps_file() + '\n[[step]]\nname = "Build"\n')
+    git(repo, "add", "-A")
+
+    no_run = commit(repo)
+
+    assert no_run.returncode != 0
+    assert 'The step "Build" in gates/steps.toml needs a name and a run list.' in no_run.stdout + no_run.stderr
+
+
 def test_a_clean_merge_of_a_branch_with_a_failing_check_is_blocked(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
     write(repo, "check.py", "print('ok')\n")

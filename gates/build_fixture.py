@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Builds the fixture database, data/out/fixture.duckdb, that the offline tests read.
 
-For now it loads the placeholder tables. Each CSV file in data/fixture/placeholder goes into
-the schema `placeholder` of that file. The tests attach the file as `strata`, so they query
-plan_rows.csv as strata.placeholder.plan_rows. Ticket 05 replaces this with the lakehouse run
-over recorded sources. It builds into a new file and swaps it in, so a failed build never
-leaves a half-built database behind.
+For now it loads the placeholder tables. Each CSV file in data/fixture/placeholder becomes a
+table in the schema `placeholder` of the fixture database. The tests attach the database as
+`strata`, so they query plan_rows.csv as strata.placeholder.plan_rows. Ticket 05 replaces
+this with the lakehouse run over recorded sources. It builds into a new file and swaps it
+in, so a failed build never leaves a half-built database behind.
 
 Run it with this command:
 
@@ -22,17 +22,17 @@ import duckdb
 ROOT = Path(__file__).resolve().parents[1]
 PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
-TABLE_NAME = re.compile(r"[a-z_][a-z0-9_]*")
+TABLE_NAME = re.compile(r"[a-z][a-z0-9_]*")
 
 
-def build(out=FIXTURE_DB):
+def build(out=FIXTURE_DB, source=PLACEHOLDER):
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
     with duckdb.connect(str(building)) as con:
         con.execute("CREATE SCHEMA placeholder")
-        for table in sorted(PLACEHOLDER.glob("*.csv")):
+        for table in sorted(source.glob("*.csv")):
             if not TABLE_NAME.fullmatch(table.stem):
                 raise SystemExit(f"The fixture file {table.name} needs a lower-case table name. Use only "
                                  "letters, digits and underscores, and start with a letter.")
