@@ -36,6 +36,15 @@ class EngineError(RuntimeError):
     """A statement an engine could not run, with the reason the engine gave."""
 
 
+class AccessDenied(EngineError):
+    """The workspace refused the token's owner: no permission on the warehouse or on a table."""
+
+
+# How the warehouse says a statement failed for want of a permission: its error code, or the
+# error class at the start of its message.
+PERMISSION_ERRORS = ("PERMISSION_DENIED", "INSUFFICIENT_PERMISSIONS")
+
+
 @dataclass(frozen=True)
 class Result:
     """The columns and rows one statement returned."""
@@ -227,7 +236,8 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
                 return json.loads(response.read() or b"{}")
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")[:400]
-            raise EngineError(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
+            refused = AccessDenied if error.code == 403 else EngineError
+            raise refused(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
 
     return call
 
@@ -267,9 +277,11 @@ class WarehouseEngine:
 
         status = reply.get("status", {})
         if status.get("state") != "SUCCEEDED":
-            message = status.get("error", {}).get("message", "it gave no reason")
-            raise EngineError(f"The warehouse did not run the statement. Its state was {status.get('state')}: "
-                              f"{message}")
+            error = status.get("error", {})
+            message = error.get("message", "it gave no reason")
+            refused = error.get("error_code") in PERMISSION_ERRORS or message.lstrip("[").startswith(PERMISSION_ERRORS)
+            raise (AccessDenied if refused else EngineError)(
+                f"The warehouse did not run the statement. Its state was {status.get('state')}: {message}")
 
         return self._result(reply)
 

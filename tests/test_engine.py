@@ -6,10 +6,13 @@ runs the real thing.
 """
 
 import datetime as dt
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from strata.lakehouse.engine import DuckDBEngine, EngineError, SparkEngine, WarehouseEngine
+from strata.lakehouse.engine import (AccessDenied, DuckDBEngine, EngineError, SparkEngine, WarehouseEngine,
+                                     http_transport)
 
 SQL = "SELECT event, happened_on FROM strata.ops.events WHERE happened_on <= CAST(:as_of AS DATE)"
 
@@ -74,6 +77,41 @@ def test_a_statement_the_warehouse_refuses_raises_its_reason():
 
     with pytest.raises(EngineError, match="TABLE_OR_VIEW_NOT_FOUND"):
         WarehouseEngine("wh-1", warehouse).run(SQL)
+
+
+@pytest.mark.parametrize("error", [
+    {"error_code": "BAD_REQUEST",
+     "message": "[INSUFFICIENT_PERMISSIONS] User does not have USE CATALOG on Catalog 'strata'."},
+    {"error_code": "PERMISSION_DENIED", "message": "User does not have SELECT on Table 'strata.ops.data_readiness'."},
+])
+def test_a_statement_refused_for_want_of_a_permission_raises_access_denied(error):
+    warehouse = FakeWarehouse([{"statement_id": "s-1", "status": {"state": "FAILED", "error": error}}])
+
+    with pytest.raises(AccessDenied):
+        WarehouseEngine("wh-1", warehouse).run(SQL)
+
+
+def test_a_workspace_that_answers_403_raises_access_denied():
+    class Refuses(BaseHTTPRequestHandler):
+        def do_POST(self):
+            body = b'{"error_code": "PERMISSION_DENIED", "message": "You do not have permission to use the warehouse."}'
+            self.send_response(403)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Refuses)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        call = http_transport(f"http://127.0.0.1:{server.server_address[1]}", "not-a-real-key")
+        with pytest.raises(AccessDenied, match="permission to use the warehouse"):
+            WarehouseEngine("wh-1", call).run(SQL)
+    finally:
+        server.shutdown()
+        server.server_close()
 
 
 def test_spark_gets_the_same_text_and_named_parameters():

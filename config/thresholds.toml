@@ -13,6 +13,23 @@
 [ingestion]
 daily_page_cap = 500
 
+# The app (ticket 06). The server stops waiting for the warehouse after stamp_timeout_seconds, and
+# the data-freshness stamp then shows its error state. Source: the 06 design brief ("Error (timeout
+# after 30 seconds, set in the app config, or a server error)"). Usage events wait at most
+# usage_flush_seconds before the server writes them to strata.ops.usage_events in one insert, so a
+# page never waits for the warehouse to log it; 10 is a starting value for the owner to confirm.
+[app]
+stamp_timeout_seconds = 30
+usage_flush_seconds = 10
+
+# App state (docs/PLAN.md section 18; docs/app-state.md). The Lakebase probe times a write and then
+# a read of one row, ten times, in strata.ops through the SQL warehouse and in a Lakebase database.
+# Lakebase wins only when strata.ops's middle time is over this budget and Lakebase's is within it.
+# Source: one second is the limit for a person's flow of thought (Nielsen, "Response Times: The 3
+# Important Limits", 1993); following a project or checking a draft must feel immediate.
+[app_state]
+round_trip_budget_ms = 1000
+
 # Plan-check thresholds: planned completion passed, days before closing, the actual-to-estimate
 # ratio and the data notes (ticket 09).
 [plan_check]
