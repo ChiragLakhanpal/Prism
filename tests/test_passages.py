@@ -342,6 +342,62 @@ def test_a_second_run_fetches_parses_and_embeds_nothing_new(fresh):
                        "(SELECT count(*) FROM strata.gold.passage) AS indexed") == held
 
 
+class UndatedReissue:
+    """The recorded documents, but the list gives the ICR Review's May 4, 2023 re-issue no disclosure
+    date, and its text is fetched two days after the list, as a live run on another day would fetch it."""
+
+    def __init__(self, inner):
+        self.inner, self.text_url = inner, None
+
+    def listing(self, url):
+        import copy
+
+        from strata.reader.documents import Fetched
+
+        fetched = self.inner.listing(url)
+        body = copy.deepcopy(fetched.body)
+        for document in body.get("documents", {}).values():
+            if (isinstance(document, dict) and document.get("docty") == "Implementation Completion Report Review"
+                    and document["docdt"].startswith(str(value("icr-review-reissue-date")["value"]))):
+                document.pop("disclosure_date")
+                self.text_url = document["txturl"]
+        return Fetched(url, body, fetched.fetched_at)
+
+    def text(self, url):
+        import datetime as dt
+
+        from strata.reader.documents import Fetched
+
+        fetched = self.inner.text(url)
+        later = fetched.fetched_at + dt.timedelta(days=2) if url == self.text_url else fetched.fetched_at
+        return Fetched(url, fetched.body, later)
+
+    def pages(self, url):
+        return self.inner.pages(url)
+
+
+def test_a_re_issue_with_no_disclosure_date_replaces_the_earlier_version_on_its_own_public_date(fresh):
+    """Otherwise the earlier version stops being current on the day the list was fetched, and the
+    re-issue starts on the day its text was fetched, and for the days between neither is current."""
+    from strata.config import load_thresholds
+    from strata.fixture import recorded as fmt
+    from strata.knowledge.embed import offline
+    from strata.knowledge.shields import PatternShield
+    from strata.lakehouse import passages
+    from strata.reader.documents import RecordedDocuments
+
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 2  # the ICR Review and its re-issue come first
+    passages.run(fresh, UndatedReissue(RecordedDocuments(fmt.load_manifest())), ["P130164"], thresholds=limits,
+                 shield=PatternShield(), embedder=offline())
+
+    first, reissue = rows(fresh, "SELECT version, public_from, replaced_on, (SELECT max(fetched_at) FROM "
+                                 "strata.bronze.document_lists) AS listed_at FROM strata.silver.documents "
+                                 "WHERE document_type = 'Implementation Completion Report Review' ORDER BY version")
+    assert reissue["public_from"] > first["listed_at"].date()  # its text came two days after the list
+    assert (first["replaced_on"], reissue["replaced_on"]) == (reissue["public_from"], None)
+
+
 def squash(text: str) -> str:
     return re.sub(r"\s+", "", text)
 

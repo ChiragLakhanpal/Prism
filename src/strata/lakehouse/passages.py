@@ -139,9 +139,16 @@ class Held:
     replaced_on: dt.date | None = None
 
 
+HELD_TEXT = """
+SELECT text, public_from FROM strata.bronze.document_texts WHERE document_id = :document_id ORDER BY fetched_at DESC
+"""
+HELD_PUBLIC_FROM = """
+SELECT public_from FROM strata.bronze.document_texts WHERE document_id = :document_id ORDER BY fetched_at DESC
+"""
+
+
 def _held(engine: Engine, listed: Listed) -> Held | None:
-    texts = _rows(engine, "SELECT text, public_from FROM strata.bronze.document_texts WHERE document_id = :document_id "
-                          "ORDER BY fetched_at DESC", document_id=listed.document_id)
+    texts = _rows(engine, HELD_TEXT, document_id=listed.document_id)
     if not texts:
         return None
     pages = int(engine.run("SELECT count(DISTINCT pdf_page) AS n FROM strata.bronze.document_pages "
@@ -161,12 +168,12 @@ class Chosen:
 def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[str], cap: int) -> Chosen:
     """The documents to read, fetched into bronze: up to cap whose text Route A can read, and any
     scan met on the way, whose pages wait for Route B."""
-    chosen, paged, removed = [], 0, {}
+    chosen, paged, removed, lists = [], 0, {}, {}
     for project_id in projects:
         if paged >= cap:
             break
         plans.fetch_listing(engine, documents, endpoint, project_id)
-        listed = listed_documents(engine, project_id)
+        listed = lists[project_id] = listed_documents(engine, project_id)
         for document in listed:
             if paged >= cap:
                 break
@@ -176,13 +183,15 @@ def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[s
             held = _held(engine, document)
             if held is None:
                 continue  # listed but not fetched: the source could not give it
-            chosen.append(_versioned(held, listed))
+            chosen.append(held)
             paged += held.paged
-    return Chosen(chosen, removed)
+    return Chosen([_versioned(engine, held, lists[held.listed.project_id]) for held in chosen], removed)
 
 
-def _versioned(held: Held, listed: list[Listed]) -> Held:
-    """The document's version of its report, and the day the next version replaced it."""
+def _versioned(engine: Engine, held: Held, listed: list[Listed]) -> Held:
+    """The document's version of its report, and the day the next version replaced it: the next
+    version's own public date as bronze holds it, so one version is current every day. The list's
+    date is used only for a next version bronze does not hold."""
     document = held.listed
     if document.report_number is None:
         return held
@@ -190,7 +199,11 @@ def _versioned(held: Held, listed: list[Listed]) -> Held:
                                                                                  document.report_number)),
                     key=lambda d: (d.document_date, d.public_from, d.document_id))
     at = next(i for i, d in enumerate(issues) if d.document_id == document.document_id)
-    replaced = issues[at + 1].public_from if at + 1 < len(issues) else None
+    replaced = None
+    if at + 1 < len(issues):
+        following = issues[at + 1]
+        kept = _rows(engine, HELD_PUBLIC_FROM, document_id=following.document_id)
+        replaced = _date(kept[0]["public_from"]) if kept else following.public_from
     return Held(held.listed, held.text, held.pdf_pages, held.public_from, held.paged, at + 1, replaced)
 
 
