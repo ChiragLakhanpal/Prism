@@ -1,0 +1,1433 @@
+{
+ "source": "https://search.worldbank.org/api/v3/projects?format=json&id=P130164&fl=*",
+ "license": "The World Bank: World Bank Projects & Operations: Projects API (search.worldbank.org/api/v3/projects). License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "The project record for the India Rajasthan Road Sector Modernization Project (P130164), the closed showcase project.",
+ "response": {
+  "rows": 10,
+  "os": "0",
+  "page": "1",
+  "total": "1",
+  "projects": {
+   "P130164": {
+    "id": "P130164",
+    "themev2_level1_exact": [
+     "FY17 - Private Sector Development",
+     "FY17 - Urban and Rural Development"
+    ],
+    "themev2_level2_exact": [
+     "FY17 - Public Private Partnerships",
+     "FY17 - Rural Development"
+    ],
+    "themev2_level3_exact": [
+     "FY17 - Rural Infrastructure and service delivery"
+    ],
+    "proj_id": "P130164",
+    "countryshortname": "India",
+    "boardapprovaldate": "2013-10-29T00:00:00Z",
+    "curr_ibrd_commitment": "0",
+    "envassesmentcategorycode": "B",
+    "grantamt": "0",
+    "totalamt": "160000000",
+    "regionname": "South Asia",
+    "lendprojectcost": "227000000",
+    "closingdate": "2018-12-31",
+    "project_abstract": "The development objective of the Rajasthan Road Sector Modernization Project for India is to improve rural connectivity, enhance road safety, and strengthen road sector management capacity of the state of Rajasthan. The project has three components. The first component is rural connectivity improvement. This component will support construction of about 2500 kilometer (km) rural roads to provide connectivity to about 1,300 revenue villages with population between 250 and 499 people in the areas of the state not covered by Pradhan Mantri Gram Sadak Yojana (PMGSY) and introduce good practices of cost effective low volume technologies. The second component is road sector modernization and performance enhancement. This component will support implementation of a road sector modernization plan (RSMP) in the following key areas: improved policy framework; modernization of engineering practices and business procedures; sustainable asset management; institutional and human resource development; preparing a pipeline of feasible projects for implementation; and enhancing governance and accountability in public works department (PWD). The third component is road safety management. This component will support the strengthening of road safety management systems in Rajasthan with the objective of reducing the number of fatalities and serious injuries from traffic accidents in the state.",
+    "borrower": "Department of Economic Affairs, Ministry of Finance, Govt. of India",
+    "impagency": "Rajasthan State Public Works Department",
+    "sector_name": "FY17 - Public Administration - Transportation,FY17 - Rural and Inter-Urban Roads",
+    "sector_percent": "3.0,97.0",
+    "sectorcode": "TF,TI",
+    "major_sectors": [
+     {
+      "major_sector": {
+       "major_sector_code": "TX",
+       "major_sector_name": "FY17 - Transportation",
+       "sectors": [
+        {
+         "sector_name": "FY17 - Public Administration - Transportation",
+         "sector_code": "TF",
+         "sector_percent": "3.0"
+        },
+        {
+         "sector_name": "FY17 - Rural and Inter-Urban Roads",
+         "sector_code": "TI",
+         "sector_percent": "97.0"
+        }
+       ]
+      }
+     }
+    ],
+    "idacommamt": "160000000",
+    "boardapprovaldate_exact": "2013-10-29",
+    "countryshortname_exact": "India",
+    "regionname_exact": "South Asia",
+    "borrower_exact": "Department of Economic Affairs, Ministry of Finance, Govt. of India",
+    "impagency_exact": "Rajasthan State Public Works Department",
+    "sector_exact": "FY17 - Public Administration - Transportation,FY17 - Rural and Inter-Urban Roads",
+    "sectorcode_exact": "TF,TI",
+    "major_sector_name": "FY17 - Transportation",
+    "major_sector_code": "TX",
+    "milestones": [
+     {
+      "concpt_review_date": "2012-11-01T00:00:00Z",
+      "begin_apprsl_date": "2013-09-04T00:00:00Z",
+      "authorize_negotiations_date": "2013-09-18T00:00:00Z",
+      "apprvl_date": "2013-10-29T00:00:00Z",
+      "dsclsr_of_concpt_pid_date": "2013-04-18T00:00:00Z",
+      "decsn_review_date": "2013-08-23T00:00:00Z",
+      "effctvnss_date": "2014-03-10T00:00:00Z",
+      "icr_nco_date": "2019-10-23T00:00:00Z"
+     }
+    ],
+    "indicators": [
+     {
+      "Name": "A reduction in annual average fatality count of road users on model road safety corridors",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "46.00",
+       "Date": "2014-03-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "30.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Average star rating achieved on model road safety corridor(s)",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2014-03-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "3.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Computerization of key business processes in PWD",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No",
+       "Date": "2013-08-06T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "No",
+       "Date": "2019-06-30T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": null,
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2014-01-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "67.00",
+       "Date": "2019-06-30T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Model road safety corridor(s) developed",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2014-01-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "100.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Number of rural people with access to an all-season road",
+      "Type": "PDO Indicator",
+      "Subtype": "Supplemental",
+      "Baseline": {
+       "Value": "33115250.00",
+       "Date": "2013-09-01T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "33469940.00",
+       "Date": "2017-03-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Road Asset Management System Operational",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "Existing system not user-friendly and not in use",
+       "Date": "2014-03-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "The RAMS still under development by SPC and underg",
+       "Date": "2019-06-30T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": null,
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Road safety policy and action plan approved and implemented",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No",
+       "Date": "2014-01-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "Yes",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": null,
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Roads constructed, Rural",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2013-09-01T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "2500.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Sector Policy and Financing Framework developed",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No",
+       "Date": "2016-12-30T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "Yes",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": null,
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Share of rural population with access to an all-season road",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "67.00",
+       "Date": "2013-09-01T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "81.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Size of total classified network",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "133435.00",
+       "Date": "2014-03-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "135935.00",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Training Plan and HR Policy & Procedures developed",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No",
+       "Date": "2016-12-30T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "Yes",
+       "Date": "2018-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": null,
+       "Date": null,
+       "Comment": null
+      }
+     }
+    ],
+    "countrycode": [
+     "IN"
+    ],
+    "status": "Closed",
+    "status_exact": [
+     "Closed"
+    ],
+    "mjsector": "FY17 - Public Administration - Transportation,FY17 - Rural and Inter-Urban Roads",
+    "mjsector_exact": [
+     "FY17 - Public Administration - Transportation",
+     "FY17 - Rural and Inter-Urban Roads"
+    ],
+    "theme": "FY17 - Private Sector Development,FY17 - Public Private Partnerships,FY17 - Rural Development,FY17 - Rural Infrastructure and service delivery,FY17 - Urban and Rural Development",
+    "pdo": "The project development objective is to improve rural connectivity, enhance road safety and strengthen road sector managementcapacity of the state of Rajasthan.",
+    "regionhomepageurl": "http://www.worldbank.org/sar",
+    "themecode": "20,23,70,72,723",
+    "theme_exact": [
+     "FY17 - Private Sector Development",
+     "FY17 - Public Private Partnerships",
+     "FY17 - Rural Development",
+     "FY17 - Rural Infrastructure and service delivery",
+     "FY17 - Urban and Rural Development"
+    ],
+    "themecode_exact": [
+     "20",
+     "23",
+     "70",
+     "72",
+     "723"
+    ],
+    "teamleaderupi": "00000478236",
+    "prodline_exact": "PE",
+    "geo_locations": [
+     {
+      "geo_loc_id": "1258899",
+      "place_id": "PLA0035654",
+      "wbg_cntry_key": "IN",
+      "geo_loc_name": "State of Rajasthan",
+      "geo_latitude_nbr": "26.58333",
+      "geo_longitude_nbr": "73.833328",
+      "admin_unit1_name": "Rajasthan",
+      "admin_unit2_name": null
+     }
+    ],
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "icr_ratings": [
+     {
+      "bankqualityentry": "Not Rated",
+      "banksupervision": "Not Rated",
+      "borrgovt": null,
+      "borrimplegency": null,
+      "borroverall": null,
+      "completion_riskdo": null,
+      "outratingind": "Moderately Unsatisfactory",
+      "overallrating": "Moderately Unsatisfactory",
+      "value": "2019-10-23"
+     }
+    ],
+    "ieg_ratings": [
+     {
+      "evaldate": "2020-03-27",
+      "borrowcompliance": null,
+      "icrquality": "Substantial",
+      "mequality": "Modest",
+      "outcome": "Moderately Unsatisfactory",
+      "overallbankperf": "Moderately Unsatisfactory",
+      "overallborrowperf": null,
+      "evaluation_riskdo": null,
+      "bankqualityofsupervision": "Moderately Unsatisfactory",
+      "borrowimplementation": null,
+      "evaltype": "ES"
+     }
+    ],
+    "isr_ratings": [
+     {
+      "name": "Counterpart Funding",
+      "code": "25",
+      "isr_date": "2018-12-28",
+      "value": "Satisfactory"
+     },
+     {
+      "name": "Financial Management",
+      "code": "18",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Monitoring and Evaluation",
+      "code": "125",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Overall Implementation Progress (IP)",
+      "code": "10",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Overall Safeguards Rating",
+      "code": "700",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Procurement",
+      "code": "27",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Progress towards achievement of PDO",
+      "code": "5",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Project Management",
+      "code": "20",
+      "isr_date": "2018-12-28",
+      "value": "Moderately Unsatisfactory"
+     }
+    ],
+    "financers": [
+     {
+      "fincrname": "Borrower/Recipient",
+      "fincr_curr_amt": "0",
+      "fincr_usd_amt": "67000000",
+      "fincr_id": "BORR",
+      "fincr_curr_id": "USD  ",
+      "projectfinancialtype": "Local Contributor"
+     },
+     {
+      "fincrname": "IDA Credit",
+      "fincr_curr_amt": "104395200",
+      "fincr_usd_amt": "160000000",
+      "fincr_id": "IDA",
+      "fincr_curr_id": "XDR  ",
+      "projectfinancialtype": "World Bank Group"
+     }
+    ],
+    "loan_transactions": [
+     {
+      "amount": "-0.01",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "0.01",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1.013007987E7",
+      "period": "2015-03-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1.06824487E7",
+      "period": "2014-04-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1.26082804E7",
+      "period": "2017-12-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1.406500474E7",
+      "period": "2015-03-24T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1.908112765E7",
+      "period": "2015-02-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1002333.04",
+      "period": "2019-06-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "101.47",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1051.81",
+      "period": "2017-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1051.81",
+      "period": "2017-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "11723.9",
+      "period": "2020-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "121288.39",
+      "period": "2025-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "122195.73",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "125382.89",
+      "period": "2015-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "12649.33",
+      "period": "2019-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1283448.51",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1336123.92",
+      "period": "2019-05-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "13954.68",
+      "period": "2018-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "15070.16",
+      "period": "2024-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "160000000",
+      "period": "2013-10-29T00:00:00.000Z",
+      "transactiontype": "LOAN_COMMITMENT",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1736768.52",
+      "period": "2015-09-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "17408.89",
+      "period": "2026-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1788233.81",
+      "period": "2016-11-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1909671.86",
+      "period": "2022-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1948463.31",
+      "period": "2021-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1949603.37",
+      "period": "2020-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "1977719.66",
+      "period": "2021-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "2.812234387E7",
+      "period": "2019-07-01T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "20192.08",
+      "period": "2026-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "2062181.18",
+      "period": "2019-06-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "21882.49",
+      "period": "2018-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "223444.28",
+      "period": "2019-07-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "2281535.84",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "245958.34",
+      "period": "2026-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "245958.34",
+      "period": "2026-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "251883.69",
+      "period": "2015-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "251883.69",
+      "period": "2015-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "258082.53",
+      "period": "2026-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "258082.53",
+      "period": "2026-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "25822.81",
+      "period": "2021-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "26158.51",
+      "period": "2015-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "274045.47",
+      "period": "2016-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "274045.47",
+      "period": "2016-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "275225.67",
+      "period": "2025-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "275225.67",
+      "period": "2025-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "280916.1",
+      "period": "2025-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "280916.1",
+      "period": "2025-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "2902.01",
+      "period": "2022-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "298470.72",
+      "period": "2024-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "298470.72",
+      "period": "2024-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "308382.34",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "308382.34",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "315192.49",
+      "period": "2016-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "315192.49",
+      "period": "2016-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "319092.66",
+      "period": "2023-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "319092.66",
+      "period": "2023-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "321220.83",
+      "period": "2017-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "321220.83",
+      "period": "2017-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3306235.86",
+      "period": "2015-05-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "335945.34",
+      "period": "2023-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "335945.34",
+      "period": "2023-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "340223.25",
+      "period": "2022-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "340223.25",
+      "period": "2022-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "342280.18",
+      "period": "2017-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "342280.18",
+      "period": "2017-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "350494.85",
+      "period": "2025-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3525558.22",
+      "period": "2022-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3592417.58",
+      "period": "2023-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3636220.68",
+      "period": "2023-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3689644.48",
+      "period": "2025-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "369564.91",
+      "period": "2022-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "369564.91",
+      "period": "2022-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3720.4",
+      "period": "2017-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3721120.95",
+      "period": "2024-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3721198.53",
+      "period": "2014-06-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "375013.48",
+      "period": "2026-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3751.47",
+      "period": "2015-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3751.47",
+      "period": "2015-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3760142.83",
+      "period": "2026-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3766504.91",
+      "period": "2020-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3770409.58",
+      "period": "2026-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "379176.8",
+      "period": "2018-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "379176.8",
+      "period": "2018-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3802176.02",
+      "period": "2025-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "389472.8",
+      "period": "2021-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "389472.8",
+      "period": "2021-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "3899748.35",
+      "period": "2015-06-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "397566.61",
+      "period": "2021-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "397566.61",
+      "period": "2021-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "400241.82",
+      "period": "2018-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "400241.82",
+      "period": "2018-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "401626.36",
+      "period": "2020-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "401626.36",
+      "period": "2020-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "405027.39",
+      "period": "2020-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "405027.39",
+      "period": "2020-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "411563.85",
+      "period": "2019-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "411563.85",
+      "period": "2019-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "413016.66",
+      "period": "2019-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "413016.66",
+      "period": "2019-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "413433.76",
+      "period": "2015-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "423421.89",
+      "period": "2024-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "430137.56",
+      "period": "2026-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "441105.98",
+      "period": "2025-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "4417770.23",
+      "period": "2019-03-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "451353.4",
+      "period": "2016-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "4772573.49",
+      "period": "2019-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "4852096.13",
+      "period": "2019-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "49599.1",
+      "period": "2020-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "49962.57",
+      "period": "2023-03-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "5032897.56",
+      "period": "2016-06-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "513970.57",
+      "period": "2024-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "521460.64",
+      "period": "2016-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "531821.13",
+      "period": "2023-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "535368.06",
+      "period": "2017-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "5414.42",
+      "period": "2016-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "543.27",
+      "period": "2019-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "550781.38",
+      "period": "2017-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "559908.92",
+      "period": "2023-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "56679.56",
+      "period": "2021-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "567038.73",
+      "period": "2022-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "56901.43",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "56901.43",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "59097.98",
+      "period": "2023-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "60.89",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "60.89",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "60027.81",
+      "period": "2022-09-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "603525",
+      "period": "2014-03-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "613167.42",
+      "period": "2020-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "615941.52",
+      "period": "2022-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "617503.34",
+      "period": "2018-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "620266.93",
+      "period": "2014-08-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "6296.69",
+      "period": "2016-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "646121.13",
+      "period": "2021-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "662610.99",
+      "period": "2021-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "666522.33",
+      "period": "2018-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "675045.67",
+      "period": "2020-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "685939.69",
+      "period": "2019-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "688361.11",
+      "period": "2019-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "73107.04",
+      "period": "2025-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "7466088.24",
+      "period": "2018-06-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "7704898.95",
+      "period": "2014-06-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "86732.86",
+      "period": "2015-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "86732.86",
+      "period": "2015-03-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "9207113.58",
+      "period": "2016-03-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "935143.55",
+      "period": "2017-06-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-53100"
+     },
+     {
+      "amount": "94835.74",
+      "period": "2014-09-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-53100"
+     }
+    ],
+    "teamleadname": [
+     "Reenu Aneja "
+    ],
+    "fiscalyear": "2014",
+    "cons_serv_reqd_ind": "Yes",
+    "countryname": "Republic of India",
+    "projectfinancialtype": [
+     "IDA",
+     "Other"
+    ],
+    "projectfinancialtype_exact": "IDA,Other",
+    "proj_last_upd_date": "2023-08-01T00:00:00Z",
+    "curr_project_cost": "227000000",
+    "last_stage_reached_name": "Board Approved",
+    "cons_serv_reqd_ind_exact": "Yes",
+    "curr_total_commitment": "160000000",
+    "countryhomepageurl": "http://www.worldbank.org/en/country/india",
+    "curr_ida_commitment": "160000000",
+    "projid_id_display": "P130164",
+    "public_disclosure_date": "2013-04-18",
+    "loan_effective_date": "2014-03-10",
+    "theme_list": [
+     {
+      "name": "FY17 - Private Sector Development",
+      "code": "20",
+      "seqno": "1",
+      "percent": "10",
+      "theme2": [
+       {
+        "name": "FY17 - Public Private Partnerships",
+        "code": "23",
+        "seqno": "2",
+        "percent": "10"
+       }
+      ]
+     },
+     {
+      "name": "FY17 - Urban and Rural Development",
+      "code": "70",
+      "seqno": "3",
+      "percent": "100",
+      "theme2": [
+       {
+        "name": "FY17 - Rural Development",
+        "code": "72",
+        "seqno": "4",
+        "percent": "100",
+        "theme3": [
+         {
+          "name": "FY17 - Rural Infrastructure and service delivery",
+          "code": "723",
+          "seqno": "5",
+          "percent": "100"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "facets": {}
+ }
+}

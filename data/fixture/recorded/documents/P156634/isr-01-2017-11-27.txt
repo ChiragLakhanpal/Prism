@@ -1,0 +1,609 @@
+Source: https://documents.worldbank.org/curated/en/847131511764668262/text/ISR-Disclosable-P156634-11-27-2017-1511764659440.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: ISR 1 for P156634, 2017-11-27 (ISR30317). Documents API id 28621250.
+
+                                                         Public Disclosure Copy
+
+        The World Bank                                                                             Implementation Status & Results Report
+        Water and Sanitation Development Project (P156634)
+
+
+Water and Sanitation Development Project (P156634)
+
+AFRICA | Kenya | Water Global Practice |
+IBRD/IDA | Investment Project Financing | FY 2017 | Seq No: 1 | ARCHIVED on 27-Nov-2017 | ISR30317 |
+
+
+Implementing Agencies: Government of the Republic of Kenya, Ministry of Water and Irrigation, Water Services Regulatory Board, Coast Water
+Services Board, Mombasa Water and Sanitation Services Company, Tavevo Water and Sewerage Company Ltd, Kilifi - Mariakani Water and
+Sewerage Company Ltd, Malindi Water and Sewerage Company Ltd, Kwale Water and Sewerage Company Ltd., Mavoko Water & Sewarage Co.
+Ltd, Eldoret Water & Sanitation Co. Ltd, Garissa Water and Saniation Company, Wajir Water and Sewerage Company
+
+
+
+
+Key Dates
+
+  Key Project Dates
+
+  Bank Approval Date:26-Apr-2017                                           Effectiveness Date:--
+  Planned Mid Term Review Date:--                                          Actual Mid-Term Review Date:--
+  Original Closing Date:31-Oct-2022                                        Revised Closing Date:31-Oct-2022
+
+
+
+
+Project Development Objectives
+
+ Project Development Objective (from Project Appraisal Document)
+ The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and northeastern regions in Kenya.
+
+ Has the Project Development Objective been changed since Board Approval of the Project Objective?
+ No
+
+ PHRPDODEL
+
+
+
+Components
+
+Name
+Component 1: Rehabilitation and expansion of urban water supply and sanitation services in the coastal region (US$176 of which IDA-SUF US$160
+million).:(Cost $176.00 M)
+Component 2: Expansion of water supply and sanitation services in underserved northeastern counties of Kenya (US$110 of which IDA US$100
+million).:(Cost $110.00 M)
+Component 3: National performance-based financing (PBF) (US$40.7 of which IDA-SUF US$37 million).:(Cost $40.70 M)
+Component 4: Project management (US$3.3 million of which IDA-SUF US$3 million).:(Cost $3.30 M)
+
+
+
+Overall Ratings
+Name                                                                      Previous Rating                        Current Rating
+
+Progress towards achievement of PDO                                        --                                    Satisfactory
+Overall Implementation Progress (IP)                                       --                                    Satisfactory
+
+
+
+11/27/2017                                                                                                                           Page 1 of 9
+                                                         Public Disclosure Copy
+                                                          Public Disclosure Copy
+
+               The World Bank                                                                       Implementation Status & Results Report
+               Water and Sanitation Development Project (P156634)
+
+
+Overall Risk Rating                                                            --                                   Substantial
+
+
+Implementation Status and Key Decisions
+
+ Overall the Project is progressing in a satisfactory manner. The two IDA credit agreements were signed on June 21, 2017. The national and local
+ implementing agencies are making steady progress towards building a solid pipeline of implementable activities, consolidating their project coordinating
+ units (PCUs), and finalizing the implementation arrangements to ensure adequate flow of funds from National Treasury to local and regional IA.
+ Furthermore, the Bank team delivered a 3-day training on procurement, financial management and safeguards training in August 2017 to the PCUs
+ staff, and several IAs are advancing procurement procedures of key activities included in their procurement plans. On October 18, 2017, the Bank
+ granted an extension of effectiveness from October 21, 2017 to December 15, 2017.
+
+
+
+
+Risks
+
+ Systematic Operations Risk-rating Tool
+
+ Risk Category                                              Rating at Approval               Previous Rating             Current Rating
+
+ Political and Governance                                    Substantial                     --                         Substantial
+ Macroeconomic                                               Moderate                        --                         Moderate
+ Sector Strategies and Policies                              Substantial                     --                         Substantial
+ Technical Design of Project or Program                      Substantial                     --                         Substantial
+ Institutional Capacity for Implementation and
+ Sustainability
+                                                             High                            --                         High
+ Fiduciary                                                   Substantial                     --                         Substantial
+ Environment and Social                                      Moderate                        --                         Substantial
+ Stakeholders                                                Substantial                     --                         Substantial
+ Other                                                       Moderate                        --                         Moderate
+ Overall                                                     Substantial                     --                         Substantial
+
+
+Results
+
+ Project Development Objective Indicators
+ PHINDPDOTBL
+
+
+
+
+          Number of people in urban areas provided with access to Improved Water Sources under the project (Number, Custom)
+
+
+                                           Baseline                      Actual (Previous)          Actual (Current)            End Target
+
+         Value                             0.00                          --                         --                          90,000.00
+
+         Date                              26-Apr-2017                   --                         --                          30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                               Page 2 of 9
+                                                          Public Disclosure Copy
+                                                           Public Disclosure Copy
+
+               The World Bank                                                               Implementation Status & Results Report
+               Water and Sanitation Development Project (P156634)
+
+
+
+
+ PHINDPDOTBL
+
+
+
+
+          People provided with access to improved sanitation services under the projectâurban. (Number, Custom)
+
+
+                                            Baseline                    Actual (Previous)    Actual (Current)         End Target
+
+         Value                              0.00                        --                   --                       50,000.00
+
+         Date                               26-Apr-2017                 --                   --                       30-Jun-2022
+
+
+ PHINDPDOTBL
+
+
+
+
+      People benefiting under the project from a connection to the sewage system or from improved septic sludge manage-ment
+     (number). (Number, Custom)
+
+                                            Baseline                    Actual (Previous)    Actual (Current)         End Target
+
+         Value                              0.00                        --                   --                       415,000.00
+
+         Date                               26-Apr-2017                 --                   --                       30-Jun-2022
+
+
+ PHINDPDOTBL
+
+
+
+
+          People with existing connections benefiting from more hours per week of water services. (Number, Custom)
+
+
+                                            Baseline                    Actual (Previous)    Actual (Current)         End Target
+
+         Value                              0.00                        --                   --                       2,100,000.00
+
+         Date                               26-Apr-2017                 --                   --                       30-Jun-2022
+
+
+ PHINDPDOTBL
+
+
+
+
+          Direct project beneficiaries (Number, Custom)
+
+
+                                            Baseline                    Actual (Previous)    Actual (Current)         End Target
+
+         Value                              0.00                        --                   --                       2,200,000.00
+
+         Date                               26-Apr-2017                 --                   --                       30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                   Page 3 of 9
+                                                           Public Disclosure Copy
+                                                            Public Disclosure Copy
+
+                  The World Bank                                                                Implementation Status & Results Report
+                  Water and Sanitation Development Project (P156634)
+
+ PHINDPDOTBL
+
+
+
+
+              Female beneficiaries (Percentage, Custom Supplement)
+
+
+
+                                               Baseline                  Actual (Previous)       Actual (Current)        End Target
+
+               Value                           0.00                      --                      --                      50.00
+
+
+
+
+ Overall Comments
+
+
+
+
+ Intermediate Results Indicators
+ PHINDIRITBL
+
+
+
+
+            Piped household water connections that are benefiting from rehabilitation works undertaken under the project. (Number,
+           Custom)
+
+                                              Baseline                   Actual (Previous)      Actual (Current)         End Target
+
+               Value                          0.00                       --                     --                       60,000.00
+
+               Date                           26-Apr-2017                --                     --                       30-Jun-2022
+
+
+
+ PHINDIRITBL
+
+
+
+
+              New piped household water connections under the project. (Number, Custom)
+
+                                              Baseline                   Actual (Previous)      Actual (Current)         End Target
+
+               Value                          0.00                       --                     --                       13,000.00
+
+               Date                           26-Apr-2017                --                     --                       30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                       Page 4 of 9
+                                                            Public Disclosure Copy
+                                                               Public Disclosure Copy
+
+                  The World Bank                                                                     Implementation Status & Results Report
+                  Water and Sanitation Development Project (P156634)
+
+ PHINDIRITBL
+
+
+
+
+              Water delivered by WSPs to customers (as reflected in water bills). (Cubic meters/year, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             39.30                       --                       --                   51.60
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              People provided with access to improved shared sanitation facilities under the project. (Number, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   7,200.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              Quantity of septic sludge treated in facilities supported under the project. (Tones/year, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   14,500.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+            Volume of biological oxygen demand pollution loads removed by treatment plants supported under the project. (Tones/year,
+           Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   3,100.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                         Page 5 of 9
+                                                               Public Disclosure Copy
+                                                              Public Disclosure Copy
+
+                  The World Bank                                                                    Implementation Status & Results Report
+                  Water and Sanitation Development Project (P156634)
+
+ PHINDIRITBL
+
+
+
+
+              Hours of service per week provided by coastal WSPs benefiting from the project. (Hours, Custom)
+
+                                                Baseline                    Actual (Previous)       Actual (Current)          End Target
+
+               Value                            15.00                       --                      --                        16.00
+
+               Date                             26-Apr-2017                 --                      --                        30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+            Non-revenue water (% of water that a service provider supplies to its distribution system that is not reflected in revenues).
+           (Percentage, Custom)
+
+                                                Baseline                    Actual (Previous)       Actual (Current)          End Target
+
+               Value                            50.00                       --                      --                        35.00
+
+               Date                             26-Apr-2017                 --                      --                        30-Jun-2022
+
+
+
+ PHINDIRITBL
+
+
+
+
+            Operations and maintenance costs of coastal WSPs benefiting from the project recovered from customers. (Percentage,
+           Custom)
+
+                                                Baseline                    Actual (Previous)       Actual (Current)          End Target
+
+               Value                            100.00                      --                      --                        120.00
+
+               Date                             26-Apr-2017                 --                      --                        30-Jun-2022
+
+
+
+ PHINDIRITBL
+
+
+
+
+              New piped household water connections that are resulting from the project intervention (Number, Custom)
+
+                                                Baseline                    Actual (Previous)       Actual (Current)          End Target
+
+               Value                            0.00                        --                      --                        2,500.00
+
+               Date                             26-Apr-2017                 --                      --                        30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                             Page 6 of 9
+                                                              Public Disclosure Copy
+                                                               Public Disclosure Copy
+
+                  The World Bank                                                                     Implementation Status & Results Report
+                  Water and Sanitation Development Project (P156634)
+
+ PHINDIRITBL
+
+
+
+
+              Improved community water points constructed or rehabilitated under the project (Number, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   12.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              New water supplied to northeastern WSPs under the project (m3/day). (Number, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   3,000.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              Quantity of septic sludge treated in facilities supported under the project. (Tones/year, Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   2,200.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+            Volume of biological oxygen demand pollution loads removed by treatment plants supported under the project. (Tones/year,
+           Custom)
+
+                                                 Baseline                    Actual (Previous)        Actual (Current)     End Target
+
+               Value                             0.00                        --                       --                   1,200.00
+
+               Date                              26-Apr-2017                 --                       --                   30-Jun-2022
+
+
+
+
+11/27/2017                                                                                                                         Page 7 of 9
+                                                               Public Disclosure Copy
+                                                             Public Disclosure Copy
+
+                  The World Bank                                                                 Implementation Status & Results Report
+                  Water and Sanitation Development Project (P156634)
+
+ PHINDIRITBL
+
+
+
+
+              Gender action plans developed and under implementation. (Number, Custom)
+
+                                               Baseline                   Actual (Previous)      Actual (Current)      End Target
+
+               Value                           0.00                       --                     --                    3.00
+
+               Date                            26-Apr-2017                --                     --                    30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              Guidelines for results-based financing adopted (Yes/No, Custom)
+
+                                               Baseline                   Actual (Previous)      Actual (Current)      End Target
+
+               Value                           N                          --                     --                    Y
+
+               Date                            26-Apr-2017                --                     --                    30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              Results-based financing mechanism established and operational. (Yes/No, Custom)
+
+                                               Baseline                   Actual (Previous)      Actual (Current)      End Target
+
+               Value                           N                          --                     --                    Y
+
+               Date                            26-Apr-2017                --                     --                    30-Jun-2022
+
+
+
+
+ PHINDIRITBL
+
+
+
+
+              Complaints handling system (Maji Voice)estab-lished in WSPs supported under the project. (Number, Custom)
+
+                                               Baseline                   Actual (Previous)      Actual (Current)      End Target
+
+               Value                           0.00                       --                     --                    2.00
+
+               Date                            26-Apr-2017                --                     --                    30-Jun-2022
+
+
+
+
+ Overall Comments
+
+
+
+
+11/27/2017                                                                                                                    Page 8 of 9
+                                                             Public Disclosure Copy
+                                                           Public Disclosure Copy
+
+          The World Bank                                                                           Implementation Status & Results Report
+          Water and Sanitation Development Project (P156634)
+
+
+
+Data on Financial Performance
+
+Disbursements (by loan)
+
+Project       Loan/Credit/TF     Status      Currency        Original   Revised        Cancelled   Disbursed   Undisbursed                   Disbursed
+
+                                 Not
+P156634       IDA-60290                      USD               37.00      37.00             0.00        0.00           37.57                        0%
+                                 Effective
+
+                                 Not
+P156634       IDA-60300                      USD              263.00     263.00             0.00        0.00          294.27                        0%
+                                 Effective
+
+
+Key Dates (by loan)
+Project       Loan/Credit/TF     Status      Approval Date      Signing Date      Effectiveness Date    Orig. Closing Date     Rev. Closing Date
+
+                                 Not
+P156634       IDA-60290                      26-Apr-2017        --                --                    31-Oct-2022            31-Oct-2022
+                                 Effective
+                                 Not
+P156634       IDA-60300                      26-Apr-2017        21-Jun-2017       --                    31-Oct-2022            31-Oct-2022
+                                 Effective
+
+
+
+
+ Restructuring History
+
+ There has been no restructuring to date.
+
+
+
+
+ Related Project(s)
+
+There are no related projects.
+
+
+
+
+11/27/2017                                                                                                                            Page 9 of 9
+                                                           Public Disclosure Copy
+

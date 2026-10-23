@@ -1,0 +1,398 @@
+Source: https://documents.worldbank.org/curated/en/768091588250052402/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Ministry of Water and Irrigation's Procurement Plan of April 30, 2020 for P156634, which lists NWWDA-WSDP-03-2019-2020. Documents API id 31998332.
+Pages: 4, one after each form feed, read from the PDF's text layer
+
+Page 1 of 2
+WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+SUMMARY PROCUREMENT PLAN (first eighteen months)
+I. General
+The following procurement plan has been developed for project implementation during the first eighteen months 
+and provides the basis for the procurement methods and bank prior/post review thresholds.  It covers the three 
+categories, namely, Works; Consultancies; and Goods. The plan will be updated when need arises to reflect the 
+actual project implementation needs. 
+1. Project information:  
+Country / Borrower: Republic of Kenya 
+Project: Water and Sanitation Development Project (WSDP) 
+IDA Credit No.  6029 & 6030
+Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b) WaSREB, (c) Water 
+Service Providers: Kilifi-Mariakani Water and Sewerage Company (Kimawasco),; Taita-Voi Water 
+and Sewerage Company (Tavevo); Mombasa Water Supply and Sanitation Company (Mowassco); 
+Kwale Water and Sewerage Company (Kwawasco); Garissa Water and Sewerage Company 
+(Gawasco); Wajir Water and Sewerage Company (Wajwasco); and Malindi Water and Sewerage 
+Company; and (d) Counties: Kilifi; Taita Taveta; Mombasa; Kwale; Garissa; and Wajir 
+2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan: June 15, 2017
+3. Date of General Procurement Notice: June 14, 2017
+4. Period covered by this procurement plan: June 2017 to December 2018
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods and Bank’s Prior 
+Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s Prior Review for Works, 
+Goods and Consultancy Services
+Expenditure 
+Category
+Contract Value 
+(Threshold) 
+(US$ 000)
+Procurement 
+Method
+Contract Subject to Prior 
+Review 
+15,000 or more ICB Contracts above $5 million1. Works
+Below 15,000 NCB First contract per entity and 
+Contracts above $5 million
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Page 2 of 2
+Expenditure 
+Category
+Contract Value 
+(Threshold) 
+(US$ 000)
+Procurement 
+Method
+Contract Subject to Prior 
+Review 
+Below or equal 200 Shopping None unless contract 
+specified in the PP
+No threshold Direct Contracting As specified in PP
+1,000 or more ICB First contract per entity and 
+Contracts above $1.5 
+million
+Below 1,000 NCB First contract per entity
+Below or equal to 
+100
+Shopping None unless contract 
+specified in the PP
+2. Goods
+ 
+No threshold Direct Contracting As specified in PP
+Firms* QCBS,LCS,FBS, 
+QBS
+First contract per entity and 
+Contracts above $0.5 
+million
+Firms* (Estimated 
+cost  less than 
+$300,000)
+CQS First contract per entity
+Individual IC (at least 3 CVs) All contract of estimated 
+cost above $200,000 and 
+more
+3. Consultancy 
+Services
+No threshold Single Source All 
+*Assignments whose estimated cost is less $300,000 could be Open-National (Shortlist could 
+comprise of all national firms)
+NB:  All terms of reference for consulting services will be subject to IDA’s prior review.Page 1
+PROCUREMENT
+PLAN
+Kenya : Water and Sanitation Development Project
+General Information
+Country: Kenya Bank’s Approval Date of the Original Procurement Plan: 2017-06-23
+Revised Plan Date(s): (comma delineated, leave blank if none)2020-04-30
+Project ID: P156634 GPN Date: 2017-06-13
+Project Name: Water and Sanitation Development Project
+Loan / Credit No: IDA / 60300, IDA / 60290
+Executing Agency(ies):Ministry of Water and Irrigation
+WORKS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Estimated
+Amount (US$)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+GOODS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Estimated
+Amount (US$)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ MWSI-WSDP-04-2019-2020 /
+Procurement of 2No. Four
+wheel drive vehicles for
+project monitoring and
+management
+ 
+IDA / 60300
+Component 4: Project
+management (US$3.3 million
+of which IDA-SUF US$3
+million).
+Post Request for Bids Open
+ 
+Single Stage - One
+Envelope
+160,000.00 0.00
+Pending
+Implementati
+on
+2020-03-27 2020-04-10 2020-05-22 2020-06-21 2020-07-25 2020-08-06
+NON CONSULTING SERVICES
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Estimated
+Amount (US$)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+CONSULTING FIRMS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type  Method
+Market
+Approach
+Contract Type Estimated
+Amount (US$)
+Actual
+Amount (US$)
+Process Status Terms of Reference
+Expression of Interest
+Notice
+Short List and Draft
+Request for Proposals
+Request for Proposals
+as Issued
+Opening of Technical
+Proposals / Minutes
+ Evaluation of
+Technical Proposal
+Combined Evaluation
+Report and Draft
+Negotiated Contract
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ MWI-WSDP-001 /
+Monitoring and Evaluation
+and Safeguards Consultancy
+Services
+ 
+IDA / 60300
+Component 4: Project
+management (US$3.3 million
+of which IDA-SUF US$3
+million).
+Prior
+Quality And Cost-
+Based Selection
+Open - National
+ 
+400,000.00 0.00 Canceled 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24
+ MWI-WSDP-002 / Financial
+Management and
+Procurement Consultancy
+Services
+ 
+IDA / 60300
+Component 4: Project
+management (US$3.3 million
+of which IDA-SUF US$3
+million).
+Prior
+Quality And Cost-
+Based Selection
+Open - National
+ 
+500,000.00 0.00 Canceled 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24 2017-07-24
+ MOWS-WSDP-01-2017-2018
+/ Financial Management,
+Procurement, Monitoring and
+Evaluation, Safeguards and
+Engineering Support
+Consultancy Services
+ 
+IDA / 60300
+Component 4: Project
+management (US$3.3 million
+of which IDA-SUF US$3
+million).
+Prior
+Quality And Cost-
+Based Selection
+Open -
+International
+ 
+900,000.00 0.00 Under Review 2018-05-21 2018-05-10 2018-06-11 2018-06-19 2018-07-25 2019-02-26 2018-08-22 2018-09-21 2019-12-16 2018-10-26 2018-11-30 2019-11-30Page 2
+ KE-MOWI-96348-CS-QCBS /
+Consultancy for Water
+Utility Performance
+Improvement Program -
+Institutional Strengthening
+and capacity building
+ 
+IDA / 60290
+Component 1: Rehabilitation
+and expansion of urban
+water supply and sanitation
+services in the coastal
+region (US$176 of w hich
+IDA-SUF US$160 million).
+Prior
+Quality And Cost-
+Based Selection
+Open -
+International
+ 
+1,500,000.00 0.00 Canceled 2019-01-25 2019-03-12 2019-02-15 2019-05-22 2019-03-31 2019-04-28 2019-05-28 2019-07-02 2019-08-06 2020-08-05
+ MOWS-WSDP-02-2019-2020
+/ Consultancy for Water
+Utility Performance
+Improvement Program -
+Institutional Strengthening
+and capacity building
+ 
+IDA / 60290
+Component 1: Rehabilitation
+and expansion of urban
+water supply and sanitation
+services in the coastal
+region (US$176 of w hich
+IDA-SUF US$160 million).
+Prior
+Quality And Cost-
+Based Selection
+Open -
+International
+ 
+5,000,000.00 0.00 Under Review 2019-07-22 2019-09-16 2019-08-12 2019-09-25 2019-10-23 2019-11-22 2019-12-27 2020-01-31 2021-01-30
+ NWWDA-WSDP-03-2019-
+2020 / Consultancy Services
+for Comparison of Water
+Supply Options, Preparation
+of Detailed Designs, Tender
+Documents, Safeguards
+Documents and Construction
+Supervision of Wajir Water
+Supply
+ 
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved
+northeastern counties of
+Kenya (US$110 of wh ich
+IDA US$100 million).
+Prior
+Quality And Cost-
+Based Selection
+Open -
+International
+ 
+2,000,000.00 0.00
+Under
+Implementation
+2019-11-05 2019-11-19 2019-11-26 2019-12-04 2020-01-09 2020-02-06 2020-03-07 2020-04-11 2020-05-16 2021-05-16
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type  Method
+Market
+Approach
+Contract Type Estimated
+Amount (US$)
+Actual
+Amount (US$)
+Process Status Terms of Reference
+Invitation to
+Identified/Selected
+Consultant
+Draft Negotiated
+Contract
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual

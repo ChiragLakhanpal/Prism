@@ -1,0 +1,1032 @@
+{
+ "source": "https://search.worldbank.org/api/v3/wds?format=json&proid=P130164&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc",
+ "license": "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "Every document the Documents API lists for P130164, including the ICR Review of March 27, 2020 and its re-issue of May 4, 2023 under the same report number.",
+ "response": {
+  "rows": 500,
+  "os": 0,
+  "page": 1,
+  "total": 62,
+  "documents": {
+   "D34056616": {
+    "id": "34056616",
+    "docty": "Implementation Completion Report Review",
+    "lang": "English",
+    "repnb": "ICRR0021929",
+    "docdt": "2023-05-04T04:00:00Z",
+    "display_title": "India - IN: Rajasthan Road Sector Modernization : Rajasthan Road Sector Modernization",
+    "disclosure_date": "2023-05-04T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099050423040030393/pdf/P1301640b1a4d202008b910ba796c7180f1.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099050423040030393/text/P1301640b1a4d202008b910ba796c7180f1.txt",
+    "guid": "099050423040030393",
+    "url": "http://documents.worldbank.org/curated/en/099050423040030393"
+   },
+   "D32604339": {
+    "id": "32604339",
+    "docty": "Board Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08800a88f_1_0"
+    },
+    "repnb": "154543",
+    "docdt": "2020-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "This report provides the findings of an administrative inquiry by the World Bank Group Integrity Vice Presidency (INT) into allegations of misconduct in connection with the Rajasthan Road \nSector Modernization Project in India. Department A of the state government of Rajasthan is the Project Implementing Agency. Individual A is Department A's Executive Engineer. Evidence indicates that Individual A solicited improper payments from a Joint Venture that had been awarded a contract under the Project. INT will not pursue sanctions against Individual A because the World Bank does not sanction officials and employees of its member governments."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : INT Redacted Report",
+    "disclosure_date": "2020-11-25T16:18:02Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/762781607098708544/pdf/India-Rajasthan-Road-Sector-Modernization-Project-INT-Redacted-Report.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/762781607098708544/text/India-Rajasthan-Road-Sector-Modernization-Project-INT-Redacted-Report.txt",
+    "guid": "762781607098708544",
+    "url": "http://documents.worldbank.org/curated/en/762781607098708544"
+   },
+   "D31906731": {
+    "id": "31906731",
+    "docty": "Implementation Completion Report Review",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08777bbe3_1_0"
+    },
+    "repnb": "ICRR0021929",
+    "docdt": "2020-03-27T04:00:00Z",
+    "display_title": "India - IN: Rajasthan Road Sector Modernization",
+    "disclosure_date": "2020-03-27T19:19:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/277111585336766011/pdf/India-IN-Rajasthan-Road-Sector-Modernization.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/277111585336766011/text/India-IN-Rajasthan-Road-Sector-Modernization.txt",
+    "guid": "277111585336766011",
+    "url": "http://documents.worldbank.org/curated/en/277111585336766011"
+   },
+   "D31725605": {
+    "id": "31725605",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08753b1f3_1_0"
+    },
+    "repnb": "AUD0027505",
+    "docdt": "2020-01-20T05:00:00Z",
+    "display_title": "Audit Report FY2018-2019",
+    "disclosure_date": "2020-01-25T19:01:45Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/396481579854785365/pdf/Audit-Report-FY2018-2019.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/396481579854785365/text/Audit-Report-FY2018-2019.txt",
+    "guid": "396481579854785365",
+    "url": "http://documents.worldbank.org/curated/en/396481579854785365"
+   },
+   "D31525018": {
+    "id": "31525018",
+    "docty": "Implementation Completion and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08728c958_1_0"
+    },
+    "repnb": "ICR4803",
+    "docdt": "2019-10-10T04:00:00Z",
+    "abstracts": {
+     "cdata!": "Ratings of Rajasthan Road Sector Modernization Project for India were as follows: outcome was moderately unsatisfactory, Bank performance was moderately unsatisfactory, and monitoring and evaluation quality was modest.  Some of the lessons learned include: (i) It is important to get endorsement from relevant stakeholders early on during the preparation process to ensure ownership for all components and activities; (ii) This project may have benefitted from additional preliminary studies; (iii) implementing new management standards and business procedures to generate increased efficiency must be adapted based on the network characteristics; (iv) the road asset management system (RAMS), once finalized, be discussed not only at the central level but also at the local level with local entities; (v) commendable work done on the ground to make sure that the land ownership was legally transferred can be replicated in future projects in Rajasthan or even other states in India; and (vi) Enhancing social settings next to the road bed for communities in selected areas proved to be successful under this project."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project",
+    "disclosure_date": "2019-11-02T07:01:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/258481572631321132/text/India-Rajasthan-Road-Sector-Modernization-Project.txt",
+    "guid": "258481572631321132",
+    "url": "http://documents.worldbank.org/curated/en/258481572631321132"
+   },
+   "D30913409": {
+    "id": "30913409",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086aa22f3_1_0"
+    },
+    "repnb": "AUD0020268",
+    "docdt": "2019-03-17T04:00:00Z",
+    "display_title": "2017-18 Audit Report",
+    "disclosure_date": "2019-03-20T18:54:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/427361552987691204/pdf/FY17-18-Audit-report.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/427361552987691204/text/FY17-18-Audit-report.txt",
+    "guid": "427361552987691204",
+    "url": "http://documents.worldbank.org/curated/en/427361552987691204"
+   },
+   "D30730274": {
+    "id": "30730274",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08680a3ea_1_0"
+    },
+    "repnb": "ISR33718",
+    "docdt": "2018-12-28T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rajasthan Road Sector Modernization Project - P130164 - Sequence No : 13",
+    "disclosure_date": "2018-12-28T16:03:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/767181546013001577/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/767181546013001577/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.txt",
+    "guid": "767181546013001577",
+    "url": "http://documents.worldbank.org/curated/en/767181546013001577"
+   },
+   "D30663099": {
+    "id": "30663099",
+    "docty": "Resettlement Plan",
+    "lang": "Hindi",
+    "entityids": {
+     "entityid": "090224b08667b948_1_0"
+    },
+    "repnb": "SFG4886",
+    "docdt": "2018-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. some of the negative impacts include: (i) loss of private agriculture, homestead and commercial land of title-holder’s; (ii) loss of private structures (residential/commercial/residential cum commercial) for title-holder’s; (iii)  loss of structures (residential/commercial/residential cum commercial) for non-titleholders; (iv) additional assistance to vulnerable families; (v) loss of community infrastructure/ community property resources; (vi) loss of land and assets temporarily impacted during construction; Some of the mitigation measures include: (i) land for land, if available, or cash compensation for the land at replacement value, which will be determined as provided; (ii) refund of stamp duty and registration charges incurred for replacement land to be paid by the project; (iii) replacement land must be bought within a year from the date of payment of compensation to project affected persons; (iv) cash compensation for the structure at replacement for land holders; (v) each affected family getting displaced shall get a onetime financial assistance of Rs. 50,000 as shifting allowance; (vi) registered lessees will be entitled to an apportionment of the compensation payable to structure owner as per applicable local laws; (vii) right to salvage material from the demolished structures for non-titleholders; (viii) training assistance up to the value of Rs. 5000 for any one adult member of the commercial squatter family for income generation in opted areas; (ix) reconstruction of community structure and common property resources in consultation with the community; (x) compensation to be paid by the contractor for loss of assets, crops and any other damage as per prior agreement between the contractor and the affected party."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : Resettlement Plan : सेफ डेमो कॉरिडोर डीग अलवर बेहरर के लिए रीसेटमेंट एक्शन प्लान (SH-14)",
+    "disclosure_date": "2018-12-03T12:24:43Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/411691544013042408/pdf/RRSMP-Nov-2018-RAP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-Hindi.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/411691544013042408/text/RRSMP-Nov-2018-RAP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-Hindi.txt",
+    "guid": "411691544013042408",
+    "url": "http://documents.worldbank.org/curated/en/411691544013042408"
+   },
+   "D30662545": {
+    "id": "30662545",
+    "docty": "Environmental Assessment",
+    "lang": "Hindi",
+    "entityids": {
+     "entityid": "090224b08667b946_1_0"
+    },
+    "repnb": "SFG4854",
+    "docdt": "2018-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of Rajasthan Road Sector Modernization Project for India  is to improve rural connectivity, enhance road safety and strengthen road sector management capacity of the state of Rajasthan. Some of the negative impacts include: (i) dust due to earth work and vehicular movement which have localized impact; (ii) accidental spillages of many substances on the soil which may contaminate soil; (iii) five religious structures will be affected due to proposed development; (iv) six community structures will be affected due to proposed development; (v) nine roadside water facilities, three bus shelters and one public toilet will be affected due to proposed development; (vi) siltation of water bodies and degradation of water quality; (vii) chance findings of archeological property; (viii) debris disposal; and (ix) traffic management plan during construction. Some of the mitigation measures include: (i) ensure that all vehicles, equipment and machinery used for construction are regularly maintained and confirm that emission levels comply with the relevant standards of state pollution control board; (ii) make inventory of structures with hazardous building material like asbestos or asbestos cement sheet before dismantling or demolition; (iii) prepare an emergency plan for handling accidental spillage of hazardous wastes; (iv) vegetation will be removed from the construction zone before commencement of construction; (v) topsoil from areas of cutting for construction work will be stripped to a specified depth of 150 milimeters and stored in stockpiles; (vi) stockpiling of any material along the road will be avoided; (vii) all waste arising from the project is to be disposed off in the manner that is acceptable to the state pollution control board; (viii) all fossils, coins, articles of value of antiquity, structures and other remains of archaeological interests discovered on the site shall be the property of the government and shall be dealt with as per permissions of the relevant legislation; (ix) debris generated due to the dismantling of existing structures, road locations, median construction and junctions will be suitably reused during construction, subject to agreement with technical specification requirements and approval of the SC; and (x) take all required measures to prevent temporary or permanent water logging of the site."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : Environmental Assessment : पर्यावरण प्रभाव आंकलन व पर्यावरण प्रबन्धन योजना",
+    "disclosure_date": "2018-12-03T20:08:26Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/246061543954381487/pdf/RRSMP-Nov-2018-EIA-EMP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-Hindi.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/246061543954381487/text/RRSMP-Nov-2018-EIA-EMP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-Hindi.txt",
+    "guid": "246061543954381487",
+    "url": "http://documents.worldbank.org/curated/en/246061543954381487"
+   },
+   "D30663143": {
+    "id": "30663143",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08667b8d6_1_0"
+    },
+    "repnb": "SFG4854",
+    "docdt": "2018-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of Rajasthan Road Sector Modernization Project for India  is to improve rural connectivity, enhance road safety and strengthen road sector management capacity of the state of Rajasthan. Some of the negative impacts include: (i) dust due to earth work and vehicular movement which have localized impact; (ii) accidental spillages of many substances on the soil which may contaminate soil; (iii) five religious structures will be affected due to proposed development; (iv) six community structures will be affected due to proposed development; (v) nine roadside water facilities, three bus shelters and one public toilet will be affected due to proposed development; (vi) siltation of water bodies and degradation of water quality; (vii) chance findings of archeological property; (viii) debris disposal; and (ix) traffic management plan during construction. Some of the mitigation measures include: (i) ensure that all vehicles, equipment and machinery used for construction are regularly maintained and confirm that emission levels comply with the relevant standards of state pollution control board; (ii) make inventory of structures with hazardous building material like asbestos or asbestos cement sheet before dismantling or demolition; (iii) prepare an emergency plan for handling accidental spillage of hazardous wastes; (iv) vegetation will be removed from the construction zone before commencement of construction; (v) topsoil from areas of cutting for construction work will be stripped to a specified depth of 150 milimeters and stored in stockpiles; (vi) stockpiling of any material along the road will be avoided; (vii) all waste arising from the project is to be disposed off in the manner that is acceptable to the state pollution control board; (viii) all fossils, coins, articles of value of antiquity, structures and other remains of archaeological interests discovered on the site shall be the property of the government and shall be dealt with as per permissions of the relevant legislation; (ix) debris generated due to the dismantling of existing structures, road locations, median construction and junctions will be suitably reused during construction, subject to agreement with technical specification requirements and approval of the SC; and (x) take all required measures to prevent temporary or permanent water logging of the site."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : Environmental Assessment : Environmental Impact Assessment and Environmental Management Plan",
+    "disclosure_date": "2018-12-03T11:43:11Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/603091544010328813/pdf/RRSMP-EIA-EMP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-English.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/603091544010328813/text/RRSMP-EIA-EMP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-English.txt",
+    "guid": "603091544010328813",
+    "url": "http://documents.worldbank.org/curated/en/603091544010328813"
+   },
+   "D30663131": {
+    "id": "30663131",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08667b8d7_1_0"
+    },
+    "repnb": "SFG4886",
+    "docdt": "2018-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. some of the negative impacts include: (i) loss of private agriculture, homestead and commercial land of title-holder’s; (ii) loss of private structures (residential/commercial/residential cum commercial) for title-holder’s; (iii)  loss of structures (residential/commercial/residential cum commercial) for non-titleholders; (iv) additional assistance to vulnerable families; (v) loss of community infrastructure/ community property resources; (vi) loss of land and assets temporarily impacted during construction; Some of the mitigation measures include: (i) land for land, if available, or cash compensation for the land at replacement value, which will be determined as provided; (ii) refund of stamp duty and registration charges incurred for replacement land to be paid by the project; (iii) replacement land must be bought within a year from the date of payment of compensation to project affected persons; (iv) cash compensation for the structure at replacement for land holders; (v) each affected family getting displaced shall get a onetime financial assistance of Rs. 50,000 as shifting allowance; (vi) registered lessees will be entitled to an apportionment of the compensation payable to structure owner as per applicable local laws; (vii) right to salvage material from the demolished structures for non-titleholders; (viii) training assistance up to the value of Rs. 5000 for any one adult member of the commercial squatter family for income generation in opted areas; (ix) reconstruction of community structure and common property resources in consultation with the community; (x) compensation to be paid by the contractor for loss of assets, crops and any other damage as per prior agreement between the contractor and the affected party."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : Resettlement Plan : Resettlement Action Plan Report for Safe Demo Corridor Deeg Alwar Behror (SH-14)",
+    "disclosure_date": "2018-12-03T12:31:26Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/493481544013196239/pdf/RRSMP-Nov-2018-RAP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-English.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/493481544013196239/text/RRSMP-Nov-2018-RAP-Report-for-Safe-Demo-Corridor-Deeg-Alwar-Behror-SH-14-English.txt",
+    "guid": "493481544013196239",
+    "url": "http://documents.worldbank.org/curated/en/493481544013196239"
+   },
+   "D30152361": {
+    "id": "30152361",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085c37688_1_0"
+    },
+    "repnb": "STEP10412",
+    "docdt": "2018-06-20T04:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-06-20T05:42:27Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/775491529473348537/pdf/Plan-Archive-13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/775491529473348537/text/Plan-Archive-13.txt",
+    "guid": "775491529473348537",
+    "url": "http://documents.worldbank.org/curated/en/775491529473348537"
+   },
+   "D29840402": {
+    "id": "29840402",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08594a2a5_1_0"
+    },
+    "repnb": "STEP8975",
+    "docdt": "2018-04-26T04:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-04-26T04:29:59Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/906181524717000564/pdf/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/906181524717000564/text/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.txt",
+    "guid": "906181524717000564",
+    "url": "http://documents.worldbank.org/curated/en/906181524717000564"
+   },
+   "D29794672": {
+    "id": "29794672",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0858a8914_1_0"
+    },
+    "repnb": "ISR31603",
+    "docdt": "2018-04-10T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rajasthan Road Sector Modernization Project - P130164 - Sequence No : 12",
+    "disclosure_date": "2018-04-10T14:21:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/477601523370122764/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-12.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/477601523370122764/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-12.txt",
+    "guid": "477601523370122764",
+    "url": "http://documents.worldbank.org/curated/en/477601523370122764"
+   },
+   "D29621167": {
+    "id": "29621167",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0856b84ae_1_0"
+    },
+    "repnb": "AUD0011488",
+    "docdt": "2018-02-18T05:00:00Z",
+    "display_title": "FY16-17_Audit report : 2016-17 Audit report",
+    "disclosure_date": "2018-11-05T07:30:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/622721541401324868/pdf/FY16-17-Audit-report.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/622721541401324868/text/FY16-17-Audit-report.txt",
+    "guid": "622721541401324868",
+    "url": "http://documents.worldbank.org/curated/en/622721541401324868"
+   },
+   "D29601771": {
+    "id": "29601771",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085691bfc_1_0"
+    },
+    "repnb": "STEP7132",
+    "docdt": "2018-02-16T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-02-16T12:37:28Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/587441518784650834/pdf/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/587441518784650834/text/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.txt",
+    "guid": "587441518784650834",
+    "url": "http://documents.worldbank.org/curated/en/587441518784650834"
+   },
+   "D29554228": {
+    "id": "29554228",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0855f0805_1_0"
+    },
+    "repnb": "STEP6749",
+    "docdt": "2018-02-01T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-02-01T11:43:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/989621517485414972/pdf/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/989621517485414972/text/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.txt",
+    "guid": "989621517485414972",
+    "url": "http://documents.worldbank.org/curated/en/989621517485414972"
+   },
+   "D29548573": {
+    "id": "29548573",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0855dca70_1_0"
+    },
+    "repnb": "STEP6718",
+    "docdt": "2018-01-30T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-01-30T20:04:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/160001517342665305/pdf/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/160001517342665305/text/India-SOUTH-ASIA-P130164-Rajasthan-Road-Sector-Modernization-Project-Procurement-Plan.txt",
+    "guid": "160001517342665305",
+    "url": "http://documents.worldbank.org/curated/en/160001517342665305"
+   },
+   "D29508503": {
+    "id": "29508503",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08554c0e5_1_0"
+    },
+    "repnb": "STEP6315",
+    "docdt": "2018-01-15T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2018-01-15T18:24:35Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/661501516040676598/pdf/Plan-Archive-8.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/661501516040676598/text/Plan-Archive-8.txt",
+    "guid": "661501516040676598",
+    "url": "http://documents.worldbank.org/curated/en/661501516040676598"
+   },
+   "D29287108": {
+    "id": "29287108",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085469ece_1_0"
+    },
+    "repnb": "STEP5815",
+    "docdt": "2017-12-19T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-12-19T20:11:26Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/742101513714291014/pdf/Plan-Archive-7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/742101513714291014/text/Plan-Archive-7.txt",
+    "guid": "742101513714291014",
+    "url": "http://documents.worldbank.org/curated/en/742101513714291014"
+   },
+   "D29280184": {
+    "id": "29280184",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085457a6a_1_0"
+    },
+    "repnb": "ISR30732",
+    "docdt": "2017-12-18T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rajasthan Road Sector Modernization Project - P130164 - Sequence No : 11",
+    "disclosure_date": "2017-12-18T15:18:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/475111513610289175/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-11.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/475111513610289175/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-11.txt",
+    "guid": "475111513610289175",
+    "url": "http://documents.worldbank.org/curated/en/475111513610289175"
+   },
+   "D28732721": {
+    "id": "28732721",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08539c866_1_0"
+    },
+    "repnb": "STEP5427",
+    "docdt": "2017-11-28T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-11-28T17:36:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/323281511890564968/pdf/Plan-Archive-6.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/323281511890564968/text/Plan-Archive-6.txt",
+    "guid": "323281511890564968",
+    "url": "http://documents.worldbank.org/curated/en/323281511890564968"
+   },
+   "D27950982": {
+    "id": "27950982",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084f48072_1_0"
+    },
+    "docdt": "2017-08-31T04:00:00Z",
+    "display_title": "Official Documents- Amendment to the Financing Agreement and to the Supplemental Letter Ref. Performance Monitoring Indicators for Credit 5310-IN",
+    "disclosure_date": "2017-09-01T12:50:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/476421504268567036/pdf/ITK171540-201708010820.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/476421504268567036/text/ITK171540-201708010820.txt",
+    "guid": "476421504268567036",
+    "url": "http://documents.worldbank.org/curated/en/476421504268567036"
+   },
+   "D29528676": {
+    "id": "29528676",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085596112_1_0"
+    },
+    "docdt": "2017-07-31T04:00:00Z",
+    "display_title": "Official Documents- Amendment to the Financing Agreement and Performance Monitoring Indicators for Credit 5310-IN",
+    "disclosure_date": "2018-01-23T18:15:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/426731516729614135/pdf/Official-Documents-Amendment-to-the-Financing-Agreement-and-Performance-Monitoring-Indicators-for-Credit-5310-IN.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/426731516729614135/text/Official-Documents-Amendment-to-the-Financing-Agreement-and-Performance-Monitoring-Indicators-for-Credit-5310-IN.txt",
+    "guid": "426731516729614135",
+    "url": "http://documents.worldbank.org/curated/en/426731516729614135"
+   },
+   "D27853466": {
+    "id": "27853466",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084e266b5_1_0"
+    },
+    "repnb": "ISR28734",
+    "docdt": "2017-07-26T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 10",
+    "disclosure_date": "2017-07-26T07:17:02Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/112351501053423465/pdf/ISR-Disclosable-P130164-07-26-2017-1501053413211.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/112351501053423465/text/ISR-Disclosable-P130164-07-26-2017-1501053413211.txt",
+    "guid": "112351501053423465",
+    "url": "http://documents.worldbank.org/curated/en/112351501053423465"
+   },
+   "D27749634": {
+    "id": "27749634",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084de4515_1_0"
+    },
+    "repnb": "STEP2763",
+    "docdt": "2017-07-17T04:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-07-17T15:10:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/505671500304219111/pdf/Plan-Archive-5.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/505671500304219111/text/Plan-Archive-5.txt",
+    "guid": "505671500304219111",
+    "url": "http://documents.worldbank.org/curated/en/505671500304219111"
+   },
+   "D27490469": {
+    "id": "27490469",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084bc1f89_1_0"
+    },
+    "repnb": "ISR27743",
+    "docdt": "2017-05-23T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 09",
+    "disclosure_date": "2017-05-23T07:02:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/501451495522927853/pdf/ISR-Disclosable-P130164-05-23-2017-1495522916648.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/501451495522927853/text/ISR-Disclosable-P130164-05-23-2017-1495522916648.txt",
+    "guid": "501451495522927853",
+    "url": "http://documents.worldbank.org/curated/en/501451495522927853"
+   },
+   "D27243340": {
+    "id": "27243340",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0849b6521_1_0"
+    },
+    "repnb": "ISR25432",
+    "docdt": "2017-03-05T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 08",
+    "disclosure_date": "2017-03-06T04:30:10Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/630741488774611571/pdf/ISR-Disclosable-P130164-03-05-2017-1488774594304.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/630741488774611571/text/ISR-Disclosable-P130164-03-05-2017-1488774594304.txt",
+    "guid": "630741488774611571",
+    "url": "http://documents.worldbank.org/curated/en/630741488774611571"
+   },
+   "D27213657": {
+    "id": "27213657",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0849723a9_1_0"
+    },
+    "repnb": "STEP1061",
+    "docdt": "2017-02-22T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-02-22T11:59:09Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/854871487764750186/pdf/Plan-Archive-4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/854871487764750186/text/Plan-Archive-4.txt",
+    "guid": "854871487764750186",
+    "url": "http://documents.worldbank.org/curated/en/854871487764750186"
+   },
+   "D27179624": {
+    "id": "27179624",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084928964_1_0"
+    },
+    "repnb": "STEP970",
+    "docdt": "2017-02-10T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-02-10T12:32:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/726101486729926997/pdf/Plan-Archive-3.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/726101486729926997/text/Plan-Archive-3.txt",
+    "guid": "726101486729926997",
+    "url": "http://documents.worldbank.org/curated/en/726101486729926997"
+   },
+   "D27172462": {
+    "id": "27172462",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08491872c_1_0"
+    },
+    "repnb": "STEP955",
+    "docdt": "2017-02-08T05:00:00Z",
+    "display_title": "India/SOUTH ASIA- P130164- Rajasthan Road Sector Modernization Project - Procurement Plan",
+    "disclosure_date": "2017-02-08T11:57:15Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/505811486555036529/pdf/Plan-Archive-2.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/505811486555036529/text/Plan-Archive-2.txt",
+    "guid": "505811486555036529",
+    "url": "http://documents.worldbank.org/curated/en/505811486555036529"
+   },
+   "D27087441": {
+    "id": "27087441",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084861fcd_1_0"
+    },
+    "repnb": "AUD0007490",
+    "docdt": "2017-01-09T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : audited financial statement - year ending March, 2016",
+    "disclosure_date": "2018-11-05T13:44:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/112481541401160852/pdf/India-Rajasthan-Road-Sector-Modernization-Project-audited-financial-statement-year-ending-March-2016.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/112481541401160852/text/India-Rajasthan-Road-Sector-Modernization-Project-audited-financial-statement-year-ending-March-2016.txt",
+    "guid": "112481541401160852",
+    "url": "http://documents.worldbank.org/curated/en/112481541401160852"
+   },
+   "D26733307": {
+    "id": "26733307",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08451d8c6_1_0"
+    },
+    "repnb": "ISR24046",
+    "docdt": "2016-08-26T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 07",
+    "disclosure_date": "2016-08-26T21:44:14Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/276751472247855381/pdf/ISR-Disclosable-P130164-08-26-2016-1472247844818.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/276751472247855381/text/ISR-Disclosable-P130164-08-26-2016-1472247844818.txt",
+    "guid": "276751472247855381",
+    "url": "http://documents.worldbank.org/curated/en/276751472247855381"
+   },
+   "D25814564": {
+    "id": "25814564",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0840ec580_1_0"
+    },
+    "repnb": "ISR21836",
+    "docdt": "2016-01-21T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 06",
+    "disclosure_date": "2016-01-21T20:59:43Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/573951468049736207/pdf/ISR-Disclosable-P130164-01-21-2016-1453409976127.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/573951468049736207/text/ISR-Disclosable-P130164-01-21-2016-1453409976127.txt",
+    "guid": "573951468049736207",
+    "url": "http://documents.worldbank.org/curated/en/573951468049736207"
+   },
+   "D25481343": {
+    "id": "25481343",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0831f02b4_1_0"
+    },
+    "repnb": "ISR21540",
+    "docdt": "2015-11-20T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 05",
+    "disclosure_date": "2015-11-20T18:13:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/255441468042042497/pdf/India-Rajasthan-Road-Sector-Modernization-Project-P130164-Implementation-Status-Results-Report-Sequence-05.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/255441468042042497/text/India-Rajasthan-Road-Sector-Modernization-Project-P130164-Implementation-Status-Results-Report-Sequence-05.txt",
+    "guid": "255441468042042497",
+    "url": "http://documents.worldbank.org/curated/en/255441468042042497"
+   },
+   "D24589049": {
+    "id": "24589049",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b082ef84ef_1_0"
+    },
+    "repnb": "ISR18299",
+    "docdt": "2015-06-04T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 04",
+    "disclosure_date": "2015-06-04T23:17:56Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/622221468290960185/pdf/ISR-Disclosable-P130164-06-04-2015-1433459867784.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/622221468290960185/text/ISR-Disclosable-P130164-06-04-2015-1433459867784.txt",
+    "guid": "622221468290960185",
+    "url": "http://documents.worldbank.org/curated/en/622221468290960185"
+   },
+   "D23868309": {
+    "id": "23868309",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0829ebebd_1_0"
+    },
+    "repnb": "ISR17299",
+    "docdt": "2015-01-23T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 03",
+    "disclosure_date": "2015-01-23T20:47:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/153581468274185451/pdf/ISR-Disclosable-P130164-01-23-2015-1422046009555.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/153581468274185451/text/ISR-Disclosable-P130164-01-23-2015-1422046009555.txt",
+    "guid": "153581468274185451",
+    "url": "http://documents.worldbank.org/curated/en/153581468274185451"
+   },
+   "D27060911": {
+    "id": "27060911",
+    "docty": "Auditing Document; Financial Monitoring Report; Letter; Memorandum",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08481924c_1_0"
+    },
+    "repnb": "118290",
+    "docdt": "2014-09-30T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : audited financial statement - year ending March 31, 2014",
+    "disclosure_date": "2016-12-29T21:05:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/735461482962800158/pdf/P130164-RRSMP-PWD-Audit-Report-FY-2013-14.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/735461482962800158/text/P130164-RRSMP-PWD-Audit-Report-FY-2013-14.txt",
+    "guid": "735461482962800158",
+    "url": "http://documents.worldbank.org/curated/en/735461482962800158"
+   },
+   "D19901331": {
+    "id": "19901331",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0825d0b00_1_0"
+    },
+    "docdt": "2014-07-30T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 02",
+    "disclosure_date": "2014-07-30T22:37:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/183091468034867647/pdf/ISR-Disclosable-P130164-07-30-2014-1406759831327.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/183091468034867647/text/ISR-Disclosable-P130164-07-30-2014-1406759831327.txt",
+    "guid": "183091468034867647",
+    "url": "http://documents.worldbank.org/curated/en/183091468034867647"
+   },
+   "D19095337": {
+    "id": "19095337",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0822ba193_1_0"
+    },
+    "repnb": "ISR13553",
+    "docdt": "2014-02-22T05:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : P130164 - Implementation Status Results Report : Sequence 01",
+    "disclosure_date": "2014-02-23T00:52:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/934351468251717700/pdf/ISR-Disclosable-P130164-02-22-2014-1393116744882.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/934351468251717700/text/ISR-Disclosable-P130164-02-22-2014-1393116744882.txt",
+    "guid": "934351468251717700",
+    "url": "http://documents.worldbank.org/curated/en/934351468251717700"
+   },
+   "D18900264": {
+    "id": "18900264",
+    "docty": "Side Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224db5d_1_0"
+    },
+    "docdt": "2014-01-02T05:00:00Z",
+    "display_title": "Official Documents- Supplemental Letter Ref. Performance Monitoring Indicators for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T14:26:43Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/703291468049770208/pdf/RAD243333040.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/703291468049770208/text/RAD243333040.txt",
+    "guid": "703291468049770208",
+    "url": "http://documents.worldbank.org/curated/en/703291468049770208"
+   },
+   "D18900385": {
+    "id": "18900385",
+    "docty": "Side Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224db7d_1_0"
+    },
+    "docdt": "2014-01-02T05:00:00Z",
+    "display_title": "Official Documents- Supplemental Letter Ref. Financial Data for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T14:32:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/889121468033312221/pdf/RAD38249897.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/889121468033312221/text/RAD38249897.txt",
+    "guid": "889121468033312221",
+    "url": "http://documents.worldbank.org/curated/en/889121468033312221"
+   },
+   "D18900231": {
+    "id": "18900231",
+    "docty": "Project Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224daeb_1_0"
+    },
+    "docdt": "2014-01-02T05:00:00Z",
+    "display_title": "Official Documents- Project Agreement for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T14:19:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/111121468034822692/pdf/RAD1538322747.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/111121468034822692/text/RAD1538322747.txt",
+    "guid": "111121468034822692",
+    "url": "http://documents.worldbank.org/curated/en/111121468034822692"
+   },
+   "D18900283": {
+    "id": "18900283",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224dbf5_1_0"
+    },
+    "docdt": "2014-01-02T05:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T14:41:25Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/749611468034193767/pdf/RAD387891083.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/749611468034193767/text/RAD387891083.txt",
+    "guid": "749611468034193767",
+    "url": "http://documents.worldbank.org/curated/en/749611468034193767"
+   },
+   "D18900299": {
+    "id": "18900299",
+    "docty": "Financing Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224daee_1_0"
+    },
+    "docdt": "2014-01-02T05:00:00Z",
+    "display_title": "Official Documents- Financing Agreement for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T14:21:29Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/568261468281106216/pdf/RAD1165509944.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/568261468281106216/text/RAD1165509944.txt",
+    "guid": "568261468281106216",
+    "url": "http://documents.worldbank.org/curated/en/568261468281106216"
+   },
+   "D18900585": {
+    "id": "18900585",
+    "docty": "Statutory Committee Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08224ee1c_1_0"
+    },
+    "docdt": "2013-10-24T04:00:00Z",
+    "display_title": "Official Documents- Recommendation of Statutory Committee for Credit 5310-IN (Closing Package)",
+    "disclosure_date": "2014-02-04T15:51:07Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/280691468033312523/pdf/RAD1477629534.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/280691468033312523/text/RAD1477629534.txt",
+    "guid": "280691468033312523",
+    "url": "http://documents.worldbank.org/curated/en/280691468033312523"
+   },
+   "D18381488": {
+    "id": "18381488",
+    "docty": "Project Appraisal Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20131011095013"
+    },
+    "repnb": "81594",
+    "docdt": "2013-10-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of the Rajasthan Road Sector Modernization Project for India is to improve rural connectivity, enhance road safety, and strengthen road sector management capacity of the state of Rajasthan. The project has three components. The first component is rural connectivity improvement. This component will support construction of about 2500 kilometer (km) rural roads to provide connectivity to about 1,300 revenue villages with population between 250 and 499 people in the areas of the state not covered by Pradhan Mantri Gram Sadak Yojana (PMGSY) and introduce good practices of cost effective low volume technologies. The second component is road sector modernization and performance enhancement. This component will support implementation of a road sector modernization plan (RSMP) in the following key areas: improved policy framework; modernization of engineering practices and business procedures; sustainable asset management; institutional and human resource development; preparing a pipeline of feasible projects for implementation; and enhancing governance and accountability in public works department (PWD). The third component is road safety management. This component will support the strengthening of road safety management systems in Rajasthan with the objective of reducing the number of fatalities and serious injuries from traffic accidents in the state."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project",
+    "disclosure_date": "2013-11-06T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/836241468260649073/text/815940PAD0Box30official0use0only090.txt",
+    "guid": "836241468260649073",
+    "url": "http://documents.worldbank.org/curated/en/836241468260649073"
+   },
+   "D18265854": {
+    "id": "18265854",
+    "docty": "Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081edbfca_1_0"
+    },
+    "repnb": "ISDSA5655",
+    "docdt": "2013-09-17T04:00:00Z",
+    "display_title": "Integrated Safeguards Data Sheet (Appraisal Stage) - Rajasthan Road Sector Modernization Project - P130164",
+    "disclosure_date": "2013-09-17T19:24:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/358901468050035207/pdf/AppraisalISDS-Print-P130164-09-17-2013-1379445881058.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/358901468050035207/text/AppraisalISDS-Print-P130164-09-17-2013-1379445881058.txt",
+    "guid": "358901468050035207",
+    "url": "http://documents.worldbank.org/curated/en/358901468050035207"
+   },
+   "D18256573": {
+    "id": "18256573",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130916105506"
+    },
+    "repnb": "81054",
+    "docdt": "2013-09-05T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : procurement plan",
+    "disclosure_date": "2013-09-16T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/700611468040592125/pdf/810540PROP0P130Box0379826B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/700611468040592125/text/810540PROP0P130Box0379826B00PUBLIC0.txt",
+    "guid": "700611468040592125",
+    "url": "http://documents.worldbank.org/curated/en/700611468040592125"
+   },
+   "D18256568": {
+    "id": "18256568",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130916105047"
+    },
+    "repnb": "81053",
+    "docdt": "2013-09-05T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : procurement plan",
+    "disclosure_date": "2013-09-16T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/978791468269663806/pdf/810530PROP0P130Box0379826B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/978791468269663806/text/810530PROP0P130Box0379826B00PUBLIC0.txt",
+    "guid": "978791468269663806",
+    "url": "http://documents.worldbank.org/curated/en/978791468269663806"
+   },
+   "D18187701": {
+    "id": "18187701",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081e76fbb_1_0"
+    },
+    "repnb": "PIDA1345",
+    "docdt": "2013-09-03T04:00:00Z",
+    "display_title": "Project Information Document (Appraisal Stage) - Rajasthan Rural Connectivity Project - P130164",
+    "disclosure_date": "2013-09-03T13:20:34Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/582421468036312981/pdf/PID-Appraisal-Print-P130164-09-03-2013-1378214427305.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/582421468036312981/text/PID-Appraisal-Print-P130164-09-03-2013-1378214427305.txt",
+    "guid": "582421468036312981",
+    "url": "http://documents.worldbank.org/curated/en/582421468036312981"
+   },
+   "D18190950": {
+    "id": "18190950",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130904111918"
+    },
+    "repnb": "E4283",
+    "docdt": "2013-08-27T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Rural Connectivity Project for India is to improve rural connectivity, enhance road safety, and strengthen road sector management capacity of the state of Rajasthan. Negative impacts include: loss of trees, sewage, traffic, risk to health, risk from electrical equipment(s), dust, siltation of water bodies and degradation of water quality, noise, flood, and soil erosion. Mitigation measures include: (1) avoiding cutting of trees except that are required to be felled for construction of traffic diversion works and facilities; (2) providing separate toilets and bathrooms for women workers and proper sewage system for the camp; (3) providing protective footwear and goggles to all workers handling asphalt materials, cement, mortar, concrete, blasting, and crusher operations; (4) ensuring necessary fencing, illumination, and proper insulation of the electrical lines for safety and security of the general public, road users, workers, and the wildlife; (5) providing wind screens or barriers, sprinkling water at the plant sites; (6) releasing wastes (non-toxic and toxic) by the contractor into water bodies and drainage systems that may adversely impact the aquatic life; (7) locating garage, service stations, refueling stations, and equipment maintenance yards at least 100 meters away from kitchen, mess, and drinking water within the camp site; (8) fitting exhaust silencers in all vehicles and equipment's used in construction; (9) clearing drainage to avoid accumulation of water within the construction sites, camp, and plant sites and storage yard well in advance of the rainy season; and (10) mulching or netting of slope with sowing of grass seeds and sprinkling of water on such slopes after the completion of the earth work."
+    },
+    "display_title": "India - Rajasthan Rural Connectivity Project : environmental assessment (Vol. 1 of 2) : Environment management framework",
+    "disclosure_date": "2013-09-04T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/906811468267329084/pdf/E42830v10RRCP0000PUBLIC00Box379823B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/906811468267329084/text/E42830v10RRCP0000PUBLIC00Box379823B.txt",
+    "guid": "906811468267329084",
+    "url": "http://documents.worldbank.org/curated/en/906811468267329084"
+   },
+   "D18190952": {
+    "id": "18190952",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130904112419"
+    },
+    "repnb": "E4283",
+    "docdt": "2013-08-27T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Rural Connectivity Project for India is to improve rural connectivity, enhance road safety, and strengthen road sector management capacity of the state of Rajasthan. Negative impacts include: loss of trees, sewage, traffic, risk to health, risk from electrical equipment(s), dust, siltation of water bodies and degradation of water quality, noise, flood, and soil erosion. Mitigation measures include: (1) avoiding cutting of trees except that are required to be felled for construction of traffic diversion works and facilities; (2) providing separate toilets and bathrooms for women workers and proper sewage system for the camp; (3) providing protective footwear and goggles to all workers handling asphalt materials, cement, mortar, concrete, blasting, and crusher operations; (4) ensuring necessary fencing, illumination, and proper insulation of the electrical lines for safety and security of the general public, road users, workers, and the wildlife; (5) providing wind screens or barriers, sprinkling water at the plant sites; (6) releasing wastes (non-toxic and toxic) by the contractor into water bodies and drainage systems that may adversely impact the aquatic life; (7) locating garage, service stations, refueling stations, and equipment maintenance yards at least 100 meters away from kitchen, mess, and drinking water within the camp site; (8) fitting exhaust silencers in all vehicles and equipment's used in construction; (9) clearing drainage to avoid accumulation of water within the construction sites, camp, and plant sites and storage yard well in advance of the rainy season; and (10) mulching or netting of slope with sowing of grass seeds and sprinkling of water on such slopes after the completion of the earth work."
+    },
+    "display_title": "India - Rajasthan Rural Connectivity Project : environmental assessment (Vol. 2 of 2) : Environmental codes of practice",
+    "disclosure_date": "2013-09-04T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/764801468043145435/pdf/E42830v20RRCP0030PUBLIC00Box379823B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/764801468043145435/text/E42830v20RRCP0030PUBLIC00Box379823B.txt",
+    "guid": "764801468043145435",
+    "url": "http://documents.worldbank.org/curated/en/764801468043145435"
+   },
+   "D18156455": {
+    "id": "18156455",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130828120731"
+    },
+    "repnb": "RP1474",
+    "docdt": "2013-08-22T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. Negative impacts include: loss of land, loss of business, traffic, drainage problem, noise, and pollution. Mitigation measures include: (1) widening and strengthening between existing Right of Way (RoW); (2) providing footpath over covered drains since building to building line is limited; (3) using rumble strips to reduce the vehicle speed at the location of junctions, schools, and railway crossings; (4) providing efficient drainage system and rainwater harvesting layout; (5) sprinkling water to suppress dust; and (6) providing compensation at replacement value as per the policy."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : resettlement plan (Vol. 1 of 2) : Social impact assessment and resettlement action plan",
+    "disclosure_date": "2013-08-28T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/289381468041338727/pdf/RP014740v10Raj000PUBLIC00Box379816B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/289381468041338727/text/RP014740v10Raj000PUBLIC00Box379816B.txt",
+    "guid": "289381468041338727",
+    "url": "http://documents.worldbank.org/curated/en/289381468041338727"
+   },
+   "D18157054": {
+    "id": "18157054",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000333037_20130828125810"
+    },
+    "repnb": "RP1474",
+    "docdt": "2013-08-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. Negative impacts include: loss of land, loss of business, traffic, drainage problem, noise, and pollution. Mitigation measures include: (1) widening and strengthening between existing Right of Way (RoW); (2) providing footpath over covered drains since building to building line is limited; (3) using rumble strips to reduce the vehicle speed at the location of junctions, schools, and railway crossings; (4) providing efficient drainage system and rainwater harvesting layout; (5) sprinkling water to suppress dust; and (6) providing compensation at replacement value as per the policy."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : resettlement plan (Vol. 2 of 2) : Resettlement policy and framework",
+    "disclosure_date": "2013-08-28T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/918591468052468098/pdf/RP014740v20Raj000PUBLIC00Box379816B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/918591468052468098/text/RP014740v20Raj000PUBLIC00Box379816B.txt",
+    "guid": "918591468052468098",
+    "url": "http://documents.worldbank.org/curated/en/918591468052468098"
+   },
+   "D18191091": {
+    "id": "18191091",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000445729_20130904120146"
+    },
+    "repnb": "RP1474",
+    "docdt": "2013-08-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. Negative impacts include: loss of land, loss of business, traffic, drainage problem, noise, and pollution. Mitigation measures include: (1) widening and strengthening between existing Right of Way (RoW); (2) providing footpath over covered drains since building to building line is limited; (3) using rumble strips to reduce the vehicle speed at the location of junctions, schools, and railway crossings; (4) providing efficient drainage system and rainwater harvesting layout; (5) sprinkling water to suppress dust; and (6) providing compensation at replacement value as per the policy."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : resettlement plan (Vol. 4 of 2) : Resettlement policy and framework",
+    "disclosure_date": "2013-09-04T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/636731468044088080/pdf/RP14740v40APPE000PUBLIC00Box379823B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/636731468044088080/text/RP14740v40APPE000PUBLIC00Box379823B.txt",
+    "guid": "636731468044088080",
+    "url": "http://documents.worldbank.org/curated/en/636731468044088080"
+   },
+   "D18191060": {
+    "id": "18191060",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000445729_20130904115721"
+    },
+    "repnb": "RP1474",
+    "docdt": "2013-08-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Rajasthan Road Sector Modernization Project for India is to assist the public works department, Rajasthan to improve the quality, connectivity, and management of its road network. Negative impacts include: loss of land, loss of business, traffic, drainage problem, noise, and pollution. Mitigation measures include: (1) widening and strengthening between existing Right of Way (RoW); (2) providing footpath over covered drains since building to building line is limited; (3) using rumble strips to reduce the vehicle speed at the location of junctions, schools, and railway crossings; (4) providing efficient drainage system and rainwater harvesting layout; (5) sprinkling water to suppress dust; and (6) providing compensation at replacement value as per the policy."
+    },
+    "display_title": "India - Rajasthan Road Sector Modernization Project : resettlement plan (Vol. 3 of 2) : Social management framework and  vulnerability framework",
+    "disclosure_date": "2013-09-04T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/733521468267012172/pdf/RP14740v30Raja000PUBLIC00Box379823B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/733521468267012172/text/RP14740v30Raja000PUBLIC00Box379823B.txt",
+    "guid": "733521468267012172",
+    "url": "http://documents.worldbank.org/curated/en/733521468267012172"
+   },
+   "D17840782": {
+    "id": "17840782",
+    "docty": "Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081c4fa5a_1_0"
+    },
+    "repnb": "ISDSC1984",
+    "docdt": "2013-06-11T04:00:00Z",
+    "display_title": "Integrated Safeguards Data Sheet (Concept Stage) - Rajasthan Road Sector Modernization Project - P130164",
+    "disclosure_date": "2013-03-26T16:25:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/643001468033529181/pdf/ISDS-Print-P130164-06-11-2013-1370967948010.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/643001468033529181/text/ISDS-Print-P130164-06-11-2013-1370967948010.txt",
+    "guid": "643001468033529181",
+    "url": "http://documents.worldbank.org/curated/en/643001468033529181"
+   },
+   "D18240523": {
+    "id": "18240523",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000356161_20130912142847"
+    },
+    "repnb": "81018",
+    "docdt": "2013-05-09T04:00:00Z",
+    "display_title": "India - Rajasthan Road Sector Modernization Project : procurement plan",
+    "disclosure_date": "2013-09-12T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/276291468040592875/pdf/810180PROP0P1300050920130Box379825B.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/276291468040592875/text/810180PROP0P1300050920130Box379825B.txt",
+    "guid": "276291468040592875",
+    "url": "http://documents.worldbank.org/curated/en/276291468040592875"
+   },
+   "D17617352": {
+    "id": "17617352",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081af0043_1_0"
+    },
+    "repnb": "PIDC737",
+    "docdt": "2013-04-22T04:00:00Z",
+    "display_title": "Project Information Document (Concept Stage) - Rajasthan Road Sector Modernization Project - P130164",
+    "disclosure_date": "2013-04-18T04:35:24Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/637381468034729628/pdf/PID-Print-P130164-04-23-2013-1366691718720.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/637381468034729628/text/PID-Print-P130164-04-23-2013-1366691718720.txt",
+    "guid": "637381468034729628",
+    "url": "http://documents.worldbank.org/curated/en/637381468034729628"
+   },
+   "D17461313": {
+    "id": "17461313",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0819fafe0_1_0"
+    },
+    "docdt": "2013-01-31T05:00:00Z",
+    "display_title": "Official Documents- Agreement for Advance Q847-IN",
+    "disclosure_date": "2013-03-19T21:30:26Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/314701468036245397/pdf/RAD266504657.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/314701468036245397/text/RAD266504657.txt",
+    "guid": "314701468036245397",
+    "url": "http://documents.worldbank.org/curated/en/314701468036245397"
+   },
+   "D17461336": {
+    "id": "17461336",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0819fafe2_1_0"
+    },
+    "docdt": "2013-01-31T05:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Advance Q847-IN",
+    "disclosure_date": "2013-03-19T21:33:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/587611468251099803/pdf/RAD2142851720.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/587611468251099803/text/RAD2142851720.txt",
+    "guid": "587611468251099803",
+    "url": "http://documents.worldbank.org/curated/en/587611468251099803"
+   },
+   "facets": {}
+  }
+ }
+}

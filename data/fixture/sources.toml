@@ -1,0 +1,541 @@
+# The fixture's sources. Every offline test reads the files recorded from these.
+#
+# Each [[source]] is one recorded copy of a public World Bank source:
+#   file     where it is recorded, under data/fixture/recorded/. A document records two
+#            files: <file>.txt (the published text) and <file>.pages.txt (the text of each
+#            PDF page, one after each form feed).
+#   kind     "json" for an API response, "document" for a document's text and pages.
+#   dataset  the entry under [datasets] whose attribution and license line the file carries.
+#   url, or text_url and pdf_url   where it is fetched from.
+#   about    one sentence on what it is and why the fixture holds it.
+#
+# To refresh the fixture, run `uv run python -m strata.fixture.record`, read the diff, then
+# run it again with --write. To add a source, add an entry here and record it with --only.
+
+recorded = "recorded"
+
+# Size limits that keep the gate well under two minutes. tests/test_fixture.py checks them.
+# A source that would break them is recorded as text, or narrowed, before it is added.
+[limits]
+file_mb = 5
+total_mb = 25
+
+[datasets.projects]
+attribution = "The World Bank: World Bank Projects & Operations: Projects API (search.worldbank.org/api/v3/projects). License: CC BY 4.0."
+
+[datasets.document_list]
+attribution = "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0."
+
+[datasets.documents]
+attribution = "The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0."
+
+[datasets.notices]
+attribution = "The World Bank: Procurement Notices: Systematic Tracking of Exchanges in Procurement (STEP), from search.worldbank.org/api/v2/procnotices. License: CC BY 4.0."
+
+[datasets.awards]
+attribution = "The World Bank: Contract Awards in Investment Project Financing (Since FY 2020): Systematic Tracking of Exchanges in Procurement (STEP), Finances One dataset DS00005. License: CC BY 4.0."
+
+[datasets.awards_fy2001_2016]
+attribution = "The World Bank: Contract Awards in Investment Project Financing (FY 2001 to FY 2016, prior review only), Finances One dataset DS01004. License: CC BY 4.0."
+
+[datasets.ieg_ratings]
+attribution = "The World Bank: IEG World Bank Project Performance Ratings, Finances One dataset DS00053. License: CC BY 4.0."
+
+[datasets.ida_credits]
+attribution = "The World Bank: IDA Statement of Credits, Grants and Guarantees (latest), Finances One dataset DS00001. License: CC BY 4.0."
+
+[datasets.ida_credit_history]
+attribution = "The World Bank: IDA Statement of Credits, Grants and Guarantees (historical monthly), Finances One dataset DS00976. License: CC BY 4.0."
+
+[datasets.cpia]
+attribution = "The World Bank: World Development Indicators: Country Policy and Institutional Assessment (IQ.CPA codes), from api.worldbank.org/v2. License: CC BY 4.0."
+
+[datasets.wgi]
+attribution = "The World Bank: Worldwide Governance Indicators (GOV_WGI codes), from api.worldbank.org/v2. License: CC BY 4.0."
+
+# Projects
+
+[[source]]
+file = "api/projects/P156634.json"
+kind = "json"
+dataset = "projects"
+url = "https://search.worldbank.org/api/v3/projects?format=json&id=P156634&fl=*"
+about = "The project record for the Kenya Water and Sanitation Development Project (P156634), the demo plan's project. It closes October 31, 2026."
+
+[[source]]
+file = "api/projects/P130164.json"
+kind = "json"
+dataset = "projects"
+url = "https://search.worldbank.org/api/v3/projects?format=json&id=P130164&fl=*"
+about = "The project record for the India Rajasthan Road Sector Modernization Project (P130164), the closed showcase project."
+
+# Document lists, with each document's date and disclosure date
+
+[[source]]
+file = "api/documents/P156634.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P156634&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
+about = "Every document the Documents API lists for P156634, with its type, date and disclosure date. The Procurement Plans form one series per implementing agency."
+
+[[source]]
+file = "api/documents/P130164.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P130164&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
+about = "Every document the Documents API lists for P130164, including the ICR Review of March 27, 2020 and its re-issue of May 4, 2023 under the same report number."
+
+[[source]]
+file = "api/documents/dated-in-the-future.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&id=34442292&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid,projectid,count"
+about = "A document whose date (December 31, 2026) is later than both its disclosure date and the day it was recorded, so public_from must fall back to the first fetch."
+
+# Procurement notices, with award notices that list every bidder
+
+[[source]]
+file = "api/notices/P156634.json"
+kind = "json"
+dataset = "notices"
+url = "https://search.worldbank.org/api/v2/procnotices?format=json&project_id=P156634&rows=500&os=0"
+about = "Every procurement notice for P156634: the specific procurement notices of the comparable works packages and the award notices for the NWWDA plan's activities. Notices carry contact names, emails and phone numbers, which ingestion strips."
+
+[[source]]
+file = "api/notices/P130164.json"
+kind = "json"
+dataset = "notices"
+url = "https://search.worldbank.org/api/v2/procnotices?format=json&project_id=P130164&rows=500&os=0"
+about = "Every procurement notice for P130164, including the award notice for IN-RRSMP-7431-CW-RFB, signed in FY2017, which no award dataset covers."
+
+# Contract awards
+
+[[source]]
+file = "api/awards/P156634.json"
+kind = "json"
+dataset = "awards"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005&resourceId=RS00005&type=json&top=1000&skip=0&filter=project_id%3D%27P156634%27"
+about = "Every contract award row for P156634 since FY2020, one row per supplier, so a joint venture has one row per member."
+
+[[source]]
+file = "api/awards/P130164-fy2001-2016.json"
+kind = "json"
+dataset = "awards_fy2001_2016"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS01004&resourceId=RS00934&type=json&top=1000&skip=0&filter=project_id%3D%27P130164%27"
+about = "P130164's prior-review contract awards from the frozen FY2001 to FY2016 dataset, which uses the old method names."
+
+# IEG ratings, credits and the credits' monthly history
+
+[[source]]
+file = "api/ieg/P156634-P130164.json"
+kind = "json"
+dataset = "ieg_ratings"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00053&resourceId=RS00055&type=json&top=100&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)"
+about = "IEG's ratings for the two projects. Only P130164 is rated; P156634 is still active."
+
+[[source]]
+file = "api/credits/P156634-P130164.json"
+kind = "json"
+dataset = "ida_credits"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00001&resourceId=RS00001&type=json&top=100&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)"
+about = "The latest snapshot of the two projects' IDA credits (IDA60290, IDA60300 and IDA53100), with disbursed and canceled amounts."
+
+[[source]]
+file = "api/credits/P156634-P130164-history.json"
+kind = "json"
+dataset = "ida_credit_history"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00976&resourceId=RS00976&type=json&top=2000&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)"
+about = "The monthly history of the two projects' IDA credits, which shows each closing-date change. P156634's closing date moved three times since 2022."
+
+# Governance indicators for Kenya and India
+
+[[source]]
+file = "api/indicators/cpia-irai-KEN-IND.json"
+kind = "json"
+dataset = "cpia"
+url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/IQ.CPA.IRAI.XQ?format=json&per_page=500"
+about = "The overall CPIA score (IDA resource allocation index) for Kenya and India. India has values only for the years it borrowed from IDA."
+
+[[source]]
+file = "api/indicators/cpia-tran-KEN-IND.json"
+kind = "json"
+dataset = "cpia"
+url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/IQ.CPA.TRAN.XQ?format=json&per_page=500"
+about = "The CPIA rating for transparency, accountability and corruption in the public sector, for Kenya and India."
+
+[[source]]
+file = "api/indicators/wgi-ge-KEN-IND.json"
+kind = "json"
+dataset = "wgi"
+url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_GE.EST?format=json&per_page=500&source=3"
+about = "The Worldwide Governance Indicators estimate of government effectiveness for Kenya and India. The old GE.EST code no longer works."
+
+[[source]]
+file = "api/indicators/wgi-cc-KEN-IND.json"
+kind = "json"
+dataset = "wgi"
+url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_CC.EST?format=json&per_page=500&source=3"
+about = "The Worldwide Governance Indicators estimate of control of corruption for Kenya and India."
+
+# Documents: the published text and the text of each PDF page
+
+[[source]]
+file = "documents/P156634/procurement-plan-2019-11-08"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/381251573242090835/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/381251573242090835/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
+about = "The Ministry of Water and Irrigation's Procurement Plan of November 8, 2019 for P156634, the first version that lists NWWDA-WSDP-03-2019-2020. Documents API id 31541426."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2020-04-30"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/768091588250052402/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/768091588250052402/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
+about = "The Ministry of Water and Irrigation's Procurement Plan of April 30, 2020 for P156634, which lists NWWDA-WSDP-03-2019-2020. Documents API id 31998332."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2020-12-07"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/311981607352126696/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/311981607352126696/pdf/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
+about = "The Northern Water Works Development Agency's Procurement Plan of December 7, 2020 for P156634. Documents API id 32642978."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2021-04-21"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/856721618995941664/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/856721618995941664/pdf/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
+about = "The Northern Water Works Development Agency's Procurement Plan of April 21, 2021 for P156634, the first version that lists KE-NWWDA-229129-CW-RFB. Documents API id 33014836."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2025-07-21"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099072125080039635/text/P156634-980ca8a0-c502-4555-ae80-be6b03dc5106.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099072125080039635/pdf/P156634-980ca8a0-c502-4555-ae80-be6b03dc5106.pdf"
+about = "The Northern Water Works Development Agency's Procurement Plan of July 21, 2025 for P156634. Documents API id 40031468."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2026-03-05"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099030526084522998/text/P156634-7166beb6-3d9e-419f-b2cc-2452fcd8c873.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099030526084522998/pdf/P156634-7166beb6-3d9e-419f-b2cc-2452fcd8c873.pdf"
+about = "The Northern Water Works Development Agency's Procurement Plan of March 5, 2026 for P156634, the first version that lists KE-NWWDA-541055-CW-RFB. Documents API id 40090127."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2026-08-17"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099081726084537498/text/P156634-faf2ceb3-b8a0-43e2-9b8b-cf9a661426fb.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099081726084537498/pdf/P156634-faf2ceb3-b8a0-43e2-9b8b-cf9a661426fb.pdf"
+about = "The Coast Water Services Board's Procurement Plan of August 17, 2026 for P156634, the first version that lists KE-CWSB-567630-CW-DIR. Documents API id 40122770."
+
+[[source]]
+file = "documents/P156634/procurement-plan-2026-10-09"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099100926083038869/text/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf"
+about = "The Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634: the demo plan. Documents API id 40132287."
+
+[[source]]
+file = "documents/P156634/pad-2017-04-05"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/899451500992254422/text/Kenya-Water-PAD-04072017.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/899451500992254422/pdf/Kenya-Water-PAD-04072017.pdf"
+about = "The Project Appraisal Document for P156634, April 5, 2017 (PAD2077). Documents API id 27348420."
+
+[[source]]
+file = "documents/P156634/isr-01-2017-11-27"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/847131511764668262/text/ISR-Disclosable-P156634-11-27-2017-1511764659440.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/847131511764668262/pdf/ISR-Disclosable-P156634-11-27-2017-1511764659440.pdf"
+about = "ISR 1 for P156634, 2017-11-27 (ISR30317). Documents API id 28621250."
+
+[[source]]
+file = "documents/P156634/isr-02-2018-05-30"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/633941527700579025/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-02.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/633941527700579025/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-02.pdf"
+about = "ISR 2 for P156634, 2018-05-30 (ISR32343). Documents API id 29938995."
+
+[[source]]
+file = "documents/P156634/isr-03-2018-12-03"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/725661543806078114/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-03.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/725661543806078114/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-03.pdf"
+about = "ISR 3 for P156634, 2018-12-03 (ISR34481). Documents API id 30657394."
+
+[[source]]
+file = "documents/P156634/isr-04-2019-06-04"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/913051559618779413/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-04.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/913051559618779413/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-04.pdf"
+about = "ISR 4 for P156634, 2019-06-04 (ISR37063). Documents API id 31128142."
+
+[[source]]
+file = "documents/P156634/isr-05-2019-10-02"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/164411570022904293/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-05.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/164411570022904293/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-05.pdf"
+about = "ISR 5 for P156634, 2019-10-02 (ISR38479). Documents API id 31451672."
+
+[[source]]
+file = "documents/P156634/isr-06-2020-04-01"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/241241585758120568/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-06.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/241241585758120568/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-06.pdf"
+about = "ISR 6 for P156634, 2020-04-01 (ISR40971). Documents API id 31920934."
+
+[[source]]
+file = "documents/P156634/isr-07-2020-09-28"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/382511601315047276/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-07.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/382511601315047276/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-07.pdf"
+about = "ISR 7 for P156634, 2020-09-28 (ISR43402). Documents API id 32442111."
+
+[[source]]
+file = "documents/P156634/isr-08-2020-12-17"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/643921608225799066/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-08.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/643921608225799066/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-08.pdf"
+about = "ISR 8 for P156634, 2020-12-17 (ISR44182). Documents API id 32682225."
+
+[[source]]
+file = "documents/P156634/isr-09-2021-06-16"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/609931623856195570/text/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-09.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/609931623856195570/pdf/Disclosable-Version-of-the-ISR-Water-and-Sanitation-Development-Project-P156634-Sequence-No-09.pdf"
+about = "ISR 9 for P156634, 2021-06-16 (ISR47021). Documents API id 33182526."
+
+[[source]]
+file = "documents/P156634/isr-10-2021-12-14"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099545012142124906/text/Disclosable0Ve0634000Sequence0No010.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099545012142124906/pdf/Disclosable0Ve0634000Sequence0No010.pdf"
+about = "ISR 10 for P156634, 2021-12-14 (ISR49349). Documents API id 33673197."
+
+[[source]]
+file = "documents/P156634/isr-11-2022-08-09"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099135008092234709/text/P15663408df4f80bd088ec091c0fdcaab15.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099135008092234709/pdf/P15663408df4f80bd088ec091c0fdcaab15.pdf"
+about = "ISR 11 for P156634, 2022-08-09 (ISR50690). Documents API id 33879167."
+
+[[source]]
+file = "documents/P156634/isr-12-2023-02-06"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099224002062335275/text/P1566340cbc94d0da0b92a02d2e7016a24b.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099224002062335275/pdf/P1566340cbc94d0da0b92a02d2e7016a24b.pdf"
+about = "ISR 12 for P156634, 2023-02-06 (ISR54832). Documents API id 33996648."
+
+[[source]]
+file = "documents/P156634/isr-13-2023-08-11"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099081123004034660/text/P1566340bf05770a60bda502de07a2b2a05.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099081123004034660/pdf/P1566340bf05770a60bda502de07a2b2a05.pdf"
+about = "ISR 13 for P156634, 2023-08-11 (ISR57349). Documents API id 34133893."
+
+[[source]]
+file = "documents/P156634/isr-14-2024-03-08"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099030724222516445/text/P1566341fa486c01b1a0471c40cd24452d7.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099030724222516445/pdf/P1566341fa486c01b1a0471c40cd24452d7.pdf"
+about = "ISR 14 for P156634, 2024-03-08 (ISR59788). Documents API id 34277278."
+
+[[source]]
+file = "documents/P156634/isr-15-2024-08-19"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099081924082516257/text/P156634-fdffc8de-69b8-4282-955d-e7ca94ced430.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099081924082516257/pdf/P156634-fdffc8de-69b8-4282-955d-e7ca94ced430.pdf"
+about = "ISR 15 for P156634, 2024-08-19 (ISR00849). Documents API id 34378949."
+
+[[source]]
+file = "documents/P156634/isr-16-2025-02-18"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099021825152023663/text/P156634-4d4973f9-046e-4522-8d7c-e09e3a2f7612.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099021825152023663/pdf/P156634-4d4973f9-046e-4522-8d7c-e09e3a2f7612.pdf"
+about = "ISR 16 for P156634, 2025-02-18 (ISR03244). Documents API id 34457596."
+
+[[source]]
+file = "documents/P156634/isr-17-2025-08-18"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099081825132081158/text/P156634-f5e5fc99-520e-406b-b68f-c532aa4c9ce6.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099081825132081158/pdf/P156634-f5e5fc99-520e-406b-b68f-c532aa4c9ce6.pdf"
+about = "ISR 17 for P156634, 2025-08-18 (ISR05223). Documents API id 40038432."
+
+[[source]]
+file = "documents/P156634/isr-18-2026-03-12"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099031226003019207/text/P156634-4691aab6-8be2-47be-a151-186b5d20a1b3.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099031226003019207/pdf/P156634-4691aab6-8be2-47be-a151-186b5d20a1b3.pdf"
+about = "ISR 18 for P156634, 2026-03-12 (ISR07091). Documents API id 40091292."
+
+[[source]]
+file = "documents/P156634/isr-19-2026-06-30"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099063026170036715/text/P156634-a6497888-50b9-45b4-88d2-1303b0327745.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099063026170036715/pdf/P156634-a6497888-50b9-45b4-88d2-1303b0327745.pdf"
+about = "ISR 19 for P156634, 2026-06-30 (ISR07733). Documents API id 40114539."
+
+[[source]]
+file = "documents/P130164/pad-2013-10-01"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/836241468260649073/text/815940PAD0Box30official0use0only090.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf"
+about = "The Project Appraisal Document for P130164, October 1, 2013 (report 81594-IN), a scan. Documents API id 18381488."
+
+[[source]]
+file = "documents/P130164/isr-01-2014-02-22"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/934351468251717700/text/ISR-Disclosable-P130164-02-22-2014-1393116744882.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/934351468251717700/pdf/ISR-Disclosable-P130164-02-22-2014-1393116744882.pdf"
+about = "ISR 1 for P130164, 2014-02-22 (ISR13553). Documents API id 19095337."
+
+[[source]]
+file = "documents/P130164/isr-02-2014-07-30"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/183091468034867647/text/ISR-Disclosable-P130164-07-30-2014-1406759831327.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/183091468034867647/pdf/ISR-Disclosable-P130164-07-30-2014-1406759831327.pdf"
+about = "ISR 2 for P130164, 2014-07-30. Documents API id 19901331."
+
+[[source]]
+file = "documents/P130164/isr-03-2015-01-23"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/153581468274185451/text/ISR-Disclosable-P130164-01-23-2015-1422046009555.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/153581468274185451/pdf/ISR-Disclosable-P130164-01-23-2015-1422046009555.pdf"
+about = "ISR 3 for P130164, 2015-01-23 (ISR17299). Documents API id 23868309."
+
+[[source]]
+file = "documents/P130164/isr-04-2015-06-04"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/622221468290960185/text/ISR-Disclosable-P130164-06-04-2015-1433459867784.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/622221468290960185/pdf/ISR-Disclosable-P130164-06-04-2015-1433459867784.pdf"
+about = "ISR 4 for P130164, 2015-06-04 (ISR18299). Documents API id 24589049."
+
+[[source]]
+file = "documents/P130164/isr-05-2015-11-20"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/255441468042042497/text/India-Rajasthan-Road-Sector-Modernization-Project-P130164-Implementation-Status-Results-Report-Sequence-05.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/255441468042042497/pdf/India-Rajasthan-Road-Sector-Modernization-Project-P130164-Implementation-Status-Results-Report-Sequence-05.pdf"
+about = "ISR 5 for P130164, 2015-11-20 (ISR21540). Documents API id 25481343."
+
+[[source]]
+file = "documents/P130164/isr-06-2016-01-21"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/573951468049736207/text/ISR-Disclosable-P130164-01-21-2016-1453409976127.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/573951468049736207/pdf/ISR-Disclosable-P130164-01-21-2016-1453409976127.pdf"
+about = "ISR 6 for P130164, 2016-01-21 (ISR21836). Documents API id 25814564."
+
+[[source]]
+file = "documents/P130164/isr-07-2016-08-26"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/276751472247855381/text/ISR-Disclosable-P130164-08-26-2016-1472247844818.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/276751472247855381/pdf/ISR-Disclosable-P130164-08-26-2016-1472247844818.pdf"
+about = "ISR 7 for P130164, 2016-08-26 (ISR24046). Documents API id 26733307."
+
+[[source]]
+file = "documents/P130164/isr-08-2017-03-05"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/630741488774611571/text/ISR-Disclosable-P130164-03-05-2017-1488774594304.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/630741488774611571/pdf/ISR-Disclosable-P130164-03-05-2017-1488774594304.pdf"
+about = "ISR 8 for P130164, 2017-03-05 (ISR25432). Documents API id 27243340."
+
+[[source]]
+file = "documents/P130164/isr-09-2017-05-23"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/501451495522927853/text/ISR-Disclosable-P130164-05-23-2017-1495522916648.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/501451495522927853/pdf/ISR-Disclosable-P130164-05-23-2017-1495522916648.pdf"
+about = "ISR 9 for P130164, 2017-05-23 (ISR27743). Documents API id 27490469."
+
+[[source]]
+file = "documents/P130164/isr-10-2017-07-26"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/112351501053423465/text/ISR-Disclosable-P130164-07-26-2017-1501053413211.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/112351501053423465/pdf/ISR-Disclosable-P130164-07-26-2017-1501053413211.pdf"
+about = "ISR 10 for P130164, 2017-07-26 (ISR28734). Documents API id 27853466."
+
+[[source]]
+file = "documents/P130164/isr-11-2017-12-18"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/475111513610289175/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-11.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/475111513610289175/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-11.pdf"
+about = "ISR 11 for P130164, 2017-12-18 (ISR30732). Documents API id 29280184."
+
+[[source]]
+file = "documents/P130164/isr-12-2018-04-10"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/477601523370122764/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-12.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/477601523370122764/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-12.pdf"
+about = "ISR 12 for P130164, 2018-04-10 (ISR31603). Documents API id 29794672."
+
+[[source]]
+file = "documents/P130164/isr-13-2018-12-28"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/767181546013001577/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/767181546013001577/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.pdf"
+about = "ISR 13 for P130164, 2018-12-28 (ISR33718). Documents API id 30730274."
+
+[[source]]
+file = "documents/P130164/icr-2019-10-10"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/258481572631321132/text/India-Rajasthan-Road-Sector-Modernization-Project.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf"
+about = "The Implementation Completion and Results Report for P130164, October 10, 2019 (ICR4803). Documents API id 31525018."
+
+[[source]]
+file = "documents/P130164/icr-review-2020-03-27"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/277111585336766011/text/India-IN-Rajasthan-Road-Sector-Modernization.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/277111585336766011/pdf/India-IN-Rajasthan-Road-Sector-Modernization.pdf"
+about = "IEG's ICR Review for P130164, March 27, 2020 (ICRR0021929). Documents API id 31906731."
+
+[[source]]
+file = "documents/P130164/icr-review-2023-05-04"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099050423040030393/text/P1301640b1a4d202008b910ba796c7180f1.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099050423040030393/pdf/P1301640b1a4d202008b910ba796c7180f1.pdf"
+about = "IEG's ICR Review for P130164 re-issued under the same number on May 4, 2023 (ICRR0021929). Documents API id 34056616."
+

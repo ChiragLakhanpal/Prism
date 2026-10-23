@@ -1,0 +1,1858 @@
+{
+ "source": "https://search.worldbank.org/api/v3/projects?format=json&id=P156634&fl=*",
+ "license": "The World Bank: World Bank Projects & Operations: Projects API (search.worldbank.org/api/v3/projects). License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "The project record for the Kenya Water and Sanitation Development Project (P156634), the demo plan's project. It closes October 31, 2026.",
+ "response": {
+  "rows": 10,
+  "os": "0",
+  "page": "1",
+  "total": "1",
+  "projects": {
+   "P156634": {
+    "id": "P156634",
+    "themev2_level1_exact": [
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Urban and Rural Development"
+    ],
+    "themev2_level2_exact": [
+     "FY17 - Climate change",
+     "FY17 - Climate change",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Renewable Natural Resources Asset Management",
+     "FY17 - Urban Development",
+     "FY17 - Water Resource Management"
+    ],
+    "themev2_level3_exact": [
+     "FY17 - Adaptation",
+     "FY17 - Coastal Zone Management",
+     "FY17 - Disaster Risk Reduction",
+     "FY17 - Mitigation",
+     "FY17 - Urban Water and Sanitation",
+     "FY17 - Water Institutions, Policies and Reform"
+    ],
+    "proj_id": "P156634",
+    "countryshortname": "Kenya",
+    "boardapprovaldate": "2017-04-26T00:00:00Z",
+    "curr_ibrd_commitment": "0",
+    "envassesmentcategorycode": "B",
+    "grantamt": "0",
+    "totalamt": "300000000",
+    "regionname": "Eastern and Southern Africa",
+    "lendprojectcost": "330000000",
+    "closingdate": "2026-10-31",
+    "project_abstract": "The development objective of Water and Sanitation Development Project is to improve water supply and sanitation services in select coastal and northeastern regions in Kenya. This project has four components. 1) The first component, Rehabilitation and expansion of urban water supply and sanitation services in the coastal region, has the following subcomponents: (i) Support to coastal counties; and (ii) Support to the coast bulk water services provider. 2) The second component, Expansion of water supply and sanitation services in underserved northeastern counties, aims to finance a program of activities designed to improve water supply and sanitation services in the northeastern counties, such as Wajir town in Wajir County and the Dadaab refugee camp host communities in Garissa County. 3) The third component, National performance-based financing, has the following two subcomponents: (i) Support for water and sanitation infrastructure investments and services; and (ii) Technical assistance for national performance-based financing. 4) The fourth component, Project management, finance a program of activities designed to strengthen the capacity of the Recipient for project management, implementation and coordination, and Monitoring and Evaluation (M and E).",
+    "borrower": "Government of the Republic of Kenya",
+    "impagency": "Coast Water Works Development Agency,Garissa Water and Saniation Company,Kilifi - Mariakani Water and Sewerage Company Ltd,Kwale Water and Sewerage Company Ltd.,Malindi Water and Sewerage Company Ltd,Ministry of Water, Sanitation and Irrigation,Mombasa Water and Sanitation Services Company,Northern Water Works Development Agency,Tavevo Water and Sewerage Company Ltd,Wajir Water and Sewerage Company,Water Sector Trust Fund,Water Services Regulatory Board",
+    "sector_name": "FY17 - Public Administration - Water, Sanitation and Waste Management,FY17 - Sanitation,FY17 - Water Supply",
+    "sector_percent": "30.0,33.0,37.0",
+    "sectorcode": "WA,WC,WF",
+    "major_sectors": [
+     {
+      "major_sector": {
+       "major_sector_code": "WX",
+       "major_sector_name": "FY17 - Water, Sanitation and Waste Management",
+       "sectors": [
+        {
+         "sector_name": "FY17 - Sanitation",
+         "sector_code": "WA",
+         "sector_percent": "30.0"
+        },
+        {
+         "sector_name": "FY17 - Water Supply",
+         "sector_code": "WC",
+         "sector_percent": "37.0"
+        },
+        {
+         "sector_name": "FY17 - Public Administration - Water, Sanitation and Waste Management",
+         "sector_code": "WF",
+         "sector_percent": "33.0"
+        }
+       ]
+      }
+     }
+    ],
+    "idacommamt": "300000000",
+    "boardapprovaldate_exact": "2017-04-26",
+    "countryshortname_exact": "Kenya",
+    "regionname_exact": "Eastern and Southern Africa",
+    "borrower_exact": "Government of the Republic of Kenya",
+    "impagency_exact": "Coast Water Works Development Agency,Garissa Water and Saniation Company,Kilifi - Mariakani Water and Sewerage Company Ltd,Kwale Water and Sewerage Company Ltd.,Malindi Water and Sewerage Company Ltd,Ministry of Water, Sanitation and Irrigation,Mombasa Water and Sanitation Services Company,Northern Water Works Development Agency,Tavevo Water and Sewerage Company Ltd,Wajir Water and Sewerage Company,Water Sector Trust Fund,Water Services Regulatory Board",
+    "sector_exact": "FY17 - Public Administration - Water, Sanitation and Waste Management,FY17 - Sanitation,FY17 - Water Supply",
+    "sectorcode_exact": "WA,WC,WF",
+    "major_sector_name": "FY17 - Water, Sanitation and Waste Management",
+    "major_sector_code": "WX",
+    "milestones": [
+     {
+      "concpt_review_date": "2016-06-30T00:00:00Z",
+      "begin_apprsl_date": "2017-01-30T00:00:00Z",
+      "authorize_negotiations_date": "2017-03-09T00:00:00Z",
+      "apprvl_date": "2017-04-26T00:00:00Z",
+      "dsclsr_of_concpt_pid_date": null,
+      "decsn_review_date": "2017-01-24T00:00:00Z",
+      "effctvnss_date": "2018-03-09T00:00:00Z",
+      "icr_nco_date": "2027-04-30T00:00:00Z"
+     }
+    ],
+    "indicators": [
+     {
+      "Name": "Additional Water delivered by WSPs to customers due to project interventions (as reflected in water bills)",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "39.30",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "39.30",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "44.50",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Average performance score for WSPs receiving the CLSG",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2020-06-02T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "51.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Complaints handling system (Maji Voice) established in WSPs supported under the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "2.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Direct project beneficiaries",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "3550.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "2030200.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Female beneficiaries",
+      "Type": "PDO Indicator",
+      "Subtype": "Supplemental",
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      },
+      "Target": {
+       "Value": "50.00",
+       "Date": "2022-06-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Gender action plans developed and under implementation.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "1.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "2.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Guidelines for results-based financing adopted",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "Yes",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "Yes",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Hours of service per day provided by coastal WSPs benefiting from the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "10.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "11.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "12.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Improved community water points constructed or rehabilitated under the project",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "37.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "New piped household water connections under the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "11900.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "New water supplied to northeastern WSPs under the project (m3/day).",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "7600.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Non-revenue water (% of water that a service provider supplies to its distribution system that is not reflected in revenues).",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "50.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "50.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "43.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Operations and maintenance costs of coastal WSPs benefiting from the project recovered from customers.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "90.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "65.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "100.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People benefiting under the project from a connection to the sewage system or from improved septic sludge management.",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "130000.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People in urban areas provided with access to Improved Water Sources under the project",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "3550.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "74300.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People provided with access to improved shared sanitation facilities",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2016-07-20T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "13650.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People provided with access to improved shared sanitation facilities under the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "7050.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People with existing connections benefiting from more hours per day of water services.",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "1930000.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Piped household water connections that are benefiting from rehabilitation works undertaken under the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "710.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "15500.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Septic sludge treatment facilities constructed under the project",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "2.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Volume of biological oxygen demand pollution loads removed by treatment plants supported under the project.",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2017-04-26T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "1600.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "WSPs benefiting from the CLSG that demonstrate an increase in their OCCR by 2022 compared with 2019 (annual average).",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2020-06-02T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "0.00",
+       "Date": "2024-01-25T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "77.00",
+       "Date": "2024-08-30T00:00:00Z",
+       "Comment": null
+      }
+     }
+    ],
+    "countrycode": [
+     "KE"
+    ],
+    "status": "Active",
+    "status_exact": [
+     "Active"
+    ],
+    "mjsector": "FY17 - Public Administration - Water, Sanitation and Waste Management,FY17 - Sanitation,FY17 - Water Supply",
+    "mjsector_exact": [
+     "FY17 - Public Administration - Water, Sanitation and Waste Management",
+     "FY17 - Sanitation",
+     "FY17 - Water Supply"
+    ],
+    "theme": "FY17 - Adaptation,FY17 - Climate change,FY17 - Coastal Zone Management,FY17 - Disaster Risk Management,FY17 - Disaster Risk Reduction,FY17 - Environment and Natural Resource Management,FY17 - Mitigation,FY17 - Renewable Natural Resources Asset Management,FY17 - Urban Development,FY17 - Urban Water and Sanitation,FY17 - Urban and Rural Development,FY17 - Water Institutions, Policies and Reform,FY17 - Water Resource Management",
+    "pdo": "The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and northeastern regions in Kenya and improve the financial performance of water service providers affected by the COVID-19 pandemic.",
+    "regionhomepageurl": "http://www.worldbank.org/afr",
+    "themecode": "70,71,716,75,752,80,81,811,812,83,836,85,851",
+    "theme_exact": [
+     "FY17 - Adaptation",
+     "FY17 - Climate change",
+     "FY17 - Coastal Zone Management",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Disaster Risk Reduction",
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Mitigation",
+     "FY17 - Renewable Natural Resources Asset Management",
+     "FY17 - Urban Development",
+     "FY17 - Urban Water and Sanitation",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Water Institutions, Policies and Reform",
+     "FY17 - Water Resource Management"
+    ],
+    "themecode_exact": [
+     "70",
+     "71",
+     "716",
+     "75",
+     "752",
+     "80",
+     "81",
+     "811",
+     "812",
+     "83",
+     "836",
+     "85",
+     "851"
+    ],
+    "teamleaderupi": "00000240171",
+    "prodline_exact": "PE",
+    "geo_locations": [
+     {
+      "geo_loc_id": "10858547",
+      "place_id": "PLA0066019",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Turkana County",
+      "geo_latitude_nbr": "3.15",
+      "geo_longitude_nbr": "35.35",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "178145",
+      "place_id": "PLA0066015",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "West Pokot District",
+      "geo_latitude_nbr": "1.75",
+      "geo_longitude_nbr": "35.25",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "178440",
+      "place_id": "PLA0066016",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Wajir District",
+      "geo_latitude_nbr": "1.75",
+      "geo_longitude_nbr": "40.01667",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "178914",
+      "place_id": "PLA0066014",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Turkana District",
+      "geo_latitude_nbr": "3.0",
+      "geo_longitude_nbr": "35.5",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "180785",
+      "place_id": "PLA0066018",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Samburu",
+      "geo_latitude_nbr": "-3.75",
+      "geo_longitude_nbr": "39.28333",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "186298",
+      "place_id": "PLA0066031",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Mombasa",
+      "geo_latitude_nbr": "-4.02",
+      "geo_longitude_nbr": "39.66667",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "187585",
+      "place_id": "PLA0066022",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Marsabit",
+      "geo_latitude_nbr": "2.32839",
+      "geo_longitude_nbr": "37.98986",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "187896",
+      "place_id": "PLA0066024",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Mandera",
+      "geo_latitude_nbr": "3.93726",
+      "geo_longitude_nbr": "41.85688",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "189741",
+      "place_id": "PLA0066020",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Lamu",
+      "geo_latitude_nbr": "-2.27169",
+      "geo_longitude_nbr": "40.90201",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "190106",
+      "place_id": "PLA0066029",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Kwale",
+      "geo_latitude_nbr": "-4.13333",
+      "geo_longitude_nbr": "39.2",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "192064",
+      "place_id": "PLA0066030",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Kilifi",
+      "geo_latitude_nbr": "-3.563",
+      "geo_longitude_nbr": "39.644",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "195166",
+      "place_id": "PLA0066027",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Kakuyuni Sub-Location",
+      "geo_latitude_nbr": "-3.21667",
+      "geo_longitude_nbr": "39.98333",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "196231",
+      "place_id": "PLA0066023",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Isiolo",
+      "geo_latitude_nbr": "0.35462",
+      "geo_longitude_nbr": "37.58218",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "197077",
+      "place_id": "PLA0066026",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Gongoni Sub-Location",
+      "geo_latitude_nbr": "-3.81667",
+      "geo_longitude_nbr": "39.76667",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "197744",
+      "place_id": "PLA0066017",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Garissa District",
+      "geo_latitude_nbr": "-0.172",
+      "geo_longitude_nbr": "40.041",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "200577",
+      "place_id": "PLA0066025",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Baricho Sub-Location",
+      "geo_latitude_nbr": "-3.1",
+      "geo_longitude_nbr": "39.78333",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "7667652",
+      "place_id": "PLA0066028",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Taita Taveta",
+      "geo_latitude_nbr": "-3.4",
+      "geo_longitude_nbr": "38.37",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "9538007",
+      "place_id": "PLA0066021",
+      "wbg_cntry_key": "KE",
+      "geo_loc_name": "Tana River",
+      "geo_latitude_nbr": "-2.59901",
+      "geo_longitude_nbr": "40.33862",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     }
+    ],
+    "project_name": "Water and Sanitation Development Project",
+    "isr_ratings": [
+     {
+      "name": "Counterpart Funding",
+      "code": "25",
+      "isr_date": "2026-06-30",
+      "value": "Satisfactory"
+     },
+     {
+      "name": "Counterpart Funding",
+      "code": "25",
+      "isr_date": "2026-06-30",
+      "value": "Satisfactory"
+     },
+     {
+      "name": "Financial Management",
+      "code": "18",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Financial Management",
+      "code": "18",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Monitoring and Evaluation",
+      "code": "125",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Monitoring and Evaluation",
+      "code": "125",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Overall Implementation Progress (IP)",
+      "code": "10",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Overall Implementation Progress (IP)",
+      "code": "10",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Procurement",
+      "code": "27",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Procurement",
+      "code": "27",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Progress towards achievement of PDO",
+      "code": "5",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Progress towards achievement of PDO",
+      "code": "5",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Project Management",
+      "code": "20",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Project Management",
+      "code": "20",
+      "isr_date": "2026-06-30",
+      "value": "Moderately Satisfactory"
+     }
+    ],
+    "financers": [
+     {
+      "fincrname": "Borrower/Recipient",
+      "fincr_curr_amt": "30000000",
+      "fincr_usd_amt": "30000000",
+      "fincr_id": "BORR",
+      "fincr_curr_id": "USD  ",
+      "projectfinancialtype": "Local Contributor"
+     },
+     {
+      "fincrname": "IDA Credit",
+      "fincr_curr_amt": "300000000",
+      "fincr_usd_amt": "300000000",
+      "fincr_id": "IDA",
+      "fincr_curr_id": "USD  ",
+      "projectfinancialtype": "World Bank Group"
+     }
+    ],
+    "loan_transactions": [
+     {
+      "amount": "-17807.23",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "-3903503.37",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "0.23",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1.108270356E7",
+      "period": "2024-01-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1.150561071E7",
+      "period": "2022-04-13T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1.247068527E7",
+      "period": "2022-12-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1.404448611E7",
+      "period": "2025-09-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "1020348.72",
+      "period": "2019-12-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1022310",
+      "period": "2019-01-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1041693.07",
+      "period": "2019-03-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "104903.46",
+      "period": "2023-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "10524.42",
+      "period": "2019-02-26T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1054294.91",
+      "period": "2021-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "112629.19",
+      "period": "2021-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "120.28",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "1231.09",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "1231.09",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "1282521.97",
+      "period": "2021-12-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1320969",
+      "period": "2022-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1326.92",
+      "period": "2023-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1361241.31",
+      "period": "2022-01-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1444771.26",
+      "period": "2022-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1494387.38",
+      "period": "2023-06-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "151085.05",
+      "period": "2023-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1556442.67",
+      "period": "2023-12-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1589950.11",
+      "period": "2022-11-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1633732.98",
+      "period": "2019-01-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "1637710.54",
+      "period": "2022-06-28T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "163806.15",
+      "period": "2020-02-18T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "17807.23",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "17807.23",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "180128.55",
+      "period": "2023-03-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "183958.64",
+      "period": "2022-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "184334.83",
+      "period": "2022-01-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "18750.98",
+      "period": "2020-02-18T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "19234080",
+      "period": "2024-03-11T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "19749.47",
+      "period": "2022-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2.033031786E7",
+      "period": "2021-05-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2.400876941E7",
+      "period": "2023-12-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2.941668202E7",
+      "period": "2025-02-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2.995862784E7",
+      "period": "2020-12-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2074948.6",
+      "period": "2023-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2266320",
+      "period": "2020-05-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "23191.41",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "235944.68",
+      "period": "2022-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2372.97",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "2372.97",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "238466.09",
+      "period": "2020-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "240616.01",
+      "period": "2025-07-28T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "247778.34",
+      "period": "2024-03-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "2526370.46",
+      "period": "2022-03-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "263000000",
+      "period": "2017-04-26T00:00:00.000Z",
+      "transactiontype": "LOAN_COMMITMENT",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "2659717.15",
+      "period": "2023-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "266185.16",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "268534.46",
+      "period": "2021-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "27406.69",
+      "period": "2021-02-16T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "277673.91",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "278012.69",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "2781881.24",
+      "period": "2024-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "279965.16",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "2828200.92",
+      "period": "2022-07-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "283700.85",
+      "period": "2021-06-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "299951.42",
+      "period": "2023-02-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "3.100427472E7",
+      "period": "2022-12-09T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "3089365.26",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "323213.1",
+      "period": "2022-06-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "323415.19",
+      "period": "2020-02-18T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "3249625.63",
+      "period": "2024-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "328685.24",
+      "period": "2021-02-16T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "331948.31",
+      "period": "2019-08-30T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "341073.67",
+      "period": "2020-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "34526.65",
+      "period": "2024-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "353954.09",
+      "period": "2019-02-26T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "37000000",
+      "period": "2017-04-26T00:00:00.000Z",
+      "transactiontype": "LOAN_COMMITMENT",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "3730587.12",
+      "period": "2021-06-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "3903503.37",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "3903503.37",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "396507.69",
+      "period": "2024-04-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "402837.97",
+      "period": "2021-06-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4085357.7",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4089911.33",
+      "period": "2020-08-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4117361.35",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "417876.11",
+      "period": "2023-09-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "428335.64",
+      "period": "2022-09-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4304.82",
+      "period": "2020-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4462",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "4462",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "457875.3",
+      "period": "2021-02-16T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "468364.46",
+      "period": "2022-11-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4723.21",
+      "period": "2019-08-30T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "48012.27",
+      "period": "2023-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "493238.55",
+      "period": "2020-02-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "497199.94",
+      "period": "2020-05-28T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "4980.47",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "4980.47",
+      "period": "2025-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "503185.56",
+      "period": "2022-01-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "509481.42",
+      "period": "2019-09-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "511438.05",
+      "period": "2022-09-09T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "516342.67",
+      "period": "2023-09-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "53936.02",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "53936.02",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "53955.56",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "5410830.97",
+      "period": "2021-12-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "56100.02",
+      "period": "2024-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "5689500",
+      "period": "2019-06-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "60137.09",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "60137.09",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "612219.71",
+      "period": "2022-12-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "6172615.03",
+      "period": "2020-06-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "646230.37",
+      "period": "2024-03-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "6477733.1",
+      "period": "2025-06-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "6634.23",
+      "period": "2026-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "666065.99",
+      "period": "2025-09-09T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "666066",
+      "period": "2024-07-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "6737260.94",
+      "period": "2026-08-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "68205.1",
+      "period": "2019-08-30T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "6853.47",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "6853.47",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "687876.02",
+      "period": "2022-03-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "691973.87",
+      "period": "2024-07-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "709492.04",
+      "period": "2018-08-27T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "736603.06",
+      "period": "2019-04-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "746549.34",
+      "period": "2020-09-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "762814.46",
+      "period": "2018-03-09T00:00:00.000Z",
+      "transactiontype": "FEE_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "762814.46",
+      "period": "2018-03-09T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "801156.57",
+      "period": "2022-03-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "806422.85",
+      "period": "2024-08-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "8536699.2",
+      "period": "2022-12-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "8594097.3",
+      "period": "2025-12-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "86553.08",
+      "period": "2024-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "8752276.75",
+      "period": "2022-06-24T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "879971.49",
+      "period": "2023-12-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "8893.72",
+      "period": "2018-08-27T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "9073.54",
+      "period": "2025-02-15T00:00:00.000Z",
+      "transactiontype": "LOAN_REPAY",
+      "financier_loan": "IDA-60290"
+     },
+     {
+      "amount": "913385.96",
+      "period": "2021-07-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "9180.26",
+      "period": "2022-02-15T00:00:00.000Z",
+      "transactiontype": "INT_CHARGES",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "918482.59",
+      "period": "2020-04-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "926871.74",
+      "period": "2021-03-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "951707.16",
+      "period": "2019-09-13T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "955110.82",
+      "period": "2020-10-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "956273.64",
+      "period": "2023-01-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "9589224.77",
+      "period": "2021-06-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     },
+     {
+      "amount": "961846.57",
+      "period": "2021-06-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-60300"
+     }
+    ],
+    "teamleadname": [
+     "Lewnida Sara "
+    ],
+    "fiscalyear": "2017",
+    "cons_serv_reqd_ind": "Yes",
+    "countryname": "Republic of Kenya",
+    "projectfinancialtype": [
+     "IDA",
+     "Other"
+    ],
+    "projectfinancialtype_exact": "IDA,Other",
+    "proj_last_upd_date": "2024-04-24T00:00:00Z",
+    "curr_project_cost": "330000000",
+    "last_stage_reached_name": "Board Approved",
+    "cons_serv_reqd_ind_exact": "Yes",
+    "curr_total_commitment": "300000000",
+    "countryhomepageurl": "http://www.worldbank.org/en/country/kenya",
+    "curr_ida_commitment": "300000000",
+    "projid_id_display": "P156634",
+    "public_disclosure_date": "2017-03-01",
+    "loan_effective_date": "2018-03-09",
+    "theme_list": [
+     {
+      "name": "FY17 - Environment and Natural Resource Management",
+      "code": "80",
+      "seqno": "6",
+      "percent": "75",
+      "theme2": [
+       {
+        "name": "FY17 - Climate change",
+        "code": "81",
+        "seqno": "7",
+        "percent": "8",
+        "theme3": [
+         {
+          "name": "FY17 - Adaptation",
+          "code": "812",
+          "seqno": "9",
+          "percent": "7"
+         },
+         {
+          "name": "FY17 - Mitigation",
+          "code": "811",
+          "seqno": "8",
+          "percent": "1"
+         }
+        ]
+       },
+       {
+        "name": "FY17 - Renewable Natural Resources Asset Management",
+        "code": "83",
+        "seqno": "10",
+        "percent": "41",
+        "theme3": [
+         {
+          "name": "FY17 - Coastal Zone Management",
+          "code": "836",
+          "seqno": "11",
+          "percent": "41"
+         }
+        ]
+       },
+       {
+        "name": "FY17 - Water Resource Management",
+        "code": "85",
+        "seqno": "12",
+        "percent": "75",
+        "theme3": [
+         {
+          "name": "FY17 - Water Institutions, Policies and Reform",
+          "code": "851",
+          "seqno": "13",
+          "percent": "75"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "FY17 - Urban and Rural Development",
+      "code": "70",
+      "seqno": "1",
+      "percent": "99",
+      "theme2": [
+       {
+        "name": "FY17 - Disaster Risk Management",
+        "code": "75",
+        "seqno": "4",
+        "percent": "18",
+        "theme3": [
+         {
+          "name": "FY17 - Disaster Risk Reduction",
+          "code": "752",
+          "seqno": "5",
+          "percent": "18"
+         }
+        ]
+       },
+       {
+        "name": "FY17 - Urban Development",
+        "code": "71",
+        "seqno": "2",
+        "percent": "99",
+        "theme3": [
+         {
+          "name": "FY17 - Urban Water and Sanitation",
+          "code": "716",
+          "seqno": "3",
+          "percent": "99"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "facets": {}
+ }
+}
