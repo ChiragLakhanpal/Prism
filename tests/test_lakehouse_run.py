@@ -452,7 +452,7 @@ def test_a_notice_that_says_ncb_is_stored_as_request_for_bids_open_national(gold
                       "procurement_method_as_written": raw["procurement_method_name"]}
 
 
-# ── Joint ventures and individual consultants ────────────────────────────
+# ── Packages and their Process Status ────────────────────────────────────
 
 def test_a_package_takes_its_process_status_from_the_newest_plan_that_lists_it(gold):
     """values.toml, [[comparable]]: the KIMAWASCO plan of March 19, 2025 marks three works packages
@@ -472,6 +472,8 @@ def test_a_package_takes_its_process_status_from_the_newest_plan_that_lists_it(g
     assert len(canceled) == 3
     assert one(gold, package, reference=still_open[0]["reference"])["process_status"] is None
 
+
+# ── Joint ventures and individual consultants ────────────────────────────
 
 def test_the_joint_venture_award_becomes_one_joint_venture_supplier_linked_to_its_members(gold):
     venture = TRUTH["awkward"]["joint_venture"]  # contract 1624689, members 503708 and 503711
