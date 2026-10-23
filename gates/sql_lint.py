@@ -7,20 +7,22 @@ Strata's SQL runs on the workspace and on DuckDB, as each viewer, so two rules h
 1. Every table is named in three parts, in the strata catalog: strata.<schema>.<table> (or
    system.information_schema.<x>). A name defined in the same query, by WITH, needs no parts.
 2. Every value is a bound :name parameter. Code never builds a value into a query's text. A query
-   whose text code does build, from table or column names only, says so on its first line with
-   the comment `# sql-lint: names only`, so a reviewer can check that claim in one place.
+   whose text code does build, from table or column names only, says so on any line of the
+   statement that builds it with the comment `# sql-lint: names only`, so a reviewer can check
+   that claim in one place.
 
 It reads every .sql file under src/strata and tests/ground_truth, and the Python under src/strata
 and ops/bundle: every string that holds a query, wherever it is written (passed to run(),
 execute(), executemany() or sql(), held in a variable or a constant, or returned), and every
-query text that code builds with an f-string, + or %, or .format(). A string is a query when it
-starts the way a statement does (QUERY_START): a SELECT, an INSERT or MERGE into a table, a WITH
-clause, a CREATE of a table, view or schema, a DELETE, or an UPDATE that sets columns. The
-names-only comment may sit on any line of the statement that builds the query. Two places are
-left out on purpose: gates/, whose fixture build
-loads the fixture's own copy of the sources into schemas of its own, and ops/dayone, ticket 03's
-day-one probes, which run once on the workspace's own catalog and bind each name with
-IDENTIFIER(:name).
+query text that code builds with an f-string, + or %, += or %=, or .format(). A built query may
+start from a string written right there or from a name the same file gives a query
+(QUERY = "SELECT ..."), as this repo writes its queries as named constants. A string is a query
+when it starts the way a statement does (QUERY_START): a SELECT, an INSERT or MERGE into a table,
+a WITH clause, a CREATE of a table, view or schema, a DELETE, or an UPDATE that sets columns.
+
+Two places are left out on purpose: gates/, whose fixture build loads the fixture's own copy of
+the sources into schemas of its own, and ops/dayone, ticket 03's day-one probes, which run once on
+the workspace's own catalog and bind each name with IDENTIFIER(:name).
 
     uv run --frozen python gates/sql_lint.py
 """
@@ -74,20 +76,46 @@ def _name_problems(sql: str, where: str, unreadable: bool = True) -> list[str]:
     return problems
 
 
-def _first_text(node: ast.AST) -> str | None:
-    """The written text a built string starts with: an f-string's first part, the left end of a + or
-    a %, or the string .format() is called on."""
+def _named_queries(tree: ast.AST) -> dict[str, str]:
+    """Each name the file gives a query, at any level, with its text: QUERY = "SELECT ..." or
+    QUERY: str = "SELECT ...". This repo writes its queries as named constants."""
+    named = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target, value = node.targets[0], node.value
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            target, value = node.target, node.value
+        else:
+            continue
+        if (isinstance(target, ast.Name) and isinstance(value, ast.Constant) and isinstance(value.value, str)
+                and _is_query(value.value)):
+            named[target.id] = value.value
+    return named
+
+
+def _text(node: ast.AST, named: dict[str, str]) -> str | None:
+    """A string written right there, or the query a name holds."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return named.get(node.id) if isinstance(node, ast.Name) else None
+
+
+def _first_text(node: ast.AST, named: dict[str, str]) -> str | None:
+    """The text a built string starts with: an f-string's first part, the left end of a + or a %,
+    the string .format() is called on, or the query a name holds when += or %= adds to it. A name
+    in named stands for its query wherever a written string could."""
     if isinstance(node, ast.JoinedStr):
         first = node.values[0] if node.values else None
         return first.value if isinstance(first, ast.Constant) and isinstance(first.value, str) else None
     if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Mod)):
         left = node.left
         if isinstance(left, (ast.JoinedStr, ast.BinOp)):
-            return _first_text(left)
-        return left.value if isinstance(left, ast.Constant) and isinstance(left.value, str) else None
-    if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "format"
-            and isinstance(node.func.value, ast.Constant) and isinstance(node.func.value.value, str)):
-        return node.func.value.value
+            return _first_text(left, named)
+        return _text(left, named)
+    if isinstance(node, ast.AugAssign) and isinstance(node.op, (ast.Add, ast.Mod)):
+        return _text(node.target, named)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "format":
+        return _text(node.func.value, named)
     return None
 
 
@@ -99,6 +127,7 @@ def _python_problems(path: Path, relative: str) -> list[str]:
     docstrings = {id(node.body[0].value) for node in ast.walk(tree)
                   if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
                   and node.body and isinstance(node.body[0], ast.Expr)}
+    named = _named_queries(tree)
 
     def first_line(node: ast.AST) -> int:
         """The first line of the statement that holds the node."""
@@ -124,7 +153,7 @@ def _python_problems(path: Path, relative: str) -> list[str]:
                 continue
             problems += _name_problems(node.value, f"{relative}:{node.lineno}", unreadable=passed_to_a_query_call(node))
             continue
-        text = _first_text(node)
+        text = _first_text(node, named)
         if text is None or not _is_query(text) or part_of_a_built_string(node):
             continue
         if NAMES_ONLY not in "\n".join(lines[first_line(node) - 1:node.end_lineno]):

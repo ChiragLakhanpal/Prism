@@ -51,7 +51,7 @@ To add a check, add a step to `gates/steps.toml`. A step with no `lane` key runs
 
 To run the nightly job's tasks in order on an empty DuckDB database, over the recorded pages, and see the rows they write, run `uv run --frozen python -m strata.lakehouse.nightly`. To deploy the catalog and the job to the shared workspace, follow `bundle/README.md`.
 
-A query that code builds from table or column names, never values, says so on its first line with `# sql-lint: names only`. Every other query is a fixed text with `:name` parameters.
+A query that code builds from table or column names, never values, says so on any line of the statement that builds it with `# sql-lint: names only`. Every other query is a fixed text with `:name` parameters.
 
 ## Merge a ticket
 

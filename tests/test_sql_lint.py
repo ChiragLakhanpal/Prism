@@ -120,3 +120,38 @@ def test_a_docstring_that_starts_with_a_query_word_is_not_a_query(tmp_path):
                              "    return message\n"})
 
     assert lint().problems(root) == []
+
+
+# This repo writes its queries as named constants (HELD, NEWEST, PENDING), so a value built into a
+# query is most likely built onto one of them.
+FIND = ("FIND = \"SELECT * FROM strata.gold.package WHERE step_reference = '{}'\"\n"
+        "PERCENT = \"SELECT * FROM strata.gold.package WHERE step_reference = '%s'\"\n"
+        "BASE: str = \"SELECT * FROM strata.gold.package\"\n\n\n")
+
+
+def test_a_value_formatted_or_added_into_a_query_held_in_a_named_constant_is_refused(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py": FIND +
+                             "def find(engine, reference):\n"
+                             "    engine.run(FIND.format(reference))\n"
+                             "    engine.run(PERCENT % reference)\n"
+                             "    return engine.run(BASE + \" WHERE step_reference = '\" + reference + \"'\")\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:{line}: {BUILT}" for line in (7, 8, 9)]
+
+
+def test_a_value_added_onto_a_query_held_in_a_variable_is_refused(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py":
+                             "def find(engine, reference):\n"
+                             "    sql = \"SELECT * FROM strata.gold.package\"\n"
+                             "    sql += f\" WHERE step_reference = '{reference}'\"\n"
+                             "    return engine.run(sql)\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:3: {BUILT}"]
+
+
+def test_names_added_onto_a_named_query_constant_pass_when_the_statement_says_so(tmp_path):
+    root = tree(tmp_path, **{"src__strata__lakehouse__sync.py": FIND +
+                             "def count(engine, column):\n"
+                             "    return engine.run(BASE + f\" ORDER BY {column}\")  # sql-lint: names only\n"})
+
+    assert lint().problems(root) == []
