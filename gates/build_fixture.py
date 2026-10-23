@@ -14,8 +14,9 @@ It builds three things, with no network:
   the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops.
 - The demo project's Procurement Plans as STEP rows. The plan reader (src/strata/lakehouse/plans.py)
   runs over the recorded plans with the offline document source and layout parser, and fills
-  bronze, silver.plan_versions, plan_rows, plan_steps, plan_step_delays and plan_data_notes, and
-  the ops tables, exactly as it does on the workspace.
+  bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
+  plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
+  adds it to the nightly job.
 
 The tests attach the database as `strata`, so they query strata.recorded.pages and
 strata.silver.plan_rows. It builds into a new file and swaps it in, so a failed build
