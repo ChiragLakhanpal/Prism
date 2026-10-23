@@ -40,7 +40,11 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         reference = clean.step_reference(record.get("borrower_contract_reference_number"))
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
-        individual = (clean.text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT  # in any capitals
+        # A person is written INDIVIDUAL CONSULTANT, in any capitals, but a description or the
+        # supplier field could still name one. Either way the row keeps neither.
+        named = (clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
+                 or clean.titled(record.get("supplier")))
+        individual = named or (clean.text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT
         rows.append((
             clean.text(record.get("wb_contract_number")),
             clean.text(record.get("supplier_id")),
@@ -53,8 +57,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("borrower_contract_reference_number")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            None if clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
-            else clean.text(record.get("contract_description")),
+            None if named else clean.text(record.get("contract_description")),
             clean.text(record.get("procurement_category")),
             method.name if method else None,
             clean.text(record.get("procurement_method")),

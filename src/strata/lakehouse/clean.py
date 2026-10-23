@@ -101,16 +101,25 @@ def category(name) -> str | None:
     """A procurement category in STEP's words: Works, Goods, Consultant Services or Non-consulting Services."""
     written = text(name)
     return OLD_CATEGORIES.get(written.upper(), written) if written else None
+
+
 # A personal title followed by a name, as a description names a consultant hired in person: "the
-# Consultancy Services of Dr. ...". A title in capitals counts only with its period, so MS OFFICE
-# is not a person.
-PERSONAL_TITLE = re.compile(r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?|(?:MR|MRS|MS|DR|CAPT|ENG|PROF)\.)\s+[A-Z]")
+# Consultancy Services of Dr. ..." or "CONSULTANCY SERVICES OF DR ...". In capitals, MS and ENG
+# count only with their period, so MS OFFICE and ENG WORKS are not people; MR, MRS, DR, CAPT and
+# PROF are not words of their own, so they count without one.
+PERSONAL_TITLE = re.compile(
+    r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?|(?:MS|ENG)\.|(?:MR|MRS|DR|CAPT|PROF)\.?)\s+[A-Z]")
 
 
 def names_a_person(procurement_category, description) -> bool:
     """Whether a contract's description names a person: a Consultant Services contract whose
     description gives a personal title followed by a name (spec, user stories 59 and 115)."""
     return category(procurement_category) == "Consultant Services" and bool(PERSONAL_TITLE.search(text(description) or ""))
+
+
+def titled(name) -> bool:
+    """Whether a supplier is written as a person, with a personal title before the name, in any category."""
+    return bool(PERSONAL_TITLE.match(text(name) or ""))
 
 
 STEP_REFERENCE = re.compile(

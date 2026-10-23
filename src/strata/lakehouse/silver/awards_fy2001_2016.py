@@ -43,7 +43,8 @@ def _with_a_person(record: dict) -> bool:
     """Whether the row is a contract with a person, whom the dataset may name."""
     if any((clean.text(record.get(field)) or "").upper() in INDIVIDUAL for field in ("supplier", "procurement_method")):
         return True
-    return clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
+    return (clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
+            or clean.titled(record.get("supplier")))
 
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:

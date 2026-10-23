@@ -102,8 +102,9 @@ def test_an_old_award_written_as_direct_contracting_is_stored_as_direct_selectio
 
 
 # A personal title followed by a name, as the FY2001 to FY2016 dataset writes a consultant hired in
-# person into a contract's description: "the Consultancy Services of Dr. ...".
-TITLED = re.compile(r"\b(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?\s+[A-Z]")
+# person into a contract's description: "the Consultancy Services of Dr. ..." or, in capitals,
+# "CONSULTANCY SERVICES OF DR ...".
+TITLED = re.compile(r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?|MR|MRS|DR|CAPT|PROF)\s+[A-Z]")
 
 
 def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_description(db):
@@ -138,24 +139,60 @@ def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_de
         assert named == 0, f"{table} names {named} of the people the recorded rows name"  # never prints them
 
 
-@pytest.mark.parametrize("description", ["Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist",
-                                         "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST"])
-def test_an_award_since_fy2020_whose_description_names_a_person_keeps_no_description(description):
-    """The awards since FY2020 write INDIVIDUAL CONSULTANT for a person, but a description could
-    still name one. No recorded row does, so this page is a recorded P156634 Consultant Services row
-    with only its description changed to give a title and a name, in either case."""
+# A row that names a person, in each place and form the review found: a title with its period, in
+# either case, a title in capitals without one, and a supplier written with a title. The names are
+# made up.
+NAMED = [{"contract_description": "Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist"},
+         {"contract_description": "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST"},
+         {"contract_description": "CONSULTANCY SERVICES OF DR JOHN DOE"},
+         {"supplier": "MR. JOHN DOE"}]
+
+
+@pytest.mark.parametrize("named", NAMED, ids=lambda named: next(iter(named.values())))
+def test_an_award_since_fy2020_that_names_a_person_keeps_no_description_and_no_name(named):
+    """The awards since FY2020 write INDIVIDUAL CONSULTANT for a person, but a description or the
+    supplier field could still name one. No recorded row does, so this page is a recorded P156634
+    Consultant Services row with one field changed. The contract keeps its supplier ID, as an
+    individual consultant does, and no table keeps the description or the name."""
     record = next(row for row in recorded("api/awards/P156634.json")["data"]
                   if row["procurement_category"] == "Consultant Services")
-    named = dict(record, contract_description=description)
 
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
-        run_one(engine, "awards", {"count": 1, "data": [named]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        run_one(engine, "awards", {"count": 1, "data": [dict(record, **named)]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
         gold.build(engine)
-        silver_row = rows(engine, "SELECT contract_description, supplier_id FROM strata.silver.awards")
+        silver_row = rows(engine, "SELECT contract_description, supplier, supplier_id, individual_consultant "
+                                  "FROM strata.silver.awards")
         gold_row = rows(engine, "SELECT contract_description, supplier_id FROM strata.gold.contract")
+        supplier = rows(engine, "SELECT supplier_id, name, kind FROM strata.gold.supplier")
 
-    assert silver_row == gold_row == [{"contract_description": None, "supplier_id": record["supplier_id"]}]
+    assert silver_row == [{"contract_description": None, "supplier": None, "supplier_id": record["supplier_id"],
+                           "individual_consultant": True}]
+    assert gold_row == [{"contract_description": None, "supplier_id": record["supplier_id"]}]
+    assert supplier == [{"supplier_id": record["supplier_id"], "name": None, "kind": "individual consultant"}]
+
+
+@pytest.mark.parametrize("named", NAMED[2:], ids=lambda named: next(iter(named.values())))
+def test_an_old_award_that_names_a_person_in_capitals_or_as_its_supplier_keeps_no_description_and_no_name(named):
+    """The FY2001 to FY2016 dataset often writes in capitals, and a supplier field can give a title.
+    The page is a recorded P124109 Consultant Services row with a firm as its supplier, with one
+    field changed."""
+    record = next(row for row in recorded(OLD_AWARDS[0])["data"]
+                  if row["procurement_category"] == "Consultant Services" and row["supplier"]
+                  and row["procurement_method"] != "Individual Consultant Selection"
+                  and not TITLED.search(row["contract_description"] or ""))
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "awards_fy2001_2016", {"count": 1, "data": [dict(record, **named)]},
+                dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        silver_row = rows(engine, "SELECT contract_description, supplier, individual_consultant "
+                                  "FROM strata.silver.awards_fy2001_2016")
+        gold_row = rows(engine, "SELECT contract_description FROM strata.gold.contract")
+
+    assert silver_row == [{"contract_description": None, "supplier": None, "individual_consultant": True}]
+    assert gold_row == [{"contract_description": None}]
 
 
 # ── FY2017 to FY2019, from award notices ─────────────────────────────────
