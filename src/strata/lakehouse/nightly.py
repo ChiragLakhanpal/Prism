@@ -4,11 +4,12 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Three tasks have their work (ticket 07): fetch_by_watermark fetches each source in
-config/sources.toml that it fetches page by page into bronze, bronze_to_gold builds silver and
-gold from bronze, and measure_data_readiness writes the data readiness measures to strata.ops. The
-rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and adds
-the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
+Three tasks have their work (tickets 07 and 17): fetch_by_watermark fetches each source in
+config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
+countries as each entry says, bronze_to_gold builds silver and gold from bronze, and
+measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
+The rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and
+adds the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls

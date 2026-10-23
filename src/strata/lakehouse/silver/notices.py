@@ -31,13 +31,6 @@ TABLES = {
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("notice_id",)
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.notices AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
 
 BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
 TAGS = re.compile(r"<[^>]+>")

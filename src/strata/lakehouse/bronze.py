@@ -65,17 +65,19 @@ def holds_pages(engine: Engine, source: Source) -> bool:
 
 
 def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) -> int:
-    """Add the pages bronze does not hold yet. Returns how many it added."""
+    """Add the pages bronze does not hold yet, each as it comes, so a fetch that fails partway keeps
+    the pages it fetched and never holds a whole source in memory. Returns how many it added."""
     held = {row[0] for row in engine.run(HELD, {"source": source.key}).rows}
-    rows = []
+    added = 0
     for page in pages:
         body, removed = contacts.strip(page.body)  # before anything is kept (CLAUDE.md rule 8)
         page_hash = content_hash(source, body)
         if page_hash in held:
             continue
         held.add(page_hash)
-        rows.append((source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
-                     len(source_pages.records(source, body)), source_pages.reported_total(source, body),
-                     source_pages.newest_record(source, body), removed, page.fetched_at,
-                     page.fetched_at.astimezone(dt.UTC).date()))
-    return engine.insert_rows(TABLE, COLUMNS, rows)
+        added += engine.insert_rows(TABLE, COLUMNS, [(
+            source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
+            len(source_pages.records(source, body)), source_pages.reported_total(source, body),
+            source_pages.newest_record(source, body), removed, page.fetched_at,
+            page.fetched_at.astimezone(dt.UTC).date())])
+    return added

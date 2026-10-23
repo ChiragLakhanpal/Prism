@@ -91,6 +91,31 @@ def test_the_same_records_in_another_order_add_no_bronze_rows():
             assert (key, first, later) == (key, 1, 0)
 
 
+def test_a_fetch_that_fails_partway_keeps_every_page_it_fetched_before_the_failure():
+    """A fetch for every country asks for hundreds of pages, and the API may stop answering partway.
+    Bronze keeps each page as it comes, so the pages already fetched are not lost and are not asked
+    for again."""
+    from strata.lakehouse import bronze, catalog
+
+    rows = recorded("api/awards/P156634.json")["data"]
+    source = config.load_sources()["awards"]
+
+    def fetch():
+        for number in range(3):
+            yield pages.Page("awards", f"https://example.org/awards?top=100&skip={number * 100}",
+                             {"count": 280, "data": rows[number * 100:(number + 1) * 100]},
+                             dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        raise OSError("The API stopped answering.")
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        with pytest.raises(OSError):
+            bronze.store(engine, source, fetch())
+        kept = engine.run("SELECT count(*) FROM strata.bronze.api_pages").rows[0][0]
+
+    assert kept == 3
+
+
 def test_a_page_whose_records_changed_is_kept_again_and_gold_takes_the_new_value(fixture_copy):
     def revised(source, engine):
         for page in pages.recorded_pages(source):

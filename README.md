@@ -101,7 +101,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The nightly job's tasks | `src/strata/lakehouse/nightly.py` |
 | The bundle: the strata catalog, its schemas, the volume, the grants and the nightly job, with its notes | `databricks.yml` and `bundle/` |
 | The deploy command and the workspace checks for the bundle | `ops/bundle/` |
-| The lakehouse: where pages come from (the live APIs, or the recorded fixture in the gate), bronze and the contact details it never keeps, the cleaning rules, silver's transforms, gold's tables (one SQL query each), and the data readiness measures (one SQL file per source) | `src/strata/lakehouse/`: `pages.py`, `bronze.py` and `contacts.py`, `clean.py`, `silver/`, `gold/`, `readiness/` |
+| The lakehouse: where pages come from (the live APIs, or the recorded fixture in the gate), bronze and the contact details it never keeps, the cleaning rules, silver's transforms, gold's tables (one SQL query each), the data readiness measures (one SQL file per silver transform), each table's size, and governance scores as of a date | `src/strata/lakehouse/`: `pages.py`, `bronze.py` and `contacts.py`, `clean.py`, `silver/`, `gold/`, `readiness/`, `storage.py`, `governance.py` |
 | The SQL lint: three-part names and bound parameters | `gates/sql_lint.py` |
 | The plan reader: a project's Procurement Plans into STEP rows, with delay from the first published planned date and data notes, under the daily page cap | `src/strata/lakehouse/plans.py` and `src/strata/lakehouse/sql/plans/` (`uv run --frozen python -m strata.lakehouse.plans` runs it on the fixture) |
 | The document reader: documents and their pages, the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
@@ -110,7 +110,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The tool registry and its tools | `src/strata/tools/` (later) |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |
-| The registry and config files for the change drill: the source registry, the slice file, the model file and the thresholds file, each read by one function in `src/strata/config.py` | `config/` |
+| The registry and config files for the change drill: the source registry, the slice file, the sector taxonomy, the model file and the thresholds file, each read by one function in `src/strata/config.py` | `config/` |
 | The rest of the change drill's config files: the evidence ladder, the package form and roles | `config/` (later) |
 | The benchmark and evaluation sets | `evals/` (later) |
 | The dashboard definition | `dashboard/` (later) |

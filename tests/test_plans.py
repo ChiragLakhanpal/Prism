@@ -112,7 +112,7 @@ def test_older_listed_versions_the_fixture_never_recorded_leave_each_first_listi
     than the version that first lists each activity here. Delay is still measured from that version,
     and the row says its first listing is not confirmed."""
     signed = demo_step(db, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
-    count, denominator = measured(db)["latest_activities_with_first_listing_read"]
+    count, denominator = measured(db)["latest_activities_with_confirmed_first_listing_read"]
 
     assert signed["delay_days"] == value("plan-229129-days-late")["value"]
     assert signed["first_listing_confirmed"] is False
@@ -266,7 +266,7 @@ def test_when_every_listed_version_is_read_each_first_listing_is_confirmed(fresh
     found = measured(fresh, report.run_id)
 
     versions, listed = found["plan_versions_read"]
-    count, denominator = found["latest_activities_with_first_listing_read"]
+    count, denominator = found["latest_activities_with_confirmed_first_listing_read"]
     assert versions == listed > 0
     assert count == denominator > 0
     assert signed["first_listing_confirmed"] is True

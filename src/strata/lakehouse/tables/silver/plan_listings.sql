@@ -8,8 +8,9 @@
 -- activity_reference_no    STEP's Activity Reference No., such as KE-NWWDA-229129-CW-RFB
 -- is_first_listing         whether this version is the activity's first listing
 -- first_listing_confirmed  whether the activity's first listing is the first published one: true
---                          when every plan the documents API lists that is dated on or before it was
---                          read, false when an older listed version went unread and may list it first
+--                          when every plan the documents API lists that is dated on or before it, or
+--                          that has no date, was read; false when such a version went unread and may
+--                          list it first
 -- public_from              the version's public date (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_listings (
   document_id STRING NOT NULL,

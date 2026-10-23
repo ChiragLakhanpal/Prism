@@ -31,13 +31,6 @@ TABLES = {
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("contract_number", "supplier", "supplier_contract_amount_usd")
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.awards_fy2001_2016 AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
 
 INDIVIDUAL = ("INDIVIDUAL CONSULTANT", "INDIVIDUAL CONSULTANT SELECTION")
 

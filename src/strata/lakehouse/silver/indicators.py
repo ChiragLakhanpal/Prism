@@ -24,14 +24,6 @@ TABLES = {
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("indicator_id", "country_code", "country_iso3", "year")
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.indicators AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
-
 
 def _value(value) -> float | None:
     return None if value in (None, "") else float(value)

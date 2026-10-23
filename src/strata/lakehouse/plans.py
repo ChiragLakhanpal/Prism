@@ -11,8 +11,8 @@ For one project, a run:
    silver.plan_versions and silver.plan_listings.
 3. Decides each activity's first listing, the earliest version read that lists it, which holds its
    first published planned dates. The first listing is confirmed only when every plan the list
-   names that is dated on or before it was read; otherwise an older version may list the activity
-   first, and silver says so. Then it chooses the versions whose tables the layout parser reads:
+   names that is dated on or before it, or that has no date, was read; otherwise an older version
+   may list the activity first, and silver says so. Then it chooses the versions whose tables the layout parser reads:
    each agency's latest version, the version before it (so a later ticket can show what changed),
    and each first listing. Only those go to Route B.
 4. Sends the chosen versions' table pages to the layout parser, newest version first, each page
@@ -48,7 +48,7 @@ from importlib import resources
 
 from strata.config import Thresholds, load_sources, load_thresholds
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import Engine, WarehouseEngine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, tables_from_json, tables_to_json
@@ -81,24 +81,15 @@ def _sql(name: str) -> str:
     return (resources.files("strata.lakehouse") / "sql" / "plans" / name).read_text()
 
 
-CHUNK = {"duckdb": 200}  # rows per INSERT statement; the warehouse takes fewer, so each statement stays small
-WAREHOUSE_CHUNK = 20
+WAREHOUSE_CHUNK = 20  # rows per INSERT on the SQL warehouse: a plan's pages are long text
 
 
 def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
-    """Insert rows with every value bound as a named parameter, a chunk of rows per statement."""
-    chunk = CHUNK.get(getattr(engine, "name", ""), WAREHOUSE_CHUNK)
-    for start in range(0, len(rows), chunk):
-        params, values = {}, []
-        for n, row in enumerate(rows[start:start + chunk]):
-            names = []
-            for column, value in zip(columns, row, strict=True):
-                params[f"{column}_{n}"] = value
-                names.append(f":{column}_{n}")
-            values.append(f"({', '.join(names)})")
-        engine.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {', '.join(values)}",  # sql-lint: names only
-                   params)
-    return len(rows)
+    """Insert rows through the engine's own insert_rows, which binds every value. On the SQL warehouse
+    each statement takes fewer rows than usual, so a statement of long page text stays small."""
+    if isinstance(engine, WarehouseEngine):
+        return engine.insert_rows(table, columns, list(rows), chunk=WAREHOUSE_CHUNK)
+    return engine.insert_rows(table, columns, list(rows))
 
 
 # ── 1. Fetch into bronze ─────────────────────────────────────────────────
@@ -267,8 +258,8 @@ def read_versions(engine: Engine, project_id: str, listing: Listing) -> list[Ver
     # An activity's first listing is the earliest version read that lists it, across every agency's
     # series, because an activity can move from one agency's plan to another's. A listed plan that
     # was not read (the fixture does not record it, it failed to fetch, or the list gives it no text,
-    # PDF or date) may list the activity earlier, so a first listing is confirmed only when no such
-    # plan is dated on or before it.
+    # PDF or date) may list the activity earlier, so a first listing is confirmed only when every
+    # plan the list names that is dated on or before it, or that has no date, was read.
     read = {version.document_id for version in versions}
     unread = [date for document_id, date in listing.dates.items() if document_id not in read]
     seen: set[str] = set()
@@ -463,7 +454,7 @@ def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version
         ("step_rows_with_reference", "read_well", read.with_reference, read.with_reference + read.without_reference),
         ("latest_activities_with_step_rows", "read_well",
          sum(1 for v in latest for a in v.listings if (v.document_id, a) in with_rows), latest_listed),
-        ("latest_activities_with_first_listing_read", "coverage",
+        ("latest_activities_with_confirmed_first_listing_read", "coverage",
          sum(1 for v in latest for a in v.listings
              if first[a].nothing_older_unread and first[a].document_id in read.versions), latest_listed),
     ]

@@ -12,8 +12,9 @@
 --                          empty until that version's tables are read, or when it plans no date for the step
 -- first_planned_document   the first listing's document_id
 -- first_planned_plan_date  the first listing's date
--- first_listing_confirmed  whether the first listing is the first published one; false when an older
---                          listed version went unread, so the delay may be measured from a later date
+-- first_listing_confirmed  whether the first listing is the first published one: true when every plan
+--                          the list names that is dated on or before it, or that has no date, was read;
+--                          false otherwise, so the delay may be measured from a later date
 -- delay_days               actual_on minus first_planned_on, in days; empty until both are known
 -- public_from              the version's public date (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_step_delays (

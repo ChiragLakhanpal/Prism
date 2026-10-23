@@ -32,14 +32,6 @@ TABLES = {
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("project_id",)
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.projects AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
-
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
     fetched = fetched_at.astimezone(dt.UTC).date()

@@ -27,13 +27,6 @@ TABLES = {"strata.silver.loans": COLUMNS}
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("loan_number",)
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.loans AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
 
 LENDER = re.compile(r"^(IBRD|IDA|TF)")
 

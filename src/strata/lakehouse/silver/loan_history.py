@@ -18,14 +18,6 @@ TABLES = {"strata.silver.loan_history": loans.COLUMNS}
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("loan_number", "end_of_period")
 
-PENDING = """
-SELECT p.page_hash, p.body, p.fetched_at
-FROM strata.bronze.api_pages AS p
-WHERE p.source = :source
-  AND NOT EXISTS (SELECT 1 FROM strata.silver.loan_history AS s WHERE s.page_hash = p.page_hash)
-ORDER BY p.fetched_at, p.page_hash
-"""
-
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
     rows = [loans.row(record, page_hash, fetched_at) for record in body.get("data") or []]
