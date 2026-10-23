@@ -22,9 +22,11 @@ queries as named constants. A string is a query when it starts the way a stateme
 (QUERY_START): a SELECT, an INSERT or MERGE into a table, a WITH clause, a CREATE of a table, view
 or schema, a DELETE, or an UPDATE that sets columns.
 
-Two places are left out on purpose: gates/, whose fixture build loads the fixture's own copy of
-the sources into schemas of its own, and ops/dayone, ticket 03's day-one probes, which run once on
-the workspace's own catalog and bind each name with IDENTIFIER(:name).
+Three places are left out on purpose: gates/, whose fixture build loads the fixture's own copy of
+the sources into schemas of its own; ops/dayone, ticket 03's day-one probes, which run once on
+the workspace's own catalog and bind each name with IDENTIFIER(:name); and ops/app, ticket 06's
+deploy and Lakebase probe, whose probe writes to the day-one probes' schema through
+IDENTIFIER(:table) and whose deploy grants rights to an application id it checks first.
 
     uv run --frozen python gates/sql_lint.py
 """

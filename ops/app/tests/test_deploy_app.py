@@ -7,6 +7,8 @@ A fake workspace stands in for Databricks. docs/workspace-catchup.md runs the re
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "ops" / "app"))
 
@@ -156,8 +158,11 @@ def test_the_command_needs_the_workspace_keys_from_the_env_file(tmp_path, capsys
     assert "DATABRICKS_WAREHOUSE_ID" in capsys.readouterr().err
 
 
-def test_the_command_says_how_to_run_it_from_the_main_checkout():
-    text = (REPO / "ops" / "app" / "deploy_app.py").read_text()
+def test_the_command_s_help_says_how_to_run_it_and_to_run_it_again_after_a_bundle_deploy(capsys):
+    with pytest.raises(SystemExit) as stopped:
+        deploy_app.main(["--help"])
 
-    assert "uv run --script ops/app/deploy_app.py --env-file .env" in text
-    assert text.startswith("# /// script")
+    out = " ".join(capsys.readouterr().out.split())
+    assert stopped.value.code == 0
+    assert "uv run --script ops/app/deploy_app.py --env-file .env" in out
+    assert "Run it again after every bundle deploy" in out

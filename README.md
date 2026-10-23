@@ -102,7 +102,19 @@ Strata runs as a Databricks App that acts as each viewer. After the wizard and t
 
     uv run --script ops/app/deploy_app.py --env-file .env
 
-It builds the web app, uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`, gives it the SQL warehouse, the Application Insights secret and each viewer's SQL token, deploys it, lets its own service principal write usage events, and prints its address. Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
+It takes these steps, in order:
+
+1. It builds the web app into `web/dist`.
+2. It finds the app that `ops/dayone/dayone.toml` names, or makes it.
+3. It gives the app the SQL warehouse, the Application Insights secret and each viewer's SQL token.
+4. It uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`.
+5. It deploys the app and waits for it.
+6. It lets the app's own service principal write usage events.
+7. It prints the app's address.
+
+Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the usage events stop being written.
+
+Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
 
     uv run --script ops/app/probe_lakebase.py --env-file .env
 

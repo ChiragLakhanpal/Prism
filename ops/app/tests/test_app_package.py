@@ -64,8 +64,10 @@ def test_the_lean_requirements_pin_each_package_at_its_uv_lock_version_and_leave
     pins, lock = requirements(), locked()
 
     assert not [name for name in pins if name.startswith("agent-framework")]
-    assert {name: version for name, version in pins.items() if name in lock} == {
-        name: lock[name]["version"] for name in pins if name in lock}
+    # Every package the server's packages install is pinned at the version the gate tested, so the
+    # App never resolves a newer Starlette or pydantic on its own.
+    assert {name: pins.get(name) for name in closure(pins, lock)} == {
+        name: lock[name]["version"] for name in closure(pins, lock)}
     # The only pin uv.lock does not hold is the tracing package, which the app imports only with a
     # connection string, at the version the day-one probe app sends its trace with.
     assert [name for name in pins if name not in lock] == ["azure-monitor-opentelemetry"]

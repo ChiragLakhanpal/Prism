@@ -24,6 +24,10 @@ It needs npm, which builds the web app. It does these things, in order:
    strata.ops.usage_events. Viewers read as themselves, through the bundle's grants.
 7. It prints the app's address.
 
+Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
+grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
+app's USE CATALOG and USE SCHEMA, and its usage events stop being written.
+
 This was written from docs/PLAN.md section 12's description of fairshare's lakehouse/app_deploy.py,
 because fairshare could not be read on the build machine.
 """
@@ -137,7 +141,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
 
 def main(argv: list[str] | None = None, workspace=None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--env-file", type=Path, default=None,
                         help="The main checkout's .env, which the wizard filled. That file is the default.")
     args = parser.parse_args(argv)
