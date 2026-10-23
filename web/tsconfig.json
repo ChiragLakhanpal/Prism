@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src", "tests", "vite.config.ts", "playwright.config.ts", "free-port.ts"]
+  "include": ["src", "tests", "lint", "capture", "vite.config.ts", "playwright.config.ts", "playwright.capture.config.ts", "free-port.ts"]
 }

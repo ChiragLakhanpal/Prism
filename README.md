@@ -34,12 +34,13 @@ Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also run
 It runs the steps in `gates/steps.toml`. Steps that do not depend on each other run side by side, in lanes. Today it has these steps:
 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
-2. Run five lanes side by side:
+2. Run six lanes side by side:
    - The guard lane tests the guard hook.
    - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then it runs the Python tests that may read that database, on four pytest-xdist workers: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader and the bundle commands.
    - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
-   - The web lane type checks and bundles the web app, then runs the Playwright tests against it.
+   - The lint lane lints the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders, passes to a prop or writes into the page that is not from the copy file (words joined with `+` included), on a Term that names a word GLOSSARY.md does not define, and on spacing or colors outside DESIGN.md's tokens. The props that never hold copy, such as `className` and `href`, are listed in `web/lint/rules.ts`.
    - The sql lane lints the SQL (`gates/sql_lint.py`): every query names its tables in three parts and binds its values as parameters.
+   - The web lane type checks and bundles the web app, builds the design gallery, then runs the Playwright tests against both.
 
 The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
@@ -91,7 +92,12 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The harness: each turn's evidence and the stream helpers | `src/strata/harness/` |
 | The app server | `src/strata/server/` |
 | The web app, with its `api`, `sse`, `store` and `export` libraries | `web/src/` and `web/src/lib/` |
-| The copy file, for now | `web/src/copy.ts` |
+| The copy file: every string a person reads | `web/src/copy.ts` |
+| The design tokens: DESIGN.md sections 2 to 4 as the Tailwind theme, and the self-hosted fonts | `web/src/styles/app.css` |
+| The components, and the number and date rules Num follows | `web/src/components/` and `web/src/lib/format.ts` |
+| The design gallery, for development only, with its own copy file | `web/src/gallery/` |
+| The copy lint, the string lint and the class lint | `web/lint/`, with its rules in `web/lint/rules.ts` |
+| The screenshot command's list of pages and states | `web/capture/shots.ts` |
 | Python tests for seams 1, 2, 3 and 5, and for the gate | `tests/` |
 | The guard that keeps every Python test off the network | `conftest.py` at the root |
 | Screen tests (seam 4) | `web/tests/` |
@@ -129,3 +135,13 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | `STRATA_WEB_PORT` | the web app's dev server | a free port |
 
 The Playwright tests always pick their own free port, so they never clash with a running dev server.
+
+## The design gallery and screenshots
+
+The design gallery shows every component in each of its states. Start `scripts/dev` and open `/gallery` at the address it prints. Only development builds and the gallery build have it; the production build leaves it out, and a test checks that.
+
+To take screenshots of every gallery page and of the hover, focus and open states, at 1440, 1024 and 390 px, run this command:
+
+    npm --prefix web run capture
+
+It builds the app and the gallery, answers `/api` from the recordings in `tests/fixtures/api`, and saves the pictures in `web/screenshots`, or in the folder that `STRATA_CAPTURE_DIR` names. It takes about 10 seconds. It is not a gate step. To capture a new screen, add its routes and states to `web/capture/shots.ts`.
