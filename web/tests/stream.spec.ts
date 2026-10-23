@@ -1,3 +1,4 @@
+// Ticket 14 moves these cases into the answer panel's screen tests and deletes this file.
 // The client side of the answer stream (seam 3): the web app reads the stream the server
 // writes. The recorded stream is the one the server tests check the server against.
 import { expect, test } from "@playwright/test";

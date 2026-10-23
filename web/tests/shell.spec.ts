@@ -43,5 +43,5 @@ test("the shell says so when it can't reach the server", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page.getByText("I can't reach Strata's server. Try again in a minute.")).toBeVisible();
+  await expect(page.getByText("The server did not answer, so I can't tell who you are. Try again in a minute.")).toBeVisible();
 });

@@ -12,6 +12,6 @@ export const copy = {
     checking: "Checking who you are.",
     signedIn: (name: string) => `You are signed in as ${name}.`,
     signedOut: "You are not signed in. Open Strata through its Databricks App to sign in.",
-    unreachable: "I can't reach Strata's server. Try again in a minute.",
+    unreachable: "The server did not answer, so I can't tell who you are. Try again in a minute.",
   },
 } as const;
