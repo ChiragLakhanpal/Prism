@@ -50,6 +50,10 @@ class Manifest:
     recorded: Path
     sources: list = field(default_factory=list)
 
+    def files(self):
+        """Every recorded file the sources write, relative to the recorded folder, in listing order."""
+        return [name for source in self.sources for name in source.files()]
+
 
 @dataclass(frozen=True)
 class Recorded:

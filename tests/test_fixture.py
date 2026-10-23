@@ -18,13 +18,15 @@ def builder():
 
 
 def test_a_fixture_file_whose_name_starts_with_an_underscore_stops_the_build(tmp_path):
+    from strata.fixture import recorded as fmt
+
     source = tmp_path / "placeholder"
     source.mkdir()
     (source / "_plan_rows.csv").write_text("plan_id\nP1\n")
     out = tmp_path / "fixture.duckdb"
 
     with pytest.raises(SystemExit, match="start with a letter"):
-        builder().build(out=out, source=source, manifest=ROOT / "data" / "fixture" / "sources.toml")
+        builder().build(out=out, source=source, manifest=fmt.load_manifest())
 
     assert not out.exists()
 
@@ -71,13 +73,14 @@ def test_the_fixture_database_holds_every_recorded_file_with_its_source_license_
     placeholder.mkdir()
     out = tmp_path / "fixture.duckdb"
 
-    builder().build(out=out, source=placeholder, manifest=tmp_path / "sources.toml")
+    builder().build(out=out, source=placeholder, manifest=fmt.load_manifest(tmp_path / "sources.toml"))
 
-    with duckdb.connect(str(out), read_only=True) as con:
-        licensed = con.execute("SELECT file, source, license FROM recorded.files ORDER BY file").fetchall()
-        amount = con.execute("SELECT response->'$.data[0].supplier_contract_amount_usd' FROM recorded.responses"
-                             ).fetchone()[0]
-        pages = con.execute("SELECT pdf_page, text FROM recorded.pages ORDER BY pdf_page").fetchall()
+    with duckdb.connect() as con:
+        con.execute("ATTACH ? AS strata (READ_ONLY)", [str(out)])
+        licensed = con.execute("SELECT file, source, license FROM strata.recorded.files ORDER BY file").fetchall()
+        amount = con.execute("SELECT response->'$.data[0].supplier_contract_amount_usd' "
+                             "FROM strata.recorded.responses").fetchone()[0]
+        pages = con.execute("SELECT pdf_page, text FROM strata.recorded.pages ORDER BY pdf_page").fetchall()
     assert licensed == [
         ("api/awards/P000001.json", "https://awards.example/?project=P000001",
          "The World Bank: Contract Awards. License: CC BY 4.0."),
@@ -99,9 +102,9 @@ def test_every_recorded_file_is_listed_and_carries_its_source_and_a_cc_by_4_lice
     from strata.fixture import recorded as fmt
 
     manifest = fmt.load_manifest()
-    listed = {name for source in manifest.sources for name in source.files()}
+    listed = manifest.files()
 
-    assert recorded_files(manifest) == listed
+    assert recorded_files(manifest) == set(listed) and len(listed) == len(set(listed))
     for name in sorted(listed):
         file = fmt.read(manifest.recorded / name)
         assert file.source.startswith("https://"), name
@@ -126,9 +129,10 @@ def test_the_fixture_database_loads_every_recorded_file_with_no_network(fixture_
     from strata.fixture import recorded as fmt
 
     manifest = fmt.load_manifest()
-    with duckdb.connect(str(fixture_db), read_only=True) as con:
-        files = {row[0] for row in con.execute("SELECT file FROM recorded.files").fetchall()}
-        icr_pages = con.execute("SELECT count(*) FROM recorded.pages WHERE document = ?",
+    with duckdb.connect() as con:
+        con.execute("ATTACH ? AS strata (READ_ONLY)", [str(fixture_db)])
+        files = {row[0] for row in con.execute("SELECT file FROM strata.recorded.files").fetchall()}
+        icr_pages = con.execute("SELECT count(*) FROM strata.recorded.pages WHERE document = ?",
                                 ["documents/P130164/icr-2019-10-10"]).fetchone()[0]
 
     assert files == recorded_files(manifest)

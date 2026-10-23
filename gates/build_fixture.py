@@ -75,7 +75,9 @@ def load_recorded(con, manifest):
                 con.execute("INSERT INTO recorded.documents VALUES (?, ?, ?)", [source.file, file.source, file.body])
 
 
-def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=fmt.MANIFEST):
+def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None):
+    """Build the database at out from the placeholder folder and a loaded manifest (by default, sources.toml)."""
+    manifest = manifest or fmt.load_manifest()
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
@@ -83,7 +85,7 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=fmt.MANIFEST):
     try:
         with duckdb.connect(str(building)) as con:
             load_placeholder(con, source)
-            load_recorded(con, fmt.load_manifest(manifest))
+            load_recorded(con, manifest)
     except BaseException:
         building.unlink(missing_ok=True)
         raise
@@ -93,9 +95,9 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=fmt.MANIFEST):
 
 def main():
     manifest = fmt.load_manifest()
-    files = [manifest.recorded / name for source in manifest.sources for name in source.files()]
-    out = build()
-    recorded_mb = sum(path.stat().st_size for path in files) / 1_000_000
+    out = build(manifest=manifest)
+    files = manifest.files()
+    recorded_mb = sum((manifest.recorded / name).stat().st_size for name in files) / 1_000_000
     print(f"The fixture holds {len(files)} recorded files ({recorded_mb:.1f} MB) from {len(manifest.sources)} "
           f"sources. The fixture database is {out.stat().st_size / 1_000_000:.1f} MB, at {out.relative_to(ROOT)}.")
     return 0
