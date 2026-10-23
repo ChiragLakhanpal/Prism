@@ -107,6 +107,8 @@ export const SHOTS: Shot[] = [
   { name: "answer--focus-retry", path: "/gallery/answer", act: focus("[data-state-section=error] button") },
   { name: "document--focus-pdf-link", path: "/gallery/document", act: focus("[data-document=ready] a") },
   { name: "table--focus-region", path: "/gallery/table", widths: WIDE, act: focus("[data-table] [role=region]") },
+  // Between 768 and 1023 px the two breakpoints differ: the default table and the lg one's cards.
+  { name: "table--cards-below-lg", path: "/gallery/table", widths: [900] },
 
   // The production app's shell against the mocked API: signed in, signed out and unreachable.
   { name: "app--signed-in", path: "/", server: "app", api: { "/api/me": { recorded: "me.json" } } },

@@ -1,7 +1,9 @@
 // Table (DESIGN.md section 5): a title sentence that states the finding, a count line
 // ("Showing 1–20 of 99 sources"), a surface-2 header with units in the column heads, numbers
 // right-aligned in tabular numerals, and a source line below. Below 768 px each row becomes a
-// card, so nothing scrolls sideways. In a card each column's head sits above its value, and
+// card, so nothing scrolls sideways. A table whose columns need more than the 672 px a 768 px
+// screen leaves, such as ticket 10's plan check, sets cardsBelow="lg" and becomes cards below
+// 1024 px instead. In a card each column's head sits above its value, and
 // every value starts at one left edge: text runs the card's full width, and two or more
 // numbers share a grid of 120 px columns, so they sit side by side (the 10 brief's activity
 // card).
@@ -50,6 +52,13 @@ export type Count = { noun: string; total: number; from?: number; to?: number };
 
 type Level = 2 | 3 | 4 | 5;
 
+// Where the rows turn into cards. The class names are written out whole, so Tailwind finds them.
+export type CardsBelow = "md" | "lg";
+const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
+  md: { table: "md:block", cards: "md:hidden" },
+  lg: { table: "lg:block", cards: "lg:hidden" },
+};
+
 const n = (value: number) => formatNumber(value, { compact: false });
 
 // A card's fields: a grid of 120 px columns that numbers share, with text, or a number with no
@@ -74,6 +83,7 @@ export function Table({
   source,
   rowHeader,
   level = 3,
+  cardsBelow = "md",
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -81,10 +91,12 @@ export function Table({
   columns: Column[];
   state: TableState;
   source?: ReactNode;
-  // The column that names each row, used as the card's heading below 768 px.
+  // The column that names each row, used as the card's heading when the rows are cards.
   rowHeader: string;
   // The title's heading level; each card's heading is one level below it.
   level?: Level;
+  // Below which breakpoint the rows become cards: md (768 px, the default) or lg (1024 px).
+  cardsBelow?: CardsBelow;
 }) {
   const titleId = useId();
   const countId = useId();
@@ -153,14 +165,15 @@ export function Table({
         </>
       )}
 
-      {/* From 768 px, a table. In a narrow column it scrolls inside its frame, which then takes
-          focus so a keyboard can scroll it too. */}
+      {/* From 768 px (or 1024 px with cardsBelow="lg"), a table. In a narrow column it scrolls
+          inside its frame, which then takes focus so a keyboard can scroll it too. */}
       <div
         tabIndex={loading ? undefined : 0}
         role={loading ? undefined : "region"}
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
-        className="hidden overflow-x-auto rounded-md border border-line bg-surface md:block"
+        data-table-view="table"
+        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table)}
       >
         <table
           aria-labelledby={loading ? undefined : titleId}
@@ -209,9 +222,15 @@ export function Table({
         </table>
       </div>
 
-      {/* Below 768 px, one card per row: the row's name as its heading, then each column's head
-          above its value, every value from one left edge. A loading card has the same lines. */}
-      <ul aria-labelledby={loading ? undefined : titleId} aria-hidden={loading || undefined} className="flex flex-col gap-3 md:hidden">
+      {/* Below the breakpoint, one card per row: the row's name as its heading, then each
+          column's head above its value, every value from one left edge. A loading card has the
+          same lines. */}
+      <ul
+        aria-labelledby={loading ? undefined : titleId}
+        aria-hidden={loading || undefined}
+        data-table-view="cards"
+        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards)}
+      >
         {skeletonRows.map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
             <SkeletonLine className="text-small" width="w-3/5" />

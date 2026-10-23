@@ -8,7 +8,12 @@
 // On navy, the selected tab has a 3 px white underline and hover a line-strong one; focus uses
 // focus-on-dark. Only one Main navigation is exposed at a time: the bar's below 1024 px is
 // display: none, and so is the panel's from 1024 px.
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+//
+// When the window crosses 1024 px, the control that had focus can vanish with its half of the
+// bar, which would drop focus to the page. Focus moves to the control that now holds the same
+// thing instead: a tab to its twin, the pill or the view popover to the Menu button, and the
+// Menu button to the pill (DESIGN.md section 10).
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
@@ -33,6 +38,21 @@ export type Viewer =
   | { status: "error" };
 
 const WIDE = "(min-width: 64rem)";
+
+// The view popover hangs 8 px below the navy bar, not 8 px below the pill, so no white lip of
+// it sits on the bar. The 32 px pill is centered in the 56 px bar, 12 px above its bottom edge.
+const BELOW_BAR = 12 + 8;
+
+// Calls back each time the window crosses 1024 px, with whether it is now wide. The callbacks
+// here use only state setters and refs, which never change, so the first one is kept.
+function useWideChange(onChange: (wide: boolean) => void) {
+  useEffect(() => {
+    const wide = window.matchMedia(WIDE);
+    const changed = () => onChange(wide.matches);
+    wide.addEventListener("change", changed);
+    return () => wide.removeEventListener("change", changed);
+  }, []);
+}
 
 // Who is signed in, as the first of the view lines. An error carries the circle-x icon, as the
 // freshness stamp's does, so it does not read like the signed-in line.
@@ -64,20 +84,25 @@ function ViewLines({ viewer }: { viewer: Viewer }) {
   );
 }
 
-function ViewSwitch({ viewer, defaultOpen }: { viewer: Viewer; defaultOpen?: boolean }) {
+function ViewSwitch({
+  viewer,
+  defaultOpen,
+  menuButton,
+}: {
+  viewer: Viewer;
+  defaultOpen?: boolean;
+  // Where focus goes when a narrowing window closes the popover.
+  menuButton: RefObject<HTMLButtonElement | null>;
+}) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const body = useRef<HTMLDivElement>(null);
 
   // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
-  useEffect(() => {
-    const wide = window.matchMedia(WIDE);
-    const close = () => !wide.matches && setOpen(false);
-    wide.addEventListener("change", close);
-    return () => wide.removeEventListener("change", close);
-  }, []);
+  useWideChange((wide) => !wide && setOpen(false));
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
       <RadixPopover.Trigger
+        data-view-pill
         aria-haspopup="dialog"
         className={cx(
           "flex h-8 shrink-0 items-center gap-1 rounded-pill border border-surface px-3 text-button whitespace-nowrap text-surface",
@@ -90,12 +115,19 @@ function ViewSwitch({ viewer, defaultOpen }: { viewer: Viewer; defaultOpen?: boo
       <RadixPopover.Portal>
         <RadixPopover.Content
           align="end"
-          sideOffset={8}
+          sideOffset={BELOW_BAR}
           collisionPadding={16}
           aria-label={copy.nav.view.dialog}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             body.current?.focus();
+          }}
+          onCloseAutoFocus={(event) => {
+            // Below 1024 px the pill is hidden and the Menu holds the view lines, so focus goes there.
+            if (!window.matchMedia(WIDE).matches) {
+              event.preventDefault();
+              menuButton.current?.focus();
+            }
           }}
           className={cx(POPOVER, "w-80 p-4")}
         >
@@ -167,18 +199,35 @@ export function TopNav({
 }) {
   const [menuOpen, setMenuOpen] = useState(menuOpenAtStart);
   const menuButton = useRef<HTMLButtonElement>(null);
+  const header = useRef<HTMLElement>(null);
+  // The control a resize just hid. Chrome takes focus from it before it reports the media
+  // change, so the header notes it on blur and forgets it after the frame.
+  const hidden = useRef<HTMLElement | null>(null);
   const panelId = useId();
 
-  // Widening the window to 1024 px closes the panel.
-  useEffect(() => {
-    const wide = window.matchMedia(WIDE);
-    const close = () => wide.matches && setMenuOpen(false);
-    wide.addEventListener("change", close);
-    return () => wide.removeEventListener("change", close);
-  }, []);
+  // Widening the window to 1024 px closes the panel. A focused control that the new width hides
+  // hands focus to its twin, or to the control at the bar's right end (the pill or the Menu).
+  useWideChange((wide) => {
+    if (wide) setMenuOpen(false);
+    const active = document.activeElement;
+    const root = header.current;
+    const focused = active instanceof HTMLElement && root?.contains(active) ? active : active === document.body ? hidden.current : null;
+    hidden.current = null;
+    if (!root || !focused || focused.getClientRects().length > 0) return;
+    const key = focused.dataset.navTab;
+    const twin = key && wide ? root.querySelector<HTMLElement>(`[data-nav-bar] [data-nav-tab=${key}]`) : null;
+    (twin ?? (wide ? root.querySelector<HTMLElement>("[data-view-pill]") : menuButton.current))?.focus();
+  });
 
   return (
     <header
+      ref={header}
+      onBlur={(event) => {
+        const target = event.target as HTMLElement;
+        if (event.relatedTarget || target.getClientRects().length > 0) return;
+        hidden.current = target;
+        requestAnimationFrame(() => (hidden.current = null));
+      }}
       onKeyDown={(event) => {
         // Escape in the open Menu closes it and returns focus to the Menu button.
         if (event.key === "Escape" && menuOpen) {
@@ -212,7 +261,7 @@ export function TopNav({
             </ul>
           </nav>
           <div className="ml-auto hidden pl-6 lg:block">
-            <ViewSwitch viewer={viewer} defaultOpen={viewOpen} />
+            <ViewSwitch viewer={viewer} defaultOpen={viewOpen} menuButton={menuButton} />
           </div>
           <button
             ref={menuButton}

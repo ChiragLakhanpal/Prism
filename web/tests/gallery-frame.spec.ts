@@ -143,6 +143,39 @@ test("narrowing the window below 1024 px closes the open view popover", async ({
   await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
 });
 
+// DESIGN.md section 10: a focus order people can follow. When the window crosses 1024 px, the
+// control that had focus can vanish with its half of the bar. Focus then moves to the control
+// that now holds the same thing, so the next Tab starts from where the reader was.
+test("a resize across 1024 px moves focus to the control that now holds the same thing", async ({ page }) => {
+  const pill = page.getByRole("button", { name: "View: World Bank staff" });
+  const menu = page.getByRole("button", { name: "Menu" });
+
+  // The view popover, opened from the keyboard, closes when the window narrows, and focus goes
+  // to the Menu button, which holds the view lines below 1024 px.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/navigation");
+  await pill.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(page.getByRole("dialog", { name: "Your view" })).toBeHidden();
+  await expect(menu).toBeFocused();
+
+  // A row in the open Menu goes to the same tab in the bar when the window widens.
+  await menu.press("Enter");
+  await page.locator("[data-menu-panel] [data-nav-tab=lessons]").focus();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("[data-menu-panel]")).toBeHidden();
+  await expect(page.locator("[data-nav-bar] [data-nav-tab=lessons]")).toBeFocused();
+
+  // A tab in the bar goes to the Menu button when the window narrows, and the Menu button goes
+  // to the pill when it widens again.
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(menu).toBeFocused();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(pill).toBeFocused();
+});
+
 test("the footer reads DESIGN.md section 8's disclaimer word for word on every page the gallery renders", async ({ page }) => {
   const footer = await footerSentence();
   const paths = await galleryPaths(page);

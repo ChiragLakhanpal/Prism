@@ -27,7 +27,8 @@ export const galleryCopy = {
     },
     links: {
       title: "Links and tabs",
-      purpose: "Text links are always underlined. Tabs on a light surface use a primary underline.",
+      purpose:
+        "Text links are always underlined. Tabs on a light surface use a primary underline. On a phone they stay on one row, and you scroll it sideways.",
     },
     cards: {
       title: "Cards and empty states",
@@ -62,7 +63,7 @@ export const galleryCopy = {
     table: {
       title: "Table",
       purpose:
-        "A table has a title sentence, a count line, units in the column heads and a source line. The title, count and source show only with the rows. Below 768 px each row becomes a card.",
+        "A table has a title sentence, a count line, units in the column heads and a source line. The title, count and source show only with the rows. Below 768 px each row becomes a card. A table with wide columns becomes cards below 1024 px instead.",
     },
     skeleton: {
       title: "Skeleton",
@@ -113,6 +114,8 @@ export const galleryCopy = {
     flush: "A ghost button under text",
     textLink: "Text link",
     tabs: "Tabs on a light surface",
+    tabsLater: "Tabs with a later one selected",
+    cardsBelowLg: "Cards below 1024 px, for a table with wide columns",
     card: "Card",
     emptyState: "Empty state",
     signals: "Signals",
@@ -211,12 +214,12 @@ export const galleryCopy = {
     measureRows: ["Linked", "All rows", "Measured"],
     markerSource: "Implementation Completion and Results Report, June 30, 2021, paragraph 54",
     markerSecond: "Implementation Status and Results Report, March 4, 2024, paragraph 12",
+    // Each sentence says only what its own source says. Marker 1's preview quotes paragraph 54,
+    // the passage on the Document page, and marker 2 cites a later status report.
     markerPreview:
-      "The contracts were advertised again after all bids were rejected, and the works started five months late.",
-    // The reference class and its count come first (DESIGN.md section 7, rule 15), and 24 is
-    // over the 20 comparables a range needs.
-    sentenceBefore: "The 24 packages like this took 7 to 11 months from notice to signed contract.",
-    sentenceAfter: "Two of the 24 were advertised again.",
+      "The works contracts were advertised again in 2017 after all bids were rejected. The contracts were signed in March 2018, five months after the date in the first Procurement Plan.",
+    sentenceBefore: "The works contracts were advertised again after all bids were rejected, and they were signed five months late.",
+    sentenceAfter: "The works were still under way in March 2024.",
     coverageNoun: "matching packages",
     coverageGap: "15 lacked the STEP reference that links notice to contract.",
     removed: [

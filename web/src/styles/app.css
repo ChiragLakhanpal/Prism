@@ -123,6 +123,25 @@
   transition-duration: var(--default-transition-duration);
 }
 
+/* A row of tabs that scrolls sideways (DESIGN.md section 5). It hides its scroll bar, which
+   would push the hairline down, and fades out over 32 px on each side that has more tabs, so a
+   reader can tell the row goes on. A mask only reads alpha, so it adds no color. Tabs.tsx sets
+   data-more as the row scrolls. */
+@utility tab-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  --tab-fade: 2rem;
+  &[data-more="start"] {
+    mask-image: linear-gradient(to right, transparent, black var(--tab-fade));
+  }
+  &[data-more="end"] {
+    mask-image: linear-gradient(to left, transparent, black var(--tab-fade));
+  }
+  &[data-more="both"] {
+    mask-image: linear-gradient(to right, transparent, black var(--tab-fade), black calc(100% - var(--tab-fade)), transparent);
+  }
+}
+
 /* Text that screen readers skip but a copy keeps, such as the brackets around "[1]". */
 @utility clip-visually {
   position: absolute;

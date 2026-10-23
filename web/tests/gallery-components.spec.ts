@@ -60,38 +60,60 @@ test("the citation marker's accessible name names the source, and a copy of it r
 // CLAUDE.md rule 2: the marker shows which claim a source backs. A marker that wraps to the
 // next line sits at the head of the next sentence and points at the wrong claim. Answers come
 // from a model, so their line ends move; the marker must hold to its sentence at any width.
+//
+// For each marker that follows a sentence, this lists the markers that sit on a different
+// line from the last character of that sentence.
+function markersApart(page: Page) {
+  return page.locator("[data-citation]").evaluateAll((markers) =>
+    markers.flatMap((marker) => {
+      // The word joiner sits in the marker's no-wrap span, so it always shares the marker's
+      // line. Measure the last character a reader sees instead.
+      const visible = (text: string) => text.replace(/[\s\u2060]+$/u, "");
+      // Only markers that follow a sentence: in a paragraph, or in an answer's "In short".
+      const block = marker.closest("p, [data-answer] > div");
+      if (!block) return [];
+      let last: Text | null = null;
+      const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode as Text;
+        if (marker.contains(node) || marker.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING) break;
+        if (visible(node.data)) last = node;
+      }
+      if (!last) return [];
+      // The last character of that text, and the line it sits on.
+      const end = visible(last.data).length;
+      const range = document.createRange();
+      range.setStart(last, end - 1);
+      range.setEnd(last, end);
+      const char = range.getBoundingClientRect();
+      const box = marker.getBoundingClientRect();
+      const middle = box.top + box.height / 2;
+      return middle > char.top && middle < char.bottom ? [] : [`marker ${marker.textContent} after "${visible(last.data).slice(-20)}"`];
+    }),
+  );
+}
+
 test("a citation marker stays on the line of the sentence it cites, at every width", async ({ page }) => {
   for (const path of ["/gallery/citations", "/gallery/answer"]) {
     for (const width of [1440, 1280, 1024, 768, 390, 360, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(path);
       await expect(page.locator("[data-citation]").first()).toBeVisible();
-      const apart = await page.locator("[data-citation]").evaluateAll((markers) =>
-        markers.flatMap((marker) => {
-          // Only markers that follow a sentence: in a paragraph, or in an answer's "In short".
-          const block = marker.closest("p, [data-answer] > div");
-          if (!block) return [];
-          let last: Text | null = null;
-          const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-          while (walker.nextNode()) {
-            const node = walker.currentNode as Text;
-            if (marker.contains(node) || marker.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING) break;
-            if (node.data.trim()) last = node;
-          }
-          if (!last) return [];
-          // The last character of that text, and the line it sits on.
-          const end = last.data.trimEnd().length;
-          const range = document.createRange();
-          range.setStart(last, end - 1);
-          range.setEnd(last, end);
-          const char = range.getBoundingClientRect();
-          const box = marker.getBoundingClientRect();
-          const middle = box.top + box.height / 2;
-          return middle > char.top && middle < char.bottom ? [] : [`marker ${marker.textContent} after "${last.data.trimEnd().slice(-20)}"`];
-        }),
-      );
-      expect(apart, `${path} at ${width} px`).toEqual([]);
+      expect(await markersApart(page), `${path} at ${width} px`).toEqual([]);
     }
+  }
+});
+
+// The guard above must be able to fail. A line break forced in front of marker 1 moves the
+// marker, with its no-wrap span, to the head of the next line, and the measure must see it.
+test("the marker measure catches a marker pushed to the start of the next line", async ({ page }) => {
+  for (const path of ["/gallery/citations", "/gallery/answer"]) {
+    await page.setViewportSize({ width: 1024, height: 900 });
+    await page.goto(path);
+    const first = page.locator("p [data-citation], [data-answer] > div [data-citation]").first();
+    await expect(first).toBeVisible();
+    await first.evaluate((marker) => marker.parentElement!.before(document.createElement("br")));
+    expect(await markersApart(page), path).toEqual([expect.stringMatching(/^marker \[1\] after /)]);
   }
 });
 
@@ -100,7 +122,7 @@ test("hovering or focusing a marker shows its evidence card, and Escape closes i
   const marker = page.locator("p").getByRole("link", { name: /^Source 1:/ });
   await marker.focus();
   const card = page.getByRole("tooltip");
-  await expect(card).toContainText("The contracts were advertised again");
+  await expect(card).toContainText("The works contracts were advertised again in 2017");
   expect(await axe(page)).toEqual([]);
   await page.keyboard.press("Escape");
   await expect(card).toBeHidden();
@@ -245,7 +267,7 @@ test("below 768 px every value in a table's cards starts at one left edge, with 
   // "Estimated Amount (US$)" wraps to two lines beside "Days late", and both values still
   // share one line.
   await page.goto("/gallery/table");
-  const tableCards = page.locator("[data-table=ready] ul > li");
+  const tableCards = page.locator("[data-state-section=ready] [data-table=ready] ul > li");
   await expect(tableCards).toHaveCount(4);
   const tops = await tableCards.evaluateAll((items) =>
     items.map((item) => [...item.querySelectorAll("[data-card-field=number] dd")].map((dd) => Math.round(dd.getBoundingClientRect().top))),
@@ -253,6 +275,31 @@ test("below 768 px every value in a table's cards starts at one left edge, with 
   for (const card of tops) {
     expect(card).toHaveLength(2);
     expect(new Set(card).size).toBe(1);
+  }
+});
+
+// Ticket 10's plan check needs 880 px for its columns, so it turns into cards below 1024 px,
+// while every other table keeps DESIGN.md's 768 px. Exactly one view shows at each width.
+test("a table turns into cards below 768 px, or below 1024 px with cardsBelow lg", async ({ page }) => {
+  await page.goto("/gallery/table");
+  const shown = (section: string) =>
+    page.locator(`[data-state-section=${section}] [data-table-view]`).evaluateAll((views) =>
+      views.filter((view) => getComputedStyle(view).display !== "none").map((view) => (view as HTMLElement).dataset.tableView),
+    );
+  const expected: [number, string, string][] = [
+    [390, "cards", "cards"],
+    [767, "cards", "cards"],
+    [768, "table", "cards"],
+    [900, "table", "cards"],
+    [1023, "table", "cards"],
+    [1024, "table", "table"],
+    [1440, "table", "table"],
+  ];
+  await expect(page.locator("[data-state-section=cards-below-lg] [data-table=ready]")).toBeVisible();
+  for (const [width, md, lg] of expected) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await shown("ready"), `default at ${width} px`).toEqual([md]);
+    expect(await shown("cards-below-lg"), `lg at ${width} px`).toEqual([lg]);
   }
 });
 
@@ -341,7 +388,7 @@ test("a loading button keeps its name, its label and its width, and a disabled o
   const width = async (section: string, variant: string) =>
     Math.round((await page.locator(`[data-state-section=${section}] [data-button=${variant}]`).first().boundingBox())!.width);
   expect(await width("loading", "primary")).toBe(await width("variants", "primary"));
-  expect(await width("loading", "secondary")).toBe(await width("with-icon", "secondary"));
+  expect(await width("loading", "secondary")).toBe(await width("variants", "secondary"));
   expect(await width("loading", "ghost")).toBe(await width("variants", "ghost"));
   for (const button of await page.locator("[data-state-section=loading] button").all()) {
     expect(await button.locator("span").evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
@@ -351,4 +398,58 @@ test("a loading button keeps its name, its label and its width, and a disabled o
   await disabled.focus();
   await expect(disabled).toBeFocused();
   await expect(disabled).toHaveAttribute("aria-disabled", "true");
+});
+
+// DESIGN.md section 5: tabs on a light surface never wrap. Five section tabs need about 537 px,
+// so on a phone the row scrolls inside its own strip: every tab keeps one top, the hairline
+// runs under the whole strip, the selected tab starts in view, and no focus ring is clipped.
+test("tabs on a light surface keep one row at 390 and 320 px, with the selected tab in view", async ({ page }) => {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/links");
+    for (const section of ["tabs", "tabs-later"]) {
+      const strip = page.locator(`[data-state-section=${section}] [data-tab-strip]`);
+      const at = `${section} at ${width} px`;
+      const measure = () =>
+        strip.evaluate((row) => {
+          const box = (el: Element) => {
+            const { top, right, bottom, left } = el.getBoundingClientRect();
+            return { top, right, bottom, left };
+          };
+          return {
+            strip: box(row),
+            nav: { ...box(row.parentElement!), line: getComputedStyle(row.parentElement!).borderBottomWidth },
+            tabs: [...row.querySelectorAll("a")].map(box),
+            current: box(row.querySelector("[aria-current=page]")!),
+            focused: document.activeElement?.closest("[data-tab-strip]") === row ? box(document.activeElement!) : null,
+            scrolls: row.scrollWidth > row.clientWidth,
+          };
+        });
+      const shape = await measure();
+      expect(new Set(shape.tabs.map((tab) => tab.top)).size, at).toBe(1);
+      expect(shape.scrolls, at).toBe(true);
+      // A side with more tabs out of sight fades, so a reader can tell the row goes on.
+      expect(await strip.getAttribute("data-more"), at).not.toBe("none");
+      // The hairline is the nav's bottom border, the width of the column, right under the tabs.
+      expect(shape.nav.line, at).toBe("1px");
+      expect(shape.nav.bottom - 1, at).toBe(shape.tabs[0].bottom);
+      // The selected tab and its 4 px of focus ring sit inside the visible strip.
+      expect(shape.current.left - 4, at).toBeGreaterThanOrEqual(shape.strip.left);
+      expect(shape.current.right + 4, at).toBeLessThanOrEqual(shape.strip.right);
+      expect(shape.current.top - 4, at).toBeGreaterThanOrEqual(shape.strip.top);
+      expect(shape.current.bottom + 4, at).toBeLessThanOrEqual(shape.strip.bottom);
+      // A keyboard user who tabs to the last tab sees it whole, ring and all.
+      await strip.getByRole("link").last().focus();
+      const focused = (await measure()).focused!;
+      expect(focused.right + 4, at).toBeLessThanOrEqual(shape.strip.right + 0.5);
+      expect(focused.left - 4, at).toBeGreaterThanOrEqual(shape.strip.left - 0.5);
+    }
+  }
+  // On a wide screen the row fits, so it neither scrolls nor fades.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/links");
+  for (const strip of await page.locator("[data-tab-strip]").all()) {
+    expect(await strip.evaluate((row) => row.scrollWidth > row.clientWidth)).toBe(false);
+    await expect(strip).toHaveAttribute("data-more", "none");
+  }
 });

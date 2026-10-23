@@ -349,7 +349,7 @@ export const PAGES: GalleryPage[] = [
             <Button variant="primary" loading>
               {sample.primary}
             </Button>
-            <Button variant="secondary" loading icon={FileDown}>
+            <Button variant="secondary" loading>
               {sample.secondary}
             </Button>
             <Button variant="ghost" loading>
@@ -380,6 +380,18 @@ export const PAGES: GalleryPage[] = [
             <Tabs
               label={sample.tabsLabel}
               tabs={sample.tabs.map((label, index) => ({ key: label, label, href: `#tab-${index}`, current: index === 1 }))}
+            />
+          </Panel>
+        ),
+      },
+      {
+        id: "tabs-later",
+        title: t.tabsLater,
+        body: (
+          <Panel>
+            <Tabs
+              label={sample.tabsLabel}
+              tabs={sample.tabs.map((label, index) => ({ key: label, label, href: `#tab-${index}`, current: index === 3 }))}
             />
           </Panel>
         ),
@@ -746,6 +758,12 @@ export const PAGES: GalleryPage[] = [
     sections: [
       { id: "ready", title: s.ready, body: <Table {...tableProps} state={{ status: "ready", rows }} /> },
       { id: "loading", title: s.loading, body: <Table {...tableProps} state={{ status: "loading", rows: rows.length }} /> },
+      {
+        // Ticket 10's plan check needs 880 px for its columns, so its rows become cards below 1024 px.
+        id: "cards-below-lg",
+        title: t.cardsBelowLg,
+        body: <Table {...tableProps} cardsBelow="lg" state={{ status: "ready", rows }} />,
+      },
       {
         id: "empty",
         title: s.empty,

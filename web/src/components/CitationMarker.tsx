@@ -4,7 +4,9 @@
 // evidence card; a click opens the source; Escape closes the card.
 //
 // The brackets sit in the page but out of sight, so a copied answer reads "[1]". An ::after
-// pads the hit area to 24 by 24 px without changing the line. No state changes its size.
+// pads the hit area to 24 by 24 px without changing the line. No state changes its size. A
+// 4 px margin on each side keeps the focus ring (2 px at a 2 px offset) off the period before
+// it and the word after it.
 //
 // The marker never starts a line. A word joiner (U+2060) ties it to the last word of the
 // sentence it cites, and the span around both keeps the browser from breaking between them,
@@ -50,7 +52,7 @@ export function CitationMarker({
         })
       }
       className={cx(
-        "relative mx-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-pill border px-1 align-[1px]",
+        "relative mx-1 inline-flex h-5 min-w-5 items-center justify-center rounded-pill border px-1 align-[1px]",
         "text-label font-bold tabular-nums no-underline transition-paint duration-150",
         "after:absolute after:-inset-0.5 after:content-['']",
         active
