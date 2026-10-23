@@ -195,8 +195,9 @@ def text_values(engine):
 
 # Contact names that are job titles, not people. A P130164 notice gives "Chief Engineer" as its
 # contact's name, and the project's reports use the title as an ordinary word ("headed by the Chief
-# Engineer"), so it is no contact detail there.
+# Engineer"), so it is no contact detail in a report's text. Every other table is still checked for it.
 JOB_TITLES = {"Chief Engineer"}
+REPORT_TEXT = ("bronze.document_texts.", "bronze.document_pages.", "silver.passages.", "gold.passage.")
 
 
 def recorded_contacts():
@@ -207,7 +208,7 @@ def recorded_contacts():
             found |= {notice[key].strip() for key in ("contact_name", "contact_email", "contact_phone_no")
                       if notice.get(key) and len(notice[key].strip()) > 5}
             found |= set(EMAIL.findall(notice.get("notice_text") or ""))
-    return found - JOB_TITLES
+    return found
 
 
 def awkward_contact_notice():
@@ -228,7 +229,8 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
         leaks += [(where, "an email or phone number")
                   for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
                   + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)]
-        leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
+        leaks += [(where, "a recorded contact detail") for contact in found if contact in value
+                  and not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
     assert leaks == []
 
 
