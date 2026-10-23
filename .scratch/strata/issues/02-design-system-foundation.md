@@ -6,14 +6,14 @@ Read first: DESIGN.md sections 1 to 10; GLOSSARY.md; docs/agents/areas/design.md
 
 **Blocked by:** 01 (Repo scaffold with fairshare's rules, hooks, shell and the offline gate)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** design
 **Phase:** P0
 **Design review:** yes
 
 - [ ] A test compares every token in DESIGN.md section 2's theme block with the app theme and finds the same names and values.
 - [ ] Fonts load from the app's own bundle with no external font requests, and the fallback face uses the size-adjust and override values in DESIGN.md section 3.
-- [ ] The gallery's navigation, box band and footer match the blueprint's Home wireframe and DESIGN.md section 5: a 56px navy bar, a logo slot at least 24px tall with clear space, the tabs Packages, Projects, Lessons, Drafts and Data in that order, the selected tab with a 3px primary underline, and the pill "View: World Bank staff ▾".
+- [ ] The gallery's navigation, box band and footer match the blueprint's Home wireframe and DESIGN.md section 5: a 56px navy bar, a logo slot at least 24px tall with clear space, the tabs Packages, Projects, Lessons, Drafts and Data in that order, the selected tab with a 3px white underline (primary measures 1.55:1 on the navy bar, so the 06 brief chose white; primary stays for tabs on light surfaces), and the pill "View: World Bank staff ▾".
 - [ ] The footer reads, word for word, the DESIGN.md section 8 disclaimer on every page the gallery renders.
 - [ ] Num renders 6 of 12 as "6 of 12" and never as a percentage, renders 31 of 37 as "31 of 37" beside "about 8 in 10", and formats thousands, K, M and B and decimals as DESIGN.md section 6 specifies, checked against literal expected strings.
 - [ ] The status badge shows Needs a look, Watch and No signals, each with its own icon shape and its text; the citation marker's accessible name follows "Source 1: Implementation Completion and Results Report, June 30, 2021, paragraph 54"; the check line uses the neutral state, never success green (DESIGN.md section 5).
@@ -22,3 +22,8 @@ Read first: DESIGN.md sections 1 to 10; GLOSSARY.md; docs/agents/areas/design.md
 - [ ] A lint rule fails the gate when a component renders a user-facing string that is not from the copy file.
 - [ ] Every component ships with all its states (default, hover, focus, disabled, loading and, where it applies, empty, error and abstention), and one command captures Playwright screenshots of each at 1440, 1024 and 390 px against the mocked API, so design reviews are repeatable.
 - [ ] The gallery route is absent from a production build.
+
+## Comments
+
+- October 23, 2026, orchestrator: the third criterion now asks for a white underline on the selected tab in the navy bar. The design brief for ticket 06 measured DESIGN.md's primary at 1.55:1 on #002244, which fails the 3:1 rule, and chose white. Primary still underlines tabs on light surfaces.
+- October 23, 2026, orchestrator: dispatched to design-lead in its own worktree on branch strata/02-design-system-foundation. The briefs for tickets 06, 10, 14 and 16 settled four additions this ticket also lands and records in DESIGN.md: a focus token for the navy bar (#f5926c, since #b6490c measures 3.01:1 on navy), a highlight token (#fff1b8), an empty-state card (a card with a circle-dashed icon, a first-person heading sentence, one or two body sentences and at most one link, with no illustration), and the Partial and Gap badges (Partial uses the warning state with the triangle-alert icon, Gap uses the neutral state with the circle-dashed icon and a dashed border). The navigation's Menu breakpoint is 1024 px, written in rem.

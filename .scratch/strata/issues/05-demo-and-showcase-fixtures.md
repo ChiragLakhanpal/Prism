@@ -8,7 +8,7 @@ Read first: docs/PLAN.md section 3; the blueprint's Check a plan, Evidence drawe
 
 **Blocked by:** 01 (Repo scaffold with fairshare's rules, hooks, shell and the offline gate)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** data
 **Phase:** P0
 **Design review:** no
@@ -20,3 +20,6 @@ Read first: docs/PLAN.md section 3; the blueprint's Check a plan, Evidence drawe
 - [ ] The fixture includes at least one notice with a contact name, email and phone number; a loan number in each of its four forms; a joint-venture award; an "INDIVIDUAL CONSULTANT" row; a document dated in the future; a signed plan row with an Actual Amount of 0.00; and a reference whose method differs from the Method column.
 - [ ] The recording command refetches every source and prints a diff, overwriting only when asked.
 - [ ] Every recorded file carries its source and its license line (CC BY 4.0).
+
+## Comments
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/05-demo-and-showcase-fixtures. Credentials are still missing, so anything that needs the workspace is parked in docs/workspace-catchup.md. Sources are fetched from the World Bank's public sites and APIs.

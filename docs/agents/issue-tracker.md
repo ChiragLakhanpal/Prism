@@ -22,7 +22,7 @@ A ticket moves through these values of its `Status:` line, and only the named ro
 | `in-review` | the orchestrator, when the implementer reports | Reviews running; the comment names the branch and worktree |
 | `done` | the merger, after merging | Merged into `build/strata`; the comment names the merge commit and the evidence |
 
-**Frontier:** every ticket whose `Status` is `ready-for-agent` and whose blockers are all `done`. Lowest number first when there are more than the orchestrator can run at once.
+**Frontier:** every ticket whose `Status` is `ready-for-agent` and whose blockers are all `done`. When there are more than the orchestrator can run at once, the ticket with the longest chain of tickets waiting on it goes first, and the lowest number breaks ties (see the standing rules in `build.md`).
 
 ## When a skill says "publish to the issue tracker"
 
