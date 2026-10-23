@@ -52,7 +52,7 @@ export function EmptyState({
       <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
       <div className="min-w-0">
         {createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
-        <p className="mt-2 max-w-prose text-body text-ink">{body}</p>
+        <p className="mt-2 max-w-prose text-body text-pretty text-ink">{body}</p>
         {link && (
           <p className="mt-4">
             <TextLink href={link.href}>{link.text}</TextLink>

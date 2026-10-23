@@ -176,7 +176,9 @@ export const copy = {
     ready: (date: string) => `Data through ${date}`,
     empty: "No data loaded yet",
     error: "I can't read the data date.",
-    description: "See each source's date on the Data page.",
+    // The stamp's link description. It names where the link goes and promises nothing the Data
+    // page can't show yet; tickets 16 and 17 may say more once that page lists each source's date.
+    description: "Open the Data page.",
   },
 
   loading: "Loading",

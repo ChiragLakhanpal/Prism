@@ -145,7 +145,8 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
       >
         {text}
       </a>
-      <span id={descriptionId} className="sr-only">
+      {/* Hidden, so it is read once through aria-describedby and never again as page text. */}
+      <span id={descriptionId} hidden>
         {copy.stamp.description}
       </span>
     </>

@@ -22,7 +22,7 @@ export function PageHeader({
         { tabIndex: -1, className: "text-h1 wrap-anywhere text-ink-heading focus:outline-none" },
         title,
       )}
-      <p className="mt-2 max-w-prose text-body text-ink-muted">{purpose}</p>
+      <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>
     </div>
   );
 }

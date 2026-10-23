@@ -35,6 +35,20 @@ test("the navy bar carries the official World Bank logo, unaltered, 24 px tall w
   expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(12);
 });
 
+test("one banner holds the Main navigation, the search landmark around the box and the stamp", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const banner = page.getByRole("banner");
+  await expect(banner).toHaveCount(1);
+  await expect(banner.getByRole("navigation", { name: "Main" })).toHaveCount(1);
+  await expect(banner.getByRole("search")).toHaveCount(1);
+  await expect(banner.locator("[data-stamp]").getByRole("link")).toBeVisible();
+  // The stamp's description is read once, through aria-describedby, and never as page text.
+  await expect(page.getByText("Open the Data page.")).toBeHidden();
+});
+
 test("the first paint holds the bar, the band and the logo where the app puts them, before any script runs", async ({ browser, page }) => {
   const boxes = (selectors: string[]) =>
     selectors.map((selector) => {
@@ -66,7 +80,7 @@ test("the stamp shows the day the server returns, and links to the Data page", a
   const stamp = page.locator("[data-stamp]").getByRole("link");
   await expect(stamp).toHaveText("Data through Oct 23");
   await expect(stamp).toHaveAttribute("href", "/data");
-  await expect(stamp).toHaveAccessibleDescription("See each source's date on the Data page.");
+  await expect(stamp).toHaveAccessibleDescription("Open the Data page.");
   await expect(page.locator("[data-stamp]")).not.toHaveAttribute("aria-busy");
 });
 

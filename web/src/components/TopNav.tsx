@@ -229,7 +229,7 @@ export function TopNav({
 }) {
   const [menuOpen, setMenuOpen] = useState(menuOpenAtStart);
   const menuButton = useRef<HTMLButtonElement>(null);
-  const header = useRef<HTMLElement>(null);
+  const header = useRef<HTMLDivElement>(null);
   // The control a resize just hid. Chrome takes focus from it before it reports the media
   // change, so the header notes it on blur and forgets it after the frame.
   const hidden = useRef<HTMLElement | null>(null);
@@ -260,8 +260,9 @@ export function TopNav({
     (twin ?? (wide ? root.querySelector<HTMLElement>("[data-view-pill]") : menuButton.current))?.focus();
   });
 
+  // A div, not a header: the frame's one header holds this bar and the box band together.
   return (
-    <header
+    <div
       ref={header}
       onBlur={(event) => {
         const target = event.target as HTMLElement;
@@ -341,6 +342,6 @@ export function TopNav({
           <ViewLines viewer={viewer} />
         </div>
       </div>
-    </header>
+    </div>
   );
 }
