@@ -20,7 +20,6 @@
 #   DATABRICKS_CLIENT_ID                   .env, only without a token       typed
 #   DATABRICKS_CLIENT_SECRET               .env, only without a token       hidden
 #   DATABRICKS_WAREHOUSE_ID                .env                             typed, or found by the CLI
-#   STRATA_CATALOG                         .env                             default from .env.example
 #   GENIE_SPACE_ID                         .env                             typed
 #   AI_SEARCH_ENDPOINT                     .env                             default from dayone.toml
 #   FOUNDRY_TENANT_ID                      .env                             read from az, or typed
@@ -543,13 +542,10 @@ else
 fi
 write_env DATABRICKS_WAREHOUSE_ID "$DATABRICKS_WAREHOUSE_ID"
 
-# An empty saved value counts as none, so a copy of .env.example still gets the defaults.
-STRATA_CATALOG=$(_existing STRATA_CATALOG || true)
-[[ -n "$STRATA_CATALOG" ]] || STRATA_CATALOG=$(example_value STRATA_CATALOG)
+# An empty saved value counts as none, so a copy of .env.example still gets the default.
 AI_SEARCH_ENDPOINT=$(_existing AI_SEARCH_ENDPOINT || true)
 [[ -n "$AI_SEARCH_ENDPOINT" ]] || AI_SEARCH_ENDPOINT=$(setting names.ai_search_endpoint)
-say "Strata's catalog is named $STRATA_CATALOG, and its AI Search endpoint will be named $AI_SEARCH_ENDPOINT."
-write_env STRATA_CATALOG "$STRATA_CATALOG"
+say "Strata's AI Search endpoint will be named $AI_SEARCH_ENDPOINT."
 write_env AI_SEARCH_ENDPOINT "$AI_SEARCH_ENDPOINT"
 
 # ── Stage 3 ───────────────────────────────────────────────────────────────

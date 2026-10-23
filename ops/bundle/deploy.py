@@ -95,7 +95,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
     try:
         built = catalog.build(workspace.engine(), create_schemas=False)
     except (CatalogError, EngineError) as error:
-        print(f"The tables could not be created: {error}")
+        print(f"I could not create the tables. {error}")
         return 1
     print(f"   Each of these exists now: {', '.join(built)}.")
 

@@ -193,7 +193,6 @@ def test_a_first_run_fills_every_key_in_the_example_env_file(place):
     assert values["DATABRICKS_TOKEN"] == TOKEN
     assert values["DATABRICKS_WAREHOUSE_ID"] == "wh0123456789"
     assert values["GENIE_SPACE_ID"] == "01f0abc"
-    assert values["STRATA_CATALOG"] == "strata"
     assert values["FOUNDRY_TENANT_ID"] == "tenant-0001"
     assert values["AZURE_OPENAI_API_KEY"] == AZURE_KEY
     assert values["APPLICATIONINSIGHTS_CONNECTION_STRING"] == INSIGHTS

@@ -41,8 +41,8 @@ The job starts at 05:00 in Washington (`America/New_York`) and stops after 150 m
 The block below records both schedules and how long each job's runs took, as measured on the workspace. Fill it with the `schedules` check above. If the check finds that the two meet, change the hour in `nightly.yml` and run the deploy again.
 
 <!-- bundle:schedules -->
-- fairshare's job: Not measured yet. fairshare could not be read on the build machine, and the workspace needs the credentials in `.env`.
-- Strata's job: strata nightly, daily at 05:00 America/New_York. It stops after 150 minutes. Its runs are not measured yet.
+- fairshare's job: Not measured yet. I could not read fairshare's files on the build machine, and the check needs the credentials in `.env`.
+- Strata's job: strata nightly, daily at 05:00 America/New_York. It stops after 150 minutes. Nobody has measured its runs yet.
 - Overlap: not checked yet.
 - Measured: never. Run `uv run --script ops/bundle/check.py schedules --env-file .env --write`.
 <!-- /bundle:schedules -->

@@ -11,8 +11,8 @@ engines run it, and all three take the same text and the same parameters:
 
 The SQL names tables in three parts (strata.<schema>.<table>) and takes values only as named
 parameters (`:name`), which every engine binds from Python values. No engine builds SQL from
-values. Each call runs one statement, which keeps clear of the trap where SQL tasks divide a file
-at every semicolon (docs/PLAN.md section 12).
+values. Each call runs one statement, because a SQL task divides a file into statements at every
+semicolon (docs/PLAN.md section 12).
 """
 
 from __future__ import annotations
