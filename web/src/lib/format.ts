@@ -13,11 +13,16 @@ export const FEWEST_FOR_A_PERCENTAGE = 50;
 const grouped = (decimals: number) =>
   new Intl.NumberFormat("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-// Section 6: two decimals below 1, one up to 100, none above. Whole numbers keep none.
+// Section 6: two decimals below 1, one up to 100, none above. Whole numbers keep none. The
+// size is read again after rounding, so a number rounded over a boundary takes the next
+// size's rule: 99.95 reads 100, not 100.0, and 0.995 reads 1.0, not 1.00.
+const decimalsBySize = (size: number) => (size < 1 ? 2 : size < 100 ? 1 : 0);
+const rounded = (value: number, decimals: number) => Number(grouped(decimals).format(value).replaceAll(",", ""));
+
 function defaultDecimals(value: number): number {
-  const size = Math.abs(value);
   if (Number.isInteger(value)) return 0;
-  return size < 1 ? 2 : size < 100 ? 1 : 0;
+  const first = decimalsBySize(Math.abs(value));
+  return decimalsBySize(Math.abs(rounded(value, first)));
 }
 
 const UNITS = [
@@ -27,10 +32,11 @@ const UNITS = [
 ];
 
 // Section 6: K from 10,000, then M and B, with one decimal below 100 and none above.
-// A trailing ".0" is dropped, so 10,000 reads "10K".
+// A trailing ".0" is dropped, so 10,000 reads "10K". A number that rounds to 10,000, such as
+// 9999.6, reads "10K" too.
 function compact(value: number): string | null {
   const size = Math.abs(value);
-  if (size < 10_000) return null;
+  if (Math.abs(rounded(value, defaultDecimals(value))) < 10_000) return null;
   let unit = UNITS.findIndex((candidate) => size >= candidate.size);
   for (;;) {
     const mantissa = size / UNITS[unit].size;

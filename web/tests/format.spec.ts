@@ -58,6 +58,20 @@ test("decimals: two below 1, one up to 100, none above, unless the tool's roundi
   expect(formatNumber(1245092.76, { decimals: 2, compact: false })).toBe("1,245,092.76");
 });
 
+test("a number that rounds over a boundary takes the next size's rule", () => {
+  // Rounded to one decimal, 99.95 is 100, and from 100 a number has no decimals.
+  expect(formatNumber(99.95)).toBe("100");
+  expect(formatNumber(-99.95)).toBe("-100");
+  // Rounded to two decimals, 0.995 is 1, and from 1 a number has one decimal.
+  expect(formatNumber(0.995)).toBe("1.0");
+  // Rounded to a whole number, 9999.6 is 10,000, and from 10,000 a number is written with K.
+  expect(formatNumber(9999.6)).toBe("10K");
+  expect(formatNumber(9999.4)).toBe("9,999");
+  // A number that stays inside its size keeps its rule.
+  expect(formatNumber(9.95)).toBe("10.0");
+  expect(formatNumber(45.04)).toBe("45.0");
+});
+
 test("years have no comma", () => {
   expect(formatYear(2024)).toBe("2024");
 });
