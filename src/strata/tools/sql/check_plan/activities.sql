@@ -1,11 +1,16 @@
 -- check_plan: each activity in one plan version, in STEP's columns, with the dates its checks need.
 --
--- Signed Contract: the actual signing date in this version, and its first published planned date
--- and delay from silver.plan_step_delays, the one definition of delay. Contract Completion: the
--- first published planned date, or this version's own planned date when the first listing gives
--- none. Rows public after the as-of date are left out, so a delay measured from a plan not yet
--- public is not used (ADR 0002). public_from is the latest public date among the rows each
--- activity's values come from.
+-- This version's own dates come from silver.plan_steps, which is public with the version: the
+-- actual signing date, and the planned completion date. The first published planned dates and the
+-- delay come from silver.plan_step_delays, the one definition of delay. A delay row rests on two
+-- versions, this one and the activity's first listing, so it is public only once both are
+-- (ADR 0002). When the first listing is an older plan disclosed after this one, the as-of date can
+-- fall between the two disclosures: the delay is then left out, and this version's own dates stay.
+--
+-- Signed Contract: the actual signing date in this version, its first published planned date and
+-- its delay. Contract Completion: the first published planned date, or this version's own planned
+-- date when the first listing gives none or is not yet public. public_from is the latest public
+-- date among the rows each activity's values come from.
 --
 -- Activities come in the order of the plan's tables (works, goods, non-consulting services,
 -- consulting firms, individual consultants), then by PDF page and reference.
@@ -20,17 +25,26 @@ SELECT
   r.actual_amount_usd,
   r.process_status,
   r.pdf_page,
-  sc.actual_on AS signed_on,
+  ss.actual_on AS signed_on,
   sc.first_planned_on AS planned_signing_on,
   sc.first_planned_plan_date AS planned_signing_plan_date,
   sc.delay_days AS days_late,
-  COALESCE(cc.first_planned_on, cc.planned_on) AS planned_completion_on,
+  COALESCE(cc.first_planned_on, cs.planned_on) AS planned_completion_on,
   CASE WHEN cc.first_planned_on IS NOT NULL THEN cc.first_planned_plan_date
-       WHEN cc.planned_on IS NOT NULL THEN v.plan_date END AS planned_completion_plan_date,
+       WHEN cs.planned_on IS NOT NULL THEN v.plan_date END AS planned_completion_plan_date,
   fl.first_listing_confirmed,
-  GREATEST(r.public_from, sc.public_from, cc.public_from, fl.public_from) AS public_from
+  GREATEST(r.public_from, ss.public_from, cs.public_from, sc.public_from, cc.public_from, fl.public_from)
+    AS public_from
 FROM strata.silver.plan_rows AS r
 JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
+LEFT JOIN strata.silver.plan_steps AS ss
+  ON ss.document_id = r.document_id
+  AND ss.activity_reference_no = r.activity_reference_no
+  AND ss.step = 'Signed Contract'
+LEFT JOIN strata.silver.plan_steps AS cs
+  ON cs.document_id = r.document_id
+  AND cs.activity_reference_no = r.activity_reference_no
+  AND cs.step = 'Contract Completion'
 LEFT JOIN strata.silver.plan_step_delays AS sc
   ON sc.document_id = r.document_id
   AND sc.activity_reference_no = r.activity_reference_no

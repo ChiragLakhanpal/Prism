@@ -341,6 +341,70 @@ def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked
     assert reasons(after_closing, "XX-MADE-1-CW-RFB")["pending_after_closing"]["days_to_close"] == -15
 
 
+def test_a_plan_disclosed_before_an_older_one_is_checked_on_its_own_dates_until_the_older_one_is_public(fresh):
+    """A made-up agency's two plans, the older disclosed after the newer (ticket 08's verification,
+    F2). The plan of April 21, 2021 was disclosed on December 15, 2021 and first lists both
+    activities. The plan of December 1, 2021 was disclosed that day. In it, XX-1-CW-RFB, estimated at
+    US$2,000,000.00, is still pending and plans Contract Completion for November 1, 2021, and
+    XX-2-GO-RFQ was signed on November 20, 2021 at US$500,000.00 against US$100,000.00. The project
+    closes June 30, 2023. As of December 10, 2021, only the December 1 plan is public."""
+    from strata.lakehouse import plans
+    from strata.lakehouse.plans import insert
+
+    agency, project, older, newer = "A Made-Up Agency", "P000002", dt.date(2021, 4, 21), dt.date(2021, 12, 1)
+    older_public = dt.date(2021, 12, 15)
+    insert(fresh, "strata.gold.project", ("project_id", "project_name", "closing_date", "public_from"),
+           [(project, "A made-up project", dt.date(2023, 6, 30), dt.date(2020, 1, 1))])
+    insert(fresh, "strata.silver.plan_versions",
+           ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest", "pdf_pages",
+            "route_b_pages", "text_url", "pdf_url", "public_from"),
+           [("older", project, agency, older, 1, False, 1, 1, "older.txt", "older.pdf", older_public),
+            ("newer", project, agency, newer, 2, True, 1, 1, "newer.txt", "newer.pdf", newer)])
+    insert(fresh, "strata.silver.plan_rows",
+           ("document_id", "project_id", "section", "activity_reference_no", "estimated_amount_usd",
+            "actual_amount_usd", "process_status", "pdf_page", "parser", "public_from"),
+           [(document, project, section, reference, estimated, actual, status, 1, "made up", public_from)
+            for document, public_from, statuses in (("older", older_public, ("Pending Implementation",) * 2),
+                                                    ("newer", newer, ("Pending Implementation", "Signed")))
+            for (section, reference, estimated, actual), status in zip(
+                (("WORKS", "XX-1-CW-RFB", 2000000, None), ("GOODS", "XX-2-GO-RFQ", 100000, 500000)), statuses)])
+    insert(fresh, "strata.silver.plan_listings",
+           ("document_id", "project_id", "activity_reference_no", "is_first_listing", "first_listing_confirmed",
+            "public_from"),
+           [(document, project, reference, document == "older", True, public_from)
+            for document, public_from in (("older", older_public), ("newer", newer))
+            for reference in ("XX-1-CW-RFB", "XX-2-GO-RFQ")])
+    insert(fresh, "strata.silver.plan_steps",
+           ("document_id", "project_id", "activity_reference_no", "step", "step_order", "planned_on", "actual_on",
+            "public_from"),
+           [("older", project, "XX-1-CW-RFB", "Contract Completion", 2, dt.date(2021, 9, 30), None, older_public),
+            ("older", project, "XX-2-GO-RFQ", "Signed Contract", 1, dt.date(2021, 8, 1), None, older_public),
+            ("newer", project, "XX-1-CW-RFB", "Contract Completion", 2, dt.date(2021, 11, 1), None, newer),
+            ("newer", project, "XX-2-GO-RFQ", "Signed Contract", 1, dt.date(2021, 8, 1), dt.date(2021, 11, 20),
+             newer)])
+    fresh.run(plans._sql("plan_step_delays.sql"), {"project_id": project})
+    context = registry.Context(engine=fresh, viewer=ANA)
+
+    result = registry.call("check_plan", {"project_id": project, "implementing_agency": agency,
+                                          "as_of": "2021-12-10"}, context)
+
+    assert result["plan"]["plan_date"] == "2021-12-01"
+    pending = next(row for row in result["rows"] if row["activity_reference_no"] == "XX-1-CW-RFB")
+    assert (pending["planned_completion_on"], pending["planned_completion_plan_date"]) == ("2021-11-01", "2021-12-01")
+    assert marks(result)["XX-1-CW-RFB"] == ["needs_a_look"]
+    assert "no_planned_date" not in reasons(result, "XX-1-CW-RFB")
+    signed = reasons(result, "XX-2-GO-RFQ")["signed_over_estimate"]
+    assert (signed["signed_on"], signed["days_late"]) == ("2021-11-20", None)  # the delay rests on the older plan
+    assert all(row["public_from"] <= "2021-12-10" for row in result["rows"])
+
+    once_both_are_public = registry.call("check_plan", {"project_id": project, "implementing_agency": agency,
+                                                        "as_of": "2021-12-20"}, context)
+
+    assert reasons(once_both_are_public, "XX-1-CW-RFB")["completion_passed_no_contract"][
+        "planned_completion_on"] == "2021-09-30"  # the first published planned date
+    assert reasons(once_both_are_public, "XX-2-GO-RFQ")["signed_late_over_estimate"]["days_late"] == 111
+
+
 @pytest.mark.parametrize("name, arguments, says", [
     ("check_plans", {}, "There is no tool check_plans"),
     ("check_plan", {"project_id": "P156634"}, "needs implementing_agency"),
