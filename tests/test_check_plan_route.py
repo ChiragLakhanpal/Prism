@@ -126,6 +126,28 @@ def test_a_data_service_that_fails_gives_a_reference_and_keeps_its_details_priva
     assert "TABLE_OR_VIEW_NOT_FOUND" not in response.text
 
 
+def test_a_database_file_that_cannot_be_opened_gives_a_reference_and_keeps_its_details_private(tmp_path):
+    missing = tmp_path / "not-built-yet.duckdb"
+
+    response = get(create_app(engine_for=engines.duckdb_file(missing)), f"{NWWDA_PLAN}/2026-10-09", ANA)
+
+    assert response.status_code == 503
+    assert response.json()["code"] == "data_service"
+    assert response.json()["trace_id"]
+    assert "not-built-yet" not in response.text
+
+
+def test_a_tool_that_breaks_its_contract_gives_a_reference_and_no_rows(fixture_app, monkeypatch):
+    monkeypatch.setattr("strata.tools.check_plan.check_plan", lambda call, **arguments: {"rows": []})
+
+    response = get(fixture_app, f"{NWWDA_PLAN}/2026-10-09?asof=2026-10-22", ANA)
+
+    assert response.status_code == 500
+    assert response.json()["code"] == "tool_contract"
+    assert response.json()["trace_id"]
+    assert "rows" not in response.json()
+
+
 def test_with_no_data_service_set_up_the_route_says_so(monkeypatch):
     for key in ("STRATA_DATABASE_FILE", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID"):
         monkeypatch.delenv(key, raising=False)

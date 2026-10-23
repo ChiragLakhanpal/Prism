@@ -54,7 +54,9 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None)
 
     def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
-        """One tool call as the viewer, or the error a page can show: permission, or the data service."""
+        """One tool call as the viewer, or the error a page can show: a bad request, permission, a tool
+        that broke its contract, or the data service. The last two keep their details in the server log
+        and give the page a reference to it."""
         if engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         try:
@@ -64,6 +66,10 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
         except PermissionDenied:
             return JSONResponse({"code": "permission"}, status_code=403)
+        except registry.ToolContractError:
+            trace_id = uuid.uuid4().hex
+            log.exception("The tool %s broke its contract, reference %s.", name, trace_id)
+            return JSONResponse({"code": "tool_contract", "trace_id": trace_id}, status_code=500)
         except EngineError:
             trace_id = uuid.uuid4().hex
             log.exception("The data service failed on %s, reference %s.", name, trace_id)

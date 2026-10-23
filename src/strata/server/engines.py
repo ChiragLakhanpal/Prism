@@ -20,16 +20,22 @@ from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 
 from strata.dbx import Viewer
-from strata.lakehouse.engine import DuckDBEngine, Engine, PermissionDenied, Transport, WarehouseEngine, http_transport
+from strata.lakehouse.engine import (DuckDBEngine, Engine, EngineError, PermissionDenied, Transport, WarehouseEngine,
+                                     http_transport)
 
 EngineFor = Callable[[Viewer], AbstractContextManager[Engine]]
 
 
 def duckdb_file(path: Path | str) -> EngineFor:
-    """A local DuckDB file, opened read-only for each request."""
+    """A local DuckDB file, opened read-only for each request. A file that cannot be opened, such as
+    one not built yet, is the data service failing, so the route answers with a reference."""
     @contextmanager
     def engine_for(viewer: Viewer) -> Iterator[Engine]:
-        with DuckDBEngine.open(path, read_only=True) as engine:
+        try:
+            engine = DuckDBEngine.open(path, read_only=True)
+        except Exception as error:
+            raise EngineError(f"I could not open {path}: {error}") from error
+        with engine:
             yield engine
     return engine_for
 
