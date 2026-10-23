@@ -2,8 +2,9 @@
 -- Strata shows as a data note. Source: tests/ground_truth/values.toml, plan-503455-actual-zero and
 -- plan-541061-actual-zero, from page 3 of the Northern Water Works Development Agency's
 -- October 9, 2026 Procurement Plan for P156634. The plan reader writes the notes
--- (src/strata/lakehouse/sql/plans/plan_data_notes.sql). The live plan run checks it on the SQL
--- warehouse once the workspace holds the plans (ops/plans/run_live.py).
+-- (src/strata/lakehouse/sql/plans/plan_data_notes.sql). ops/bundle/check.py same-rows checks it on
+-- the SQL warehouse after the live plan run (ops/plans/run_live.py) has read the plans there.
+-- engines: duckdb, databricks
 -- param: agency = Northern Water Works Development Agency
 -- param: plan_date = 2026-10-09
 -- expect: activity_reference_no,process_status,actual_amount_usd

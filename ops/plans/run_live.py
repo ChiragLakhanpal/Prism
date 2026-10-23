@@ -14,11 +14,11 @@ It runs the same plan reader as the gate (src/strata/lakehouse/plans.py) with th
 fetches the project's document list and plans from the World Bank's hosts on this computer, puts
 each chosen table page in the volume as a PDF of its own, runs ai_parse_document on the SQL warehouse,
 and writes bronze, silver and strata.ops on the warehouse, under the daily page cap in
-config/thresholds.toml. Then it runs the plan's ground-truth queries on the warehouse and checks that
-they return the rows the files expect, as they do on the fixture.
+config/thresholds.toml. It exits 0 when the run finished and 2 when it could not run.
 
-Pass --check-only to skip the run and only check. It exits 0 when the checks pass, 1 when one fails,
-and 2 when it could not run.
+Then check the plan's ground-truth queries on both engines, as for every file marked for databricks:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
 """
 
 from __future__ import annotations
@@ -35,37 +35,15 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
         sys.path.insert(0, str(folder))
 
 from strata.config import load_slice  # noqa: E402
-from strata.lakehouse import ground_truth, plans  # noqa: E402
+from strata.lakehouse import plans  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
-
-CHECKS = ("delay_from_first_published_planned_date.sql", "data_notes_actual_amount_zero.sql")
-
-
-def check(engine) -> int:
-    """The plan's ground-truth queries on the warehouse. Returns how many returned other rows."""
-    failed = 0
-    for name in CHECKS:
-        case = ground_truth.read(REPO / "tests" / "ground_truth" / name)
-        result = engine.run(case.sql, case.params)
-        found = [result.columns, *result.as_text()]
-        if found == case.expected:
-            print(f"{name}: the SQL warehouse returned the rows the file expects.")
-            continue
-        failed += 1
-        print(f"{name}: the SQL warehouse returned other rows.")
-        for label, rows in (("The SQL warehouse", found), ("The file expects", case.expected)):
-            print(f"  {label}:")
-            for row in rows:
-                print(f"    {', '.join(map(str, row))}")
-    return failed
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="ops/plans/run_live.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--env-file", help="the env file with the workspace's address, warehouse and sign-in")
     parser.add_argument("--project", default=load_slice().demo_plan.project_id, help="the project, P156634 by default")
-    parser.add_argument("--check-only", action="store_true", help="skip the run and only run the checks")
     args = parser.parse_args(argv)
     try:
         env = load_workspace_env(Path(args.env_file) if args.env_file else None)
@@ -82,25 +60,24 @@ def main(argv=None) -> int:
     workspace = LiveWorkspace(env)
     engine = workspace.engine()
     try:
-        if not args.check_only:
-            layout = AiParseDocument(
-                engine, fetch=fetch_url,
-                upload=lambda path, data: workspace.w.files.upload(path, io.BytesIO(data), overwrite=True))
-            report = plans.run(engine, LiveDocuments(), layout, args.project)
-            parsing = report.parsing
-            print(f"Run {report.run_id} read {report.versions} plan versions of {args.project} and parsed "
-                  f"{parsing.parsed} of the {parsing.waiting} pages waiting for {parsing.parser}, under a cap of "
-                  f"{parsing.cap} pages a day. {report.versions_with_rows} versions have STEP rows.")
-            if parsing.failed:
-                document, page = parsing.failed[0]
-                print(f"The layout parser could not read {len(parsing.failed)} of them, first page {page} of "
-                      f"document {document}. strata.ops.parse_failures says why, and the next run tries them "
-                      "again tomorrow.")
-            if parsing.stopped_at:
-                print(f"It stopped at the cap, at page {parsing.stopped_at[1]} of document {parsing.stopped_at[0]}. "
-                      "Run it again tomorrow to read the rest.")
-            plans.print_measures(report)
-        return 1 if check(engine) else 0
+        layout = AiParseDocument(
+            engine, fetch=fetch_url,
+            upload=lambda path, data: workspace.w.files.upload(path, io.BytesIO(data), overwrite=True))
+        report = plans.run(engine, LiveDocuments(), layout, args.project)
+        parsing = report.parsing
+        print(f"Run {report.run_id} read {report.versions} plan versions of {args.project} and parsed "
+              f"{parsing.parsed} of the {parsing.waiting} pages waiting for {parsing.parser}, under a cap of "
+              f"{parsing.cap} pages a day. {report.versions_with_rows} versions have STEP rows.")
+        if parsing.failed:
+            document, page = parsing.failed[0]
+            print(f"The layout parser could not read {len(parsing.failed)} of them, first page {page} of "
+                  f"document {document}. strata.ops.parse_failures says why, and the next run tries them "
+                  "again tomorrow.")
+        if parsing.stopped_at:
+            print(f"It stopped at the cap, at page {parsing.stopped_at[1]} of document {parsing.stopped_at[0]}. "
+                  "Run it again tomorrow to read the rest.")
+        plans.print_measures(report)
+        return 0
     except EngineError as error:
         print(f"The warehouse could not run a statement: {error}")
         return 2
