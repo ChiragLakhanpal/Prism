@@ -254,3 +254,80 @@ It worked if the run's summary line says "Prompt Shields scanned N new passage t
     SELECT shield, count(*) AS texts, count_if(attack_detected) AS attacks FROM strata.silver.passage_shields GROUP BY shield
 
 It worked if it returns one row, with the shield `Prompt Shields`. Its `texts` can be lower than the number of passages, because passages with the same header and text are scanned once (on the fixture, 650 texts for 733 passages). If `attacks` is above 0, `passages_prompt_shields_hit` must be above 0 for at least one of the two projects. Any attack found is kept, counted and left out of search, so a number above 0 is not a failure. Read those passages before the demo.
+
+## Ticket 06, step 1 of 6: deploy the App and see its address
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. It needs the Databricks keys in `.env`, `DATABRICKS_WAREHOUSE_ID` among them, and the Application Insights connection string that the wizard saved in the secret scope. Run it after ticket 04's step 1, because the bundle deploy makes `strata.ops.usage_events`. Run it before ticket 09's three steps above, because they need the App it deploys. The deploy also asks for the `sql` user authorization scope, so ticket 09's step 1 may only need its check.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the command exits 0 and its last line reads `Strata is running at https://...`, and the App's Logs tab in the workspace shows that it installed `ops/app/requirements.txt` and that the server is serving (criterion 1). The logs should not show the agent-framework metapackage installed, because the lean requirements file leaves it out.
+
+Run this command again after every bundle deploy. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again.
+
+## Ticket 06, step 2 of 6: the identity route shows your own account
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after step 1. The App's address is the one step 1 printed, or the `url` field of `databricks apps get strata -o json`.
+
+Sign in to the workspace in a browser and open:
+
+    <App url>/api/me
+
+It worked if the answer holds your own email and `"has_token": true`, and never the token itself. Ticket 01's verifier asked for this check. If `has_token` is false, run ticket 09's step 1, sign in to the App again and reload.
+
+## Ticket 06, step 3 of 6: two users each read the stamp as themselves
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after step 1. It needs two workspace users who can read `strata.ops`.
+
+Each of the two users signs in and opens these two addresses:
+
+    <App url>/
+    <App url>/api/me/warehouse
+
+The first page reads the stamp through `src/strata/server/sql/data_through.sql` with that user's own token. The second answers with the user name the warehouse saw.
+
+It worked if each user's `/api/me/warehouse` answer names that user and not the other one, and the SQL warehouse's query history shows the `data_through.sql` query run once by each of them, under their own names and not the App's service principal (criterion 2).
+
+## Ticket 06, step 4 of 6: an outside reviewer opens the App (day-one test 6)
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after step 1, so the App exists. Before that, the wizard records test 6 as waiting.
+
+Run this from the main checkout, and follow the stage "An outside reviewer in the workspace (test 6)":
+
+    bash ops/wizard/strata-setup.sh
+
+Then check the result:
+
+    python3 ops/dayone/dayone.py field test-6 Status
+
+It worked if it prints `passed`, and a reviewer with an outside email opens `<App url>` and sees the navy bar, the stamp and their own email in the view popover (criterion 4).
+
+If it prints `failed`, the plan is a Container Apps copy of the same build behind Entra sign-in, and the reviewer opens that copy after signing in. No script in the repo builds that copy yet, because test 6 has not run. Tell the orchestrator, so it becomes its own ticket before the Round 2 date.
+
+## Ticket 06, step 5 of 6: a request to the App appears in Application Insights
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after step 1. It needs the Application Insights resource that the wizard made (test 10).
+
+Open `<App url>/` once in a browser. Wait 10 seconds, which is how long the App holds its usage events before it writes them (`usage_flush_seconds` under `[app]` in `config/thresholds.toml`). Then run this in the workspace's SQL editor:
+
+    SELECT route, requested_at, trace_id FROM strata.ops.usage_events WHERE route = '/api/freshness' ORDER BY requested_at DESC LIMIT 1
+
+Then run this in Application Insights, under Logs:
+
+    requests | where name startswith "GET /api/freshness" | order by timestamp desc | take 1 | project timestamp, name, operation_Id
+
+It worked if the two rows have the same time, to within a few seconds, and `operation_Id` equals `trace_id` (criterion 6, trace half).
+
+Also check where a failed request's details go. The verifier found that once Azure Monitor starts, the server's own warning and error lines go to Application Insights and no longer to the App's log. After a request that fails, search the `traces` table in Application Insights for the reference in the error's answer. If the line is there and not in the App's log, tell the orchestrator. One `logging.basicConfig(level=logging.INFO)` line in `src/strata/server/__main__.py` would send it to both.
+
+## Ticket 06, step 6 of 6: the Lakebase probe chooses where app state lives
+
+The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after the wizard and before ticket 15 starts, because ticket 15 writes the first app state. It needs the Databricks keys in `.env`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/probe_lakebase.py --env-file .env
+
+It worked if the result block in `docs/app-state.md` reads `Status: run`, lists real times for both stores, names the chosen store, and gives today's date as the last run (criterion 7). If Lakebase wins, `docs/adr` also holds a new ADR named `NNNN-app-state-lives-in-lakebase.md`, numbered one after the highest ADR there. Commit both files on `build/strata` before ticket 15 starts, so its builder reads the choice.

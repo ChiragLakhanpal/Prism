@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 5, 7 and 10; the blueprint's Check a plan wirefra
 
 **Blocked by:** 06 (The app shell, deployed as a Databricks App that acts as the viewer); 09 (The tool registry with the as-of contract, and check_plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P1
 **Design review:** yes
@@ -24,3 +24,4 @@ Read first: DESIGN.md sections 5, 7 and 10; the blueprint's Check a plan wirefra
 
 
 - October 23, 2026, orchestrator: two things from ticket 08's verification, for whoever builds this screen. First, a description can hold a word that the PDF's line wrap split ("Explor atory"); the rows keep the words as the PDF gives them (a decision parked for the user), so show them as given and do not join them. Second, the October 9 plan lists nine activities and the wireframe shows eight (the ninth is KE-NWWDA-207796-CS-INDV); ticket 09's tool returns all nine, so show all nine unless the 10 brief says otherwise, and record the choice in parkedDecisions. Table's cardsBelow prop ('md' or 'lg') is in ticket 02.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/10-check-a-plan-screen, as soon as ticket 06 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
