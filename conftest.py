@@ -1,0 +1,46 @@
+"""Every Python test runs with the network off, wherever it lives.
+
+The gate runs the tests under tests/ and the tests under ops/ in separate pytest processes, in
+separate lanes. This file sits at the root, so pytest loads it for both.
+"""
+
+import socket
+
+import pytest
+
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", None, ""}
+
+
+class NetworkIsOff(RuntimeError):
+    pass
+
+
+def _local(address):
+    if isinstance(address, (str, bytes)):  # a Unix socket path
+        return True
+    return address[0] in LOCAL_HOSTS
+
+
+def _guard(original):
+    def connect(self, address, *args, **kwargs):
+        if self.family != socket.AF_UNIX and not _local(address):
+            raise NetworkIsOff(f"The offline tests may not reach {address[0]}.")
+        return original(self, address, *args, **kwargs)
+    return connect
+
+
+@pytest.fixture(autouse=True, scope="session")
+def network_off():
+    """Any connection to a host other than this computer fails the test that made it."""
+    originals = socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo
+    socket.socket.connect = _guard(originals[0])
+    socket.socket.connect_ex = _guard(originals[1])
+
+    def getaddrinfo(host, *args, **kwargs):
+        if host not in LOCAL_HOSTS:
+            raise NetworkIsOff(f"The offline tests may not look up {host}.")
+        return originals[2](host, *args, **kwargs)
+
+    socket.getaddrinfo = getaddrinfo
+    yield
+    socket.socket.connect, socket.socket.connect_ex, socket.getaddrinfo = originals
