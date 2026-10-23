@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Strata's offline gate (CLAUDE.md rule 6), run by .githooks/pre-commit.
+"""Strata's offline gate, which CLAUDE.md rule 6 requires. Git runs it through .githooks/.
 
 It runs the steps listed in gates/steps.toml, in order, from the root of the tree it
 was started in. It stops at the first step that fails, prints the total time, and fails
 when the whole run takes longer than the limit in that file. When every staged file is
-Markdown, it runs only the steps marked `always`. Steps run with the network switched
-off for uv, npm and Playwright, and without git's hook variables, so a test that builds
-its own repo cannot touch the commit in progress.
+Markdown, it runs only the steps marked `always`. Otherwise it first checks that no
+tracked file has changes that are not staged, so the tests see what the commit holds.
+Steps run with the network switched off for uv, npm and Playwright. They also run without
+git's hook variables, so a test that builds its own repo cannot touch the commit in progress.
 
 This file uses only the standard library, so it runs before anything is installed.
 """
@@ -26,7 +27,6 @@ OFFLINE = {
     "UV_OFFLINE": "1",
     "npm_config_offline": "true",
     "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1",
-    "STRATA_OFFLINE": "1",
 }
 
 
@@ -37,15 +37,25 @@ def load_steps(path=STEPS_FILE):
     for step in steps:
         unknown = set(step) - STEP_KEYS
         if unknown or "name" not in step or not isinstance(step.get("run"), list):
-            raise SystemExit(f"{path}: the step {step.get('name', '(unnamed)')!r} needs a name and a run list, "
-                             f"and only these keys: {', '.join(sorted(STEP_KEYS))}.")
+            raise SystemExit(f"The step {step.get('name', 'with no name')!r} in {path} needs a name and a run list. "
+                             f"It can use only these keys: {', '.join(sorted(STEP_KEYS))}.")
     return float(config.get("limit_seconds", 120)), steps
 
 
 def staged_files():
-    done = subprocess.run(["git", "diff", "--cached", "--name-only", "-z"],
+    # --no-renames lists both names of a renamed file, so a code file renamed to Markdown still counts as code.
+    done = subprocess.run(["git", "diff", "--cached", "--name-only", "--no-renames", "-z"],
                           capture_output=True, text=True, check=True)
     return [name for name in done.stdout.split("\0") if name]
+
+
+def unstaged_changes():
+    """True when a tracked file in the working tree differs from what the commit will hold."""
+    done = subprocess.run(["git", "diff", "--quiet"], capture_output=True, text=True)
+    if done.returncode not in (0, 1):
+        raise SystemExit("The gate could not compare the working tree with the staged changes. "
+                         f"Git said this: {done.stderr.strip()}")
+    return done.returncode == 1
 
 
 def only_markdown(files):
@@ -59,7 +69,7 @@ def step_env(keep_git):
 
 
 def stop(process):
-    """Stop a step and everything it started: ask first, so test runners can shut their servers down."""
+    """Stop a step and everything it started. Ask first, so test runners can shut their servers down."""
     for sig, grace in ((signal.SIGTERM, 5), (signal.SIGKILL, None)):
         try:
             os.killpg(process.pid, sig)
@@ -81,7 +91,7 @@ def run_step(step, seconds_left):
         return process.returncode, output
     except subprocess.TimeoutExpired:
         return None, stop(process)
-    except BaseException:  # Ctrl-C: the step runs in its own session, so stop it here
+    except BaseException:  # On Ctrl-C, stop the step here, because it runs in its own session.
         stop(process)
         raise
 
@@ -97,9 +107,14 @@ def seconds(value):
 def main():
     started = time.monotonic()
     limit, steps = load_steps()
-    if only_markdown(staged_files()):
+    files = staged_files()
+    if only_markdown(files):
         print("Only Markdown files are staged, so the gate skips the tests.")
         steps = [step for step in steps if step.get("always")]
+    elif files and unstaged_changes():
+        print("Some changes to tracked files are not staged. Stage them or stash them, then commit again, "
+              "so the gate tests what you commit.")
+        return 1
 
     for step in steps:
         print(f"- {step['name']} ...", flush=True)
@@ -111,12 +126,12 @@ def main():
         took = time.monotonic() - step_started
         if code is None:
             print(indent(output), end="")
-            print(f"The gate failed: it ran longer than {limit:g} seconds, the limit in {STEPS_FILE}, "
-                  f"during \"{step['name']}\".")
+            print(f"The gate failed because it ran longer than {limit:g} seconds, the limit in {STEPS_FILE}. "
+                  f"It stopped during \"{step['name']}\".")
             return 1
         if code != 0:
             print(indent(output), end="")
-            print(f"The gate failed in {seconds(time.monotonic() - started)}: \"{step['name']}\" "
+            print(f"The gate failed after {seconds(time.monotonic() - started)}. The step \"{step['name']}\" "
                   f"exited with code {code}. Fix what it reports and commit again.")
             return 1
         if step.get("show"):
@@ -125,7 +140,7 @@ def main():
 
     total = time.monotonic() - started
     if total > limit:
-        print(f"The gate failed: it took {seconds(total)}, longer than {limit:g} seconds, the limit in {STEPS_FILE}.")
+        print(f"The gate failed because it took {seconds(total)}, and the limit in {STEPS_FILE} is {limit:g} seconds.")
         return 1
     print(f"The gate passed in {seconds(total)}.")
     return 0

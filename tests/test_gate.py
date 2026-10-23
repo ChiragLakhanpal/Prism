@@ -83,7 +83,7 @@ def test_a_commit_with_a_failing_test_is_blocked_and_goes_through_once_fixed(rep
 
     assert blocked.returncode != 0
     assert head_count(repo) == 1
-    assert "Run the checks" in blocked.stdout + blocked.stderr
+    assert 'The step "Run the checks" exited with code 1.' in blocked.stdout + blocked.stderr
     assert "The total is 3, not 4." in blocked.stdout + blocked.stderr
 
     write(repo, "check.py", "print('The total is 4.')\n")
@@ -93,6 +93,19 @@ def test_a_commit_with_a_failing_test_is_blocked_and_goes_through_once_fixed(rep
 
     assert passed.returncode == 0, passed.stdout + passed.stderr
     assert head_count(repo) == 2
+
+
+def test_a_commit_that_leaves_its_fix_unstaged_is_blocked(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
+    write(repo, "check.py", "raise SystemExit('The total is 3, not 4.')\n")
+    git(repo, "add", "-A")
+    write(repo, "check.py", "print('The total is 4.')\n")
+
+    blocked = commit(repo)
+
+    assert blocked.returncode != 0
+    assert head_count(repo) == 1
+    assert "Some changes to tracked files are not staged." in blocked.stdout + blocked.stderr
 
 
 def test_the_gate_prints_its_total_time(repo):
@@ -123,6 +136,20 @@ def test_a_commit_of_only_markdown_skips_the_tests(repo):
     assert "Only Markdown files are staged" in output
 
 
+def test_a_commit_that_renames_a_code_file_to_markdown_runs_the_tests(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
+    write(repo, "check.py", "raise SystemExit('The tests ran.')\n")
+    write(repo, "test_totals.py", "def test_total():\n    assert 2 + 2 == 4\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a failing check and a test file")
+    git(repo, "mv", "test_totals.py", "test_totals.md")
+
+    done = commit(repo)
+
+    assert done.returncode != 0
+    assert "The tests ran." in done.stdout + done.stderr
+
+
 def test_a_commit_with_code_beside_markdown_runs_the_tests(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
     write(repo, "check.py", "raise SystemExit('The tests ran.')\n")
@@ -146,6 +173,7 @@ def test_the_gate_fails_when_a_run_takes_longer_than_its_limit(repo):
     assert done.returncode != 0
     assert head_count(repo) == 1
     assert "longer than 2 seconds" in output
+    assert 'It stopped during "Sleep".' in output
 
 
 def test_a_step_that_makes_its_own_repo_leaves_the_commit_alone(repo):
