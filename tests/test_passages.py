@@ -86,6 +86,66 @@ def test_every_passage_has_all_ten_fields_filled(db):
     assert {p["language"] for p in passages} == {"en"}  # the documents API lists each of them in English
 
 
+REPORTS = """
+SELECT d.project_id, d.document_type, d.document_date, d.text_paged, d.pdf_pages
+FROM strata.silver.documents AS d
+"""
+
+
+def test_the_fixture_run_reads_twenty_documents_through_route_a_and_routes_a_scan_to_route_b(db):
+    documents = rows(db, REPORTS)
+    read = [d for d in documents if d["text_paged"]]
+    dated = {(d["project_id"], d["document_type"], d["document_date"]) for d in read}
+
+    assert len(read) == 20  # the ticket: twenty documents, text-based (Route A)
+    for key, document_type in [("icr-date", ICR), ("icr-review-date", "Implementation Completion Report Review"),
+                               ("icr-review-reissue-date", "Implementation Completion Report Review"),
+                               ("isr-7-date", "Implementation Status and Results Report"),
+                               ("isr-12-date", "Implementation Status and Results Report")]:
+        assert ("P130164", document_type, value(key)["value"]) in dated, key
+    assert sum(d["document_type"] == "Implementation Status and Results Report" and d["project_id"] == "P130164"
+               for d in read) == 13  # every ISR of P130164, all published as text
+    assert ("P156634", "Project Appraisal Document") in {(d["project_id"], d["document_type"]) for d in read}
+    [scan] = [d for d in documents if not d["text_paged"]]
+    assert (scan["project_id"], scan["document_type"]) == ("P130164", "Project Appraisal Document")
+    routes = rows(db, "SELECT route, count(*) AS pages FROM strata.silver.document_page_routes "
+                      "WHERE project_id = 'P130164' AND document_id = (SELECT document_id FROM strata.silver.documents "
+                      "WHERE NOT text_paged) GROUP BY route")
+    assert routes == [{"route": "B", "pages": scan["pdf_pages"]}]
+
+
+def measured(engine, subject: str) -> dict[str, dict]:
+    found = rows(engine, "SELECT * FROM strata.ops.data_readiness WHERE run_id = 'fixture' AND source = 'documents' "
+                         "AND subject = :subject", subject=subject)
+    return {row["measure"]: row for row in found}
+
+
+def test_strata_ops_shows_pages_per_route_and_the_share_whose_paragraph_numbering_was_found(db):
+    for project_id in ("P130164", "P156634"):
+        found = measured(db, project_id)
+        pages = rows(db, "SELECT sum(pdf_pages) AS n FROM strata.silver.documents WHERE project_id = :p",
+                     p=project_id)[0]["n"]
+
+        route_a, route_b = found["pages_route_a"], found["pages_route_b"]
+        assert route_a["denominator"] == route_b["denominator"] == pages
+        assert route_a["count"] + route_b["count"] == pages
+        numbering = found["pages_paragraph_numbering_found"]
+        assert 0 < numbering["count"] < numbering["denominator"] <= route_a["count"]
+        assert all(row["detail"] for row in found.values())
+    # P130164's 100-page PAD is a scan, so every one of its pages waits for Route B.
+    assert measured(db, "P130164")["pages_route_b"]["count"] >= 100
+
+
+def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_and_how_fresh_they_are(db):
+    found = measured(db, "P130164")
+
+    assert (found["documents_read_route_a"]["count"], found["documents_read_route_a"]["denominator"]) == (16, 17)
+    linked = found["passages_linked_to_project"]
+    assert linked["count"] == linked["denominator"] > 0  # gold.project holds P130164
+    assert found["documents_fresh"]["as_of"] == value("icr-review-reissue-date")["value"]
+    assert found["document_contacts_stripped"]["kind"] == "stripped"
+
+
 def squash(text: str) -> str:
     return re.sub(r"\s+", "", text)
 

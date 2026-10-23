@@ -136,13 +136,15 @@ def _held(engine: Engine, listed: Listed) -> Held | None:
 @dataclass(frozen=True)
 class Chosen:
     documents: list[Held]
-    contacts_removed: int  # emails and phone numbers taken out of the texts this run fetched
+    # For each project, the emails and phone numbers taken out of the texts this run fetched, and how
+    # many texts it fetched.
+    contacts_removed: dict[str, tuple[int, int]]
 
 
 def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[str], cap: int) -> Chosen:
     """The documents to read, fetched into bronze: up to cap whose text Route A can read, and any
     scan met on the way, whose pages wait for Route B."""
-    chosen, paged, removed = [], 0, 0
+    chosen, paged, removed = [], 0, {}
     for project_id in projects:
         if paged >= cap:
             break
@@ -151,7 +153,9 @@ def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[s
         for document in listed:
             if paged >= cap:
                 break
-            removed += plans.fetch_documents(engine, documents, project_id, [document.entry()]).contacts_removed
+            fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
+            count, fetched = removed.get(project_id, (0, 0))
+            removed[project_id] = (count + fetching.contacts_removed, fetched + fetching.fetched)
             held = _held(engine, document)
             if held is None:
                 continue  # listed but not fetched: the source could not give it
@@ -261,6 +265,51 @@ def read_documents(engine: Engine, chosen: list[Held], max_tokens: int) -> list[
     return found
 
 
+# ── Data readiness ───────────────────────────────────────────────────────
+
+MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
+                   "measured_at", "public_from")
+CADENCE = "The documents API is read daily."
+
+
+def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, tuple[int, int]],
+            when: dt.datetime) -> int:
+    """The run's data readiness measures for each project, each a count with its denominator, written
+    to strata.ops.data_readiness: documents and pages per route, the pages whose paragraph numbering
+    was found, the passages linked to a project, freshness, and the contact details taken out."""
+    linked = {str(row[0]) for row in engine.run("SELECT project_id FROM strata.gold.project").rows}
+    rows = []
+    for project_id in dict.fromkeys(item.held.listed.project_id for item in found):
+        items = [item for item in found if item.held.listed.project_id == project_id]
+        pages = [page for item in items for page in item.reading.pages]
+        on_a = [page for page in pages if page.route == route_a.ROUTE_A]
+        body = [page for page in on_a if page.reason == route_a.BODY]
+        passages = sum(len(item.reading.passages) for item in items)
+        stripped, fetched = removed.get(project_id, (0, 0))
+
+        def add(name, kind, count, denominator, detail, as_of=None):
+            rows.append((run_id, SOURCE, project_id, name, kind, count, denominator, as_of, detail, when, when.date()))
+
+        add("documents_read_route_a", "coverage", sum(item.held.paged for item in items), len(items),
+            "Documents whose published text divides into their PDF's pages, so Route A read them, of the documents "
+            "chosen. The others are scans, whose pages wait for Route B.")
+        add("pages_route_a", "read_well", len(on_a), len(pages),
+            "Pages Route A read from the published text, of every page of the documents chosen.")
+        add("pages_route_b", "read_well", len(pages) - len(on_a), len(pages),
+            "Pages waiting for Route B, the layout parser: scans, data sheets and pages with no text.")
+        add("pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body), len(body),
+            "Pages of the body Route A read on which a paragraph the report numbers was found. An ISR numbers "
+            "none of its paragraphs.")
+        add("passages_linked_to_project", "linked", passages if project_id in linked else 0, passages,
+            "Passages whose project is in strata.gold.project.")
+        add("documents_fresh", "fresh", None, None, CADENCE,
+            as_of=max(item.held.public_from for item in items))
+        add("document_contacts_stripped", "stripped", stripped, fetched,
+            "Emails and phone numbers taken out of the published texts this run fetched, of the documents it fetched.")
+    engine.insert_rows("strata.ops.data_readiness", MEASURE_COLUMNS, rows)
+    return len(rows)
+
+
 # ── The run ──────────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
@@ -282,6 +331,7 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
     chosen = choose(engine, documents, endpoint, projects, int(limits.value("ingestion.passage_documents")))
     found = read_documents(engine, chosen.documents, int(limits.value("passages.max_tokens")))
+    measure(engine, run_id, found, chosen.contacts_removed, clock())
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.reading.passages) for item in found))
 
