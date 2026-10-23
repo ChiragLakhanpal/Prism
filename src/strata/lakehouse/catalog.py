@@ -10,8 +10,8 @@ rows (CLAUDE.md rule 5); a change to a table's columns needs its own ALTER TABLE
 Every table keeps the date it became public in a public_from DATE column (ADR 0002).
 check_public_from() looks at every table in the schemas the bundle declares, whatever made it, and
 stops when one lacks the column or gives it another type. Views hold no rows of their own, so it
-skips plain views and the metric views that Genie reads. The fixture database's own schemas,
-`recorded` (its copy of the sources) and `placeholder`, are not catalog layers, so it skips them.
+skips plain views and the metric views that Genie reads. The fixture database's own schema,
+`recorded` (its copy of the sources), is not a catalog layer, so it skips it.
 """
 
 from __future__ import annotations

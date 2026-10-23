@@ -25,3 +25,11 @@ purpose = "Bulk extraction on Global Batch, such as proposing lessons."
 deployment = "text-embedding-3-large"
 purpose = "Embeddings for the passage index."
 dimensions = 1024
+
+# The layout parser that reads table pages on the workspace (Route B, docs/PLAN.md section 5), such
+# as the STEP tables of a Procurement Plan. Day-one test 3 (docs/day-one-results.md) decides it:
+# ai_parse_document on the SQL warehouse when the test passes, Content Understanding's
+# prebuilt-layout when it fails. The name must be one of the adapters in PARSERS in
+# src/strata/reader/layout.py. strata.config.load_layout_parser() reads it.
+[layout]
+parser = "ai_parse_document"

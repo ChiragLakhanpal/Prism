@@ -4,8 +4,8 @@
 # here and one silver transform. strata.config.load_sources() reads it and stops with a sentence
 # when an entry is missing a key or has one it does not know.
 #
-# The registry is empty until the Kenya procurement records ticket (07) adds the first three
-# sources. An entry looks like this:
+# Ticket 08 added the documents API. Ticket 07 adds the Kenya procurement records. An entry looks
+# like this:
 #
 #   [sources.awards]
 #   dataset_name = "..."          # the dataset's name, word for word, for the attribution line
@@ -21,3 +21,21 @@
 #   limitations = ["..."]         # optional: limits the Data readiness page shows as Partial
 
 [sources]
+
+# Procurement Plan versions, and later every document of the slice, from the documents API. The
+# plan reader (src/strata/lakehouse/plans.py) lists a project's documents here and fetches each
+# plan's published text and PDF. Ticket 08 added it.
+#
+# The plan reader does not filter the list by disclosure_date yet: it fetches the whole list on each
+# run, keeps it in bronze when it changed, and skips each plan whose document id bronze already
+# holds. Its second silver transform is src/strata/lakehouse/sql/plans/plan_data_notes.sql, which
+# runs after plan_step_delays.sql.
+[sources.documents]
+dataset_name = "Documents & Reports: Documents API"
+endpoint = "https://search.worldbank.org/api/v3/wds"
+watermark_field = "disclosure_date"
+cadence = "daily"
+license = "CC BY 4.0"
+silver_transform = "src/strata/lakehouse/sql/plans/plan_step_delays.sql"
+stratum = "How"
+limitations = ["The published text scrambles Procurement Plan tables, so only some versions are read through the layout parser."]
