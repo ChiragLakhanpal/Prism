@@ -7,7 +7,9 @@ It loads two things, with no network:
   `recorded.files` (each file with its source and license line), `recorded.responses`
   (each API response as JSON), `recorded.documents` (each document's published text) and
   `recorded.pages` (the text of each PDF page, numbered from 1). Ticket 07's lakehouse run
-  turns these into bronze, silver and gold.
+  turns these into bronze, silver and gold. The `recorded` schema is the fixture's copy of
+  the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops,
+  which ticket 07 builds from it.
 - The placeholder tables. Each CSV file in data/fixture/placeholder becomes a table in the
   schema `placeholder`. Ticket 08 replaces them with plan rows read from the recorded plans.
 

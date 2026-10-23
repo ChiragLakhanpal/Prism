@@ -593,7 +593,7 @@ wireframe_mark = "No signals"
 # fixture cannot tell whether any of them was canceled.
 
 [comparables]
-says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and 2 only in their award notices) and 3 still open."
+says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and two only in their award notices) and three still open."
 notices = "api/notices/P156634.json"
 awards = "api/awards/P156634.json"
 procurement_group = "CW"
