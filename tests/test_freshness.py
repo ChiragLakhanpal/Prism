@@ -161,10 +161,10 @@ def test_a_warehouse_that_fails_gives_an_error_and_keeps_its_reason_private():
 def test_a_warehouse_slower_than_the_stamp_s_timeout_gives_a_timeout():
     class Slow:
         def run(self, sql, params=None):
-            time.sleep(0.5)
+            time.sleep(0.2)
             return Result(("data_through",), ((None,),))
 
-    response = get(create_app(sql_as=lambda viewer: Slow(), stamp_timeout_seconds=0.05), "/api/freshness", ANA)
+    response = get(create_app(sql_as=lambda viewer: Slow(), stamp_timeout_seconds=0.02), "/api/freshness", ANA)
 
     assert response.status_code == 504
     assert response.json() == {"code": "timeout"}

@@ -34,10 +34,11 @@ Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also run
 It runs the steps in `gates/steps.toml`. Steps that do not depend on each other run side by side, in lanes. Today it has these steps:
 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
-2. Run six lanes side by side:
+2. Run seven lanes side by side:
    - The guard lane tests the guard hook.
-   - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then it runs the Python tests that may read that database, on four pytest-xdist workers: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader and the bundle commands.
+   - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then it runs the Python tests that may read that database, on four pytest-xdist workers: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server (its routes, the data-freshness stamp as each viewer, usage events and traces), the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader and the bundle commands.
    - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
+   - The app lane runs the Python tests for the app's deploy, what it uploads, and the Lakebase probe, under `ops/app/tests/`.
    - The lint lane lints the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders, passes to a prop or writes into the page that is not from the copy file (words joined with `+` included), on a Term that names a word GLOSSARY.md does not define, and on spacing or colors outside DESIGN.md's tokens. The props that never hold copy, such as `className` and `href`, are listed in `web/lint/rules.ts`.
    - The sql lane lints the SQL (`gates/sql_lint.py`): every query names its tables in three parts and binds its values as parameters.
    - The web lane type checks and bundles the web app, builds the design gallery, then runs the Playwright tests against both.
@@ -78,7 +79,22 @@ To start only the server, run `uv run python -m strata.server`. It prints the ad
 
 - `GET /api/health` says the server is up.
 - `GET /api/me` names the viewer that the Databricks App forwarded. It never returns the viewer's token.
+- `GET /api/me/warehouse` runs one query as the viewer and returns the user the warehouse says ran it.
+- `GET /api/freshness` returns the data-freshness stamp's day, read from `strata.ops` as the viewer: the earliest day a daily source was last loaded, or `null` before any has loaded. It answers 401 when no viewer was forwarded, 403 when the warehouse refuses the viewer, 504 after `app.stamp_timeout_seconds` in `config/thresholds.toml`, and 502 when the warehouse fails.
 - `POST /api/ask` takes `{"question": "..."}` and streams the run's events as `text/event-stream`, ending with a `done` event that carries the run id. Until the agent exists, the run sends one `error` event with the code `no_agent`.
+- Every other address outside `/api` gets the built web app (`web/dist`, or `STRATA_WEB_DIST`), whose router shows the page or the not-found page.
+
+Each request a viewer makes, except `/api/health`, writes one usage event to `strata.ops.usage_events` and sends one trace. `src/strata/server/settings.py` says which environment variables set the warehouse, the app's own credentials for the usage events, the Application Insights connection string and the web app. On this computer, with no warehouse set, the queries read the gate's fixture database, and the server keeps no usage events.
+
+## Deploy the app
+
+Strata runs as a Databricks App that acts as each viewer. After the wizard and the bundle deploy, run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It builds the web app, uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`, gives it the SQL warehouse, the Application Insights secret and each viewer's SQL token, deploys it, lets its own service principal write usage events, and prints its address. Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
+
+    uv run --script ops/app/probe_lakebase.py --env-file .env
 
 ## Where things live
 
@@ -90,8 +106,11 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The guard hook and its tests | `.claude/hooks/` |
 | Viewer identity | `src/strata/dbx.py` |
 | The harness: each turn's evidence and the stream helpers | `src/strata/harness/` |
-| The app server | `src/strata/server/` |
-| The web app, with its `api`, `sse`, `store` and `export` libraries | `web/src/` and `web/src/lib/` |
+| The app server, its settings from the environment, and the queries it runs as the viewer | `src/strata/server/` (`settings.py`, `viewer_sql.py` and `sql/`) |
+| The app's deploy, its `app.yaml` and its lean requirements file, and the Lakebase probe | `ops/app/`, with the probe's result in `docs/app-state.md` |
+| The web app, with its `api`, `sse`, `store`, `export`, `router` and `freshness` libraries | `web/src/` and `web/src/lib/` |
+| The app's routes: which page an address opens and the tab it selects | `web/src/routes.ts` |
+| The World Bank logo, with where and when it was downloaded | `web/src/assets/` |
 | The copy file: every string a person reads | `web/src/copy.ts` |
 | The design tokens: DESIGN.md sections 2 to 4 as the Tailwind theme, and the self-hosted fonts | `web/src/styles/app.css` |
 | The components, and the number and date rules Num follows | `web/src/components/` and `web/src/lib/format.ts` |
@@ -133,6 +152,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | `STRATA_SERVER_PORT` | the server, and the web app's dev server to reach it | a free port |
 | `STRATA_SERVER_HOST` | the server, and the web app's dev server to reach it | `127.0.0.1` |
 | `STRATA_WEB_PORT` | the web app's dev server | a free port |
+| `DATABRICKS_APP_PORT` | the server, on the Databricks App, when `STRATA_SERVER_PORT` is unset | the platform sets it |
 
 The Playwright tests always pick their own free port, so they never clash with a running dev server.
 

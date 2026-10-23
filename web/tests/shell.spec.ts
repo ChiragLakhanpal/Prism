@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { expect, mockShell, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
-const LOGO_SHA256 = "008de872f82765e61d5c7987e405d51000376b3aa9b3c73039250226f7b3be4c";
+const LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a0317aff";
 
 // The stamp writes "Oct 21" in the current year, so the tests fix today.
 const TODAY = new Date("2026-10-24T12:00:00Z");
@@ -18,7 +18,10 @@ test("the navy bar carries the official World Bank logo, unaltered, 24 px tall w
   const logo = page.getByRole("img", { name: "World Bank logo" });
   await expect(logo).toBeVisible();
   const file = await page.request.get(await logo.evaluate((img) => (img as HTMLImageElement).currentSrc));
-  expect(createHash("sha256").update(await file.body()).digest("hex")).toBe(LOGO_SHA256);
+  const body = await file.body();
+  expect(createHash("sha256").update(body).digest("hex")).toBe(LOGO_SHA256);
+  // White artwork, the file for dark backgrounds, so it reads on the navy bar.
+  expect(new Set(body.toString().match(/fill="[^"]*"/g))).toEqual(new Set(['fill="#fff"', 'fill="none"']));
   // The logo is not a link.
   await expect(page.locator("a").filter({ has: logo })).toHaveCount(0);
 
