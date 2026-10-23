@@ -8,6 +8,28 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
+## Ticket 03, before every other step: the wizard, the day-one probes and the pay-as-you-go check
+
+The orchestrator added this block on October 23, 2026, after the P0 phase gate found it missing. Ticket 03 is ready-for-human: its criteria 2, 3, 4 and 5 are parked until you run these. Every block below needs the `.env` that the wizard writes, so this comes first.
+
+Run this from the main checkout, in this order:
+
+    bash ops/wizard/strata-setup.sh
+    bash ops/dayone/run-probes.sh --env-file .env
+    bash ops/wizard/strata-setup.sh
+
+The first wizard run fills `.env` and the human-only tests. The probes run tests 1, 2, 3, 4, 5 and 10 and write their results. The second wizard run finishes test 6.
+
+It worked if `grep -c "None yet. The command above fills it." docs/day-one-results.md` prints 0, and `python3 ops/dayone/dayone.py show` lists ten tests, each with a status other than "not run" and a chosen path (criteria 2 and 4).
+
+Then run:
+
+    uv run --script ops/dayone/probe_caps.py --env-file .env
+
+It worked if it exits 0, prints a limit for each of the four deployments, and prints "Status: capped" with a budget line that names its alerts (criterion 3).
+
+Then, before the free credit ends on November 10, 2026, run the wizard's pay-as-you-go stage (stage 12), or `probe_caps.py` again after the upgrade. It worked if `python3 ops/dayone/dayone.py field payg Status` prints "Done on ...", "The subscription showed pay-as-you-go on ...", or "Planned for" a date before November 10, 2026, and the Who field is filled (criterion 5).
+
 ## Ticket 03, step 1 of 4: the unit of a Global Batch capacity
 
 The merger parked this step on October 23, 2026, after squash commit 43ed569. It needs the Azure sign-in.
