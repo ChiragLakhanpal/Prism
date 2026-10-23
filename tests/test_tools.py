@@ -119,16 +119,51 @@ def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sourc
         assert set(tool.sources) <= set(sources), f"{tool.name} reads a source the source registry lacks"
 
 
+def answered(result) -> dict[str, list[str]]:
+    """The references under each mark, in the benchmark question's shape."""
+    found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
+    for mark in ("needs_a_look", "watch", "data_note"):
+        found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
+    return found
+
+
+def expected(question) -> dict[str, list[str]]:
+    return {mark: sorted(refs) for mark, refs in question["expected"].items()}
+
+
+def tool_questions():
+    return [question for question in BENCHMARK["questions"] if "tool" in question]
+
+
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine):
-    for question in BENCHMARK["questions"]:
-        if "tool" not in question:
-            continue
+    for question in tool_questions():
         result = registry.call(question["tool"], question["arguments"], registry.Context(engine=engine, viewer=ANA))
 
-        answered = {"unmarked": sorted(ref for ref, found in marks(result).items() if not found)}
-        for mark in ("needs_a_look", "watch", "data_note"):
-            answered[mark] = sorted(ref for ref, found in marks(result).items() if mark in found)
-        assert answered == {mark: sorted(refs) for mark, refs in question["expected"].items()}
+        assert answered(result) == expected(question)
+
+
+def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch):
+    """The benchmark question's date stands in for today, so the expected answer still holds."""
+    for question in tool_questions():
+        today = dt.date.fromisoformat(question["arguments"]["as_of"])
+        monkeypatch.setattr(registry, "today", lambda: today)
+        arguments = {name: given for name, given in question["arguments"].items() if name != "as_of"}
+
+        result = registry.call(question["tool"], arguments, registry.Context(engine=engine, viewer=ANA))
+
+        assert result["as_of"] == today.isoformat()
+        assert answered(result) == expected(question)
+
+
+@pytest.mark.parametrize("view", ["piu", "public"])
+def test_each_tool_answers_under_each_view(engine, view):
+    """Until ticket 40 applies each view's rules, every view gets the World Bank staff result."""
+    for question in tool_questions():
+        result = registry.call(question["tool"], question["arguments"],
+                               registry.Context(engine=engine, viewer=ANA, view=view))
+
+        assert result["view"] == view
+        assert answered(result) == expected(question)
 
 
 def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
@@ -244,7 +279,24 @@ def drop_an_evidence_id(call, **arguments):
     return result
 
 
-@pytest.mark.parametrize("adapter", ["leak_a_later_row", "drop_an_evidence_id"])
+def rename_a_reason(call, **arguments):
+    """check_plan with a reason code the registry does not list, which the screen's copy has no
+    sentence for: the registry must refuse it."""
+    from strata.tools.check_plan import check_plan as adapter
+    result = adapter(call, **arguments)
+    marked = next(row for row in result["rows"] if row["marks"])
+    marked["marks"][0]["reasons"][0]["code"] = "planned_completion_passed"
+    return result
+
+
+def invent_an_abstention(call, **arguments):
+    """check_plan abstaining for a reason the registry does not list: the registry must refuse it."""
+    from strata.tools.check_plan import check_plan as adapter
+    return {**adapter(call, **arguments), "rows": [], "abstention": {"reason": "plan_not_ready"}}
+
+
+@pytest.mark.parametrize("adapter", ["leak_a_later_row", "drop_an_evidence_id", "rename_a_reason",
+                                     "invent_an_abstention"])
 def test_the_registry_refuses_a_result_that_breaks_the_tool_contract(engine, tmp_path, adapter):
     path = copy_registry(tmp_path, '"strata.tools.check_plan:check_plan"', f'"test_tools:{adapter}"')
     context = registry.Context(engine=engine, viewer=ANA)

@@ -9,8 +9,9 @@ strata.config.load_tools() reads it. This module does three things with those de
   the as-of date (the earlier of the call's and the page's, else today), runs the adapter with
   the viewer's engine, and wraps the result in the envelope every tool shares.
 - It then checks the result against seam 2's contract and the tool's declared shape: every row
-  has an evidence id, a public date on or before the as-of date and a source line. A tool that
-  breaks the contract raises ToolContractError, so a test catches it before a viewer does.
+  has an evidence id, a public date on or before the as-of date and a source line, and every
+  reason code and abstention reason is one the file lists. A tool that breaks the contract raises
+  ToolContractError, so a test catches it before a viewer does.
 """
 
 from __future__ import annotations
@@ -161,7 +162,9 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
 
 def check_contract(tool: Tool, result: dict) -> None:
     """Every result has the shared envelope and the tool's own fields; every row is cited, dated on or
-    before the as-of date, and has its source line. An abstention gives a reason and no rows."""
+    before the as-of date, and has its source line. An abstention gives a reason and no rows. Each
+    reason code and abstention reason is one the registry lists, so the screens' copy has a sentence
+    for it."""
     def broken(what: str):
         raise ToolContractError(f"{tool.name} broke the tool contract: {what}.")
 
@@ -174,6 +177,8 @@ def check_contract(tool: Tool, result: dict) -> None:
     abstention = result["abstention"]
     if abstention is not None and (not isinstance(abstention, dict) or not abstention.get("reason")):
         broken("an abstention must give its reason")
+    if abstention is not None and abstention["reason"] not in tool.result.abstentions:
+        broken(f"it abstained for {abstention['reason']!r}, which its result's abstentions do not list")
     if abstention is not None and result["rows"]:
         broken("it abstained and still returned rows")
     for row in result["rows"]:
@@ -185,3 +190,8 @@ def check_contract(tool: Tool, result: dict) -> None:
             broken(f"{row['evidence_id']} is public from {row['public_from']}, after the as-of date {result['as_of']}")
         if not isinstance(row["source"], dict) or set(row["source"]) != set(tool.result.source_fields):
             broken(f"{row['evidence_id']} has no source line with {', '.join(tool.result.source_fields)}")
+        for mark in row.get("marks") or []:
+            for reason in mark["reasons"]:
+                if reason["code"] not in tool.result.reasons:
+                    broken(f"{row['evidence_id']} gives the reason {reason['code']!r}, which its result's "
+                           f"reasons do not list")

@@ -397,6 +397,8 @@ class ToolResult:
     row_fields: tuple[str, ...]
     source_fields: tuple[str, ...]
     fields: tuple[str, ...]
+    reasons: tuple[str, ...] = ()  # the codes a reason in a row's marks may have
+    abstentions: tuple[str, ...] = ()  # the reasons the tool may give for returning no rows
 
 
 @dataclass(frozen=True)
@@ -464,9 +466,9 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
         raise ConfigError(f"In {path.name}, tools.{name} has no result shape. Add a [tools.{name}.result] table "
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
-    entry.only({"row", "row_fields", "source_fields", "fields"})
+    entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions"})
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
-                        entry.texts("fields"))
+                        entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"))
     missing = [field for field in ROW_CONTRACT if field not in result.row_fields]
     if missing:
         entry._fail("row_fields", f"must include {', '.join(ROW_CONTRACT)}, so every row can be cited and dated; "

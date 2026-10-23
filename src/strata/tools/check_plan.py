@@ -22,7 +22,12 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
 
 Every number a reason states is a value here, at its rounding: days are whole numbers, amounts
 are text with two decimals, and the ratio is given exactly to two decimals and as the whole
-number "about" rounds it to. The screen and the agent never compute them.
+number "about" rounds it to. The screen and the agent never compute them. Each reason's code and
+each abstention's reason is listed in the registry's [tools.check_plan.result], and the registry
+refuses one it does not list.
+
+The call's view (staff, piu or public) is returned with the result but not yet applied: until
+ticket 40 applies each view's rules, every view gets the World Bank staff result.
 """
 
 from __future__ import annotations
