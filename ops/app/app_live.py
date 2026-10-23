@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime as dt
 import sys
+import uuid
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -82,6 +83,96 @@ class LiveApps:
         return self.w.apps.get(name).url
 
     def run_sql(self, statement: str) -> None:
-        engine = WarehouseEngine(self.env["DATABRICKS_WAREHOUSE_ID"],
-                                 lambda method, path, body: self.w.api_client.do(method, path, body=body))
-        engine.run(statement)
+        warehouse(self.w, self.env).run(statement)
+
+
+def warehouse(w, env: dict) -> WarehouseEngine:
+    return WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], lambda method, path, body: w.api_client.do(method, path, body=body))
+
+
+# ── The Lakebase probe's two stores (ops/app/probe_lakebase.py) ──────────
+
+LAKEBASE_INSTANCE = "strata-state-probe"
+LAKEBASE_CAPACITY = "CU_1"  # the smallest instance
+POSTGRES_DATABASE = "databricks_postgres"
+
+
+class WarehouseStore:
+    """A table in the day-one probes' own schema, on the SQL warehouse strata.ops uses."""
+
+    def __init__(self, w, env: dict, config: dict):
+        self.engine = warehouse(w, env)
+        self.table = f"{config['names']['schema']}.state_probe"
+
+    def prepare(self) -> None:
+        self.engine.run("CREATE TABLE IF NOT EXISTS IDENTIFIER(:table) "
+                        "(key STRING, value STRING, written_at TIMESTAMP, public_from DATE)", {"table": self.table})
+
+    def write(self, key: str, value: str) -> None:
+        self.engine.run("INSERT INTO IDENTIFIER(:table) VALUES (:key, :value, current_timestamp(), current_date())",
+                        {"table": self.table, "key": key, "value": value})
+
+    def read(self, key: str) -> str | None:
+        rows = self.engine.run("SELECT value FROM IDENTIFIER(:table) WHERE key = :key",
+                               {"table": self.table, "key": key}).rows
+        return rows[0][0] if rows else None
+
+    def finish(self) -> None:
+        pass
+
+
+class LakebaseStore:
+    """A table in a small Lakebase database instance, which the probe stops when it is done."""
+
+    def __init__(self, w):
+        self.w, self.connection = w, None
+
+    def prepare(self) -> None:
+        from probe_lakebase import Unavailable
+        from databricks.sdk.errors import NotFound
+        from databricks.sdk.service import database
+        import psycopg
+
+        try:
+            try:
+                instance = self.w.database.get_database_instance(LAKEBASE_INSTANCE)
+                if instance.stopped:
+                    self.w.database.update_database_instance(
+                        LAKEBASE_INSTANCE, database.DatabaseInstance(name=LAKEBASE_INSTANCE, stopped=False), "stopped")
+                    instance = self.w.database.wait_get_database_instance_database_available(LAKEBASE_INSTANCE)
+            except NotFound:
+                instance = self.w.database.create_database_instance_and_wait(
+                    database.DatabaseInstance(name=LAKEBASE_INSTANCE, capacity=LAKEBASE_CAPACITY),
+                    timeout=dt.timedelta(minutes=MINUTES))
+            credential = self.w.database.generate_database_credential(instance_names=[LAKEBASE_INSTANCE],
+                                                                       request_id=uuid.uuid4().hex)
+            self.connection = psycopg.connect(host=instance.read_write_dns, dbname=POSTGRES_DATABASE,
+                                              user=self.w.current_user.me().user_name, password=credential.token,
+                                              sslmode="require", autocommit=True)
+            self.connection.execute("CREATE TABLE IF NOT EXISTS state_probe "
+                                    "(key text PRIMARY KEY, value text, written_at timestamptz DEFAULT now())")
+        except Exception as error:  # a workspace without Lakebase, a quota or a refused connection
+            raise Unavailable(" ".join(str(error).split())[:300] or type(error).__name__) from error
+
+    def write(self, key: str, value: str) -> None:
+        self.connection.execute("INSERT INTO state_probe (key, value) VALUES (%s, %s)", (key, value))
+
+    def read(self, key: str) -> str | None:
+        row = self.connection.execute("SELECT value FROM state_probe WHERE key = %s", (key,)).fetchone()
+        return row[0] if row else None
+
+    def finish(self) -> None:
+        from databricks.sdk.service import database
+
+        if self.connection is not None:
+            self.connection.close()
+        try:
+            self.w.database.update_database_instance(
+                LAKEBASE_INSTANCE, database.DatabaseInstance(name=LAKEBASE_INSTANCE, stopped=True), "stopped")
+        except Exception:  # an instance the probe never made has nothing to stop
+            pass
+
+
+def live_stores(env: dict, config: dict) -> dict:
+    w = workspace_client(env)
+    return {"strata.ops": WarehouseStore(w, env, config), "Lakebase": LakebaseStore(w)}
