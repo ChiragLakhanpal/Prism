@@ -5,9 +5,10 @@
 # Some projects carry the older taxonomy's single-letter codes (WX, named "FY17 - Water, Sanitation
 # and Waste Management", or "(Historic)Urban Development" for UX); others carry the newer
 # double-letter codes (WWX, "Water, Sanitation and Waste Management"). A project maps to the sector
-# of the major sector with the largest share, so each project has one sector. Ties go to the
-# sector listed first in this file. A code that no sector lists leaves the project without one,
-# and the projects source's data readiness measure linked_sector counts it.
+# with the largest share, so each project has one sector: the shares of its major sectors add up by
+# the sector each maps to, since the older taxonomy splits energy and industry across several
+# codes. Ties go to the sector listed first in this file. A code that no sector lists leaves the
+# project without one, and the projects source's data readiness measure linked_sector counts it.
 #
 # This is the one place to change how a code maps (CLAUDE.md rule 9). config/slice.toml names the
 # slice's sectors by their keys here. strata.config.load_sectors() reads it and stops with a

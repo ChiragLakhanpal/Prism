@@ -370,13 +370,19 @@ def test_the_sector_file_maps_every_code_the_slice_countries_projects_list():
 def test_a_project_maps_to_the_major_sector_with_the_largest_share():
     """A project's sectors each carry a share. A project split 40 to public administration (BX) and
     35 plus 25 to transport (TTX, the newer taxonomy) is transport, and a project that lists no
-    sector has none."""
-    split = dict(id="P000017", project_name="A split project", countrycode="KE", major_sectors=[
-        {"major_sector": {"major_sector_code": "BX", "sectors": [{"sector_percent": "40.0"}]}},
-        {"major_sector": {"major_sector_code": "TTX", "sectors": [{"sector_percent": "35.0"},
-                                                                    {"sector_percent": "25.0"}]}}])
+    sector has none. The older taxonomy splits energy across several codes, so the shares add up
+    by sector: a project split 35 to public administration (BX), 20 and 30 to energy (LX and PX)
+    and 15 to transport (TX) is energy, from PX, its larger energy code."""
+    def major(code, *percents):
+        return {"major_sector": {"major_sector_code": code,
+                                 "sectors": [{"sector_percent": percent} for percent in percents]}}
+
+    split = dict(id="P000017", project_name="A split project", countrycode="KE",
+                 major_sectors=[major("BX", "40.0"), major("TTX", "35.0", "25.0")])
     unlisted = dict(id="P000018", project_name="A project with no sector", countrycode="KE")
-    body = {"total": "2", "projects": {"P000017": split, "P000018": unlisted}}
+    energy = dict(id="P000019", project_name="A project split across energy codes", countrycode="PK",
+                  major_sectors=[major("BX", "35.0"), major("LX", "20.0"), major("PX", "30.0"), major("TX", "15.0")])
+    body = {"total": "3", "projects": {"P000017": split, "P000018": unlisted, "P000019": energy}}
 
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
@@ -386,7 +392,8 @@ def test_a_project_maps_to_the_major_sector_with_the_largest_share():
                               "ORDER BY project_id")
 
     assert stored == [{"project_id": "P000017", "sector": "transport", "major_sector_code": "TTX"},
-                      {"project_id": "P000018", "sector": None, "major_sector_code": None}]
+                      {"project_id": "P000018", "sector": None, "major_sector_code": None},
+                      {"project_id": "P000019", "sector": "energy", "major_sector_code": "PX"}]
 
 
 # ── Data readiness for every source ──────────────────────────────────────

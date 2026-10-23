@@ -325,8 +325,11 @@ class Sectors:
 
     def of(self, major_sectors) -> tuple[str | None, str | None]:
         """A project's one sector and the major sector code it came from, from the projects API's
-        major_sectors: the code with the largest share of the project, ties to the sector listed
-        first. (None, None) when it lists no major sector; (None, code) when the code is not mapped."""
+        major_sectors. The shares add up by sector, since the older taxonomy splits a sector across
+        codes (energy is LX, PX, GX and NX), and the sector with the largest total wins, ties to the
+        sector listed first. Its code is the one with the largest share within it. A code no sector
+        lists counts on its own. (None, None) when the project lists no major sector; (None, code)
+        when an unmapped code wins."""
         shares: dict[str, float] = {}
         for entry in major_sectors or []:
             major = entry.get("major_sector", entry) if isinstance(entry, dict) else {}
@@ -336,9 +339,17 @@ class Sectors:
                                                            for sector in major.get("sectors") or [])
         if not shares:
             return None, None
+
+        def group(code: str) -> tuple[str | None, str]:  # (its sector's key, or None and the code itself)
+            return (self.codes[code], "") if code in self.codes else (None, code)
+
+        totals: dict[tuple[str | None, str], float] = {}
+        for code, share in shares.items():
+            totals[group(code)] = totals.get(group(code), 0.0) + share
         order = {key: number for number, key in enumerate(self.keys)}
-        code = min(shares, key=lambda code: (-shares[code], order.get(self.codes.get(code), len(order)), code))
-        return self.codes.get(code), code
+        best = min(totals, key=lambda found: (-totals[found], order.get(found[0], len(order)), found[1]))
+        code = min((code for code in shares if group(code) == best), key=lambda code: (-shares[code], code))
+        return best[0], code
 
 
 def _percent(value) -> float:
