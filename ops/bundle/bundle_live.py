@@ -25,12 +25,25 @@ from live import workspace as workspace_client  # noqa: E402  (ticket 03's clien
 from strata.lakehouse.engine import WarehouseEngine  # noqa: E402
 
 TARGET = "shared"
-CREDENTIALS = ("DATABRICKS_HOST", "DATABRICKS_TOKEN", "DATABRICKS_CLIENT_ID", "DATABRICKS_CLIENT_SECRET")
 RUN_MINUTES = 60  # how long job-run waits; the job itself stops after 150 minutes
 
 
 def _text(value) -> str:
     return str(getattr(value, "value", value))
+
+
+def cli_env(env: dict, environ: dict) -> dict:
+    """The Databricks CLI's environment: the shell's, without its DATABRICKS_* keys, plus one way to sign in.
+
+    The CLI stops when it sees more than one way, so a token wins over a service principal, as it
+    does in ticket 03's workspace client (ops/dayone/live.py).
+    """
+    found = {key: value for key, value in environ.items() if not key.startswith("DATABRICKS_")}
+    found["DATABRICKS_HOST"] = env["DATABRICKS_HOST"]
+    if env.get("DATABRICKS_TOKEN"):
+        return found | {"DATABRICKS_AUTH_TYPE": "pat", "DATABRICKS_TOKEN": env["DATABRICKS_TOKEN"]}
+    return found | {"DATABRICKS_AUTH_TYPE": "oauth-m2m", "DATABRICKS_CLIENT_ID": env["DATABRICKS_CLIENT_ID"],
+                    "DATABRICKS_CLIENT_SECRET": env["DATABRICKS_CLIENT_SECRET"]}
 
 
 class LiveWorkspace:
@@ -127,8 +140,7 @@ class LiveWorkspace:
         cli = shutil.which("databricks")
         if cli is None:
             return 1, "The Databricks CLI is not on the path. Install version 0.287.0 or later."
-        env = {key: value for key, value in os.environ.items() if not key.startswith("DATABRICKS_")}
-        env |= {key: self.env[key] for key in CREDENTIALS if self.env.get(key)}
-        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET], cwd=REPO, env=env,
+        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET], cwd=REPO,
+                              env=cli_env(self.env, dict(os.environ)),
                               capture_output=True, text=True, timeout=1800)
         return done.returncode, (done.stdout + done.stderr).strip()

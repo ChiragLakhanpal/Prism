@@ -102,6 +102,11 @@ def _job(bundle=None) -> dict:
     return (bundle or bundle_files.load()).resources("jobs")[JOB]
 
 
+def job_name(bundle=None) -> str:
+    """The job's name in the workspace, as bundle/nightly.yml gives it."""
+    return _job(bundle)["name"]
+
+
 def job_tasks(bundle=None) -> list[Task]:
     """The job's tasks in the order they run: each after every task it depends on, ties in file order."""
     declared = [Task(entry["task_key"], tuple(dep["task_key"] for dep in entry.get("depends_on", [])),

@@ -11,7 +11,7 @@ Run it from the main checkout after the wizard:
 It needs the Databricks CLI 0.287.0 or later on the path. It does these things, in order:
 
 1. It lists what the workspace holds: the strata catalog, its schemas, the volume, the tables, the
-   grants and the job "strata nightly", and also fairshare's catalog.
+   grants and the nightly job that bundle/nightly.yml names, and also fairshare's catalog.
 2. It runs `databricks bundle deploy`, which creates or updates the catalog, the bronze, silver,
    gold and ops schemas, the bronze files volume, the read grants and the nightly job.
 3. It creates the tables from src/strata/lakehouse/tables on the SQL warehouse. Each one is
@@ -33,13 +33,12 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
-from strata.lakehouse import catalog  # noqa: E402
+from strata.lakehouse import catalog, nightly  # noqa: E402
 from strata.lakehouse.catalog import CatalogError  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
+from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
-JOB = "strata nightly"
 FAIRSHARE = "fairshare"
-NEEDS = ["DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID"]
 KINDS = {"catalog": "The catalog", "schemas": "The schema", "volumes": "The volume", "tables": "The table",
          "grants": "The grants on", "jobs": "The job"}
 
@@ -81,7 +80,8 @@ def summary(listing: dict) -> str:
 
 
 def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
-    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(JOB))
+    job = nightly.job_name()
+    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job))
     neighbour_before = workspace.listing(fairshare)
 
     print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants and the nightly job.")
@@ -100,7 +100,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
     print(f"   Each of these exists now: {', '.join(built)}.")
 
     print("3. What changed:")
-    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(JOB))
+    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job))
     for line in changes(before, after) or ["No changes."]:
         print(f"   {line}")
 
@@ -126,16 +126,10 @@ def main(argv: list[str] | None = None, workspace=None) -> int:
                         help="fairshare's catalog, which must list the same before and after. The default is fairshare.")
     args = parser.parse_args(argv)
 
-    path = args.env_file or dayone.default_env_path()
-    if not Path(path).is_file():
-        print(f"There is no env file at {path}. {dayone.WIZARD_FIRST}", file=sys.stderr)
-        return 2
-    env = dayone.load_env(path)
-    missing = dayone.missing_keys(env, NEEDS)
-    if not env.get("DATABRICKS_TOKEN") and not (env.get("DATABRICKS_CLIENT_ID") and env.get("DATABRICKS_CLIENT_SECRET")):
-        missing.append("DATABRICKS_TOKEN (or DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET)")
-    if missing:
-        print(f"{path} has no value for {', '.join(missing)}. {dayone.WIZARD_FIRST}", file=sys.stderr)
+    try:
+        env = load_workspace_env(args.env_file)
+    except WorkspaceEnvError as error:
+        print(error, file=sys.stderr)
         return 2
 
     if workspace is None:

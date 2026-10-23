@@ -40,11 +40,10 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
 import dayone  # noqa: E402
 from strata.lakehouse import ground_truth, nightly, schedule  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, EngineError  # noqa: E402
+from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
-JOB = "strata nightly"
 NOTES = REPO / "bundle" / "README.md"
 FIXTURE_DB = REPO / "data" / "out" / "fixture.duckdb"
-NEEDS = ["DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID"]
 BLOCK = re.compile(r"(<!-- bundle:schedules -->\n).*?(<!-- /bundle:schedules -->)", re.S)
 RUNS = """
 SELECT task_key, status, started_at
@@ -58,8 +57,9 @@ ORDER BY started_at
 
 def job_run(workspace, run_id: str | None) -> int:
     if run_id is None:
-        print(f"Starting the job {JOB} and waiting for it to finish.")
-        run_id, state, page = workspace.run_job(JOB)
+        job = nightly.job_name()
+        print(f"Starting the job {job} and waiting for it to finish.")
+        run_id, state, page = workspace.run_job(job)
         print(f"Run {run_id}: {page}")
         if state != "SUCCESS":
             print(f"The run ended {state}, so it did not finish every task. Open the run's page to see why.")
@@ -179,9 +179,10 @@ def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool
 
 
 def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, today: dt.date) -> int:
-    strata = workspace.job_facts(JOB)
+    job = nightly.job_name()
+    strata = workspace.job_facts(job)
     if strata is None:
-        print(f"I found no job named {JOB}. Deploy first: uv run --script ops/bundle/deploy.py --env-file .env")
+        print(f"I found no job named {job}. Deploy first: uv run --script ops/bundle/deploy.py --env-file .env")
         return 2
     if fairshare_job is None:
         names = [name for name in workspace.job_names() if "fairshare" in name.lower()]
@@ -199,7 +200,7 @@ def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, to
         if facts.get("quartz") and not facts["durations"]:
             print(f"{facts['name']} has no finished runs to measure. Run it once by hand, then check again. "
                   "For Strata's job: uv run --script ops/bundle/check.py job-run --env-file .env")
-            return 1
+            return 2
     try:
         apart, lines = schedules_block(strata, fairshare, today)
     except schedule.ScheduleError as error:
@@ -235,14 +236,10 @@ def main(argv: list[str] | None = None, workspace=None, env: dict | None = None)
     args = parser.parse_args(argv)
 
     if env is None:
-        path = args.env_file or dayone.default_env_path()
-        if not Path(path).is_file():
-            print(f"There is no env file at {path}. {dayone.WIZARD_FIRST}", file=sys.stderr)
-            return 2
-        env = dayone.load_env(path)
-        missing = dayone.missing_keys(env, NEEDS)
-        if missing:
-            print(f"{path} has no value for {', '.join(missing)}. {dayone.WIZARD_FIRST}", file=sys.stderr)
+        try:
+            env = load_workspace_env(args.env_file)
+        except WorkspaceEnvError as error:
+            print(error, file=sys.stderr)
             return 2
     if workspace is None:
         from bundle_live import LiveWorkspace

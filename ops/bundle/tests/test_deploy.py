@@ -15,6 +15,7 @@ import pytest
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "ops" / "bundle"))
 
+import bundle_live  # noqa: E402
 import deploy  # noqa: E402
 
 from strata.lakehouse import catalog, nightly  # noqa: E402
@@ -143,6 +144,27 @@ def test_the_command_runs_with_a_complete_env_file(tmp_path, capsys):
 
     assert deploy.main(["--env-file", str(env)], workspace=FakeWorkspace()) == 0
     assert "The catalog strata is new." in capsys.readouterr().out
+
+
+SHELL = {"PATH": "/usr/bin", "DATABRICKS_CONFIG_PROFILE": "someone-else"}
+HOST = "https://dbc-1.cloud.databricks.com"
+
+
+def test_the_cli_gets_the_token_alone_when_the_env_file_has_both_ways_to_sign_in():
+    env = {"DATABRICKS_HOST": HOST, "DATABRICKS_TOKEN": "not-a-real-key",
+           "DATABRICKS_CLIENT_ID": "sp-client", "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
+
+    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST,
+                                               "DATABRICKS_AUTH_TYPE": "pat", "DATABRICKS_TOKEN": "not-a-real-key"}
+
+
+def test_the_cli_gets_the_service_principal_when_the_env_file_has_no_token():
+    env = {"DATABRICKS_HOST": HOST, "DATABRICKS_TOKEN": "",
+           "DATABRICKS_CLIENT_ID": "sp-client", "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
+
+    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST,
+                                               "DATABRICKS_AUTH_TYPE": "oauth-m2m", "DATABRICKS_CLIENT_ID": "sp-client",
+                                               "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
 
 
 @pytest.mark.parametrize("name", ["deploy.py", "check.py"])

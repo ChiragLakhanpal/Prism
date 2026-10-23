@@ -49,6 +49,16 @@ def checked(argv, workspace, capsys):
     return code, capsys.readouterr().out
 
 
+def test_an_env_file_with_no_way_to_sign_in_stops_before_the_workspace(tmp_path, capsys):
+    env = tmp_path / "strata.env"
+    env.write_text("DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\nDATABRICKS_WAREHOUSE_ID='wh-1'\n")
+
+    code = check.main(["--env-file", str(env), "job-run"], workspace=FakeWorkspace())
+
+    assert code == 2
+    assert "DATABRICKS_TOKEN (or DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET)" in capsys.readouterr().err
+
+
 # ── A manual run of the nightly job ──────────────────────────────────────
 
 def test_a_run_that_records_every_task_in_plan_order_passes(capsys):
@@ -170,7 +180,7 @@ def test_a_fairshare_job_with_no_finished_runs_cannot_be_measured(capsys):
 
     code, out = checked(["schedules", "--fairshare-job", "fairshare nightly"], FakeWorkspace(jobs=jobs), capsys)
 
-    assert code == 1
+    assert code == 2  # could not run, as the docstring says, rather than a failed check
     assert "has no finished runs to measure" in out
 
 

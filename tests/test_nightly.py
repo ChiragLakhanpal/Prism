@@ -7,6 +7,7 @@ Databricks, with the same parameters, against DuckDB. The workspace step
 """
 
 import datetime as dt
+import shutil
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,7 @@ PLAN_ORDER = [
 ]
 
 WASHINGTON = "America/New_York"
+ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -77,6 +79,17 @@ def test_a_task_the_job_does_not_have_is_refused(engine):
         nightly.main(["--task", "polish_gold", "--run-id", "42", "--src", "/tmp/src"], engine)
 
     assert engine.run("SELECT count(*) AS n FROM strata.ops.pipeline_runs").as_text() == [("0",)]
+
+
+def test_the_job_s_name_comes_from_the_bundle(tmp_path):
+    """The deploy and the checks find the job by this name, so renaming it in nightly.yml is enough."""
+    shutil.copy(ROOT / "databricks.yml", tmp_path)
+    shutil.copytree(ROOT / "bundle", tmp_path / "bundle")
+    job_file = tmp_path / "bundle" / "nightly.yml"
+    job_file.write_text(job_file.read_text().replace("name: strata nightly\n", "name: strata overnight\n"))
+
+    assert nightly.job_name() == "strata nightly"
+    assert nightly.job_name(bundle.load(tmp_path)) == "strata overnight"
 
 
 def test_the_bundle_syncs_the_config_files_beside_the_package():
