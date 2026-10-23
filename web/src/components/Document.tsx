@@ -1,7 +1,8 @@
 // Document: one numbered paragraph of a source, as a citation points to it. It shows the
 // whole paragraph word for word with the matching words highlighted, then the source line
-// (which says where the paragraph sits), and a link to the page in the World Bank's PDF. A passage in French,
-// Spanish or Portuguese carries its lang attribute (DESIGN.md section 10).
+// (which says where the paragraph sits, drawn by Source.tsx), and a link to the page in the
+// World Bank's PDF. A passage in French, Spanish or Portuguese carries its lang attribute
+// (DESIGN.md section 10).
 //
 // States: ready, loading (a skeleton sized to the passage), failed (with "Try again"), and
 // missing (no source has this ID).
@@ -10,6 +11,7 @@ import { copy } from "../copy";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
+import { DocumentSource } from "./Source";
 import { TextLink } from "./TextLink";
 
 // Matched words: the highlight fill, with the start and end said aloud, because most screen
@@ -90,17 +92,19 @@ export function Document({ state }: { state: DocumentState }) {
   }
   const { passage } = state;
   const page = String(passage.page);
-  const source = copy.document.sourceLine(passage.docType, passage.date, String(passage.para), page);
   return (
     <article data-document="ready" className="max-w-prose">
       <blockquote lang={passage.lang} className="border-l-2 border-line-strong pl-4 text-body text-ink">
         <p>{highlighted(passage.text, passage.highlights)}</p>
       </blockquote>
-      <p className="mt-3 text-caption text-ink-muted" data-numbers>
-        <span className="font-bold">{copy.document.source}</span> {source.before}
-        <span className="font-mono">{passage.pcode}</span>
-        {source.after}
-      </p>
+      <DocumentSource
+        className="mt-3"
+        docType={passage.docType}
+        pcode={passage.pcode}
+        date={passage.date}
+        para={passage.para}
+        page={passage.page}
+      />
       <p className="mt-2 text-small">
         <TextLink href={passage.pdfHref} target="_blank" rel="noreferrer">
           {copy.document.openAtPage(page)}

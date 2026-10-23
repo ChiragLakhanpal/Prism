@@ -27,6 +27,7 @@ import { CitationMarker } from "../components/CitationMarker";
 import { Document, type Passage } from "../components/Document";
 import { Num, type NumValue } from "../components/Num";
 import { Skeleton, SkeletonText } from "../components/Skeleton";
+import { DocumentSource } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
 import { Steps, type Step } from "../components/Steps";
 import { Table, type Column, type Row } from "../components/Table";
@@ -88,22 +89,11 @@ const steps = (list: Omit<Step, "state">[], running = false): Step[] =>
   list.map((step, index) => ({ ...step, state: running && index === list.length - 1 ? "running" : "done" }));
 const ST = sample.steps;
 
-// The source line an evidence card ends with, as Document writes it.
-function SourceLine({ docType, pcode, iso, para, page }: { docType: string; pcode: string; iso: string; para: number; page: number }) {
-  const parts = copy.document.sourceLine(docType, date(iso), String(para), String(page));
-  return (
-    <p className="mt-2 text-caption text-ink-muted" data-numbers>
-      <span className="font-bold">{copy.document.source}</span> {parts.before}
-      <span className="font-mono">{pcode}</span>
-      {parts.after}
-    </p>
-  );
-}
-
+// The marker's preview ends with the source line an evidence card ends with.
 const preview = (
   <>
     <p>{sample.markerPreview}</p>
-    <SourceLine docType={sample.docType} pcode={sample.pcode} iso={sample.docDate} para={54} page={23} />
+    <DocumentSource className="mt-2" docType={sample.docType} pcode={sample.pcode} date={date(sample.docDate)} para={54} page={23} />
   </>
 );
 
@@ -173,6 +163,8 @@ const comparableRows: Row[] = sample.abstentionRows.map(([reference, method, mon
 }));
 
 // The Numbers page's reference tables: the value a tool sent, the rule, and what Num shows.
+// The value a tool sent is in Open Sans with tabular numerals, because DESIGN.md section 3
+// keeps Roboto Mono for IDs and codes.
 const h = reference.headers;
 const RATIOS: [number, number, "sentence" | "table"][] = [
   [6, 12, "sentence"],
@@ -191,8 +183,8 @@ const ratioColumns: Column[] = [
 const ratioRows: Row[] = RATIOS.map(([part, whole, style], index) => ({
   id: `${part}-${whole}-${style}`,
   cells: {
-    part: mono(String(part)),
-    whole: mono(String(whole)),
+    part: String(part),
+    whole: String(whole),
     style: style === "table" ? reference.table : reference.sentence,
     rule: reference.ratios.rules[index],
     shows: <Num part={part} whole={whole} style={style} />,
@@ -207,7 +199,7 @@ const valueColumns: Column[] = [
 const valueRows = (values: { sent: string; num: NumValue }[], rules: readonly string[]): Row[] =>
   values.map(({ sent, num }, index) => ({
     id: `${sent}-${index}`,
-    cells: { value: mono(sent), rule: rules[index], shows: <Num {...num} /> },
+    cells: { value: sent, rule: rules[index], shows: <Num {...num} /> },
   }));
 const FORMATS = [1234, 12500, 295689, 1250000, 2500000000, 0.456, 45.67, 456.7].map((value) => ({
   sent: String(value),
@@ -381,7 +373,15 @@ export const PAGES: GalleryPage[] = [
   {
     slug: "cards",
     sections: [
-      { id: "card", title: t.card, body: <Card title={sample.cardTitle}>{sample.cardBody}</Card> },
+      {
+        id: "card",
+        title: t.card,
+        body: (
+          <Card title={sample.cardTitle} source={sample.cardSource}>
+            {sample.cardBody}
+          </Card>
+        ),
+      },
       {
         id: "empty-link",
         title: s.withLink,
@@ -596,7 +596,8 @@ export const PAGES: GalleryPage[] = [
         body: <Panel><Answer state={{ status: "streaming", steps: steps([ST.read, ST.searchDocuments], true), stillWorking: true }} /></Panel>,
       },
       {
-        // Three sentences written: two kept, with three numbers between them, and one removed.
+        // Three sentences written: two kept, with five numbers between them (24, 7, 11, two
+        // and 24), and one removed.
         id: "ready",
         title: s.ready,
         body: (
@@ -607,7 +608,7 @@ export const PAGES: GalleryPage[] = [
                 steps: steps([ST.read, ST.searchDocuments, ST.write, ST.verify]),
                 runId: sample.runId,
                 sentences: markers,
-                checks: { numbers: { matched: 3, total: 3 }, notChecked: ["sentences", "comparables"], removed: [sample.removed[0]] },
+                checks: { numbers: { matched: 5, total: 5 }, notChecked: ["sentences", "comparables"], removed: [sample.removed[0]] },
               }}
             />
           </Panel>

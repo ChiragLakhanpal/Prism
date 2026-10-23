@@ -33,9 +33,15 @@ test("the shell says so when no one is signed in", async ({ page }) => {
     "/api/me": { body: JSON.stringify({ email: null, name: null, signed_in: false, has_token: false }) },
   });
 
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   await expect(page.getByText("You are not signed in. Open Strata through its Databricks App to sign in.")).toBeVisible();
+  // The view popover agrees: it does not suggest the viewer signed in with some account.
+  await page.getByRole("button", { name: "View: World Bank staff" }).click();
+  const view = page.getByRole("dialog", { name: "Your view" });
+  await expect(view).toContainText("You are not signed in.");
+  await expect(view).not.toContainText("I can't tell which account");
 });
 
 test("the shell says so in an error alert when it can't reach the server, and Try again asks again", async ({ page }) => {

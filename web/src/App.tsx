@@ -39,6 +39,7 @@ async function loadViewer(signal: AbortSignal) {
 function navViewer(state: ViewerState): Viewer {
   if (state.status === "checking") return { status: "loading" };
   if (state.status === "signed-in" && state.email) return { status: "signed-in", email: state.email };
+  if (state.status === "signed-out") return { status: "signed-out" };
   return { status: "error" };
 }
 

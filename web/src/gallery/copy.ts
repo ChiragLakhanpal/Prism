@@ -192,6 +192,7 @@ export const galleryCopy = {
     tabs: ["Summary", "Procurement", "Timeline", "Documents", "Connections"],
     cardTitle: "Sample Water Agency, Procurement Plan of October 9, 2026",
     cardBody: "Eight activities were checked. One needs a look and two are worth watching.",
+    cardSource: "A sample plan check made for the gallery, in STEP's columns.",
     emptyTitle: "I have nothing to brief you on yet.",
     emptyBody:
       "Once I load plans and projects, this page lists the plans that changed, the activities that need a look and the drafts waiting for you.",
@@ -210,8 +211,10 @@ export const galleryCopy = {
     markerSecond: "Implementation Status and Results Report, March 4, 2024, paragraph 12",
     markerPreview:
       "The contracts were advertised again after all bids were rejected, and the works started five months late.",
-    sentenceBefore: "Packages like this took 7 to 11 months from notice to signed contract.",
-    sentenceAfter: "Two of them were advertised again.",
+    // The reference class and its count come first (DESIGN.md section 7, rule 15), and 24 is
+    // over the 20 comparables a range needs.
+    sentenceBefore: "The 24 packages like this took 7 to 11 months from notice to signed contract.",
+    sentenceAfter: "Two of the 24 were advertised again.",
     coverageNoun: "matching packages",
     coverageGap: "15 lacked the STEP reference that links notice to contract.",
     removed: [

@@ -57,11 +57,13 @@ export const GLOSSARY_AVOID: [string, string][] = [
   ["Direct Contracting", "Direct Selection"],
 ];
 
-// JSX attributes and component props whose strings are never shown to anyone: names, addresses,
-// keys and settings. The string lint reads a string given to any other prop as copy, so a new
+// JSX attributes and component props whose strings are never shown to anyone: addresses, keys
+// and settings. The string lint reads a string given to any other prop as copy, so a new
 // component's props are checked without listing them here. Inside an object or an array
 // given to a prop, each string is judged by its own key: in state={{ status: "empty",
-// message: "..." }}, status is a setting and message is copy.
+// message: "..." }}, status is a setting and message is copy. List a prop here only when a
+// component uses it, with the reason if it is not plain: name, method and download are left
+// off, because a person's name, a STEP method and a file name are all read by someone.
 export const NON_COPY_PROPS = new Set([
   "className",
   "href",
@@ -88,11 +90,8 @@ export const NON_COPY_PROPS = new Set([
   "show",
   "widths",
   "htmlFor",
-  "name",
-  "method",
   "inputMode",
   "enterKeyHint",
-  "download",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
 ]);

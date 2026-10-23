@@ -40,6 +40,12 @@ export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   loading?: boolean;
   // An icon-only button needs an aria-label from the copy file.
   iconOnly?: boolean;
+  // A ghost button in a column of text, such as the answer's "Show the steps I took": 8 px of
+  // padding instead of 24, pulled left by the same 8 px, so its icon lines up with the text
+  // above. Its hover fill then reaches 8 px past the text and its focus ring 12 px, inside the
+  // 16 px padding of the smallest card. A flush button carries an icon, so its spinner takes
+  // the icon's place and loading does not change its width.
+  flush?: boolean;
 };
 
 export function Button({
@@ -48,6 +54,7 @@ export function Button({
   disabled = false,
   loading = false,
   iconOnly = false,
+  flush = false,
   className,
   children,
   onClick,
@@ -67,7 +74,7 @@ export function Button({
       className={cx(
         "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
         "transition-paint duration-150 select-none",
-        iconOnly ? "w-11" : loading && !Icon ? "px-3" : "px-6",
+        iconOnly ? "w-11" : flush ? "-ml-2 px-2" : loading && !Icon ? "px-3" : "px-6",
         VARIANTS[variant],
         DISABLED[variant],
         loading && "cursor-progress",

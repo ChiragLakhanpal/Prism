@@ -41,6 +41,7 @@ export const copy = {
       dialog: "Your view",
       signedIn: (email: string) => `Signed in as ${email}`,
       identityError: "I can't tell which account you signed in with.",
+      signedOut: "You are not signed in.",
       current: "You are seeing the World Bank staff view.",
       notReady: "Previews of what an implementing agency officer or the public sees are not ready yet.",
     },
@@ -63,6 +64,8 @@ export const copy = {
   },
 
   loading: "Loading",
+  // The bold start of every source line: under a table, a card or a passage.
+  source: "Source:",
 
   // Status badges (DESIGN.md section 5). The word always names the state.
   badge: {
@@ -145,7 +148,6 @@ export const copy = {
 
   // A document's passage, as the evidence drawer and the document page show it.
   document: {
-    source: "Source:",
     // The source line's words on each side of the project ID, which shows in mono:
     // "Implementation Completion and Results Report, " P000000 ", June 30, 2021, paragraph 54,
     // page 23."
@@ -167,7 +169,6 @@ export const copy = {
   table: {
     showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
-    source: "Source:",
   },
 
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts

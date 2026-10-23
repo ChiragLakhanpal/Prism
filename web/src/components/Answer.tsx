@@ -51,14 +51,16 @@ function StepsTaken({ steps, runId }: { steps: Step[]; runId: string }) {
   const count = steps.length;
   return (
     <div className="mt-4">
-      {/* -ml-6 takes back the ghost button's padding, so its icon lines up with the text above. */}
+      {/* Flush, so its icon lines up with the text above and its fill and focus ring stay
+          inside the card around the answer. */}
       <Button
         variant="ghost"
+        flush
         icon={ChevronDown}
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen(!open)}
-        className={cx("-ml-6 [&>svg]:transition-transform", open && "[&>svg]:rotate-180")}
+        className={cx("[&>svg]:transition-transform", open && "[&>svg]:rotate-180")}
       >
         {open ? copy.steps.hide : count === 1 ? copy.steps.showOne : copy.steps.show(numText({ count }))}
       </Button>

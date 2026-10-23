@@ -10,7 +10,7 @@
 // display: none, and so is the panel's from 1024 px.
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
-import { ChevronDown, Menu as MenuIcon, X } from "lucide-react";
+import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { POPOVER } from "./Popover";
@@ -26,21 +26,38 @@ export const SECTIONS: { key: Section; href: string }[] = [
   { key: "data", href: "/data" },
 ];
 
-export type Viewer = { status: "loading" } | { status: "signed-in"; email: string } | { status: "error" };
+export type Viewer =
+  | { status: "loading" }
+  | { status: "signed-in"; email: string }
+  | { status: "signed-out" }
+  | { status: "error" };
 
 const WIDE = "(min-width: 64rem)";
+
+// Who is signed in, as the first of the view lines. An error carries the circle-x icon, as the
+// freshness stamp's does, so it does not read like the signed-in line.
+function WhoLine({ viewer }: { viewer: Viewer }) {
+  if (viewer.status === "loading") return <Skeleton className="h-[13px] w-[200px] max-w-full" />;
+  if (viewer.status === "error") {
+    return (
+      <p className="flex items-start gap-1 text-caption text-ink-muted">
+        <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
+        {copy.nav.view.identityError}
+      </p>
+    );
+  }
+  return (
+    <p className="text-caption text-ink-muted">
+      {viewer.status === "signed-in" ? copy.nav.view.signedIn(viewer.email) : copy.nav.view.signedOut}
+    </p>
+  );
+}
 
 // The three lines about who is viewing, in the view popover and at the foot of the Menu panel.
 function ViewLines({ viewer }: { viewer: Viewer }) {
   return (
     <div className="flex flex-col gap-2">
-      {viewer.status === "loading" ? (
-        <Skeleton className="h-[13px] w-[200px] max-w-full" />
-      ) : (
-        <p className="text-caption text-ink-muted">
-          {viewer.status === "signed-in" ? copy.nav.view.signedIn(viewer.email) : copy.nav.view.identityError}
-        </p>
-      )}
+      <WhoLine viewer={viewer} />
       <p className="text-small text-ink">{copy.nav.view.current}</p>
       <p className="text-caption text-ink-muted">{copy.nav.view.notReady}</p>
     </div>

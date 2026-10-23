@@ -1,8 +1,10 @@
 // Cards (DESIGN.md section 5, from The Loop): surface, a 1 px line and radius 8, with no
 // shadow. Titles are 80 characters or fewer and blurbs 140; a group holds eight cards at most.
+// A card that states a finding ends with its source line (DESIGN.md principle 1).
 import { createElement, type ReactNode } from "react";
 import { CircleDashed } from "lucide-react";
 import { cx } from "../lib/cx";
+import { Source } from "./Source";
 import { TextLink } from "./TextLink";
 
 type Level = 2 | 3 | 4 | 5;
@@ -11,17 +13,21 @@ export function Card({
   title,
   level = 3,
   children,
+  source,
   className,
 }: {
   title?: ReactNode;
   level?: Level;
   children?: ReactNode;
+  // Where the card's finding came from, after "Source:".
+  source?: ReactNode;
   className?: string;
 }) {
   return (
     <section className={cx("rounded-md border border-line bg-surface p-4 md:p-6", className)}>
       {title && createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
       {children && <div className={cx(Boolean(title) && "mt-2", "text-body text-ink")}>{children}</div>}
+      {source && <Source className="mt-4">{source}</Source>}
     </section>
   );
 }

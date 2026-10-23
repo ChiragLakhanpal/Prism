@@ -122,8 +122,8 @@ function Index() {
 }
 
 // The frame's own states come from the address, so the capture command can open each one:
-// ?menu=open opens the Menu panel, ?view=open the view popover, and ?viewer=loading or
-// ?viewer=error sets what the view lines say.
+// ?menu=open opens the Menu panel, ?view=open the view popover, and ?viewer=loading,
+// ?viewer=signed-out or ?viewer=error sets what the view lines say.
 function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer } {
   const params = new URLSearchParams(search);
   const viewer = params.get("viewer");
@@ -131,7 +131,7 @@ function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; vie
     menuOpen: params.get("menu") === "open",
     viewOpen: params.get("view") === "open",
     viewer:
-      viewer === "loading" || viewer === "error"
+      viewer === "loading" || viewer === "signed-out" || viewer === "error"
         ? { status: viewer }
         : { status: "signed-in", email: galleryCopy.sampleEmail },
   };

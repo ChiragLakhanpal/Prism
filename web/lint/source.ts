@@ -112,8 +112,13 @@ function keyName(property: Node): string | null {
 
 // Text a component renders that is not from the copy file: words written in JSX, strings in
 // JSX expressions, strings given to any prop that is not on NON_COPY_PROPS (inside objects
-// and arrays too, each judged by its own key), and consts holding such strings that a
-// component renders or passes by name.
+// and arrays too, each judged by its own key), consts holding such strings that a component
+// renders or passes by name, a key read from a local const object (words.empty), and a
+// default prop value ({ body = "..." }).
+//
+// It does not follow function calls, such as .map over a local array: RATIOS and BADGES in
+// the gallery hold settings, and following them would flag those. Keep words in an array in
+// the copy file, as copy.nav.tabs does.
 export function literalText(source: string, file: string): Found[] {
   const root = parse(source, file);
   const consts = constants(root);
@@ -153,6 +158,24 @@ export function literalText(source: string, file: string): Found[] {
         // Reported where the const is used, with the words it holds.
         return strings(init, prop, new Set([...seen, name])).map((found) => ({ ...found, offset: node.start, from: name }));
       }
+      case "MemberExpression": {
+        // words.empty, where words is a local const object: the value under that key, judged
+        // by the key. A prop that is not copy, such as className={LOOK.box}, stops here.
+        const object = node.object as Node;
+        const property = node.property as Node;
+        if (node.computed || object.type !== "Identifier" || property.type !== "Identifier" || !isCopyProp(prop)) return [];
+        const name = object.name as string;
+        const init = consts.get(name);
+        if (!init || init.type !== "ObjectExpression" || seen.has(name)) return [];
+        const key = property.name as string;
+        const held = (init.properties as Node[]).find((entry) => entry.type === "Property" && keyName(entry) === key);
+        if (!held) return [];
+        return strings(held.value as Node, key, new Set([...seen, name])).map((found) => ({
+          ...found,
+          offset: node.start,
+          from: `${name}.${key}`,
+        }));
+      }
       default:
         return [];
     }
@@ -160,6 +183,14 @@ export function literalText(source: string, file: string): Found[] {
 
   const found: Found[] = [];
   walk(root, (node, parent) => {
+    // A default value in a destructured parameter, such as function A({ body = "..." }),
+    // judged by its key.
+    if (node.type === "AssignmentPattern" && parent?.type === "Property" && (node.right as Node).type !== "Identifier") {
+      const key = keyName(parent);
+      for (const text of key === null ? [] : strings(node.right as Node, key)) {
+        if (hasWords(text.text)) found.push({ ...text, where: `defaults ${key} to` });
+      }
+    }
     if (node.type === "JSXText" && hasWords(node.value as string)) {
       found.push({ offset: node.start, text: (node.value as string).trim(), where: "renders" });
     }

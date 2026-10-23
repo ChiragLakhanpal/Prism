@@ -158,12 +158,85 @@ test("nothing in a table moves when its rows arrive: columns, rows and cards kee
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/table");
+  // The gallery loads through a dynamic import and evaluateAll does not wait, so wait for both
+  // tables before measuring them.
+  await expect(page.locator("[data-state-section=ready] table thead th")).toHaveCount(4);
+  await expect(page.locator("[data-state-section=loading] table thead th")).toHaveCount(4);
   expect(await edges("loading")).toEqual(await edges("ready"));
   expect(await box("loading", "table tbody tr")).toEqual(await box("ready", "table tbody tr"));
   expect(await box("loading", "[data-table]")).toEqual(await box("ready", "[data-table]"));
 
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await box("loading", "ul > li")).toEqual(await box("ready", "ul > li"));
+});
+
+test("below 768 px every value in a table's cards starts at one left edge, with each head above its value", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/gallery/numbers");
+  const cards = page.locator("[data-table=ready] ul > li");
+  await expect(cards).toHaveCount(5 + 8 + 5);
+  const measured = await cards.evaluateAll((items) =>
+    items.map((item) => {
+      const left = (el: Element) => Math.round(el.getBoundingClientRect().x);
+      const field = (kind: string) =>
+        [...item.querySelectorAll(`[data-card-field=${kind}]`)].map((el) => ({
+          head: el.querySelector("dt")!.getBoundingClientRect(),
+          value: el.querySelector("dd")!.getBoundingClientRect(),
+        }));
+      return {
+        heading: left(item.querySelector("h4, h5")!),
+        text: field("text").map(({ value }) => Math.round(value.x)),
+        numbers: field("number").map(({ value }) => Math.round(value.x)),
+        // Each head sits above its value, so a value never starts beside its head.
+        stacked: [...field("text"), ...field("number")].every(({ head, value }) => value.top >= head.bottom - 1),
+      };
+    }),
+  );
+  const heading = measured[0].heading;
+  for (const card of measured) {
+    expect(card.heading).toBe(heading);
+    expect(new Set(card.text)).toEqual(new Set([heading]));
+    expect(card.stacked).toBe(true);
+  }
+  // Numbers share the grid's columns, so across all 18 cards they start at two edges at most,
+  // and the first is the text's.
+  const numberEdges = new Set(measured.flatMap((card) => card.numbers));
+  expect(numberEdges.size).toBeLessThanOrEqual(2);
+  expect(Math.min(...numberEdges)).toBe(heading);
+
+  // "Estimated Amount (US$)" wraps to two lines beside "Days late", and both values still
+  // share one line.
+  await page.goto("/gallery/table");
+  const tableCards = page.locator("[data-table=ready] ul > li");
+  await expect(tableCards).toHaveCount(4);
+  const tops = await tableCards.evaluateAll((items) =>
+    items.map((item) => [...item.querySelectorAll("[data-card-field=number] dd")].map((dd) => Math.round(dd.getBoundingClientRect().top))),
+  );
+  for (const card of tops) {
+    expect(card).toHaveLength(2);
+    expect(new Set(card).size).toBe(1);
+  }
+});
+
+test("the steps toggle lines up with the answer's text, and its fill and focus ring stay inside the card", async ({ page }) => {
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/answer");
+    for (const state of ["ready", "abstained", "empty", "refused"]) {
+      const answer = page.locator(`[data-answer=${state}]`);
+      const card = (await answer.locator("xpath=..").boundingBox())!;
+      const toggle = page.locator(`[data-answer=${state}] > div:last-child > button`);
+      // DESIGN.md section 10's focus ring: a 2 px outline at a 2 px offset.
+      const ring = 4;
+      const button = (await toggle.boundingBox())!;
+      const icon = (await toggle.locator("svg").boundingBox())!;
+      const text = (await answer.locator("h3, p").first().boundingBox())!;
+      // The card's 1 px border stays clear of the fill and the ring.
+      expect(button.x - ring, `${state} at ${width}`).toBeGreaterThan(card.x + 1);
+      // The icon box starts within 2 px of the text, the width of the button's clear border.
+      expect(Math.abs(icon.x - text.x), `${state} at ${width}`).toBeLessThanOrEqual(2);
+    }
+  }
 });
 
 test("the abstention's sentence, table and check line count the same 12 packages", async ({ page }) => {
@@ -213,7 +286,7 @@ test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   expect(await axe(page)).toEqual([]);
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  for (const viewer of ["", "&viewer=loading", "&viewer=error"]) {
+  for (const viewer of ["", "&viewer=loading", "&viewer=signed-out", "&viewer=error"]) {
     await page.goto(`/gallery/navigation?view=open${viewer}`);
     await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
     expect(await axe(page), viewer).toEqual([]);
