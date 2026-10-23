@@ -1,0 +1,379 @@
+Source: https://documents.worldbank.org/curated/en/767181546013001577/text/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: ISR 13 for P130164, 2018-12-28 (ISR33718). Documents API id 30730274.
+
+         The World Bank                                                                                 Implementation Status & Results Report
+         Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+Rajasthan Road Sector Modernization Project (P130164)
+
+ SOUTH ASIA | India | Transport Global Practice |
+ IBRD/IDA | Investment Project Financing | FY 2014 | Seq No: 13 | ARCHIVED on 28-Dec-2018 | ISR33718 |
+
+
+ Implementing Agencies: Rajasthan State Public Works Department, Department of Economic Affairs, Ministry of Finance, Govt. of India
+
+
+
+ Key Dates
+
+  Key Project Dates
+
+   Bank Approval Date: 29-Oct-2013                                             Effectiveness Date: 10-Mar-2014
+   Planned Mid Term Review Date: 11-Apr-2016                                   Actual Mid-Term Review Date: 16-May-2016
+   Original Closing Date: 31-Dec-2018                                          Revised Closing Date: 31-Dec-2018
+ pdoTable
+
+ Project Development Objectives
+  Project Development Objective (from Project Appraisal Document)
+  The project development objective is to improve rural connectivity, enhance road safety and strengthen road sector managementcapacity of the
+  state of Rajasthan.
+
+  Has the Project Development Objective been changed since Board Approval of the Project Objective?
+  No
+
+
+ Components            Table
+
+
+
+
+ Name
+ Component A- Rural Connectivity Improvement:(Cost $134.52 M)
+ Component B - Road Sector Modernization and Performance Enhancement:(Cost $9.43 M)
+ Component C - Road Safety Management:(Cost $13.90 M)
+ Incremental Operating Cost:(Cost $1.05 M)
+ None
+
+ Overall Ratings
+
+ Name                                                                         Previous Rating                          Current Rating
+
+ Progress towards achievement of PDO                                          Moderately Unsatisfactory               Moderately Unsatisfactory
+ Overall Implementation Progress (IP)                                         Moderately Unsatisfactory               Moderately Unsatisfactory
+ Overall Risk Rating                                                          Substantial                             Substantial
+
+
+ Implementation Status and Key Decisions
+  Overall the project is moving at a slower pace, with some progress noted since the last mission in February 2018. Implementation of Component
+  A, Rural Connectivity Improvement progressed reasonably well, by completing about 97% of civil works under conventional design, including
+  some progress in the ongoing pilot cost-effective technology works. It has been reported that 8 roads have been completed without obtaining the
+  necessary forest clearances and there are also serious delays in processing forest clearances for another 7 roads, which is still pending with the
+  forest department, and this is likely to impact completion of these works. The mission advised that without diligent coordination and urgent follow-up
+  with forest department, these roads might not be completed by project closing. In Component B, Road Sector Modernization and Performance
+
+
+12/28/2018                                                                                                                      Page 1 of 6
+                  The World Bank                                                                         Implementation Status & Results Report
+                  Rajasthan Road Sector Modernization Project (P130164)
+
+
+  Enhancement, there has been progress in some activities while a substantial delay encountered in the most important subcomponent -
+  Development of a Sustainable Road Asset Management System (RAMS). It is noted that the system providing consultant (SPC) is now appointed to
+  develop RAMS. Out of the four activities under this component, two have successfully been completed namely: (i) Preparatory works to Improving
+  Engineering Practices and Business Procedures, and (ii) Developing a Strategy for Human Resources Development. While these outputs
+  demonstrate a good progress, the key outcomes PDO outcomes namely approval of Road Sector Policy and operationalization of RAMS are
+  substantially delayed. Though the (i) study report to Improving Road Sector Policy, Strategy and Financing Framework has been finalized, is yet to
+  be approved by the cabinet; (ii) SPC consultant has been mobilized, RAMS is yet to be completed and operational both activities will not be
+  completed within the current credit closing period. In Component C, Road Safety Management, there has been a very little progress with regards
+  to the Safe Corridor Demonstration Program (SCDP) since last mission in February 2018. Although preparatory activities are completed, there are
+  significant delays in the procurement process of civil works and road safety equipment due to poor bid response and the resulting rebidding. These
+  activities, especially SCDP civil works, are related to key outcome indicators attributed to the PDO, are substantially delayed and will not be
+  completed within the current credit closing period. The road Safety Education and Awareness Program reached out to approximately 81% of the
+  Gram Panchayats.
+
+
+
+
+  Risks
+
+ Systematic Operations Risk-rating Tool
+
+  Risk Category                                                Rating at Approval           Previous Rating             Current Rating
+
+  Political and Governance                                     --                           Low                        Substantial
+  Macroeconomic                                                --                           Low                        Low
+  Sector Strategies and Policies                               --                           Moderate                   Substantial
+  Technical Design of Project or Program                       --                           Substantial                Substantial
+  Institutional Capacity for Implementation and
+  Sustainability
+                                                               --                           Substantial                Substantial
+  Fiduciary                                                    --                           Moderate                   Moderate
+  Environment and Social                                       --                           Moderate                   Substantial
+  Stakeholders                                                 --                           Moderate                   Moderate
+  Other                                                        --                           --                          --
+  Overall                                                      --                           Substantial                Substantial
+
+
+  Results
+
+ PDO Indicators by Objectives / Outcomes
+
+
+   To improve rural connectivity, enhance road safety & strengthen road sector management capacity
+    IN00629304
+
+
+
+
+    ►A           reduction in annual average fatality count of road users on model road safety corridors (Number, Custom)
+
+                                            Baseline                 Actual (Previous)           Actual (Current)        End Target
+    Value                                  46.00                    61.00                        61.00                   30.00
+
+
+
+12/28/2018                                                                                                                   Page 2 of 6
+                              The World Bank                                                                              Implementation Status & Results Report
+                              Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+    Date                                               31-Mar-2014                  16-Feb-2018                   20-Aug-2018                 31-Dec-2018
+                                                        The civil works for demo corridor and other countermeasure procurement will be done, but implementation
+    Comments:                                           may go beyond the project period.
+    IN00629309
+
+
+
+
+    ►Size                      of total classified network (Kilometers, Custom)
+
+                                                        Baseline                    Actual (Previous)             Actual (Current)            End Target
+    Value                                              133,435.00                   135,725.00                    135,739.00                  135,935.00
+
+    Date                                               31-Mar-2014                  16-Feb-2018                   20-Aug-2018                 31-Dec-2018
+    IN00629269
+
+
+
+
+    ►Share                      of rural population with access to an all-season road (Percentage, Custom)
+
+                                                        Baseline                    Actual (Previous)             Actual (Current)            End Target
+    Value                                              67.00                        80.42                         80.79                       81.00
+
+    Date                                               01-Sep-2013                  --                            20-Aug-2018                 31-Dec-2018
+                 IN00629311
+
+
+
+
+                 Number            of rural people with access to an all-season road (Number, Custom Supplement)
+
+                                                      Baseline                     Actual (Previous)             Actual (Current)             End Target
+                 Value                                33,115,250.00                33,481,714.00                 33,487,461.00                33,489,250.00
+    IN00629310
+
+
+
+
+    ►Road                       Asset Management System Operational (Text, Custom)
+
+                                                        Baseline                    Actual (Previous)             Actual (Current)            End Target
+                                                                                                                  System Defining
+                                                                                                                  Consultant (SDC)
+                                                                                                                  Contract Agreement
+                                                                                                                  was signed on 28
+                                                                                                                  December 2015 and
+                                                                                    REOIs for System              mobilized on 13             Road Asset
+                                                       Existing system not user-
+    Value                                                                           Provider Consultant           January 2016.               Management System
+                                                       friendly and not in use
+                                                                                    (SPC) on Feb 22, 2018         Contract for SPC was        developed and in use
+                                                                                                                  signed on August 02,
+                                                                                                                  2018. Procurement for
+                                                                                                                  services for data
+                                                                                                                  collection is still to be
+                                                                                                                  procured.
+    Date                                               31-Mar-2014                  16-Feb-2018                   16-Feb-2018                 31-Dec-2018
+                                                        Implementation will start. However, PDO Indicator not likely to be achieved within the project period, if not
+    Comments:                                           extended.
+
+
+
+ Overall Comments                         PDO
+
+
+
+
+  Good progress in terms of the submission of the road sector policy and financing framework which is under
+  internal approval before its final approval by the State Cabinet, completion of (ii) Modernization of
+  Engineering Practices and Business Procedures - which proposed a series of systems and business process
+  improvements with automation and under consideration by the sector modernization task force; and (iii) Human
+  Resource Management Strategy, which produces a HR Strategy with key recommendations that have been
+
+12/28/2018                                                                                                                                       Page 3 of 6
+                 The World Bank                                                                       Implementation Status & Results Report
+                 Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+  prioritized for implementation. These are some very strategic achievements for the Rajasthan Road Sector. On
+  the other hand, the Road Asset Management System (RAMS) related activities, being the major activity of the
+  component and attributed to the PDO, is substantially delayed. Having said that, we are pleased to report that
+  the contract for SPC has been signed on August 2, 2018. The procurement for services for data collection is
+  still to be procured. Implementation will start, but the PDO indicator not likely to be achieved during the
+  project period.
+
+
+
+ Intermediate Results Indicators by Components
+
+
+   Component A- Rural Connectivity Improvement
+    IN00629270
+
+
+
+
+    ►Roads          constructed, Rural (Kilometers, Custom)
+
+                                         Baseline                Actual (Previous)            Actual (Current)        End Target
+    Value                                0.00                    2,290.00                     2,334.00                2,500.00
+
+    Date                                 01-Sep-2013             16-Feb-2018                  20-Aug-2018            31-Dec-2018
+    IN00629301
+
+
+
+
+    ►Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads
+    (Kilometers, Custom)
+                                         Baseline                Actual (Previous)            Actual (Current)        End Target
+    Value                                0.00                    7.00                         28.00                   100.00
+
+    Date                                 31-Jan-2014             16-Feb-2018                  20-Aug-2018            31-Dec-2018
+
+
+
+   Component B - Road Sector Modernization and Performance Enhancement
+    IN00629302
+
+
+
+
+    ►Computerization         of key business processes in PWD (Yes/No, Custom)
+
+                                         Baseline                Actual (Previous)            Actual (Current)        End Target
+    Value                                No                      Yes                          Yes                     Yes
+
+    Date                                 06-Aug-2013             16-Feb-2018                  20-Aug-2018            31-Dec-2018
+    IN00629307
+
+
+
+
+    ►Sector         Policy and Financing Framework developed (Yes/No, Custom)
+
+                                         Baseline                Actual (Previous)            Actual (Current)        End Target
+    Value                                No                      No                           No                      Yes
+
+    Date                                 30-Dec-2016             16-Feb-2018                  20-Aug-2018            31-Dec-2018
+    IN00629305
+
+
+
+
+    ►Average         star rating achieved on model road safety corridor(s) (Number, Custom)
+
+                                         Baseline                Actual (Previous)            Actual (Current)        End Target
+
+
+
+12/28/2018                                                                                                                  Page 4 of 6
+                 The World Bank                                                                                 Implementation Status & Results Report
+                 Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+    Value                                 0.00                          --                               0.00                     3.00
+
+    Date                                  31-Mar-2014                   16-Feb-2018                      20-Aug-2018              31-Dec-2018
+
+                                           Part length below star rating 3 for all four categories.
+    Comments:
+    IN00629308
+
+
+
+
+    ►Training        Plan and HR Policy & Procedures developed (Yes/No, Custom)
+
+                                           Baseline                      Actual (Previous)               Actual (Current)         End Target
+    Value                                 No                            Yes                              Yes                      Yes
+
+    Date                                  30-Dec-2016                   16-Feb-2018                      20-Aug-2018              31-Dec-2018
+
+
+
+   Component C - Road Safety Management
+    IN00629303
+
+
+
+
+    ►Model         road safety corridor(s) developed (Kilometers, Custom)
+
+                                           Baseline                      Actual (Previous)               Actual (Current)         End Target
+    Value                                 0.00                          0.00                             0.00                     100.00
+
+    Date                                  31-Jan-2014                   16-Feb-2018                      20-Aug-2018              31-Dec-2018
+    IN00629306
+
+
+
+
+    ►Road          safety policy and action plan approved and implemented (Yes/No, Custom)
+
+                                           Baseline                      Actual (Previous)               Actual (Current)         End Target
+    Value                                 No                            Yes                              Yes                      Yes
+
+    Date                                  31-Jan-2014                   16-Feb-2018                      20-Aug-2018              31-Dec-2018
+
+
+
+
+ Data on Financial Performance
+
+ Disbursements (by loan)
+
+ Project            Loan/Credit/TF    Status      Currency        Original     Revised     Cancelled       Disbursed        Undisbursed               % Disbursed
+
+ P130164            IDA-53100         Effective   USD              160.00       160.00            0.00          112.59            37.79                      75%
+
+
+ Key Dates (by loan)
+ Project             Loan/Credit/TF   Status       Approval Date       Signing Date      Effectiveness Date        Orig. Closing Date      Rev. Closing Date
+
+ P130164             IDA-53100        Effective    29-Oct-2013         02-Jan-2014       10-Mar-2014               31-Dec-2018             31-Dec-2018
+
+
+Cumulative Disbursements
+
+
+
+12/28/2018                                                                                                                              Page 5 of 6
+          The World Bank                                          Implementation Status & Results Report
+          Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+  Restructuring History
+
+  Level 2 Approved on 27-Jul-2017
+
+
+  Related Project(s)
+
+  There are no related projects.
+
+
+
+
+12/28/2018                                                                           Page 6 of 6
+

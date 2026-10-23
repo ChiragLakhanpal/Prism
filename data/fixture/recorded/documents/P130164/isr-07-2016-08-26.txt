@@ -1,0 +1,456 @@
+Source: https://documents.worldbank.org/curated/en/276751472247855381/text/ISR-Disclosable-P130164-08-26-2016-1472247844818.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: ISR 7 for P130164, 2016-08-26 (ISR24046). Documents API id 26733307.
+
+                                                         Public Disclosure Copy
+
+        The World Bank                                                                           Implementation Status & Results Report
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+Rajasthan Road Sector Modernization Project (P130164)
+
+SOUTH ASIA | India | Transport & ICT Global Practice |
+IBRD/IDA | Specific Investment Loan | FY 2014 | Seq No: 7 | ARCHIVED on 26-Aug-2016 | ISR24046 |
+
+
+Implementing Agencies: Rajasthan State Public Works Department
+
+
+
+
+Key Dates
+
+  Key Project Dates
+
+  Bank Approval Date:29-Oct-2013                                           Effectiveness Date:10-Mar-2014
+  Planned Mid Term Review Date:11-Apr-2016                                 Actual Mid-Term Review Date:16-May-2016
+  Original Closing Date:31-Dec-2018                                        Revised Closing Date:31-Dec-2018
+
+
+
+
+Project Development Objectives
+
+ Project Development Objective (from Project Appraisal Document)
+ The project development objective is to improve rural connectivity, enhance road safety and strengthen road sector management capacity of the
+ state of Rajasthan.
+
+
+ Has the Project Development Objective been changed since Board Approval of the Project Objective?
+ No
+
+ PHRPDODEL
+
+
+
+Components
+
+Name
+Component A- Rural Connectivity Improvement:(Cost $138.00 M)
+Component B - Road Sector Modernization and Performance Enhancement:(Cost $7.75 M)
+Component C - Road Safety Management:(Cost $10.55 M)
+None
+None
+
+
+
+Overall Ratings
+Name                                                                     Previous Rating                         Current Rating
+
+Progress towards achievement of PDO                                       Satisfactory                           Satisfactory
+Overall Implementation Progress (IP)                                      Moderately Satisfactory                Satisfactory
+
+
+
+8/26/2016                                                                                                                            Page 1 of 9
+                                                         Public Disclosure Copy
+                                                           Public Disclosure Copy
+
+        The World Bank                                                                               Implementation Status & Results Report
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+Overall Risk Rating                                                          Moderate                                 Moderate
+
+
+Implementation Status and Key Decisions
+
+ Overall the project is moving at an improved pace with most of the roads completed and procurement of consultancies of component B and C (which
+ were pending for a while) have been awarded in the last 6-9 months. The construction of rural roads has been progressing satisfactorily with about 90%
+ of road works substantially completed. A few roads works under this component have been delayed due to unavailability of land and/or pending forest
+ clearances, but it is expected that all road works will be completed well within the project completion date including those road works which are currently
+ experiencing delays due to forest clearances and land unavailability issues. The Road Sector Modernization, has picked up in the past 6 months, after
+ initial delays, with most of the consultancies now awarded and under implementation phase. These activities need to further speed up to be completed
+ within the project implementation period. The Road Safety Management component is progressing satisfactorily with all procurement completed.
+ Implementation of the Road Safety Demonstration Corridor requires close monitoring to be completed within the project completion period.
+
+
+
+
+8/26/2016                                                                                                                                 Page 2 of 9
+                                                           Public Disclosure Copy
+                                               Public Disclosure Copy
+
+        The World Bank                                                          Implementation Status & Results Report
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+Risks
+
+ Systematic Operations Risk-rating Tool
+
+ Risk Category                                  Rating at Approval      Previous Rating          Current Rating
+
+ Political and Governance                        --                     Low                     Low
+ Macroeconomic                                   --                     Low                     Low
+ Sector Strategies and Policies                  --                     Moderate                Moderate
+
+
+8/26/2016                                                                                                     Page 3 of 9
+                                               Public Disclosure Copy
+                                                             Public Disclosure Copy
+
+               The World Bank                                                                          Implementation Status & Results Report
+               Rajasthan Road Sector Modernization Project (P130164)
+
+
+ Technical Design of Project or Program                         --                              Substantial               Substantial
+ Institutional Capacity for Implementation and
+ Sustainability
+                                                                --                              Substantial               Substantial
+ Fiduciary                                                      --                              Moderate                  Moderate
+ Environment and Social                                         --                              Moderate                  Moderate
+ Stakeholders                                                   --                              Moderate                  Moderate
+ Other                                                          --                              --                        --
+ Overall                                                        --                              Moderate                  Moderate
+
+
+Results
+
+ Project Development Objective Indicators
+ PHINDPDOTBL
+
+
+
+
+          Share of rural population with access to an all-season road (Percentage, Core)
+
+
+                                              Baseline                      Actual (Previous)          Actual (Current)           End Target
+
+         Value                                67.00                         77.00                      79.53                      81.00
+
+         Date                                 01-Sep-2013                   20-Nov-2015                27-May-2016                31-Dec-2018
+
+
+         Comments
+         Share of villages with access to all-season road (population category 250-500) has increased from 67% to 77.2% with completion of 935
+         road works. The target is 81% which will be achieved with completion of all road works before project closing.
+
+
+
+ PHINDPDOTBL
+
+
+
+
+          Number of rural people with access to an all-season road (Number, Core Supplement)
+
+
+
+                                              Baseline                      Actual (Previous)          Actual (Current)           End Target
+
+         Value                                33115250.00                   33423231.00                33459464.00                33489250.00
+
+
+
+
+ PHINDPDOTBL
+
+
+
+
+          Roads in good and fair condition as a share of total classified roads (Percentage, Core)
+
+
+                                              Baseline                      Actual (Previous)          Actual (Current)           End Target
+
+         Value                                50.00                         50.00                      50.00                      60.00
+
+         Date                                 31-Mar-2014                   20-Nov-2015                27-May-2016                30-Jun-2018
+
+
+
+8/26/2016                                                                                                                                  Page 4 of 9
+                                                             Public Disclosure Copy
+                                                                      Public Disclosure Copy
+
+                   The World Bank                                                                                Implementation Status & Results Report
+                   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+               Comments
+               Increased percentage of core road network in good/fair condition : This was decided to be dropped due to the issue of attribution.
+
+
+
+
+ PHINDPDOTBL
+
+
+
+
+              Size of the total classified network (Kilometers, Core Supplement)
+
+
+
+                                                      Baseline                        Actual (Previous)          Actual (Current)             End Target
+
+               Value                                  133435.00                       135397.00                  135556.00                    135935.00
+
+
+
+
+ PHINDPDOTBL
+
+
+
+
+              A reduction in annual average fatality count of road users on model road safety corridors (Number, Custom)
+
+
+                                                      Baseline                        Actual (Previous)          Actual (Current)             End Target
+
+               Value                                  0.00                            --                         0.00                         0.00
+
+               Date                                   31-Mar-2014                     --                         27-May-2016                  31-Dec-2018
+
+
+               Comments
+               Reduction in annual road accident fatality count on model road corridor is still valid and baseline and target values will be set once the
+               demo corridor is identified and data collected.
+
+
+
+
+ Overall Comments
+
+ Intermediate Results Indicators
+ PHINDIRITBL
+
+
+
+
+              Roads constructed, Rural (Kilometers, Core)
+
+                                                      Baseline                        Actual (Previous)          Actual (Current)             End Target
+
+               Value                                  0.00                            1962.00                    2146.00                      2500.00
+
+               Date                                   01-Sep-2013                     20-Nov-2015                27-May-2016                  31-Dec-2015
+
+
+
+
+8/26/2016                                                                                                                                               Page 5 of 9
+                                                                      Public Disclosure Copy
+                                                                    Public Disclosure Copy
+
+                   The World Bank                                                                            Implementation Status & Results Report
+                   Rajasthan Road Sector Modernization Project (P130164)
+
+ PHINDIRITBL
+
+
+
+
+            Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads
+           (Kilometers, Custom)
+
+                                                     Baseline                      Actual (Previous)          Actual (Current)            End Target
+
+               Value                                 0.00                          0.00                       0.00                        100.00
+
+               Date                                  31-Jan-2014                   08-May-2015                27-May-2016                 31-Dec-2015
+
+
+               Comments
+               The DPRs for the works to be taken up under cost effective technologies are under preparation and hence the baseline and actual values
+               are currently zero.
+
+
+ PHINDIRITBL
+
+
+
+
+              Computerization of key business processes in PWD (Yes/No, Custom)
+
+                                                     Baseline                      Actual (Previous)          Actual (Current)            End Target
+
+               Value                                 N                             N                          N                           Y
+
+               Date                                  06-Aug-2013                   20-Nov-2015                27-May-2016                 31-Dec-2015
+
+
+               Comments
+               E-tendering is in place. For Monitoring of works, online monitoring System, RWOMS is launched and data entry is almost complete.
+               However, the system has not been fully tested and is currently not operational. Integrated Financial Management System (IFMS) is now
+               being implemented for the state as a whole. All payments to contractors, consultants, and vendors will be made quickly and transparently
+               through the online system.
+
+
+ PHINDIRITBL
+
+
+
+
+              Model road safety corridor(s) developed (Kilometers, Custom)
+
+                                                     Baseline                      Actual (Previous)          Actual (Current)            End Target
+
+               Value                                 0.00                          0.00                       0.00                        100.00
+
+               Date                                  31-Jan-2014                   20-Nov-2015                27-May-2016                 31-Dec-2015
+
+
+               Comments
+               To Be determined after iRAP survey which is being carried out
+
+
+
+
+8/26/2016                                                                                                                                          Page 6 of 9
+                                                                    Public Disclosure Copy
+                                                                    Public Disclosure Copy
+
+                   The World Bank                                                                           Implementation Status & Results Report
+                   Rajasthan Road Sector Modernization Project (P130164)
+
+ PHINDIRITBL
+
+
+
+
+              Average star rating achieved on model road safety corridor(s) (Number, Custom)
+
+                                                     Baseline                      Actual (Previous)        Actual (Current)      End Target
+
+               Value                                 0.00                          --                       --                    3.00
+
+               Date                                  31-Mar-2014                   20-Nov-2015              27-May-2016           31-Dec-2018
+
+
+               Comments
+               Please note that I entered zero under baseline so that the system can let me complete ISR.
+
+               Preparation activities underway.
+
+
+ PHINDIRITBL
+
+
+
+
+              Road safety policy and action plan approved and implemented (Yes/No, Custom)
+
+                                                     Baseline                      Actual (Previous)        Actual (Current)      End Target
+
+               Value                                 N                             N                        N                     Y
+
+               Date                                  31-Jan-2014                   20-Nov-2015              27-May-2016           31-Dec-2018
+
+
+               Comments
+               Draft Road safety Policy and action plan are being prepared by Transport department and waiting GoR’s approval
+
+
+ PHINDIRITBL
+
+
+
+
+              Road Asset management System in place (Yes/No, Custom)
+
+                                                     Baseline                      Actual (Previous)        Actual (Current)      End Target
+
+               Value                                 N                             N                        N                     Y
+
+               Date                                  31-Jan-2014                   20-Nov-2015              27-May-2016           31-Dec-2018
+
+
+               Comments
+               System Defining Consultant (SDC) Contract Agreement was signed on 28 December 2015 and mobilized on 29 Feb 2016. System Provider
+               Consultant (SPC) expected to be awarded by October 2016.
+
+
+
+
+ Overall Comments
+
+
+
+Data on Financial Performance
+
+
+
+8/26/2016                                                                                                                                Page 7 of 9
+                                                                    Public Disclosure Copy
+                                                            Public Disclosure Copy
+
+           The World Bank                                                                          Implementation Status & Results Report
+           Rajasthan Road Sector Modernization Project (P130164)
+
+
+Disbursements (by loan)
+
+ Project       Loan/Credit/TF     Status      Currency        Original   Revised     Cancelled    Disbursed     Undisbursed                Disbursed
+
+ P130164       IDA-53100          Effective   XDR              105.60     105.60           0.00         62.63           42.97                        59%
+
+
+Key Dates (by loan)
+ Project       Loan/Credit/TF     Status      Approval Date      Signing Date      Effectiveness Date    Orig. Closing Date     Rev. Closing Date
+
+ P130164       IDA-53100          Effective   29-Oct-2013        02-Jan-2014       10-Mar-2014           31-Dec-2018            31-Dec-2018
+
+
+
+Cumulative Disbursements
+
+
+
+
+ Restructuring History
+
+  There has been no restructuring to date.
+
+
+
+
+ Related Project(s)
+
+ There are no related projects.
+
+
+
+
+8/26/2016                                                                                                                              Page 8 of 9
+                                                            Public Disclosure Copy
+                                               Public Disclosure Copy
+
+        The World Bank                                                  Implementation Status & Results Report
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+8/26/2016                                                                                            Page 9 of 9
+                                               Public Disclosure Copy
+
