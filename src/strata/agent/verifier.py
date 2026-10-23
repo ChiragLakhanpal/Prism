@@ -83,6 +83,8 @@ DATES = (
 )
 # A number standing on its own: not part of a word or an id such as P130164, IDA-60290 or 10.b.
 STANDALONE_NUMBER = re.compile(r"(?<![\w.,:/-])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?![\w/-]|[.,]\d|\.[A-Za-z])")
+# A World Bank fiscal year, FY2019 or FY19: a number a row must hold, such as a fiscal_year column.
+FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
 
 
@@ -104,6 +106,10 @@ def mentions(text: str) -> list[Mention]:
             except ValueError:
                 continue  # not a real date, such as February 30
             found.append(Mention("date", match.group(0), when, *match.span()))
+    for match in FISCAL_YEAR.finditer(text):
+        if free(*match.span()):
+            year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
+            found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
     for match in STANDALONE_NUMBER.finditer(text):
         if not free(*match.span()):
             continue
@@ -116,13 +122,13 @@ def mentions(text: str) -> list[Mention]:
 
 
 def _declared(claim: Claim, stated: list[Mention]) -> list[Mention]:
-    """The numbers and dates the claim lists but the sentence does not show: they are checked too."""
+    """The numbers and dates the claim lists but the sentence does not show: they are checked too, each as
+    what its text reads as, whichever list it came in."""
     extra = []
-    for kind, texts in (("number", claim.numbers), ("date", claim.dates)):
-        for text in texts:
-            for mention in mentions(text):
-                if not any(mention.value == other.value for other in stated + extra):
-                    extra.append(Mention(mention.kind if kind == "number" else "date", mention.text, mention.value))
+    for text in claim.numbers + claim.dates:
+        for mention in mentions(text):
+            if not any(mention.value == other.value for other in stated + extra):
+                extra.append(Mention(mention.kind, mention.text, mention.value))
     return extra
 
 

@@ -248,6 +248,39 @@ def test_an_answer_that_is_not_claims_as_json_ends_with_its_own_error():
     assert parsed[-2:] == [("error", {"code": "agent_output"}), ("done", {"run_id": "run-0003"})]
 
 
+class Answers:
+    """An agent that answers at once with the claims it is given, calling no tool."""
+
+    name, version = "strata-orchestrator", None
+
+    def __init__(self, *claims):
+        self.claims = list(claims)
+
+    def respond(self, items, previous_response_id):
+        return {"id": "resp_1", "output": [{"type": "message", "role": "assistant", "content": [
+            {"type": "output_text", "text": json.dumps({"claims": self.claims})}]}]}
+
+
+def test_numbers_and_dates_the_agent_lists_but_does_not_write_are_checked_too():
+    unwritten = {"sentence": "Bids took a while to open.", "kind": "summary", "evidence_ids": [],
+                 "numbers": [], "dates": ["45", "March 3, 2015"], "quote": None}
+
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(unwritten), no_engine))))
+
+    assert [reason["code"] for reason in of(parsed, "removed")[0]["reasons"]] == [
+        "number_not_in_records", "date_not_in_records"]
+
+
+def test_a_fiscal_year_is_a_number_a_record_must_hold():
+    fiscal = {"sentence": "Most of the works were signed in FY2019.", "kind": "summary", "evidence_ids": [],
+              "numbers": [], "dates": [], "quote": None}
+
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(fiscal), no_engine))))
+
+    assert [(reason["code"], reason["text"]) for reason in of(parsed, "removed")[0]["reasons"]] == [
+        ("number_not_in_records", "FY2019")]
+
+
 def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
     parsed, _ = ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(tmp_path / "no-tables.duckdb")))
 
