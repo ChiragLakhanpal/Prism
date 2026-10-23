@@ -6,6 +6,7 @@ serves canned responses, so they never reach the network.
 """
 
 import json
+import shutil
 
 import pytest
 
@@ -28,7 +29,7 @@ about = "The project record for P000001."
 """
 
 
-def run(tmp_path, responses, *args, manifest=MANIFEST):
+def run(tmp_path, responses, *args, manifest=MANIFEST, words=None):
     path = tmp_path / "sources.toml"
     path.write_text(manifest)
 
@@ -38,7 +39,7 @@ def run(tmp_path, responses, *args, manifest=MANIFEST):
             raise answer
         return answer
 
-    return record.main(["--manifest", str(path), *args], fetch=fetch)
+    return record.main(["--manifest", str(path), *args], fetch=fetch, **({"words": words} if words else {}))
 
 
 def recorded(tmp_path, name):
@@ -227,6 +228,41 @@ def test_a_document_is_recorded_as_its_published_text_and_the_text_of_each_pdf_p
     assert pages.source == "https://documents.example/icr.pdf"
     assert [page.strip() for page in fmt.pages(recorded(tmp_path, "documents/P000001/icr.pages.txt"))] == [
         "Page one text", "Page two text"]
+
+
+PLAN = DOCUMENT.replace('about = "An ICR."', 'about = "A Procurement Plan."\nwords = true').replace("icr", "plan")
+
+
+def test_a_plan_with_words_is_also_recorded_as_the_words_of_each_pdf_page_with_their_boxes(tmp_path):
+    responses = {"https://documents.example/plan.txt": b"KE-NWWDA-229129-CW-RFB / Drilling",
+                 "https://documents.example/plan.pdf": tiny_pdf("Page one text", "Page two text")}
+
+    def words(pdf):
+        assert pdf == responses["https://documents.example/plan.pdf"]
+        return [{"width": 792.0, "height": 612.0, "words": [(16.4425, 141.0012, 59.5557, 144.4932, "KE-NWWDA")]},
+                {"width": 792.0, "height": 612.0, "words": []}]
+
+    code = run(tmp_path, responses, "--write", manifest=PLAN, words=words)
+
+    saved = fmt.read(recorded(tmp_path, "documents/P000001/plan.words.json"))
+    assert code == 0
+    assert saved.source == "https://documents.example/plan.pdf"
+    assert saved.license == "The World Bank: Documents and Reports. License: CC BY 4.0."
+    assert saved.body["pages"] == [{"width": 792.0, "height": 612.0, "words": ["16.44 141 59.56 144.49 KE-NWWDA"]},
+                                   {"width": 792.0, "height": 612.0, "words": []}]
+    assert "pdftotext -bbox" in saved.body["read_with"]
+    assert fmt.load_manifest(tmp_path / "sources.toml").files() == [
+        "documents/P000001/plan.txt", "documents/P000001/plan.pages.txt", "documents/P000001/plan.words.json"]
+
+
+@pytest.mark.skipif(shutil.which("pdftotext") is None, reason="poppler's pdftotext is not installed here")
+def test_the_words_of_a_pdf_page_come_with_their_boxes_from_pdftotext():
+    pages = record.pdf_words(tiny_pdf("Signed Contract", "Planned"))
+
+    assert [[word[4] for word in page["words"]] for page in pages] == [["Signed", "Contract"], ["Planned"]]
+    assert pages[0]["width"] == 612.0
+    first = pages[0]["words"][0]
+    assert first[0] == pytest.approx(72, abs=0.5) and first[1] < first[3]
 
 
 @pytest.mark.parametrize("old, bad, message", [

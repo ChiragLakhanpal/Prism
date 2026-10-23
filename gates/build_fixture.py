@@ -73,6 +73,8 @@ def load_recorded(con, manifest):
             if source.kind == "json":
                 con.execute("INSERT INTO recorded.responses VALUES (?, ?, ?)",
                             [name, file.source, json.dumps(file.body)])
+            elif name.endswith(".words.json"):
+                continue  # the offline layout parser reads the words from the file itself
             elif name.endswith(".pages.txt"):
                 con.executemany("INSERT INTO recorded.pages VALUES (?, ?, ?)",
                                 [[source.file, number, text]

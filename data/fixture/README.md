@@ -24,6 +24,7 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 | `recorded/api/` | API responses, one JSON file each, with the keys `source`, `license`, `recorded`, `about` and `response` |
 | `recorded/documents/<project>/<name>.txt` | The text the World Bank publishes for a document, byte for byte, after a few header lines |
 | `recorded/documents/<project>/<name>.pages.txt` | The text of each PDF page of the same document, one page after each form feed, read from the PDF's text layer |
+| `recorded/documents/<project>/<name>.words.json` | For each Procurement Plan (`words = true` in `sources.toml`), every word on each PDF page with its box, read with poppler's `pdftotext -bbox`. Offline, the layout parser reads the plans' tables from these words, because `ai_parse_document` runs only on the workspace |
 | `placeholder/` | Five plan rows that ticket 01 typed in. Ticket 08 replaces them with rows read from the recorded plans |
 
 The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops, which ticket 07 builds from it.
@@ -49,7 +50,7 @@ Run the recording command. It needs the network, so it is never a gate step.
 
     uv run python -m strata.fixture.record
 
-It fetches every source again and prints a diff against the recorded files. It writes nothing until you run it again with `--write`. A file whose content did not change keeps its Recorded date. The command ignores the `as_of_date` that Finances One stamps on each row every day. To refresh a few sources, pass `--only` with part of their file names, for example `--only P156634`.
+It fetches every source again and prints a diff against the recorded files. It writes nothing until you run it again with `--write`. A file whose content did not change keeps its Recorded date. The command ignores the `as_of_date` that Finances One stamps on each row every day. To refresh a few sources, pass `--only` with part of their file names, for example `--only P156634`. Recording a plan's words needs poppler's `pdftotext` on this computer (`brew install poppler`).
 
 After a refresh, run the gate. The tests in `tests/test_ground_truth_values.py` check every value in `tests/ground_truth/values.toml` against the recorded files, so a source that changed shows up as a failing value. Update that value only when the source really changed, and say so in the commit.
 
