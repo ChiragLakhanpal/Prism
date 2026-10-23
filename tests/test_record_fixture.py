@@ -60,6 +60,7 @@ def test_write_saves_the_response_with_its_source_and_license_lines(tmp_path, ca
 
     saved = json.loads(recorded(tmp_path, "api/projects/P000001.json").read_text())
     assert code == 0
+    assert "Saved 1 file." in capsys.readouterr().out
     assert saved["source"] == PROJECT_URL
     assert saved["license"] == "The World Bank: Projects API. License: CC BY 4.0."
     assert saved["response"] == {"id": "P000001"}
@@ -78,6 +79,7 @@ def test_an_unchanged_source_shows_no_diff_and_keeps_its_recorded_date(tmp_path,
 
     out = capsys.readouterr().out
     assert code == 0
+    assert "Fetching 1 source." in out
     assert "0 new, 0 changed and 1 the same. Every source was fetched." in out
     assert path.read_bytes() == before
 

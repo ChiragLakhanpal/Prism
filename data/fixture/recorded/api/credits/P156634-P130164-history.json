@@ -2,7 +2,7 @@
  "source": "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00976&resourceId=RS00976&type=json&top=2000&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)",
  "license": "The World Bank: IDA Statement of Credits, Grants and Guarantees (historical monthly), Finances One dataset DS00976. License: CC BY 4.0.",
  "recorded": "2026-10-23",
- "about": "The monthly history of the two projects' IDA credits, which shows each closing-date change. P156634's closing date moved three times since 2022.",
+ "about": "The monthly history of the two projects' IDA credits, which shows each closing-date change.",
  "response": {
   "count": 384,
   "data": [

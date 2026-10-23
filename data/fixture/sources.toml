@@ -152,7 +152,7 @@ file = "api/credits/P156634-P130164-history.json"
 kind = "json"
 dataset = "ida_credit_history"
 url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00976&resourceId=RS00976&type=json&top=2000&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)"
-about = "The monthly history of the two projects' IDA credits, which shows each closing-date change. P156634's closing date moved three times since 2022."
+about = "The monthly history of the two projects' IDA credits, which shows each closing-date change."
 
 # Governance indicators for Kenya and India
 

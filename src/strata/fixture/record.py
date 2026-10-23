@@ -29,6 +29,11 @@ USER_AGENT = "strata-fixture-recorder/0.1 (public World Bank open data)"
 RETRIES = 4
 
 
+def count(n, word):
+    """"1 source" or "2 sources"."""
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
 def fetch_url(url):
     """GET a URL and return the body. Retries when the server asks us to wait or fails for a moment."""
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -124,7 +129,7 @@ def main(argv=None, fetch=fetch_url):
     today = date.today().isoformat()
     counts = {"new": 0, "changed": 0, "same": 0}
     failed = []
-    print(f"Fetching {len(sources)} sources. Recorded files are in {manifest.recorded}.")
+    print(f"Fetching {count(len(sources), 'source')}. Recorded files are in {manifest.recorded}.")
     for source in sources:
         try:
             files = fetched_files(source, fetch, today)
@@ -147,8 +152,7 @@ def main(argv=None, fetch=fetch_url):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(data)
     pending = counts["new"] + counts["changed"]
-    fetched = ("Every source was fetched." if not failed
-               else f"{len(failed)} source{'' if len(failed) == 1 else 's'} could not be fetched.")
+    fetched = "Every source was fetched." if not failed else f"{count(len(failed), 'source')} could not be fetched."
     print(f"{counts['new']} new, {counts['changed']} changed and {counts['same']} the same. {fetched}")
     if failed:
         print("To try those again, run: uv run python -m strata.fixture.record "
@@ -158,7 +162,7 @@ def main(argv=None, fetch=fetch_url):
         print("Nothing was saved. Run again with --write to save these changes.")
         return 1
     if pending:
-        print(f"Saved {pending} files.")
+        print(f"Saved {count(pending, 'file')}.")
     return 0
 
 

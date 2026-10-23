@@ -56,7 +56,7 @@ printed_page = "19 of 62"
 
 [[value]]
 id = "icr-para-78"
-says = "The ICR says the mid-term review found part of the PDO compromised. ISR 7, three months after the review, rated progress Satisfactory: the showcase disagreement."
+says = "The ICR says the mid-term review found part of the PDO compromised. ISR 7, archived after the review, rated progress Satisfactory: the showcase disagreement."
 value = "it was clearly identified at the MTR that the achievement of part of the PDO was compromised"
 quote = "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."
 document = "documents/P130164/icr-2019-10-10"
@@ -81,7 +81,7 @@ pdf_page = 1
 
 [[value]]
 id = "icr-disclosed"
-says = "The ICR became public on November 2, 2019, three weeks after its date."
+says = "The ICR became public on November 2, 2019."
 value = 2019-11-02
 quote = "2019-11-02T07:01:08Z"
 record = "api/documents/P130164.json"
@@ -305,7 +305,7 @@ at = "data[wb_contract_number=1903781].supplier_contract_amount_usd"
 
 [[value]]
 id = "award-notice-541055"
-says = "The award notice for KE-NWWDA-541055-CW-RFB was published on October 13, 2026, four days after the plan, with the award notified on June 22, 2026."
+says = "The award notice for KE-NWWDA-541055-CW-RFB was published on October 13, 2026, after the October 9, 2026 plan, with the award notified on June 22, 2026."
 value = 2026-10-13
 quote = "13-Oct-2026"
 record = "api/notices/P156634.json"
@@ -332,7 +332,7 @@ pdf_page = 3
 
 [[value]]
 id = "plan-229129-actual"
-says = "KE-NWWDA-229129-CW-RFB's Actual Amount is US$1,245,092.76, about 4 times its estimate."
+says = "KE-NWWDA-229129-CW-RFB's Actual Amount is US$1,245,092.76, against an estimate of US$300,000.00."
 value = 1245092.76
 quote = "300,000.00 1,245,092.76 Signed"
 document = "documents/P156634/procurement-plan-2026-10-09"
