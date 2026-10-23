@@ -27,3 +27,11 @@ show = true
 [[step]]
 name = "Run the Python tests: the gate, the ground-truth SQL and the server"
 run = ["uv", "run", "--frozen", "pytest"]
+
+[[step]]
+name = "Build the web app: type check and bundle"
+run = ["npm", "--prefix", "web", "run", "--silent", "build"]
+
+[[step]]
+name = "Run the Playwright tests against the built web app"
+run = ["npm", "--prefix", "web", "run", "--silent", "test"]
