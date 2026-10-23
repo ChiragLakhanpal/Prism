@@ -1,10 +1,26 @@
-# The offline gate's steps (CLAUDE.md rule 6). gates/offline.py runs them in this order,
-# from the root of the tree, with the network off. Add a step here when a seam gets its tests.
+# The offline gate's steps (CLAUDE.md rule 6). gates/offline.py runs them from the root of
+# the tree, with the network off. Add a step here when a seam gets its tests.
 #
 # Each step has a name and a run list. Optional keys:
 #   always = true   the step runs even when only Markdown files are staged
 #   git_env = true  the step sees the commit's git variables (the secret scan needs the commit's index)
 #   show = true     the step's output is printed when it passes, not only when it fails
+#   lane = "web"    the step runs in this lane, side by side with the other lanes
+#
+# Lanes. A step with no lane runs alone. It starts after every step above it has finished,
+# and every step below it waits for it. Steps with lanes that sit next to each other in this
+# file run together: each lane runs its own steps from top to bottom, and the lanes run at the
+# same time. When a step fails, the gate stops the other lanes. The time limit covers the
+# whole run.
+#
+# To add a step to a lane, put it among the other steps with lanes and give it that lane's
+# name. It runs after the steps above it in the same lane. Give it a new lane's name if it
+# needs nothing from the other steps. A step that needs another step's output goes in that
+# step's lane, below it, as the Python tests under tests/ do with the fixture database.
+# A new pytest step names the folders it tests, so each test folder runs in one step. A new
+# test folder whose tests read the fixture database goes in the python lane, and in
+# FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
+# the build.
 
 # The whole run fails when it takes longer than this.
 limit_seconds = 120
@@ -18,20 +34,32 @@ git_env = true
 [[step]]
 name = "Test the guard hook"
 run = ["python3", ".claude/hooks/test_guard.py"]
+lane = "guard"
 
 [[step]]
 name = "Build the fixture database"
 run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
 show = true
+lane = "python"
 
 [[step]]
-name = "Run the Python tests: the gate, the fixture and its ground truth, the ground-truth SQL, the catalog, the config files, the nightly job, the bundle commands and the server"
-run = ["uv", "run", "--frozen", "pytest"]
+# These tests may read the fixture database, so they run in its lane, after the build.
+name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
+run = ["uv", "run", "--frozen", "pytest", "tests", "ops/bundle/tests"]
+lane = "python"
+
+# The wizard tests take about 50 seconds in one process, so six pytest-xdist workers share them.
+[[step]]
+name = "Run the Python tests for the wizard and the day-one probes"
+run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "ops/wizard/tests", "ops/dayone/tests"]
+lane = "ops"
 
 [[step]]
 name = "Build the web app: type check and bundle"
 run = ["npm", "--prefix", "web", "run", "--silent", "build"]
+lane = "web"
 
 [[step]]
 name = "Run the Playwright tests against the built web app"
 run = ["npm", "--prefix", "web", "run", "--silent", "test"]
+lane = "web"
