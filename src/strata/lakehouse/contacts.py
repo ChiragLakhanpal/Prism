@@ -1,7 +1,7 @@
 """Contact details come out of every page before it is kept (CLAUDE.md rule 8).
 
 A document's text and its pages go through strip_text() before bronze keeps them, which takes out
-the emails and phone numbers this module finds in free text. The rest of this docstring is about
+its email addresses and the numbers written after a phone label. The rest of this docstring is about
 notices.
 
 Procurement notices name a contact person with their address, email, phone number and web
@@ -137,7 +137,9 @@ class Stripper:
             return REMOVED
         return pattern.sub(replace, text)
 
-    def text(self, text: str) -> str:
+    def text(self, text: str, labelled_only: bool = False) -> str:
+        """The text with its contact details replaced. With labelled_only, a number comes out only when
+        a phone label comes before it: a number with no label is left as written."""
         for pattern in self.patterns:
             text = self._sub(pattern, text)
         if self.phones:
@@ -145,8 +147,9 @@ class Stripper:
         text = self._sub(EMAIL, text, _an_address)
         text = self._sub(EMAIL_SPELLED_OUT, text)
         text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
-        text = self._sub(PHONE, text, _phone)
-        text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
+        if not labelled_only:
+            text = self._sub(PHONE, text, _phone)
+            text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         text = LABELLED.sub(self._labelled, text)
         return MOBILE_LABELLED.sub(self._labelled, text)
 
@@ -196,13 +199,17 @@ def strip(body: dict) -> tuple[dict, int]:
 
 
 def strip_text(text: str) -> tuple[str, int]:
-    """A document's text with every email address and phone number replaced, and how many it replaced.
+    """A document's text with every email address and every number written after a phone label
+    replaced, and how many it replaced.
 
-    A report can print a person's email and phone, as a PAD's data sheet prints its contact's. A
-    document has no contact fields to say whose they are, so its names stay, and only the emails and
-    numbers that the patterns above find come out."""
+    A report can print a person's email and phone, as a PAD's data sheet prints its contact's
+    ("Telephone No.: ... Email: ..."). A document has no contact fields to say whose they are, so its
+    names stay. A number with no label stays too: in a Procurement Plan's tables a date runs into the
+    next column's digits (2019-11-26   2019-12-27), and a STEP reference is cut at a column's edge
+    (NWWDA-WSDP-03-2019-), so the pattern for a phone number with a trunk zero would take dates and
+    references out of the plan as published."""
     stripper = Stripper([])
-    return stripper.text(text), stripper.removed
+    return stripper.text(text, labelled_only=True), stripper.removed
 
 
 def _filled(value) -> bool:

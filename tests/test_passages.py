@@ -146,6 +146,37 @@ def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_an
     assert found["document_contacts_stripped"]["kind"] == "stripped"
 
 
+# The labelled contacts each recorded PAD's data sheet prints, counted by reading the files: P130164's
+# gives a telephone number (its email is misread by the PDF's text layer and has no "@"), and
+# P156634's gives a telephone number and an email.
+PAD_CONTACTS = {"P130164/pad-2013-10-01": 1, "P156634/pad-2017-04-05": 2}
+
+
+@pytest.mark.parametrize("document", sorted(PAD_CONTACTS))
+def test_a_pads_labelled_phone_number_and_email_come_out_before_bronze_keeps_it(document):
+    from strata.lakehouse import contacts
+
+    published = (ROOT / "data" / "fixture" / "recorded" / "documents" / f"{document}.txt").read_text()
+
+    kept, removed = contacts.strip_text(published)
+
+    assert removed == PAD_CONTACTS[document]
+    assert kept.count("[contact removed]") == PAD_CONTACTS[document]
+    assert re.search(r"Telephone No\.:\s*\[contact removed\]", kept)
+
+
+def test_the_only_documents_bronze_holds_with_contact_details_taken_out_are_the_two_pads(db):
+    marked = rows(db, "SELECT DISTINCT t.project_id, l.document_type FROM strata.bronze.document_texts AS t "
+                      "JOIN strata.silver.documents AS l ON l.document_id = t.document_id "
+                      "WHERE t.text LIKE '%contact removed%' ORDER BY t.project_id")
+    unread = rows(db, "SELECT count(*) AS n FROM strata.bronze.document_texts AS t WHERE t.text LIKE "
+                      "'%contact removed%' AND t.document_id NOT IN (SELECT document_id FROM strata.silver.documents)")
+
+    assert marked == [{"project_id": "P130164", "document_type": "Project Appraisal Document"},
+                      {"project_id": "P156634", "document_type": "Project Appraisal Document"}]
+    assert unread == [{"n": 0}]
+
+
 def test_every_passage_has_a_stored_prompt_shields_result(db):
     found = rows(db, "SELECT p.passage_id, s.shield, s.attack_detected FROM strata.silver.passages AS p "
                      "LEFT JOIN strata.silver.passage_shields AS s ON s.text_hash = p.text_hash")
