@@ -200,3 +200,57 @@ Sign in to the App in a browser as a user with USE CATALOG, USE SCHEMA and SELEC
     <App url>/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?asof=2026-10-22
 
 It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json`. Its counts say 9 activities were checked: 1 `needs_a_look`, 2 `watch`, 3 `data_note` and 3 with no mark. This one call also proves that check_plan's four SQL files in `src/strata/tools/sql/check_plan/` run on the SQL warehouse without transpiling (`GREATEST` over columns that may be empty, and a correlated subquery in `project.sql`).
+
+## Ticket 11, step 1 of 4: read the first 20 documents into passages and sync the AI Search index
+
+The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
+
+Run this from the main checkout:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+
+It worked if the command exits 0 and its last line says the index `strata.gold.passage_index` "holds N of the N passages in strata.gold.passage and is ready", with both numbers the same (criterion 7). Exit 1 means the run finished but the index did not catch up within 30 minutes. Run the command again, and it syncs the index again.
+
+The measures it prints come from `strata.ops.data_readiness` on the warehouse. `documents_read_route_a_text` must add up to 20 across P130164 and P156634. Each project must also show `document_pages_route_a`, `document_pages_route_b`, `document_pages_paragraph_numbering_found` and `contact_details_removed`. On the fixture, the run read 20 documents into 733 passages, and the measures read:
+
+| Measure | P130164 | P156634 |
+|---|---|---|
+| documents_read_route_a_text | 16 of 17 | 4 of 4 |
+| document_pages_route_a | 177 of 287 | 127 of 133 |
+| document_pages_route_b | 110 of 287 | 6 of 133 |
+| document_pages_paragraph_numbering_found | 67 of 83 | 78 of 92 |
+| contact_details_removed | 1 of 17 | 1 of 4 |
+
+The warehouse's counts may differ if the World Bank's hosts now list newer ISRs. Read `contact_details_removed` from the first run only: a second run writes it as 0 of 0, because it counts only the documents fetched in that run (review round 2, P1, not fixed yet).
+
+## Ticket 11, step 2 of 4: paragraph 54's passage on DuckDB and on the SQL warehouse
+
+The merger parked this step on October 23, 2026, after merge commit e0721da. Run it after step 1. It is the same command as ticket 04's step 3, ticket 07's step 2 and ticket 08's step 2. If you ran it before step 1, run it again now, because `tests/ground_truth/icr_paragraph_54_passage.sql` reads `strata.gold.passage`, which step 1 fills.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the command exits 0 and prints "icr_paragraph_54_passage.sql: DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." with the row `31525018/v1/54`, `III.B`, 23, 66, `19 of 62`, 1, 2019-11-02 (criterion 7).
+
+## Ticket 11, step 3 of 4: search_passages finds paragraph 54 through AI Search
+
+The merger parked this step on October 23, 2026, after merge commit e0721da. Run it after step 1, once the index holds every passage. It needs `DATABRICKS_TOKEN` to be a person's token, because the tool acts as the viewer. A service principal's sign-in is not enough.
+
+Run this from the main checkout:
+
+    uv run --script ops/documents/search_live.py --env-file .env
+
+It worked if the command exits 0, its first line starts "search_passages ranked with AI Search: AI Search's hybrid query, words and vector, with its reranker", `strata.gold.passage:31525018/v1/54` is one of the three passages it lists, and its last line reads "1 of the 1 expected passages are in the top three." (criterion 3, workspace half).
+
+Then replace `tests/fixtures/ai_search/query.json` with a recorded answer. No script records it yet. Save the JSON that `POST /api/2.0/vector-search/indexes/strata.gold.passage_index/query` returned for this question under `"response"`, set `"recorded"` to `true`, and change `"about"` to say when it was recorded. The tests in `tests/test_knowledge_adapters.py` check the hand-written ids and scores (`31525018/v1/54` 0.0327, `34056616/v2/10.b` 0.0322, `31525018/v1/55` 0.0301), so change them to the recorded ones in the same commit. It worked if the gate passes with the recorded file.
+
+## Ticket 11, step 4 of 4: Prompt Shields and the embeddings ran on every passage
+
+The merger parked this step on October 23, 2026, after merge commit e0721da. It has no command of its own: step 1's run scans every passage with Prompt Shields on the Foundry resource and embeds it with `text-embedding-3-large`. Read the output of step 1.
+
+It worked if the run's summary line says "Prompt Shields scanned N new passage texts and text-embedding-3-large embedded N.", and, for both P130164 and P156634, `passages_screened` and `passages_embedded` each show a count equal to the number after "of" (criterion 8, live half). On the fixture these read 392 of 392 and 341 of 341. Then run this in the workspace's SQL editor:
+
+    SELECT shield, count(*) AS texts, count_if(attack_detected) AS attacks FROM strata.silver.passage_shields GROUP BY shield
+
+It worked if it returns one row, with the shield `Prompt Shields`. Its `texts` can be lower than the number of passages, because passages with the same header and text are scanned once (on the fixture, 650 texts for 733 passages). If `attacks` is above 0, `passages_prompt_shields_hit` must be above 0 for at least one of the two projects. Any attack found is kept, counted and left out of search, so a number above 0 is not a failure. Read those passages before the demo.
