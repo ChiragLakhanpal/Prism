@@ -119,12 +119,26 @@ def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sourc
         assert set(tool.sources) <= set(sources), f"{tool.name} reads a source the source registry lacks"
 
 
-def answered(result) -> dict[str, list[str]]:
-    """The references under each mark, in the benchmark question's shape."""
+def marked(result, question) -> dict[str, list[str]]:
+    """check_plan's answer: the references under each mark, in the benchmark question's shape."""
     found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
     for mark in ("needs_a_look", "watch", "data_note"):
         found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
     return found
+
+
+def in_top_three(result, question) -> dict[str, list[str]]:
+    """search_passages' answer: which of the expected passages are among its first three."""
+    top = {row["evidence_id"] for row in result["rows"][:3]}
+    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top)}
+
+
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three}
+
+
+def answered(result, question) -> dict[str, list[str]]:
+    """The tool's answer, in its benchmark question's shape."""
+    return ANSWERS[question["tool"]](result, question)
 
 
 def expected(question) -> dict[str, list[str]]:
@@ -135,11 +149,15 @@ def tool_questions():
     return [question for question in BENCHMARK["questions"] if "tool" in question]
 
 
+def test_each_tool_with_a_benchmark_question_has_a_way_to_read_its_answer():
+    assert {question["tool"] for question in tool_questions()} <= set(ANSWERS)
+
+
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine):
     for question in tool_questions():
         result = registry.call(question["tool"], question["arguments"], registry.Context(engine=engine, viewer=ANA))
 
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch):
@@ -152,7 +170,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch
         result = registry.call(question["tool"], arguments, registry.Context(engine=engine, viewer=ANA))
 
         assert result["as_of"] == today.isoformat()
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 @pytest.mark.parametrize("view", ["piu", "public"])
@@ -163,7 +181,7 @@ def test_each_tool_answers_under_each_view(engine, view):
                                registry.Context(engine=engine, viewer=ANA, view=view))
 
         assert result["view"] == view
-        assert answered(result) == expected(question)
+        assert answered(result, question) == expected(question)
 
 
 def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
@@ -178,14 +196,18 @@ def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
 
 
 def test_adding_a_tool_is_one_entry_and_the_agents_tool_list_grows_with_it(tmp_path):
+    import re
+
     path = copy_registry(tmp_path)
     text = path.read_text()
     start = text.index("[tools.check_plan]")
-    path.write_text(text + "\n" + text[start:].replace("tools.check_plan", "tools.check_plan_again"))
+    following = re.compile(r"^\[tools\.(?!check_plan[.\]])", re.M).search(text, start + 1)
+    entry = text[start:following.start() if following else len(text)]
+    path.write_text(text + "\n" + entry.replace("tools.check_plan", "tools.check_plan_again"))
 
     listed = registry.agent_tools(config.load_tools(path))
 
-    assert [tool["name"] for tool in listed] == ["check_plan", "check_plan_again"]
+    assert [tool["name"] for tool in listed] == [*config.load_tools(), "check_plan_again"]
 
 
 # ── check_plan on the NWWDA plan of October 9, 2026 ──────────────────────

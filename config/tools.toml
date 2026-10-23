@@ -81,3 +81,81 @@ reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_
            "no_planned_date", "no_estimate"]
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
                "no_activities"]
+
+[tools.search_passages]
+description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs and \
+ICR Reviews) by words and by meaning, and returns the best passages first. A passage is one numbered \
+paragraph, or a part of a long one, with its document, section, paragraph number and PDF page, so a \
+citation can point to it. Filter by project, document type, country, sector or the date a document became \
+public. A report re-issued under the same number replaces its earlier version, unless the as-of date comes \
+before the re-issue. Passages Prompt Shields flagged at ingestion are left out, and the coverage line says \
+how many. Quote a passage only word for word, from its text."""
+adapter = "strata.tools.search_passages:search_passages"
+benchmark = "search-passages-icr-rebidding"
+sources = ["documents", "projects"]
+
+[[tools.search_passages.parameters]]
+name = "query"
+type = "string"
+required = true
+description = "What to look for, in words, such as works estimates market rates rebidding."
+
+[[tools.search_passages.parameters]]
+name = "project_id"
+type = "string"
+required = false
+description = "Only passages of this project, P followed by six digits, such as P130164."
+
+[[tools.search_passages.parameters]]
+name = "document_type"
+type = "string"
+required = false
+description = """Only passages of this type of document: PAD, ISR, ICR or ICR Review, or the documents \
+API's full name, such as Implementation Completion and Results Report."""
+
+[[tools.search_passages.parameters]]
+name = "country"
+type = "string"
+required = false
+description = "Only passages of projects in this country, by its two-letter ISO code, such as KE or IN."
+
+[[tools.search_passages.parameters]]
+name = "sector"
+type = "string"
+required = false
+description = "Only passages of projects in this sector of the pilot slice: water or transport."
+
+[[tools.search_passages.parameters]]
+name = "published_from"
+type = "date"
+required = false
+description = "Only passages of documents that became public on or after this date."
+
+[[tools.search_passages.parameters]]
+name = "published_until"
+type = "date"
+required = false
+description = "Only passages of documents that became public on or before this date."
+
+[[tools.search_passages.parameters]]
+name = "limit"
+type = "integer"
+required = false
+description = "How many passages to return, from 1 to 20. Leave it out for 10."
+
+[[tools.search_passages.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only documents public on or before this date, each in the version that was current \
+then. Leave it out for today."""
+
+[tools.search_passages.result]
+row = "One passage, best first: its document, section, paragraph number, pages and text, with its place and score."
+row_fields = ["evidence_id", "public_from", "source", "passage_id", "document_id", "document_type", "project_id",
+              "version", "section_path", "paragraph", "paragraph_numbered", "part", "parts", "pdf_page",
+              "last_pdf_page", "printed_page", "language", "parse_route", "header", "text", "rank", "score"]
+source_fields = ["document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
+                 "version", "section_path", "paragraph", "pdf_page", "pdf_pages", "pdf_url"]
+fields = ["query", "filters", "search"]
+abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
