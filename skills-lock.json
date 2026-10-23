@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "115a126a5bff5abd547b125e9865269c4ad737e4cb134df153118e0ffd679f82"
+    },
+    "hairline-adopt": {
+      "source": "lucasmarkes/hairline",
+      "sourceType": "github",
+      "skillPath": "skills/hairline-adopt/SKILL.md",
+      "computedHash": "b637cec02d6073b9b19cfcb2a45e0b9ec0ab074646314e5880b001de2cb56d9d"
+    },
+    "hairline-create": {
+      "source": "lucasmarkes/hairline",
+      "sourceType": "github",
+      "skillPath": "skills/hairline-create/SKILL.md",
+      "computedHash": "97dc77430c05a87e0e1e985f7952938b02147040742ec88095ccfe6f1abe11b5"
+    }
+  }
+}
