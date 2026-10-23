@@ -57,7 +57,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -71,13 +71,13 @@ It worked if the command exits 0 and prints "Run <id> wrote one row per task to 
 
 ## Ticket 04, step 3 of 4: the same rows on DuckDB and on the SQL warehouse
 
-The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes.
+The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes. Since ticket 08 merged, this command also checks `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql`, which read the plan tables. Those tables stay empty until ticket 08's step 1 has run, and until then the command exits 1 on those two files even when the deploy is fine. So run this step after ticket 08's step 1, below. Ticket 08's step 2 is the same command, and one run covers both tickets.
 
 Run this from the main checkout:
 
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
-It worked if the command exits 0, and for both `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4).
+It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `pipeline_runs_columns.sql`, `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql` in `tests/ground_truth/` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4).
 
 ## Ticket 04, step 4 of 4: record both nightly schedules
 
@@ -88,3 +88,25 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
 If the name of fairshare's job does not contain "fairshare", add `--fairshare-job <name>`. It worked if the command exits 0 and the `bundle:schedules` block in `bundle/README.md` records both jobs with "- Overlap: none" (criterion 3). Then commit `bundle/README.md` on `build/strata`. If the check finds that the two windows meet, change the hour in `bundle/nightly.yml` and run step 1 again.
+
+## Ticket 08, step 1 of 2: read P156634's Procurement Plans on the warehouse
+
+The merger parked this step on October 23, 2026, after merge commit eba87ed. It needs the Databricks keys in `.env`. Run it after ticket 04's step 1, because the deploy makes the plan tables and the volume `strata.bronze.files`. Run it after ticket 03's step 2 too, because day-one test 3 decides the layout parser. If test 3 failed in `docs/day-one-results.md`, stop here: Strata has an adapter only for `ai_parse_document`, so a Content Understanding adapter must first join `PARSERS` in `src/strata/reader/layout.py`.
+
+Run this from the main checkout:
+
+    uv run --script ops/plans/run_live.py --env-file .env
+
+It worked if the command exits 0 and prints "Run plans-P156634-... read N plan versions of P156634 ...". In the measures it prints below that, `plan_versions_read`, `pages_read_route_b` and `latest_activities_with_first_listing_read` each show a count equal to the number after "of". `pages_read_route_b` may fall short only if the run also printed "It stopped at the cap ...". On the warehouse, `strata.ops.parse_runs` has a row for P156634 with `pages_parsed` above 0, and `strata.ops.data_readiness` has the run's six measures. The run also proves that real `ai_parse_document` output has the version 2.0 shape the tests were written against. Then run the same command a second time on the same day, in UTC. It worked if that run parses 0 pages (criterion 5).
+
+If a fetch from the World Bank's hosts or an upload to the volume fails, the script stops with a Python traceback, not a one-line message. The pages it parsed before that stay in bronze, so run it again.
+
+## Ticket 08, step 2 of 2: the plan's queries on DuckDB and on the SQL warehouse
+
+The merger parked this step on October 23, 2026, after merge commit eba87ed. Run it after step 1, because the two plan files read the tables that step 1 fills. It is the same command as ticket 04's step 3, and one run covers both tickets.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the command exits 0 and prints "DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." for `tests/ground_truth/delay_from_first_published_planned_date.sql`, with 2021-04-21, 2021-07-01, 2022-01-03, 186 and 1245092.76 (criterion 2). It must also print "... the same two rows, and they are the rows the file expects." for `tests/ground_truth/data_notes_actual_amount_zero.sql`, with KE-NWWDA-503455-CW-RFQ Signed 0.00 and KE-NWWDA-541061-CW-RFQ Completed 0.00 (criterion 4).
