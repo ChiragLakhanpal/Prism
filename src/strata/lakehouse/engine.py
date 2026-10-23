@@ -43,9 +43,11 @@ class Result:
     rows: tuple[tuple, ...]
 
     def as_text(self) -> list[tuple[str, ...]]:
-        """Each value as the warehouse writes it: dates as 2016-05-16, true and false, and '' for null.
+        """Each value as the warehouse writes it: dates as 2016-05-16, timestamps in UTC as
+        2026-10-23T23:30:00.000Z, true and false, and '' for null.
 
         Rows from WarehouseEngine are text already, so rows from two engines can be compared.
+        `ops/bundle/check.py same-rows` compares them on the workspace.
         """
         return [tuple(_text(value) for value in row) for row in self.rows]
 
@@ -55,7 +57,11 @@ def _text(value) -> str:
         return ""
     if isinstance(value, bool):
         return "true" if value else "false"
-    if isinstance(value, dt.date | dt.datetime):
+    if isinstance(value, dt.datetime):
+        if value.tzinfo is None:  # a TIMESTAMP_NTZ, which the warehouse writes without a zone
+            return value.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+        return value.astimezone(dt.UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    if isinstance(value, dt.date):
         return value.isoformat()
     return str(value)
 

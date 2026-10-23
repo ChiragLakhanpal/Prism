@@ -84,6 +84,22 @@ def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
         catalog.build(engine, folder)
 
 
+def test_a_public_from_column_that_is_not_a_date_stops_the_build(tmp_path):
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD,
+                         gold__supplier="CREATE TABLE IF NOT EXISTS strata.{schema}.{table} (id STRING, public_from STRING)\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(CatalogError, match=r"strata\.gold\.supplier"):
+        catalog.build(engine, folder)
+
+
+def test_a_view_needs_no_public_from_column_of_its_own(tmp_path):
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        engine.run("CREATE VIEW strata.gold.task_names AS SELECT DISTINCT task_key FROM strata.ops.pipeline_runs")
+
+        catalog.check_public_from(engine)
+
+
 def test_a_definition_that_could_replace_a_table_is_refused(tmp_path):
     folder = definitions(tmp_path, ops__pipeline_runs=GOOD.replace("IF NOT EXISTS", "").replace(
         "CREATE TABLE", "CREATE OR REPLACE TABLE"))
@@ -106,7 +122,5 @@ def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
         catalog.table_definitions(folder)
 
 
-def test_the_real_definitions_live_one_table_per_file_under_their_schema():
-    folder = Path(catalog.TABLES)
-
-    assert catalog.table_definitions() and all(path.parent.parent == folder for path in folder.glob("*/*.sql"))
+def test_this_ticket_ships_one_table_definition_the_pipeline_runs():
+    assert [definition.full_name for definition in catalog.table_definitions()] == ["strata.ops.pipeline_runs"]

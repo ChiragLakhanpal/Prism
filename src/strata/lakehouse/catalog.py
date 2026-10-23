@@ -7,9 +7,10 @@ build() runs those definitions through any engine: DuckDB for the fixture databa
 the SQL warehouse for the deploy. IF NOT EXISTS means a deploy never replaces a table that holds
 rows (CLAUDE.md rule 5); a change to a table's columns needs its own ALTER TABLE.
 
-Every table keeps the date it became public in a public_from column (ADR 0002).
+Every table keeps the date it became public in a public_from DATE column (ADR 0002).
 check_public_from() looks at every table in the catalog, whatever made it, and stops when one
-lacks the column.
+lacks the column or gives it another type. Views hold no rows of their own, so it skips plain
+views and the metric views that Genie reads.
 """
 
 from __future__ import annotations
@@ -30,7 +31,7 @@ SELECT t.table_schema, t.table_name
 FROM system.information_schema.tables AS t
 WHERE t.table_catalog = :catalog
   AND t.table_schema <> 'information_schema'
-  AND t.table_type <> 'VIEW'
+  AND t.table_type NOT IN ('VIEW', 'METRIC_VIEW')
   AND NOT EXISTS (
     SELECT 1
     FROM system.information_schema.columns AS c
@@ -38,6 +39,7 @@ WHERE t.table_catalog = :catalog
       AND c.table_schema = t.table_schema
       AND c.table_name = t.table_name
       AND c.column_name = 'public_from'
+      AND c.data_type = 'DATE'
   )
 ORDER BY t.table_schema, t.table_name
 """
@@ -112,12 +114,12 @@ def table_definitions(folder: Path = TABLES, schemas: tuple[str, ...] | None = N
 
 
 def check_public_from(engine: Engine) -> None:
-    """Stop when any table in the catalog has no public_from column (ADR 0002)."""
+    """Stop when any table in the catalog has no public_from DATE column (ADR 0002)."""
     missing = engine.run(MISSING_PUBLIC_FROM, {"catalog": CATALOG}).as_text()
     if missing:
         names = ", ".join(f"{CATALOG}.{schema}.{table}" for schema, table in missing)
-        raise CatalogError(f"These tables have no public_from column: {names}. Every table keeps the date "
-                           "each row became public (ADR 0002), so add a public_from DATE column.")
+        raise CatalogError(f"These tables have no public_from column of type DATE: {names}. Every table keeps "
+                           "the date each row became public (ADR 0002), so add a public_from DATE column.")
 
 
 def build(engine: Engine, folder: Path = TABLES, create_schemas: bool = True) -> list[str]:

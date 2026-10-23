@@ -22,7 +22,7 @@ from pathlib import Path
 
 from strata.lakehouse import catalog
 from strata.lakehouse.catalog import CatalogError
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, EngineError
 
 ROOT = Path(__file__).resolve().parents[1]
 PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
@@ -30,14 +30,14 @@ FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 TABLE_NAME = re.compile(r"[a-z][a-z0-9_]*")
 
 
-def build(out=FIXTURE_DB, source=PLACEHOLDER):
+def build(out=FIXTURE_DB, source=PLACEHOLDER, tables=catalog.TABLES):
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
     with DuckDBEngine.open(building) as engine:
         try:
-            catalog.build(engine)  # the catalog's schemas and tables, from the same definitions the deploy uses
+            catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
             con = engine.connection
             con.execute("CREATE SCHEMA placeholder")
             for table in sorted(source.glob("*.csv")):
@@ -47,7 +47,7 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER):
                 con.execute(f"CREATE TABLE placeholder.{table.stem} AS SELECT * FROM read_csv(?, header = true)",
                             [str(table)])
             catalog.check_public_from(engine)  # every table, whatever made it (ADR 0002)
-        except CatalogError as error:
+        except (CatalogError, EngineError) as error:  # one sentence, never a traceback
             raise SystemExit(str(error)) from error
     os.replace(building, out)
     return out

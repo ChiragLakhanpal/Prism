@@ -89,6 +89,14 @@ def test_spark_gets_the_same_text_and_named_parameters():
     assert result.as_text() == [("1",)]
 
 
+def test_duckdb_writes_a_timestamp_and_a_date_the_way_the_warehouse_does():
+    """The Statement Execution API writes a TIMESTAMP in UTC with milliseconds and a Z."""
+    with DuckDBEngine.open() as engine:
+        result = engine.run("SELECT TIMESTAMP '2026-10-23 23:30:00.123456' AS at, DATE '2026-10-23' AS day")
+
+    assert result.as_text() == [("2026-10-23T23:30:00.123Z", "2026-10-23")]
+
+
 def test_duckdb_takes_one_statement_per_call():
     with DuckDBEngine.open() as engine, pytest.raises(EngineError, match="one statement"):
         engine.run("SELECT 1; SELECT 2")
