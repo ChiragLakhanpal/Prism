@@ -8,7 +8,7 @@ carries instructions for a model must be caught before any answer cites it.
   prove that every passage gets a stored result and that a hit is counted. It is not Prompt Shields,
   and its name, kept with each result, says so.
 
-SHIELDS names each adapter. A hit is never dropped: the passage stays, its result says it was
+A hit is never dropped: the passage stays, its result says it was
 flagged, the data readiness measures count it, and search_passages leaves it out and says why.
 """
 
@@ -111,6 +111,3 @@ class PromptShields:
                              "Prompt Shields found a document attack." if analysis.get("attackDetected") else None)
                         for analysis in analyses]
         return results
-
-
-SHIELDS = {PatternShield.name: PatternShield, PromptShields.name: PromptShields}

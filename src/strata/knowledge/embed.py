@@ -7,7 +7,7 @@
   same size, so the same words give nearby vectors. The gate's fixture search runs on it. It is not
   a language model, and its name, kept with each vector, says so.
 
-EMBEDDERS names each adapter. A vector is kept with the model that made it, and the run embeds only
+A vector is kept with the model that made it, and the run embeds only
 the passage texts that model has not embedded yet.
 """
 
@@ -122,9 +122,6 @@ class AzureOpenAIEmbeddings:
                                  f"that are not {self.dimensions} long.")
             vectors += [item["embedding"] for item in data]
         return vectors
-
-
-EMBEDDERS = {HashedWords.name: HashedWords, "azure-openai": AzureOpenAIEmbeddings}
 
 
 def offline() -> HashedWords:
