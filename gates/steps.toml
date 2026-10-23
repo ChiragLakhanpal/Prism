@@ -60,6 +60,13 @@ name = "Run the Python tests for the wizard and the day-one probes"
 run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
+# The app's deploy and what it uploads (ticket 06). They read no fixture database and take a few
+# seconds in one process, so they run in a lane of their own instead of lengthening the ops lane.
+[[step]]
+name = "Run the Python tests for the app's deploy and the Lakebase probe"
+run = ["uv", "run", "--frozen", "pytest", "ops/app/tests"]
+lane = "app"
+
 # The two lints read only source files, so each needs nothing from the other steps and runs
 # in a lane of its own.
 [[step]]

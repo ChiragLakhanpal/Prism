@@ -45,8 +45,44 @@ const click = (selector: string) => async (page: Page) => {
   await page.waitForTimeout(250);
 };
 
+const type = (selector: string, text: string) => async (page: Page) => {
+  await page.locator(selector).first().fill(text);
+  await page.waitForTimeout(250);
+};
+
 const WIDE = [1440, 1024];
 const NARROW = [390];
+
+// The app's routes, as the 06 design brief lists them, and both not-found pages.
+const ROUTES: [string, string][] = [
+  ["home", "/"],
+  ["packages", "/packages"],
+  ["package", "/packages/KE-NWWDA-541055-CW-RFB"],
+  ["projects", "/projects"],
+  ["project", "/projects/P130164"],
+  ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
+  ["document", "/projects/P130164/documents/icr?page=23&para=54"],
+  ["lessons", "/lessons"],
+  ["drafts", "/drafts"],
+  ["data", "/data"],
+  ["not-found", "/nowhere"],
+  ["not-a-project", "/projects/130164"],
+];
+
+const SIGNED_OUT = '{"email":null,"name":null,"signed_in":false,"has_token":false}';
+type Answer = { recorded?: string; body?: string; status?: number };
+
+// An app shot: the page, with /api/me and /api/freshness answered from the recordings unless
+// the shot says otherwise.
+function app(name: string, path: string, answers: { me?: Answer; freshness?: Answer } = {}, rest: Partial<Shot> = {}): Shot {
+  return {
+    name,
+    path,
+    server: "app",
+    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" } },
+    ...rest,
+  };
+}
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
@@ -110,21 +146,33 @@ export const SHOTS: Shot[] = [
   // Between 768 and 1023 px the two breakpoints differ: the default table and the lg one's cards.
   { name: "table--cards-below-lg", path: "/gallery/table", widths: [900] },
 
-  // The production app's shell against the mocked API: signed in, signed out and unreachable.
-  { name: "app--signed-in", path: "/", server: "app", api: { "/api/me": { recorded: "me.json" } } },
-  {
-    name: "app--signed-out",
-    path: "/",
-    server: "app",
-    api: { "/api/me": { body: '{"email":null,"name":null,"signed_in":false,"has_token":false}' } },
-  },
-  { name: "app--unreachable", path: "/", server: "app", api: { "/api/me": { status: 502, body: '{"detail":"Bad Gateway"}' } } },
-  {
-    name: "app--focus-retry",
-    path: "/",
-    server: "app",
-    api: { "/api/me": { status: 502, body: '{"detail":"Bad Gateway"}' } },
-    act: focus("[role=alert] button"),
-  },
-  { name: "app--focus-skip-link", path: "/", server: "app", api: { "/api/me": { recorded: "me.json" } }, act: (page) => page.keyboard.press("Tab") },
+  // The production app against the mocked API (ticket 06): every route, both not-found pages,
+  // the stamp's states, the page alerts, the box, the view popover, the Menu and the frame's
+  // hover and focus states.
+  ...ROUTES.map(([name, path]) => app(`app--${name}`, path)),
+  app("app--stamp-past-year", "/", { freshness: { body: '{"data_through":"2025-12-30"}' } }),
+  app("app--stamp-empty", "/", { freshness: { recorded: "freshness-empty.json" } }),
+  app("app--stamp-error", "/", { freshness: { status: 502, body: '{"code":"unreadable"}' } }),
+  app("app--no-access", "/", { freshness: { status: 403, recorded: "freshness-no-access.json" } }),
+  app("app--no-identity", "/", { me: { body: SIGNED_OUT }, freshness: { status: 401, recorded: "freshness-no-identity.json" } }),
+  app("app--view-piu", "/projects?view=piu"),
+  app("app--view-public", "/projects?view=public"),
+  app("app--asof", "/projects?asof=2016-08-26"),
+  app("app--asof-unreadable", "/projects?asof=last-tuesday"),
+  app("app--box-with-text", "/", {}, { act: type("[data-box-band] input", "P130164") }),
+  app("app--view-open", "/", {}, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
+  app("app--view-error", "/", { me: { status: 502, body: '{"detail":"Bad Gateway"}' } }, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
+  app("app--menu-open", "/projects/P130164", {}, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),
+  app("app--1024-with-scrollbar", "/projects", {}, {
+    widths: [1024],
+    act: async (page) => {
+      await page.addStyleTag({ content: "body { margin-right: 15px; }" });
+    },
+  }),
+  app("app--320", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", {}, { widths: [320] }),
+  app("app--hover-selected-tab", "/projects", {}, { widths: WIDE, act: hover("[data-nav-bar] [aria-current=page]") }),
+  app("app--focus-wordmark", "/", {}, { act: focus("[data-nav-bar] a[href='/']") }),
+  app("app--focus-empty-link", "/", {}, { act: focus("[data-empty-state] a") }),
+  app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
+  app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 ];

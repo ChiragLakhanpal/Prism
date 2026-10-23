@@ -3,7 +3,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockShell, test } from "./mocked";
 import { galleryCopy } from "../src/gallery/copy";
 
 const dist = (name: string) => fileURLToPath(new URL(`../${name}/`, import.meta.url));
@@ -28,10 +28,10 @@ test("the production build holds none of the gallery's code, and the gallery bui
   expect(holdsGallery(dist("dist-gallery")).length).toBeGreaterThan(0);
 });
 
-test("the gallery's address in the production build shows the app, not the gallery", async ({ page }) => {
-  await mockApi(page, { "/api/me": { body: await recorded("me.json") } });
+test("the gallery's address in the production build shows the app's not-found page, not the gallery", async ({ page }) => {
+  await mockShell(page);
   await page.goto("/gallery/buttons");
 
-  await expect(page.getByText("You are signed in as Ana Example.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Page not found");
   await expect(page.locator("[data-gallery-root]")).toHaveCount(0);
 });

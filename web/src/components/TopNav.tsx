@@ -1,7 +1,7 @@
 // The top navigation (DESIGN.md section 5): a navy bar, 56 px tall, with the logo, the
 // Strata wordmark (a link to Home), five tabs and the view switch. Nouns navigate.
 //
-// From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 844 px
+// From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 856 px
 // wide and the 768 grid gives 672, so below 1024 a labeled Menu button holds them in a panel
 // that pushes the page down. Below 360 px the button stacks its icon over its label.
 //
@@ -18,6 +18,7 @@ import * as RadixPopover from "@radix-ui/react-popover";
 import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { isBoxShortcut } from "./BoxBand";
 import { POPOVER } from "./Popover";
 import { Skeleton } from "./Skeleton";
 import { SkipLink } from "./SkipLink";
@@ -78,8 +79,8 @@ function ViewLines({ viewer }: { viewer: Viewer }) {
   return (
     <div className="flex flex-col gap-2">
       <WhoLine viewer={viewer} />
-      <p className="text-small text-ink">{copy.nav.view.current}</p>
-      <p className="text-caption text-ink-muted">{copy.nav.view.notReady}</p>
+      <p className="text-small text-pretty text-ink">{copy.nav.view.current}</p>
+      <p className="text-caption text-pretty text-ink-muted">{copy.nav.view.notReady}</p>
     </div>
   );
 }
@@ -96,12 +97,17 @@ function ViewSwitch({
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const body = useRef<HTMLDivElement>(null);
+  const pill = useRef<HTMLButtonElement>(null);
+  // Where Tab or Shift+Tab sends focus once the popover has closed. The popover is portaled to
+  // the end of the page and holds nothing to focus, so without this Tab would leave the page.
+  const after = useRef<HTMLElement | null>(null);
 
   // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
   useWideChange((wide) => !wide && setOpen(false));
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
       <RadixPopover.Trigger
+        ref={pill}
         data-view-pill
         aria-haspopup="dialog"
         className={cx(
@@ -122,7 +128,21 @@ function ViewSwitch({
             event.preventDefault();
             body.current?.focus();
           }}
+          onKeyDown={(event) => {
+            // Tab closes the popover and moves on to the box, the next control after the pill;
+            // Shift+Tab closes it and goes back to the pill (the 06 brief's keyboard table).
+            if (event.key !== "Tab") return;
+            event.preventDefault();
+            after.current = event.shiftKey ? pill.current : document.querySelector<HTMLElement>("[data-box-band] input");
+            setOpen(false);
+          }}
           onCloseAutoFocus={(event) => {
+            if (after.current) {
+              event.preventDefault();
+              after.current.focus();
+              after.current = null;
+              return;
+            }
             // Below 1024 px the pill is hidden and the Menu holds the view lines, so focus goes there.
             if (!window.matchMedia(WIDE).matches) {
               event.preventDefault();
@@ -158,18 +178,31 @@ function BarTab({ section, current }: { section: (typeof SECTIONS)[number]; curr
   );
 }
 
-function PanelRow({ section, current }: { section: (typeof SECTIONS)[number]; current: boolean }) {
+function PanelRow({
+  section,
+  current,
+  onNavigate,
+}: {
+  section: (typeof SECTIONS)[number];
+  current: boolean;
+  // A row opens its page and closes the panel.
+  onNavigate: () => void;
+}) {
   return (
     <a
       href={section.href}
       aria-current={current ? "page" : undefined}
+      onClick={onNavigate}
       data-nav-tab={section.key}
+      // Inset 6 px from each side (4 px here and 2 px on the list), so the 2 px focus ring with its
+      // 2 px offset (DESIGN.md section 10) ends 2 px inside the panel and its edge never clips it
+      // (the 06 brief). The text still starts on the grid margin.
       className={cx(
         "relative mx-1 flex h-12 items-center rounded-sm text-body font-bold text-ink-heading transition-paint duration-150",
         "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
         current ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
       )}
-      style={{ paddingInline: "calc(var(--layout-margin) - 0.25rem)" }}
+      style={{ paddingInline: "calc(var(--layout-margin) - 0.375rem)" }}
     >
       {copy.nav.tabs[section.key]}
     </a>
@@ -185,8 +218,9 @@ export function TopNav({
   menuOpen: menuOpenAtStart = false,
   viewOpen,
 }: {
-  // The logo, at least 24 px tall. The slot gives it clear space of half its height. Ticket 06
-  // adds the World Bank's file; until then the production shell has no logo slot.
+  // The logo, at least 24 px tall. The slot gives it clear space of half its height, and 24 px
+  // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
+  // the gallery pass the World Bank's official file (web/src/assets/world-bank-logo.md).
   logo?: ReactNode;
   // The tab whose section holds the page; none on Home and the not-found page.
   current?: Section;
@@ -199,11 +233,20 @@ export function TopNav({
 }) {
   const [menuOpen, setMenuOpen] = useState(menuOpenAtStart);
   const menuButton = useRef<HTMLButtonElement>(null);
-  const header = useRef<HTMLElement>(null);
+  const header = useRef<HTMLDivElement>(null);
   // The control a resize just hid. Chrome takes focus from it before it reports the media
   // change, so the header notes it on blur and forgets it after the frame.
   const hidden = useRef<HTMLElement | null>(null);
   const panelId = useId();
+
+  // "/" anywhere outside a text field focuses the box (OneBox), and closes the Menu panel first.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (isBoxShortcut(event)) setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   // Widening the window to 1024 px closes the panel. A focused control that the new width hides
   // hands focus to its twin, or to the control at the bar's right end (the pill or the Menu).
@@ -219,8 +262,9 @@ export function TopNav({
     (twin ?? (wide ? root.querySelector<HTMLElement>("[data-view-pill]") : menuButton.current))?.focus();
   });
 
+  // A div, not a header: the frame's one header holds this bar and the box band together.
   return (
-    <header
+    <div
       ref={header}
       onBlur={(event) => {
         const target = event.target as HTMLElement;
@@ -240,7 +284,7 @@ export function TopNav({
         <SkipLink />
         <div className="layout flex h-14 items-center">
           {logo && (
-            <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-3">
+            <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-6">
               {logo}
             </div>
           )}
@@ -288,10 +332,10 @@ export function TopNav({
         className="animate-menu-in border-b border-line bg-surface py-2 lg:hidden"
       >
         <nav aria-label={copy.nav.label}>
-          <ul>
+          <ul className="px-0.5">
             {SECTIONS.map((section) => (
               <li key={section.key}>
-                <PanelRow section={section} current={section.key === current} />
+                <PanelRow section={section} current={section.key === current} onNavigate={() => setMenuOpen(false)} />
               </li>
             ))}
           </ul>
@@ -300,6 +344,6 @@ export function TopNav({
           <ViewLines viewer={viewer} />
         </div>
       </div>
-    </header>
+    </div>
   );
 }
