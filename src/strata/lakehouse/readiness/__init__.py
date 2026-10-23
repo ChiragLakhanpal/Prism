@@ -8,10 +8,13 @@ defined once, here, for the source as a whole (subject all):
 
 - coverage_rows        the source's records held, counted once in each request they came back
                        in, of the totals the source reported for those requests at its last fetch.
-                       Only the newest page of each request counts (strata.bronze.current_pages):
-                       bronze keeps every page it was sent, so a record the source dropped since
-                       stays in an older page. When the two are equal, the fetch holds every record
-                       the API reported.
+                       Bronze keeps every page it was sent. For a source the job fetches in full
+                       each night, only the newest page of each request counts
+                       (strata.bronze.current_pages), so a record the source dropped since is not
+                       counted. For a search source, every page bronze holds counts, because a
+                       later fetch asks again only for the newest pages, and the older records stay
+                       on pages it does not ask for (strata.lakehouse.pages.reads_every_page). When
+                       the two are equal, the fetch holds every record the API reported.
 - fresh_fetched        the day of the last fetch, with the source's cadence
 - fresh_newest_record  the newest date in the source's watermark field, with its cadence
 
@@ -31,6 +34,7 @@ from collections.abc import Callable
 from importlib import resources
 
 from strata.config import Source, load_sources
+from strata.lakehouse import pages as source_pages
 from strata.lakehouse import silver
 from strata.lakehouse.engine import Engine
 
@@ -48,15 +52,17 @@ def _source_query(source: Source) -> str:
     module = silver.transform(source)
     table = next(iter(module.TABLES))
     key = ", ".join(f"coalesce(CAST(s.{column} AS STRING), '')" for column in module.RECORD_KEY)
+    counted = ("strata.bronze.current_pages" if source_pages.reads_every_page(source)  # sql-lint: names only
+               else "strata.bronze.api_pages")
     return f"""
 WITH pages AS (
   SELECT page_hash, {QUERY} AS query, reported_total, fetched_at, newest_record_on
   FROM strata.bronze.api_pages
   WHERE source = :source
 ),
-current_pages AS (
+counted_pages AS (
   SELECT page_hash, {QUERY} AS query
-  FROM strata.bronze.current_pages
+  FROM {counted}
   WHERE source = :source
 ),
 reported AS (
@@ -68,7 +74,7 @@ held AS (
   FROM (
     SELECT p.query, count(DISTINCT concat_ws('|', {key})) AS records
     FROM {table} AS s
-    JOIN current_pages AS p ON p.page_hash = s.page_hash
+    JOIN counted_pages AS p ON p.page_hash = s.page_hash
     GROUP BY p.query
   ) AS per_query
 ),
@@ -90,7 +96,7 @@ UNION ALL
 SELECT :source, 'all', 'fresh_newest_record', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
 FROM fresh
 WHERE newest IS NOT NULL
-"""  # sql-lint: names only, the table and key columns come from the source's silver transform
+"""  # sql-lint: names only, the tables and key columns come from the source and its silver transform
 
 
 def _transform_query(source: Source) -> str | None:

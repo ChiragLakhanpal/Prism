@@ -145,6 +145,12 @@ def _message(message) -> str:
     return "; ".join(part.strip().rstrip(".") for part in said if part.strip()) or "it gave no reason"
 
 
+def reads_every_page(source: Source) -> bool:
+    """Whether a live fetch asks for every page of the source each time. The search APIs sort
+    newest first, so their fetch stops at the watermark and does not ask for older pages again."""
+    return source.api != "search"
+
+
 def _series(source, get, country, code, indicator, watermark, clock) -> Iterator[Page]:
     offset = 0
     while True:
@@ -161,7 +167,7 @@ def _series(source, get, country, code, indicator, watermark, clock) -> Iterator
         total = reported_total(source, body)
         if len(held) < source.page_size or (total is not None and offset >= total):
             break
-        if source.api == "search" and watermark is not None:
+        if not reads_every_page(source) and watermark is not None:
             oldest = min((day for day in (clean.parse_date(record.get(source.watermark_field))
                                           for record in held) if day), default=None)
             if oldest is not None and oldest < watermark:

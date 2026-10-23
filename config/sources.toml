@@ -194,7 +194,7 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "notices"
 stratum = "What"
-limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched."]
+limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total."]
 
 # The projects API answers with every field unless asked for some, and the full record is many
 # times larger, so the endpoint names the fields that silver reads. It sends project_abstract anyway.
@@ -211,7 +211,7 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "projects"
 stratum = "What"
-limitations = ["The projects API keeps only the latest ISR ratings, and lists some of them twice. I keep each rating once."]
+limitations = ["The projects API keeps only the latest ISR ratings, and lists some of them twice. I keep each rating once.", "I fetch only the projects updated since my last fetch, so a project the source drops later still counts in my total."]
 
 # ── Governance indicators: CPIA and WGI ──────────────────────────────────
 

@@ -10,12 +10,14 @@ or from the recorded files read directly, never from the code under test.
 """
 
 import copy
+import dataclasses
 import datetime as dt
 import decimal
 import json
 import re
 import tomllib
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 
@@ -470,42 +472,54 @@ def test_each_source_s_row_count_in_ops_equals_the_total_the_api_reported(db, ke
     assert coverage["kind"] == "coverage"
 
 
-def test_a_record_a_later_fetch_drops_or_replaces_no_longer_counts_as_held():
-    """Criterion 1 on a later night: bronze keeps the page each fetch returned, but only the newest
-    page of each request says what the source holds now. A day after the recorded fetch, the awards
-    source has dropped one supplier row of P156634 (Kenya), the notices source has withdrawn one of
-    P130164's notices (India) and published another, and the projects source has dropped one Kenya
-    project. The rows held, for every country and for each one, must equal the new totals, and the
-    workspace check must still pass."""
+def test_rows_held_equal_the_reported_totals_on_a_later_night():
+    """Criterion 1 on a later night, for each way the job fetches. The job asks Finances One for every
+    page of the awards each night: a day after the recorded fetch, the source has dropped one
+    supplier row of P156634 (Kenya), and only the newest page of each request says what it holds now.
+    The job asks the search API for notices newest first, and stops at the newest notice it already
+    holds: the API held 13 of P130164's notices (India) on the first night and all 14 on the second,
+    so the second night asks for the first page only, and the notices pushed onto later pages stay
+    on the pages of the first night. P130164's project record comes back unchanged both nights, and
+    gives India's code to the notices. On each source, the rows held must equal the reported totals,
+    and the workspace check must pass."""
     from strata.lakehouse import ground_truth, nightly
 
-    files = {"awards": ["api/awards/P156634.json"], "notices": ["api/notices/P130164.json"],
-             "projects": ["api/projects/P130164.json", "api/projects/kenya-fy2012-2025.json"]}
+    awards, project = "api/awards/P156634.json", "api/projects/P130164.json"
+    newest_first = sorted(recorded("api/notices/P130164.json")["procnotices"],
+                          key=lambda notice: notice["submission_date"], reverse=True)
+    asked = {23: [], 24: []}
 
-    def a_day_later(file, body):
-        if file == "api/awards/P156634.json":
-            return dict(body, count=body["count"] - 1, data=body["data"][1:])
-        if file == "api/notices/P130164.json":
-            published = dict(body["procnotices"][1], id="OP99999999")
-            return dict(body, procnotices=[*body["procnotices"][1:], published])
-        if file == "api/projects/kenya-fy2012-2025.json":
-            dropped = next(iter(body["projects"]))
-            return dict(body, total=str(int(body["total"]) - 1),
-                        projects={pid: project for pid, project in body["projects"].items() if pid != dropped})
-        return body
+    def search_api(day, held):
+        def get(url):  # the search API's answer to rows and os, newest first as the request asks
+            query = parse_qs(urlparse(url).query)
+            size, offset = int(query["rows"][0]), int(query["os"][0])
+            asked[day].append(offset)
+            return json.dumps({"rows": size, "os": str(offset), "total": str(len(held)),
+                               "procnotices": held[offset:offset + size]}).encode()
+        return get
 
-    def fetch(day):
+    def fetch(day, notices):
+        when = dt.datetime(2026, 10, day, tzinfo=dt.UTC)
+
         def pages_of(source, engine):
-            for file in files.get(source.key, []):  # the other sources play no part here, and the job runs faster without them
-                request = json.loads((RECORDED / file).read_text())["source"]
-                body = a_day_later(file, recorded(file)) if day == 24 else recorded(file)
-                yield pages.Page(source.key, request, body, dt.datetime(2026, 10, day, tzinfo=dt.UTC))
+            if source.key == "awards":
+                body = recorded(awards)
+                if day == 24:
+                    body = dict(body, count=body["count"] - 1, data=body["data"][1:])
+                return [pages.Page(source.key, json.loads((RECORDED / awards).read_text())["source"], body, when)]
+            if source.key == "projects":
+                return [pages.Page(source.key, json.loads((RECORDED / project).read_text())["source"],
+                                   recorded(project), when)]
+            if source.key == "notices":
+                return pages.live_pages(dataclasses.replace(source, page_size=4), search_api(day, notices),
+                                        lambda country: bronze.newest_held(engine, source, country), clock=lambda: when)
+            return []  # the other sources play no part here, and the job runs faster without them
         return pages_of
 
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
-        nightly.run_locally(engine, run_id="recorded", fetch=fetch(23))
-        nightly.run_locally(engine, run_id="later", fetch=fetch(24))
+        nightly.run_locally(engine, run_id="recorded", fetch=fetch(23, newest_first[1:]))
+        nightly.run_locally(engine, run_id="later", fetch=fetch(24, newest_first))
 
         held = {}
         for source, subject, count, denominator in engine.run(
@@ -515,10 +529,11 @@ def test_a_record_a_later_fetch_drops_or_replaces_no_longer_counts_as_held():
         check = ground_truth.read(ROOT / "tests" / "ground_truth" / "every_source_holds_the_rows_its_api_reported.sql")
         complete = dict(engine.run(check.sql, check.params).as_text())
 
+    assert asked == {23: [0, 4, 8, 12], 24: [0]}  # every page the first night, the newest the second
     assert held == {
         "awards": {"all": (279, 279), "KE": (279, 279)},  # 280 recorded, one row gone
-        "notices": {"all": (14, 14), "IN": (14, 14)},  # 14 recorded, one notice out and another in
-        "projects": {"all": (91, 91), "KE": (90, 90), "IN": (1, 1)},  # 1 and 91 recorded, one Kenya project gone
+        "notices": {"all": (14, 14), "IN": (14, 14)},  # 13 the first night, one more the second
+        "projects": {"all": (1, 1), "IN": (1, 1)},
     }
     assert complete == {"awards": "true", "notices": "true", "projects": "true"}
 

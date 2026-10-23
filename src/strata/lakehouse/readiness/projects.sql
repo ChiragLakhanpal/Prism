@@ -1,8 +1,6 @@
 -- The projects source's data readiness measures, per country and for every country (subject all):
 --   coverage_rows        projects held, of the projects the source reported for the same requests.
---                        Per country only for requests that held that country's projects alone,
---                        and only from the newest page of each request (strata.bronze.current_pages),
---                        so a project the source no longer returns is not counted.
+--                        Per country only for requests that held that country's projects alone.
 --   coverage_years       approval fiscal years with projects, of the fiscal years from the first to the last
 --   linked_sector        projects mapped to one sector of Strata's taxonomy (config/sectors.toml), of
 --                        all projects. A project is left out when its record lists no major sector, or
@@ -53,7 +51,6 @@ rows_held AS (
     SELECT p.country_code, p.query, count(DISTINCT s.project_id) AS projects
     FROM strata.silver.projects AS s
     JOIN pages AS p ON p.page_hash = s.page_hash AND p.country_code = s.country_code
-    JOIN strata.bronze.current_pages AS c ON c.page_hash = p.page_hash
     JOIN one_country AS o ON o.query = p.query
     GROUP BY p.country_code, p.query
   ) AS per_query

@@ -1,8 +1,6 @@
 -- The notices source's data readiness measures, per country and for every country (subject all):
 --   coverage_rows            notices held, of the notices the source reported for the same requests.
---                            Per country only for requests that held that country's notices alone,
---                            and only from the newest page of each request (strata.bronze.current_pages),
---                            so a notice the source has withdrawn since is not counted.
+--                            Per country only for requests that held that country's notices alone.
 --   coverage_years           fiscal years with notices, of the fiscal years from the first to the last
 --   linked_project           notices whose project record is held, of all notices
 --   contact_details_removed  notices that had contact names, addresses, emails, phone numbers or
@@ -71,7 +69,6 @@ rows_held AS (
   FROM latest AS l
   JOIN strata.silver.notices AS s ON s.notice_id = l.notice_id
   JOIN pages AS p ON p.page_hash = s.page_hash AND p.country_code = l.country_code
-  JOIN strata.bronze.current_pages AS c ON c.page_hash = p.page_hash
   JOIN one_country AS o ON o.query = p.query
   GROUP BY p.country_code
 ),
