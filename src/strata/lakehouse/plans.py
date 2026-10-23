@@ -16,9 +16,10 @@ For one project, a run:
    each agency's latest version, the version before it (so a later ticket can show what changed),
    and each first listing. Only those go to Route B.
 4. Sends the chosen versions' table pages to the layout parser, newest version first, each page
-   once, until the day's pages reach the daily page cap (config/thresholds.toml,
-   ingestion.daily_page_cap). Each page read goes to bronze.layout_pages, and the run, with the page
-   it stopped at, to strata.ops.parse_runs.
+   once, until the day's attempts reach the daily page cap (config/thresholds.toml,
+   ingestion.daily_page_cap). Each page read goes to bronze.layout_pages. A page the parser cannot
+   read goes to strata.ops.parse_failures, counts against the cap, and waits until the next day.
+   The run, with the page it stopped at and the first page that failed, goes to strata.ops.parse_runs.
 5. Reads the parsed tables into silver.plan_rows and silver.plan_steps, for every version whose
    table pages have all been parsed, then runs the SQL that defines delay (silver.plan_step_delays)
    and the data notes (silver.plan_data_notes).
@@ -49,7 +50,7 @@ from strata.config import Thresholds, load_sources, load_thresholds
 from strata.lakehouse.engine import Engine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
-from strata.reader.layout import LayoutParser, Page, tables_from_json, tables_to_json
+from strata.reader.layout import LayoutParser, Page, ParseFailed, tables_from_json, tables_to_json
 
 SOURCE = "documents"  # the source registry's key for the documents API
 PLAN = "Procurement Plan"
@@ -313,10 +314,11 @@ def write_versions(engine: Engine, project_id: str, versions: list[Version]) -> 
 class Parsing:
     parser: str
     cap: int
-    parsed_earlier_today: int
+    parsed_earlier_today: int  # pages the parser tried earlier that day, read or failed
     waiting: int
     parsed: int
     stopped_at: tuple[str, int] | None  # the document and PDF page the run did not reach
+    failed: tuple[tuple[str, int], ...] = ()  # the document and PDF page of each page the parser could not read
 
 
 def parsed_pages(engine: Engine, project_id: str) -> set[tuple[str, int, str]]:
@@ -325,29 +327,53 @@ def parsed_pages(engine: Engine, project_id: str) -> set[tuple[str, int, str]]:
         {"project_id": project_id}).rows}
 
 
+TRIED_TODAY = """
+SELECT (SELECT count(*) FROM strata.bronze.layout_pages WHERE CAST(parsed_at AS DATE) = :today)
+     + (SELECT count(*) FROM strata.ops.parse_failures WHERE CAST(failed_at AS DATE) = :today) AS n
+"""
+
+
 def parse_chosen(engine: Engine, layout: LayoutParser, project_id: str, versions: list[Version], cap: int,
                  clock: Callable[[], dt.datetime], run_id: str) -> Parsing:
-    """Each chosen version's table pages that have not been parsed, newest version first, up to the cap."""
+    """Each chosen version's table pages that have not been parsed, newest version first, up to the cap.
+
+    The cap counts every page the parser tried that day, in UTC, across every project, whether it
+    read the page or not, because each attempt costs a parse. A page that failed that day waits
+    until the next."""
+    today = clock().date()
     done = parsed_pages(engine, project_id)
+    failed_today = {(str(d), int(n), str(h)) for d, n, h in engine.run(
+        "SELECT document_id, pdf_page, page_hash FROM strata.ops.parse_failures "
+        "WHERE project_id = :project_id AND CAST(failed_at AS DATE) = :today",
+        {"project_id": project_id, "today": today}).rows}
     chosen = sorted((v for v in versions if v.reasons), key=lambda v: (v.entry.plan_date, v.document_id), reverse=True)
     waiting = [(version, number, digest) for version in chosen for number, digest in version.table_pages
-               if (version.document_id, number, digest) not in done]
-    today = clock().date()
-    earlier = int(engine.run("SELECT count(*) AS n FROM strata.bronze.layout_pages "
-                             "WHERE CAST(parsed_at AS DATE) = :today", {"today": today}).rows[0][0])
-    budget, parsed, stopped = max(cap - earlier, 0), 0, None
+               if (version.document_id, number, digest) not in done | failed_today]
+    earlier = int(engine.run(TRIED_TODAY, {"today": today}).rows[0][0])
+    budget, tried, parsed, stopped, failed = max(cap - earlier, 0), 0, 0, None, []
     for version, number, digest in waiting:
-        if parsed >= budget:
+        if tried >= budget:
             stopped = (version.document_id, number)
             break
-        tables = layout.parse(Page(version.document_id, version.entry.pdf_url, number))
+        tried += 1
+        try:
+            tables = layout.parse(Page(version.document_id, version.entry.pdf_url, number))
+        except ParseFailed as error:
+            when = clock()
+            insert(engine, "strata.ops.parse_failures",
+                   ("run_id", "project_id", "document_id", "pdf_page", "page_hash", "parser", "error", "failed_at",
+                    "public_from"),
+                   [(run_id, project_id, version.document_id, number, digest, layout.name, str(error), when,
+                     when.date())])
+            failed.append((version.document_id, number))
+            continue
         insert(engine, "strata.bronze.layout_pages",
                ("document_id", "project_id", "pdf_page", "page_hash", "parser", "tables", "parsed_at", "run_id",
                 "public_from"),
                [(version.document_id, project_id, number, digest, layout.name, tables_to_json(tables), clock(), run_id,
                  version.public_from)])
         parsed += 1
-    return Parsing(layout.name, cap, earlier, len(waiting), parsed, stopped)
+    return Parsing(layout.name, cap, earlier, len(waiting), parsed, stopped, tuple(failed))
 
 
 # ── 5. Silver rows, steps, delays and data notes ─────────────────────────
@@ -481,11 +507,12 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     finished = clock()
     insert(engine, "strata.ops.parse_runs",
            ("run_id", "project_id", "parser", "daily_page_cap", "parsed_earlier_today", "pages_waiting",
-            "pages_parsed", "stopped_at_cap", "stopped_at_document_id", "stopped_at_pdf_page", "started_at",
-            "finished_at", "public_from"),
+            "pages_parsed", "pages_failed", "first_failed_document_id", "first_failed_pdf_page", "stopped_at_cap",
+            "stopped_at_document_id", "stopped_at_pdf_page", "started_at", "finished_at", "public_from"),
            [(run_id, project_id, parsing.parser, parsing.cap, parsing.parsed_earlier_today, parsing.waiting,
-             parsing.parsed, parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started,
-             finished, finished.date())])
+             parsing.parsed, len(parsing.failed), *(parsing.failed[0] if parsing.failed else (None, None)),
+             parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started, finished,
+             finished.date())])
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
                        finished)
     return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns)

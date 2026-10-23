@@ -3,7 +3,8 @@
 The page router sends a page here when it holds a table that the published text scrambles, such as
 the STEP table of a Procurement Plan (docs/PLAN.md section 5). A parser returns each table on the
 page as a grid: its header rows first, then one row per table row, each row with one cell per
-column. Each parser has a name, which the run records with every page it reads.
+column. Each parser has a name, which the run records with every page it reads. A parser raises
+ParseFailed for a page it cannot read; the run records the page and goes on to the next one.
 
 - RecordedLayout, offline. The fixture records every word on each plan's PDF pages with its box
   (data/fixture/recorded/documents/<project>/<name>.words.json). This parser finds each table from
@@ -66,11 +67,15 @@ class Page:
     pdf_page: int
 
 
+class ParseFailed(RuntimeError):
+    """A page the layout parser could not read."""
+
+
 class LayoutParser(Protocol):
     name: str
 
     def parse(self, page: Page) -> list[Table]:
-        """The tables on one page."""
+        """The tables on one page. Raises ParseFailed when it cannot read the page."""
 
 
 def https(url: str) -> str:
@@ -321,15 +326,30 @@ class AiParseDocument:
         self._pdfs: dict[str, bytes] = {}
 
     def parse(self, page: Page) -> list[Table]:
+        """One page's tables. A page that cannot be cut out of its PDF, or that ai_parse_document
+        refuses or answers with nothing it can read, raises ParseFailed. A PDF that cannot be fetched,
+        or a volume that refuses the upload, stops the run, because every page would fail the same way."""
+        from strata.lakehouse.engine import EngineError
+
         url = https(page.pdf_url)
         if url not in self._pdfs:
             self._pdfs = {url: self.fetch(url)}  # keep one PDF at a time: pages come document by document
         path = f"{self.volume}/{page.document_id}/page-{page.pdf_page}.pdf"
-        self.upload(path, single_page(self._pdfs[url], page.pdf_page))
-        result = self.engine.run(PARSE_SQL, {"path": path})
+        try:
+            one_page = single_page(self._pdfs[url], page.pdf_page)
+        except Exception as error:  # noqa: BLE001 - pypdf raises its own errors for a page it cannot cut out
+            raise ParseFailed(f"I could not cut page {page.pdf_page} out of {url}: {error}") from error
+        self.upload(path, one_page)
+        try:
+            result = self.engine.run(PARSE_SQL, {"path": path})
+        except EngineError as error:
+            raise ParseFailed(f"ai_parse_document could not read {path}: {error}") from error
         if not result.rows or not result.rows[0][0]:
-            raise RuntimeError(f"ai_parse_document returned nothing for {path}.")
-        return tables_from_parsed(json.loads(result.rows[0][0]))
+            raise ParseFailed(f"ai_parse_document returned nothing for {path}.")
+        try:
+            return tables_from_parsed(json.loads(result.rows[0][0]))
+        except (ValueError, TypeError, AttributeError) as error:
+            raise ParseFailed(f"I could not read ai_parse_document's answer for {path}: {error}") from error
 
 
 def single_page(pdf: bytes, number: int) -> bytes:

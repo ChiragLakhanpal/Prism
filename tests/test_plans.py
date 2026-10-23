@@ -298,6 +298,49 @@ def test_a_lower_daily_page_cap_stops_the_run_at_the_cap_and_records_where_it_st
     assert day_two["delay_days"] == value("plan-229129-days-late")["value"]
 
 
+class FirstPageFails:
+    """The recorded layout parser, except that the first page it is given always fails, as a page
+    ai_parse_document cannot read would. Pages go newest first, so that page heads every run's queue."""
+
+    def __init__(self, manifest):
+        from strata.reader.layout import RecordedLayout
+
+        self.recorded = RecordedLayout(manifest)
+        self.name = self.recorded.name
+        self.tried, self.failing = [], None
+
+    def parse(self, page):
+        from strata.reader.layout import ParseFailed
+
+        self.tried.append((page.document_id, page.pdf_page))
+        self.failing = self.failing or self.tried[-1]
+        if self.tried[-1] == self.failing:
+            raise ParseFailed(f"ai_parse_document returned nothing for page {page.pdf_page}.")
+        return self.recorded.parse(page)
+
+
+def test_a_page_the_layout_parser_cannot_read_is_recorded_and_waits_for_the_next_day(fresh):
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import plans
+    from strata.reader.documents import RecordedDocuments
+
+    manifest = fmt.load_manifest()
+    layout, now = FirstPageFails(manifest), clock(dt.date(2026, 10, 23))
+    for day in (dt.date(2026, 10, 23), dt.date(2026, 10, 23), dt.date(2026, 10, 24)):
+        now.state["day"] = day
+        plans.run(fresh, RecordedDocuments(manifest), layout, "P156634", clock=now)
+
+    runs = rows(fresh, """
+        SELECT pages_parsed, pages_failed, first_failed_document_id, first_failed_pdf_page, parsed_earlier_today
+        FROM strata.ops.parse_runs ORDER BY started_at""")
+    tried_on_day_one = len(layout.tried) - 1
+    assert [(r["pages_parsed"], r["pages_failed"]) for r in runs] == [(tried_on_day_one - 1, 1), (0, 0), (0, 1)]
+    assert (runs[0]["first_failed_document_id"], runs[0]["first_failed_pdf_page"]) == layout.failing
+    assert runs[1]["parsed_earlier_today"] == tried_on_day_one  # the failed attempt counts against the cap
+    assert layout.tried[tried_on_day_one:] == [layout.failing]  # tried again only the next day
+    assert fresh.run("SELECT count(*) FROM strata.ops.parse_failures").rows[0][0] == 2
+
+
 def test_a_later_version_that_re_dates_a_step_does_not_move_its_first_published_planned_date(fresh):
     """No recorded plan re-dates a step, so this test writes two versions of one activity by hand.
     The first plans the signed contract on the date the April 21, 2021 plan gives. The later one
@@ -387,3 +430,28 @@ def test_the_live_layout_parser_sends_one_page_to_ai_parse_document_and_reads_it
     assert row.fields["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
     assert (signed.planned_on, signed.actual_on) == (value("plan-229129-first-planned-signing")["value"],
                                                      value("plan-229129-signed")["value"])
+
+
+def test_a_page_ai_parse_document_answers_with_nothing_fails_as_that_one_page():
+    import io
+
+    from pypdf import PdfWriter
+
+    from strata.lakehouse.engine import Result
+    from strata.reader.layout import AiParseDocument, Page, ParseFailed
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=792, height=612)
+    pdf = io.BytesIO()
+    writer.write(pdf)
+
+    class Warehouse:
+        def run(self, sql, params=None):
+            return Result(("parsed",), ())
+
+    parser = AiParseDocument(Warehouse(), upload=lambda path, data: None, fetch=lambda url: pdf.getvalue())
+
+    with pytest.raises(ParseFailed, match="returned nothing"):
+        parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 1))
+    with pytest.raises(ParseFailed, match="could not cut page 2"):
+        parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 2))

@@ -91,6 +91,11 @@ def main(argv=None) -> int:
             print(f"Run {report.run_id} read {report.versions} plan versions of {args.project} and parsed "
                   f"{parsing.parsed} of the {parsing.waiting} pages waiting for {parsing.parser}, under a cap of "
                   f"{parsing.cap} pages a day. {report.versions_with_rows} versions have STEP rows.")
+            if parsing.failed:
+                document, page = parsing.failed[0]
+                print(f"The layout parser could not read {len(parsing.failed)} of them, first page {page} of "
+                      f"document {document}. strata.ops.parse_failures says why, and the next run tries them "
+                      "again tomorrow.")
             if parsing.stopped_at:
                 print(f"It stopped at the cap, at page {parsing.stopped_at[1]} of document {parsing.stopped_at[0]}. "
                       "Run it again tomorrow to read the rest.")

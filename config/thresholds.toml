@@ -5,9 +5,9 @@
 # value with strata.config.load_thresholds().value("section.name"). A value that is missing here is
 # an error that says where to add it, never a silent default.
 
-# Ingestion caps. The layout parser (Route B) reads at most this many PDF pages a day, counted in
-# UTC across every project, and a run that reaches the cap stops and records the first page it left
-# for the next day in strata.ops.parse_runs. Source: the spec's "Platform, identity and limits" (a
+# Ingestion caps. The layout parser (Route B) tries at most this many PDF pages a day, counted in
+# UTC across every project, whether it reads the page or fails on it, and a run that reaches the cap
+# stops and records the first page it left for the next day in strata.ops.parse_runs. Source: the spec's "Platform, identity and limits" (a
 # daily page cap in ingestion holds Azure and workspace spend). 500 is a starting value for the
 # owner to confirm; ticket 18 sets it for the whole document slice.
 [ingestion]
