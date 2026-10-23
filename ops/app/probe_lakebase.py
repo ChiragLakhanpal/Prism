@@ -11,9 +11,10 @@ Run it from the main checkout after the wizard, before ticket 15 writes the firs
 It times the same small job in each store: write one row, then read it back, ten times, after
 one first statement that wakes the store up. It applies the rule in docs/app-state.md, with the
 budget in config/thresholds.toml (app_state.round_trip_budget_ms), and writes the times and the
-chosen store into docs/app-state.md. When Lakebase wins, it also writes
-docs/adr/0005-app-state-lives-in-lakebase.md. --dry-run prints a result from canned times and
-writes nothing.
+chosen store into docs/app-state.md. When Lakebase wins, it also writes an ADR named
+NNNN-app-state-lives-in-lakebase.md in docs/adr, numbered one after the highest ADR there. It never
+overwrites a file: when that ADR is already there, from an earlier run, it leaves it alone.
+--dry-run prints a result from canned times and writes nothing.
 """
 
 from __future__ import annotations
@@ -39,7 +40,8 @@ import dayone  # noqa: E402
 from strata.config import load_thresholds  # noqa: E402
 
 DOCUMENT = REPO / "docs" / "app-state.md"
-ADR = "adr/0005-app-state-lives-in-lakebase.md"
+ADR_NAME = "app-state-lives-in-lakebase.md"
+NUMBERED = re.compile(r"^(\d{4})-.+\.md$")
 OPS, LAKEBASE = "strata.ops", "Lakebase"
 ROUNDS = 10
 BLOCK = re.compile(r"(<!-- app-state:result -->\n).*?(<!-- /app-state:result -->)", re.S)
@@ -61,11 +63,13 @@ class Timing:
         return statistics.median(self.round_trips_ms) if self.round_trips_ms else None
 
     def sentence(self) -> str:
-        if self.unavailable:
+        if self.unavailable and self.first_ms is None:
             return f"{self.store}: I could not make a database. {self.unavailable}"
-        return (f"{self.store}: the first statement took {self.first_ms:,.0f} ms; a write and a read took "
-                f"{self.middle_ms:,.0f} ms in the middle of {len(self.round_trips_ms)} tries, and "
-                f"{max(self.round_trips_ms):,.0f} ms at most.")
+        if self.unavailable:
+            return f"{self.store}: I made a database, but a write or a read failed. {self.unavailable}"
+        return (f"{self.store}: the first statement took {self.first_ms:,.0f} ms. Of {len(self.round_trips_ms)} "
+                f"tries at a write and a read, the middle time was {self.middle_ms:,.0f} ms and the longest was "
+                f"{max(self.round_trips_ms):,.0f} ms.")
 
 
 @dataclass
@@ -82,7 +86,7 @@ class Outcome:
         if ops.middle_ms is not None and ops.middle_ms <= self.budget_ms:
             return f"strata.ops took {ops.middle_ms:,.0f} ms in the middle, within the budget of {self.budget_ms:,} ms."
         if lakebase.unavailable:
-            return "strata.ops was over the budget, and I could not make a Lakebase database to compare."
+            return "strata.ops was over the budget, and I could not time a Lakebase database to compare."
         return (f"Neither store was within the budget of {self.budget_ms:,} ms, so strata.ops stays, because "
                 "Lakebase would add a second store without making state feel immediate.")
 
@@ -134,22 +138,37 @@ On {dayone.long_date(dt.date.fromisoformat(day))}, the Lakebase probe (`ops/app/
 ## Consequences
 
 - Follows, packages, drafts and their states, uploads and feedback live in Lakebase. Usage events, agent runs and every measure stay in `strata.ops`, because the dashboard reads them there.
-- The app reaches Lakebase with a database credential for each viewer, and each table keeps the uploader's team rule (CLAUDE.md rule 8) in the database itself.
+- Ticket 15 designs how the app reaches Lakebase as each viewer, and keeps the uploader's team rule (CLAUDE.md rule 8).
 - Every row still keeps the day it became public (ADR 0002), and the deploy creates the tables from one definition each.
 """
 
 
-def record(document: Path, outcome: Outcome, day: str | None = None) -> None:
-    """Write the result block, and the ADR when Lakebase wins."""
+def adr_path(adrs: Path) -> tuple[Path, bool]:
+    """Where the Lakebase ADR goes, and whether it is already there. A new one is numbered one after
+    the highest ADR in the folder, so it never takes a number another ticket used."""
+    existing = sorted(adrs.glob(f"[0-9][0-9][0-9][0-9]-{ADR_NAME}")) if adrs.is_dir() else []
+    if existing:
+        return existing[0], True
+    numbers = [int(match[1]) for path in (adrs.iterdir() if adrs.is_dir() else []) if (match := NUMBERED.match(path.name))]
+    return adrs / f"{max(numbers, default=0) + 1:04d}-{ADR_NAME}", False
+
+
+def record(document: Path, outcome: Outcome, day: str | None = None) -> Path | None:
+    """Write the result block, and the ADR when Lakebase wins. Returns the ADR's path when Lakebase
+    won, whether this run wrote it or an earlier one did."""
     day = day or dt.date.today().isoformat()
     text = document.read_text()
     if not BLOCK.search(text):
         raise dayone.DayOneError(f"{document} has no app-state:result block.")
     document.write_text(BLOCK.sub(lambda m: m[1] + dayone.render_fields(fields(outcome, day)) + m[2], text))
-    if outcome.chosen == LAKEBASE:
-        path = document.parent / ADR
+    if outcome.chosen != LAKEBASE:
+        return None
+    path, there = adr_path(document.parent / "adr")
+    if not there:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(adr(outcome, day))
+        with path.open("x") as file:  # "x" refuses to overwrite a file
+            file.write(adr(outcome, day))
+    return path
 
 
 class CannedClock:
@@ -209,10 +228,10 @@ def main(argv: list[str] | None = None, stores: dict | None = None) -> int:
     if args.dry_run:
         print("This was a dry run, so I wrote nothing.")
         return 0
-    record(args.document, outcome)
+    path = record(args.document, outcome)
     print(f"I wrote this result in {args.document}.")
-    if outcome.chosen == LAKEBASE:
-        print(f"Lakebase won, so I also wrote {args.document.parent / ADR}.")
+    if path is not None:
+        print(f"Lakebase won, so the decision is recorded in {path}.")
     return 0
 
 

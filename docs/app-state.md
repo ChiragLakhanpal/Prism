@@ -12,7 +12,7 @@ The probe times the same small job in each store: write one row, then read it ba
 - Lakebase wins only when `strata.ops`'s middle time is over the budget, and Free Edition lets the probe create a Lakebase database whose middle time is within it.
 - When neither store is within the budget, `strata.ops` still wins, because Lakebase would add a second store without making state feel immediate.
 
-When Lakebase wins, the probe also writes `docs/adr/0005-app-state-lives-in-lakebase.md`, so the switch is recorded before any app state is written.
+When Lakebase wins, the probe also writes an ADR in `docs/adr`, named `app-state-lives-in-lakebase.md` and numbered one after the highest ADR there, so the switch is recorded before any app state is written. It never overwrites a file, and a later run that Lakebase wins again leaves the first ADR as it is.
 
 The probe writes its rows to the day-one probes' own schema, `workspace.strata_dayone`, on the same SQL warehouse, so `strata.ops` holds no probe rows. In Lakebase it uses a small database instance named `strata-state-probe`, and it stops the instance when it is done, so the instance costs nothing while it waits.
 

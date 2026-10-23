@@ -9,6 +9,7 @@ methods that need it, so importing this file needs only the standard library.
 
 from __future__ import annotations
 
+import contextlib
 import datetime as dt
 import sys
 import uuid
@@ -121,6 +122,23 @@ class WarehouseStore:
         pass
 
 
+def unavailable(error: Exception):
+    """The probe's Unavailable, with the reason on one line, as the result block shows it."""
+    from probe_lakebase import Unavailable
+
+    return Unavailable(" ".join(str(error).split())[:300] or type(error).__name__)
+
+
+@contextlib.contextmanager
+def unavailable_on_error():
+    """A failure while the probe writes or reads becomes the reason Lakebase was unavailable, so the
+    probe still writes its result instead of stopping."""
+    try:
+        yield
+    except Exception as error:  # a dropped connection, an expired credential or a full instance
+        raise unavailable(error) from error
+
+
 class LakebaseStore:
     """A table in a small Lakebase database instance, which the probe stops when it is done."""
 
@@ -128,7 +146,6 @@ class LakebaseStore:
         self.w, self.connection = w, None
 
     def prepare(self) -> None:
-        from probe_lakebase import Unavailable
         from databricks.sdk.errors import NotFound
         from databricks.sdk.service import database
         import psycopg
@@ -152,13 +169,15 @@ class LakebaseStore:
             self.connection.execute("CREATE TABLE IF NOT EXISTS state_probe "
                                     "(key text PRIMARY KEY, value text, written_at timestamptz DEFAULT now())")
         except Exception as error:  # a workspace without Lakebase, a quota or a refused connection
-            raise Unavailable(" ".join(str(error).split())[:300] or type(error).__name__) from error
+            raise unavailable(error) from error
 
     def write(self, key: str, value: str) -> None:
-        self.connection.execute("INSERT INTO state_probe (key, value) VALUES (%s, %s)", (key, value))
+        with unavailable_on_error():
+            self.connection.execute("INSERT INTO state_probe (key, value) VALUES (%s, %s)", (key, value))
 
     def read(self, key: str) -> str | None:
-        row = self.connection.execute("SELECT value FROM state_probe WHERE key = %s", (key,)).fetchone()
+        with unavailable_on_error():
+            row = self.connection.execute("SELECT value FROM state_probe WHERE key = %s", (key,)).fetchone()
         return row[0] if row else None
 
     def finish(self) -> None:
