@@ -125,23 +125,24 @@ def test_a_source_with_a_misspelled_key_is_refused(tmp_path):
 
 # ── The model file ───────────────────────────────────────────────────────
 
-def test_the_model_file_names_the_deployment_for_each_role():
+def test_the_model_file_names_a_deployment_for_each_role():
+    """The file's shape, not its names: swapping a model is one line and keeps the gate green.
+
+    docs/PLAN.md section 2 gives the roles: the agent, drafting and hard questions, bulk extraction
+    and embeddings. The caps probe checks the names themselves against Azure.
+    """
     models = config.load_models()
 
-    # docs/PLAN.md section 2: the agent, drafting and hard questions, bulk extraction, embeddings.
-    assert {role: model.deployment for role, model in models.items()} == {
-        "agent": "gpt-5.4-mini",
-        "draft": "gpt-5.4",
-        "batch": "gpt-5.4-nano",
-        "embed": "text-embedding-3-large",
-    }
-    assert models["embed"].dimensions == 1024
+    assert list(models) == list(config.ROLES) == ["agent", "draft", "batch", "embed"]
+    assert all(model.deployment.strip() for model in models.values())
+    assert isinstance(models["embed"].dimensions, int) and models["embed"].dimensions > 0
 
 
 def test_swapping_a_model_is_one_line(tmp_path):
-    path = copy("models.toml", tmp_path, old='deployment = "gpt-5.4-mini"', new='deployment = "gpt-5.5-mini"')
+    current = config.load_models()["agent"].deployment
+    path = copy("models.toml", tmp_path, old=f'deployment = "{current}"', new='deployment = "swapped-model"')
 
-    assert config.load_models(path)["agent"].deployment == "gpt-5.5-mini"
+    assert config.load_models(path)["agent"].deployment == "swapped-model"
 
 
 def test_a_model_file_missing_a_role_is_refused(tmp_path):
