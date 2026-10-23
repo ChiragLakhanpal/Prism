@@ -14,7 +14,8 @@ job-run    Starts the nightly job by hand, waits for it, and checks that strata.
            holds one row per task for that run, in the order bundle/nightly.yml gives. Pass
            --run-id to check a run that already finished instead.
 same-rows  Runs each ground-truth query marked for databricks (tests/ground_truth) on DuckDB and
-           on the SQL warehouse, and checks that both return the rows the file expects.
+           on the SQL warehouse, and checks that both return the rows the file expects. DuckDB
+           reads the fixture database, or builds the catalog's tables in memory without it.
 schedules  Reads fairshare's nightly job and Strata's, with how long their recent runs took, and
            checks that the two never run at the same time on any day of the next year. With
            --write it records both schedules in the bundle's notes, bundle/README.md.
@@ -38,7 +39,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
-from strata.lakehouse import ground_truth, nightly, schedule  # noqa: E402
+from strata.lakehouse import catalog, ground_truth, nightly, schedule  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
@@ -93,6 +94,15 @@ def _table(columns, rows) -> list[str]:
     return [" | ".join(columns)] + [" | ".join(row) for row in rows]
 
 
+def _local_engine() -> DuckDBEngine:
+    """The fixture database the gate builds, or the catalog's tables built in memory when it is missing."""
+    if FIXTURE_DB.exists():
+        return DuckDBEngine.open(FIXTURE_DB, read_only=True)
+    engine = DuckDBEngine.open()
+    catalog.build(engine)
+    return engine
+
+
 def same_rows(workspace) -> int:
     cases = [case for case in map(ground_truth.read, sorted((REPO / "tests" / "ground_truth").glob("*.sql")))
              if "databricks" in case.engines]
@@ -102,7 +112,7 @@ def same_rows(workspace) -> int:
     failed = 0
     for case in cases:
         name = case.path.name
-        with DuckDBEngine.open(FIXTURE_DB if FIXTURE_DB.exists() else None, read_only=FIXTURE_DB.exists()) as duckdb:
+        with _local_engine() as duckdb:
             local = duckdb.run(case.sql, case.params)
         try:
             remote = workspace.engine().run(case.sql, case.params)

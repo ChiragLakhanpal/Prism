@@ -21,7 +21,7 @@ Then run these three checks, also from the main checkout:
     uv run --script ops/bundle/check.py same-rows --env-file .env
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
-The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the sample query, `tests/ground_truth/showcase_fiscal_years.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
+The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the two sample queries, `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
 
 Some things to know before the first deploy:
 

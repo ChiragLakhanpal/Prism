@@ -36,7 +36,7 @@ It runs the steps in `gates/steps.toml` in order and stops at the first one that
 1. Scan the staged changes and the history of the branch for secrets.
 2. Test the guard hook.
 3. Build the fixture database.
-4. Run the Python tests. They cover the gate, the ground-truth SQL on DuckDB and the server.
+4. Run the Python tests. They cover the gate, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job, the bundle commands and the server.
 5. Type check and bundle the web app.
 6. Run the Playwright tests against the built web app.
 

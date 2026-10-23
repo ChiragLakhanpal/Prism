@@ -97,25 +97,46 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 
 # ── The sample query on both engines ─────────────────────────────────────
 
+def deployed_warehouse():
+    """A SQL warehouse after the deploy: DuckDB with the catalog's tables built."""
+    engine = DuckDBEngine.open()
+    catalog.build(engine)
+    return engine
+
+
 class Changed:
-    """A warehouse whose answer differs from DuckDB's in one cell."""
+    """A warehouse whose answer differs from DuckDB's in the last cell of the first row."""
 
     name = "databricks"
 
+    def __init__(self):
+        self.engine = deployed_warehouse()
+
     def run(self, sql, params=None):
-        with DuckDBEngine.open() as duckdb:
-            result = duckdb.run(sql, params)
+        result = self.engine.run(sql, params)
         rows = [list(row) for row in result.as_text()]
-        rows[0][2] = "2017"
+        if rows:
+            rows[0][-1] = "2017"
         return Result(result.columns, tuple(tuple(row) for row in rows))
 
 
-def test_the_sample_query_returns_the_same_rows_on_duckdb_and_the_warehouse(capsys):
-    code, out = checked(["same-rows"], FakeWorkspace(warehouse=DuckDBEngine.open()), capsys)
+def test_the_sample_queries_return_the_same_rows_on_duckdb_and_the_warehouse(capsys):
+    code, out = checked(["same-rows"], FakeWorkspace(warehouse=deployed_warehouse()), capsys)
 
     assert code == 0
     assert ("showcase_fiscal_years.sql: DuckDB and the SQL warehouse returned the same four rows, "
             "and they are the rows the file expects.") in out
+    assert ("pipeline_runs_columns.sql: DuckDB and the SQL warehouse returned the same seven rows, "
+            "and they are the rows the file expects.") in out
+
+
+def test_without_the_fixture_database_the_duckdb_side_builds_the_catalog_in_memory(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(check, "FIXTURE_DB", tmp_path / "missing.duckdb")
+
+    code, out = checked(["same-rows"], FakeWorkspace(warehouse=deployed_warehouse()), capsys)
+
+    assert code == 0
+    assert "pipeline_runs_columns.sql: DuckDB and the SQL warehouse returned the same seven rows" in out
 
 
 def test_a_warehouse_that_returns_other_rows_fails_and_shows_both(capsys):
@@ -123,7 +144,7 @@ def test_a_warehouse_that_returns_other_rows_fails_and_shows_both(capsys):
 
     assert code == 1
     assert "returned different rows" in out
-    assert "Mid-term review | 2016-05-16 | 2017 | 1242" in out
+    assert "Mid-term review | 2016-05-16 | 2016 | 2017" in out
 
 
 # ── The two schedules ────────────────────────────────────────────────────
