@@ -5,7 +5,10 @@ the fiscal year from the signing date, parses the STEP reference, maps an old me
 current one, and keeps the dataset's INDIVIDUAL CONSULTANT label out of the supplier's name: the
 label stands for many people, each with their own supplier ID, and no person is named (spec,
 user stories 59 and 115). For the same reason, a Consultant Services contract whose description
-gives a personal title and a name keeps no description (strata.lakehouse.clean.names_a_person).
+gives a personal title and a name keeps no description. When its supplier names no firm, or the
+supplier is written with a personal title and no word that names a firm, the row is a person's
+contract: it keeps no supplier name and no description, and counts as an individual consultant
+(strata.lakehouse.clean.hires_a_named_person).
 """
 
 from __future__ import annotations
@@ -41,10 +44,11 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
         # A person is written INDIVIDUAL CONSULTANT, in any capitals, but a description or the
-        # supplier field could still name one. Either way the row keeps neither.
-        named = (clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
-                 or clean.titled(record.get("supplier")))
-        individual = named or (clean.text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT
+        # supplier field could still name one. A firm hired for a person's services keeps its name.
+        category, supplier = record.get("procurement_category"), clean.text(record.get("supplier"))
+        person = clean.hires_a_named_person(category, record.get("contract_description"), supplier)
+        named = person or clean.names_a_person(category, record.get("contract_description"))
+        individual = person or (supplier or "").upper() == INDIVIDUAL_CONSULTANT
         rows.append((
             clean.text(record.get("wb_contract_number")),
             clean.text(record.get("supplier_id")),
@@ -63,7 +67,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("procurement_method")),
             method.market_approach if method else None,
             clean.text(record.get("review_type")),
-            None if individual else clean.text(record.get("supplier")),
+            None if individual else supplier,
             individual,
             clean.text(record.get("supplier_country")),
             clean.text(record.get("supplier_country_code")),

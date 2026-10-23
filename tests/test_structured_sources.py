@@ -142,11 +142,14 @@ def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_de
 
 
 # A row that names a person, in each place and form the review found: a title with its period, in
-# either case, a title in capitals without one, and a supplier written with a title. The names are
-# made up.
-NAMED = [{"contract_description": "Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist"},
-         {"contract_description": "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST"},
-         {"contract_description": "CONSULTANCY SERVICES OF DR JOHN DOE"},
+# either case, a title in capitals without one, and a supplier written with a title. A description
+# that names a person comes with that person as the supplier, written without a title, so the row
+# names no firm. The names are made up.
+NAMED = [{"contract_description": "Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist",
+          "supplier": "JANE DOE"},
+         {"contract_description": "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST",
+          "supplier": "JOHN DOE"},
+         {"contract_description": "CONSULTANCY SERVICES OF DR JOHN DOE", "supplier": "JOHN DOE"},
          {"supplier": "MR. JOHN DOE"}]
 
 
@@ -195,6 +198,64 @@ def test_an_old_award_that_names_a_person_in_capitals_or_as_its_supplier_keeps_n
 
     assert silver_row == [{"contract_description": None, "supplier": None, "individual_consultant": True}]
     assert gold_row == [{"contract_description": None}]
+
+
+# Rows that name a firm or a country, not a person, as the review found them, each with whether the
+# row keeps its description. A firm's name can start with a title, DR can stand for the Democratic
+# Republic of the Congo, and a firm can be hired for a person's services. The two firms are public
+# company names, and the person and the third firm are made up.
+FIRMS = [({"supplier": "DR. REDDY'S LABORATORIES LTD"}, True),
+         ({"supplier": "DR. SAUER & PARTNERS"}, True),
+         ({"contract_description": "Trade corridor study for Rwanda and DR Congo"}, True),
+         ({"contract_description": "TRADE CORRIDOR STUDY FOR RWANDA AND DR CONGO"}, True),
+         ({"contract_description": "Services of Dr. Jane Doe", "supplier": "ABC CONSULTING LTD"}, False)]
+
+
+@pytest.mark.parametrize(("named", "keeps_description"), FIRMS, ids=lambda case: str(case))
+def test_an_award_since_fy2020_that_names_a_firm_or_a_country_keeps_the_firm_s_name(named, keeps_description):
+    """A personal title alone does not make a supplier a person: the firm keeps its name in silver
+    and in gold.supplier, and a description loses only a person's name. The page is a recorded
+    P156634 Consultant Services row with a firm as its supplier, with the fields changed."""
+    record = dict(next(row for row in recorded("api/awards/P156634.json")["data"]
+                       if row["procurement_category"] == "Consultant Services"
+                       and row["supplier"].upper() != "INDIVIDUAL CONSULTANT"), **named)
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "awards", {"count": 1, "data": [record]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        silver_row = rows(engine, "SELECT contract_description, supplier, individual_consultant FROM strata.silver.awards")
+        supplier = rows(engine, "SELECT supplier_id, name, kind FROM strata.gold.supplier")
+
+    assert silver_row == [{"contract_description": record["contract_description"] if keeps_description else None,
+                           "supplier": record["supplier"], "individual_consultant": False}]
+    assert supplier == [{"supplier_id": record["supplier_id"], "name": record["supplier"], "kind": "firm"}]
+
+
+@pytest.mark.parametrize(("named", "keeps_description"), FIRMS, ids=lambda case: str(case))
+def test_an_old_award_that_names_a_firm_or_a_country_keeps_the_firm_s_name(named, keeps_description):
+    """The same rows in the FY2001 to FY2016 dataset, from a recorded P124109 Consultant Services
+    row with a firm as its supplier."""
+    record = dict(next(row for row in recorded(OLD_AWARDS[0])["data"]
+                       if row["procurement_category"] == "Consultant Services" and row["supplier"]
+                       and row["procurement_method"] != "Individual Consultant Selection"
+                       and not TITLED.search(row["contract_description"] or "")), **named)
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "awards_fy2001_2016", {"count": 1, "data": [record]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        silver_row = rows(engine, "SELECT contract_description, supplier, individual_consultant "
+                                  "FROM strata.silver.awards_fy2001_2016")
+        gold_row = rows(engine, "SELECT contract_description FROM strata.gold.contract")
+
+    def one_line(written):  # silver keeps text on one line, as the dataset breaks long fields
+        return " ".join(written.split())
+
+    description = one_line(record["contract_description"]) if keeps_description else None
+    assert silver_row == [{"contract_description": description, "supplier": one_line(record["supplier"]),
+                           "individual_consultant": False}]
+    assert gold_row == [{"contract_description": description}]
 
 
 # ── FY2017 to FY2019, from award notices ─────────────────────────────────

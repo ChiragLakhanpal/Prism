@@ -12,9 +12,11 @@ The dataset names people, where the later dataset writes INDIVIDUAL CONSULTANT: 
 an Individual Consultant Selection, as the supplier of a Consultant Qualification Selection that
 hired one person, and in contract descriptions such as "the Consultancy Services of Dr. ...". A row
 is a contract with a person when its method is Individual Consultant Selection, when its supplier
-is INDIVIDUAL CONSULTANT, or when it is for Consultant Services and its description gives a
-personal title followed by a name. Such a row keeps no supplier and no description, and is marked
-individual_consultant, so no person is named (spec, user stories 59 and 115).
+is INDIVIDUAL CONSULTANT, or when its supplier is written with a personal title and no word that
+names a firm, or when it is for Consultant Services, its description gives a personal title
+followed by a name, and its supplier names no firm. Such a row keeps no supplier and no
+description, and is marked individual_consultant, so no person is named (spec, user stories 59 and
+115). A firm hired for a person's services keeps its name, and its description is removed.
 """
 
 from __future__ import annotations
@@ -43,8 +45,8 @@ def _with_a_person(record: dict) -> bool:
     """Whether the row is a contract with a person, whom the dataset may name."""
     if any((clean.text(record.get(field)) or "").upper() in INDIVIDUAL for field in ("supplier", "procurement_method")):
         return True
-    return (clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
-            or clean.titled(record.get("supplier")))
+    return clean.hires_a_named_person(record.get("procurement_category"), record.get("contract_description"),
+                                      record.get("supplier"))
 
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
@@ -58,6 +60,8 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
         individual = _with_a_person(record)
+        described = individual or clean.names_a_person(record.get("procurement_category"),
+                                                       record.get("contract_description"))
         rows.append((
             number,
             clean.text(record.get("project_id")),
@@ -68,7 +72,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("borrower_contract_reference_number")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            None if individual else clean.text(record.get("contract_description")),
+            None if described else clean.text(record.get("contract_description")),
             clean.category(record.get("procurement_category")),
             method.name if method else None,
             clean.text(record.get("procurement_method")),

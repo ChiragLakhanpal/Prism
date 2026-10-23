@@ -106,9 +106,16 @@ def category(name) -> str | None:
 # A personal title followed by a name, as a description names a consultant hired in person: "the
 # Consultancy Services of Dr. ..." or "CONSULTANCY SERVICES OF DR ...". In capitals, MS and ENG
 # count only with their period, so MS OFFICE and ENG WORKS are not people; MR, MRS, DR, CAPT and
-# PROF are not words of their own, so they count without one.
+# PROF are not words of their own, so they count without one. DR before Congo, in any case, is the
+# Democratic Republic of the Congo.
 PERSONAL_TITLE = re.compile(
-    r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?|(?:MS|ENG)\.|(?:MR|MRS|DR|CAPT|PROF)\.?)\s+[A-Z]")
+    r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr(?!\.?\s+(?i:congo)\b)|Capt|Eng|Prof)\.?|(?:MS|ENG)\.|"
+    r"(?:MR|MRS|DR(?!\.?\s+(?i:congo)\b)|CAPT|PROF)\.?)\s+[A-Z]")
+
+# A word that names a firm, not a person, in any case: a legal form such as LTD or GMBH, a word such
+# as PARTNERS or LABORATORIES, or an ampersand. CONSULTANT alone is not one, as a person is one.
+FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|INC|PLC|SARL|S\.?A\.?|GMBH|AG|B\.?V\.?|CO|COMPANY|CORP(?:ORATION)?|"
+                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?)\b|&", re.I)
 
 
 def names_a_person(procurement_category, description) -> bool:
@@ -117,9 +124,22 @@ def names_a_person(procurement_category, description) -> bool:
     return category(procurement_category) == "Consultant Services" and bool(PERSONAL_TITLE.search(text(description) or ""))
 
 
+def names_a_firm(name) -> bool:
+    """Whether a supplier's name has a word that names a firm."""
+    return bool(FIRM.search(text(name) or ""))
+
+
 def titled(name) -> bool:
-    """Whether a supplier is written as a person, with a personal title before the name, in any category."""
-    return bool(PERSONAL_TITLE.match(text(name) or ""))
+    """Whether a supplier is written as a person, in any category: a personal title before the name,
+    and no word that names a firm, so DR. REDDY'S LABORATORIES LTD stays a firm."""
+    return bool(PERSONAL_TITLE.match(text(name) or "")) and not names_a_firm(name)
+
+
+def hires_a_named_person(procurement_category, description, supplier) -> bool:
+    """Whether a contract is with a person whom the row may name: its supplier is written with a
+    personal title, or its description names a person and its supplier names no firm. A firm hired
+    for a person's services keeps its name."""
+    return titled(supplier) or (names_a_person(procurement_category, description) and not names_a_firm(supplier))
 
 
 STEP_REFERENCE = re.compile(
