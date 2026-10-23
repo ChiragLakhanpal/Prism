@@ -91,6 +91,22 @@ def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
         catalog.build(engine, folder)
 
 
+def test_the_check_covers_the_four_schemas_and_not_the_fixtures_own_copy_of_the_sources():
+    """The fixture database also holds recorded.files, its copy of the sources (ticket 05), which is
+    not a catalog layer. The check covers the schemas the bundle declares, where every fact lives."""
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        engine.run("CREATE SCHEMA strata.recorded")
+        engine.run("CREATE TABLE strata.recorded.files (file STRING, recorded DATE)")
+
+        catalog.check_public_from(engine)
+
+        engine.run("CREATE TABLE strata.silver.awards (award_id STRING)")
+        with pytest.raises(CatalogError, match=r"strata\.silver\.awards") as stopped:
+            catalog.check_public_from(engine)
+        assert "recorded" not in str(stopped.value)
+
+
 def test_a_public_from_column_that_is_not_a_date_stops_the_build(tmp_path):
     folder = definitions(tmp_path, ops__pipeline_runs=GOOD,
                          gold__supplier="CREATE TABLE IF NOT EXISTS strata.{schema}.{table} (id STRING, public_from STRING)\n")
