@@ -10,7 +10,7 @@ Read first: docs/PLAN.md sections 2, 14 and 16; ADR 0001; the wizard skill's ins
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P0
 **Design review:** no
@@ -25,3 +25,4 @@ Read first: docs/PLAN.md sections 2, 14 and 16; ADR 0001; the wizard skill's ins
 
 - October 22, 2026, orchestrator: dispatched to an implementer in its own worktree. Credentials are not in place yet, so workspace steps are parked in docs/workspace-catchup.md.
 - October 22, 2026, orchestrator: reset to ready-for-agent. The first session had started one folder up, so the guard hook and the named agents never loaded; the worktree was removed before any commit. The next session, started inside strata/, dispatches this ticket again.
+- October 23, 2026, orchestrator: dispatched again to an implementer in its own worktree, from a session started inside strata/. Credentials are still missing, so every workspace step is parked in docs/workspace-catchup.md and the offline parts are built against local fixtures.
