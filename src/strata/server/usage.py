@@ -1,7 +1,9 @@
 """Usage events: one row in strata.ops.usage_events for each request a viewer makes.
 
-The adoption measures (weekly users, which pages people open, which view they use) read these
-rows. The server keeps each event in memory and writes them in one insert at a time, from a
+The adoption measures (weekly users, the page each visit starts on and the API routes it calls,
+which view people use) read these rows. The web app's router changes pages without asking the
+server, so later pages in a visit are not recorded. An event keeps the viewer's user id, never
+their email, because every account user can read strata.ops. The server keeps each event in memory and writes them in one insert at a time, from a
 background thread every usage_flush_seconds (config/thresholds.toml) and once more when the
 server stops, so no request waits for the warehouse. A write that fails is logged and its
 events wait for the next one; a request never fails because its event could not be written.
@@ -22,14 +24,13 @@ from strata.lakehouse.engine import Engine
 
 log = logging.getLogger("strata.server.usage")
 TABLE = "strata.ops.usage_events"
-COLUMNS = ("viewer_email", "viewer_id", "route", "view", "requested_at", "trace_id", "public_from")
+COLUMNS = ("viewer_id", "route", "view", "requested_at", "trace_id", "public_from")
 # Events kept while the warehouse cannot take them. Beyond this, the oldest are dropped.
 MOST_KEPT = 5000
 
 
 @dataclass(frozen=True)
 class UsageEvent:
-    viewer_email: str | None
     viewer_id: str | None
     route: str
     view: str

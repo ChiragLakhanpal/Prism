@@ -129,7 +129,7 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             if response.status_code >= 500:
                 span.set_status(trace.StatusCode.ERROR)
         if usage is not None:
-            usage.record(UsageEvent(viewer.email, viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
+            usage.record(UsageEvent(viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
         return response
 
     def read_as(viewer: Viewer, read: Callable[[Engine], object]):

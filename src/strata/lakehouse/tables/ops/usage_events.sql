@@ -3,15 +3,18 @@
 -- server leaves out /api/health, which the platform calls, and the files a page loads. It writes
 -- the rows as the app's own service principal, a few at a time (src/strata/server/usage.py).
 --
--- viewer_email  the email the Databricks App forwarded; empty when no one was signed in
--- viewer_id     the user id the App forwarded; empty when no one was signed in
+-- The rows keep no email: every account user can read strata.ops (bundle/catalog.yml), and the
+-- user id is enough to count people. The web app changes pages without asking the server, so a
+-- visit records the page it starts on and the /api routes it calls (/api/me and /api/freshness on
+-- every full page load). A count of pages keeps only route NOT LIKE '/api/%'.
+--
+-- viewer_id     the user id the Databricks App forwarded; empty when no one was signed in
 -- route         the path asked for, without its query, such as /projects/P130164 or /api/freshness
 -- view          the view the server applied: staff, until ticket 40 adds piu and public
 -- requested_at  when the request arrived, in UTC
 -- trace_id      the request's trace in Application Insights, as 32 hex digits
 -- public_from   the day of the request, in UTC (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.ops.usage_events (
-  viewer_email STRING,
   viewer_id STRING,
   route STRING NOT NULL,
   view STRING NOT NULL,

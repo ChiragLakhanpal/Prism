@@ -1,6 +1,7 @@
 """Usage events and traces at seam 3: each request a viewer makes writes one usage event to
 strata.ops.usage_events (viewer, route, view and time, for the adoption measures) and sends one
-trace, whose id the event keeps.
+trace, whose id the event keeps. The viewer is kept by the user id the App forwards, never by
+email, because every account user can read strata.ops.
 
 The events go to a DuckDB catalog in the test's own folder, through the same table definition the
 deploy creates on the warehouse. The traces go to OpenTelemetry's in-memory exporter; on the
@@ -11,6 +12,7 @@ import asyncio
 import datetime as dt
 import time
 
+import duckdb
 import httpx
 import pytest
 from opentelemetry.sdk.trace import TracerProvider
@@ -57,7 +59,7 @@ def ops(tmp_path):
 
 def events(path):
     with DuckDBEngine.open(path, read_only=True) as engine:
-        return engine.run("SELECT viewer_email, viewer_id, route, view, requested_at, trace_id, public_from "
+        return engine.run("SELECT viewer_id, route, view, requested_at, trace_id, public_from "
                           "FROM strata.ops.usage_events ORDER BY requested_at").rows
 
 
@@ -74,14 +76,28 @@ def test_each_request_writes_one_usage_event_with_its_viewer_route_view_and_time
 
     after = dt.datetime.now(dt.UTC)
     rows = events(ops)
-    assert [row[:4] for row in rows] == [
-        ("ana.example@worldbank.org", "4021@1984", "/api/me", "staff"),
+    assert [row[:3] for row in rows] == [
+        ("4021@1984", "/api/me", "staff"),
         # Until ticket 40, every request sees the World Bank staff view, whatever the link asks for.
-        ("ben.example@worldbank.org", "4022@1984", "/api/freshness", "staff"),
-        (None, None, "/api/me", "staff"),
+        ("4022@1984", "/api/freshness", "staff"),
+        (None, "/api/me", "staff"),
     ]
-    assert all(before <= row[4] <= after for row in rows)
-    assert all(row[6] == row[4].date() for row in rows)
+    assert all(before <= row[3] <= after for row in rows)
+    assert all(row[5] == row[3].date() for row in rows)
+
+
+def test_a_usage_event_keeps_no_email(ops):
+    usage = UsageLog(lambda: DuckDBEngine.open(ops), flush_seconds=None)
+
+    serve(create_app(usage=usage), [("/api/me", ANA)])
+
+    with DuckDBEngine.open(ops, read_only=True) as engine:
+        everything = engine.run("SELECT * FROM strata.ops.usage_events").rows
+        columns = engine.run("SELECT column_name FROM information_schema.columns "
+                             "WHERE table_schema = 'ops' AND table_name = 'usage_events'").rows
+    assert len(everything) == 1
+    assert "ana.example@worldbank.org" not in str(everything)
+    assert not [name for (name,) in columns if "email" in name]
 
 
 def test_the_events_wait_for_one_insert_and_the_server_writes_them_when_it_stops(ops):
@@ -108,10 +124,14 @@ def test_the_server_writes_waiting_events_every_few_seconds(ops):
 
     def wait_for_the_writer():
         for _ in range(100):
-            if events(ops):
+            try:
+                found = events(ops)
+            except duckdb.Error:  # the writer holds the file at this moment; look again
+                found = []
+            if found:
+                written.extend(found)
                 break
             time.sleep(0.02)
-        written.extend(events(ops))
 
     serve(create_app(usage=usage), [("/api/me", ANA)], before_stopping=wait_for_the_writer)
 
@@ -133,7 +153,7 @@ def test_each_request_sends_one_trace_and_its_usage_event_keeps_the_trace_id(ops
     assert span.attributes["strata.view"] == "staff"
     assert "token-for-ana-only" not in str(dict(span.attributes))
     [row] = events(ops)
-    assert row[5] == format(span.context.trace_id, "032x")
+    assert row[4] == format(span.context.trace_id, "032x")
 
 
 def test_a_usage_log_that_cannot_write_never_breaks_a_request():
