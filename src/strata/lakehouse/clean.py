@@ -88,6 +88,14 @@ def public_from(published: dt.date | None, fetched: dt.date) -> dt.date:
 # ── STEP references ──────────────────────────────────────────────────────
 
 CATEGORIES = {"CW": "Works", "GO": "Goods", "CS": "Consultant Services", "NC": "Non-consulting Services"}
+# A category as the FY2001 to FY2016 awards dataset writes it, where it differs from STEP's name.
+OLD_CATEGORIES = {"CIVIL WORKS": "Works"}
+
+
+def category(name) -> str | None:
+    """A procurement category in STEP's words: Works, Goods, Consultant Services or Non-consulting Services."""
+    written = text(name)
+    return OLD_CATEGORIES.get(written.upper(), written) if written else None
 STEP_REFERENCE = re.compile(
     r"(?P<country>[A-Z]{2})-(?P<agency>[A-Z0-9][A-Z0-9 &.()]*?)-(?P<number>\d+)-"
     r"(?P<category>CW|GO|CS|NC)-(?P<method>[A-Z]+)(?P<suffix>-.+)?")

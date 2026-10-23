@@ -8,6 +8,8 @@
 -- step_reference            the STEP reference, normalized, when the reference is one
 -- reference_method_code     the method part of the reference, kept for the data note, never the method
 -- procurement_method        the current Procurement Regulations' name
+-- procurement_method_as_written  the dataset's own words, kept when an old name was mapped
+-- market_approach           what an old method name says, in STEP's words, such as Open - National
 -- supplier                  the supplier's name; empty for an individual consultant
 -- individual_consultant     true when the dataset names the supplier only as INDIVIDUAL CONSULTANT
 -- fiscal_year               July to June, worked out from contract_signing_date
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS strata.silver.awards (
   procurement_category STRING,
   procurement_method STRING,
   procurement_method_as_written STRING,
+  market_approach STRING,
   review_type STRING,
   supplier STRING,
   individual_consultant BOOLEAN NOT NULL,

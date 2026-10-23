@@ -1,0 +1,48 @@
+{
+ "source": "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00047&resourceId=RS00047&type=json&top=100&skip=0&filter=project_id%3D%27P164704%27",
+ "license": "The World Bank: IBRD Statement of Loans and Guarantees - Latest Available Snapshot, Finances One dataset DS00047. License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "The latest snapshot of the IBRD loan for the Karachi Water and Sewerage Services Improvement Project (P164704), a water project in Pakistan, one of the slice's countries.",
+ "response": {
+  "count": 1,
+  "data": [
+   {
+    "agreement_signing_date": "26-Nov-2019",
+    "board_approval_date": "27-Jun-2019",
+    "borrower": "MINISTRY OF ECONOMIC AFFAIRS",
+    "borrowers_obligation": 36351619.29,
+    "board_approval___fiscal_year": 2019,
+    "board_approval___calendar_year": 2019,
+    "cancelled_amount": 0,
+    "closed_date_most_recent": "30-Jun-2026",
+    "country": "Pakistan",
+    "country_code": "PK",
+    "currency_of_commitment": "",
+    "disbursed_amount": 38860301.17,
+    "due_3rd_party": 0,
+    "due_to_ibrd": 36351619.29,
+    "effective_date_most_recent": "20-Feb-2020",
+    "end_of_period": "30-Sep-2026",
+    "exchange_adjustment": 0,
+    "first_repayment_date": "01-Sep-2025",
+    "guarantor": "Pakistan",
+    "guarantor_country_code": "PK",
+    "interest_rate": 0,
+    "last_disbursement_date": "21-Jul-2026",
+    "last_repayment_date": "01-Mar-2044",
+    "loan_number": "IBRD89940",
+    "loan_status": "Disbursing&Repaying",
+    "loan_type": "FSL",
+    "loans_held": 37491318.12,
+    "original_principal_amount": 40000000,
+    "project_id": "P164704",
+    "project_name": "KWSSIP",
+    "region": "MID EAST,NORTH AFRICA,AFG,PAK",
+    "repaid_3rd_party": 0,
+    "repaid_to_ibrd": 2508681.88,
+    "sold_3rd_party": 0,
+    "undisbursed_amount": 1139698.83
+   }
+  ]
+ }
+}

@@ -1,5 +1,5 @@
 -- strata.gold.package: each STEP reference that a notice or a contract carries, from every project.
--- A package is signed on its earliest contract in the awards dataset or, when it has none there,
+-- A package is signed on its earliest contract in an awards dataset or, when it has none there,
 -- on the Contract Signature Date of its Contract Award notice. Its Process Status is the one in
 -- the newest plan version that lists it, by plan date.
 -- key: step_reference
@@ -45,7 +45,7 @@ contracts AS (
     min(review_type) AS review_type,
     min(public_from) AS public_from
   FROM strata.gold.contract
-  WHERE step_reference IS NOT NULL
+  WHERE step_reference IS NOT NULL AND source <> 'notices'
   GROUP BY step_reference
 ),
 planned AS (

@@ -54,8 +54,9 @@ def restamped(source, engine):
     """The recorded pages again, fetched a day later: Finances One has stamped every row with a new as_of_date."""
     for page in pages.recorded_pages(source):
         body = copy.deepcopy(page.body)
-        for row in body.get("data") or []:
-            row["as_of_date"] = "24-Oct-2026"
+        for row in pages.records(source, body):
+            if "as_of_date" in row:
+                row["as_of_date"] = "24-Oct-2026"
         yield pages.Page(page.source, page.request, body, page.fetched_at + dt.timedelta(days=1))
 
 
@@ -94,7 +95,7 @@ def test_a_page_whose_records_changed_is_kept_again_and_gold_takes_the_new_value
     def revised(source, engine):
         for page in pages.recorded_pages(source):
             body = copy.deepcopy(page.body)
-            for row in body.get("data") or []:
+            for row in body["data"] if source.key == "awards" else []:
                 if row["wb_contract_number"] == "1903781":
                     row["supplier_contract_amount_usd"] = 1300000.0
             yield pages.Page(page.source, page.request, body, page.fetched_at + dt.timedelta(days=1))
@@ -113,7 +114,7 @@ def test_a_supplier_row_a_later_fetch_drops_leaves_gold(fixture_copy):
     def revised(source, engine):
         for page in pages.recorded_pages(source):
             body = copy.deepcopy(page.body)
-            if "data" in body:
+            if source.key == "awards":
                 body["data"] = [row for row in body["data"]
                                 if (row["wb_contract_number"], row["supplier_id"]) != ("1624689", "503711")]
             yield pages.Page(page.source, page.request, body, page.fetched_at + dt.timedelta(days=1))
@@ -192,7 +193,7 @@ def source(key, **changes):
     return dataclasses.replace(config.load_sources()[key], **changes)
 
 
-def test_the_awards_fetch_asks_finances_one_for_kenya_page_by_page_until_the_rows_run_out():
+def test_the_awards_fetch_asks_finances_one_for_every_country_page_by_page_until_the_rows_run_out():
     rows = recorded("api/awards/P156634.json")["data"]
     api = FakeAPI("data", rows, "count")
 
@@ -200,8 +201,9 @@ def test_the_awards_fetch_asks_finances_one_for_kenya_page_by_page_until_the_row
 
     assert [len(page.body["data"]) for page in fetched] == [100, 100, 80]
     assert api.asked[0] == ("https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005"
-                            "&resourceId=RS00005&type=json&filter=borrower_country_code%3D%27KE%27&top=100&skip=0")
+                            "&resourceId=RS00005&type=json&top=100&skip=0")
     assert [parse_qs(urlparse(url).query)["skip"] for url in api.asked] == [["0"], ["100"], ["200"]]
+    assert {page.country_code for page in fetched} == {None}  # no country filter, so no one country
 
 
 def test_the_notices_fetch_stops_at_the_first_page_older_than_what_bronze_holds():
@@ -213,7 +215,36 @@ def test_the_notices_fetch_stops_at_the_first_page_older_than_what_bronze_holds(
     fetched = list(pages.live_pages(source("notices", page_size=100), api, newest_held=lambda country: held))
 
     assert len(fetched) == 2  # the second page reaches back past it, so the 399 notices take two pages, not four
-    assert "project_ctry_name=Kenya" in api.asked[0] and "srt=submission_date&order=desc" in api.asked[0]
+    assert "project_ctry_name" not in api.asked[0] and "srt=submission_date&order=desc" in api.asked[0]
+
+
+class FakeIndicators:
+    """Serves a recorded Indicators API response a page at a time, as [about the page, records]."""
+
+    def __init__(self, response):
+        self.meta, self.rows, self.asked = response[0], response[1], []
+
+    def __call__(self, url):
+        self.asked.append(url)
+        query = parse_qs(urlparse(url).query)
+        size, number = int(query["per_page"][0]), int(query["page"][0])
+        pages_in_all = -(-len(self.rows) // size)
+        meta = dict(self.meta, page=number, pages=pages_in_all, per_page=size, total=len(self.rows))
+        return json.dumps([meta, self.rows[(number - 1) * size:number * size] or None])
+
+
+def test_an_indicators_source_asks_for_each_indicator_page_by_page():
+    api = FakeIndicators(recorded("api/indicators/wgi-ge-KEN-IND.json"))  # 54 rows
+    wgi = source("wgi", page_size=20, indicators=("GOV_WGI_GE.EST", "GOV_WGI_CC.EST"))
+
+    fetched = list(pages.live_pages(wgi, api))
+
+    assert [len(pages.records(wgi, page.body)) for page in fetched] == [20, 20, 14, 20, 20, 14]
+    assert api.asked[0] == ("https://api.worldbank.org/v2/country/all/indicator/GOV_WGI_GE.EST?format=json&source=3"
+                            "&page=1&per_page=20")
+    assert "indicator/GOV_WGI_CC.EST?" in api.asked[3]
+    assert {pages.reported_total(wgi, page.body) for page in fetched} == {54}
+    assert {pages.newest_record(wgi, page.body) for page in fetched} == {dt.date(2026, 9, 25)}  # its lastupdated
 
 
 def test_a_live_page_loses_its_contact_details_and_a_date_after_the_fetch_falls_back_to_the_fetch_day():
@@ -252,14 +283,16 @@ class FakeCountries:
         return json.dumps({"total": str(len(rows)), "procnotices": rows[offset:offset + size]}).encode()
 
 
-def test_a_country_added_to_the_registry_is_fetched_in_full_though_bronze_holds_newer_records_of_another(
+def test_a_country_added_to_the_slice_is_fetched_in_full_though_bronze_holds_newer_records_of_another(
         monkeypatch):
-    """The watermark is each country's own. Bronze holds Kenya's newest notices, and every notice
-    of the added country is older than those, so a source-wide watermark would stop its first fetch
-    after one page."""
+    """A source fetched for the slice countries keeps a watermark per country. Bronze holds Kenya's
+    newest notices, and every notice of the added country is older than those, so a source-wide
+    watermark would stop its first fetch after one page. The search API stands in for any source
+    fetched country by country."""
     rows = sorted(recorded("api/notices/P156634.json")["procnotices"], key=lambda row: row["submission_date"],
                   reverse=True)
-    kenya, added = config.FetchCountry("Kenya", "KE"), config.FetchCountry("Uganda", "UG")
+    kenya, added = config.Country("Kenya", "KE", "KEN"), config.Country("Uganda", "UG", "UGA")
+    by_country = {"scope": "slice countries", "country_filter": "project_ctry_name={name}"}
     api = FakeCountries({"Kenya": rows[:200], "Uganda": rows[200:]})
     monkeypatch.setattr("strata.fixture.record.fetch_url", api)
 
@@ -267,10 +300,52 @@ def test_a_country_added_to_the_registry_is_fetched_in_full_though_bronze_holds_
         from strata.lakehouse import bronze, catalog
 
         catalog.build(engine)
-        bronze.store(engine, source("notices"), nightly.fetch_live(source("notices", countries=(kenya,)), engine))
+        bronze.store(engine, source("notices"),
+                     nightly.fetch_live(source("notices", countries=(kenya,), **by_country), engine))
         api.asked.clear()
-        fetched = list(nightly.fetch_live(source("notices", page_size=50, countries=(kenya, added)), engine))
+        fetched = list(nightly.fetch_live(source("notices", page_size=50, countries=(kenya, added), **by_country),
+                                          engine))
 
     uganda = [page for page in fetched if "project_ctry_name=Uganda" in page.request]
     assert [len(page.body["procnotices"]) for page in uganda] == [50, 50, 50, 49]
     assert {page.country_code for page in uganda} == {"UG"}
+
+
+def test_a_source_fetched_for_every_country_keeps_one_watermark(monkeypatch):
+    """With no country filter, the newest notice bronze holds from the last fetch is the watermark,
+    so a second fetch stops at the first page older than it."""
+    rows = sorted(recorded("api/notices/P156634.json")["procnotices"], key=lambda row: row["submission_date"],
+                  reverse=True)
+    api = FakeAPI("procnotices", rows, "total")
+    monkeypatch.setattr("strata.fixture.record.fetch_url", lambda url: api(url).encode())
+
+    with DuckDBEngine.open() as engine:
+        from strata.lakehouse import bronze, catalog
+
+        catalog.build(engine)
+        bronze.store(engine, source("notices"), nightly.fetch_live(source("notices", page_size=100), engine))
+        api.asked.clear()
+        again = list(nightly.fetch_live(source("notices", page_size=100), engine))
+
+    assert len(again) == 1  # the newest page already reaches back to the newest notice held
+
+
+def test_the_nightly_job_fetches_a_frozen_source_only_while_bronze_holds_none_of_its_pages():
+    """The FY2001 to FY2016 awards have not changed since March 2022 (cadence frozen), so once bronze
+    holds them the job does not ask Finances One for its 147 pages again."""
+    from strata.lakehouse import catalog
+
+    asked = []
+
+    def fetch(source, engine):
+        asked.append(source.key)
+        return pages.recorded_pages(source)
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        nightly.run_task(engine, "fetch_by_watermark", "first", fetch)
+        first, asked[:] = list(asked), []
+        nightly.run_task(engine, "fetch_by_watermark", "second", fetch)
+
+    assert "awards_fy2001_2016" in first
+    assert "awards_fy2001_2016" not in asked and "awards" in asked

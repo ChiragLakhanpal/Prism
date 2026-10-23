@@ -1132,6 +1132,88 @@ quote = "International Competitive Bidding"
 record = "api/notices/kenya-icb-2015.json"
 at = "procnotices[id=OP00034393].procurement_method_name"
 
+# Every structured source (ticket 17)
+
+[[value]]
+id = "award-old-icb"
+says = "Contract 1500442 for P124109, signed July 12, 2012, is in the FY2001 to FY2016 awards dataset under International Competitive Bidding, an old name for Request for Bids, Open - International."
+value = "International Competitive Bidding"
+quote = "International Competitive Bidding"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1500442].procurement_method"
+
+[[value]]
+id = "award-old-lib"
+says = "Contract 1321403 for P124109 is under Limited International Bidding, an old name for Request for Bids, Limited - International."
+value = "Limited International Bidding"
+quote = "Limited International Bidding"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1321403].procurement_method"
+
+[[value]]
+id = "award-old-shopping"
+says = "Contract 1521435 for P124109 is under Shopping, the old name for Request for Quotations."
+value = "Shopping"
+quote = "Shopping"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1521435].procurement_method"
+
+[[value]]
+id = "award-old-ncb"
+says = "Contract 1516228 for P130164 is under National Competitive Bidding, an old name for Request for Bids, Open - National."
+value = "National Competitive Bidding"
+quote = "National Competitive Bidding"
+record = "api/awards/P130164-fy2001-2016.json"
+at = "data[contract_number=1516228].procurement_method"
+
+[[value]]
+id = "closing-p156634-original"
+says = "Credit IDA60290's closing date was October 31, 2022 in the month that ended October 31, 2022, the last month before it moved."
+value = 2022-10-31
+quote = "31-Oct-2022"
+record = "api/credits/P156634-P130164-history.json"
+at = "data[credit_number=IDA60290&end_of_period=31-Oct-2022].closed_date_most_recent"
+
+[[value]]
+id = "closing-p156634-move-1"
+says = "The monthly history first shows P156634's closing date moved to April 30, 2024 in the month that ended November 30, 2022."
+value = 2024-04-30
+quote = "30-Apr-2024"
+record = "api/credits/P156634-P130164-history.json"
+at = "data[credit_number=IDA60290&end_of_period=30-Nov-2022].closed_date_most_recent"
+
+[[value]]
+id = "closing-p156634-move-2"
+says = "It first shows the closing date moved to October 31, 2025 in the month that ended April 30, 2024."
+value = 2025-10-31
+quote = "31-Oct-2025"
+record = "api/credits/P156634-P130164-history.json"
+at = "data[credit_number=IDA60290&end_of_period=30-Apr-2024].closed_date_most_recent"
+
+[[value]]
+id = "closing-p156634-move-3"
+says = "It first shows the closing date moved to October 31, 2026 in the month that ended November 30, 2025: the third move since 2022. IDA60300 moved on the same months."
+value = 2026-10-31
+quote = "31-Oct-2026"
+record = "api/credits/P156634-P130164-history.json"
+at = "data[credit_number=IDA60290&end_of_period=30-Nov-2025].closed_date_most_recent"
+
+[[value]]
+id = "ibrd-loan-p164704"
+says = "The IBRD loan for P164704 is IBRD89940, with US$38,860,301.17 disbursed in the snapshot for the month that ended September 30, 2026."
+value = "IBRD89940"
+quote = "IBRD89940"
+record = "api/loans/P164704-ibrd.json"
+at = "data[project_id=P164704].loan_number"
+
+[[value]]
+id = "isr-procurement-p156634"
+says = "The projects API lists P156634's ISR rating for Procurement on June 30, 2026, Moderately Satisfactory, twice, as it lists each of its seven ratings."
+value = "Moderately Satisfactory"
+quote = "Moderately Satisfactory"
+record = "api/projects/P156634.json"
+at = "projects.P156634.isr_ratings.8.value"
+
 [awkward.contact_details]
 says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, carries a contact name, email and phone number. Ingestion strips them, and this file does not repeat them."
 record = "api/notices/P156634.json"
@@ -1176,3 +1258,17 @@ with_notice = 239
 with_notice_counted = "The contracts with a STEP reference that a recorded notice's bid_reference_no also carries, once both are written in capitals with single hyphens."
 notices = 404
 notices_counted = "The distinct notice ids in the three notice files whose project_ctry_name is Kenya: 399 for P156634, four for the packages still open on October 9, 2026, and the 2015 ICB notice."
+
+# FY2017 to FY2019, which neither awards dataset covers. Each Contract Award notice in the
+# fixture whose Contract Signature Date falls in one of those fiscal years, read from the notice's
+# text by hand on October 23, 2026. Every one has a signature date. The fiscal year runs July to
+# June: OP00059544, signed September 27, 2016, is FY2017; OP00154314, signed June 18, 2019, is FY2019.
+[counts.gap_years]
+says = "The award notices that fill FY2017 to FY2019, by the fiscal year their contract was signed in."
+notice_files = ["api/notices/P130164.json", "api/notices/P156634.json"]
+fy2017 = ["OP00044090", "OP00059544"]
+fy2018 = ["OP00054114"]
+fy2019 = ["OP00071741", "OP00074816", "OP00086370", "OP00154314"]
+in_inr = "OP00044090"
+in_inr_price = "69,826,127.64"
+no_price = "OP00074816"

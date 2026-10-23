@@ -18,10 +18,13 @@ TABLES = {
         "wb_contract_number", "supplier_id", "project_id", "project_name", "borrower_country_code",
         "borrower_country", "region", "global_practice", "borrower_contract_reference_number", "step_reference",
         "reference_method_code", "contract_description", "procurement_category", "procurement_method",
-        "procurement_method_as_written", "review_type", "supplier", "individual_consultant", "supplier_country",
+        "procurement_method_as_written", "market_approach", "review_type", "supplier", "individual_consultant", "supplier_country",
         "supplier_country_code", "supplier_contract_amount_usd", "contract_signing_date", "fiscal_year",
         "page_hash", "fetched_at", "public_from"),
 }
+
+# The columns that tell one of the source's records from another (strata.lakehouse.readiness).
+RECORD_KEY = ("wb_contract_number", "supplier_id")
 
 PENDING = """
 SELECT p.page_hash, p.body, p.fetched_at
@@ -60,6 +63,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("procurement_category")),
             method.name if method else None,
             clean.text(record.get("procurement_method")),
+            method.market_approach if method else None,
             clean.text(record.get("review_type")),
             None if individual else clean.text(record.get("supplier")),
             individual,

@@ -130,6 +130,13 @@ def notice_method_as_written(gold, value):
     assert row["public_from"] == dt.date(2015, 9, 14)  # its noticedate, 14-Sep-2015
 
 
+def isr_rating(gold, value):
+    """The projects API lists the rating twice; gold keeps it once, public from its ISR's date."""
+    row = one(gold, "SELECT value, public_from FROM strata.gold.project_isr_rating "
+                    "WHERE project_id = 'P156634' AND rating_name = 'Procurement'")
+    assert (row["value"], row["public_from"]) == (value["value"], dt.date(2026, 6, 30))
+
+
 CHECKS = {
     "notice-icb-code": notice_method_as_written,
     "notice-icb-name": notice_method_as_written,
@@ -144,6 +151,7 @@ CHECKS = {
     "loan-form-older-with-lender": notice_loan,
     "closing-date-p156634": project_closing,
     "individual-consultant": individual_consultant,
+    "isr-procurement-p156634": isr_rating,
 }
 
 
@@ -434,7 +442,7 @@ def test_fiscal_years_run_july_to_june_as_the_awards_dataset_counts_them(gold):
     recorded_years = {row["wb_contract_number"]: row["fiscal_year"] for file in KENYA_RECORDS
                       if file.startswith("api/awards/") for row in record(file)["data"]}
     gold_years = dict(gold.run("SELECT wb_contract_number, fiscal_year FROM strata.gold.contract "
-                               "WHERE country_code = 'KE'").rows)
+                               "WHERE country_code = 'KE' AND source = 'awards'").rows)
 
     assert gold_years == recorded_years
 

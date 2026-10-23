@@ -13,6 +13,9 @@ SELECT
   borrower,
   sector_codes,
   major_sector,
+  major_sector_code,
+  sector,
+  sector_name,
   total_commitment_usd,
   public_from
 FROM strata.silver.projects

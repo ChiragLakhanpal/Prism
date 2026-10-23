@@ -11,8 +11,10 @@
 #   dataset_id        optional: the Finances One dataset id
 #   resource_id       optional: the Finances One resource id
 #   watermark_field   the field that says how new a record is. The search APIs sort by it, so a
-#                     fetch stops at the first page older than what bronze already holds.
-#   cadence           daily, weekly, monthly, quarterly, yearly or frozen
+#                     fetch stops at the first page older than what bronze already holds. For the
+#                     Indicators API it is the page's lastupdated date.
+#   cadence           daily, weekly, monthly, quarterly, yearly or frozen. The nightly job fetches
+#                     a frozen source once, when bronze holds none of its pages yet.
 #   license           the license line for attribution
 #   silver_transform  the module in src/strata/lakehouse/silver/ that types and cleans its pages,
 #                     or, for a source its own reader fetches, the SQL file of its first transform
@@ -20,13 +22,20 @@
 #   known_gaps        optional: gaps the Data readiness page shows as Gap rows
 #   limitations       optional: limits the Data readiness page shows as Partial
 #
-# The nightly job fetches a source page by page when its entry names these five keys. A source
-# that its own reader fetches, such as documents (the plan reader), names none of them.
+# The nightly job fetches a source page by page when its entry names these keys. A source that its
+# own reader fetches, such as documents (the plan reader), names none of them.
 #
-#   api               how pages are asked for: finances_one (top and skip) or search (rows and os,
-#                     newest first by the watermark field)
-#   records           the key that holds the records in each page
-#   country_filter    the query text that limits a request to one country, with {iso2} or {name}
+#   api               how pages are asked for: finances_one (top and skip), search (rows and os,
+#                     newest first by the watermark field) or indicators (the Indicators API, by
+#                     page and per_page, one indicator at a time)
+#   records           the key that holds the records in each page. An indicators source needs none:
+#                     the Indicators API sends each page as [about the page, records].
+#   scope             every country (one series of pages with no country filter) or slice countries
+#                     (the countries in config/slice.toml, each asked for on its own)
+#   country_filter    for a source fetched for the slice countries: the query text that limits a
+#                     request to one country, with {iso2}, {iso3} or {name}
+#   indicators        for an indicators source: the indicator codes, each put where the endpoint
+#                     says {indicator}
 #   page_size         records per page
 #   fixture_dataset   the [datasets] entry in data/fixture/sources.toml whose recorded files stand
 #                     in for this source in the offline gate
@@ -35,12 +44,11 @@
 #
 # data/fixture/sources.toml is a different file: it lists the recorded copies of public pages that
 # the offline gate reads in place of these endpoints.
+#
+# Structured data covers every country (docs/PLAN.md section 3, "Scope"). Only the monthly loan
+# history follows the slice, so adding a country to config/slice.toml adds it there too.
 
-# The countries whose records the nightly job fetches. P1 fetches Kenya. Adding a country is one
-# entry; ticket 17 widens the fetch to every country.
-[[countries]]
-name = "Kenya"
-iso2 = "KE"
+# ── Contract awards ──────────────────────────────────────────────────────
 
 [sources.awards]
 dataset_name = "Contract Awards in Investment Project Financing (Since FY 2020)"
@@ -49,7 +57,7 @@ dataset_id = "DS00005"
 resource_id = "RS00005"
 api = "finances_one"
 records = "data"
-country_filter = "filter=borrower_country_code%3D%27{iso2}%27"
+scope = "every country"
 page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
@@ -61,12 +69,123 @@ stratum = "What"
 known_gaps = ["Awards for FY2017 to FY2019 are in neither awards dataset. Award notices fill most of the gap, in local currency."]
 limitations = ["A joint venture appears as one row per member, with the contract amount split between them.", "INDIVIDUAL CONSULTANT stands for many people, each with their own supplier ID."]
 
+[sources.awards_fy2001_2016]
+dataset_name = "Contract Awards in Investment Project Financing (since FY 2001 - FY 2016)"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS01004&resourceId=RS00934&type=json"
+dataset_id = "DS01004"
+resource_id = "RS00934"
+api = "finances_one"
+records = "data"
+scope = "every country"
+page_size = 1000
+watermark_field = "contract_signing_date"
+ignore_keys = ["as_of_date"]
+fixture_dataset = "awards_fy2001_2016"
+cadence = "frozen"
+license = "CC BY 4.0"
+silver_transform = "awards_fy2001_2016"
+stratum = "What"
+limitations = ["It holds prior-review contracts only, and has not changed since March 2022.", "Its references are free text, not STEP references, so its contracts do not join notices or packages.", "It writes methods by the names used before the 2016 Procurement Regulations. I store the current name and keep its words."]
+
+# ── IEG ratings ──────────────────────────────────────────────────────────
+
+# The dataset does not say how often it changes. New ratings arrive as IEG finishes its reviews.
+[sources.ieg_ratings]
+dataset_name = "IEG World Bank Project Performance Ratings"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00053&resourceId=RS00055&type=json"
+dataset_id = "DS00053"
+resource_id = "RS00055"
+api = "finances_one"
+records = "data"
+scope = "every country"
+page_size = 1000
+watermark_field = "evaluation_fy"
+ignore_keys = ["as_of_date"]
+fixture_dataset = "ieg_ratings"
+cadence = "monthly"
+license = "CC BY 4.0"
+silver_transform = "ieg_ratings"
+stratum = "What"
+limitations = ["It gives the fiscal year of each evaluation, not its date, so a rating counts as public from the last day of that fiscal year."]
+
+# ── Loans and credits: the latest snapshot, and the monthly history ──────
+
+[sources.ida_credits]
+dataset_name = "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00001&resourceId=RS00001&type=json"
+dataset_id = "DS00001"
+resource_id = "RS00001"
+api = "finances_one"
+records = "data"
+scope = "every country"
+page_size = 1000
+watermark_field = "end_of_period"
+fixture_dataset = "ida_credits"
+cadence = "monthly"
+license = "CC BY 4.0"
+silver_transform = "loans"
+stratum = "What"
+
+[sources.ibrd_loans]
+dataset_name = "IBRD Statement of Loans and Guarantees - Latest Available Snapshot"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00047&resourceId=RS00047&type=json"
+dataset_id = "DS00047"
+resource_id = "RS00047"
+api = "finances_one"
+records = "data"
+scope = "every country"
+page_size = 1000
+watermark_field = "end_of_period"
+fixture_dataset = "ibrd_loans"
+cadence = "monthly"
+license = "CC BY 4.0"
+silver_transform = "loans"
+stratum = "What"
+
+[sources.ida_credit_history]
+dataset_name = "IDA Statement Of Credits, Grants and Guarantees - Historical Data"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00976&resourceId=RS00976&type=json"
+dataset_id = "DS00976"
+resource_id = "RS00976"
+api = "finances_one"
+records = "data"
+scope = "slice countries"
+country_filter = "filter=country_code%3D%27{iso2}%27"
+page_size = 1000
+watermark_field = "end_of_period"
+fixture_dataset = "ida_credit_history"
+cadence = "monthly"
+license = "CC BY 4.0"
+silver_transform = "loan_history"
+stratum = "What"
+limitations = ["I fetch the monthly history for the slice's countries only."]
+
+[sources.ibrd_loan_history]
+dataset_name = "IBRD Statement Of Loans and Guarantees - Historical Data"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00975&resourceId=RS00975&type=json"
+dataset_id = "DS00975"
+resource_id = "RS00975"
+api = "finances_one"
+records = "data"
+scope = "slice countries"
+country_filter = "filter=country_code%3D%27{iso2}%27"
+page_size = 1000
+watermark_field = "end_of_period"
+fixture_dataset = "ibrd_loan_history"
+cadence = "monthly"
+license = "CC BY 4.0"
+silver_transform = "loan_history"
+stratum = "What"
+limitations = ["I fetch the monthly history for the slice's countries only."]
+
+# ── The search APIs: procurement notices and projects ────────────────────
+
 [sources.notices]
 dataset_name = "Procurement Notices"
 endpoint = "https://search.worldbank.org/api/v2/procnotices?format=json"
 api = "search"
 records = "procnotices"
-country_filter = "project_ctry_name={name}"
+scope = "every country"
 page_size = 500
 watermark_field = "submission_date"
 fixture_dataset = "notices"
@@ -76,12 +195,14 @@ silver_transform = "notices"
 stratum = "What"
 limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched."]
 
+# The projects API answers with every field unless asked for some, and the full record is many
+# times larger, so the endpoint names the fields that silver reads. It sends project_abstract anyway.
 [sources.projects]
 dataset_name = "World Bank Projects & Operations"
-endpoint = "https://search.worldbank.org/api/v3/projects?format=json&fl=*"
+endpoint = "https://search.worldbank.org/api/v3/projects?format=json&fl=id,project_name,countrycode,countryshortname,regionname,status,boardapprovaldate,closingdate,impagency,borrower,sectorcode,major_sector_name,major_sectors,curr_total_commitment,totalamt,public_disclosure_date,proj_last_upd_date,loan_transactions,isr_ratings"
 api = "search"
 records = "projects"
-country_filter = "countrycode_exact={iso2}"
+scope = "every country"
 page_size = 100
 watermark_field = "proj_last_upd_date"
 fixture_dataset = "projects"
@@ -89,7 +210,48 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "projects"
 stratum = "What"
-limitations = ["The projects API keeps only the latest ISR ratings."]
+limitations = ["The projects API keeps only the latest ISR ratings, and lists some of them twice. I keep each rating once."]
+
+# ── Governance indicators: CPIA and WGI ──────────────────────────────────
+
+# CPIA: every IQ.CPA code on the Indicators API (21 on October 23, 2026). CPIA covers IDA countries only.
+[sources.cpia]
+dataset_name = "World Development Indicators: Country Policy and Institutional Assessment"
+endpoint = "https://api.worldbank.org/v2/country/all/indicator/{indicator}?format=json"
+api = "indicators"
+indicators = [
+  "IQ.CPA.BREG.XQ", "IQ.CPA.DEBT.XQ", "IQ.CPA.ECON.XQ", "IQ.CPA.ENVR.XQ", "IQ.CPA.FINQ.XQ", "IQ.CPA.FINS.XQ",
+  "IQ.CPA.FISP.XQ", "IQ.CPA.GNDR.XQ", "IQ.CPA.HRES.XQ", "IQ.CPA.IRAI.XQ", "IQ.CPA.MACR.XQ", "IQ.CPA.PADM.XQ",
+  "IQ.CPA.PRES.XQ", "IQ.CPA.PROP.XQ", "IQ.CPA.PROT.XQ", "IQ.CPA.PUBS.XQ", "IQ.CPA.REVN.XQ", "IQ.CPA.SOCI.XQ",
+  "IQ.CPA.STRC.XQ", "IQ.CPA.TRAD.XQ", "IQ.CPA.TRAN.XQ",
+]
+scope = "every country"
+page_size = 1000
+watermark_field = "lastupdated"
+fixture_dataset = "cpia"
+cadence = "yearly"
+license = "CC BY 4.0"
+silver_transform = "indicators"
+stratum = "What"
+limitations = ["CPIA scores exist for IDA countries only.", "When the API revises a score, I keep both versions, and a join on a past date uses the version public then."]
+
+# WGI: the estimate of each of the six dimensions (source 3). The old GE.EST codes no longer work.
+[sources.wgi]
+dataset_name = "Worldwide Governance Indicators"
+endpoint = "https://api.worldbank.org/v2/country/all/indicator/{indicator}?format=json&source=3"
+api = "indicators"
+indicators = ["GOV_WGI_CC.EST", "GOV_WGI_GE.EST", "GOV_WGI_PV.EST", "GOV_WGI_RL.EST", "GOV_WGI_RQ.EST", "GOV_WGI_VA.EST"]
+scope = "every country"
+page_size = 1000
+watermark_field = "lastupdated"
+fixture_dataset = "wgi"
+cadence = "yearly"
+license = "CC BY 4.0"
+silver_transform = "indicators"
+stratum = "What"
+limitations = ["When the API revises a score, I keep both versions, and a join on a past date uses the version public then."]
+
+# ── Documents ────────────────────────────────────────────────────────────
 
 # Procurement Plan versions, and later every document of the slice, from the documents API. The
 # plan reader (src/strata/lakehouse/plans.py) lists a project's documents here and fetches each

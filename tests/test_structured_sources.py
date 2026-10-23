@@ -1,0 +1,291 @@
+"""Every structured source, for every country, through the lakehouse run (seam 1, ticket 17).
+
+The gate builds data/out/fixture.duckdb with the nightly job's own tasks over the recorded pages
+(gates/build_fixture.py), so most tests here read the tables that run wrote. A test that needs a
+page the fixture does not hold, such as an indicator revised in place, writes that page by hand
+from a recorded one and runs the same tasks on an empty database.
+
+Expected values come from tests/ground_truth/values.toml, where each names its recorded record,
+or from the recorded files read directly, never from the code under test.
+"""
+
+import copy
+import datetime as dt
+import decimal
+import json
+import tomllib
+from pathlib import Path
+
+import pytest
+
+from strata import config
+from strata.lakehouse import bronze, catalog, gold, pages, silver
+from strata.lakehouse.engine import DuckDBEngine
+
+ROOT = Path(__file__).resolve().parents[1]
+RECORDED = ROOT / "data" / "fixture" / "recorded"
+TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
+VALUES = {value["id"]: value for value in TRUTH["value"]}
+
+
+@pytest.fixture(scope="module")
+def db(fixture_db):
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        yield engine
+
+
+def rows(engine, sql, **params):
+    result = engine.run(sql, params)
+    return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
+
+
+def recorded(file):
+    return json.loads((RECORDED / file).read_text())["response"]
+
+
+def run_one(engine, key, body, fetched_at, request="https://example.org/page?top=1000&skip=0"):
+    """One page of one source through bronze and silver, as the nightly job's tasks take it."""
+    source = config.load_sources()[key]
+    bronze.store(engine, source, [pages.Page(key, request, body, fetched_at)])
+    silver.run(engine, source)
+    return source
+
+
+# ── Old method names ─────────────────────────────────────────────────────
+
+# The names used before the July 2016 Procurement Regulations, and what each is now with the
+# market approach it implies in STEP's words. ICB, NCB and Direct Contracting are the spec's
+# examples (user story 33); a plain Shopping names no market approach.
+OLD_NAMES = {
+    "International Competitive Bidding": ("Request for Bids", "Open - International"),
+    "National Competitive Bidding": ("Request for Bids", "Open - National"),
+    "Limited International Bidding": ("Request for Bids", "Limited - International"),
+    "Shopping": ("Request for Quotations", None),
+    "Direct Contracting": ("Direct Selection", "Direct"),
+}
+OLD_AWARDS = ("api/awards/P124109-fy2001-2016.json", "api/awards/P130164-fy2001-2016.json")
+
+
+def test_old_awards_reach_gold_with_the_current_method_name_and_keep_the_dataset_s_words(db):
+    written = {row["contract_number"]: row["procurement_method"]
+               for file in OLD_AWARDS for row in recorded(file)["data"] if row["procurement_method"] in OLD_NAMES}
+    assert {"International Competitive Bidding", "National Competitive Bidding", "Shopping",
+            "Limited International Bidding"} <= set(written.values())  # the fixture holds each of these
+
+    stored = {row["wb_contract_number"]: row for row in rows(
+        db, "SELECT wb_contract_number, procurement_method, procurement_method_as_written, market_approach, source, "
+            "public_from FROM strata.gold.contract WHERE source = 'awards_fy2001_2016'")}
+
+    for number, words in written.items():
+        row = stored[number]
+        assert (row["procurement_method"], row["market_approach"]) == OLD_NAMES[words], number
+        assert row["procurement_method_as_written"] == words
+        assert row["public_from"] is not None
+
+
+def test_an_old_award_written_as_direct_contracting_is_stored_as_direct_selection():
+    """The FY2001 to FY2016 dataset writes no award as Direct Contracting: on October 23, 2026 a
+    search for it found 0 of its 146,802 rows, which write direct awards as Direct Selection. So this
+    page is a recorded P124109 row with only its method changed to the old name."""
+    record = dict(recorded("api/awards/P124109-fy2001-2016.json")["data"][0], procurement_method="Direct Contracting")
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "awards_fy2001_2016", {"count": 1, "data": [record]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        stored = rows(engine, "SELECT procurement_method, procurement_method_as_written, market_approach "
+                              "FROM strata.gold.contract")
+
+    assert stored == [{"procurement_method": "Direct Selection", "procurement_method_as_written": "Direct Contracting",
+                       "market_approach": "Direct"}]
+
+
+# ── FY2017 to FY2019, from award notices ─────────────────────────────────
+
+GAP = TRUTH["counts"]["gap_years"]
+
+
+def test_fy2017_to_fy2019_have_contracts_from_award_notices_labeled_as_local_currency(db):
+    stored = rows(db, "SELECT contract_id, fiscal_year, award_notice_id, amount_basis, contract_amount_usd, "
+                      "contract_currency, public_from FROM strata.gold.contract WHERE source = 'notices'")
+
+    by_year = {f"fy{year}": sorted(row["contract_id"] for row in stored if row["fiscal_year"] == year)
+               for year in (2017, 2018, 2019)}
+    assert by_year == {key: sorted(GAP[key]) for key in ("fy2017", "fy2018", "fy2019")}
+    assert len(stored) == sum(len(GAP[key]) for key in ("fy2017", "fy2018", "fy2019"))  # no other year
+    assert {row["amount_basis"] for row in stored} == {"local currency, from award notices"}
+    assert {row["contract_amount_usd"] for row in stored} == {None}  # never converted
+    assert all(row["award_notice_id"] == row["contract_id"] and row["public_from"] for row in stored)
+
+
+def test_a_contract_from_an_award_notice_keeps_the_price_in_the_currency_the_notice_names(db):
+    # values.toml: award-7431-signed. OP00044090 signed IN-RRSMP-7431-CW-RFB on June 15, 2017.
+    notice = [row for row in recorded("api/notices/P130164.json")["procnotices"] if row["id"] == GAP["in_inr"]][0]
+    assert f"INR {GAP['in_inr_price']}" in notice["notice_text"]
+
+    contract = rows(db, "SELECT step_reference, contract_signing_date, contract_amount, contract_currency "
+                        "FROM strata.gold.contract WHERE contract_id = :notice", notice=GAP["in_inr"])
+    assert contract == [{"step_reference": "IN-RRSMP-7431-CW-RFB", "contract_signing_date": dt.date(2017, 6, 15),
+                         "contract_amount": decimal.Decimal(GAP["in_inr_price"].replace(",", "")),
+                         "contract_currency": "INR"}]
+
+
+# ── Loans and credits: the closing-date history ──────────────────────────
+
+def test_p156634_s_closing_date_history_shows_three_moves_since_2022_as_the_loan_history_records(db):
+    history = rows(db, "SELECT closing_date, previous_closing_date, reported_on, public_from "
+                       "FROM strata.gold.project_closing_date WHERE project_id = 'P156634' ORDER BY reported_on")
+    moves = [row for row in history if row["previous_closing_date"] is not None
+             and row["reported_on"] >= dt.date(2022, 1, 1)]
+
+    expected = [VALUES[f"closing-p156634-move-{n}"] for n in (1, 2, 3)]
+    reported = [dt.datetime.strptime(value["at"].split("end_of_period=")[1].split("]")[0], "%d-%b-%Y").date()
+                for value in expected]
+    assert [(row["closing_date"], row["reported_on"]) for row in moves] == [
+        (value["value"], day) for value, day in zip(expected, reported, strict=True)]
+    assert moves[0]["previous_closing_date"] == VALUES["closing-p156634-original"]["value"]
+    assert all(row["public_from"] == row["reported_on"] for row in moves)
+
+
+def test_each_loan_reaches_gold_from_its_newest_snapshot_with_its_amounts(db):
+    # values.toml: ibrd-loan-p164704, and the IDA credits of the two recorded projects.
+    snapshot = recorded("api/loans/P164704-ibrd.json")["data"][0]
+    loan = rows(db, "SELECT lender, project_id, country_code, closing_date, disbursed_usd, as_of, public_from "
+                    "FROM strata.gold.loan WHERE loan_number = :loan", loan=VALUES["ibrd-loan-p164704"]["value"])
+
+    assert loan == [{"lender": "IBRD", "project_id": "P164704", "country_code": "PK",
+                     "closing_date": dt.date(2026, 6, 30), "disbursed_usd": decimal.Decimal("38860301.17"),
+                     "as_of": dt.date(2026, 9, 30), "public_from": dt.date(2026, 9, 30)}]
+    assert snapshot["disbursed_amount"] == 38860301.17
+    credits = {row["loan_number"] for row in rows(db, "SELECT loan_number FROM strata.gold.loan WHERE lender = 'IDA'")}
+    assert credits == {row["credit_number"] for row in recorded("api/credits/P156634-P130164.json")["data"]}
+
+
+# ── IEG ratings and ISR ratings ──────────────────────────────────────────
+
+def test_an_ieg_rating_reaches_gold_public_from_the_end_of_its_evaluation_year(db):
+    # values.toml: ieg-outcome-p130164. IEG's ICR Review of P130164 was evaluated in FY2020.
+    rating = rows(db, "SELECT outcome, evaluation_type, evaluation_fy, public_from FROM strata.gold.ieg_rating "
+                      "WHERE project_id = 'P130164'")
+
+    assert rating == [{"outcome": VALUES["ieg-outcome-p130164"]["value"], "evaluation_type": "ICRR",
+                       "evaluation_fy": 2020, "public_from": dt.date(2020, 6, 30)}]
+
+
+def test_the_projects_api_s_duplicate_isr_ratings_are_kept_once(db):
+    listed = recorded("api/projects/P156634.json")["projects"]["P156634"]["isr_ratings"]
+    distinct = {(row["code"], row["isr_date"], row["value"]) for row in listed}
+    assert len(listed) == 2 * len(distinct)  # the API lists each of P156634's ratings twice
+
+    stored = rows(db, "SELECT rating_code, isr_date, value, public_from FROM strata.gold.project_isr_rating "
+                      "WHERE project_id = 'P156634'")
+    assert sorted((row["rating_code"], row["isr_date"].isoformat(), row["value"]) for row in stored) == sorted(distinct)
+    procurement = [row for row in stored if row["rating_code"] == "27"]
+    assert [row["value"] for row in procurement] == [VALUES["isr-procurement-p156634"]["value"]]
+    assert {row["public_from"] for row in stored} == {dt.date(2026, 6, 30)}
+
+
+# ── Governance indicators, each published version kept ───────────────────
+
+def revised(response, country, year, value, lastupdated):
+    """The recorded Indicators API page again, as if the API had revised one value in place."""
+    body = copy.deepcopy(response)
+    body[0]["lastupdated"] = lastupdated
+    for row in body[1]:
+        if (row["country"]["id"], row["date"]) == (country, year):
+            row["value"] = value
+    return body
+
+
+def test_an_indicator_revised_in_place_keeps_both_versions_and_a_join_between_them_takes_the_earlier():
+    """The Indicators API overwrites a revised value and gives the page a new lastupdated date. This
+    is the recorded WGI page for government effectiveness (lastupdated September 25, 2026), then the
+    same page with Kenya's 2025 estimate, the latest year, revised on February 15, 2027, a version the API has not
+    published: the fixture can record only what the API serves today."""
+    from strata.lakehouse import governance
+
+    first = recorded("api/indicators/wgi-ge-KEN-IND.json")
+    earlier = [row["value"] for row in first[1] if (row["country"]["id"], row["date"]) == ("KE", "2025")][0]
+    later = revised(first, "KE", "2025", -0.5, "2027-02-15")
+    url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_GE.EST?format=json&per_page=500&source=3"
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "wgi", first, dt.datetime(2026, 10, 23, tzinfo=dt.UTC), url)
+        run_one(engine, "wgi", later, dt.datetime(2027, 2, 16, tzinfo=dt.UTC), url)
+        gold.build(engine)
+        versions = rows(engine, "SELECT value, public_from, superseded_on FROM strata.gold.governance_score "
+                                "WHERE country_code = 'KE' AND indicator_id = 'GOV_WGI_GE.EST' AND year = 2025 "
+                                "ORDER BY public_from")
+        unchanged = rows(engine, "SELECT count(*) AS versions FROM strata.gold.governance_score "
+                                 "WHERE country_code = 'IN' AND indicator_id = 'GOV_WGI_GE.EST' AND year = 2025")
+        between = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 12, 1))
+        after = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2027, 3, 1))
+        before = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 9, 1))
+
+    assert [(row["value"], row["public_from"], row["superseded_on"]) for row in versions] == [
+        (earlier, dt.date(2026, 9, 25), dt.date(2027, 2, 15)), (-0.5, dt.date(2027, 2, 15), None)]
+    assert unchanged == [{"versions": 1}]
+    assert (between["year"], between["value"]) == (2025, earlier)
+    assert (after["year"], after["value"]) == (2025, -0.5)
+    assert before is None  # nothing from this page was public before its lastupdated date
+
+
+def test_cpia_and_wgi_reach_gold_for_each_country_and_year_with_a_value(db):
+    """CPIA covers IDA countries only: India has values only for the years it borrowed from IDA."""
+    for file, indicator in (("api/indicators/cpia-irai-KEN-IND.json", "IQ.CPA.IRAI.XQ"),
+                            ("api/indicators/wgi-cc-KEN-IND.json", "GOV_WGI_CC.EST")):
+        response = recorded(file)
+        with_values = {(row["country"]["id"], int(row["date"])) for row in response[1] if row["value"] is not None}
+        stored = rows(db, "SELECT country_code, year, public_from FROM strata.gold.governance_score "
+                          "WHERE indicator_id = :indicator", indicator=indicator)
+        assert {(row["country_code"], row["year"]) for row in stored} == with_values
+        assert {row["public_from"] for row in stored} == {dt.date.fromisoformat(response[0]["lastupdated"])}
+
+
+# ── One sector taxonomy ──────────────────────────────────────────────────
+
+SLICE_FILE = "api/projects/kenya-fy2012-2025.json"
+
+
+def test_every_slice_project_maps_to_one_sector_and_every_listed_code_is_mapped(db):
+    """The projects API lists major sectors from two taxonomies: single-letter codes, many named
+    FY17 - ..., some (Historic), and the newer double-letter codes such as WWX and TTX. Every Kenya
+    project approved FY2012 to FY2025 that lists a major sector maps to exactly one sector."""
+    sectors = config.load_sectors()
+    projects = recorded(SLICE_FILE)["projects"]
+    listed = {pid: project for pid, project in projects.items() if project.get("major_sectors")}
+    codes = {sector["major_sector"]["major_sector_code"] for project in listed.values()
+             for sector in project["major_sectors"]}
+    assert any(len(code) == 3 for code in codes) and any(len(code) == 2 for code in codes)  # both taxonomies
+
+    stored = {row["project_id"]: row for row in rows(db, "SELECT project_id, sector, sector_name, major_sector_code "
+                                                         "FROM strata.gold.project WHERE country_code = 'KE'")}
+    assert {pid for pid in listed} <= set(stored)
+    assert all(stored[pid]["sector"] in sectors.keys for pid in listed)
+    assert all(stored[pid]["sector_name"] == sectors.names[stored[pid]["sector"]] for pid in listed)
+    slice_projects = [pid for pid in listed if stored[pid]["sector"] in config.load_slice().sectors]
+    assert slice_projects and "P156634" in slice_projects
+    assert stored["P156634"]["sector"] == "water"
+
+
+def test_a_project_maps_to_the_major_sector_with_the_largest_share():
+    """A project's sectors each carry a share. P156634's three sectors all sit under WX, water. A
+    project split 40 to public administration (BX) and 35 plus 25 to transport (TTX, the newer
+    taxonomy) is transport, and a project that lists no sector has none."""
+    split = dict(id="P000017", project_name="A split project", countrycode="KE", major_sectors=[
+        {"major_sector": {"major_sector_code": "BX", "sectors": [{"sector_percent": "40.0"}]}},
+        {"major_sector": {"major_sector_code": "TTX", "sectors": [{"sector_percent": "35.0"},
+                                                                    {"sector_percent": "25.0"}]}}])
+    unlisted = dict(id="P000018", project_name="A project with no sector", countrycode="KE")
+    body = {"total": "2", "projects": {"P000017": split, "P000018": unlisted}}
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "projects", body, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.sync(engine, "project")
+        stored = rows(engine, "SELECT project_id, sector, major_sector_code FROM strata.gold.project "
+                              "ORDER BY project_id")
+
+    assert stored == [{"project_id": "P000017", "sector": "transport", "major_sector_code": "TTX"},
+                      {"project_id": "P000018", "sector": None, "major_sector_code": None}]

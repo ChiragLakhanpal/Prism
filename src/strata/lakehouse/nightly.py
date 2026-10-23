@@ -70,7 +70,14 @@ def _paged() -> list[Source]:
 
 
 def _fetch_by_watermark(run: Run) -> int:
-    return sum(bronze.store(run.engine, source, run.fetch(source, run.engine)) for source in _paged())
+    """Each source's new pages into bronze. A frozen source no longer changes, so once bronze holds
+    its pages it is not asked for again."""
+    added = 0
+    for source in _paged():
+        if source.cadence == "frozen" and bronze.holds_pages(run.engine, source):
+            continue
+        added += bronze.store(run.engine, source, run.fetch(source, run.engine))
+    return added
 
 
 def _bronze_to_gold(run: Run) -> int:

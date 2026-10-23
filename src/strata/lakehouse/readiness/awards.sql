@@ -51,7 +51,7 @@ linked AS (
   FROM strata.gold.contract AS c
   LEFT JOIN (SELECT DISTINCT step_reference FROM strata.gold.notice) AS n ON n.step_reference = c.step_reference
   LEFT JOIN strata.gold.project AS p ON p.project_id = c.project_id
-  WHERE c.country_code IS NOT NULL
+  WHERE c.country_code IS NOT NULL AND c.source = 'awards'
   GROUP BY c.country_code
 )
 SELECT

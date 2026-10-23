@@ -24,8 +24,9 @@ TABLE = "strata.bronze.api_pages"
 COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", "reported_total",
            "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
+ANY_HELD = "SELECT count(*) AS pages FROM strata.bronze.api_pages WHERE source = :source"
 NEWEST = ("SELECT max(newest_record_on) AS newest FROM strata.bronze.api_pages "
-          "WHERE source = :source AND country_code = :country")
+          "WHERE source = :source AND coalesce(country_code, '') = :country")
 
 
 def _canonical(value) -> str:
@@ -44,15 +45,23 @@ def content_hash(source: Source, body: dict) -> str:
         return value
 
     kept = without(body)
-    if isinstance(kept.get(source.records), list):
+    if isinstance(kept, list) and len(kept) > 1 and isinstance(kept[1], list):  # an Indicators API page
+        kept[1] = sorted(kept[1], key=_canonical)
+    elif isinstance(kept, dict) and isinstance(kept.get(source.records), list):
         kept[source.records] = sorted(kept[source.records], key=_canonical)
     return hashlib.sha256(_canonical(kept).encode("utf-8")).hexdigest()
 
 
-def newest_held(engine: Engine, source: Source, country_code: str) -> dt.date | None:
-    """The newest record date bronze holds for one country of a source: the live fetch's watermark."""
-    rows = engine.run(NEWEST, {"source": source.key, "country": country_code}).rows
+def newest_held(engine: Engine, source: Source, country_code: str | None) -> dt.date | None:
+    """The newest record date bronze holds for one series of a source, the live fetch's watermark:
+    one country's, or with None, the series fetched for every country."""
+    rows = engine.run(NEWEST, {"source": source.key, "country": country_code or ""}).rows
     return rows[0][0] if rows and rows[0][0] else None
+
+
+def holds_pages(engine: Engine, source: Source) -> bool:
+    """Whether bronze holds any page of the source."""
+    return int(engine.run(ANY_HELD, {"source": source.key}).rows[0][0]) > 0
 
 
 def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) -> int:
