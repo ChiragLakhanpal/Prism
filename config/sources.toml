@@ -4,20 +4,84 @@
 # here and one silver transform. strata.config.load_sources() reads it and stops with a sentence
 # when an entry is missing a key or has one it does not know.
 #
-# The registry is empty until the Kenya procurement records ticket (07) adds the first three
-# sources. An entry looks like this:
+# Each entry has these keys:
 #
-#   [sources.awards]
-#   dataset_name = "..."          # the dataset's name, word for word, for the attribution line
-#   endpoint = "https://..."      # where the source answers
-#   dataset_id = "DS00005"        # optional: the Finances One dataset id
-#   resource_id = "RS00005"       # optional: the Finances One resource id
-#   watermark_field = "..."       # the field that says what changed since the last fetch
-#   cadence = "daily"             # daily, weekly, monthly, quarterly, yearly or frozen
-#   license = "CC BY 4.0"         # the license line for attribution
-#   silver_transform = "..."      # the SQL file that builds its silver table
-#   stratum = "What"              # optional: What, How or Why (GLOSSARY.md)
-#   known_gaps = ["..."]          # optional: gaps the Data readiness page shows as Gap rows
-#   limitations = ["..."]         # optional: limits the Data readiness page shows as Partial
+#   dataset_name      the dataset's name, word for word, for the attribution line
+#   endpoint          where the source answers, with the query that every request shares
+#   dataset_id        optional: the Finances One dataset id
+#   resource_id       optional: the Finances One resource id
+#   api               how pages are asked for: finances_one (top and skip) or search (rows and os,
+#                     newest first by the watermark field)
+#   records           the key that holds the records in each page
+#   country_filter    the query text that limits a request to one country, with {iso2} or {name}
+#   page_size         records per page
+#   watermark_field   the field that says how new a record is. The search APIs sort by it, so a
+#                     fetch stops at the first page older than what bronze already holds.
+#   ignore_keys       optional: keys left out of a page's content hash, such as the as_of_date
+#                     that Finances One stamps on every row every day
+#   fixture_dataset   the [datasets] entry in data/fixture/sources.toml whose recorded files stand
+#                     in for this source in the offline gate
+#   cadence           daily, weekly, monthly, quarterly, yearly or frozen
+#   license           the license line for attribution
+#   silver_transform  the module in src/strata/lakehouse/silver/ that types and cleans its pages
+#   stratum           optional: What, How or Why (GLOSSARY.md)
+#   known_gaps        optional: gaps the Data readiness page shows as Gap rows
+#   limitations       optional: limits the Data readiness page shows as Partial
+#
+# data/fixture/sources.toml is a different file: it lists the recorded copies of public pages that
+# the offline gate reads in place of these endpoints.
 
-[sources]
+# The countries whose records the nightly job fetches. P1 fetches Kenya. Adding a country is one
+# entry; ticket 17 widens the fetch to every country.
+[[countries]]
+name = "Kenya"
+iso2 = "KE"
+
+[sources.awards]
+dataset_name = "Contract Awards in Investment Project Financing (Since FY 2020)"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005&resourceId=RS00005&type=json"
+dataset_id = "DS00005"
+resource_id = "RS00005"
+api = "finances_one"
+records = "data"
+country_filter = "filter=borrower_country_code%3D%27{iso2}%27"
+page_size = 1000
+watermark_field = "contract_signing_date"
+ignore_keys = ["as_of_date"]
+fixture_dataset = "awards"
+cadence = "daily"
+license = "CC BY 4.0"
+silver_transform = "awards"
+stratum = "What"
+known_gaps = ["Awards for FY2017 to FY2019 are in neither awards dataset. Award notices fill most of the gap, in local currency."]
+limitations = ["A joint venture appears as one row per member, with the contract amount split between them.", "INDIVIDUAL CONSULTANT stands for many people, each with their own supplier ID."]
+
+[sources.notices]
+dataset_name = "Procurement Notices"
+endpoint = "https://search.worldbank.org/api/v2/procnotices?format=json"
+api = "search"
+records = "procnotices"
+country_filter = "project_ctry_name={name}"
+page_size = 500
+watermark_field = "submission_date"
+fixture_dataset = "notices"
+cadence = "daily"
+license = "CC BY 4.0"
+silver_transform = "notices"
+stratum = "What"
+limitations = ["Notices give amounts in local currency.", "Contact names, emails and phone numbers are removed when a page is fetched."]
+
+[sources.projects]
+dataset_name = "World Bank Projects & Operations"
+endpoint = "https://search.worldbank.org/api/v3/projects?format=json&fl=*"
+api = "search"
+records = "projects"
+country_filter = "countrycode_exact={iso2}"
+page_size = 100
+watermark_field = "proj_last_upd_date"
+fixture_dataset = "projects"
+cadence = "daily"
+license = "CC BY 4.0"
+silver_transform = "projects"
+stratum = "What"
+limitations = ["The projects API keeps only the latest ISR ratings."]
