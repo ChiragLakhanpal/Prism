@@ -66,3 +66,57 @@ def test_a_query_in_a_python_constant_is_read_too(tmp_path):
 
     assert lint().problems(root) == [
         "ops/bundle/check.py:1: ops.pipeline_runs is not a three-part name. Write it as strata.<schema>.<table>."]
+
+
+BUILT = ("this query's text is built in code. Bind each value as a :name parameter; a query that builds in only "
+         "table or column names says so with '# sql-lint: names only'.")
+
+
+def test_a_value_built_into_a_query_held_in_a_variable_first_is_refused(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py":
+                             "def find(engine, reference):\n"
+                             "    sql = f\"SELECT * FROM strata.gold.package WHERE step_reference = '{reference}'\"\n"
+                             "    return engine.run(sql)\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:2: {BUILT}"]
+
+
+def test_a_query_held_in_a_variable_inside_a_function_is_read_too(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py":
+                             "def find(engine):\n"
+                             "    query = \"SELECT * FROM gold.package\"\n"
+                             "    return engine.run(query)\n"})
+
+    assert lint().problems(root) == [
+        "src/strata/tools/find.py:2: gold.package is not a three-part name. Write it as strata.<schema>.<table>."]
+
+
+def test_a_three_part_name_outside_the_strata_catalog_is_refused(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py":
+                             "def find(engine, reference):\n"
+                             "    return engine.run(\"SELECT * FROM main.default.package WHERE step_reference = :reference\",\n"
+                             "                      {\"reference\": reference})\n"})
+
+    assert lint().problems(root) == [
+        "src/strata/tools/find.py:2: main.default.package is not in the strata catalog. "
+        "Write it as strata.<schema>.<table>."]
+
+
+def test_a_value_added_or_formatted_into_a_query_anywhere_is_refused(tmp_path):
+    root = tree(tmp_path, **{"src__strata__tools__find.py":
+                             "def find(reference):\n"
+                             "    first = \"SELECT * FROM strata.gold.package WHERE step_reference = '\" + reference + \"'\"\n"
+                             "    second = \"SELECT * FROM strata.gold.package WHERE step_reference = '%s'\" % reference\n"
+                             "    return \"SELECT * FROM strata.gold.package WHERE step_reference = '{}'\".format(reference)\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:{line}: {BUILT}" for line in (2, 3, 4)]
+
+
+def test_a_docstring_that_starts_with_a_query_word_is_not_a_query(tmp_path):
+    root = tree(tmp_path, **{"src__strata__lakehouse__build.py":
+                             "def build(engine):\n"
+                             "    \"\"\"Create the schemas, then every table.\"\"\"\n"
+                             "    message = \"Update the bundle, then deploy again.\"\n"
+                             "    return message\n"})
+
+    assert lint().problems(root) == []

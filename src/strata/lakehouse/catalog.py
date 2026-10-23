@@ -105,7 +105,8 @@ def table_definitions(folder: Path = TABLES, schemas: tuple[str, ...] | None = N
                                f"schemas: {', '.join(schemas)}. Move it into one of those folders.")
         sql = path.read_text()
         statement = COMMENT_LINE.sub("", sql).strip()
-        start = re.compile(rf"CREATE TABLE IF NOT EXISTS {CATALOG}\.{schema}\.{table}\s*\(", re.I)
+        start = re.compile(  # sql-lint: names only, a pattern for the definition's first line
+            rf"CREATE TABLE IF NOT EXISTS {CATALOG}\.{schema}\.{table}\s*\(", re.I)
         if not start.match(statement):
             raise CatalogError(f"{schema}/{path.name} must hold one statement that starts with "
                                f"CREATE TABLE IF NOT EXISTS {CATALOG}.{schema}.{table} (. IF NOT EXISTS keeps a "
