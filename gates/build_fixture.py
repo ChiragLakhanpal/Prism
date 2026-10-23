@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Builds the fixture database, data/out/fixture.duckdb, that the offline tests read.
 
-It loads two things, with no network:
+It builds three things, with no network:
 
+- The strata catalog's schemas and tables, from the table definitions in
+  src/strata/lakehouse/tables, the same ones the deploy builds on the workspace. The build stops
+  when any table in those schemas lacks a public_from DATE column (ADR 0002).
 - The recorded sources listed in data/fixture/sources.toml, into the schema `recorded`:
   `recorded.files` (each file with its source and license line), `recorded.responses`
   (each API response as JSON), `recorded.documents` (each document's published text) and
@@ -26,9 +29,10 @@ import re
 import sys
 from pathlib import Path
 
-import duckdb
-
 from strata.fixture import recorded as fmt
+from strata.lakehouse import catalog
+from strata.lakehouse.catalog import CatalogError
+from strata.lakehouse.engine import DuckDBEngine, EngineError
 
 ROOT = Path(__file__).resolve().parents[1]
 PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
@@ -77,17 +81,23 @@ def load_recorded(con, manifest):
                 con.execute("INSERT INTO recorded.documents VALUES (?, ?, ?)", [source.file, file.source, file.body])
 
 
-def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None):
-    """Build the database at out from the placeholder folder and a loaded manifest (by default, sources.toml)."""
+def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABLES):
+    """Build the database at out from the table definitions, the placeholder folder and a loaded
+    manifest (by default, sources.toml)."""
     manifest = manifest or fmt.load_manifest()
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
     try:
-        with duckdb.connect(str(building)) as con:
-            load_placeholder(con, source)
-            load_recorded(con, manifest)
+        with DuckDBEngine.open(building) as engine:
+            catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
+            load_placeholder(engine.connection, source)
+            load_recorded(engine.connection, manifest)
+            catalog.check_public_from(engine)  # every table in the catalog's schemas, whatever made it
+    except (CatalogError, EngineError) as error:  # one sentence, never a traceback
+        building.unlink(missing_ok=True)
+        raise SystemExit(str(error)) from error
     except BaseException:
         building.unlink(missing_ok=True)
         raise

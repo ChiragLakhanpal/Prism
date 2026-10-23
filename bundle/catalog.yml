@@ -1,0 +1,57 @@
+# The strata catalog: four schemas and the volume for documents (docs/PLAN.md section 4).
+#
+# The people in var.readers can read every schema, so the app can query as each viewer
+# (ADR 0003). A bundle does not declare tables, so the deploy command creates them from the
+# table definitions in src/strata/lakehouse/tables/, one folder per schema below.
+
+resources:
+  catalogs:
+    strata:
+      name: strata
+      comment: Strata, procurement intelligence on World Bank open data. Every row keeps the date it became public.
+      grants:
+        - principal: ${var.readers}
+          privileges: [USE_CATALOG]
+
+  schemas:
+    bronze:
+      name: bronze
+      catalog_name: ${resources.catalogs.strata.name}
+      comment: API pages as received, with their fetch time and source. Rebuilt from source, never edited by hand.
+      grants:
+        - principal: ${var.readers}
+          privileges: [USE_SCHEMA, SELECT]
+    silver:
+      name: silver
+      catalog_name: ${resources.catalogs.strata.name}
+      comment: Typed, cleaned tables per source, and parsed document elements. Rebuilt from source, never edited by hand.
+      grants:
+        - principal: ${var.readers}
+          privileges: [USE_SCHEMA, SELECT]
+    gold:
+      name: gold
+      catalog_name: ${resources.catalogs.strata.name}
+      comment: The knowledge model, metric views for Genie, and features and scores.
+      grants:
+        - principal: ${var.readers}
+          privileges: [USE_SCHEMA, SELECT]
+    ops:
+      name: ops
+      catalog_name: ${resources.catalogs.strata.name}
+      comment: Data readiness measures, pipeline runs, agent runs, drafts, feedback, evaluation results and cost.
+      # SELECT here reaches every future table in strata.ops. A table that holds uploads (CLAUDE.md
+      # rule 8) needs a row filter on the uploader's team, or a schema without this grant.
+      grants:
+        - principal: ${var.readers}
+          privileges: [USE_SCHEMA, SELECT]
+
+  volumes:
+    bronze_files:
+      name: files
+      catalog_name: ${resources.catalogs.strata.name}
+      schema_name: ${resources.schemas.bronze.name}
+      volume_type: MANAGED
+      comment: PDFs and text files, kept as they were fetched.
+      grants:
+        - principal: ${var.readers}
+          privileges: [READ_VOLUME]

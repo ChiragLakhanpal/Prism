@@ -13,6 +13,8 @@ import dayone  # noqa: E402
 import probe_ai_search  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
+from strata.config import load_models  # noqa: E402
+
 RESULTS = REPO / "docs" / "day-one-results.md"
 
 
@@ -60,14 +62,15 @@ def run(place, search):
 
 
 def test_an_online_endpoint_and_a_hybrid_answer_pass(place):
+    size = load_models()["embed"].dimensions
     search = FakeSearch()
     code, test4 = run(place, search)
     assert code == 0
     assert test4["Status"] == "passed"
     assert search.calls[0] == ("endpoint", "strata-search")
     assert search.calls[1][1:] == ("strata-search", "workspace.strata_dayone.passages",
-                                   "workspace.strata_dayone.passages_index", 1024, 3)
-    assert search.calls[2][3] == 1024
+                                   "workspace.strata_dayone.passages_index", size, 3)
+    assert search.calls[2][3] == size
     assert any("p1" in line for line in test4["Evidence"])
 
 

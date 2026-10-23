@@ -1,0 +1,72 @@
+# The slice file: which projects Strata reads documents for.
+#
+# This is the one place for the slice's countries, sectors and fiscal years, the showcase project,
+# the demo plan and the stress shelf (spec, "Ten single places", item 4). Structured data covers
+# every country; only documents follow this file. Adding a country is one [[countries]] entry.
+# strata.config.load_slice() reads it and stops with a sentence when an entry has the wrong shape.
+#
+# Source: docs/PLAN.md section 3, "Scope".
+
+# Projects approved in these World Bank fiscal years, which run from July 1 to June 30.
+first_fiscal_year = 2012
+last_fiscal_year = 2025
+
+# Sectors, by the slice's own key. The ticket that maps the two sector taxonomies to one
+# (docs/PLAN.md section 3, "Quirks") maps each key to its sector codes.
+sectors = ["water", "transport"]
+
+# Each country with its ISO 3166 codes: two letters for the projects API, three for the indicators.
+[[countries]]
+name = "Kenya"
+iso2 = "KE"
+iso3 = "KEN"
+
+[[countries]]
+name = "Bangladesh"
+iso2 = "BD"
+iso3 = "BGD"
+
+[[countries]]
+name = "Vietnam"
+iso2 = "VN"
+iso3 = "VNM"
+
+[[countries]]
+name = "Pakistan"
+iso2 = "PK"
+iso3 = "PAK"
+
+# The closed project whose disagreement (ISR 7 against ICR paragraph 78) and rebidding lesson
+# (ICR paragraph 54) the demo shows.
+[showcase]
+project_id = "P130164"
+name = "India Rajasthan Road Sector Modernization"
+
+# The published Procurement Plan that "Check a plan" opens in the demo.
+[demo_plan]
+project_id = "P156634"
+project_name = "Kenya Water and Sanitation Development Project"
+implementing_agency = "Northern Water Works Development Agency"
+agency_short_name = "NWWDA"
+plan_date = 2026-10-09
+
+# The hardest documents, each read and given a recorded outcome on the Data readiness page.
+# An entry without a project_id is a slot the document slice ticket (18) fills when it finds one.
+[[stress_shelf]]
+project_id = "P130164"
+document_type = "PAD"
+why = "A 100-page scan with a garbled two-column risk annex."
+
+[[stress_shelf]]
+document_type = "PAD"
+why = "The longest PAD in the slice."
+
+[[stress_shelf]]
+document_type = "Procurement Plan"
+why = "A Procurement Plan with hundreds of rows."
+
+[[stress_shelf]]
+why = "A completion report in French."
+
+[[stress_shelf]]
+why = "A document over 500 pages, if the slice has one."

@@ -1,6 +1,6 @@
 """Building the fixture database and checking the recorded files. Each CSV file in the
-placeholder folder becomes a table, and a bad file name stops the build before it writes
-anything. Every recorded file is listed in sources.toml with its source and license line, the
+placeholder folder becomes a table, and a bad file name or a table definition DuckDB cannot run
+stops the build before it writes anything. Every recorded file is listed in sources.toml with its source and license line, the
 files stay inside their size limits, and every response stamped with a daily as_of_date leaves
 it out of the refresh diff."""
 
@@ -31,6 +31,21 @@ def test_a_fixture_file_whose_name_starts_with_an_underscore_stops_the_build(tmp
     with pytest.raises(SystemExit, match="start with a letter"):
         builder().build(out=out, source=source, manifest=fmt.load_manifest())
 
+    assert not out.exists()
+
+
+def test_a_table_definition_duckdb_cannot_run_stops_the_build_with_one_sentence(tmp_path):
+    tables = tmp_path / "tables" / "ops"
+    tables.mkdir(parents=True)
+    (tables / "pipeline_runs.sql").write_text(
+        "CREATE TABLE IF NOT EXISTS strata.ops.pipeline_runs (run_id STRING COMMENT 'the run', public_from DATE)\n")
+    (tmp_path / "placeholder").mkdir()
+    out = tmp_path / "fixture.duckdb"
+
+    with pytest.raises(SystemExit, match="transpile step could not rewrite") as stopped:
+        builder().build(out=out, source=tmp_path / "placeholder", tables=tmp_path / "tables")
+
+    assert isinstance(stopped.value.code, str)
     assert not out.exists()
 
 

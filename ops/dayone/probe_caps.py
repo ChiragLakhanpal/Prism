@@ -9,9 +9,9 @@ Run it from the main checkout after the wizard:
     uv run --script ops/dayone/probe_caps.py --env-file .env
 
 It uses the Azure command line the wizard signed in. It prints a tokens-per-minute limit for
-each of the four deployments, checks that a budget sends alerts, and reads whether the
-subscription is on pay-as-you-go. It writes test 8, the caps block and, once the subscription
-shows pay-as-you-go, the pay-as-you-go block in docs/day-one-results.md.
+each of the four deployments that config/models.toml names, checks that a budget sends alerts, and
+reads whether the subscription is on pay-as-you-go. It writes test 8, the caps block and, once the
+subscription shows pay-as-you-go, the pay-as-you-go block in docs/day-one-results.md.
 """
 
 from __future__ import annotations
@@ -106,8 +106,12 @@ def offer_line(subscription: dict) -> tuple[str, bool]:
             offer == "pay-as-you-go")
 
 
-def check(azure, env: dict, config: dict):
-    """Returns test 8's Outcome, the caps block's fields and whether the subscription is pay-as-you-go."""
+def check(azure, config: dict, models: dict):
+    """Returns test 8's Outcome, the caps block's fields and whether the subscription is pay-as-you-go.
+
+    models is the model file's roles (dayone.models()), which name the deployments. dayone.toml
+    holds only each role's cap.
+    """
     today = dayone.dt.date.today()
     try:
         found = {d.get("name"): d for d in azure.deployments()}
@@ -117,8 +121,8 @@ def check(azure, env: dict, config: dict):
         outcome = Outcome("failed", "I could not read the deployments.", [str(error)])
         return outcome, None, False
     lines, missing, capped = [], [], True
-    for cap in config["caps"]["deployments"].values():
-        name = env.get(cap["env_key"]) or cap["env_key"]
+    for role, cap in config["caps"]["deployments"].items():
+        name = models[role].deployment
         deployment = found.get(name)
         if deployment is None:
             lines.append(f"{name}: not found in {config['names']['foundry_resource']}.")
@@ -144,7 +148,8 @@ def check(azure, env: dict, config: dict):
     if missing:
         outcome = Outcome("failed", f"These deployments are missing or not ready: {', '.join(missing)}.", lines)
     else:
-        outcome = Outcome("passed", "Every deployment in dayone.toml exists and finished deploying.", lines)
+        outcome = Outcome("passed", "Every deployment with a cap in dayone.toml exists and finished deploying.",
+                          lines)
     caps = [
         ("Status", "capped" if capped and budget_ok else "not capped"),
         ("Deployments", lines),
@@ -158,17 +163,17 @@ def check(azure, env: dict, config: dict):
 class CannedAzure:
     """What a capped subscription on the free trial looks like, for --dry-run."""
 
-    def __init__(self, env: dict, config: dict):
-        self.env, self.config = env, config
+    def __init__(self, config: dict, models: dict):
+        self.config, self.models = config, models
 
     def deployments(self):
         rows = []
-        for cap in self.config["caps"]["deployments"].values():
+        for role, cap in self.config["caps"]["deployments"].items():
             if "enqueued_tokens" in cap:
                 capacity = cap["enqueued_tokens"] // cap.get("capacity_unit", 1)
             else:
                 capacity = cap["tokens_per_minute"] // 1000  # a standard deployment counts thousands per minute
-            rows.append({"name": self.env.get(cap["env_key"]), "sku": {"name": cap["sku"], "capacity": capacity},
+            rows.append({"name": self.models[role].deployment, "sku": {"name": cap["sku"], "capacity": capacity},
                          "properties": {"provisioningState": "Succeeded"}})
         return rows
 
@@ -186,16 +191,16 @@ class CannedAzure:
 def main(argv: list[str] | None = None, service=None) -> int:
     args = dayone.probe_args(argv, __doc__)
     config = dayone.load_config()
-    needs = [cap["env_key"] for cap in config["caps"]["deployments"].values()]
     try:
-        env = dayone.probe_env(args, needs)
+        dayone.probe_env(args, [])  # the az sign-in comes from the wizard, so the env file must exist
+        models = dayone.models()
         if service is None:
             if args.dry_run:
-                service = CannedAzure(env, config)
+                service = CannedAzure(config, models)
             else:
                 from live import LiveAzure
                 service = LiveAzure(config)
-        outcome, caps, payg = check(service, env, config)
+        outcome, caps, payg = check(service, config, models)
     except (dayone.DayOneError, ProbeError) as error:
         print(error, file=sys.stderr)
         return 2

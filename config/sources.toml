@@ -1,0 +1,23 @@
+# The source registry: one entry per data source.
+#
+# This is the one place to add a data source (spec, "Ten single places", item 1): add one entry
+# here and one silver transform. strata.config.load_sources() reads it and stops with a sentence
+# when an entry is missing a key or has one it does not know.
+#
+# The registry is empty until the Kenya procurement records ticket (07) adds the first three
+# sources. An entry looks like this:
+#
+#   [sources.awards]
+#   dataset_name = "..."          # the dataset's name, word for word, for the attribution line
+#   endpoint = "https://..."      # where the source answers
+#   dataset_id = "DS00005"        # optional: the Finances One dataset id
+#   resource_id = "RS00005"       # optional: the Finances One resource id
+#   watermark_field = "..."       # the field that says what changed since the last fetch
+#   cadence = "daily"             # daily, weekly, monthly, quarterly, yearly or frozen
+#   license = "CC BY 4.0"         # the license line for attribution
+#   silver_transform = "..."      # the SQL file that builds its silver table
+#   stratum = "What"              # optional: What, How or Why (GLOSSARY.md)
+#   known_gaps = ["..."]          # optional: gaps the Data readiness page shows as Gap rows
+#   limitations = ["..."]         # optional: limits the Data readiness page shows as Partial
+
+[sources]
