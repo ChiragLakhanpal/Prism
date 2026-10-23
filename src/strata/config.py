@@ -5,7 +5,7 @@ request lands in one file (CLAUDE.md rule 9). This module reads four of them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
-- load_models()      config/models.toml, the model file
+- load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
@@ -265,7 +265,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles"})
+    _Entry(path, "the file", data).only({"roles", "layout"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -281,6 +281,13 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
         models[role] = Model(role, entry.text("deployment"), entry.text("purpose"),
                              entry.integer("dimensions", required=(role == "embed")))
     return models
+
+
+def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
+    """The name of the layout parser that reads table pages on the workspace (Route B)."""
+    entry = _Entry(path, "layout", _read(path).get("layout"))
+    entry.only({"parser"})
+    return entry.text("parser")
 
 
 # ── The thresholds file ──────────────────────────────────────────────────

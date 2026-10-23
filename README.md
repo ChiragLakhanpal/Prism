@@ -36,7 +36,7 @@ It runs the steps in `gates/steps.toml`. Steps that do not depend on each other 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
 2. Run four lanes side by side:
    - The guard lane tests the guard hook.
-   - The python lane builds the fixture database from the recorded sources and prints its size. Then it runs the Python tests that may read that database: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job and the bundle commands.
+   - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. Then it runs the Python tests that may read that database: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job, the plan reader and the bundle commands.
    - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
    - The web lane type checks and bundles the web app, then runs the Playwright tests against it.
 
@@ -98,8 +98,10 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The nightly job's tasks | `src/strata/lakehouse/nightly.py` |
 | The bundle: the strata catalog, its schemas, the volume, the grants and the nightly job, with its notes | `databricks.yml` and `bundle/` |
 | The deploy command and the workspace checks for the bundle | `ops/bundle/` |
-| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (sources and transforms later) |
-| The document reader | `src/strata/reader/` (later) |
+| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (more sources and transforms later) |
+| The plan reader: a project's Procurement Plans into STEP rows, with delay from the first published planned date and data notes, under the daily page cap | `src/strata/lakehouse/plans.py` and `src/strata/lakehouse/sql/plans/` (`uv run --frozen python -m strata.lakehouse.plans` runs it on the fixture) |
+| The document reader: documents and their pages, the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
+| The live plan run on the workspace | `ops/plans/run_live.py` |
 | The knowledge model | `src/strata/knowledge/` (later) |
 | The tool registry and its tools | `src/strata/tools/` (later) |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |

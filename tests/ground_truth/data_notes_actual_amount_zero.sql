@@ -1,10 +1,19 @@
--- Two packages in the demo plan show an Actual Amount of 0.00, which Strata shows as a data note.
--- Source: .scratch/strata/spec.md, Testing Decisions, from the Northern Water Works Development
--- Agency's October 9, 2026 Procurement Plan for P156634.
--- expect: activity_reference_no
--- expect: KE-NWWDA-503455-CW-RFQ
--- expect: KE-NWWDA-541061-CW-RFQ
-SELECT activity_reference_no
-FROM strata.placeholder.plan_rows
-WHERE actual_amount_usd = 0
-ORDER BY activity_reference_no
+-- Two packages in the demo plan are Signed or Completed with an Actual Amount of 0.00, which
+-- Strata shows as a data note. Source: tests/ground_truth/values.toml, plan-503455-actual-zero and
+-- plan-541061-actual-zero, from page 3 of the Northern Water Works Development Agency's
+-- October 9, 2026 Procurement Plan for P156634. The plan reader writes the notes
+-- (src/strata/lakehouse/sql/plans/plan_data_notes.sql). ops/bundle/check.py same-rows checks it on
+-- the SQL warehouse after the live plan run (ops/plans/run_live.py) has read the plans there.
+-- engines: duckdb, databricks
+-- param: agency = Northern Water Works Development Agency
+-- param: plan_date = 2026-10-09
+-- expect: activity_reference_no,process_status,actual_amount_usd
+-- expect: KE-NWWDA-503455-CW-RFQ,Signed,0.00
+-- expect: KE-NWWDA-541061-CW-RFQ,Completed,0.00
+SELECT n.activity_reference_no, n.process_status, n.actual_amount_usd
+FROM strata.silver.plan_data_notes AS n
+JOIN strata.silver.plan_versions AS v ON v.document_id = n.document_id
+WHERE v.implementing_agency = :agency
+  AND v.plan_date = CAST(:plan_date AS DATE)
+  AND n.note = 'actual_amount_zero'
+ORDER BY n.activity_reference_no

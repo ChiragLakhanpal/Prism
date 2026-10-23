@@ -61,21 +61,68 @@ def pdf_pages(pdf):
     return [page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages]
 
 
-def fetched_files(source, fetch, today):
+WORDS_READ_WITH = ("poppler's pdftotext -bbox: each word is \"x0 y0 x1 y1 text\", in points from the page's "
+                   "top left")
+
+
+def pdf_words(pdf):
+    """The words on each page of a PDF with their boxes, read with poppler's pdftotext -bbox.
+
+    Each page is {"width", "height", "words"}, and each word is (x0, y0, x1, y1, text). The
+    recording command needs pdftotext installed (Homebrew: brew install poppler).
+    """
+    import html
+    import shutil
+    import subprocess
+    import tempfile
+
+    if shutil.which("pdftotext") is None:
+        raise RuntimeError("Recording a document's words needs poppler's pdftotext. Install poppler, "
+                           "for example with: brew install poppler")
+    with tempfile.TemporaryDirectory() as folder:
+        path = f"{folder}/document.pdf"
+        with open(path, "wb") as handle:
+            handle.write(pdf)
+        out = subprocess.run(["pdftotext", "-bbox", path, "-"], capture_output=True, check=True).stdout
+    pages = []
+    for width, height, body in re.findall(r'<page width="([\d.]+)" height="([\d.]+)">(.*?)</page>',
+                                          out.decode("utf-8"), re.S):
+        words = [(float(x0), float(y0), float(x1), float(y1), html.unescape(text)) for x0, y0, x1, y1, text in
+                 re.findall(r'<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)">([^<]*)</word>',
+                            body)]
+        pages.append({"width": float(width), "height": float(height), "words": words})
+    return pages
+
+
+def words_response(pages):
+    """The response a words file keeps: each word as one line of text, so a refresh diffs word by word."""
+    return {"read_with": WORDS_READ_WITH,
+            "pages": [{"width": page["width"], "height": page["height"],
+                       "words": [f"{round(x0, 2):g} {round(y0, 2):g} {round(x1, 2):g} {round(y1, 2):g} {text}"
+                                 for x0, y0, x1, y1, text in page["words"]]}
+                      for page in pages]}
+
+
+def fetched_files(source, fetch, today, words=pdf_words):
     """The recorded files for one source, as {relative path: bytes}, built from fresh fetches."""
     if source.kind == "json":
         response = json.loads(fetch(source.url))
         return {source.file: fmt.json_file(source.url, source.license, today, source.about, response)}
     text = fetch(source.text_url)
-    pages = pdf_pages(fetch(source.pdf_url))
+    pdf = fetch(source.pdf_url)
+    pages = pdf_pages(pdf)
     header = {"License": source.license, "Recorded": today, "About": source.about}
-    return {
+    files = {
         f"{source.file}.txt": fmt.text_file({"Source": source.text_url, **header}, text),
         f"{source.file}.pages.txt": fmt.text_file(
             {"Source": source.pdf_url, **header,
              "Pages": f"{len(pages)}, one after each form feed, read from the PDF's text layer"},
             fmt.PAGE_BREAK.join(pages).encode("utf-8")),
     }
+    if source.words:
+        files[f"{source.file}.words.json"] = fmt.json_file(source.pdf_url, source.license, today, source.about,
+                                                           words_response(words(pdf)))
+    return files
 
 
 def without_keys(value, keys):
@@ -122,7 +169,7 @@ def parse(argv):
     return parser.parse_args(argv)
 
 
-def main(argv=None, fetch=fetch_url):
+def main(argv=None, fetch=fetch_url, words=pdf_words):
     args = parse(argv)
     manifest = fmt.load_manifest(args.manifest)
     sources = [s for s in manifest.sources if not args.only or any(part in s.file for part in args.only)]
@@ -132,7 +179,7 @@ def main(argv=None, fetch=fetch_url):
     print(f"Fetching {count(len(sources), 'source')}. Recorded files are in {manifest.recorded}.")
     for source in sources:
         try:
-            files = fetched_files(source, fetch, today)
+            files = fetched_files(source, fetch, today, words)
         except Exception as error:  # noqa: BLE001 - report every failure, then carry on
             failed.append(source.file)
             print(f"could not fetch  {source.file}: {type(error).__name__}: {error}")

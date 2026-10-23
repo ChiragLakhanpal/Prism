@@ -78,8 +78,11 @@ def test_a_slice_file_whose_years_run_backwards_is_refused(tmp_path):
 
 # ── The source registry ──────────────────────────────────────────────────
 
-def test_the_source_registry_loads_with_no_sources_until_the_first_is_added():
-    assert config.load_sources() == {}
+def test_the_source_registry_loads_and_names_the_documents_api_that_plan_versions_come_from():
+    documents = config.load_sources()["documents"]
+
+    assert documents.endpoint == "https://search.worldbank.org/api/v3/wds"
+    assert documents.stratum == "How"
 
 
 AWARDS = """
@@ -144,6 +147,22 @@ def test_swapping_a_model_is_one_line(tmp_path):
     path = copy("models.toml", tmp_path, old=f'deployment = "{current}"', new='deployment = "swapped-model"')
 
     assert config.load_models(path)["agent"].deployment == "swapped-model"
+
+
+def test_the_model_file_names_the_layout_parser_and_strata_has_its_adapter():
+    """The ticket's layout parser is ai_parse_document, or Content Understanding if day-one test 3
+    failed, so a swap is one line in the model file."""
+    from strata.reader import layout
+
+    assert config.load_layout_parser() == "ai_parse_document"
+    assert config.load_layout_parser() in layout.PARSERS
+
+
+def test_swapping_the_layout_parser_is_one_line(tmp_path):
+    path = copy("models.toml", tmp_path, old='parser = "ai_parse_document"', new='parser = "content_understanding"')
+
+    assert config.load_layout_parser(path) == "content_understanding"
+    assert list(config.load_models(path)) == list(config.ROLES)
 
 
 def test_a_model_file_missing_a_role_is_refused(tmp_path):
