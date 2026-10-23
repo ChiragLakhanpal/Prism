@@ -1,7 +1,7 @@
 """Procurement notices (search.worldbank.org's procnotices API) into strata.silver.notices.
 
 Contact details are gone before a page reaches bronze (strata.lakehouse.contacts), so this
-transform never sees them. It types each field, parses the STEP reference, maps an old method
+transform never sees them; it notes which notices lost some. It types each field, parses the STEP reference, maps an old method
 name such as ICB to the current one with the market approach it implies (keeping the notice's own
 words in their own columns), and reads three things from the notice's text: the loan or credit
 number, and for a Contract Award notice, the Contract Signature Date and the signed contract
@@ -15,7 +15,7 @@ import decimal
 import html
 import re
 
-from strata.lakehouse import clean
+from strata.lakehouse import clean, contacts
 
 TABLES = {
     "strata.silver.notices": (
@@ -24,8 +24,8 @@ TABLES = {
         "bid_description", "procurement_group", "procurement_category", "procurement_method_code",
         "procurement_method_as_written", "procurement_method", "market_approach", "submission_deadline",
         "loan_number_as_written", "loan_number", "loan_digits", "contract_signature_date",
-        "signed_contract_price", "signed_contract_currency", "notice_text", "page_hash", "fetched_at",
-        "public_from"),
+        "signed_contract_price", "signed_contract_currency", "notice_text", "contact_details_removed",
+        "page_hash", "fetched_at", "public_from"),
 }
 
 PENDING = """
@@ -114,6 +114,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             price,
             currency,
             text or None,
+            contacts.removed_from(record),
             page_hash,
             fetched_at,
             clean.public_from(notice_date, fetched),

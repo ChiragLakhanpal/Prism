@@ -1,5 +1,5 @@
 -- One row for each page an API returned (docs/PLAN.md section 4), kept as received except for
--- the contact names, emails and phone numbers that the fetch removes first (CLAUDE.md rule 8).
+-- the contact details that the fetch removes first (CLAUDE.md rule 8).
 -- A page whose content bronze already holds is not added again.
 --
 -- source                   the source registry's key (config/sources.toml)
@@ -9,7 +9,9 @@
 -- records                  how many records the page holds
 -- reported_total           how many records the source said the whole request has
 -- newest_record_on         the newest date in the page's watermark field
--- contact_details_removed  contact names, emails and phone numbers removed before the page was kept
+-- contact_details_removed  the contact details removed before the page was kept: each filled contact
+--                          name, address, email, phone number and web address field, and each
+--                          name, email and phone number found in a notice's text
 -- fetched_at               when the page was fetched, in UTC
 -- public_from              the day it was fetched (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.bronze.api_pages (

@@ -1,18 +1,22 @@
-"""Contact names, emails and phone numbers come out of every page before it is kept (CLAUDE.md rule 8).
+"""Contact details come out of every page before it is kept (CLAUDE.md rule 8).
 
-Procurement notices name a contact person with their email and phone number, and their text often
-repeats them, along with bidders' emails and phone numbers. strip() takes them out of a page before
-bronze keeps it, so no layer of the lakehouse ever holds them, and counts what it took out:
+Procurement notices name a contact person with their address, email, phone number and web
+address, and their text often repeats them, along with bidders' emails and phone numbers. strip()
+takes them out of a page before bronze keeps it, so no layer of the lakehouse ever holds them, and
+counts what it took out:
 
 - each contact field a record fills (contact_name, contact_email, contact_phone_no,
-  contact_address and contact_web_url) is dropped;
-- each name, email and phone number from those fields is replaced wherever it appears in the page,
-  whatever its spacing or capitals;
-- every other email address, and every phone number written with a country code (+254 20 2724292)
-  or a trunk zero (046-2103598, 0722437748), is replaced too.
+  contact_address and contact_web_url) is replaced by [contact removed];
+- in a record's free text (notice_text and bid_description), each name, email and phone number
+  from those fields is replaced wherever it appears, whatever its spacing or capitals;
+- in the same free text, every other email address, and every phone number written with a country
+  code (+254 20 2724292) or a trunk zero (046-2103598, 0722437748), is replaced too.
 
-The organization's name and country stay: they say who runs the procurement, not how to reach a
-person. Dates, amounts, postal codes and reference numbers are not phone numbers, and stay.
+Every other field stays as received: a reference number such as NWWDA-WSDP-03-2019-2020 is STEP's
+own, and the join from a notice to its package. In the free text, fiscal years at the end of a
+reference (03-2019-2020) and a P.O. Box with its postal code (05586-00100) are not phone numbers,
+and stay. The organization's name and country stay too: they say who runs the procurement, not
+how to reach a person.
 """
 
 from __future__ import annotations
@@ -20,7 +24,8 @@ from __future__ import annotations
 import re
 
 CONTACT_FIELDS = ("contact_name", "contact_email", "contact_phone_no", "contact_address", "contact_web_url")
-SEARCHED = ("contact_name", "contact_email", "contact_phone_no")  # also taken out of the page's text
+SEARCHED = ("contact_name", "contact_email", "contact_phone_no")  # also taken out of the free text
+FREE_TEXT = ("notice_text", "bid_description")  # the only fields searched; every other field stays as received
 REMOVED = "[contact removed]"
 
 EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
@@ -30,6 +35,8 @@ PHONE = re.compile(r"(?<![\d+])(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0\d{1,
                    r"(?:\s*/\s*\+?\d[\d \t–-]{4,}\d)*")
 DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
+FISCAL_YEARS = re.compile(r"\d{1,2}-(?:19|20)\d{2}-(?:19|20)\d{2}")  # a reference's end: 03-2019-2020
+POSTAL_CODE = re.compile(r"\d{3,5}-\d{5}")  # a P.O. Box and its postal code: 05586-00100
 
 
 def _phone(candidate: str) -> bool:
@@ -37,7 +44,7 @@ def _phone(candidate: str) -> bool:
     digits = re.sub(r"\D", "", first)
     if not 9 <= len(digits) <= 15 or digits.startswith("000"):
         return False
-    return not (DATE_LIKE.fullmatch(first) or AMOUNT_LIKE.fullmatch(first))
+    return not any(pattern.fullmatch(first) for pattern in (DATE_LIKE, AMOUNT_LIKE, FISCAL_YEARS, POSTAL_CODE))
 
 
 DIGIT_RUN = re.compile(r"\+?\(?\d[\d \t().–-]{5,}\d")  # digits and the separators a phone number uses
@@ -82,15 +89,6 @@ class Stripper:
         text = self._sub(EMAIL, text)
         return self._sub(PHONE, text, _phone)
 
-    def value(self, value):
-        if isinstance(value, str):
-            return self.text(value)
-        if isinstance(value, list):
-            return [self.value(item) for item in value]
-        if isinstance(value, dict):
-            return {key: self.value(item) for key, item in value.items()}
-        return value
-
 
 def _records(value):
     """Every dict in a page that has a contact field."""
@@ -105,21 +103,35 @@ def _records(value):
 
 
 def strip(body: dict) -> tuple[dict, int]:
-    """The page without contact details, and how many it removed."""
+    """The page with its contact details replaced, and how many it replaced."""
     found, dropped = set(), 0
     for record in _records(body):
         for field in CONTACT_FIELDS:
-            if str(record.get(field) or "").strip():
+            if _filled(record.get(field)):
                 dropped += 1
                 if field in SEARCHED:
                     found.add(str(record[field]))
     stripper = Stripper(sorted(found))
 
-    def without_fields(value):
+    def stripped(key, value):
+        if key in CONTACT_FIELDS:
+            return REMOVED if _filled(value) else value
+        if key in FREE_TEXT and isinstance(value, str):
+            return stripper.text(value)
         if isinstance(value, dict):
-            return {key: without_fields(item) for key, item in value.items() if key not in CONTACT_FIELDS}
+            return {name: stripped(name, item) for name, item in value.items()}
         if isinstance(value, list):
-            return [without_fields(item) for item in value]
+            return [stripped(None, item) for item in value]
         return value
 
-    return stripper.value(without_fields(body)), dropped + stripper.removed
+    return stripped(None, body), dropped + stripper.removed
+
+
+def _filled(value) -> bool:
+    return bool(str(value or "").strip())
+
+
+def removed_from(record: dict) -> bool:
+    """Whether strip() replaced any contact detail in this record, in a contact field or its free text."""
+    return (any(record.get(field) == REMOVED for field in CONTACT_FIELDS)
+            or any(REMOVED in str(record.get(field) or "") for field in FREE_TEXT))

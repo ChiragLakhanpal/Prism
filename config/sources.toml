@@ -69,7 +69,7 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "notices"
 stratum = "What"
-limitations = ["Notices give amounts in local currency.", "Contact names, emails and phone numbers are removed when a page is fetched."]
+limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched."]
 
 [sources.projects]
 dataset_name = "World Bank Projects & Operations"

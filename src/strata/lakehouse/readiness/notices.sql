@@ -2,8 +2,8 @@
 --   coverage_rows            notices held, of the notices the source reported for the same requests
 --   coverage_years           fiscal years with notices, of the fiscal years from the first to the last
 --   linked_project           notices whose project record is held, of all notices
---   contact_details_removed  contact names, emails and phone numbers removed when the pages were
---                            fetched, out of the notices held
+--   contact_details_removed  notices that had contact names, addresses, emails, phone numbers or
+--                            web addresses removed when they were fetched, of the notices held
 --   fresh_fetched            the day of the last fetch, with the source's cadence
 --   fresh_newest_record      the newest notice fetched, with the source's cadence
 -- Notices name their country in words, which gold.country turns into its code.
@@ -18,6 +18,7 @@ held AS (
     l.country_code,
     count(*) AS notices,
     count(p.project_id) AS with_project,
+    count(CASE WHEN l.contact_details_removed THEN 1 END) AS with_contacts_removed,
     count(DISTINCT CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END) AS years_held,
     max(CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END)
       - min(CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END) + 1
@@ -47,12 +48,6 @@ reported AS (
   ) AS per_query
   GROUP BY country_code
 ),
-removed AS (
-  SELECT l.country_code, sum(p.contact_details_removed) AS removed
-  FROM (SELECT DISTINCT country_code, page_hash FROM latest) AS l
-  JOIN strata.bronze.api_pages AS p ON p.page_hash = l.page_hash
-  GROUP BY l.country_code
-),
 fresh AS (
   SELECT country_code, CAST(max(fetched_at) AS DATE) AS fetched_on, max(newest_record_on) AS newest
   FROM pages
@@ -77,10 +72,10 @@ SELECT 'notices', country_code, 'linked_project', CAST(with_project AS BIGINT), 
   CAST(NULL AS DATE), 'Notices whose project record is held.'
 FROM held
 UNION ALL
-SELECT 'notices', h.country_code, 'contact_details_removed', CAST(r.removed AS BIGINT), CAST(h.notices AS BIGINT),
-  CAST(NULL AS DATE), 'Contact names, emails and phone numbers removed from the notices held, before they were kept.'
-FROM held AS h
-JOIN removed AS r ON r.country_code = h.country_code
+SELECT 'notices', country_code, 'contact_details_removed', CAST(with_contacts_removed AS BIGINT),
+  CAST(notices AS BIGINT), CAST(NULL AS DATE),
+  'This counts the notices that had contact names, addresses, emails, phone numbers or web addresses removed before they were kept, out of the notices held.'
+FROM held
 UNION ALL
 SELECT 'notices', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
 FROM fresh

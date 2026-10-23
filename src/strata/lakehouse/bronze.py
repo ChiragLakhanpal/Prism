@@ -1,8 +1,7 @@
 """Bronze: every page a source returned, kept once, with its fetch time and source.
 
-store() is the fetch task's last step. It first takes contact names, emails and phone numbers out
-of the page and counts them (strata.lakehouse.contacts), so bronze keeps each page as received
-except for those. It hashes each page with the source's ignore_keys left out
+store() is the fetch task's last step. It first takes the contact details out of the page and
+counts them (strata.lakehouse.contacts), so bronze keeps each page as received except for those. It hashes each page with the source's ignore_keys left out
 (Finances One stamps every row with today's as_of_date), and adds only pages whose hash bronze does
 not hold yet, so a second fetch with no source changes adds no rows.
 """

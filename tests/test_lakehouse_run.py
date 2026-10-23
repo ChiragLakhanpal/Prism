@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from strata.lakehouse import clean
+from strata.lakehouse import clean, contacts
 from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -199,6 +199,43 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
     assert leaks == []
 
 
+def outside_contacts(value):
+    """A page without its contact fields and its free text: what stripping must leave as received."""
+    if isinstance(value, dict):
+        return {key: outside_contacts(item) for key, item in value.items()
+                if key not in contacts.CONTACT_FIELDS + contacts.FREE_TEXT}
+    if isinstance(value, list):
+        return [outside_contacts(item) for item in value]
+    return value
+
+
+NOTICE_FILES = sorted(path.relative_to(RECORDED).as_posix() for path in (RECORDED / "api" / "notices").glob("*.json"))
+
+
+@pytest.mark.parametrize("file", NOTICE_FILES)
+def test_stripping_leaves_every_field_but_the_contact_fields_and_the_free_text_as_received(file):
+    page = record(file)
+
+    stripped, _ = contacts.strip(page)
+
+    assert outside_contacts(stripped) == outside_contacts(page)
+
+
+def test_stripping_keeps_reference_numbers_fiscal_years_and_postal_codes(gold):
+    """A notice's reference ends in its fiscal years (NWWDA-WSDP-03-2019-2020), and a P.O. Box ends
+    in its postal code (05586-00100). Neither is a phone number."""
+    stripped, _ = contacts.strip(record("api/notices/P156634.json"))
+    text = {notice["id"]: notice.get("notice_text") or "" for notice in stripped["procnotices"]}
+
+    assert "NWWDA-WSDP-03-2019-2020" in text["OP00152444"]
+    assert "MOWS-WSDP-01-2017-2018" in text["OP00121580"]
+    assert "P.O BOX 05586-00100" in text["OP00246451"]
+    notice = one(gold, "SELECT bid_reference_no FROM strata.gold.notice WHERE notice_id = 'OP00152444'")
+    assert notice["bid_reference_no"] == "NWWDA-WSDP-03-2019-2020"
+    assert one(gold, "SELECT count(*) AS n FROM strata.gold.notice WHERE bid_reference_no LIKE '%contact removed%'"
+               ) == {"n": 0}
+
+
 def test_the_fetch_counts_the_contact_details_it_removes(gold):
     removed = one(gold, "SELECT sum(contact_details_removed) AS n FROM strata.bronze.api_pages WHERE source = 'notices'")
 
@@ -240,11 +277,23 @@ def test_each_source_is_fresh_as_of_its_fetch_with_its_cadence(gold):
         assert kenya[source, "fresh_newest_record"][2] <= dt.date(2026, 10, 23)
 
 
+def kenya_notices_with_a_contact_field():
+    """Kenya's notices that fill any contact field, counted from the recorded files."""
+    return {notice["id"] for file in KENYA_RECORDS if file.startswith("api/notices/")
+            for notice in record(file)["procnotices"]
+            if notice.get("project_ctry_name") == "Kenya"
+            and any(str(notice.get(field) or "").strip() for field in contacts.CONTACT_FIELDS)}
+
+
 def test_the_contact_details_removed_are_recorded_as_a_data_readiness_measure(gold):
-    removed, notices, _, _ = measures(gold)["notices", "contact_details_removed"]
+    """The measure counts notices, as its denominator does: a notice counts when the fetch removed
+    any contact detail from it, from a contact field or from its text."""
+    removed, notices, _, detail = measures(gold)["notices", "contact_details_removed"]
 
     assert notices == 404
-    assert removed >= len(recorded_contacts())
+    assert len(kenya_notices_with_a_contact_field()) <= removed <= notices
+    assert detail == ("This counts the notices that had contact names, addresses, emails, phone numbers or web "
+                      "addresses removed before they were kept, out of the notices held.")
 
 
 # ── Fiscal years and currencies ──────────────────────────────────────────
