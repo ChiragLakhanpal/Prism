@@ -10,19 +10,35 @@ You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which
 
     scripts/install
 
-It installs Python 3.12 and the Python packages with uv, installs the web app's packages with npm, downloads the Chromium browser that the Playwright tests use, and sets `core.hooksPath` to `.githooks` so git runs the gate before every commit. It needs the network. Nothing after it does.
+It does these things, in order:
+
+1. It installs Python 3.12 and the Python packages with uv.
+2. It installs the web app's packages with npm.
+3. It downloads the Chromium browser that the Playwright tests use.
+4. It sets `core.hooksPath` to `.githooks`, so git runs the gate before every commit.
+
+The install needs the network. The gate and `scripts/dev` do not.
 
 Secrets go in `.env` in the main checkout, never in git. `.env.example` lists the keys. To see which keys are set without printing their values, run `python3 .claude/hooks/guard.py --env-keys`.
 
 ## The gate
 
-The gate runs before every commit (CLAUDE.md rule 6). Run it by hand the same way:
+Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also runs the gate before a merge commit, through `.githooks/pre-merge-commit`. To run the gate by hand, use this command:
 
     .githooks/pre-commit
 
-It runs the steps in `gates/steps.toml` in order and stops at the first one that fails. Today it scans the staged changes and the whole history of the branch for secrets, runs the guard hook's own tests, builds the fixture database, runs the Python tests (the gate itself, the ground-truth SQL on DuckDB and the server) and runs the Playwright tests against the built web app. It switches the network off for uv, npm and the tests, prints its total time, and fails when a run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
+It runs the steps in `gates/steps.toml` in order and stops at the first one that fails. Today it has these steps:
 
-The gate tests the files in your working tree, so a change you have not staged still counts. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment.
+1. Scan the staged changes and the history of the branch for secrets.
+2. Test the guard hook.
+3. Build the fixture database.
+4. Run the Python tests. They cover the gate, the ground-truth SQL on DuckDB and the server.
+5. Type check and bundle the web app.
+6. Run the Playwright tests against the built web app.
+
+The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when a run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
+
+The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment.
 
 ## Run the app
 
@@ -42,7 +58,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet; the
 
 | Part | Where |
 |---|---|
-| The gate | `.githooks/pre-commit`, which runs `gates/offline.py` over `gates/steps.toml` |
+| The gate | `.githooks/pre-commit` and `.githooks/pre-merge-commit`, which run `gates/offline.py` over `gates/steps.toml` |
 | The guard hook and its tests | `.claude/hooks/` |
 | Viewer identity | `src/strata/dbx.py` |
 | The harness: each turn's evidence and the stream helpers | `src/strata/harness/` |
@@ -52,7 +68,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet; the
 | Python tests for seams 1, 2, 3 and 5, and for the gate | `tests/` |
 | Screen tests (seam 4) | `web/tests/` |
 | Responses recorded once and shared by the server and screen tests | `tests/fixtures/api/` |
-| Fixture inputs, and the fixture database the gate builds | `data/fixture/` and `data/out/` (not in git) |
+| Fixture inputs, and the fixture database the gate builds | `data/fixture/`, and `data/out/`, which git ignores |
 | Ground-truth SQL | `tests/ground_truth/` |
 | The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (later) |
 | The document reader | `src/strata/reader/` (later) |

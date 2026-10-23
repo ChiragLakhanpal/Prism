@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Builds the fixture database, data/out/fixture.duckdb, that the offline tests read.
 
-For now it loads the placeholder tables: each CSV file in data/fixture/placeholder becomes
-the table strata.placeholder.<file name>. Ticket 05 replaces this with the lakehouse run
+For now it loads the placeholder tables. Each CSV file in data/fixture/placeholder goes into
+the schema `placeholder` of that file. The tests attach the file as `strata`, so they query
+plan_rows.csv as strata.placeholder.plan_rows. Ticket 05 replaces this with the lakehouse run
 over recorded sources. It builds into a new file and swaps it in, so a failed build never
 leaves a half-built database behind.
 
-Run: uv run --frozen python gates/build_fixture.py
+Run it with this command:
+
+    uv run --frozen python gates/build_fixture.py
 """
 
 import os
@@ -31,7 +34,8 @@ def build(out=FIXTURE_DB):
         con.execute("CREATE SCHEMA placeholder")
         for table in sorted(PLACEHOLDER.glob("*.csv")):
             if not TABLE_NAME.fullmatch(table.stem):
-                raise SystemExit(f"{table.name}: a fixture file name must be a lower-case table name.")
+                raise SystemExit(f"The fixture file {table.name} needs a lower-case table name. Use only "
+                                 "letters, digits and underscores, and start with a letter.")
             con.execute(f"CREATE TABLE placeholder.{table.stem} AS SELECT * FROM read_csv(?, header = true)",
                         [str(table)])
     os.replace(building, out)

@@ -18,7 +18,7 @@ npm --prefix web ci --no-audit --no-fund
 echo "Installing the Chromium browser for the Playwright tests."
 (cd web && npx playwright install chromium)
 
-echo "Turning on the gate: git will run .githooks/pre-commit before every commit."
+echo "Turning on the gate. Git will run it before every commit and every merge commit."
 git config core.hooksPath .githooks
 
 echo "Strata is installed. Run the gate with .githooks/pre-commit, and start the app with scripts/dev."
