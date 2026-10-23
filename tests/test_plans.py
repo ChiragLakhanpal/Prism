@@ -96,6 +96,26 @@ def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_d
     assert signed["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
 
 
+def measured(engine, run_id: str | None = None) -> dict:
+    """Each data readiness measure of a run (the latest when run_id is None), as (count, denominator)."""
+    found = rows(engine, """
+        SELECT run_id, measure, count, denominator FROM strata.ops.data_readiness ORDER BY measured_at""")
+    run_id = run_id or found[-1]["run_id"]
+    return {r["measure"]: (r["count"], r["denominator"]) for r in found if r["run_id"] == run_id}
+
+
+def test_older_listed_versions_the_fixture_never_recorded_leave_each_first_listing_unconfirmed(db):
+    """The documents API lists far more plan versions than the fixture records, many of them older
+    than the version that first lists each activity here. Delay is still measured from that version,
+    and the row says its first listing is not confirmed."""
+    signed = demo_step(db, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
+    count, denominator = measured(db)["latest_activities_with_first_listing_read"]
+
+    assert signed["delay_days"] == value("plan-229129-days-late")["value"]
+    assert signed["first_listing_confirmed"] is False
+    assert count == 0 < denominator
+
+
 def test_ke_nwwda_541055_plans_completion_on_july_31_2026_and_shows_no_signed_contract(db):
     completion = demo_step(db, "KE-NWWDA-541055-CW-RFB", "Contract Completion")
     signed = demo_step(db, "KE-NWWDA-541055-CW-RFB", "Signed Contract")
@@ -188,6 +208,48 @@ def test_a_second_run_parses_no_new_pages_and_strata_ops_shows_the_pages_read_by
     route_a, route_b = measured["pages_read_route_a"], measured["pages_read_route_b"]
     assert route_b[0] == route_b[1] == before["bronze.layout_pages"] > 0
     assert route_a[0] + route_b[0] == route_a[1] == before["bronze.document_pages"]
+
+
+class OnlyRecordedPlans:
+    """The recorded documents, with a document list that names only the Procurement Plans the fixture
+    records, as if the documents API listed nothing older."""
+
+    def __init__(self, manifest):
+        from strata.reader.documents import RecordedDocuments
+        from strata.reader.layout import https
+
+        self.recorded = RecordedDocuments(manifest)
+        self.texts = {https(source.text_url) for source in manifest.sources if source.kind == "document"}
+        self.text, self.pages = self.recorded.text, self.recorded.pages
+
+    def listing(self, url):
+        from strata.reader.documents import Fetched
+        from strata.reader.layout import https
+
+        fetched = self.recorded.listing(url)
+        kept = {key: document for key, document in fetched.body["documents"].items()
+                if not isinstance(document, dict) or document.get("docty") != "Procurement Plan"
+                or https(document.get("txturl", "")) in self.texts}
+        return Fetched(url, {**fetched.body, "documents": kept}, fetched.fetched_at)
+
+
+def test_when_every_listed_version_is_read_each_first_listing_is_confirmed(fresh):
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import plans
+    from strata.reader.layout import RecordedLayout
+
+    manifest = fmt.load_manifest()
+    report = plans.run(fresh, OnlyRecordedPlans(manifest), RecordedLayout(manifest), "P156634",
+                       clock=clock(dt.date(2026, 10, 23)))
+    signed = demo_step(fresh, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
+    found = measured(fresh, report.run_id)
+
+    versions, listed = found["plan_versions_read"]
+    count, denominator = found["latest_activities_with_first_listing_read"]
+    assert versions == listed > 0
+    assert count == denominator > 0
+    assert signed["first_listing_confirmed"] is True
+    assert signed["delay_days"] == value("plan-229129-days-late")["value"]
 
 
 def cap(tmp_path, pages: int):

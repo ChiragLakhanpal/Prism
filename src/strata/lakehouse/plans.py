@@ -9,9 +9,12 @@ For one project, a run:
 2. Reads every version cheaply (Route A): its Executing Agency(ies) line, which puts it in one
    series per implementing agency, and every Activity Reference No. its text lists. These become
    silver.plan_versions and silver.plan_listings.
-3. Chooses the versions whose tables the layout parser reads: each agency's latest version, the
-   version before it (so a later ticket can show what changed), and the earliest version that lists
-   each activity, which holds its first published planned dates. Only those go to Route B.
+3. Decides each activity's first listing, the earliest version read that lists it, which holds its
+   first published planned dates. The first listing is confirmed only when every plan the list
+   names that is dated on or before it was read; otherwise an older version may list the activity
+   first, and silver says so. Then it chooses the versions whose tables the layout parser reads:
+   each agency's latest version, the version before it (so a later ticket can show what changed),
+   and each first listing. Only those go to Route B.
 4. Sends the chosen versions' table pages to the layout parser, newest version first, each page
    once, until the day's pages reach the daily page cap (config/thresholds.toml,
    ingestion.daily_page_cap). Each page read goes to bronze.layout_pages, and the run, with the page
@@ -131,24 +134,32 @@ def fetch_listing(engine: Engine, documents: Documents, endpoint: str, project_i
             return
 
 
-def listed_plans(engine: Engine, project_id: str) -> tuple[list[Entry], int]:
-    """The project's Procurement Plans in its latest document list, and how many plans it lists in all."""
+@dataclass(frozen=True)
+class Listing:
+    """The project's Procurement Plans in its latest document list."""
+
+    entries: list[Entry]  # the plans the run can fetch, with a text, a PDF and a date, oldest first
+    dates: dict[str, dt.date | None]  # every plan the list names, by document id, with its date (docdt) or None
+
+
+def listed_plans(engine: Engine, project_id: str) -> Listing:
+    """The project's Procurement Plans in its latest document list."""
     latest: dict[str, str] = {}
     for url, response in engine.run(
             "SELECT url, response FROM strata.bronze.document_lists WHERE project_id = :project_id "
             "ORDER BY fetched_at", {"project_id": project_id}).rows:
         latest[url] = response
-    entries, listed = {}, set()
+    entries, dates = {}, {}
     for response in latest.values():
         for key, document in json.loads(response).get("documents", {}).items():
             if key == "facets" or not isinstance(document, dict) or document.get("docty") != PLAN:
                 continue
-            listed.add(document["id"])
+            dates[document["id"]] = _date(document.get("docdt"))
             if document.get("txturl") and document.get("pdfurl") and document.get("docdt"):
                 entries[document["id"]] = Entry(document["id"], _date(document["docdt"]),
                                                 _date(document.get("disclosure_date")),
                                                 document["txturl"], document["pdfurl"])
-    return sorted(entries.values(), key=lambda e: (e.plan_date, e.document_id)), len(listed)
+    return Listing(sorted(entries.values(), key=lambda e: (e.plan_date, e.document_id)), dates)
 
 
 def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> int:
@@ -163,7 +174,7 @@ def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: 
         try:
             text, pages = documents.text(entry.text_url), documents.pages(entry.pdf_url)
         except NotFetched:
-            continue  # counted in the measures as a plan listed but not read
+            continue  # a plan listed but not read, which leaves later first listings unconfirmed
         public = public_from(entry.disclosed_on, text.fetched_at.date())
         insert(engine, "strata.bronze.document_texts",
                ("document_id", "project_id", "url", "content_hash", "text", "fetched_at", "public_from"),
@@ -189,6 +200,8 @@ class Version:
     previous: str | None = None
     is_latest: bool = False
     reasons: list[str] = field(default_factory=list)
+    first_listings: list[str] = field(default_factory=list)  # the activities no earlier version read lists
+    nothing_older_unread: bool = False  # every plan the list names that is dated on or before this one was read
 
     @property
     def document_id(self) -> str:
@@ -199,8 +212,14 @@ class Version:
         return [(number, digest) for number, digest, table in self.pages if table]
 
 
-def read_versions(engine: Engine, project_id: str, entries: list[Entry]) -> list[Version]:
-    """Every plan bronze holds, read through its text (Route A), in series per implementing agency."""
+def _published_order(version: Version) -> tuple:
+    """Plan versions in the order they were published: by plan date, then public date, then document id."""
+    return (version.entry.plan_date, version.public_from, version.document_id)
+
+
+def read_versions(engine: Engine, project_id: str, listing: Listing) -> list[Version]:
+    """Every listed plan bronze holds, read through its text (Route A), in series per implementing
+    agency, with each activity's first listing. This is the one place that decides first listings."""
     texts = {str(d): (t, _date(p)) for d, t, p in engine.run(
         "SELECT document_id, text, public_from FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
@@ -210,7 +229,7 @@ def read_versions(engine: Engine, project_id: str, entries: list[Entry]) -> list
             "WHERE project_id = :project_id ORDER BY document_id, pdf_page", {"project_id": project_id}).rows:
         pages[str(document_id)].append((int(number), str(digest), text))
     versions = []
-    for entry in entries:
+    for entry in listing.entries:
         if entry.document_id not in texts:
             continue
         text, public = texts[entry.document_id]
@@ -223,7 +242,7 @@ def read_versions(engine: Engine, project_id: str, entries: list[Entry]) -> list
     for version in versions:
         series[version.agency].append(version)
     for members in series.values():
-        members.sort(key=lambda v: (v.entry.plan_date, v.public_from, v.document_id))
+        members.sort(key=_published_order)
         for order, version in enumerate(members, 1):
             version.series_order = order
             version.previous = members[order - 2].document_id if order > 1 else None
@@ -231,15 +250,26 @@ def read_versions(engine: Engine, project_id: str, entries: list[Entry]) -> list
         members[-1].reasons.append("the agency's latest version")
         if len(members) > 1:
             members[-2].reasons.append("the version before the latest")
-    first: dict[str, Version] = {}
-    for version in sorted(versions, key=lambda v: (v.entry.plan_date, v.public_from, v.document_id)):
-        for reference in version.listings:
-            first.setdefault(reference, version)
-    for version in versions:
-        firsts = [reference for reference in version.listings if first[reference] is version]
-        if firsts:
-            version.reasons.append(f"the first version to list {', '.join(firsts)}")
+    # An activity's first listing is the earliest version read that lists it, across every agency's
+    # series, because an activity can move from one agency's plan to another's. A listed plan that
+    # was not read (the fixture does not record it, it failed to fetch, or the list gives it no text,
+    # PDF or date) may list the activity earlier, so a first listing is confirmed only when no such
+    # plan is dated on or before it.
+    read = {version.document_id for version in versions}
+    unread = [date for document_id, date in listing.dates.items() if document_id not in read]
+    seen: set[str] = set()
+    for version in sorted(versions, key=_published_order):
+        version.nothing_older_unread = all(date is not None and date > version.entry.plan_date for date in unread)
+        version.first_listings = [reference for reference in version.listings if reference not in seen]
+        seen.update(version.first_listings)
+        if version.first_listings:
+            version.reasons.append(f"the first version to list {', '.join(version.first_listings)}")
     return versions
+
+
+def first_listings(versions: list[Version]) -> dict[str, Version]:
+    """Each activity's first listing, as read_versions decided it."""
+    return {reference: version for version in versions for reference in version.first_listings}
 
 
 def write_versions(engine: Engine, project_id: str, versions: list[Version]) -> None:
@@ -252,9 +282,12 @@ def write_versions(engine: Engine, project_id: str, versions: list[Version]) -> 
            [(v.document_id, project_id, v.agency, v.entry.plan_date, v.entry.disclosed_on, v.series_order, v.previous,
              v.is_latest, len(v.pages), len(v.table_pages), "; ".join(v.reasons) or None, v.entry.text_url,
              v.entry.pdf_url, v.public_from) for v in versions])
+    first = first_listings(versions)
     insert(engine, "strata.silver.plan_listings",
-           ("document_id", "project_id", "activity_reference_no", "public_from"),
-           [(v.document_id, project_id, reference, v.public_from) for v in versions for reference in v.listings])
+           ("document_id", "project_id", "activity_reference_no", "is_first_listing", "first_listing_confirmed",
+            "public_from"),
+           [(v.document_id, project_id, reference, first[reference] is v, first[reference].nothing_older_unread,
+             v.public_from) for v in versions for reference in v.listings])
 
 
 # ── 4. Route B, under the daily page cap ─────────────────────────────────
@@ -355,10 +388,7 @@ def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version
     with_rows = {(str(d), str(a)) for d, a in engine.run(
         "SELECT document_id, activity_reference_no FROM strata.silver.plan_rows WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
-    first = {}
-    for version in sorted(versions, key=lambda v: (v.entry.plan_date, v.public_from, v.document_id)):
-        for reference in version.listings:
-            first.setdefault(reference, version.document_id)
+    first = first_listings(versions)
     measures = [
         ("plan_versions_read", "coverage", len(versions), listed),
         ("pages_read_route_a", "read_well", route_a, all_pages),
@@ -366,7 +396,8 @@ def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version
         ("latest_activities_with_step_rows", "read_well",
          sum(1 for v in latest for a in v.listings if (v.document_id, a) in with_rows), latest_listed),
         ("latest_activities_with_first_listing_read", "coverage",
-         sum(1 for v in latest for a in v.listings if first[a] in read), latest_listed),
+         sum(1 for v in latest for a in v.listings
+             if first[a].nothing_older_unread and first[a].document_id in read), latest_listed),
     ]
     rows = [(run_id, SOURCE, project_id, name, kind, count, denominator, when, when.date())
             for name, kind, count, denominator in measures]
@@ -397,9 +428,9 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     run_id = run_id or f"plans-{project_id}-{started:%Y%m%dT%H%M%S%f}"
 
     fetch_listing(engine, documents, endpoint, project_id)
-    entries, listed = listed_plans(engine, project_id)
-    fetch_plans(engine, documents, project_id, entries)
-    versions = read_versions(engine, project_id, entries)
+    listing = listed_plans(engine, project_id)
+    fetch_plans(engine, documents, project_id, listing.entries)
+    versions = read_versions(engine, project_id, listing)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
     read = write_rows(engine, project_id, versions)
@@ -411,7 +442,8 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
            [(run_id, project_id, parsing.parser, parsing.cap, parsing.parsed_earlier_today, parsing.waiting,
              parsing.parsed, parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started,
              finished, finished.date())])
-    measures = measure(engine, project_id, run_id, versions, listed, read, parsed_pages(engine, project_id), finished)
+    measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
+                       finished)
     return Report(run_id, len(versions), parsing, len(read), measures)
 
 
