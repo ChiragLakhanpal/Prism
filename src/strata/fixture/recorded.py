@@ -10,6 +10,10 @@ formats hold what comes back:
   byte for byte. `<file>.pages.txt` holds the text of each PDF page, one page after each
   form feed, so page n is the nth part. Both start with header lines (Source, License,
   Recorded, About) and a blank line.
+- A document marked `words = true` also has `<file>.words.json`, a JSON file like an API
+  response whose response holds the words on each PDF page with their boxes, read with
+  poppler's `pdftotext -bbox`. Each word is one string, "x0 y0 x1 y1 text", in points from the
+  page's top left. The offline layout parser (src/strata/reader/layout.py) reads tables from them.
 """
 
 import json
@@ -37,12 +41,13 @@ class Source:
     text_url: str = ""
     pdf_url: str = ""
     ignore_keys: tuple = ()  # keys a refetch leaves out of its diff, such as a stamp that moves daily
+    words: bool = False  # a document whose PDF words are recorded with their boxes, for the layout parser's stand-in
 
     def files(self):
         """The recorded files this source writes, relative to the recorded folder."""
         if self.kind == "json":
             return [self.file]
-        return [f"{self.file}.txt", f"{self.file}.pages.txt"]
+        return [f"{self.file}.txt", f"{self.file}.pages.txt"] + ([f"{self.file}.words.json"] if self.words else [])
 
 
 @dataclass(frozen=True)
@@ -87,7 +92,8 @@ def load_manifest(path=MANIFEST):
         sources.append(Source(file=entry["file"], kind=entry["kind"], license=dataset["attribution"],
                               about=entry.get("about", ""), url=entry.get("url", ""), dataset=entry["dataset"],
                               text_url=entry.get("text_url", ""), pdf_url=entry.get("pdf_url", ""),
-                              ignore_keys=tuple(dataset.get("ignore_keys", ()))))
+                              ignore_keys=tuple(dataset.get("ignore_keys", ())),
+                              words=entry.get("words", False) is True and entry["kind"] == "document"))
     return Manifest(path=path, recorded=path.parent / config.get("recorded", "recorded"), sources=sources)
 
 

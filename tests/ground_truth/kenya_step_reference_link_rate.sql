@@ -9,23 +9,23 @@
 WITH last_run AS (
   SELECT run_id
   FROM strata.ops.data_readiness
-  WHERE source = 'awards' AND measure = 'linked_step_reference' AND country_code = 'KE'
+  WHERE source = 'awards' AND measure = 'linked_step_reference' AND subject = 'KE'
   ORDER BY measured_at DESC
   LIMIT 1
 ),
 stored AS (
-  SELECT d.numerator, d.denominator
+  SELECT d.count AS with_reference, d.denominator AS contracts
   FROM strata.ops.data_readiness AS d
   JOIN last_run AS r ON r.run_id = d.run_id
-  WHERE d.source = 'awards' AND d.measure = 'linked_step_reference' AND d.country_code = 'KE'
+  WHERE d.source = 'awards' AND d.measure = 'linked_step_reference' AND d.subject = 'KE'
 ),
 counted AS (
-  SELECT count(step_reference) AS numerator, count(*) AS denominator
+  SELECT count(step_reference) AS with_reference, count(*) AS contracts
   FROM strata.gold.contract
   WHERE country_code = 'KE'
 )
 SELECT
   'linked_step_reference' AS measure,
-  s.numerator = c.numerator AND s.denominator = c.denominator AS matches
+  s.with_reference = c.with_reference AND s.contracts = c.contracts AS matches
 FROM stored AS s
 CROSS JOIN counted AS c

@@ -1,12 +1,13 @@
-"""The data readiness measures each run writes to strata.ops.data_readiness (spec, "Data readiness
-and the dashboard"): coverage (rows and years), linked (to STEP references, notices and projects),
-fresh (as of, with the cadence) and the contact details removed, per source and country. Each is a
-count with its denominator, or a date. There is no composite score.
+"""The data readiness measures the nightly job writes to strata.ops.data_readiness (spec, "Data
+readiness and the dashboard"): coverage (rows and years), linked (to STEP references, notices and
+projects), fresh (as of, with the cadence) and the contact details removed, per source and country.
+Each is a count with its denominator, or a date. There is no composite score.
 
 Each source's measures are defined once, in <source>.sql in this folder: a query that returns
-source, country_code, measure, numerator, denominator, as_of and detail. measure() runs each one
-for the sources in the registry and adds its rows under the run's id. A source with no file here
-has no measures yet.
+source, subject (the country's two-letter code), measure, kind, count, denominator, as_of and
+detail. measure() runs each one for the sources in the registry and adds its rows under the run's
+id. A source with no file here has no measures from this job: the plan reader writes the documents
+source's own (strata.lakehouse.plans).
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from importlib import resources
 from strata.config import load_sources
 from strata.lakehouse.engine import Engine
 
-COLUMNS = "run_id, source, country_code, measure, numerator, denominator, as_of, detail, measured_at, public_from"
+COLUMNS = "run_id, source, subject, measure, kind, count, denominator, as_of, detail, measured_at, public_from"
 
 
 def _query(source: str) -> str | None:
@@ -40,7 +41,7 @@ def measure(engine: Engine, run_id: str, clock: Callable[[], dt.datetime] = lamb
         written += len(engine.run(f"SELECT 1 AS one FROM ({query}) AS m", {"cadence": source.cadence}).rows)  # sql-lint: names only
         engine.run(  # sql-lint: names only
             f"INSERT INTO strata.ops.data_readiness ({COLUMNS}) "
-            f"SELECT :run_id, m.source, m.country_code, m.measure, m.numerator, m.denominator, m.as_of, m.detail, "
+            f"SELECT :run_id, m.source, m.subject, m.measure, m.kind, m.count, m.denominator, m.as_of, m.detail, "
             f":measured_at, :public_from FROM ({query}) AS m",
             {"run_id": run_id, "cadence": source.cadence, "measured_at": measured_at,
              "public_from": measured_at.astimezone(dt.UTC).date()})

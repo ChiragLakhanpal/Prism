@@ -214,6 +214,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/722831566844626702/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/722831566844626702/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Ministry of Water and Irrigation's Procurement Plan of August 26, 2019 for P156634, its version just before November 8, 2019, which does not yet list NWWDA-WSDP-03-2019-2020. Documents API id 31362180."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2019-11-08"
@@ -222,6 +223,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/381251573242090835/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/381251573242090835/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Ministry of Water and Irrigation's Procurement Plan of November 8, 2019 for P156634, the first version that lists NWWDA-WSDP-03-2019-2020. Documents API id 31541426."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2020-04-30"
@@ -230,6 +232,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/768091588250052402/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/768091588250052402/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Ministry of Water and Irrigation's Procurement Plan of April 30, 2020 for P156634, which lists NWWDA-WSDP-03-2019-2020. Documents API id 31998332."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2020-12-07"
@@ -238,6 +241,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/311981607352126696/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/311981607352126696/pdf/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of December 7, 2020 for P156634, its version just before April 21, 2021, which does not yet list KE-NWWDA-229129-CW-RFB. Documents API id 32642978."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2021-04-21"
@@ -246,6 +250,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/856721618995941664/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/856721618995941664/pdf/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of April 21, 2021 for P156634, the first version that lists KE-NWWDA-229129-CW-RFB. Documents API id 33014836."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2025-03-19"
@@ -254,6 +259,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099031925071537402/text/P156634-be594812-7608-4bdd-98c0-d5d487e962a4.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099031925071537402/pdf/P156634-be594812-7608-4bdd-98c0-d5d487e962a4.pdf"
 about = "The Kilifi - Mariakani Water and Sewerage Company's Procurement Plan of March 19, 2025 for P156634, its latest version, which marks KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and KE-KIMAWASCO-377450-CW-RFB as Canceled. Documents API id 40001676."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2025-07-21"
@@ -262,6 +268,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099072125080039635/text/P156634-980ca8a0-c502-4555-ae80-be6b03dc5106.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099072125080039635/pdf/P156634-980ca8a0-c502-4555-ae80-be6b03dc5106.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of July 21, 2025 for P156634, its version just before March 5, 2026, which does not yet list KE-NWWDA-541055-CW-RFB. Documents API id 40031468."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2026-03-05"
@@ -270,6 +277,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099030526084522998/text/P156634-7166beb6-3d9e-419f-b2cc-2452fcd8c873.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099030526084522998/pdf/P156634-7166beb6-3d9e-419f-b2cc-2452fcd8c873.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of March 5, 2026 for P156634, the first version that lists KE-NWWDA-541055-CW-RFB. Documents API id 40090127."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2026-07-31"
@@ -278,6 +286,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099073126063519067/text/P156634-20dacfd1-e5e5-4949-a065-f98e9a431c5f.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099073126063519067/pdf/P156634-20dacfd1-e5e5-4949-a065-f98e9a431c5f.pdf"
 about = "The Coast Water Services Board's Procurement Plan of July 31, 2026 for P156634, its version just before August 17, 2026, which does not yet list KE-CWSB-567630-CW-DIR. Documents API id 40119876."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2026-08-17"
@@ -286,6 +295,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099081726084537498/text/P156634-faf2ceb3-b8a0-43e2-9b8b-cf9a661426fb.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099081726084537498/pdf/P156634-faf2ceb3-b8a0-43e2-9b8b-cf9a661426fb.pdf"
 about = "The Coast Water Services Board's Procurement Plan of August 17, 2026 for P156634, the first version that lists KE-CWSB-567630-CW-DIR. Documents API id 40122770."
+words = true
 
 [[source]]
 file = "documents/P156634/procurement-plan-2026-10-09"
@@ -294,6 +304,7 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099100926083038869/text/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf"
 about = "The Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634: the demo plan. Documents API id 40132287."
+words = true
 
 [[source]]
 file = "documents/P156634/pad-2017-04-05"

@@ -40,21 +40,22 @@ fresh AS (
 )
 SELECT
   'projects' AS source,
-  h.country_code,
+  h.country_code AS subject,
   'coverage_rows' AS measure,
-  CAST(h.projects AS BIGINT) AS numerator,
+  'coverage' AS kind,
+  CAST(h.projects AS BIGINT) AS count,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
   'This counts the projects held, out of the projects the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
-SELECT 'projects', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
+SELECT 'projects', country_code, 'coverage_years', 'coverage', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
   CAST(NULL AS DATE), 'This counts the fiscal years in which projects were approved, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
-SELECT 'projects', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
+SELECT 'projects', country_code, 'fresh_fetched', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
 FROM fresh
 UNION ALL
-SELECT 'projects', country_code, 'fresh_newest_record', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
+SELECT 'projects', country_code, 'fresh_newest_record', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
 FROM fresh

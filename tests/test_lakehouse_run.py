@@ -274,10 +274,10 @@ def test_the_fetch_counts_the_contact_details_it_removes(gold):
 # ── Data readiness ───────────────────────────────────────────────────────
 
 def measures(gold, country="KE"):
-    rows = gold.run("SELECT source, measure, numerator, denominator, as_of, detail FROM strata.ops.data_readiness "
-                    "WHERE run_id = 'fixture' AND country_code = :country", {"country": country}).rows
-    return {(source, measure): (numerator, denominator, as_of, detail)
-            for source, measure, numerator, denominator, as_of, detail in rows}
+    rows = gold.run("SELECT source, measure, count, denominator, as_of, detail FROM strata.ops.data_readiness "
+                    "WHERE run_id = 'fixture' AND subject = :country", {"country": country}).rows
+    return {(source, measure): (count, denominator, as_of, detail)
+            for source, measure, count, denominator, as_of, detail in rows}
 
 
 def test_the_run_writes_kenya_s_coverage_linked_and_fresh_measures_each_count_with_its_denominator(gold):
@@ -287,12 +287,23 @@ def test_the_run_writes_kenya_s_coverage_linked_and_fresh_measures_each_count_wi
     assert {("awards", "coverage_rows"), ("awards", "coverage_years"), ("awards", "linked_step_reference"),
             ("awards", "linked_notice"), ("notices", "coverage_rows"), ("notices", "coverage_years"),
             ("projects", "coverage_rows"), ("projects", "coverage_years")} <= set(counts)
-    assert all(numerator is not None and denominator for numerator, denominator, _, _ in counts.values())
+    assert all(count is not None and denominator for count, denominator, _, _ in counts.values())
     # The awards files report all their rows in their count fields, and the run holds them all.
     assert kenya["awards", "coverage_rows"][:2] == (KENYA["award_rows"], KENYA["award_rows"])
     assert kenya["awards", "linked_step_reference"][:2] == (KENYA["with_step_reference"], KENYA["contracts"])
     assert kenya["awards", "linked_notice"][:2] == (KENYA["with_notice"], KENYA["contracts"])
     assert kenya["notices", "coverage_rows"][:2] == (KENYA["notices"], KENYA["notices"])
+
+
+def test_each_measure_has_the_kind_the_spec_names(gold):
+    """The spec's kinds: coverage (rows and years), linked, fresh, and the contact details removed,
+    which the dashboard's Governance page shows as personal data stripped."""
+    kinds = dict(gold.run("SELECT DISTINCT measure, kind FROM strata.ops.data_readiness "
+                          "WHERE run_id = 'fixture' AND subject = 'KE'").rows)
+
+    assert kinds == {"coverage_rows": "coverage", "coverage_years": "coverage", "linked_step_reference": "linked",
+                     "linked_notice": "linked", "linked_project": "linked", "contact_details_removed": "stripped",
+                     "fresh_fetched": "fresh", "fresh_newest_record": "fresh"}
 
 
 def test_the_ground_truth_sql_expects_the_counts_values_toml_holds():

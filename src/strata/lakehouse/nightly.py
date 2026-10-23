@@ -5,9 +5,10 @@ Databricks, each task runs nightly_task.py, which calls main() here with the tas
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
 Three tasks have their work (ticket 07): fetch_by_watermark fetches each source in
-config/sources.toml into bronze, bronze_to_gold builds silver and gold from bronze, and
-measure_data_readiness writes the data readiness measures to strata.ops. The rest do nothing yet,
-so each records zero rows changed; ticket 43 gives them their work.
+config/sources.toml that it fetches page by page into bronze, bronze_to_gold builds silver and
+gold from bronze, and measure_data_readiness writes the data readiness measures to strata.ops. The
+rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and adds
+the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
@@ -63,12 +64,17 @@ def _nothing_yet(run: Run) -> int:
     return 0
 
 
+def _paged() -> list[Source]:
+    """The sources this job fetches page by page. The documents source has its own reader."""
+    return [source for source in load_sources().values() if source.paged]
+
+
 def _fetch_by_watermark(run: Run) -> int:
-    return sum(bronze.store(run.engine, source, run.fetch(source, run.engine)) for source in load_sources().values())
+    return sum(bronze.store(run.engine, source, run.fetch(source, run.engine)) for source in _paged())
 
 
 def _bronze_to_gold(run: Run) -> int:
-    added = sum(silver.run(run.engine, source) for source in load_sources().values())
+    added = sum(silver.run(run.engine, source) for source in _paged())
     return added + gold.build(run.engine)
 
 

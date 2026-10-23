@@ -55,30 +55,31 @@ fresh AS (
 )
 SELECT
   'notices' AS source,
-  h.country_code,
+  h.country_code AS subject,
   'coverage_rows' AS measure,
-  CAST(h.notices AS BIGINT) AS numerator,
+  'coverage' AS kind,
+  CAST(h.notices AS BIGINT) AS count,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
   'This counts the notices held, out of the notices the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
-SELECT 'notices', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
+SELECT 'notices', country_code, 'coverage_years', 'coverage', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
   CAST(NULL AS DATE), 'This counts the fiscal years that have notices, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
-SELECT 'notices', country_code, 'linked_project', CAST(with_project AS BIGINT), CAST(notices AS BIGINT),
+SELECT 'notices', country_code, 'linked_project', 'linked', CAST(with_project AS BIGINT), CAST(notices AS BIGINT),
   CAST(NULL AS DATE), 'This counts the notices whose project record is held, out of all notices held.'
 FROM held
 UNION ALL
-SELECT 'notices', country_code, 'contact_details_removed', CAST(with_contacts_removed AS BIGINT),
+SELECT 'notices', country_code, 'contact_details_removed', 'stripped', CAST(with_contacts_removed AS BIGINT),
   CAST(notices AS BIGINT), CAST(NULL AS DATE),
   'This counts the notices that had contact names, addresses, emails, phone numbers or web addresses removed before they were kept, out of the notices held.'
 FROM held
 UNION ALL
-SELECT 'notices', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
+SELECT 'notices', country_code, 'fresh_fetched', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
 FROM fresh
 UNION ALL
-SELECT 'notices', country_code, 'fresh_newest_record', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
+SELECT 'notices', country_code, 'fresh_newest_record', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
 FROM fresh

@@ -91,13 +91,27 @@ def test_the_source_registry_holds_kenya_s_three_procurement_sources():
     assert all("KE" in [country.iso2 for country in source.countries] for source in sources.values())
 
 
+def test_the_nightly_job_fetches_kenya_s_sources_page_by_page_and_the_plan_reader_fetches_the_documents():
+    sources = config.load_sources()
+
+    assert {key for key, source in sources.items() if source.paged} == {"awards", "notices", "projects"}
+    assert not sources["documents"].paged
+
+
+def test_the_source_registry_loads_and_names_the_documents_api_that_plan_versions_come_from():
+    documents = config.load_sources()["documents"]
+
+    assert documents.endpoint == "https://search.worldbank.org/api/v3/wds"
+    assert documents.stratum == "How"
+
+
 def test_each_source_leaves_out_the_same_keys_as_the_recording_of_its_fixture_dataset():
     """config/sources.toml's ignore_keys keep a key out of a page's content hash, and
     data/fixture/sources.toml's keep it out of the recording's diff. They name the same keys, so
     the two lists cannot drift apart."""
     datasets = tomllib.loads((ROOT / "data" / "fixture" / "sources.toml").read_text())["datasets"]
 
-    for source in config.load_sources().values():
+    for source in (source for source in config.load_sources().values() if source.paged):
         recorded = tuple(datasets[source.fixture_dataset].get("ignore_keys", ()))
         assert tuple(source.ignore_keys) == recorded, source.key
 
@@ -158,6 +172,14 @@ def test_a_source_with_a_misspelled_key_is_refused(tmp_path):
         config.load_sources(path)
 
 
+def test_a_source_that_names_some_of_the_paging_keys_but_not_all_is_refused(tmp_path):
+    path = copy("sources.toml", tmp_path)
+    path.write_text(path.read_text() + AWARDS_COPY.replace('records = "data"\n', ""))
+
+    with pytest.raises(ConfigError, match=r"awards_copy.*records.*api, records, country_filter, page_size"):
+        config.load_sources(path)
+
+
 def test_a_source_that_pages_an_api_strata_does_not_know_is_refused(tmp_path):
     path = copy("sources.toml", tmp_path)
     path.write_text(path.read_text() + AWARDS_COPY.replace('api = "finances_one"', 'api = "socrata"'))
@@ -186,6 +208,22 @@ def test_swapping_a_model_is_one_line(tmp_path):
     path = copy("models.toml", tmp_path, old=f'deployment = "{current}"', new='deployment = "swapped-model"')
 
     assert config.load_models(path)["agent"].deployment == "swapped-model"
+
+
+def test_the_model_file_names_the_layout_parser_and_strata_has_its_adapter():
+    """The ticket's layout parser is ai_parse_document, or Content Understanding if day-one test 3
+    failed, so a swap is one line in the model file."""
+    from strata.reader import layout
+
+    assert config.load_layout_parser() == "ai_parse_document"
+    assert config.load_layout_parser() in layout.PARSERS
+
+
+def test_swapping_the_layout_parser_is_one_line(tmp_path):
+    path = copy("models.toml", tmp_path, old='parser = "ai_parse_document"', new='parser = "content_understanding"')
+
+    assert config.load_layout_parser(path) == "content_understanding"
+    assert list(config.load_models(path)) == list(config.ROLES)
 
 
 def test_a_model_file_missing_a_role_is_refused(tmp_path):

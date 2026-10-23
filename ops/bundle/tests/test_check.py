@@ -16,7 +16,7 @@ sys.path.insert(0, str(REPO / "ops" / "bundle"))
 
 import check  # noqa: E402
 
-from strata.lakehouse import catalog, nightly  # noqa: E402
+from strata.lakehouse import catalog, nightly, plans  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, Result  # noqa: E402
 
 
@@ -98,10 +98,11 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 # ── The sample query on both engines ─────────────────────────────────────
 
 def deployed_warehouse():
-    """A SQL warehouse after the deploy and one run of the nightly job: DuckDB with the catalog's
-    tables built and filled, here from the recorded pages."""
+    """A SQL warehouse after the deploy, the live plan run and one run of the nightly job: DuckDB
+    with the catalog's tables built and filled, here from the recorded plans and pages."""
     engine = DuckDBEngine.open()
     catalog.build(engine)
+    plans.run_on_fixture(engine)
     nightly.run_locally(engine)
     return engine
 
@@ -129,6 +130,10 @@ def test_the_sample_queries_return_the_same_rows_on_duckdb_and_the_warehouse(cap
     assert ("showcase_fiscal_years.sql: DuckDB and the SQL warehouse returned the same four rows, "
             "and they are the rows the file expects.") in out
     assert ("pipeline_runs_columns.sql: DuckDB and the SQL warehouse returned the same seven rows, "
+            "and they are the rows the file expects.") in out
+    assert ("delay_from_first_published_planned_date.sql: DuckDB and the SQL warehouse returned the same "
+            "one row, and they are the rows the file expects.") in out
+    assert ("data_notes_actual_amount_zero.sql: DuckDB and the SQL warehouse returned the same two rows, "
             "and they are the rows the file expects.") in out
 
 

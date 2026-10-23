@@ -147,11 +147,13 @@ def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
         catalog.table_definitions(folder)
 
 
-def test_every_shipped_definition_sits_in_a_declared_schema_and_keeps_public_from():
+def test_every_shipped_definition_sits_in_a_declared_schema_keeps_public_from_and_is_defined_once():
     """Adding a table is one file, so this checks the rule each file follows, not the list of files."""
     definitions = catalog.table_definitions()
+    names = [definition.full_name for definition in definitions]
 
-    assert "strata.ops.pipeline_runs" in [definition.full_name for definition in definitions]
+    assert "strata.ops.pipeline_runs" in names
+    assert len(names) == len(set(names))
     for definition in definitions:
         assert definition.schema in catalog.declared().schemas, definition.path.name
         assert "public_from DATE" in definition.sql, definition.full_name

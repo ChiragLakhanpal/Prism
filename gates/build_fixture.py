@@ -10,17 +10,21 @@ It builds four things, with no network:
   (each API response as JSON), `recorded.documents` (each document's published text) and
   `recorded.pages` (the text of each PDF page, numbered from 1). The `recorded` schema is the
   fixture's copy of the sources, not a catalog layer.
-- The placeholder tables. Each CSV file in data/fixture/placeholder becomes a table in the
-  schema `placeholder`. Ticket 08 replaces them with plan rows read from the recorded plans.
+- The demo project's Procurement Plans as STEP rows. The plan reader (src/strata/lakehouse/plans.py)
+  runs over the recorded plans with the offline document source and layout parser, and fills
+  bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
+  plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
+  adds it to the nightly job.
 - Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
   (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
-  the fixture can never drift from the code that makes the real tables.
+  the fixture can never drift from the code that makes the real tables. They run after the plan
+  reader, so gold can read the plan rows.
 
 The build stops when any table outside the `recorded` schema lacks a public_from DATE column
 (ADR 0002).
 
 The tests attach the database as `strata`, so they query strata.recorded.pages and
-strata.placeholder.plan_rows. It builds into a new file and swaps it in, so a failed build
+strata.silver.plan_rows. It builds into a new file and swaps it in, so a failed build
 never leaves a half-built database behind. Run it with this command:
 
     uv run --frozen python gates/build_fixture.py
@@ -28,20 +32,20 @@ never leaves a half-built database behind. Run it with this command:
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
+from strata.config import load_slice
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog, nightly, pages
+from strata.lakehouse import catalog, nightly, pages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
+from strata.reader.documents import NotFetched
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_ID = "fixture"  # the run id the fixture's pipeline runs and data readiness measures carry
-PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
+RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readiness measures carry
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
-TABLE_NAME = re.compile(r"[a-z][a-z0-9_]*")
+DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
 RECORDED_TABLES = """
 CREATE SCHEMA recorded;
 CREATE TABLE recorded.files (file VARCHAR PRIMARY KEY, source VARCHAR NOT NULL, license VARCHAR NOT NULL,
@@ -52,15 +56,6 @@ CREATE TABLE recorded.pages (document VARCHAR NOT NULL, pdf_page INTEGER NOT NUL
                              PRIMARY KEY (document, pdf_page));
 """
 
-
-def load_placeholder(con, source):
-    con.execute("CREATE SCHEMA placeholder")
-    for table in sorted(source.glob("*.csv")):
-        if not TABLE_NAME.fullmatch(table.stem):
-            raise SystemExit(f"The fixture file {table.name} needs a lower-case table name. Use only "
-                             "letters, digits and underscores, and start with a letter.")
-        con.execute(f"CREATE TABLE placeholder.{table.stem} AS SELECT * FROM read_csv(?, header = true)",
-                    [str(table)])
 
 
 def load_recorded(con, manifest):
@@ -77,6 +72,8 @@ def load_recorded(con, manifest):
             if source.kind == "json":
                 con.execute("INSERT INTO recorded.responses VALUES (?, ?, ?)",
                             [name, file.source, json.dumps(file.body)])
+            elif name.endswith(".words.json"):
+                continue  # the offline layout parser reads the words from the file itself
             elif name.endswith(".pages.txt"):
                 con.executemany("INSERT INTO recorded.pages VALUES (?, ?, ?)",
                                 [[source.file, number, text]
@@ -85,9 +82,9 @@ def load_recorded(con, manifest):
                 con.execute("INSERT INTO recorded.documents VALUES (?, ?, ?)", [source.file, file.source, file.body])
 
 
-def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABLES):
-    """Build the database at out from the table definitions, the placeholder folder and a loaded
-    manifest (by default, sources.toml)."""
+def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
+    """Build the database at out from the table definitions and a loaded manifest (by default,
+    sources.toml), then read the Procurement Plans of the project plans_for (none when it is None)."""
     manifest = manifest or fmt.load_manifest()
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
@@ -96,13 +93,14 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABL
     try:
         with DuckDBEngine.open(building) as engine:
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
-            load_placeholder(engine.connection, source)
             load_recorded(engine.connection, manifest)
+            if plans_for:
+                plans.run_on_fixture(engine, plans_for, manifest=manifest)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest))
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
-    except (CatalogError, EngineError) as error:  # one sentence, never a traceback
+    except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)
         raise SystemExit(str(error)) from error
     except BaseException:

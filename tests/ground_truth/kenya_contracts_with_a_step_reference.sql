@@ -11,7 +11,7 @@ SELECT 'gold' AS counted_in, count(step_reference) AS with_step_reference, count
 FROM strata.gold.contract
 WHERE country_code = 'KE'
 UNION ALL
-SELECT 'ops', numerator, denominator
+SELECT 'ops', count, denominator
 FROM strata.ops.data_readiness
-WHERE run_id = 'fixture' AND source = 'awards' AND measure = 'linked_step_reference' AND country_code = 'KE'
+WHERE run_id = 'fixture' AND source = 'awards' AND measure = 'linked_step_reference' AND subject = 'KE'
 ORDER BY counted_in

@@ -56,33 +56,34 @@ linked AS (
 )
 SELECT
   'awards' AS source,
-  h.country_code,
+  h.country_code AS subject,
   'coverage_rows' AS measure,
-  CAST(h.award_rows AS BIGINT) AS numerator,
+  'coverage' AS kind,
+  CAST(h.award_rows AS BIGINT) AS count,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
   'This counts the award rows held, out of the rows the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
-SELECT 'awards', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
+SELECT 'awards', country_code, 'coverage_years', 'coverage', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
   CAST(NULL AS DATE), 'This counts the fiscal years that have awards, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
-SELECT 'awards', country_code, 'linked_step_reference', CAST(with_reference AS BIGINT), CAST(contracts AS BIGINT),
+SELECT 'awards', country_code, 'linked_step_reference', 'linked', CAST(with_reference AS BIGINT), CAST(contracts AS BIGINT),
   CAST(NULL AS DATE), 'This counts the contracts that carry a STEP reference, out of all contracts.'
 FROM linked
 UNION ALL
-SELECT 'awards', country_code, 'linked_notice', CAST(with_notice AS BIGINT), CAST(contracts AS BIGINT),
+SELECT 'awards', country_code, 'linked_notice', 'linked', CAST(with_notice AS BIGINT), CAST(contracts AS BIGINT),
   CAST(NULL AS DATE), 'This counts the contracts whose STEP reference a notice also carries, out of all contracts.'
 FROM linked
 UNION ALL
-SELECT 'awards', country_code, 'linked_project', CAST(with_project AS BIGINT), CAST(contracts AS BIGINT),
+SELECT 'awards', country_code, 'linked_project', 'linked', CAST(with_project AS BIGINT), CAST(contracts AS BIGINT),
   CAST(NULL AS DATE), 'This counts the contracts whose project record is held, out of all contracts.'
 FROM linked
 UNION ALL
-SELECT 'awards', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
+SELECT 'awards', country_code, 'fresh_fetched', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
 FROM fresh
 UNION ALL
-SELECT 'awards', country_code, 'fresh_newest_record', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
+SELECT 'awards', country_code, 'fresh_newest_record', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
 FROM fresh

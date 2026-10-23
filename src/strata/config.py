@@ -5,7 +5,7 @@ request lands in one file (CLAUDE.md rule 9). This module reads four of them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
-- load_models()      config/models.toml, the model file
+- load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
@@ -119,20 +119,22 @@ class FetchCountry:
 @dataclass(frozen=True)
 class Source:
     """One data source: where it answers, how its pages are fetched, how often it changes, and how
-    it is credited."""
+    it is credited. A source the nightly job fetches page by page names api, records,
+    country_filter, page_size and fixture_dataset; a source its own reader fetches, such as
+    documents (the plan reader), names none of them."""
 
     key: str
     dataset_name: str
     endpoint: str
-    api: str
-    records: str
-    country_filter: str
-    page_size: int
     watermark_field: str
-    fixture_dataset: str
     cadence: str
     license: str
     silver_transform: str
+    api: str | None = None
+    records: str | None = None
+    country_filter: str | None = None
+    page_size: int | None = None
+    fixture_dataset: str | None = None
     dataset_id: str | None = None
     resource_id: str | None = None
     stratum: str | None = None
@@ -141,9 +143,14 @@ class Source:
     limitations: tuple[str, ...] = ()
     countries: tuple[FetchCountry, ...] = ()
 
+    @property
+    def paged(self) -> bool:
+        """Whether the nightly job fetches this source page by page."""
+        return self.api is not None
 
-SOURCE_REQUIRED = ("dataset_name", "endpoint", "api", "records", "country_filter", "watermark_field",
-                   "fixture_dataset", "cadence", "license", "silver_transform")
+
+SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
+SOURCE_PAGING = ("api", "records", "country_filter", "page_size", "fixture_dataset")  # all of them or none
 SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum")
 SOURCE_LISTS = ("ignore_keys", "known_gaps", "limitations")
 
@@ -162,21 +169,33 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml") -> dict[str, Source]:
     sources = {}
     for key, table in data.get("sources", {}).items():
         entry = _Entry(path, f"sources.{key}", table)
-        entry.only(set(SOURCE_REQUIRED + SOURCE_OPTIONAL + SOURCE_LISTS) | {"page_size"})
+        entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
         fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL}
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
-        fields["page_size"] = entry.integer("page_size")
         if fields["cadence"] not in CADENCES:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
         if fields["stratum"] is not None and fields["stratum"] not in STRATA:
             entry._fail("stratum", f"must be one of {', '.join(STRATA)}")
-        if fields["api"] not in APIS:
-            entry._fail("api", f"must be one of {', '.join(APIS)}")
-        if fields["page_size"] < 1:
-            entry._fail("page_size", "must be 1 or more")
+        if any(name in table for name in SOURCE_PAGING):
+            fields |= _paging(entry, table)
         sources[key] = Source(key=key, countries=tuple(countries), **fields)
     return sources
+
+
+def _paging(entry: _Entry, table: dict) -> dict:
+    """The five keys of a source the nightly job fetches page by page, which it names all together."""
+    missing = [name for name in SOURCE_PAGING if name not in table]
+    if missing:
+        entry._fail(missing[0], f"is missing. A source the nightly job fetches page by page names all of "
+                                f"{', '.join(SOURCE_PAGING)}, and a source its own reader fetches names none")
+    fields = {name: entry.text(name) for name in SOURCE_PAGING if name != "page_size"}
+    fields["page_size"] = entry.integer("page_size")
+    if fields["api"] not in APIS:
+        entry._fail("api", f"must be one of {', '.join(APIS)}")
+    if fields["page_size"] < 1:
+        entry._fail("page_size", "must be 1 or more")
+    return fields
 
 
 # ── The slice file ───────────────────────────────────────────────────────
@@ -295,7 +314,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles"})
+    _Entry(path, "the file", data).only({"roles", "layout"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -311,6 +330,13 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
         models[role] = Model(role, entry.text("deployment"), entry.text("purpose"),
                              entry.integer("dimensions", required=(role == "embed")))
     return models
+
+
+def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
+    """The name of the layout parser that reads table pages on the workspace (Route B)."""
+    entry = _Entry(path, "layout", _read(path).get("layout"))
+    entry.only({"parser"})
+    return entry.text("parser")
 
 
 # ── The thresholds file ──────────────────────────────────────────────────
