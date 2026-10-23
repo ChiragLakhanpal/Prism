@@ -177,7 +177,9 @@ PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\
 LABELLED_PHONE = re.compile(r"\b(?:tel\w*|\w*phone|mobile|mob|cell\w*|fax)\b[^0-9\n]{0,15}?\+?\(?\d[\d ().-]{6,}\d", re.I)
 AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d")
 # An email with spaces around its "@" (JDOE @ EXAMPLE.COM) or spelled out (jdoe [at] example [dot] com).
-SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*\w+(?:(?:\.|\s*[\[(]\s*dot\s*[\])]\s*)\w+)+", re.I)
+# Its domain has a letter, so a rate a report's table writes after a year ("INR - 2013 @7.4%") is not one.
+SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*(?=[\w.]*[A-Za-z])\w+"
+                          r"(?:(?:\.|\s*[\[(]\s*dot\s*[\])]\s*)\w+)+", re.I)
 
 
 def text_values(engine):
@@ -191,6 +193,12 @@ def text_values(engine):
             yield f"{schema}.{table}.{column}", value
 
 
+# Contact names that are job titles, not people. A P130164 notice gives "Chief Engineer" as its
+# contact's name, and the project's reports use the title as an ordinary word ("headed by the Chief
+# Engineer"), so it is no contact detail there.
+JOB_TITLES = {"Chief Engineer"}
+
+
 def recorded_contacts():
     """Every contact name, email and phone number the recorded notices carry, read from the files."""
     found = set()
@@ -199,7 +207,7 @@ def recorded_contacts():
             found |= {notice[key].strip() for key in ("contact_name", "contact_email", "contact_phone_no")
                       if notice.get(key) and len(notice[key].strip()) > 5}
             found |= set(EMAIL.findall(notice.get("notice_text") or ""))
-    return found
+    return found - JOB_TITLES
 
 
 def awkward_contact_notice():

@@ -47,6 +47,7 @@ from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
 from strata.config import Thresholds, load_sources, load_thresholds
+from strata.lakehouse import contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
 from strata.reader import step
@@ -164,27 +165,43 @@ def listed_plans(engine: Engine, project_id: str) -> Listing:
 
 def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> int:
     """Each plan's text and page texts, for the plans bronze does not hold yet. Returns how many it fetched."""
+    return fetch_documents(engine, documents, project_id, entries).fetched
+
+
+@dataclass(frozen=True)
+class Fetching:
+    fetched: int  # documents fetched into bronze
+    contacts_removed: int  # emails and phone numbers taken out of their published texts
+
+
+def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
+    """Each document's text and page texts, for the documents bronze does not hold yet, with every email
+    address and phone number taken out before bronze keeps them (CLAUDE.md rule 8). The passage reader
+    (src/strata/lakehouse/passages.py) fetches its documents here too."""
     held = {str(row[0]) for row in engine.run(
         "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
-    fetched = 0
+    fetched = removed = 0
     for entry in entries:
         if entry.document_id in held:
             continue
         try:
             text, pages = documents.text(entry.text_url), documents.pages(entry.pdf_url)
         except NotFetched:
-            continue  # a plan listed but not read, which leaves later first listings unconfirmed
+            continue  # a document listed but not read, which leaves later first listings unconfirmed
+        body, count = contacts.strip_text(text.body)
+        page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
         public = public_from(entry.disclosed_on, text.fetched_at.date())
         insert(engine, "strata.bronze.document_texts",
                ("document_id", "project_id", "url", "content_hash", "text", "fetched_at", "public_from"),
-               [(entry.document_id, project_id, entry.text_url, _sha(text.body), text.body, text.fetched_at, public)])
+               [(entry.document_id, project_id, entry.text_url, _sha(body), body, text.fetched_at, public)])
         insert(engine, "strata.bronze.document_pages",
                ("document_id", "project_id", "pdf_page", "url", "page_hash", "text", "fetched_at", "public_from"),
                [(entry.document_id, project_id, number, entry.pdf_url, _sha(page), page, pages.fetched_at, public)
-                for number, page in enumerate(pages.body, 1)])
+                for number, page in enumerate(page_texts, 1)])
         fetched += 1
-    return fetched
+        removed += count
+    return Fetching(fetched, removed)
 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───

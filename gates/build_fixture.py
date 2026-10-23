@@ -37,7 +37,7 @@ from pathlib import Path
 
 from strata.config import load_slice
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog, nightly, pages, plans
+from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.documents import NotFetched
@@ -99,6 +99,7 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest))
+                passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID)
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
     except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)

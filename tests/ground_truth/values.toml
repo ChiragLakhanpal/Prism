@@ -232,6 +232,35 @@ project = "P130164"
 date = 2023-05-04
 pdf_page = 9
 
+# Item 10.a of the March 27, 2020 ICR Review, on safeguards, is one paragraph of more than 500 tokens:
+# it starts at the foot of PDF page 11 and runs to the middle of page 12. The passage tests divide it
+# at sentence ends (tests/test_passages.py).
+[[value]]
+id = "icr-review-2020-item-10a-start"
+says = "Item 10.a of the March 27, 2020 ICR Review, Safeguards, starts at the foot of PDF page 11, under section 10."
+value = "Safeguards"
+quote = "10. Other Issues a. Safeguards"
+document = "documents/P130164/icr-review-2020-03-27"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2020-03-27
+section = "10"
+paragraph = "10.a"
+pdf_page = 11
+
+[[value]]
+id = "icr-review-2020-item-10a-end"
+says = "Item 10.a of the March 27, 2020 ICR Review ends on PDF page 12 with the ICR's paragraph 70 on resettlement."
+value = "ICR para 70"
+quote = "The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) was difficult but was adequately managed through proper consultations with landowners (ICR para 70)."
+document = "documents/P130164/icr-review-2020-03-27"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2020-03-27
+section = "10"
+paragraph = "10.a"
+pdf_page = 12
+
 [[value]]
 id = "ieg-outcome-p130164"
 says = "IEG rated P130164's outcome Moderately Unsatisfactory."

@@ -1,5 +1,9 @@
 """Contact details come out of every page before it is kept (CLAUDE.md rule 8).
 
+A document's text and its pages go through strip_text() before bronze keeps them, which takes out
+the emails and phone numbers this module finds in free text. The rest of this docstring is about
+notices.
+
 Procurement notices name a contact person with their address, email, phone number and web
 address, and their text often repeats them, along with bidders' emails and phone numbers. strip()
 takes them out of a page before bronze keeps it, so no layer of the lakehouse ever holds them, and
@@ -86,6 +90,12 @@ def _phone(candidate: str) -> bool:
     return not any(pattern.fullmatch(first) for pattern in (DATE_LIKE, AMOUNT_LIKE, FISCAL_YEARS, POSTAL_CODE))
 
 
+def _an_address(candidate: str) -> bool:
+    """An email address's domain has a letter. A rate written after a year, as a report's table
+    writes "INR - 2013 @7.4%", has none, and stays."""
+    return bool(re.search(r"@\s?[^@]*[A-Za-z]", candidate))
+
+
 def _labelled_number(numbers: str) -> bool:
     """Seven digits or more, or any alternate left after a removed number (Tel: [contact removed] / 8,
     the last digit of a second line)."""
@@ -132,7 +142,7 @@ class Stripper:
             text = self._sub(pattern, text)
         if self.phones:
             text = self._sub(DIGIT_RUN, text, self._known_phone)
-        text = self._sub(EMAIL, text)
+        text = self._sub(EMAIL, text, _an_address)
         text = self._sub(EMAIL_SPELLED_OUT, text)
         text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
         text = self._sub(PHONE, text, _phone)
@@ -183,6 +193,16 @@ def strip(body: dict) -> tuple[dict, int]:
         return value
 
     return stripped(None, body), dropped + stripper.removed
+
+
+def strip_text(text: str) -> tuple[str, int]:
+    """A document's text with every email address and phone number replaced, and how many it replaced.
+
+    A report can print a person's email and phone, as a PAD's data sheet prints its contact's. A
+    document has no contact fields to say whose they are, so its names stay, and only the emails and
+    numbers that the patterns above find come out."""
+    stripper = Stripper([])
+    return stripper.text(text), stripper.removed
 
 
 def _filled(value) -> bool:
