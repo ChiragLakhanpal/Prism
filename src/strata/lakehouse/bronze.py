@@ -24,6 +24,7 @@ TABLE = "strata.bronze.api_pages"
 COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", "reported_total",
            "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
+GROUP = 20  # pages a write adds at most
 # The pages of a source that a fetch task that finished holds: how many, and the newest record date
 # among them, for one series (a country's, or with '', the one with no country filter) or, with
 # every_series, for all of them. The watermark and the frozen check both read it. A fetch that
@@ -78,19 +79,33 @@ def holds_a_finished_fetch(engine: Engine, source: Source) -> bool:
 
 
 def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) -> int:
-    """Add the pages bronze does not hold yet, each as it comes, so a fetch that fails partway keeps
-    the pages it fetched and never holds a whole source in memory. Returns how many it added."""
+    """Add the pages bronze does not hold yet, as they come, so a fetch that fails partway keeps the
+    pages it fetched and never holds a whole source in memory. They are written GROUP pages at a
+    time, since on Databricks each write is a Delta commit, and what is left is written when the
+    fetch ends or fails. Returns how many it added."""
     held = {row[0] for row in engine.run(HELD, {"source": source.key}).rows}
+    waiting: list[tuple] = []
     added = 0
-    for page in pages:
-        body, removed = contacts.strip(page.body)  # before anything is kept (CLAUDE.md rule 8)
-        page_hash = content_hash(source, body)
-        if page_hash in held:
-            continue
-        held.add(page_hash)
-        added += engine.insert_rows(TABLE, COLUMNS, [(
-            source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
-            len(source_pages.records(source, body)), source_pages.reported_total(source, body),
-            source_pages.newest_record(source, body), removed, page.fetched_at,
-            page.fetched_at.astimezone(dt.UTC).date())])
+
+    def write() -> int:
+        written = engine.insert_rows(TABLE, COLUMNS, waiting) if waiting else 0
+        waiting.clear()
+        return written
+
+    try:
+        for page in pages:
+            body, removed = contacts.strip(page.body)  # before anything is kept (CLAUDE.md rule 8)
+            page_hash = content_hash(source, body)
+            if page_hash in held:
+                continue
+            held.add(page_hash)
+            waiting.append((
+                source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
+                len(source_pages.records(source, body)), source_pages.reported_total(source, body),
+                source_pages.newest_record(source, body), removed, page.fetched_at,
+                page.fetched_at.astimezone(dt.UTC).date()))
+            if len(waiting) >= GROUP:
+                added += write()
+    finally:
+        added += write()
     return added

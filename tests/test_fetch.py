@@ -116,6 +116,53 @@ def test_a_fetch_that_fails_partway_keeps_every_page_it_fetched_before_the_failu
     assert kept == 3
 
 
+class CountingWrites:
+    """The engine, counting how many times bronze writes to it."""
+
+    def __init__(self, engine):
+        self.engine, self.writes = engine, 0
+
+    def insert_rows(self, *args):
+        self.writes += 1
+        return self.engine.insert_rows(*args)
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+def test_bronze_writes_the_pages_of_a_long_fetch_in_groups_and_keeps_the_last_group_when_it_fails():
+    """On Databricks each write is a Delta commit, and a first fetch for every country is about 1,700
+    pages, so bronze writes 20 pages at a time. A fetch that fails partway still keeps every page
+    it fetched before the failure."""
+    from strata.lakehouse import bronze, catalog
+
+    rows = recorded("api/awards/P156634.json")["data"]
+    source = config.load_sources()["awards"]
+
+    def fetch(fails):
+        for number in range(45):
+            yield pages.Page("awards", f"https://example.org/awards?top=1&skip={number}",
+                             {"count": 45, "data": [rows[number]]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        if fails:
+            raise OSError("The API stopped answering.")
+
+    with DuckDBEngine.open() as plain:
+        catalog.build(plain)
+        engine = CountingWrites(plain)
+        added = bronze.store(engine, source, fetch(fails=False))
+        whole = (added, engine.writes)
+
+    with DuckDBEngine.open() as plain:
+        catalog.build(plain)
+        engine = CountingWrites(plain)
+        with pytest.raises(OSError):
+            bronze.store(engine, source, fetch(fails=True))
+        cut_short = (plain.run("SELECT count(*) FROM strata.bronze.api_pages").rows[0][0], engine.writes)
+
+    assert whole == (45, 3)
+    assert cut_short == (45, 3)
+
+
 def test_a_page_whose_records_changed_is_kept_again_and_gold_takes_the_new_value(fixture_copy):
     def revised(source, engine):
         for page in pages.recorded_pages(source):
