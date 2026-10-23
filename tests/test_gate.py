@@ -543,7 +543,7 @@ def test_ctrl_c_stops_every_lane(repo):
     assert "The gate was stopped before it finished, so the commit did not go through." in output
 
 
-def test_a_lane_that_is_not_a_name_is_named_plainly(repo):
+def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(repo):
     write(repo, "gates/steps.toml", steps_file() + '\n[[step]]\nname = "Build"\nrun = ["true"]\nlane = 2\n')
 
     done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())

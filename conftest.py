@@ -1,7 +1,8 @@
 """Every Python test runs with the network off, wherever it lives.
 
-The gate runs the tests under tests/ and the tests under ops/ in separate pytest processes, in
-separate lanes. This file sits at the root, so pytest loads it for both.
+The gate runs the Python tests in more than one pytest process, in separate lanes, and the ops
+lane's process hands its tests to pytest-xdist workers. This file sits at the root, so pytest
+loads it in each of them. ops/dayone/tests/test_network_off.py checks that it reaches the workers.
 """
 
 import socket
