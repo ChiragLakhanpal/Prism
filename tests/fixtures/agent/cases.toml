@@ -1,0 +1,100 @@
+# The scripted cases: questions the scripted agent answers offline from recorded model outputs (spec,
+# seam 3, and "Model outputs are recorded, not called, in the offline gate").
+#
+# Each case names a recording in recorded/<recording>.json: the Foundry agent's answers through the
+# Responses API, in order, for the case's question, scope and as-of date. Several cases can share one
+# recording. The recording command re-records every recording from the live agent and prints the
+# difference, so a re-recording is reviewed in the diff:
+#
+#     uv run --script ops/agent/record.py --env-file .env
+#
+# A case can also plant what a model might get wrong, so the verifier's checks can be shown to work.
+# Plants are applied when the case is replayed, never written into the recording, so they survive a
+# re-recording:
+#
+#   [[cases.plant_rounds]]   a round of tool calls the agent asks for after its recorded rounds, before
+#                            its answer. Each has calls, a list of {name, arguments}.
+#   [[cases.plant_claims]]   a claim added to the end of the agent's answer, in the claims' own shape:
+#                            sentence, kind, evidence_ids, numbers, dates and quote ({text, passage_id}).
+#
+# The tests in tests/test_answer_stream.py replay each case on the fixture database and say what it
+# must show.
+
+[[cases]]
+id = "p130164-rebidding"
+says = "The answer cites ICR P130164 paragraph 54 and states 108 of 328, and every check passes."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases]]
+id = "p130164-number-with-no-record"
+says = "The agent adds a number no record holds. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "Bids were usually opened within 45 days."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["45"]
+dates = []
+
+[[cases]]
+id = "p130164-source-not-returned"
+says = "The agent cites ICR paragraph 71, which no tool returned this turn. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "Some works started before their forest clearance came through."
+kind = "summary"
+evidence_ids = ["strata.gold.passage:31525018/v1/71"]
+numbers = []
+dates = []
+
+[[cases]]
+id = "p130164-misquote"
+says = "The agent quotes paragraph 54 in words that are not on its page. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The report puts it plainly: \"108 of 328 works contracts had to be bid again\"."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["108", "328"]
+dates = []
+quote = { text = "108 of 328 works contracts had to be bid again", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases]]
+id = "p130164-fourth-round"
+says = """The agent asks for a fourth round of tool calls, which never runs, then cites ICR paragraph 88, which \
+only that round would have found. The answer keeps what the first three rounds support."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "forest land clearances before awarding works contracts", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "ICR Review procurement rebidding", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "land acquisition delays", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_claims]]
+sentence = "Land for the roads was mostly donated, and recording those donations took time."
+kind = "summary"
+evidence_ids = ["strata.gold.passage:31525018/v1/88"]
+numbers = []
+dates = []

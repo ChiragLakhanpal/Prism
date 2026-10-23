@@ -45,6 +45,9 @@ SENTENCE_END = re.compile(r"[.!?][\"'”’)]*(\s+)(?=[\"'“‘(]?[A-Z0-9])")
 
 # Routes and the reasons a page takes one, as silver.document_page_routes records them.
 ROUTE_A, ROUTE_B = "A", "B"
+# The parse_route of a table's one summary passage, which never backs a number (spec, "Reading
+# documents"). Route B's table reader (ticket 18) writes it; the verifier reads it.
+TABLE_SUMMARY = "B-table-summary"
 BODY, FRONT_MATTER = "body", "front_matter"
 DATA_SHEET, NO_TEXT, NOT_PAGED = "data_sheet", "no_text", "text_not_paged"
 

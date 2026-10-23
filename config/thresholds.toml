@@ -33,6 +33,12 @@ max_results = 20
 # Source: none yet; a starting value for the owner to confirm.
 search_depth = 2
 
+# The answer loop (src/strata/agent/loop.py). The agent gets at most this many rounds of tool results
+# for one question; a tool call it asks for after that is not run, and it answers from what it has.
+# Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").
+[agent]
+tool_rounds = 3
+
 # Plan-check thresholds (ticket 09). check_plan (src/strata/tools/check_plan.py) reads them, returns
 # the values it used, and the Check a plan screen fills its definition of each mark from them.
 # Source: the ticket's fixed checks and the blueprint's Check a plan wireframe. Each value is a

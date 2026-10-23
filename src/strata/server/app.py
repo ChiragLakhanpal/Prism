@@ -2,9 +2,12 @@
 
 - GET /api/health says the server is up.
 - GET /api/me names the viewer the Databricks App forwarded, and never returns the token.
-- POST /api/ask takes a question and streams a run's events as text/event-stream, then a
-  final done event with the run id. A run that breaks ends with an error event whose
-  details stay in the server log.
+- POST /api/ask takes a question, with the page's scope chip, as-of date, view and language, and
+  streams a run's events as text/event-stream: steps, then the answer's sentences with their
+  evidence ids, the evidence they cite, the check counts and the removed sentences, then a final
+  done event with the run id and its trace ids. The verifier runs here, in the stream, on every
+  answer the runner hands over, so no runner can send a sentence the checks did not see. A run that
+  breaks ends with an error event whose details stay in the server log.
 - GET /api/projects/{project_id}/procurement/{agency_id}[/{version}] checks one implementing
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
@@ -18,14 +21,16 @@ import json
 import logging
 import uuid
 from collections.abc import AsyncIterator, Callable
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent.verifier import answer_events, verify
 from strata.dbx import Viewer, viewer_from_headers
 from strata.harness.aio import HEARTBEAT, with_heartbeats
-from strata.harness.turn import Event, Runner, Turn, new_run_id as random_run_id, no_agent
+from strata.harness.turn import Event, RunError, Runner, Scope, Turn, new_run_id as random_run_id, no_agent
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.server import engines
 from strata.tools import registry
@@ -33,10 +38,16 @@ from strata.tools import registry
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+# Only the verifier writes these, from the claims a runner hands over.
+ANSWER_EVENTS = {"sentence", "evidence", "disagreement", "checks", "removed", "done"}
 
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
+    scope: str | None = Field(default=None, max_length=64)  # the page's scope chip: a P-code or STEP reference
+    asof: dt.date | None = None
+    view: Literal["staff", "piu", "public"] = "staff"
+    lang: Literal["en", "fr", "es", "pt"] = "en"
 
 
 def current_viewer(request: Request) -> Viewer:
@@ -98,13 +109,34 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
 
     @app.post("/api/ask")
     async def ask(body: AskRequest, viewer: Viewer = Depends(current_viewer)) -> StreamingResponse:
-        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id())
+        scope = Scope(chip=body.scope.strip().upper() if body.scope and body.scope.strip() else None,
+                      as_of=body.asof, view=body.view, language=body.lang)
+        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id(), scope=scope)
         return StreamingResponse(stream(turn), media_type="text/event-stream", headers=STREAM_HEADERS)
+
+    def checked(turn: Turn, claims) -> list[Event]:
+        """The verifier on the runner's claims, with its own step, then the answer's events."""
+        verdict = verify(claims, turn.facts)
+        ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
+        return [Event("step", {"id": "check", "kind": "check", "status": "running"}),
+                Event("step", {"id": "check", "kind": "check", "status": "done", "removed": len(verdict.removed)}),
+                *answer_events(verdict, turn.facts, ran)]
 
     async def stream(turn: Turn) -> AsyncIterator[str]:
         try:
             async for item in with_heartbeats(runner(turn), heartbeat_seconds):
-                yield KEEP_ALIVE if item is HEARTBEAT else frame(item)
+                if item is HEARTBEAT:
+                    yield KEEP_ALIVE
+                elif item.type == "claims":
+                    for event in checked(turn, item.data["claims"]):
+                        yield frame(event)
+                elif item.type in ANSWER_EVENTS:
+                    raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")
+                else:
+                    yield frame(item)
+        except RunError as error:
+            log.warning("Run %s could not answer (%s): %s", turn.run_id, error.code, error)
+            yield frame(Event("error", {"code": error.code}))
         except Exception:
             log.exception("Run %s failed.", turn.run_id)
             yield frame(Event("error", {"code": "internal"}))
