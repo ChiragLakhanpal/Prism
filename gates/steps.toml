@@ -45,7 +45,7 @@ lane = "python"
 [[step]]
 # These tests may read the fixture database, so they run in its lane, after the build.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "tests", "ops/bundle/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "4", "tests", "ops/bundle/tests"]
 lane = "python"
 
 # The wizard tests take about 50 seconds in one process, so six pytest-xdist workers share them.
