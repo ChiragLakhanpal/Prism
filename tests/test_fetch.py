@@ -215,8 +215,7 @@ def test_a_joint_venture_whose_members_sit_on_two_pages_keeps_both_when_only_one
     def two_pages(changed_amounts, day):
         def fetch(source, engine):
             if source.key != "awards":
-                yield from pages.recorded_pages(source)
-                return
+                return  # the other sources play no part here, and the job runs faster without them
             fetched_at = dt.datetime(2026, 10, day, tzinfo=dt.UTC)
             revised = [dict(row, **changed_amounts.get(row["wb_contract_number"], {})) for row in first]
             yield pages.Page("awards", "https://example.org/awards?top=1000&skip=0", {"data": revised}, fetched_at)
