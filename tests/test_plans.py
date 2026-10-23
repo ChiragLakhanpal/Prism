@@ -354,24 +354,35 @@ def test_a_page_the_layout_parser_cannot_read_is_recorded_and_waits_for_the_next
     assert fresh.run("SELECT count(*) FROM strata.ops.parse_failures").rows[0][0] == 2
 
 
-def test_a_later_version_that_re_dates_a_step_does_not_move_its_first_published_planned_date(fresh):
+LATER_PLAN = dt.date(2021, 12, 1)  # made up, like the re-dated step
+
+
+@pytest.mark.parametrize("first_public_from, delay_public_from", [
+    (dt.date(2021, 4, 21), LATER_PLAN),
+    # Disclosed after the later plan (ticket 08's verification, F2): the delay row rests on the
+    # first plan's date, so it cannot be public before that plan is.
+    (dt.date(2021, 12, 15), dt.date(2021, 12, 15)),
+], ids=["first-plan-disclosed-first", "first-plan-disclosed-after-the-later-one"])
+def test_a_later_version_that_re_dates_a_step_does_not_move_its_first_published_planned_date(
+        fresh, first_public_from, delay_public_from):
     """No recorded plan re-dates a step, so this test writes two versions of one activity by hand.
     The first plans the signed contract on the date the April 21, 2021 plan gives. The later one
-    re-dates it to November 1, 2021, a made-up date, and shows the actual signing date."""
+    re-dates it to November 1, 2021, a made-up date, and shows the actual signing date. The delay
+    row is public only once both plans are (ADR 0002)."""
     from strata.lakehouse import plans
 
     first, signed = value("plan-229129-first-planned-signing"), value("plan-229129-signed")["value"]
-    later = dt.date(2021, 12, 1)  # made up, like the re-dated step
+    later = LATER_PLAN
     reference, project = "KE-NWWDA-229129-CW-RFB", "P156634"
     plans.insert(fresh, "strata.silver.plan_versions",
                  ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest",
                   "pdf_pages", "route_b_pages", "text_url", "pdf_url", "public_from"),
-                 [("first", project, NWWDA, first["date"], 1, False, 1, 1, "first.txt", "first.pdf", first["date"]),
+                 [("first", project, NWWDA, first["date"], 1, False, 1, 1, "first.txt", "first.pdf", first_public_from),
                   ("later", project, NWWDA, later, 2, True, 1, 1, "later.txt", "later.pdf", later)])
     plans.insert(fresh, "strata.silver.plan_listings",
                  ("document_id", "project_id", "activity_reference_no", "is_first_listing",
                   "first_listing_confirmed", "public_from"),
-                 [("first", project, reference, True, True, first["date"]),
+                 [("first", project, reference, True, True, first_public_from),
                   ("later", project, reference, False, True, later)])
     plans.insert(fresh, "strata.silver.plan_steps",
                  ("document_id", "project_id", "activity_reference_no", "step", "step_order", "planned_on",
@@ -384,6 +395,7 @@ def test_a_later_version_that_re_dates_a_step_does_not_move_its_first_published_
     [row] = rows(fresh, "SELECT * FROM strata.silver.plan_step_delays WHERE document_id = 'later'")
     assert (row["planned_on"], row["first_planned_on"]) == (dt.date(2021, 11, 1), first["value"])
     assert row["delay_days"] == value("plan-229129-days-late")["value"]
+    assert row["public_from"] == delay_public_from
 
 
 # ── The live layout parser, through the same port ──
