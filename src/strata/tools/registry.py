@@ -163,8 +163,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
 def check_contract(tool: Tool, result: dict) -> None:
     """Every result has the shared envelope and the tool's own fields; every row is cited, dated on or
     before the as-of date, and has its source line. An abstention gives a reason and no rows. Each
-    reason code and abstention reason is one the registry lists, so the screens' copy has a sentence
-    for it."""
+    reason code, in a row's marks or in the coverage line, and each abstention reason is one the
+    registry lists, so the screens' copy has a sentence for it."""
     def broken(what: str):
         raise ToolContractError(f"{tool.name} broke the tool contract: {what}.")
 
@@ -174,6 +174,10 @@ def check_contract(tool: Tool, result: dict) -> None:
     coverage = result["coverage"]
     if not isinstance(coverage, dict) or set(coverage) != set(COVERAGE):
         broken(f"its coverage must have {', '.join(COVERAGE)}")
+    for left_out in coverage["not_used"]:
+        if left_out.get("reason") not in tool.result.reasons:
+            broken(f"its coverage line leaves rows out for {left_out.get('reason')!r}, which its result's reasons "
+                   f"do not list")
     abstention = result["abstention"]
     if abstention is not None and (not isinstance(abstention, dict) or not abstention.get("reason")):
         broken("an abstention must give its reason")

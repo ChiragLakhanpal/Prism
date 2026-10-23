@@ -259,30 +259,21 @@ def fresh():
         yield engine
 
 
-class FlagsParagraph54:
-    """A shield that finds an attack in the ICR's paragraph 54 and nowhere else."""
-
-    name = "test shield"
-
-    def scan(self, texts):
-        from strata.knowledge.shields import Scan
-
-        return [Scan(value("icr-para-54")["quote"] in text, "flagged by the test") for text in texts]
-
-
-def test_a_prompt_shields_hit_is_kept_with_its_result_and_counted_in_data_readiness(fresh):
+def test_a_prompt_shields_hit_is_kept_with_its_result_and_counted_in_data_readiness(
+        fresh, shield_finding_an_attack_in):
     from strata.config import load_thresholds
     from strata.lakehouse import passages
 
     limits = load_thresholds()
     limits.values["ingestion"]["passage_documents"] = 3  # the ICR Reviews and the ICR: enough for paragraph 54
-    report = passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, shield=FlagsParagraph54())
+    report = passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits,
+                                     shield=shield_finding_an_attack_in(value("icr-para-54")["quote"]))
 
-    flagged = rows(fresh, "SELECT p.paragraph, p.document_type, s.attack_detected, s.detail "
+    attacks = rows(fresh, "SELECT p.paragraph, p.document_type, s.attack_detected, s.detail "
                           "FROM strata.silver.passages AS p JOIN strata.silver.passage_shields AS s "
                           "ON s.text_hash = p.text_hash WHERE s.attack_detected")
-    assert flagged == [{"paragraph": "54", "document_type": ICR, "attack_detected": True,
-                        "detail": "flagged by the test"}]
+    assert attacks == [{"paragraph": "54", "document_type": ICR, "attack_detected": True,
+                        "detail": "found by the test"}]
     hits = rows(fresh, "SELECT count, denominator FROM strata.ops.data_readiness WHERE run_id = :run_id "
                        "AND measure = 'passages_prompt_shields_hit'", run_id=report.run_id)
     assert hits == [{"count": 1, "denominator": report.passages}]

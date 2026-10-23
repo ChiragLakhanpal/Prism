@@ -134,30 +134,41 @@ def test_an_unknown_filter_or_no_match_abstains_with_its_reason(engine, argument
     assert result["rows"] == [] and result["abstention"]["reason"] == reason
 
 
-@pytest.fixture
-def flagged():
-    """A fresh run over P130164's ICR Reviews and ICR, with a shield that flags the ICR's paragraph 54."""
+def fresh_run(shield):
+    """A fresh run over P130164's ICR Reviews and ICR, with the given shield."""
     from strata.config import load_thresholds
-    from strata.knowledge.shields import Scan
     from strata.lakehouse import catalog, passages
-
-    class FlagsParagraph54:
-        name = "test shield"
-
-        def scan(self, texts):
-            return [Scan(value("icr-para-54")["quote"] in text, "flagged by the test") for text in texts]
 
     limits = load_thresholds()
     limits.values["ingestion"]["passage_documents"] = 3
-    with DuckDBEngine.open() as engine:
-        catalog.build(engine)
-        passages.run_on_fixture(engine, projects=["P130164"], thresholds=limits, shield=FlagsParagraph54())
-        yield engine
+    engine = DuckDBEngine.open()
+    catalog.build(engine)
+    passages.run_on_fixture(engine, projects=["P130164"], thresholds=limits, shield=shield)
+    return engine
 
 
-def test_a_passage_prompt_shields_flagged_is_left_out_and_the_coverage_line_says_why(flagged):
-    result = search(flagged, query=REBIDDING, project_id="P130164")
+def test_a_passage_in_which_prompt_shields_found_an_attack_is_left_out_and_the_coverage_line_says_why(
+        shield_finding_an_attack_in):
+    with fresh_run(shield_finding_an_attack_in(value("icr-para-54")["quote"])) as engine:
+        result = search(engine, query=REBIDDING, project_id="P130164")
 
     assert all(row["paragraph"] != "54" or row["document_type"] != ICR for row in result["rows"])
     [held_back] = [entry for entry in result["coverage"]["not_used"] if entry["reason"] == "prompt_shields_hit"]
+    assert held_back["count"] == 1 and held_back["evidence_ids"][0].endswith("/v1/54")
+
+
+def test_a_passage_with_no_stored_shield_result_is_left_out_and_the_coverage_line_says_why():
+    """Today a run stops before embedding when the shield fails, so this cannot happen. The tool still
+    returns only passages the shield has screened."""
+    from strata.knowledge.shields import PatternShield
+    from strata.lakehouse import gold
+
+    with fresh_run(PatternShield()) as engine:
+        engine.run("DELETE FROM strata.silver.passage_shields WHERE text_hash IN (SELECT text_hash FROM "
+                   "strata.silver.passages WHERE document_type = :icr AND paragraph = '54')", {"icr": ICR})
+        gold.sync(engine, "passage")
+        result = search(engine, query=REBIDDING, project_id="P130164")
+
+    assert all(row["paragraph"] != "54" or row["document_type"] != ICR for row in result["rows"])
+    [held_back] = [entry for entry in result["coverage"]["not_used"] if entry["reason"] == "not_screened"]
     assert held_back["count"] == 1 and held_back["evidence_ids"][0].endswith("/v1/54")

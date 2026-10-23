@@ -32,3 +32,21 @@ def fixture_db(tmp_path_factory):
             if not FIXTURE_DB.exists():
                 subprocess.run([sys.executable, str(ROOT / "gates" / "build_fixture.py")], check=True)
     return FIXTURE_DB
+
+
+@pytest.fixture
+def shield_finding_an_attack_in():
+    """A shield stand-in that finds a prompt attack in each passage holding the given words, and in no
+    other. The passage tests and the search tests use it to prove a hit is kept, counted and left out."""
+    from strata.knowledge.shields import Scan
+
+    class FindsAnAttack:
+        name = "test shield"
+
+        def __init__(self, words: str):
+            self.words = words
+
+        def scan(self, texts):
+            return [Scan(self.words in text, "found by the test") for text in texts]
+
+    return FindsAnAttack

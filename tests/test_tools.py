@@ -128,7 +128,6 @@ def test_the_agents_tool_list_uses_no_word_design_md_says_strata_never_writes():
         parameter["description"] for tool in registry.agent_tools()
         for parameter in tool["parameters"]["properties"].values()]
 
-    assert "flag" in words and "approve" in words
     def forms(word: str) -> str:
         """Every form of the word: approve, approves, approved, approving; flag, flags, flagged, flagging."""
         *first, last = word.split()
@@ -137,6 +136,7 @@ def test_the_agents_tool_list_uses_no_word_design_md_says_strata_never_writes():
         return r"\b" + r"\s+".join([*map(re.escape, first), ending]) + r"\b"
 
     found = [(word, text) for text in texts for word in words if re.search(forms(word), text, re.I)]
+    assert "flag" in words and "approve" in words
     assert found == []
     assert [text for text in texts if "\u2014" in text or "!" in text] == []
 
@@ -160,9 +160,13 @@ def marked(result, question) -> dict[str, list[str]]:
 
 
 def in_top_three(result, question) -> dict[str, list[str]]:
-    """search_passages' answer: which of the expected passages are among its first three."""
+    """search_passages' answer: which of the expected passages are among its first three, and which
+    matched passages it left out because Prompt Shields found an attack or never screened them."""
     top = {row["evidence_id"] for row in result["rows"][:3]}
-    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top)}
+    left_out = [evidence for entry in result["coverage"]["not_used"]
+                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
+    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
+            "left_out": sorted(left_out)}
 
 
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three}
@@ -349,8 +353,18 @@ def invent_an_abstention(call, **arguments):
     return {**adapter(call, **arguments), "rows": [], "abstention": {"reason": "plan_not_ready"}}
 
 
+def invent_a_coverage_reason(call, **arguments):
+    """check_plan saying it left a row out for a reason the registry does not list, which the coverage
+    line's copy has no sentence for: the registry must refuse it."""
+    from strata.tools.check_plan import check_plan as adapter
+    result = adapter(call, **arguments)
+    result["coverage"]["not_used"].append({"reason": "row_skipped", "count": 1,
+                                           "evidence_ids": [result["rows"][0]["evidence_id"]]})
+    return result
+
+
 @pytest.mark.parametrize("adapter", ["leak_a_later_row", "drop_an_evidence_id", "rename_a_reason",
-                                     "invent_an_abstention"])
+                                     "invent_an_abstention", "invent_a_coverage_reason"])
 def test_the_registry_refuses_a_result_that_breaks_the_tool_contract(engine, tmp_path, adapter):
     path = copy_registry(tmp_path, '"strata.tools.check_plan:check_plan"', f'"test_tools:{adapter}"')
     context = registry.Context(engine=engine, viewer=ANA)
