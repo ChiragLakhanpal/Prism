@@ -1074,6 +1074,30 @@ record = "api/notices/P156634.json"
 at = "procnotices[id=OP00245480].notice_text"
 
 [[value]]
+id = "loan-form-older"
+says = "Credit 60300 written in its older form: the four-digit credit number 6030 and the country code. P156634's project record lists only IDA-60290 and IDA-60300."
+value = "6030-KE"
+quote = "Credit No.: 6030-KE"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00142640].notice_text"
+
+[[value]]
+id = "loan-form-older-with-lender"
+says = "Credit 60300 written in its older form, with the lender and a stray space before the number."
+value = "IDA- 6030-KE"
+quote = "Credit No:&nbsp; IDA- 6030-KE"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00073086].notice_text"
+
+[[value]]
+id = "loan-form-older-india"
+says = "P130164's credit, which its project record writes IDA-53100, written in its older form in a notice."
+value = "5310-IN"
+quote = "Credit No.:&nbsp; 5310-IN"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00049920].notice_text"
+
+[[value]]
 id = "loan-form-slash"
 says = "Credit 60300 written with a spaced slash, as Procurement Plans write it."
 value = "IDA / 60300"

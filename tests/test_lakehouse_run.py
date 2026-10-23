@@ -140,6 +140,8 @@ CHECKS = {
     "award-notice-541055": notice_date,
     "loan-form-hyphen": notice_loan,
     "loan-form-bare": notice_loan,
+    "loan-form-older": notice_loan,
+    "loan-form-older-with-lender": notice_loan,
     "closing-date-p156634": project_closing,
     "individual-consultant": individual_consultant,
 }
@@ -431,19 +433,50 @@ def test_an_award_notice_keeps_its_signed_price_in_the_currency_it_names(gold):
 
 # ── Loan numbers and old method names ────────────────────────────────────
 
-def test_a_loan_number_in_each_of_its_four_forms_normalizes_to_one_value_and_joins_to_its_project(gold):
+def project_credits(project):
+    """The loans and credits a recorded project record lists, as the projects API writes them (IDA-60300)."""
+    loans = record(f"api/projects/{project}.json")["projects"][project].get("loan_transactions") or []
+    return {loan["financier_loan"] for loan in loans if loan.get("financier_loan")}
+
+
+def test_a_loan_number_in_each_of_its_forms_normalizes_to_one_value_and_joins_to_its_project(gold):
     """values.toml: credit 60300 as the credits dataset (IDA60300), notices and the projects API
-    (IDA-60300), a notice's free text (60300) and Procurement Plans (IDA / 60300) write it.
-    clean.loan_number is the one normalization every source uses; a bare number has no lender, so
-    gold matches it to the loans of the notice's own project."""
-    forms = {key: VALUES[key]["value"] for key in ("loan-form-compact", "loan-form-hyphen", "loan-form-slash")}
-    assert {clean.loan_number(form).normalized for form in forms.values()} == {"IDA60300"}
-    assert clean.loan_number(VALUES["loan-form-bare"]["value"]).digits == "60300"
+    (IDA-60300), a notice's free text (60300) and Procurement Plans (IDA / 60300) write it, and
+    the older four-digit form with a country code that notices also use (6030-KE, IDA- 6030-KE).
+    clean.loan_number is the one normalization every source uses; a number written with no lender
+    keeps its digits, and gold matches them to the loans of the notice's own project."""
+    with_lender = ("loan-form-compact", "loan-form-hyphen", "loan-form-slash", "loan-form-older-with-lender")
+    assert {clean.loan_number(VALUES[key]["value"]).normalized for key in with_lender} == {"IDA60300"}
+    for key in ("loan-form-bare", "loan-form-older"):
+        written = clean.loan_number(VALUES[key]["value"])
+        assert (written.normalized, written.digits) == (None, "60300")
+    india = clean.loan_number(VALUES["loan-form-older-india"]["value"])
+    assert {f"IDA-{india.digits}"} == project_credits("P130164")
 
     loan = one(gold, "SELECT project_id, public_from FROM strata.gold.project_loan WHERE loan_number = 'IDA60300'")
     assert loan["project_id"] == "P156634"
-    bare = one(gold, "SELECT loan_number, project_id FROM strata.gold.notice WHERE notice_id = 'OP00245480'")
-    assert (bare["loan_number"], bare["project_id"]) == ("IDA60300", "P156634")
+    for key in ("loan-form-bare", "loan-form-older", "loan-form-older-with-lender"):
+        notice_loan(gold, VALUES[key])
+
+
+@pytest.mark.parametrize("project", ["P156634", "P130164"])
+def test_every_notice_that_writes_one_of_its_projects_credits_carries_it_in_gold(gold, project):
+    """However a notice writes a credit its project record lists (IDA-60300, 60300 KE, 6030-KE,
+    IDA- 6030-KE, 6030), gold gives the notice that credit, and never a lender with four digits."""
+    rows = gold.run("SELECT s.notice_id, s.loan_number_as_written, n.loan_number FROM strata.silver.notices AS s "
+                    "JOIN strata.gold.notice AS n ON n.notice_id = s.notice_id "
+                    "WHERE s.project_id = :project AND s.loan_number_as_written IS NOT NULL", {"project": project}).rows
+    credits = {credit.split("-")[1]: credit.replace("-", "") for credit in project_credits(project)}
+    wrong, checked = [], 0
+    for notice, written, loan in rows:
+        digits = re.sub(r"\D", "", written)
+        for number, credit in credits.items():
+            if digits in (number, number[:-1]):  # 60300, or the older four-digit 6030
+                checked += 1
+                if loan != credit:
+                    wrong.append((notice, written, loan))
+    assert checked and wrong == []
+    assert not [loan for _, _, loan in rows if loan and re.fullmatch(r"[A-Z]+\d{4}", loan)]
 
 
 def test_a_notice_that_says_ncb_is_stored_as_request_for_bids_open_national(gold):

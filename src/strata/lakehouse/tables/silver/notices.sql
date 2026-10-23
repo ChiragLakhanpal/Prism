@@ -13,7 +13,8 @@
 -- procurement_method              the current Procurement Regulations' name, such as Request for Bids
 -- market_approach                 what an old method name says, in STEP's words: ICB is Open - International
 -- loan_number                     IDA60300, when the notice writes the lender; empty for a bare number
--- loan_digits                     the loan or credit number's digits, which gold matches to the project's loans
+-- loan_digits                     the loan or credit number's digits (6030-KE gives 60300), which gold
+--                                 matches to the project's loans
 -- contract_signature_date         a Contract Award notice's Contract Signature Date
 -- signed_contract_price, _currency  a Contract Award notice's signed price, in the currency it names
 -- notice_text                     the notice as plain text

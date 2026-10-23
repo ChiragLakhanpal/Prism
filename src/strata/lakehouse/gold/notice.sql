@@ -1,5 +1,7 @@
 -- strata.gold.notice: each notice from the newest page that held it. A notice that writes its
--- credit as a bare number (60300) gets the loan of its own project with that number (IDA60300).
+-- credit with no lender (60300, or 6030 KE, which clean.py reads as 60300) gets the loan of its
+-- own project with that number (IDA60300). Four bare digits (6030) are the older form of the
+-- number, so they also match the loan whose number adds a 0.
 -- key: notice_id
 WITH latest AS (
   SELECT *
@@ -14,7 +16,7 @@ resolved AS (
   LEFT JOIN strata.gold.project_loan AS l
     ON n.loan_number IS NULL
     AND l.project_id = n.project_id
-    AND regexp_extract(l.loan_number, '([0-9]+)', 1) = n.loan_digits
+    AND regexp_extract(l.loan_number, '([0-9]+)', 1) IN (n.loan_digits, n.loan_digits || '0')
   QUALIFY row_number() OVER (PARTITION BY n.notice_id ORDER BY l.loan_number) = 1
 )
 SELECT

@@ -2,6 +2,8 @@
 
 Each rule is defined once here, and every silver transform uses it:
 
+- Text has its spacing made single, and a list is joined with commas. An amount keeps two decimal
+  places.
 - Dates come in mixed formats (09-Sep-2019, 2021-09-17T00:00:00Z, 2022/04/19). parse_date reads
   each one and returns None for anything else, never a guess.
 - World Bank fiscal years run July to June, so a date from July 1 on falls in the next year's FY.
@@ -10,9 +12,12 @@ Each rule is defined once here, and every silver transform uses it:
 - A STEP reference (KE-NWWDA-541055-CW-RFB) is parsed into its parts. Sources write it with stray
   spaces (KE- WASREB-...) or slashes (KE/TAVEVO/82746/GO/RFB), and both normalize to hyphens. The
   method is never read from the reference: its last part is kept only for the data note.
-- Loan numbers come in four forms (IDA60300, IDA-60300, IDA / 60300 and a bare 60300) and
-  normalize to one: the lender's letters and the number, IDA60300. A bare number has no lender, so
-  gold resolves it against the loans of the notice's own project.
+- Loan numbers come in five forms (IDA60300, IDA-60300, IDA / 60300, a bare 60300, and the older
+  four-digit number with a country code, 6030-KE) and normalize to one: the lender's letters and
+  the five-digit number, IDA60300. The older form gains its 0 (6030-KE is credit 60300). A number
+  written with no lender keeps only its digits, so gold resolves it against the loans of the
+  notice's own project, and a lender with four digits and no country code is never a normalized
+  value.
 - Method names from before the 2016 Procurement Regulations map to the current names, with the
   market approach the old name implies. The old wording is kept in its own column.
 """
@@ -24,10 +29,7 @@ import decimal
 import re
 from dataclasses import dataclass
 
-# ── Dates ────────────────────────────────────────────────────────────────
-
-DATE_FORMATS = ("%d-%b-%Y", "%Y-%m-%d", "%Y/%m/%d", "%d-%B-%Y")
-
+# ── Text and amounts ─────────────────────────────────────────────────────
 
 def text(value) -> str | None:
     """A field's text with its spacing made single, or None when it is empty. A list is joined with commas."""
@@ -44,6 +46,11 @@ def amount(value) -> decimal.Decimal | None:
     return decimal.Decimal(str(value)).quantize(decimal.Decimal("0.01"))
 
 
+# ── Dates ────────────────────────────────────────────────────────────────
+
+DATE_FORMATS = ("%d-%b-%Y", "%Y-%m-%d", "%Y/%m/%d", "%d-%B-%Y")
+
+
 def parse_date(value) -> dt.date | None:
     """A date written in any of the sources' formats, or None."""
     if value is None:
@@ -52,13 +59,13 @@ def parse_date(value) -> dt.date | None:
         return value.date()
     if isinstance(value, dt.date):
         return value
-    text = str(value).strip()
-    if not text:
+    written = str(value).strip()
+    if not written:
         return None
-    text = re.sub(r"T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$", "", text)
+    written = re.sub(r"T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$", "", written)
     for fmt in DATE_FORMATS:
         try:
-            return dt.datetime.strptime(text, fmt).date()
+            return dt.datetime.strptime(written, fmt).date()
         except ValueError:
             continue
     return None
@@ -114,7 +121,11 @@ def step_reference(text) -> StepReference | None:
 # ── Loan numbers ─────────────────────────────────────────────────────────
 
 LENDERS = ("IBRD", "IDA", "TF")
-LOAN_NUMBER = re.compile(r"(?<![A-Z0-9])(?:(?P<lender>IBRD|IDA|TF)\s*(?:[-/]\s*)?)?(?P<digits>\d{4,6})(?:\s*[A-Z]{2})?(?![0-9])")
+# The lender, a hyphen, en dash or slash, the number, and a country code after a space or a hyphen.
+# The country code is two letters on their own: 6030 AND is the number 6030 with no country code.
+LOAN_NUMBER = re.compile(
+    r"(?<![A-Z0-9])(?:(?P<lender>IBRD|IDA|TF)\s*(?:[-/\u2013]\s*)?)?(?P<digits>\d{4,6})(?![0-9])"
+    r"(?:\s*[-\u2013]?\s*(?P<country>[A-Z]{2})(?![A-Z0-9]))?")
 
 
 @dataclass(frozen=True)
@@ -125,18 +136,22 @@ class LoanNumber:
 
     @property
     def normalized(self) -> str | None:
-        """IDA60300 for every written form; None for a bare number, whose lender is not written."""
-        return f"{self.lender}{self.digits}" if self.lender else None
+        """IDA60300 for every written form; None when the lender is not written, or when the number
+        has four digits and no country code to say it is the older form."""
+        return f"{self.lender}{self.digits}" if self.lender and len(self.digits) > 4 else None
 
 
 def loan_number(text) -> LoanNumber | None:
-    """The first loan or credit number in text, in any of its four forms."""
+    """The first loan or credit number in text, in any of its five forms."""
     if not text:
         return None
     match = LOAN_NUMBER.search(str(text).upper())
     if not match:
         return None
-    return LoanNumber(match.group(0).strip(), match["lender"], match["digits"])
+    digits = match["digits"]
+    if len(digits) == 4 and match["country"]:
+        digits += "0"  # the older form: credit 6030-KE is IDA60300
+    return LoanNumber(match.group(0).strip(), match["lender"], digits)
 
 
 # ── Selection methods ────────────────────────────────────────────────────

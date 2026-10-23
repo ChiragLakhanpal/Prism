@@ -1,5 +1,6 @@
--- Each loan or credit and the project it finances, so a loan number in any of its four forms
--- (IDA60300, IDA-60300, IDA / 60300, 60300) joins to its project once normalized.
+-- Each loan or credit and the project it finances, so a loan number in any of the forms that
+-- strata.lakehouse.clean names (IDA-60300, 60300, 6030-KE and others) joins to its project once
+-- normalized.
 --
 -- loan_number            the lender's letters and the number, such as IDA60300
 -- loan_number_as_written as the projects API writes it, such as IDA-60300
