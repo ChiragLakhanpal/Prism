@@ -47,6 +47,7 @@ from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
 from strata.config import Thresholds, load_sources, load_thresholds
+from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
@@ -98,12 +99,6 @@ def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tupl
         engine.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {', '.join(values)}",  # sql-lint: names only
                    params)
     return len(rows)
-
-
-def public_from(disclosed_on: dt.date | None, fetched_on: dt.date) -> dt.date:
-    """ADR 0002: the day the source published it, or the day Strata first fetched it when that day is
-    missing or later than the fetch."""
-    return disclosed_on if disclosed_on is not None and disclosed_on <= fetched_on else fetched_on
 
 
 # ── 1. Fetch into bronze ─────────────────────────────────────────────────
