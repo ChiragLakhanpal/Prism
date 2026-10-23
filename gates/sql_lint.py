@@ -14,7 +14,8 @@ Strata's SQL runs on the workspace and on DuckDB, as each viewer, so two rules h
 It reads every .sql file under src/strata and tests/ground_truth, and the Python under src/strata
 and ops/bundle: every string that holds a query, wherever it is written (passed to run(),
 execute(), executemany() or sql(), held in a variable or a constant, or returned), and every
-query text that code builds with an f-string, + or %, += or %=, or .format(). A built query may
+query text that code builds with an f-string, + or %, += or %=, .format() or .replace(), or by
+joining a list or tuple whose first item is a query (" ".join([...])). A built query may
 start from a string written right there or from a name any of those files gives a query
 (QUERY = "SELECT ..."), read bare or through its module (queries.QUERY), as this repo writes its
 queries as named constants. A string is a query when it starts the way a statement does
@@ -105,7 +106,8 @@ def _text(node: ast.AST, named: dict[str, str]) -> str | None:
 
 def _first_text(node: ast.AST, named: dict[str, str]) -> str | None:
     """The text a built string starts with: an f-string's first part, the left end of a + or a %,
-    the string .format() is called on, or the query a name holds when += or %= adds to it. A name
+    the string .format() or .replace() is called on, the first item of a list or tuple that
+    .join() joins, or the query a name holds when += or %= adds to it. A name
     in named stands for its query wherever a written string could, also as an f-string's first
     part (f"{QUERY} AND ...")."""
     if isinstance(node, ast.JoinedStr):
@@ -120,8 +122,12 @@ def _first_text(node: ast.AST, named: dict[str, str]) -> str | None:
         return _text(left, named)
     if isinstance(node, ast.AugAssign) and isinstance(node.op, (ast.Add, ast.Mod)):
         return _text(node.target, named)
-    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "format":
-        return _text(node.func.value, named)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+        if node.func.attr in ("format", "replace"):
+            return _text(node.func.value, named)
+        joined = node.args[0] if node.func.attr == "join" and node.args else None
+        if isinstance(joined, (ast.List, ast.Tuple)) and joined.elts:
+            return _text(joined.elts[0], named) or _first_text(joined.elts[0], named)
     return None
 
 

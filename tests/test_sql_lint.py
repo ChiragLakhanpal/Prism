@@ -169,3 +169,17 @@ def test_a_value_built_onto_a_query_constant_from_another_module_is_refused(tmp_
             "    return engine.run(queries.PENDING + \" AND step_reference = '\" + reference + \"'\")\n"})
 
     assert lint().problems(root) == [f"src/strata/tools/find.py:{line}: {BUILT}" for line in (6, 7)]
+
+
+def test_a_value_joined_or_replaced_into_a_query_is_refused(tmp_path):
+    """A query's text built with str.join from a list that starts with a query, or with str.replace
+    on a query, is built in code like any other."""
+    root = tree(tmp_path, **{
+        "src__strata__tools__find.py":
+            "FIND = \"SELECT * FROM strata.gold.package WHERE step_reference = :reference\"\n\n\n"
+            "def find(engine, reference):\n"
+            "    engine.run(\" \".join([\"SELECT * FROM strata.gold.package WHERE\", f\"step_reference = '{reference}'\"]))\n"
+            "    engine.run(FIND.replace(\":reference\", repr(reference)))\n"
+            "    return engine.run(\"\\n\".join((FIND, \"LIMIT 1\")))  # sql-lint: names only\n"})
+
+    assert lint().problems(root) == [f"src/strata/tools/find.py:{line}: {BUILT}" for line in (5, 6)]
