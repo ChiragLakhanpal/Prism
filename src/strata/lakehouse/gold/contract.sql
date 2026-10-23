@@ -10,7 +10,10 @@
 -- notices             FY2017 to FY2019, which neither awards dataset covers: each Contract Award
 --                     notice whose contract was signed in those years (or, with no signature date,
 --                     whose notice was published in them) is a contract, with the signed price in
---                     the currency the notice names, labeled as local currency from award notices.
+--                     the currency the notice names, labeled as US dollars or local currency from
+--                     award notices. A notice with no signature date whose STEP reference is
+--                     already a contract's from an awards dataset is that contract, published after
+--                     its signing, so it is left out rather than counted twice.
 -- A contract number in both datasets is kept once, from the later dataset.
 -- key: contract_id
 WITH contracts AS (
@@ -121,6 +124,11 @@ award_notices AS (
   FROM strata.gold.notice
   WHERE notice_type = 'Contract Award'
 ),
+awarded AS (
+  SELECT step_reference AS awarded_reference FROM since_fy2020 WHERE step_reference IS NOT NULL
+  UNION
+  SELECT step_reference AS awarded_reference FROM fy2001_2016 WHERE step_reference IS NOT NULL
+),
 from_notices AS (
   SELECT
     notice_id AS contract_id,
@@ -144,13 +152,16 @@ from_notices AS (
     CAST(NULL AS DECIMAL(18, 2)) AS contract_amount_usd,
     signed_contract_price AS contract_amount,
     signed_contract_currency AS contract_currency,
-    'local currency, from award notices' AS amount_basis,
+    CASE WHEN signed_contract_currency = 'USD' THEN 'US dollars, from award notices'
+         ELSE 'local currency, from award notices' END AS amount_basis,
     CAST(NULL AS STRING) AS supplier_id,
     CAST(0 AS INT) AS supplier_count,
     false AS joint_venture,
     public_from
-  FROM award_notices
-  WHERE fiscal_year BETWEEN 2017 AND 2019
+  FROM award_notices AS n
+  LEFT JOIN awarded AS a ON a.awarded_reference = n.step_reference
+  WHERE n.fiscal_year BETWEEN 2017 AND 2019
+    AND NOT (n.contract_signature_date IS NULL AND a.awarded_reference IS NOT NULL)
 ),
 every_contract AS (
   SELECT * FROM since_fy2020

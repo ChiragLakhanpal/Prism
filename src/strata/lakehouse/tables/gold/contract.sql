@@ -19,7 +19,8 @@
 --                        date, from the notice date)
 -- contract_amount_usd    in US dollars; empty for a contract from a notice, never converted
 -- contract_amount, contract_currency   the amount in the currency the source gives it in
--- amount_basis           US dollars, or local currency, from award notices
+-- amount_basis           US dollars; or, for a contract from a notice, US dollars from award notices
+--                        when the notice prices it in USD, else local currency from award notices
 -- supplier_id            the contract's supplier: the member, or the joint venture (JV-...) when
 --                        it has several members, which gold.contract_supplier lists; empty for the
 --                        FY2001 to FY2016 dataset and for notices, which give no STEP supplier ID

@@ -85,7 +85,7 @@ cadence = "frozen"
 license = "CC BY 4.0"
 silver_transform = "awards_fy2001_2016"
 stratum = "What"
-limitations = ["It holds prior-review contracts only, and has not changed since March 2022.", "Its references are free text, not STEP references, so its contracts do not join notices or packages.", "It writes methods by the names used before the 2016 Procurement Regulations. I store the current name and keep its words."]
+limitations = ["It holds prior-review contracts only, and has not changed since March 2022.", "Its references are free text, not STEP references, so its contracts rarely join notices or packages.", "It writes methods by the names used before the 2016 Procurement Regulations. I store the current name and keep its words."]
 
 # ── IEG ratings ──────────────────────────────────────────────────────────
 

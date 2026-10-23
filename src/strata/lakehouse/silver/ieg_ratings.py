@@ -56,6 +56,6 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("me_quality")),
             page_hash,
             fetched_at,
-            clean.public_from(dt.date(evaluated, 6, 30) if evaluated else None, fetched),
+            clean.public_from(clean.fiscal_year_end(evaluated) if evaluated else None, fetched),
         ))
     return {"strata.silver.ieg_ratings": rows}

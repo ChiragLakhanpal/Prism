@@ -78,6 +78,11 @@ def fiscal_year(day: dt.date | None) -> int | None:
     return day.year + 1 if day.month >= 7 else day.year
 
 
+def fiscal_year_end(year: int) -> dt.date:
+    """The last day of a World Bank fiscal year: FY2020 ends on June 30, 2020."""
+    return dt.date(year, 6, 30)
+
+
 def public_from(published: dt.date | None, fetched: dt.date) -> dt.date:
     """The day a row became public: the source's own date, unless it is missing or after the fetch."""
     if published is None or published > fetched:

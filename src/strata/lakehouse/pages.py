@@ -67,12 +67,21 @@ def reported_total(source: Source, body) -> int | None:
     return None
 
 
+def _day(value) -> dt.date | None:
+    """A watermark value as a date. A fiscal year alone, such as IEG's evaluation_fy 2020, is the
+    last day of that year."""
+    written = clean.text(value)
+    if written and len(written) == 4 and written.isdigit():
+        return clean.fiscal_year_end(int(written))
+    return clean.parse_date(value)
+
+
 def newest_record(source: Source, body) -> dt.date | None:
     """The newest date in the page's watermark field. For the Indicators API, the watermark is the
     page's own lastupdated date."""
     if isinstance(body, list):
         return clean.parse_date(_about(body).get(source.watermark_field))
-    days = [clean.parse_date(record.get(source.watermark_field)) for record in records(source, body)]
+    days = [_day(record.get(source.watermark_field)) for record in records(source, body)]
     return max((day for day in days if day), default=None)
 
 

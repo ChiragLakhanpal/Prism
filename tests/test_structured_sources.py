@@ -171,7 +171,7 @@ def test_fy2017_to_fy2019_have_contracts_from_award_notices_labeled_as_local_cur
                for year in (2017, 2018, 2019)}
     assert by_year == {key: sorted(GAP[key]) for key in ("fy2017", "fy2018", "fy2019")}
     assert len(stored) == sum(len(GAP[key]) for key in ("fy2017", "fy2018", "fy2019"))  # no other year
-    assert {row["amount_basis"] for row in stored} == {"local currency, from award notices"}
+    assert {row["amount_basis"] for row in stored} == {"local currency, from award notices"}  # none in USD
     assert {row["contract_amount_usd"] for row in stored} == {None}  # never converted
     assert all(row["award_notice_id"] == row["contract_id"] and row["public_from"] for row in stored)
 
@@ -186,6 +186,37 @@ def test_a_contract_from_an_award_notice_keeps_the_price_in_the_currency_the_not
     assert contract == [{"step_reference": "IN-RRSMP-7431-CW-RFB", "contract_signing_date": dt.date(2017, 6, 15),
                          "contract_amount": decimal.Decimal(GAP["in_inr_price"].replace(",", "")),
                          "contract_currency": "INR"}]
+
+
+def test_a_gap_year_notice_priced_in_us_dollars_is_labeled_so_and_one_that_repeats_an_award_is_left_out():
+    """Two pages written from recorded ones. OP00044090 (values.toml, award-7431-signed) priced in US
+    dollars instead of rupees is labeled US dollars from award notices. And a prior-review award
+    signed on June 15, 2016 under a STEP reference, whose award notice came out on August 2, 2016
+    with no signature date, falls in FY2016 by its signing and FY2017 by its notice: it is one
+    contract, from the awards dataset, not two."""
+    notice = next(row for row in recorded("api/notices/P130164.json")["procnotices"] if row["id"] == GAP["in_inr"])
+    in_dollars = dict(notice, notice_text=notice["notice_text"].replace("INR ", "USD "))
+    late = dict(notice, id="OP00000017", noticedate="02-Aug-2016", submission_date="2016-08-02T00:00:00Z",
+                bid_reference_no="KE-KURA-000017-CW-RFB",
+                notice_text=notice["notice_text"].replace("Contract Signature Date", "Contract Date"))
+    award = dict(recorded("api/awards/P124109-fy2001-2016.json")["data"][0], contract_number="1000017",
+                 borrower_contract_reference_number="KE-KURA-000017-CW-RFB", contract_signing_date="15-Jun-2016")
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "notices", {"total": "2", "procnotices": [in_dollars, late]},
+                dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        run_one(engine, "awards_fy2001_2016", {"count": 1, "data": [award]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        stored = rows(engine, "SELECT contract_id, source, fiscal_year, contract_currency, amount_basis "
+                              "FROM strata.gold.contract ORDER BY contract_id")
+
+    assert stored == [
+        {"contract_id": "1000017", "source": "awards_fy2001_2016", "fiscal_year": 2016, "contract_currency": "USD",
+         "amount_basis": "US dollars"},
+        {"contract_id": GAP["in_inr"], "source": "notices", "fiscal_year": 2017, "contract_currency": "USD",
+         "amount_basis": "US dollars, from award notices"},
+    ]
 
 
 # ── Loans and credits: the closing-date history ──────────────────────────
@@ -405,6 +436,7 @@ def test_each_source_has_coverage_linked_and_fresh_measures_for_the_data_readine
     kinds = {row["kind"] for row in found.values()}
 
     assert {"coverage", "linked", "fresh"} <= kinds, key
+    assert {"fresh_fetched", "fresh_newest_record"} <= set(found), key
     assert all(row["count"] is not None and row["denominator"] for row in found.values() if row["kind"] != "fresh")
     assert found["fresh_fetched"]["as_of"] == dt.date(2026, 10, 23)  # the day the fixture was recorded
     assert found["fresh_fetched"]["detail"] == config.load_sources()[key].cadence
@@ -412,8 +444,8 @@ def test_each_source_has_coverage_linked_and_fresh_measures_for_the_data_readine
 
 
 def test_the_projects_measure_counts_the_projects_mapped_to_a_sector(db):
-    """The Kenya page lists one project with no major sector, P163538, so 92 of the 93 projects held
-    for every country map to a sector: P130164, P156634 and the 91 Kenya projects, P156634 among them."""
+    """The Kenya page lists one project with no major sector, P163538, so 91 of the 92 projects held
+    for every country map to a sector: P130164 and the 91 Kenya projects, P156634 among them."""
     linked = measures(db, "projects")["linked_sector"]
     unmapped = [pid for pid, project in recorded(SLICE_FILE)["projects"].items() if not project.get("major_sectors")]
 
