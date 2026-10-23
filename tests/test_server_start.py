@@ -20,7 +20,8 @@ def server(**env):
     process = subprocess.Popen([sys.executable, "-m", "strata.server"], stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True,
                                # Clear the person's own settings, so only what the test gives counts.
-                               env={**os.environ, "STRATA_SERVER_PORT": "", "STRATA_SERVER_HOST": "", **env})
+                               env={**os.environ, "STRATA_SERVER_PORT": "", "STRATA_SERVER_HOST": "",
+                                    "DATABRICKS_APP_PORT": "", **env})
     try:
         line = process.stdout.readline()
         match = LISTENING.search(line)
@@ -76,6 +77,14 @@ def test_the_server_listens_on_the_port_it_is_given():
     port = free_port()
 
     with server(STRATA_SERVER_PORT=str(port)) as listening:
+        assert port_of(listening) == port
+        assert health(listening) == {"status": "ok"}
+
+
+def test_on_the_databricks_app_the_server_listens_on_the_port_the_platform_names():
+    port = free_port()
+
+    with server(DATABRICKS_APP_PORT=str(port)) as listening:
         assert port_of(listening) == port
         assert health(listening) == {"status": "ok"}
 

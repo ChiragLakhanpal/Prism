@@ -26,9 +26,10 @@ import json
 import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
@@ -49,6 +50,7 @@ UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
 # every request sees the World Bank staff view, whatever ?view= asks for.
 STAFF = "staff"
+IMMUTABLE = "public, max-age=31536000, immutable"
 
 
 class AskRequest(BaseModel):
@@ -70,12 +72,22 @@ def refused(status: int, code: str) -> JSONResponse:
 def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, sql_as: SqlAs | None = None,
                stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
-               tracer_provider: trace.TracerProvider | None = None) -> FastAPI:
+               tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None) -> FastAPI:
     """The app.
 
     sql_as builds a viewer's own engine for each request that reads data. usage receives one
     event per request, and tracer_provider (the process's global one when None) one span.
+    web_dist is the built web app: its files are served as they are, and every other address
+    outside /api gets its index.html, whose router shows the page or the not-found page.
     """
+    web = web_dist.resolve() if web_dist is not None else None
+
+    def web_file(path: str) -> Path | None:
+        """The built web app's file at this address, if there is one inside it."""
+        if web is None:
+            return None
+        candidate = (web / path.lstrip("/")).resolve()
+        return candidate if candidate.is_file() and web in candidate.parents else None
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -95,7 +107,7 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
     async def observe(request: Request, call_next):
         """One span and one usage event for each request a viewer makes."""
         path = request.url.path
-        if path in UNCOUNTED:
+        if path in UNCOUNTED or web_file(path) is not None:
             return await call_next(request)
         viewer = viewer_from_headers(request.headers)
         requested_at = dt.datetime.now(dt.UTC)
@@ -161,5 +173,16 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             log.exception("Run %s failed.", turn.run_id)
             yield frame(Event("error", {"code": "internal"}))
         yield frame(Event("done", {"run_id": turn.run_id}))
+
+    if web is not None:
+        @app.get("/{address:path}", include_in_schema=False)
+        def page(address: str):
+            if address == "api" or address.startswith("api/"):
+                return JSONResponse({"detail": "Not Found"}, status_code=404)
+            file = web_file(address)
+            if file is not None:
+                lasting = file.parent.name == "assets"  # Vite names each asset by its content
+                return FileResponse(file, headers={"Cache-Control": IMMUTABLE if lasting else "no-cache"})
+            return FileResponse(web / "index.html", headers={"Cache-Control": "no-cache"})
 
     return app
