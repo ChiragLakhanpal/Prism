@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from strata.lakehouse import catalog, nightly, schedule
+from strata.lakehouse import bundle, catalog, nightly, schedule
 from strata.lakehouse.engine import DuckDBEngine
 
 # docs/PLAN.md section 11, "Nightly job", in its order: fetch by watermark, bronze to gold, parse and
@@ -77,6 +77,11 @@ def test_a_task_the_job_does_not_have_is_refused(engine):
         nightly.main(["--task", "polish_gold", "--run-id", "42", "--src", "/tmp/src"], engine)
 
     assert engine.run("SELECT count(*) AS n FROM strata.ops.pipeline_runs").as_text() == [("0",)]
+
+
+def test_the_bundle_syncs_the_config_files_beside_the_package():
+    # strata.config.CONFIG_DIR finds config/ beside src/, so the tasks read the source registry there.
+    assert {"src", "config"} <= set(bundle.load().data["sync"]["paths"])
 
 
 def test_the_jobs_entry_script_does_without_a_file_location():

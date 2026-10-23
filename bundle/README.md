@@ -28,13 +28,14 @@ Some things to know before the first deploy:
 - If a catalog named `strata` already exists, the deploy cannot create it. Bind it to the bundle first with `databricks bundle deployment bind strata strata`.
 - The target has no development mode on purpose. Development mode would put a prefix on the schema names, and Strata's SQL names them `strata.bronze` and so on.
 - The grants in `catalog.yml` replace any other grants on Strata's own catalog, schemas and volume. They never touch fairshare's.
+- SELECT on `strata.ops` reaches every future table in that schema. A table that holds uploads (CLAUDE.md rule 8) needs a row filter on the uploader's team, or a schema without this grant.
 
 ## The nightly window
 
 The job starts at 05:00 in Washington (`America/New_York`) and stops after 150 minutes, at 07:30 at the latest. These are the reasons.
 
-- **Review hours.** The panel works in Washington. The job ends half an hour before 08:00, so a review never meets a busy warehouse or a spent daily quota.
-- **fairshare's job.** fairshare's files could not be read on the build machine, so its schedule was not known when this window was chosen. A nightly job usually starts at a round hour in the evening, or at midnight UTC, which is 20:00 in Washington in summer and 19:00 in winter. Strata's window does not meet a job that starts at any hour from 18:00 to midnight in Washington, or at midnight UTC, and finishes within four hours. That holds on every day of the year, including the night the clocks go forward, when midnight to 05:00 lasts only four hours. `tests/test_nightly.py` checks it for each day of a year.
+- **Review hours.** The panel works in Washington. The job stops by 07:30, half an hour before review hours start at 08:00, so no task is running when a review starts. I have not checked when the daily compute quota resets. The workspace catch-up records it.
+- **fairshare's job.** I could not read fairshare's files on the build machine, so I chose this window without fairshare's schedule. The window misses any job that starts at an hour from 18:00 to midnight in Washington, or at midnight UTC, and finishes within four hours. That holds on every day of the year, including the night the clocks go forward, when midnight to 05:00 lasts only four hours. `tests/test_nightly.py` checks it for each day of a year.
 - **The daily quota.** The two jobs share one daily compute quota and five concurrent job tasks. Strata's tasks run one at a time, so the job never uses more than one of the five.
 
 The block below records both schedules and how long each job's runs took, as measured on the workspace. Fill it with the `schedules` check above. If the check finds that the two meet, change the hour in `nightly.yml` and run the deploy again.

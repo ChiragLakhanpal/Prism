@@ -14,10 +14,12 @@ bundle:
 include:
   - bundle/*.yml
 
-# Only the Python package goes to the workspace. The job's tasks import it from there.
+# Only the Python package and the config files go to the workspace. The job's tasks import the
+# package and read config/ from there.
 sync:
   paths:
     - src
+    - config
 
 variables:
   readers:
