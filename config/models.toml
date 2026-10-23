@@ -1,0 +1,26 @@
+# The model file: the Azure OpenAI deployment that each role uses.
+#
+# This is the one place to swap a model (spec, "Ten single places", item 5). Change a role's
+# deployment line and nothing else. There is no fallback model. strata.config.load_models()
+# reads it, and every role below must be present.
+#
+# Source: docs/PLAN.md section 2. The four deployments live in wb-strata, in the resource group
+# WorldBank-demo. The caps on each one are in ops/dayone/dayone.toml, and .env.example's
+# STRATA_MODEL_* lines name the same deployments, so the wizard creates what this file uses.
+
+[roles.agent]
+deployment = "gpt-5.4-mini"
+purpose = "The agent: it answers questions and calls the tools."
+
+[roles.draft]
+deployment = "gpt-5.4"
+purpose = "Drafting, hard questions and the judge that checks each sentence follows from its passages."
+
+[roles.batch]
+deployment = "gpt-5.4-nano"
+purpose = "Bulk extraction on Global Batch, such as proposing lessons."
+
+[roles.embed]
+deployment = "text-embedding-3-large"
+purpose = "Embeddings for the passage index."
+dimensions = 1024
