@@ -164,12 +164,34 @@ def test_without_a_fairshare_job_the_check_lists_the_jobs_it_found(capsys):
     assert "airline refresh" in out
 
 
-@pytest.mark.parametrize("durations", [[]])
-def test_a_fairshare_job_with_no_finished_runs_cannot_be_measured(durations, capsys):
+def test_a_fairshare_job_with_no_finished_runs_cannot_be_measured(capsys):
     jobs = {"strata nightly": STRATA,
-            "fairshare nightly": facts("fairshare nightly", "0 0 2 * * ?", "UTC", durations)}
+            "fairshare nightly": facts("fairshare nightly", "0 0 2 * * ?", "UTC", [])}
 
     code, out = checked(["schedules", "--fairshare-job", "fairshare nightly"], FakeWorkspace(jobs=jobs), capsys)
 
     assert code == 1
     assert "has no finished runs to measure" in out
+
+
+def test_a_fairshare_job_with_no_schedule_cannot_overlap_and_the_notes_say_so(tmp_path, capsys):
+    notes = tmp_path / "README.md"
+    shutil.copy(REPO / "bundle" / "README.md", notes)
+    jobs = {"strata nightly": STRATA, "fairshare refresh": facts("fairshare refresh", None, None, [12])}
+
+    code, out = checked(["schedules", "--write", "--notes", str(notes)], FakeWorkspace(jobs=jobs), capsys)
+
+    assert code == 0
+    assert "- fairshare's job: fairshare refresh, with no schedule. It runs only when someone starts it." \
+           in notes.read_text()
+    assert "- Overlap: none, because fairshare's job never starts on its own." in out
+
+
+def test_a_schedule_that_is_not_daily_is_named_rather_than_guessed(capsys):
+    jobs = {"strata nightly": STRATA,
+            "fairshare nightly": facts("fairshare nightly", "0 0 2 ? * MON-FRI", "UTC", [20])}
+
+    code, out = checked(["schedules"], FakeWorkspace(jobs=jobs), capsys)
+
+    assert code == 2
+    assert "only schedules that run once a day" in out

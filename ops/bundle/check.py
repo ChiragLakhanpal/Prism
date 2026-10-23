@@ -148,9 +148,14 @@ def _measured(facts: dict) -> str:
 def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool, list[str]]:
     """Whether the two jobs never meet, and the lines the bundle's notes record."""
     days = [today + dt.timedelta(days=n) for n in range(366)]
-    lines = [f"- fairshare's job: {fairshare['name']}, {_when(fairshare)}. {_measured(fairshare)}.",
-             f"- Strata's job: {strata['name']}, {_when(strata)}. {_measured(strata)}, and it stops after "
-             f"{dayone.count_words(strata['timeout_minutes'], 'minute')}."]
+    strata_line = (f"- Strata's job: {strata['name']}, {_when(strata)}. {_measured(strata)}, and it stops after "
+                   f"{dayone.count_words(strata['timeout_minutes'], 'minute')}.")
+    measured_line = (f"- Measured: {dayone.long_date(today)}, with `uv run --script ops/bundle/check.py schedules "
+                     "--env-file .env --write`.")
+    if not fairshare.get("quartz"):
+        return True, [f"- fairshare's job: {fairshare['name']}, with no schedule. It runs only when someone starts it.",
+                      strata_line, "- Overlap: none, because fairshare's job never starts on its own.", measured_line]
+    lines = [f"- fairshare's job: {fairshare['name']}, {_when(fairshare)}. {_measured(fairshare)}.", strata_line]
 
     def window(facts, minutes):
         return schedule.Window(facts["name"], schedule.daily_start(facts["quartz"]), facts["timezone"], minutes)
@@ -169,8 +174,7 @@ def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool
     else:
         lines.append(f"- Overlap: none. With these durations the two jobs share no minute on any day {span}, "
                      "and the same holds if Strata's job runs to its limit.")
-    lines.append(f"- Measured: {dayone.long_date(today)}, with `uv run --script ops/bundle/check.py schedules "
-                 "--env-file .env --write`.")
+    lines.append(measured_line)
     return not measured, lines
 
 
@@ -192,13 +196,15 @@ def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, to
         print(f"I found no job named {fairshare_job}.")
         return 2
     for facts in (fairshare, strata):
-        if not facts.get("quartz"):
-            print(f"{facts['name']} has no schedule, so it never runs at night on its own. Nothing can overlap it.")
-            return 0
-        if not facts["durations"]:
-            print(f"{facts['name']} has no finished runs to measure. Run it once by hand, then check again.")
+        if facts.get("quartz") and not facts["durations"]:
+            print(f"{facts['name']} has no finished runs to measure. Run it once by hand, then check again. "
+                  "For Strata's job: uv run --script ops/bundle/check.py job-run --env-file .env")
             return 1
-    apart, lines = schedules_block(strata, fairshare, today)
+    try:
+        apart, lines = schedules_block(strata, fairshare, today)
+    except schedule.ScheduleError as error:
+        print(error)
+        return 2
     for line in lines:
         print(line)
     if write:
