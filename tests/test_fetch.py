@@ -70,6 +70,25 @@ def test_a_second_fetch_with_no_source_changes_adds_no_bronze_rows(fixture_copy)
     assert fetched == ((0,),)
 
 
+def test_the_same_records_in_another_order_add_no_bronze_rows():
+    """Finances One cannot sort, so a later fetch may return a page's records in another order. The
+    source has not changed, so bronze keeps each page once."""
+    from strata.lakehouse import bronze, catalog
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        for key, file in (("awards", "api/awards/P156634.json"), ("notices", "api/notices/P156634.json")):
+            source = config.load_sources()[key]
+            body = recorded(file)
+            reordered = dict(body, **{source.records: list(reversed(body[source.records]))})
+            url = f"https://example.org/{key}?page=1"
+
+            first = bronze.store(engine, source, [pages.Page(key, url, body, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))])
+            later = bronze.store(engine, source, [pages.Page(key, url, reordered, dt.datetime(2026, 10, 24, tzinfo=dt.UTC))])
+
+            assert (key, first, later) == (key, 1, 0)
+
+
 def test_a_page_whose_records_changed_is_kept_again_and_gold_takes_the_new_value(fixture_copy):
     def revised(source, engine):
         for page in pages.recorded_pages(source):

@@ -3,8 +3,9 @@
 store() is the fetch task's last step. It first takes the contact details out of the page and
 counts them (strata.lakehouse.contacts), so bronze keeps each page as received except for those.
 It hashes each page with the source's ignore_keys left out (Finances One stamps every row with
-today's as_of_date), and adds only pages whose hash bronze does not hold yet, so a second fetch
-with no source changes adds no rows.
+today's as_of_date) and its records in a fixed order (Finances One cannot sort, so the same
+records may come back in another order), and adds only pages whose hash bronze does not hold
+yet, so a second fetch with no source changes adds no rows.
 """
 
 from __future__ import annotations
@@ -27,8 +28,14 @@ NEWEST = ("SELECT max(newest_record_on) AS newest FROM strata.bronze.api_pages "
           "WHERE source = :source AND country_code = :country")
 
 
+def _canonical(value) -> str:
+    return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
 def content_hash(source: Source, body: dict) -> str:
-    """The page's hash, leaving out the keys that change on every fetch without the record changing."""
+    """The page's hash, leaving out the keys that change on every fetch without the record changing.
+    The page's records are hashed in a fixed order, each by its own content, so their order on the
+    page does not change the hash."""
     def without(value):
         if isinstance(value, dict):
             return {key: without(item) for key, item in value.items() if key not in source.ignore_keys}
@@ -36,8 +43,10 @@ def content_hash(source: Source, body: dict) -> str:
             return [without(item) for item in value]
         return value
 
-    canonical = json.dumps(without(body), sort_keys=True, ensure_ascii=False, separators=(",", ":"))
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    kept = without(body)
+    if isinstance(kept.get(source.records), list):
+        kept[source.records] = sorted(kept[source.records], key=_canonical)
+    return hashlib.sha256(_canonical(kept).encode("utf-8")).hexdigest()
 
 
 def newest_held(engine: Engine, source: Source, country_code: str) -> dt.date | None:
