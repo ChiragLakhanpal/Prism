@@ -293,6 +293,54 @@ def test_a_version_the_agency_never_published_gets_an_abstention_that_names_its_
         "version_not_found", "2026-10-09")
 
 
+@pytest.fixture
+def fresh():
+    from strata.lakehouse import catalog
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        yield engine
+
+
+def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked_and_says_why(fresh):
+    """A made-up plan with two activities no recorded plan has: one pending, estimated at
+    US$2,000,000.00, with no planned Contract Completion, and one signed at US$50,000.00 with no
+    Estimated Amount. The project closes June 30, 2027."""
+    from strata.lakehouse.plans import insert
+
+    insert(fresh, "strata.gold.project", ("project_id", "project_name", "closing_date", "public_from"),
+           [("P000001", "A made-up project", dt.date(2027, 6, 30), dt.date(2020, 1, 1))])
+    insert(fresh, "strata.silver.plan_versions",
+           ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest", "pdf_pages",
+            "route_b_pages", "text_url", "pdf_url", "public_from"),
+           [("made-up", "P000001", "A Made-Up Agency", dt.date(2026, 1, 15), 1, True, 1, 1, "plan.txt", "plan.pdf",
+             dt.date(2026, 1, 15))])
+    insert(fresh, "strata.silver.plan_rows",
+           ("document_id", "project_id", "section", "activity_reference_no", "estimated_amount_usd",
+            "actual_amount_usd", "process_status", "pdf_page", "parser", "public_from"),
+           [("made-up", "P000001", "WORKS", "XX-MADE-1-CW-RFB", 2000000, 0, "Pending Implementation", 3, "made up",
+             dt.date(2026, 1, 15)),
+            ("made-up", "P000001", "GOODS", "XX-MADE-2-GO-RFQ", None, 50000, "Signed", 3, "made up",
+             dt.date(2026, 1, 15))])
+    context = registry.Context(engine=fresh, viewer=ANA)
+    arguments = {"project_id": "P000001", "implementing_agency": "A Made-Up Agency"}
+
+    result = registry.call("check_plan", {**arguments, "as_of": "2026-10-22"}, context)
+
+    assert marks(result) == {"XX-MADE-1-CW-RFB": ["data_note"], "XX-MADE-2-GO-RFQ": ["data_note"]}
+    assert set(reasons(result, "XX-MADE-1-CW-RFB")) == {"no_planned_date"}
+    assert set(reasons(result, "XX-MADE-2-GO-RFQ")) == {"no_estimate"}
+    assert result["counts"]["checked"] == 0
+    assert (result["coverage"]["matched"], result["coverage"]["used"]) == (2, 0)
+    assert {(item["reason"], item["count"]) for item in result["coverage"]["not_used"]} == {
+        ("no_planned_date", 1), ("no_estimate", 1)}
+
+    after_closing = registry.call("check_plan", {**arguments, "as_of": "2027-07-15"}, context)
+
+    assert marks(after_closing)["XX-MADE-1-CW-RFB"] == ["watch", "data_note"]
+    assert reasons(after_closing, "XX-MADE-1-CW-RFB")["pending_after_closing"]["days_to_close"] == -15
+
+
 @pytest.mark.parametrize("name, arguments, says", [
     ("check_plans", {}, "There is no tool check_plans"),
     ("check_plan", {"project_id": "P156634"}, "needs implementing_agency"),

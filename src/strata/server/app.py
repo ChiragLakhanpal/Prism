@@ -18,7 +18,6 @@ import json
 import logging
 import uuid
 from collections.abc import AsyncIterator, Callable
-from typing import Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -32,7 +31,6 @@ from strata.server import engines
 from strata.tools import registry
 
 log = logging.getLogger("strata.server")
-View = Literal["staff", "piu", "public"]  # registry.VIEWS
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
@@ -62,6 +60,8 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
         try:
             with engine_for(viewer) as engine:
                 return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of))
+        except registry.ToolError as error:  # a view or an argument the tool does not take
+            return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
         except PermissionDenied:
             return JSONResponse({"code": "permission"}, status_code=403)
         except EngineError:
@@ -70,14 +70,14 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             return JSONResponse({"code": "data_service", "trace_id": trace_id}, status_code=503)
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
-    def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: View = "staff",
+    def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",
                           viewer: Viewer = Depends(current_viewer)):
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
                         viewer, view, asof)
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}")
     def check_plan_version(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
-                           view: View = "staff", viewer: Viewer = Depends(current_viewer)):
+                           view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
                                        "plan_date": version}, viewer, view, asof)
 
