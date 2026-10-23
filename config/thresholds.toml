@@ -13,10 +13,30 @@
 # ticket 18 sets it for the whole document slice.
 [ingestion]
 daily_page_cap = 500
+# The passage reader (src/strata/lakehouse/passages.py) reads at most this many documents whose
+# published text Route A can read: the showcase project's first, then the demo plan project's, each
+# project's ICR Reviews, ICRs, PADs and ISRs in that order, newest first. Source: ticket 11, "the
+# first 20 documents". Ticket 18 raises it to the whole document slice.
+passage_documents = 20
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
 # table but the documents' text and layout, as strata.ops.table_sizes records each run.
 structured_data_limit_bytes = 500_000_000
+
+# Passages (docs/PLAN.md section 5). A paragraph over max_tokens tokens is divided at sentence ends,
+# and each part is its own passage with the paragraph's number. Source: the spec's "Reading
+# documents" ("Paragraphs over 500 tokens are divided at sentence ends").
+[passages]
+max_tokens = 500
+# search_passages returns this many passages unless the call asks for another number, and never more
+# than max_results. Source: the spec's retrieval evaluation reports precision at 10, and the agent
+# gets at most three rounds of tool results. Starting values for the owner to confirm.
+results = 10
+max_results = 20
+# search_passages asks the searcher for max_results times this many passages, so the passages it
+# leaves out (a prompt attack, or no Prompt Shields result) can drop out and still leave enough.
+# Source: none yet; a starting value for the owner to confirm.
+search_depth = 2
 
 # Plan-check thresholds (ticket 09). check_plan (src/strata/tools/check_plan.py) reads them, returns
 # the values it used, and the Check a plan screen fills its definition of each mark from them.

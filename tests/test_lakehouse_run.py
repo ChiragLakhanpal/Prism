@@ -185,7 +185,9 @@ PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\
 LABELLED_PHONE = re.compile(r"\b(?:tel\w*|\w*phone|mobile|mob|cell\w*|fax)\b[^0-9\n]{0,15}?\+?\(?\d[\d ().-]{6,}\d", re.I)
 AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d")
 # An email with spaces around its "@" (JDOE @ EXAMPLE.COM) or spelled out (jdoe [at] example [dot] com).
-SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*\w+(?:(?:\.|\s*[\[(]\s*dot\s*[\])]\s*)\w+)+", re.I)
+# Its domain has a letter, so a rate a report's table writes after a year ("INR - 2013 @7.4%") is not one.
+SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*(?=[\w.]*[A-Za-z])\w+"
+                          r"(?:(?:\.|\s*[\[(]\s*dot\s*[\])]\s*)\w+)+", re.I)
 
 
 def text_values(engine):
@@ -197,6 +199,13 @@ def text_values(engine):
         for (value,) in engine.connection.execute(
                 f'SELECT "{column}" FROM strata.{schema}.{table} WHERE "{column}" IS NOT NULL').fetchall():
             yield f"{schema}.{table}.{column}", value
+
+
+# Contact names that are job titles, not people. A P130164 notice gives "Chief Engineer" as its
+# contact's name, and the project's reports use the title as an ordinary word ("headed by the Chief
+# Engineer"), so it is no contact detail in a report's text. Every other table is still checked for it.
+JOB_TITLES = {"Chief Engineer"}
+REPORT_TEXT = ("bronze.document_texts.", "bronze.document_pages.", "silver.passages.", "gold.passage.")
 
 
 def recorded_contacts():
@@ -228,7 +237,8 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
         leaks += [(where, "an email or phone number")
                   for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
                   + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)]
-        leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
+        leaks += [(where, "a recorded contact detail") for contact in found if contact in value
+                  and not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
     assert leaks == []
 
 

@@ -36,7 +36,7 @@ It runs the steps in `gates/steps.toml`. Steps that do not depend on each other 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
 2. Run six lanes side by side:
    - The guard lane tests the guard hook.
-   - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then it runs the Python tests that may read that database, on four pytest-xdist workers: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader and the bundle commands.
+   - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then the passage reader reads the first 20 documents of P130164 and P156634 into numbered passages, scans and embeds them with the offline stand-ins, and fills `strata.gold.passage`, which the fixture search reads. Then it runs the Python tests that may read that database, on four pytest-xdist workers: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader, the passage reader, `search_passages` and its live adapters, and the bundle commands.
    - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
    - The lint lane lints the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders, passes to a prop or writes into the page that is not from the copy file (words joined with `+` included), on a Term that names a word GLOSSARY.md does not define, and on spacing or colors outside DESIGN.md's tokens. The props that never hold copy, such as `className` and `href`, are listed in `web/lint/rules.ts`.
    - The sql lane lints the SQL (`gates/sql_lint.py`): every query names its tables in three parts and binds its values as parameters.
@@ -54,7 +54,7 @@ The Python tests run on pytest-xdist workers, so each test runs beside others in
 
 When a lane gets slow again, first run `uv run --frozen pytest --durations=15 <its folders>` to find the slowest tests. A single slow test sets a floor that no number of workers can lower. Then try more workers on that lane's step (`--numprocesses`), and keep the number that gives the lower total gate time over three runs by hand. The lanes share this computer's processors, so more workers in one lane can slow the others. You can also move a folder that does not read the fixture database to a lane of its own.
 
-To run the nightly job's tasks in order on an empty DuckDB database, over the recorded pages, and see the rows they write, run `uv run --frozen python -m strata.lakehouse.nightly`. To deploy the catalog and the job to the shared workspace, follow `bundle/README.md`.
+To run the nightly job's tasks in order on an empty DuckDB database, over the recorded pages, and see the rows they write, run `uv run --frozen python -m strata.lakehouse.nightly`. To read the first documents into passages the same way and see their data readiness measures, run `uv run --frozen python -m strata.lakehouse.passages`. To deploy the catalog and the job to the shared workspace, follow `bundle/README.md`.
 
 A query that code builds from table or column names, never values, says so on any line of the statement that builds it with `# sql-lint: names only`. Every other query is a fixed text with `:name` parameters.
 
@@ -110,6 +110,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The guard that keeps every Python test off the network | `conftest.py` at the root |
 | Screen tests (seam 4) | `web/tests/` |
 | Responses recorded once and shared by the server and screen tests | `tests/fixtures/api/` |
+| Answers in the shape Azure OpenAI, Prompt Shields and AI Search document, which the live adapters' tests read until a live run records real ones | `tests/fixtures/azure/` and `tests/fixtures/ai_search/` |
 | Fixture inputs, and the fixture database the gate builds | `data/fixture/`, and `data/out/`, which git ignores |
 | The list of recorded sources, and the recorded files. This `sources.toml` lists recorded copies of public pages, grouped by dataset. The source registry, `config/sources.toml`, lists what the nightly job fetches, and each of its entries names, in `fixture_dataset`, the dataset here whose files stand in for it in the gate | `data/fixture/sources.toml` and `data/fixture/recorded/` (see `data/fixture/README.md`) |
 | The recording command, which refetches the fixture and prints a diff | `src/strata/fixture/` (`uv run python -m strata.fixture.record`) |
@@ -122,11 +123,13 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The lakehouse: where pages come from (the live APIs, or the recorded fixture in the gate), bronze and the contact details it never keeps, the cleaning rules, silver's transforms, gold's tables (one SQL query each), the data readiness measures (one SQL file per silver transform), each table's size, and governance scores as of a date | `src/strata/lakehouse/`: `pages.py`, `bronze.py` and `contacts.py`, `clean.py`, `silver/`, `gold/`, `readiness/`, `storage.py`, `governance.py` |
 | The SQL lint: three-part names and bound parameters | `gates/sql_lint.py` |
 | The plan reader: a project's Procurement Plans into STEP rows, with delay from the first published planned date and data notes, under the daily page cap | `src/strata/lakehouse/plans.py` and `src/strata/lakehouse/sql/plans/` (`uv run --frozen python -m strata.lakehouse.plans` runs it on the fixture) |
-| The document reader: documents and their pages, the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
+| The document reader: documents and their pages, Route A's numbered passages and each document type's template (`passages.py`, `templates.py`), the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
+| The passage reader: the first documents into numbered passages, Prompt Shields' results, vectors and `strata.gold.passage`, with data readiness measures | `src/strata/lakehouse/passages.py` (`uv run --frozen python -m strata.lakehouse.passages` runs it on the fixture) |
 | The live plan run on the workspace | `ops/plans/run_live.py` |
-| The knowledge model | `src/strata/knowledge/` (later) |
+| The live passage run on the workspace, which also makes and syncs the AI Search index, and the live check that asks `search_passages` its benchmark question through AI Search | `ops/documents/run_live.py` and `ops/documents/search_live.py` |
+| The knowledge model: the sector words, the embedding and Prompt Shields adapters, and hybrid search (AI Search live, the fixture search offline). Lessons, links and assertions come later | `src/strata/knowledge/` |
 | The tool registry: one entry per tool, with its parameters (always an optional `as_of` date), adapter, benchmark question and result shape. Adding a tool is one entry plus its adapter | `config/tools.toml` |
-| The registry at work (the agent's tool list, calling a tool by name, the tool contract) and the tools, with their SQL. `check_plan` is the first | `src/strata/tools/` |
+| The registry at work (the agent's tool list, calling a tool by name, the tool contract) and the tools, with their SQL: `check_plan` and `search_passages` | `src/strata/tools/` |
 | Which engine runs a viewer's queries in the server | `src/strata/server/engines.py` |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |

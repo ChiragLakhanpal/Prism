@@ -1,12 +1,13 @@
 """The registry and config files for the change drill, each read through one function.
 
 Each file in config/ is one of the spec's single places ("Ten single places"), so a change
-request lands in one file (CLAUDE.md rule 9). This module reads five of them:
+request lands in one file (CLAUDE.md rule 9). This module reads six of them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
 - load_sectors()     config/sectors.toml, the one sector taxonomy
-- load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table)
+- load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table,
+                     and load_search() its [search] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 
@@ -403,7 +404,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -426,6 +427,22 @@ def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
     entry = _Entry(path, "layout", _read(path).get("layout"))
     entry.only({"parser"})
     return entry.text("parser")
+
+
+@dataclass(frozen=True)
+class SearchSettings:
+    """How search_passages ranks on the workspace: the AI Search index and the reranker it runs."""
+
+    index: str  # the Delta Sync index over strata.gold.passage, by its three-part name
+    reranker: str  # the model AI Search reranks the best hits with
+    rerank_columns: tuple[str, ...]  # the columns of each passage the reranker reads
+
+
+def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
+    """The AI Search index and the reranker search_passages uses on the workspace."""
+    entry = _Entry(path, "search", _read(path).get("search"))
+    entry.only({"index", "reranker", "rerank_columns"})
+    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"))
 
 
 # ── The thresholds file ──────────────────────────────────────────────────
