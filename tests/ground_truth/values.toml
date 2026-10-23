@@ -1074,6 +1074,30 @@ record = "api/notices/P156634.json"
 at = "procnotices[id=OP00245480].notice_text"
 
 [[value]]
+id = "loan-form-older"
+says = "Credit 60300 written in its older form: the four-digit credit number 6030 and the country code. P156634's project record lists only IDA-60290 and IDA-60300."
+value = "6030-KE"
+quote = "Credit No.: 6030-KE"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00142640].notice_text"
+
+[[value]]
+id = "loan-form-older-with-lender"
+says = "Credit 60300 written in its older form, with the lender and a stray space before the number."
+value = "IDA- 6030-KE"
+quote = "Credit No:&nbsp; IDA- 6030-KE"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00073086].notice_text"
+
+[[value]]
+id = "loan-form-older-india"
+says = "P130164's credit, which its project record writes IDA-53100, written in its older form in a notice."
+value = "5310-IN"
+quote = "Credit No.:&nbsp; 5310-IN"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00049920].notice_text"
+
+[[value]]
 id = "loan-form-slash"
 says = "Credit 60300 written with a spaced slash, as Procurement Plans write it."
 value = "IDA / 60300"
@@ -1091,6 +1115,22 @@ value = "INDIVIDUAL CONSULTANT"
 quote = "INDIVIDUAL CONSULTANT"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1668349].supplier"
+
+[[value]]
+id = "notice-icb-code"
+says = "Notice OP00034393, a Kenya Invitation for Bids of September 14, 2015 for the Nairobi bulk water supply, gives its method's code as ICB, an old name that silver maps to Request for Bids, Open - International."
+value = "ICB"
+quote = "ICB"
+record = "api/notices/kenya-icb-2015.json"
+at = "procnotices[id=OP00034393].procurement_method_code"
+
+[[value]]
+id = "notice-icb-name"
+says = "The same notice names its method International Competitive Bidding, which silver keeps word for word in its own column."
+value = "International Competitive Bidding"
+quote = "International Competitive Bidding"
+record = "api/notices/kenya-icb-2015.json"
+at = "procnotices[id=OP00034393].procurement_method_name"
 
 [awkward.contact_details]
 says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, carries a contact name, email and phone number. Ingestion strips them, and this file does not repeat them."
@@ -1117,3 +1157,22 @@ disclosed = 2025-01-01
 says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017 (FY2017). The FY2001 to FY2016 awards dataset has no row for it and the since-FY2020 dataset has no rows for P130164, so only award notice OP00044090 records it (award-7431-signed)."
 awards = "api/awards/P130164-fy2001-2016.json"
 reference = "IN-RRSMP-7431-CW-RFB"
+
+# Kenya's rows in the fixture, counted from the recorded files apart from Strata's code. The lakehouse
+# run's data readiness measures and tests/ground_truth/kenya_contracts_with_a_step_reference.sql
+# must agree with them.
+
+[counts.kenya]
+says = "Kenya's award rows, contracts and notices in the fixture, and how many contracts carry a STEP reference and share it with a notice."
+awards = ["api/awards/P156634.json", "api/awards/P176758-P170941.json"]
+notice_files = ["api/notices/P156634.json", "api/notices/kenya-works-open-on-2026-10-09.json", "api/notices/kenya-icb-2015.json"]
+award_rows = 632
+award_rows_counted = "The rows of the two award files whose borrower_country_code is KE: all 280 and all 352, as each file's count field also says."
+contracts = 603
+contracts_counted = "The distinct wb_contract_number values among those rows. A joint venture has one row per member, so there are fewer contracts than rows."
+with_step_reference = 528
+with_step_reference_counted = "The contracts whose borrower_contract_reference_number starts like a STEP reference: two letters, an agency, digits, CW, GO, CS or NC, and a method, separated by hyphens, or by the slashes and stray spaces some rows use."
+with_notice = 239
+with_notice_counted = "The contracts with a STEP reference that a recorded notice's bid_reference_no also carries, once both are written in capitals with single hyphens."
+notices = 404
+notices_counted = "The distinct notice ids in the three notice files whose project_ctry_name is Kenya: 399 for P156634, four for the packages still open on October 9, 2026, and the 2015 ICB notice."

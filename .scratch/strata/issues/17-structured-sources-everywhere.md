@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 and 4; ADR 0002; docs/agents/areas/data.md.
 
 **Blocked by:** 07 (Kenya's procurement records, bronze to gold)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** data
 **Phase:** P2
 **Design review:** no
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md sections 3 and 4; ADR 0002; docs/agents/areas/data.md.
 - [ ] Every slice project maps to one sector in the single taxonomy, with no project left unmapped.
 - [ ] Structured data in strata stays under 0.5 GB, measured and recorded.
 - [ ] A second nightly run with no source changes adds no bronze rows, and each new source appears on the Data readiness page with coverage, linked and fresh measures.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/17-structured-sources-everywhere, as soon as ticket 07 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

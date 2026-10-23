@@ -3,9 +3,9 @@
 Strata's Declarative Automation Bundle is `databricks.yml` at the root of the repo, with the files in this folder. It declares two things on the Free Edition workspace that Strata shares with fairshare.
 
 - `catalog.yml` declares the catalog `strata`, its schemas `bronze`, `silver`, `gold` and `ops`, and the volume `strata.bronze.files`. It also gives the people who use the app read access, so the app can run each query as the viewer (ADR 0003). The bundle variable `readers` names them, and it is `account users`, everyone who can sign in to the workspace.
-- `nightly.yml` declares the job `strata nightly`. Its ten tasks run one at a time, in the order of `docs/PLAN.md` section 11. For now each task does nothing and writes one row to `strata.ops.pipeline_runs`.
+- `nightly.yml` declares the job `strata nightly`. Its ten tasks run one at a time, in the order of `docs/PLAN.md` section 11, and each writes one row to `strata.ops.pipeline_runs`. Three tasks have their work: `fetch_by_watermark` fetches Kenya's awards, notices and projects into bronze, `bronze_to_gold` builds silver and gold from them, and `measure_data_readiness` writes the data readiness measures to `strata.ops.data_readiness`. The other seven do nothing yet.
 
-A bundle does not declare tables. Each table is defined once, in `src/strata/lakehouse/tables/<schema>/<table>.sql`, and the deploy command creates it on the SQL warehouse. The gate builds the same definitions on DuckDB, and it fails when a table has no `public_from` column (ADR 0002).
+A bundle does not declare tables. Each table is defined once, in `src/strata/lakehouse/tables/<schema>/<table>.sql`, and each view in `src/strata/lakehouse/views/<schema>/<view>.sql`, and the deploy command creates them on the SQL warehouse. The gate builds the same definitions on DuckDB, and it fails when a table has no `public_from` column (ADR 0002).
 
 ## Deploy
 

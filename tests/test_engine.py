@@ -105,3 +105,67 @@ def test_duckdb_takes_one_statement_per_call():
 def test_the_transpile_step_refuses_what_duckdb_cannot_express_instead_of_dropping_it():
     with DuckDBEngine.open() as engine, pytest.raises(EngineError, match="transpile"):
         engine.run("CREATE TABLE strata.main.t (id STRING COMMENT 'the id', public_from DATE)")
+
+
+# ── Rows that Python built ───────────────────────────────────────────────
+
+ROWS = [("1624689", "503708", "NICHOLAS O'DWYER LIMITED"), ("1624689", "503711", None)]
+COLUMNS = ("wb_contract_number", "supplier_id", "supplier")
+
+
+def test_duckdb_adds_rows_with_every_value_bound_so_a_quote_in_a_name_stays_as_it_is():
+    with DuckDBEngine.open() as engine:
+        engine.run("CREATE SCHEMA strata.silver")
+        engine.run("CREATE TABLE strata.silver.awards (wb_contract_number STRING, supplier_id STRING, supplier STRING)")
+
+        added = engine.insert_rows("strata.silver.awards", COLUMNS, ROWS)
+
+        assert added == 2
+        assert engine.run("SELECT * FROM strata.silver.awards ORDER BY supplier_id").rows == tuple(ROWS)
+
+
+def test_the_warehouse_adds_rows_in_one_insert_whose_every_value_is_a_parameter():
+    warehouse = FakeWarehouse([succeeded([])])
+
+    WarehouseEngine("wh-1", warehouse).insert_rows("strata.silver.awards", COLUMNS, ROWS)
+
+    body = warehouse.calls[0][2]
+    assert body["statement"] == ("INSERT INTO strata.silver.awards (wb_contract_number, supplier_id, supplier) "
+                                 "VALUES (:v0_0, :v0_1, :v0_2), (:v1_0, :v1_1, :v1_2)")
+    assert {"name": "v0_2", "value": "NICHOLAS O'DWYER LIMITED", "type": "STRING"} in body["parameters"]
+    assert {"name": "v1_2"} in body["parameters"]
+
+
+def test_spark_adds_rows_as_a_frame_typed_by_the_table_and_appended_by_name():
+    class FakeSpark:
+        def __init__(self):
+            self.calls = []
+
+        def table(self, name):
+            self.calls.append(("table", name))
+            return type("Table", (), {"select": lambda table, *columns: type("Picked", (), {"schema": columns})()})()
+
+        def createDataFrame(self, rows, schema):  # noqa: N802, the PySpark name
+            self.calls.append(("frame", rows, schema))
+            spark = self
+
+            class Writer:
+                def mode(self, mode):
+                    spark.calls.append(("mode", mode))
+                    return self
+
+                def saveAsTable(self, name):  # noqa: N802, the PySpark name
+                    spark.calls.append(("save", name))
+
+            return type("Frame", (), {"write": Writer()})()
+
+    spark = FakeSpark()
+    SparkEngine(spark).insert_rows("strata.silver.awards", COLUMNS, ROWS)
+
+    assert spark.calls == [("table", "strata.silver.awards"), ("frame", ROWS, COLUMNS), ("mode", "append"),
+                           ("save", "strata.silver.awards")]
+
+
+def test_adding_rows_takes_only_a_three_part_table_name():
+    with DuckDBEngine.open() as engine, pytest.raises(EngineError, match="three-part table name"):
+        engine.insert_rows("awards; SELECT 1", COLUMNS, ROWS)

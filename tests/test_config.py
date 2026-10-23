@@ -78,6 +78,26 @@ def test_a_slice_file_whose_years_run_backwards_is_refused(tmp_path):
 
 # ── The source registry ──────────────────────────────────────────────────
 
+def test_the_source_registry_holds_kenya_s_three_procurement_sources():
+    """The ticket's three sources (docs/PLAN.md section 3): awards since FY2020 from Finances One
+    DS00005, and procurement notices and projects from the search APIs. The job fetches Kenya."""
+    sources = config.load_sources()
+
+    assert {"awards", "notices", "projects"} <= set(sources)
+    assert (sources["awards"].dataset_id, sources["awards"].resource_id) == ("DS00005", "RS00005")
+    assert sources["notices"].endpoint.startswith("https://search.worldbank.org/api/")
+    assert sources["projects"].endpoint.startswith("https://search.worldbank.org/api/v3/projects")
+    assert all(source.license == "CC BY 4.0" for source in sources.values())
+    assert all("KE" in [country.iso2 for country in source.countries] for source in sources.values())
+
+
+def test_the_nightly_job_fetches_kenya_s_sources_page_by_page_and_the_plan_reader_fetches_the_documents():
+    sources = config.load_sources()
+
+    assert {key for key, source in sources.items() if source.paged} == {"awards", "notices", "projects"}
+    assert not sources["documents"].paged
+
+
 def test_the_source_registry_loads_and_names_the_documents_api_that_plan_versions_come_from():
     documents = config.load_sources()["documents"]
 
@@ -85,16 +105,33 @@ def test_the_source_registry_loads_and_names_the_documents_api_that_plan_version
     assert documents.stratum == "How"
 
 
-AWARDS = """
-[sources.awards]
+def test_each_source_leaves_out_the_same_keys_as_the_recording_of_its_fixture_dataset():
+    """config/sources.toml's ignore_keys keep a key out of a page's content hash, and
+    data/fixture/sources.toml's keep it out of the recording's diff. They name the same keys, so
+    the two lists cannot drift apart."""
+    datasets = tomllib.loads((ROOT / "data" / "fixture" / "sources.toml").read_text())["datasets"]
+
+    for source in (source for source in config.load_sources().values() if source.paged):
+        recorded = tuple(datasets[source.fixture_dataset].get("ignore_keys", ()))
+        assert tuple(source.ignore_keys) == recorded, source.key
+
+
+AWARDS_COPY = """
+[sources.awards_copy]
 dataset_name = "Contract awards since FY2020"
-endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice"
+endpoint = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00005&resourceId=RS00005&type=json"
 dataset_id = "DS00005"
 resource_id = "RS00005"
-watermark_field = "as_of_date"
+api = "finances_one"
+records = "data"
+country_filter = "filter=borrower_country_code%3D%27{iso2}%27"
+page_size = 1000
+watermark_field = "contract_signing_date"
+ignore_keys = ["as_of_date"]
+fixture_dataset = "awards"
 cadence = "daily"
 license = "CC BY 4.0"
-silver_transform = "silver/awards.sql"
+silver_transform = "awards"
 stratum = "What"
 known_gaps = ["Awards for FY2017 to FY2019 are in neither dataset."]
 """
@@ -102,28 +139,52 @@ known_gaps = ["Awards for FY2017 to FY2019 are in neither dataset."]
 
 def test_a_source_is_one_entry_in_the_registry(tmp_path):
     path = copy("sources.toml", tmp_path)
-    path.write_text(path.read_text() + AWARDS)
+    path.write_text(path.read_text() + AWARDS_COPY)
 
-    awards = config.load_sources(path)["awards"]
+    awards = config.load_sources(path)["awards_copy"]
 
     assert awards.dataset_id == "DS00005"
     assert awards.cadence == "daily"
+    assert (awards.api, awards.page_size, awards.ignore_keys) == ("finances_one", 1000, ("as_of_date",))
     assert awards.known_gaps == ("Awards for FY2017 to FY2019 are in neither dataset.",)
+
+
+def test_adding_a_country_to_fetch_is_one_entry(tmp_path):
+    path = copy("sources.toml", tmp_path)
+    path.write_text(path.read_text().replace("[sources.", '[[countries]]\nname = "Nepal"\niso2 = "NP"\n\n[sources.', 1))
+
+    assert [country.iso2 for country in config.load_sources(path)["notices"].countries][-1] == "NP"
 
 
 def test_a_source_without_its_watermark_field_is_refused(tmp_path):
     path = copy("sources.toml", tmp_path)
-    path.write_text(path.read_text() + AWARDS.replace('watermark_field = "as_of_date"\n', ""))
+    path.write_text(path.read_text() + AWARDS_COPY.replace('watermark_field = "contract_signing_date"\n', ""))
 
-    with pytest.raises(ConfigError, match=r"sources\.toml.*awards.*watermark_field"):
+    with pytest.raises(ConfigError, match=r"sources\.toml.*awards_copy.*watermark_field"):
         config.load_sources(path)
 
 
 def test_a_source_with_a_misspelled_key_is_refused(tmp_path):
     path = copy("sources.toml", tmp_path)
-    path.write_text(path.read_text() + AWARDS.replace("cadence =", "cadance ="))
+    path.write_text(path.read_text() + AWARDS_COPY.replace("cadence =", "cadance ="))
 
     with pytest.raises(ConfigError, match="cadance"):
+        config.load_sources(path)
+
+
+def test_a_source_that_names_some_of_the_paging_keys_but_not_all_is_refused(tmp_path):
+    path = copy("sources.toml", tmp_path)
+    path.write_text(path.read_text() + AWARDS_COPY.replace('records = "data"\n', ""))
+
+    with pytest.raises(ConfigError, match=r"awards_copy.*records.*api, records, country_filter, page_size"):
+        config.load_sources(path)
+
+
+def test_a_source_that_pages_an_api_strata_does_not_know_is_refused(tmp_path):
+    path = copy("sources.toml", tmp_path)
+    path.write_text(path.read_text() + AWARDS_COPY.replace('api = "finances_one"', 'api = "socrata"'))
+
+    with pytest.raises(ConfigError, match=r"awards_copy\.api.*finances_one, search"):
         config.load_sources(path)
 
 

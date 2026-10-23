@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime as dt
 import decimal
 import json
+import re
 import time
 import urllib.error
 import urllib.request
@@ -72,6 +73,20 @@ class Engine(Protocol):
     def run(self, sql: str, params: Params = None) -> Result:
         """Run one statement with its named parameters bound."""
 
+    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
+        """Append rows that Python built to a table, by column name. Returns how many it added."""
+
+
+TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
+COLUMN_NAME = re.compile(r"[a-z][a-z0-9_]*")
+
+
+def _names(table: str, columns: tuple[str, ...]) -> None:
+    """insert_rows puts names, never values, into SQL text, so it takes only plain three-part names."""
+    if not TABLE_NAME.fullmatch(table) or not all(COLUMN_NAME.fullmatch(column) for column in columns):
+        raise EngineError(f"insert_rows takes a three-part table name and plain column names, not {table} "
+                          f"({', '.join(columns)}).")
+
 
 # ── DuckDB, for the offline gate ─────────────────────────────────────────
 
@@ -107,8 +122,8 @@ class DuckDBEngine:
         import duckdb
 
         connection = duckdb.connect()
-        connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",
-                           [str(path) if path else ":memory:"])
+        connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
+                           [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
         connection.execute("USE strata")
         connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
         return cls(connection)
@@ -123,6 +138,19 @@ class DuckDBEngine:
         if cursor.description is None:
             return Result((), ())
         return Result(tuple(column[0] for column in cursor.description), tuple(cursor.fetchall()))
+
+    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 500) -> int:
+        _names(table, columns)
+        rows = list(rows)
+        for start in range(0, len(rows), chunk):
+            part = rows[start:start + chunk]
+            marks = ", ".join(["(" + ", ".join(["?"] * len(columns)) + ")"] * len(part))
+            try:
+                self.connection.execute(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {marks}",  # sql-lint: names only
+                                        [value for row in part for value in row])
+            except Exception as error:  # duckdb raises its own error classes
+                raise EngineError(f"DuckDB could not add rows to {table}: {error}") from error
+        return len(rows)
 
     def close(self):
         self.connection.close()
@@ -147,6 +175,15 @@ class SparkEngine:
     def run(self, sql: str, params: Params = None) -> Result:
         frame = self.spark.sql(sql, args=dict(params) if params else None)
         return Result(tuple(frame.columns), tuple(tuple(row) for row in frame.collect()))
+
+    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
+        """A DataFrame typed by the table's own columns, appended by name."""
+        _names(table, columns)
+        rows = list(rows)
+        if rows:
+            schema = self.spark.table(table).select(*columns).schema
+            self.spark.createDataFrame(rows, schema).write.mode("append").saveAsTable(table)
+        return len(rows)
 
 
 # ── The SQL warehouse, through the Statement Execution API ───────────────
@@ -234,6 +271,22 @@ class WarehouseEngine:
             raise EngineError(f"The warehouse did not run the statement. Its state was {status.get('state')}: "
                               f"{message}")
 
+        return self._result(reply)
+
+    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 100) -> int:
+        """Rows in chunks, each one INSERT whose every value is a bound parameter."""
+        _names(table, columns)
+        rows = list(rows)
+        for start in range(0, len(rows), chunk):
+            part = rows[start:start + chunk]
+            params = {f"v{number}_{column}": value for number, row in enumerate(part)
+                      for column, value in zip(range(len(columns)), row, strict=True)}
+            values = ", ".join("(" + ", ".join(f":v{number}_{column}" for column in range(len(columns))) + ")"
+                               for number in range(len(part)))
+            self.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {values}", params)  # sql-lint: names only
+        return len(rows)
+
+    def _result(self, reply: dict) -> Result:
         columns = sorted(reply.get("manifest", {}).get("schema", {}).get("columns", []),
                          key=lambda column: column.get("position", 0))
         result = reply.get("result") or {}

@@ -57,7 +57,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -67,17 +67,17 @@ Run this from the main checkout:
 
     uv run --script ops/bundle/check.py job-run --env-file .env
 
-It worked if the command exits 0 and prints "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That means ten rows in the order of `docs/PLAN.md` section 11 (criterion 2).
+It worked if the command exits 0 and prints "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That means ten rows in the order of `docs/PLAN.md` section 11 (criterion 2). Since ticket 07 merged, three of the tasks do real work, so the run takes longer and needs the World Bank's public APIs. `fetch_by_watermark` fetches Kenya's awards, notices and projects into `strata.bronze.api_pages`. `bronze_to_gold` fills `strata.silver.awards`, `notices`, `projects` and `project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. `measure_data_readiness` writes Kenya's measures to `strata.ops.data_readiness`. Ticket 07's steps below read what this run wrote.
 
 ## Ticket 04, step 3 of 4: the same rows on DuckDB and on the SQL warehouse
 
-The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes. Since ticket 08 merged, this command also checks `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql`, which read the plan tables. Those tables stay empty until ticket 08's step 1 has run, and until then the command exits 1 on those two files even when the deploy is fine. So run this step after ticket 08's step 1, below. Ticket 08's step 2 is the same command, and one run covers both tickets.
+The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes. Since ticket 08 merged, this command also checks `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql`, which read the plan tables. Those tables stay empty until ticket 08's step 1 has run, and until then the command exits 1 on those two files even when the deploy is fine. So run this step after ticket 08's step 1, below. Since ticket 07 merged, it also checks `kenya_step_reference_link_rate.sql`, which reads what step 2's job run wrote. Ticket 08's step 2 and ticket 07's step 2 are the same command, and one run covers all three tickets.
 
 Run this from the main checkout:
 
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
-It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `pipeline_runs_columns.sql`, `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql` in `tests/ground_truth/` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4).
+It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `pipeline_runs_columns.sql`, `delay_from_first_published_planned_date.sql`, `data_notes_actual_amount_zero.sql` and `kenya_step_reference_link_rate.sql` in `tests/ground_truth/` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4).
 
 ## Ticket 04, step 4 of 4: record both nightly schedules
 
@@ -110,3 +110,37 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if the command exits 0 and prints "DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." for `tests/ground_truth/delay_from_first_published_planned_date.sql`, with 2021-04-21, 2021-07-01, 2022-01-03, 186 and 1245092.76 (criterion 2). It must also print "... the same two rows, and they are the rows the file expects." for `tests/ground_truth/data_notes_actual_amount_zero.sql`, with KE-NWWDA-503455-CW-RFQ Signed 0.00 and KE-NWWDA-541061-CW-RFQ Completed 0.00 (criterion 4).
+
+## Ticket 07, step 1 of 3: the job fetched Kenya into bronze
+
+The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after ticket 04's steps 1 and 2, because the deploy makes `strata.bronze.api_pages` and the job run fills it. Deploy from `build/strata` at dbc054a or later, so that the first deploy creates `strata.silver.notices` with its `fiscal_year` column and `strata.ops.data_readiness` with `as_of` and `detail`. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so a table that already exists keeps its old columns.
+
+Run this query in the workspace's SQL editor, on the SQL warehouse:
+
+    SELECT source, count(*) AS pages FROM strata.bronze.api_pages WHERE country_code = 'KE' GROUP BY source ORDER BY source
+
+It worked if it returns three rows, `awards`, `notices` and `projects`, each with one page or more (criterion 8).
+
+## Ticket 07, step 2 of 3: the link rate in strata.ops equals a direct count over gold
+
+The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after step 1. It is the same command as ticket 04's step 3 and ticket 08's step 2, and one run covers all three tickets.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the command exits 0 and prints "kenya_step_reference_link_rate.sql: DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." That row is `linked_step_reference,true` (criterion 8). The file compares the link rate that the job's last run wrote to `strata.ops.data_readiness` with a direct count of Kenya's contracts in `strata.gold.contract` that carry a STEP reference. Offline it was 528 of 603 on the fixture. The warehouse's counts will be larger, because the job fetches every Kenya award since FY2020, but the file returns only true or false.
+
+## Ticket 07, step 3 of 3: a second run adds no award pages
+
+The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after step 2, on the same day as ticket 04's step 2.
+
+First run this query in the workspace's SQL editor, and note the count:
+
+    SELECT count(*) AS pages FROM strata.bronze.api_pages WHERE source = 'awards'
+
+Then run the nightly job a second time from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+Then run the query again. It worked if the job run exits 0 and the count is the same as before (the verifier's observation O2). A page's records are now hashed in a fixed order, so the same awards in a new order make no new page. If the count grew, read `newest_record_on` in the new rows before you call it a failure, because Finances One may have published new awards between the two runs.

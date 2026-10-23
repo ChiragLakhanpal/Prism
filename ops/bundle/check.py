@@ -15,9 +15,10 @@ job-run    Starts the nightly job by hand, waits for it, and checks that strata.
            --run-id to check a run that already finished instead.
 same-rows  Runs each ground-truth query marked for databricks (tests/ground_truth) on DuckDB and
            on the SQL warehouse, and checks that both return the rows the file expects. DuckDB
-           reads the fixture database, or, without it, builds the catalog's tables in memory and
-           reads the demo plan's recorded Procurement Plans into them, as the fixture build does.
-           Run it after the live plan run (ops/plans/run_live.py), so the warehouse holds the plans.
+           reads the fixture database, or, without it, builds the catalog's tables in memory, reads
+           the demo plan's recorded Procurement Plans into them and runs the nightly job's tasks
+           over the recorded pages, as the fixture build does. Run it after the live plan run
+           (ops/plans/run_live.py) and job-run, because some files read what they wrote.
 schedules  Reads fairshare's nightly job and Strata's, with how long their recent runs took, and
            checks that the two never run at the same time on any day of the next year. With
            --write it records both schedules in the bundle's notes, bundle/README.md.
@@ -97,13 +98,14 @@ def _table(columns, rows) -> list[str]:
 
 
 def _local_engine() -> DuckDBEngine:
-    """The fixture database the gate builds or, when it is missing, the catalog's tables built in
-    memory with the demo plan's recorded Procurement Plans read into them, offline."""
+    """The fixture database the gate builds or, when it is missing, the same tables built in memory:
+    the demo plan's recorded Procurement Plans, then the nightly job's tasks over the recorded pages."""
     if FIXTURE_DB.exists():
         return DuckDBEngine.open(FIXTURE_DB, read_only=True)
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
+    nightly.run_locally(engine, run_id="fixture")
     return engine
 
 
@@ -114,10 +116,11 @@ def same_rows(workspace) -> int:
         print("No ground-truth file is marked to run on databricks, so there is nothing to compare.")
         return 2
     failed = 0
+    with _local_engine() as duckdb:
+        local_results = {case.path: duckdb.run(case.sql, case.params) for case in cases}
     for case in cases:
         name = case.path.name
-        with _local_engine() as duckdb:
-            local = duckdb.run(case.sql, case.params)
+        local = local_results[case.path]
         try:
             remote = workspace.engine().run(case.sql, case.params)
         except EngineError as error:

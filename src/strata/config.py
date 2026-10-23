@@ -94,15 +94,34 @@ class _Entry:
                               f"It can use only these: {', '.join(sorted(allowed))}.")
 
 
+def _tables(path: Path, data: dict, key: str) -> list[_Entry]:
+    tables = data.get(key, [])
+    if not isinstance(tables, list):
+        raise ConfigError(f"In {path.name}, write each of {key} as a [[{key}]] table.")
+    return [_Entry(path, f"{key}[{number}]", table) for number, table in enumerate(tables, 1)]
+
+
 # ── The source registry ──────────────────────────────────────────────────
 
 CADENCES = ("daily", "weekly", "monthly", "quarterly", "yearly", "frozen")
 STRATA = ("What", "How", "Why")
+APIS = ("finances_one", "search")
+
+
+@dataclass(frozen=True)
+class FetchCountry:
+    """A country whose records the nightly job fetches: its name and its ISO 3166 two-letter code."""
+
+    name: str
+    iso2: str
 
 
 @dataclass(frozen=True)
 class Source:
-    """One data source: where it answers, how often it changes, and how it is credited."""
+    """One data source: where it answers, how its pages are fetched, how often it changes, and how
+    it is credited. A source the nightly job fetches page by page names api, records,
+    country_filter, page_size and fixture_dataset; a source its own reader fetches, such as
+    documents (the plan reader), names none of them."""
 
     key: str
     dataset_name: str
@@ -111,26 +130,46 @@ class Source:
     cadence: str
     license: str
     silver_transform: str
+    api: str | None = None
+    records: str | None = None
+    country_filter: str | None = None
+    page_size: int | None = None
+    fixture_dataset: str | None = None
     dataset_id: str | None = None
     resource_id: str | None = None
     stratum: str | None = None
+    ignore_keys: tuple[str, ...] = ()
     known_gaps: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
+    countries: tuple[FetchCountry, ...] = ()
+
+    @property
+    def paged(self) -> bool:
+        """Whether the nightly job fetches this source page by page."""
+        return self.api is not None
 
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
+SOURCE_PAGING = ("api", "records", "country_filter", "page_size", "fixture_dataset")  # all of them or none
 SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum")
-SOURCE_LISTS = ("known_gaps", "limitations")
+SOURCE_LISTS = ("ignore_keys", "known_gaps", "limitations")
 
 
 def load_sources(path: Path = CONFIG_DIR / "sources.toml") -> dict[str, Source]:
-    """Every source in the registry, by its key."""
+    """Every source in the registry, by its key, each with the countries the job fetches."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"sources"})
+    _Entry(path, "the file", data).only({"sources", "countries"})
+    countries = []
+    for entry in _tables(path, data, "countries"):
+        entry.only({"name", "iso2"})
+        country = FetchCountry(entry.text("name"), entry.text("iso2"))
+        if not re.fullmatch(r"[A-Z]{2}", country.iso2):
+            entry._fail("iso2", "must be two capital letters")
+        countries.append(country)
     sources = {}
     for key, table in data.get("sources", {}).items():
         entry = _Entry(path, f"sources.{key}", table)
-        entry.only(set(SOURCE_REQUIRED + SOURCE_OPTIONAL + SOURCE_LISTS))
+        entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
         fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL}
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
@@ -138,8 +177,25 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml") -> dict[str, Source]:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
         if fields["stratum"] is not None and fields["stratum"] not in STRATA:
             entry._fail("stratum", f"must be one of {', '.join(STRATA)}")
-        sources[key] = Source(key=key, **fields)
+        if any(name in table for name in SOURCE_PAGING):
+            fields |= _paging(entry, table)
+        sources[key] = Source(key=key, countries=tuple(countries), **fields)
     return sources
+
+
+def _paging(entry: _Entry, table: dict) -> dict:
+    """The five keys of a source the nightly job fetches page by page, which it names all together."""
+    missing = [name for name in SOURCE_PAGING if name not in table]
+    if missing:
+        entry._fail(missing[0], f"is missing. A source the nightly job fetches page by page names all of "
+                                f"{', '.join(SOURCE_PAGING)}, and a source its own reader fetches names none")
+    fields = {name: entry.text(name) for name in SOURCE_PAGING if name != "page_size"}
+    fields["page_size"] = entry.integer("page_size")
+    if fields["api"] not in APIS:
+        entry._fail("api", f"must be one of {', '.join(APIS)}")
+    if fields["page_size"] < 1:
+        entry._fail("page_size", "must be 1 or more")
+    return fields
 
 
 # ── The slice file ───────────────────────────────────────────────────────
@@ -190,13 +246,6 @@ class Slice:
     @property
     def fiscal_years(self) -> range:
         return range(self.first_fiscal_year, self.last_fiscal_year + 1)
-
-
-def _tables(path: Path, data: dict, key: str) -> list[_Entry]:
-    tables = data.get(key, [])
-    if not isinstance(tables, list):
-        raise ConfigError(f"In {path.name}, write each of {key} as a [[{key}]] table.")
-    return [_Entry(path, f"{key}[{number}]", table) for number, table in enumerate(tables, 1)]
 
 
 def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:

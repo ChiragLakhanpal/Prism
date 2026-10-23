@@ -91,7 +91,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
         print("".join(f"    {line}\n" for line in output.splitlines()), end="")
         return 1
 
-    print("2. Creating the tables from src/strata/lakehouse/tables on the SQL warehouse.")
+    print("2. Creating the tables and views from src/strata/lakehouse/tables and views on the SQL warehouse.")
     try:
         built = catalog.build(workspace.engine(), create_schemas=False)
     except (CatalogError, EngineError) as error:

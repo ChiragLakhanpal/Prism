@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from strata import config
 from strata.lakehouse import bundle, catalog, nightly, schedule
 from strata.lakehouse.engine import DuckDBEngine
 
@@ -56,27 +57,52 @@ def test_the_job_runs_its_tasks_one_after_another_in_plan_order():
     assert set(nightly.TASKS) == set(PLAN_ORDER)
 
 
+def no_pages(source, engine):
+    return ()
+
+
+# The tasks that have their work so far (ticket 07); ticket 43 gives the rest theirs.
+WORKING = {"fetch_by_watermark", "bronze_to_gold", "measure_data_readiness"}
+
+
 def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(engine):
-    run_id = nightly.run_locally(engine)
+    run_id = nightly.run_locally(engine)  # over the recorded fixture
 
     rows = runs(engine, run_id)
     assert [row[0] for row in rows] == PLAN_ORDER
-    assert {(status, changed) for _, status, changed, *_ in rows} == {("succeeded", 0)}
+    assert {status for _, status, *_ in rows} == {"succeeded"}
+    assert {task for task, _, changed, *_ in rows if changed > 0} == WORKING
     for _, _, _, started, finished, public_from in rows:
         assert started <= finished
         assert public_from == finished.astimezone(dt.UTC).date()
 
 
 def test_two_runs_keep_their_rows_apart(engine):
-    first, second = nightly.run_locally(engine), nightly.run_locally(engine)
+    first, second = nightly.run_locally(engine, fetch=no_pages), nightly.run_locally(engine, fetch=no_pages)
 
     assert first != second
     assert len(runs(engine, first)) == len(runs(engine, second)) == len(PLAN_ORDER)
 
 
+def test_a_task_run_as_the_job_runs_it_fetches_from_the_live_apis(engine, monkeypatch):
+    """nightly_task.py calls main() with the task's arguments and an engine, as this test does. With
+    no fetch given, the task asks the live APIs, here a fake that records the URLs and has no rows."""
+    asked = []
+
+    def fake_fetch_url(url):
+        asked.append(url)
+        return b"{}"
+
+    monkeypatch.setattr("strata.fixture.record.fetch_url", fake_fetch_url)
+
+    nightly.main(["--task", "fetch_by_watermark", "--run-id", "1", "--src", "src"], engine)
+
+    assert asked[0].startswith(config.load_sources()["awards"].endpoint)
+
+
 def test_a_task_the_job_does_not_have_is_refused(engine):
     with pytest.raises(SystemExit, match="no task called polish_gold"):
-        nightly.main(["--task", "polish_gold", "--run-id", "42", "--src", "/tmp/src"], engine)
+        nightly.main(["--task", "polish_gold", "--run-id", "42", "--src", "/tmp/src"], engine, no_pages)
 
     assert engine.run("SELECT count(*) AS n FROM strata.ops.pipeline_runs").as_text() == [("0",)]
 

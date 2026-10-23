@@ -80,7 +80,7 @@ def test_building_twice_keeps_the_rows_a_table_holds():
 def test_every_table_in_the_fixture_database_keeps_its_public_from_date(fixture_db):
     with DuckDBEngine.open(fixture_db, read_only=True) as engine:
         assert ("ops", "pipeline_runs") in tables(engine)
-        catalog.check_public_from(engine)
+        catalog.check_public_from(engine, skip=("recorded",))
 
 
 def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
@@ -91,19 +91,21 @@ def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
         catalog.build(engine, folder)
 
 
-def test_the_check_covers_the_four_schemas_and_not_the_fixtures_own_copy_of_the_sources():
+def test_the_check_skips_only_the_schemas_its_caller_names():
     """The fixture database also holds recorded.files, its copy of the sources (ticket 05), which is
-    not a catalog layer. The check covers the schemas the bundle declares, where every fact lives."""
+    not a catalog layer, so the fixture build skips `recorded`. Every other schema is checked,
+    including one the bundle does not declare, such as the `main` schema a workspace can make."""
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
         engine.run("CREATE SCHEMA strata.recorded")
         engine.run("CREATE TABLE strata.recorded.files (file STRING, recorded DATE)")
 
-        catalog.check_public_from(engine)
+        catalog.check_public_from(engine, skip=("recorded",))
 
-        engine.run("CREATE TABLE strata.silver.awards (award_id STRING)")
-        with pytest.raises(CatalogError, match=r"strata\.silver\.awards") as stopped:
-            catalog.check_public_from(engine)
+        engine.run("CREATE SCHEMA IF NOT EXISTS strata.main")
+        engine.run("CREATE TABLE strata.main.notes (id STRING)")
+        with pytest.raises(CatalogError, match=r"strata\.main\.notes") as stopped:
+            catalog.check_public_from(engine, skip=("recorded",))
         assert "recorded" not in str(stopped.value)
 
 
@@ -145,8 +147,50 @@ def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
         catalog.table_definitions(folder)
 
 
-def test_the_catalog_defines_the_pipeline_runs_and_each_table_once():
-    names = [definition.full_name for definition in catalog.table_definitions()]
+def test_every_shipped_definition_sits_in_a_declared_schema_keeps_public_from_and_is_defined_once():
+    """Adding a table is one file, so this checks the rule each file follows, not the list of files."""
+    definitions = catalog.table_definitions()
+    names = [definition.full_name for definition in definitions]
 
     assert "strata.ops.pipeline_runs" in names
     assert len(names) == len(set(names))
+    for definition in definitions:
+        assert definition.schema in catalog.declared().schemas, definition.path.name
+        assert "public_from DATE" in definition.sql, definition.full_name
+
+
+def test_the_view_definitions_build_after_the_tables():
+    """A view is defined once too, in views/<schema>/<view>.sql beside the tables folder."""
+    with DuckDBEngine.open() as engine:
+        built = catalog.build(engine)
+        kinds = dict(((schema, name), kind) for schema, name, kind in engine.run(
+            "SELECT table_schema, table_name, table_type FROM system.information_schema.tables "
+            "WHERE table_catalog = 'strata'").as_text())
+
+    assert "strata.silver.awards_current" in built
+    assert kinds["silver", "awards_current"] == "VIEW"
+
+
+def views(tmp_path, **files):
+    """A tables folder with one table, and a views folder beside it: each keyword is schema__view and its SQL."""
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD)
+    for name, sql in files.items():
+        schema, view = name.split("__")
+        (tmp_path / "views" / schema).mkdir(parents=True, exist_ok=True)
+        (tmp_path / "views" / schema / f"{view}.sql").write_text(sql.format(schema=schema, view=view))
+    return folder
+
+
+def test_a_view_definition_must_replace_the_view_its_file_names(tmp_path):
+    folder = views(tmp_path, ops__run_days="CREATE VIEW strata.{schema}.{view} AS SELECT 1 AS one\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(
+            CatalogError, match=r"CREATE OR REPLACE VIEW strata\.ops\.run_days AS"):
+        catalog.build(engine, folder)
+
+
+def test_a_view_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
+    folder = views(tmp_path, platinum__scores="CREATE OR REPLACE VIEW strata.{schema}.{view} AS SELECT 1 AS one\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(CatalogError, match="platinum.*bronze, silver, gold, ops"):
+        catalog.build(engine, folder)
