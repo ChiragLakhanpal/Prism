@@ -8,8 +8,10 @@ docs/workspace-catchup.md runs the job against the real APIs.
 
 import copy
 import datetime as dt
+import decimal
 import json
 import shutil
+import tomllib
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -21,6 +23,7 @@ from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
 RECORDED = ROOT / "data" / "fixture" / "recorded"
+AWKWARD = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["awkward"]
 LAYERS = {
     "bronze": "SELECT count(*) FROM strata.bronze.api_pages",
     "silver": "SELECT (SELECT count(*) FROM strata.silver.awards) + (SELECT count(*) FROM strata.silver.notices) "
@@ -107,6 +110,46 @@ def test_a_supplier_row_a_later_fetch_drops_leaves_gold(fixture_copy):
     assert ventures.rows == ((0,),)
 
 
+def test_a_joint_venture_whose_members_sit_on_two_pages_keeps_both_when_only_one_page_changes():
+    """values.toml, awkward.joint_venture: contract 1624689 went to members 503708 and 503711. When a
+    country's awards fill two pages, a later fetch may change the first page only. Bronze keeps the
+    second page from its first fetch, as its content did not change, and that page still counts."""
+    venture = AWKWARD["joint_venture"]
+    rows = recorded(venture["awards"])["data"]
+    second = [row for row in rows if (row["wb_contract_number"], row["supplier_id"]) == (venture["contract"], "503711")]
+    first = [row for row in rows if row not in second]
+
+    def two_pages(changed_amounts, day):
+        def fetch(source, engine):
+            if source.key != "awards":
+                yield from pages.recorded_pages(source)
+                return
+            fetched_at = dt.datetime(2026, 10, day, tzinfo=dt.UTC)
+            revised = [dict(row, **changed_amounts.get(row["wb_contract_number"], {})) for row in first]
+            yield pages.Page("awards", "https://example.org/awards?top=1000&skip=0", {"data": revised}, fetched_at)
+            yield pages.Page("awards", "https://example.org/awards?top=1000&skip=1000", {"data": second}, fetched_at)
+        return fetch
+
+    with DuckDBEngine.open() as engine:
+        from strata.lakehouse import catalog
+
+        catalog.build(engine)
+        nightly.run_locally(engine, run_id="first", fetch=two_pages({}, 23))
+        nightly.run_locally(engine, run_id="later", fetch=two_pages(
+            {"1903781": {"supplier_contract_amount_usd": 1300000.0}}, 24))
+
+        kept = engine.run("SELECT count(*) FROM strata.bronze.api_pages WHERE source = 'awards'").rows
+        contract = engine.run("SELECT contract_amount_usd, supplier_count, joint_venture FROM strata.gold.contract "
+                              "WHERE wb_contract_number = :number", {"number": venture["contract"]}).rows
+        members = engine.run("SELECT supplier_id FROM strata.gold.contract_supplier WHERE wb_contract_number = :number "
+                             "ORDER BY supplier_id", {"number": venture["contract"]}).rows
+
+    assert kept == ((3,),)  # the first page twice, the second once
+    share = decimal.Decimal(str(venture["amount_per_member_usd"]))
+    assert contract == ((share * 2, 2, True),)  # US$1,395,944.66, counted once
+    assert [supplier for (supplier,) in members] == venture["supplier_ids"]
+
+
 # ── The live adapter, with a fake transport ──────────────────────────────
 
 class FakeAPI:
@@ -169,7 +212,7 @@ def test_a_live_page_loses_its_contact_details_and_a_date_after_the_fetch_falls_
         notice = engine.run("SELECT notice_date, public_from FROM strata.silver.notices "
                             "WHERE notice_id = 'OP00474946'").rows
 
-    contact = next(row for row in rows if row["id"] == "OP00146683")  # values.toml, awkward.contact_details
+    contact = next(row for row in rows if row["id"] == AWKWARD["contact_details"]["notice"])
     kept = [field for field in ("contact_email", "contact_name") if contact[field] and contact[field] in body]
     assert contact["contact_email"] and contact["contact_name"] and kept == []  # never prints the details
     assert notice == ((dt.date(2026, 10, 13), dt.date(2026, 10, 1)),)
