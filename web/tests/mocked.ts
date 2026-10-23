@@ -44,4 +44,16 @@ export async function mockApi(page: Page, responses: Record<string, { status?: n
   return unrecorded;
 }
 
+// The two calls every page of the shell makes, answered from the recordings unless a test says
+// otherwise: who is viewing (/api/me) and the data-freshness stamp (/api/freshness).
+export async function mockShell(
+  page: Page,
+  answers: { me?: { status?: number; body: string }; freshness?: { status?: number; body: string } } = {},
+) {
+  return mockApi(page, {
+    "/api/me": answers.me ?? { body: await recorded("me.json") },
+    "/api/freshness": answers.freshness ?? { body: await recorded("freshness.json") },
+  });
+}
+
 export { expect };

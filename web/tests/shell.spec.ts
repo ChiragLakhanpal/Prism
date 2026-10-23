@@ -1,105 +1,241 @@
-// Smoke test of the web shell (seam 4): the built app against the mocked API.
-import { expect, mockApi, recorded, test } from "./mocked";
+// The app's frame on every page (seam 4, ticket 06): the navy bar with the World Bank logo, the
+// band with the box and the data-freshness stamp in its five states, the page alerts, and the
+// footer, against the mocked API. The words are the 06 design brief's.
+import { createHash } from "node:crypto";
+import { expect, mockShell, recorded, test } from "./mocked";
 
-// DESIGN.md section 8, word for word.
-const FOOTER =
-  "Strata is an independent demo built on World Bank open data. It is not a World Bank product, " +
-  "and the World Bank has not reviewed or endorsed it.";
+// web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
+const LOGO_SHA256 = "008de872f82765e61d5c7987e405d51000376b3aa9b3c73039250226f7b3be4c";
 
-test("the shell renders, names the signed-in viewer and carries the footer", async ({ page, outsideRequests }) => {
-  const unrecorded = await mockApi(page, { "/api/me": { body: await recorded("me.json") } });
+// The stamp writes "Oct 21" in the current year, so the tests fix today.
+const TODAY = new Date("2026-10-24T12:00:00Z");
 
-  await page.goto("/");
-
-  await expect(page.getByRole("heading", { level: 1, name: "Strata" })).toBeVisible();
-  await expect(page.getByText("You are signed in as Ana Example.")).toBeVisible();
-  await expect(page.getByRole("contentinfo")).toHaveText(FOOTER);
-  await expect(page.getByRole("link", { name: "Skip to the main content" })).toHaveAttribute("href", "#main");
-  expect(unrecorded).toEqual([]);
-  expect(outsideRequests).toEqual([]);
-});
-
-test("nothing in the shell links to the deck", async ({ page }) => {
-  await mockApi(page, { "/api/me": { body: await recorded("me.json") } });
-
-  await page.goto("/");
-  await expect(page.getByText("You are signed in as Ana Example.")).toBeVisible();
-
-  await expect(page.locator('a[href*="/present"]')).toHaveCount(0);
-});
-
-test("the shell says so when no one is signed in", async ({ page }) => {
-  await mockApi(page, {
-    "/api/me": { body: JSON.stringify({ email: null, name: null, signed_in: false, has_token: false }) },
-  });
-
+test("the navy bar carries the official World Bank logo, unaltered, 24 px tall with clear space of half its height", async ({ page }) => {
+  await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
-  await expect(page.getByText("You are not signed in. Open Strata through its Databricks App to sign in.")).toBeVisible();
-  // The view popover agrees: it does not suggest the viewer signed in with some account.
-  await page.getByRole("button", { name: "View: World Bank staff" }).click();
-  const view = page.getByRole("dialog", { name: "Your view" });
-  await expect(view).toContainText("You are not signed in.");
-  await expect(view).not.toContainText("I can't tell which account");
+  const logo = page.getByRole("img", { name: "World Bank logo" });
+  await expect(logo).toBeVisible();
+  const file = await page.request.get(await logo.evaluate((img) => (img as HTMLImageElement).currentSrc));
+  expect(createHash("sha256").update(await file.body()).digest("hex")).toBe(LOGO_SHA256);
+  // The logo is not a link.
+  await expect(page.locator("a").filter({ has: logo })).toHaveCount(0);
+
+  const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
+  const box = (await logo.boundingBox())!;
+  const wordmark = (await page.getByRole("link", { name: "Strata", exact: true }).boundingBox())!;
+  expect([box.width, box.height]).toEqual([120, 24]);
+  expect(box.y - bar.y).toBeGreaterThanOrEqual(12);
+  expect(bar.y + bar.height - (box.y + box.height)).toBeGreaterThanOrEqual(12);
+  expect(Math.round(box.x)).toBe(72);
+  expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(12);
 });
 
-test("the shell says so in an error alert when it can't reach the server, and Try again asks again", async ({ page }) => {
-  let calls = 0;
-  await page.route("**/api/me", async (route) => {
-    calls += 1;
-    if (calls === 1) return route.fulfill({ status: 502, contentType: "application/json", body: JSON.stringify({ detail: "Bad Gateway" }) });
-    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("me.json") });
-  });
+test("the first paint holds the bar, the band and the logo where the app puts them, before any script runs", async ({ browser, page }) => {
+  const boxes = (selectors: string[]) =>
+    selectors.map((selector) => {
+      const box = document.querySelector(selector)!.getBoundingClientRect();
+      return [Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)];
+    });
+  await mockShell(page);
+  for (const width of [1440, 800, 390]) {
+    const first = await browser.newContext({ javaScriptEnabled: false, viewport: { width, height: 900 } });
+    const before = await first.newPage();
+    await before.goto(test.info().project.use.baseURL!);
+    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-band]", "[data-boot-bar] img"]);
+    await first.close();
 
-  await page.goto("/");
-
-  const alert = page.getByRole("alert");
-  await expect(alert).toHaveText(/^The server did not answer, so I can't tell who you are\.Try again$/);
-  expect(await alert.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(253, 242, 242)");
-  await alert.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByText("You are signed in as Ana Example.")).toBeVisible();
-  await expect(page.getByRole("alert")).toHaveCount(0);
-});
-
-test("the shell sits in the shared frame: the navy bar, the box band, a styled title and one left edge", async ({ page }) => {
-  await mockApi(page, { "/api/me": { body: await recorded("me.json") } });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/");
-
-  await expect(page.locator("[data-nav-bar]")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Strata", exact: true })).toHaveAttribute("aria-current", "page");
-  await expect(page.locator("[data-box-band]").getByRole("textbox", { name: /Search a project/ })).toBeVisible();
-  const title = page.getByRole("heading", { level: 1 });
-  expect(await title.evaluate((el) => getComputedStyle(el).fontSize)).toBe("28px");
-  // The title, the viewer line and the footer's text all start at the 72 px grid margin.
-  const left = (selector: string) =>
-    page.locator(selector).first().evaluate((el) => Math.round(el.getBoundingClientRect().x + parseFloat(getComputedStyle(el).paddingLeft)));
-  expect([await left("h1"), await left("main p"), await left("footer p")]).toEqual([72, 72, 72]);
-  // The skip link is out of sight until it has focus.
-  const skip = page.getByRole("link", { name: "Skip to the main content" });
-  expect((await skip.boundingBox())!.width).toBeLessThanOrEqual(1);
-  await page.keyboard.press("Tab");
-  await expect(skip).toBeFocused();
-  expect((await skip.boundingBox())!.height).toBe(44);
-});
-
-test("axe finds no WCAG 2.2 AA violations in the shell, signed in or unable to reach the server", async ({ page }) => {
-  const { default: AxeBuilder } = await import("@axe-core/playwright");
-  const check = async () =>
-    (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze()).violations.map(
-      (v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`,
-    );
-  for (const [width, response] of [
-    [1440, { body: await recorded("me.json") }],
-    [390, { status: 502, body: JSON.stringify({ detail: "Bad Gateway" }) }],
-  ] as const) {
-    await page.unrouteAll();
-    await mockApi(page, { "/api/me": response });
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator("main [role=status], main [role=alert]")).not.toHaveText("I'm checking who you are.");
-    expect(await check(), `${width} px`).toEqual([]);
+    await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
+    const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-box-band]", "[data-nav-bar] img"]);
+
+    expect(painted, `${width} px`).toEqual(mounted);
   }
+});
+
+test("the stamp shows the day the server returns, and links to the Data page", async ({ page }) => {
+  await page.clock.setFixedTime(TODAY);
+  await mockShell(page);
+  await page.goto("/");
+
+  const stamp = page.locator("[data-stamp]").getByRole("link");
+  await expect(stamp).toHaveText("Data through Oct 23");
+  await expect(stamp).toHaveAttribute("href", "/data");
+  await expect(stamp).toHaveAccessibleDescription("See each source's date on the Data page.");
+  await expect(page.locator("[data-stamp]")).not.toHaveAttribute("aria-busy");
+});
+
+test("a data date from another year shows its year", async ({ page }) => {
+  await page.clock.setFixedTime(TODAY);
+  await mockShell(page, { freshness: { body: '{"data_through": "2025-12-30"}' } });
+  await page.goto("/");
+
+  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data through Dec 30, 2025");
+});
+
+test("before any daily source has loaded, the stamp says no data are loaded and still links to the Data page", async ({ page }) => {
+  await mockShell(page, { freshness: { body: await recorded("freshness-empty.json") } });
+  await page.goto("/");
+
+  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("No data loaded yet");
+  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveAttribute("href", "/data");
+});
+
+test("while it loads, the stamp holds a static bar for the first second and then says it is reading the date", async ({ page }) => {
+  await mockShell(page);
+  let answer: () => void = () => {};
+  const answered = new Promise<void>((resolve) => (answer = resolve));
+  await page.route("**/api/freshness", async (route) => {
+    await answered;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
+  });
+  await page.goto("/");
+
+  const stamp = page.locator("[data-stamp]");
+  await expect(stamp).toHaveAttribute("aria-busy", "true");
+  await expect(stamp.locator("[data-skeleton]")).toHaveCount(1);
+  await expect(stamp).toHaveText("Reading the data date", { timeout: 3000 });
+  answer();
+  await expect(stamp.getByRole("link")).toHaveText(/^Data through /);
+});
+
+test("when the server fails, the stamp says it can't read the date, and tries again on a later page at most once a minute", async ({ page }) => {
+  await page.clock.install({ time: TODAY });
+  await mockShell(page);
+  let reads = 0;
+  await page.route("**/api/freshness", async (route) => {
+    reads += 1;
+    if (reads === 1) return route.fulfill({ status: 502, contentType: "application/json", body: '{"code": "unreadable"}' });
+    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
+  });
+  await page.goto("/");
+
+  const stamp = page.locator("[data-stamp]");
+  await expect(stamp).toHaveText("I can't read the data date.");
+  await expect(stamp.getByRole("link")).toHaveCount(0);
+  await expect(stamp.locator("svg.lucide-circle-x")).toHaveCount(1);
+
+  const tabs = page.getByRole("navigation", { name: "Main" });
+  await tabs.getByRole("link", { name: "Packages" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packages");
+  expect(reads).toBe(1);
+
+  await page.clock.fastForward("01:01");
+  await tabs.getByRole("link", { name: "Projects" }).click();
+  await expect(stamp.getByRole("link")).toHaveText("Data through Oct 23");
+  expect(reads).toBe(2);
+});
+
+test("an account the warehouse refuses gets one error alert that says how to get access", async ({ page }) => {
+  await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
+  await page.goto("/drafts");
+
+  await expect(page.getByRole("alert")).toHaveText(
+    "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
+  );
+  await expect(page.locator("[data-stamp]")).toHaveText("I can't read the data date.");
+});
+
+test("with no forwarded identity, one error alert says to open Strata from its link in the workspace", async ({ page }) => {
+  await mockShell(page, {
+    me: { body: '{"email": null, "name": null, "signed_in": false, "has_token": false}' },
+    freshness: { status: 401, body: await recorded("freshness-no-identity.json") },
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  await expect(page.getByRole("alert")).toHaveText(
+    "I can't tell who you are, so I can't read any data; open Strata from its link in the workspace.",
+  );
+  await page.getByRole("button", { name: "View: World Bank staff" }).click();
+  await expect(page.getByRole("dialog", { name: "Your view" })).toContainText("You are not signed in.");
+});
+
+test("the view popover says who is signed in and which view this is", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "View: World Bank staff" }).click();
+
+  await expect(page.getByRole("dialog", { name: "Your view" })).toHaveText(
+    "Signed in as ana.example@worldbank.orgYou are seeing the World Bank staff view." +
+      "Previews of what an implementing agency officer or the public sees are not ready yet.",
+  );
+});
+
+const ADDRESS_ALERTS: [string, string][] = [
+  ["?view=piu", "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view."],
+  ["?view=public", "I can't show the public preview yet, so you are seeing the World Bank staff view."],
+  ["?view=board", "I don't know the view in this link, so you are seeing the World Bank staff view."],
+  ["?asof=2016-08-26", "I can't show pages as of August 26, 2016 yet, so you are seeing today's data."],
+  ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
+];
+
+for (const [query, sentence] of ADDRESS_ALERTS) {
+  test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
+    await mockShell(page);
+    await page.goto(`/projects${query}`);
+
+    const alert = page.locator("[data-alert=info]");
+    await expect(alert).toHaveText(sentence);
+    const [alertBox, title] = [await alert.boundingBox(), await page.getByRole("heading", { level: 1 }).boundingBox()];
+    expect(alertBox!.y).toBeLessThan(title!.y);
+  });
+}
+
+test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ page }) => {
+  await mockShell(page);
+  await page.goto("/projects?view=staff&lang=fr&evidence=ev-1");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Projects");
+  await expect(page.locator("[data-alert]")).toHaveCount(0);
+});
+
+test("error alerts come before the address's info alerts", async ({ page }) => {
+  await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
+  await page.goto("/?view=piu&asof=2016-08-26");
+
+  await expect(page.locator("[data-alert]")).toHaveCount(3);
+  await expect(page.locator("[data-alert]").first()).toHaveAttribute("data-alert", "error");
+});
+
+test("the box says what Enter will do before anyone presses it, and Escape closes that line, then clears the box", async ({ page }) => {
+  await mockShell(page);
+  await page.goto("/");
+  await page.getByRole("heading", { level: 1 }).click();
+
+  await page.keyboard.press("/");
+  const box = page.locator("[data-box-band]").getByRole("textbox", { name: /Search a project/ });
+  await expect(box).toBeFocused();
+  await box.fill("P130164");
+  const status = page.locator("[data-box-band]").getByRole("status");
+  await expect(status).toHaveText("I can't open projects or answer questions from this box yet.");
+  await expect(box).toHaveAccessibleDescription("I can't open projects or answer questions from this box yet.");
+
+  await box.press("Enter");
+  await expect(status).toHaveText("I can't open projects or answer questions from this box yet.");
+  expect(new URL(page.url()).pathname).toBe("/");
+
+  await box.press("Escape");
+  await expect(status).toHaveCount(0);
+  await expect(box).toHaveValue("P130164");
+  await box.press("Escape");
+  await expect(box).toHaveValue("");
+  await expect(box).toBeFocused();
+});
+
+test("/ closes an open Menu and focuses the box", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("heading", { level: 1 }).click();
+
+  await page.keyboard.press("/");
+
+  await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("[data-box-band]").getByRole("textbox")).toBeFocused();
 });

@@ -17,7 +17,7 @@ export function Frame({ nav, band, children }: { nav: ReactNode; band: ReactNode
     <div className="flex min-h-dvh flex-col bg-page">
       {nav}
       {band}
-      <main id="main" tabIndex={-1} className="flex-1 pb-16 focus-visible:outline-none">
+      <main id="main" tabIndex={-1} className="flex-1 pb-12 focus-visible:outline-none md:pb-16">
         {children}
       </main>
       <Footer />

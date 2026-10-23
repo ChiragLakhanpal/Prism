@@ -17,16 +17,132 @@ export const copy = {
   footer:
     "Strata is an independent demo built on World Bank open data. It is not a World Bank product, " +
     "and the World Bank has not reviewed or endorsed it.",
-  viewer: {
-    checking: "I'm checking who you are.",
-    signedIn: (name: string) => `You are signed in as ${name}.`,
-    signedOut: "You are not signed in. Open Strata through its Databricks App to sign in.",
-    // An alert holds one sentence (DESIGN.md section 5); its "Try again" button asks again.
-    unreachable: "The server did not answer, so I can't tell who you are.",
+  // The browser tab's title: the page's h1, then the app's name.
+  pageTitle: (title: string) => `${title} | Strata`,
+
+  // Every route's title, its one-sentence purpose and its empty state (the 06 design brief).
+  // {pid}, {stepRef} and {id} come from the address and show in Roboto Mono. Each page's link
+  // goes where web/src/routes.ts says; data has none, and the not-found pages have no card.
+  pages: {
+    home: {
+      title: "Your briefing",
+      purpose:
+        "This page lists what changed in the plans and projects you work on, and the drafts waiting for you to " +
+        "check. It comes from fixed checks on public records, and no model writes it.",
+      emptyTitle: "I have nothing to brief you on yet.",
+      emptyBody:
+        "Once I load plans and projects, this page lists the plans that changed, the activities that need a look " +
+        "and the drafts waiting for you.",
+      link: "See which data I hold",
+    },
+    packages: {
+      title: "Packages",
+      purpose: "Check a borrower's Procurement Plan against comparable past packages, or plan a new package from one sentence.",
+      emptyTitle: "There are no plans or packages here yet.",
+      emptyBody:
+        "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of " +
+        "Exchanges in Procurement (STEP). I can check a plan once I load its records.",
+      link: "See which data I hold",
+    },
+    package: {
+      title: "Package",
+      purpose:
+        "This page shows one package: the past range of comparable packages, a planned date for each step, its " +
+        "risks and its approach options.",
+      emptyTitle: "I can't find package {id}.",
+      emptyBody: "A package appears here after you plan it or check the plan it belongs to.",
+      link: "Go to Packages",
+    },
+    projects: {
+      title: "Projects",
+      purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
+      emptyTitle: "I haven't loaded any projects yet.",
+      emptyBody: "Once I load the project records, every project appears here, and the projects you follow come first.",
+      link: "See which data I hold",
+    },
+    project: {
+      title: "Project {pid}",
+      purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
+      emptyTitle: "I don't have records for {pid} yet.",
+      emptyBody:
+        "Once I load project records, this page shows the project's procurement, its reports in date order and its " +
+        "documents.",
+      link: "Go to Projects",
+    },
+    activity: {
+      title: "Activity {stepRef}",
+      purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
+      emptyTitle: "I don't have records for {stepRef} yet.",
+      emptyBody:
+        "Once I load the Procurement Plan records, this page traces the activity from its plan row to its signed " +
+        "contract.",
+      link: "Go to project {pid}",
+    },
+    document: {
+      title: "Document",
+      purpose: "This page opens one project document at the page and paragraph a citation points to.",
+      emptyTitle: "I don't have this document yet.",
+      emptyBody: "Once I read the project's documents, each citation opens here at its paragraph and page.",
+      link: "Go to project {pid}",
+    },
+    lessons: {
+      title: "Lessons",
+      purpose:
+        "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
+        "procurement specialist decides which lessons enter the library.",
+      emptyTitle: "There are no lessons in the library yet.",
+      emptyBody:
+        "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
+      link: "See which data I hold",
+    },
+    drafts: {
+      title: "Drafts",
+      purpose:
+        "I write drafts for you to check, such as review notes and suggested rows for the borrower's Project " +
+        "Procurement Strategy for Development (PPSD). Only you can mark a draft as checked or export it, and " +
+        "exporting sends nothing.",
+      emptyTitle: "You have no drafts to check.",
+      emptyBody:
+        "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you " +
+        "to check.",
+      link: "Go to Packages",
+    },
+    data: {
+      title: "Data",
+      purpose:
+        "This page shows what the data I hold are ready for, where each source comes from and its license. It also " +
+        "explains how I turn records and documents into answers.",
+      emptyTitle: "I haven't loaded any data yet.",
+      emptyBody:
+        "Once I load the first sources, this page shows what each one is ready for, how complete and fresh it is, " +
+        "and its license.",
+    },
+    notFound: {
+      title: "Page not found",
+      purpose: "I don't have a page at this address. Check the address, or go to Home.",
+      link: "Go to Home",
+    },
+    notAProject: {
+      title: "Page not found",
+      purpose: "This address doesn't name a project. A project ID is the letter P followed by six digits.",
+      link: "Go to Projects",
+    },
+  },
+
+  // The alert slot above every page's title. Each alert is one sentence; errors come first.
+  alerts: {
+    noAccess: "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
+    noIdentity: "I can't tell who you are, so I can't read any data; open Strata from its link in the workspace.",
+    viewPiu: "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view.",
+    viewPublic: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
+    viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
+    asOf: (date: string) => `I can't show pages as of ${date} yet, so you are seeing today's data.`,
+    asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
   // The navy bar (DESIGN.md section 5, Top navigation). Nouns navigate.
   nav: {
+    logo: "World Bank logo",
     label: "Main",
     tabs: {
       packages: "Packages",

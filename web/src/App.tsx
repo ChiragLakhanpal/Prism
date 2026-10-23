@@ -1,95 +1,150 @@
-// The web shell, in the frame every page shares (web/src/components/Frame.tsx): the navy bar
-// with its skip link, the box band, the page and the footer. The page says who is viewing.
-// Ticket 06 adds the logo, the freshness stamp, the routes and Home's own content.
+// The app: the frame every page shares (web/src/components/Frame.tsx), around the page the address
+// names (web/src/routes.ts). The navy bar carries the World Bank logo, the wordmark, the five tabs
+// and the view switch; the band, the box and the data-freshness stamp; the page, its alert slot,
+// title, purpose and empty state; and the footer.
 //
-// Who is viewing, in four states: checking (a muted line that says so), signed in (a sentence
-// with the name), signed out (a sentence that says how to sign in) and unreachable (an error
-// alert above the title, with "Try again").
+// The app reads who is viewing (/api/me) and the stamp (/api/freshness) once per page load and
+// keeps both across route changes. A route change updates the browser tab's title, scrolls to the
+// top and moves focus to the new h1, and a stamp that failed tries again.
 import { useEffect, useState } from "react";
+import logo from "./assets/world-bank-logo.svg";
 import { Alert } from "./components/Alert";
-import { BoxBand, OneBox } from "./components/BoxBand";
-import { Button } from "./components/Button";
+import { BoxBand, FreshnessStamp, OneBox } from "./components/BoxBand";
 import { Frame } from "./components/Frame";
 import { TopNav, type Viewer } from "./components/TopNav";
-import { getJson, type Me } from "./lib/api";
-import { createStore, useStore } from "./lib/store";
-import { cx } from "./lib/cx";
 import { copy } from "./copy";
+import { getJson, type Me } from "./lib/api";
+import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
+import { formatDate } from "./lib/format";
+import { address, navigate, startRouter } from "./lib/router";
+import { createStore, useStore } from "./lib/store";
+import { RoutePage } from "./RoutePage";
+import { fill, matchRoute } from "./routes";
 
-type ViewerState =
-  | { status: "checking" }
-  | { status: "signed-in"; name: string; email: string | null }
-  | { status: "signed-out" }
-  | { status: "unreachable" };
+const viewer = createStore<Viewer>({ status: "loading" });
 
-const viewer = createStore<ViewerState>({ status: "checking" });
-
-async function loadViewer(signal: AbortSignal) {
-  viewer.set({ status: "checking" });
+async function readViewer() {
   try {
-    const me = await getJson<Me>("/api/me", { signal });
-    const name = me.name ?? me.email;
-    viewer.set(me.signed_in && name ? { status: "signed-in", name, email: me.email } : { status: "signed-out" });
+    const me = await getJson<Me>("/api/me");
+    viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email } : me.signed_in ? { status: "error" } : { status: "signed-out" });
   } catch {
-    if (!signal.aborted) viewer.set({ status: "unreachable" });
+    viewer.set({ status: "error" });
   }
 }
 
-// What the view pill's popover says about who is signed in.
-function navViewer(state: ViewerState): Viewer {
-  if (state.status === "checking") return { status: "loading" };
-  if (state.status === "signed-in" && state.email) return { status: "signed-in", email: state.email };
-  if (state.status === "signed-out") return { status: "signed-out" };
-  return { status: "error" };
-}
-
+// Before ticket 14 the box takes text but cannot act. Its status line says so before Enter is
+// pressed; Enter submits nothing and says it again, so a screen reader hears it a second time.
+// The first Escape closes the line and the second clears the box.
 function Box() {
   const [value, setValue] = useState("");
-  return <OneBox value={value} onChange={setValue} below={copy.box.notReady} />;
+  const [closed, setClosed] = useState(false);
+  const [said, setSaid] = useState(0);
+  return (
+    <OneBox
+      value={value}
+      onChange={(next) => {
+        setValue(next);
+        setClosed(false);
+      }}
+      below={closed ? undefined : <span key={said}>{copy.box.notReady}</span>}
+      onEnter={() => setSaid(said + 1)}
+      onEscape={() => {
+        if (closed || !value) return false;
+        setClosed(true);
+        return true;
+      }}
+    />
+  );
 }
 
-// The line under the title that says who is viewing.
-function viewerLine(state: Exclude<ViewerState, { status: "unreachable" }>): string {
-  if (state.status === "checking") return copy.viewer.checking;
-  if (state.status === "signed-in") return copy.viewer.signedIn(state.name);
-  return copy.viewer.signedOut;
+const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
+const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+function realDay(text: string): boolean {
+  const day = DAY.exec(text);
+  if (!day) return false;
+  const date = new Date(`${text}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
+}
+
+// The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
+// replaces the view and as-of alerts with its preview and as-of banners in this same slot.
+function alerts(problem: Problem, search: string): { state: "error" | "info"; text: string }[] {
+  const params = new URLSearchParams(search);
+  const found: { state: "error" | "info"; text: string }[] = [];
+  if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
+  if (problem === "no_identity") found.push({ state: "error", text: copy.alerts.noIdentity });
+  const view = params.get("view");
+  if (view !== null && view !== "staff") found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
+  const asOf = params.get("asof");
+  if (asOf !== null) {
+    found.push({ state: "info", text: realDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
+  }
+  return found;
 }
 
 export function App() {
-  const state = useStore(viewer);
-  const [attempt, setAttempt] = useState(0);
+  const here = useStore(address);
+  const who = useStore(viewer);
+  const { freshness, problem } = useStore(stamp);
+  const match = matchRoute(here.pathname);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadViewer(controller.signal);
-    return () => controller.abort();
-  }, [attempt]);
+    const stop = startRouter();
+    readStamp();
+    void readViewer();
+    const onVisible = () => document.visibilityState === "visible" && retryStamp();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
+  // A lowercase p in a project ID: the address shows the uppercase form, in place.
+  useEffect(() => {
+    if (match.canonical) navigate(match.canonical + window.location.search + window.location.hash, { replace: true });
+  }, [match.canonical]);
+
+  const title = fill(copy.pages[match.key].title, match.values);
+  useEffect(() => {
+    document.title = copy.pageTitle(title);
+  }, [title]);
+
+  // A route change, but not the first page: scroll to the top, focus the new title, and try the
+  // stamp again if it failed.
+  useEffect(() => {
+    if (here.moves === 0) return;
+    window.scrollTo(0, 0);
+    document.querySelector<HTMLElement>("main h1")?.focus();
+    retryStamp();
+  }, [here.moves]);
+
+  const slot = alerts(problem, here.search);
   return (
-    <Frame nav={<TopNav home viewer={navViewer(state)} />} band={<BoxBand box={<Box />} />}>
-      <div className="layout layout-grid pt-10">
-        {/* The 06 brief's alert slot: above the title, columns 1 to 8, 24 px under it. */}
+    <Frame
+      nav={
+        <TopNav
+          logo={<img src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />}
+          current={match.section}
+          home={match.key === "home"}
+          viewer={who}
+        />
+      }
+      band={<BoxBand box={<Box />} stamp={<FreshnessStamp freshness={freshness} />} />}
+    >
+      <div className="layout layout-grid pt-6 md:pt-8 lg:pt-10">
         <div className="col-span-12 md:col-span-8">
-          {state.status === "unreachable" && (
-            <Alert
-              state="error"
-              live="alert"
-              className="mb-6"
-              action={
-                <Button variant="secondary" onClick={() => setAttempt(attempt + 1)}>
-                  {copy.answer.tryAgain}
-                </Button>
-              }
-            >
-              {copy.viewer.unreachable}
-            </Alert>
+          {slot.length > 0 && (
+            <div className="mb-6 flex flex-col gap-2">
+              {slot.map((alert) => (
+                <Alert key={alert.text} state={alert.state} live={alert.state === "error" ? "alert" : undefined}>
+                  {alert.text}
+                </Alert>
+              ))}
+            </div>
           )}
-          <h1 className="text-h1 text-ink-heading">{copy.appName}</h1>
-          {state.status !== "unreachable" && (
-            <p role="status" className={cx("mt-2 text-body", state.status === "checking" ? "text-ink-muted" : "text-ink")}>
-              {viewerLine(state)}
-            </p>
-          )}
+          <RoutePage match={match} />
         </div>
       </div>
     </Frame>

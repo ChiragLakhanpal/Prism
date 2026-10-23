@@ -26,6 +26,7 @@ import { CheckLine, CoverageLine, RemovedBox } from "../components/Checks";
 import { CitationMarker } from "../components/CitationMarker";
 import { Document, type Passage } from "../components/Document";
 import { Num, type NumValue } from "../components/Num";
+import { PageHeader, WithIds } from "../components/PageHeader";
 import { Skeleton, SkeletonText } from "../components/Skeleton";
 import { DocumentSource } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
@@ -285,6 +286,60 @@ export const PAGES: GalleryPage[] = [
                 </div>
               </Labeled>
             ))}
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    // The app's pages in 06 (web/src/RoutePage.tsx): each route's own states are captured from
+    // the production build (web/capture/shots.ts); these are the parts every page shares.
+    slug: "pages",
+    sections: [
+      {
+        id: "header",
+        title: t.header,
+        body: (
+          <div className="max-w-[54rem]">
+            <PageHeader
+              level={2}
+              title={<WithIds template={copy.pages.project.title} values={{ pid: sample.pcode }} />}
+              purpose={copy.pages.project.purpose}
+            />
+            <EmptyState
+              level={3}
+              className="mt-6 lg:mt-8"
+              title={<WithIds template={copy.pages.project.emptyTitle} values={{ pid: sample.pcode }} />}
+              body={copy.pages.project.emptyBody}
+              link={{ href: "#projects", text: copy.pages.project.link }}
+            />
+          </div>
+        ),
+      },
+      {
+        id: "not-found",
+        title: t.notFound,
+        body: (
+          <div className="max-w-[54rem]">
+            <PageHeader level={2} title={copy.pages.notFound.title} purpose={copy.pages.notFound.purpose} />
+            <p className="mt-4 text-body">
+              <TextLink href="#home">{copy.pages.notFound.link}</TextLink>
+            </p>
+          </div>
+        ),
+      },
+      {
+        id: "page-alerts",
+        title: t.pageAlerts,
+        body: (
+          <div className="flex max-w-[54rem] flex-col gap-2">
+            <Alert state="error">{copy.alerts.noAccess}</Alert>
+            <Alert state="error">{copy.alerts.noIdentity}</Alert>
+            <Alert state="info">{copy.alerts.viewPiu}</Alert>
+            <Alert state="info">{copy.alerts.viewPublic}</Alert>
+            <Alert state="info">{copy.alerts.viewUnknown}</Alert>
+            <Alert state="info">{copy.alerts.asOf(date(galleryCopy.sampleDate))}</Alert>
+            <Alert state="info">{copy.alerts.asOfUnreadable}</Alert>
           </div>
         ),
       },

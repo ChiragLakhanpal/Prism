@@ -6,6 +6,7 @@
 // Below 1024 px a component page puts the list after its content, and the index leaves it
 // out, because its cards already link to every page.
 import { useState, type ReactNode } from "react";
+import logo from "../assets/world-bank-logo.svg";
 import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
 import { TopNav, type Section, type Viewer } from "../components/TopNav";
@@ -15,9 +16,9 @@ import { formatDate } from "../lib/format";
 import { galleryCopy } from "./copy";
 import { PAGES, type GalleryPage } from "./pages";
 
-// The wireframes' stand-in for the World Bank logo: a dashed box 120 by 24 px.
+// The World Bank logo, the official file the app shows (web/src/assets/world-bank-logo.md).
 export function LogoSlot() {
-  return <span aria-hidden="true" data-logo className="block h-6 w-[120px] rounded-xs border border-dashed border-surface" />;
+  return <img data-logo src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />;
 }
 
 function Box() {

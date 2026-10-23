@@ -18,6 +18,7 @@ import * as RadixPopover from "@radix-ui/react-popover";
 import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { typingInAField } from "./BoxBand";
 import { POPOVER } from "./Popover";
 import { Skeleton } from "./Skeleton";
 import { SkipLink } from "./SkipLink";
@@ -158,11 +159,21 @@ function BarTab({ section, current }: { section: (typeof SECTIONS)[number]; curr
   );
 }
 
-function PanelRow({ section, current }: { section: (typeof SECTIONS)[number]; current: boolean }) {
+function PanelRow({
+  section,
+  current,
+  onNavigate,
+}: {
+  section: (typeof SECTIONS)[number];
+  current: boolean;
+  // A row opens its page and closes the panel.
+  onNavigate: () => void;
+}) {
   return (
     <a
       href={section.href}
       aria-current={current ? "page" : undefined}
+      onClick={onNavigate}
       data-nav-tab={section.key}
       className={cx(
         "relative mx-1 flex h-12 items-center rounded-sm text-body font-bold text-ink-heading transition-paint duration-150",
@@ -185,8 +196,8 @@ export function TopNav({
   menuOpen: menuOpenAtStart = false,
   viewOpen,
 }: {
-  // The logo, at least 24 px tall. The slot gives it clear space of half its height. Ticket 06
-  // adds the World Bank's file; until then the production shell has no logo slot.
+  // The logo, at least 24 px tall. The slot gives it clear space of half its height. The app and
+  // the gallery pass the World Bank's official file (web/src/assets/world-bank-logo.md).
   logo?: ReactNode;
   // The tab whose section holds the page; none on Home and the not-found page.
   current?: Section;
@@ -204,6 +215,17 @@ export function TopNav({
   // change, so the header notes it on blur and forgets it after the frame.
   const hidden = useRef<HTMLElement | null>(null);
   const panelId = useId();
+
+  // "/" anywhere outside a text field focuses the box (OneBox), and closes the Menu panel first.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !typingInAField(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
 
   // Widening the window to 1024 px closes the panel. A focused control that the new width hides
   // hands focus to its twin, or to the control at the bar's right end (the pill or the Menu).
@@ -291,7 +313,7 @@ export function TopNav({
           <ul>
             {SECTIONS.map((section) => (
               <li key={section.key}>
-                <PanelRow section={section} current={section.key === current} />
+                <PanelRow section={section} current={section.key === current} onNavigate={() => setMenuOpen(false)} />
               </li>
             ))}
           </ul>

@@ -12,7 +12,7 @@ import { cx } from "../lib/cx";
 import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
 
-function typingInAField(target: EventTarget | null): boolean {
+export function typingInAField(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
@@ -22,6 +22,7 @@ export function OneBox({
   onChange,
   below,
   onEscape,
+  onEnter,
   shortcut = true,
 }: {
   // Only the band's box answers "/"; a second box, such as a gallery sample, sets false.
@@ -32,6 +33,8 @@ export function OneBox({
   below?: ReactNode;
   // Escape: the first press closes what is below the box, the second clears the text.
   onEscape?: () => boolean;
+  // Enter, which submits nothing until a ticket gives the box something to do.
+  onEnter?: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const belowId = useId();
@@ -51,7 +54,14 @@ export function OneBox({
 
   const showBelow = Boolean(below) && value.length > 0;
   return (
-    <form role="search" className="relative" onSubmit={(event) => event.preventDefault()}>
+    <form
+      role="search"
+      className="relative"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onEnter?.();
+      }}
+    >
       <label htmlFor={inputId} className="sr-only">
         {copy.box.label}
       </label>
