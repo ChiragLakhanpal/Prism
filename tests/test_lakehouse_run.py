@@ -160,10 +160,14 @@ def test_each_kenya_value_appears_in_gold_with_its_public_from_date(gold, value_
 
 # This test's own idea of an email address and a phone number, written apart from the stripping
 # code: an international number (+254 20 1234567, (+254) 20 123 4567), a Kenyan or Indian number
-# with its trunk zero (046-1234567, 0141-1234567) and a Kenyan mobile (0722123456).
+# with its trunk zero (046-1234567, 0141-1234567) and a Kenyan mobile (0722123456), also with a
+# space after its zero (0 722-123456). Any letter or digit right before an "@" counts as an email
+# address, however untidy the rest of it is: only "[contact removed]@..." may be left.
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+")
+AT_SIGN = re.compile(r"[A-Za-z0-9]@")
 PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\d{3,4}"
-                   r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])")
+                   r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])"
+                   r"|(?<![\d.,/-])0 7\d{2}[ -]?\d{6}(?![\d.])")
 
 
 def text_values(engine):
@@ -203,7 +207,8 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
 
     leaks = []
     for where, value in text_values(gold):
-        leaks += [(where, "an email or phone number") for _ in EMAIL.findall(value) + PHONE.findall(value)]
+        leaks += [(where, "an email or phone number")
+                  for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)]
         leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
     assert leaks == []
 
@@ -243,6 +248,21 @@ def test_stripping_keeps_reference_numbers_fiscal_years_and_postal_codes(gold):
     assert notice["bid_reference_no"] == "NWWDA-WSDP-03-2019-2020"
     assert one(gold, "SELECT count(*) AS n FROM strata.gold.notice WHERE bid_reference_no LIKE '%contact removed%'"
                ) == {"n": 0}
+
+
+def test_stripping_removes_an_email_or_a_mobile_number_written_untidily():
+    """Bidders' details in award notices are often typed by hand: a space after the "@" or inside the
+    domain, a comma for a dot, a space after a mobile number's zero. These values are made up."""
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        "Email jdoe@g mail.com, jdoe@ example.org or j.doe@mail,com. Tel 0 722-123456. "
+        "Ref NWWDA-WSDP-03-2019-2020, P.O BOX 05586-00100.")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "Email [contact removed], [contact removed] or [contact removed]. Tel [contact removed]. "
+        "Ref NWWDA-WSDP-03-2019-2020, P.O BOX 05586-00100.")
+    assert removed == 4
 
 
 def test_the_fetch_counts_the_contact_details_it_removes(gold):

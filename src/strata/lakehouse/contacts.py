@@ -9,14 +9,15 @@ counts what it took out:
   contact_address and contact_web_url) is replaced by [contact removed];
 - in a record's free text (notice_text and bid_description), each name, email and phone number
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
-- in the same free text, every other email address, and every phone number written with a country
-  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456), is replaced too.
+- in the same free text, every other email address, also one typed with a stray space or a comma
+  for a dot, and every phone number written with a country code (+254 20 1234567) or a trunk zero
+  (046-1234567, 0722123456, 0 722-123456), is replaced too.
 
-Every other field stays as received: a reference number such as NWWDA-WSDP-03-2019-2020 is STEP's
-own, and the join from a notice to its package. In the free text, fiscal years at the end of a
-reference (03-2019-2020) and a P.O. Box with its postal code (05586-00100) are not phone numbers,
-and stay. The organization's name and country stay too: they say who runs the procurement, not
-how to reach a person.
+Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
+reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
+stays as written. In the free text, fiscal years at the end of a reference (03-2019-2020) and a
+P.O. Box with its postal code (05586-00100) are not phone numbers, and stay. The organization's
+name and country stay too: they say who runs the procurement, not how to reach a person.
 """
 
 from __future__ import annotations
@@ -28,10 +29,13 @@ SEARCHED = ("contact_name", "contact_email", "contact_phone_no")  # also taken o
 FREE_TEXT = ("notice_text", "bid_description")  # the only fields searched; every other field stays as received
 REMOVED = "[contact removed]"
 
-EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+")
-# A number with a country code or a trunk zero, then any alternates written after it with a slash
-# (0722123456 / 0733123456). A letter may come right before it, as scraped text runs words together.
-PHONE = re.compile(r"(?<![\d+])(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
+# An email address, also when it is written untidily: one stray space after the "@" or inside the
+# domain (name@ gmail.com, name@g mail.com), or a comma for a dot (name@gmail,com).
+EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+")
+# A number with a country code or a trunk zero, also with a space after the zero (0 722-123456),
+# then any alternates written after it with a slash (0722123456 / 0733123456). A letter may come
+# right before it, as scraped text runs words together.
+PHONE = re.compile(r"(?<![\d+])(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0 ?\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
                    r"(?:\s*/\s*\+?\d[\d \t–-]{4,}\d)*")
 DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
