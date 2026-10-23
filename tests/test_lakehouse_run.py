@@ -247,6 +247,30 @@ def test_the_contact_details_removed_are_recorded_as_a_data_readiness_measure(go
     assert removed >= len(recorded_contacts())
 
 
+# ── Fiscal years and currencies ──────────────────────────────────────────
+
+def test_fiscal_years_run_july_to_june_as_the_awards_dataset_counts_them(gold):
+    """Silver works the fiscal year out from the signing date; the dataset's own fiscal_year field,
+    which silver does not read, is the independent answer."""
+    recorded_years = {row["wb_contract_number"]: row["fiscal_year"] for file in KENYA_RECORDS
+                      if file.startswith("api/awards/") for row in record(file)["data"]}
+    gold_years = dict(gold.run("SELECT wb_contract_number, fiscal_year FROM strata.gold.contract "
+                               "WHERE country_code = 'KE'").rows)
+
+    assert gold_years == recorded_years
+
+
+def test_an_award_notice_keeps_its_signed_price_in_the_currency_it_names(gold):
+    # values.toml, awkward.joint_venture: award notice OP00125855 for KE-KIMAWASCO-158691-CW-RFB. Its
+    # text gives "Signed Contract price KES 151,320,438.30"; the awards dataset gives US dollars.
+    notice = [row for row in record("api/notices/P156634.json")["procnotices"] if row["id"] == "OP00125855"][0]
+    assert "Signed Contract price<br/>KES 151,320,438.30" in notice["notice_text"]
+
+    row = one(gold, "SELECT signed_contract_price, signed_contract_currency FROM strata.gold.notice "
+                    "WHERE notice_id = 'OP00125855'")
+    assert (row["signed_contract_price"], row["signed_contract_currency"]) == (decimal.Decimal("151320438.30"), "KES")
+
+
 # ── Loan numbers and old method names ────────────────────────────────────
 
 def test_a_loan_number_in_each_of_its_four_forms_normalizes_to_one_value_and_joins_to_its_project(gold):
