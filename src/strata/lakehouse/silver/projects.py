@@ -9,7 +9,6 @@ so a loan number in any of its forms joins to its project. The team leader's nam
 from __future__ import annotations
 
 import datetime as dt
-import decimal
 
 from strata.lakehouse import clean
 
@@ -32,25 +31,12 @@ ORDER BY p.fetched_at, p.page_hash
 """
 
 
-def _text(value) -> str | None:
-    if isinstance(value, list):
-        value = ",".join(str(item) for item in value)
-    text = " ".join(str(value).split()) if value is not None else ""
-    return text or None
-
-
-def _amount(value) -> decimal.Decimal | None:
-    if value is None or str(value).strip() == "":
-        return None
-    return decimal.Decimal(str(value)).quantize(decimal.Decimal("0.01"))
-
-
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
     fetched = fetched_at.astimezone(dt.UTC).date()
     held = body.get("projects") or {}
     projects, loans = [], []
     for record in (held.values() if isinstance(held, dict) else held):
-        project_id = _text(record.get("id") or record.get("proj_id"))
+        project_id = clean.text(record.get("id") or record.get("proj_id"))
         if not project_id:
             continue
         approved = clean.parse_date(record.get("boardapprovaldate"))
@@ -58,19 +44,19 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         public = clean.public_from(disclosed or approved, fetched)
         projects.append((
             project_id,
-            _text(record.get("project_name")),
-            _text(record.get("countrycode")),
-            _text(record.get("countryshortname")),
-            _text(record.get("regionname")),
-            _text(record.get("status")),
+            clean.text(record.get("project_name")),
+            clean.text(record.get("countrycode")),
+            clean.text(record.get("countryshortname")),
+            clean.text(record.get("regionname")),
+            clean.text(record.get("status")),
             approved,
             clean.fiscal_year(approved),
             clean.parse_date(record.get("closingdate")),
-            _text(record.get("impagency")),
-            _text(record.get("borrower")),
-            _text(record.get("sectorcode")),
-            _text(record.get("major_sector_name")),
-            _amount(record.get("curr_total_commitment") or record.get("totalamt")),
+            clean.text(record.get("impagency")),
+            clean.text(record.get("borrower")),
+            clean.text(record.get("sectorcode")),
+            clean.text(record.get("major_sector_name")),
+            clean.amount(record.get("curr_total_commitment") or record.get("totalamt")),
             disclosed,
             clean.parse_date(record.get("proj_last_upd_date")),
             page_hash,

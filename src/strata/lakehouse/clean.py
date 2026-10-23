@@ -20,12 +20,28 @@ Each rule is defined once here, and every silver transform uses it:
 from __future__ import annotations
 
 import datetime as dt
+import decimal
 import re
 from dataclasses import dataclass
 
 # ── Dates ────────────────────────────────────────────────────────────────
 
 DATE_FORMATS = ("%d-%b-%Y", "%Y-%m-%d", "%Y/%m/%d", "%d-%B-%Y")
+
+
+def text(value) -> str | None:
+    """A field's text with its spacing made single, or None when it is empty. A list is joined with commas."""
+    if isinstance(value, list):
+        value = ",".join(str(item) for item in value)
+    written = " ".join(str(value).split()) if value is not None else ""
+    return written or None
+
+
+def amount(value) -> decimal.Decimal | None:
+    """An amount to the cent, or None when the field is empty."""
+    if value is None or str(value).strip() == "":
+        return None
+    return decimal.Decimal(str(value)).quantize(decimal.Decimal("0.01"))
 
 
 def parse_date(value) -> dt.date | None:

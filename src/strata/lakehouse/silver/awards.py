@@ -10,7 +10,6 @@ user story 115).
 from __future__ import annotations
 
 import datetime as dt
-import decimal
 
 from strata.lakehouse import clean
 
@@ -35,49 +34,38 @@ ORDER BY p.fetched_at, p.page_hash
 INDIVIDUAL_CONSULTANT = "INDIVIDUAL CONSULTANT"
 
 
-def _text(value) -> str | None:
-    text = " ".join(str(value).split()) if value is not None else ""
-    return text or None
-
-
-def _amount(value) -> decimal.Decimal | None:
-    if value is None or str(value).strip() == "":
-        return None
-    return decimal.Decimal(str(value)).quantize(decimal.Decimal("0.01"))
-
-
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
     fetched = fetched_at.astimezone(dt.UTC).date()
     rows = []
     for record in body.get("data") or []:
-        if not _text(record.get("wb_contract_number")):
+        if not clean.text(record.get("wb_contract_number")):
             continue  # a row without its contract number cannot be keyed
         reference = clean.step_reference(record.get("borrower_contract_reference_number"))
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
-        individual = (_text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT  # in any capitals
+        individual = (clean.text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT  # in any capitals
         rows.append((
-            _text(record.get("wb_contract_number")),
-            _text(record.get("supplier_id")),
-            _text(record.get("project_id")),
-            _text(record.get("project_name")),
-            _text(record.get("borrower_country_code")),
-            _text(record.get("borrower_country")),
-            _text(record.get("region")),
-            _text(record.get("project_global_practice")),
-            _text(record.get("borrower_contract_reference_number")),
+            clean.text(record.get("wb_contract_number")),
+            clean.text(record.get("supplier_id")),
+            clean.text(record.get("project_id")),
+            clean.text(record.get("project_name")),
+            clean.text(record.get("borrower_country_code")),
+            clean.text(record.get("borrower_country")),
+            clean.text(record.get("region")),
+            clean.text(record.get("project_global_practice")),
+            clean.text(record.get("borrower_contract_reference_number")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            _text(record.get("contract_description")),
-            _text(record.get("procurement_category")),
+            clean.text(record.get("contract_description")),
+            clean.text(record.get("procurement_category")),
             method.name if method else None,
-            _text(record.get("procurement_method")),
-            _text(record.get("review_type")),
-            None if individual else _text(record.get("supplier")),
+            clean.text(record.get("procurement_method")),
+            clean.text(record.get("review_type")),
+            None if individual else clean.text(record.get("supplier")),
             individual,
-            _text(record.get("supplier_country")),
-            _text(record.get("supplier_country_code")),
-            _amount(record.get("supplier_contract_amount_usd")),
+            clean.text(record.get("supplier_country")),
+            clean.text(record.get("supplier_country_code")),
+            clean.amount(record.get("supplier_contract_amount_usd")),
             signed,
             clean.fiscal_year(signed),
             page_hash,

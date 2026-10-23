@@ -405,6 +405,15 @@ def test_fiscal_years_run_july_to_june_as_the_awards_dataset_counts_them(gold):
     assert gold_years == recorded_years
 
 
+def test_a_notice_carries_the_fiscal_year_its_date_falls_in(gold):
+    """The recorded notices' dates: OP00191645 on August 17, 2022, which opens FY2023, and OP00175878
+    on April 21, 2022, which closes FY2022."""
+    years = dict(gold.run("SELECT notice_id, fiscal_year FROM strata.silver.notices "
+                          "WHERE notice_id IN ('OP00191645', 'OP00175878')").rows)
+
+    assert years == {"OP00191645": 2023, "OP00175878": 2022}
+
+
 def test_an_award_notice_keeps_its_signed_price_in_the_currency_it_names(gold):
     # values.toml, awkward.joint_venture: award notice OP00125855 for KE-KIMAWASCO-158691-CW-RFB. Its
     # text gives "Signed Contract price KES 151,320,438.30"; the awards dataset gives US dollars.

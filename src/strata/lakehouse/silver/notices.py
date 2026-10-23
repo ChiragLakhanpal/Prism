@@ -19,13 +19,13 @@ from strata.lakehouse import clean, contacts
 
 TABLES = {
     "strata.silver.notices": (
-        "notice_id", "notice_type", "notice_date", "notice_status", "notice_language", "project_id",
-        "project_name", "project_country", "bid_reference_no", "step_reference", "reference_method_code",
-        "bid_description", "procurement_group", "procurement_category", "procurement_method_code",
-        "procurement_method_as_written", "procurement_method", "market_approach", "submission_deadline",
-        "loan_number_as_written", "loan_number", "loan_digits", "contract_signature_date",
-        "signed_contract_price", "signed_contract_currency", "notice_text", "contact_details_removed",
-        "page_hash", "fetched_at", "public_from"),
+        "notice_id", "notice_type", "notice_date", "fiscal_year", "notice_status", "notice_language",
+        "project_id", "project_name", "project_country", "bid_reference_no", "step_reference",
+        "reference_method_code", "bid_description", "procurement_group", "procurement_category",
+        "procurement_method_code", "procurement_method_as_written", "procurement_method", "market_approach",
+        "submission_deadline", "loan_number_as_written", "loan_number", "loan_digits",
+        "contract_signature_date", "signed_contract_price", "signed_contract_currency", "notice_text",
+        "contact_details_removed", "page_hash", "fetched_at", "public_from"),
 }
 
 PENDING = """
@@ -52,16 +52,11 @@ def plain_text(markup) -> str:
     return "\n".join(line for line in lines if line)
 
 
-def _text(value) -> str | None:
-    text = " ".join(str(value).split()) if value is not None else ""
-    return text or None
-
-
 def _price(text: str) -> tuple[decimal.Decimal | None, str | None]:
     match = SIGNED_PRICE.search(text)
     if not match:
         return None, None
-    return decimal.Decimal(match[2].replace(",", "")).quantize(decimal.Decimal("0.01")), match[1].upper()
+    return clean.amount(match[2].replace(",", "")), match[1].upper()
 
 
 def _loan(text: str) -> clean.LoanNumber | None:
@@ -76,7 +71,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
     fetched = fetched_at.astimezone(dt.UTC).date()
     rows = []
     for record in body.get("procnotices") or []:
-        if not _text(record.get("id")):
+        if not clean.text(record.get("id")):
             continue
         text = plain_text(record.get("notice_text"))
         reference = clean.step_reference(record.get("bid_reference_no"))
@@ -86,24 +81,25 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         signature = SIGNATURE_DATE.search(text) if award else None
         price, currency = _price(text) if award else (None, None)
         loan = _loan(text)
-        group = _text(record.get("procurement_group"))
+        group = clean.text(record.get("procurement_group"))
         rows.append((
-            _text(record.get("id")),
-            _text(record.get("notice_type")),
+            clean.text(record.get("id")),
+            clean.text(record.get("notice_type")),
             notice_date,
-            _text(record.get("notice_status")),
-            _text(record.get("notice_lang_name")),
-            _text(record.get("project_id")),
-            _text(record.get("project_name")),
-            _text(record.get("project_ctry_name")),
-            _text(record.get("bid_reference_no")),
+            clean.fiscal_year(notice_date),
+            clean.text(record.get("notice_status")),
+            clean.text(record.get("notice_lang_name")),
+            clean.text(record.get("project_id")),
+            clean.text(record.get("project_name")),
+            clean.text(record.get("project_ctry_name")),
+            clean.text(record.get("bid_reference_no")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            _text(record.get("bid_description")),
+            clean.text(record.get("bid_description")),
             group,
             clean.CATEGORIES.get(group or ""),
-            _text(record.get("procurement_method_code")),
-            _text(record.get("procurement_method_name")),
+            clean.text(record.get("procurement_method_code")),
+            clean.text(record.get("procurement_method_name")),
             method.name if method else None,
             method.market_approach if method else None,
             clean.parse_date(record.get("submission_deadline_date")),

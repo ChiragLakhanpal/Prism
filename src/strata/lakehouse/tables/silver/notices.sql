@@ -2,6 +2,7 @@
 -- newest row for each notice. Contact names, addresses, emails, phone numbers and web addresses
 -- never reach this table: the fetch removes them before a page is kept in bronze (CLAUDE.md rule 8).
 --
+-- fiscal_year                     July to June, worked out from notice_date
 -- bid_reference_no                the reference as the notice writes it
 -- step_reference                  the STEP reference, normalized, when the reference is one
 -- reference_method_code           the method part of the reference, kept for the data note only
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS strata.silver.notices (
   notice_id STRING NOT NULL,
   notice_type STRING,
   notice_date DATE,
+  fiscal_year INT,
   notice_status STRING,
   notice_language STRING,
   project_id STRING,

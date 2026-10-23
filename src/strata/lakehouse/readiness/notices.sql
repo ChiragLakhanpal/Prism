@@ -19,10 +19,8 @@ held AS (
     count(*) AS notices,
     count(p.project_id) AS with_project,
     count(CASE WHEN l.contact_details_removed THEN 1 END) AS with_contacts_removed,
-    count(DISTINCT CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END) AS years_held,
-    max(CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END)
-      - min(CASE WHEN month(l.notice_date) >= 7 THEN year(l.notice_date) + 1 ELSE year(l.notice_date) END) + 1
-      AS years_spanned
+    count(DISTINCT l.fiscal_year) AS years_held,
+    max(l.fiscal_year) - min(l.fiscal_year) + 1 AS years_spanned
   FROM latest AS l
   LEFT JOIN strata.gold.project AS p ON p.project_id = l.project_id
   GROUP BY l.country_code
