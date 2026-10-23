@@ -3,6 +3,7 @@ so copies from several worktrees run side by side."""
 
 import json
 import os
+import random
 import re
 import socket
 import subprocess
@@ -47,9 +48,21 @@ def health(address):
 
 
 def free_port():
-    with socket.socket() as probe:
-        probe.bind(("127.0.0.1", 0))
-        return probe.getsockname()[1]
+    """A free port below the range the system hands out for port 0 and outgoing connections
+    (from 49152 on macOS, and from 32768 on Linux).
+
+    The tests run on pytest-xdist workers beside other lanes, which open sockets all the time. A
+    port from the system's range could be handed to one of those sockets after this probe lets go
+    of it and before the server takes it. No socket gets a port from below that range unless it asks.
+    """
+    for port in random.sample(range(20000, 32000), 50):
+        with socket.socket() as probe:
+            try:
+                probe.bind(("127.0.0.1", port))
+            except OSError:
+                continue
+            return port
+    raise AssertionError("No port between 20000 and 32000 was free in 50 tries.")
 
 
 def test_two_servers_with_no_port_set_start_side_by_side():
