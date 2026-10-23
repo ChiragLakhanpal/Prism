@@ -400,6 +400,11 @@ test("a loading button keeps its name, its label and its width, and a disabled o
   await expect(disabled).toHaveAttribute("aria-disabled", "true");
 });
 
+// The tab strip centers its selected tab again when Open Sans arrives, so the tab tests
+// measure after the fonts load and two frames pass.
+const fontsSettled = (page: Page) =>
+  page.evaluate(() => document.fonts.ready.then(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))));
+
 // DESIGN.md section 5: tabs on a light surface never wrap. Five section tabs need about 537 px,
 // so on a phone the row scrolls inside its own strip: every tab keeps one top, the hairline
 // runs under the whole strip, the selected tab starts in view, and no focus ring is clipped.
@@ -407,6 +412,7 @@ test("tabs on a light surface keep one row at 390 and 320 px, with the selected 
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/gallery/links");
+    await fontsSettled(page);
     for (const section of ["tabs", "tabs-later"]) {
       const strip = page.locator(`[data-state-section=${section}] [data-tab-strip]`);
       const at = `${section} at ${width} px`;
@@ -452,4 +458,158 @@ test("tabs on a light surface keep one row at 390 and 320 px, with the selected 
     expect(await strip.evaluate((row) => row.scrollWidth > row.clientWidth)).toBe(false);
     await expect(strip).toHaveAttribute("data-more", "none");
   }
+});
+
+// A pointer focuses a link on mousedown. If the strip scrolled then, the link would move out
+// from under the mouseup and the click would be lost, so only keyboard focus scrolls it. A
+// reader taps where the row fades, because the fade says more tabs are there.
+async function pressInFade(page: Page, press: (x: number, y: number) => Promise<void>) {
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    // The tabs section has more tabs to the right of its selected tab, tabs-later to the left.
+    for (const [section, side] of [["tabs", "right"], ["tabs-later", "left"]] as const) {
+      await page.goto("/gallery/links");
+      await fontsSettled(page);
+      const strip = page.locator(`[data-state-section=${section}] [data-tab-strip]`);
+      const target = await strip.evaluate((row, side) => {
+        const edge = row.getBoundingClientRect();
+        // The fade is the 32 px at the strip's edge. Press in the middle of the largest part of
+        // a tab inside it.
+        const [fadeLeft, fadeRight] = side === "right" ? [edge.right - 32, edge.right] : [edge.left, edge.left + 32];
+        const parts = [...row.querySelectorAll("a")].map((tab) => {
+          const box = tab.getBoundingClientRect();
+          const [left, right] = [Math.max(box.left, fadeLeft), Math.min(box.right, fadeRight)];
+          return { width: right - left, x: (left + right) / 2, y: box.top + box.height / 2, href: tab.getAttribute("href")! };
+        });
+        return parts.sort((a, b) => b.width - a.width)[0];
+      }, side);
+      const at = `${section}, ${side} fade, at ${width} px`;
+      await expect(strip, `${at}: the side fades`).toHaveAttribute("data-more", side === "right" ? /end|both/ : /start|both/);
+      expect(target.width, `${at}: a tab shows in the fade`).toBeGreaterThanOrEqual(8);
+      await press(target.x, target.y);
+      await expect(page, at).toHaveURL(new RegExp(`${target.href}$`));
+    }
+  }
+}
+
+test("a click on a tab in the fade follows its link", async ({ page }) => {
+  await pressInFade(page, (x, y) => page.mouse.click(x, y));
+});
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true });
+  test("a tap on a tab in the fade follows its link", async ({ page }) => {
+    await pressInFade(page, (x, y) => page.touchscreen.tap(x, y));
+  });
+});
+
+// When the selected tab sits less than a fade's width from the row's end, the row goes all
+// the way to that end. At 375 and 390 px, centering Procurement would scroll 2 or 3 px and
+// fade out Summary's left edge as if a tab sat before it.
+test("a selected tab near the row's start leaves the first tab whole, with no fade on its side", async ({ page }) => {
+  for (const width of [375, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/links");
+    await fontsSettled(page);
+    const strip = page.locator("[data-state-section=tabs] [data-tab-strip]");
+    expect(await strip.evaluate((row) => row.scrollLeft), `at ${width} px`).toBe(0);
+    await expect(strip, `at ${width} px`).toHaveAttribute("data-more", "end");
+  }
+});
+
+// The Answer page promises that in each sample the sentences, the table, the check line and the
+// steps count the same things. The check line tells a reader how far to trust an answer, and
+// later tickets copy these samples, so the counts are checked here, not just stated.
+const NUMBER_WORDS = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+// The numbers a reader sees in a piece of text: numerals, and one to nine in words (DESIGN.md
+// section 7, rule 12).
+const numbersIn = (text: string) =>
+  [...text.matchAll(new RegExp(`\\d[\\d,.]*\\d|\\d|\\b(?:${NUMBER_WORDS.join("|")})\\b`, "gi"))].map(([found]) => {
+    const word = NUMBER_WORDS.indexOf(found.toLowerCase());
+    return word >= 0 ? word + 1 : Number(found.replace(/,/g, ""));
+  });
+
+async function answerSample(page: Page, section: string) {
+  const answer = page.locator(`[data-state-section=${section}] [data-answer]`);
+  return answer.evaluate((root) => {
+    // "In short" and the text under it, without the markers' numbers and their previews.
+    const inShort = root.querySelector("h3 + div")!.cloneNode(true) as HTMLElement;
+    inShort.querySelectorAll("[data-citation], [role=tooltip]").forEach((el) => el.remove());
+    return {
+      sentences: inShort.textContent!,
+      markers: root.querySelectorAll("h3 + div [data-citation]").length,
+      checkLine: root.querySelector("[data-check-line]")!.textContent!,
+      // "I removed one sentence." or "I removed no sentences."
+      removed: root.querySelector("[data-removed-box] .font-semibold")!.textContent!,
+      steps: [...root.querySelectorAll("[data-steps] li")].map((li) => li.textContent!),
+      rows: root.querySelectorAll("[data-table-view=cards] [data-card-field=number]").length,
+    };
+  });
+}
+
+test("each answer sample's sentences, table, check line and steps count the same things", async ({ page }) => {
+  await page.goto("/gallery/answer");
+  const checked = (line: string) => Number(line.match(/Checked: (\d+) of (\d+) numbers?/)![2]);
+
+  // Ready: the check line counts the numbers in the sentences that were kept, and the step that
+  // wrote them counts the kept sentences and the removed one.
+  const ready = await answerSample(page, "ready");
+  expect(checked(ready.checkLine), `"${ready.sentences}" against "${ready.checkLine}"`).toBe(numbersIn(ready.sentences).length);
+  const wrote = ready.steps.find((step) => step.startsWith("I wrote"))!;
+  expect(numbersIn(wrote), wrote).toEqual([ready.markers + (numbersIn(ready.removed)[0] ?? 0)]);
+
+  // Abstention: the sentence, the table's rows, the check line and the steps all say 12.
+  const held = await answerSample(page, "abstained");
+  const shown = held.rows;
+  expect(numbersIn(held.sentences).every((n) => n === shown), held.sentences).toBe(true);
+  expect(checked(held.checkLine), held.checkLine).toBe(shown);
+  for (const step of held.steps.filter((step) => numbersIn(step).length > 0)) expect(numbersIn(step), step).toEqual([shown]);
+});
+
+// Each marker in the states row stands under its label, on the label's left edge.
+test("each marker in the citation states row starts on its label's left edge", async ({ page }) => {
+  await page.goto("/gallery/citations");
+  const row = page.locator("[data-state-section=markers] p.text-caption");
+  await expect(row).toHaveCount(3);
+  for (const label of await row.all()) {
+    const edges = await label.evaluate((p) => [
+      p.getBoundingClientRect().left,
+      p.parentElement!.querySelector("[data-citation]")!.getBoundingClientRect().left,
+    ]);
+    expect(edges[1], (await label.textContent())!).toBeCloseTo(edges[0], 0);
+  }
+});
+
+// The strip centers its selected tab before the first paint, often in the fallback face. When
+// Open Sans arrives the tabs change width, so the strip centers the tab again. Here letter
+// spacing stands in for the font.
+test("the strip centers its selected tab again when the tabs change width, as when the web font arrives", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/gallery/links");
+  await fontsSettled(page);
+  const strip = page.locator("[data-state-section=tabs] [data-tab-strip]");
+  await strip.evaluate((row) => row.querySelectorAll("a").forEach((tab) => (tab.style.letterSpacing = "2px")));
+  await expect
+    .poll(() =>
+      strip.evaluate((row) => {
+        const box = row.getBoundingClientRect();
+        const tab = row.querySelector("[aria-current=page]")!.getBoundingClientRect();
+        return Math.round(tab.left + tab.width / 2 - (box.left + box.width / 2));
+      }),
+    )
+    .toBe(0);
+});
+
+// Once a reader has pressed, scrolled or focused the strip, it does not move by itself, even
+// when a tab changes width, so it cannot shift a tab out from under a press.
+test("the strip stays where a reader left it when the tabs change width after", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/gallery/links");
+  await fontsSettled(page);
+  const strip = page.locator("[data-state-section=tabs] [data-tab-strip]");
+  await strip.getByRole("link").last().focus();
+  const left = await strip.evaluate((row) => row.scrollLeft);
+  await strip.evaluate((row) => row.querySelectorAll("a").forEach((tab) => (tab.style.letterSpacing = "2px")));
+  await fontsSettled(page);
+  expect(await strip.evaluate((row) => row.scrollLeft)).toBe(left);
 });

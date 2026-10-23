@@ -106,6 +106,16 @@ const markers = (
   </>
 );
 
+// The Answer page's sentences, with the same two sources as the Citations page.
+const answerSentences = (
+  <>
+    {sample.answerSentences[0]}
+    <CitationMarker n={1} source={sample.markerSource} href="#source-1" preview={preview} />{" "}
+    {sample.answerSentences[1]}
+    <CitationMarker n={2} source={sample.markerSecond} href="#source-2" />
+  </>
+);
+
 // The character range of a phrase in a passage, as the evidence event will carry it.
 const range = (text: string, phrase: string): [number, number] => {
   const start = text.indexOf(phrase);
@@ -560,15 +570,17 @@ export const PAGES: GalleryPage[] = [
         body: (
           <div className="flex flex-col gap-4">
             <p className="max-w-prose text-body">{markers}</p>
+            {/* A marker keeps 4 px of space on each side for a sentence. Here it stands under its
+                label, so the wrapper takes the left 4 px back and the two share a left edge. */}
             <Inline>
               <Labeled label={s.default}>
-                <span><CitationMarker n={1} source={sample.markerSource} href="#source-1" /></span>
+                <span className="-ml-1"><CitationMarker n={1} source={sample.markerSource} href="#source-1" /></span>
               </Labeled>
               <Labeled label={s.opened}>
-                <span><CitationMarker n={2} source={sample.markerSecond} href="#source-2" opened /></span>
+                <span className="-ml-1"><CitationMarker n={2} source={sample.markerSecond} href="#source-2" opened /></span>
               </Labeled>
               <Labeled label={s.active}>
-                <span><CitationMarker n={3} source={sample.markerSource} href="#source-3" active /></span>
+                <span className="-ml-1"><CitationMarker n={3} source={sample.markerSource} href="#source-3" active /></span>
               </Labeled>
             </Inline>
           </div>
@@ -624,8 +636,8 @@ export const PAGES: GalleryPage[] = [
         body: <Panel><Answer state={{ status: "streaming", steps: steps([ST.read, ST.searchDocuments], true), stillWorking: true }} /></Panel>,
       },
       {
-        // Three sentences written: two kept, with five numbers between them (24, 7, 11, two
-        // and 24), and one removed.
+        // Three sentences written: two kept, with three numbers between them (five, three and
+        // four), and one removed. A test in gallery-components.spec.ts checks these counts.
         id: "ready",
         title: s.ready,
         body: (
@@ -635,8 +647,8 @@ export const PAGES: GalleryPage[] = [
                 status: "ready",
                 steps: steps([ST.read, ST.searchDocuments, ST.write, ST.verify]),
                 runId: sample.runId,
-                sentences: markers,
-                checks: { numbers: { matched: 5, total: 5 }, notChecked: ["sentences", "comparables"], removed: [sample.removed[0]] },
+                sentences: answerSentences,
+                checks: { numbers: { matched: 3, total: 3 }, notChecked: ["sentences"], removed: [sample.removed[0]] },
               }}
             />
           </Panel>

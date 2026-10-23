@@ -220,6 +220,12 @@ export const galleryCopy = {
       "The works contracts were advertised again in 2017 after all bids were rejected. The contracts were signed in March 2018, five months after the date in the first Procurement Plan.",
     sentenceBefore: "The works contracts were advertised again after all bids were rejected, and they were signed five months late.",
     sentenceAfter: "The works were still under way in March 2024.",
+    // The Answer page's own sentences, so a change to the Citations sample cannot change what
+    // the Answer's check line counts. They hold three numbers: five, three and four.
+    answerSentences: [
+      "All bids for the works contracts were rejected, and the contracts were signed five months late.",
+      "The latest status report found that three of the four works contracts were complete.",
+    ],
     coverageNoun: "matching packages",
     coverageGap: "15 lacked the STEP reference that links notice to contract.",
     removed: [

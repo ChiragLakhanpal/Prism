@@ -5,13 +5,17 @@
 //
 // The tabs never wrap. When the row is wider than its column, as five section tabs are below
 // 48rem, it scrolls sideways inside its own strip, and the hairline runs under the whole
-// strip. The selected tab starts in the middle of the strip, so a reader sees it. Each side
-// with more tabs fades out over 32 px (the tab-strip utility in app.css), so a reader can tell
-// the row goes on even when a gap falls at the edge. The strip pads itself by 4 px on every
-// side, and takes the 4 px back with a negative margin, so a focus ring (2 px at a 2 px
-// offset) is never clipped and the tabs keep their place on the page. A tab that gets focus
-// scrolls clear of the fade, ring and all. The strip does this itself, because Chrome does not
-// scroll to a focused link that is already partly in view.
+// strip. The selected tab starts in the middle of the strip, so a reader sees it, or at the
+// row's end when the middle is within a fade's width of it. Each side with more tabs fades out
+// over 32 px (the tab-strip utility in app.css), so a reader can tell the row goes on even
+// when a gap falls at the edge. The strip pads itself by 4 px on every side, and takes the
+// 4 px back with a negative margin, so a focus ring (2 px at a 2 px offset) is never clipped
+// and the tabs keep their place on the page. A tab that gets keyboard focus scrolls clear of
+// the fade, ring and all. The strip does this itself, because Chrome does not scroll to a
+// focused link that is already partly in view. A click or a tap never scrolls the strip. A
+// pointer focuses the link on mousedown, and a scroll then would move the link out from under
+// the mouseup and lose the click. For the same reason, once a reader has pressed, scrolled or
+// focused the strip, it stops centering itself.
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { cx } from "../lib/cx";
 
@@ -26,32 +30,44 @@ export function Tabs({ label, tabs }: { label: string; tabs: TabLink[] }) {
     throw new Error(`Tabs got ${tabs.length} tabs, but DESIGN.md section 5 allows ${MOST_TABS} at most.`);
   }
   const strip = useRef<HTMLUListElement>(null);
+  // Set once a reader presses, scrolls or focuses the strip. From then on it never moves by
+  // itself, so it cannot shift a tab out from under a press.
+  const handled = useRef(false);
   const current = tabs.find((tab) => tab.current)?.key;
+  const keys = tabs.map((tab) => tab.key).join(" ");
 
-  // Before the first paint, and again when the strip changes width (a phone turned on its
-  // side), put the selected tab in the middle of the strip. A row that fits does not move.
+  // Before the first paint, put the selected tab in the middle of the strip. Do it again when
+  // the strip changes width (a phone turned on its side) or a tab does (Open Sans arriving
+  // after the fallback face), until a reader handles the strip. A row that fits does not move.
   useLayoutEffect(() => {
     const row = strip.current;
     if (!row) return;
+    handled.current = false;
     const center = () => {
       const tab = row.querySelector<HTMLElement>("[aria-current=page]");
-      if (tab) reveal(row, tab, "center");
+      if (tab && !handled.current) reveal(row, tab, "center");
       markEdges(row);
     };
     center();
     const observer = new ResizeObserver(center);
     observer.observe(row);
+    row.querySelectorAll("a").forEach((tab) => observer.observe(tab));
     return () => observer.disconnect();
-  }, [current]);
+  }, [current, keys]);
 
   return (
     <nav aria-label={label} className="border-b border-line">
       <ul
         ref={strip}
         data-tab-strip
+        onPointerDown={() => (handled.current = true)}
+        onWheel={() => (handled.current = true)}
         onFocus={(event) => {
+          handled.current = true;
           const tab = (event.target as HTMLElement).closest("a");
-          if (tab) reveal(event.currentTarget, tab, "whole");
+          // Only keyboard focus scrolls the strip. Chrome sets :focus-visible after Tab or
+          // focus() and not after a mouse or touch press, which focuses the link on mousedown.
+          if (tab?.matches(":focus-visible")) reveal(event.currentTarget, tab, "whole");
         }}
         onScroll={(event) => markEdges(event.currentTarget)}
         className="tab-strip -mx-1 -my-1 flex gap-x-6 p-1"
@@ -90,7 +106,11 @@ function reveal(row: HTMLElement, tab: HTMLElement, how: "center" | "whole") {
   const rowBox = row.getBoundingClientRect();
   const tabBox = tab.getBoundingClientRect();
   if (how === "center") {
-    row.scrollLeft += tabBox.left + tabBox.width / 2 - (rowBox.left + rowBox.width / 2);
+    const end = row.scrollWidth - row.clientWidth;
+    const middle = row.scrollLeft + tabBox.left + tabBox.width / 2 - (rowBox.left + rowBox.width / 2);
+    // Within a fade's width of either end, go all the way to that end. A scroll of a few
+    // pixels would fade out the first or last tab as if more tabs sat beyond it.
+    row.scrollLeft = middle < FADE ? 0 : middle > end - FADE ? end : middle;
   } else if (tabBox.left - FADE < rowBox.left) {
     row.scrollLeft -= rowBox.left - (tabBox.left - FADE);
   } else if (tabBox.right + FADE > rowBox.right) {
