@@ -151,8 +151,10 @@ def _longest(facts: dict) -> int | None:
 
 
 def _measured(facts: dict) -> str:
-    count = dayone.count_words(len(facts["durations"]), "run")
-    return f"Its longest of the last {count} took {dayone.count_words(_longest(facts), 'minute')}"
+    took = dayone.count_words(_longest(facts), "minute")
+    if len(facts["durations"]) == 1:
+        return f"Its one finished run took {took}"
+    return f"Its longest of the last {dayone.count_words(len(facts['durations']), 'run')} took {took}"
 
 
 def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool, list[str]]:

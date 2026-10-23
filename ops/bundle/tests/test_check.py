@@ -175,6 +175,23 @@ def test_schedules_that_never_meet_pass_and_the_notes_record_both(tmp_path, caps
     assert "Not measured yet" not in block
 
 
+def test_a_job_with_one_finished_run_is_described_as_one_run(tmp_path, capsys):
+    """The catch-up runs the job once before it writes the notes, so one run is the common case."""
+    notes = tmp_path / "README.md"
+    shutil.copy(REPO / "bundle" / "README.md", notes)
+    jobs = {"strata nightly": facts("strata nightly", "0 0 5 * * ?", "America/New_York", [2], timeout_minutes=150),
+            "fairshare nightly": facts("fairshare nightly", "0 0 2 * * ?", "UTC", [20])}
+
+    code, _ = checked(["schedules", "--write", "--notes", str(notes)], FakeWorkspace(jobs=jobs), capsys)
+
+    assert code == 0
+    block = notes.read_text()
+    assert "- fairshare's job: fairshare nightly, daily at 02:00 UTC. Its one finished run took 20 minutes." in block
+    assert "- Strata's job: strata nightly, daily at 05:00 America/New_York. Its one finished run took two " \
+           "minutes, and it stops after 150 minutes." in block
+    assert "the last one run" not in block
+
+
 def test_a_fairshare_run_that_reaches_into_strata_s_window_fails(capsys):
     jobs = {"strata nightly": STRATA,
             "fairshare nightly": facts("fairshare nightly", "0 30 4 * * ?", "America/New_York", [60])}
