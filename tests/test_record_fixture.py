@@ -78,7 +78,7 @@ def test_an_unchanged_source_shows_no_diff_and_keeps_its_recorded_date(tmp_path,
 
     out = capsys.readouterr().out
     assert code == 0
-    assert "0 new, 0 changed and 1 the same" in out
+    assert "0 new, 0 changed and 1 the same. Every source was fetched." in out
     assert path.read_bytes() == before
 
 
@@ -114,6 +114,7 @@ def test_a_source_that_cannot_be_fetched_is_named_with_the_command_to_retry_it(t
 
     out = capsys.readouterr().out
     assert code == 2
+    assert "1 new, 0 changed and 0 the same. 1 source could not be fetched." in out
     assert "could not fetch  api/projects/P000001.json" in out
     assert "--only api/projects/P000001.json --write" in out
     assert recorded(tmp_path, "api/projects/P000002.json").exists()

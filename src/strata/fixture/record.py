@@ -106,12 +106,14 @@ def show_diff(name, old, new, max_lines):
 
 
 def parse(argv):
-    parser = argparse.ArgumentParser(prog="python -m strata.fixture.record", description=__doc__.splitlines()[0])
-    parser.add_argument("--write", action="store_true", help="save the changes instead of only showing them")
-    parser.add_argument("--only", action="append", default=[],
-                        help="record only sources whose file contains this text (repeatable)")
-    parser.add_argument("--manifest", default=str(fmt.MANIFEST), help="the list of sources")
-    parser.add_argument("--max-lines", type=int, default=80, help="diff lines to print per file")
+    parser = argparse.ArgumentParser(prog="python -m strata.fixture.record",
+                                     description=" ".join(__doc__.split("\n\n")[0].split()))
+    parser.add_argument("--write", action="store_true", help="Save the changes instead of only showing them.")
+    parser.add_argument("--only", action="append", default=[], metavar="TEXT",
+                        help="Record only the sources whose file name contains this text. You can repeat it.")
+    parser.add_argument("--manifest", default=str(fmt.MANIFEST), metavar="PATH", help="The list of sources.")
+    parser.add_argument("--max-lines", type=int, default=80, metavar="N",
+                        help="The most diff lines to print for each file.")
     return parser.parse_args(argv)
 
 
@@ -145,8 +147,9 @@ def main(argv=None, fetch=fetch_url):
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(data)
     pending = counts["new"] + counts["changed"]
-    print(f"{counts['new']} new, {counts['changed']} changed and {counts['same']} the same; "
-          f"{len(failed)} sources could not be fetched.")
+    fetched = ("Every source was fetched." if not failed
+               else f"{len(failed)} source{'' if len(failed) == 1 else 's'} could not be fetched.")
+    print(f"{counts['new']} new, {counts['changed']} changed and {counts['same']} the same. {fetched}")
     if failed:
         print("To try those again, run: uv run python -m strata.fixture.record "
               + " ".join(f"--only {name}" for name in failed) + (" --write" if args.write else ""))
