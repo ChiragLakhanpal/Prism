@@ -10,8 +10,8 @@ counts what it took out:
 - in a record's free text (notice_text and bid_description), each name, email and phone number
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
 - in the same free text, every other email address, also one typed with a stray space or a comma
-  for a dot, and every phone number written with a country code (+254 20 1234567) or a trunk zero
-  (046-1234567, 0722123456, 0 722-123456), is replaced too;
+  for a dot or run into the next with no space, and every phone number written with a country
+  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456, 0 722-123456), is replaced too;
 - every number written after a Tel, Phone, Mobile, Cell or Fax label, also one with a country code
   and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too.
 
@@ -34,10 +34,13 @@ REMOVED = "[contact removed]"
 # An email address, also when it is written untidily: one stray space after the "@" or inside the
 # domain (name@ gmail.com, name@g mail.com), or a comma for a dot (name@gmail,com).
 EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+")
+# What is left of a second address run into the first with no space (a@x.com.b@y.com): its domain.
+AFTER_EMAIL = re.compile(re.escape(REMOVED) + r"@ ?[A-Za-z0-9-]+(?:[.,][A-Za-z0-9-]+)+")
 # A number with a country code or a trunk zero, also with a space after the zero (0 722-123456),
 # then any alternates written after it with a slash (0722123456 / 0733123456). A letter may come
-# right before it, as scraped text runs words together.
-PHONE = re.compile(r"(?<![\d+])(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0 ?\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
+# right before it, as scraped text runs words together, and so may another number's last digit
+# when the plus starts this one (+254 712 345 678+254 20 123 4567).
+PHONE = re.compile(r"(?:(?<![\d+])|(?<=\d)(?=\+))(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0 ?\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
                    r"(?:\s*/\s*\+?\d[\d \t–-]{4,}\d)*")
 DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
@@ -56,7 +59,8 @@ TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after i
 def _phone(candidate: str) -> bool:
     first = candidate.split("/")[0].strip()
     digits = re.sub(r"\D", "", first)
-    if not 9 <= len(digits) <= 15 or digits.startswith("000"):
+    shortest = 8 if first.startswith("+") else 9  # a country code and seven digits: +254 20 123
+    if not shortest <= len(digits) <= 15 or digits.startswith("000"):
         return False
     return not any(pattern.fullmatch(first) for pattern in (DATE_LIKE, AMOUNT_LIKE, FISCAL_YEARS, POSTAL_CODE))
 
@@ -108,6 +112,7 @@ class Stripper:
         if self.phones:
             text = self._sub(DIGIT_RUN, text, self._known_phone)
         text = self._sub(EMAIL, text)
+        text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
         text = self._sub(PHONE, text, _phone)
         return LABELLED.sub(self._labelled, text)
 

@@ -161,10 +161,10 @@ def test_each_kenya_value_appears_in_gold_with_its_public_from_date(gold, value_
 # This test's own idea of an email address and a phone number, written apart from the stripping
 # code: an international number (+254 20 1234567, (+254) 20 123 4567), a Kenyan or Indian number
 # with its trunk zero (046-1234567, 0141-1234567) and a Kenyan mobile (0722123456), also with a
-# space after its zero (0 722-123456). Any letter or digit right before an "@" counts as an email
-# address, however untidy the rest of it is: only "[contact removed]@..." may be left.
+# space after its zero (0 722-123456). Any letter, digit or removed contact right before an "@"
+# counts as an email address, however untidy the rest of it is.
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9.-]+")
-AT_SIGN = re.compile(r"[A-Za-z0-9]@")
+AT_SIGN = re.compile(r"[A-Za-z0-9\]]@")
 PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\d{3,4}"
                    r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])"
                    r"|(?<![\d.,/-])0 7\d{2}[ -]?\d{6}(?![\d.])")
@@ -283,6 +283,21 @@ def test_stripping_removes_every_number_written_after_a_phone_label():
         "Tel [contact removed]. Tel.[contact removed]. PHONE: [contact removed]. TEL/FAX [contact removed]. "
         "Tel: [contact removed]. Ext. 42301. Mobile 4x4 units.")
     assert removed == 1 + 6  # the contact_phone_no field, and six replacements in the text
+
+
+def test_stripping_removes_emails_and_numbers_run_together_with_no_spaces():
+    """Scraped award notices sometimes run a mobile, two emails and two numbers together. Nothing of
+    them may be left: no "@" and a domain, no first digits of a number. These values are made up."""
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        "MOMBASA, KENYA0712345678jdoe@example.com.info@example.org<br/>"
+        "Nairobi, Kenya+254 712 345 678+254 20 123 4567sales@example.co<br/>")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "MOMBASA, [contact removed]<br/>"
+        "Nairobi, Kenya[contact removed][contact removed] [contact removed]<br/>")
+    assert removed == 4
 
 
 def test_the_fetch_counts_the_contact_details_it_removes(gold):
