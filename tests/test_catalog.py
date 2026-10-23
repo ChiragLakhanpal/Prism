@@ -80,7 +80,7 @@ def test_building_twice_keeps_the_rows_a_table_holds():
 def test_every_table_in_the_fixture_database_keeps_its_public_from_date(fixture_db):
     with DuckDBEngine.open(fixture_db, read_only=True) as engine:
         assert ("ops", "pipeline_runs") in tables(engine)
-        catalog.check_public_from(engine)
+        catalog.check_public_from(engine, skip=("recorded",))
 
 
 def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
@@ -91,19 +91,21 @@ def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
         catalog.build(engine, folder)
 
 
-def test_the_check_covers_the_four_schemas_and_not_the_fixtures_own_copy_of_the_sources():
+def test_the_check_skips_only_the_schemas_its_caller_names():
     """The fixture database also holds recorded.files, its copy of the sources (ticket 05), which is
-    not a catalog layer. The check covers the schemas the bundle declares, where every fact lives."""
+    not a catalog layer, so the fixture build skips `recorded`. Every other schema is checked,
+    including one the bundle does not declare, such as the `main` schema a workspace can make."""
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
         engine.run("CREATE SCHEMA strata.recorded")
         engine.run("CREATE TABLE strata.recorded.files (file STRING, recorded DATE)")
 
-        catalog.check_public_from(engine)
+        catalog.check_public_from(engine, skip=("recorded",))
 
-        engine.run("CREATE TABLE strata.silver.awards (award_id STRING)")
-        with pytest.raises(CatalogError, match=r"strata\.silver\.awards") as stopped:
-            catalog.check_public_from(engine)
+        engine.run("CREATE SCHEMA IF NOT EXISTS strata.main")
+        engine.run("CREATE TABLE strata.main.notes (id STRING)")
+        with pytest.raises(CatalogError, match=r"strata\.main\.notes") as stopped:
+            catalog.check_public_from(engine, skip=("recorded",))
         assert "recorded" not in str(stopped.value)
 
 
@@ -145,5 +147,11 @@ def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
         catalog.table_definitions(folder)
 
 
-def test_this_ticket_ships_one_table_definition_the_pipeline_runs():
-    assert [definition.full_name for definition in catalog.table_definitions()] == ["strata.ops.pipeline_runs"]
+def test_every_shipped_definition_sits_in_a_declared_schema_and_keeps_public_from():
+    """Adding a table is one file, so this checks the rule each file follows, not the list of files."""
+    definitions = catalog.table_definitions()
+
+    assert "strata.ops.pipeline_runs" in [definition.full_name for definition in definitions]
+    for definition in definitions:
+        assert definition.schema in catalog.declared().schemas, definition.path.name
+        assert "public_from DATE" in definition.sql, definition.full_name

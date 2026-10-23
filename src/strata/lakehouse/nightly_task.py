@@ -29,6 +29,6 @@ if __name__ == "__main__":
     from pyspark.sql import SparkSession
 
     from strata.lakehouse.engine import SparkEngine
-    from strata.lakehouse.nightly import main
+    from strata.lakehouse.nightly import fetch_live, main
 
-    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()))
+    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()), fetch_live)

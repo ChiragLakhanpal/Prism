@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 """Builds the fixture database, data/out/fixture.duckdb, that the offline tests read.
 
-It builds three things, with no network:
+It builds four things, with no network:
 
 - The strata catalog's schemas and tables, from the table definitions in
-  src/strata/lakehouse/tables, the same ones the deploy builds on the workspace. The build stops
-  when any table in those schemas lacks a public_from DATE column (ADR 0002).
+  src/strata/lakehouse/tables, the same ones the deploy builds on the workspace.
 - The recorded sources listed in data/fixture/sources.toml, into the schema `recorded`:
   `recorded.files` (each file with its source and license line), `recorded.responses`
   (each API response as JSON), `recorded.documents` (each document's published text) and
-  `recorded.pages` (the text of each PDF page, numbered from 1). Ticket 07's lakehouse run
-  turns these into bronze, silver and gold. The `recorded` schema is the fixture's copy of
-  the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops,
-  which ticket 07 builds from it.
+  `recorded.pages` (the text of each PDF page, numbered from 1). The `recorded` schema is the
+  fixture's copy of the sources, not a catalog layer.
 - The placeholder tables. Each CSV file in data/fixture/placeholder becomes a table in the
   schema `placeholder`. Ticket 08 replaces them with plan rows read from the recorded plans.
+- Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
+  (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
+  the fixture can never drift from the code that makes the real tables.
+
+The build stops when any table outside the `recorded` schema lacks a public_from DATE column
+(ADR 0002).
 
 The tests attach the database as `strata`, so they query strata.recorded.pages and
 strata.placeholder.plan_rows. It builds into a new file and swaps it in, so a failed build
@@ -30,11 +33,12 @@ import sys
 from pathlib import Path
 
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog
+from strata.lakehouse import catalog, nightly, pages
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 
 ROOT = Path(__file__).resolve().parents[1]
+RUN_ID = "fixture"  # the run id the fixture's pipeline runs and data readiness measures carry
 PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 TABLE_NAME = re.compile(r"[a-z][a-z0-9_]*")
@@ -94,7 +98,10 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABL
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
             load_placeholder(engine.connection, source)
             load_recorded(engine.connection, manifest)
-            catalog.check_public_from(engine)  # every table in the catalog's schemas, whatever made it
+            if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
+                nightly.run_locally(engine, run_id=RUN_ID,
+                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest))
+            catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
     except (CatalogError, EngineError) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)
         raise SystemExit(str(error)) from error

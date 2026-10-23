@@ -1092,6 +1092,22 @@ quote = "INDIVIDUAL CONSULTANT"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1668349].supplier"
 
+[[value]]
+id = "notice-icb-code"
+says = "Notice OP00034393, a Kenya Invitation for Bids of September 14, 2015 for the Nairobi bulk water supply, gives its method's code as ICB, an old name that silver maps to Request for Bids, Open - International."
+value = "ICB"
+quote = "ICB"
+record = "api/notices/kenya-icb-2015.json"
+at = "procnotices[id=OP00034393].procurement_method_code"
+
+[[value]]
+id = "notice-icb-name"
+says = "The same notice names its method International Competitive Bidding, which silver keeps word for word in its own column."
+value = "International Competitive Bidding"
+quote = "International Competitive Bidding"
+record = "api/notices/kenya-icb-2015.json"
+at = "procnotices[id=OP00034393].procurement_method_name"
+
 [awkward.contact_details]
 says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, carries a contact name, email and phone number. Ingestion strips them, and this file does not repeat them."
 record = "api/notices/P156634.json"

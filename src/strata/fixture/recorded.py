@@ -33,6 +33,7 @@ class Source:
     license: str
     about: str
     url: str = ""
+    dataset: str = ""  # its [datasets] key, which the lakehouse's offline fetch selects by
     text_url: str = ""
     pdf_url: str = ""
     ignore_keys: tuple = ()  # keys a refetch leaves out of its diff, such as a stamp that moves daily
@@ -84,7 +85,7 @@ def load_manifest(path=MANIFEST):
         if not all(entry.get(key) for key in urls):
             raise SystemExit(f"The source {name} in {path} needs {' and '.join(urls)}.")
         sources.append(Source(file=entry["file"], kind=entry["kind"], license=dataset["attribution"],
-                              about=entry.get("about", ""), url=entry.get("url", ""),
+                              about=entry.get("about", ""), url=entry.get("url", ""), dataset=entry["dataset"],
                               text_url=entry.get("text_url", ""), pdf_url=entry.get("pdf_url", ""),
                               ignore_keys=tuple(dataset.get("ignore_keys", ()))))
     return Manifest(path=path, recorded=path.parent / config.get("recorded", "recorded"), sources=sources)

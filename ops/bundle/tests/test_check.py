@@ -34,7 +34,7 @@ class FakeWorkspace:
     def run_job(self, name):
         run_id = "880001"
         for key in self.order or [task.key for task in nightly.job_tasks()]:
-            nightly.run_task(self.duckdb, key, run_id)
+            nightly.run_task(self.duckdb, key, run_id, fetch=lambda source, engine: ())  # no pages to fetch
         return run_id, self.state, "https://dbc-1.cloud.databricks.com/jobs/1/runs/880001"
 
     def job_names(self):

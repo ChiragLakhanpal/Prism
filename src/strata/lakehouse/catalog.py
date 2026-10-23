@@ -8,10 +8,10 @@ the SQL warehouse for the deploy. IF NOT EXISTS means a deploy never replaces a 
 rows (CLAUDE.md rule 5); a change to a table's columns needs its own ALTER TABLE.
 
 Every table keeps the date it became public in a public_from DATE column (ADR 0002).
-check_public_from() looks at every table in the schemas the bundle declares, whatever made it, and
-stops when one lacks the column or gives it another type. Views hold no rows of their own, so it
-skips plain views and the metric views that Genie reads. The fixture database's own schemas,
-`recorded` (its copy of the sources) and `placeholder`, are not catalog layers, so it skips them.
+check_public_from() looks at every table in the catalog, whatever made it, and stops when one lacks
+the column or gives it another type. Views hold no rows of their own, so it skips plain views and
+the metric views that Genie reads. The fixture build skips its `recorded` schema, its copy of the
+sources, which is not a catalog layer.
 """
 
 from __future__ import annotations
@@ -114,11 +114,10 @@ def table_definitions(folder: Path = TABLES, schemas: tuple[str, ...] | None = N
     return found
 
 
-def check_public_from(engine: Engine) -> None:
-    """Stop when any table in the bundle's schemas has no public_from DATE column (ADR 0002)."""
-    schemas = declared().schemas
+def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:
+    """Stop when any table in the catalog, outside the schemas in skip, has no public_from DATE column (ADR 0002)."""
     missing = [(schema, table) for schema, table in engine.run(MISSING_PUBLIC_FROM, {"catalog": CATALOG}).as_text()
-               if schema in schemas]
+               if schema not in skip]
     if missing:
         names = ", ".join(f"{CATALOG}.{schema}.{table}" for schema, table in missing)
         raise CatalogError(f"These tables have no public_from column of type DATE: {names}. Every table keeps "

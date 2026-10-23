@@ -1,0 +1,121 @@
+"""Procurement notices (search.worldbank.org's procnotices API) into strata.silver.notices.
+
+Contact details are gone before a page reaches bronze (strata.lakehouse.contacts), so this
+transform never sees them. It types each field, parses the STEP reference, maps an old method
+name such as ICB to the current one with the market approach it implies (keeping the notice's own
+words in their own columns), and reads three things from the notice's text: the loan or credit
+number, and for a Contract Award notice, the Contract Signature Date and the signed contract
+price with its currency. The text itself is kept as plain text.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import decimal
+import html
+import re
+
+from strata.lakehouse import clean
+
+TABLES = {
+    "strata.silver.notices": (
+        "notice_id", "notice_type", "notice_date", "notice_status", "notice_language", "project_id",
+        "project_name", "project_country", "bid_reference_no", "step_reference", "reference_method_code",
+        "bid_description", "procurement_group", "procurement_category", "procurement_method_code",
+        "procurement_method_as_written", "procurement_method", "market_approach", "submission_deadline",
+        "loan_number_as_written", "loan_number", "loan_digits", "contract_signature_date",
+        "signed_contract_price", "signed_contract_currency", "notice_text", "page_hash", "fetched_at",
+        "public_from"),
+}
+
+PENDING = """
+SELECT p.page_hash, p.body, p.fetched_at
+FROM strata.bronze.api_pages AS p
+WHERE p.source = :source
+  AND NOT EXISTS (SELECT 1 FROM strata.silver.notices AS s WHERE s.page_hash = p.page_hash)
+ORDER BY p.fetched_at, p.page_hash
+"""
+
+BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
+TAGS = re.compile(r"<[^>]+>")
+SIGNATURE_DATE = re.compile(r"Contract Signature Date\s*(?:\(YYYY/MM/DD\))?\s*:?\s*([0-9]{1,4}[-/][0-9A-Za-z]{2,3}[-/][0-9]{2,4})", re.I)
+SIGNED_PRICE = re.compile(r"(?:Signed Contract price|Contract Price)\s*:?\s*([A-Z]{3})\s*([0-9][0-9,]*(?:\.[0-9]+)?)", re.I)
+LOAN_FIELD = re.compile(r"(?:Loan|Credit)[^:\n]{0,25}:\s*([^\n]{0,40})", re.I)
+
+
+def plain_text(markup) -> str:
+    """A notice's HTML as plain text, one line per paragraph or line break."""
+    if not markup:
+        return ""
+    text = html.unescape(TAGS.sub(" ", BREAKS.sub("\n", str(markup))))
+    lines = (" ".join(line.split()) for line in text.splitlines())
+    return "\n".join(line for line in lines if line)
+
+
+def _text(value) -> str | None:
+    text = " ".join(str(value).split()) if value is not None else ""
+    return text or None
+
+
+def _price(text: str) -> tuple[decimal.Decimal | None, str | None]:
+    match = SIGNED_PRICE.search(text)
+    if not match:
+        return None, None
+    return decimal.Decimal(match[2].replace(",", "")).quantize(decimal.Decimal("0.01")), match[1].upper()
+
+
+def _loan(text: str) -> clean.LoanNumber | None:
+    for match in LOAN_FIELD.finditer(text):
+        found = clean.loan_number(match[1])
+        if found:
+            return found
+    return None
+
+
+def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
+    fetched = fetched_at.astimezone(dt.UTC).date()
+    rows = []
+    for record in body.get("procnotices") or []:
+        if not _text(record.get("id")):
+            continue
+        text = plain_text(record.get("notice_text"))
+        reference = clean.step_reference(record.get("bid_reference_no"))
+        method = clean.method(record.get("procurement_method_code"), record.get("procurement_method_name"))
+        notice_date = clean.parse_date(record.get("noticedate")) or clean.parse_date(record.get("submission_date"))
+        award = (record.get("notice_type") or "").strip().lower() == "contract award"
+        signature = SIGNATURE_DATE.search(text) if award else None
+        price, currency = _price(text) if award else (None, None)
+        loan = _loan(text)
+        group = _text(record.get("procurement_group"))
+        rows.append((
+            _text(record.get("id")),
+            _text(record.get("notice_type")),
+            notice_date,
+            _text(record.get("notice_status")),
+            _text(record.get("notice_lang_name")),
+            _text(record.get("project_id")),
+            _text(record.get("project_name")),
+            _text(record.get("project_ctry_name")),
+            _text(record.get("bid_reference_no")),
+            reference.reference if reference else None,
+            reference.method_code if reference else None,
+            _text(record.get("bid_description")),
+            group,
+            clean.CATEGORIES.get(group or ""),
+            _text(record.get("procurement_method_code")),
+            _text(record.get("procurement_method_name")),
+            method.name if method else None,
+            method.market_approach if method else None,
+            clean.parse_date(record.get("submission_deadline_date")),
+            loan.as_written if loan else None,
+            loan.normalized if loan else None,
+            loan.digits if loan else None,
+            clean.parse_date(signature[1]) if signature else None,
+            price,
+            currency,
+            text or None,
+            page_hash,
+            fetched_at,
+            clean.public_from(notice_date, fetched),
+        ))
+    return {"strata.silver.notices": rows}
