@@ -127,7 +127,7 @@ export function RemovedBox({
       <CircleDashed aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-line-strong" />
       <div className="min-w-0">
         <p>
-          <span className="font-semibold">{lead}</span>
+          <span data-removed-lead className="font-semibold">{lead}</span>
           {first && !all && (
             <>
               {" "}

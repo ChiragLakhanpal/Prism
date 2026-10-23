@@ -40,7 +40,7 @@ function InShort({ children }: { children: ReactNode }) {
   return (
     <>
       <h3 className="text-label text-ink-muted uppercase">{copy.answer.inShort}</h3>
-      <div className="mt-2 max-w-prose text-body text-ink">{children}</div>
+      <div data-in-short className="mt-2 max-w-prose text-body text-ink">{children}</div>
     </>
   );
 }

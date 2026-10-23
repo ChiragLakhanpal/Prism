@@ -221,10 +221,12 @@ export const galleryCopy = {
     sentenceBefore: "The works contracts were advertised again after all bids were rejected, and they were signed five months late.",
     sentenceAfter: "The works were still under way in March 2024.",
     // The Answer page's own sentences, so a change to the Citations sample cannot change what
-    // the Answer's check line counts. They hold three numbers: five, three and four.
+    // the Answer's check line counts. They hold three numbers: five, three and four. "A later
+    // status report", not "the latest": a saved answer keeps its words after a newer report
+    // arrives, and marker 2's source line gives the report's date.
     answerSentences: [
       "All bids for the works contracts were rejected, and the contracts were signed five months late.",
-      "The latest status report found that three of the four works contracts were complete.",
+      "A later status report found that three of the four works contracts were complete.",
     ],
     coverageNoun: "matching packages",
     coverageGap: "15 lacked the STEP reference that links notice to contract.",
