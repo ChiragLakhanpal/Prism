@@ -1,0 +1,4 @@
+#!/bin/sh
+# Git runs this hook, not pre-commit, before a merge that has no conflicts. It runs the
+# same offline gate, so every merge into build/strata passes the gate before it lands.
+exec "$(git rev-parse --show-toplevel)/.githooks/pre-commit" "$@"

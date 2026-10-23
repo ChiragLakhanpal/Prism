@@ -1,0 +1,24 @@
+#!/bin/sh
+# Starts Strata's server and the web app's dev server together:
+#
+#     scripts/dev
+#
+# The server listens on STRATA_SERVER_PORT and the web app on STRATA_WEB_PORT. When either
+# is unset, this picks a free port for it, so copies from several worktrees run side by
+# side. The web app passes /api on to the server. Ctrl-C stops both.
+set -eu
+cd "$(git rev-parse --show-toplevel)"
+
+if [ -z "${STRATA_SERVER_PORT:-}" ] || [ -z "${STRATA_WEB_PORT:-}" ]; then
+  ports=$(uv run --frozen python -m strata.ports 2)
+  [ -n "${STRATA_SERVER_PORT:-}" ] || STRATA_SERVER_PORT=$(echo "$ports" | sed -n 1p)
+  [ -n "${STRATA_WEB_PORT:-}" ] || STRATA_WEB_PORT=$(echo "$ports" | sed -n 2p)
+fi
+export STRATA_SERVER_PORT STRATA_WEB_PORT
+
+uv run --frozen python -m strata.server &
+server=$!
+trap 'kill "$server" 2>/dev/null || true' EXIT INT TERM
+
+echo "Strata's web app is at http://127.0.0.1:$STRATA_WEB_PORT"
+npm --prefix web run dev

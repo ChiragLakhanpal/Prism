@@ -1,0 +1,12 @@
+#!/bin/sh
+# Strata's offline gate (CLAUDE.md rule 6). Git runs it before every commit once
+# core.hooksPath is .githooks, which scripts/install sets. Run it by hand the same way:
+#
+#     .githooks/pre-commit
+#
+# It works from the main checkout and from any worktree: it finds the root of the
+# tree it was started in and runs that tree's own copy of the gate.
+set -eu
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+exec python3 gates/offline.py "$@"
