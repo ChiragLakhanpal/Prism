@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 6 and 10; ADRs 0002 and 0003; the spec's Seams
 
 **Blocked by:** 07 (Kenya's procurement records, bronze to gold); 08 (P156634's Procurement Plans read into STEP rows)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P1
 **Design review:** no
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 6 and 10; ADRs 0002 and 0003; the spec's Seams
 - [ ] Every returned row carries an evidence id, a public_from date and its source-line fields (Procurement Plan, agency, version date).
 - [ ] The plan-check HTTP route returns the tool's result for the viewer, and a viewer whose token cannot read strata gets a permission error and no rows.
 - [ ] The ground-truth SQL for these counts runs in the offline gate.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/09-tool-registry-and-check-plan, as soon as ticket 07 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
