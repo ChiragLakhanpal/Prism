@@ -25,3 +25,5 @@ Read first: CLAUDE.md rule 6; `gates/offline.py`; `gates/steps.toml`; `tests/tes
 ## Comments
 
 - October 23, 2026, orchestrator: Opened during wave 2 of the build. The timings above come from the reviewers' and verifiers' gate runs in `.notes/` (Python tests 62.4 to 67.1 seconds of 71.8 to 78.9 seconds). Build on build/strata at 79a3ab3. This ticket merges right after tickets 02, 04 and 05 land and before any P1 ticket merges, so the first P1 merge already has the room. Keep the new tests short (waits of about 2 seconds), because they run inside the gate too.
+
+- October 23, 2026, orchestrator: built, reviewed and verified in worktree .claude/worktrees/wf_384e6421-3b6-1 (branch strata/50-gate-lanes, head 2f575cc): the gate fell from 79 to about 27 seconds on the same tree, with pytest-xdist on the wizard lane. One more round merges build/strata (tickets 04 and 05), puts ops/bundle/tests in a lane, and lands it before the first P1 ticket merges.
