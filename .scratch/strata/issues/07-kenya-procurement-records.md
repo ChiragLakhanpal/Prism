@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 and 4; ADR 0002; docs/agents/areas/data.md; 
 
 **Blocked by:** 04 (The strata catalog and the bundle skeleton); 05 (Fixtures for the demo plan and the showcase project)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** data
 **Phase:** P1
 **Design review:** no
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 3 and 4; ADR 0002; docs/agents/areas/data.md; 
 - [ ] A second fetch with no source changes adds no bronze rows.
 - [ ] On the workspace, the job ingests Kenya, and the STEP-reference link rate in strata.ops equals a direct count query over gold run as a check.
 - [ ] Every query uses bound parameters and three-part names, enforced by a lint in the gate.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/07-kenya-procurement-records, as soon as tickets 04 and 05 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures. Ticket 12 reads the gold tables: a package's signing date comes from the awards dataset or, when it has no row, from its Contract Award notice's Contract Signature Date, and its canceled state from its plan row's status. tests/ground_truth/values.toml says 45 signed, 3 canceled and 4 still open across P156634, P176758 and P170941.

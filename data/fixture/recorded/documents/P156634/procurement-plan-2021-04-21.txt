@@ -1,0 +1,227 @@
+Source: https://documents.worldbank.org/curated/en/856721618995941664/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Northern Water Works Development Agency's Procurement Plan of April 21, 2021 for P156634, the first version that lists KE-NWWDA-229129-CW-RFB. Documents API id 33014836.
+
+                 WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+                 SUMMARY PROCUREMENT PLAN (first eighteen months)
+
+
+I.    General
+The following procurement plan has been developed for project implementation during the
+first eighteen months and provides the basis for the procurement methods and bank
+prior/post review thresholds. It covers the three categories, namely, Works; Consultancies;
+and Goods. The plan will be updated when need arises to reflect the actual project
+implementation needs.
+      1. Project information:
+            Country / Borrower: Republic of Kenya
+            Project: Water and Sanitation Development Project (WSDP)
+            IDA Credit No. 6029 & 6030
+            Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b) WaSREB,
+            (c) Water Service Providers: Kilifi-Mariakani Water and Sewerage Company
+            (Kimawasco),; Taita-Voi Water and Sewerage Company (Tavevo); Mombasa Water
+            Supply and Sanitation Company (Mowassco); Kwale Water and Sewerage Company
+            (Kwawasco); Garissa Water and Sewerage Company (Gawasco); Wajir Water and
+            Sewerage Company (Wajwasco); and Malindi Water and Sewerage Company; and
+            (d) Counties: Kilifi; Taita Taveta; Mombasa; Kwale; Garissa; and Wajir
+      2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan: June 15,
+         2017
+      3. Date of General Procurement Notice: June 14, 2017
+      4. Period covered by this procurement plan: June 2017 to December 2018
+
+
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods and
+Bank’s Prior Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s Prior
+Review for Works, Goods and Consultancy Services
+
+                           Contract Value
+                            (Threshold)        Procurement
+         Expenditure                                             Contract Subject to
+          Category            (US$ 000)             Method          Prior Review
+
+      1. Works            15,000 or more      ICB               Contracts above $5
+                                                                million
+                                          Page 1 of 2
+                  Contract Value
+                   (Threshold)           Procurement
+  Expenditure                                             Contract Subject to
+   Category          (US$ 000)                Method         Prior Review
+
+                  Below 15,000          NCB              First contract per
+                                                         entity and Contracts
+                                                         above $5 million
+
+                  Below or equal        Shopping         None unless contract
+                  200                                    specified in the PP
+
+                  No threshold          Direct           As specified in PP
+                                        Contracting
+
+2. Goods          1,000 or more         ICB              First contract per
+                                                         entity and Contracts
+                                                         above $1.5 million
+
+                  Below 1,000           NCB              First contract per
+                                                         entity
+
+                  Below or equal to Shopping             None unless contract
+                  100                                    specified in the PP
+
+                  No threshold          Direct           As specified in PP
+                                        Contracting
+
+3. Consultancy    Firms*                QCBS,LCS,FBS,    First contract per
+Services                                QBS              entity and Contracts
+                                                         above $0.5 million
+
+                  Firms*                CQS              First contract per
+                  (Estimated cost                        entity
+                  less than
+                  $300,000)
+
+                  Individual            IC (at least 3   All contract of
+                                        CVs)             estimated cost above
+                                                         $200,000 and more
+
+                  No threshold          Single Source    All
+
+    *Assignments whose estimated cost is less $300,000 could be Open-National
+    (Shortlist could comprise of all national firms)
+    NB: All terms of reference for consulting services will be subject to IDA’s prior
+    review.
+
+
+
+
+                                    Page 2 of 2
+PROCUREMENT
+                  Kenya : Water and Sanitation Development Project
+PLAN
+General Information
+Country:             Kenya                              Bank’s Approval Date of the Original Procurement Plan:     2019-11-08
+                                                                                                                   2021-04-21
+                                                        Revised Plan Date(s): (comma delineated, leave blank if none)
+Project ID:          P156634                            GPN Date:                                                  2017-06-13
+Project Name:        Water and Sanitation Development Project
+Loan / Credit No:    IDA / 60300
+                     N
+Executing Agency(ies): orthern Water Works Development Agency
+
+
+WORKS
+Activity Reference No. /                                                                                                                                                                                              Estimated        Actual                                                                           Draft Bidding                                                                             Bid Evaluation Report
+                                Loan / Credit                                                                                               Procurement        Prequalification   High SEA/SH       Procurement                                     Process      Draft Pre-qualification     Prequalification                                Specific Procurement      Bidding Documents as Proposal Submission /                                                          Contract
+       Description                                     Component                 Review Type       Method          Market Approach                                                                                     Amount         Amount                                                                            Document /                                                                                and Recommendation                 Signed Contract
+                                    No.                                                                                                       Process               (Y/N)             Risk         Document Type                                     Status            Documents            Evaluation Report                                 Notice / Invitation              Issued         Opening / Minutes                                                           Completion
+                                                                                                                                                                                                                        (US$)          (US$)                                                                            Justification                                                                                   for Award
+                                                                                                                                                                                                                                                                  Planned      Actual      Planned      Actual      Planned       Actual      Planned       Actual      Planned      Actual  Planned     Actual    Planned      Actual             Planned     Actual   Planned
+
+                                                Component 2: Expansion of
+ KE-NWWDA-229129-CW-RFB                         water supply and sanitation
+                                                                                                                                                                                                                                                   Pending
+/ Drilling of 4 Number                          services in underserved                                                                   Single Stage - One                                                                                                                                                                                                                                                                                                            2021-10-
+                               IDA / 60300                                    Post             Request for Bids    Open - National                                                                                     300,000.00          0.00    Implementat                                                     2021-04-23                2021-04-28                                       2021-05-19                2021-05-26                2021-07-01
+Exploratory Boreholes In Wajir                  northeastern counties of                                                                  Envelope                                                                                                                                                                                                                                                                                                                         15
+                                                                                                                                                                                                                                                   ion
+County                                          Kenya (US$110 of wh ich IDA
+                                                US$100 million).
+
+
+
+
+GOODS
+Activity Reference No. /                                                                                                                                                                                                                                                                       Draft Bidding                                                                            Bid Evaluation Report
+                                Loan / Credit                                                                                               Procurement        Prequalification    Estimated       Actual Amount        Process      Draft Pre-qualification        Prequalification                               Specific Procurement      Bidding Documents as Proposal Submission /
+       Description                                     Component                 Review Type       Method          Market Approach                                                                                                                                                             Document /                                                                               and Recommendation                 Signed Contract        Contract Completion
+                                    No.                                                                                                       Process               (Y/N)         Amount (US$)         (US$)             Status            Documents               Evaluation Report                                Notice / Invitation              Issued         Opening / Minutes
+                                                                                                                                                                                                                                                                                               Justification                                                                                  for Award
+                                                                                                                                                                                                                                      Planned        Actual       Planned      Actual      Planned       Actual     Planned       Actual      Planned      Actual  Planned     Actual    Planned      Actual             Planned       Actual      Planned     Actual
+
+                                                Component 2: Expansion of
+ KE-NWWDA-199461-GO-RFB
+                                                water supply and sanitation
+/ Supply and Delivery 1 No. 4                                                                                                                                                                                         Pending
+                                                services in underserved                        Request for                                Single Stage - One
+x 4 Wheel drive, manual       IDA / 60300                                     Post                                 Limited                                                             95,000.00               0.00   Implementati                                                                                 2020-12-19                                                                                           2021-02-06                2021-05-07
+                                                northeastern counties of                       Quotations                                 Envelope
+transmission of engine                                                                                                                                                                                                on
+                                                Kenya (US$110 of wh ich IDA
+capacity 4,100 - 4,200 cc
+                                                US$100 million).
+
+
+                                                Component 2: Expansion of
+ KE-NWWDA-199471-GO-                            water supply and sanitation
+                                                                                                                                                                                                                      Pending
+RFQ / supply and delivery of                    services in underserved                        Request for                                Single Stage - One
+                               IDA / 60300                                    Post                                 Limited                                                             15,000.00               0.00   Implementati                                                                                 2020-12-19                                                                                           2021-02-06                2021-05-07
+Laptops, desktops and                           northeastern counties of                       Quotations                                 Envelope
+                                                                                                                                                                                                                      on
+photocopier.                                    Kenya (US$110 of wh ich IDA
+                                                US$100 million).
+
+
+
+
+NON CONSULTING SERVICES
+Activity Reference No. /                                                                                                                                                                                                                                                                       Draft Bidding                                                                            Bid Evaluation Report
+                                Loan / Credit                                                                                               Procurement        Prequalification    Estimated       Actual Amount        Process      Draft Pre-qualification        Prequalification                               Specific Procurement      Bidding Documents as Proposal Submission /
+       Description                                     Component                 Review Type       Method          Market Approach                                                                                                                                                             Document /                                                                               and Recommendation                 Signed Contract        Contract Completion
+                                    No.                                                                                                       Process               (Y/N)         Amount (US$)         (US$)             Status            Documents               Evaluation Report                                Notice / Invitation              Issued         Opening / Minutes
+                                                                                                                                                                                                                                                                                               Justification                                                                                  for Award
+                                                                                                                                                                                                                                      Planned        Actual       Planned      Actual      Planned       Actual     Planned       Actual      Planned      Actual  Planned     Actual    Planned      Actual             Planned       Actual      Planned     Actual
+
+
+
+
+CONSULTING FIRMS
+Activity Reference No. /                                                                                                                                                                                                                                                                                                                                                          Combined Evaluation
+                                Loan / Credit                                                                                              Contract Type        Estimated         Actual Amount                                                    Expression of Interest     Short List and Draft    Request for Proposals     Opening of Technical          Evaluation of
+       Description                                     Component                 Review Type        Method         Market Approach                                                                 Process Status       Terms of Reference                                                                                                                                          Report and Draft          Signed Contract        Contract Completion
+                                    No.                                                                                                                        Amount (US$)           (US$)                                                               Notice             Request for Proposals         as Issued            Proposals / Minutes        Technical Proposal
+                                                                                                                                                                                                                                                                                                                                                                                  Negotiated Contract
+                                                                                                                                                                                                                       Planned         Actual       Planned        Actual     Planned      Actual      Planned       Actual      Planned       Actual      Planned      Actual    Planned     Actual        Planned       Actual      Planned       Actual
+
+ NWWDA-WSDP-03-2019-
+2020 / Consultancy Services
+                                                Component 2: Expansion of
+for Comparison of Water
+                                                water supply and sanitation
+Supply Options, Preparation of
+                                                services in underserved                        Quality And Cost-                                                                                   Under
+Detailed Designs, Tender       IDA / 60300                                    Prior                                Open - International                            2,000,000.00             0.00                      2019-11-05     2019-11-19 2019-11-26 2019-12-04 2020-01-09 2021-01-25                                     2020-02-06                2020-03-07             2020-04-11                2020-05-16                2021-05-16
+                                                northeastern counties of                       Based Selection                                                                                     Implementation
+Documents, Safeguards
+                                                Kenya (US$110 of wh ich IDA
+Documents and Construction
+                                                US$100 million).
+Supervision of Wajir Water
+Supply
+
+
+
+
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /                                                                                                                                                                                                                                Invitation to
+                                Loan / Credit                                                                                              Contract Type        Estimated         Actual Amount                                                                                 Draft Negotiated
+       Description                                     Component                 Review Type        Method         Market Approach                                                                 Process Status       Terms of Reference          Identified/Selected                                  Signed Contract        Contract Completion
+                                    No.                                                                                                                        Amount (US$)           (US$)                                                                                         Contract
+                                                                                                                                                                                                                                                         Consultant
+                                                                                                                                                                                                                       Planned         Actual       Planned       Actual      Planned      Actual      Planned       Actual      Planned       Actual
+
+                                                Component 2: Expansion of
+ KE-NWWDA-207796-CS-                            water supply and sanitation
+                                                                                               Individual
+INDV / consultancy services                     services in underserved                                                                                                                            Under
+                               IDA / 60300                                    Post             Consultant          Open                                               60,000.00             0.00                      2020-12-14     2020-12-07 2021-02-01                   2021-02-22               2021-03-29                2022-06-22
+for environmental safeguards                    northeastern counties of                                                                                                                           Implementation
+                                                                                               Selection
+expert                                          Kenya (US$110 of wh ich IDA
+                                                US$100 million).
+
+
+
+
+                                                                                                                                                                                                                                          Page 1
+

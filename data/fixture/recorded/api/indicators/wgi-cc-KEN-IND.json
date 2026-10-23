@@ -1,0 +1,882 @@
+{
+ "source": "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_CC.EST?format=json&per_page=500&source=3",
+ "license": "The World Bank: Worldwide Governance Indicators (GOV_WGI codes), from api.worldbank.org/v2. License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "The Worldwide Governance Indicators estimate of control of corruption for Kenya and India.",
+ "response": [
+  {
+   "page": 1,
+   "pages": 1,
+   "per_page": 500,
+   "total": 54,
+   "sourceid": "3",
+   "lastupdated": "2026-09-25"
+  },
+  [
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2025",
+    "value": -0.2791735,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2024",
+    "value": -0.2980376,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2023",
+    "value": -0.3354592,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2022",
+    "value": -0.3266917,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2021",
+    "value": -0.3031751,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2020",
+    "value": -0.2569922,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2019",
+    "value": -0.2210026,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2018",
+    "value": -0.2108371,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2017",
+    "value": -0.2253804,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2016",
+    "value": -0.2868347,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2015",
+    "value": -0.3457352,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2014",
+    "value": -0.4143125,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2013",
+    "value": -0.4705032,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2012",
+    "value": -0.5033606,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2011",
+    "value": -0.4898141,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2010",
+    "value": -0.3618983,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2009",
+    "value": -0.3456043,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2008",
+    "value": -0.2955149,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2007",
+    "value": -0.3273389,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2006",
+    "value": -0.2312051,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2005",
+    "value": -0.4107227,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2004",
+    "value": -0.3902731,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2003",
+    "value": -0.553052,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2002",
+    "value": -0.5618875,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2000",
+    "value": -0.2129263,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1998",
+    "value": -0.1573126,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1996",
+    "value": -0.2656494,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2025",
+    "value": -0.8551308,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2024",
+    "value": -0.7918911,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2023",
+    "value": -0.7463243,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2022",
+    "value": -0.7506211,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2021",
+    "value": -0.7087751,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2020",
+    "value": -0.7425837,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2019",
+    "value": -0.8024879,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2018",
+    "value": -0.8389528,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2017",
+    "value": -0.9032092,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2016",
+    "value": -0.9099853,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2015",
+    "value": -0.9754075,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2014",
+    "value": -0.8556803,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2013",
+    "value": -0.9344245,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2012",
+    "value": -0.9752473,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2011",
+    "value": -0.9324966,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2010",
+    "value": -0.8336636,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2009",
+    "value": -1.0916299,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2008",
+    "value": -1.0348876,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2007",
+    "value": -0.9415551,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2006",
+    "value": -0.9276255,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2005",
+    "value": -1.0281948,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2004",
+    "value": -0.8764736,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2003",
+    "value": -0.7202005,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2002",
+    "value": -0.9777392,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2000",
+    "value": -0.9778085,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1998",
+    "value": -1.1816851,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "GOV_WGI_CC.EST",
+     "value": "Control of Corruption - Governance estimate (approx. -2.5 to +2.5)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1996",
+    "value": -1.0192308,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   }
+  ]
+ ]
+}

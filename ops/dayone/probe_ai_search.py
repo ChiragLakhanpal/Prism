@@ -11,8 +11,8 @@ Run it from the main checkout after the wizard:
 It makes the endpoint named in AI_SEARCH_ENDPOINT if it is missing, then a small Delta table of
 three passages with their own embedding vectors, as Strata's passages will have. It syncs a
 Delta Sync index over that table and asks it one hybrid query, with both words and a vector.
-The vectors have the embedding size in dayone.toml, so the index has the same shape as
-Strata's. It writes test 4 in docs/day-one-results.md.
+The vectors have the embedding size in config/models.toml, so the index has the same shape
+as Strata's. It writes test 4 in docs/day-one-results.md.
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ def vector(position: int, dimensions: int) -> list[float]:
 
 def check(search, env: dict, config: dict) -> Outcome:
     names, endpoint = config["names"], env["AI_SEARCH_ENDPOINT"]
-    dimensions = config["caps"]["deployments"]["embed"]["dimensions"]
+    dimensions = dayone.models()["embed"].dimensions
     evidence = []
     try:
         state = search.ensure_endpoint(endpoint)
