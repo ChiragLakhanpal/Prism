@@ -114,8 +114,11 @@ PERSONAL_TITLE = re.compile(
 
 # A word that names a firm, not a person, in any case: a legal form such as LTD or GMBH, a word such
 # as PARTNERS or LABORATORIES, or an ampersand. CONSULTANT alone is not one, as a person is one.
-FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|INC|PLC|SARL|S\.?A\.?|GMBH|AG|B\.?V\.?|CO|COMPANY|CORP(?:ORATION)?|"
-                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?)\b|&", re.I)
+# A two-letter legal form such as S.A., B.V., AG or CO counts only where a firm writes it, at the end
+# of the name or before a comma or a bracket, as a person's initials can read the same.
+FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|INC|PLC|SARL|GMBH|COMPANY|CORP(?:ORATION)?|"
+                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?)\b|&|"
+                  r"\b(?:S\.?A|B\.?V|AG|CO)\b\.?\s*(?:[,(]|$)", re.I)
 
 
 def names_a_person(procurement_category, description) -> bool:
