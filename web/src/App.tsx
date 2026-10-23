@@ -17,7 +17,7 @@ async function loadViewer(signal: AbortSignal) {
     const me = await getJson<Me>("/api/me", { signal });
     const name = me.name ?? me.email;
     viewer.set(me.signed_in && name ? { status: "signed-in", name } : { status: "signed-out" });
-  } catch (error) {
+  } catch {
     if (!signal.aborted) viewer.set({ status: "unreachable" });
   }
 }

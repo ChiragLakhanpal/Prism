@@ -58,6 +58,20 @@ def step_env(keep_git):
     return env
 
 
+def stop(process):
+    """Stop a step and everything it started: ask first, so test runners can shut their servers down."""
+    for sig, grace in ((signal.SIGTERM, 5), (signal.SIGKILL, None)):
+        try:
+            os.killpg(process.pid, sig)
+        except ProcessLookupError:
+            break
+        try:
+            return process.communicate(timeout=grace)[0]
+        except subprocess.TimeoutExpired:
+            continue
+    return process.communicate()[0]
+
+
 def run_step(step, seconds_left):
     """Run one step in its own process group. Return (exit code or None on timeout, output)."""
     process = subprocess.Popen(step["run"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
@@ -66,9 +80,10 @@ def run_step(step, seconds_left):
         output, _ = process.communicate(timeout=max(seconds_left, 0.01))
         return process.returncode, output
     except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
-        output, _ = process.communicate()
-        return None, output
+        return None, stop(process)
+    except BaseException:  # Ctrl-C: the step runs in its own session, so stop it here
+        stop(process)
+        raise
 
 
 def indent(text):
@@ -117,4 +132,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        print("\nThe gate was stopped before it finished, so the commit did not go through.")
+        sys.exit(130)

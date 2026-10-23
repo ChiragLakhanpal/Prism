@@ -6,7 +6,7 @@ Strata is an independent demo built on World Bank open data. It is not a World B
 
 ## Install
 
-You need uv, Node.js 24 or later with npm, and git. Then run this once after cloning, and again in each new worktree:
+You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which runs the gate and the guard hook. Then run this once after cloning, and again in each new worktree:
 
     scripts/install
 
@@ -22,7 +22,7 @@ The gate runs before every commit (CLAUDE.md rule 6). Run it by hand the same wa
 
 It runs the steps in `gates/steps.toml` in order and stops at the first one that fails. Today it scans the staged changes and the whole history of the branch for secrets, runs the guard hook's own tests, builds the fixture database, runs the Python tests (the gate itself, the ground-truth SQL on DuckDB and the server) and runs the Playwright tests against the built web app. It switches the network off for uv, npm and the tests, prints its total time, and fails when a run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
-The gate tests the files in your working tree, so a change you have not staged still counts. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/` with its expected rows in `-- expect:` lines and the source of those values in a comment.
+The gate tests the files in your working tree, so a change you have not staged still counts. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment.
 
 ## Run the app
 

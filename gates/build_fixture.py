@@ -24,7 +24,7 @@ TABLE_NAME = re.compile(r"[a-z_][a-z0-9_]*")
 
 def build(out=FIXTURE_DB):
     out.parent.mkdir(parents=True, exist_ok=True)
-    building = out.with_name(out.name + ".building")
+    building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
     with duckdb.connect(str(building)) as con:
