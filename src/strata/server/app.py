@@ -13,17 +13,23 @@
   final done event with the run id. A run that breaks ends with an error event whose
   details stay in the server log.
 
+Each request a viewer makes, except /api/health, writes one usage event (src/strata/server/usage.py)
+and sends one trace (src/strata/server/tracing.py), whose id the event keeps.
+
 Each request builds its own Viewer, its own engine and its own Turn; create_app keeps only
 settings, never a viewer.
 """
 
 import asyncio
+import datetime as dt
 import json
 import logging
 from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+from opentelemetry import trace
 from pydantic import BaseModel, Field
 
 from strata.config import load_thresholds
@@ -31,11 +37,18 @@ from strata.dbx import Viewer, viewer_from_headers
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event, Runner, Turn, new_run_id as random_run_id, no_agent
 from strata.lakehouse.engine import AccessDenied, Engine, EngineError
+from strata.server.tracing import trace_id
+from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import SqlAs, data_through, run_as, warehouse_user
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+# The platform's check that the app is up. It is not a viewer's request, so it is not counted.
+UNCOUNTED = {"/api/health"}
+# The view the server applies. Until ticket 40 adds the implementing agency and public previews,
+# every request sees the World Bank staff view, whatever ?view= asks for.
+STAFF = "staff"
 
 
 class AskRequest(BaseModel):
@@ -56,10 +69,48 @@ def refused(status: int, code: str) -> JSONResponse:
 
 def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, sql_as: SqlAs | None = None,
-               stamp_timeout_seconds: float | None = None) -> FastAPI:
-    """The app. sql_as builds a viewer's own engine for each request that reads data."""
-    app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None)
+               stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
+               tracer_provider: trace.TracerProvider | None = None) -> FastAPI:
+    """The app.
+
+    sql_as builds a viewer's own engine for each request that reads data. usage receives one
+    event per request, and tracer_provider (the process's global one when None) one span.
+    """
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        if usage is not None:
+            usage.start()
+        try:
+            yield
+        finally:
+            if usage is not None:
+                await asyncio.to_thread(usage.stop)
+
+    app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     timeout = stamp_timeout_seconds or load_thresholds().value("app.stamp_timeout_seconds")
+    tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
+
+    @app.middleware("http")
+    async def observe(request: Request, call_next):
+        """One span and one usage event for each request a viewer makes."""
+        path = request.url.path
+        if path in UNCOUNTED:
+            return await call_next(request)
+        viewer = viewer_from_headers(request.headers)
+        requested_at = dt.datetime.now(dt.UTC)
+        name = f"{request.method} {path if path.startswith('/api/') else 'page'}"
+        with tracer.start_as_current_span(name, kind=trace.SpanKind.SERVER) as span:
+            span.set_attribute("http.request.method", request.method)
+            span.set_attribute("url.path", path)
+            span.set_attribute("strata.view", STAFF)
+            response = await call_next(request)
+            span.set_attribute("http.response.status_code", response.status_code)
+            if response.status_code >= 500:
+                span.set_status(trace.StatusCode.ERROR)
+        if usage is not None:
+            usage.record(UsageEvent(viewer.email, viewer.user_id, path, STAFF, requested_at, trace_id(span)))
+        return response
 
     async def as_viewer(viewer: Viewer, read: Callable[[Engine], object], answer: Callable[[object], dict]):
         """Run one read as the viewer, or say plainly why it could not run."""
