@@ -67,10 +67,6 @@ class Engine(Protocol):
         """Run one statement with its named parameters bound."""
 
 
-def read_sql(path: Path) -> str:
-    return Path(path).read_text()
-
-
 # ── DuckDB, for the offline gate ─────────────────────────────────────────
 
 def transpile(sql: str) -> str:

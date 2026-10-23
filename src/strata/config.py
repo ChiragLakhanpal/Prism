@@ -61,7 +61,9 @@ class _Entry:
 
     def integer(self, key: str, required: bool = True) -> int | None:
         value = self.table.get(key)
-        if value is None and not required:
+        if value is None:
+            if required:
+                self._fail(key, "is missing")
             return None
         if not isinstance(value, int) or isinstance(value, bool):
             self._fail(key, "must be a whole number")
