@@ -22,7 +22,10 @@ For one project, a run:
 5. Reads the parsed tables into silver.plan_rows and silver.plan_steps, for every version whose
    table pages have all been parsed, then runs the SQL that defines delay (silver.plan_step_delays)
    and the data notes (silver.plan_data_notes).
-6. Writes its data readiness measures, each a count with its denominator, to strata.ops.data_readiness.
+6. Writes its data readiness measures, each a count with its denominator, to strata.ops.data_readiness:
+   the listed versions it read, the pages each route read well, the table rows in which the STEP
+   reader found an Activity Reference No., and how many of the latest versions' activities have
+   STEP rows and a confirmed first listing that was read.
 
 Bronze only grows. Silver is rebuilt from bronze for the project on every run.
 
@@ -39,7 +42,7 @@ import json
 import sys
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass, field
+from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
 from strata.config import Thresholds, load_sources, load_thresholds
@@ -189,13 +192,21 @@ def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───
 
+@dataclass(frozen=True)
+class PdfPage:
+    number: int  # from 1
+    digest: str  # the hash of its text
+    holds_table: bool  # whether it holds a STEP table, which only the layout parser reads well
+    has_text: bool  # whether its text is not empty, so Route A can read it
+
+
 @dataclass
 class Version:
     entry: Entry
     public_from: dt.date
     agency: str | None
     listings: list[str]
-    pages: list[tuple[int, str, bool]]  # PDF page, its hash, whether it holds a STEP table
+    pages: list[PdfPage]
     series_order: int = 0
     previous: str | None = None
     is_latest: bool = False
@@ -209,7 +220,12 @@ class Version:
 
     @property
     def table_pages(self) -> list[tuple[int, str]]:
-        return [(number, digest) for number, digest, table in self.pages if table]
+        return [(page.number, page.digest) for page in self.pages if page.holds_table]
+
+    @property
+    def route_a_pages(self) -> list[PdfPage]:
+        """The pages left to Route A: every page, except a table page when the version is chosen for Route B."""
+        return [page for page in self.pages if not (page.holds_table and self.reasons)]
 
 
 def _published_order(version: Version) -> tuple:
@@ -236,7 +252,8 @@ def read_versions(engine: Engine, project_id: str, listing: Listing) -> list[Ver
         page_texts = pages[entry.document_id]
         agency = step.executing_agency("\n".join(t for _, _, t in page_texts)) or step.executing_agency(text)
         versions.append(Version(entry, public, agency, step.references_in(text),
-                                [(n, d, TABLE_PAGE in step.squash(t)) for n, d, t in page_texts]))
+                                [PdfPage(n, d, TABLE_PAGE in step.squash(t), bool(t.strip()))
+                                 for n, d, t in page_texts]))
 
     series: dict[str | None, list[Version]] = defaultdict(list)
     for version in versions:
@@ -340,8 +357,20 @@ ROW_COLUMNS = ("loan_credit_no", "component", "review_type", "method", "market_a
                "estimated_amount_usd", "actual_amount_usd", "process_status")
 
 
-def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> set[str]:
-    """STEP rows and step dates for every version whose table pages are all parsed. Returns those versions."""
+@dataclass(frozen=True)
+class RowsRead:
+    """What write_rows read: the versions it wrote STEP rows for, the table rows in which the STEP
+    reader found an Activity Reference No. and those in which it found none, and the column
+    names it did not know."""
+
+    versions: frozenset[str]
+    with_reference: int
+    without_reference: int
+    unknown_columns: tuple[str, ...]
+
+
+def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> RowsRead:
+    """STEP rows and step dates for every version whose table pages are all parsed."""
     parsed: dict[tuple[str, int], tuple[str, str, str]] = {}
     for document_id, number, digest, parser, tables, _ in engine.run(
             "SELECT document_id, pdf_page, page_hash, parser, tables, parsed_at FROM strata.bronze.layout_pages "
@@ -349,7 +378,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> set[
         parsed[(str(document_id), int(number))] = (str(digest), str(parser), tables)
     for table in ("plan_rows", "plan_steps", "plan_step_delays", "plan_data_notes"):
         engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id", {"project_id": project_id})
-    rows, steps, read = [], [], set()
+    rows, steps, read, without_reference, unknown = [], [], set(), 0, set()
     for version in versions:
         pages = version.table_pages
         found = [parsed.get((version.document_id, number)) for number, _ in pages]
@@ -358,6 +387,8 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> set[
         reading = step.plan_rows([(number, tables_from_json(page[2])) for (number, _), page in zip(pages, found)])
         parser = found[0][1]
         read.add(version.document_id)
+        without_reference += reading.rows_without_reference
+        unknown |= reading.unknown_columns
         for row in reading.rows:
             rows.append((version.document_id, project_id, row.section, row.activity_reference_no,
                          row.description or None, *(row.fields.get(column) for column in ROW_COLUMNS),
@@ -372,17 +403,30 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> set[
             "public_from"), steps)
     for transform in ("plan_step_delays.sql", "plan_data_notes.sql"):
         engine.run(_sql(transform), {"project_id": project_id})
-    return read
+    return RowsRead(frozenset(read), len(rows), without_reference, tuple(sorted(unknown)))
 
 
 # ── 6. Data readiness ────────────────────────────────────────────────────
 
-def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version], listed: int, read: set[str],
-            parsed: set[tuple[str, int, str]], when: dt.datetime) -> list[tuple]:
-    chosen = [v for v in versions if v.reasons]
-    all_pages = sum(len(v.pages) for v in versions)
-    route_b = [(v.document_id, n, d) for v in chosen for n, d in v.table_pages]
-    route_a = all_pages - len(route_b)
+@dataclass(frozen=True)
+class Measure:
+    """One data readiness measure, a count with its denominator: a row of strata.ops.data_readiness."""
+
+    run_id: str
+    source: str
+    subject: str
+    measure: str
+    kind: str
+    count: int
+    denominator: int
+    measured_at: dt.datetime
+    public_from: dt.date
+
+
+def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version], listed: int, read: RowsRead,
+            parsed: set[tuple[str, int, str]], when: dt.datetime) -> list[Measure]:
+    route_a = [page for v in versions for page in v.route_a_pages]
+    route_b = [(v.document_id, n, d) for v in versions if v.reasons for n, d in v.table_pages]
     latest = [v for v in versions if v.is_latest]
     latest_listed = sum(len(v.listings) for v in latest)
     with_rows = {(str(d), str(a)) for d, a in engine.run(
@@ -391,19 +435,18 @@ def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version
     first = first_listings(versions)
     measures = [
         ("plan_versions_read", "coverage", len(versions), listed),
-        ("pages_read_route_a", "read_well", route_a, all_pages),
+        ("pages_read_route_a", "read_well", sum(1 for page in route_a if page.has_text), len(route_a)),
         ("pages_read_route_b", "read_well", sum(1 for page in route_b if page in parsed), len(route_b)),
+        ("step_rows_with_reference", "read_well", read.with_reference, read.with_reference + read.without_reference),
         ("latest_activities_with_step_rows", "read_well",
          sum(1 for v in latest for a in v.listings if (v.document_id, a) in with_rows), latest_listed),
         ("latest_activities_with_first_listing_read", "coverage",
          sum(1 for v in latest for a in v.listings
-             if first[a].nothing_older_unread and first[a].document_id in read), latest_listed),
+             if first[a].nothing_older_unread and first[a].document_id in read.versions), latest_listed),
     ]
-    rows = [(run_id, SOURCE, project_id, name, kind, count, denominator, when, when.date())
+    rows = [Measure(run_id, SOURCE, project_id, name, kind, count, denominator, when, when.date())
             for name, kind, count, denominator in measures]
-    insert(engine, "strata.ops.data_readiness",
-           ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "measured_at", "public_from"),
-           rows)
+    insert(engine, "strata.ops.data_readiness", tuple(f.name for f in fields(Measure)), [astuple(m) for m in rows])
     return rows
 
 
@@ -415,7 +458,8 @@ class Report:
     versions: int
     parsing: Parsing
     versions_with_rows: int
-    measures: list[tuple]
+    measures: list[Measure]
+    unknown_columns: tuple[str, ...]  # STEP table columns the reader did not know, which it left out
 
 
 def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: str, *,
@@ -444,7 +488,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
              finished, finished.date())])
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
                        finished)
-    return Report(run_id, len(versions), parsing, len(read), measures)
+    return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns)
 
 
 def run_on_fixture(engine: Engine, project_id: str | None = None, manifest=None, **options) -> Report:
@@ -468,9 +512,16 @@ def _print_fixture_run() -> int:
         report = run_on_fixture(engine)
     print(f"Run {report.run_id} read {report.versions} plan versions and parsed {report.parsing.parsed} pages "
           f"with {report.parsing.parser}. {report.versions_with_rows} versions have STEP rows.")
-    for _, _, subject, name, _, count, denominator, _, _ in report.measures:
-        print(f"  {subject} {name}: {count} of {denominator}")
+    print_measures(report)
     return 0
+
+
+def print_measures(report: Report) -> None:
+    """The run's measures, one a line, and any STEP column the reader did not know."""
+    for m in report.measures:
+        print(f"  {m.subject} {m.measure}: {m.count} of {m.denominator}")
+    if report.unknown_columns:
+        print(f"The STEP reader did not know these columns and left them out: {', '.join(report.unknown_columns)}.")
 
 
 if __name__ == "__main__":

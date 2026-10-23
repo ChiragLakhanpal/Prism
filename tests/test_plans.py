@@ -203,12 +203,19 @@ def test_a_second_run_parses_no_new_pages_and_strata_ops_shows_the_pages_read_by
     runs = rows(fresh, "SELECT run_id, pages_parsed, stopped_at_cap FROM strata.ops.parse_runs ORDER BY started_at")
     assert [(r["run_id"], r["pages_parsed"], r["stopped_at_cap"]) for r in runs] == [
         (first.run_id, before["bronze.layout_pages"], False), (second.run_id, 0, False)]
-    measured = {r["measure"]: (r["count"], r["denominator"]) for r in rows(
-        fresh, "SELECT measure, count, denominator FROM strata.ops.data_readiness WHERE run_id = :run_id",
-        run_id=second.run_id)}
-    route_a, route_b = measured["pages_read_route_a"], measured["pages_read_route_b"]
+    found = measured(fresh, second.run_id)
+    route_a, route_b = found["pages_read_route_a"], found["pages_read_route_b"]
     assert route_b[0] == route_b[1] == before["bronze.layout_pages"] > 0
-    assert route_a[0] + route_b[0] == route_a[1] == before["bronze.document_pages"]
+    assert route_a[0] == route_a[1] > 0  # every page left to Route A has text
+    assert route_a[1] + route_b[1] == before["bronze.document_pages"]
+
+
+def test_the_step_reader_finds_a_reference_in_every_table_row_and_knows_every_column(fresh):
+    report = plan_run(fresh, clock(dt.date(2026, 10, 23)))
+
+    count, denominator = measured(fresh, report.run_id)["step_rows_with_reference"]
+    assert count == denominator > 0
+    assert report.unknown_columns == ()
 
 
 class OnlyRecordedPlans:

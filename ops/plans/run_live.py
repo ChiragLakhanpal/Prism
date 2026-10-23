@@ -94,8 +94,7 @@ def main(argv=None) -> int:
             if parsing.stopped_at:
                 print(f"It stopped at the cap, at page {parsing.stopped_at[1]} of document {parsing.stopped_at[0]}. "
                       "Run it again tomorrow to read the rest.")
-            for _, _, subject, name, _, count, denominator, _, _ in report.measures:
-                print(f"  {subject} {name}: {count} of {denominator}")
+            plans.print_measures(report)
         return 1 if check(engine) else 0
     except EngineError as error:
         print(f"The warehouse could not run a statement: {error}")
