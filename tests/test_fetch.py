@@ -456,7 +456,7 @@ def test_a_fetch_that_failed_partway_sets_no_watermark_so_the_next_run_fetches_w
     assert [len(page.body["procnotices"]) for page in again] == [100, 100, 100, 99]  # all 399, from the top
 
 
-def test_the_nightly_job_fetches_a_frozen_source_only_while_bronze_holds_none_of_its_pages():
+def test_the_nightly_job_stops_asking_for_a_frozen_source_once_a_finished_fetch_holds_its_pages():
     """The FY2001 to FY2016 awards have not changed since March 2022 (cadence frozen), so once bronze
     holds them the job does not ask Finances One for its 147 pages again."""
     from strata.lakehouse import catalog

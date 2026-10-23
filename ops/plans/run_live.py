@@ -90,8 +90,8 @@ def main(argv=None) -> int:
         print(f"The warehouse could not run a statement: {error}")
         return 2
     except (NotFetched, OSError) as error:  # urllib's errors and the Databricks SDK's are OSErrors
-        print(f"The run stopped before it finished: {error} The pages it parsed are kept, and the next run "
-              "goes on from there.")
+        print(f"The run stopped before it finished: {str(error).rstrip('.')}. The pages it parsed are kept, "
+              "and the next run goes on from there.")
         return 2
 
 

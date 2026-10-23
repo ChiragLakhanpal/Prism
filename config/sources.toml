@@ -14,7 +14,8 @@
 #                     fetch stops at the first page older than what bronze already holds. For the
 #                     Indicators API it is the page's lastupdated date.
 #   cadence           daily, weekly, monthly, quarterly, yearly or frozen. The nightly job fetches
-#                     a frozen source once, when bronze holds none of its pages yet.
+#                     a frozen source until a fetch task that finished holds its pages, and then
+#                     stops asking for it.
 #   license           the license line for attribution
 #   silver_transform  the module in src/strata/lakehouse/silver/ that types and cleans its pages,
 #                     or, for a source its own reader fetches, the SQL file of its first transform

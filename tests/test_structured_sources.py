@@ -586,10 +586,14 @@ FULL_SCALE = {
 }
 
 
+def test_every_paged_source_has_a_full_scale_count():
+    assert set(FULL_SCALE) == set(PAGED)
+
+
 @pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "At full scale the notices alone project to about 0.96 GB, so structured data projects to about "
-    "1.6 GB. Raising the limit or keeping less notice text is the user's choice (ticket 17's parked "
-    "decision 2). Remove this mark once the projection is under the limit."))
+    "At full scale, structured data projects to about 1.6 GB: bronze 0.89 GB, silver 0.54 GB and gold "
+    "0.15 GB. Bronze alone is over the limit, so the user decides the limit (ticket 17's parked "
+    "decision 2). Remove this mark once the projection is under it."))
 def test_structured_data_projected_to_every_country_from_the_fixture_stays_under_the_limit(db, tmp_path):
     """Criterion 7 at full scale, projected. Each source's bronze pages and silver rows are written
     as Parquet, the format Delta tables keep, and their bytes per record, less the file's own
@@ -604,27 +608,32 @@ def test_structured_data_projected_to_every_country_from_the_fixture_stays_under
         db.run(f"COPY ({query} LIMIT 0) TO '{empty}' (FORMAT parquet)")
         return full.stat().st_size - empty.stat().st_size
 
-    projected, records_held = {}, 0
+    projected, layers, records_held = {}, {"bronze": 0.0, "silver": 0.0, "gold": 0.0}, 0
     for key, source in config.load_sources().items():
         if not source.paged:
             continue
         held = rows(db, "SELECT sum(records) AS n FROM strata.bronze.api_pages WHERE source = :source", source=key)[0]["n"]
         pages_of = f"SELECT page_hash FROM strata.bronze.api_pages WHERE source = '{key}'"
-        size = parquet_bytes(f"SELECT * FROM strata.bronze.api_pages WHERE source = '{key}'") + sum(
-            parquet_bytes(f"SELECT * FROM {table} WHERE page_hash IN ({pages_of})")
-            for table in silver.transform(source).TABLES)
-        projected[key] = size / held * FULL_SCALE[key]
+        scale = FULL_SCALE[key] / held
+        in_bronze = parquet_bytes(f"SELECT * FROM strata.bronze.api_pages WHERE source = '{key}'") * scale
+        in_silver = sum(parquet_bytes(f"SELECT * FROM {table} WHERE page_hash IN ({pages_of})")
+                        for table in silver.transform(source).TABLES) * scale
+        projected[key] = in_bronze + in_silver
+        layers["bronze"] += in_bronze
+        layers["silver"] += in_silver
         records_held += held
     gold_tables = [definition.full_name for definition in catalog.table_definitions()
                    if definition.full_name.startswith("strata.gold.")]
-    projected["gold"] = sum(parquet_bytes(f"SELECT * FROM {table}") for table in gold_tables) / records_held * sum(
-        FULL_SCALE.values())
+    projected["gold"] = layers["gold"] = sum(
+        parquet_bytes(f"SELECT * FROM {table}") for table in gold_tables) / records_held * sum(FULL_SCALE.values())
     total = sum(projected.values())
     limit = config.load_thresholds().value("ingestion.structured_data_limit_bytes")
 
-    assert set(FULL_SCALE) == set(PAGED)
-    by_source = ", ".join(f"{key} {size / 1e6:,.0f} MB" for key, size in sorted(projected.items(), key=lambda item: -item[1]))
-    assert total < limit, f"Structured data projects to {total / 1e9:.2f} GB at full scale: {by_source}."
+    def listed(sizes):
+        return ", ".join(f"{key} {size / 1e6:,.0f} MB" for key, size in sorted(sizes.items(), key=lambda item: -item[1]))
+
+    assert total < limit, (f"Structured data projects to {total / 1e9:.2f} GB at full scale. By layer: "
+                           f"{listed(layers)}. By source: {listed(projected)}.")
 
 
 def test_the_workspace_checks_name_every_paged_source_and_the_thresholds_file_s_limit():
