@@ -20,7 +20,8 @@
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
 (src/strata/server/usage.py) and sends one trace (src/strata/server/tracing.py), whose id the
-event keeps.
+event keeps. An /api span is named by its route, such as GET /api/projects/{project_id}/..., and
+an error's reference is the request's trace id.
 
 Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer.
 """
@@ -70,6 +71,12 @@ def current_viewer(request: Request) -> Viewer:
 
 def frame(event: Event) -> str:
     return f"event: {event.type}\ndata: {json.dumps(event.data, ensure_ascii=False)}\n\n"
+
+
+def request_reference() -> str:
+    """The reference an error gives the page: the request's trace id, which finds it in Application
+    Insights and in its usage event, or a random one when the request has no trace."""
+    return tracing.trace_id(trace.get_current_span()) or uuid.uuid4().hex
 
 
 def refused(status: int, code: str) -> JSONResponse:
@@ -125,6 +132,10 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             span.set_attribute("url.path", path)
             span.set_attribute("strata.view", STAFF)
             response = await call_next(request)
+            # One operation per route in Application Insights, not one per project or agency.
+            route = getattr(request.scope.get("route"), "path", None)
+            if route and path.startswith("/api/"):
+                span.update_name(f"{request.method} {route}")
             span.set_attribute("http.response.status_code", response.status_code)
             if response.status_code >= 500:
                 span.set_status(trace.StatusCode.ERROR)
@@ -168,11 +179,11 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
         except PermissionDenied:
             return JSONResponse({"code": "permission"}, status_code=403)
         except registry.ToolContractError:
-            reference = uuid.uuid4().hex
+            reference = request_reference()
             log.exception("The tool %s broke its contract, reference %s.", name, reference)
             return JSONResponse({"code": "tool_contract", "trace_id": reference}, status_code=500)
         except EngineError:
-            reference = uuid.uuid4().hex
+            reference = request_reference()
             log.exception("The data service failed on %s, reference %s.", name, reference)
             return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
 

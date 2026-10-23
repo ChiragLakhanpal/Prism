@@ -22,6 +22,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
+from strata.server.engines import duckdb_file
 from strata.server.usage import UsageLog
 
 ANA = {
@@ -154,6 +155,34 @@ def test_each_request_sends_one_trace_and_its_usage_event_keeps_the_trace_id(ops
     assert "token-for-ana-only" not in str(dict(span.attributes))
     [row] = events(ops)
     assert row[4] == format(span.context.trace_id, "032x")
+
+
+def traced():
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    return exporter, provider
+
+
+def test_an_api_span_is_named_by_its_route_so_each_project_shares_one_operation():
+    exporter, provider = traced()
+    app = create_app(tracer_provider=provider, engine_for=duckdb_file("/nowhere/strata.duckdb"))
+
+    serve(app, [("/api/projects/P130164/procurement/AGENCY-1", ANA), ("/api/projects/P156634/procurement/AGENCY-2", ANA)])
+
+    assert [span.name for span in exporter.get_finished_spans()] == [
+        "GET /api/projects/{project_id}/procurement/{agency_id}"] * 2
+
+
+def test_a_failed_request_s_reference_is_its_trace_in_application_insights():
+    exporter, provider = traced()
+    app = create_app(tracer_provider=provider, engine_for=duckdb_file("/nowhere/strata.duckdb"))
+
+    [response] = serve(app, [("/api/projects/P130164/procurement/AGENCY-1", ANA)])
+
+    [span] = exporter.get_finished_spans()
+    assert response.status_code == 503
+    assert response.json() == {"code": "data_service", "trace_id": format(span.context.trace_id, "032x")}
 
 
 def test_a_usage_log_that_cannot_write_never_breaks_a_request():
