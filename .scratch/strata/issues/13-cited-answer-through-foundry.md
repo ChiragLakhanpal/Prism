@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 6; ADRs 0001 and 0003; the blueprint's "How an 
 - [ ] On the workspace, the same question through the live Foundry agent returns a cited answer that passes checks 1 to 3; the run is logged in strata.ops with an Application Insights trace id that opens in Application Insights.
 - [ ] Five real passages containing rule-like sentences go through the live agent as tool results without a Prompt Shields refusal.
 - [ ] The recording command re-records every scripted case, and the result shows as a reviewable diff.
+
+## Comments
+
+- October 23, 2026, orchestrator: ticket 09 landed in build/strata (merge commit f9cc969) with choices that shape the agent; its done comment lists all nine. Three matter here. First, check_plan's `version_not_public` abstention names the later disclosure date, which is a date after the as-of date; keep it for page routes, but the agent must never see or state a date after its as-of, so strip it from what the agent gets. Second, the registry accepts an as-of date after today and then states events that have not happened; the user has not picked between answering as of today and refusing, so leave `registry.call` as it is and make the agent pass an as-of date no later than today. Third, a data note code that `reasons` in `config/tools.toml` lacks gives HTTP 500 at run time, not a gate failure; when you add a tool, a reason or an abstention, add its code and its copy sentence in the same change, and add the gate check if it is cheap.
