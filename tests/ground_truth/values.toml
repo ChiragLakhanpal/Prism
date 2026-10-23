@@ -548,16 +548,30 @@ process_status = "Signed"
 quotes = ["Prior Quality And Cost-Based Selection Open - International 2,000,000.00 1,021,300.12 Signed"]
 wireframe_mark = "No signals"
 
-# Comparable works packages for KE-NWWDA-541055-CW-RFB, with its default criteria. Each one's
-# specific procurement notice (its first Invitation for Bids) joins its signed contract on the
-# STEP reference: the notice's bid_reference_no equals the award's
-# borrower_contract_reference_number. A package with no award row is still open. The fixture
-# records P156634's notices and awards, so every comparable here is from P156634 in Kenya.
-# KE-TAVEVO-466579-GO-RFB is a works package by its notice's procurement group, though its
-# reference says GO.
+# Comparable works packages for KE-NWWDA-541055-CW-RFB.
+#
+# Default criteria: category works, method Request for Bids, Kenya, first Invitation for Bids
+# from July 1, 2019 (the start of the since-FY2020 awards dataset) to the plan's date. Market
+# approach, review type and size band are left open by default, because a package still open
+# has no review type in any record. So of the glossary's seven criteria, the default sets
+# category, method, region (as the country) and period. Ticket 12's find_comparables must
+# default the same way, or update this list in the same change.
+#
+# Each package's specific procurement notice (its first Invitation for Bids) joins its signed
+# contract on the STEP reference: the notice's bid_reference_no equals the award's
+# borrower_contract_reference_number. The fixture records P156634's notices and awards, so
+# every comparable here is from P156634 in Kenya. KE-TAVEVO-466579-GO-RFB is a works package
+# by its notice's procurement group, though its reference says GO.
+#
+# Two packages, KE-GAWASCO-54771-CW-RFB and KE-GAWASCO-111742-CW-RFB, have no row in the
+# awards dataset, but each has a Contract Award notice that gives its Contract Signature Date.
+# They are signed: their entries name the award_notice and have no contract or review_type.
+# Three packages have no award row and no award notice, so they are still open:
+# KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and KE-KIMAWASCO-377450-CW-RFB. The
+# fixture cannot tell whether any of them was canceled.
 
 [comparables]
-says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 43 signed and 5 still open."
+says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and 2 only in their award notices) and 3 still open."
 notices = "api/notices/P156634.json"
 awards = "api/awards/P156634.json"
 procurement_group = "CW"
@@ -565,9 +579,10 @@ procurement_method_code = "RFB"
 country = "Kenya"
 first_notice_from = 2019-07-01
 first_notice_to = 2026-10-09
-signed = 43
-still_open = 5
-narrower = "Add review type Prior. Review type comes from the award row, so a package still open has none and drops out."
+signed = 45
+signed_only_in_award_notice = 2
+still_open = 3
+narrower = "Add review type Prior. Review type comes from the award row, so a package with no award row has none and drops out: the three still open and the two signed only in their award notices."
 narrower_review_type = "Prior"
 narrower_count = 7
 [[comparable]]
@@ -848,6 +863,8 @@ review_type = "Post"
 reference = "KE-GAWASCO-54771-CW-RFB"
 notice = "OP00160523"
 notice_date = 2022-01-03
+award_notice = "OP00175878"
+signed = 2022-04-19
 
 [[comparable]]
 reference = "KE-GAWASCO-266383-CW-RFB"
@@ -861,6 +878,8 @@ review_type = "Post"
 reference = "KE-GAWASCO-111742-CW-RFB"
 notice = "OP00180273"
 notice_date = 2022-05-19
+award_notice = "OP00191645"
+signed = 2022-08-16
 
 [[comparable]]
 reference = "KE-TAVEVO-338455-CW-RFB"

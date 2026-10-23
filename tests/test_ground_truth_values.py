@@ -168,12 +168,23 @@ def test_each_comparable_joins_its_notice_to_its_signed_contract_on_the_step_ref
     assert notice["notice_type"] == "Invitation for Bids"
     assert notice["bid_reference_no"].strip() == comparable["reference"]
     assert notice_date(notice) == comparable["notice_date"]
-    if "signed" in comparable:
+    if "award_notice" in comparable:
+        award = next(n for n in recorded_notices() if n["id"] == comparable["award_notice"])
+        signature = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>" + comparable["signed"].strftime("%Y/%m/%d")
+        assert award["notice_type"] == "Contract Award"
+        assert award["bid_reference_no"].strip() == comparable["reference"]
+        assert signature in award["notice_text"]
+        assert awards == [], f"{comparable['reference']} now has an award row: give it contract and review_type"
+    elif "signed" in comparable:
         assert {row["wb_contract_number"] for row in awards} == {comparable["contract"]}
         assert {row["contract_signing_date"] for row in awards} == {comparable["signed"].strftime("%d-%b-%Y")}
         assert {row["review_type"] for row in awards} == {comparable["review_type"]}
     else:
         assert awards == [], f"{comparable['reference']} is listed as still open but has an award row"
+        award_notices = [n["id"] for n in recorded_notices() if n["notice_type"] == "Contract Award"
+                         and n["bid_reference_no"].strip() == comparable["reference"]]
+        assert award_notices == [], (
+            f"{comparable['reference']} is listed as still open but has award notices {award_notices}")
 
 
 def test_at_least_25_comparables_are_signed_and_at_least_3_are_still_open():
@@ -181,6 +192,7 @@ def test_at_least_25_comparables_are_signed_and_at_least_3_are_still_open():
     still_open = [c for c in COMPARABLES if "signed" not in c]
     assert len(signed) == CRITERIA["signed"] >= 25
     assert len(still_open) == CRITERIA["still_open"] >= 3
+    assert len([c for c in signed if "award_notice" in c]) == CRITERIA["signed_only_in_award_notice"]
 
 
 def test_the_list_holds_every_recorded_package_that_meets_the_default_criteria():

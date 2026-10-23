@@ -4,7 +4,7 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 
 - The demo plan is the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634). The fixture also holds the agency's earlier plan versions, the Coast Water Services Board's plan of August 17, 2026 (the first to list KE-CWSB-567630-CW-DIR), the project's PAD and its 19 ISRs, every notice and award for the project, and its credits' monthly history.
 - The showcase is the India Rajasthan Road Sector Modernization Project (P130164): its PAD (a scan), its 13 ISRs, the ICR of October 10, 2019, IEG's ICR Review of March 27, 2020 and its re-issue of May 4, 2023, its notices and its awards from the FY2001 to FY2016 dataset.
-- The comparable works packages are the 48 Kenya works packages under Request for Bids in P156634's notices and awards. `tests/ground_truth/values.toml` lists them.
+- The comparable works packages are the 48 Kenya works packages under Request for Bids in P156634's notices and awards: 45 signed and 3 still open. Two of the signed ones have no row in the awards dataset, and only their award notices give the signing date. `tests/ground_truth/values.toml` lists them with the default criteria.
 - IEG ratings, IDA credits, CPIA and WGI cover Kenya and India.
 
 ## What is here
