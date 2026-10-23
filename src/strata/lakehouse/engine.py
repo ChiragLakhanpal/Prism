@@ -224,9 +224,14 @@ def _parameter(name: str, value) -> dict:
     raise EngineError(f"I cannot bind the parameter {name}, a {type(value).__name__}.")
 
 
+def base_url(host: str) -> str:
+    """The workspace's address, from DATABRICKS_HOST with or without its https://."""
+    return host.rstrip("/") if host.startswith("http") else f"https://{host.rstrip('/')}"
+
+
 def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
     """Calls to one workspace's REST API with one token. The token stays in this closure."""
-    base = host.rstrip("/") if host.startswith("http") else f"https://{host.rstrip('/')}"
+    base = base_url(host)
 
     def call(method: str, path: str, body: dict | None = None) -> dict:
         request = urllib.request.Request(
@@ -262,7 +267,9 @@ class WarehouseEngine:
             "statement": sql,
             "warehouse_id": self.warehouse_id,
             "parameters": [_parameter(name, value) for name, value in (params or {}).items()],
-            "wait_timeout": "50s",
+            # The warehouse holds the first answer at most this long: within 5 to 50 seconds, and
+            # never longer than this engine waits in all.
+            "wait_timeout": f"{max(5, min(50, int(self.timeout_seconds)))}s",
             "on_wait_timeout": "CONTINUE",
             "format": "JSON_ARRAY",
             "disposition": "INLINE",

@@ -18,11 +18,12 @@ from pathlib import Path
 import httpx
 import pytest
 
-from strata.dbx import Viewer
+from strata.dbx import Viewer, viewer_from_headers
 from strata.fixture import recorded as fmt
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, Result
 from strata.server.app import create_app
+from strata.server import engines
 from strata.server.engines import duckdb_file
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -170,6 +171,32 @@ def test_a_warehouse_slower_than_the_stamp_s_timeout_gives_a_timeout():
 
     assert response.status_code == 504
     assert response.json() == {"code": "timeout"}
+
+
+def test_a_stamp_read_that_gives_up_also_stops_the_warehouse_wait_behind_it():
+    # The 504 above leaves the read running in its thread, so the engine must give up too, or slow
+    # reads would fill the server's threads. The warehouse is asked to hold the first answer no
+    # longer than the timeout (its floor is 5 seconds), and polling stops at the timeout.
+    calls = []
+
+    def still_running(method, path, body):
+        calls.append((method, body["wait_timeout"] if body else None))
+        return {"statement_id": "s-1", "status": {"state": "PENDING"}}
+
+    engine_for = engines.warehouse_as_viewer("strata.test", "wh-1", transport=lambda host, token: still_running,
+                                             timeout_seconds=0)
+    with pytest.raises(EngineError, match="longer than 0 seconds"), engine_for(viewer_from_headers(ANA)) as engine:
+        engine.run("SELECT 1")
+
+    assert calls == [("POST", "5s")]
+
+
+def test_the_environment_s_warehouse_gives_up_at_the_stamp_s_timeout():
+    engine_for = engines.from_environment({"DATABRICKS_HOST": "strata.test", "DATABRICKS_WAREHOUSE_ID": "wh-1"},
+                                          timeout_seconds=12)
+
+    with engine_for(viewer_from_headers(ANA)) as engine:
+        assert engine.timeout_seconds == 12
 
 
 def test_overlapping_requests_from_two_viewers_each_run_their_query_with_their_own_token():

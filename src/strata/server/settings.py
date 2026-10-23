@@ -33,7 +33,7 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from strata.config import load_thresholds
-from strata.lakehouse.engine import EngineError, Transport, WarehouseEngine, http_transport
+from strata.lakehouse.engine import EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.server import engines, tracing
 from strata.server.app import create_app
 from strata.server.usage import UsageLog
@@ -43,10 +43,6 @@ WEB_DIST = ROOT / "web" / "dist"
 TOKEN_PATH = "/oidc/v1/token"
 # A token is renewed this long before Databricks says it expires.
 RENEW_SECONDS = 300
-
-
-def _base(host: str) -> str:
-    return host.rstrip("/") if host.startswith("http") else f"https://{host.rstrip('/')}"
 
 
 def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30):
@@ -59,7 +55,7 @@ def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30):
         with lock:
             if held["token"] is None or time.monotonic() >= held["until"]:
                 form = urllib.parse.urlencode({"grant_type": "client_credentials", "scope": "all-apis"}).encode()
-                request = urllib.request.Request(_base(host) + TOKEN_PATH, data=form, method="POST", headers={
+                request = urllib.request.Request(base_url(host) + TOKEN_PATH, data=form, method="POST", headers={
                     "Authorization": f"Basic {basic}", "Content-Type": "application/x-www-form-urlencoded"})
                 try:
                     with urllib.request.urlopen(request, timeout=timeout) as response:
@@ -93,7 +89,8 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
-    return create_app(engine_for=engines.from_environment(environ), stamp_timeout_seconds=timeout,
+    return create_app(engine_for=engines.from_environment(environ, timeout_seconds=timeout),
+                      stamp_timeout_seconds=timeout,
                       usage=_usage(environ, thresholds.value("app.usage_flush_seconds")),
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)
