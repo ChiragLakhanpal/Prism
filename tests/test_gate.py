@@ -620,6 +620,19 @@ def test_each_test_folder_in_pyproject_runs_in_exactly_one_gate_step():
     assert runs and all(count == 1 for count in runs.values()), runs
 
 
+def workers(step):
+    """How many pytest-xdist workers a step asks for: the number after --numprocesses, or one."""
+    run = step["run"]
+    return int(run[run.index("--numprocesses") + 1]) if "--numprocesses" in run else 1
+
+
+def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
+    """The python lane sets the gate's total, and every ticket adds tests under tests/."""
+    readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
+
+    assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
+
+
 # Edits to the steps file that the two checks above must catch: each adds a second pytest step,
 # in the web lane, that runs tests a step in another lane already runs and that may read the
 # fixture database while the python lane is still building it.
