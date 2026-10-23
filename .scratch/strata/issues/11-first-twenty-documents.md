@@ -19,3 +19,8 @@ Read first: docs/PLAN.md section 5; ADRs 0002 and 0004; the blueprint's "How doc
 - [ ] Every passage has all ten fields listed above filled, checked by a schema test.
 - [ ] On the workspace, 20 documents are indexed and synced, and strata.ops shows their pages per route and the share whose paragraph numbering was found.
 - [ ] Every passage has a stored Prompt Shields result, and any hit is counted in the data readiness measures rather than silently dropped.
+
+## Comments
+
+
+- October 23, 2026, orchestrator: ticket 08 already fetches a project's document list and pages (src/strata/reader/documents.py: fetch_listing, fetch_url, NotFetched) and reads a page's layout through an ai_parse_document adapter with a recorded offline parser (src/strata/reader/layout.py: PARSERS, AiParseDocument; config/models.toml's [layout] parser picks one). Build on those modules and add to them; do not write a second fetcher or a second parser adapter. The 20 documents are recorded under data/fixture/recorded/documents/<project>/ as text with page maps (ticket 05). Every live call is a workspace step.
