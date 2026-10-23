@@ -1,0 +1,13 @@
+{
+ "about": "An answer of Azure OpenAI's embeddings operation (the v1 API) for two inputs, with vectors cut to 4 dimensions so the file stays readable, and the data out of order, as the API allows. It is written by hand in the shape the operation documents, because the gate's machine has no key. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "response": {
+  "object": "list",
+  "data": [
+   {"object": "embedding", "index": 1, "embedding": [0.5, -0.5, 0.5, -0.5]},
+   {"object": "embedding", "index": 0, "embedding": [0.1, 0.2, 0.3, 0.4]}
+  ],
+  "model": "text-embedding-3-large",
+  "usage": {"prompt_tokens": 18, "total_tokens": 18}
+ }
+}

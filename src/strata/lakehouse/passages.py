@@ -32,9 +32,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from strata.config import Thresholds, load_slice, load_sources, load_thresholds
+from strata.knowledge.embed import Embedder
 from strata.knowledge.sectors import main_sector
 from strata.knowledge.shields import Shield
-from strata.lakehouse import plans
+from strata.lakehouse import gold, plans
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
 from strata.reader import passages as route_a
@@ -182,11 +183,12 @@ def _versioned(held: Held, listed: list[Listed]) -> Held:
 
 @dataclass(frozen=True)
 class Project:
-    """What a passage's header says about its project."""
+    """What a passage's header says about its project, and the slice sector search filters on."""
 
     project_id: str
     country: str | None
-    sector: str | None
+    sector: str | None  # the header's word, such as roads
+    slice_sector: str | None = None  # water or transport
 
 
 PROJECT = """
@@ -202,7 +204,8 @@ def project(engine: Engine, project_id: str) -> Project:
     if not found:
         return Project(project_id, None, None)
     sector = main_sector(found[0]["sector_codes"])
-    return Project(project_id, found[0]["country_name"], sector.word if sector else None)
+    return Project(project_id, found[0]["country_name"], sector.word if sector else None,
+                   sector.slice_sector if sector else None)
 
 
 def header(short_name: str, project: Project, passage: route_a.Passage) -> str:
@@ -224,7 +227,7 @@ ROUTE_COLUMNS = ("document_id", "project_id", "pdf_page", "route", "reason", "pr
                  "passages", "public_from")
 PASSAGE_COLUMNS = ("passage_id", "document_id", "project_id", "document_type", "version", "section_path",
                    "paragraph", "paragraph_numbered", "part", "parts", "pdf_page", "last_pdf_page", "printed_page",
-                   "language", "parse_route", "header", "text", "tokens", "text_hash", "public_from")
+                   "language", "parse_route", "sector", "header", "text", "tokens", "text_hash", "public_from")
 
 
 @dataclass(frozen=True)
@@ -258,7 +261,8 @@ def read_documents(engine: Engine, chosen: list[Held], max_tokens: int) -> list[
                              listed.project_id, listed.document_type, held.version, passage.section_path,
                              passage.paragraph, passage.paragraph_numbered, passage.part, passage.parts,
                              passage.pdf_page, passage.last_pdf_page, passage.printed_page, listed.language,
-                             route_a.ROUTE_A, line, passage.text, passage.tokens,
+                             route_a.ROUTE_A, projects[listed.project_id].slice_sector, line, passage.text,
+                             passage.tokens,
                              route_a.text_hash(embedded_text(line, passage.text)), held.public_from))
     engine.insert_rows("strata.silver.documents", DOCUMENT_COLUMNS, documents)
     engine.insert_rows("strata.silver.document_page_routes", ROUTE_COLUMNS, routes)
@@ -294,6 +298,50 @@ def screen(engine: Engine, shield: Shield, clock: Callable[[], dt.datetime]) -> 
     return len(waiting)
 
 
+# ── 5. Embeddings, and the passages in gold ──────────────────────────────
+
+WAITING_FOR_VECTOR = """
+SELECT p.text_hash, min(p.header) AS header, min(p.text) AS text, min(p.public_from) AS public_from
+FROM strata.silver.passages AS p
+WHERE NOT EXISTS (SELECT 1 FROM strata.silver.passage_embeddings AS e
+                  WHERE e.text_hash = p.text_hash AND e.model = :model)
+GROUP BY p.text_hash
+"""
+VECTOR_COLUMNS = ("text_hash", "model", "dimensions", "embedding", "embedded_at", "public_from")
+VECTORS_PER_CALL = 64  # passages the embedder is asked for at once, so a failure loses little
+
+
+def store_vectors(engine: Engine, rows: list[tuple]) -> int:
+    """Append vectors to silver.passage_embeddings. DuckDB and Spark take a list of numbers as it is. The
+    SQL warehouse binds only single values, so each vector goes to it as JSON text, which from_json reads."""
+    from strata.lakehouse.engine import WarehouseEngine
+
+    if not isinstance(engine, WarehouseEngine):
+        return engine.insert_rows("strata.silver.passage_embeddings", VECTOR_COLUMNS, rows)
+    for start in range(0, len(rows), plans.WAREHOUSE_CHUNK):
+        params, values = {}, []
+        for n, (text_hash, model, dimensions, embedding, embedded_at, public) in enumerate(
+                rows[start:start + plans.WAREHOUSE_CHUNK]):
+            params |= {f"h{n}": text_hash, f"m{n}": model, f"d{n}": dimensions, f"e{n}": json.dumps(embedding),
+                       f"t{n}": embedded_at, f"p{n}": public}
+            values.append(f"(:h{n}, :m{n}, :d{n}, from_json(:e{n}, 'ARRAY<FLOAT>'), :t{n}, :p{n})")
+        engine.run(f"INSERT INTO strata.silver.passage_embeddings ({', '.join(VECTOR_COLUMNS)}) "  # sql-lint: names only
+                   f"VALUES {', '.join(values)}", params)  # sql-lint: names only
+    return len(rows)
+
+
+def embed(engine: Engine, embedder: Embedder, clock: Callable[[], dt.datetime]) -> int:
+    """Embed each passage text, with its header in front, that the model has not embedded. Returns how many."""
+    waiting = _rows(engine, WAITING_FOR_VECTOR, model=embedder.name)
+    for start in range(0, len(waiting), VECTORS_PER_CALL):
+        batch = waiting[start:start + VECTORS_PER_CALL]
+        vectors = embedder.embed([embedded_text(row["header"], row["text"]) for row in batch])
+        when = clock()
+        store_vectors(engine, [(row["text_hash"], embedder.name, embedder.dimensions, vector, when, row["public_from"])
+                               for row, vector in zip(batch, vectors, strict=True)])
+    return len(waiting)
+
+
 # ── Data readiness ───────────────────────────────────────────────────────
 
 MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
@@ -308,6 +356,8 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
     was found, the passages linked to a project, freshness, the contact details taken out, and what
     Prompt Shields found."""
     linked = {str(row[0]) for row in engine.run("SELECT project_id FROM strata.gold.project").rows}
+    indexed = {str(project): int(count) for project, count in engine.run(
+        "SELECT project_id, count(*) AS n FROM strata.gold.passage GROUP BY project_id").rows}
     scanned: dict[str, list] = {}
     for row in _rows(engine, SCANNED, shield=shield):
         scanned.setdefault(row["project_id"], []).append(row["attack_detected"])
@@ -335,6 +385,8 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
             "none of its paragraphs.")
         add("passages_linked_to_project", "linked", passages if project_id in linked else 0, passages,
             "Passages whose project is in strata.gold.project.")
+        add("passages_embedded", "coverage", indexed.get(project_id, 0), passages,
+            "Passages with a vector in strata.gold.passage, the AI Search index's source, of every passage.")
         add("documents_fresh", "fresh", None, None, CADENCE,
             as_of=max(item.held.public_from for item in items))
         add("document_contacts_stripped", "stripped", stripped, fetched,
@@ -356,10 +408,12 @@ class Report:
     documents: int  # documents read whose text Route A could read
     scans: int  # documents whose pages all wait for Route B
     passages: int
+    scanned: int  # passage texts the shield scanned this run
+    embedded: int  # passage texts the embedder embedded this run
 
 
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
-        thresholds: Thresholds | None = None, endpoint: str | None = None,
+        embedder: Embedder, thresholds: Thresholds | None = None, endpoint: str | None = None,
         clock: Callable[[], dt.datetime] = _now, run_id: str | None = None) -> Report:
     """Read the first documents into passages. See the module's docstring for the steps."""
     limits = thresholds or load_thresholds()
@@ -369,10 +423,12 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
     chosen = choose(engine, documents, endpoint, projects, int(limits.value("ingestion.passage_documents")))
     found = read_documents(engine, chosen.documents, int(limits.value("passages.max_tokens")))
-    screen(engine, shield, clock)
+    scanned = screen(engine, shield, clock)
+    embedded = embed(engine, embedder, clock)
+    gold.sync(engine, "passage")
     measure(engine, run_id, found, chosen.contacts_removed, shield.name, clock())
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
-                  sum(len(item.reading.passages) for item in found))
+                  sum(len(item.reading.passages) for item in found), scanned, embedded)
 
 
 def default_projects() -> list[str]:
@@ -385,10 +441,12 @@ def run_on_fixture(engine: Engine, manifest=None, **options) -> Report:
     """The run over the recorded fixture, with the offline document source, for each project whose
     document list the fixture records."""
     from strata.fixture import recorded as fmt
+    from strata.knowledge.embed import offline
     from strata.knowledge.shields import PatternShield
     from strata.reader.documents import NotFetched, RecordedDocuments
 
     options.setdefault("shield", PatternShield())
+    options.setdefault("embedder", offline())
     documents = RecordedDocuments(manifest or fmt.load_manifest())
     endpoint = options.get("endpoint") or load_sources()[SOURCE].endpoint
     recorded = []

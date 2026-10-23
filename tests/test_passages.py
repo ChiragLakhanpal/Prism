@@ -196,6 +196,60 @@ def test_a_prompt_shields_hit_is_kept_with_its_result_and_counted_in_data_readin
     assert hits == [{"count": 1, "denominator": report.passages}]
 
 
+def test_every_passage_sits_in_gold_with_a_vector_of_the_model_files_size_made_with_its_header(db):
+    import hashlib
+
+    from strata.config import load_models
+
+    size = load_models()["embed"].dimensions
+    silver = rows(db, "SELECT passage_id FROM strata.silver.passages")
+    gold = {row["passage_id"]: row for row in rows(db, "SELECT passage_id, embedding, embedding_model, public_from "
+                                                       "FROM strata.gold.passage")}
+
+    assert set(gold) == {row["passage_id"] for row in silver}
+    assert {len(row["embedding"]) for row in gold.values()} == {size}
+    for project_id in ("P130164", "P156634"):
+        embedded = measured(db, project_id)["passages_embedded"]
+        assert embedded["count"] == embedded["denominator"] > 0
+    [passage] = rows(db, ICR_PARAGRAPH, document_type=ICR, paragraph="54")
+    # What was embedded is the ticket's header, a line break, then the paragraph word for word.
+    embedded = "ICR, P130164, India, roads, III.B, ¶54, p.23\n" + value("icr-para-54")["quote"]
+    vectors = rows(db, "SELECT model FROM strata.silver.passage_embeddings WHERE text_hash = :hash",
+                   hash=hashlib.sha256(embedded.encode("utf-8")).hexdigest())
+    assert [row["model"] for row in vectors] == [gold[passage["passage_id"]]["embedding_model"]]
+
+
+class CountingEmbedder:
+    """The offline stand-in, counting the passages it is asked to embed."""
+
+    def __init__(self):
+        from strata.knowledge.embed import offline
+
+        self.inner, self.embedded = offline(), 0
+        self.name, self.dimensions = self.inner.name, self.inner.dimensions
+
+    def embed(self, texts):
+        self.embedded += len(texts)
+        return self.inner.embed(texts)
+
+
+def test_a_second_run_fetches_parses_and_embeds_nothing_new(fresh):
+    from strata.config import load_thresholds
+    from strata.lakehouse import passages
+
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 2
+    first, second = CountingEmbedder(), CountingEmbedder()
+    passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, embedder=first)
+    held = rows(fresh, "SELECT (SELECT count(*) FROM strata.bronze.document_texts) AS texts, "
+                       "(SELECT count(*) FROM strata.gold.passage) AS indexed")
+    passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, embedder=second)
+
+    assert first.embedded > 0 and second.embedded == 0
+    assert rows(fresh, "SELECT (SELECT count(*) FROM strata.bronze.document_texts) AS texts, "
+                       "(SELECT count(*) FROM strata.gold.passage) AS indexed") == held
+
+
 def squash(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
