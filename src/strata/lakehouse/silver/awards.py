@@ -4,7 +4,8 @@ Each row of the dataset is one supplier of one contract. The transform types eac
 the fiscal year from the signing date, parses the STEP reference, maps an old method name to the
 current one, and keeps the dataset's INDIVIDUAL CONSULTANT label out of the supplier's name: the
 label stands for many people, each with their own supplier ID, and no person is named (spec,
-user story 115).
+user stories 59 and 115). For the same reason, a Consultant Services contract whose description
+gives a personal title and a name keeps no description (strata.lakehouse.clean.names_a_person).
 """
 
 from __future__ import annotations
@@ -52,7 +53,8 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("borrower_contract_reference_number")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            clean.text(record.get("contract_description")),
+            None if clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
+            else clean.text(record.get("contract_description")),
             clean.text(record.get("procurement_category")),
             method.name if method else None,
             clean.text(record.get("procurement_method")),

@@ -225,7 +225,7 @@ file = "api/awards/P124109-fy2001-2016.json"
 kind = "json"
 dataset = "awards_fy2001_2016"
 url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS01004&resourceId=RS00934&type=json&top=1000&skip=0&filter=project_id%3D%27P124109%27"
-about = "A Kenya project's prior-review contract awards from the frozen FY2001 to FY2016 dataset, written with the old method names International Competitive Bidding, Limited International Bidding and Shopping, and its individual consultants named in person."
+about = "A Kenya project's prior-review contract awards from the frozen FY2001 to FY2016 dataset, written with the old method names International Competitive Bidding, Limited International Bidding and Shopping, and with people named as suppliers under Individual Consultant Selection and Consultant Qualification Selection, and in contract descriptions. The transform keeps none of those names."
 
 [[source]]
 file = "api/loans/P164704-ibrd.json"

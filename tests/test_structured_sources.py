@@ -13,6 +13,7 @@ import copy
 import datetime as dt
 import decimal
 import json
+import re
 import tomllib
 from pathlib import Path
 
@@ -98,6 +99,63 @@ def test_an_old_award_written_as_direct_contracting_is_stored_as_direct_selectio
 
     assert stored == [{"procurement_method": "Direct Selection", "procurement_method_as_written": "Direct Contracting",
                        "market_approach": "Direct"}]
+
+
+# A personal title followed by a name, as the FY2001 to FY2016 dataset writes a consultant hired in
+# person into a contract's description: "the Consultancy Services of Dr. ...".
+TITLED = re.compile(r"\b(?:Mr|Mrs|Ms|Miss|Dr|Capt|Eng|Prof)\.?\s+[A-Z]")
+
+
+def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_description(db):
+    """The spec: individual consultants are never named (user stories 59 and 115). The FY2001 to
+    FY2016 dataset names people as suppliers under Individual Consultant Selection and under
+    Consultant Qualification Selection, and in contract descriptions. The names are read from the
+    recorded files here, so no test file holds them."""
+    people = [row for file in OLD_AWARDS for row in recorded(file)["data"]
+              if row["procurement_category"] == "Consultant Services"
+              and (row["procurement_method"] == "Individual Consultant Selection"
+                   or TITLED.search(row["contract_description"] or ""))]
+    # INDIVIDUAL CONSULTANT is the label, not a person, and other contracts' descriptions use it.
+    names = {row["supplier"] for row in people if row["supplier"] and row["supplier"] != "INDIVIDUAL CONSULTANT"}
+    assert len(people) >= 5 and names  # the fixture holds such rows, and they name people
+
+    numbers = sorted({row["contract_number"] for row in people})
+    in_silver = rows(db, "SELECT contract_number, supplier, contract_description, individual_consultant "
+                         "FROM strata.silver.awards_fy2001_2016 WHERE list_contains(:numbers, contract_number)",
+                     numbers=numbers)
+    in_gold = rows(db, "SELECT wb_contract_number, supplier_id, contract_description FROM strata.gold.contract "
+                       "WHERE list_contains(:numbers, wb_contract_number)", numbers=numbers)
+    assert sorted({row["contract_number"] for row in in_silver}) == numbers
+    assert all((row["supplier"], row["contract_description"], row["individual_consultant"]) == (None, None, True)
+               for row in in_silver)
+    assert sorted(row["wb_contract_number"] for row in in_gold) == numbers
+    assert all((row["supplier_id"], row["contract_description"]) == (None, None) for row in in_gold)
+
+    for table in ("strata.silver.awards_fy2001_2016", "strata.gold.contract"):
+        held = db.run(f"SELECT * FROM {table}").rows  # sql-lint: names only
+        text = [value for row in held for value in row if isinstance(value, str)]
+        named = sum(any(name in value for value in text) for name in names)
+        assert named == 0, f"{table} names {named} of the people the recorded rows name"  # never prints them
+
+
+@pytest.mark.parametrize("description", ["Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist",
+                                         "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST"])
+def test_an_award_since_fy2020_whose_description_names_a_person_keeps_no_description(description):
+    """The awards since FY2020 write INDIVIDUAL CONSULTANT for a person, but a description could
+    still name one. No recorded row does, so this page is a recorded P156634 Consultant Services row
+    with only its description changed to give a title and a name, in either case."""
+    record = next(row for row in recorded("api/awards/P156634.json")["data"]
+                  if row["procurement_category"] == "Consultant Services")
+    named = dict(record, contract_description=description)
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "awards", {"count": 1, "data": [named]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        silver_row = rows(engine, "SELECT contract_description, supplier_id FROM strata.silver.awards")
+        gold_row = rows(engine, "SELECT contract_description, supplier_id FROM strata.gold.contract")
+
+    assert silver_row == gold_row == [{"contract_description": None, "supplier_id": record["supplier_id"]}]
 
 
 # ── FY2017 to FY2019, from award notices ─────────────────────────────────

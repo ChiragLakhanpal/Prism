@@ -8,9 +8,13 @@ Competitive Bidding. The transform stores the current name with the market appro
 implies, and keeps the dataset's own words in their own column (strata.lakehouse.clean). It also
 writes Civil Works as STEP's Works.
 
-The dataset names individual consultants in person, where the later dataset writes INDIVIDUAL
-CONSULTANT. A row whose method is Individual Consultant Selection, or whose supplier is that label,
-keeps no supplier name, so no person is named (spec, user story 115).
+The dataset names people, where the later dataset writes INDIVIDUAL CONSULTANT: as the supplier of
+an Individual Consultant Selection, as the supplier of a Consultant Qualification Selection that
+hired one person, and in contract descriptions such as "the Consultancy Services of Dr. ...". A row
+is a contract with a person when its method is Individual Consultant Selection, when its supplier
+is INDIVIDUAL CONSULTANT, or when it is for Consultant Services and its description gives a
+personal title followed by a name. Such a row keeps no supplier and no description, and is marked
+individual_consultant, so no person is named (spec, user stories 59 and 115).
 """
 
 from __future__ import annotations
@@ -35,6 +39,13 @@ RECORD_KEY = ("contract_number", "supplier", "supplier_contract_amount_usd")
 INDIVIDUAL = ("INDIVIDUAL CONSULTANT", "INDIVIDUAL CONSULTANT SELECTION")
 
 
+def _with_a_person(record: dict) -> bool:
+    """Whether the row is a contract with a person, whom the dataset may name."""
+    if any((clean.text(record.get(field)) or "").upper() in INDIVIDUAL for field in ("supplier", "procurement_method")):
+        return True
+    return clean.names_a_person(record.get("procurement_category"), record.get("contract_description"))
+
+
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
     fetched = fetched_at.astimezone(dt.UTC).date()
     rows = []
@@ -45,8 +56,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         reference = clean.step_reference(record.get("borrower_contract_reference_number"))
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
-        individual = any((clean.text(record.get(field)) or "").upper() in INDIVIDUAL
-                         for field in ("supplier", "procurement_method"))
+        individual = _with_a_person(record)
         rows.append((
             number,
             clean.text(record.get("project_id")),
@@ -57,7 +67,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("borrower_contract_reference_number")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            clean.text(record.get("contract_description")),
+            None if individual else clean.text(record.get("contract_description")),
             clean.category(record.get("procurement_category")),
             method.name if method else None,
             clean.text(record.get("procurement_method")),

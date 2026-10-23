@@ -10,8 +10,11 @@
 -- procurement_method             the current Procurement Regulations' name, such as Request for Bids
 -- procurement_method_as_written  the dataset's own words, such as International Competitive Bidding
 -- market_approach                what the old name says, in STEP's words: ICB is Open - International
--- supplier                       the supplier as the dataset names it; empty for an individual consultant
--- individual_consultant          true for an Individual Consultant Selection or an INDIVIDUAL CONSULTANT row
+-- contract_description           the dataset's description; empty for a contract with a person
+-- supplier                       the supplier as the dataset names it; empty for a contract with a person
+-- individual_consultant          true for a contract with a person: an Individual Consultant Selection,
+--                                an INDIVIDUAL CONSULTANT supplier, or Consultant Services whose
+--                                description gives a personal title and a name, so no person is named
 -- supplier_contract_amount_usd   the dataset's supplier_contract_amount, in US dollars
 -- fiscal_year                    July to June, worked out from contract_signing_date
 -- page_hash, fetched_at          the bronze page the row came from

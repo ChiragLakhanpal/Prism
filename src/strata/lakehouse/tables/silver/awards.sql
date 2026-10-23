@@ -7,6 +7,7 @@
 -- supplier_contract_amount_usd, the member's share in US dollars.
 -- step_reference            the STEP reference, normalized, when the reference is one
 -- reference_method_code     the method part of the reference, kept for the data note, never the method
+-- contract_description      the dataset's description; empty when it names a person by title and name
 -- procurement_method        the current Procurement Regulations' name
 -- procurement_method_as_written  the dataset's own words, kept when an old name was mapped
 -- market_approach           what an old method name says, in STEP's words, such as Open - National
