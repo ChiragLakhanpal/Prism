@@ -168,6 +168,10 @@ AT_SIGN = re.compile(r"[A-Za-z0-9]@")
 PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\d{3,4}"
                    r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])"
                    r"|(?<![\d.,/-])0 7\d{2}[ -]?\d{6}(?![\d.])")
+# A number of seven digits or more written after a phone label, whatever its shape (Tel 254 20 1234567,
+# Tel.254412345678), and a number written after a removed one with a slash, as a second mobile is.
+LABELLED_PHONE = re.compile(r"\b(?:tel|phone|mobile|cell|fax)\b\.?\s*(?:no\.?)?\s*[:.]?\s*\+?\(?\d[\d ().-]{6,}\d", re.I)
+AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d{3}")
 
 
 def text_values(engine):
@@ -208,7 +212,8 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
     leaks = []
     for where, value in text_values(gold):
         leaks += [(where, "an email or phone number")
-                  for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)]
+                  for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
+                  + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value)]
         leaks += [(where, "a recorded contact detail") for contact in found if contact in value]
     assert leaks == []
 
@@ -263,6 +268,21 @@ def test_stripping_removes_an_email_or_a_mobile_number_written_untidily():
         "Email [contact removed], [contact removed] or [contact removed]. Tel [contact removed]. "
         "Ref NWWDA-WSDP-03-2019-2020, P.O BOX 05586-00100.")
     assert removed == 4
+
+
+def test_stripping_removes_every_number_written_after_a_phone_label():
+    """Award notices write bidders' numbers with a country code and no plus, and a contact's second
+    mobile after a slash. An extension and a phrase such as "Mobile 4x4 units" stay. Made-up values."""
+    page = {"procnotices": [{"id": "OP-made-up", "contact_phone_no": "0722 123456", "notice_text": (
+        "Tel 254 20 1234567, 254722123456. Tel.254412345678. PHONE: 256 41 1234567. TEL/FAX 258 21 123456. "
+        "Tel: 0722 123 456/733123456. Ext. 42301. Mobile 4x4 units.")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "Tel [contact removed]. Tel.[contact removed]. PHONE: [contact removed]. TEL/FAX [contact removed]. "
+        "Tel: [contact removed]. Ext. 42301. Mobile 4x4 units.")
+    assert removed == 1 + 6  # the contact_phone_no field, and six replacements in the text
 
 
 def test_the_fetch_counts_the_contact_details_it_removes(gold):

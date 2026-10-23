@@ -11,7 +11,9 @@ counts what it took out:
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
 - in the same free text, every other email address, also one typed with a stray space or a comma
   for a dot, and every phone number written with a country code (+254 20 1234567) or a trunk zero
-  (046-1234567, 0722123456, 0 722-123456), is replaced too.
+  (046-1234567, 0722123456, 0 722-123456), is replaced too;
+- every number written after a Tel, Phone, Mobile, Cell or Fax label, also one with a country code
+  and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too.
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
@@ -41,6 +43,14 @@ DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
 FISCAL_YEARS = re.compile(r"\d{1,2}-(?:19|20)\d{2}-(?:19|20)\d{2}")  # a reference's end: 03-2019-2020
 POSTAL_CODE = re.compile(r"\d{3,5}-\d{5}")  # a P.O. Box and its postal code: 05586-00100
+# A number written after a phone label (Tel, Phone, Mobile, Cell, Fax, TEL/FAX), whatever its shape:
+# a country code with no plus (Tel 254 20 1234567), or a second number after a slash
+# (Tel: [contact removed]/722123456). Award notices write firms' and contacts' numbers this way.
+NUMBER = r"(?:" + re.escape(REMOVED) + r"|[+(]?\d(?:[\d \t()–-]|\.(?=\d))*)"
+LABELLED = re.compile(
+    r"(?P<label>\b(?:tel(?:ephone)?|phone|mobile|cell|fax)\b(?:\s*/\s*fax\b)?\.?\s*(?:no\.?)?\s*[:.]?[ \t]*)"
+    r"(?P<numbers>" + NUMBER + r"(?:[ \t]*[/,][ \t]*" + NUMBER + r")*)", re.I)
+TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
 
 def _phone(candidate: str) -> bool:
@@ -49,6 +59,13 @@ def _phone(candidate: str) -> bool:
     if not 9 <= len(digits) <= 15 or digits.startswith("000"):
         return False
     return not any(pattern.fullmatch(first) for pattern in (DATE_LIKE, AMOUNT_LIKE, FISCAL_YEARS, POSTAL_CODE))
+
+
+def _labelled_number(numbers: str) -> bool:
+    """Seven digits or more, or any alternate left after a removed number (Tel: [contact removed] / 8,
+    the last digit of a second line)."""
+    digits = len(re.sub(r"\D", "", numbers.replace(REMOVED, "")))
+    return digits >= 7 or (REMOVED in numbers and digits >= 1)
 
 
 DIGIT_RUN = re.compile(r"\+?\(?\d[\d \t().–-]{5,}\d")  # digits and the separators a phone number uses
@@ -91,7 +108,15 @@ class Stripper:
         if self.phones:
             text = self._sub(DIGIT_RUN, text, self._known_phone)
         text = self._sub(EMAIL, text)
-        return self._sub(PHONE, text, _phone)
+        text = self._sub(PHONE, text, _phone)
+        return LABELLED.sub(self._labelled, text)
+
+    def _labelled(self, match: re.Match) -> str:
+        numbers = match.group("numbers")
+        if not _labelled_number(numbers):
+            return match.group(0)
+        self.removed += 1
+        return match.group("label") + REMOVED + TRAILING.search(numbers).group(0)
 
 
 def _records(value):
