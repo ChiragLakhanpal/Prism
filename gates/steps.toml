@@ -40,7 +40,7 @@ show = true
 lane = "python"
 
 [[step]]
-name = "Run the Python tests for the gate, the server, the fixture and the ground-truth SQL"
+name = "Run the Python tests for the gate, the server, the fixture and its ground truth, and the ground-truth SQL"
 run = ["uv", "run", "--frozen", "pytest", "tests"]
 lane = "python"
 

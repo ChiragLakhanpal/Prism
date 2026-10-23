@@ -1,0 +1,1119 @@
+# Ground truth for the fixture: every value the spec's Testing Decisions name, the plan rows
+# the blueprint's Check a plan wireframe shows, the comparable works packages, and the awkward
+# cases the lakehouse must handle on purpose.
+#
+# Each value is a literal copied once from its source, never computed by Strata's code. Each
+# one says where it came from:
+#   - a document: document (the recorded file, without .txt), document_type, project, date,
+#     section and paragraph where there are any, and pdf_page (PDF pages count from 1);
+#   - a record: record (the recorded API file) and at (the path to the field, where a
+#     [key=value] step picks the one matching item).
+# `quote` is the text as it appears there. tests/test_ground_truth_values.py checks that each
+# quote is word for word on the stated page or in the stated field, ignoring only whitespace
+# and line-end hyphenation. The fixture was recorded with `uv run python -m strata.fixture.record`
+# on October 23, 2026.
+#
+# First listed: a value that says a plan is the first to list an activity names the activity
+# (first_lists) and the same agency's previous version (not_in), which must not list it. Each
+# previous version was found by fetching the text of every P156634 Procurement Plan dated
+# between the two and reading its Executing Agency(ies) line.
+#
+# Plan dates: the published plans print each step as Planned and Actual columns, and the text
+# loses the column of a blank cell. The column of each plan date below was read from the
+# word's x position on the PDF page with `pdftotext -bbox`. On page 3 of the October 9, 2026
+# plan the Signed Contract Planned column sits at x 720, its Actual column at x 743, and the
+# Contract Completion Planned column at x 761.
+
+# The showcase: India Rajasthan Road Sector Modernization (P130164)
+
+[[value]]
+id = "icr-para-54"
+says = "The ICR's rebidding lesson: 108 of 328 cases had to go through rebidding."
+value = "108 of 328 cases had to go through rebidding"
+quote = "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "III.B"
+paragraph = 54
+pdf_page = 23
+printed_page = "19 of 62"
+
+[[value]]
+id = "icr-para-55"
+says = "The ICR's lesson that forest and other clearances should be in place before works contracts are awarded."
+value = "forest and other administrative clearances should have been in place prior to awarding contracts"
+quote = "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "III.B"
+paragraph = 55
+pdf_page = 23
+printed_page = "19 of 62"
+
+[[value]]
+id = "icr-para-78"
+says = "The ICR says the mid-term review found part of the PDO compromised. ISR 7, archived after the review, rated progress Satisfactory: the showcase disagreement."
+value = "it was clearly identified at the MTR that the achievement of part of the PDO was compromised"
+quote = "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "IV.C"
+paragraph = 78
+pdf_page = 27
+printed_page = "23 of 62"
+
+[[value]]
+id = "icr-date"
+says = "The ICR is dated October 10, 2019."
+value = 2019-10-10
+quote = "RAJASTHAN ROAD SECTOR MODERNIZATION PROJECT October 10, 2019"
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+pdf_page = 1
+
+[[value]]
+id = "icr-disclosed"
+says = "The ICR became public on November 2, 2019."
+value = 2019-11-02
+quote = "2019-11-02T07:01:08Z"
+record = "api/documents/P130164.json"
+at = "documents.D31525018.disclosure_date"
+
+[[value]]
+id = "mid-term-review"
+says = "The mid-term review took place on May 16, 2016."
+value = 2016-05-16
+quote = "Approval Effectiveness MTR Review Original Closing Actual Closing 29-Oct-2013 10-Mar-2014 16-May-2016"
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "Data sheet, key dates"
+pdf_page = 6
+
+[[value]]
+id = "restructuring"
+says = "The project was restructured once, on July 27, 2017."
+value = 2017-07-27
+quote = "The project was restructured once on July 27, 2017."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "I.B"
+paragraph = 11
+pdf_page = 13
+
+[[value]]
+id = "isr-7-date"
+says = "ISR 7 was archived on August 26, 2016."
+value = 2016-08-26
+quote = "Seq No: 7 | ARCHIVED on 26-Aug-2016 | ISR24046"
+document = "documents/P130164/isr-07-2016-08-26"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2016-08-26
+pdf_page = 1
+
+[[value]]
+id = "isr-7-rating"
+says = "ISR 7 rated progress towards the PDO Satisfactory (the current rating, the second column). The ISR prints a bullet glyph, U+F06C, before each rating."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO \uf06c Satisfactory \uf06c Satisfactory"
+document = "documents/P130164/isr-07-2016-08-26"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2016-08-26
+pdf_page = 1
+
+[[value]]
+id = "isr-12-date"
+says = "ISR 12 was archived on April 10, 2018."
+value = 2018-04-10
+quote = "Seq No: 12 | ARCHIVED on 10-Apr-2018 | ISR31603"
+document = "documents/P130164/isr-12-2018-04-10"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2018-04-10
+pdf_page = 1
+
+[[value]]
+id = "isr-12-rating"
+says = "ISR 12 rated progress towards the PDO Moderately Unsatisfactory (the current rating, the second column)."
+value = "Moderately Unsatisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO \uf06c Moderately Satisfactory \uf06c Moderately Unsatisfactory"
+document = "documents/P130164/isr-12-2018-04-10"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2018-04-10
+pdf_page = 1
+
+[[value]]
+id = "award-7431-signed"
+says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017, in FY2017, which neither award dataset covers; only the award notice records it."
+value = 2017-06-15
+quote = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>2017/06/15"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+
+[[value]]
+id = "award-7431-reference"
+says = "Award notice OP00044090 carries the STEP reference IN-RRSMP-7431-CW-RFB."
+value = "IN-RRSMP-7431-CW-RFB"
+quote = "IN-RRSMP-7431-CW-RFB"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].bid_reference_no"
+
+[[value]]
+id = "icr-review-date"
+says = "IEG's ICR Review is dated March 27, 2020."
+value = 2020-03-27
+quote = "2020-03-27T04:00:00Z"
+record = "api/documents/P130164.json"
+at = "documents.D31906731.docdt"
+
+[[value]]
+id = "icr-review-reissue-date"
+says = "IEG re-issued the ICR Review on May 4, 2023."
+value = 2023-05-04
+quote = "2023-05-04T04:00:00Z"
+record = "api/documents/P130164.json"
+at = "documents.D34056616.docdt"
+
+[[value]]
+id = "icr-review-number-2020"
+says = "The March 27, 2020 ICR Review is report ICRR0021929."
+value = "ICRR0021929"
+quote = "Report Number: ICRR0021929"
+document = "documents/P130164/icr-review-2020-03-27"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2020-03-27
+pdf_page = 1
+
+[[value]]
+id = "icr-review-number-2023"
+says = "The May 4, 2023 re-issue keeps the same report number, ICRR0021929."
+value = "ICRR0021929"
+quote = "Report Number: ICRR0021929"
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+pdf_page = 1
+
+[[value]]
+id = "icr-review-efficiency-2020"
+says = "The March 27, 2020 ICR Review gives no efficiency rating."
+value = "---"
+quote = "Page 9 of 14 Efficiency Rating ---"
+document = "documents/P130164/icr-review-2020-03-27"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2020-03-27
+pdf_page = 9
+
+[[value]]
+id = "icr-review-efficiency-2023"
+says = "The May 4, 2023 re-issue rates efficiency Modest, the change the re-issue made."
+value = "Modest"
+quote = "Page 9 of 14 Efficiency Rating Modest"
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+pdf_page = 9
+
+[[value]]
+id = "ieg-outcome-p130164"
+says = "IEG rated P130164's outcome Moderately Unsatisfactory."
+value = "Moderately Unsatisfactory"
+quote = "Moderately Unsatisfactory"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].outcome"
+
+# The demo plan: the Northern Water Works Development Agency's Procurement Plan of
+# October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634)
+
+[[value]]
+id = "plan-541055-estimated"
+says = "KE-NWWDA-541055-CW-RFB is estimated at US$1,230,000.00."
+value = 1230000.00
+quote = "1,230,000.00 0.00 Pending Implementation"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541055-status"
+says = "KE-NWWDA-541055-CW-RFB's Process Status is Pending Implementation."
+value = "Pending Implementation"
+quote = "1,230,000.00 0.00 Pending Implementation"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541055-planned-completion"
+says = "KE-NWWDA-541055-CW-RFB's planned contract completion is July 31, 2026 (Contract Completion Planned, x 761)."
+value = 2026-07-31
+quote = "Pending Implementation 2026-03-09 2026-03-10 2026-04-01 2026-04-06 2026-04-24 2026-07-31"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541055-no-signed-contract"
+says = "The plan shows no signed contract for KE-NWWDA-541055-CW-RFB: the Signed Contract Actual cell is blank, its last dated step is the Signed Contract Planned date April 24, 2026 (x 720), and its Actual Amount reads 0.00."
+value = "no signed contract"
+quote = "1,230,000.00 0.00 Pending Implementation 2026-03-09 2026-03-10 2026-04-01 2026-04-06 2026-04-24 2026-07-31"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "award-541055-signed"
+says = "The contract awards dataset shows KE-NWWDA-541055-CW-RFB signed on June 22, 2026 at US$1,287,515.60, which the October 9, 2026 plan does not show. Recheck its signals on demo day."
+value = 2026-06-22
+quote = "22-Jun-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1903781].contract_signing_date"
+
+[[value]]
+id = "award-541055-amount"
+says = "The awards dataset's amount for KE-NWWDA-541055-CW-RFB is US$1,287,515.60."
+value = 1287515.60
+quote = "1287515.6"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1903781].supplier_contract_amount_usd"
+
+[[value]]
+id = "award-notice-541055"
+says = "The award notice for KE-NWWDA-541055-CW-RFB was published on October 13, 2026, after the October 9, 2026 plan, with the award notified on June 22, 2026."
+value = 2026-10-13
+quote = "13-Oct-2026"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00474946].noticedate"
+
+[[value]]
+id = "award-541062-signed"
+says = "The awards dataset shows KE-NWWDA-541062-CW-RFQ signed on May 11, 2026, while the October 9, 2026 plan shows it Pending Implementation."
+value = 2026-05-11
+quote = "11-May-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1903551].contract_signing_date"
+
+[[value]]
+id = "plan-229129-estimated"
+says = "KE-NWWDA-229129-CW-RFB was estimated at US$300,000.00."
+value = 300000.00
+quote = "Post Request for Bids Open - National Single Stage - One Envelope N 300,000.00 1,245,092.76 Signed"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-actual"
+says = "KE-NWWDA-229129-CW-RFB's Actual Amount is US$1,245,092.76, against an estimate of US$300,000.00."
+value = 1245092.76
+quote = "300,000.00 1,245,092.76 Signed"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-signed"
+says = "KE-NWWDA-229129-CW-RFB's contract was signed on January 3, 2022 (Signed Contract Actual, x 743)."
+value = 2022-01-03
+quote = "2021-07-01 2022-01-03 2021-10-15"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-first-planned-signing"
+says = "The first plan that lists KE-NWWDA-229129-CW-RFB, of April 21, 2021, planned its signed contract for July 1, 2021 (the fifth planned date of six, before Contract Completion)."
+value = 2021-07-01
+quote = "300,000.00 0.00 Pending Implementation 2021-04-23 2021-04-28 2021-05-19 2021-05-26 2021-07-01 2021-10-15"
+document = "documents/P156634/procurement-plan-2021-04-21"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2021-04-21
+pdf_page = 3
+first_lists = "KE-NWWDA-229129-CW-RFB"
+not_in = "documents/P156634/procurement-plan-2020-12-07"
+
+[[value]]
+id = "plan-229129-days-late"
+says = "KE-NWWDA-229129-CW-RFB was signed 186 days after its first published planned date."
+value = 186
+days_between = ["plan-229129-first-planned-signing", "plan-229129-signed"]
+quote = "2021-07-01 2022-01-03"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "award-229129-signed"
+says = "The contract awards dataset agrees: KE-NWWDA-229129-CW-RFB was signed on January 3, 2022 at US$1,245,092.76."
+value = 2022-01-03
+quote = "03-Jan-2022"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1686165].contract_signing_date"
+
+[[value]]
+id = "plan-199461-reference-method"
+says = "KE-NWWDA-199461-GO-RFB's reference ends in RFB."
+value = "RFB"
+quote = "KE-NWWDA-199461-GO-RFB"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-199461-method-column"
+says = "KE-NWWDA-199461-GO-RFB's Method column says Request for Quotations, so the method differs from the reference."
+value = "Request for Quotations"
+quote = "Post Request for Quotations Limited Single Stage - One Envelope N 95,000.00 103,996.17 Completed"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-503455-actual-zero"
+says = "KE-NWWDA-503455-CW-RFQ is Signed (signed August 13, 2025, x 743), but its Actual Amount reads 0.00."
+value = 0.00
+quote = "220,000.00 0.00 Signed 2025-07-23 2025-07-23 2025-08-06 2025-08-13"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541061-actual-zero"
+says = "KE-NWWDA-541061-CW-RFQ is Completed, but its Actual Amount reads 0.00."
+value = 0.00
+quote = "290,000.00 0.00 Completed"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-cwsb-567630-first-listed"
+says = "The Coast Water Services Board's plan of August 17, 2026 is the first to list KE-CWSB-567630-CW-DIR, a works contract by direct selection."
+value = 2026-08-17
+quote = "KE-CWSB-567630-CW-DIR"
+document = "documents/P156634/procurement-plan-2026-08-17"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-08-17
+pdf_page = 3
+first_lists = "KE-CWSB-567630-CW-DIR"
+not_in = "documents/P156634/procurement-plan-2026-07-31"
+
+[[value]]
+id = "plan-541055-first-listed"
+says = "The Northern Water Works Development Agency's plan of March 5, 2026 is the first to list KE-NWWDA-541055-CW-RFB."
+value = 2026-03-05
+quote = "KE-NWWDA-541055-CW-RFB / Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply"
+document = "documents/P156634/procurement-plan-2026-03-05"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-03-05
+pdf_page = 3
+first_lists = "KE-NWWDA-541055-CW-RFB"
+not_in = "documents/P156634/procurement-plan-2025-07-21"
+
+[[value]]
+id = "plan-wsdp-03-first-listed"
+says = "The Ministry of Water and Irrigation's plan of November 8, 2019 is the first to list NWWDA-WSDP-03-2019-2020, the consultancy for the Wajir water supply."
+value = 2019-11-08
+quote = "NWWDA-WSDP-03-2019-2020 / Consultancy Services for Comparison of Water Supply Options, Preparation of Detailed Designs, Tender Documents, Safeguards Documents and Construction Supervision of Wajir Water Supply"
+document = "documents/P156634/procurement-plan-2019-11-08"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2019-11-08
+pdf_page = 4
+first_lists = "NWWDA-WSDP-03-2019-2020"
+not_in = "documents/P156634/procurement-plan-2019-08-26"
+
+[[value]]
+id = "closing-date-p156634"
+says = "P156634 closes on October 31, 2026."
+value = 2026-10-31
+quote = "2026-10-31"
+record = "api/projects/P156634.json"
+at = "projects.P156634.closingdate"
+
+# The October 9, 2026 plan's rows, as the blueprint's Check a plan wireframe shows them. Each
+# field is copied from the plan in STEP's words; each quote must sit inside that activity's
+# row on the page. The plan lists a ninth activity the wireframe leaves out:
+# KE-NWWDA-207796-CS-INDV, an individual consultant (Post, Individual Consultant Selection,
+# Open, US$60,000.00, Completed).
+
+[plan]
+document = "documents/P156634/procurement-plan-2026-10-09"
+pdf_page = 3
+also_lists = ["KE-NWWDA-207796-CS-INDV"]
+
+[[plan_row]]
+reference = "KE-NWWDA-541055-CW-RFB"
+description = "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply"
+review_type = "Post"
+method = "Request for Bids"
+market_approach = "Open - National"
+estimated_amount_usd = "1,230,000.00"
+actual_amount_usd = "0.00"
+process_status = "Pending Implementation"
+quotes = ["Post Request for Bids Open - National", "1,230,000.00 0.00 Pending Implementation"]
+wireframe_mark = "Needs a look"
+
+[[plan_row]]
+reference = "KE-NWWDA-229129-CW-RFB"
+description = "Drilling of 4 Number Exploratory Boreholes In Wajir County"
+review_type = "Post"
+method = "Request for Bids"
+market_approach = "Open - National"
+estimated_amount_usd = "300,000.00"
+actual_amount_usd = "1,245,092.76"
+process_status = "Signed"
+quotes = ["Post Request for Bids Open - National Single Stage - One Envelope N 300,000.00 1,245,092.76 Signed"]
+wireframe_mark = "Watch"
+
+[[plan_row]]
+reference = "KE-NWWDA-541062-CW-RFQ"
+description = "Equipping of Exploratory Boreholes project- Lot 3- Qaras Water Supply"
+review_type = "Post"
+method = "Request for Quotations"
+market_approach = "Limited - National"
+estimated_amount_usd = "295,000.00"
+actual_amount_usd = "0.00"
+process_status = "Pending Implementation"
+quotes = ["Post Request for Quotations Limited - National", "295,000.00 0.00 Pending Implementation"]
+wireframe_mark = "Watch"
+
+[[plan_row]]
+reference = "KE-NWWDA-199461-GO-RFB"
+description = "Supply and Delivery 1 No. 4 x 4 Wheel drive, manual transmission of engine capacity 4,100 - 4,200 cc"
+review_type = "Post"
+method = "Request for Quotations"
+market_approach = "Limited"
+estimated_amount_usd = "95,000.00"
+actual_amount_usd = "103,996.17"
+process_status = "Completed"
+quotes = ["Post Request for Quotations Limited Single Stage - One Envelope N 95,000.00 103,996.17 Completed"]
+wireframe_mark = "Data note"
+
+[[plan_row]]
+reference = "KE-NWWDA-503455-CW-RFQ"
+description = "Drilling 4 No. New Exploratory Boreholes in Arbajahan and Sarman in Wajir County"
+review_type = "Post"
+method = "Request for Quotations"
+market_approach = "Limited - National"
+estimated_amount_usd = "220,000.00"
+actual_amount_usd = "0.00"
+process_status = "Signed"
+quotes = ["Post Request for Quotations Limited - National", "220,000.00 0.00 Signed"]
+wireframe_mark = "Data note"
+
+[[plan_row]]
+reference = "KE-NWWDA-541061-CW-RFQ"
+description = "Equipping of Exploratory Boreholes Project - Lot 2- Nurgows Water Supply"
+review_type = "Post"
+method = "Request for Quotations"
+market_approach = "Limited - National"
+estimated_amount_usd = "290,000.00"
+actual_amount_usd = "0.00"
+process_status = "Completed"
+quotes = ["Post Request for Quotations Limited - National", "290,000.00 0.00 Completed"]
+wireframe_mark = "Data note"
+
+[[plan_row]]
+reference = "KE-NWWDA-199471-GO-RFQ"
+description = "supply and delivery of Laptops, desktops and photocopier."
+review_type = "Post"
+method = "Request for Quotations"
+market_approach = "Limited"
+estimated_amount_usd = "15,000.00"
+actual_amount_usd = "14,856.89"
+process_status = "Completed"
+quotes = ["Post Request for Quotations Limited Single Stage - One Envelope N 15,000.00 14,856.89 Completed"]
+wireframe_mark = "No signals"
+
+[[plan_row]]
+reference = "NWWDA-WSDP-03-2019-2020"
+description = "Consultancy Services for Comparison of Water Supply Options, Preparation of Detailed Designs, Tender Documents, Safeguards Documents and Construction Supervision of Wajir Water Supply"
+review_type = "Prior"
+method = "Quality And Cost-Based Selection"
+market_approach = "Open - International"
+estimated_amount_usd = "2,000,000.00"
+actual_amount_usd = "1,021,300.12"
+process_status = "Signed"
+quotes = ["Prior Quality And Cost-Based Selection Open - International 2,000,000.00 1,021,300.12 Signed"]
+wireframe_mark = "No signals"
+
+# Comparable works packages for KE-NWWDA-541055-CW-RFB.
+#
+# Default criteria: category works, method Request for Bids, Kenya, first Invitation for Bids
+# from July 1, 2019 (the start of the since-FY2020 awards dataset) to the plan's date. Market
+# approach, review type and size band are left open by default, because a package still open
+# has no review type in any record. So of the glossary's seven criteria, the default sets
+# category, method, region (as the country) and period. Ticket 12's find_comparables must
+# default the same way, or update this list in the same change.
+#
+# Each package's specific procurement notice (its first Invitation for Bids) joins its signed
+# contract on the STEP reference: the notice's bid_reference_no equals the award's
+# borrower_contract_reference_number. The fixture records every notice and award for P156634,
+# so most comparables are from P156634. KE-TAVEVO-466579-GO-RFB is a works package by its
+# notice's procurement group, though its reference says GO.
+#
+# Each package is signed, canceled or still open:
+# - Signed (45). Most have a row in the awards dataset. KE-GAWASCO-54771-CW-RFB and
+#   KE-GAWASCO-111742-CW-RFB have none, but each has a Contract Award notice that gives its
+#   Contract Signature Date. Their entries name the award_notice and have no contract or
+#   review_type.
+# - Canceled (3). KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and
+#   KE-KIMAWASCO-377450-CW-RFB have no award row and no award notice. The agency's latest plan,
+#   of March 19, 2025, marks each one Canceled (canceled_in, pdf_page and quote), and the notice
+#   for KE-KIMAWASCO-149448-CW-RFB says so too (notice_says). By their titles, the works were
+#   advertised again and signed as KE-KIMAWASCO-158691-CW-RFB (the ablution blocks) and
+#   KE-KIMAWASCO-416959-CW-RFB (the sludge facilities). The blueprint's table of estimates keeps
+#   "unsigned and canceled packages" as still open for procurement cycle time, so ticket 12 may
+#   draw these hollow too. They are listed apart so that either count can be checked.
+# - Still open (4). P156634 has none. The fixture adds every notice for the four Kenya works
+#   packages under Request for Bids that were advertised by October 9, 2026 with bids due after
+#   it, found with a notices search for Kenya, works and Request for Bids on October 23, 2026,
+#   and every award row for their projects, P176758 and P170941. None of the four has an award
+#   row, an award notice or a notice that mentions a cancellation. Bids were due after the plan's
+#   date (bids_due), so none could have been signed by then.
+
+[comparables]
+says = "Kenya works packages under Request for Bids whose first Invitation for Bids is dated July 1, 2019 to October 9, 2026: 45 signed (43 in the awards dataset and two only in their award notices), three canceled and four still open."
+notices = ["api/notices/P156634.json", "api/notices/kenya-works-open-on-2026-10-09.json"]
+awards = ["api/awards/P156634.json", "api/awards/P176758-P170941.json"]
+procurement_group = "CW"
+procurement_method_code = "RFB"
+country = "Kenya"
+first_notice_from = 2019-07-01
+first_notice_to = 2026-10-09
+signed = 45
+signed_only_in_award_notice = 2
+canceled = 3
+still_open = 4
+narrower = "Add review type Prior. Review type comes from the award row, so a package with no award row has none and drops out: the three canceled, the four still open and the two signed only in their award notices."
+narrower_review_type = "Prior"
+narrower_count = 7
+[[comparable]]
+reference = "KE-MOWI-47509-CW-RFB"
+notice = "OP00078259"
+notice_date = 2019-10-01
+contract = "1652775"
+signed = 2021-03-23
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-WAJWASCO-26664-CW-RFB"
+notice = "OP00079327"
+notice_date = 2019-10-24
+contract = "1613386"
+signed = 2021-04-06
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-142995-CW-RFB"
+notice = "OP00081965"
+notice_date = 2019-12-18
+contract = "1618181"
+signed = 2021-03-30
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-54759-CW-RFB"
+notice = "OP00082051"
+notice_date = 2019-12-19
+contract = "1625868"
+signed = 2020-07-15
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-GAWASCO-54761-CW-RFB"
+notice = "OP00082096"
+notice_date = 2019-12-20
+contract = "1621205"
+signed = 2020-07-13
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-54763-CW-RFB"
+notice = "OP00082095"
+notice_date = 2019-12-20
+contract = "1621199"
+signed = 2020-07-20
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-54775-CW-RFB"
+notice = "OP00082094"
+notice_date = 2019-12-20
+contract = "1621523"
+signed = 2020-07-21
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MAWASCO-149056-CW-RFB"
+notice = "OP00082809"
+notice_date = 2020-01-10
+contract = "1612028"
+signed = 2020-07-22
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-149448-CW-RFB"
+notice = "OP00083890"
+notice_date = 2020-02-04
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "Post Request for Bids Open - National Single Stage - One Envelope 3,000,000.00 0.00 Canceled"
+notice_says = "The Request for Bids has been cancelled."
+
+[[comparable]]
+reference = "KE-TAVEVO-151330-CW-RFB"
+notice = "OP00084050"
+notice_date = 2020-02-06
+contract = "1622208"
+signed = 2020-06-18
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MAWASCO-69899-CW-RFB"
+notice = "OP00084128"
+notice_date = 2020-02-09
+contract = "1635004"
+signed = 2020-12-10
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-MAWASCO-156444-CW-RFB"
+notice = "OP00084153"
+notice_date = 2020-02-10
+contract = "1620056"
+signed = 2020-09-15
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-158691-CW-RFB"
+notice = "OP00085086"
+notice_date = 2020-02-26
+contract = "1624689"
+signed = 2021-04-09
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-CWSB-150896-CW-RFB"
+notice = "OP00090862"
+notice_date = 2020-06-17
+contract = "1646192"
+signed = 2021-03-23
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-141042-CW-RFB"
+notice = "OP00091325"
+notice_date = 2020-06-23
+contract = "1647639"
+signed = 2021-04-09
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-TAVEVO-151304-CW-RFB"
+notice = "OP00091874"
+notice_date = 2020-06-30
+contract = "1647421"
+signed = 2021-03-11
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-MAWASCO-178688-CW-RFB"
+notice = "OP00094517"
+notice_date = 2020-08-17
+contract = "1636744"
+signed = 2021-01-20
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KWAWASCO-203531-CW-RFB"
+notice = "OP00108785"
+notice_date = 2020-12-11
+contract = "1654319"
+signed = 2021-09-14
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KWAWASCO-203535-CW-RFB"
+notice = "OP00108797"
+notice_date = 2020-12-11
+contract = "1657064"
+signed = 2021-09-14
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KWAWASCO-206973-CW-RFB"
+notice = "OP00110738"
+notice_date = 2020-12-26
+contract = "1654318"
+signed = 2021-09-14
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MOWASCO-113723-CW-RFB"
+notice = "OP00119451"
+notice_date = 2021-03-03
+contract = "1659465"
+signed = 2021-06-11
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-WAJWASCO-220077-CW-RFB"
+notice = "OP00123041"
+notice_date = 2021-03-30
+contract = "1674954"
+signed = 2021-07-27
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-157517-CW-RFB"
+notice = "OP00124313"
+notice_date = 2021-04-07
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "Post Request for Bids Open - National Single Stage - One Envelope 1,200,000.00 0.00 Canceled"
+
+[[comparable]]
+reference = "KE-WAJWASCO-205491-CW-RFB"
+notice = "OP00125209"
+notice_date = 2021-04-14
+contract = "1666402"
+signed = 2021-07-17
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-WAJWASCO-226565-CW-RFB"
+notice = "OP00125205"
+notice_date = 2021-04-14
+contract = "1666400"
+signed = 2021-07-29
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-TAVEVO-170154-CW-RFB"
+notice = "OP00125512"
+notice_date = 2021-04-16
+contract = "1670085"
+signed = 2021-07-14
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-TAVEVO-175703-CW-RFB"
+notice = "OP00127194"
+notice_date = 2021-04-28
+contract = "1670515"
+signed = 2021-07-30
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MOWASCO-228804-CW-RFB"
+notice = "OP00130863"
+notice_date = 2021-05-28
+contract = "1668379"
+signed = 2021-09-10
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MAWASCO-236797-CW-RFB"
+notice = "OP00132339"
+notice_date = 2021-06-09
+contract = "1675351"
+signed = 2021-10-27
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-MAWASCO-236802-CW-RFB"
+notice = "OP00132341"
+notice_date = 2021-06-09
+contract = "1674418"
+signed = 2021-10-12
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-CWSB-233052-CW-RFB"
+notice = "OP00139348"
+notice_date = 2021-07-26
+contract = "1676946"
+signed = 2021-11-17
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-CWSB-232660-CW-RFB"
+notice = "OP00142640"
+notice_date = 2021-08-16
+contract = "1691287"
+signed = 2022-04-13
+review_type = "Prior"
+
+[[comparable]]
+reference = "KE-NWWDA-229129-CW-RFB"
+notice = "OP00146683"
+notice_date = 2021-09-17
+contract = "1686165"
+signed = 2022-01-03
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KWAWASCO-201675-CW-RFB"
+notice = "OP00151064"
+notice_date = 2021-11-18
+contract = "1687124"
+signed = 2022-02-15
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KWAWASCO-203571-CW-RFB"
+notice = "OP00151069"
+notice_date = 2021-11-18
+contract = "1688210"
+signed = 2022-02-15
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-54771-CW-RFB"
+notice = "OP00160523"
+notice_date = 2022-01-03
+award_notice = "OP00175878"
+signed = 2022-04-19
+
+[[comparable]]
+reference = "KE-GAWASCO-266383-CW-RFB"
+notice = "OP00162705"
+notice_date = 2022-01-19
+contract = "1695885"
+signed = 2022-05-18
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-111742-CW-RFB"
+notice = "OP00180273"
+notice_date = 2022-05-19
+award_notice = "OP00191645"
+signed = 2022-08-16
+
+[[comparable]]
+reference = "KE-TAVEVO-338455-CW-RFB"
+notice = "OP00216583"
+notice_date = 2023-03-01
+contract = "1733208"
+signed = 2023-06-22
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-WAJWASCO-356671-CW-RFB"
+notice = "OP00235440"
+notice_date = 2023-07-07
+contract = "1754918"
+signed = 2023-08-22
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-377450-CW-RFB"
+notice = "OP00244373"
+notice_date = 2023-08-28
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+pdf_page = 3
+quote = "2,849,262.19 0.00 Canceled"
+
+[[comparable]]
+reference = "KE-WAJWASCO-372776-CW-RFB"
+notice = "OP00245480"
+notice_date = 2023-09-02
+contract = "1768930"
+signed = 2023-10-06
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KIMAWASCO-416959-CW-RFB"
+notice = "OP00284655"
+notice_date = 2024-04-17
+contract = "1815280"
+signed = 2024-11-08
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-GAWASCO-436012-CW-RFB"
+notice = "OP00306615"
+notice_date = 2024-08-21
+contract = "1809442"
+signed = 2024-11-18
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-WAJWASCO-456993-CW-RFB"
+notice = "OP00319669"
+notice_date = 2024-10-31
+contract = "1903145"
+signed = 2025-01-24
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-TAVEVO-449427-CW-RFB"
+notice = "OP00321105"
+notice_date = 2024-11-07
+contract = "1817945"
+signed = 2025-01-28
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-TAVEVO-451075-CW-RFB"
+notice = "OP00321096"
+notice_date = 2024-11-07
+contract = "1821548"
+signed = 2025-02-17
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-TAVEVO-466579-GO-RFB"
+notice = "OP00343811"
+notice_date = 2025-03-06
+contract = "1850833"
+signed = 2025-08-15
+review_type = "Post"
+
+[[comparable]]
+reference = "KE-KAJIADO COUNTY-567787-CW-RFB"
+notice = "OP00468983"
+notice_date = 2026-09-15
+project = "P176758"
+bids_due = 2026-10-13
+
+[[comparable]]
+reference = "KE-UASIN GISHU COUNTY-571338-CW-RFB"
+notice = "OP00469903"
+notice_date = 2026-09-21
+project = "P176758"
+bids_due = 2026-10-21
+
+[[comparable]]
+reference = "KE-ICTA-571738-CW-RFB"
+notice = "OP00471871"
+notice_date = 2026-09-29
+project = "P170941"
+bids_due = 2026-11-10
+
+[[comparable]]
+reference = "KE-MIGORI COUNTY-532367-CW-RFB"
+notice = "OP00474209"
+notice_date = 2026-10-09
+project = "P176758"
+bids_due = 2026-11-09
+
+# Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
+# Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the
+# Method column (plan-199461-method-column) are values above.
+
+[[value]]
+id = "loan-form-compact"
+says = "Credit 60300 written with no separator, as the IDA credits dataset writes it."
+value = "IDA60300"
+quote = "IDA60300"
+record = "api/credits/P156634-P130164.json"
+at = "data[credit_number=IDA60300].credit_number"
+
+[[value]]
+id = "loan-form-hyphen"
+says = "Credit 60300 written with a hyphen, as procurement notices and the projects API write it."
+value = "IDA-60300"
+quote = "Loan/Credit/TF Info:</b>IDA-60300"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00474946].notice_text"
+
+[[value]]
+id = "loan-form-bare"
+says = "Credit 60300 written as bare digits, here with the country code after it, in a notice's free text."
+value = "60300"
+quote = "Credit No.:</strong> 60300 KE"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00245480].notice_text"
+
+[[value]]
+id = "loan-form-slash"
+says = "Credit 60300 written with a spaced slash, as Procurement Plans write it."
+value = "IDA / 60300"
+quote = "Loan / Credit No: IDA / 60300"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "individual-consultant"
+says = "The award for KE-NWWDA-207796-CS-INDV names its supplier only as INDIVIDUAL CONSULTANT, with a hashed supplier id."
+value = "INDIVIDUAL CONSULTANT"
+quote = "INDIVIDUAL CONSULTANT"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1668349].supplier"
+
+[awkward.contact_details]
+says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, carries a contact name, email and phone number. Ingestion strips them, and this file does not repeat them."
+record = "api/notices/P156634.json"
+notice = "OP00146683"
+
+[awkward.joint_venture]
+says = "Contract 1624689 for KE-KIMAWASCO-158691-CW-RFB went to two firms together. The awards dataset has one row per member with the contract amount split equally, and award notice OP00125855 lists both as awarded bidders."
+awards = "api/awards/P156634.json"
+contract = "1624689"
+supplier_ids = ["503708", "503711"]
+amount_per_member_usd = 697972.33
+notices = "api/notices/P156634.json"
+notice = "OP00125855"
+
+[awkward.dated_in_the_future]
+says = "Document 34442292, a loan agreement, is dated December 31, 2026: after its disclosure on January 1, 2025 and after the day it was recorded."
+record = "api/documents/dated-in-the-future.json"
+document = "D34442292"
+docdt = 2026-12-31
+disclosed = 2025-01-01
+
+[awkward.fy2017_2019_gap]
+says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017 (FY2017). The FY2001 to FY2016 awards dataset has no row for it and the since-FY2020 dataset has no rows for P130164, so only award notice OP00044090 records it (award-7431-signed)."
+awards = "api/awards/P130164-fy2001-2016.json"
+reference = "IN-RRSMP-7431-CW-RFB"

@@ -36,13 +36,13 @@ It runs the steps in `gates/steps.toml`. Steps that do not depend on each other 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
 2. Run four lanes side by side:
    - The guard lane tests the guard hook.
-   - The python lane builds the fixture database, then runs the Python tests under `tests/`. They cover the gate, the server, the fixture and the ground-truth SQL on DuckDB.
+   - The python lane builds the fixture database from the recorded sources and prints its size. Then it runs the Python tests under `tests/`. They cover the gate, the server, the fixture and its ground truth, and the ground-truth SQL on DuckDB.
    - The ops lane runs the Python tests under `ops/`, for the wizard and the day-one probes, on six pytest-xdist workers.
    - The web lane type checks and bundles the web app, then runs the Playwright tests against it.
 
 The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
-The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment.
+The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
 
 To add a check, add a step to `gates/steps.toml`. A step with no `lane` key runs alone. It waits for every step above it, and every step below it waits for it. To run a step side by side with others, give it a lane, such as `lane = "web"`, and put it among the steps that have lanes. It runs after the steps above it in the same lane. Use a new lane's name when the step needs nothing from the other steps. A step that needs another step's output goes in that step's lane, below it. A new pytest step names the folders it tests, and the gate's own tests check that each folder in `testpaths` in `pyproject.toml` runs in exactly one step.
 
@@ -86,7 +86,9 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | Screen tests (seam 4) | `web/tests/` |
 | Responses recorded once and shared by the server and screen tests | `tests/fixtures/api/` |
 | Fixture inputs, and the fixture database the gate builds | `data/fixture/`, and `data/out/`, which git ignores |
-| Ground-truth SQL | `tests/ground_truth/` |
+| The list of recorded sources, and the recorded files | `data/fixture/sources.toml` and `data/fixture/recorded/` (see `data/fixture/README.md`) |
+| The recording command, which refetches the fixture and prints a diff | `src/strata/fixture/` (`uv run python -m strata.fixture.record`) |
+| Ground-truth SQL, and the ground-truth values with their sources | `tests/ground_truth/` (`*.sql` and `values.toml`) |
 | The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (later) |
 | The document reader | `src/strata/reader/` (later) |
 | The knowledge model | `src/strata/knowledge/` (later) |

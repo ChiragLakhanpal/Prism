@@ -1,0 +1,248 @@
+Source: https://documents.worldbank.org/curated/en/768091588250052402/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Ministry of Water and Irrigation's Procurement Plan of April 30, 2020 for P156634, which lists NWWDA-WSDP-03-2019-2020. Documents API id 31998332.
+
+                   WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+                       SUMMARY PROCUREMENT PLAN (first eighteen months)
+
+
+I.     General
+The following procurement plan has been developed for project implementation during the first eighteen months
+and provides the basis for the procurement methods and bank prior/post review thresholds. It covers the three
+categories, namely, Works; Consultancies; and Goods. The plan will be updated when need arises to reflect the
+actual project implementation needs.
+       1. Project information:
+              Country / Borrower: Republic of Kenya
+              Project: Water and Sanitation Development Project (WSDP)
+              IDA Credit No. 6029 & 6030
+              Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b) WaSREB, (c) Water
+              Service Providers: Kilifi-Mariakani Water and Sewerage Company (Kimawasco),; Taita-Voi Water
+              and Sewerage Company (Tavevo); Mombasa Water Supply and Sanitation Company (Mowassco);
+              Kwale Water and Sewerage Company (Kwawasco); Garissa Water and Sewerage Company
+              (Gawasco); Wajir Water and Sewerage Company (Wajwasco); and Malindi Water and Sewerage
+              Company; and (d) Counties: Kilifi; Taita Taveta; Mombasa; Kwale; Garissa; and Wajir
+       2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan: June 15, 2017
+       3. Date of General Procurement Notice: June 14, 2017
+       4. Period covered by this procurement plan: June 2017 to December 2018
+
+
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods and Bank’s Prior
+Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s Prior Review for Works,
+Goods and Consultancy Services
+
+                                 Contract Value
+                                  (Threshold)            Procurement
+            Expenditure                                                     Contract Subject to Prior
+             Category               (US$ 000)               Method                  Review
+
+        1. Works               15,000 or more         ICB                  Contracts above $5 million
+
+                               Below 15,000           NCB                  First contract per entity and
+                                                                           Contracts above $5 million
+
+
+
+                                                  Page 1 of 2
+                        Contract Value
+                         (Threshold)             Procurement
+   Expenditure                                                       Contract Subject to Prior
+    Category               (US$ 000)               Method                    Review
+
+                      Below or equal 200     Shopping               None unless contract
+                                                                    specified in the PP
+
+                      No threshold           Direct Contracting     As specified in PP
+
+2. Goods              1,000 or more          ICB                    First contract per entity and
+                                                                    Contracts above $1.5
+                                                                    million
+
+                      Below 1,000            NCB                    First contract per entity
+
+                      Below or equal to      Shopping               None unless contract
+                      100                                           specified in the PP
+
+                      No threshold           Direct Contracting     As specified in PP
+
+3. Consultancy        Firms*                 QCBS,LCS,FBS,          First contract per entity and
+Services                                     QBS                    Contracts above $0.5
+                                                                    million
+
+                      Firms* (Estimated      CQS                    First contract per entity
+                      cost less than
+                      $300,000)
+
+                      Individual             IC (at least 3 CVs)    All contract of estimated
+                                                                    cost above $200,000 and
+                                                                    more
+
+                      No threshold           Single Source          All
+
+     *Assignments whose estimated cost is less $300,000 could be Open-National (Shortlist could
+     comprise of all national firms)
+     NB: All terms of reference for consulting services will be subject to IDA’s prior review.
+
+
+
+
+                                          Page 2 of 2
+PROCUREMENT
+                              Kenya : Water and Sanitation Development Project
+PLAN
+General Information
+Country:                      Kenya                                        Bank’s Approval Date of the Original Procurement Plan:                     2017-06-23
+                                                                                                                                      2020-04-30
+                                                                           Revised Plan Date(s): (comma delineated, leave blank if none)
+Project ID:                   P156634                                      GPN Date:                                                                  2017-06-13
+Project Name:                 Water and Sanitation Development Project
+Loan / Credit No:             IDA / 60300, IDA / 60290
+Executing Agency(ies): Ministry of Water and Irrigation
+
+
+
+
+WORKS
+                                                                                                                                                                                                                                                                                                                                                                                           Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                                                                Draft Bidding
+                              Loan / Credit                                                                           Market       Procurement        Prequalification    Estimated         Actual Amount            Process   Draft Pre-qualification        Prequalification                               Specific Procurement      Bidding Documents      Proposal Submission /          Report and
+           Description                                    Component          Review Type       Method                                                                                                                                                                                    Document /                                                                                                                 Signed Contract         Contract Completion
+                                    No.                                                                            Approach           Process              (Y/N)         Amount (US$)            (US$)               Status         Documents              Evaluation Report                                  Notice / Invitation          as Issued           Opening / Minutes        Recommendation for
+                                                                                                                                                                                                                                                                                        Justification
+                                                                                                                                                                                                                                                                                                                                                                                                Award
+                                                                                                                                                                                                                                Planned       Actual      Planned       Actual      Planned      Actual       Planned      Actual      Planned    Actual       Planned      Actual      Planned       Actual      Planned       Actual      Planned      Actual
+
+
+
+
+GOODS
+                                                                                                                                                                                                                                                                                                                                                                                           Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                                                                Draft Bidding
+                              Loan / Credit                                                                           Market       Procurement        Prequalification    Estimated         Actual Amount            Process   Draft Pre-qualification        Prequalification                               Specific Procurement      Bidding Documents      Proposal Submission /          Report and
+           Description                                    Component          Review Type       Method                                                                                                                                                                                    Document /                                                                                                                 Signed Contract         Contract Completion
+                                    No.                                                                            Approach           Process              (Y/N)         Amount (US$)            (US$)               Status         Documents              Evaluation Report                                  Notice / Invitation          as Issued           Opening / Minutes        Recommendation for
+                                                                                                                                                                                                                                                                                        Justification
+                                                                                                                                                                                                                                                                                                                                                                                                Award
+                                                                                                                                                                                                                                Planned       Actual      Planned       Actual      Planned      Actual       Planned      Actual      Planned    Actual       Planned      Actual      Planned       Actual      Planned       Actual      Planned      Actual
+
+
+ MWSI-WSDP-04-2019-2020 /
+                                              Component 4: Project
+Procurement of 2No. Four                                                                                                                                                                                        Pending
+                                              management (US$3.3 million                                                         Single Stage - One
+wheel drive vehicles for      IDA / 60300                                  Post            Request for Bids    Open                                                          160,000.00                  0.00   Implementati                                                        2020-03-27               2020-04-10                                       2020-05-22                2020-06-21                2020-07-25                2020-08-06
+                                              of which IDA-SUF US$3                                                              Envelope
+project monitoring and                                                                                                                                                                                          on
+                                              million).
+management
+
+
+
+
+NON CONSULTING SERVICES
+                                                                                                                                                                                                                                                                                                                                                                                           Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                                                                Draft Bidding
+                              Loan / Credit                                                                           Market       Procurement        Prequalification    Estimated         Actual Amount            Process   Draft Pre-qualification        Prequalification                               Specific Procurement      Bidding Documents      Proposal Submission /          Report and
+           Description                                    Component          Review Type       Method                                                                                                                                                                                    Document /                                                                                                                 Signed Contract         Contract Completion
+                                    No.                                                                            Approach           Process              (Y/N)         Amount (US$)            (US$)               Status         Documents              Evaluation Report                                  Notice / Invitation          as Issued           Opening / Minutes        Recommendation for
+                                                                                                                                                                                                                                                                                        Justification
+                                                                                                                                                                                                                                                                                                                                                                                                Award
+                                                                                                                                                                                                                                Planned       Actual      Planned       Actual      Planned      Actual       Planned      Actual      Planned    Actual       Planned      Actual      Planned       Actual      Planned       Actual      Planned      Actual
+
+
+
+
+CONSULTING FIRMS
+Activity Reference No. /                                                                                                                                                                                                                                                                                                                                                   Combined Evaluation
+                              Loan / Credit                                                                           Market      Contract Type         Estimated           Actual                                                           Expression of Interest Short List and Draft Request for Proposals Opening of Technical                    Evaluation of
+           Description                                    Component          Review Type        Method                                                                                      Process Status       Terms of Reference                                                                                                                                         Report and Draft            Signed Contract        Contract Completion
+                                    No.                                                                            Approach                           Amount (US$)       Amount (US$)                                                                Notice            Request for Proposals            as Issued         Proposals / Minutes     Technical Proposal
+                                                                                                                                                                                                                                                                                                                                                                           Negotiated Contract
+                                                                                                                                                                                                                 Planned         Actual       Planned      Actual       Planned      Actual      Planned       Actual     Planned      Actual    Planned       Actual      Planned       Actual      Planned       Actual      Planned       Actual
+
+
+ MWI-WSDP-001 /                               Component 4: Project
+Monitoring and Evaluation                     management (US$3.3 million                   Quality And Cost-
+                              IDA / 60300                                  Prior                               Open - National                              400,000.00               0.00   Canceled             2017-07-24                  2017-07-24                2017-07-24                                         2017-07-24             2017-07-24                2017-07-24                2017-07-24                2017-07-24
+and Safeguards Consultancy                    of which IDA-SUF US$3                        Based Selection
+Services                                      million).
+
+
+
+
+ MWI-WSDP-002 / Financial                     Component 4: Project
+Management and                                management (US$3.3 million                   Quality And Cost-
+                              IDA / 60300                                  Prior                               Open - National                              500,000.00               0.00   Canceled             2017-07-24                  2017-07-24                2017-07-24                                         2017-07-24             2017-07-24                2017-07-24                2017-07-24                2017-07-24
+Procurement Consultancy                       of which IDA-SUF US$3                        Based Selection
+Services                                      million).
+
+
+
+
+ MOWS-WSDP-01-2017-2018
+/ Financial Management,                       Component 4: Project
+Procurement, Monitoring and                   management (US$3.3 million                   Quality And Cost- Open -
+                              IDA / 60300                                  Prior                                                                            900,000.00               0.00   Under Review         2018-05-21    2018-05-10    2018-06-11   2018-06-19   2018-07-25   2019-02-26                            2018-08-22             2018-09-21   2019-12-16   2018-10-26                2018-11-30                2019-11-30
+Evaluation, Safeguards and                    of which IDA-SUF US$3                        Based Selection     International
+Engineering Support                           million).
+Consultancy Services
+
+
+
+
+                                                                                                                                                                                                                                    Page 1
+ KE-MOWI-96348-CS-QCBS /                      Component 1: Rehabilitation
+Consultancy for Water                         and expansion of urban
+Utility Performance                           water supply and sanitation                   Quality And Cost- Open -
+                              IDA / 60290                                   Prior                                                                1,500,000.00               0.00   Canceled         2019-01-25   2019-03-12    2019-02-15   2019-05-22   2019-03-31                                2019-04-28            2019-05-28   2019-07-02   2019-08-06   2020-08-05
+Improvement Program -                         services in the coastal                       Based Selection   International
+Institutional Strengthening                   region (US$176 of w hich
+and capacity building                         IDA-SUF US$160 million).
+
+
+
+
+ MOWS-WSDP-02-2019-2020                       Component 1: Rehabilitation
+/ Consultancy for Water                       and expansion of urban
+Utility Performance                           water supply and sanitation                   Quality And Cost- Open -
+                              IDA / 60290                                   Prior                                                                5,000,000.00               0.00   Under Review     2019-07-22   2019-09-16    2019-08-12                2019-09-25                                2019-10-23            2019-11-22   2019-12-27   2020-01-31   2021-01-30
+Improvement Program -                         services in the coastal                       Based Selection   International
+Institutional Strengthening                   region (US$176 of w hich
+and capacity building                         IDA-SUF US$160 million).
+
+
+
+
+ NWWDA-WSDP-03-2019-
+2020 / Consultancy Services
+                                              Component 2: Expansion of
+for Comparison of Water
+                                              water supply and sanitation
+Supply Options, Preparation
+                                              services in underserved                       Quality And Cost- Open -                                                               Under
+of Detailed Designs, Tender   IDA / 60300                                   Prior                                                                2,000,000.00               0.00                    2019-11-05   2019-11-19    2019-11-26   2019-12-04   2020-01-09                                2020-02-06            2020-03-07   2020-04-11   2020-05-16   2021-05-16
+                                              northeastern counties of                      Based Selection   International                                                        Implementation
+Documents, Safeguards
+                                              Kenya (US$110 of wh ich
+Documents and Construction
+                                              IDA US$100 million).
+Supervision of Wajir Water
+Supply
+
+
+
+
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /                                                                                                                                                                                                           Invitation to
+                              Loan / Credit                                                                        Market     Contract Type    Estimated           Actual                                                                                  Draft Negotiated
+         Description                                  Component               Review Type        Method                                                                            Process Status   Terms of Reference          Identified/Selected                             Signed Contract    Contract Completion
+                                    No.                                                                           Approach                    Amount (US$)      Amount (US$)                                                                                   Contract
+                                                                                                                                                                                                                                    Consultant
+                                                                                                                                                                                                    Planned       Actual       Planned       Actual      Planned      Actual   Planned    Actual   Planned      Actual
+
+
+
+
+                                                                                                                                                                                                                      Page 2
+

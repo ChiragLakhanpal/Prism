@@ -1,0 +1,34 @@
+{
+ "source": "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00053&resourceId=RS00055&type=json&top=100&skip=0&filter=project_id%20in%20(%27P156634%27,%27P130164%27)",
+ "license": "The World Bank: IEG World Bank Project Performance Ratings, Finances One dataset DS00053. License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "IEG's ratings for the two projects. Only P130164 is rated; P156634 is still active.",
+ "response": {
+  "count": 1,
+  "data": [
+   {
+    "agreement_type": "IDA",
+    "approval_fy": 2014,
+    "as_of_date": "21-Oct-2026",
+    "bank_performance": "Moderately Unsatisfactory",
+    "country": "Republic of India",
+    "country_fcs_lending_group": "IBRD non-FCS",
+    "country_fcs_status": "non-FCS",
+    "country_lending_group": "IBRD",
+    "evaluation_fy": "2020",
+    "evaluation_type": "ICRR",
+    "final_closing_fy": 2019,
+    "global_practice": "Transport and Logistics",
+    "lending_instrument_type": "IPF",
+    "me_quality": "Modest",
+    "outcome": "Moderately Unsatisfactory",
+    "practice_group": "Infrastructure",
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "quality_at_entry": "Moderately Unsatisfactory",
+    "quality_of_supervision": "Moderately Unsatisfactory",
+    "wb_region": "South Asia"
+   }
+  ]
+ }
+}

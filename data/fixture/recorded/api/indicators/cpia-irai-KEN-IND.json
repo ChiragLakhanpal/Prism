@@ -1,0 +1,2130 @@
+{
+ "source": "https://api.worldbank.org/v2/country/KEN;IND/indicator/IQ.CPA.IRAI.XQ?format=json&per_page=500",
+ "license": "The World Bank: World Development Indicators: Country Policy and Institutional Assessment (IQ.CPA codes), from api.worldbank.org/v2. License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "The overall CPIA score (IDA resource allocation index) for Kenya and India. India has values only for the years it borrowed from IDA.",
+ "response": [
+  {
+   "page": 1,
+   "pages": 1,
+   "per_page": 500,
+   "total": 132,
+   "sourceid": "2",
+   "lastupdated": "2026-10-08"
+  },
+  [
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2025",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2024",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2023",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2022",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2021",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2020",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2019",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2018",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2017",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2016",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2015",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2014",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2013",
+    "value": 3.7,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2012",
+    "value": 3.7,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2011",
+    "value": 3.71666666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2010",
+    "value": 3.74166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2009",
+    "value": 3.76666666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2008",
+    "value": 3.8,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2007",
+    "value": 3.85,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2006",
+    "value": 3.80833333333333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2005",
+    "value": 3.76666666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2004",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2003",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2002",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2001",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "2000",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1999",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1998",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1997",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1996",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1995",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1994",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1993",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1992",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1991",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1990",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1989",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1988",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1987",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1986",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1985",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1984",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1983",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1982",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1981",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1980",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1979",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1978",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1977",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1976",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1975",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1974",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1973",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1972",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1971",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1970",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1969",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1968",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1967",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1966",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1965",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1964",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1963",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1962",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1961",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "IN",
+     "value": "India"
+    },
+    "countryiso3code": "IND",
+    "date": "1960",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2025",
+    "value": 3.816667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2024",
+    "value": 3.85,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2023",
+    "value": 3.833333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2022",
+    "value": 3.783333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2021",
+    "value": 3.766667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2020",
+    "value": 3.69166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2019",
+    "value": 3.69166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2018",
+    "value": 3.69166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2017",
+    "value": 3.73333333333333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2016",
+    "value": 3.775,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2015",
+    "value": 3.81667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2014",
+    "value": 3.81667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2013",
+    "value": 3.85833333333333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2012",
+    "value": 3.85833333333333,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2011",
+    "value": 3.79166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2010",
+    "value": 3.79166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2009",
+    "value": 3.74166666666667,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2008",
+    "value": 3.6,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2007",
+    "value": 3.625,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2006",
+    "value": 3.65,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2005",
+    "value": 3.6,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2004",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2003",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2002",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2001",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "2000",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1999",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1998",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1997",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1996",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1995",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1994",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1993",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1992",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1991",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1990",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1989",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1988",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1987",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1986",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1985",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1984",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1983",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1982",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1981",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1980",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1979",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1978",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1977",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1976",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1975",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1974",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1973",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1972",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1971",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1970",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1969",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1968",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1967",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1966",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1965",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1964",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1963",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1962",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1961",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   },
+   {
+    "indicator": {
+     "id": "IQ.CPA.IRAI.XQ",
+     "value": "IDA resource allocation index (1=low to 6=high)"
+    },
+    "country": {
+     "id": "KE",
+     "value": "Kenya"
+    },
+    "countryiso3code": "KEN",
+    "date": "1960",
+    "value": null,
+    "unit": "",
+    "obs_status": "",
+    "decimal": 1
+   }
+  ]
+ ]
+}

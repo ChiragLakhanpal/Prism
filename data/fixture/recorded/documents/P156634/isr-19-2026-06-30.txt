@@ -1,0 +1,975 @@
+Source: https://documents.worldbank.org/curated/en/099063026170036715/text/P156634-a6497888-50b9-45b4-88d2-1303b0327745.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: ISR 19 for P156634, 2026-06-30 (ISR07733). Documents API id 40114539.
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+Water and Sanitation Development Project (P156634)
+EASTERN AND SOUTHERN AFRICA | Kenya | IBRD/IDA | Investment Project Financing (IPF) | FY 2017 | Seq No: 19 | Archived
+on 30-Jun-2026 | ISR07733
+Implementing Agencies: Coast Water Works Development Agency, Garissa Water and Saniation Company, Kilifi - Mariakani
+Water and Sewerage Company Ltd, Kwale Water and Sewerage Company Ltd., Malindi Water and Sewerage Company Ltd,
+Ministry of Water, Sanitation and Irrigation, Mombasa Water and Sanitation Services Company, Northern Water Works
+Development Agency, Tavevo Water and Sewerage Company Ltd, Wajir Water and Sewerage Company, Water Sector Trust
+Fund, Water Services Regulatory Board
+
+1. OBJECTIVE
+1.1 Development Objective
+Original Development Objective (Approved as part of Approval package on 26-Apr-2017)
+The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and
+northeastern regions in Kenya and improve the financial performance of water service providers affected by the COVID-19
+pandemic.
+Has the Development Objective been changed since Board Approval of the Project Objective?
+Yes
+Current Development Objective (Approved as part of Restructuring package Seq. 2 on 08-Sep-2020)
+The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and
+northeastern regions in Kenya and improve the financial performance of water service providers affected by the COVID-19
+pandemic.
+
+2. COMPONENTS
+Name
+Component 1: Rehabilitation and expansion of urban water supply and sanitation services in the coastal region (US$165
+million of which IDA-SUF US$150 million).:(Cost 33,000,000.00)
+Component 2: Expansion of water supply and sanitation services in underserved north-eastern counties of Kenya (US$33
+of which IDA-SUF US$30 million).:(Cost 184,400,000.00)
+Component 3: National performance-based financing (US$83.6 million of which IDA-SUF US$76 million).:(Cost
+83,600,000.00)
+
+Jun 30, 2026
+
+Official Use Only
+
+Page 1 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+Component 4: Project management (US$8.8 million of which IDA-SUF US$8 million).:(Cost 7,700,000.00)
+3. OVERALL RATINGS
+Name
+
+Previous
+
+Current
+
+Progress towards achievement of PDO
+
+Moderately Satisfactory
+
+Moderately Satisfactory
+
+Overall Implementation Progress (IP)
+
+Moderately Satisfactory
+
+Moderately Satisfactory
+
+Overall Risk Rating
+
+Moderate
+
+Moderate
+
+4. KEY ISSUES & STATUS
+4.1 Implementation Status and Key Decisions
+The Project is making steady overall progress across its components. In the coastal region, bulk water supply capacity has
+been significantly enhanced through the rehabilitation of the Baricho water supply system, adding 36,000m³/day of supply
+capacity to Kilifi and Mombasa counties. Solarization of the Baricho bulk water system is complete and expected to deliver
+substantial energy cost savings estimated at Kshs 10 million per month. Water distribution and sanitation contracts are
+advancing well, with most works either completed or nearing completion. Sanitation infrastructure, including ablution
+blocks, sewer networks, and fecal sludge treatment plants, is largely on track.
+In the northeastern counties, rehabilitation and construction of boreholes and sanitation facilities in Garissa and Wajir
+are substantially complete or nearing finalization, and long-term water supply planning for Wajir county is advancing with
+key technical and hydrogeological deliverables are being finalized. At the national level, the Conditional Liquidity Support
+Grant is rolling out activities aimed at supporting the financial recovery of Water Service Providers. The Utility
+Turnaround Framework has supported tariff reviews and institutional strengthening across coastal and northeastern
+WSPs, while project management and technical assistance arrangements continue to provide effective oversight and
+coordination across all components.
+
+5. SYSTEMATIC OPERATIONS RISK-RATING TOOL
+
+Risk Category
+
+Rating at Approval
+Approval Package 26 Apr 2017
+
+Last Approved Rating
+ISR Seq. 018 - 12 Mar
+2026
+
+Proposed Rating
+
+Political and Governance
+
+Substantial
+
+Substantial
+
+Substantial
+
+Jun 30, 2026
+
+Official Use Only
+
+Page 2 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+Macroeconomic
+
+Moderate
+
+Moderate
+
+Moderate
+
+Sector Strategies and Policies
+
+Substantial
+
+Moderate
+
+Moderate
+
+Technical Design of Project or Program
+
+Substantial
+
+Moderate
+
+Moderate
+
+Institutional Capacity for Implementation and
+Sustainability
+
+High
+
+Moderate
+
+Moderate
+
+Fiduciary
+
+Substantial
+
+Substantial
+
+Substantial
+
+Environment and Social
+
+Moderate
+
+Moderate
+
+Moderate
+
+Stakeholders
+
+Substantial
+
+Moderate
+
+Moderate
+
+Overall
+
+Substantial
+
+Moderate
+
+Moderate
+
+Jun 30, 2026
+
+Official Use Only
+
+Page 3 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+6. RESULTS
+6.1 PDO Indicators by PDO Outcomes
+Is to improve water supply and sanitation services in select coastal and northeastern regions in Kenya
+Baseline
+Month/Year
+Value
+
+Indicator Name
+People in urban areas
+provided with access to
+Improved Water Sources
+under the project (Number)
+People benefiting under the
+project from a connection to
+the sewage system or from
+improved septic sludge
+management. (Number)
+People with existing
+connections benefiting from
+more hours per day of water
+services. (Number)
+Direct project beneficiaries
+(Number)
+
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+
+Actual (Previous)
+Value
+57,400.00
+
+Date
+
+Actual (Current)
+Value
+
+30-Apr-2026 57,400.00
+
+Date
+
+30-Apr-2026 74,300.00
+
+Jun 30, 2026
+
+Baseline
+Month/Year
+Value
+Official Use Only
+
+Oct/2026
+
+Target set to be achieved once ongoing distribution works are completed, before project
+closure.
+153,900.00
+
+30-Apr-2026 153,900.00
+
+30-Apr-2026 130,000.00
+
+Oct/2026
+
+The indicator is updated to reflect the actual value as of April 30, 2026 from 163,500 to
+153,900 to correct a reporting error during the earlier restructuring.
+1,930,000.00
+
+30-Apr-2026 1,930,000.00
+
+30-Apr-2026 1,930,000.00
+
+Oct/2026
+
+30-Apr-2026 1,985,550.00
+
+Oct/2026
+
+Target achieved
+2,019,300.00
+
+30-Apr-2026 2,019,300.00
+
+Target exceeded
+
+Female beneficiaries
+0.00
+50.00
+50.00
+(Percentage)
+To improve financial performance of Water Service Providers affected by COVID-19 pandemic
+Indicator Name
+
+Closing Period
+Month/Year
+Value
+
+Actual (Previous)
+Value
+
+Date
+
+50.00
+
+Actual (Current)
+Value
+
+Date
+
+Closing Period
+Month/Year
+Value
+Page 4 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+WSPs benefiting from CLSG 1
+that demonstrate an increase
+in their OCCR by 2022
+compared with 2019 (annual
+average). (Number)
+WSPs benefiting from the
+CLSG 2 that demonstrate an
+increase in their OCCR by
+2025 compared with 2023
+(annual average). (Number)
+
+0.00
+
+May/2020
+
+Comments on
+achieving targets
+0.00
+
+Dec/2023
+
+77.00
+
+30-Apr-2026 77.00
+
+30-Apr-2026 77.00
+
+Oct/2026
+
+30-Apr-2026 22.00
+
+Oct/2026
+
+Target achieved
+
+22.00
+
+30-Apr-2026 22.00
+
+6.2 Intermediate Results Indicators by Components
+Component 1: Rehabilitation and expansion of urban water supply and sanitation services in the coastal region (US$165 million of which IDA-SUF US$150
+million).
+Baseline
+Month/Year
+Value
+
+Indicator Name
+Piped household water
+connections that are
+benefiting from rehabilitation
+works undertaken under the
+project. (Number)
+
+0.00
+
+New piped household water
+connections under the
+project. (Number)
+
+0.00
+
+Additional Water delivered
+by WSPs to customers due to
+project interventions (as
+
+39.30
+
+Jun 30, 2026
+
+Apr/2017
+
+Comments on
+achieving targets
+Apr/2017
+
+Comments on
+achieving targets
+Apr/2017
+
+Comments on
+achieving targets
+Official Use Only
+
+Actual (Previous)
+Value
+15,500.00
+
+Date
+
+Actual (Current)
+Value
+
+30-Apr-2026 15,500.00
+
+Date
+
+Closing Period
+Month/Year
+Value
+
+30-Apr-2026 15,500.00
+
+Oct/2026
+
+Contract complete. All previous existing connections benefitting.
+
+4,600.00
+
+30-Apr-2026 4,600.00
+
+30-Apr-2026 11,900.00
+
+Oct/2026
+
+The target for number of household connections is expected to be achieved once all ongoing
+contracts are complete
+44.50
+
+30-Apr-2026 44.50
+
+30-Apr-2026 44.50
+
+Oct/2026
+
+Targets expected to be exceeded once Kwale contracts are complete
+Page 5 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+reflected in water bills)
+(Cubic Meter (m3))
+People provided with access
+to improved shared
+sanitation facilities under the
+project. (Number)
+Volume of biological oxygen
+demand pollution loads
+removed by treatment plants
+supported under the project.
+(Tones/year)
+Hours of service per day
+provided by coastal WSPs
+benefiting from the project.
+(Hours)
+Non-revenue water (% of
+water that a service provider
+supplies to its distribution
+system that is not reflected
+in revenues). (Percentage)
+Operations and maintenance
+costs of coastal WSPs
+benefiting from the project
+recovered from customers.
+(Percentage)
+Septic sludge treatment
+facilities constructed under
+the project (Number)
+
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+10.00
+
+Apr/2017
+
+Comments on
+achieving targets
+
+5,100.00
+
+30-Apr-2026 5,100.00
+
+0.00
+
+30-Apr-2026 0.00
+
+17.00
+
+30-Apr-2026 17.00
+
+30-Jan-2026
+
+90.00
+
+Apr/2017
+
+83.00
+
+30-Apr-2026 83.00
+
+Comments on
+achieving targets
+
+Oct/2026
+
+30-Apr-2026 12.00
+
+Oct/2026
+
+30-Jan-2026
+
+Oct/2026
+
+Target exceeded
+43.00
+
+Apr/2017
+
+30-Apr-2026 1,600.00
+
+Rehabilitation of Kipevu ongoing
+
+Apr/2017
+
+0.00
+
+Oct/2026
+
+Almost all planned ablution blocks are complete or nearing completion.
+
+50.00
+
+Comments on
+achieving targets
+
+30-Apr-2026 4,800.00
+
+43.00
+
+43.00
+
+30-Apr-2026 100.00
+
+Oct/2026
+
+This is from the previous IMPACT report. The number will be updated with the next IMPACT
+report
+0.00
+
+30-Apr-2026 0.00
+
+30-Apr-2026 4.00
+
+Oct/2026
+
+Construction ongoing. Expected to be complete by August 2026
+
+Component 2: Expansion of water supply and sanitation services in underserved north-eastern counties of Kenya (US$33 of which IDA-SUF US$30 million).
+Indicator Name
+Jun 30, 2026
+
+Baseline
+Official Use Only
+
+Actual (Previous)
+
+Actual (Current)
+
+Closing Period
+Page 6 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+Value
+Improved community water
+points constructed or
+rehabilitated under the
+project (Number)
+New water supplied to
+northeastern WSPs under the
+project (cubic meters/day)
+(Number)
+
+0.00
+
+Gender action plans
+developed and under
+implementation. (Number)
+
+0.00
+
+Month/Year
+Apr/2017
+
+Comments on
+achieving targets
+0.00
+
+Apr/2017
+
+Comments on
+achieving targets
+Apr/2017
+
+Comments on
+achieving targets
+
+Value
+28.00
+
+Date
+
+Value
+
+30-Apr-2026 28.00
+
+Date
+
+Value
+
+30-Apr-2026 22.00
+
+3,830.00
+
+30-Apr-2026 3,830.00
+
+30-Apr-2026 3,200.00
+
+Guidelines for results-based
+financing adopted (Yes/No)
+Complaints handling system
+operational in WSPs
+supported under the project
+(Number)
+
+Jun 30, 2026
+
+Apr/2017
+
+Comments on
+achieving targets
+
+Oct/2026
+
+Target exceeded. Additional source identification and drilling works ongoing
+2.00
+
+30-Apr-2026 2.00
+
+30-Apr-2026 2.00
+
+Oct/2026
+
+Completed
+
+Baseline
+Month/Year
+Value
+No
+
+Oct/2026
+
+NWWDA has constructed 8 communal water points, and is planning an additional 7. Wajir
+has constructed 2, and Garissa has constructed 24. This gives a total of 34 so far.
+
+People provided with access
+0.00
+Jul/2016
+13,352.00
+30-Apr-2026 13,352.00
+30-Apr-2026 13,650.00
+to improved shared
+Comments on
+Most facilities in Wajir and Garissa complete and in use.
+sanitation facilities
+achieving targets
+(Number)
+Component 3: National performance-based financing (US$83.6 million of which IDA-SUF US$76 million).
+Indicator Name
+
+Month/Year
+
+Actual (Previous)
+Value
+Yes
+
+Date
+
+Actual (Current)
+Value
+
+30-Apr-2026 Yes
+
+Date
+
+Oct/2026
+
+Closing Period
+Month/Year
+Value
+
+30-Apr-2026 Yes
+
+Oct/2026
+
+GoK adopted the National Water and Sanitation Investment Plan (NAWASIP), which
+promotes results-based financing. The first ever results-based project in the sector, K-WASH,
+co-financed by GoK and IDA, was approved in December 2023.
+
+0.00
+
+Apr/2017
+
+2.00
+
+30-Apr-2026 2.00
+
+30-Apr-2026 2.00
+
+Oct/2026
+
+0.00
+
+May/2020
+
+51.00
+
+30-Apr-2026 51.00
+
+30-Apr-2026 51.00
+
+Oct/2026
+
+Official Use Only
+
+Page 7 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+Average performance score
+for WSPs receiving the CLSG
+(Percentage)
+
+Jun 30, 2026
+
+Comments on
+achieving targets
+
+Official Use Only
+
+Applies only to CLSG I
+
+Page 8 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+7. DATA ON FINANCIAL PERFORMANCE
+7.1 Cumulative Disbursements
+
+7.2 Disbursements (by loan)
+Loan/Credit/TF Status
+
+Original
+
+Revised
+
+Cancelled
+
+Disbursed Undisbursed
+
+Historical
+Disbursed
+
+% Disbursed
+
+IDA-60290
+
+Effective
+
+37.00
+
+17.63
+
+19.53
+
+17.56
+
+0.00
+
+17.60
+
+99.60%
+
+IDA-60300
+
+Effective
+
+263.00
+
+282.88
+
+0.00
+
+282.88
+
+0.00
+
+275.91
+
+100.00
+%
+
+7.3 Key Dates (by loan)
+Loan/Credit/TF
+
+Status
+
+IDA-60290
+
+Effective
+
+Jun 30, 2026
+
+Approval
+26-Apr-2017
+
+Official Use Only
+
+Signing
+
+Effectiveness
+
+Orig. Closing
+
+Rev. Closing
+
+21-Jun-2017
+
+09-Mar-2018
+
+31-Oct-2022
+
+31-Oct-2026
+Page 9 of 10
+
+The World Bank
+
+Implementation Status & Results Report
+
+Water and Sanitation Development Project (P156634)
+
+IDA-60300
+
+Effective
+
+26-Apr-2017
+
+21-Jun-2017
+
+09-Mar-2018
+
+31-Oct-2022
+
+31-Oct-2026
+
+8. KEY DATES
+Key Events
+
+Planned
+
+Actual
+
+Approval
+
+26-Apr-2017
+
+26-Apr-2017
+
+Effectiveness
+
+09-Mar-2018
+
+09-Mar-2018
+
+Mid-Term Review No. 01
+
+28-Sep-2020
+
+28-Sep-2020
+
+Operation Closing/Cancellation
+
+31-Oct-2026
+
+9. RESTRUCTURING HISTORY
+Restructuring Level 2 Approved on 23-Jun-2026
+Restructuring Level 2 Approved on 06-Dec-2019
+Restructuring Level 2 Approved on 06-Apr-2021
+Restructuring Level 2 Approved on 06-May-2022
+Restructuring Level 2 Approved on 25-Sep-2025
+Restructuring Level 2 Approved on 13-Oct-2022
+Restructuring Level 2 Approved on 24-Apr-2024
+Restructuring Level 2 Approved on 28-Jul-2020
+Restructuring Level 2 Approved on 25-Feb-2026
+Restructuring Level 2 Approved on 03-May-2025
+10. ASSOCIATED OPERATION(S)
+There are no associated operations
+
+Jun 30, 2026
+
+Official Use Only
+
+Page 10 of 10
+
+

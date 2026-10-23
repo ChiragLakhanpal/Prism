@@ -1,0 +1,401 @@
+Source: https://documents.worldbank.org/curated/en/099031925071537402/text/P156634-be594812-7608-4bdd-98c0-d5d487e962a4.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Kilifi - Mariakani Water and Sewerage Company's Procurement Plan of March 19, 2025 for P156634, its latest version, which marks KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB and KE-KIMAWASCO-377450-CW-RFB as Canceled. Documents API id 40001676.
+
+             WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+              SUMMARY PROCUREMENT PLAN (first eighteen months)
+
+
+I.   General
+The following procurement plan has been developed for project implementation during the
+first eighteen months and provides the basis for the procurement methods and bank
+prior/post review thresholds. It covers the three categories, namely, Works; Consultancies;
+and Goods. The plan will be updated when need arises to reflect the actual project
+implementation needs.
+      1. Project information:
+           Country / Borrower: Republic of Kenya
+           Project: Water and Sanitation Development Project (WSDP)
+           IDA Credit No. 6029 & 6030
+           Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b)
+           WaSREB, (c) Water Service Providers: Kilifi-Mariakani Water and Sewerage
+           Company (Kimawasco),; Taita-Voi Water and Sewerage Company (Tavevo);
+           Mombasa Water Supply and Sanitation Company (Mowassco); Kwale Water and
+           Sewerage Company (Kwawasco); Garissa Water and Sewerage Company
+           (Gawasco); Wajir Water and Sewerage Company (Wajwasco); and Malindi
+           Water and Sewerage Company; and (d) Counties: Kilifi; Taita Taveta;
+           Mombasa; Kwale; Garissa; and Wajir
+      2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan:
+         June 15, 2017
+      3. Date of General Procurement Notice: June 14, 2017
+      4. Period covered by this procurement plan: June 2017 to December 2018
+
+
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods
+and Bank’s Prior Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s
+Prior Review for Works, Goods and Consultancy Services
+
+
+
+
+                                        Page 1 of 2
+                  Contract Value
+                   (Threshold)        Procurement
+ Expenditure                                           Contract Subject to
+  Category          (US$ 000)               Method        Prior Review
+
+1. Works          15,000 or more      ICB              Contracts above $5
+                                                       million
+
+                  Below 15,000        NCB              First contract per
+                                                       entity and Contracts
+                                                       above $5 million
+
+                  Below or equal      Shopping         None unless contract
+                  200                                  specified in the PP
+
+                  No threshold        Direct           As specified in PP
+                                      Contracting
+
+2. Goods          1,000 or more       ICB              First contract per
+                                                       entity and Contracts
+                                                       above $1.5 million
+
+                  Below 1,000         NCB              First contract per
+                                                       entity
+
+                  Below or equal      Shopping         None unless contract
+                  to 100                               specified in the PP
+
+                  No threshold        Direct           As specified in PP
+                                      Contracting
+
+3. Consultancy    Firms*              QCBS,LCS,FBS,    First contract per
+Services                              QBS              entity and Contracts
+                                                       above $0.5 million
+
+                  Firms*              CQS              First contract per
+                  (Estimated cost                      entity
+                  less than
+                  $300,000)
+
+                  Individual          IC (at least 3   All contract of
+                                      CVs)             estimated cost above
+                                                       $200,000 and more
+
+                  No threshold        Single Source    All
+
+    *Assignments whose estimated cost is less $300,000 could be Open-National
+    (Shortlist could comprise of all national firms)
+    NB: All terms of reference for consulting services will be subject to IDA’s prior
+    review.
+
+
+                                  Page 2 of 2
+PROCUREMENT
+                Kenya : Water and Sanitation Development Project
+PLAN
+General Information
+Country:           Kenya                                                                                    2018-08-20
+                                                       Bank’s Approval Date of the Original Procurement Plan:
+                                                                                                            2025-03-19
+                                                       Revised Plan Date(s): (comma delineated, leave blank if none)
+Project ID:        P156634                             GPN Date:                                            2017-06-13
+Project Name:      Water and Sanitation Development Project
+Loan / Credit No:  IDA / 60300
+                   Kilifi - Mariakani Water and Sewerage Company Ltd
+Executing Agency(ies):
+
+WORKS
+Activity Reference No. /                                                                                                                                                                        Estimated Actual Am                                                                                                                                                                            Bid Evaluation Report
+                                Loan / Credit N                                                                     Market Approac Procurement Pro Prequalification High SEA/SH R Procurement D                     Process St Draft Pre-qualification Prequalification Evalu                    Draft Bidding Docum Specific Procurement            Bidding Documents a Proposal Submission /                                                               Contract Complet
+       Description                                       Component                 Review Type       Method                                                                                     Amount (U ount (US$                                                                                                                                                                            and Recommendation                    Signed Contract
+                                       o.                                                                                  h             cess           (Y/N)             isk     ocument Type                         atus         Documents               ation Report                          ent / Justification Notice / Invitation                  s Issued        Opening / Minutes                                                                        ion
+                                                                                                                                                                                                    S$)       )                                                                                                                                                                                      for Award
+                                                                                                                                                                                                                                Planned     Actual      Planned      Actual                      Planned       Actual      Planned       Actual       Planned     Actual  Planned     Actual    Planned     Actual                 Planned       Actual      Planned
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-74957-CW-                           and expansion of urban wat
+                                                                                                                                           Single Stage - One E                                                                                                                                                                                                                                                                                              2021-05-1
+RFB / Water Works distributio IDA / 60300         er supply and sanitation ser Prior             Request for Bids   Open - National                                                                      6,564,500.00         0.00     Canceled                                                  2018-11-15                2018-11-20                                          2019-01-01                2019-01-31                2019-03-07
+                                                                                                                                           nvelope                                                                                                                                                                                                                                                                                                               5
+n for Kilifi Town                                 vices in the coastal region (
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-141042-CW-                          and expansion of urban wat
+                                                                                                                                           Single Stage - One E                                          10,500,000.0 7,741,367.6                                                                                                                                                                                                                            2021-08-1
+RFB / Water works distributio IDA / 60300         er supply and sanitation ser Prior             Request for Bids   Open - National                                                                                                    Signed                                                    2019-10-28   2020-05-25   2019-11-02   2020-06-23                             2019-12-14   2020-07-28   2020-01-13   2021-02-02   2020-02-17   2021-04-09
+                                                                                                                                           nvelope                                                                  0           5                                                                                                                                                                                                                                8
+n system for Mtwapa Town                          vices in the coastal region (
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-142995-CW-                          and expansion of urban wat
+                                                                                                                                           Single Stage - One E                                                         5,209,625.0                                                                                                                                                                                                                          2021-08-1
+RFB / Water Works distributio IDA / 60300         er supply and sanitation ser Post              Request for Bids   Open - National                                                                      5,870,000.00                  Signed                                                    2019-10-21   2019-12-09   2019-10-28   2019-12-18                             2019-12-09   2020-01-24   2019-12-19   2020-02-04   2020-02-10   2021-03-30
+                                                                                                                                           nvelope                                                                                2                                                                                                                                                                                                                              1
+n for Kilifi Town                                 vices in the coastal region (
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-149448-CW-
+                                                  and expansion of urban wat
+RFB / Construction of 12No.A                                                                                                               Single Stage - One E                                                                                                                                                                                                                                                                                              2020-10-0
+                             IDA / 60300          er supply and sanitation ser Post              Request for Bids   Open - National                                                                      3,000,000.00         0.00     Canceled                                                  2019-12-16   2020-02-03   2019-12-21   2020-02-04                             2020-02-01                2020-03-02                2020-04-06
+blution blocks and 2No. Slud                                                                                                               nvelope                                                                                                                                                                                                                                                                                                               3
+                                                  vices in the coastal region (
+ge Handling Facilities
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-158691-CW-                          and expansion of urban wat
+                                                                                                                                           Single Stage - One E                                                         1,395,944.6                                                                                                                                                                                                                          2021-04-2
+RFB / Construction of 12No.A IDA / 60300          er supply and sanitation ser Post              Request for Bids   Open - National                                                                      1,800,000.00                  Terminated                                                2020-02-13   2020-02-25   2020-02-17   2020-02-26                             2020-03-20   2020-03-27   2020-03-31   2020-04-10   2020-04-20   2021-04-09
+                                                                                                                                           nvelope                                                                                6                                                                                                                                                                                                                              2
+blution Blocks                                    vices in the coastal region (
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-157517-CW-
+                                                  and expansion of urban wat
+RFB / Construction of 2No.Slu                                                                                                              Single Stage - One E                                                                                                                                                                                                                                                                                              2021-04-2
+                                 IDA / 60300      er supply and sanitation ser Post              Request for Bids   Open - National                                                                      1,200,000.00         0.00     Canceled                                                  2020-02-13   2021-04-09   2020-02-17   2021-04-07                             2020-03-20                2020-03-31                2020-04-20
+dge Handling Facilities in Kilif                                                                                                           nvelope                                                                                                                                                                                                                                                                                                               2
+                                                  vices in the coastal region (
+i and Mtwapa Towns
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+ KE-KIMAWASCO-377450-CW-                          Component 1: Rehabilitation
+                                                                                                                                                                                      Request for Bids -
+RFB / CONSTRUCTION OF SL                          and expansion of urban wat
+                                                                                                                                           Single Stage - One E                       Small Works SPD                                                                                                                                                                                                                                                        2024-08-0
+UDGE TREATMENT FACILITIE IDA / 60300              er supply and sanitation ser Post              Request for Bids   Open - National                                                                      2,849,262.19         0.00     Canceled                                                  2023-08-21   2023-08-28   2023-08-25   2023-08-28                             2023-10-06   2023-10-12   2023-10-13   2023-11-21   2023-11-03
+                                                                                                                                           nvelope                                    (1 envelope proce                                                                                                                                                                                                                                                          2
+S FOR KILIFI AND MTWAPA T                         vices in the coastal region (
+                                                                                                                                                                                      ss)
+OWNS;                                             US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation
+ KE-KIMAWASCO-416959-CW-                                                                                                                                                              Request for Bids -
+                                                  and expansion of urban wat
+RFB / Construction of Sludge                                                                                                               Single Stage - One E                       Small Works SPD                                                                                                                                                                                                                                                        2025-02-2
+                                  IDA / 60300     er supply and sanitation ser Post              Request for Bids   Open - National                                                                      2,839,107.71         0.00     Signed                                                    2024-03-21   2024-04-19   2024-03-23   2024-04-17                             2024-05-04   2024-05-30   2024-05-11   2024-06-03   2024-05-29   2024-11-08
+treatment facilities in Kilifi an                                                                                                          nvelope                                    (1 envelope proce                                                                                                                                                                                                                                                          6
+                                                  vices in the coastal region (
+d Mtwapa towns                                                                                                                                                                        ss)
+                                                  US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+ KE-KIMAWASCO-448687-CW-                          Component 1: Rehabilitation                                                                                                         National Procure
+DIR / CONSTRUCTION OF 12N                         and expansion of urban wat                                                                                                          ment Document -
+                                                                                                                    Direct - Internation                                                                                                                                                                                                                                                                                                                     2025-10-3
+O.ABLUTION BLOCKS IN KILIF IDA / 60300            er supply and sanitation ser Prior             Direct Selection                                                                     1 Envelope proce 1,376,565.99           0.00     Canceled                                                  2024-10-14   2024-10-15   2024-10-19                                                                                              2024-11-01
+                                                                                                                    al                                                                                                                                                                                                                                                                                                                                           0
+I,MTWAPA AND MARIAKANI T                          vices in the coastal region (                                                                                                       ss (Non Bank-SPD
+OWNS                                              US$176 of w hich IDA-SUF U                                                                                                          )
+                                                  S$160 million).
+
+                                                  Component 1: Rehabilitation                                                                                                         National Procure
+ KE-KIMAWASCO-459000-CW-
+                                                  and expansion of urban wat                                                                                                          ment Document -
+DIR / Construction of 12Nr Ab                                                                                                                                                                                                                                                                                                                                                                                                                                2025-10-3
+                                IDA / 60300       er supply and sanitation ser Post              Direct Selection   Direct - National                                                 1 Envelope proce 1,376,565.99           0.00     Signed                                                    2024-10-29   2024-10-30   2024-10-31   2024-10-30                                                                                 2024-11-06   2024-11-22
+lution Blocks in Kilifi, Mtwapa                                                                                                                                                                                                                                                                                                                                                                                                                                  0
+                                                  vices in the coastal region (                                                                                                       ss (Non Bank-SPD
+and Mariakani Towns
+                                                  US$176 of w hich IDA-SUF U                                                                                                          )
+                                                  S$160 million).
+
+
+
+GOODS
+Activity Reference No. /                                                                                                                                                                                                                                                                                                                                             Bid Evaluation Report
+                                Loan / Credit N                                                                     Market Approac Procurement Pro Prequalification Estimated Am Actual Amount           Process St Draft Pre-qualification Prequalification Evalu     Draft Bidding Docum Specific Procurement            Bidding Documents a Proposal Submission /
+       Description                                       Component                 Review Type       Method                                                                                                                                                                                                                                                          and Recommendation                    Signed Contract         Contract Completion
+                                       o.                                                                                  h             cess           (Y/N)        ount (US$)      (US$)                  atus         Documents              ation Report            ent / Justification Notice / Invitation                  s Issued        Opening / Minutes
+                                                                                                                                                                                                                                                                                                                                                                           for Award
+                                                                                                                                                                                                                         Planned         Actual     Planned   Actual   Planned       Actual      Planned       Actual       Planned     Actual  Planned     Actual    Planned     Actual                 Planned       Actual      Planned       Actual
+ KE-KIMAWASCO-50050-GO-R                          Component 1: Rehabilitation
+FB / Supply and delivery of KI                    and expansion of urban wat
+MAWASCO repair Kit ( pipes                        er supply and sanitation ser                                                             Single Stage - One E
+                               IDA / 60300                                      Prior            Request for Bids   Open - National                                      600,000.00        350,587.16    Completed                                                     2018-06-30   2019-08-22   2018-07-05   2019-09-02                             2018-08-16   2019-09-30   2018-09-15   2020-06-28   2018-10-20   2020-09-13   2019-04-18   2020-12-13
+and fittings,Gate valves,Vikin                    vices in the coastal region (                                                            nvelope
+g Johnson couplings & Range                       US$176 of w hich IDA-SUF U
+r Couplings,Sluice valves,Air                     S$160 million).
+valves of Assorted sizes
+
+ KE-KIMAWASCO-74939-GO-R                          Component 1: Rehabilitation
+FQ / Supply and delivery of 1                     and expansion of urban wat
+                                                                                                 Request for Quota                         Single Stage - One E
+5no. Motor Cycles for project IDA / 60300         er supply and sanitation ser Post                                Open - National                                        75,000.00          89,827.55   Completed                                                                               2018-09-15                                                                                              2018-11-10   2020-01-08   2019-05-09   2020-12-19
+                                                                                                 tions                                     nvelope
+monitoring 175cc and meter                        vices in the coastal region (
+reading                                           US$176 of w hich IDA-SUF U
+                                                  S$160 million).
+
+ KE-KIMAWASCO-50038-GO-R
+FB / Supply and delivery of m
+                                                  Component 1: Rehabilitation
+eters(13,700 no.) to AMR ena
+                                                  and expansion of urban wat
+bled meters(DN15mm-32mm
+                                                  er supply and sanitation ser                                                             Single Stage - One E
+) and major customer meters IDA / 60300                                         Post             Request for Bids   Open - National                                      850,750.00               0.00   Canceled                                                      2018-05-30                2018-06-04                                          2018-07-16                2018-08-15                2018-09-19                2019-03-18
+                                                  vices in the coastal region (                                                            nvelope
+(81 no-ultrasonic meters with
+                                                  US$176 of w hich IDA-SUF U
+integrated radio module of si
+                                                  S$160 million).
+ze DN40,DN50-DN150mm),1
+5nos.portable meter testing
+kit and 1no.testing bench.
+
+
+
+
+                                                                                                                                                                                                                              Page 1
+ KE-KIMAWASCO-76105-GO-R
+FB / Supply and delivery of al
+                                                Component 1: Rehabilitation
+l small customer meters(3,51
+                                                and expansion of urban wat
+0 no.) to AMR enabled meter
+                                                er supply and sanitation ser                                                        Single Stage - One E
+s(DN15mm-32mm) and majo IDA / 60300                                           Post            Request for Bids    Open - National                                             329,900.00        515,948.06   Signed                                                              2018-11-09   2019-07-27   2018-11-14   2019-08-09                             2018-12-26   2019-09-12   2019-01-25   2019-09-20   2019-03-01   2019-12-31   2019-04-15   2020-07-10
+                                                vices in the coastal region (                                                       nvelope
+r customer meters (81 no-ult
+                                                US$176 of w hich IDA-SUF U
+rasonic meters with integrate
+                                                S$160 million).
+d radio module of size DN40,
+DN50-DN150mm),15nos.port
+able meter testing kit and 1n
+o. bench
+                                                Component 1: Rehabilitation
+ KE-KIMAWASCO-74931-GO-R                        and expansion of urban wat
+                                                                                                                                    Single Stage - One E
+FB / Supply and delivery of 2 IDA / 60300       er supply and sanitation ser Post             Request for Bids    Open - National                                             216,000.00        172,222.15   Completed                                                           2018-11-13   2019-06-20   2018-11-18   2019-06-20                             2018-12-30   2019-07-09   2019-01-29   2019-07-18   2019-03-05   2019-12-27   2019-05-09   2020-12-07
+                                                                                                                                    nvelope
+nos 4WD 4x4 vehicle                             vices in the coastal region (
+                                                US$176 of w hich IDA-SUF U
+                                                S$160 million).
+
+                                                Component 1: Rehabilitation
+KE-KIMAWASCO-130411-GO-                         and expansion of urban wat
+                                                                                                                                    Single Stage - One E
+RFB / Supply and Delivery of IDA / 60300        er supply and sanitation ser Post             Request for Bids    Open - National                                             300,000.00        317,215.50   Completed                                                           2019-09-20   2019-09-30   2019-09-25   2019-09-30                             2019-11-06   2019-11-04   2019-12-06   2019-11-14   2020-01-10   2020-04-12   2020-03-10   2020-12-20
+                                                                                                                                    nvelope
+2No.Exhausters 10M³                             vices in the coastal region (
+                                                US$176 of w hich IDA-SUF U
+                                                S$160 million).
+
+ KE-KIMAWASCO-372408-GO-                        Component 1: Rehabilitation
+RFQ / Supply and Delivery of                    and expansion of urban wat
+                                                                                              Request for Quota                     Single Stage - One E
+NRW and GIS Hardware Good IDA / 60300           er supply and sanitation ser Post                               Limited                                                       186,693.00              0.00   Signed                                                                                        2023-07-26   2023-10-05                                                                                 2023-08-29   2023-11-01   2023-09-29
+                                                                                              tions                                 nvelope
+s under Utility Turnaround Fr                   vices in the coastal region (
+amework                                         US$176 of w hich IDA-SUF U
+                                                S$160 million).
+
+ KE-KIMAWASCO-372410-GO-                        Component 1: Rehabilitation
+RFQ / Supply and delivery of                    and expansion of urban wat
+HRM Goods under Utility Tur                     er supply and sanitation ser                  Request for Quota                     Single Stage - One E                                                     Under Imple
+                             IDA / 60300                                      Post                              Limited                                                         8,696.00              0.00                                                                                                 2023-07-26                                                                                              2023-08-28                2023-10-02
+naround framework ( UTF) co                     vices in the coastal region (                 tions                                 nvelope                                                                  mentation
+ntract ( Sage Modules for 10                    US$176 of w hich IDA-SUF U
+0 people;- Accounting and Hu                    S$160 million).
+man Resource department)
+
+ KE-KIMAWASCO-372126-GO-
+                                                Component 1: Rehabilitation
+RFQ / Supply and Delivery of
+                                                and expansion of urban wat
+Commercial and Finance ICT
+                                                er supply and sanitation ser                  Request for Quota                     Single Stage - One E                                                     Under Imple
+Goods under Utility Turnarou IDA / 60300                                      Post                              Limited                                                        27,536.00              0.00                                                                                                 2023-07-26   2023-10-05                                                                                 2023-09-01                2023-10-02
+                                                vices in the coastal region (                 tions                                 nvelope                                                                  mentation
+nd framework (UTF)-( Deskto
+                                                US$176 of w hich IDA-SUF U
+p computers for office users,
+                                                S$160 million).
+UPS for Desktops, Anti virus,
+19inch TFT Monitors )
+
+ KE-KIMAWASCO-372128-GO-
+                                                Component 1: Rehabilitation
+RFQ / Supply and Delivery of
+                                                and expansion of urban wat
+NRW field Operation goods u
+                                                er supply and sanitation ser                  Request for Quota                     Single Stage - One E
+nder Utlity Turnaround Fram IDA / 60300                                       Post                              Limited                                                         3,623.00              0.00   Completed                                                                                     2023-07-26   2023-09-28                                                                                 2023-09-01   2023-11-01   2023-10-01   2023-12-18
+                                                vices in the coastal region (                 tions                                 nvelope
+ework ( Overals, Gumboots,
+                                                US$176 of w hich IDA-SUF U
+Flood lights, Tape measure,
+                                                S$160 million).
+Muttocks, Pipe wrenches, sur
+veyor wheel, Ring spanners)
+
+ KE-KIMAWASCO-481608-GO-                        Component 1: Rehabilitation
+RFB / Supply and Delivery of                    and expansion of urban wat
+                                                                                                                                    Single Stage - One E                                                     Pending Impl
+AMR enabled Consumer Wat IDA / 60300            er supply and sanitation ser Post             Request for Bids    Open - National                                             275,743.49              0.00                                                                       2025-03-11                2025-03-13                                          2025-04-14                2025-04-19                2025-05-08                2025-06-30
+                                                                                                                                    nvelope                                                                  ementation
+er Meters (Size DN15mm, DN                      vices in the coastal region (
+20mm)                                           US$176 of w hich IDA-SUF U
+                                                S$160 million).
+
+
+
+NON CONSULTING SERVICES
+Activity Reference No. /                                                                                                                                                                                                                                                                                                                                                       Bid Evaluation Report
+                              Loan / Credit N                                                                     Market Approac Procurement Pro Prequalification Estimated Am Actual Amount                 Process St Draft Pre-qualification Prequalification Evalu           Draft Bidding Docum Specific Procurement            Bidding Documents a Proposal Submission /
+       Description                                     Component                Review Type       Method                                                                                                                                                                                                                                                                       and Recommendation                    Signed Contract         Contract Completion
+                                     o.                                                                                  h             cess           (Y/N)        ount (US$)      (US$)                        atus         Documents              ation Report                  ent / Justification Notice / Invitation                  s Issued        Opening / Minutes
+                                                                                                                                                                                                                                                                                                                                                                                     for Award
+                                                                                                                                                                                                                            Planned         Actual     Planned       Actual      Planned       Actual      Planned       Actual       Planned     Actual  Planned     Actual    Planned     Actual                 Planned       Actual      Planned       Actual
+
+
+
+
+CONSULTING FIRMS
+Activity Reference No. /                                                                                                                                                                                                                                                                                                                                                Combined Evaluation
+                              Loan / Credit N                                                                     Market Approac     Contract Type         Estimated Amo Actual Amount                                                    Expression of Interest Short List and Draft R Request for Proposals Opening of Technical                Evaluation of Technic
+       Description                                     Component                Review Type       Method                                                                               Process Status         Terms of Reference                                                                                                                                        Report and Draft Neg            Signed Contract         Contract Completion
+                                     o.                                                                                  h                                    unt (US$)      (US$)                                                               Notice          equest for Proposals        as Issued         Proposals / Minutes                     al Proposal
+                                                                                                                                                                                                                                                                                                                                                                           otiated Contract
+                                                                                                                                                                                                              Planned        Actual        Planned      Actual      Planned       Actual      Planned       Actual      Planned       Actual      Planned      Actual    Planned     Actual           Planned       Actual      Planned       Actual
+                                                Component 1: Rehabilitation
+ KE-KIMAWASCO-74960-CS-Q
+                                                and expansion of urban wat
+CBS / Supervision consultanc                                                                  Quality And Cost-
+                               IDA / 60300      er supply and sanitation ser Prior                                Open - National                              345,500.00     448,722.37   Signed            2019-01-24     2019-05-06    2019-02-14   2019-05-23   2019-03-30   2020-01-20                             2019-04-27   2020-01-21   2019-05-27   2020-06-24   2019-07-01   2021-01-28   2019-08-05   2021-03-05   2020-08-04
+y for water distribution works                                                                Based Selection
+                                                vices in the coastal region (
+in Kilifi Town
+                                                US$176 of w hich IDA-SUF U
+                                                S$160 million).
+
+
+
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /
+                              Loan / Credit N                                                                     Market Approac     Contract Type         Estimated Amo Actual Amount                                                    Invitation to Identifie Draft Negotiated Cont
+       Description                                     Component                Review Type       Method                                                                               Process Status         Terms of Reference                                                                Signed Contract         Contract Completion
+                                     o.                                                                                  h                                    unt (US$)      (US$)                                                        d/Selected Consultant            ract
+                                                                                                                                                                                                              Planned        Actual        Planned      Actual      Planned       Actual      Planned       Actual      Planned       Actual
+
+
+
+
+                                                                                                                                                                                                                                 Page 2
+
