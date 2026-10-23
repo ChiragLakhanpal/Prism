@@ -4,7 +4,8 @@ config/tools.toml defines each tool once (spec, "Ten single places", item 2) and
 strata.config.load_tools() reads it. This module does three things with those definitions:
 
 - agent_tools() is the agent's tool list: one function tool per entry, in the Responses API's
-  shape, so adding a tool is one entry in the file.
+  shape, so adding a tool is one entry in the file. A value of the thresholds file named in braces
+  in a description, such as {passages.results}, is filled in from that file.
 - call() runs a tool by name. It checks the arguments against the tool's parameters, settles
   the as-of date (the earlier of the call's and the page's, else today), runs the adapter with
   the viewer's engine, and wraps the result in the envelope every tool shares.
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -70,28 +72,38 @@ class Call:
 
 # ── The agent's tool list ────────────────────────────────────────────────
 
-def _schema(parameter: ToolParameter) -> dict:
-    return {**JSON_TYPES[parameter.type], "description": parameter.description}
+THRESHOLD = re.compile(r"\{([a-z_]+(?:\.[a-z_]+)+)\}")  # a value of the thresholds file: {passages.results}
 
 
-def agent_tool(tool: Tool) -> dict:
+def _filled(text: str, thresholds: Thresholds) -> str:
+    """A description with each threshold it names in braces filled in from the thresholds file."""
+    return THRESHOLD.sub(lambda match: str(thresholds.value(match.group(1))), text)
+
+
+def _schema(parameter: ToolParameter, thresholds: Thresholds) -> dict:
+    return {**JSON_TYPES[parameter.type], "description": _filled(parameter.description, thresholds)}
+
+
+def agent_tool(tool: Tool, thresholds: Thresholds | None = None) -> dict:
     """One tool as the agent is offered it: a function with a JSON Schema for its arguments."""
+    limits = thresholds or load_thresholds()
     return {
         "type": "function",
         "name": tool.name,
-        "description": tool.description,
+        "description": _filled(tool.description, limits),
         "parameters": {
             "type": "object",
-            "properties": {parameter.name: _schema(parameter) for parameter in tool.parameters},
+            "properties": {parameter.name: _schema(parameter, limits) for parameter in tool.parameters},
             "required": [parameter.name for parameter in tool.parameters if parameter.required],
             "additionalProperties": False,
         },
     }
 
 
-def agent_tools(tools: dict[str, Tool] | None = None) -> list[dict]:
+def agent_tools(tools: dict[str, Tool] | None = None, thresholds: Thresholds | None = None) -> list[dict]:
     """The agent's tool list: exactly the registry's tools, in the registry's order."""
-    return [agent_tool(tool) for tool in (tools if tools is not None else load_tools()).values()]
+    limits = thresholds or load_thresholds()
+    return [agent_tool(tool, limits) for tool in (tools if tools is not None else load_tools()).values()]
 
 
 # ── Calling a tool ───────────────────────────────────────────────────────

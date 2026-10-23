@@ -109,6 +109,24 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
         assert "as_of" not in tool["parameters"]["required"]
 
 
+def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file(tmp_path):
+    """The prompt and the tool use the same numbers, so changing the thresholds file changes both."""
+    text = (ROOT / "config" / "thresholds.toml").read_text()
+    path = tmp_path / "thresholds.toml"
+    path.write_text(text.replace("\nmax_results = 20\n", "\nmax_results = 15\n"))
+
+    def limit(thresholds=None) -> str:
+        [tool] = [tool for tool in registry.agent_tools(thresholds=thresholds) if tool["name"] == "search_passages"]
+        return tool["parameters"]["properties"]["limit"]["description"]
+
+    assert limit() == "How many passages to return, from 1 to 20. Leave it out for 10."
+    assert limit(config.load_thresholds(path)) == "How many passages to return, from 1 to 15. Leave it out for 10."
+    texts = [tool["description"] for tool in registry.agent_tools()] + [
+        parameter["description"] for tool in registry.agent_tools()
+        for parameter in tool["parameters"]["properties"].values()]
+    assert [text for text in texts if "{" in text] == []
+
+
 def never_written() -> list[str]:
     """DESIGN.md section 7, rule 19's list of words Strata never writes, read from the file, as the
     copy lint (web/lint/copy.ts) reads it."""

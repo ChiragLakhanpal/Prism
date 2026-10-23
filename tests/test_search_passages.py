@@ -108,6 +108,17 @@ def test_a_document_type_filter_takes_the_short_name_and_keeps_only_that_type(en
     assert result["filters"]["document_type"] == "Implementation Status and Results Report"
 
 
+def test_the_source_line_says_whether_the_paragraph_number_is_the_reports_own(engine):
+    """An ISR numbers none of its paragraphs, so its passages carry Strata's own count, such as s4,
+    which a citation must not print as a paragraph number."""
+    reports = search(engine, query=REBIDDING, project_id="P130164", document_type="ICR")
+    isrs = search(engine, query="implementation progress rating", document_type="ISR", project_id="P156634")
+
+    [paragraph_54] = [row for row in reports["rows"] if row["paragraph"] == "54"]
+    assert paragraph_54["source"]["paragraph_numbered"] is True
+    assert isrs["rows"] and {row["source"]["paragraph_numbered"] for row in isrs["rows"]} == {False}
+
+
 def test_a_published_date_filter_keeps_only_passages_public_in_its_window(engine):
     result = search(engine, query="road works completed", project_id="P130164", published_from="2016-01-01",
                     published_until="2016-12-31")

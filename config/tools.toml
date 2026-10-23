@@ -17,6 +17,10 @@
 # date (ADR 0002): it then uses only what was public on or before that date. The page's own as-of
 # date applies to every call too, and the earlier of the two wins.
 #
+# A description names a value of config/thresholds.toml in braces, such as {passages.results},
+# rather than writing its number: the agent's tool list fills it in, so the prompt and the tool
+# always use the same number (CLAUDE.md rule 4).
+#
 # [tools.<name>.result], the shape of what it returns. Every result has the same envelope: tool,
 # as_of, view, rows, coverage (matched, used, and why the rest were not used) and abstention
 # (empty, or the reason the tool gives no rows). The table says:
@@ -142,7 +146,7 @@ description = "Only passages of documents that became public on or before this d
 name = "limit"
 type = "integer"
 required = false
-description = "How many passages to return, from 1 to 20. Leave it out for 10."
+description = "How many passages to return, from 1 to {passages.max_results}. Leave it out for {passages.results}."
 
 [[tools.search_passages.parameters]]
 name = "as_of"
@@ -157,7 +161,7 @@ row_fields = ["evidence_id", "public_from", "source", "passage_id", "document_id
               "version", "section_path", "paragraph", "paragraph_numbered", "part", "parts", "pdf_page",
               "last_pdf_page", "printed_page", "language", "parse_route", "header", "text", "rank", "score"]
 source_fields = ["document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
-                 "version", "section_path", "paragraph", "pdf_page", "pdf_pages", "pdf_url"]
+                 "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url"]
 fields = ["query", "filters", "search"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
