@@ -108,6 +108,7 @@ class DuckDBEngine:
         connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",
                            [str(path) if path else ":memory:"])
         connection.execute("USE strata")
+        connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
         return cls(connection)
 
     def run(self, sql: str, params: Params = None) -> Result:
