@@ -565,7 +565,7 @@ def gate_steps():
 FIXTURE_READERS = (Path("tests"), Path("ops/bundle/tests"))
 
 
-def testpaths():
+def folders_in_testpaths():
     with open(ROOT / "pyproject.toml", "rb") as handle:
         return [Path(path) for path in tomllib.load(handle)["tool"]["pytest"]["ini_options"]["testpaths"]]
 
@@ -576,7 +576,7 @@ def paths_tested(step):
         return []
     args = step["run"][step["run"].index("pytest") + 1:]
     named = [Path(arg) for arg in args if not arg.startswith("-") and (ROOT / arg).exists()]
-    return named or testpaths()
+    return named or folders_in_testpaths()
 
 
 def overlap(one, other):
@@ -604,7 +604,7 @@ def steps_that_may_start_before_the_fixture_build(steps):
 def gate_steps_per_test_folder(steps):
     """For each folder in testpaths, how many steps run some or all of its tests."""
     tested = [path for step in steps for path in paths_tested(step)]
-    return {folder: sum(overlap(folder, path) for path in tested) for folder in testpaths()}
+    return {folder: sum(overlap(folder, path) for path in tested) for folder in folders_in_testpaths()}
 
 
 def test_the_fixture_database_is_built_before_the_python_tests_that_read_it():
