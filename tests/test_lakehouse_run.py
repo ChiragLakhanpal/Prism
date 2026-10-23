@@ -169,9 +169,10 @@ PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\
                    r"|(?<![\d.,/-])0\d{2,3}[ -]\d{6,7}(?![\d.])|(?<![\d.,/-])07\d{8}(?![\d.])"
                    r"|(?<![\d.,/-])0 7\d{2}[ -]?\d{6}(?![\d.])")
 # A number of seven digits or more written after a phone label, whatever its shape (Tel 254 20 1234567,
-# Tel.254412345678), and a number written after a removed one with a slash, as a second mobile is.
+# Tel.254412345678), and any digit written after a removed number with a slash, as a second mobile
+# or the last digit of a second line (0722 123 456/7) is.
 LABELLED_PHONE = re.compile(r"\b(?:tel|phone|mobile|cell|fax)\b\.?\s*(?:no\.?)?\s*[:.]?\s*\+?\(?\d[\d ().-]{6,}\d", re.I)
-AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d{3}")
+AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d")
 
 
 def text_values(engine):
@@ -286,18 +287,21 @@ def test_stripping_removes_every_number_written_after_a_phone_label():
 
 
 def test_stripping_removes_emails_and_numbers_run_together_with_no_spaces():
-    """Scraped award notices sometimes run a mobile, two emails and two numbers together. Nothing of
-    them may be left: no "@" and a domain, no first digits of a number. These values are made up."""
+    """Scraped award notices sometimes run a mobile, two emails and two numbers together, or write a
+    second line as one more digit. Nothing of them may be left: no "@" and a domain, no first digits
+    of a number, no last digit of a line. These values are made up."""
     page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
         "MOMBASA, KENYA0712345678jdoe@example.com.info@example.org<br/>"
-        "Nairobi, Kenya+254 712 345 678+254 20 123 4567sales@example.co<br/>")}]}
+        "Nairobi, Kenya+254 712 345 678+254 20 123 4567sales@example.co<br/>"
+        "Nairobi<br/>0722 123 456/7<br/>Dated 12/03/2019")}]}
 
     stripped, removed = contacts.strip(page)
 
     assert stripped["procnotices"][0]["notice_text"] == (
         "MOMBASA, [contact removed]<br/>"
-        "Nairobi, Kenya[contact removed][contact removed] [contact removed]<br/>")
-    assert removed == 4
+        "Nairobi, Kenya[contact removed][contact removed] [contact removed]<br/>"
+        "Nairobi<br/>[contact removed]<br/>Dated 12/03/2019")
+    assert removed == 5
 
 
 def test_the_fetch_counts_the_contact_details_it_removes(gold):

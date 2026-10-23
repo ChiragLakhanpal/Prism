@@ -11,7 +11,8 @@ counts what it took out:
   from those fields is replaced wherever it appears, whatever its spacing or capitals;
 - in the same free text, every other email address, also one typed with a stray space or a comma
   for a dot or run into the next with no space, and every phone number written with a country
-  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456, 0 722-123456), is replaced too;
+  code (+254 20 1234567) or a trunk zero (046-1234567, 0722123456, 0 722-123456), with the last
+  digit of a second line written after it (0722 123 456/7), is replaced too;
 - every number written after a Tel, Phone, Mobile, Cell or Fax label, also one with a country code
   and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too.
 
@@ -42,6 +43,8 @@ AFTER_EMAIL = re.compile(re.escape(REMOVED) + r"@ ?[A-Za-z0-9-]+(?:[.,][A-Za-z0-
 # when the plus starts this one (+254 712 345 678+254 20 123 4567).
 PHONE = re.compile(r"(?:(?<![\d+])|(?<=\d)(?=\+))(?:\(\s*\+?\s*\d{1,4}\s*\)|\+\s?\d{1,4}|\(?0 ?\d{1,4}\)?)(?:[ \t.–-]{0,3}\(?\d{1,5}\)?){1,6}"
                    r"(?:\s*/\s*\+?\d[\d \t–-]{4,}\d)*")
+# The last digit or two of another line, written after a removed number: [contact removed]/7.
+LINE_ENDING = re.compile(re.escape(REMOVED) + r"(?:[ \t]*/[ \t]*\d{1,2}(?![\d/]))+")
 DATE_LIKE = re.compile(r"\d{1,4}[./-]\d{1,2}[./-]\d{1,4}")
 AMOUNT_LIKE = re.compile(r"\d[\d,]*\.\d{1,2}")
 FISCAL_YEARS = re.compile(r"\d{1,2}-(?:19|20)\d{2}-(?:19|20)\d{2}")  # a reference's end: 03-2019-2020
@@ -114,6 +117,7 @@ class Stripper:
         text = self._sub(EMAIL, text)
         text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
         text = self._sub(PHONE, text, _phone)
+        text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         return LABELLED.sub(self._labelled, text)
 
     def _labelled(self, match: re.Match) -> str:
