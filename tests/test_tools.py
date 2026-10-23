@@ -16,6 +16,7 @@ import tomllib
 from pathlib import Path
 
 import pytest
+import yaml
 
 from strata import config
 from strata.config import ConfigError
@@ -25,6 +26,7 @@ from strata.tools import registry
 
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
+BENCHMARK = yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())
 NWWDA = "Northern Water Works Development Agency"
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", token="token-for-ana-only")
 WIREFRAME_MARKS = {"Needs a look": ["needs_a_look"], "Watch": ["watch"], "Data note": ["data_note"], "No signals": []}
@@ -105,6 +107,39 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
         assert tool["parameters"]["properties"]["as_of"] == {
             "type": "string", "format": "date", "description": tools[tool["name"]].parameter("as_of").description}
         assert "as_of" not in tool["parameters"]["required"]
+
+
+def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sources():
+    questions = {question["id"]: question for question in BENCHMARK["questions"]}
+    sources = config.load_sources()
+
+    for tool in config.load_tools().values():
+        assert tool.benchmark in questions, f"{tool.name}'s question {tool.benchmark} is not in evals/benchmark.yaml"
+        assert questions[tool.benchmark]["tool"] == tool.name
+        assert set(tool.sources) <= set(sources), f"{tool.name} reads a source the source registry lacks"
+
+
+def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine):
+    for question in BENCHMARK["questions"]:
+        if "tool" not in question:
+            continue
+        result = registry.call(question["tool"], question["arguments"], registry.Context(engine=engine, viewer=ANA))
+
+        answered = {"unmarked": sorted(ref for ref, found in marks(result).items() if not found)}
+        for mark in ("needs_a_look", "watch", "data_note"):
+            answered[mark] = sorted(ref for ref, found in marks(result).items() if mark in found)
+        assert answered == {mark: sorted(refs) for mark, refs in question["expected"].items()}
+
+
+def test_the_ground_truth_sql_uses_the_thresholds_file_s_plan_check_values():
+    """The ground-truth SQL writes each threshold as a parameter, so it must change when the file does."""
+    from strata.lakehouse import ground_truth
+
+    case = ground_truth.read(ROOT / "tests" / "ground_truth" / "check_plan_nwwda_2026_10_09.sql")
+    plan_check = config.load_thresholds().values["plan_check"]
+
+    assert {name: float(case.params[name]) for name in plan_check} == {
+        name: float(number) for name, number in plan_check.items()}
 
 
 def test_adding_a_tool_is_one_entry_and_the_agents_tool_list_grows_with_it(tmp_path):
