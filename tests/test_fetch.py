@@ -77,7 +77,8 @@ def test_the_same_records_in_another_order_add_no_bronze_rows():
 
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
-        for key, file in (("awards", "api/awards/P156634.json"), ("notices", "api/notices/P156634.json")):
+        for key, file in (("awards", "api/awards/P156634.json"),
+                          ("notices", "api/notices/kenya-works-open-on-2026-10-09.json")):
             source = config.load_sources()[key]
             body = recorded(file)
             reordered = dict(body, **{source.records: list(reversed(body[source.records]))})
