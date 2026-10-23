@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 2, 8, 12 and 18; DESIGN.md sections 5, 8, 9 an
 
 **Blocked by:** 02 (Design-system foundation); 03 (Credentials, Azure caps and the day-one tests); 04 (The strata catalog and the bundle skeleton)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P1
 **Design review:** yes
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 2, 8, 12 and 18; DESIGN.md sections 5, 8, 9 an
 - [ ] The Lakebase probe's timings and the decision are written down before any app state exists.
 - [ ] The navigation, band and footer match DESIGN.md section 5 (top navigation, tabs) and section 8 (footer text), and the blueprint's Home wireframe layout; the logo is the official file, unaltered, at least 24px tall with clear space of half its height (DESIGN.md section 9).
 - [ ] Below 768 px a labeled Menu holds the tabs, the layout reflows at 320px, a skip link leads every page, and axe finds no WCAG 2.2 AA violations on any route (DESIGN.md section 10).
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/06-deployed-app-shell, as soon as ticket 02 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
