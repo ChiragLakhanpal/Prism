@@ -8,6 +8,7 @@ Expected values come from docs/PLAN.md sections 2 and 3 and the ticket, never fr
 
 import datetime as dt
 import shutil
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -150,13 +151,21 @@ def test_a_model_file_missing_a_role_is_refused(tmp_path):
         config.load_models(path)
 
 
-def test_the_model_file_and_env_example_name_the_same_deployments():
-    """The wizard from ticket 03 writes .env.example's defaults, so the two must not drift apart."""
-    example = dict(line.split("=", 1) for line in (ROOT / ".env.example").read_text().splitlines()
-                   if line.startswith("STRATA_MODEL_"))
-    models = config.load_models()
+def test_only_the_model_file_names_a_deployment_or_the_embedding_size():
+    """Swapping a model is one line (spec, "Ten single places"), so no other file repeats what it holds.
 
-    assert {f"STRATA_MODEL_{role.upper()}": model.deployment for role, model in models.items()} == example
+    The wizard and the probes from ticket 03 read the names through load_models(), and dayone.toml
+    keeps only each role's cap.
+    """
+    names = [model.deployment for model in config.load_models().values()]
+    for path in (".env.example", "ops/dayone/dayone.toml", "ops/wizard/strata-setup.sh"):
+        text = (ROOT / path).read_text()
+        assert "STRATA_MODEL_" not in text, path
+        assert [name for name in names if name in text] == [], path
+
+    caps = tomllib.loads((ROOT / "ops" / "dayone" / "dayone.toml").read_text())["caps"]["deployments"]
+    assert list(caps) == list(config.ROLES)
+    assert [key for cap in caps.values() for key in cap if key in ("env_key", "deployment", "dimensions")] == []
 
 
 # ── The thresholds file ──────────────────────────────────────────────────

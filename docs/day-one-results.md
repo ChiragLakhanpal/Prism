@@ -190,7 +190,7 @@ Command: `bash ops/wizard/strata-setup.sh`
 
 The four models deploy within the subscription's quota.
 
-- If it passes: The four deployments named in .env serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
+- If it passes: The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
 - If it fails: PLAN.md section 14 names no gap fill, so the user decides.
 
 Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
@@ -200,7 +200,7 @@ Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
 - Result: Not run yet, because it needs the wizard first.
 - Evidence:
   - None yet. The command above fills it.
-- Chosen path: Default, until a result says otherwise. The four deployments named in .env serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
+- Chosen path: Default, until a result says otherwise. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
 - Last run: never
 <!-- /dayone:test-8 -->
 

@@ -5,6 +5,7 @@ Azure is replaced by a fake that returns what Azure Resource Manager returns for
 
 import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,8 @@ sys.path.insert(0, str(REPO / "ops" / "dayone"))
 import dayone  # noqa: E402
 import probe_caps  # noqa: E402
 from dayone import Outcome, SetupError  # noqa: E402
+
+from strata.config import load_models  # noqa: E402
 
 RESULTS = REPO / "docs" / "day-one-results.md"
 
@@ -94,13 +97,29 @@ def test_four_capped_deployments_pass_test_eight_and_the_caps_check(place):
     assert len(results["caps"]["Deployments"]) == 4
 
 
+def test_the_probe_checks_the_deployments_the_model_file_names(place, capsys):
+    run(place, FakeAzure())
+    shown = capsys.readouterr().out
+    for model in load_models().values():
+        assert f"    - {model.deployment}: " in shown
+
+
+def test_a_model_swapped_in_the_model_file_is_the_one_the_probe_looks_for():
+    models = load_models()
+    models["agent"] = replace(models["agent"], deployment="gpt-5.5-mini")
+
+    outcome, _, _ = probe_caps.check(FakeAzure(), dayone.load_config(), models)
+
+    assert outcome.status == "failed"
+    assert "gpt-5.5-mini: not found in wb-strata." in outcome.evidence
+
+
 def test_the_passed_result_holds_for_however_many_deployments_dayone_toml_lists():
     config = dayone.load_config()
     del config["caps"]["deployments"]["embed"]
-    env = dayone.load_env(REPO / ".env.example")
-    outcome, _, _ = probe_caps.check(FakeAzure(deployments=CAPPED[:3]), env, config)
+    outcome, _, _ = probe_caps.check(FakeAzure(deployments=CAPPED[:3]), config, load_models())
     assert outcome.status == "passed"
-    assert outcome.result == "Every deployment in dayone.toml exists and finished deploying."
+    assert outcome.result == "Every deployment with a cap in dayone.toml exists and finished deploying."
 
 
 def test_a_missing_deployment_fails_test_eight(place):

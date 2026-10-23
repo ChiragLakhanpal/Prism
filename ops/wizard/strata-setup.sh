@@ -27,10 +27,6 @@
 #   FOUNDRY_PROJECT_ENDPOINT               .env                             typed
 #   AZURE_OPENAI_ENDPOINT                  .env                             typed
 #   AZURE_OPENAI_API_KEY                   .env and secret scope            hidden, or read from az
-#   STRATA_MODEL_AGENT                     .env                             typed
-#   STRATA_MODEL_DRAFT                     .env                             typed
-#   STRATA_MODEL_BATCH                     .env                             typed
-#   STRATA_MODEL_EMBED                     .env                             typed
 #   APPLICATIONINSIGHTS_CONNECTION_STRING  .env and secret scope            hidden
 #   AZURE_SUBSCRIPTION                     nowhere, only az account set     typed
 #   DEPLOY_PROBLEM                         results document                 typed
@@ -251,6 +247,10 @@ dayone() { "$PYTHON" "$ROOT/ops/dayone/dayone.py" --results "$RESULTS" "$@"; }
 
 # setting NAME prints one value from ops/dayone/dayone.toml.
 setting() { dayone get "$1"; }
+
+# model_value ROLE [FIELD] prints one role's deployment, or its dimensions, from config/models.toml,
+# the one place that names a model (spec, "Ten single places").
+model_value() { dayone model "$@"; }
 
 # example_value KEY prints KEY's value in .env.example.
 example_value() { grep -E "^$1=" "$ROOT/.env.example" | head -n1 | cut -d= -f2-; }
@@ -644,11 +644,12 @@ say "your quota."
 say ""
 open_url "https://ai.azure.com"
 step "In the project, open Models + endpoints. Click Deploy model, then Deploy base model."
-step "Deploy $(example_value STRATA_MODEL_AGENT) as $(setting caps.deployments.agent.deployment_type), named $(example_value STRATA_MODEL_AGENT). Under Customize, set the tokens-per-minute rate limit to $(with_commas "$(setting caps.deployments.agent.tokens_per_minute)")."
-step "Deploy $(example_value STRATA_MODEL_DRAFT) as $(setting caps.deployments.draft.deployment_type), named $(example_value STRATA_MODEL_DRAFT), with a limit of $(with_commas "$(setting caps.deployments.draft.tokens_per_minute)") tokens per minute."
-step "Deploy $(example_value STRATA_MODEL_BATCH) as $(setting caps.deployments.batch.deployment_type), named $(example_value STRATA_MODEL_BATCH). If the page offers an enqueued-token limit, set it to $(with_commas "$(setting caps.deployments.batch.enqueued_tokens)")."
-step "Deploy $(example_value STRATA_MODEL_EMBED) as $(setting caps.deployments.embed.deployment_type), named $(example_value STRATA_MODEL_EMBED), with a limit of $(with_commas "$(setting caps.deployments.embed.tokens_per_minute)") tokens per minute."
-note "Strata asks $(example_value STRATA_MODEL_EMBED) for $(with_commas "$(setting caps.deployments.embed.dimensions)") dimensions in each request, so that deployment needs no setting for it."
+step "Deploy $(model_value agent) as $(setting caps.deployments.agent.deployment_type), named $(model_value agent). Under Customize, set the tokens-per-minute rate limit to $(with_commas "$(setting caps.deployments.agent.tokens_per_minute)")."
+step "Deploy $(model_value draft) as $(setting caps.deployments.draft.deployment_type), named $(model_value draft), with a limit of $(with_commas "$(setting caps.deployments.draft.tokens_per_minute)") tokens per minute."
+step "Deploy $(model_value batch) as $(setting caps.deployments.batch.deployment_type), named $(model_value batch). If the page offers an enqueued-token limit, set it to $(with_commas "$(setting caps.deployments.batch.enqueued_tokens)")."
+step "Deploy $(model_value embed) as $(setting caps.deployments.embed.deployment_type), named $(model_value embed), with a limit of $(with_commas "$(setting caps.deployments.embed.tokens_per_minute)") tokens per minute."
+note "Strata asks $(model_value embed) for $(with_commas "$(model_value embed dimensions)") dimensions in each request, so that deployment needs no setting for it."
+note "Give each deployment the name shown. Strata reads the names from config/models.toml, so a deployment with another name means a change to that file."
 note "If a deployment fails because the quota is too small, note what the page says. That answers test 8."
 pause "Press Enter when you have tried all four."
 deployments=$(az cognitiveservices account deployment list -g "$RESOURCE_GROUP" -n "$FOUNDRY_RESOURCE" -o json 2>/dev/null || true)
@@ -664,14 +665,6 @@ else
   deploy_evidence="az cognitiveservices account deployment list returned nothing, so this rests on what the portal showed."
 fi
 say ""
-ask_with_default STRATA_MODEL_AGENT "Name of the $(example_value STRATA_MODEL_AGENT) deployment." "$(example_value STRATA_MODEL_AGENT)"
-write_env STRATA_MODEL_AGENT "$STRATA_MODEL_AGENT"
-ask_with_default STRATA_MODEL_DRAFT "Name of the $(example_value STRATA_MODEL_DRAFT) deployment." "$(example_value STRATA_MODEL_DRAFT)"
-write_env STRATA_MODEL_DRAFT "$STRATA_MODEL_DRAFT"
-ask_with_default STRATA_MODEL_BATCH "Name of the $(example_value STRATA_MODEL_BATCH) deployment." "$(example_value STRATA_MODEL_BATCH)"
-write_env STRATA_MODEL_BATCH "$STRATA_MODEL_BATCH"
-ask_with_default STRATA_MODEL_EMBED "Name of the $(example_value STRATA_MODEL_EMBED) deployment." "$(example_value STRATA_MODEL_EMBED)"
-write_env STRATA_MODEL_EMBED "$STRATA_MODEL_EMBED"
 if [[ "$(test_status 8)" == "passed" ]]; then
   note "Test 8 passed on an earlier run, so there is nothing to ask."
 elif confirm "Did all four deploy?"; then
@@ -722,7 +715,7 @@ else
   say ""
   open_url "https://ai.azure.com"
   step "In the project, open Evaluation in the left menu and start a new evaluation."
-  step "If the page offers a sample dataset, use it. Pick the groundedness evaluator and use $(example_value STRATA_MODEL_AGENT) as the judge."
+  step "If the page offers a sample dataset, use it. Pick the groundedness evaluator and use $(model_value agent) as the judge."
   step "Submit it and wait until its status says Completed. This can take a few minutes."
   pause "Press Enter when the evaluation has finished or failed."
   if confirm "Did the evaluation finish with scores?"; then

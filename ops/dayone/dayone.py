@@ -3,7 +3,8 @@
 
 The wizard calls this file with python3, the probes import it, and later tickets read the
 results document through read_results() or path_kind(). It uses the standard library only,
-so it runs anywhere Python 3.11 or later runs.
+so it runs anywhere Python 3.11 or later runs. The model deployments come from the model file,
+config/models.toml, through strata.config.load_models(), which also uses only the standard library.
 
 Commands:
   python3 ops/dayone/dayone.py init      Write the results document if it is missing.
@@ -11,6 +12,8 @@ Commands:
   python3 ops/dayone/dayone.py payg --status done|planned --who TEXT [--due YYYY-MM-DD]
   python3 ops/dayone/dayone.py payg-done Exit 0 when the subscription has moved to pay-as-you-go.
   python3 ops/dayone/dayone.py get caps.monthly_budget_usd
+  python3 ops/dayone/dayone.py model agent             The agent role's deployment, from config/models.toml.
+  python3 ops/dayone/dayone.py model embed dimensions  The embedding size.
   python3 ops/dayone/dayone.py field test-6 Status
   python3 ops/dayone/dayone.py show      Print each test's status and chosen path.
 
@@ -32,6 +35,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CONFIG_PATH = HERE / "dayone.toml"
+SRC = HERE.parents[1] / "src"
 
 # "waiting" means part of the test ran and the rest waits for something, such as the app.
 STATUSES = ("not run", "waiting", "passed", "partly", "failed")
@@ -58,6 +62,22 @@ class Outcome:
 def load_config(path: Path = CONFIG_PATH) -> dict:
     with open(path, "rb") as handle:
         return tomllib.load(handle)
+
+
+def models() -> dict:
+    """Each model role's deployment, read from config/models.toml through strata.config.load_models().
+
+    The model file is the one place that names a deployment (spec, "Ten single places"), so the
+    wizard and the probes ask it here instead of keeping their own names.
+    """
+    if str(SRC) not in sys.path:
+        sys.path.insert(0, str(SRC))
+    from strata.config import ConfigError, load_models
+
+    try:
+        return load_models()
+    except ConfigError as error:
+        raise DayOneError(str(error)) from error
 
 
 def config_value(config: dict, dotted: str):
@@ -510,6 +530,9 @@ def main(argv: list[str] | None = None) -> int:
         "--results", type=Path, default=argparse.SUPPRESS)
     get = commands.add_parser("get", help="Print one setting from dayone.toml.")
     get.add_argument("key")
+    model = commands.add_parser("model", help="Print one role's deployment, or its size, from config/models.toml.")
+    model.add_argument("role")
+    model.add_argument("field", nargs="?", default="deployment", choices=("deployment", "dimensions"))
     one_field = commands.add_parser("field", help="Print one field of one block, such as test-6 Status.")
     one_field.add_argument("--results", type=Path, default=argparse.SUPPRESS)
     one_field.add_argument("block")
@@ -540,6 +563,15 @@ def main(argv: list[str] | None = None) -> int:
             if value is None:
                 raise DayOneError(f"{results} has no field {args.name} in block {args.block}.")
             print("\n".join(value) if isinstance(value, list) else value)
+        elif args.command == "model":
+            found = models()
+            if args.role not in found:
+                raise DayOneError(f"config/models.toml has no role named {args.role}. "
+                                  f"Its roles are: {', '.join(found)}.")
+            value = getattr(found[args.role], args.field)
+            if value is None:
+                raise DayOneError(f"config/models.toml gives the {args.role} role no {args.field}.")
+            print(value)
         elif args.command == "get":
             value = config_value(config, args.key)
             if isinstance(value, dict):
