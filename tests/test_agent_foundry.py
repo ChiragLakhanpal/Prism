@@ -65,6 +65,21 @@ def test_a_content_filter_refusal_is_its_own_error_and_any_other_failure_says_th
     assert (filtered.value.code, unavailable.value.code) == ("content_filter", "agent_unavailable")
 
 
+def test_the_app_answers_through_the_foundry_agent_only_when_its_environment_names_one():
+    from strata.agent.runner import from_environment
+
+    named = {"FOUNDRY_PROJECT_ENDPOINT": ENDPOINT, "FOUNDRY_TENANT_ID": "tenant-0001",
+             "FOUNDRY_CLIENT_ID": "client-0001", "FOUNDRY_CLIENT_SECRET": "not-a-real-secret"}
+
+    def engine_for(viewer):
+        raise AssertionError("No tool runs until a question is asked.")
+
+    assert from_environment({}, engine_for) is None
+    assert from_environment({**named, "FOUNDRY_CLIENT_SECRET": ""}, engine_for) is None
+    assert from_environment(named, None) is None  # no data service, so no tool could run
+    assert callable(from_environment(named, engine_for))
+
+
 class FakeProject:
     """A Foundry project and its resource's RAI policies behind the HTTP call, kept in memory."""
 

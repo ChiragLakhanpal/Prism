@@ -20,6 +20,7 @@ import asyncio
 import datetime as dt
 import json
 import logging
+import os
 import threading
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -29,6 +30,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent import runner as agent_runner
 from strata.agent import traces
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import answer_events, verify
@@ -63,13 +65,16 @@ def frame(event: Event) -> str:
     return f"event: {event.type}\ndata: {json.dumps(event.data, ensure_ascii=False)}\n\n"
 
 
-def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
+def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None,
                runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current) -> FastAPI:
     """engine_for makes the engine for each request's viewer; without it, the environment names one.
-    runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the log only.
-    trace_ids reads the request's trace ids while its span is open."""
+    runner answers /api/ask; without it, the Foundry agent the environment names does
+    (src/strata/agent/runner.py), or no agent. runs writes each answer stream's run to
+    strata.ops.agent_runs; without it, runs go to the log only. trace_ids reads the request's trace ids
+    while its span is open."""
     engine_for = engine_for or engines.from_environment()
+    runner = runner or agent_runner.from_environment(os.environ, engine_for) or no_agent
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None)
 
     def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):

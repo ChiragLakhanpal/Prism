@@ -1,0 +1,116 @@
+"""The recording command: re-record every scripted case from the live agent (spec, "Model outputs are
+recorded, not called, in the offline gate").
+
+record_all() asks each recording's question (tests/fixtures/agent/cases.toml names which cases share it)
+through the same answer loop the app runs, with the agent and the tools it is given, and keeps every
+response the agent gave, in order. It writes each one over its file in tests/fixtures/agent/recorded and
+keeps the old text, so report_text() can show the change as a unified diff. Re-recording is a deliberate
+act: review the diff, run the gate, and commit the recordings with the change that needed them. The
+cases' plants stay in cases.toml, so they apply to the new recordings too.
+
+A response keeps the fields that say what the agent did (its id, status, model, agent and output). Fields
+that change on every call, such as its usage and creation time, stay out, so the diff shows only what
+changed in the agent's answers.
+
+ops/agent/record.py runs it with the Foundry agent and the SQL warehouse, as the env file's token.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import datetime as dt
+import difflib
+import json
+from collections.abc import Callable
+from dataclasses import dataclass
+from pathlib import Path
+
+from strata.agent.loop import Agent, answer_runner
+from strata.agent.scripted import Case
+from strata.agent.verifier import verify
+from strata.dbx import Viewer
+from strata.harness.turn import Scope, Turn
+from strata.server.engines import EngineFor
+
+KEPT = ("id", "object", "status", "model", "agent", "incomplete_details", "output")
+ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops/agent/record.py from the live "
+         "agent with the live tools. The scripted agent replays them in the offline gate.")
+
+
+@dataclass(frozen=True)
+class Recorded:
+    recording: str
+    path: Path
+    cases: tuple[str, ...]
+    before: str
+    after: str
+    counts: dict | None  # the verifier's counts on the answer, with no plants
+
+
+class Keeper:
+    """The live agent, with each response it gives kept, in the recording's shape."""
+
+    def __init__(self, agent: Agent):
+        self.agent, self.responses = agent, []
+        self.name, self.version = agent.name, agent.version
+
+    def respond(self, items, previous_response_id):
+        response = self.agent.respond(items, previous_response_id)
+        self.version = getattr(self.agent, "version", None) or self.version
+        self.responses.append({key: response[key] for key in KEPT if key in response})
+        return response
+
+
+def _record_one(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer, today: dt.date) -> tuple[dict, dict | None]:
+    keeper = Keeper(agent)
+    turn = Turn(question=case.question, viewer=viewer, run_id=f"record-{case.recording}",
+                scope=Scope(chip=case.scope, as_of=case.as_of))
+    run = answer_runner(lambda _: keeper, engine_for, today=lambda: today)
+
+    async def drain():
+        claims = None
+        async for event in run(turn):
+            if event.type == "claims":
+                claims = event.data["claims"]
+        return claims
+
+    claims = asyncio.run(drain())
+    recording = {"about": ABOUT, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, verify(claims, turn.facts).counts() if claims is not None else None
+
+
+def record_all(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+               today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the cases name, once each, and write it over its file."""
+    today = today or dt.datetime.now(dt.UTC).date()
+    done = []
+    for name in dict.fromkeys(case.recording for case in cases.values()):
+        sharing = [case for case in cases.values() if case.recording == name]
+        first = sharing[0]
+        recording, counts = _record_one(first, agent_for(), engine_for, viewer, today)
+        before = first.path.read_text() if first.path.exists() else ""
+        after = json.dumps(recording, indent=1, ensure_ascii=False) + "\n"
+        first.path.write_text(after)
+        done.append(Recorded(name, first.path, tuple(case.id for case in sharing), before, after, counts))
+    return done
+
+
+def report_text(done: list[Recorded], root: Path) -> str:
+    """What changed in each recording, as a unified diff, with the cases it serves and the verifier's counts."""
+    lines = []
+    for item in done:
+        shown = item.path.relative_to(root) if item.path.is_relative_to(root) else item.path
+        lines.append(f"{shown}: the recording of {', '.join(item.cases)}.")
+        if item.counts:
+            sentences, numbers, quotes = item.counts["sentences"], item.counts["numbers"], item.counts["quotes"]
+            lines.append(f"The verifier kept {sentences['kept']} of {sentences['written']} sentences; "
+                         f"{numbers['matched']} of {numbers['total']} numbers matched and {quotes['found']} of "
+                         f"{quotes['total']} quotes were on their pages.")
+        diff = list(difflib.unified_diff(item.before.splitlines(), item.after.splitlines(), fromfile=f"a/{shown}",
+                                         tofile=f"b/{shown}", lineterm=""))
+        lines += diff or ["No change."]
+        lines.append("")
+    lines.append("Review the change with git diff tests/fixtures/agent, run the gate, and commit the recordings.")
+    return "\n".join(lines) + "\n"

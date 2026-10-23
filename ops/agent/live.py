@@ -52,7 +52,7 @@ def load_env(env_file: str | None, needs: tuple[str, ...]) -> dict[str, str]:
     return env
 
 
-def _az(*args: str) -> str:
+def az(*args: str) -> str:
     try:
         done = subprocess.run(["az", *args], capture_output=True, text=True, timeout=120)
     except OSError as error:
@@ -70,8 +70,8 @@ def az_token(resource: str):
     def token() -> str:
         with lock:
             if held["token"] is None or time.monotonic() >= held["until"]:
-                held["token"] = _az("account", "get-access-token", "--resource", resource, "--query", "accessToken",
-                                    "-o", "tsv")
+                held["token"] = az("account", "get-access-token", "--resource", resource, "--query", "accessToken",
+                                   "-o", "tsv")
                 held["until"] = time.monotonic() + 45 * 60
             return held["token"]
     return token
@@ -79,7 +79,7 @@ def az_token(resource: str):
 
 def foundry_project(env: dict, spec: AgentSpec) -> FoundryProject:
     names = dayone.load_config()["names"]
-    subscription = _az("account", "show", "--query", "id", "-o", "tsv")
+    subscription = az("account", "show", "--query", "id", "-o", "tsv")
     return FoundryProject(env["FOUNDRY_PROJECT_ENDPOINT"], spec, az_token(FOUNDRY_RESOURCE), az_token(ARM_RESOURCE),
                           account_id(subscription, names["resource_group"], names["foundry_resource"]))
 
