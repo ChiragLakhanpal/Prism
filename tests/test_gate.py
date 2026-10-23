@@ -17,8 +17,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def clean_env():
-    """The environment without git's hook variables, so nested git calls act on their own repo."""
-    return {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    """The environment without git's hook variables, so nested git calls act on their own repo.
+
+    It also hides the person's global and system git settings, so a setting such as
+    commit.gpgsign cannot make the throwaway commits fail or wait for a passphrase.
+    """
+    env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
+    env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
+    return env
 
 
 def git(repo, *args, check=True):
@@ -108,6 +114,25 @@ def test_a_commit_that_leaves_its_fix_unstaged_is_blocked(repo):
     assert "Some changes to tracked files are not staged." in blocked.stdout + blocked.stderr
 
 
+def test_a_clean_merge_of_a_branch_with_a_failing_check_is_blocked(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
+    write(repo, "check.py", "print('ok')\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a passing check")
+    git(repo, "switch", "-q", "-c", "ticket")
+    write(repo, "check.py", "raise SystemExit('The merged check ran.')\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Break the check on the ticket branch")
+    git(repo, "switch", "-q", "work")
+    before = git(repo, "rev-parse", "HEAD").stdout
+
+    done = git(repo, "merge", "--no-ff", "-m", "Merge the ticket", "ticket", check=False)
+
+    assert done.returncode != 0
+    assert git(repo, "rev-parse", "HEAD").stdout == before
+    assert "The merged check ran." in done.stdout + done.stderr
+
+
 def test_the_gate_prints_its_total_time(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
     write(repo, "check.py", "print('ok')\n")
@@ -181,7 +206,8 @@ def test_a_step_that_makes_its_own_repo_leaves_the_commit_alone(repo):
         import subprocess, tempfile
         with tempfile.TemporaryDirectory() as tmp:
             def git(*args):
-                subprocess.run(["git", "-C", tmp, "-c", "user.name=n", "-c", "user.email=n@example.org", *args],
+                subprocess.run(["git", "-C", tmp, "-c", "user.name=n", "-c", "user.email=n@example.org",
+                                "-c", "commit.gpgsign=false", *args],
                                check=True, capture_output=True)
             git("init", "-q")
             open(tmp + "/inner.txt", "w").write("inner")
