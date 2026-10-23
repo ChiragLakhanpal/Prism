@@ -29,9 +29,17 @@ name = "Run the Python tests: the gate, the ground-truth SQL and the server"
 run = ["uv", "run", "--frozen", "pytest"]
 
 [[step]]
+name = "Lint the copy and the components: DESIGN.md's words, strings only from the copy file, tokens only"
+run = ["node", "web/lint/run.ts"]
+
+[[step]]
 name = "Build the web app: type check and bundle"
 run = ["npm", "--prefix", "web", "run", "--silent", "build"]
 
 [[step]]
-name = "Run the Playwright tests against the built web app"
+name = "Build the design gallery, which the Playwright tests open and production leaves out"
+run = ["npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+
+[[step]]
+name = "Run the Playwright tests against the built web app and the gallery"
 run = ["npm", "--prefix", "web", "run", "--silent", "test"]

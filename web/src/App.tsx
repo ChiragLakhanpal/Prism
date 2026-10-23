@@ -1,5 +1,7 @@
-// The web shell: unstyled until the design-system ticket. It shows who is viewing and the footer.
+// The web shell: it shows who is viewing and the footer. Ticket 06 puts it in the shared
+// frame (web/src/components/Frame.tsx) with the navy bar and the box band.
 import { useEffect } from "react";
+import { Footer } from "./components/Frame";
 import { getJson, type Me } from "./lib/api";
 import { createStore, useStore } from "./lib/store";
 import { copy } from "./copy";
@@ -54,9 +56,7 @@ export function App() {
         <h1>{copy.appName}</h1>
         <p role="status">{viewerLine(state)}</p>
       </main>
-      <footer>
-        <p>{copy.footer}</p>
-      </footer>
+      <Footer />
     </>
   );
 }

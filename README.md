@@ -37,8 +37,10 @@ It runs the steps in `gates/steps.toml` in order and stops at the first one that
 2. Test the guard hook.
 3. Build the fixture database.
 4. Run the Python tests. They cover the gate, the ground-truth SQL on DuckDB and the server.
-5. Type check and bundle the web app.
-6. Run the Playwright tests against the built web app.
+5. Lint the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders that is not from the copy file, and on spacing or colours outside DESIGN.md's tokens.
+6. Type check and bundle the web app.
+7. Build the design gallery.
+8. Run the Playwright tests against the built web app and the gallery.
 
 The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when a run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
@@ -78,7 +80,12 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The harness: each turn's evidence and the stream helpers | `src/strata/harness/` |
 | The app server | `src/strata/server/` |
 | The web app, with its `api`, `sse`, `store` and `export` libraries | `web/src/` and `web/src/lib/` |
-| The copy file, for now | `web/src/copy.ts` |
+| The copy file: every string a person reads | `web/src/copy.ts` |
+| The design tokens: DESIGN.md sections 2 to 4 as the Tailwind theme, and the self-hosted fonts | `web/src/styles/app.css` |
+| The components, and the number and date rules Num follows | `web/src/components/` and `web/src/lib/format.ts` |
+| The design gallery, for development only, with its own copy file | `web/src/gallery/` |
+| The copy lint, the string lint and the class lint | `web/lint/`, with its rules in `web/lint/rules.ts` |
+| The screenshot command's list of pages and states | `web/capture/shots.ts` |
 | Python tests for seams 1, 2, 3 and 5, and for the gate | `tests/` |
 | Screen tests (seam 4) | `web/tests/` |
 | Responses recorded once and shared by the server and screen tests | `tests/fixtures/api/` |
@@ -104,3 +111,13 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | `STRATA_WEB_PORT` | the web app's dev server | a free port |
 
 The Playwright tests always pick their own free port, so they never clash with a running dev server.
+
+## The design gallery and screenshots
+
+The design gallery shows every component in each of its states. Start `scripts/dev` and open `/gallery` at the address it prints. Only development builds and the gallery build have it; the production build leaves it out, and a test checks that.
+
+To take screenshots of every gallery page and of the hover, focus and open states, at 1440, 1024 and 390 px, run this command:
+
+    npm --prefix web run capture
+
+It builds the app and the gallery, answers `/api` from the recordings in `tests/fixtures/api`, and saves the pictures in `web/screenshots`, or in the folder that `STRATA_CAPTURE_DIR` names. It takes about 10 seconds. It is not a gate step. To capture a new screen, add its routes and states to `web/capture/shots.ts`.
