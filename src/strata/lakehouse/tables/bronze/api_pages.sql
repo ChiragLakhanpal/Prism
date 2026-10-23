@@ -4,7 +4,8 @@
 --
 -- source                   the source registry's key (config/sources.toml)
 -- country_code             the two-letter code of the country the request asked for, whose
---                          watermark the page counts toward; empty for a recorded page
+--                          watermark the page counts toward; empty for a request for every country
+--                          and for a recorded page
 -- request                  the URL asked for; in the gate, the recorded file's source URL
 -- page_hash                sha256 of the page, leaving out the source's ignore_keys
 -- body                     the page as JSON text

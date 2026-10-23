@@ -17,9 +17,8 @@ plain rows, so both engines run it the same way. The cleaning rules themselves l
 strata.lakehouse.clean.
 
 A page is parsed once: run() reads only pages its first table has no rows from, one page at a
-time, and adds their rows.
-Gold reads the newest row for each key, so a page fetched again after a change replaces the old
-values there, and silver keeps every version.
+time, and adds their rows. Gold reads the newest row for each key, so a page fetched again after
+a change replaces the old values there, and silver keeps every version.
 """
 
 from __future__ import annotations
@@ -43,9 +42,9 @@ def run(engine: Engine, source: Source) -> int:
     """Parse the source's bronze pages that silver has not read yet, one at a time, so a fetch for
     every country never needs all its pages in memory. Returns the rows it added."""
     module = transform(source)
-    table = next(iter(module.TABLES))
+    first = next(iter(module.TABLES))
     pending = (f"SELECT p.page_hash FROM strata.bronze.api_pages AS p WHERE p.source = :source "  # sql-lint: names only
-               f"AND NOT EXISTS (SELECT 1 FROM {table} AS s WHERE s.page_hash = p.page_hash) "
+               f"AND NOT EXISTS (SELECT 1 FROM {first} AS s WHERE s.page_hash = p.page_hash) "
                f"ORDER BY p.fetched_at, p.page_hash")
     added = 0
     for (page_hash,) in engine.run(pending, {"source": source.key}).rows:
