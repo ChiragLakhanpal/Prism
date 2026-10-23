@@ -8,7 +8,7 @@ Read first: docs/PLAN.md sections 2, 4 and 11; ADRs 0002 and 0004; the spec's "T
 
 **Blocked by:** 01 (Repo scaffold with fairshare's rules, hooks, shell and the offline gate); 03 (Credentials, Azure caps and the day-one tests)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** data
 **Phase:** P0
 **Design review:** no
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 2, 4 and 11; ADRs 0002 and 0004; the spec's "T
 - [ ] The gate fails when a table definition without a public_from column is added and passes again when it is removed.
 - [ ] The source registry, slice file, model file and thresholds file each load through one tested function; the slice file names Kenya, Bangladesh, Vietnam and Pakistan, water and transport, FY2012–2025, P130164 as the showcase and the NWWDA plan of P156634 as the demo plan.
 - [ ] A listing of fairshare's catalog taken before and after the deploy is identical.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/04-catalog-and-bundle-skeleton, as soon as ticket 03 landed. Credentials are still missing, so the deploy, the job run, the grants and the catalog listing are parked in docs/workspace-catchup.md; the DuckDB side is built against fixtures.
