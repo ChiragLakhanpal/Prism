@@ -55,7 +55,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         reference = clean.step_reference(record.get("borrower_contract_reference_number"))
         method = clean.method(name=record.get("procurement_method"))
         signed = clean.parse_date(record.get("contract_signing_date"))
-        individual = _text(record.get("supplier")) == INDIVIDUAL_CONSULTANT
+        individual = (_text(record.get("supplier")) or "").upper() == INDIVIDUAL_CONSULTANT  # in any capitals
         rows.append((
             _text(record.get("wb_contract_number")),
             _text(record.get("supplier_id")),

@@ -45,12 +45,12 @@ SELECT
   CAST(h.projects AS BIGINT) AS numerator,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
-  'Projects held, of the projects the source reported.' AS detail
+  'This counts the projects held, out of the projects the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
 SELECT 'projects', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
-  CAST(NULL AS DATE), 'Approval fiscal years with projects, of the fiscal years from the first to the last.'
+  CAST(NULL AS DATE), 'This counts the fiscal years in which projects were approved, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
 SELECT 'projects', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence

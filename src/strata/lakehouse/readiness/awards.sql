@@ -61,24 +61,24 @@ SELECT
   CAST(h.award_rows AS BIGINT) AS numerator,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
-  'Award rows held, of the rows the source reported.' AS detail
+  'This counts the award rows held, out of the rows the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
 SELECT 'awards', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
-  CAST(NULL AS DATE), 'Fiscal years with awards, of the fiscal years from the first to the last.'
+  CAST(NULL AS DATE), 'This counts the fiscal years that have awards, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
 SELECT 'awards', country_code, 'linked_step_reference', CAST(with_reference AS BIGINT), CAST(contracts AS BIGINT),
-  CAST(NULL AS DATE), 'Contracts carrying a STEP reference.'
+  CAST(NULL AS DATE), 'This counts the contracts that carry a STEP reference, out of all contracts.'
 FROM linked
 UNION ALL
 SELECT 'awards', country_code, 'linked_notice', CAST(with_notice AS BIGINT), CAST(contracts AS BIGINT),
-  CAST(NULL AS DATE), 'Contracts whose STEP reference a notice also carries.'
+  CAST(NULL AS DATE), 'This counts the contracts whose STEP reference a notice also carries, out of all contracts.'
 FROM linked
 UNION ALL
 SELECT 'awards', country_code, 'linked_project', CAST(with_project AS BIGINT), CAST(contracts AS BIGINT),
-  CAST(NULL AS DATE), 'Contracts whose project record is held.'
+  CAST(NULL AS DATE), 'This counts the contracts whose project record is held, out of all contracts.'
 FROM linked
 UNION ALL
 SELECT 'awards', country_code, 'fresh_fetched', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence

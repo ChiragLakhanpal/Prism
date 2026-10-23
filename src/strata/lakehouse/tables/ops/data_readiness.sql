@@ -10,7 +10,9 @@
 -- numerator     the count measured
 -- denominator   what it is counted out of
 -- as_of         for a freshness measure: the day of the last fetch, or of the newest record
--- detail        what the count means in a sentence, or the source's cadence for a freshness measure
+-- detail        what the count means, as a full sentence, or the source's cadence for a freshness
+--               measure. It is for people who query this table; screens take their words from
+--               web/src/copy.ts.
 -- measured_at   when the run measured it, in UTC
 -- public_from   the day it was measured (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.ops.data_readiness (

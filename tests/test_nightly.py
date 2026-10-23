@@ -12,6 +12,7 @@ from pathlib import Path
 
 import pytest
 
+from strata import config
 from strata.lakehouse import bundle, catalog, nightly, schedule
 from strata.lakehouse.engine import DuckDBEngine
 
@@ -83,10 +84,20 @@ def test_two_runs_keep_their_rows_apart(engine):
     assert len(runs(engine, first)) == len(runs(engine, second)) == len(PLAN_ORDER)
 
 
-def test_on_databricks_each_task_fetches_from_the_live_apis():
-    script = Path(nightly.__file__).with_name("nightly_task.py").read_text()
+def test_a_task_run_as_the_job_runs_it_fetches_from_the_live_apis(engine, monkeypatch):
+    """nightly_task.py calls main() with the task's arguments and an engine, as this test does. With
+    no fetch given, the task asks the live APIs, here a fake that records the URLs and has no rows."""
+    asked = []
 
-    assert "main(arguments, SparkEngine(SparkSession.builder.getOrCreate()), fetch_live)" in script
+    def fake_fetch_url(url):
+        asked.append(url)
+        return b"{}"
+
+    monkeypatch.setattr("strata.fixture.record.fetch_url", fake_fetch_url)
+
+    nightly.main(["--task", "fetch_by_watermark", "--run-id", "1", "--src", "src"], engine)
+
+    assert asked[0].startswith(config.load_sources()["awards"].endpoint)
 
 
 def test_a_task_the_job_does_not_have_is_refused(engine):

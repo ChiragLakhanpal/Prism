@@ -91,6 +91,17 @@ def test_the_source_registry_holds_kenya_s_three_procurement_sources():
     assert all("KE" in [country.iso2 for country in source.countries] for source in sources.values())
 
 
+def test_each_source_leaves_out_the_same_keys_as_the_recording_of_its_fixture_dataset():
+    """config/sources.toml's ignore_keys keep a key out of a page's content hash, and
+    data/fixture/sources.toml's keep it out of the recording's diff. They name the same keys, so
+    the two lists cannot drift apart."""
+    datasets = tomllib.loads((ROOT / "data" / "fixture" / "sources.toml").read_text())["datasets"]
+
+    for source in config.load_sources().values():
+        recorded = tuple(datasets[source.fixture_dataset].get("ignore_keys", ()))
+        assert tuple(source.ignore_keys) == recorded, source.key
+
+
 AWARDS_COPY = """
 [sources.awards_copy]
 dataset_name = "Contract awards since FY2020"

@@ -406,6 +406,17 @@ def test_individual_consultant_rows_never_yield_a_supplier_name(gold):
     assert [name for _, name, _ in suppliers if name and "INDIVIDUAL CONSULTANT" in name.upper()] == []
 
 
+@pytest.mark.parametrize("label", ["INDIVIDUAL CONSULTANT", "Individual Consultant", " individual  consultant "])
+def test_an_individual_consultant_label_in_any_capitals_never_becomes_a_supplier_name(label):
+    from strata.lakehouse.silver import awards
+
+    page = {"data": [{"wb_contract_number": "1668349", "supplier_id": "1", "supplier": label}]}
+    rows = awards.parse(page, "a page", dt.datetime(2026, 10, 23, tzinfo=dt.UTC))["strata.silver.awards"]
+
+    row = dict(zip(awards.TABLES["strata.silver.awards"], rows[0], strict=True))
+    assert (row["supplier"], row["individual_consultant"]) == (None, True)
+
+
 COMPARABLES = TRUTH["comparable"]
 
 

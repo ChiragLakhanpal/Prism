@@ -60,16 +60,16 @@ SELECT
   CAST(h.notices AS BIGINT) AS numerator,
   CAST(r.total AS BIGINT) AS denominator,
   CAST(NULL AS DATE) AS as_of,
-  'Notices held, of the notices the source reported.' AS detail
+  'This counts the notices held, out of the notices the source reported.' AS detail
 FROM held AS h
 LEFT JOIN reported AS r ON r.country_code = h.country_code
 UNION ALL
 SELECT 'notices', country_code, 'coverage_years', CAST(years_held AS BIGINT), CAST(years_spanned AS BIGINT),
-  CAST(NULL AS DATE), 'Fiscal years with notices, of the fiscal years from the first to the last.'
+  CAST(NULL AS DATE), 'This counts the fiscal years that have notices, out of the fiscal years from the first to the last.'
 FROM held
 UNION ALL
 SELECT 'notices', country_code, 'linked_project', CAST(with_project AS BIGINT), CAST(notices AS BIGINT),
-  CAST(NULL AS DATE), 'Notices whose project record is held.'
+  CAST(NULL AS DATE), 'This counts the notices whose project record is held, out of all notices held.'
 FROM held
 UNION ALL
 SELECT 'notices', country_code, 'contact_details_removed', CAST(with_contacts_removed AS BIGINT),

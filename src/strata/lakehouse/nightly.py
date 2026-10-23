@@ -117,9 +117,10 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
         })
 
 
-def main(argv: list[str], engine: Engine, fetch: Fetch) -> int:
-    """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. On
-    Databricks, nightly_task.py passes fetch_live; run_locally() passes the recorded fixture."""
+def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live) -> int:
+    """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. Pages come
+    from the live APIs, as on Databricks, unless fetch says otherwise; run_locally() passes the
+    recorded fixture."""
     parser = argparse.ArgumentParser(prog="nightly_task.py")
     parser.add_argument("--task", required=True)
     parser.add_argument("--run-id", required=True)
