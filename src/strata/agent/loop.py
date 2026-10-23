@@ -130,8 +130,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
     async def run(turn: Turn) -> AsyncIterator[Event]:
         agent = agent_for(turn)
         turn.notes.agent, turn.notes.agent_version = agent.name, agent.version
-        as_of = min(turn.scope.as_of or today(), today())
-        message = {"question": turn.question, "scope": turn.scope.chip, "as_of": as_of.isoformat(),
+        as_of = turn.notes.as_of = min(turn.scope.as_of or today(), today())
+        message ={"question": turn.question, "scope": turn.scope.chip, "as_of": as_of.isoformat(),
                    "view": turn.scope.view, "language": turn.scope.language}
         items = [{"role": "user", "content": json.dumps(message, ensure_ascii=False)}]
         previous, refusals, step = None, 0, 0

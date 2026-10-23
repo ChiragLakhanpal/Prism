@@ -48,6 +48,7 @@ class RunNotes:
 
     agent: str | None = None
     agent_version: str | None = None
+    as_of: dt.date | None = None  # the as-of date the tools ran at
     tool_rounds: int = 0
     tool_calls: list[dict] = field(default_factory=list)
     response_ids: list[str] = field(default_factory=list)

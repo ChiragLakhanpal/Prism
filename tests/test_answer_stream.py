@@ -17,7 +17,10 @@ import httpx
 import pytest
 
 from strata.agent.loop import answer_runner
-from strata.agent.scripted import ScriptedAgent, load_cases
+from strata.agent.runs import RunLog
+from strata.agent.scripted import ScriptedAgent, load_cases, stream_text
+from strata.harness.turn import Event, TraceIds
+from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
 
@@ -179,6 +182,100 @@ def test_an_as_of_date_after_today_asks_as_of_today(ask_case):
 
     assert json.loads(agent.received[0]["input"][0]["content"])["as_of"] == "2026-10-23"
     assert json.loads(agent.received[1]["input"][0]["output"])["as_of"] == "2026-10-23"
+
+
+TRACES = TraceIds(application_insights="4bf92f3577b34da6a3ce929d0e0e4736", mlflow="tr-0af7651916cd43dd8448eb211c80319c")
+
+
+@pytest.fixture
+def ops_db(tmp_path):
+    """A writable database with the strata catalog's tables, for the run log."""
+    path = tmp_path / "ops.duckdb"
+    with DuckDBEngine.open(path) as engine:
+        catalog.build(engine)
+    return path
+
+
+def test_the_final_event_names_the_run_and_both_of_its_traces(ask_case):
+    parsed, _ = ask_case("p130164-rebidding", trace_ids=lambda: TRACES)
+
+    assert parsed[-1] == ("done", {"run_id": "run-0001", "trace_ids": {
+        "application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}})
+
+
+def test_every_run_is_logged_in_strata_ops_with_its_checks_and_trace(ask_case, ops_db):
+    ask_case("p130164-number-with-no-record", trace_ids=lambda: TRACES,
+             runs=RunLog(lambda: DuckDBEngine.open(ops_db)))
+
+    with DuckDBEngine.open(ops_db, read_only=True) as engine:
+        result = engine.run("SELECT * FROM strata.ops.agent_runs")
+    runs = [dict(zip(result.columns, row)) for row in result.rows]
+    assert len(runs) == 1
+    run = runs[0]
+    assert (run["run_id"], run["status"], run["viewer_id"], run["scope"], run["as_of"].isoformat()) == (
+        "run-0001", "answered", "4021@1984", "P130164", "2026-10-23")
+    assert (run["agent"], run["tool_rounds"], run["sentences_written"], run["sentences_removed"]) == (
+        "strata-orchestrator", 1, 4, 1)
+    assert (run["numbers_total"], run["numbers_matched"], run["quotes_total"], run["quotes_found"]) == (3, 2, 2, 2)
+    assert json.loads(run["removed"]) == [
+        {"sentence": "Bids were usually opened within 45 days.", "reason": "number_not_in_records"}]
+    assert json.loads(run["response_ids"]) == ["resp_p130164_rebidding_1", "resp_p130164_rebidding_2"]
+    assert run["application_insights_trace_id"] == "4bf92f3577b34da6a3ce929d0e0e4736"
+    assert "ana.example" not in json.dumps(run, default=str)
+
+
+def test_a_runner_cannot_send_a_sentence_the_verifier_did_not_check():
+    async def runner(turn):
+        yield Event("sentence", {"text": "Bids were usually opened within 45 days.", "evidence_ids": []})
+
+    parsed = events(ask_with(create_app(runner=runner, new_run_id=lambda: "run-0002")))
+
+    assert parsed == [("error", {"code": "internal"}), ("done", {"run_id": "run-0002"})]
+
+
+def test_an_answer_that_is_not_claims_as_json_ends_with_its_own_error():
+    class Rambles:
+        name, version = "strata-orchestrator", None
+
+        def respond(self, items, previous_response_id):
+            return {"id": "resp_1", "output": [{"type": "message", "role": "assistant", "content": [
+                {"type": "output_text", "text": "Bids were usually opened within 45 days."}]}]}
+
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Rambles(), no_engine),
+                                        new_run_id=lambda: "run-0003")))
+
+    assert of(parsed, "sentence") == []
+    assert parsed[-2:] == [("error", {"code": "agent_output"}), ("done", {"run_id": "run-0003"})]
+
+
+def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
+    parsed, _ = ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(tmp_path / "no-tables.duckdb")))
+
+    assert len(of(parsed, "sentence")) == 3 and parsed[-1][0] == "done"
+
+
+@contextmanager
+def no_engine(viewer):
+    raise AssertionError("This run calls no tool.")
+    yield
+
+
+def ask_with(app, question="Why were works contracts in P130164 advertised again?"):
+    async def go():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            return await client.post("/api/ask", headers=ANA, json={"question": question})
+    return asyncio.run(go()).text
+
+
+@pytest.mark.parametrize("case_id, recorded", [("p130164-rebidding", "ask-p130164-rebidding.sse"),
+                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse")])
+def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
+    sent = stream_text(load_cases()[case_id], fixture_db)
+
+    assert sent == (RECORDED / recorded).read_text(), (
+        f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted {case_id} "
+        f"> tests/fixtures/api/{recorded}")
 
 
 def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():

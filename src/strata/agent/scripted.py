@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from strata.agent.loop import function_calls, output_text
+from strata.harness.turn import TraceIds
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = ROOT / "tests" / "fixtures" / "agent"
@@ -113,3 +114,61 @@ class ScriptedAgent:
             if answered != asked:
                 raise ScriptError(f"Request {turn + 1} answered the tool calls {answered}, not {asked}.")
         return copy.deepcopy(self.responses[turn])
+
+
+# ── The recorded streams ─────────────────────────────────────────────────
+
+# The run and trace ids the recorded streams in tests/fixtures/api carry, so they never change.
+RECORDED_RUN_ID = "run-0001"
+RECORDED_TRACES = TraceIds(application_insights="4bf92f3577b34da6a3ce929d0e0e4736",
+                           mlflow="tr-0af7651916cd43dd8448eb211c80319c")
+FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
+
+
+def stream_text(case: Case, database: Path = FIXTURE_DB) -> str:
+    """The answer stream the server sends for a case, run on the fixture database as a signed-in viewer."""
+    import asyncio
+    from contextlib import contextmanager
+
+    import httpx
+
+    from strata.agent.loop import answer_runner
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.server.app import create_app
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(database, read_only=True) as engine:
+            yield engine
+
+    app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: case.as_of),
+                     new_run_id=lambda: RECORDED_RUN_ID, trace_ids=lambda: RECORDED_TRACES)
+
+    async def ask():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            response = await client.post("/api/ask", headers={"X-Forwarded-User": "4021@1984"}, json={
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+            return response.text
+
+    return asyncio.run(ask())
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Print a scripted case's answer stream, as tests/fixtures/api keeps it for the screen tests:
+
+        uv run --frozen python -m strata.agent.scripted p130164-rebidding > tests/fixtures/api/ask-p130164-rebidding.sse
+    """
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(prog="python -m strata.agent.scripted", description=main.__doc__.split("\n")[0])
+    parser.add_argument("case", choices=sorted(load_cases()))
+    parser.add_argument("--database", type=Path, default=FIXTURE_DB, help="the fixture database (gates/build_fixture.py)")
+    args = parser.parse_args(argv)
+    sys.stdout.write(stream_text(load_cases()[args.case], args.database))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

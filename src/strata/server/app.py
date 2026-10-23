@@ -16,9 +16,11 @@
 Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer.
 """
 
+import asyncio
 import datetime as dt
 import json
 import logging
+import threading
 import uuid
 from collections.abc import AsyncIterator, Callable
 from typing import Literal
@@ -27,10 +29,13 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent import traces
+from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import answer_events, verify
 from strata.dbx import Viewer, viewer_from_headers
 from strata.harness.aio import HEARTBEAT, with_heartbeats
-from strata.harness.turn import Event, RunError, Runner, Scope, Turn, new_run_id as random_run_id, no_agent
+from strata.harness.turn import (Event, RunError, Runner, Scope, TraceIds, Turn, new_run_id as random_run_id,
+                                 no_agent)
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.server import engines
 from strata.tools import registry
@@ -59,8 +64,11 @@ def frame(event: Event) -> str:
 
 
 def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
-               new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None) -> FastAPI:
-    """engine_for makes the engine for each request's viewer; without it, the environment names one."""
+               new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None,
+               runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current) -> FastAPI:
+    """engine_for makes the engine for each request's viewer; without it, the environment names one.
+    runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the log only.
+    trace_ids reads the request's trace ids while its span is open."""
     engine_for = engine_for or engines.from_environment()
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None)
 
@@ -111,35 +119,54 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
     async def ask(body: AskRequest, viewer: Viewer = Depends(current_viewer)) -> StreamingResponse:
         scope = Scope(chip=body.scope.strip().upper() if body.scope and body.scope.strip() else None,
                       as_of=body.asof, view=body.view, language=body.lang)
-        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id(), scope=scope)
+        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id(), scope=scope, trace=trace_ids())
         return StreamingResponse(stream(turn), media_type="text/event-stream", headers=STREAM_HEADERS)
 
-    def checked(turn: Turn, claims) -> list[Event]:
-        """The verifier on the runner's claims, with its own step, then the answer's events."""
-        verdict = verify(claims, turn.facts)
-        ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
-        return [Event("step", {"id": "check", "kind": "check", "status": "running"}),
-                Event("step", {"id": "check", "kind": "check", "status": "done", "removed": len(verdict.removed)}),
-                *answer_events(verdict, turn.facts, ran)]
-
     async def stream(turn: Turn) -> AsyncIterator[str]:
+        """The run's events, then its row in the run log, even when the viewer leaves part way."""
+        started, outcome = dt.datetime.now(dt.UTC), {"verdict": None, "error_code": "stopped"}
+        try:
+            async for chunk in run_events(turn, outcome):
+                yield chunk
+        finally:
+            row = run_row(turn, outcome["verdict"], outcome["error_code"], started, dt.datetime.now(dt.UTC))
+            log.info("Run %s ended: %s.", turn.run_id, row["error_code"] or row["status"])
+            if runs is not None:  # its own thread, so a dropped connection cannot stop the write
+                writer = threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}")
+                writer.start()
+                await asyncio.to_thread(writer.join, 60)
+
+    async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
+        verdict, error_code = None, None
         try:
             async for item in with_heartbeats(runner(turn), heartbeat_seconds):
                 if item is HEARTBEAT:
                     yield KEEP_ALIVE
-                elif item.type == "claims":
-                    for event in checked(turn, item.data["claims"]):
+                elif item.type == "claims":  # the verifier, with its own step, then the answer's events
+                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "running"}))
+                    verdict = verify(item.data["claims"], turn.facts)
+                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "done",
+                                               "removed": len(verdict.removed)}))
+                    ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
+                    for event in answer_events(verdict, turn.facts, ran):
                         yield frame(event)
                 elif item.type in ANSWER_EVENTS:
                     raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")
                 else:
+                    error_code = item.data.get("code") if item.type == "error" else error_code
                     yield frame(item)
         except RunError as error:
             log.warning("Run %s could not answer (%s): %s", turn.run_id, error.code, error)
+            error_code = error.code
             yield frame(Event("error", {"code": error.code}))
         except Exception:
             log.exception("Run %s failed.", turn.run_id)
+            error_code = "internal"
             yield frame(Event("error", {"code": "internal"}))
-        yield frame(Event("done", {"run_id": turn.run_id}))
+        done = {"run_id": turn.run_id}
+        if turn.trace is not None and (turn.trace.application_insights or turn.trace.mlflow):
+            done["trace_ids"] = {"application_insights": turn.trace.application_insights, "mlflow": turn.trace.mlflow}
+        outcome.update(verdict=verdict, error_code=error_code or (None if verdict else "no_answer"))
+        yield frame(Event("done", done))
 
     return app
