@@ -522,6 +522,27 @@ def test_the_limit_covers_the_whole_run_and_stops_every_lane(repo):
     assert 'It stopped during "Short" and "Long".' in output
 
 
+def test_ctrl_c_stops_every_lane(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[wait("A", 30, lane="one"), wait("B", 30, lane="two")]))
+    write(repo, "step.py", STEP)
+    gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, env=clean_env())
+    for _ in range(100):
+        if (repo / "log.txt").exists() and len(logged(repo)) == 2:
+            break
+        time.sleep(0.05)
+    time.sleep(0.5)  # Ctrl-C lands while the gate waits on the lanes, as when a person presses it.
+
+    gate.send_signal(signal.SIGINT)
+    output, _ = gate.communicate(timeout=20)
+
+    assert not was_still_running(pid_of(repo, "A"))
+    assert not was_still_running(pid_of(repo, "B"))
+    assert gate.returncode == 130, output
+    assert '"A" was stopped' in output and '"B" was stopped' in output, output
+    assert "The gate was stopped before it finished, so the commit did not go through." in output
+
+
 def test_a_lane_that_is_not_a_name_is_named_plainly(repo):
     write(repo, "gates/steps.toml", steps_file() + '\n[[step]]\nname = "Build"\nrun = ["true"]\nlane = 2\n')
 

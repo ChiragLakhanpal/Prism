@@ -109,6 +109,8 @@ def stop(process):
 
 # What run_step returns in place of an exit code when the gate stopped the step itself.
 OVER_LIMIT, STOPPED = "over the limit", "stopped"
+# How a step in a lane ended, as the gate prints it. Any other exit code means it failed.
+ENDINGS = {0: "passed in", STOPPED: "was stopped after", OVER_LIMIT: "was stopped by the limit after"}
 
 
 class Run:
@@ -132,16 +134,12 @@ class Run:
 
     def finish(self, step, code, output, took):
         """Note how a step ended and print its lines together. A step that did not pass stops every lane."""
-        name, lane, shown = step["name"], step.get("lane"), indent(output)
-        if code == 0:
-            shown = shown if step.get("show") else ""
-            lines = f"{shown}  passed in {took}.\n" if lane is None else f"- \"{name}\" passed in {took}, in the {lane} lane.\n{shown}"
-        elif code == STOPPED:
-            lines = "" if lane is None else f"- \"{name}\" was stopped after {took}, in the {lane} lane.\n"
-        elif code == OVER_LIMIT:
-            lines = shown if lane is None else f"- \"{name}\" was stopped by the limit after {took}, in the {lane} lane.\n{shown}"
+        lane = step.get("lane")
+        shown = "" if code == STOPPED or (code == 0 and not step.get("show")) else indent(output)
+        if lane is None:  # A lone step printed its name when it started, as the gate always has.
+            lines = shown + (f"  passed in {took}.\n" if code == 0 else "")
         else:
-            lines = shown if lane is None else f"- \"{name}\" failed after {took}, in the {lane} lane.\n{shown}"
+            lines = f"- \"{step['name']}\" {ENDINGS.get(code, 'failed after')} {took}, in the {lane} lane.\n{shown}"
         with self.screen:
             if code == OVER_LIMIT:
                 self.over.append(step)
@@ -160,19 +158,26 @@ def run_step(step, run):
     """
     process = subprocess.Popen(step["run"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
                                env=step_env(step.get("git_env", False)), start_new_session=True)
-    while True:
-        try:
-            output, _ = process.communicate(timeout=min(POLL_SECONDS, max(run.seconds_left(), 0.01)))
-            return process.returncode, output
-        except subprocess.TimeoutExpired:
-            if run.seconds_left() <= 0:
-                return OVER_LIMIT, stop(process)
-            if run.halt.is_set():
-                return STOPPED, stop(process)
+    try:
+        while True:
+            try:
+                output, _ = process.communicate(timeout=min(POLL_SECONDS, max(run.seconds_left(), 0.01)))
+                return process.returncode, output
+            except subprocess.TimeoutExpired:
+                if run.seconds_left() <= 0:
+                    return OVER_LIMIT, stop(process)
+                if run.halt.is_set():
+                    return STOPPED, stop(process)
+    except BaseException:  # If the gate itself breaks, stop the step here, because it runs in its own session.
+        stop(process)
+        raise
 
 
-def run_lane(steps, run):
-    """Run a lane's steps in order. Stop at the first one that does not pass, or when another lane stops."""
+def run_lane(steps, run, done):
+    """Run a lane's steps in order. Stop at the first one that does not pass, or when another lane stops.
+
+    Set `done` at the end, however the lane ends.
+    """
     try:
         for step in steps:
             if run.halt.is_set():
@@ -190,24 +195,30 @@ def run_lane(steps, run):
     except BaseException as error:  # main() raises it again, so the gate fails as loudly as it would without lanes.
         run.crashed.append(error)
         run.halt.set()
+    finally:
+        done.set()
 
 
 def run_stage(stage, run):
-    """Run one stage: a lone step, or a lane for each name in the stage, side by side."""
+    """Run one stage: a lone step, or a lane for each name in the stage, side by side.
+
+    The gate waits on each lane's `done` event, not on its thread. When Ctrl-C breaks into
+    Thread.join, Python can report a lane that is still running as finished, and the gate
+    would then exit before that lane stopped its step.
+    """
     lanes = [lane for lane in stage if lane is not None]
     if lanes:
         run.say(f"- The gate runs the {listed(lanes)} {'lanes side by side' if len(lanes) > 1 else 'lane'}.\n")
-    threads = [threading.Thread(target=run_lane, args=(steps, run)) for steps in stage.values()]
-    for thread in threads:
-        thread.start()
+    finished = [threading.Event() for _ in stage]
+    for steps, done in zip(stage.values(), finished):
+        threading.Thread(target=run_lane, args=(steps, run, done)).start()
     try:
-        for thread in threads:
-            while thread.is_alive():
-                thread.join(POLL_SECONDS)
+        for done in finished:
+            done.wait()
     except BaseException:  # On Ctrl-C, stop every lane here, because each step runs in its own session.
         run.halt.set()
-        for thread in threads:
-            thread.join()
+        for done in finished:
+            done.wait()
         raise
     if run.crashed:
         raise run.crashed[0]
