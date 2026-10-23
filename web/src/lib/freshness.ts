@@ -5,7 +5,8 @@
 //
 // After an error it tries again on the next route change, or when the tab becomes visible again,
 // at most once a minute, and a retry says "Reading the data date" at once. A 401 or a 403 also
-// puts an error alert above the title (web/src/App.tsx).
+// puts an error alert above the title (web/src/App.tsx). The alert stays while a retry reads, so
+// a screen reader does not hear it again and the page does not shift.
 import type { Freshness } from "../components/BoxBand";
 import { ApiError, getJson } from "./api";
 import { formatDate } from "./format";
@@ -23,10 +24,10 @@ let lastRead = -Infinity;
 
 async function read(slow: boolean) {
   lastRead = Date.now();
-  stamp.set({ freshness: { status: "loading", slow }, problem: null });
+  stamp.set({ freshness: { status: "loading", slow }, problem: stamp.get().problem });
   const timer = slow ? undefined : setTimeout(() => {
-    const current = stamp.get().freshness;
-    if (current.status === "loading") stamp.set({ freshness: { status: "loading", slow: true }, problem: null });
+    const current = stamp.get();
+    if (current.freshness.status === "loading") stamp.set({ freshness: { status: "loading", slow: true }, problem: current.problem });
   }, SLOW_MS);
   try {
     const answer = await getJson<{ data_through: string | null }>("/api/freshness");

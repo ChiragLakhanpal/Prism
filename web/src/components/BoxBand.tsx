@@ -17,6 +17,12 @@ export function typingInAField(target: EventTarget | null): boolean {
   return target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName);
 }
 
+// "/" with no modifier key, outside a text field: the key that focuses the box. Panels that the
+// key closes first, such as the Menu, ask the same question.
+export function isBoxShortcut(event: KeyboardEvent): boolean {
+  return event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !typingInAField(event.target);
+}
+
 export function OneBox({
   value,
   onChange,
@@ -44,7 +50,7 @@ export function OneBox({
   useEffect(() => {
     if (!shortcut) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "/" || event.ctrlKey || event.metaKey || event.altKey || typingInAField(event.target)) return;
+      if (!isBoxShortcut(event)) return;
       event.preventDefault();
       input.current?.focus();
     };

@@ -157,6 +157,32 @@ test("an account the warehouse refuses gets one error alert that says how to get
   await expect(page.locator("[data-stamp]")).toHaveText("I can't read the data date.");
 });
 
+test("while the stamp tries again, the access alert stays where it is, so it is not announced twice", async ({ page }) => {
+  await page.clock.install({ time: TODAY });
+  await mockShell(page);
+  let reads = 0;
+  let answer: () => void = () => {};
+  const answered = new Promise<void>((resolve) => (answer = resolve));
+  await page.route("**/api/freshness", async (route) => {
+    reads += 1;
+    if (reads > 1) await answered;
+    await route.fulfill({ status: 403, contentType: "application/json", body: await recorded("freshness-no-access.json") });
+  });
+  await page.goto("/drafts");
+  const alert = page.getByRole("alert");
+  await expect(alert).toHaveCount(1);
+
+  await page.clock.fastForward("01:01");
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Packages" }).click();
+
+  await expect(page.locator("[data-stamp]")).toHaveText("Reading the data date");
+  await expect(alert).toHaveCount(1);
+  answer();
+  await expect(page.locator("[data-stamp]")).toHaveText("I can't read the data date.");
+  await expect(alert).toHaveCount(1);
+  expect(reads).toBe(2);
+});
+
 test("with no forwarded identity, one error alert says to open Strata from its link in the workspace", async ({ page }) => {
   await mockShell(page, {
     me: { body: '{"email": null, "name": null, "signed_in": false, "has_token": false}' },

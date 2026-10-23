@@ -18,7 +18,7 @@ import * as RadixPopover from "@radix-ui/react-popover";
 import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
-import { typingInAField } from "./BoxBand";
+import { isBoxShortcut } from "./BoxBand";
 import { POPOVER } from "./Popover";
 import { Skeleton } from "./Skeleton";
 import { SkipLink } from "./SkipLink";
@@ -242,9 +242,7 @@ export function TopNav({
   // "/" anywhere outside a text field focuses the box (OneBox), and closes the Menu panel first.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "/" && !event.ctrlKey && !event.metaKey && !event.altKey && !typingInAField(event.target)) {
-        setMenuOpen(false);
-      }
+      if (isBoxShortcut(event)) setMenuOpen(false);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
