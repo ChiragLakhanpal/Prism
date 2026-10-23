@@ -8,8 +8,9 @@ Both adapters yield the same Page, so everything after the fetch runs the same w
   until the source has no more. The search APIs return the newest records first by the source's
   watermark field, so it stops at the first page whose oldest record is older than the newest
   record bronze already holds for that country. Each country has its own watermark, so a country
-  added to the registry is fetched in full the first time. Finances One cannot sort, so every page of an awards fetch is asked
-  for, and the content hash keeps the ones already held out of bronze.
+  added to the registry is fetched in full the first time. Finances One cannot sort, so every
+  page of an awards fetch is asked for, and the content hash keeps the ones already held out of
+  bronze.
 """
 
 from __future__ import annotations

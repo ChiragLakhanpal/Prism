@@ -1,11 +1,11 @@
 """Procurement notices (search.worldbank.org's procnotices API) into strata.silver.notices.
 
 Contact details are gone before a page reaches bronze (strata.lakehouse.contacts), so this
-transform never sees them; it notes which notices lost some. It types each field, parses the STEP reference, maps an old method
-name such as ICB to the current one with the market approach it implies (keeping the notice's own
-words in their own columns), and reads three things from the notice's text: the loan or credit
-number, and for a Contract Award notice, the Contract Signature Date and the signed contract
-price with its currency. The text itself is kept as plain text.
+transform never sees them; it notes which notices lost some. It types each field, parses the STEP
+reference, maps an old method name such as ICB to the current one with the market approach it
+implies (keeping the notice's own words in their own columns), and reads three things from the
+notice's text: the loan or credit number, and for a Contract Award notice, the Contract Signature
+Date and the signed contract price with its currency. The text itself is kept as plain text.
 """
 
 from __future__ import annotations
