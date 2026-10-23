@@ -24,4 +24,3 @@ def test_a_test_can_still_reach_this_computer():
         server.listen()
         with socket.create_connection(server.getsockname(), timeout=1):
             pass
-
