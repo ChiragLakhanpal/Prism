@@ -1,0 +1,37 @@
+# Strata's Declarative Automation Bundle (the new name for Databricks Asset Bundles).
+#
+# It declares the strata catalog, its four schemas and the bronze files volume (bundle/catalog.yml)
+# and the nightly job (bundle/nightly.yml). Deploy it with the command in bundle/README.md, which
+# also creates the tables and reports what changed. The bundle's notes, with both nightly
+# schedules, are in bundle/README.md.
+
+bundle:
+  name: strata
+  # A catalog can be a bundle resource only with the direct deployment engine, from CLI 0.287.0.
+  engine: direct
+  databricks_cli_version: ">= 0.287.0"
+
+include:
+  - bundle/*.yml
+
+# Only the Python package goes to the workspace. The job's tasks import it from there.
+sync:
+  paths:
+    - src
+
+variables:
+  readers:
+    description: >-
+      Who can read the catalog, so the app can run each query as the viewer (ADR 0003).
+      "account users" is everyone who can sign in to the workspace.
+    default: account users
+  nightly_pause_status:
+    description: UNPAUSED runs the nightly job on its schedule. PAUSED leaves only manual runs.
+    default: UNPAUSED
+
+targets:
+  # The Free Edition workspace that Strata shares with fairshare. The deploy command passes the
+  # host and the token from the main checkout's .env. There is no development mode: it would add
+  # a prefix to the schema names, and Strata's SQL names them strata.bronze, strata.silver and so on.
+  shared:
+    default: true

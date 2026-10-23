@@ -1,0 +1,112 @@
+"""The strata catalog (seam 1): what the bundle declares, and the table definitions that build
+the same tables on DuckDB in the gate and on the workspace.
+
+Every table keeps the date it became public in its public_from column (ADR 0002). The fixture
+build stops when a table lacks one, and so does the gate.
+"""
+
+from pathlib import Path
+
+import pytest
+
+from strata.lakehouse import catalog
+from strata.lakehouse.catalog import CatalogError
+from strata.lakehouse.engine import DuckDBEngine
+
+GOOD = "CREATE TABLE IF NOT EXISTS strata.{schema}.{table} (id STRING NOT NULL, public_from DATE NOT NULL)\n"
+
+
+def definitions(tmp_path, **files):
+    """A folder of table definitions: each keyword is schema__table and its SQL."""
+    folder = tmp_path / "tables"
+    for name, sql in files.items():
+        schema, table = name.split("__")
+        (folder / schema).mkdir(parents=True, exist_ok=True)
+        (folder / schema / f"{table}.sql").write_text(sql.format(schema=schema, table=table))
+    return folder
+
+
+def tables(engine):
+    result = engine.run("SELECT table_schema, table_name FROM system.information_schema.tables "
+                        "WHERE table_catalog = 'strata' ORDER BY table_schema, table_name")
+    return result.as_text()
+
+
+def test_the_bundle_declares_the_catalog_its_four_schemas_and_the_bronze_files_volume():
+    declared = catalog.declared()
+
+    assert declared.catalog == "strata"
+    assert declared.schemas == ("bronze", "silver", "gold", "ops")
+    assert declared.volumes == ("bronze.files",)
+
+
+def test_the_bundle_grants_the_apps_users_read_access_to_the_catalog():
+    readers = catalog.declared().grants
+
+    assert readers["strata"] == {"account users": ("USE_CATALOG",)}
+    for schema in ("bronze", "silver", "gold", "ops"):
+        assert readers[f"strata.{schema}"] == {"account users": ("USE_SCHEMA", "SELECT")}
+    assert readers["strata.bronze.files"] == {"account users": ("READ_VOLUME",)}
+
+
+def test_the_table_definitions_build_on_duckdb_in_the_four_schemas():
+    with DuckDBEngine.open() as engine:
+        built = catalog.build(engine)
+        schemas = engine.run("SELECT schema_name FROM system.information_schema.schemata "
+                             "WHERE catalog_name = 'strata' ORDER BY schema_name").as_text()
+
+        assert "strata.ops.pipeline_runs" in built
+        assert ("ops", "pipeline_runs") in tables(engine)
+    assert {("bronze",), ("silver",), ("gold",), ("ops",)} <= set(schemas)
+
+
+def test_building_twice_keeps_the_rows_a_table_holds():
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        engine.run("INSERT INTO strata.ops.pipeline_runs VALUES ('r1', 'score', 'succeeded', 0, "
+                   "TIMESTAMP '2026-10-23 08:00:00', TIMESTAMP '2026-10-23 08:00:01', DATE '2026-10-23')")
+        catalog.build(engine)
+
+        assert engine.run("SELECT count(*) AS n FROM strata.ops.pipeline_runs").as_text() == [("1",)]
+
+
+def test_every_table_in_the_fixture_database_keeps_its_public_from_date(fixture_db):
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        assert ("ops", "pipeline_runs") in tables(engine)
+        catalog.check_public_from(engine)
+
+
+def test_a_table_definition_without_public_from_stops_the_build(tmp_path):
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD,
+                         gold__supplier="CREATE TABLE IF NOT EXISTS strata.{schema}.{table} (id STRING)\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(CatalogError, match=r"strata\.gold\.supplier.*public_from"):
+        catalog.build(engine, folder)
+
+
+def test_a_definition_that_could_replace_a_table_is_refused(tmp_path):
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD.replace("IF NOT EXISTS", "").replace(
+        "CREATE TABLE", "CREATE OR REPLACE TABLE"))
+
+    with pytest.raises(CatalogError, match="CREATE TABLE IF NOT EXISTS strata.ops.pipeline_runs"):
+        catalog.table_definitions(folder)
+
+
+def test_a_definition_must_create_the_table_its_file_names(tmp_path):
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD.replace("{table}", "runs"))
+
+    with pytest.raises(CatalogError, match="strata.ops.pipeline_runs"):
+        catalog.table_definitions(folder)
+
+
+def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
+    folder = definitions(tmp_path, platinum__scores=GOOD)
+
+    with pytest.raises(CatalogError, match="platinum.*bronze, silver, gold, ops"):
+        catalog.table_definitions(folder)
+
+
+def test_the_real_definitions_live_one_table_per_file_under_their_schema():
+    folder = Path(catalog.TABLES)
+
+    assert catalog.table_definitions() and all(path.parent.parent == folder for path in folder.glob("*/*.sql"))
