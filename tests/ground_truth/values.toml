@@ -608,8 +608,9 @@ wireframe_mark = "No signals"
 #   of March 19, 2025, marks each one Canceled (canceled_in, pdf_page and quote), and the notice
 #   for KE-KIMAWASCO-149448-CW-RFB says so too (notice_says). By their titles, the works were
 #   advertised again and signed as KE-KIMAWASCO-158691-CW-RFB (the ablution blocks) and
-#   KE-KIMAWASCO-416959-CW-RFB (the sludge facilities). A canceled package can never be signed,
-#   so it is not still open and is never drawn hollow.
+#   KE-KIMAWASCO-416959-CW-RFB (the sludge facilities). The blueprint's table of estimates keeps
+#   "unsigned and canceled packages" as still open for procurement cycle time, so ticket 12 may
+#   draw these hollow too. They are listed apart so that either count can be checked.
 # - Still open (4). P156634 has none. The fixture adds every notice for the four Kenya works
 #   packages under Request for Bids that were advertised by October 9, 2026 with bids due after
 #   it, found with a notices search for Kenya, works and Request for Bids on October 23, 2026,

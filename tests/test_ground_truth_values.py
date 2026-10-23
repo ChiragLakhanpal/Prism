@@ -284,7 +284,7 @@ def test_at_least_25_comparables_are_signed_and_at_least_3_are_still_open():
 
 
 def test_every_canceled_plan_row_of_a_comparable_is_marked_canceled_in_the_ground_truth():
-    """A package whose plan row says Canceled can never be signed, so it is not censored as still open."""
+    """A package whose plan row says Canceled is listed as canceled, never as still open, so the two are counted apart."""
     for comparable in COMPARABLES:
         for document, pdf_page in {(c["canceled_in"], c["pdf_page"]) for c in CANCELED}:
             text = squash(page(document, pdf_page))
