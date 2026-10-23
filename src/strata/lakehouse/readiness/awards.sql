@@ -6,18 +6,13 @@
 --   linked_project         contracts whose project gold holds, of all contracts
 --   fresh_fetched          the day of the last fetch, with the source's cadence
 --   fresh_newest_record    the newest signing date fetched, with the source's cadence
-WITH latest AS (
-  SELECT *
-  FROM strata.silver.awards
-  QUALIFY row_number() OVER (PARTITION BY wb_contract_number, supplier_id ORDER BY fetched_at DESC, page_hash) = 1
-),
-held AS (
+WITH held AS (
   SELECT
     borrower_country_code AS country_code,
     count(*) AS award_rows,
     count(DISTINCT fiscal_year) AS years_held,
     max(fiscal_year) - min(fiscal_year) + 1 AS years_spanned
-  FROM latest
+  FROM strata.silver.awards_current
   WHERE borrower_country_code IS NOT NULL
   GROUP BY borrower_country_code
 ),

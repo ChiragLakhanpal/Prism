@@ -155,3 +155,40 @@ def test_every_shipped_definition_sits_in_a_declared_schema_and_keeps_public_fro
     for definition in definitions:
         assert definition.schema in catalog.declared().schemas, definition.path.name
         assert "public_from DATE" in definition.sql, definition.full_name
+
+
+def test_the_view_definitions_build_after_the_tables():
+    """A view is defined once too, in views/<schema>/<view>.sql beside the tables folder."""
+    with DuckDBEngine.open() as engine:
+        built = catalog.build(engine)
+        kinds = dict(((schema, name), kind) for schema, name, kind in engine.run(
+            "SELECT table_schema, table_name, table_type FROM system.information_schema.tables "
+            "WHERE table_catalog = 'strata'").as_text())
+
+    assert "strata.silver.awards_current" in built
+    assert kinds["silver", "awards_current"] == "VIEW"
+
+
+def views(tmp_path, **files):
+    """A tables folder with one table, and a views folder beside it: each keyword is schema__view and its SQL."""
+    folder = definitions(tmp_path, ops__pipeline_runs=GOOD)
+    for name, sql in files.items():
+        schema, view = name.split("__")
+        (tmp_path / "views" / schema).mkdir(parents=True, exist_ok=True)
+        (tmp_path / "views" / schema / f"{view}.sql").write_text(sql.format(schema=schema, view=view))
+    return folder
+
+
+def test_a_view_definition_must_replace_the_view_its_file_names(tmp_path):
+    folder = views(tmp_path, ops__run_days="CREATE VIEW strata.{schema}.{view} AS SELECT 1 AS one\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(
+            CatalogError, match=r"CREATE OR REPLACE VIEW strata\.ops\.run_days AS"):
+        catalog.build(engine, folder)
+
+
+def test_a_view_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
+    folder = views(tmp_path, platinum__scores="CREATE OR REPLACE VIEW strata.{schema}.{view} AS SELECT 1 AS one\n")
+
+    with DuckDBEngine.open() as engine, pytest.raises(CatalogError, match="platinum.*bronze, silver, gold, ops"):
+        catalog.build(engine, folder)

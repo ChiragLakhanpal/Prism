@@ -1,11 +1,11 @@
--- strata.gold.supplier: each STEP supplier ID in the awards, and each joint venture of several of
--- them. An individual consultant keeps their own supplier ID but no name.
+-- strata.gold.supplier: each STEP supplier ID in the awards as the newest fetch of each contract
+-- holds them (strata.silver.awards_current), and each joint venture of several of them. An
+-- individual consultant keeps their own supplier ID but no name.
 -- key: supplier_id
 WITH latest AS (
   SELECT *
-  FROM strata.silver.awards
+  FROM strata.silver.awards_current
   WHERE supplier_id IS NOT NULL
-  QUALIFY row_number() OVER (PARTITION BY wb_contract_number, supplier_id ORDER BY fetched_at DESC, page_hash) = 1
 ),
 members AS (
   SELECT

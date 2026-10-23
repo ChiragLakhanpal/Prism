@@ -7,6 +7,10 @@ build() runs those definitions through any engine: DuckDB for the fixture databa
 the SQL warehouse for the deploy. IF NOT EXISTS means a deploy never replaces a table that holds
 rows (CLAUDE.md rule 5); a change to a table's columns needs its own ALTER TABLE.
 
+A view holds no rows, so it is defined as one `CREATE OR REPLACE VIEW strata.<schema>.<view> AS`
+statement in views/<schema>/<view>.sql, in the folder beside tables/. build() creates the views
+after the tables, in schema then view order, so each deploy carries a changed view's query.
+
 Every table keeps the date it became public in a public_from DATE column (ADR 0002).
 check_public_from() looks at every table in the catalog, whatever made it, and stops when one lacks
 the column or gives it another type. Views hold no rows of their own, so it skips plain views and
@@ -25,6 +29,7 @@ from strata.lakehouse.engine import Engine
 
 CATALOG = "strata"
 TABLES = Path(__file__).resolve().parent / "tables"
+VIEWS = "views"  # the folder beside the tables folder that holds the view definitions
 COMMENT_LINE = re.compile(r"^\s*--.*$", re.M)
 
 MISSING_PUBLIC_FROM = """
@@ -115,6 +120,27 @@ def table_definitions(folder: Path = TABLES, schemas: tuple[str, ...] | None = N
     return found
 
 
+def view_definitions(folder: Path = TABLES.with_name(VIEWS),
+                     schemas: tuple[str, ...] | None = None) -> list[TableDefinition]:
+    """Every view definition in folder, checked against its file's place, in schema then view order."""
+    schemas = schemas or declared().schemas
+    found = []
+    for path in sorted(Path(folder).glob("*/*.sql")):
+        schema, view = path.parent.name, path.stem
+        if schema not in schemas:
+            raise CatalogError(f"{path.name} sits in the folder {schema}, which is not one of the catalog's "
+                               f"schemas: {', '.join(schemas)}. Move it into one of those folders.")
+        sql = path.read_text()
+        start = re.compile(  # sql-lint: names only, a pattern for the definition's first line
+            rf"CREATE OR REPLACE VIEW {CATALOG}\.{schema}\.{view}\s+AS\s", re.I)
+        if not start.match(COMMENT_LINE.sub("", sql).strip()):
+            raise CatalogError(f"{VIEWS}/{schema}/{path.name} must hold one statement that starts with "
+                               f"CREATE OR REPLACE VIEW {CATALOG}.{schema}.{view} AS. A view holds no rows, so "
+                               "each build replaces it with its current query.")
+        found.append(TableDefinition(path, schema, view, sql))
+    return found
+
+
 def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:
     """Stop when any table in the catalog, outside the schemas in skip, has no public_from DATE column (ADR 0002)."""
     missing = [(schema, table) for schema, table in engine.run(MISSING_PUBLIC_FROM, {"catalog": CATALOG}).as_text()
@@ -126,16 +152,20 @@ def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:
 
 
 def build(engine: Engine, folder: Path = TABLES, create_schemas: bool = True) -> list[str]:
-    """Create the declared schemas (unless the bundle made them) and every table, then check public_from.
+    """Create the declared schemas (unless the bundle made them) and every table, check public_from,
+    then create the views defined in the views folder beside folder.
 
-    It returns the full names of the tables it defined. Running it again changes nothing.
+    It returns the full names of the tables and views it defined. Running it again changes no rows.
     """
     schemas = declared().schemas
     definitions = table_definitions(folder, schemas)
+    views = view_definitions(Path(folder).with_name(VIEWS), schemas)
     if create_schemas:
         for schema in schemas:
             engine.run(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{schema}")  # sql-lint: names only, from the bundle
     for definition in definitions:
         engine.run(definition.sql)
     check_public_from(engine)
-    return [definition.full_name for definition in definitions]
+    for view in views:
+        engine.run(view.sql)
+    return [definition.full_name for definition in definitions + views]

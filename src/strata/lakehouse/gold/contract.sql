@@ -1,24 +1,20 @@
--- strata.gold.contract: one row per contract, from the newest silver row of each of its suppliers.
--- A joint venture's members each have a row with their share, so the contract's amount adds the
--- shares and is counted once, and its supplier is the joint venture, JV- and its members' IDs.
+-- strata.gold.contract: one row per contract, from the rows of its suppliers that the newest fetch
+-- of it holds (strata.silver.awards_current). A joint venture's members each have a row with their
+-- share, so the contract's amount adds the shares and is counted once, and its supplier is the
+-- joint venture, JV- and its members' IDs.
 -- key: wb_contract_number
-WITH latest AS (
-  SELECT *
-  FROM strata.silver.awards
-  QUALIFY row_number() OVER (PARTITION BY wb_contract_number, supplier_id ORDER BY fetched_at DESC, page_hash) = 1
-),
-contracts AS (
+WITH contracts AS (
   SELECT
     wb_contract_number,
     count(*) AS supplier_count,
     CAST(sum(supplier_contract_amount_usd) AS DECIMAL(18, 2)) AS contract_amount_usd,
     array_join(array_sort(collect_list(supplier_id)), '-') AS member_ids
-  FROM latest
+  FROM strata.silver.awards_current
   GROUP BY wb_contract_number
 ),
 first_row AS (
   SELECT *
-  FROM latest
+  FROM strata.silver.awards_current
   QUALIFY row_number() OVER (PARTITION BY wb_contract_number ORDER BY supplier_id) = 1
 )
 SELECT
