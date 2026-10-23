@@ -99,9 +99,11 @@ def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_d
 
 def measured(engine, run_id: str | None = None) -> dict:
     """Each data readiness measure of a plan run (the latest when run_id is None), as (count, denominator).
-    The nightly job writes its own sources' measures to the same table."""
+    The nightly job writes its own sources' measures to the same table, and the passage reader writes the
+    documents source's too, so a plan run is one that strata.ops.parse_runs records."""
     found = rows(engine, """
         SELECT run_id, measure, count, denominator FROM strata.ops.data_readiness WHERE source = 'documents'
+          AND run_id IN (SELECT run_id FROM strata.ops.parse_runs)
         ORDER BY measured_at""")
     run_id = run_id or found[-1]["run_id"]
     return {r["measure"]: (r["count"], r["denominator"]) for r in found if r["run_id"] == run_id}
@@ -156,6 +158,43 @@ def test_each_method_the_method_note_names_is_one_of_steps_methods_word_for_word
 
     assert ("RFB", "Request for Bids") in listed
     assert {method for _, method in listed} <= set(step.VALUES["method"])
+
+
+RECORDED = ROOT / "data" / "fixture" / "recorded" / "documents"
+PLAN_TEXTS = sorted(RECORDED.glob("*/procurement-plan-*.txt"))  # each plan's text and its page texts
+DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+@pytest.mark.parametrize("file", PLAN_TEXTS, ids=lambda file: file.name)
+def test_taking_contact_details_out_of_a_procurement_plan_keeps_every_step_reference_and_date(file):
+    """A plan's table runs a date in one column into the next column's digits, and cuts a reference at
+    a column's edge, so a run of digits there is no phone number. Bronze keeps the plan as published."""
+    from strata.lakehouse import contacts
+    from strata.reader import step
+
+    published = file.read_text()
+
+    kept, removed = contacts.strip_text(published)
+
+    assert (kept, removed) == (published, 0)
+    assert step.references_in(kept) == step.references_in(published)
+    assert DATE.findall(kept) == DATE.findall(published)
+
+
+def test_bronze_keeps_every_procurement_plan_as_published_and_the_demo_plan_lists_the_wajir_consultancy(db):
+    marked = rows(db, """
+        SELECT count(*) AS n FROM strata.bronze.document_texts AS t
+        WHERE t.document_id IN (SELECT document_id FROM strata.silver.plan_versions)
+          AND (t.text LIKE '%contact removed%' OR EXISTS (
+            SELECT 1 FROM strata.bronze.document_pages AS p
+            WHERE p.document_id = t.document_id AND p.text LIKE '%contact removed%'))""")
+    listed = rows(db, """
+        SELECT l.activity_reference_no FROM strata.silver.plan_listings AS l
+        JOIN strata.silver.plan_versions AS v ON v.document_id = l.document_id
+        WHERE v.implementing_agency = :agency AND v.plan_date = :plan_date""", agency=NWWDA, plan_date=DEMO_PLAN)
+
+    assert marked == [{"n": 0}]
+    assert value("plan-wsdp-03-first-listed")["first_lists"] in {row["activity_reference_no"] for row in listed}
 
 
 def test_each_plan_version_is_public_from_its_disclosure_date_and_in_its_agencys_series(db):

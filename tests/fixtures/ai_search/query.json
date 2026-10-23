@@ -1,0 +1,16 @@
+{
+ "about": "An answer of the AI Search (Databricks Vector Search) REST query operation, POST /api/2.0/vector-search/indexes/{index}/query, for a hybrid query asking for the passage_id column. The service adds the score as the last column. It is written by hand in the shape the operation documents, because the gate's machine has no workspace token. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "response": {
+  "manifest": {"column_count": 2, "columns": [{"name": "passage_id"}, {"name": "score"}]},
+  "result": {
+   "row_count": 3,
+   "data_array": [
+    ["31525018/v1/54", 0.0327],
+    ["34056616/v2/10.b", 0.0322],
+    ["31525018/v1/55", 0.0301]
+   ]
+  },
+  "next_page_token": ""
+ }
+}

@@ -68,6 +68,14 @@ def test_a_query_in_a_python_constant_is_read_too(tmp_path):
         "ops/bundle/check.py:1: ops.pipeline_runs is not a three-part name. Write it as strata.<schema>.<table>."]
 
 
+def test_the_live_passage_runs_queries_are_read_too(tmp_path):
+    """ops/documents/run_live.py and search_live.py run SQL on the workspace's warehouse."""
+    root = tree(tmp_path, **{"ops__documents__run_live.py": 'HELD = "SELECT count(*) FROM gold.passage"\n'})
+
+    assert lint().problems(root) == [
+        "ops/documents/run_live.py:1: gold.passage is not a three-part name. Write it as strata.<schema>.<table>."]
+
+
 BUILT = ("this query's text is built in code. Bind each value as a :name parameter; a query that builds in only "
          "table or column names says so with '# sql-lint: names only'.")
 

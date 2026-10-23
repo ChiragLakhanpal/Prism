@@ -16,7 +16,7 @@ sys.path.insert(0, str(REPO / "ops" / "bundle"))
 
 import check  # noqa: E402
 
-from strata.lakehouse import catalog, nightly, plans  # noqa: E402
+from strata.lakehouse import catalog, nightly, passages, plans  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, Result  # noqa: E402
 
 
@@ -98,12 +98,14 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 # ── The sample query on both engines ─────────────────────────────────────
 
 def deployed_warehouse():
-    """A SQL warehouse after the deploy, the live plan run and one run of the nightly job: DuckDB
-    with the catalog's tables built and filled, here from the recorded plans and pages."""
+    """A SQL warehouse after the deploy, the live plan run, one run of the nightly job and the live
+    passage run: DuckDB with the catalog's tables built and filled, here from the recorded plans,
+    pages and documents."""
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
     nightly.run_locally(engine)
+    passages.run_on_fixture(engine)
     return engine
 
 
