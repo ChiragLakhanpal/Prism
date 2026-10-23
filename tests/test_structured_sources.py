@@ -132,7 +132,7 @@ def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_de
     assert all((row["supplier_id"], row["contract_description"]) == (None, None) for row in in_gold)
 
     for table in ("strata.silver.awards_fy2001_2016", "strata.gold.contract"):
-        held = db.run(f"SELECT * FROM {table}").rows  # sql-lint: names only
+        held = db.run(f"SELECT * FROM {table}").rows
         text = [value for row in held for value in row if isinstance(value, str)]
         named = sum(any(name in value for value in text) for name in names)
         assert named == 0, f"{table} names {named} of the people the recorded rows name"  # never prints them
@@ -481,6 +481,60 @@ def test_the_run_measures_and_records_each_table_s_size_and_structured_data_stay
     assert all(row["bytes"] > 0 for row in sizes.values() if row["row_count"])
     assert 0 < structured <= fixture_db.stat().st_size and structured < limit == 500_000_000
     assert sizes["strata.gold.contract"]["row_count"] == rows(db, "SELECT count(*) AS n FROM strata.gold.contract")[0]["n"]
+
+
+# Each paged source's full size: the total its API reported for a request for one record on
+# October 23, 2026 (PLAN.md section 3 gives the awards', IEG's and the notices' too). The loan
+# histories are the slice's four countries' totals added up, and CPIA and WGI are one indicator's
+# total times the registry's number of codes, every country and year with or without a value.
+FULL_SCALE = {
+    "awards": 295_845, "awards_fy2001_2016": 146_802, "ieg_ratings": 12_629, "ida_credits": 11_486,
+    "ibrd_loans": 9_538, "ida_credit_history": 36_305 + 58_526 + 30_378 + 50_349,
+    "ibrd_loan_history": 11_582 + 188 + 2_637 + 22_279, "notices": 424_022, "projects": 28_208,
+    "cpia": 17_556 * len(config.load_sources()["cpia"].indicators),
+    "wgi": 5_832 * len(config.load_sources()["wgi"].indicators),
+}
+
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
+    "At full scale the notices alone project to about 0.96 GB, so structured data projects to about "
+    "1.6 GB. Raising the limit or keeping less notice text is the user's choice (ticket 17's parked "
+    "decision 2). Remove this mark once the projection is under the limit."))
+def test_structured_data_projected_to_every_country_from_the_fixture_stays_under_the_limit(db, tmp_path):
+    """Criterion 7 at full scale, projected. Each source's bronze pages and silver rows are written
+    as Parquet, the format Delta tables keep, and their bytes per record, less the file's own
+    overhead, are multiplied by the source's full size. Gold grows with the records overall. A
+    source with few records in the fixture is overstated, since its pages' own fields are shared by
+    fewer records. The workspace measures the real size (strata.ops.table_sizes)."""
+    written = iter(range(10_000))
+
+    def parquet_bytes(query):
+        full, empty = tmp_path / f"{next(written)}.parquet", tmp_path / f"{next(written)}.parquet"
+        db.run(f"COPY ({query}) TO '{full}' (FORMAT parquet)")
+        db.run(f"COPY ({query} LIMIT 0) TO '{empty}' (FORMAT parquet)")
+        return full.stat().st_size - empty.stat().st_size
+
+    projected, records_held = {}, 0
+    for key, source in config.load_sources().items():
+        if not source.paged:
+            continue
+        held = rows(db, "SELECT sum(records) AS n FROM strata.bronze.api_pages WHERE source = :source", source=key)[0]["n"]
+        pages_of = f"SELECT page_hash FROM strata.bronze.api_pages WHERE source = '{key}'"
+        size = parquet_bytes(f"SELECT * FROM strata.bronze.api_pages WHERE source = '{key}'") + sum(
+            parquet_bytes(f"SELECT * FROM {table} WHERE page_hash IN ({pages_of})")
+            for table in silver.transform(source).TABLES)
+        projected[key] = size / held * FULL_SCALE[key]
+        records_held += held
+    gold_tables = [definition.full_name for definition in catalog.table_definitions()
+                   if definition.full_name.startswith("strata.gold.")]
+    projected["gold"] = sum(parquet_bytes(f"SELECT * FROM {table}") for table in gold_tables) / records_held * sum(
+        FULL_SCALE.values())
+    total = sum(projected.values())
+    limit = config.load_thresholds().value("ingestion.structured_data_limit_bytes")
+
+    assert set(FULL_SCALE) == set(PAGED)
+    by_source = ", ".join(f"{key} {size / 1e6:,.0f} MB" for key, size in sorted(projected.items(), key=lambda item: -item[1]))
+    assert total < limit, f"Structured data projects to {total / 1e9:.2f} GB at full scale: {by_source}."
 
 
 def test_the_workspace_checks_name_every_paged_source_and_the_thresholds_file_s_limit():
