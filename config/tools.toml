@@ -1,0 +1,74 @@
+# The tool registry: every tool the agent, the pages and the workflows call.
+#
+# This is the one place a tool is defined (spec, "Ten single places", item 2). The agent's tool
+# list is generated from this file (strata.tools.registry.agent_tools), every call goes through
+# strata.tools.registry.call, and strata.config.load_tools() reads it. Adding a tool is one entry
+# here plus its adapter function.
+#
+# Each [tools.<name>] table has:
+#   description   what the tool does and returns, for the agent, in full sentences
+#   adapter       the Python function that runs it, as module:function
+#   benchmark     the id of its question in evals/benchmark.yaml. Changing a tool's contract means
+#                 updating that question in the same change (CLAUDE.md rule 4).
+#   sources       the source registry's keys (config/sources.toml) whose rows it reads
+#
+# [[tools.<name>.parameters]], one table per parameter: name, type (string, date, integer, number
+# or boolean), required, and a description for the agent. Every tool takes an optional as_of
+# date (ADR 0002): it then uses only what was public on or before that date. The page's own as-of
+# date applies to every call too, and the earlier of the two wins.
+#
+# [tools.<name>.result], the shape of what it returns. Every result has the same envelope: tool,
+# as_of, view, rows, coverage (matched, used, and why the rest were not used) and abstention
+# (empty, or the reason the tool gives no rows). The table says:
+#   row            what one row is
+#   row_fields     the fields every row carries, always with evidence_id, public_from and source
+#   source_fields  the fields of each row's source line
+#   fields         the tool's own fields beside the envelope
+
+[tools.check_plan]
+description = """Checks every activity in one implementing agency's Procurement Plan for a project, the \
+latest version by default or a named one, with Strata's fixed checks: planned completion passed with no \
+signed contract, the signed amount far above the estimate (with how late the contract was signed, measured \
+from the first published planned date), still pending close to the project's closing date, and the data \
+notes on rows whose record is weak. It returns one row per activity in STEP's columns, with its marks \
+(needs_a_look, watch, data_note) and the values behind each reason. It reads only the plan's own record: \
+the prior-review queue, complaints, contract amendments and contract management reports are not visible \
+to it."""
+adapter = "strata.tools.check_plan:check_plan"
+benchmark = "check-plan-nwwda-2026-10-09"
+sources = ["documents", "projects"]
+
+[[tools.check_plan.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.check_plan.parameters]]
+name = "implementing_agency"
+type = "string"
+required = true
+description = """The implementing agency whose plan to check, as the plan's Executing Agency(ies) line \
+names it, such as Northern Water Works Development Agency, or its agency_id from an earlier result."""
+
+[[tools.check_plan.parameters]]
+name = "plan_date"
+type = "date"
+required = false
+description = "The version to check, by the plan's date. Leave it out to check the agency's latest version."
+
+[[tools.check_plan.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only plan versions and project dates public on or before this date, and check as of it. Leave it out for today."
+
+[tools.check_plan.result]
+row = "One activity in the plan: its STEP fields as the plan gives them, its marks and the values behind each reason."
+row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "section", "description",
+              "review_type", "method", "market_approach", "estimated_amount_usd", "actual_amount_usd",
+              "process_status", "signed_on", "planned_signing_on", "planned_signing_plan_date", "days_late",
+              "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
+              "actual_to_estimate", "marks"]
+source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
+fields = ["plan", "project", "checks_run", "thresholds", "counts"]

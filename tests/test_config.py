@@ -264,11 +264,12 @@ def test_only_the_model_file_names_a_deployment_or_the_embedding_size():
 def test_the_thresholds_file_loads_and_a_missing_threshold_says_where_to_add_it():
     thresholds = config.load_thresholds()
 
-    with pytest.raises(ConfigError, match=r"plan_check\.days_before_closing.*config/thresholds\.toml"):
-        thresholds.value("plan_check.days_before_closing")
+    # Ticket 37 adds the signals' thresholds; until then this one is missing.
+    with pytest.raises(ConfigError, match=r"signals\.late_direct_selection_days.*config/thresholds\.toml"):
+        thresholds.value("signals.late_direct_selection_days")
 
 
 def test_a_threshold_added_to_the_file_is_read(tmp_path):
-    path = copy("thresholds.toml", tmp_path, old="[plan_check]", new="[plan_check]\ndays_before_closing = 30")
+    path = copy("thresholds.toml", tmp_path, old="[signals]", new="[signals]\nlate_direct_selection_days = 30")
 
-    assert config.load_thresholds(path).value("plan_check.days_before_closing") == 30
+    assert config.load_thresholds(path).value("signals.late_direct_selection_days") == 30
