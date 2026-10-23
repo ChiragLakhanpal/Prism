@@ -1,8 +1,9 @@
 """P156634's Procurement Plans read into STEP rows: seam 1, the lakehouse run over the fixture.
 
 The gate builds the fixture database by running the plan reader over the recorded plans
-(gates/build_fixture.py), so most tests read what that run wrote. Every expected value comes from
-tests/ground_truth/values.toml, which quotes the plans with their PDF pages, never from Strata's code.
+(gates/build_fixture.py), so most tests read what that run wrote. Every value quoted from a plan
+comes from tests/ground_truth/values.toml, which quotes the plans with their PDF pages, never from
+Strata's code. The cap test's stopping page follows from how many table pages each recorded plan has.
 """
 
 import datetime as dt
@@ -288,6 +289,38 @@ def test_a_lower_daily_page_cap_stops_the_run_at_the_cap_and_records_where_it_st
     assert day_one["actual_on"] == value("plan-229129-signed")["value"]
     assert day_one["first_planned_on"] is None and day_one["delay_days"] is None
     assert day_two["delay_days"] == value("plan-229129-days-late")["value"]
+
+
+def test_a_later_version_that_re_dates_a_step_does_not_move_its_first_published_planned_date(fresh):
+    """No recorded plan re-dates a step, so this test writes two versions of one activity by hand.
+    The first plans the signed contract on the date the April 21, 2021 plan gives. The later one
+    re-dates it to November 1, 2021, a made-up date, and shows the actual signing date."""
+    from strata.lakehouse import plans
+
+    first, signed = value("plan-229129-first-planned-signing"), value("plan-229129-signed")["value"]
+    later = dt.date(2021, 12, 1)  # made up, like the re-dated step
+    reference, project = "KE-NWWDA-229129-CW-RFB", "P156634"
+    plans.insert(fresh, "strata.silver.plan_versions",
+                 ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest",
+                  "pdf_pages", "route_b_pages", "text_url", "pdf_url", "public_from"),
+                 [("first", project, NWWDA, first["date"], 1, False, 1, 1, "first.txt", "first.pdf", first["date"]),
+                  ("later", project, NWWDA, later, 2, True, 1, 1, "later.txt", "later.pdf", later)])
+    plans.insert(fresh, "strata.silver.plan_listings",
+                 ("document_id", "project_id", "activity_reference_no", "is_first_listing",
+                  "first_listing_confirmed", "public_from"),
+                 [("first", project, reference, True, True, first["date"]),
+                  ("later", project, reference, False, True, later)])
+    plans.insert(fresh, "strata.silver.plan_steps",
+                 ("document_id", "project_id", "activity_reference_no", "step", "step_order", "planned_on",
+                  "actual_on", "public_from"),
+                 [("first", project, reference, "Signed Contract", 1, first["value"], None, first["date"]),
+                  ("later", project, reference, "Signed Contract", 1, dt.date(2021, 11, 1), signed, later)])
+
+    fresh.run(plans._sql("plan_step_delays.sql"), {"project_id": project})
+
+    [row] = rows(fresh, "SELECT * FROM strata.silver.plan_step_delays WHERE document_id = 'later'")
+    assert (row["planned_on"], row["first_planned_on"]) == (dt.date(2021, 11, 1), first["value"])
+    assert row["delay_days"] == value("plan-229129-days-late")["value"]
 
 
 # ── The live layout parser, through the same port ──
