@@ -24,6 +24,15 @@ test("a ratio from 50 cases shows the count beside a whole percentage", () => {
   expect(formatRatio(93, 118, { style: "table" }).text).toBe("93 of 118, 79%");
 });
 
+test("a percentage that rounds to 0 or 100 but is neither says less than 1 or more than 99", () => {
+  expect(formatRatio(1, 300).text).toBe("1 of 300, less than 1 percent");
+  expect(formatRatio(299, 300).text).toBe("299 of 300, more than 99 percent");
+  expect(formatRatio(1, 300, { style: "table" }).text).toBe("1 of 300, <1%");
+  expect(formatRatio(299, 300, { style: "table" }).text).toBe("299 of 300, >99%");
+  expect(formatRatio(3, 300).text).toBe("3 of 300, 1 percent");
+  expect(formatRatio(300, 300).text).toBe("300 of 300");
+});
+
 test("numbers have comma thousands, then K from 10,000, then M and B", () => {
   expect(formatNumber(7)).toBe("7");
   expect(formatNumber(1234)).toBe("1,234");

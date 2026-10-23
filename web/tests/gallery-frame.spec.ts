@@ -40,6 +40,17 @@ test("the navy bar is 56 px tall with the logo slot, the wordmark, five tabs in 
   expect(pillBox.x).toBeGreaterThan(tabs[4]);
   expect(Math.round(1440 - (pillBox.x + pillBox.width))).toBe(72);
   await expect(pill.locator("svg.lucide-chevron-down")).toHaveCount(1);
+  // DESIGN.md section 5: the view switch is a 32 px pill, like a chip, not a 44 px button.
+  expect(pillBox.height).toBe(32);
+});
+
+test("below 360 px the Menu button stacks its icon over the word Menu, in sentence case", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/gallery/navigation");
+  const menu = page.getByRole("button", { name: "Menu" });
+  expect(await menu.evaluate((el) => getComputedStyle(el).textTransform)).toBe("none");
+  const size = (await menu.boundingBox())!;
+  expect([size.width, size.height]).toEqual([44, 44]);
 });
 
 test("the selected tab on the navy bar has a 3 px white underline, and the others none", async ({ page }) => {
@@ -76,7 +87,7 @@ test("the band holds the box over columns 1 to 8 and the stamp at the right, and
   await expect(page.locator("[data-box-band]").getByRole("textbox", { name: /Search a project/ })).toBeFocused();
 });
 
-test("below 1024 px a labelled Menu holds the tabs and the view lines, and Escape closes it", async ({ page }) => {
+test("below 1024 px a labeled Menu holds the tabs and the view lines, and Escape closes it", async ({ page }) => {
   await page.setViewportSize({ width: 1023, height: 900 });
   await page.goto("/gallery/navigation");
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeHidden();

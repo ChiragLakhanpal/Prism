@@ -4,14 +4,16 @@
 //
 // It checks every string in the copy files against DESIGN.md section 7 and GLOSSARY.md, the
 // definitions in GLOSSARY.md that Term shows, and every component in web/src for text that
-// is not from a copy file or classes outside DESIGN.md's tokens. It prints one line per
-// problem and exits with 1 when it finds any. Tests pass --copy, --component, --glossary and
-// --design to point it at other files.
+// is not from a copy file, for a Term that names a word GLOSSARY.md does not define, and for
+// classes outside DESIGN.md's tokens. It prints one line per problem and exits with 1 when it
+// finds any. Tests pass --copy, --component, --glossary and --design to point it at other
+// files; Term's words are always looked up in the repo's GLOSSARY.md.
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyChecker } from "./copy.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses } from "./source.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, termLiterals } from "./source.ts";
+import { definitions } from "../src/lib/definitions.ts";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const REPO = resolve(WEB, "..");
@@ -50,6 +52,7 @@ function main(): number {
   const check = copyChecker(design);
   const problems: string[] = [];
   const at = (file: string, line: number) => `${relative(process.cwd(), file) || file}:${line}`;
+  const terms = definitions(readFileSync(join(REPO, "GLOSSARY.md"), "utf8"));
 
   for (const file of copy) {
     const source = readFileSync(file, "utf8");
@@ -67,15 +70,23 @@ function main(): number {
   for (const file of components) {
     const source = readFileSync(file, "utf8");
     for (const found of literalText(source, file)) {
+      const held = found.from ? ` (held in the const ${found.from})` : "";
       problems.push(
-        `${at(file, lineOf(source, found.offset))}: it ${found.where} "${found.text}", which is not from the copy file. ` +
+        `${at(file, lineOf(source, found.offset))}: it ${found.where} "${found.text.trim()}"${held}, which is not from the copy file. ` +
           "Put the words in web/src/copy.ts and use them from there.",
+      );
+    }
+    for (const found of termLiterals(source, file)) {
+      if (found.text in terms) continue;
+      problems.push(
+        `${at(file, lineOf(source, found.offset))}: Term names "${found.text}", which GLOSSARY.md does not define. ` +
+          "Use a term exactly as GLOSSARY.md writes it, or add the term there.",
       );
     }
     for (const found of offTokenClasses(source, file)) {
       problems.push(
         `${at(file, lineOf(source, found.offset))}: the class "${found.text}" is outside DESIGN.md's tokens. ` +
-          "Use a colour token, a type step or a space step from web/src/styles/app.css.",
+          "Use a color token, a type step or a space step from web/src/styles/app.css.",
       );
     }
   }

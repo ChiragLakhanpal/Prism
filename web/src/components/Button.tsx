@@ -16,18 +16,27 @@ const VARIANTS: Record<ButtonVariant, string> = {
   ghost: "border-transparent bg-transparent text-primary hover:bg-tint-hover active:bg-tint active:text-primary-pressed",
 };
 
-// Disabled: surface-2 with ink-muted text (5.67:1), whatever the variant. A loading button
-// keeps its variant's look and shows a spinner instead.
-const DISABLED =
-  "data-disabled:cursor-not-allowed data-disabled:border-line data-disabled:bg-surface-2 data-disabled:text-ink-muted " +
-  "data-disabled:hover:border-line data-disabled:hover:bg-surface-2";
+// Disabled: ink-muted text, which is 5.67:1 on surface-2 and 6.69:1 on surface. Primary and
+// secondary turn into a surface-2 pill with a line border; ghost stays a bare label, so no
+// button changes its shape when it is disabled.
+const DISABLED: Record<ButtonVariant, string> = {
+  primary:
+    "data-disabled:cursor-not-allowed data-disabled:border-line data-disabled:bg-surface-2 data-disabled:text-ink-muted " +
+    "data-disabled:hover:border-line data-disabled:hover:bg-surface-2",
+  secondary:
+    "data-disabled:cursor-not-allowed data-disabled:border-line data-disabled:bg-surface-2 data-disabled:text-ink-muted " +
+    "data-disabled:hover:border-line data-disabled:hover:bg-surface-2",
+  ghost: "data-disabled:cursor-not-allowed data-disabled:text-ink-muted data-disabled:hover:bg-transparent",
+};
 
 export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   variant?: ButtonVariant;
   icon?: LucideIcon;
   // Disabled buttons stay focusable, so a keyboard user can still find them and read why.
   disabled?: boolean;
-  // While loading, the label stays in place and the icon turns into a spinner.
+  // While loading, every variant keeps its label and shows a spinner where its icon goes. A
+  // button with no icon gives up 12 px of padding on each side for the spinner and its gap,
+  // so it stays the same width.
   loading?: boolean;
   // An icon-only button needs an aria-label from the copy file.
   iconOnly?: boolean;
@@ -58,22 +67,19 @@ export function Button({
       className={cx(
         "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
         "transition-paint duration-150 select-none",
-        iconOnly ? "w-11" : "px-6",
+        iconOnly ? "w-11" : loading && !Icon ? "px-3" : "px-6",
         VARIANTS[variant],
-        DISABLED,
+        DISABLED[variant],
         loading && "cursor-progress",
         className,
       )}
     >
-      {Icon && !loading && <Icon aria-hidden="true" className="size-4 shrink-0" />}
-      {loading && Icon && <LoaderCircle aria-hidden="true" className="size-4 shrink-0 animate-spin" />}
-      {loading && !Icon && (
-        <span className="absolute inset-0 flex items-center justify-center">
-          <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
-        </span>
+      {loading ? (
+        <LoaderCircle aria-hidden="true" className="size-4 shrink-0 animate-spin" />
+      ) : (
+        Icon && <Icon aria-hidden="true" className="size-4 shrink-0" />
       )}
-      {/* opacity, not visibility, so the hidden label still names the button. */}
-      <span className={cx(loading && !Icon && "opacity-0", iconOnly && "sr-only")}>{children}</span>
+      <span className={cx(iconOnly && "sr-only")}>{children}</span>
     </button>
   );
 }

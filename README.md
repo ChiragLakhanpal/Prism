@@ -37,7 +37,7 @@ It runs the steps in `gates/steps.toml` in order and stops at the first one that
 2. Test the guard hook.
 3. Build the fixture database.
 4. Run the Python tests. They cover the gate, the ground-truth SQL on DuckDB and the server.
-5. Lint the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders that is not from the copy file, and on spacing or colours outside DESIGN.md's tokens.
+5. Lint the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files, on text a component renders or passes to a prop that is not from the copy file, on a Term that names a word GLOSSARY.md does not define, and on spacing or colors outside DESIGN.md's tokens. The props that never hold copy, such as `className` and `href`, are listed in `web/lint/rules.ts`.
 6. Type check and bundle the web app.
 7. Build the design gallery.
 8. Run the Playwright tests against the built web app and the gallery.

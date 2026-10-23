@@ -8,12 +8,22 @@ export function Skeleton({ className }: { className: string }) {
   return <span aria-hidden="true" data-skeleton className={cx("block rounded-xs bg-surface-2", className)} />;
 }
 
-// Lines of text: one 16 px bar per entry, at the given width, 8 px apart.
+// One line of text: a box exactly one line tall in the text style around it (1lh), holding a
+// bar as tall as the font. A line of skeleton takes the same height as the line it stands for.
+export function SkeletonLine({ width, className }: { width: string; className?: string }) {
+  return (
+    <span aria-hidden="true" className={cx("flex h-lh items-center", className)}>
+      <Skeleton className={cx("h-[1em]", width)} />
+    </span>
+  );
+}
+
+// Lines of text, one per entry, at the given widths, with no gap: a paragraph of n lines.
 export function SkeletonText({ widths, className }: { widths: string[]; className?: string }) {
   return (
-    <div className={cx("flex flex-col gap-2", className)}>
+    <div aria-hidden="true" className={cx("flex flex-col", className)}>
       {widths.map((width, index) => (
-        <Skeleton key={index} className={cx("h-4", width)} />
+        <SkeletonLine key={index} width={width} />
       ))}
     </div>
   );

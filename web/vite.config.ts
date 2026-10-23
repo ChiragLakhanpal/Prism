@@ -3,14 +3,16 @@
 // variables the server reads. scripts/dev sets both ports.
 //
 // The design gallery (web/src/gallery) is built only in development and in the "gallery"
-// mode (npm run build:gallery, into dist-gallery). A production build leaves it out, and
-// web/tests/build.spec.ts checks that on the build output.
+// mode (npm run build:gallery, into dist-gallery). Every other build, whatever its mode,
+// leaves it out, and web/tests/build.spec.ts checks that on the build output.
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { freePort } from "./free-port";
 
+const webRoot = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
 export default defineConfig(async ({ command, mode }) => {
@@ -22,14 +24,15 @@ export default defineConfig(async ({ command, mode }) => {
   }
   return {
     plugins: [react(), tailwindcss()],
-    define: { __GALLERY__: JSON.stringify(mode !== "production") },
+    define: { __GALLERY__: JSON.stringify(mode === "development" || mode === "gallery") },
     server: {
       host: "127.0.0.1",
       port: Number(process.env.STRATA_WEB_PORT) || (await freePort()),
       strictPort: true,
       proxy: serverPort ? { "/api": serverUrl } : undefined,
-      // The copy file reads GLOSSARY.md from the repo root.
-      fs: { allow: [repoRoot] },
+      // The dev server serves web/ and one file above it: GLOSSARY.md, which web/src/glossary.ts
+      // reads for Term's definitions.
+      fs: { allow: [webRoot, join(repoRoot, "GLOSSARY.md")] },
     },
     preview: { host: "127.0.0.1", strictPort: true },
   };

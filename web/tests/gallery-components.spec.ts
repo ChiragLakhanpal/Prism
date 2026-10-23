@@ -98,12 +98,84 @@ test("the check line uses the neutral state, never success green", async ({ page
 
 test("Num shows 6 of 12 as a count and 31 of 37 beside about 8 in 10, on screen", async ({ page }) => {
   await page.goto("/gallery/numbers");
-  const nums = page.locator("[data-state-section=ratios] [data-num]");
-  await expect(nums).toHaveText(["6 of 12", "31 of 37, about 8 in 10", "42 of 50, 84 percent", "93 of 118, 79%"]);
-  await expect(page.locator("[data-state-section=formats] [data-num]")).toHaveText([
+  const nums = page.locator("[data-state-section=ratios] table [data-num]");
+  await expect(nums).toHaveText([
+    "6 of 12",
+    "31 of 37, about 8 in 10",
+    "42 of 50, 84 percent",
+    "93 of 118, 79%",
+    "1 of 300, less than 1 percent",
+  ]);
+  await expect(page.locator("[data-state-section=formats] table [data-num]")).toHaveText([
     "1,234", "12.5K", "296K", "1.3M", "2.5B", "0.46", "45.7", "457",
   ]);
+  await expect(page.locator("[data-state-section=counts] table [data-num]")).toHaveText([
+    "seven", "14", "2024", "March 4, 2024", "Mar 4, 2024",
+  ]);
   expect(await nums.first().evaluate((el) => getComputedStyle(el).fontVariantNumeric)).toBe("tabular-nums");
+});
+
+test("each Num reference row shows the value the tool sent beside what Num shows", async ({ page }) => {
+  await page.goto("/gallery/numbers");
+  const first = page.locator("[data-state-section=formats] table tbody tr").first();
+  await expect(first.locator("th, td")).toHaveText(["1234", "Below 10,000, Num writes comma thousands.", "1,234"]);
+  await expect(page.locator("[data-state-section=formats] table thead th")).toHaveText(["Value the tool sent", "Rule", "Num shows"]);
+});
+
+test("the coverage line ends its first sentence with the gap, or with a period when nothing was missing", async ({ page }) => {
+  await page.goto("/gallery/citations");
+  await expect(page.locator("[data-coverage-line]")).toHaveText([
+    "Based on 37 of 52 matching packages; 15 lacked the STEP reference that links notice to contract. See data readiness for these sources",
+    "Based on 52 of 52 matching packages. See data readiness for these sources",
+  ]);
+});
+
+test("a table shows its title, count and source lines only with its rows", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/table");
+  const ready = page.locator("[data-state-section=ready] [data-table]");
+  await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
+  await expect(ready).toContainText("Showing all 4 activities");
+  await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
+
+  for (const state of ["loading", "empty", "error"]) {
+    const section = page.locator(`[data-state-section=${state}]`);
+    await expect(section, state).not.toContainText("Three of the four");
+    await expect(section, state).not.toContainText("Showing");
+    await expect(section, state).not.toContainText("Source:");
+  }
+  await expect(page.locator("[data-state-section=empty] h3")).toHaveText("I have no activities for this plan yet.");
+  await expect(page.locator("[data-state-section=error]").getByRole("alert")).toContainText("I couldn't load the activities in this plan.");
+});
+
+test("nothing in a table moves when its rows arrive: columns, rows and cards keep their places", async ({ page }) => {
+  const edges = (state: string) =>
+    page.locator(`[data-state-section=${state}] table thead th`).evaluateAll((cells) => cells.map((cell) => Math.round(cell.getBoundingClientRect().x)));
+  const box = async (state: string, selector: string) => {
+    const found = (await page.locator(`[data-state-section=${state}] ${selector}`).first().boundingBox())!;
+    return { width: Math.round(found.width), height: Math.round(found.height) };
+  };
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/table");
+  expect(await edges("loading")).toEqual(await edges("ready"));
+  expect(await box("loading", "table tbody tr")).toEqual(await box("ready", "table tbody tr"));
+  expect(await box("loading", "[data-table]")).toEqual(await box("ready", "[data-table]"));
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await box("loading", "ul > li")).toEqual(await box("ready", "ul > li"));
+});
+
+test("the abstention's sentence, table and check line count the same 12 packages", async ({ page }) => {
+  await page.goto("/gallery/answer");
+  const answer = page.locator("[data-answer=abstained]");
+  await expect(answer).toContainText("only 12 comparable packages. Here are all 12.");
+  await expect(answer.locator("table tbody tr")).toHaveCount(12);
+  await expect(answer.locator("[data-table]")).toContainText("Showing all 12 comparable packages");
+  await expect(answer.locator("[data-check-line]")).toContainText("Checked: 12 of 12 numbers match records.");
+  await answer.getByRole("button", { name: "Show the three steps I took" }).click();
+  await expect(answer.locator("[data-steps]")).toContainText("I found 12 comparable packages.");
+  await expect(answer.locator("[data-steps]")).toContainText("I checked the 12 numbers in the table against the records.");
 });
 
 test("a checkable number shows where it came from on focus, and Escape closes it", async ({ page }) => {
@@ -149,11 +221,21 @@ test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   await expect(page.getByRole("dialog", { name: "Your view" })).toContainText("I can't tell which account you signed in with.");
 });
 
-test("a loading button keeps its name and a disabled one stays focusable", async ({ page }) => {
+test("a loading button keeps its name, its label and its width, and a disabled one stays focusable", async ({ page }) => {
   await page.goto("/gallery/buttons");
   const loading = page.locator("[data-state-section=loading] button").first();
   await expect(loading).toHaveAccessibleName("Mark as checked");
   await expect(loading).toHaveAttribute("aria-busy", "true");
+  // Every variant keeps its label in sight beside the spinner, at the width it has at rest.
+  const width = async (section: string, variant: string) =>
+    Math.round((await page.locator(`[data-state-section=${section}] [data-button=${variant}]`).first().boundingBox())!.width);
+  expect(await width("loading", "primary")).toBe(await width("variants", "primary"));
+  expect(await width("loading", "secondary")).toBe(await width("with-icon", "secondary"));
+  expect(await width("loading", "ghost")).toBe(await width("variants", "ghost"));
+  for (const button of await page.locator("[data-state-section=loading] button").all()) {
+    expect(await button.locator("span").evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    await expect(button.locator("svg.animate-spin")).toHaveCount(1);
+  }
   const disabled = page.locator("[data-state-section=disabled] button").first();
   await disabled.focus();
   await expect(disabled).toBeFocused();

@@ -2,7 +2,9 @@
 //
 // Check line: what the verifier checked and what it did not, in the neutral state and never
 // success green, because a green banner reads as "safe".
-// Coverage line: a sentence with its denominator, linked to Data readiness.
+// Coverage line: a sentence with its denominator, linked to Data readiness. The gap sentence
+// ends the first sentence when some cases lacked what the count needs; a period ends it when
+// none did.
 // Removed box: the sentences the checks removed, with their reasons, open under "In short".
 import type { ReactNode } from "react";
 import { CircleDashed } from "lucide-react";
@@ -64,11 +66,13 @@ export function CoverageLine({
   return (
     <p data-coverage-line className="text-small text-ink">
       {copy.coverage.basedOn} <Num part={part} whole={whole} show="count" /> {noun}
-      {gap && (
+      {gap ? (
         <>
           {copy.coverage.join}
           {gap}
         </>
+      ) : (
+        copy.coverage.end
       )}{" "}
       <TextLink href={href}>{copy.coverage.link}</TextLink>
     </p>

@@ -2,11 +2,12 @@
 // copy file, the strings a component renders without the copy file, and class names that
 // step outside DESIGN.md's tokens.
 import { parseAst } from "vite";
-import { SPACE_STEPS, USER_FACING_PROPS } from "./rules.ts";
+import { ARIA_TEXT_PROPS, NON_COPY_PROPS, NON_COPY_SUFFIXES, SPACE_STEPS, STYLE_PROPS } from "./rules.ts";
 
 type Node = { type: string; start: number; end: number; [key: string]: unknown };
 
-export type Found = { offset: number; text: string; where?: string };
+// where: what the component does with the text. from: the const that holds it, if any.
+export type Found = { offset: number; text: string; where?: string; from?: string };
 
 // Keys that hold types, not values. Strings in types are never shown to anyone.
 const TYPE_KEYS = new Set(["typeAnnotation", "returnType", "typeParameters", "typeArguments", "superTypeArguments"]);
@@ -70,25 +71,19 @@ function concatenation(node: Node): string | null {
   return left === null || right === null ? null : left + right;
 }
 
-// The strings an expression can end up as when it is rendered: a literal, a template, or
-// either branch of a condition. Strings passed to a function are its arguments, not text.
-function renderedStrings(node: Node): Found[] {
-  switch (node.type) {
-    case "Literal":
-      return isString(node) ? [{ offset: node.start, text: node.value as string }] : [];
-    case "TemplateLiteral":
-      return [{ offset: node.start, text: (node.quasis as Node[]).map((quasi) => (quasi.value as { raw: string }).raw).join("") }];
-    case "ConditionalExpression":
-      return [...renderedStrings(node.consequent as Node), ...renderedStrings(node.alternate as Node)];
-    case "LogicalExpression":
-      return [...renderedStrings(node.left as Node), ...renderedStrings(node.right as Node)];
-    case "ParenthesizedExpression":
-    case "TSAsExpression":
-    case "TSSatisfiesExpression":
-      return renderedStrings(node.expression as Node);
-    default:
-      return [];
-  }
+// Every const in the file whose name a component might render, by name. Scopes are ignored:
+// a const and a parameter with the same name in two functions are read as one, which can only
+// make the lint stricter.
+function constants(root: Node): Map<string, Node> {
+  const found = new Map<string, Node>();
+  walk(root, (node) => {
+    if (node.type !== "VariableDeclaration" || node.kind !== "const") return;
+    for (const declarator of node.declarations as Node[]) {
+      const id = declarator.id as Node;
+      if (id.type === "Identifier" && declarator.init) found.set(id.name as string, declarator.init as Node);
+    }
+  });
+  return found;
 }
 
 const hasWords = (text: string) => /\p{L}/u.test(text);
@@ -100,26 +95,98 @@ function propName(attribute: Node): string {
     : (name.name as string);
 }
 
-// Text a component renders that is not from the copy file: words written in JSX, and literal
-// strings given to a prop a person reads or hears (USER_FACING_PROPS).
+// Whether a string given to this prop, or kept under this key, is read by a person.
+function isCopyProp(name: string): boolean {
+  if (name.startsWith("aria-")) return ARIA_TEXT_PROPS.has(name);
+  if (NON_COPY_PROPS.has(name) || name.startsWith("data-")) return false;
+  return !NON_COPY_SUFFIXES.some((suffix) => name.endsWith(suffix));
+}
+
+function keyName(property: Node): string | null {
+  const key = property.key as Node;
+  if (property.computed) return null;
+  if (key.type === "Identifier") return key.name as string;
+  if (key.type === "Literal") return String(key.value);
+  return null;
+}
+
+// Text a component renders that is not from the copy file: words written in JSX, strings in
+// JSX expressions, strings given to any prop that is not on NON_COPY_PROPS (inside objects
+// and arrays too, each judged by its own key), and consts holding such strings that a
+// component renders or passes by name.
 export function literalText(source: string, file: string): Found[] {
+  const root = parse(source, file);
+  const consts = constants(root);
+
+  // The strings an expression can end up as when it is rendered under the given prop or key
+  // ("children" for text between tags). A function's arguments are not text, and neither is
+  // anything a function returns.
+  function strings(node: Node, prop: string, seen: Set<string> = new Set()): Found[] {
+    if (STYLE_PROPS.has(prop)) return [];
+    switch (node.type) {
+      case "Literal":
+        return isString(node) && isCopyProp(prop) ? [{ offset: node.start, text: node.value as string }] : [];
+      case "TemplateLiteral": {
+        const text = (node.quasis as Node[]).map((quasi) => (quasi.value as { raw: string }).raw).join("");
+        return isCopyProp(prop) ? [{ offset: node.start, text }] : [];
+      }
+      case "JSXExpressionContainer":
+      case "ParenthesizedExpression":
+      case "TSAsExpression":
+      case "TSSatisfiesExpression":
+        return strings(node.expression as Node, prop, seen);
+      case "ConditionalExpression":
+        return [...strings(node.consequent as Node, prop, seen), ...strings(node.alternate as Node, prop, seen)];
+      case "LogicalExpression":
+        return [...strings(node.left as Node, prop, seen), ...strings(node.right as Node, prop, seen)];
+      case "ObjectExpression":
+        return (node.properties as Node[]).flatMap((property) => {
+          const key = property.type === "Property" ? keyName(property) : null;
+          return key === null ? [] : strings(property.value as Node, key, seen);
+        });
+      case "ArrayExpression":
+        return (node.elements as (Node | null)[]).flatMap((element) => (element ? strings(element, prop, seen) : []));
+      case "Identifier": {
+        const name = node.name as string;
+        const init = consts.get(name);
+        if (!init || seen.has(name)) return [];
+        // Reported where the const is used, with the words it holds.
+        return strings(init, prop, new Set([...seen, name])).map((found) => ({ ...found, offset: node.start, from: name }));
+      }
+      default:
+        return [];
+    }
+  }
+
   const found: Found[] = [];
-  walk(parse(source, file), (node, parent) => {
+  walk(root, (node, parent) => {
     if (node.type === "JSXText" && hasWords(node.value as string)) {
       found.push({ offset: node.start, text: (node.value as string).trim(), where: "renders" });
     }
     if (node.type === "JSXExpressionContainer" && (parent?.type === "JSXElement" || parent?.type === "JSXFragment")) {
-      for (const text of renderedStrings(node.expression as Node)) {
+      for (const text of strings(node.expression as Node, "children")) {
         if (hasWords(text.text)) found.push({ ...text, where: "renders" });
       }
     }
-    if (node.type === "JSXAttribute" && node.value && USER_FACING_PROPS.has(propName(node))) {
-      const value = node.value as Node;
-      const strings = value.type === "JSXExpressionContainer" ? renderedStrings(value.expression as Node) : renderedStrings(value);
-      for (const text of strings) {
-        if (hasWords(text.text)) found.push({ ...text, where: `passes ${propName(node)}` });
+    if (node.type === "JSXAttribute" && node.value) {
+      const prop = propName(node);
+      for (const text of strings(node.value as Node, prop)) {
+        if (hasWords(text.text)) found.push({ ...text, where: `passes ${prop}` });
       }
     }
+  });
+  return found;
+}
+
+// The words given to Term as literals, such as term="Comparable", so the gate can check each
+// one against GLOSSARY.md before a renamed term breaks a screen.
+export function termLiterals(source: string, file: string): Found[] {
+  const found: Found[] = [];
+  walk(parse(source, file), (node) => {
+    if (node.type !== "JSXAttribute" || propName(node) !== "term" || !node.value) return;
+    let value = node.value as Node;
+    if (value.type === "JSXExpressionContainer") value = value.expression as Node;
+    if (isString(value)) found.push({ offset: value.start, text: value.value as string });
   });
   return found;
 }
@@ -128,7 +195,7 @@ const SPACING = /^-?(?:p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy])-(.+)$
 const ALLOWED_STEPS = new Set(["0", "auto", ...SPACE_STEPS.map(String)]);
 
 // Class names that leave DESIGN.md's tokens: a spacing step off the scale, an arbitrary
-// spacing or font size, or an arbitrary colour.
+// spacing or font size, or an arbitrary color.
 export function offTokenClasses(source: string, file: string): Found[] {
   const found: Found[] = [];
   walk(parse(source, file), (node) => {
@@ -142,9 +209,9 @@ export function offTokenClasses(source: string, file: string): Found[] {
       const utility = name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
       const spacing = SPACING.exec(utility);
       const offScale = spacing && !ALLOWED_STEPS.has(spacing[1]);
-      const arbitraryColour = /\[(?:#|rgb|hsl|oklch|color)/.test(utility);
+      const arbitraryColor = /\[(?:#|rgb|hsl|oklch|color)/.test(utility);
       const arbitrarySize = /^text-\[\d/.test(utility);
-      if (offScale || arbitraryColour || arbitrarySize) found.push({ offset: node.start, text: name });
+      if (offScale || arbitraryColor || arbitrarySize) found.push({ offset: node.start, text: name });
     }
   });
   return found;

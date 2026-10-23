@@ -162,7 +162,7 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
   );
 }
 
-export function BoxBand({ box, stamp }: { box: ReactNode; stamp: ReactNode }) {
+export function BoxBand({ box, stamp }: { box: ReactNode; stamp?: ReactNode }) {
   return (
     <div data-box-band className="border-b border-line bg-surface">
       <div className="layout layout-grid min-h-[68px] items-center gap-y-2 py-3">

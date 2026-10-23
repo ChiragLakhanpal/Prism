@@ -2,7 +2,7 @@
 // Strata wordmark (a link to Home), five tabs and the view switch. Nouns navigate.
 //
 // From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 844 px
-// wide and the 768 grid gives 672, so below 1024 a labelled Menu button holds them in a panel
+// wide and the 768 grid gives 672, so below 1024 a labeled Menu button holds them in a panel
 // that pushes the page down. Below 360 px the button stacks its icon over its label.
 //
 // On navy, the selected tab has a 3 px white underline and hover a line-strong one; focus uses
@@ -76,8 +76,6 @@ function ViewSwitch({ viewer, defaultOpen }: { viewer: Viewer; defaultOpen?: boo
         >
           {/* Focus lands here so the three lines are read; it is not a control, so no ring. */}
           <div ref={body} tabIndex={-1} data-view-popover className="outline-none">
-
-
             <ViewLines viewer={viewer} />
           </div>
         </RadixPopover.Content>
@@ -130,8 +128,9 @@ export function TopNav({
   menuOpen: menuOpenAtStart = false,
   viewOpen,
 }: {
-  // The logo, at least 24 px tall. The slot gives it clear space of half its height.
-  logo: ReactNode;
+  // The logo, at least 24 px tall. The slot gives it clear space of half its height. Ticket 06
+  // adds the World Bank's file; until then the production shell has no logo slot.
+  logo?: ReactNode;
   // The tab whose section holds the page; none on Home and the not-found page.
   current?: Section;
   home?: boolean;
@@ -166,9 +165,11 @@ export function TopNav({
       <div data-nav-bar className="on-navy relative bg-navy text-surface">
         <SkipLink />
         <div className="layout flex h-14 items-center">
-          <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-3">
-            {logo}
-          </div>
+          {logo && (
+            <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-3">
+              {logo}
+            </div>
+          )}
           <a
             href={homeHref}
             aria-current={home ? "page" : undefined}
@@ -197,8 +198,8 @@ export function TopNav({
             className={cx(
               "ml-auto flex shrink-0 items-center rounded-md border border-surface text-surface xs:rounded-pill lg:hidden",
               "transition-paint duration-150 hover:bg-primary-hover aria-expanded:bg-primary-hover",
-              "size-11 flex-col justify-center gap-0.5 text-label uppercase",
-              "xs:h-11 xs:w-auto xs:flex-row xs:gap-2 xs:px-3 xs:text-button xs:normal-case",
+              "size-11 flex-col justify-center gap-0.5 text-label",
+              "xs:h-11 xs:w-auto xs:flex-row xs:gap-2 xs:px-3 xs:text-button",
             )}
           >
             {menuOpen ? <X aria-hidden="true" className="size-4" /> : <MenuIcon aria-hidden="true" className="size-4" />}

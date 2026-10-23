@@ -1,4 +1,4 @@
-/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every colour, size, space and
+/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space and
    breakpoint a component uses comes from here. Change a value in DESIGN.md first; the token
    test (web/tests/tokens.spec.ts) fails until this file matches it. */
 
@@ -21,7 +21,7 @@
 }
 
 /* `static` puts every token on :root, so tests and charts can read them. Tailwind's own
-   defaults are cleared first, so no colour, size or space outside DESIGN.md exists. */
+   defaults are cleared first, so no color, size or space outside DESIGN.md exists. */
 @theme static {
   --*: initial;
 
@@ -44,7 +44,7 @@
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
 
   /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's
-     default font size; 1rem is 16 px. Colour is set by the component, not the step. */
+     default font size; 1rem is 16 px. Color is set by the component, not the step. */
   --text-display: 2rem;  --text-display--line-height: 1.2;  --text-display--font-weight: 700;
   --text-h1: 1.75rem;  --text-h1--line-height: 1.2;  --text-h1--font-weight: 700;
   --text-h2: 1.5rem;  --text-h2--line-height: 1.25;  --text-h2--font-weight: 700;
@@ -114,8 +114,8 @@
   column-gap: var(--layout-gutter);
 }
 
-/* Colour changes for hover and press. Tailwind's transition-colors also animates outline-color,
-   which would fade the focus outline in from the text colour; this leaves the outline out, so
+/* Color changes for hover and press. Tailwind's transition-colors also animates outline-color,
+   which would fade the focus outline in from the text color; this leaves the outline out, so
    focus shows at once. */
 @utility transition-paint {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;

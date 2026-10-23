@@ -3,7 +3,8 @@
 // builds (see web/src/main.tsx) and nothing links to it.
 //
 // From 1024 px the list of components sits in columns 1 to 3 and the page in columns 4 to 12.
-// Below 1024 px the list sits above the page.
+// Below 1024 px a component page puts the list after its content, and the index leaves it
+// out, because its cards already link to every page.
 import { useState, type ReactNode } from "react";
 import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
@@ -50,7 +51,10 @@ export function GalleryFrame({
 
 function ComponentList({ active }: { active?: string }) {
   return (
-    <nav aria-label={galleryCopy.listLabel} className="col-span-12 lg:col-span-3">
+    <nav
+      aria-label={galleryCopy.listLabel}
+      className={cx("col-span-12 lg:order-first lg:col-span-3", active ? "order-last" : "hidden lg:block")}
+    >
       <h2 className="text-label text-ink-muted uppercase">{galleryCopy.listLabel}</h2>
       <ul className="mt-2 flex flex-wrap gap-x-4 lg:flex-col lg:gap-x-0">
         {PAGES.map((page) => (
@@ -140,8 +144,8 @@ export function Gallery({ path, search = "" }: { path: string; search?: string }
     <div data-gallery-root>
       <GalleryFrame current={page?.current} {...frameState(search)}>
         <div className="layout layout-grid gap-y-8 pt-10">
-          <ComponentList active={page?.slug} />
           {page ? <Page page={page} /> : <Index />}
+          <ComponentList active={page?.slug} />
         </div>
       </GalleryFrame>
     </div>

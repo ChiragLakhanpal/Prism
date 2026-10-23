@@ -1,5 +1,5 @@
 // Term: a GLOSSARY.md word with a dotted underline. A click, Enter or a tap opens its
-// DefinitionWindow. DefinitionWindow: a non-modal window labelled by its title, with the full
+// DefinitionWindow. DefinitionWindow: a non-modal window labeled by its title, with the full
 // definition, optional rows (a measure's numerator and denominator, say), and a 44 px close
 // button. Focus moves to the title when it opens; Escape closes it and focus returns to the
 // word that opened it.

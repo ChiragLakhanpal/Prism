@@ -1,6 +1,6 @@
-// Document: one numbered paragraph of a source, as a citation points to it. It shows where
-// the paragraph sits, the whole paragraph word for word with the matching words highlighted,
-// the source line, and a link to the page in the World Bank's PDF. A passage in French,
+// Document: one numbered paragraph of a source, as a citation points to it. It shows the
+// whole paragraph word for word with the matching words highlighted, then the source line
+// (which says where the paragraph sits), and a link to the page in the World Bank's PDF. A passage in French,
 // Spanish or Portuguese carries its lang attribute (DESIGN.md section 10).
 //
 // States: ready, loading (a skeleton sized to the passage), failed (with "Try again"), and
@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { LoadingLabel, Skeleton, SkeletonText } from "./Skeleton";
+import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
 import { TextLink } from "./TextLink";
 
 // Matched words: the highlight fill, with the start and end said aloud, because most screen
@@ -61,8 +61,12 @@ export function Document({ state }: { state: DocumentState }) {
     return (
       <div data-document="loading" aria-busy="true" className="max-w-prose">
         <LoadingLabel />
-        <Skeleton className="h-8 w-full rounded-md" />
-        <SkeletonText className="mt-4" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />
+        {/* The ready layout, line for line: the quoted paragraph, the source line and the link. */}
+        <div className="border-l-2 border-line pl-4 text-body">
+          <SkeletonText widths={["w-full", "w-full", "w-full", "w-3/5"]} />
+        </div>
+        <SkeletonText className="mt-3 text-caption" widths={["w-full", "w-2/5"]} />
+        <SkeletonLine className="mt-2 text-small" width="w-1/2" />
       </div>
     );
   }
@@ -86,19 +90,16 @@ export function Document({ state }: { state: DocumentState }) {
   }
   const { passage } = state;
   const page = String(passage.page);
-  const para = String(passage.para);
+  const source = copy.document.sourceLine(passage.docType, passage.date, String(passage.para), page);
   return (
     <article data-document="ready" className="max-w-prose">
-      <p className="text-label text-ink-muted uppercase" data-numbers>
-        {copy.document.paragraph(para)}, {copy.document.page(page)}
-      </p>
-      <blockquote lang={passage.lang} className="mt-2 border-l-2 border-line-strong pl-4 text-body text-ink">
+      <blockquote lang={passage.lang} className="border-l-2 border-line-strong pl-4 text-body text-ink">
         <p>{highlighted(passage.text, passage.highlights)}</p>
       </blockquote>
-      <p className="mt-3 text-caption text-ink-muted">
-        <span className="font-bold">{copy.document.source}</span>{" "}
-        {passage.docType}, <span className="font-mono">{passage.pcode}</span>,{" "}
-        {copy.document.sourceTail(passage.date, para, page)}
+      <p className="mt-3 text-caption text-ink-muted" data-numbers>
+        <span className="font-bold">{copy.document.source}</span> {source.before}
+        <span className="font-mono">{passage.pcode}</span>
+        {source.after}
       </p>
       <p className="mt-2 text-small">
         <TextLink href={passage.pdfHref} target="_blank" rel="noreferrer">

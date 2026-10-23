@@ -1,4 +1,4 @@
-// A text link: primary and underlined, so it never depends on colour alone (DESIGN.md
+// A text link: primary and underlined, so it never depends on color alone (DESIGN.md
 // section 10). Links navigate; buttons act. The 4 px of padding above and below makes the
 // hit area at least 24 px tall, even in 14 px text, without moving the line.
 import type { ComponentProps } from "react";

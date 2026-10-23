@@ -65,6 +65,16 @@ test("the copy lint allows DESIGN.md section 8's footer sentence word for word, 
   expect(lint({ copy: copyWith(footer.replace("Strata is", "This is")) }).code).toBe(1);
 });
 
+test("the copy lint allows DESIGN.md section 5's draft-bar sentence word for word", () => {
+  const draftBar =
+    "A working draft for the borrower's PPSD. Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
+  const passed = lint({ copy: copyWith(draftBar) });
+  expect(passed.output).toBe("");
+  expect(passed.code).toBe(0);
+  // Outside that sentence, "clearance" is still caught.
+  expect(lint({ copy: copyWith("I gave this draft its clearance.") }).code).toBe(1);
+});
+
 test("the copy lint finds GLOSSARY.md's Avoid terms, such as chunk", () => {
   const failed = lint({ copy: copyWith("I read 40 chunks of the report.") });
   expect(failed.code).toBe(1);
@@ -79,21 +89,37 @@ test("the gate fails when a component renders a string that is not from the copy
     `export const A = () => <button aria-label="Close the source" />;`,
     `export const A = () => <img alt="World Bank logo" src="/logo.svg" />;`,
     `export const A = () => <Card title={\`Plan \${1}\`} />;`,
+    // Any prop that is not on rules.ts's NON_COPY_PROPS list is read as copy, so the props of
+    // Strata's own components are covered without listing them.
+    `export const A = () => <EmptyState title={copy.x} body="Plans appear once they load." />;`,
+    `export const A = () => <CoverageLine part={3} whole={4} noun="matching packages" href="#data" />;`,
+    // Strings inside an object or an array given to a prop are judged by their own key.
+    `export const A = () => <Num value={3} check={{ tooltip: "Matches paragraph 54." }} />;`,
+    `export const A = () => <Answer state={{ status: "empty", message: "I found nothing." }} />;`,
+    `export const A = () => <Steps steps={[{ key: "read", running: "Reading your question." }]} />;`,
+    `export const A = () => <CitationMarker n={1} source="Implementation Completion and Results Report" href="#s1" />;`,
+    // A string kept in a const and rendered by name.
+    `const words = "Nothing here yet."; export const A = () => <p>{words}</p>;`,
+    `const words = "Close the source"; export const A = () => <button aria-label={words} />;`,
   ];
   for (const component of cases) {
     const failed = lint({ component });
     expect(failed.code, component).toBe(1);
-    expect(failed.output).toMatch(/Thing\.tsx:1: .*not from the copy file/);
+    expect(failed.output, component).toMatch(/Thing\.tsx:1: .*not from the copy file/);
   }
 });
 
 test("a component that takes every string from the copy file passes the string lint", () => {
   const component = [
     `import { copy } from "./copy";`,
+    `const WIDE = "(min-width: 64rem)";`,
     `export const A = ({ on }: { on: boolean }) => (`,
     `  <section className="flex gap-4 p-6" aria-labelledby="t" data-state={on ? "open" : "closed"}>`,
     `    <h2 id="t">{copy.title}</h2> · <span aria-hidden>/</span>`,
     `    <img alt="" src="/x.svg" />{format(3, "short")}`,
+    `    <Answer state={{ status: "empty", message: copy.empty }} aria-live="polite" />`,
+    `    <ol style={{ minHeight: "calc(6 * 1.45em)" }}><li key="read">{copy.read}</li></ol>`,
+    `    <Num part={1} whole={2} show="count" style="table" />{matchMedia(WIDE).matches && copy.wide}`,
     `  </section>`,
     `);`,
   ].join("\n");
@@ -102,7 +128,14 @@ test("a component that takes every string from the copy file passes the string l
   expect(passed.code).toBe(0);
 });
 
-test("the class lint refuses spacing off DESIGN.md's scale and colours outside the tokens", () => {
+test("the gate fails when a Term names a word GLOSSARY.md does not define", () => {
+  const failed = lint({ component: `export const A = () => <Term term="Comparables" />;` });
+  expect(failed.code).toBe(1);
+  expect(failed.output).toMatch(/Thing\.tsx:1: .*"Comparables".*GLOSSARY\.md/);
+  expect(lint({ component: `export const A = () => <Term term="Comparable" />;` }).code).toBe(0);
+});
+
+test("the class lint refuses spacing off DESIGN.md's scale and colors outside the tokens", () => {
   for (const bad of ["p-5", "gap-7", "gap-y-5", "mt-[13px]", "bg-[#ff0000]", "text-[15px]", "md:px-9"]) {
     const failed = lint({ component: `export const A = () => <div className="flex ${bad}" />;` });
     expect(failed.code, bad).toBe(1);

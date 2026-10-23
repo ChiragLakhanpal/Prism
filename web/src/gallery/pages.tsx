@@ -25,7 +25,7 @@ import { Card, EmptyState } from "../components/Card";
 import { CheckLine, CoverageLine, RemovedBox } from "../components/Checks";
 import { CitationMarker } from "../components/CitationMarker";
 import { Document, type Passage } from "../components/Document";
-import { Num } from "../components/Num";
+import { Num, type NumValue } from "../components/Num";
 import { Skeleton, SkeletonText } from "../components/Skeleton";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
 import { Steps, type Step } from "../components/Steps";
@@ -41,6 +41,7 @@ import { galleryCopy } from "./copy";
 const s = galleryCopy.states;
 const t = galleryCopy.sections;
 const sample = galleryCopy.sample;
+const reference = galleryCopy.reference;
 
 export type GalleryPage = {
   slug: keyof typeof galleryCopy.pages;
@@ -49,11 +50,11 @@ export type GalleryPage = {
   sections: { id: string; title: string; body: ReactNode }[];
 };
 
-function Row({ children }: { children: ReactNode }) {
+function Inline({ children }: { children: ReactNode }) {
   return <div className="flex flex-wrap items-center gap-4">{children}</div>;
 }
 
-function Labelled({ label, children }: { label: string; children: ReactNode }) {
+function Labeled({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
       <p className="text-caption text-ink-muted">{label}</p>
@@ -82,26 +83,38 @@ const STAMPS: [string, Freshness][] = [
   [s.error, { status: "error" }],
 ];
 
-// The first `done` steps are done and the next one is running; later steps have not started.
-const steps = (done: number): Step[] =>
-  sample.steps.slice(0, done + 1).map((step, index) => ({ ...step, state: index < done ? "done" : "running" }));
-const doneSteps: Step[] = sample.steps.map((step) => ({ ...step, state: "done" }));
+// Each answer sample's steps, done or with the last one running.
+const steps = (list: Omit<Step, "state">[], running = false): Step[] =>
+  list.map((step, index) => ({ ...step, state: running && index === list.length - 1 ? "running" : "done" }));
+const ST = sample.steps;
+
+// The source line an evidence card ends with, as Document writes it.
+function SourceLine({ docType, pcode, iso, para, page }: { docType: string; pcode: string; iso: string; para: number; page: number }) {
+  const parts = copy.document.sourceLine(docType, date(iso), String(para), String(page));
+  return (
+    <p className="mt-2 text-caption text-ink-muted" data-numbers>
+      <span className="font-bold">{copy.document.source}</span> {parts.before}
+      <span className="font-mono">{pcode}</span>
+      {parts.after}
+    </p>
+  );
+}
+
+const preview = (
+  <>
+    <p>{sample.markerPreview}</p>
+    <SourceLine docType={sample.docType} pcode={sample.pcode} iso={sample.docDate} para={54} page={23} />
+  </>
+);
 
 const markers = (
   <>
     {sample.sentenceBefore}
-    <CitationMarker n={1} source={sample.markerSource} href="#source-1" preview={sample.markerPreview} />{" "}
+    <CitationMarker n={1} source={sample.markerSource} href="#source-1" preview={preview} />{" "}
     {sample.sentenceAfter}
     <CitationMarker n={2} source={sample.markerSecond} href="#source-2" opened />
   </>
 );
-
-const checks = {
-  numbers: { matched: 23, total: 23 },
-  quotes: { found: 14, total: 14 },
-  notChecked: ["sentences", "comparables"] as const,
-  removed: [sample.removed[0]],
-};
 
 // The character range of a phrase in a passage, as the evidence event will carry it.
 const range = (text: string, phrase: string): [number, number] => {
@@ -120,15 +133,19 @@ const passage: Passage = {
   pdfHref: "#pdf",
 };
 
+const mono = (text: string) => <span className="font-mono">{text}</span>;
+
+// The Table page's sample: four activities, three of them late, as its title says.
 const columns: Column[] = sample.tableHeaders.map((header, index) => ({
   key: `c${index}`,
   header,
   numeric: index >= 2,
+  width: ["w-2/5", "w-3/10", "w-1/5", "w-1/10"][index],
 }));
 const rows: Row[] = sample.tableRows.map(([reference, method, amount, late]) => ({
   id: reference,
   cells: {
-    c0: <span className="font-mono">{reference}</span>,
+    c0: mono(reference),
     c1: method,
     c2: <Num value={Number(amount)} options={{ compact: false }} />,
     c3: <Num value={Number(late)} />,
@@ -136,10 +153,73 @@ const rows: Row[] = sample.tableRows.map(([reference, method, amount, late]) => 
 }));
 const tableProps = {
   title: sample.tableTitle,
+  count: { noun: sample.tableNoun, total: rows.length },
   columns,
   rowHeader: "c0",
   source: sample.tableSource,
 };
+
+// The abstention's sample: the 12 comparable packages its sentence names, with one number
+// each, so its check line counts 12 numbers.
+const comparableColumns: Column[] = sample.abstentionHeaders.map((header, index) => ({
+  key: `c${index}`,
+  header,
+  numeric: index === 2,
+  width: ["w-1/2", "w-3/10", "w-1/5"][index],
+}));
+const comparableRows: Row[] = sample.abstentionRows.map(([reference, method, months]) => ({
+  id: reference,
+  cells: { c0: mono(reference), c1: method, c2: <Num value={Number(months)} options={{ decimals: 1 }} /> },
+}));
+
+// The Numbers page's reference tables: the value a tool sent, the rule, and what Num shows.
+const h = reference.headers;
+const RATIOS: [number, number, "sentence" | "table"][] = [
+  [6, 12, "sentence"],
+  [31, 37, "sentence"],
+  [42, 50, "sentence"],
+  [93, 118, "table"],
+  [1, 300, "sentence"],
+];
+const ratioColumns: Column[] = [
+  { key: "part", header: h.part, numeric: true, width: "w-1/10" },
+  { key: "whole", header: h.whole, numeric: true, width: "w-1/10" },
+  { key: "style", header: h.style, width: "w-1/10" },
+  { key: "rule", header: h.rule },
+  { key: "shows", header: h.shows, numeric: true, width: "w-1/4" },
+];
+const ratioRows: Row[] = RATIOS.map(([part, whole, style], index) => ({
+  id: `${part}-${whole}-${style}`,
+  cells: {
+    part: mono(String(part)),
+    whole: mono(String(whole)),
+    style: style === "table" ? reference.table : reference.sentence,
+    rule: reference.ratios.rules[index],
+    shows: <Num part={part} whole={whole} style={style} />,
+  },
+}));
+
+const valueColumns: Column[] = [
+  { key: "value", header: h.value, numeric: true, width: "w-1/5" },
+  { key: "rule", header: h.rule },
+  { key: "shows", header: h.shows, numeric: true, width: "w-1/5" },
+];
+const valueRows = (values: { sent: string; num: NumValue }[], rules: readonly string[]): Row[] =>
+  values.map(({ sent, num }, index) => ({
+    id: `${sent}-${index}`,
+    cells: { value: mono(sent), rule: rules[index], shows: <Num {...num} /> },
+  }));
+const FORMATS = [1234, 12500, 295689, 1250000, 2500000000, 0.456, 45.67, 456.7].map((value) => ({
+  sent: String(value),
+  num: { value } as NumValue,
+}));
+const COUNTS: { sent: string; num: NumValue }[] = [
+  { sent: "7", num: { count: 7 } },
+  { sent: "14", num: { count: 14 } },
+  { sent: "2024", num: { year: 2024 } },
+  { sent: "2024-03-04", num: { date: "2024-03-04", style: "sentence" } },
+  { sent: "2024-03-04", num: { date: "2024-03-04", style: "table" } },
+];
 
 const BADGES: [string, BadgeKind[]][] = [
   [t.signals, ["needs-a-look", "watch", "no-signals"]],
@@ -159,6 +239,7 @@ const ICONS: Record<string, LucideIcon> = {
   "triangle-alert": TriangleAlert,
   check: Check,
   "loader-circle": LoaderCircle,
+  "file-down": FileDown,
 };
 
 export const PAGES: GalleryPage[] = [
@@ -176,11 +257,11 @@ export const PAGES: GalleryPage[] = [
         title: t.box,
         body: (
           <div className="flex flex-col gap-6">
-            <Labelled label={s.withText}>
+            <Labeled label={s.withText}>
               <div className="max-w-prose pb-16">
                 <SampleBox text={sample.pcode} />
               </div>
-            </Labelled>
+            </Labeled>
           </div>
         ),
       },
@@ -190,11 +271,11 @@ export const PAGES: GalleryPage[] = [
         body: (
           <div className="flex flex-col gap-4">
             {STAMPS.map(([label, freshness]) => (
-              <Labelled key={label} label={label}>
+              <Labeled key={label} label={label}>
                 <div className="max-w-[20rem] rounded-md border border-line bg-surface px-3 py-1 md:[&>div]:justify-start">
                   <FreshnessStamp freshness={freshness} />
                 </div>
-              </Labelled>
+              </Labeled>
             ))}
           </div>
         ),
@@ -208,18 +289,18 @@ export const PAGES: GalleryPage[] = [
         id: "variants",
         title: t.variants,
         body: (
-          <Row>
+          <Inline>
             <Button variant="primary">{sample.primary}</Button>
             <Button variant="secondary">{sample.secondary}</Button>
             <Button variant="ghost">{sample.ghost}</Button>
-          </Row>
+          </Inline>
         ),
       },
       {
         id: "with-icon",
         title: s.withIcon,
         body: (
-          <Row>
+          <Inline>
             <Button variant="primary" icon={Check}>
               {sample.primary}
             </Button>
@@ -232,14 +313,14 @@ export const PAGES: GalleryPage[] = [
             <Button variant="ghost" icon={X} iconOnly aria-label={sample.icon}>
               {sample.icon}
             </Button>
-          </Row>
+          </Inline>
         ),
       },
       {
         id: "disabled",
         title: s.disabled,
         body: (
-          <Row>
+          <Inline>
             <Button variant="primary" disabled>
               {sample.primary}
             </Button>
@@ -249,14 +330,14 @@ export const PAGES: GalleryPage[] = [
             <Button variant="ghost" disabled>
               {sample.ghost}
             </Button>
-          </Row>
+          </Inline>
         ),
       },
       {
         id: "loading",
         title: s.loading,
         body: (
-          <Row>
+          <Inline>
             <Button variant="primary" loading>
               {sample.primary}
             </Button>
@@ -266,7 +347,7 @@ export const PAGES: GalleryPage[] = [
             <Button variant="ghost" loading>
               {sample.ghost}
             </Button>
-          </Row>
+          </Inline>
         ),
       },
     ],
@@ -347,11 +428,11 @@ export const PAGES: GalleryPage[] = [
       id: title,
       title,
       body: (
-        <Row>
+        <Inline>
           {kinds.map((kind) => (
             <StatusBadge key={kind} kind={kind} />
           ))}
-        </Row>
+        </Inline>
       ),
     })),
   },
@@ -362,36 +443,45 @@ export const PAGES: GalleryPage[] = [
         id: "ratios",
         title: t.ratios,
         body: (
-          <ul className="flex flex-col gap-2 text-body">
-            <li><Num part={6} whole={12} /></li>
-            <li><Num part={31} whole={37} /></li>
-            <li><Num part={42} whole={50} /></li>
-            <li><Num part={93} whole={118} style="table" /></li>
-          </ul>
+          <Table
+            level={3}
+            title={reference.ratios.title}
+            count={{ noun: reference.ratios.noun, total: ratioRows.length }}
+            columns={ratioColumns}
+            rowHeader="shows"
+            state={{ status: "ready", rows: ratioRows }}
+            source={reference.source}
+          />
         ),
       },
       {
         id: "formats",
         title: t.formats,
         body: (
-          <ul className="grid max-w-[20rem] grid-cols-2 gap-2 text-body" data-numbers>
-            {[1234, 12500, 295689, 1250000, 2500000000, 0.456, 45.67, 456.7].map((value) => (
-              <li key={value} className="text-right">
-                <Num value={value} />
-              </li>
-            ))}
-          </ul>
+          <Table
+            level={3}
+            title={reference.formats.title}
+            count={{ noun: reference.formats.noun, total: FORMATS.length }}
+            columns={valueColumns}
+            rowHeader="value"
+            state={{ status: "ready", rows: valueRows(FORMATS, reference.formats.rules) }}
+            source={reference.source}
+          />
         ),
       },
       {
         id: "counts",
         title: t.counts,
         body: (
-          <ul className="flex flex-col gap-2 text-body">
-            <li><Num count={7} />, <Num count={14} /></li>
-            <li><Num year={2024} /></li>
-            <li><Num date="2024-03-04" />, <Num date="2024-03-04" style="table" /></li>
-          </ul>
+          <Table
+            level={3}
+            title={reference.counts.title}
+            count={{ noun: reference.counts.noun, total: COUNTS.length }}
+            columns={valueColumns}
+            rowHeader="value"
+            state={{ status: "ready", rows: valueRows(COUNTS, reference.counts.rules) }}
+            source={reference.source}
+          />
         ),
       },
       {
@@ -407,7 +497,7 @@ export const PAGES: GalleryPage[] = [
         id: "terms",
         title: t.terms,
         body: (
-          <Row>
+          <Inline>
             <Term term={sample.term} />
             <DefinitionWindow
               title={sample.measureTitle}
@@ -428,7 +518,7 @@ export const PAGES: GalleryPage[] = [
             >
               {sample.measureBody}
             </DefinitionWindow>
-          </Row>
+          </Inline>
         ),
       },
     ],
@@ -442,17 +532,17 @@ export const PAGES: GalleryPage[] = [
         body: (
           <div className="flex flex-col gap-4">
             <p className="max-w-prose text-body">{markers}</p>
-            <Row>
-              <Labelled label={s.default}>
+            <Inline>
+              <Labeled label={s.default}>
                 <span><CitationMarker n={1} source={sample.markerSource} href="#source-1" /></span>
-              </Labelled>
-              <Labelled label={s.opened}>
+              </Labeled>
+              <Labeled label={s.opened}>
                 <span><CitationMarker n={2} source={sample.markerSecond} href="#source-2" opened /></span>
-              </Labelled>
-              <Labelled label={s.active}>
+              </Labeled>
+              <Labeled label={s.active}>
                 <span><CitationMarker n={3} source={sample.markerSource} href="#source-3" active /></span>
-              </Labelled>
-            </Row>
+              </Labeled>
+            </Inline>
           </div>
         ),
       },
@@ -461,7 +551,7 @@ export const PAGES: GalleryPage[] = [
         title: t.checkLine,
         body: (
           <div className="flex max-w-prose flex-col gap-2">
-            <CheckLine numbers={checks.numbers} quotes={checks.quotes} notChecked={["comparables"]} />
+            <CheckLine numbers={{ matched: 23, total: 23 }} quotes={{ found: 14, total: 14 }} notChecked={["comparables"]} />
             <CheckLine numbers={{ matched: 1, total: 1 }} notChecked={["sentences"]} />
             <CheckLine quotes={{ found: 14, total: 14 }} notChecked={["sentences", "passages"]} />
             <CheckLine notChecked={["sentences"]} />
@@ -471,7 +561,16 @@ export const PAGES: GalleryPage[] = [
       {
         id: "coverage",
         title: t.coverage,
-        body: <CoverageLine part={37} whole={52} noun={sample.coverageNoun} gap={sample.coverageGap} href="#data" />,
+        body: (
+          <div className="flex max-w-prose flex-col gap-4">
+            <Labeled label={s.withGap}>
+              <CoverageLine part={37} whole={52} noun={sample.coverageNoun} gap={sample.coverageGap} href="#data" />
+            </Labeled>
+            <Labeled label={s.withoutGap}>
+              <CoverageLine part={52} whole={52} noun={sample.coverageNoun} href="#data" />
+            </Labeled>
+          </div>
+        ),
       },
       {
         id: "removed",
@@ -480,7 +579,7 @@ export const PAGES: GalleryPage[] = [
           <div className="flex max-w-prose flex-col gap-4">
             <RemovedBox removed={[]} />
             <RemovedBox removed={[sample.removed[0]]} />
-            <RemovedBox removed={[...sample.removed]} names={["IDA", "ICR"]} />
+            <RemovedBox removed={[...sample.removed]} names={[...sample.removedNames]} />
             <RemovedBox removed={[...sample.removed]} all />
           </div>
         ),
@@ -490,24 +589,32 @@ export const PAGES: GalleryPage[] = [
   {
     slug: "answer",
     sections: [
-      { id: "steps", title: t.steps, body: <Panel><Steps steps={steps(2)} /></Panel> },
+      { id: "steps", title: t.steps, body: <Panel><Steps steps={steps([ST.read, ST.searchDocuments, ST.write], true)} /></Panel> },
       {
         id: "streaming",
         title: s.streaming,
-        body: <Panel><Answer state={{ status: "streaming", steps: steps(1), stillWorking: true }} /></Panel>,
+        body: <Panel><Answer state={{ status: "streaming", steps: steps([ST.read, ST.searchDocuments], true), stillWorking: true }} /></Panel>,
       },
       {
+        // Three sentences written: two kept, with three numbers between them, and one removed.
         id: "ready",
         title: s.ready,
         body: (
           <Panel>
             <Answer
-              state={{ status: "ready", steps: doneSteps, runId: sample.runId, sentences: markers, checks: { ...checks, notChecked: [...checks.notChecked] } }}
+              state={{
+                status: "ready",
+                steps: steps([ST.read, ST.searchDocuments, ST.write, ST.verify]),
+                runId: sample.runId,
+                sentences: markers,
+                checks: { numbers: { matched: 3, total: 3 }, notChecked: ["sentences", "comparables"], removed: [sample.removed[0]] },
+              }}
             />
           </Panel>
         ),
       },
       {
+        // 12 comparable packages in the sentence, 12 rows in the table, 12 numbers checked.
         id: "abstained",
         title: s.abstained,
         body: (
@@ -515,11 +622,21 @@ export const PAGES: GalleryPage[] = [
             <Answer
               state={{
                 status: "abstained",
-                steps: doneSteps,
+                steps: steps([ST.read, ST.searchComparables, ST.verifyComparables]),
                 runId: sample.runId,
                 sentence: sample.abstention,
-                rows: <Table {...tableProps} count={sample.tableCount} state={{ status: "ready", rows }} />,
-                checks: { numbers: checks.numbers, notChecked: ["sentences", "comparables"], removed: [] },
+                rows: (
+                  <Table
+                    level={4}
+                    title={sample.abstentionTitle}
+                    count={{ noun: sample.abstentionNoun, total: comparableRows.length }}
+                    columns={comparableColumns}
+                    rowHeader="c0"
+                    state={{ status: "ready", rows: comparableRows }}
+                    source={sample.tableSource}
+                  />
+                ),
+                checks: { numbers: { matched: 12, total: 12 }, notChecked: ["sentences", "comparables"], removed: [] },
               }}
             />
           </Panel>
@@ -528,14 +645,43 @@ export const PAGES: GalleryPage[] = [
       {
         id: "empty",
         title: s.empty,
-        body: <Panel><Answer state={{ status: "empty", steps: doneSteps, runId: sample.runId, message: sample.empty }} /></Panel>,
+        body: (
+          <Panel>
+            <Answer
+              state={{
+                status: "empty",
+                steps: steps([ST.read, ST.searchNothing]),
+                runId: sample.runId,
+                message: (
+                  <>
+                    {sample.emptyLead} <TextLink href="#data">{sample.emptyLinkText}</TextLink>
+                    {sample.emptyTail}
+                  </>
+                ),
+              }}
+            />
+          </Panel>
+        ),
       },
       {
         id: "refused",
         title: s.refused,
         body: (
           <Panel>
-            <Answer state={{ status: "refused", steps: doneSteps, runId: sample.runId, message: sample.refusal, note: sample.refusalNote }} />
+            <Answer
+              state={{
+                status: "refused",
+                steps: steps([ST.read]),
+                runId: sample.runId,
+                message: sample.refusal,
+                note: (
+                  <>
+                    <TextLink href="#how">{sample.refusalLinkText}</TextLink>
+                    {sample.refusalTail}
+                  </>
+                ),
+              }}
+            />
           </Panel>
         ),
       },
@@ -544,7 +690,7 @@ export const PAGES: GalleryPage[] = [
         title: s.error,
         body: (
           <Panel>
-            <Answer state={{ status: "error", steps: doneSteps.slice(0, 2), message: sample.answerError, onRetry: () => {} }} />
+            <Answer state={{ status: "error", steps: steps([ST.read, ST.searchDocuments]), message: sample.answerError, onRetry: () => {} }} />
           </Panel>
         ),
       },
@@ -559,7 +705,10 @@ export const PAGES: GalleryPage[] = [
         title: s.french,
         body: (
           <Panel>
-            <Document state={{ status: "ready", passage: {
+            <Document
+              state={{
+                status: "ready",
+                passage: {
                   ...passage,
                   text: sample.passageFrench,
                   lang: "fr",
@@ -578,38 +727,17 @@ export const PAGES: GalleryPage[] = [
   {
     slug: "table",
     sections: [
-      {
-        id: "ready",
-        title: s.ready,
-        body: <Table {...tableProps} count={sample.tableCount} state={{ status: "ready", rows }} />,
-      },
-      { id: "loading", title: s.loading, body: <Table {...tableProps} count={sample.tableCount} state={{ status: "loading", rows: 4 }} /> },
+      { id: "ready", title: s.ready, body: <Table {...tableProps} state={{ status: "ready", rows }} /> },
+      { id: "loading", title: s.loading, body: <Table {...tableProps} state={{ status: "loading", rows: rows.length }} /> },
       {
         id: "empty",
         title: s.empty,
-        body: (
-          <Table
-            {...tableProps}
-            state={{ status: "empty", empty: <EmptyState level={4} title={sample.tableEmptyTitle} body={sample.tableEmptyBody} /> }}
-          />
-        ),
+        body: <Table {...tableProps} state={{ status: "empty", title: sample.tableEmptyTitle, body: sample.tableEmptyBody }} />,
       },
       {
         id: "error",
         title: s.error,
-        body: (
-          <Table
-            {...tableProps}
-            state={{
-              status: "error",
-              error: (
-                <Alert state="error" action={<Button variant="secondary">{copy.answer.tryAgain}</Button>}>
-                  {sample.tableError}
-                </Alert>
-              ),
-            }}
-          />
-        ),
+        body: <Table {...tableProps} state={{ status: "error", message: sample.tableError, onRetry: () => {} }} />,
       },
     ],
   },
@@ -623,7 +751,7 @@ export const PAGES: GalleryPage[] = [
           <Panel>
             <div className="max-w-prose">
               <Skeleton className="h-6 w-2/5" />
-              <SkeletonText className="mt-4" widths={["w-full", "w-11/12", "w-3/5"]} />
+              <SkeletonText className="mt-4 text-body" widths={["w-full", "w-11/12", "w-3/5"]} />
             </div>
           </Panel>
         ),

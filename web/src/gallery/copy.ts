@@ -1,12 +1,14 @@
 // Every string the design gallery shows: its labels and the sample content its components
 // display. The gallery is never shipped, so these strings stay out of web/src/copy.ts, but
 // the gate's copy lint checks them the same way (DESIGN.md section 7). Sample IDs such as
-// P000000 are made up on purpose, so no sample can be mistaken for a record.
+// P000000 and names such as Sample Water Agency are made up on purpose, so no sample can be
+// mistaken for a record. Within each sample, the counts agree: a sentence, its table, its
+// check line and its steps count the same things.
 
 export const galleryCopy = {
   title: "Design gallery",
   purpose:
-    "Every Strata component in each of its states, for building screens and for design reviews. Only development builds have this page.",
+    "This page shows every Strata component in each of its states, for building screens and for design reviews. Only development builds have it.",
   sampleNote: "Everything on this page is sample content for checking the design. None of it is a finding.",
   listLabel: "Components",
   allComponents: "All components",
@@ -17,7 +19,7 @@ export const galleryCopy = {
     navigation: {
       title: "Navigation, box band and footer",
       purpose:
-        "The frame every page shares. This page shows Projects as the selected tab. The dashed box stands for the World Bank logo, which ticket 06 adds.",
+        "Every page shares this frame. This page shows Projects as the selected tab. The dashed box stands for the World Bank logo, which ticket 06 adds.",
     },
     buttons: {
       title: "Buttons",
@@ -33,7 +35,7 @@ export const galleryCopy = {
     },
     alerts: {
       title: "Alerts",
-      purpose: "One sentence in a state's colours, with its icon and a left border.",
+      purpose: "An alert is one sentence in a state's colors, with its icon and a left border.",
     },
     badges: {
       title: "Status badges",
@@ -42,7 +44,7 @@ export const galleryCopy = {
     numbers: {
       title: "Numbers and terms",
       purpose:
-        "Num writes every number by DESIGN.md's rules. A number you can check has a dotted underline. A term opens its definition from GLOSSARY.md.",
+        "Num writes every number by DESIGN.md's rules, and each table here shows the value a tool sent, the rule and what Num shows. A number you can check has a dotted underline. A term opens its definition from GLOSSARY.md.",
     },
     citations: {
       title: "Citations and checks",
@@ -50,23 +52,27 @@ export const galleryCopy = {
     },
     answer: {
       title: "Answer",
-      purpose: "The body of a cited answer in each of its states.",
+      purpose:
+        "This page shows the body of a cited answer in each of its states. In each sample, the sentences, the table, the check line and the steps count the same things.",
     },
     document: {
       title: "Document passage",
-      purpose: "One numbered paragraph, word for word, with the matching words highlighted.",
+      purpose: "A passage is one numbered paragraph, word for word, with the matching words highlighted.",
     },
     table: {
       title: "Table",
-      purpose: "A title sentence, a count line, units in the column heads and a source line. Below 768 px each row becomes a card.",
+      purpose:
+        "A table has a title sentence, a count line, units in the column heads and a source line. The title, count and source show only with the rows. Below 768 px each row becomes a card.",
     },
     skeleton: {
       title: "Skeleton",
-      purpose: "Static blocks sized to the content they stand in for. Nothing moves when the content arrives.",
+      purpose:
+        "Skeletons are static blocks sized to the content they stand in for. Each line is as tall as the line of text it holds a place for, so nothing moves when the content arrives.",
     },
     icons: {
       title: "Icons",
-      purpose: "The lucide icons Strata uses, at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
+      purpose:
+        "Strata uses these lucide icons at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
     },
   },
 
@@ -89,6 +95,8 @@ export const galleryCopy = {
     active: "Open in the drawer",
     withLink: "With a link",
     withoutLink: "Without a link",
+    withGap: "With a gap",
+    withoutGap: "With nothing missing",
     french: "A passage in French",
   },
 
@@ -122,6 +130,58 @@ export const galleryCopy = {
     states: "States",
   },
 
+  // The Numbers page's three tables: the value a tool sent, the rule Num follows and what it
+  // shows (DESIGN.md sections 6 and 7).
+  reference: {
+    source: "DESIGN.md sections 6 and 7.",
+    headers: {
+      part: "Part",
+      whole: "Whole",
+      style: "Style",
+      value: "Value the tool sent",
+      rule: "Rule",
+      shows: "Num shows",
+    },
+    sentence: "Sentence",
+    table: "Table",
+    ratios: {
+      title: "Num never writes a frequency or a percentage from fewer than 20 cases.",
+      noun: "ratios",
+      rules: [
+        "Under 20 cases, Num shows only the count.",
+        "From 20 to 49 cases, it adds about N in 10.",
+        "From 50 cases, it adds a whole percentage.",
+        "In a table or a chart, it writes % for percent.",
+        "A share that rounds to 0 but is not 0 reads less than 1 percent.",
+      ],
+    },
+    formats: {
+      title: "Num shortens large numbers with K, M and B, and rounds each number by its size.",
+      noun: "numbers",
+      rules: [
+        "Below 10,000, Num writes comma thousands.",
+        "From 10,000, it writes K, with one decimal below 100K.",
+        "From 100K, it drops the decimal.",
+        "From a million, it writes M.",
+        "From a billion, it writes B.",
+        "Below 1, it keeps two decimals.",
+        "From 1 to 100, it keeps one decimal.",
+        "Above 100, it keeps no decimals.",
+      ],
+    },
+    counts: {
+      title: "Num writes small counts as words, and dates by where they appear.",
+      noun: "values",
+      rules: [
+        "A count from one to nine is a word.",
+        "From 10, a count is a numeral.",
+        "A year has no comma.",
+        "In a sentence, a date has the full month.",
+        "In a table, a date has the short month.",
+      ],
+    },
+  },
+
   sample: {
     primary: "Mark as checked",
     secondary: "Export to Word",
@@ -130,7 +190,7 @@ export const galleryCopy = {
     textLink: "See which data I hold",
     tabsLabel: "Project sections",
     tabs: ["Summary", "Procurement", "Timeline", "Documents", "Connections"],
-    cardTitle: "Northern water works, plan of October 9, 2026",
+    cardTitle: "Sample Water Agency, Procurement Plan of October 9, 2026",
     cardBody: "Eight activities were checked. One needs a look and two are worth watching.",
     emptyTitle: "I have nothing to brief you on yet.",
     emptyBody:
@@ -139,10 +199,9 @@ export const galleryCopy = {
     info: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     success: "You exported the draft to Word.",
     warning: "Two reports disagree about the closing date.",
-    error: "Your account can't read the data I hold yet. Ask the person who shared Strata with you for access.",
+    error: "Your account can't read the data I hold yet, so ask the person who shared Strata with you for access.",
     neutral: "I removed one sentence because no record supports its number.",
     numTooltip: "Matches paragraph 54 of the completion report for P000000.",
-    numOpened: "You opened the rows behind this number.",
     term: "Comparable",
     measureTitle: "Linked to a project",
     measureBody: "The share of contract awards that carry a project ID I can join on.",
@@ -172,25 +231,69 @@ export const galleryCopy = {
         reasonJoined: "the quote is not on the page it cited",
       },
     ],
-    steps: [
-      { key: "read", running: "I'm reading your question.", done: "I read your question." },
-      { key: "search", running: "I'm searching the documents for P000000.", done: "I found 14 passages for P000000." },
-      { key: "write", running: "I'm writing the answer.", done: "I wrote three sentences." },
-      {
-        key: "verify",
-        running: "I'm checking each number and quote against the sources.",
-        done: "I checked 23 numbers and 14 quotes, and removed one sentence.",
+    // Words that stay capitalized when a removed sentence is reported.
+    removedNames: ["IDA", "ICR"],
+
+    // The steps each answer sample took. Each list matches its sample: the ready answer wrote
+    // three sentences and removed one, the abstention found 12 packages and checked their 12
+    // numbers, and the empty answer found nothing.
+    steps: {
+      read: { key: "read", running: "I'm reading your question.", done: "I read your question." },
+      searchDocuments: {
+        key: "search",
+        running: "I'm searching the documents for P000000.",
+        done: "I found 14 passages for P000000.",
       },
-    ],
+      searchNothing: {
+        key: "search",
+        running: "I'm searching the records and documents for P000000.",
+        done: "I found no record or passage that answers this.",
+      },
+      searchComparables: {
+        key: "search",
+        running: "I'm looking for packages like this one.",
+        done: "I found 12 comparable packages.",
+      },
+      write: { key: "write", running: "I'm writing the answer.", done: "I wrote three sentences." },
+      verify: {
+        key: "verify",
+        running: "I'm checking each number against the records.",
+        done: "I checked the numbers against the records and removed one sentence.",
+      },
+      verifyComparables: {
+        key: "verify",
+        running: "I'm checking each number against the records.",
+        done: "I checked the 12 numbers in the table against the records.",
+      },
+    },
     runId: "run-0001",
     abstention: "I'm not giving a range: only 12 comparable packages. Here are all 12.",
-    empty:
-      "I found nothing in the records or documents that answers this. Data readiness shows which sources and years I have read so far.",
+    abstentionTitle: "The 12 comparable packages",
+    abstentionNoun: "comparable packages",
+    abstentionHeaders: ["Activity Reference No.", "Method", "Months from notice to contract"],
+    abstentionRows: [
+      ["KE-SAMPLE-000101-CW-RFB", "Request for Bids", "7.2"],
+      ["KE-SAMPLE-000102-CW-RFB", "Request for Bids", "8.4"],
+      ["KE-SAMPLE-000103-CW-RFB", "Request for Bids", "9.1"],
+      ["KE-SAMPLE-000104-CW-RFB", "Request for Bids", "9.6"],
+      ["KE-SAMPLE-000105-CW-RFB", "Request for Bids", "10.3"],
+      ["KE-SAMPLE-000106-CW-RFB", "Request for Bids", "10.9"],
+      ["KE-SAMPLE-000107-CW-RFB", "Request for Bids", "11.4"],
+      ["KE-SAMPLE-000108-CW-RFB", "Request for Bids", "12.0"],
+      ["KE-SAMPLE-000109-CW-RFB", "Request for Bids", "13.5"],
+      ["KE-SAMPLE-000110-CW-RFB", "Request for Bids", "14.2"],
+      ["KE-SAMPLE-000111-CW-RFB", "Request for Bids", "16.8"],
+      ["KE-SAMPLE-000112-CW-RFB", "Request for Bids", "19.1"],
+    ],
+    emptyLead: "I found nothing in the records or documents that answers this.",
+    emptyLinkText: "Data readiness",
+    emptyTail: " shows which sources and years I have read so far.",
     refusal:
       "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice.",
-    refusalNote: "How Strata works lists what I don't do, and why.",
+    refusalLinkText: "How Strata works",
+    refusalTail: " lists what I don't do, and why.",
     answerError:
-      "I couldn't answer, because the model that writes my answers did not respond. Your question is still in the box.",
+      "I couldn't answer because the model that writes my answers did not respond, but your question is still in the box.",
     docType: "Implementation Completion and Results Report",
     pcode: "P000000",
     docDate: "2021-06-30",
@@ -201,7 +304,7 @@ export const galleryCopy = {
       "Les marchés de travaux ont été relancés en 2017 après le rejet de toutes les offres. Le second appel a reçu cinq offres.",
     passageFrenchMatch: "relancés en 2017",
     tableTitle: "Three of the four sample activities were signed after their planned date.",
-    tableCount: "Showing all 4 activities",
+    tableNoun: "activities",
     tableSource: "Sample rows made for the gallery, in STEP's columns.",
     tableHeaders: ["Activity Reference No.", "Method", "Estimated Amount (US$)", "Days late"],
     tableRows: [
@@ -210,7 +313,7 @@ export const galleryCopy = {
       ["KE-SAMPLE-000003-CS-QCBS", "Quality- and Cost-Based Selection", "312000", "131"],
       ["KE-SAMPLE-000004-CW-RFB", "Request for Bids", "2450000", "12"],
     ],
-    tableEmptyTitle: "There are no activities in this plan yet.",
+    tableEmptyTitle: "I have no activities for this plan yet.",
     tableEmptyBody: "Activities appear here once the plan's rows load from STEP.",
     tableError: "I couldn't load the activities in this plan.",
     iconNames: [
@@ -225,6 +328,7 @@ export const galleryCopy = {
       "triangle-alert",
       "check",
       "loader-circle",
+      "file-down",
     ],
   },
 } as const;

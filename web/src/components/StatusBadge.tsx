@@ -1,5 +1,5 @@
 // Status badges (DESIGN.md section 5): a pill with a 16 px icon and 14 px text. Each kind has
-// its own icon shape and names itself in words, so nothing depends on colour alone. Badges
+// its own icon shape and names itself in words, so nothing depends on color alone. Badges
 // mark exceptions; the icon is hidden from screen readers because the word carries the state.
 //
 // Signals: Needs a look, Watch, No signals. Data readiness: Partial, Gap. Plan checks: Data

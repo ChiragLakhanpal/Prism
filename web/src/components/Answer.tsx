@@ -17,7 +17,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CheckLine, RemovedBox, type NotChecked, type Removed } from "./Checks";
 import { numText } from "./Num";
-import { Skeleton, LoadingLabel } from "./Skeleton";
+import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Steps, type Step } from "./Steps";
 
 type Checks = {
@@ -51,8 +51,15 @@ function StepsTaken({ steps, runId }: { steps: Step[]; runId: string }) {
   const count = steps.length;
   return (
     <div className="mt-4">
-      <Button variant="ghost" icon={ChevronDown} aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}
-        className={cx("[&>svg]:transition-transform", open && "[&>svg]:rotate-180")}>
+      {/* -ml-6 takes back the ghost button's padding, so its icon lines up with the text above. */}
+      <Button
+        variant="ghost"
+        icon={ChevronDown}
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(!open)}
+        className={cx("-ml-6 [&>svg]:transition-transform", open && "[&>svg]:rotate-180")}
+      >
         {open ? copy.steps.hide : count === 1 ? copy.steps.showOne : copy.steps.show(numText({ count }))}
       </Button>
       <div id={id} hidden={!open} className="mt-2">
@@ -65,16 +72,13 @@ function StepsTaken({ steps, runId }: { steps: Step[]; runId: string }) {
   );
 }
 
+// The check line and the removed box keep the answer's measure, about 65 characters a line.
 function ChecksBlock({ checks }: { checks: Checks }) {
   return (
-    <>
-      <div className="mt-4">
-        <CheckLine numbers={checks.numbers} quotes={checks.quotes} notChecked={checks.notChecked} />
-      </div>
-      <div className="mt-2">
-        <RemovedBox removed={checks.removed} names={checks.names} />
-      </div>
-    </>
+    <div className="mt-4 flex max-w-prose flex-col gap-2">
+      <CheckLine numbers={checks.numbers} quotes={checks.quotes} notChecked={checks.notChecked} />
+      <RemovedBox removed={checks.removed} names={checks.names} />
+    </div>
   );
 }
 
@@ -85,11 +89,11 @@ export function Answer({ state }: { state: AnswerState }) {
         <div data-answer="streaming" aria-busy="true">
           <Steps steps={state.steps} stillWorking={state.stillWorking} reserveLines={6} />
           <LoadingLabel />
-          <div className="mt-6 flex max-w-prose flex-col gap-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-11/12" />
-            <Skeleton className="h-4 w-3/5" />
-            <Skeleton className="mt-2 h-9 w-full rounded-md" />
+          {/* "In short", three lines of answer and the check line, each at its own size. */}
+          <div className="mt-6 max-w-prose">
+            <SkeletonLine className="text-label" width="w-1/6" />
+            <SkeletonText className="mt-2 text-body" widths={["w-full", "w-11/12", "w-3/5"]} />
+            <Skeleton className="mt-4 h-14 w-full rounded-md" />
           </div>
         </div>
       );

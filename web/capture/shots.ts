@@ -103,7 +103,21 @@ export const SHOTS: Shot[] = [
   { name: "document--focus-pdf-link", path: "/gallery/document", act: focus("[data-document=ready] a") },
   { name: "table--focus-region", path: "/gallery/table", widths: WIDE, act: focus("[data-table] [role=region]") },
 
-  // The production app's shell against the mocked API, signed in and unreachable.
+  // The production app's shell against the mocked API: signed in, signed out and unreachable.
   { name: "app--signed-in", path: "/", server: "app", api: { "/api/me": { recorded: "me.json" } } },
+  {
+    name: "app--signed-out",
+    path: "/",
+    server: "app",
+    api: { "/api/me": { body: '{"email":null,"name":null,"signed_in":false,"has_token":false}' } },
+  },
   { name: "app--unreachable", path: "/", server: "app", api: { "/api/me": { status: 502, body: '{"detail":"Bad Gateway"}' } } },
+  {
+    name: "app--focus-retry",
+    path: "/",
+    server: "app",
+    api: { "/api/me": { status: 502, body: '{"detail":"Bad Gateway"}' } },
+    act: focus("[role=alert] button"),
+  },
+  { name: "app--focus-skip-link", path: "/", server: "app", api: { "/api/me": { recorded: "me.json" } }, act: (page) => page.keyboard.press("Tab") },
 ];

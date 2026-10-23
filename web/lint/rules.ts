@@ -11,6 +11,8 @@ export const SPACE_STEPS = [0.5, 1, 2, 3, 4, 6, 8, 10, 12, 16];
 export const FIXED_TERMS = [
   // DESIGN.md section 8, the footer on every screen ("endorsed" is otherwise rule 19's).
   "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.",
+  // DESIGN.md section 5, Draft bar ("clearance" and "no-objection" are otherwise rule 19's).
+  "A working draft for the borrower's PPSD. Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
 ];
@@ -55,24 +57,61 @@ export const GLOSSARY_AVOID: [string, string][] = [
   ["Direct Contracting", "Direct Selection"],
 ];
 
-// JSX attributes and component props that a person reads or hears. The string lint refuses
-// a literal in any of them; the words belong in the copy file.
-export const USER_FACING_PROPS = new Set([
+// JSX attributes and component props whose strings are never shown to anyone: names, addresses,
+// keys and settings. The string lint reads a string given to any other prop as copy, so a new
+// component's props are checked without listing them here. Inside an object or an array
+// given to a prop, each string is judged by its own key: in state={{ status: "empty",
+// message: "..." }}, status is a setting and message is copy.
+export const NON_COPY_PROPS = new Set([
+  "className",
+  "href",
+  "src",
+  "id",
+  "key",
+  "type",
+  "variant",
+  "kind",
+  "state",
+  "status",
+  "role",
+  "lang",
+  "target",
+  "rel",
+  "side",
+  "align",
+  "width",
+  "term",
+  "rowHeader",
+  "autoComplete",
+  "scope",
+  "live",
+  "show",
+  "widths",
+  "htmlFor",
+  "name",
+  "method",
+  "inputMode",
+  "enterKeyHint",
+  "download",
+  // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
+  "notChecked",
+]);
+
+// A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,
+// runId or iconClassName.
+export const NON_COPY_SUFFIXES = ["Href", "Id", "Key", "ClassName"];
+
+// Props whose whole value is CSS, never text.
+export const STYLE_PROPS = new Set(["style"]);
+
+// ARIA attributes hold settings ("true", "page", "polite") and ids, except these, which hold
+// words a screen reader says. The string lint reads these as copy.
+export const ARIA_TEXT_PROPS = new Set([
   "aria-label",
   "aria-description",
   "aria-roledescription",
   "aria-valuetext",
   "aria-placeholder",
-  "alt",
-  "title",
-  "placeholder",
-  "label",
-  "heading",
-  "description",
-  "caption",
-  "message",
-  "text",
-  "hint",
-  "eyebrow",
-  "summary",
+  "aria-braillelabel",
+  "aria-brailleroledescription",
 ]);

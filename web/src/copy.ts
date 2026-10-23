@@ -21,7 +21,8 @@ export const copy = {
     checking: "Checking who you are.",
     signedIn: (name: string) => `You are signed in as ${name}.`,
     signedOut: "You are not signed in. Open Strata through its Databricks App to sign in.",
-    unreachable: "The server did not answer, so I can't tell who you are. Try again in a minute.",
+    // An alert holds one sentence (DESIGN.md section 5); its "Try again" button asks again.
+    unreachable: "The server did not answer, so I can't tell who you are.",
   },
 
   // The navy bar (DESIGN.md section 5, Top navigation). Nouns navigate.
@@ -101,8 +102,11 @@ export const copy = {
   // The coverage line: a sentence with its denominator, linked to Data readiness.
   coverage: {
     // "Based on {37 of 52} {matching packages}": the ratio is a Num, so it can be checked.
+    // Then "; " and the gap sentence, which ends with its own period, or "." when nothing
+    // was missing.
     basedOn: "Based on",
     join: "; ",
+    end: ".",
     link: "See data readiness for these sources",
   },
 
@@ -129,6 +133,7 @@ export const copy = {
   },
   answer: {
     inShort: "In short",
+    // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
     tryAgain: "Try again",
   },
@@ -141,19 +146,24 @@ export const copy = {
   // A document's passage, as the evidence drawer and the document page show it.
   document: {
     source: "Source:",
-    paragraph: (n: string) => `Paragraph ${n}`,
-    page: (n: string) => `page ${n}`,
-    // After "Source: {document type}, {project ID in mono}, ".
-    sourceTail: (date: string, para: string, page: string) => `${date}, paragraph ${para}, page ${page}.`,
+    // The source line's words on each side of the project ID, which shows in mono:
+    // "Implementation Completion and Results Report, " P000000 ", June 30, 2021, paragraph 54,
+    // page 23."
+    sourceLine: (docType: string, date: string, para: string, page: string) => ({
+      before: `${docType}, `,
+      after: `, ${date}, paragraph ${para}, page ${page}.`,
+    }),
     highlightStarts: "Highlight starts.",
     highlightEnds: "Highlight ends.",
     openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
-    missing: "I have no source with this ID. The link may be incomplete.",
+    missing: "I have no source with this ID, so the link may be incomplete.",
   },
 
   // Tables (DESIGN.md section 5): a title sentence, a count line and a source line.
+  // The title, count and source lines show only with the rows. While the rows load, skeleton
+  // lines hold their places; an empty or failed table shows only its own card or alert.
   table: {
     showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
@@ -171,6 +181,11 @@ export const copy = {
     moreThanNineInTen: "more than 9 in 10",
     percent: (n: number) => `${n} percent`,
     percentShort: (n: number) => `${n}%`,
+    // A share that rounds to 0 or 100 but is neither.
+    underOnePercent: "less than 1 percent",
+    underOnePercentShort: "<1%",
+    overNinetyNinePercent: "more than 99 percent",
+    overNinetyNinePercentShort: ">99%",
     countWithFrequency: (count: string, frequency: string) => `${count}, ${frequency}`,
   },
 } as const;

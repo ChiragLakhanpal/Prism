@@ -4,7 +4,9 @@
 import { copy } from "../copy";
 
 // DESIGN.md section 7, rules 6 and 15: no percentage or "in 10" from fewer than 20 cases,
-// and under 50 cases the count stands beside "about N in 10".
+// and under 50 cases the count stands beside "about N in 10". The tools will abstain below
+// 20 comparables too. When the thresholds file lands with them (config/, later), these two
+// values move there and this file reads them, so each is defined once (CLAUDE.md rules 4, 9).
 export const FEWEST_FOR_A_FREQUENCY = 20;
 export const FEWEST_FOR_A_PERCENTAGE = 50;
 
@@ -85,7 +87,14 @@ export function formatRatio(part: number, whole: number, options: { style?: "sen
   if (whole >= FEWEST_FOR_A_FREQUENCY && part > 0 && part < whole) {
     if (whole >= FEWEST_FOR_A_PERCENTAGE) {
       const percent = Math.round((part / whole) * 100);
-      frequency = options.style === "table" ? copy.num.percentShort(percent) : copy.num.percent(percent);
+      const table = options.style === "table";
+      // part is above 0 and below whole here, so 0 and 100 would overstate how close it is.
+      frequency =
+        percent === 0
+          ? table ? copy.num.underOnePercentShort : copy.num.underOnePercent
+          : percent === 100
+            ? table ? copy.num.overNinetyNinePercentShort : copy.num.overNinetyNinePercent
+            : table ? copy.num.percentShort(percent) : copy.num.percent(percent);
     } else {
       const tenths = (part / whole) * 10;
       const inTen = Math.round(tenths);

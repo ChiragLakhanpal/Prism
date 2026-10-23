@@ -1,5 +1,5 @@
 // Alerts (DESIGN.md section 5): the state's background, a 4 px left border in the state's
-// colour, its icon, and one sentence. An action, such as "Try again", may follow.
+// color, its icon, and one sentence. An action, such as "Try again", may follow.
 // Errors interrupt (role="alert"); the others are read in turn (role="status") or not at all.
 import type { ReactNode } from "react";
 import { cx } from "../lib/cx";

@@ -7,11 +7,18 @@ import { cx } from "../lib/cx";
 
 export type TabLink = { key: string; label: ReactNode; href: string; current?: boolean };
 
+// DESIGN.md allows five tabs at most. A sixth is a mistake in the screen, so development
+// builds stop on it rather than hide a tab; production shows every tab it is given.
+export const MOST_TABS = 5;
+
 export function Tabs({ label, tabs }: { label: string; tabs: TabLink[] }) {
+  if (import.meta.env.DEV && tabs.length > MOST_TABS) {
+    throw new Error(`Tabs got ${tabs.length} tabs, but DESIGN.md section 5 allows ${MOST_TABS} at most.`);
+  }
   return (
     <nav aria-label={label} className="border-b border-line">
       <ul className="flex flex-wrap gap-x-6">
-        {tabs.slice(0, 5).map((tab) => (
+        {tabs.map((tab) => (
           <li key={tab.key}>
             <a
               href={tab.href}

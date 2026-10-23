@@ -5,7 +5,7 @@ import { CircleDashed } from "lucide-react";
 import { cx } from "../lib/cx";
 import { TextLink } from "./TextLink";
 
-type Level = 2 | 3 | 4;
+type Level = 2 | 3 | 4 | 5;
 
 export function Card({
   title,

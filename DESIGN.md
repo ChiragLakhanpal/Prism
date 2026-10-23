@@ -131,11 +131,11 @@ Every size is a step on the World Bank's scale. Use sentence case, tabular numer
 
 ## 5. Components
 
-- **Top navigation** (WB). Navy `#002244` bar, 56px tall: the logo, then the Strata wordmark (which links Home), then five tabs (Packages, Projects, Lessons, Drafts, Data), with the view switch ("View: World Bank staff ▾") on the right. Under it, a white band holds the one box (search a project, check a plan, describe a package, or ask; "/" focuses it, and it lists what Enter will do) and the data-freshness stamp. Nouns navigate; verbs act. Below 1024 px (64rem) a labeled Menu button holds the tabs and the view switch, because the bar is 844 px wide with all five tabs; below 360 px the button stacks its icon over its label. The logo slot gives the logo clear space of half its height on every side.
+- **Top navigation** (WB). Navy `#002244` bar, 56px tall: the logo, then the Strata wordmark (which links Home), then five tabs (Packages, Projects, Lessons, Drafts, Data), with the view switch ("View: World Bank staff ▾") on the right. The view switch is a 32 px pill, like a chip (section 10), so the five tabs and the pill fit in the bar from 1024 px. Under it, a white band holds the one box (search a project, check a plan, describe a package, or ask; "/" focuses it, and it lists what Enter will do) and the data-freshness stamp. Nouns navigate; verbs act. Below 1024 px (64rem) a labeled Menu button holds the tabs and the view switch, because the bar is 844 px wide with all five tabs; below 360 px the button stacks its icon over its label. The logo slot gives the logo clear space of half its height on every side.
 - **Buttons** (WB). Pill, 2px border, 14px bold. Primary: `primary` fill, white text. Secondary: `primary` outline, `tint` hover. Ghost: `primary` text, `tint-hover` hover. Buttons act; links navigate.
 - **Tabs.** 16px bold; the selected tab gets a 3px `primary` underline on light surfaces (Strata: WB's `#169af3` underline is 2.81:1) and a 3px white underline on the navy bar (Strata: `primary` is 1.55:1 on navy). Five tabs at most. Tabs that change the address are links with `aria-current`, not ARIA tabs.
 - **Cards** (The Loop). `surface`, 1px `line`, radius 8. Titles 80 characters or fewer, blurbs 140, eight cards per group at most.
-- **Tables.** Title sentence, count line ("Showing 1–20 of 99 sources"), `surface-2` header, units in column heads, numbers right-aligned, source line below.
+- **Tables.** Title sentence, count line ("Showing 1–20 of 99 sources"), `surface-2` header, units in column heads, numbers right-aligned, source line below. The title, count and source lines show only with the rows. While the rows load, skeleton lines hold their places under the real column heads, at fixed column widths; an empty table shows only its empty-state card, and a failed one only its error alert.
 - **Alerts.** State background, 4px left border, icon, one sentence.
 - **Icons.** The World Bank's icon font is not public; use `lucide-react` (ISC). Icon-only buttons need an `aria-label`.
 
@@ -193,7 +193,7 @@ Use category colors in order, only when color separates categories, and pair col
 
 ## 7. Writing
 
-All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and translated in one place. The gate's copy lint (`web/lint/`) checks it for rules 3, 8 and 19 and for GLOSSARY.md's Avoid terms, and fails when a component renders text that is not from it.
+All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and translated in one place. The gate's copy lint (`web/lint/`) checks it for rules 3, 8 and 19 and for GLOSSARY.md's Avoid terms, and fails when a component renders text that is not from it. The design gallery, which is for development only, keeps its sample text in `web/src/gallery/copy.ts`, and the same lint checks it.
 
 1. Full sentences a 10th grader follows: short words, no jargon, nothing that sounds like a model wrote it ("use", not "utilize").
 2. Buttons are short verb phrases: "Open the report", "Start a package".
@@ -236,7 +236,7 @@ All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and transla
 ## 10. Accessibility (WCAG 2.2 AA)
 
 - Only the checked pairs above: text 4.5:1; large text and essential marks 3:1.
-- Focus: 2px `focus` outline, 2px offset, never removed or covered; `focus-on-dark` on the navy bar. Colour transitions leave the outline out, so focus shows at once.
+- Focus: 2px `focus` outline, 2px offset, never removed or covered; `focus-on-dark` on the navy bar. Color transitions leave the outline out, so focus shows at once.
 - Targets 24 x 24 px or larger.
 - Never color alone: badges pair icon and text; charts add labels and shapes; text links are underlined.
 - Charts: the finding as the title, `role="img"` with a name, a "Show the table" toggle, and tooltips on focus that Escape closes.
