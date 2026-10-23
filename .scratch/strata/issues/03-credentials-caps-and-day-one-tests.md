@@ -10,7 +10,7 @@ Read first: docs/PLAN.md sections 2, 14 and 16; ADR 0001; the wizard skill's ins
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P0
 **Design review:** no
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 2, 14 and 16; ADR 0001; the wizard skill's ins
 - [ ] A probe reads each of the four deployments and prints a tokens-per-minute limit for every one; the subscription has a budget with notifications.
 - [ ] The probes for tests 1, 2, 3, 4, 5 and 10 each run with one command and write their result into the day-one results document.
 - [ ] The subscription shows pay-as-you-go, or the results document records a dated step before November 10, 2026 and who will take it.
+
+## Comments
+
+- October 22, 2026, orchestrator: dispatched to an implementer in its own worktree. Credentials are not in place yet, so workspace steps are parked in docs/workspace-catchup.md.

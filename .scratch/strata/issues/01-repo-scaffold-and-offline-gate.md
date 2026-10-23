@@ -6,7 +6,7 @@ Read first: CLAUDE.md; docs/PLAN.md sections 8, 10 and 12; docs/agents/areas/ops
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P0
 **Design review:** no
@@ -20,3 +20,7 @@ Read first: CLAUDE.md; docs/PLAN.md sections 8, 10 and 12; docs/agents/areas/ops
 - [ ] Two copies of the app start side by side from two worktrees without a port clash.
 - [ ] A search of the repo for fairshare's airline terms, synthetic data, deck content and Power BI parity returns nothing, and CLAUDE.md and the guard are unchanged.
 - [ ] The server answers its health route, and the web shell renders in the Playwright smoke test.
+
+## Comments
+
+- October 22, 2026, orchestrator: dispatched to an implementer in its own worktree. Credentials are not in place yet, so workspace steps are parked in docs/workspace-catchup.md.
