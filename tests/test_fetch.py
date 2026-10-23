@@ -414,3 +414,36 @@ def test_the_nightly_job_fetches_a_frozen_source_only_while_bronze_holds_none_of
 
     assert "awards_fy2001_2016" in first
     assert "awards_fy2001_2016" not in asked and "awards" in asked
+
+
+def test_a_frozen_source_whose_first_fetch_stopped_partway_is_fetched_again_until_a_fetch_finishes():
+    """Bronze keeps each page as it comes, so a first fetch of the FY2001 to FY2016 awards that stops
+    partway leaves some of their pages in bronze. Only a fetch task that finished counts, so the next
+    run asks for the source again, and the run after a fetch that finished does not."""
+    from strata.lakehouse import catalog
+
+    asked = []
+
+    def stops_after_one_page(source, engine):
+        asked.append(source.key)
+        if source.key != "awards_fy2001_2016":
+            return iter(())
+        return (page if number == 0 else _stop() for number, page in enumerate(pages.recorded_pages(source)))
+
+    def finishes(source, engine):
+        asked.append(source.key)
+        return pages.recorded_pages(source) if source.key == "awards_fy2001_2016" else iter(())
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        with pytest.raises(OSError):
+            nightly.run_task(engine, "fetch_by_watermark", "cut short", stops_after_one_page)
+        kept = engine.run("SELECT count(*) FROM strata.bronze.api_pages").rows[0][0]
+        asked.clear()
+        nightly.run_task(engine, "fetch_by_watermark", "second", finishes)
+        second, asked[:] = list(asked), []
+        nightly.run_task(engine, "fetch_by_watermark", "third", finishes)
+
+    assert kept == 1
+    assert "awards_fy2001_2016" in second
+    assert "awards_fy2001_2016" not in asked and "awards" in asked

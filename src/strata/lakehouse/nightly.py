@@ -72,10 +72,11 @@ def _paged() -> list[Source]:
 
 def _fetch_by_watermark(run: Run) -> int:
     """Each source's new pages into bronze. A frozen source no longer changes, so once bronze holds
-    its pages it is not asked for again."""
+    its pages from a fetch task that finished, it is not asked for again. A fetch that stopped
+    partway does not count, so the next run asks for the pages it missed."""
     added = 0
     for source in _paged():
-        if source.cadence == "frozen" and bronze.holds_pages(run.engine, source):
+        if source.cadence == "frozen" and bronze.holds_a_finished_fetch(run.engine, source):
             continue
         added += bronze.store(run.engine, source, run.fetch(source, run.engine))
     return added
