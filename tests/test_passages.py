@@ -159,6 +159,36 @@ def test_the_data_readiness_rule_keeps_the_plan_readers_and_the_passage_readers_
             "documents_read_route_a_text"} <= by_passages
 
 
+ISR = "Implementation Status and Results Report"
+NUMBERED_BODY = """
+SELECT count(*) AS pages FROM strata.silver.document_page_routes AS r
+JOIN strata.silver.documents AS d ON d.document_id = r.document_id
+WHERE r.project_id = :project_id AND r.route = 'A' AND r.reason = 'body' AND d.document_type <> :isr
+"""
+
+
+def test_the_numbering_share_counts_only_the_body_pages_of_reports_that_number_their_paragraphs(db):
+    """An ISR numbers none of its paragraphs, so its pages would only lower the share."""
+    for project_id in ("P130164", "P156634"):
+        numbering = measured(db, project_id)["document_pages_paragraph_numbering_found"]
+
+        [body] = rows(db, NUMBERED_BODY, project_id=project_id, isr=ISR)
+        assert numbering["denominator"] == body["pages"]
+        assert numbering["count"] * 2 > numbering["denominator"]  # found on most pages of the ICR, ICR Reviews and PAD
+
+
+def test_each_measure_says_what_it_counts_in_a_full_sentence_and_freshness_gives_the_sources_cadence(db):
+    from strata.config import load_sources
+
+    for project_id in ("P130164", "P156634"):
+        found = measured(db, project_id)
+
+        assert found["documents_fresh"]["detail"] == load_sources()["documents"].cadence
+        counted = [row["detail"] for row in found.values() if row["kind"] != "fresh"]
+        assert counted and all(detail.startswith("This counts ") and detail.endswith(".") for detail in counted)
+        assert [detail for detail in counted if "strata." in detail or ", of " in detail] == []
+
+
 def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_and_how_fresh_they_are(db):
     found = measured(db, "P130164")
 

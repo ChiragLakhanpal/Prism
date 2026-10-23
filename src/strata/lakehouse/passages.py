@@ -362,7 +362,6 @@ def embed(engine: Engine, embedder: Embedder, clock: Callable[[], dt.datetime]) 
 
 MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
                    "measured_at", "public_from")
-CADENCE = "The documents API is read daily."
 
 
 def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[str, tuple[int, int]],
@@ -377,12 +376,15 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
     scanned: dict[str, list] = {}
     for row in _rows(engine, SCANNED, shield=shield):
         scanned.setdefault(row["project_id"], []).append(row["attack_detected"])
+    cadence = load_sources()[SOURCE].cadence
     rows = []
     for project_id in dict.fromkeys(item.held.listed.project_id for item in found):
         items = [item for item in found if item.held.listed.project_id == project_id]
         pages = [page for item in items for page in item.reading.pages]
         on_a = [page for page in pages if page.route == route_a.ROUTE_A]
-        body = [page for page in on_a if page.reason == route_a.BODY]
+        # The body pages of the reports that number their paragraphs: an ISR numbers none of its own.
+        body = [page for item in items if TEMPLATES[item.held.listed.document_type].numbered
+                for page in item.reading.pages if page.route == route_a.ROUTE_A and page.reason == route_a.BODY]
         passages = sum(len(item.reading.passages) for item in items)
         stripped, fetched = with_contacts.get(project_id, (0, 0))
 
@@ -390,29 +392,32 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
             rows.append((run_id, SOURCE, project_id, name, kind, count, denominator, as_of, detail, when, when.date()))
 
         add("documents_read_route_a_text", "coverage", sum(item.held.paged for item in items), len(items),
-            "Documents whose published text divides into their PDF's pages, so Route A read them, of the documents "
-            "chosen. The others are scans, whose pages wait for Route B.")
+            "This counts the documents whose published text divides into their PDF's pages, so Route A read "
+            "them, out of the documents chosen. The others are scans, whose pages wait for Route B.")
         add("document_pages_route_a", "read_well", len(on_a), len(pages),
-            "Pages Route A read from the published text, of every page of the documents chosen.")
+            "This counts the pages Route A read from the published text, out of every page of the documents "
+            "chosen.")
         add("document_pages_route_b", "read_well", len(pages) - len(on_a), len(pages),
-            "Pages waiting for Route B, the layout parser: scans, data sheets and pages with no text.")
-        add("document_pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body), len(body),
-            "Pages of the body Route A read on which a paragraph the report numbers was found. An ISR numbers "
-            "none of its paragraphs.")
+            "This counts the pages that wait for Route B, the layout parser, out of every page of the documents "
+            "chosen. They are scans, data sheets and pages with no text.")
+        add("document_pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body),
+            len(body), "This counts the body pages on which Route A found a paragraph the report numbers, out of "
+            "the body pages Route A read of the PADs, ICRs and ICR Reviews. An ISR numbers none of its "
+            "paragraphs, so its pages are not counted.")
         add("passages_linked_to_project", "linked", passages if project_id in linked else 0, passages,
-            "Passages whose project is in strata.gold.project.")
+            "This counts the passages whose project record is held, out of every passage read.")
         add("passages_embedded", "coverage", indexed.get(project_id, 0), passages,
-            "Passages with a vector in strata.gold.passage, the AI Search index's source, of every passage.")
-        add("documents_fresh", "fresh", None, None, CADENCE,
-            as_of=max(item.held.public_from for item in items))
+            "This counts the passages that have a vector and can be searched, out of every passage read.")
+        add("documents_fresh", "fresh", None, None, cadence, as_of=max(item.held.public_from for item in items))
         add("contact_details_removed", "stripped", stripped, fetched,
             "This counts the documents fetched this run that had emails or phone numbers removed before they "
             "were kept, out of the documents fetched this run.")
         results = scanned.get(project_id, [])
         add("passages_screened", "screened", sum(result is not None for result in results), len(results),
-            f"Passages with a stored result from {shield}, of every passage.")
+            f"This counts the passages that have a stored result from {shield}, out of every passage read.")
         add("passages_prompt_shields_hit", "screened", sum(result is True for result in results), len(results),
-            f"Passages in which {shield} found a prompt attack. They are kept, and search leaves them out.")
+            f"This counts the passages in which {shield} found a prompt attack, out of every passage read. "
+            "They are kept, and search leaves them out.")
     engine.insert_rows("strata.ops.data_readiness", MEASURE_COLUMNS, rows)
     return len(rows)
 
