@@ -43,7 +43,13 @@ show = true
 lane = "python"
 
 [[step]]
-# These tests may read the fixture database, so they run in its lane, after the build.
+# These tests may read the fixture database, so they run in its lane, after the build. They take
+# about 32 seconds in one process, so four pytest-xdist workers share them, in about 13 seconds.
+# Four gave a lower total gate time than six over three runs each. When the lane gets slow again,
+# run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest tests,
+# since one slow test sets a floor that no number of workers can lower. Then try more workers and
+# keep the number that gives the lower total gate time over three runs, because the lanes share
+# the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
 run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "4", "tests", "ops/bundle/tests"]
 lane = "python"
