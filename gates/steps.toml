@@ -20,5 +20,10 @@ name = "Test the guard hook"
 run = ["python3", ".claude/hooks/test_guard.py"]
 
 [[step]]
-name = "Run the Python tests"
+name = "Build the fixture database"
+run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
+show = true
+
+[[step]]
+name = "Run the Python tests: the gate, the ground-truth SQL and the server"
 run = ["uv", "run", "--frozen", "pytest"]
