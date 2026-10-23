@@ -169,6 +169,27 @@ test("the view popover says who is signed in and which view this is", async ({ p
   );
 });
 
+test("Tab in the view popover closes it and moves on to the box; Shift+Tab closes it and returns to the pill", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const pill = page.getByRole("button", { name: "View: World Bank staff" });
+
+  await pill.click();
+  await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
+  await page.keyboard.press("Tab");
+
+  await expect(page.locator("[data-box-band]").getByRole("textbox")).toBeFocused();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await pill.click();
+  await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
+  await page.keyboard.press("Shift+Tab");
+
+  await expect(pill).toBeFocused();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
 const ADDRESS_ALERTS: [string, string][] = [
   ["?view=piu", "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view."],
   ["?view=public", "I can't show the public preview yet, so you are seeing the World Bank staff view."],

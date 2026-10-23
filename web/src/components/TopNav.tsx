@@ -97,12 +97,17 @@ function ViewSwitch({
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const body = useRef<HTMLDivElement>(null);
+  const pill = useRef<HTMLButtonElement>(null);
+  // Where Tab or Shift+Tab sends focus once the popover has closed. The popover is portaled to
+  // the end of the page and holds nothing to focus, so without this Tab would leave the page.
+  const after = useRef<HTMLElement | null>(null);
 
   // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
   useWideChange((wide) => !wide && setOpen(false));
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
       <RadixPopover.Trigger
+        ref={pill}
         data-view-pill
         aria-haspopup="dialog"
         className={cx(
@@ -123,7 +128,21 @@ function ViewSwitch({
             event.preventDefault();
             body.current?.focus();
           }}
+          onKeyDown={(event) => {
+            // Tab closes the popover and moves on to the box, the next control after the pill;
+            // Shift+Tab closes it and goes back to the pill (the 06 brief's keyboard table).
+            if (event.key !== "Tab") return;
+            event.preventDefault();
+            after.current = event.shiftKey ? pill.current : document.querySelector<HTMLElement>("[data-box-band] input");
+            setOpen(false);
+          }}
           onCloseAutoFocus={(event) => {
+            if (after.current) {
+              event.preventDefault();
+              after.current.focus();
+              after.current = null;
+              return;
+            }
             // Below 1024 px the pill is hidden and the Menu holds the view lines, so focus goes there.
             if (!window.matchMedia(WIDE).matches) {
               event.preventDefault();
