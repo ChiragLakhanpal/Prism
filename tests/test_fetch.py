@@ -272,6 +272,21 @@ def test_an_indicators_source_asks_for_each_indicator_page_by_page():
     assert {pages.newest_record(wgi, page.body) for page in fetched} == {dt.date(2026, 9, 25)}  # its lastupdated
 
 
+def test_an_indicator_the_api_does_not_know_stops_the_fetch_with_a_sentence_that_names_it():
+    """For a code it does not know, the Indicators API answers with one part that holds a message and
+    no records. A retired CPIA code would otherwise end its series with no rows and no trace."""
+    api = FakeIndicators(recorded("api/indicators/wgi-ge-KEN-IND.json"))
+    message = [{"id": "120", "key": "Invalid value", "value": "The provided parameter value is not valid"}]
+
+    def answers(url):
+        return json.dumps([{"message": message}]) if "GOV_WGI_XX.EST" in url else api(url)
+
+    wgi = source("wgi", page_size=1000, indicators=("GOV_WGI_GE.EST", "GOV_WGI_XX.EST"))
+
+    with pytest.raises(OSError, match=r"GOV_WGI_XX\.EST.*The provided parameter value is not valid"):
+        list(pages.live_pages(wgi, answers))
+
+
 def test_a_live_page_loses_its_contact_details_and_a_date_after_the_fetch_falls_back_to_the_fetch_day():
     rows = recorded("api/notices/P156634.json")["procnotices"]
     api = FakeAPI("procnotices", rows, "total")

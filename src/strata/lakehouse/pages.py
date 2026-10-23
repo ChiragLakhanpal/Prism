@@ -12,7 +12,9 @@ Both adapters yield the same Page, so everything after the fetch runs the same w
   country has its own watermark, so a country added to the slice is fetched in full the first
   time. Finances One cannot sort, so every page of a Finances One fetch is asked for, and the
   content hash keeps the ones already held out of bronze. The Indicators API pages each
-  indicator by page number, and sends each page as [about the page, records].
+  indicator by page number, and sends each page as [about the page, records]. For a code it does
+  not know, it sends a message and no records, and the fetch stops with a sentence that names the
+  code, rather than ending that indicator with no rows.
 """
 
 from __future__ import annotations
@@ -40,27 +42,28 @@ class Page:
     country_code: str | None = None  # the country the request asked for; a recorded page names none
 
 
-def _about(body) -> dict:
-    """What the page says about itself: the page's own keys, or the first part of an Indicators API page."""
+def split(body, records_key: str | None = None) -> tuple[dict, list[dict]]:
+    """A page's two parts, for every API: what it says about itself, and its records. The Indicators
+    API sends each page as [about the page, records]. The others send one object whose records_key
+    holds the records, which the projects API keys by project ID; the rest of the object is what the
+    page says about itself. This is the one place that knows the shapes."""
     if isinstance(body, list):
-        return body[0] if body and isinstance(body[0], dict) else {}
-    return body
+        about = body[0] if body and isinstance(body[0], dict) else {}
+        held = (body[1] if len(body) > 1 else None) or []
+    else:
+        about = {key: value for key, value in body.items() if key != records_key}
+        held = body.get(records_key) or [] if records_key else []
+    return about, list(held.values()) if isinstance(held, dict) else list(held)
 
 
 def records(source: Source, body) -> list[dict]:
-    """The records a page holds. The projects API keys its records by project ID, and the
-    Indicators API sends them as the second part of the page."""
-    if isinstance(body, list):
-        held = body[1] if len(body) > 1 else []
-    else:
-        held = body.get(source.records)
-    held = held or []
-    return list(held.values()) if isinstance(held, dict) else list(held)
+    """The records a page holds."""
+    return split(body, source.records)[1]
 
 
 def reported_total(source: Source, body) -> int | None:
     """How many records the source says the whole request has."""
-    about = _about(body)
+    about = split(body, source.records)[0]
     for key in ("count", "total"):
         if str(about.get(key, "")).isdigit():
             return int(about[key])
@@ -77,11 +80,12 @@ def _day(value) -> dt.date | None:
 
 
 def newest_record(source: Source, body) -> dt.date | None:
-    """The newest date in the page's watermark field. For the Indicators API, the watermark is the
-    page's own lastupdated date."""
-    if isinstance(body, list):
-        return clean.parse_date(_about(body).get(source.watermark_field))
-    days = [_day(record.get(source.watermark_field)) for record in records(source, body)]
+    """The newest date in the page's watermark field: the page's own, when it gives one, as the
+    Indicators API's lastupdated, else its records' newest."""
+    about, held = split(body, source.records)
+    if source.watermark_field in about:
+        return clean.parse_date(about[source.watermark_field])
+    days = [_day(record.get(source.watermark_field)) for record in held]
     return max((day for day in days if day), default=None)
 
 
@@ -134,12 +138,22 @@ def live_pages(source: Source, get: Get, newest_held: Callable[[str | None], dt.
             yield from _series(source, get, country, code, indicator, watermark, clock)
 
 
+def _message(message) -> str:
+    """The Indicators API's error message, as one sentence: it sends a list of parts, each with a value."""
+    parts = message if isinstance(message, list) else [message]
+    said = [str(part.get("value") or part.get("key") or "") if isinstance(part, dict) else str(part) for part in parts]
+    return "; ".join(part.strip().rstrip(".") for part in said if part.strip()) or "it gave no reason"
+
+
 def _series(source, get, country, code, indicator, watermark, clock) -> Iterator[Page]:
     offset = 0
     while True:
         url = request_url(source, country, offset, indicator)
         body = json.loads(get(url))
-        held = records(source, body)
+        about, held = split(body, source.records)
+        if source.api == "indicators" and "message" in about:
+            raise OSError(f"The Indicators API did not give {indicator}: {_message(about['message'])}. "
+                          f"If the code was retired, take it out of the {source.key} entry in config/sources.toml.")
         if not held:
             break
         yield Page(source.key, url, body, clock(), code)

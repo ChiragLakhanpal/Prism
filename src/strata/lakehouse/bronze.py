@@ -46,7 +46,7 @@ def _canonical(value) -> str:
     return json.dumps(value, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
 
 
-def content_hash(source: Source, body: dict) -> str:
+def content_hash(source: Source, body) -> str:
     """The page's hash, leaving out the keys that change on every fetch without the record changing.
     The page's records are hashed in a fixed order, each by its own content, so their order on the
     page does not change the hash."""
@@ -57,11 +57,8 @@ def content_hash(source: Source, body: dict) -> str:
             return [without(item) for item in value]
         return value
 
-    kept = without(body)
-    if isinstance(kept, list) and len(kept) > 1 and isinstance(kept[1], list):  # an Indicators API page
-        kept[1] = sorted(kept[1], key=_canonical)
-    elif isinstance(kept, dict) and isinstance(kept.get(source.records), list):
-        kept[source.records] = sorted(kept[source.records], key=_canonical)
+    about, held = source_pages.split(without(body), source.records)
+    kept = {"about": about, "records": sorted(held, key=_canonical)}
     return hashlib.sha256(_canonical(kept).encode("utf-8")).hexdigest()
 
 

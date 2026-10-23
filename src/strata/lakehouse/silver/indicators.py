@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from strata.lakehouse import clean
+from strata.lakehouse import clean, pages
 
 TABLES = {
     "strata.silver.indicators": (
@@ -30,8 +30,7 @@ def _value(value) -> float | None:
 
 
 def parse(body, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
-    about = body[0] if isinstance(body, list) and body and isinstance(body[0], dict) else {}
-    records = (body[1] if isinstance(body, list) and len(body) > 1 else None) or []
+    about, records = pages.split(body)
     last_updated = clean.parse_date(about.get("lastupdated"))
     public = clean.public_from(last_updated, fetched_at.astimezone(dt.UTC).date())
     rows = []
