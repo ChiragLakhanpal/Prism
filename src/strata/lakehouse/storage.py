@@ -2,10 +2,10 @@
 
 Structured data for every country must stay under the limit in config/thresholds.toml
 (ingestion.structured_data_limit_bytes, from docs/PLAN.md section 3). measure() records each
-table's rows and bytes in strata.ops.table_sizes, marking the tables that hold documents' text and
-layout as not structured. The Governance page adds up the structured ones. Each engine says how
-many bytes a table takes (Engine.table_bytes): Databricks from its Delta files, DuckDB from the
-blocks of its database file.
+table's rows and bytes in strata.ops.table_sizes, marking the tables that hold documents' text,
+layout, passages and vectors as not structured. The Governance page adds up the structured ones.
+Each engine says how many bytes a table takes (Engine.table_bytes): Databricks from its Delta files,
+DuckDB from the blocks of its database file.
 """
 
 from __future__ import annotations
@@ -24,8 +24,11 @@ WHERE table_catalog = :catalog
 ORDER BY table_schema, table_name
 """
 COLUMNS = ("run_id", "table_name", "structured", "row_count", "bytes", "measured_at", "public_from")
-# The tables that hold documents' text and layout rather than records.
-DOCUMENT_TABLES = ("strata.bronze.document_pages", "strata.bronze.document_texts", "strata.bronze.layout_pages")
+# The tables that hold documents' text, layout, passages and the passages' vectors rather than
+# records. A new table of document text or vectors goes here, so it never counts as structured data.
+DOCUMENT_TABLES = ("strata.bronze.document_pages", "strata.bronze.document_texts", "strata.bronze.layout_pages",
+                   "strata.silver.documents", "strata.silver.document_page_routes", "strata.silver.passages",
+                   "strata.silver.passage_embeddings", "strata.silver.passage_shields", "strata.gold.passage")
 
 
 def measure(engine: Engine, run_id: str, clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC)) -> int:

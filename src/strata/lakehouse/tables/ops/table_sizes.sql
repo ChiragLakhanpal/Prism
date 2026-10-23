@@ -4,8 +4,8 @@
 --
 -- run_id        the run that measured it; "fixture" in the gate's fixture database
 -- table_name    the table's three-part name, such as strata.bronze.api_pages
--- structured    false for the tables that hold documents' text and layout (bronze.document_pages,
---               bronze.document_texts and bronze.layout_pages); true for every other table
+-- structured    false for the tables that hold documents' text, layout, passages and vectors
+--               (strata.lakehouse.storage.DOCUMENT_TABLES); true for every other table
 -- row_count     its rows
 -- bytes         the bytes it takes: on Databricks, its Delta files (DESCRIBE DETAIL's sizeInBytes);
 --               on DuckDB, the 256 KB blocks it fills in the database file

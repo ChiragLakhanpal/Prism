@@ -20,7 +20,8 @@ daily_page_cap = 500
 passage_documents = 20
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
-# table but the documents' text and layout, as strata.ops.table_sizes records each run.
+# table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records
+# each run.
 structured_data_limit_bytes = 500_000_000
 
 # Passages (docs/PLAN.md section 5). A paragraph over max_tokens tokens is divided at sentence ends,

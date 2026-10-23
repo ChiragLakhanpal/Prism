@@ -1,8 +1,8 @@
 -- Structured data in strata stays under 0.5 GB (docs/PLAN.md section 3; config/thresholds.toml,
 -- ingestion.structured_data_limit_bytes): the bytes the nightly job's last run recorded for every
--- table but the documents' text and layout. It returns true or false rather than the bytes, so it
--- holds on the fixture and on the workspace alike. Run it on the warehouse, after the job has run
--- for every country, with: uv run --script ops/bundle/check.py same-rows --env-file .env
+-- table but the documents' text, layout, passages and vectors. It returns true or false rather than
+-- the bytes, so it holds on the fixture and on the workspace alike. Run it on the warehouse, after
+-- the job has run for every country, with: uv run --script ops/bundle/check.py same-rows --env-file .env
 -- engines: duckdb, databricks
 -- param: limit_bytes = 500000000
 -- expect: measured,under_the_limit

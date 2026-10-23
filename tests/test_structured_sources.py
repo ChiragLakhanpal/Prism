@@ -22,7 +22,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from strata import config
-from strata.lakehouse import bronze, catalog, gold, pages, silver
+from strata.lakehouse import bronze, catalog, gold, pages, silver, storage
 from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -652,8 +652,8 @@ def test_the_projects_measure_counts_the_projects_mapped_to_a_sector(db):
 
 def test_the_run_measures_and_records_each_table_s_size_and_structured_data_stays_under_half_a_gigabyte(db, fixture_db):
     """Criterion 7, on the fixture: every catalog table's size is recorded in strata.ops.table_sizes,
-    the tables of documents' text are not counted as structured data, and the structured total is
-    under the thresholds file's limit and no more than the database file itself."""
+    the tables of documents' text, passages and vectors are not counted as structured data, and the
+    structured total is under the thresholds file's limit and no more than the database file itself."""
     sizes = {row["table_name"]: row for row in rows(
         db, "SELECT table_name, structured, row_count, bytes, public_from FROM strata.ops.table_sizes "
             "WHERE run_id = 'fixture'")}
@@ -664,7 +664,13 @@ def test_the_run_measures_and_records_each_table_s_size_and_structured_data_stay
     assert defined <= set(sizes)
     assert not any(sizes[name]["structured"] for name in ("strata.bronze.document_pages",
                                                             "strata.bronze.document_texts",
-                                                            "strata.bronze.layout_pages"))
+                                                            "strata.bronze.layout_pages",
+                                                            "strata.silver.documents",
+                                                            "strata.silver.document_page_routes",
+                                                            "strata.silver.passages",
+                                                            "strata.silver.passage_embeddings",
+                                                            "strata.silver.passage_shields",
+                                                            "strata.gold.passage"))
     assert all(row["bytes"] > 0 for row in sizes.values() if row["row_count"])
     assert 0 < structured <= fixture_db.stat().st_size and structured < limit == 500_000_000
     assert sizes["strata.gold.contract"]["row_count"] == rows(db, "SELECT count(*) AS n FROM strata.gold.contract")[0]["n"]
@@ -720,7 +726,8 @@ def test_structured_data_projected_to_every_country_from_the_fixture_stays_under
         layers["silver"] += in_silver
         records_held += held
     gold_tables = [definition.full_name for definition in catalog.table_definitions()
-                   if definition.full_name.startswith("strata.gold.")]
+                   if definition.full_name.startswith("strata.gold.")
+                   and definition.full_name not in storage.DOCUMENT_TABLES]
     projected["gold"] = layers["gold"] = sum(
         parquet_bytes(f"SELECT * FROM {table}") for table in gold_tables) / records_held * sum(FULL_SCALE.values())
     total = sum(projected.values())
