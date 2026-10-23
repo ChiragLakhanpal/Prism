@@ -30,9 +30,9 @@ completion_passed_min_estimated_usd = 1_000_000
 days_before_closing = 90
 # Watch: a signed amount at least this many times its estimate, "far above the estimate". The
 # reason also says how many days after its first published planned date the contract was signed.
-# A late signing alone is not marked: most signings are late (the World Bank's study of 656 works
-# contracts in STEP found 22% signed on their planned date), so a mark on each would hide the
-# exceptions.
+# A late signing alone is not marked: most signings are late (about 22% of 656 works contracts in
+# STEP were signed on their planned date, in the World Bank's procurement delay study,
+# documents.worldbank.org, 099062824153516589), so a mark on each would hide the exceptions.
 actual_to_estimate_ratio = 2.0
 
 # Signals on followed projects: late direct selection, closing-date moves, rating downgrades,

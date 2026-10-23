@@ -54,7 +54,7 @@ marked AS (
   SELECT
     CASE
       WHEN pending
-        AND estimated >= CAST(:completion_passed_min_estimated_usd AS DECIMAL(18, 2))
+        AND (estimated IS NULL OR estimated >= CAST(:completion_passed_min_estimated_usd AS DECIMAL(18, 2)))
         AND planned_completion < CAST(:as_of AS DATE) THEN 'needs a look'
       WHEN pending AND days_to_close <= CAST(:days_before_closing AS INT) THEN 'watch'
       WHEN signed AND estimated > 0

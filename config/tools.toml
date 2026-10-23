@@ -29,14 +29,15 @@
 #   abstentions    every reason the tool may give for returning no rows, for the same reason
 
 [tools.check_plan]
-description = """Checks every activity in one implementing agency's Procurement Plan for a project, the \
-latest version by default or a named one, with Strata's fixed checks: planned completion passed with no \
-signed contract, the signed amount far above the estimate (with how late the contract was signed, measured \
-from the first published planned date), still pending close to the project's closing date, and the data \
-notes on rows whose record is weak. It returns one row per activity in STEP's columns, with its marks \
-(needs_a_look, watch, data_note) and the values behind each reason. It reads only the plan's own record: \
-the prior-review queue, complaints, contract amendments and contract management reports are not visible \
-to it."""
+description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
+checks the latest version unless you name one by its date. The checks are fixed. A package with no signed \
+contract, estimated at or above the amount in the result's thresholds or with no estimate, is checked for a \
+planned completion date that has passed. \
+A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
+from the first published planned date. A package still pending close to the project's closing date is marked. \
+Weak records get data notes. It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
+watch, data_note) and the values behind each reason. It reads only the plan's own record. It cannot see the \
+prior-review queue, complaints, contract amendments or contract management reports."""
 adapter = "strata.tools.check_plan:check_plan"
 benchmark = "check-plan-nwwda-2026-10-09"
 sources = ["documents", "projects"]
