@@ -10,7 +10,8 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
 
 - Needs a look: no signed contract, and the planned completion (the first published planned date
   of the Contract Completion step) passed before the as-of date, for an activity estimated at
-  completion_passed_min_estimated_usd or more. The reason gives the days left before closing.
+  completion_passed_min_estimated_usd or more, or with no estimate, so a missing amount never
+  hides it. The reason gives the days left before closing.
 - Watch: no signed contract and still pending days_before_closing days or fewer before the
   project's closing date, or after it. Not added when the planned completion already passed,
   because that reason gives the closing date and the days left.
@@ -190,10 +191,24 @@ def _ratio(actual: Decimal, estimated: Decimal) -> tuple[Decimal, int]:
     return exact.quantize(CENTS, ROUND_HALF_UP), int(exact.quantize(WHOLE, ROUND_HALF_UP))
 
 
-def _signals(row: dict, project: dict, limits: Thresholds, as_of: dt.date) -> tuple[list[dict], list[dict]]:
-    """The signal reasons and the could-not-check notes for one activity."""
-    signals, notes, cite = [], [], [row["evidence_id"]]
-    estimated, actual = _money(row["estimated_amount_usd"]), _money(row["actual_amount_usd"])
+DATES = ("signed_on", "planned_signing_on", "planned_signing_plan_date", "planned_completion_on",
+         "planned_completion_plan_date", "public_from")
+
+
+def _typed(raw: dict) -> dict:
+    """One activity's values from either engine, typed once: dates, amounts, whole numbers and a flag."""
+    return {**raw, **{key: _date(raw[key]) for key in DATES},
+            "estimated_amount_usd": _money(raw["estimated_amount_usd"]),
+            "actual_amount_usd": _money(raw["actual_amount_usd"]),
+            "days_late": _whole(raw["days_late"]), "pdf_page": _whole(raw["pdf_page"]),
+            "first_listing_confirmed": _flag(raw["first_listing_confirmed"])}
+
+
+def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
+             as_of: dt.date) -> tuple[list[dict], list[dict]]:
+    """The signal reasons and the could-not-check notes for one typed activity."""
+    signals, notes = [], []
+    estimated, actual = row["estimated_amount_usd"], row["actual_amount_usd"]
     status = row["process_status"]
     contract = row["signed_on"] is not None or status in CONTRACT_STATUSES
     pending = not contract and (status is None or status in PENDING_STATUSES)
@@ -241,37 +256,27 @@ def _note(note: dict, cite: list[str]) -> dict:
                    actual_amount_usd=_text(_money(note["actual_amount_usd"])))
 
 
-def _activity(raw: dict, plan: dict) -> dict:
-    estimated, actual = _money(raw["estimated_amount_usd"]), _money(raw["actual_amount_usd"])
+def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dict:
+    """One activity as the tool returns it: STEP's fields, the values behind its checks, and its marks."""
+    estimated, actual = activity["estimated_amount_usd"], activity["actual_amount_usd"]
     return {
-        "evidence_id": f"strata.silver.plan_rows:{plan['document_id']}/{raw['activity_reference_no']}",
-        "public_from": _iso(_date(raw["public_from"])),
+        "evidence_id": evidence_id,
+        "public_from": _iso(activity["public_from"]),
         "source": {"document_type": "Procurement Plan", "project_id": plan["project_id"],
                    "implementing_agency": plan["implementing_agency"], "plan_date": plan["plan_date"],
-                   "document_id": plan["document_id"], "pdf_page": _whole(raw["pdf_page"])},
-        "activity_reference_no": raw["activity_reference_no"],
-        "section": raw["section"],
-        "description": raw["description"],
-        "review_type": raw["review_type"],
-        "method": raw["method"],
-        "market_approach": raw["market_approach"],
+                   "document_id": plan["document_id"], "pdf_page": activity["pdf_page"]},
+        **{key: activity[key] for key in ("activity_reference_no", "section", "description", "review_type",
+                                          "method", "market_approach")},
         "estimated_amount_usd": _text(estimated),
         "actual_amount_usd": _text(actual),
-        "process_status": raw["process_status"],
-        "signed_on": _date(raw["signed_on"]),
-        "planned_signing_on": _date(raw["planned_signing_on"]),
-        "planned_signing_plan_date": _date(raw["planned_signing_plan_date"]),
-        "days_late": _whole(raw["days_late"]),
-        "planned_completion_on": _date(raw["planned_completion_on"]),
-        "planned_completion_plan_date": _date(raw["planned_completion_plan_date"]),
-        "first_listing_confirmed": _flag(raw["first_listing_confirmed"]),
+        "process_status": activity["process_status"],
+        **{key: _iso(activity[key]) for key in ("signed_on", "planned_signing_on", "planned_signing_plan_date")},
+        "days_late": activity["days_late"],
+        **{key: _iso(activity[key]) for key in ("planned_completion_on", "planned_completion_plan_date")},
+        "first_listing_confirmed": activity["first_listing_confirmed"],
         "actual_to_estimate": str(_ratio(actual, estimated)[0]) if actual and estimated else None,
-        "marks": [],
+        "marks": marks,
     }
-
-
-DATES = ("signed_on", "planned_signing_on", "planned_signing_plan_date", "planned_completion_on",
-         "planned_completion_plan_date")
 
 
 def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date: dt.date | None = None) -> dict:
@@ -288,26 +293,27 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     plan = _plan(version, project_id)
 
     params = {"document_id": version["document_id"], "as_of": call.as_of}
-    activities = [_activity(raw, plan) for raw in _rows(call, "activities.sql", **params)]
-    if not activities:
+    found = [_typed(raw) for raw in _rows(call, "activities.sql", **params)]
+    if not found:
         return {**empty, "plan": plan, "abstention": {"reason": "no_activities", "plan_date": plan["plan_date"]}}
     notes = {}
     for note in _rows(call, "data_notes.sql", **params):
         notes.setdefault(note["activity_reference_no"], []).append(note)
 
-    not_used = {}
-    for row in activities:
-        signals, unchecked = _signals(row, project, limits, call.as_of)
-        written = [_note(note, [row["evidence_id"]]) for note in notes.get(row["activity_reference_no"], [])]
+    activities, not_used = [], {}
+    for activity in found:
+        evidence_id = f"strata.silver.plan_rows:{plan['document_id']}/{activity['activity_reference_no']}"
+        signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
+        written = [_note(note, [evidence_id]) for note in notes.get(activity["activity_reference_no"], [])]
+        marks = []
         if signals:
             strongest = "needs_a_look" if any(s["mark"] == "needs_a_look" for s in signals) else "watch"
-            row["marks"].append({"mark": strongest, "reasons": signals})
+            marks.append({"mark": strongest, "reasons": signals})
         if written or unchecked:
-            row["marks"].append({"mark": "data_note", "reasons": written + unchecked})
+            marks.append({"mark": "data_note", "reasons": written + unchecked})
         for note in unchecked:
-            not_used.setdefault(note["code"], []).append(row["evidence_id"])
-        for key in DATES:
-            row[key] = _iso(row[key])
+            not_used.setdefault(note["code"], []).append(evidence_id)
+        activities.append(_row(activity, evidence_id, plan, marks))
 
     def count(mark: str) -> int:
         return sum(1 for row in activities if any(m["mark"] == mark for m in row["marks"]))
