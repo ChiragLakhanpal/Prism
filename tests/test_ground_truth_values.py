@@ -4,9 +4,11 @@ in the recorded fixture, read straight from the recorded files and never through
 own code:
 
 - a quote is word for word on the stated PDF page of a recorded document, or in the stated
-  field of a recorded API record, ignoring only whitespace and line-end hyphenation;
+  field of a recorded API record, ignoring only whitespace and line-end hyphenation, and each
+  value is written in its own quote;
 - the October 9, 2026 plan's rows hold the values the blueprint's Check a plan wireframe shows;
-- the comparable works packages join notice to signed contract on the STEP reference;
+- the comparable works packages join notice to signed contract on the STEP reference, and a
+  package with no signed contract is either canceled, as its plan row says, or still open;
 - the awkward cases the lakehouse must handle on purpose are present.
 """
 
@@ -96,6 +98,35 @@ def test_each_quote_is_word_for_word_where_the_ground_truth_says(value):
     assert word_for_word(value["quote"], located_text(value)), (
         f"{value['id']}: {value['quote']!r} is not in {value.get('document') or value['record']}"
         f" {'page ' + str(value['pdf_page']) if 'pdf_page' in value else value.get('at')}")
+
+
+# Values that read their quote rather than copy it. Each has its own check: the plan row
+# test shows KE-NWWDA-541055-CW-RFB's Actual Amount 0.00 and status Pending Implementation,
+# and the day-count test counts the days between two dates. A first-listed value is its
+# plan's date, which the first-listed test checks.
+READINGS = {"plan-541055-no-signed-contract", "plan-229129-days-late"}
+
+
+def written_forms(value):
+    """The ways a value is written in the sources: a date in ISO, dd-Mon-yyyy, yyyy/mm/dd or
+    "Month d, yyyy" form, an amount with thousands commas or as JSON writes it, anything else as it is."""
+    if isinstance(value, datetime.date):
+        return {value.isoformat(), value.strftime("%d-%b-%Y"), value.strftime("%Y/%m/%d"),
+                f"{value:%B} {value.day}, {value.year}"}
+    if isinstance(value, float):
+        return {f"{value:,.2f}", str(value)}
+    return {str(value)}
+
+
+def test_each_reading_is_a_value_in_the_ground_truth():
+    assert READINGS <= set(BY_ID)
+
+
+@pytest.mark.parametrize("value", [v for v in VALUES if v["id"] not in READINGS], ids=lambda value: value["id"])
+def test_each_value_is_written_in_its_own_quote(value):
+    in_quote = any(squash(form) in squash(value["quote"]) for form in written_forms(value["value"]))
+    the_plans_date = "first_lists" in value and value["value"] == value["date"]
+    assert in_quote or the_plans_date, f"{value['id']}: {value['value']!r} is not in its quote {value['quote']!r}"
 
 
 @pytest.mark.parametrize("value", [v for v in VALUES if "days_between" in v], ids=lambda value: value["id"])

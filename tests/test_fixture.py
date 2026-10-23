@@ -1,5 +1,8 @@
-"""Building the fixture database: each CSV file in the placeholder folder becomes a table,
-and a file whose name is not a table name stops the build before it writes anything."""
+"""Building the fixture database and checking the recorded files. Each CSV file in the
+placeholder folder becomes a table, and a bad file name stops the build before it writes
+anything. Every recorded file is listed in sources.toml with its source and license line, the
+files stay inside their size limits, and every response stamped with a daily as_of_date leaves
+it out of the refresh diff."""
 
 import importlib.util
 from pathlib import Path
@@ -104,7 +107,8 @@ def test_every_recorded_file_is_listed_and_carries_its_source_and_a_cc_by_4_lice
     manifest = fmt.load_manifest()
     listed = manifest.files()
 
-    assert recorded_files(manifest) == set(listed) and len(listed) == len(set(listed))
+    assert recorded_files(manifest) == set(listed)
+    assert len(listed) == len(set(listed)), "a recorded file is listed twice in sources.toml"
     for name in sorted(listed):
         file = fmt.read(manifest.recorded / name)
         assert file.source.startswith("https://"), name
