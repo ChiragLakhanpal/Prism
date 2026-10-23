@@ -8,8 +8,8 @@ carries instructions for a model must be caught before any answer cites it.
   prove that every passage gets a stored result and that a hit is counted. It is not Prompt Shields,
   and its name, kept with each result, says so.
 
-A hit is never dropped: the passage stays, its result says it was
-flagged, the data readiness measures count it, and search_passages leaves it out and says why.
+A hit is never dropped: the passage stays, its result says an attack was found, the data readiness
+measures count it, and search_passages leaves it out and says why.
 """
 
 from __future__ import annotations

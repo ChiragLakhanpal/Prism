@@ -1,7 +1,8 @@
 -- What Prompt Shields found in each passage when it was ingested (src/strata/knowledge/shields.py).
 -- A passage is scanned once for each text and shield: a row here means its text, with its header,
--- was scanned, and a run scans only texts with no row. A flagged passage is kept, counted in
--- strata.ops.data_readiness (passages_prompt_shields_hit) and left out of search with its reason.
+-- was scanned, and a run scans only texts with no row. A passage in which an attack was found is
+-- kept, counted in strata.ops.data_readiness (passages_prompt_shields_hit) and left out of search
+-- with its reason.
 --
 -- text_hash        SHA-256 of the passage's header and text (silver.passages.text_hash)
 -- shield           the shield that scanned it: Prompt Shields, or the offline stand-in

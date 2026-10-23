@@ -88,8 +88,8 @@ ICR Reviews) by words and by meaning, and returns the best passages first. A pas
 paragraph, or a part of a long one, with its document, section, paragraph number and PDF page, so a \
 citation can point to it. Filter by project, document type, country, sector or the date a document became \
 public. A report re-issued under the same number replaces its earlier version, unless the as-of date comes \
-before the re-issue. Passages Prompt Shields flagged at ingestion are left out, and the coverage line says \
-how many. Quote a passage only word for word, from its text."""
+before the re-issue. When Prompt Shields found a prompt attack in a passage as it was read in, the passage \
+is left out, and the coverage line says how many. Quote a passage only word for word, from its text."""
 adapter = "strata.tools.search_passages:search_passages"
 benchmark = "search-passages-icr-rebidding"
 sources = ["documents", "projects"]

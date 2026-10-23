@@ -7,10 +7,10 @@ passages from strata.gold.passage with the viewer's engine, each only where it w
 as-of date and not replaced by then by a re-issue of its report (ADR 0002), so every passage it
 returns is a row the app holds, with its evidence id, public date and source line.
 
-A passage Prompt Shields flagged at ingestion is left out, and the coverage line counts it with its
-evidence id. The coverage line also says how many matched passages ranked below the limit. A
-document type or sector the slice does not know, or a query nothing matches, is an abstention, whose
-reason the registry lists.
+A passage in which Prompt Shields found a prompt attack when it was read in is left out, and the
+coverage line counts it with its evidence id. The coverage line also says how many matched passages
+ranked below the limit. A document type or sector the slice does not know, or a query nothing
+matches, is an abstention, whose reason the registry lists.
 
 The call's view (staff, piu or public) is returned with the result but not yet applied: until
 ticket 40 applies each view's rules, every view gets the World Bank staff result.
@@ -27,7 +27,7 @@ from strata.reader.templates import template_for
 from strata.tools.registry import Call
 
 TABLE = "strata.gold.passage"
-SEARCH_DEPTH = 2  # the searcher is asked for this many times the most a call returns, so flagged ones can drop out
+SEARCH_DEPTH = 2  # the searcher is asked for this many times the most a call returns, so attacks can drop out
 
 
 def _sql(name: str) -> str:
@@ -44,7 +44,7 @@ def _int(value) -> int | None:
     return None if value is None or value == "" else int(value)
 
 
-def _flag(value) -> bool:
+def _boolean(value) -> bool:
     return value if isinstance(value, bool) else str(value).lower() == "true"
 
 
@@ -75,7 +75,7 @@ def _row(found: dict, rank: int, score: float) -> dict:
         "version": _int(found["version"]),
         "section_path": found["section_path"],
         "paragraph": found["paragraph"],
-        "paragraph_numbered": _flag(found["paragraph_numbered"]),
+        "paragraph_numbered": _boolean(found["paragraph_numbered"]),
         "part": _int(found["part"]),
         "parts": _int(found["parts"]),
         "pdf_page": _int(found["pdf_page"]),
@@ -118,20 +118,20 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
     result = call.engine.run(_sql("passages.sql"), {"ids": ",".join(hit.passage_id for hit in hits.hits),
                                                     "as_of": call.as_of})
     held = {row["passage_id"]: row for row in (dict(zip(result.columns, row)) for row in result.rows)}
-    kept, flagged = [], []
+    kept, attacks = [], []
     for hit in hits.hits:
         found = held.get(hit.passage_id)
         if found is None:
             continue  # the index named a passage the viewer's table does not hold as of this date
-        if found["attack_detected"] is not None and _flag(found["attack_detected"]):
-            flagged.append(f"{TABLE}:{hit.passage_id}")
+        if found["attack_detected"] is not None and _boolean(found["attack_detected"]):
+            attacks.append(f"{TABLE}:{hit.passage_id}")
         else:
             kept.append((found, hit.score))
     rows = [_row(found, rank, score) for rank, (found, score) in enumerate(kept[:limit], 1)]
     not_used = []
-    if flagged:
-        not_used.append({"reason": "prompt_shields_hit", "count": len(flagged), "evidence_ids": flagged})
-    below = hits.matched - len(rows) - len(flagged)
+    if attacks:
+        not_used.append({"reason": "prompt_shields_hit", "count": len(attacks), "evidence_ids": attacks})
+    below = hits.matched - len(rows) - len(attacks)
     if below > 0:
         not_used.append({"reason": "ranked_below_limit", "count": below, "evidence_ids": []})
     return {"rows": rows, "coverage": {"matched": hits.matched, "used": len(rows), "not_used": not_used},

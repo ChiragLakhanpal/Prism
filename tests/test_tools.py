@@ -109,6 +109,38 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
         assert "as_of" not in tool["parameters"]["required"]
 
 
+def never_written() -> list[str]:
+    """DESIGN.md section 7, rule 19's list of words Strata never writes, read from the file, as the
+    copy lint (web/lint/copy.ts) reads it."""
+    import re
+
+    [rule] = re.findall(r"\n19\. Never write: ([^\n]+)", (ROOT / "DESIGN.md").read_text())
+    listed = re.sub(r"\([^)]*\)", "", rule[:re.search(r"\.\s+[A-Z]", rule).start()])
+    return [word.strip() for word in re.split(r"[;,]", listed) if word.strip()]
+
+
+def test_the_agents_tool_list_uses_no_word_design_md_says_strata_never_writes():
+    """The agent reads each description as its prompt and may repeat its words in an answer."""
+    import re
+
+    words = never_written()
+    texts = [tool["description"] for tool in registry.agent_tools()] + [
+        parameter["description"] for tool in registry.agent_tools()
+        for parameter in tool["parameters"]["properties"].values()]
+
+    assert "flag" in words and "approve" in words
+    def forms(word: str) -> str:
+        """Every form of the word: approve, approves, approved, approving; flag, flags, flagged, flagging."""
+        *first, last = word.split()
+        ending = (re.escape(last[:-1]) + "(?:e|es|ed|ing)" if last.endswith("e")
+                  else re.escape(last) + f"(?:s|es|ed|ing|{last[-1]}ed|{last[-1]}ing)?")
+        return r"\b" + r"\s+".join([*map(re.escape, first), ending]) + r"\b"
+
+    found = [(word, text) for text in texts for word in words if re.search(forms(word), text, re.I)]
+    assert found == []
+    assert [text for text in texts if "\u2014" in text or "!" in text] == []
+
+
 def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sources():
     questions = {question["id"]: question for question in BENCHMARK["questions"]}
     sources = config.load_sources()
