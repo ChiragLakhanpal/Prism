@@ -135,12 +135,6 @@ def names_a_person(procurement_category, description) -> bool:
     return category(procurement_category) == "Consultant Services" and bool(PERSONAL_TITLE.search(text(description) or ""))
 
 
-def names_a_firm(name) -> bool:
-    """Whether a supplier's name has a word that names a firm, or a two-letter legal form."""
-    written = text(name) or ""
-    return bool(FIRM.search(written) or LEGAL_FORM.search(written))
-
-
 def titled(name) -> bool:
     """Whether a supplier is written as a person, in any category: a personal title before the name,
     and no word that names a firm, so DR. REDDY'S LABORATORIES LTD stays a firm."""
@@ -162,10 +156,12 @@ def is_the_named_person(description, supplier) -> bool:
 
 def hires_a_named_person(procurement_category, description, supplier) -> bool:
     """Whether a contract is with a person whom the row may name: its supplier is written with a
-    personal title, or its description names a person and its supplier names no firm or is that
-    person. A firm hired for a person's services keeps its name."""
-    return titled(supplier) or (names_a_person(procurement_category, description)
-                                and (not names_a_firm(supplier) or is_the_named_person(description, supplier)))
+    personal title, or its description names a person and its supplier has no word that names a firm
+    and either no two-letter legal form or is that person. A firm hired for a person's services keeps
+    its name."""
+    written = text(supplier) or ""
+    return titled(supplier) or (names_a_person(procurement_category, description) and not FIRM.search(written)
+                                and (not LEGAL_FORM.search(written) or is_the_named_person(description, supplier)))
 
 
 STEP_REFERENCE = re.compile(
