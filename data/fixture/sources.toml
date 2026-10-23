@@ -9,6 +9,10 @@
 #   url, or text_url and pdf_url   where it is fetched from.
 #   about    one sentence on what it is and why the fixture holds it.
 #
+# Each [datasets] entry has an attribution, the source and license line its files carry. An
+# optional ignore_keys lists keys the recording command leaves out of its diff, such as the
+# as_of_date that Finances One stamps on each row every day. It still saves them as received.
+#
 # To refresh the fixture, run `uv run python -m strata.fixture.record`, read the diff, then
 # run it again with --write. To add a source, add an entry here and record it with --only.
 
@@ -34,12 +38,15 @@ attribution = "The World Bank: Procurement Notices: Systematic Tracking of Excha
 
 [datasets.awards]
 attribution = "The World Bank: Contract Awards in Investment Project Financing (Since FY 2020): Systematic Tracking of Exchanges in Procurement (STEP), Finances One dataset DS00005. License: CC BY 4.0."
+ignore_keys = ["as_of_date"]
 
 [datasets.awards_fy2001_2016]
 attribution = "The World Bank: Contract Awards in Investment Project Financing (FY 2001 to FY 2016, prior review only), Finances One dataset DS01004. License: CC BY 4.0."
+ignore_keys = ["as_of_date"]
 
 [datasets.ieg_ratings]
 attribution = "The World Bank: IEG World Bank Project Performance Ratings, Finances One dataset DS00053. License: CC BY 4.0."
+ignore_keys = ["as_of_date"]
 
 [datasets.ida_credits]
 attribution = "The World Bank: IDA Statement of Credits, Grants and Guarantees (latest), Finances One dataset DS00001. License: CC BY 4.0."

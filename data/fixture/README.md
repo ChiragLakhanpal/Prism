@@ -27,7 +27,7 @@ Run the recording command. It needs the network, so it is never a gate step.
 
     uv run python -m strata.fixture.record
 
-It fetches every source again and prints a diff against the recorded files. It writes nothing until you run it again with `--write`. A file whose content did not change keeps its Recorded date. Finances One stamps each award and IEG row with an `as_of_date` that moves whenever the dataset is refreshed, which is daily for awards, so those files show as changed on a later day even when nothing else moved. To refresh a few sources, pass `--only` with part of their file names, for example `--only P156634`.
+It fetches every source again and prints a diff against the recorded files. It writes nothing until you run it again with `--write`. A file whose content did not change keeps its Recorded date. The command ignores the `as_of_date` that Finances One stamps on each row every day. To refresh a few sources, pass `--only` with part of their file names, for example `--only P156634`.
 
 After a refresh, run the gate. The tests in `tests/test_ground_truth_values.py` check every value in `tests/ground_truth/values.toml` against the recorded files, so a source that changed shows up as a failing value. Update that value only when the source really changed, and say so in the commit.
 

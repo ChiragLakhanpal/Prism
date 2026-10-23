@@ -6,7 +6,8 @@ diff against the recorded files, and overwrites them only when you pass --write.
     uv run python -m strata.fixture.record --only P130164 --write
 
 It needs the network, so it is never a gate step. A file whose content did not change keeps
-its Recorded date, so a refresh shows only real changes. Exit codes: 0 when nothing changed
+its Recorded date, so a refresh shows only real changes. The diff leaves out each dataset's
+ignore_keys, such as the as_of_date that Finances One stamps on each row every day. Exit codes: 0 when nothing changed
 or the changes were saved, 1 when there are changes you have not saved, 2 when a source
 could not be fetched.
 """
@@ -72,13 +73,24 @@ def fetched_files(source, fetch, today):
     }
 
 
-def comparable(name, data):
-    """The lines of a recorded file with its Recorded date left out, so a refetch on another day matches."""
+def without_keys(value, keys):
+    """The value with the given keys dropped from every dict in it, at any depth."""
+    if isinstance(value, dict):
+        return {key: without_keys(item, keys) for key, item in value.items() if key not in keys}
+    if isinstance(value, list):
+        return [without_keys(item, keys) for item in value]
+    return value
+
+
+def comparable(name, data, ignore_keys=()):
+    """The lines of a recorded file with its Recorded date and the source's ignored keys left out,
+    so a refetch on another day matches."""
     if data is None:
         return []
     if name.endswith(".json"):
         envelope = json.loads(data)
         envelope.pop("recorded", None)
+        envelope["response"] = without_keys(envelope.get("response"), set(ignore_keys))
         return json.dumps(envelope, indent=1, ensure_ascii=False).splitlines()
     head, _, body = data.partition(b"\n\n")
     kept = [line for line in head.decode("utf-8").splitlines() if not line.startswith("Recorded: ")]
@@ -121,7 +133,7 @@ def main(argv=None, fetch=fetch_url):
         for name, data in files.items():
             path = manifest.recorded / name
             old = path.read_bytes() if path.exists() else None
-            before, after = comparable(name, old), comparable(name, data)
+            before, after = (comparable(name, blob, source.ignore_keys) for blob in (old, data))
             if before == after:
                 counts["same"] += 1
                 continue

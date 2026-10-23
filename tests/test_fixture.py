@@ -133,3 +133,23 @@ def test_the_fixture_database_loads_every_recorded_file_with_no_network(fixture_
 
     assert files == recorded_files(manifest)
     assert icr_pages == 66
+
+
+def stamped(value, key):
+    """True when any dict in the value, at any depth, has the key."""
+    if isinstance(value, dict):
+        return key in value or any(stamped(item, key) for item in value.values())
+    if isinstance(value, list):
+        return any(stamped(item, key) for item in value)
+    return False
+
+
+def test_every_recorded_response_stamped_with_a_daily_as_of_date_leaves_it_out_of_the_refresh_diff():
+    from strata.fixture import recorded as fmt
+
+    manifest = fmt.load_manifest()
+    stamped_sources = [source for source in manifest.sources if source.kind == "json"
+                       and stamped(fmt.read(manifest.recorded / source.file).body, "as_of_date")]
+
+    assert stamped_sources, "no recorded response has an as_of_date, so this test checks nothing"
+    assert [s.file for s in stamped_sources if "as_of_date" not in s.ignore_keys] == []

@@ -119,6 +119,57 @@ def test_a_source_that_cannot_be_fetched_is_named_with_the_command_to_retry_it(t
     assert recorded(tmp_path, "api/projects/P000002.json").exists()
 
 
+AWARDS_URL = "https://datacatalogapi.example/dexapps/fone/api/apiservice?datasetId=DS00005"
+AWARDS = f"""
+recorded = "recorded"
+
+[datasets.awards]
+attribution = "The World Bank: Contract Awards. License: CC BY 4.0."
+ignore_keys = ["as_of_date"]
+
+[[source]]
+file = "api/awards/P000001.json"
+kind = "json"
+dataset = "awards"
+url = "{AWARDS_URL}"
+about = "The award rows for P000001."
+"""
+
+
+def award_rows(as_of_date, *signed):
+    rows = [{"wb_contract_number": str(n), "contract_signing_date": day, "as_of_date": as_of_date}
+            for n, day in enumerate(signed, 1)]
+    return json.dumps({"data": rows}).encode("utf-8")
+
+
+def test_a_refetch_that_moves_only_the_daily_as_of_date_shows_as_the_same(tmp_path, capsys):
+    run(tmp_path, {AWARDS_URL: award_rows("22-Oct-2026", "03-Jan-2022")}, "--write", manifest=AWARDS)
+    before = recorded(tmp_path, "api/awards/P000001.json").read_bytes()
+    capsys.readouterr()
+
+    code = run(tmp_path, {AWARDS_URL: award_rows("23-Oct-2026", "03-Jan-2022")}, manifest=AWARDS)
+
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "0 new, 0 changed and 1 the same" in out
+    assert recorded(tmp_path, "api/awards/P000001.json").read_bytes() == before
+
+
+def test_a_new_award_row_shows_in_the_diff_without_the_as_of_date_lines(tmp_path, capsys):
+    run(tmp_path, {AWARDS_URL: award_rows("22-Oct-2026", "03-Jan-2022")}, "--write", manifest=AWARDS)
+    capsys.readouterr()
+
+    code = run(tmp_path, {AWARDS_URL: award_rows("23-Oct-2026", "03-Jan-2022", "22-Jun-2026")}, "--write",
+               manifest=AWARDS)
+
+    out = capsys.readouterr().out
+    saved = json.loads(recorded(tmp_path, "api/awards/P000001.json").read_text())
+    assert code == 0
+    assert '+    "contract_signing_date": "22-Jun-2026"' in out
+    assert "as_of_date" not in out
+    assert {row["as_of_date"] for row in saved["response"]["data"]} == {"23-Oct-2026"}
+
+
 def tiny_pdf(*pages):
     """A PDF whose pages each hold one line of text, written by hand so the test needs no PDF writer."""
     kids = " ".join(f"{4 + 2 * i} 0 R" for i in range(len(pages)))
