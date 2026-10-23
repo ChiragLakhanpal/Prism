@@ -79,8 +79,8 @@ function ViewLines({ viewer }: { viewer: Viewer }) {
   return (
     <div className="flex flex-col gap-2">
       <WhoLine viewer={viewer} />
-      <p className="text-small text-ink">{copy.nav.view.current}</p>
-      <p className="text-caption text-ink-muted">{copy.nav.view.notReady}</p>
+      <p className="text-small text-pretty text-ink">{copy.nav.view.current}</p>
+      <p className="text-caption text-pretty text-ink-muted">{copy.nav.view.notReady}</p>
     </div>
   );
 }

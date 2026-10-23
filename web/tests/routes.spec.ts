@@ -16,7 +16,7 @@ type Route = {
   link?: [string, string];
 };
 
-const DATA_LINK: [string, string] = ["See which data I hold", "/data"];
+const DATA_LINK: [string, string] = ["Go to Data", "/data"];
 
 export const ROUTES: Route[] = [
   {

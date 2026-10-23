@@ -51,7 +51,7 @@ export function EmptyState({
     <section data-empty-state className={cx("flex gap-3 rounded-md border border-line bg-surface p-4 md:p-6", className)}>
       <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
       <div className="min-w-0">
-        {createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
+        {createElement(`h${level}`, { className: "text-title text-balance text-ink-heading" }, title)}
         <p className="mt-2 max-w-prose text-body text-pretty text-ink">{body}</p>
         {link && (
           <p className="mt-4">

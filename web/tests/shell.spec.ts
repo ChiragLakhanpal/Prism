@@ -316,6 +316,46 @@ test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge neve
   expect(text).toBe(28);
 });
 
+// An element's last line of text: how wide it is, as a share of the widest line, and how many words it holds.
+const lastLine = (el: Element) => {
+  const lines = new Map<number, { left: number; right: number; words: number }>();
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    for (const word of node.textContent!.matchAll(/\S+/g)) {
+      const range = document.createRange();
+      range.setStart(node, word.index!);
+      range.setEnd(node, word.index! + word[0].length);
+      const box = range.getClientRects()[0];
+      const top = Math.round(box.top);
+      const line = lines.get(top) ?? { left: box.left, right: box.right, words: 0 };
+      lines.set(top, { left: Math.min(line.left, box.left), right: Math.max(line.right, box.right), words: line.words + 1 });
+    }
+  }
+  const sorted = [...lines.entries()].sort(([a], [b]) => a - b).map(([, line]) => line);
+  const last = sorted[sorted.length - 1];
+  const widest = Math.max(...sorted.map((line) => line.right - line.left));
+  return { share: (last.right - last.left) / widest, words: last.words };
+};
+
+for (const width of [390, 320]) {
+  test(`at ${width} px the Home card's title wraps into even lines, and the Menu's view line never ends on one word`, async ({ page }) => {
+    await mockShell(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+
+    // Without balancing, the title broke as "I have nothing to brief you / on yet."
+    const title = page.locator("[data-empty-state]").getByRole("heading");
+    await expect(title).toHaveText("I have nothing to brief you on yet.");
+    expect((await title.evaluate(lastLine)).share).toBeGreaterThan(0.5);
+
+    // Without it, at 320 px the line broke as "You are seeing the World Bank staff / view."
+    await page.getByRole("button", { name: "Menu" }).click();
+    const view = page.getByText("You are seeing the World Bank staff view.");
+    await expect(view).toBeVisible();
+    expect((await view.evaluate(lastLine)).words).toBeGreaterThan(1);
+  });
+}
+
 test("/ closes an open Menu and focuses the box", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 390, height: 900 });

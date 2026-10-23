@@ -36,7 +36,7 @@ export const copy = {
       emptyBody:
         "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts " +
         "waiting for you.",
-      link: "See which data I hold",
+      link: "Go to Data",
     },
     packages: {
       title: "Packages",
@@ -45,7 +45,7 @@ export const copy = {
       emptyBody:
         "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of " +
         "Exchanges in Procurement (STEP).",
-      link: "See which data I hold",
+      link: "Go to Data",
     },
     package: {
       title: "Package",
@@ -61,7 +61,7 @@ export const copy = {
       purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
       emptyTitle: "I can't list projects on this page yet.",
       emptyBody: "When I can, every project I hold appears here, and the projects you follow come first.",
-      link: "See which data I hold",
+      link: "Go to Data",
     },
     project: {
       title: "Project {pid}",
@@ -93,7 +93,7 @@ export const copy = {
       emptyTitle: "There are no lessons in the library yet.",
       emptyBody:
         "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
-      link: "See which data I hold",
+      link: "Go to Data",
     },
     drafts: {
       title: "Drafts",
