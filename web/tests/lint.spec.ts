@@ -75,6 +75,15 @@ test("the copy lint allows DESIGN.md section 5's draft-bar sentence word for wor
   expect(lint({ copy: copyWith("I gave this draft its clearance.") }).code).toBe(1);
 });
 
+test("the copy lint finds the Bank in capitals and with a no-break space, but not a bank guarantee", () => {
+  for (const text of ["THE BANK reviewed the plan.", "the\u00a0Bank reviewed the plan."]) {
+    const failed = lint({ copy: copyWith(text) });
+    expect(failed.code, text).toBe(1);
+    expect(failed.output, text).toMatch(/rule 8/);
+  }
+  expect(lint({ copy: copyWith("The bank guarantee was 2 percent of the bid.") }).code).toBe(0);
+});
+
 test("the copy lint finds GLOSSARY.md's Avoid terms, such as chunk", () => {
   const failed = lint({ copy: copyWith("I read 40 chunks of the report.") });
   expect(failed.code).toBe(1);
@@ -108,6 +117,22 @@ test("the gate fails when a component renders a string that is not from the copy
     // A STEP method and a person's name are read by someone, so these props are copy too.
     `export const A = () => <Row method="Request for Bids" />;`,
     `export const A = () => <Person name="Ana Example" />;`,
+    // Words joined with +, as children and as props: each piece with letters is copy, as it
+    // is in the template form.
+    `export const A = ({ n }: { n: number }) => <p>{n + " packages"}</p>;`,
+    `export const A = ({ state }: { state: string }) => <p>{"Opened " + state}</p>;`,
+    `export const A = () => <p>{"Something " + "went wrong."}</p>;`,
+    `export const A = ({ name }: { name: string }) => <button aria-label={"Close the " + name} />;`,
+    `export const A = ({ name }: { name: string }) => <Alert title={name + " alert"} />;`,
+    // A let or a var is read like a const, by the value it starts with.
+    `let words = "Nothing here yet."; export const A = () => <p>{words}</p>;`,
+    `var words = "Nothing here yet."; export const A = () => <p>{words}</p>;`,
+    // Props passed by spreading an object, written in place or kept in a const.
+    `export const A = () => <Card {...{ title: "Nothing here yet." }} />;`,
+    `const props = { title: "Nothing here yet." }; export const A = () => <Card {...props} />;`,
+    // Words a component writes into the page itself, outside JSX.
+    `export function A() { document.title = "Packages, Strata"; return null; }`,
+    `export function A({ el }: { el: HTMLElement }) { el.textContent = "Nothing here yet."; return null; }`,
   ];
   for (const component of cases) {
     const failed = lint({ component });
@@ -129,8 +154,12 @@ test("a component that takes every string from the copy file passes the string l
     `    <ol style={{ minHeight: "calc(6 * 1.45em)" }}><li key="read">{copy.read}</li></ol>`,
     `    <Num part={1} whole={2} show="count" style="table" />{matchMedia(WIDE).matches && copy.wide}`,
     `    <div className={LOOK.box} /><div className={LOOK["box"]} />`,
+    // + that builds an address, a class, a key or a sum, or text with no letters, is not copy.
+    `    <a href={"#" + copy.id} className={"flex " + LOOK.box} key={"row-" + 1} data-n={"n" + 2}>{1 + 2}</a>`,
+    `    <span>{"(" + 3 + ")"}</span><div {...{ className: "p-4", role: "note" }} />`,
     `  </section>`,
     `);`,
+    `export function B({ el }: { el: HTMLElement }) { el.className = "p-4"; el.textContent = copy.title; document.title = copy.title; }`,
   ].join("\n");
   const passed = lint({ component });
   expect(passed.output).toBe("");

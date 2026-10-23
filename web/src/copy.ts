@@ -18,7 +18,7 @@ export const copy = {
     "Strata is an independent demo built on World Bank open data. It is not a World Bank product, " +
     "and the World Bank has not reviewed or endorsed it.",
   viewer: {
-    checking: "Checking who you are.",
+    checking: "I'm checking who you are.",
     signedIn: (name: string) => `You are signed in as ${name}.`,
     signedOut: "You are not signed in. Open Strata through its Databricks App to sign in.",
     // An alert holds one sentence (DESIGN.md section 5); its "Try again" button asks again.

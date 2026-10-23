@@ -9,6 +9,7 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { CircleX, Search } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
 
 function typingInAField(target: EventTarget | null): boolean {
@@ -130,7 +131,7 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
       <a
         href={href}
         aria-describedby={descriptionId}
-        className="inline-flex min-h-6 items-center text-caption text-ink-muted tabular-nums underline decoration-line-strong decoration-dotted underline-offset-3 hover:text-link-hover hover:decoration-solid"
+        className={cx("inline-flex min-h-6 items-center text-caption text-ink-muted tabular-nums hover:text-link-hover", DOTTED_UNDERLINE)}
       >
         {text}
       </a>

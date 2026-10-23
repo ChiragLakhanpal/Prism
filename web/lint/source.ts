@@ -2,7 +2,7 @@
 // copy file, the strings a component renders without the copy file, and class names that
 // step outside DESIGN.md's tokens.
 import { parseAst } from "vite";
-import { ARIA_TEXT_PROPS, NON_COPY_PROPS, NON_COPY_SUFFIXES, SPACE_STEPS, STYLE_PROPS } from "./rules.ts";
+import { ARIA_TEXT_PROPS, DOM_TEXT_PROPERTIES, NON_COPY_PROPS, NON_COPY_SUFFIXES, SPACE_STEPS, STYLE_PROPS } from "./rules.ts";
 
 type Node = { type: string; start: number; end: number; [key: string]: unknown };
 
@@ -71,13 +71,14 @@ function concatenation(node: Node): string | null {
   return left === null || right === null ? null : left + right;
 }
 
-// Every const in the file whose name a component might render, by name. Scopes are ignored:
-// a const and a parameter with the same name in two functions are read as one, which can only
+// Every const, let or var in the file whose name a component might render, by name, with the
+// value it starts with. A later assignment to a let is not followed. Scopes are ignored: a
+// const and a parameter with the same name in two functions are read as one, which can only
 // make the lint stricter.
 function constants(root: Node): Map<string, Node> {
   const found = new Map<string, Node>();
   walk(root, (node) => {
-    if (node.type !== "VariableDeclaration" || node.kind !== "const") return;
+    if (node.type !== "VariableDeclaration") return;
     for (const declarator of node.declarations as Node[]) {
       const id = declarator.id as Node;
       if (id.type === "Identifier" && declarator.init) found.set(id.name as string, declarator.init as Node);
@@ -112,10 +113,12 @@ function keyName(property: Node): string | null {
 
 // Text a component renders that is not from the copy file: words written in JSX, strings in
 // JSX expressions, strings given to any prop that is not on NON_COPY_PROPS (inside objects
-// and arrays too, each judged by its own key), consts holding such strings that a component
-// renders or passes by name, a key read from a local const object (words.empty or
-// words["empty"]), and a default prop value ({ body = "..." }). It follows one level of a
-// lookup object (words.empty), not two (words.empty.title).
+// and arrays too, each judged by its own key, and props passed with {...spread}), each piece
+// of words joined with + ("Opened " + state), consts, lets and vars holding such strings that
+// a component renders or passes by name, a key read from a local const object (words.empty or
+// words["empty"]), a default prop value ({ body = "..." }), and a string written into the
+// page outside JSX (document.title = "...", el.textContent = "..."). It follows one level of
+// a lookup object (words.empty), not two (words.empty.title).
 //
 // It does not follow function calls, such as .map over a local array: RATIOS and BADGES in
 // the gallery hold settings, and following them would flag those. Keep words in an array in
@@ -145,6 +148,14 @@ export function literalText(source: string, file: string): Found[] {
         return [...strings(node.consequent as Node, prop, seen), ...strings(node.alternate as Node, prop, seen)];
       case "LogicalExpression":
         return [...strings(node.left as Node, prop, seen), ...strings(node.right as Node, prop, seen)];
+      case "BinaryExpression": {
+        // "Opened " + state or n + " packages": each piece is judged as the template form's
+        // text is, and a chain of literals ("Something " + "went wrong.") as one string.
+        if (node.operator !== "+") return [];
+        const joined = concatenation(node);
+        if (joined !== null) return isCopyProp(prop) ? [{ offset: node.start, text: joined }] : [];
+        return [...strings(node.left as Node, prop, seen), ...strings(node.right as Node, prop, seen)];
+      }
       case "ObjectExpression":
         return (node.properties as Node[]).flatMap((property) => {
           const key = property.type === "Property" ? keyName(property) : null;
@@ -210,6 +221,23 @@ export function literalText(source: string, file: string): Found[] {
       const prop = propName(node);
       for (const text of strings(node.value as Node, prop)) {
         if (hasWords(text.text)) found.push({ ...text, where: `passes ${prop}` });
+      }
+    }
+    // {...{ title: "..." }} or {...props}: an object's strings, each judged by its own key.
+    if (node.type === "JSXSpreadAttribute") {
+      for (const text of strings(node.argument as Node, "children")) {
+        if (hasWords(text.text)) found.push({ ...text, where: "spreads a prop with" });
+      }
+    }
+    // document.title = "..." or el.textContent = "...": words written into the page directly.
+    if (node.type === "AssignmentExpression" && (node.left as Node).type === "MemberExpression") {
+      const target = node.left as Node;
+      const property = target.property as Node;
+      const name = !target.computed && property.type === "Identifier" ? (property.name as string) : null;
+      if (name !== null && DOM_TEXT_PROPERTIES.has(name)) {
+        for (const text of strings(node.right as Node, "children")) {
+          if (hasWords(text.text)) found.push({ ...text, where: `writes ${name}` });
+        }
       }
     }
   });

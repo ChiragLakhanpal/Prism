@@ -14,7 +14,7 @@ import {
   type DateStyle,
   type NumberOptions,
 } from "../lib/format";
-import { Tooltip } from "./Popover";
+import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 
 export type NumValue =
   | { value: number; options?: NumberOptions }
@@ -60,8 +60,7 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
           onClick={check.onOpen}
           className={cx(
             "inline cursor-pointer py-0.5 text-left tabular-nums",
-            "underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3",
-            "hover:decoration-solid",
+            DOTTED_UNDERLINE,
             className,
           )}
         >

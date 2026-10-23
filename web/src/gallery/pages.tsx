@@ -213,10 +213,14 @@ const valueRows = (values: { sent: string; num: NumValue }[], rules: readonly st
     id: `${sent}-${index}`,
     cells: { value: sent, rule: rules[index], shows: <Num {...num} /> },
   }));
-const FORMATS = [1234, 12500, 295689, 1250000, 2500000000, 0.456, 45.67, 456.7].map((value) => ({
-  sent: String(value),
-  num: { value } as NumValue,
-}));
+const FORMATS: { sent: string; num: NumValue }[] = [
+  ...[1234, 12500, 295689, 1250000, 2500000000, 0.456, 45.67, 456.7].map((value) => ({
+    sent: String(value),
+    num: { value } as NumValue,
+  })),
+  // A STEP amount, as Table's sample shows it: whole, so it reads as the record does.
+  { sent: "2450000", num: { value: 2450000, options: { compact: false } } as NumValue },
+];
 const COUNTS: { sent: string; num: NumValue }[] = [
   { sent: "7", num: { count: 7 } },
   { sent: "14", num: { count: 14 } },
@@ -544,15 +548,7 @@ export const PAGES: GalleryPage[] = [
                 { label: sample.measureRows[1], value: <Num value={52} /> },
                 { label: sample.measureRows[2], value: <Num date={galleryCopy.sampleDate} style="table" /> },
               ]}
-              trigger={
-                <button
-                  type="button"
-                  data-term
-                  className="inline cursor-pointer py-0.5 underline decoration-line-strong decoration-dotted underline-offset-3 hover:decoration-solid"
-                >
-                  {sample.measureTitle}
-                </button>
-              }
+              label={sample.measureTitle}
             >
               {sample.measureBody}
             </DefinitionWindow>

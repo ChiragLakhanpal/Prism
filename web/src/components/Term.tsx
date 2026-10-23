@@ -2,22 +2,24 @@
 // DefinitionWindow. DefinitionWindow: a non-modal window labeled by its title, with the full
 // definition, optional rows (a measure's numerator and denominator, say), and a 44 px close
 // button. Focus moves to the title when it opens; Escape closes it and focus returns to the
-// word that opened it.
+// word that opened it. DefinitionWindow draws the word that opens it too, so a measure's name
+// and a Term carry the same dotted underline.
 import { useId, useRef, type ReactNode } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { X } from "lucide-react";
 import { copy } from "../copy";
 import { terms } from "../glossary";
 import { cx } from "../lib/cx";
-import { POPOVER } from "./Popover";
+import { DOTTED_UNDERLINE, POPOVER } from "./Popover";
 
 export function DefinitionWindow({
-  trigger,
+  label,
   title,
   children,
   rows,
 }: {
-  trigger: ReactNode;
+  // The word or measure name in the text that opens the window.
+  label: ReactNode;
   title: ReactNode;
   children: ReactNode;
   rows?: { label: ReactNode; value: ReactNode }[];
@@ -26,7 +28,11 @@ export function DefinitionWindow({
   const heading = useRef<HTMLHeadingElement>(null);
   return (
     <RadixPopover.Root>
-      <RadixPopover.Trigger asChild>{trigger}</RadixPopover.Trigger>
+      <RadixPopover.Trigger asChild>
+        <button type="button" data-term className={cx("inline cursor-pointer py-0.5 text-left", DOTTED_UNDERLINE)}>
+          {label}
+        </button>
+      </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content
           side="bottom"
@@ -73,18 +79,7 @@ export function Term({ term, children }: { term: string; children?: ReactNode })
   const definition = terms[term];
   if (!definition) throw new Error(`GLOSSARY.md has no term "${term}".`);
   return (
-    <DefinitionWindow
-      title={term}
-      trigger={
-        <button
-          type="button"
-          data-term
-          className="inline cursor-pointer py-0.5 text-left underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid"
-        >
-          {children ?? term}
-        </button>
-      }
-    >
+    <DefinitionWindow title={term} label={children ?? term}>
       {definition}
     </DefinitionWindow>
   );

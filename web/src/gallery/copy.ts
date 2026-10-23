@@ -171,6 +171,7 @@ export const galleryCopy = {
         "Below 1, it keeps two decimals.",
         "From 1 to 100, it keeps one decimal.",
         "Above 100, it keeps no decimals.",
+        "A STEP amount in a table stays whole, with comma thousands, as the record has it.",
       ],
     },
     counts: {
@@ -213,13 +214,13 @@ export const galleryCopy = {
     measureBody: "The share of contract awards that carry a project ID I can join on.",
     measureRows: ["Linked", "All rows", "Measured"],
     markerSource: "Implementation Completion and Results Report, June 30, 2021, paragraph 54",
-    markerSecond: "Implementation Status and Results Report, March 4, 2024, paragraph 12",
+    markerSecond: "Implementation Status and Results Report, March 4, 2020, paragraph 12",
     // Each sentence says only what its own source says. Marker 1's preview quotes paragraph 54,
     // the passage on the Document page, and marker 2 cites a later status report.
     markerPreview:
       "The works contracts were advertised again in 2017 after all bids were rejected. The contracts were signed in March 2018, five months after the date in the first Procurement Plan.",
     sentenceBefore: "The works contracts were advertised again after all bids were rejected, and they were signed five months late.",
-    sentenceAfter: "The works were still under way in March 2024.",
+    sentenceAfter: "The works were still under way in March 2020.",
     // The Answer page's own sentences, so a change to the Citations sample cannot change what
     // the Answer's check line counts. They hold three numbers: five, three and four. "A later
     // status report", not "the latest": a saved answer keeps its words after a newer report

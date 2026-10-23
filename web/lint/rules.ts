@@ -103,6 +103,23 @@ export const NON_COPY_SUFFIXES = ["Href", "Id", "Key", "ClassName"];
 // Props whose whole value is CSS, never text.
 export const STYLE_PROPS = new Set(["style"]);
 
+// DOM properties that put words on the page or into a screen reader when a component sets
+// them outside JSX, such as document.title = copy.title. The string lint reads a string
+// written to one of these as copy.
+export const DOM_TEXT_PROPERTIES = new Set([
+  "title",
+  "textContent",
+  "innerText",
+  "innerHTML",
+  "placeholder",
+  "alt",
+  "ariaLabel",
+  "ariaDescription",
+  "ariaRoleDescription",
+  "ariaValueText",
+  "ariaPlaceholder",
+]);
+
 // ARIA attributes hold settings ("true", "page", "polite") and ids, except these, which hold
 // words a screen reader says. The string lint reads these as copy.
 export const ARIA_TEXT_PROPS = new Set([

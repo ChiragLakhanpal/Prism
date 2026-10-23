@@ -183,7 +183,7 @@ From the World Bank Data Visualization Style Guide (draft, March 19, 2025) and i
 | Legends | Only when direct labels fail |
 | Tooltip | 0.5px grey200 border; header s semibold; number m bold |
 | Annotations | Label s semibold uppercase textSubtle; line 3px reference |
-| Numbers | Comma thousands; K from 10,000, then M, B; 2 decimals below 1, 1 up to 100, 0 above; years have no comma |
+| Numbers | Comma thousands; K from 10,000, then M, B; 2 decimals below 1, 1 up to 100, 0 above; years have no comma. Strata: a STEP amount in a table stays whole with comma thousands (2,450,000), as the record has it |
 
 Use category colors in order, only when color separates categories, and pair color with labels or shapes. Strata: cat1, cat2, cat4 and cat9 fall below 3:1 on white, so essential marks use the text variants.
 

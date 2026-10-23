@@ -47,7 +47,9 @@ const FIXED_RULES: Rule[] = [
   { pattern: /!/g, say: () => "has an exclamation mark. DESIGN.md section 7, rule 3 says never to use one." },
   { pattern: /[“”‘’]/g, say: (found) => `has a curly quote (${found}). Use straight quotes.` },
   {
-    pattern: /\b[Tt]he Bank\b/g,
+    // In capitals too, and with any space between the words, such as a no-break space. A
+    // lowercase bank, as in "the bank guarantee", is an ordinary word.
+    pattern: /\b(?:[Tt]he|THE)\s+(?:Bank|BANK)\b/g,
     say: (found) => `uses "${found}". DESIGN.md section 7, rule 8 says "World Bank", except in a fixed term.`,
   },
   {

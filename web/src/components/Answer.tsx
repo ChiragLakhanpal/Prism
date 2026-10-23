@@ -5,7 +5,8 @@
 // Ready: "In short", the verified sentences with their markers, the check line, the removed
 //   box, and the steps folded into a disclosure.
 // Abstained: a tool held back (fewer than 20 comparables, say). Its own first-person sentence
-//   stands in "In short", and the rows it returned follow.
+//   stands in "In short", the check line and the removed box sit under it as in Ready, and
+//   the rows it returned follow them, so the proof stays beside the sentence it checks.
 // Empty: nothing in the records or documents answers the question, said in the first person.
 // Refused: a request on the refusal list, answered in plain text with no alert.
 // Error: the steps done so far, an error alert and "Try again".
@@ -111,8 +112,8 @@ export function Answer({ state }: { state: AnswerState }) {
       return (
         <div data-answer="abstained">
           <InShort>{state.sentence}</InShort>
-          <div className="mt-4">{state.rows}</div>
           <ChecksBlock checks={state.checks} />
+          <div className="mt-6">{state.rows}</div>
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>
       );

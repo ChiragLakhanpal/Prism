@@ -99,7 +99,7 @@ test("axe finds no WCAG 2.2 AA violations in the shell, signed in or unable to r
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator("main [role=status], main [role=alert]")).not.toHaveText("Checking who you are.");
+    await expect(page.locator("main [role=status], main [role=alert]")).not.toHaveText("I'm checking who you are.");
     expect(await check(), `${width} px`).toEqual([]);
   }
 });

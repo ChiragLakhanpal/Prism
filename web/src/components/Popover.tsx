@@ -15,6 +15,12 @@ import { cx } from "../lib/cx";
 export const POPOVER =
   "z-50 rounded-md border border-line bg-surface text-ink shadow-popover data-[state=open]:animate-fade-in";
 
+// The mark of something you can check or look up: a number with its source, a GLOSSARY.md
+// term, a measure, the data date. One 1 px dotted line in line-strong, solid on hover, so
+// every one of them looks the same.
+export const DOTTED_UNDERLINE =
+  "underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid";
+
 const DELAY = 150;
 const open = new Set<() => void>();
 

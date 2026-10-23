@@ -53,7 +53,7 @@ test("the citation marker's accessible name names the source, and a copy of it r
   await expect(marker).toBeVisible();
   expect(await marker.textContent()).toBe("[1]");
   await expect(
-    page.getByRole("link", { name: "Source 2: Implementation Status and Results Report, March 4, 2024, paragraph 12, opened" }).first(),
+    page.getByRole("link", { name: "Source 2: Implementation Status and Results Report, March 4, 2020, paragraph 12, opened" }).first(),
   ).toBeVisible();
 });
 
@@ -167,7 +167,7 @@ test("Num shows 6 of 12 as a count and 31 of 37 beside about 8 in 10, on screen"
     "1 of 300, less than 1 percent",
   ]);
   await expect(page.locator("[data-state-section=formats] table [data-num]")).toHaveText([
-    "1,234", "12.5K", "296K", "1.3M", "2.5B", "0.46", "45.7", "457",
+    "1,234", "12.5K", "296K", "1.3M", "2.5B", "0.46", "45.7", "457", "2,450,000",
   ]);
   await expect(page.locator("[data-state-section=counts] table [data-num]")).toHaveText([
     "seven", "14", "2024", "March 4, 2024", "Mar 4, 2024",
@@ -234,7 +234,7 @@ test("below 768 px every value in a table's cards starts at one left edge, with 
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/gallery/numbers");
   const cards = page.locator("[data-table=ready] ul > li");
-  await expect(cards).toHaveCount(5 + 8 + 5);
+  await expect(cards).toHaveCount(5 + 9 + 5);
   const measured = await cards.evaluateAll((items) =>
     items.map((item) => {
       const left = (el: Element) => Math.round(el.getBoundingClientRect().x);
@@ -337,6 +337,57 @@ test("the abstention's sentence, table and check line count the same 12 packages
   await answer.getByRole("button", { name: "Show the three steps I took" }).click();
   await expect(answer.locator("[data-steps]")).toContainText("I found 12 comparable packages.");
   await expect(answer.locator("[data-steps]")).toContainText("I checked the 12 numbers in the table against the records.");
+});
+
+// DESIGN.md section 5: "Check line ... Sits under 'In short', with the removed box open below
+// it." In an abstention the rows come after both, so the proof stays beside the sentence.
+test("in every answer with checks, the check line and the removed box come right under In short, before the rows", async ({
+  page,
+}) => {
+  await page.goto("/gallery/answer");
+  for (const state of ["ready", "abstained"]) {
+    const order = await page.locator(`[data-answer=${state}]`).evaluate((root) =>
+      [...root.querySelectorAll("[data-in-short], [data-check-line], [data-removed-lead], [data-table], [data-steps]")].map(
+        (el) =>
+          el.matches("[data-in-short]") ? "in short"
+          : el.matches("[data-check-line]") ? "check line"
+          : el.matches("[data-removed-lead]") ? "removed box"
+          : el.matches("[data-table]") ? "rows"
+          : "steps",
+      ),
+    );
+    expect(order.slice(0, 3), state).toEqual(["in short", "check line", "removed box"]);
+  }
+  const held = page.locator("[data-answer=abstained]");
+  const checkLine = (await held.locator("[data-check-line]").boundingBox())!;
+  const rows = (await held.locator("[data-table]").boundingBox())!;
+  expect(checkLine.y + checkLine.height).toBeLessThan(rows.y);
+});
+
+// Every mark of something you can check or look up is the same 1 px dotted line: a Term, a
+// measure's name, a checkable number and the data date.
+// Waits for the marks first: the data date shows a skeleton for its first second.
+const underlines = async (marks: Locator, count: number) => {
+  await expect(marks).toHaveCount(count);
+  return marks.evaluateAll((els) =>
+    els.map((el) => {
+      const style = getComputedStyle(el);
+      return [style.textDecorationLine, style.textDecorationStyle, style.textDecorationThickness, style.textDecorationColor].join(" ");
+    }),
+  );
+};
+
+test("a term, a measure, a checkable number and the data date share one dotted underline", async ({ page }) => {
+  await page.goto("/gallery/numbers");
+  const marks = [
+    ...(await underlines(page.locator("[data-state-section=terms] [data-term]"), 2)),
+    ...(await underlines(page.locator("[data-state-section=checkable] button[data-num]"), 1)),
+  ];
+  await page.goto("/gallery/navigation");
+  marks.push(...(await underlines(page.locator("[data-stamp] a").first(), 1)));
+  expect(marks).toHaveLength(4);
+  expect(new Set(marks), marks.join("\n")).toEqual(new Set([marks[0]]));
+  expect(marks[0]).toMatch(/^underline dotted 1px /);
 });
 
 test("a checkable number shows where it came from on focus, and Escape closes it", async ({ page }) => {
