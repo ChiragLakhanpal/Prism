@@ -17,7 +17,10 @@
 # name. It runs after the steps above it in the same lane. Give it a new lane's name if it
 # needs nothing from the other steps. A step that needs another step's output goes in that
 # step's lane, below it, as the Python tests under tests/ do with the fixture database.
-# A new pytest step names the folders it tests, so each test folder runs in one step.
+# A new pytest step names the folders it tests, so each test folder runs in one step. A new
+# test folder whose tests read the fixture database goes in the python lane, and in
+# FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
+# the build.
 
 # The whole run fails when it takes longer than this.
 limit_seconds = 120

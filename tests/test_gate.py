@@ -560,33 +560,85 @@ def gate_steps():
         return tomllib.load(handle)["step"]
 
 
-def folders_tested(step):
-    """The folders a pytest step names on its command line."""
-    return [arg for arg in step["run"] if (ROOT / arg).is_dir()] if "pytest" in step["run"] else []
+# The test folders whose tests may read the fixture database, so they must run after its build.
+# ops/bundle/tests reads it through ops/bundle/check.py when the database exists.
+FIXTURE_READERS = (Path("tests"), Path("ops/bundle/tests"))
+
+
+def testpaths():
+    with open(ROOT / "pyproject.toml", "rb") as handle:
+        return [Path(path) for path in tomllib.load(handle)["tool"]["pytest"]["ini_options"]["testpaths"]]
+
+
+def paths_tested(step):
+    """The paths a pytest step names after "pytest", or every folder in testpaths when it names none."""
+    if "pytest" not in step["run"]:
+        return []
+    args = step["run"][step["run"].index("pytest") + 1:]
+    named = [Path(arg) for arg in args if not arg.startswith("-") and (ROOT / arg).exists()]
+    return named or testpaths()
+
+
+def overlap(one, other):
+    """Whether two paths are the same, or one lies inside the other."""
+    return one == other or one in other.parents or other in one.parents
+
+
+def reads_the_fixture_database(step):
+    return any(overlap(path, reader) for path in paths_tested(step) for reader in FIXTURE_READERS)
+
+
+def steps_that_may_start_before_the_fixture_build(steps):
+    build = next(i for i, step in enumerate(steps) if "gates/build_fixture.py" in step["run"])
+    early = []
+    for i, step in enumerate(steps):
+        if not reads_the_fixture_database(step):
+            continue
+        lanes = steps[build].get("lane"), step.get("lane")
+        alone_between = any("lane" not in other for other in steps[build + 1:i])
+        if i < build or not (None in lanes or lanes[0] == lanes[1] or alone_between):
+            early.append(step["name"])
+    return early
+
+
+def gate_steps_per_test_folder(steps):
+    """For each folder in testpaths, how many steps run some or all of its tests."""
+    tested = [path for step in steps for path in paths_tested(step)]
+    return {folder: sum(overlap(folder, path) for path in tested) for folder in testpaths()}
 
 
 def test_the_fixture_database_is_built_before_the_python_tests_that_read_it():
     steps = gate_steps()
-    build = next(i for i, step in enumerate(steps) if "gates/build_fixture.py" in step["run"])
-    readers = [i for i, step in enumerate(steps) if "tests" in folders_tested(step)]
 
-    assert readers, "no step runs the tests under tests/"
-    for reader in readers:
-        lanes = steps[build].get("lane"), steps[reader].get("lane")
-        alone_between = any("lane" not in step for step in steps[build + 1:reader])
-        assert build < reader, steps[reader]["name"]
-        assert None in lanes or lanes[0] == lanes[1] or alone_between, \
-            f"\"{steps[reader]['name']}\" may start before the fixture database is built"
+    assert any(reads_the_fixture_database(step) for step in steps), "no step runs the tests that read the fixture database"
+    assert steps_that_may_start_before_the_fixture_build(steps) == []
 
 
 def test_each_test_folder_in_pyproject_runs_in_exactly_one_gate_step():
-    with open(ROOT / "pyproject.toml", "rb") as handle:
-        testpaths = tomllib.load(handle)["tool"]["pytest"]["ini_options"]["testpaths"]
-    tested = [Path(folder) for step in gate_steps() for folder in folders_tested(step)]
+    runs = gate_steps_per_test_folder(gate_steps())
 
-    for path in map(Path, testpaths):
-        runs = [folder for folder in tested if folder == path or folder in path.parents]
-        assert len(runs) == 1, f"{path} runs in {len(runs)} gate steps"
+    assert runs and all(count == 1 for count in runs.values()), runs
+
+
+# Edits to the steps file that the two checks above must catch: each adds a second pytest step,
+# in the web lane, that runs tests a step in another lane already runs and that may read the
+# fixture database while the python lane is still building it.
+SECOND_PYTEST_STEPS = {
+    "every folder in testpaths": [],
+    "a folder inside tests": ["tests/ground_truth"],
+    "a file inside tests": ["tests/test_fixture.py"],
+    "the bundle tests": ["ops/bundle/tests"],
+    "every folder under ops": ["ops"],
+}
+
+
+@pytest.mark.parametrize("paths", SECOND_PYTEST_STEPS.values(), ids=SECOND_PYTEST_STEPS.keys())
+def test_a_second_pytest_step_in_another_lane_fails_both_steps_file_checks(paths):
+    extra = {"name": "Extra", "run": ["uv", "run", "--frozen", "pytest", *paths], "lane": "web"}
+    steps = [*gate_steps(), extra]
+
+    assert steps_that_may_start_before_the_fixture_build(steps) == ["Extra"]
+    assert any(count > 1 for count in gate_steps_per_test_folder(steps).values())
 
 
 if __name__ == "__main__":
