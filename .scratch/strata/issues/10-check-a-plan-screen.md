@@ -19,3 +19,8 @@ Read first: DESIGN.md sections 5, 7 and 10; the blueprint's Check a plan wirefra
 - [ ] The note "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP." appears as in the wireframe.
 - [ ] Loading, empty (an agency with no plan) and error states exist and are captured at 1440, 1024 and 390 px; below 768 px the table becomes cards; axe finds no WCAG 2.2 AA violations.
 - [ ] On the deployed app, a workspace user opens the NWWDA October 9, 2026 plan and sees the same counts: the first half of P1's exit criterion.
+
+## Comments
+
+
+- October 23, 2026, orchestrator: two things from ticket 08's verification, for whoever builds this screen. First, a description can hold a word that the PDF's line wrap split ("Explor atory"); the rows keep the words as the PDF gives them (a decision parked for the user), so show them as given and do not join them. Second, the October 9 plan lists nine activities and the wireframe shows eight (the ninth is KE-NWWDA-207796-CS-INDV); ticket 09's tool returns all nine, so show all nine unless the 10 brief says otherwise, and record the choice in parkedDecisions. Table's cardsBelow prop ('md' or 'lg') is in ticket 02.
