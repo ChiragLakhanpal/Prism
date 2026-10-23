@@ -1272,3 +1272,14 @@ fy2019 = ["OP00071741", "OP00074816", "OP00086370", "OP00154314"]
 in_inr = "OP00044090"
 in_inr_price = "69,826,127.64"
 no_price = "OP00074816"
+
+# The major sector codes the projects API listed for every project of the slice's four countries
+# (Kenya, Bangladesh, Vietnam and Pakistan) on October 23, 2026, read with
+# https://search.worldbank.org/api/v3/projects?format=json&countrycode_exact={iso2}&rows=1000&os=0&fl=id,major_sectors
+# for each country. The fixture records only Kenya's FY2012 to FY2025 projects, so this list
+# stands for the other three. config/sectors.toml must map every one of them.
+[sectors.slice_countries]
+says = "Every major sector code listed for a project of the slice's four countries, in both taxonomies."
+codes = ["AAX", "AX", "BBX", "BX", "CX", "DDX", "DX", "EEX", "EX", "FFX", "FX", "GX", "HHX", "HX", "IX", "JX",
+         "LLX", "LX", "MX", "NNX", "NX", "PX", "QX", "SSX", "SX", "TTX", "TX", "UX", "VX", "WWX", "WX", "XX",
+         "YX", "YYX"]

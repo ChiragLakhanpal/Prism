@@ -269,6 +269,15 @@ def test_every_slice_project_maps_to_one_sector_and_every_listed_code_is_mapped(
     assert stored["P156634"]["sector"] == "water"
 
 
+def test_the_sector_file_maps_every_code_the_slice_countries_projects_list():
+    """The fixture records Kenya's projects only. values.toml lists every major sector code the
+    projects API gave for the four slice countries' projects, so none of their projects is left
+    without a sector for want of a mapped code."""
+    listed = TRUTH["sectors"]["slice_countries"]["codes"]
+
+    assert [code for code in listed if code not in config.load_sectors().codes] == []
+
+
 def test_a_project_maps_to_the_major_sector_with_the_largest_share():
     """A project's sectors each carry a share. A project split 40 to public administration (BX) and
     35 plus 25 to transport (TTX, the newer taxonomy) is transport, and a project that lists no
