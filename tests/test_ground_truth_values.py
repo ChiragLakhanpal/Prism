@@ -134,9 +134,14 @@ def test_each_plan_row_holds_its_values_in_its_own_row_of_the_october_9_plan(row
         assert squash(row[field]) in text, f"{row['reference']}: {field} {row[field]!r} is not in its row"
     for quote in row["quotes"]:
         assert squash(quote) in text, f"{row['reference']}: {quote!r} is not in its row"
-    for field in ("review_type", "method", "market_approach", "estimated_amount_usd", "process_status"):
-        assert any(squash(row[field]) in squash(quote) for quote in row["quotes"]), (
-            f"{row['reference']}: no quote shows {field} {row[field]!r} in place")
+    # A quote must show each field in place. The Actual Amount is checked right after the
+    # Estimated Amount, its column's neighbour, because "0.00" alone is inside "1,230,000.00".
+    shown = {field: row[field] for field in ("review_type", "method", "market_approach", "estimated_amount_usd",
+                                             "process_status")}
+    shown["actual_amount_usd"] = f"{row['estimated_amount_usd']} {row['actual_amount_usd']}"
+    for field, text in shown.items():
+        assert any(squash(text) in squash(quote) for quote in row["quotes"]), (
+            f"{row['reference']}: no quote shows {field} {text!r} in place")
 
 
 CRITERIA = TRUTH["comparables"]
