@@ -30,6 +30,8 @@ SHAPES = [
     ("an Azure AI services key", r"\b[A-Za-z0-9]{52}JQQJ99[A-Za-z0-9][A-L][A-Za-z0-9]{23}\b"),
     ("a private key", r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----"),
     ("a GitHub token", r"\b(?:gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,})\b"),
+    ("a key assigned in code",
+     r"\b(?i:api_?key|access_?token|client_?secret|secret|password)['\"]?\s*[:=]\s*['\"][A-Za-z0-9_\-+/=.]{20,}['\"]"),
     ("a secret assigned in an environment file",
      rf"^\s*(?:export\s+)?{SECRET_NAME}\s*[:=]\s*['\"]?[A-Za-z0-9_\-+/=.:;]{{16,}}['\"]?\s*(?:#.*)?$"),
 ]
@@ -46,8 +48,9 @@ def shape_of(line):
     return next(name for name, pattern in COMPILED if pattern.search(line))
 
 
-def git(*args):
-    return subprocess.run(["git", *args], capture_output=True, text=True, errors="replace").stdout
+def git(*args, check=True):
+    """Git's output. When git fails and check is true, raise, so the scan never reads a failure as no keys."""
+    return subprocess.run(["git", *args], capture_output=True, text=True, errors="replace", check=check).stdout
 
 
 def scan_patch(patch):
@@ -74,16 +77,22 @@ def staged_patch():
 
 
 def history_patch():
-    if not git("rev-parse", "--verify", "-q", "HEAD").strip():
+    if not git("rev-parse", "--verify", "-q", "HEAD", check=False).strip():  # a repo with no commits yet
         return ""
     return git("log", "-p", "--no-color", "--no-ext-diff", "-U0", f"--format={COMMIT_MARK}%h \"%s\"", "HEAD")
 
 
 def main():
+    try:
+        staged, history = staged_patch(), history_patch()
+    except subprocess.CalledProcessError as failed:
+        print("The secret scan could not read the changes from git, so it cannot tell whether they hold a key. "
+              f"Git said this: {failed.stderr.strip()}")
+        return 1
     found = [f"{path}, line {number}, in the staged changes: {shape}"
-             for _, path, number, shape in scan_patch(staged_patch())]
+             for _, path, number, shape in scan_patch(staged)]
     found += [f"{path}, added by commit {commit}: {shape}"
-              for commit, path, _, shape in scan_patch(history_patch())]
+              for commit, path, _, shape in scan_patch(history)]
     if not found:
         print("The secret scan found no keys in the staged changes or the history.")
         return 0

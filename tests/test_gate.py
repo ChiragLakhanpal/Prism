@@ -283,6 +283,9 @@ def test_a_key_in_the_history_fails_the_gate_even_when_only_markdown_is_staged(r
 
 @pytest.mark.parametrize("line", [
     "AZURE_OPENAI_API_KEY={key}",
+    'api_key = "{key}"',
+    '{{"api_key": "{key}"}}',
+    "client_secret='{key}'",
     "APPLICATIONINSIGHTS_CONNECTION_STRING=InstrumentationKey={guid};IngestionEndpoint=https://example.org/",
     "conn = 'DefaultEndpointsProtocol=https;AccountName=strata;AccountKey={b64};EndpointSuffix=core.windows.net'",
     "-----BEGIN {kind} KEY-----",
@@ -317,6 +320,19 @@ def test_ordinary_lines_pass_the_secret_scan(repo, line):
     done = commit(repo)
 
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_the_secret_scan_fails_when_git_cannot_read_the_changes(tmp_path):
+    outside = tmp_path / "not-a-repo"
+    outside.mkdir()
+    env = clean_env() | {"GIT_CEILING_DIRECTORIES": str(tmp_path.resolve())}
+
+    done = subprocess.run([sys.executable, str(ROOT / "gates" / "secret_scan.py")],
+                          cwd=outside, capture_output=True, text=True, env=env)
+
+    assert done.returncode != 0
+    assert "found no keys" not in done.stdout
+    assert "could not read the changes from git" in done.stdout
 
 
 def test_no_gate_script_hides_a_standard_library_module():
