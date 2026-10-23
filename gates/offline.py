@@ -204,15 +204,18 @@ def run_stage(stage, run):
 
     The gate waits on each lane's `done` event, not on its thread. When Ctrl-C breaks into
     Thread.join, Python can report a lane that is still running as finished, and the gate
-    would then exit before that lane stopped its step.
+    would then exit before that lane stopped its step. The lanes start inside the `try`, so
+    Ctrl-C between two starts still stops the lanes that started.
     """
     lanes = [lane for lane in stage if lane is not None]
     if lanes:
         run.say(f"- The gate runs the {listed(lanes)} {'lanes side by side' if len(lanes) > 1 else 'lane'}.\n")
-    finished = [threading.Event() for _ in stage]
-    for steps, done in zip(stage.values(), finished):
-        threading.Thread(target=run_lane, args=(steps, run, done)).start()
+    finished = []
     try:
+        for steps in stage.values():
+            done = threading.Event()
+            threading.Thread(target=run_lane, args=(steps, run, done)).start()
+            finished.append(done)
         for done in finished:
             done.wait()
     except BaseException:  # On Ctrl-C, stop every lane here, because each step runs in its own session.
