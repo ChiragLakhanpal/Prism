@@ -1,0 +1,226 @@
+Source: https://documents.worldbank.org/curated/en/099073126063519067/pdf/P156634-20dacfd1-e5e5-4949-a065-f98e9a431c5f.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Coast Water Services Board's Procurement Plan of July 31, 2026 for P156634, its version just before August 17, 2026, which does not yet list KE-CWSB-567630-CW-DIR. Documents API id 40119876.
+Pages: 3, one after each form feed, read from the PDF's text layer
+
+Page 1 of 2
+WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+SUMMARY PROCUREMENT PLAN (first eighteen months)
+I. General
+The following procurement plan has been developed for project implementation during the 
+first eighteen months and provides the basis for the procurement methods and bank 
+prior/post review thresholds.  It covers the three categories, namely, Works; Consultancies; 
+and Goods. The plan will be updated when need arises to reflect the actual project 
+implementation needs. 
+1. Project information:  
+Country / Borrower: Republic of Kenya 
+Project: Water and Sanitation Development Project (WSDP) 
+IDA Credit No.  6029 & 6030
+Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b) 
+WaSREB, (c) Water Service Providers: Kilifi-Mariakani Water and Sewerage 
+Company (Kimawasco),; Taita-Voi Water and Sewerage Company (Tavevo); 
+Mombasa Water Supply and Sanitation Company (Mowassco); Kwale Water and 
+Sewerage Company (Kwawasco); Garissa Water and Sewerage Company 
+(Gawasco); Wajir Water and Sewerage Company (Wajwasco); and Malindi 
+Water and Sewerage Company; and (d) Counties: Kilifi; Taita Taveta; 
+Mombasa; Kwale; Garissa; and Wajir 
+2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan: 
+June 15, 2017
+3. Date of General Procurement Notice: June 14, 2017
+4. Period covered by this procurement plan: June 2017 to December 2018
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods 
+and Bank’s Prior Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s 
+Prior Review for Works, Goods and Consultancy Services
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure AuthorizedPage 2 of 2
+Expenditure 
+Category
+Contract Value 
+(Threshold) 
+(US$ 000)
+Procurement 
+Method
+Contract Subject to 
+Prior Review 
+15,000 or more ICB Contracts above $5 
+million
+Below 15,000 NCB First contract per 
+entity and Contracts 
+above $5 million
+Below or equal 
+200 
+Shopping None unless contract 
+specified in the PP
+1. Works
+No threshold Direct 
+Contracting
+As specified in PP
+1,000 or more ICB First contract per 
+entity and Contracts 
+above $1.5 million
+Below 1,000 NCB First contract per 
+entity
+Below or equal 
+to 100
+Shopping None unless contract 
+specified in the PP
+2. Goods
+ 
+No threshold Direct 
+Contracting
+As specified in PP
+Firms* QCBS,LCS,FBS, 
+QBS
+First contract per 
+entity and Contracts 
+above $0.5 million
+Firms* 
+(Estimated cost  
+less than 
+$300,000)
+CQS First contract per 
+entity
+Individual IC (at least 3 
+CVs)
+All contract of 
+estimated cost above 
+$200,000 and more
+3. Consultancy 
+Services
+No threshold Single Source All 
+*Assignments whose estimated cost is less $300,000 could be Open-National 
+(Shortlist could comprise of all national firms)
+NB:  All terms of reference for consulting services will be subject to IDA’s prior 
+review.Page 1
+PROCUREMENT
+PLAN Kenya : Water and Sanitation Development Project
+General Information
+Country: Kenya Bank’s Approval Date of the Original Procurement Plan: 2017-06-23
+Revised Plan Date(s): (comma delineated, leave blank if none)2026-07-31
+Project ID: P156634 GPN Date: 2017-06-13
+Project Name: Water and Sanitation Development Project
+Loan / Credit No: IDA / 60290, IDA / 60300
+Executing Agency(ies):Coast Water Services Board
+WORKS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) High SEA/SH Risk Procurement Document Type EstimatedAmount (US$) Actual Amount (US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned
+ KE-CWSB-232660-CW-RFB /
+Construction of 30km Second
+Baricho Kakuyuni Pipeline
+IDA / 60300
+Component 1: Rehabilitation
+and expansion of urban wat
+er supply and sanitation ser
+vices in the coastal region (
+US$176 of w hich IDA-SUF U
+S$160 million).
+Prior Request for Bids Open - National Single Stage - One Envelope
+Request for Bids -
+Small Works SPD
+(1 envelope proce
+ss)
+10,000,000.0
+0
+17,460,603.
+16 Signed 2021-05-03 2021-08-13 2021-05-24 2021-08-16 2021-07-05 2021-10-01 2021-08-04 2022-02-24 2021-09-08 2022-04-13 2022-09-08
+ KE-CWSB-233052-CW-RFB /
+Construction of Baricho Emer
+gency Protection Works
+IDA / 60300
+Component 1: Rehabilitation
+and expansion of urban wat
+er supply and sanitation ser
+vices in the coastal region (
+US$176 of w hich IDA-SUF U
+S$160 million).
+Prior Request for Bids Open - National Single Stage - One Envelope
+Request for Bids -
+Small Works SPD
+(1 envelope proce
+ss)
+14,000,000.0
+0
+7,205,649.4
+6 Signed 2021-05-04 2021-07-23 2021-05-18 2021-07-26 2021-06-29 2021-09-01 2021-07-20 2021-10-18 2021-08-17 2021-11-17 2022-08-17
+ KE-CWSB-506334-CW-DIR /
+Baricho Plant Solarization IDA / 60290
+Component 1: Rehabilitation
+and expansion of urban wat
+er supply and sanitation ser
+vices in the coastal region (
+US$176 of w hich IDA-SUF U
+S$160 million).
+Post Direct Selection Direct - National
+Request for Quota
+tions - Small Work
+s (Emergency) SP
+D -Non Competiti
+ve
+4,900,000.00 0.00 Signed 2025-08-05 2025-08-12 2025-08-19 2025-08-25 2025-09-02 2025-09-18 2025-10-31
+GOODS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ KE-CWSB-565568-GO-RFQ /
+Supply and installation of Ad
+ditional Pumps at Baricho
+IDA / 60290
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited - National Single Stage - One Envelope 116,000.00 0.00 Pending Implementation 2026-08-05 2026-09-25 2026-10-30
+NON CONSULTING SERVICES
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+CONSULTING FIRMS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Expression of InterestNotice Short List and Draft Request for Proposals Request for Proposalsas Issued Opening of TechnicalProposals / Minutes  Evaluation of Technical Proposal Combined EvaluationReport and Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ KE-MOWI-30792-CS-QCBS /
+Construction Supervision for
+Program for the Improvemen
+t of Water Services in Momba
+sa West and North (Nyali) Ma
+inland
+IDA / 60290
+Component 1: Rehabilitation
+and expansion of urban wat
+er supply and sanitation ser
+vices in the coastal region (
+US$176 of w hich IDA-SUF U
+S$160 million).
+Prior Quality And Cost-Based Selection Open - International 875,500.00 953,849.84 Signed 2017-10-19 2017-11-18 2017-11-24 2018-01-01 2018-01-05 2018-02-12 2018-03-14 2018-03-12 2018-05-25 2018-04-29 2018-06-29 2018-05-25 2020-06-18
+ KE-CWSB-224323-CS-QCBS /
+Consultancy Services for Det
+ailed ESIA & RAP Studies for t
+he Mwache Transmission Pip
+elines
+IDA / 60300
+Component 1: Rehabilitation
+and expansion of urban wat
+er supply and sanitation ser
+vices in the coastal region (
+US$176 of w hich IDA-SUF U
+S$160 million).
+Prior Quality And Cost-Based Selection Open - International 500,000.00 240,523.76 Completed 2021-04-15 2021-04-16 2021-05-06 2021-04-24 2021-06-10 2022-06-24 2021-07-15 2021-12-06 2021-08-12 2022-06-28 2021-09-09 2022-06-30 2021-10-07 2022-07-26 2022-07-04 2025-07-31
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Invitation to Identified/Selected Consultant Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ KE-CWSB-466875-CS-INDV /
+Project Communication Speci
+alist
+IDA / 60290
+Component 4: Project mana
+gement (US$3.3 million of w
+hich IDA-SUF US$3 million).
+Post Individual Consultant Selection Limited - National 70,000.00 0.00 Signed 2024-12-22 2025-01-24 2024-12-25 2025-06-25 2024-12-28 2025-06-22 2025-01-02 2025-08-18 2025-10-29

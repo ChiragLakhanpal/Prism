@@ -13,6 +13,11 @@
 # and line-end hyphenation. The fixture was recorded with `uv run python -m strata.fixture.record`
 # on October 23, 2026.
 #
+# First listed: a value that says a plan is the first to list an activity names the activity
+# (first_lists) and the same agency's previous version (not_in), which must not list it. Each
+# previous version was found by fetching the text of every P156634 Procurement Plan dated
+# between the two and reading its Executing Agency(ies) line.
+#
 # Plan dates: the published plans print each step as Planned and Actual columns, and the text
 # loses the column of a blank cell. The column of each plan date below was read from the
 # word's x position on the PDF page with `pdftotext -bbox`. On page 3 of the October 9, 2026
@@ -357,6 +362,8 @@ document_type = "Procurement Plan"
 project = "P156634"
 date = 2021-04-21
 pdf_page = 3
+first_lists = "KE-NWWDA-229129-CW-RFB"
+not_in = "documents/P156634/procurement-plan-2020-12-07"
 
 [[value]]
 id = "plan-229129-days-late"
@@ -432,6 +439,21 @@ document_type = "Procurement Plan"
 project = "P156634"
 date = 2026-08-17
 pdf_page = 3
+first_lists = "KE-CWSB-567630-CW-DIR"
+not_in = "documents/P156634/procurement-plan-2026-07-31"
+
+[[value]]
+id = "plan-541055-first-listed"
+says = "The Northern Water Works Development Agency's plan of March 5, 2026 is the first to list KE-NWWDA-541055-CW-RFB."
+value = 2026-03-05
+quote = "KE-NWWDA-541055-CW-RFB / Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply"
+document = "documents/P156634/procurement-plan-2026-03-05"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-03-05
+pdf_page = 3
+first_lists = "KE-NWWDA-541055-CW-RFB"
+not_in = "documents/P156634/procurement-plan-2025-07-21"
 
 [[value]]
 id = "closing-date-p156634"

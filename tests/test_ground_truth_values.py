@@ -104,6 +104,26 @@ def test_a_day_count_matches_the_two_dates_it_was_counted_between(value):
     assert (end - start).days == value["value"]
 
 
+FIRST_LISTED = [value for value in VALUES if "first_lists" in value]
+
+
+def test_every_plan_said_to_be_the_first_to_list_an_activity_has_a_check():
+    assert {value["first_lists"] for value in FIRST_LISTED} == {
+        "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541055-CW-RFB", "KE-CWSB-567630-CW-DIR"}
+
+
+@pytest.mark.parametrize("value", FIRST_LISTED, ids=lambda value: value["id"])
+def test_a_plan_said_to_be_the_first_to_list_an_activity_lists_it_and_the_version_before_does_not(value):
+    """not_in is the same agency's previous version, found by reading the Executing Agency of every plan between."""
+    earlier = value["not_in"]
+    earlier_texts = [*fmt.pages(RECORDED / f"{earlier}.pages.txt"), fmt.read(RECORDED / f"{earlier}.txt").body]
+
+    assert word_for_word(value["first_lists"], page(value["document"], value["pdf_page"]))
+    assert re.search(r"\d{4}-\d{2}-\d{2}$", earlier).group() < str(value["date"])
+    assert not any(word_for_word(value["first_lists"], text) for text in earlier_texts), (
+        f"{earlier} already lists {value['first_lists']}")
+
+
 # The eight activities in the blueprint's Check a plan wireframe (docs/blueprint/strata-blueprint.html).
 WIREFRAME_ACTIVITIES = {
     "KE-NWWDA-541055-CW-RFB", "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541062-CW-RFQ", "KE-NWWDA-199461-GO-RFB",

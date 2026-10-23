@@ -1,7 +1,7 @@
 Source: https://documents.worldbank.org/curated/en/311981607352126696/text/Kenya-AFRICA-EAST-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt
 License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
 Recorded: 2026-10-23
-About: The Northern Water Works Development Agency's Procurement Plan of December 7, 2020 for P156634. Documents API id 32642978.
+About: The Northern Water Works Development Agency's Procurement Plan of December 7, 2020 for P156634, its version just before April 21, 2021, which does not yet list KE-NWWDA-229129-CW-RFB. Documents API id 32642978.
 
                  WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
                  SUMMARY PROCUREMENT PLAN (first eighteen months)

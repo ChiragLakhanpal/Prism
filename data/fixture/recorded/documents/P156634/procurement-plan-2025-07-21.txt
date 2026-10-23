@@ -1,7 +1,7 @@
 Source: https://documents.worldbank.org/curated/en/099072125080039635/text/P156634-980ca8a0-c502-4555-ae80-be6b03dc5106.txt
 License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
 Recorded: 2026-10-23
-About: The Northern Water Works Development Agency's Procurement Plan of July 21, 2025 for P156634. Documents API id 40031468.
+About: The Northern Water Works Development Agency's Procurement Plan of July 21, 2025 for P156634, its version just before March 5, 2026, which does not yet list KE-NWWDA-541055-CW-RFB. Documents API id 40031468.
 
              WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
               SUMMARY PROCUREMENT PLAN (first eighteen months)
