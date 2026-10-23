@@ -7,7 +7,7 @@ WITH months AS (
   SELECT DISTINCT
     s.loan_number,
     s.project_id,
-    CASE WHEN month(s.end_of_period) >= 7 THEN year(s.end_of_period) + 1 ELSE year(s.end_of_period) END AS fiscal_year
+    s.fiscal_year
   FROM strata.silver.loan_history AS s
   JOIN strata.bronze.api_pages AS b ON b.page_hash = s.page_hash AND b.source = :source
 ),

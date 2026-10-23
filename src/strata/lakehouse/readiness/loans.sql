@@ -12,7 +12,7 @@ loans AS (
   SELECT
     l.loan_number,
     p.project_id AS held_project,
-    CASE WHEN month(l.approval_date) >= 7 THEN year(l.approval_date) + 1 ELSE year(l.approval_date) END AS fiscal_year
+    l.approval_fiscal_year AS fiscal_year
   FROM strata.gold.loan AS l
   JOIN mine AS m ON m.loan_number = l.loan_number
   LEFT JOIN strata.gold.project AS p ON p.project_id = l.project_id

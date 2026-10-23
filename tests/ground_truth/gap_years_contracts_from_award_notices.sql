@@ -1,6 +1,7 @@
 -- FY2017 to FY2019, which neither awards dataset covers: the contracts gold built from award notices
 -- in each fiscal year equal a direct count of Contract Award notices for that year, by the fiscal
--- year of the contract's signature date, or of the notice's date when it gives none. A notice with
+-- year of the contract's signature date, or of the notice's date when it gives none, which it
+-- works out on its own rather than from the contract_fiscal_year column it checks. A notice with
 -- no signature date whose STEP reference is already a contract's from an awards dataset is that
 -- contract, published after its signing, so neither side counts it. Each of them is labeled as US
 -- dollars or local currency from award notices. It returns true or false rather than the

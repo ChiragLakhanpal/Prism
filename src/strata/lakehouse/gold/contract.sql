@@ -116,11 +116,7 @@ fy2001_2016 AS (
 award_notices AS (
   SELECT
     *,
-    CASE
-      WHEN month(coalesce(contract_signature_date, notice_date)) >= 7
-        THEN year(coalesce(contract_signature_date, notice_date)) + 1
-      ELSE year(coalesce(contract_signature_date, notice_date))
-    END AS fiscal_year
+    contract_fiscal_year AS fiscal_year
   FROM strata.gold.notice
   WHERE notice_type = 'Contract Award'
 ),

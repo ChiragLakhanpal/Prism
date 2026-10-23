@@ -38,6 +38,7 @@ SELECT
   n.submission_deadline,
   r.loan_number,
   n.contract_signature_date,
+  n.contract_fiscal_year,
   n.signed_contract_price,
   n.signed_contract_currency,
   n.public_from

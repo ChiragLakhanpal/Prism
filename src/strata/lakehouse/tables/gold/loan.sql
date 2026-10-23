@@ -5,6 +5,7 @@
 -- lender                   IDA, IBRD or TF
 -- status                   such as Disbursing&Repaying, word for word
 -- original_principal_usd, disbursed_usd, undisbursed_usd, cancelled_usd   in US dollars
+-- approval_fiscal_year     the fiscal year of approval_date, July to June
 -- closing_date             the most recent closing date
 -- as_of                    the month end of the snapshot
 -- public_from              as_of (ADR 0002)
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS strata.gold.loan (
   undisbursed_usd DECIMAL(18, 2),
   cancelled_usd DECIMAL(18, 2),
   approval_date DATE,
+  approval_fiscal_year INT,
   effective_date DATE,
   closing_date DATE,
   as_of DATE,

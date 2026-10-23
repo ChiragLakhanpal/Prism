@@ -21,7 +21,8 @@ from strata.lakehouse import clean
 COLUMNS = (
     "loan_number", "lender", "project_id", "project_name", "country_code", "country", "borrower", "status",
     "original_principal_usd", "disbursed_usd", "undisbursed_usd", "cancelled_usd", "approval_date", "effective_date",
-    "closing_date", "last_disbursement_date", "end_of_period", "page_hash", "fetched_at", "public_from")
+    "closing_date", "last_disbursement_date", "end_of_period", "approval_fiscal_year", "fiscal_year", "page_hash",
+    "fetched_at", "public_from")
 TABLES = {"strata.silver.loans": COLUMNS}
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
@@ -46,6 +47,7 @@ def row(record: dict, page_hash: str, fetched_at: dt.datetime) -> tuple | None:
         return None
     lender = LENDER.match(number.upper())
     end_of_period = clean.parse_date(record.get("end_of_period"))
+    approved = clean.parse_date(record.get("board_approval_date"))
     return (
         number.upper(),
         lender[1] if lender else None,
@@ -59,11 +61,13 @@ def row(record: dict, page_hash: str, fetched_at: dt.datetime) -> tuple | None:
         clean.amount(_either(record, "disbursed_amount_us_", "disbursed_amount")),
         clean.amount(_either(record, "undisbursed_amount_us_", "undisbursed_amount")),
         clean.amount(_either(record, "cancelled_amount_us_", "cancelled_amount")),
-        clean.parse_date(record.get("board_approval_date")),
+        approved,
         clean.parse_date(record.get("effective_date_most_recent")),
         clean.parse_date(record.get("closed_date_most_recent")),
         clean.parse_date(record.get("last_disbursement_date")),
         end_of_period,
+        clean.fiscal_year(approved),
+        clean.fiscal_year(end_of_period),
         page_hash,
         fetched_at,
         clean.public_from(end_of_period, fetched_at.astimezone(dt.UTC).date()),

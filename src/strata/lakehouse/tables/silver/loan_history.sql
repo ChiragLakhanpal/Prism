@@ -3,6 +3,7 @@
 -- the same columns as strata.silver.loans.
 --
 -- end_of_period            the month end this row describes
+-- fiscal_year              the fiscal year of end_of_period, July to June
 -- closing_date             the closing date as that month reported it (closed_date_most_recent)
 -- public_from              end_of_period, or the fetch day when it is later (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.loan_history (
@@ -23,6 +24,8 @@ CREATE TABLE IF NOT EXISTS strata.silver.loan_history (
   closing_date DATE,
   last_disbursement_date DATE,
   end_of_period DATE,
+  approval_fiscal_year INT,
+  fiscal_year INT,
   page_hash STRING NOT NULL,
   fetched_at TIMESTAMP NOT NULL,
   public_from DATE NOT NULL

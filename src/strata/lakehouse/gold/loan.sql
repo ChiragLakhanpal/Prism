@@ -12,6 +12,7 @@ SELECT
   undisbursed_usd,
   cancelled_usd,
   approval_date,
+  approval_fiscal_year,
   effective_date,
   closing_date,
   end_of_period AS as_of,

@@ -24,7 +24,8 @@ TABLES = {
         "reference_method_code", "bid_description", "procurement_group", "procurement_category",
         "procurement_method_code", "procurement_method_as_written", "procurement_method", "market_approach",
         "submission_deadline", "loan_number_as_written", "loan_number", "loan_digits",
-        "contract_signature_date", "signed_contract_price", "signed_contract_currency", "notice_text",
+        "contract_signature_date", "contract_fiscal_year", "signed_contract_price", "signed_contract_currency",
+        "notice_text",
         "contact_details_removed", "page_hash", "fetched_at", "public_from"),
 }
 
@@ -75,6 +76,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         notice_date = clean.parse_date(record.get("noticedate")) or clean.parse_date(record.get("submission_date"))
         award = (record.get("notice_type") or "").strip().lower() == "contract award"
         signature = SIGNATURE_DATE.search(text) if award else None
+        signed = clean.parse_date(signature[1]) if signature else None
         price, currency = _price(text) if award else (None, None)
         loan = _loan(text)
         group = clean.text(record.get("procurement_group"))
@@ -102,7 +104,8 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             loan.as_written if loan else None,
             loan.normalized if loan else None,
             loan.digits if loan else None,
-            clean.parse_date(signature[1]) if signature else None,
+            signed,
+            clean.fiscal_year(signed or notice_date) if award else None,
             price,
             currency,
             text or None,
