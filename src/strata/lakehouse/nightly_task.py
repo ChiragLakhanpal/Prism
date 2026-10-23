@@ -31,4 +31,4 @@ if __name__ == "__main__":
     from strata.lakehouse.engine import SparkEngine
     from strata.lakehouse.nightly import main
 
-    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()))
+    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()))  # pages from the live APIs

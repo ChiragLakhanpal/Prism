@@ -47,6 +47,7 @@ from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
 from strata.config import Thresholds, load_sources, load_thresholds
+from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
@@ -95,14 +96,9 @@ def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tupl
                 params[f"{column}_{n}"] = value
                 names.append(f":{column}_{n}")
             values.append(f"({', '.join(names)})")
-        engine.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {', '.join(values)}", params)
+        engine.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {', '.join(values)}",  # sql-lint: names only
+                   params)
     return len(rows)
-
-
-def public_from(disclosed_on: dt.date | None, fetched_on: dt.date) -> dt.date:
-    """ADR 0002: the day the source published it, or the day Strata first fetched it when that day is
-    missing or later than the fetch."""
-    return disclosed_on if disclosed_on is not None and disclosed_on <= fetched_on else fetched_on
 
 
 # ── 1. Fetch into bronze ─────────────────────────────────────────────────
@@ -292,7 +288,8 @@ def first_listings(versions: list[Version]) -> dict[str, Version]:
 
 def write_versions(engine: Engine, project_id: str, versions: list[Version]) -> None:
     for table in ("plan_versions", "plan_listings"):
-        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id", {"project_id": project_id})
+        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
+                   {"project_id": project_id})
     insert(engine, "strata.silver.plan_versions",
            ("document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on", "series_order",
             "previous_document_id", "is_latest", "pdf_pages", "route_b_pages", "parse_reason", "text_url",
@@ -402,7 +399,8 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> Rows
             "WHERE project_id = :project_id ORDER BY parsed_at", {"project_id": project_id}).rows:
         parsed[(str(document_id), int(number))] = (str(digest), str(parser), tables)
     for table in ("plan_rows", "plan_steps", "plan_step_delays", "plan_data_notes"):
-        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id", {"project_id": project_id})
+        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
+                   {"project_id": project_id})
     rows, steps, read, without_reference, unknown = [], [], set(), 0, set()
     for version in versions:
         pages = version.table_pages

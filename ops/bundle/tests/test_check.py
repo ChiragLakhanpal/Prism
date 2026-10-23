@@ -34,7 +34,7 @@ class FakeWorkspace:
     def run_job(self, name):
         run_id = "880001"
         for key in self.order or [task.key for task in nightly.job_tasks()]:
-            nightly.run_task(self.duckdb, key, run_id)
+            nightly.run_task(self.duckdb, key, run_id, fetch=lambda source, engine: ())  # no pages to fetch
         return run_id, self.state, "https://dbc-1.cloud.databricks.com/jobs/1/runs/880001"
 
     def job_names(self):
@@ -98,11 +98,12 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 # ── The sample query on both engines ─────────────────────────────────────
 
 def deployed_warehouse():
-    """A SQL warehouse after the deploy and the live plan run: DuckDB with the catalog's tables built
-    and the demo plan's recorded Procurement Plans read into them."""
+    """A SQL warehouse after the deploy, the live plan run and one run of the nightly job: DuckDB
+    with the catalog's tables built and filled, here from the recorded plans and pages."""
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
+    nightly.run_locally(engine)
     return engine
 
 

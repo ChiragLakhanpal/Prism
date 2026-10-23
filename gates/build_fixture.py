@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """Builds the fixture database, data/out/fixture.duckdb, that the offline tests read.
 
-It builds three things, with no network:
+It builds four things, with no network:
 
 - The strata catalog's schemas and tables, from the table definitions in
-  src/strata/lakehouse/tables, the same ones the deploy builds on the workspace. The build stops
-  when any table in those schemas lacks a public_from DATE column (ADR 0002).
+  src/strata/lakehouse/tables, the same ones the deploy builds on the workspace.
 - The recorded sources listed in data/fixture/sources.toml, into the schema `recorded`:
   `recorded.files` (each file with its source and license line), `recorded.responses`
   (each API response as JSON), `recorded.documents` (each document's published text) and
-  `recorded.pages` (the text of each PDF page, numbered from 1). Ticket 07's lakehouse run
-  turns these into bronze, silver and gold. The `recorded` schema is the fixture's copy of
-  the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops.
+  `recorded.pages` (the text of each PDF page, numbered from 1). The `recorded` schema is the
+  fixture's copy of the sources, not a catalog layer.
 - The demo project's Procurement Plans as STEP rows. The plan reader (src/strata/lakehouse/plans.py)
   runs over the recorded plans with the offline document source and layout parser, and fills
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
   plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
   adds it to the nightly job.
+- Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
+  (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
+  the fixture can never drift from the code that makes the real tables. They run after the plan
+  reader, so gold can read the plan rows.
+
+The build stops when any table outside the `recorded` schema lacks a public_from DATE column
+(ADR 0002).
 
 The tests attach the database as `strata`, so they query strata.recorded.pages and
 strata.silver.plan_rows. It builds into a new file and swaps it in, so a failed build
@@ -32,12 +37,13 @@ from pathlib import Path
 
 from strata.config import load_slice
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog, plans
+from strata.lakehouse import catalog, nightly, pages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.documents import NotFetched
 
 ROOT = Path(__file__).resolve().parents[1]
+RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readiness measures carry
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
 RECORDED_TABLES = """
@@ -90,7 +96,10 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
             load_recorded(engine.connection, manifest)
             if plans_for:
                 plans.run_on_fixture(engine, plans_for, manifest=manifest)
-            catalog.check_public_from(engine)  # every table in the catalog's schemas, whatever made it
+            if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
+                nightly.run_locally(engine, run_id=RUN_ID,
+                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest))
+            catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
     except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)
         raise SystemExit(str(error)) from error

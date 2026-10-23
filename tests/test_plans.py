@@ -98,9 +98,11 @@ def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_d
 
 
 def measured(engine, run_id: str | None = None) -> dict:
-    """Each data readiness measure of a run (the latest when run_id is None), as (count, denominator)."""
+    """Each data readiness measure of a plan run (the latest when run_id is None), as (count, denominator).
+    The nightly job writes its own sources' measures to the same table."""
     found = rows(engine, """
-        SELECT run_id, measure, count, denominator FROM strata.ops.data_readiness ORDER BY measured_at""")
+        SELECT run_id, measure, count, denominator FROM strata.ops.data_readiness WHERE source = 'documents'
+        ORDER BY measured_at""")
     run_id = run_id or found[-1]["run_id"]
     return {r["measure"]: (r["count"], r["denominator"]) for r in found if r["run_id"] == run_id}
 

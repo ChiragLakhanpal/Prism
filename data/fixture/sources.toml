@@ -122,6 +122,13 @@ dataset = "notices"
 url = "https://search.worldbank.org/api/v2/procnotices?format=json&bid_reference_no=KE-KAJIADO%20COUNTY-567787-CW-RFB%5EKE-UASIN%20GISHU%20COUNTY-571338-CW-RFB%5EKE-ICTA-571738-CW-RFB%5EKE-MIGORI%20COUNTY-532367-CW-RFB&rows=50&os=0"
 about = "Every notice for the four Kenya works packages under Request for Bids that were advertised by October 9, 2026 with bids due after it, from P176758 and P170941: comparables still open on the demo plan's date."
 
+[[source]]
+file = "api/notices/kenya-icb-2015.json"
+kind = "json"
+dataset = "notices"
+url = "https://search.worldbank.org/api/v2/procnotices?format=json&id=OP00034393&rows=5&os=0"
+about = "A Kenya Invitation for Bids of September 14, 2015, under the Guidelines that came before the 2016 Procurement Regulations, whose method is International Competitive Bidding (ICB). Silver stores it as Request for Bids, Open - International, and keeps the notice's own words."
+
 # Contract awards
 
 [[source]]

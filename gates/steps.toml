@@ -54,6 +54,12 @@ name = "Run the Python tests for the wizard and the day-one probes"
 run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
+# The lint reads only the source files, so it needs nothing from the other steps.
+[[step]]
+name = "Lint the SQL: every table in three parts, every value a bound parameter"
+run = ["uv", "run", "--frozen", "python", "gates/sql_lint.py"]
+lane = "sql"
+
 [[step]]
 name = "Build the web app: type check and bundle"
 run = ["npm", "--prefix", "web", "run", "--silent", "build"]
