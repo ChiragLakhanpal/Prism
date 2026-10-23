@@ -171,17 +171,17 @@ def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: 
 @dataclass(frozen=True)
 class Fetching:
     fetched: int  # documents fetched into bronze
-    contacts_removed: int  # emails and phone numbers taken out of their published texts
+    with_contacts: int  # of those, the documents whose published text had contact details taken out
 
 
 def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
-    """Each document's text and page texts, for the documents bronze does not hold yet, with every email
-    address and phone number taken out before bronze keeps them (CLAUDE.md rule 8). The passage reader
-    (src/strata/lakehouse/passages.py) fetches its documents here too."""
+    """Each document's text and page texts, for the documents bronze does not hold yet, with its email
+    addresses and labelled phone numbers taken out before bronze keeps them (contacts.strip_text). The
+    passage reader (src/strata/lakehouse/passages.py) fetches its documents here too."""
     held = {str(row[0]) for row in engine.run(
         "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
-    fetched = removed = 0
+    fetched = with_contacts = 0
     for entry in entries:
         if entry.document_id in held:
             continue
@@ -200,8 +200,8 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
                [(entry.document_id, project_id, number, entry.pdf_url, _sha(page), page, pages.fetched_at, public)
                 for number, page in enumerate(page_texts, 1)])
         fetched += 1
-        removed += count
-    return Fetching(fetched, removed)
+        with_contacts += count > 0
+    return Fetching(fetched, with_contacts)
 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───

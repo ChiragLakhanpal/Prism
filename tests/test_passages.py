@@ -166,7 +166,15 @@ def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_an
     linked = found["passages_linked_to_project"]
     assert linked["count"] == linked["denominator"] > 0  # gold.project holds P130164
     assert found["documents_fresh"]["as_of"] == value("icr-review-reissue-date")["value"]
-    assert found["document_contacts_stripped"]["kind"] == "stripped"
+
+
+def test_strata_ops_counts_the_documents_that_had_contact_details_taken_out_of_the_documents_fetched(db):
+    """Each PAD's data sheet prints a contact (PAD_CONTACTS), and no other document fetched does. The
+    run fetched P130164's ICR, two ICR Reviews, 13 ISRs and its PAD, and P156634's PAD and three ISRs."""
+    for project_id, documents in (("P130164", 17), ("P156634", 4)):
+        removed = measured(db, project_id)["contact_details_removed"]
+
+        assert (removed["kind"], removed["count"], removed["denominator"]) == ("stripped", 1, documents)
 
 
 # The labelled contacts each recorded PAD's data sheet prints, counted by reading the files: P130164's

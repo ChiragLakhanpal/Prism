@@ -6,10 +6,10 @@ For the showcase project and then the demo plan's project (config/slice.toml), a
 1. Fetches the project's list from the documents API into bronze.document_lists, and each document of
    a type the reader has a template for (src/strata/reader/templates.py) into bronze.document_texts and
    bronze.document_pages, with the plan reader's fetcher (src/strata/lakehouse/plans.py), which takes
-   out emails and phone numbers first. It takes each project's ICR Reviews, ICRs, PADs and ISRs in that
-   order, newest first, and stops when it holds ingestion.passage_documents documents whose published
-   text divides into their PDF's pages (config/thresholds.toml). A document already in bronze is not
-   fetched again. A document whose text does not divide, such as a scan, is kept with every page
+   out emails and labelled phone numbers first. It takes each project's ICR Reviews, ICRs, PADs and
+   ISRs in that order, newest first, and stops when it holds ingestion.passage_documents documents
+   whose published text divides into their PDF's pages (config/thresholds.toml). A document already
+   in bronze is not fetched again. A document whose text does not divide, such as a scan, is kept with every page
    routed to Route B, and does not count.
 2. Gives each document its version of its report: a report re-issued under the same number has a
    second version, which replaces the first for current answers from the day it became public.
@@ -22,7 +22,8 @@ For the showcase project and then the demo plan's project (config/slice.toml), a
    silver.passage_embeddings, and syncs strata.gold.passage, the AI Search index's source table.
 6. Writes its data readiness measures for each project to strata.ops.data_readiness: documents and
    pages per route, the pages whose paragraph numbering was found, the passages linked to a project,
-   embedded and screened, Prompt Shields' hits, the contact details taken out, and freshness.
+   embedded and screened, Prompt Shields' hits, the documents with contact details taken out, and
+   freshness.
 
 Bronze only grows. Silver is rebuilt from bronze for each project of the run on every run. On the
 workspace, ops/documents/run_live.py runs it with the live adapters and then syncs the index.
@@ -152,9 +153,9 @@ def _held(engine: Engine, listed: Listed) -> Held | None:
 @dataclass(frozen=True)
 class Chosen:
     documents: list[Held]
-    # For each project, the emails and phone numbers taken out of the texts this run fetched, and how
-    # many texts it fetched.
-    contacts_removed: dict[str, tuple[int, int]]
+    # For each project, the documents this run fetched whose text had contact details taken out, and
+    # the documents it fetched.
+    with_contacts: dict[str, tuple[int, int]]
 
 
 def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[str], cap: int) -> Chosen:
@@ -171,7 +172,7 @@ def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[s
                 break
             fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
             count, fetched = removed.get(project_id, (0, 0))
-            removed[project_id] = (count + fetching.contacts_removed, fetched + fetching.fetched)
+            removed[project_id] = (count + fetching.with_contacts, fetched + fetching.fetched)
             held = _held(engine, document)
             if held is None:
                 continue  # listed but not fetched: the source could not give it
@@ -364,8 +365,8 @@ MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "d
 CADENCE = "The documents API is read daily."
 
 
-def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, tuple[int, int]], shield: str,
-            when: dt.datetime) -> int:
+def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[str, tuple[int, int]],
+            shield: str, when: dt.datetime) -> int:
     """The run's data readiness measures for each project, each a count with its denominator, written
     to strata.ops.data_readiness: documents and pages per route, the pages whose paragraph numbering
     was found, the passages linked to a project, freshness, the contact details taken out, and what
@@ -383,7 +384,7 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
         on_a = [page for page in pages if page.route == route_a.ROUTE_A]
         body = [page for page in on_a if page.reason == route_a.BODY]
         passages = sum(len(item.reading.passages) for item in items)
-        stripped, fetched = removed.get(project_id, (0, 0))
+        stripped, fetched = with_contacts.get(project_id, (0, 0))
 
         def add(name, kind, count, denominator, detail, as_of=None):
             rows.append((run_id, SOURCE, project_id, name, kind, count, denominator, as_of, detail, when, when.date()))
@@ -404,8 +405,9 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
             "Passages with a vector in strata.gold.passage, the AI Search index's source, of every passage.")
         add("documents_fresh", "fresh", None, None, CADENCE,
             as_of=max(item.held.public_from for item in items))
-        add("document_contacts_stripped", "stripped", stripped, fetched,
-            "Emails and phone numbers taken out of the published texts this run fetched, of the documents it fetched.")
+        add("contact_details_removed", "stripped", stripped, fetched,
+            "This counts the documents fetched this run that had emails or phone numbers removed before they "
+            "were kept, out of the documents fetched this run.")
         results = scanned.get(project_id, [])
         add("passages_screened", "screened", sum(result is not None for result in results), len(results),
             f"Passages with a stored result from {shield}, of every passage.")
@@ -441,7 +443,7 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     scanned = screen(engine, shield, clock)
     embedded = embed(engine, embedder, clock)
     gold.sync(engine, "passage")
-    measure(engine, run_id, found, chosen.contacts_removed, shield.name, clock())
+    measure(engine, run_id, found, chosen.with_contacts, shield.name, clock())
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.reading.passages) for item in found), scanned, embedded)
 
