@@ -1,8 +1,9 @@
 -- The data readiness measures each run writes (GLOSSARY.md; spec, "Data readiness and the
 -- dashboard"). Each measure is a count with its denominator, or for a freshness measure a date;
 -- there is no composite score. The Data readiness page (ticket 16) reads the latest run's rows for
--- each source and subject. Two writers fill it: the nightly job, from one query per source in
--- src/strata/lakehouse/readiness/, and the plan reader (src/strata/lakehouse/plans.py).
+-- each source and subject. Three writers fill it: the nightly job, from one query per source in
+-- src/strata/lakehouse/readiness/, the plan reader (src/strata/lakehouse/plans.py) and the passage
+-- reader (src/strata/lakehouse/passages.py).
 --
 -- run_id       the run that measured it; "fixture" for the nightly job's run in the gate's fixture
 --              database
@@ -11,7 +12,8 @@
 --              fetches, or a project ID (P156634) for its Procurement Plans
 -- measure      what was counted, such as linked_step_reference or pages_read_route_b
 -- kind         coverage, linked, read_well or fresh, or stripped for the contact details removed
---              (the dashboard's Governance page shows personal data stripped)
+--              (the dashboard's Governance page shows personal data stripped), or screened for what
+--              Prompt Shields found in the passages
 -- count        how many; empty for a freshness measure
 -- denominator  out of how many; empty for a freshness measure
 -- as_of        for a freshness measure: the day of the last fetch, or of the newest record

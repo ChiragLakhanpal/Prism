@@ -33,6 +33,7 @@ from dataclasses import dataclass
 
 from strata.config import Thresholds, load_slice, load_sources, load_thresholds
 from strata.knowledge.sectors import main_sector
+from strata.knowledge.shields import Shield
 from strata.lakehouse import plans
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
@@ -265,6 +266,34 @@ def read_documents(engine: Engine, chosen: list[Held], max_tokens: int) -> list[
     return found
 
 
+# ── 4. Prompt Shields ────────────────────────────────────────────────────
+
+WAITING_FOR_SHIELD = """
+SELECT p.text_hash, min(p.header) AS header, min(p.text) AS text, min(p.public_from) AS public_from
+FROM strata.silver.passages AS p
+WHERE NOT EXISTS (SELECT 1 FROM strata.silver.passage_shields AS s
+                  WHERE s.text_hash = p.text_hash AND s.shield = :shield)
+GROUP BY p.text_hash
+"""
+SCANNED = """
+SELECT p.project_id, p.passage_id, s.attack_detected
+FROM strata.silver.passages AS p
+LEFT JOIN strata.silver.passage_shields AS s ON s.text_hash = p.text_hash AND s.shield = :shield
+"""
+
+
+def screen(engine: Engine, shield: Shield, clock: Callable[[], dt.datetime]) -> int:
+    """Scan each passage text the shield has not scanned, and keep each result. Returns how many it scanned."""
+    waiting = _rows(engine, WAITING_FOR_SHIELD, shield=shield.name)
+    scans = shield.scan([embedded_text(row["header"], row["text"]) for row in waiting]) if waiting else []
+    when = clock()
+    engine.insert_rows("strata.silver.passage_shields",
+                       ("text_hash", "shield", "attack_detected", "detail", "scanned_at", "public_from"),
+                       [(row["text_hash"], shield.name, scan.attack_detected, scan.detail, when, row["public_from"])
+                        for row, scan in zip(waiting, scans, strict=True)])
+    return len(waiting)
+
+
 # ── Data readiness ───────────────────────────────────────────────────────
 
 MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
@@ -272,12 +301,16 @@ MEASURE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "d
 CADENCE = "The documents API is read daily."
 
 
-def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, tuple[int, int]],
+def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, tuple[int, int]], shield: str,
             when: dt.datetime) -> int:
     """The run's data readiness measures for each project, each a count with its denominator, written
     to strata.ops.data_readiness: documents and pages per route, the pages whose paragraph numbering
-    was found, the passages linked to a project, freshness, and the contact details taken out."""
+    was found, the passages linked to a project, freshness, the contact details taken out, and what
+    Prompt Shields found."""
     linked = {str(row[0]) for row in engine.run("SELECT project_id FROM strata.gold.project").rows}
+    scanned: dict[str, list] = {}
+    for row in _rows(engine, SCANNED, shield=shield):
+        scanned.setdefault(row["project_id"], []).append(row["attack_detected"])
     rows = []
     for project_id in dict.fromkeys(item.held.listed.project_id for item in found):
         items = [item for item in found if item.held.listed.project_id == project_id]
@@ -306,6 +339,11 @@ def measure(engine: Engine, run_id: str, found: list[Read], removed: dict[str, t
             as_of=max(item.held.public_from for item in items))
         add("document_contacts_stripped", "stripped", stripped, fetched,
             "Emails and phone numbers taken out of the published texts this run fetched, of the documents it fetched.")
+        results = scanned.get(project_id, [])
+        add("passages_screened", "screened", sum(result is not None for result in results), len(results),
+            f"Passages with a stored result from {shield}, of every passage.")
+        add("passages_prompt_shields_hit", "screened", sum(result is True for result in results), len(results),
+            f"Passages in which {shield} found a prompt attack. They are kept, and search leaves them out.")
     engine.insert_rows("strata.ops.data_readiness", MEASURE_COLUMNS, rows)
     return len(rows)
 
@@ -320,7 +358,7 @@ class Report:
     passages: int
 
 
-def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *,
+def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
         thresholds: Thresholds | None = None, endpoint: str | None = None,
         clock: Callable[[], dt.datetime] = _now, run_id: str | None = None) -> Report:
     """Read the first documents into passages. See the module's docstring for the steps."""
@@ -331,7 +369,8 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
     chosen = choose(engine, documents, endpoint, projects, int(limits.value("ingestion.passage_documents")))
     found = read_documents(engine, chosen.documents, int(limits.value("passages.max_tokens")))
-    measure(engine, run_id, found, chosen.contacts_removed, clock())
+    screen(engine, shield, clock)
+    measure(engine, run_id, found, chosen.contacts_removed, shield.name, clock())
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.reading.passages) for item in found))
 
@@ -346,8 +385,10 @@ def run_on_fixture(engine: Engine, manifest=None, **options) -> Report:
     """The run over the recorded fixture, with the offline document source, for each project whose
     document list the fixture records."""
     from strata.fixture import recorded as fmt
+    from strata.knowledge.shields import PatternShield
     from strata.reader.documents import NotFetched, RecordedDocuments
 
+    options.setdefault("shield", PatternShield())
     documents = RecordedDocuments(manifest or fmt.load_manifest())
     endpoint = options.get("endpoint") or load_sources()[SOURCE].endpoint
     recorded = []

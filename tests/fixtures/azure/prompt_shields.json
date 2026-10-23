@@ -1,0 +1,12 @@
+{
+ "about": "An answer of Azure AI Content Safety's shieldPrompt operation (api-version 2024-09-01) for three documents, the second of them an attack. It is written by hand in the shape the operation documents, because the gate's machine has no key. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "response": {
+  "userPromptAnalysis": {"attackDetected": false},
+  "documentsAnalysis": [
+   {"attackDetected": false},
+   {"attackDetected": true},
+   {"attackDetected": false}
+  ]
+ }
+}

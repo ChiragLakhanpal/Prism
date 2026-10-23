@@ -146,6 +146,56 @@ def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_an
     assert found["document_contacts_stripped"]["kind"] == "stripped"
 
 
+def test_every_passage_has_a_stored_prompt_shields_result(db):
+    found = rows(db, "SELECT p.passage_id, s.shield, s.attack_detected FROM strata.silver.passages AS p "
+                     "LEFT JOIN strata.silver.passage_shields AS s ON s.text_hash = p.text_hash")
+
+    assert found and all(row["attack_detected"] is not None and row["shield"] for row in found)
+    for project_id in ("P130164", "P156634"):
+        screened, hits = (measured(db, project_id)[name] for name in ("passages_screened",
+                                                                       "passages_prompt_shields_hit"))
+        assert screened["count"] == screened["denominator"] == hits["denominator"] > 0
+        assert (hits["kind"], hits["count"]) == ("screened", 0)
+
+
+@pytest.fixture
+def fresh():
+    from strata.lakehouse import catalog
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        yield engine
+
+
+class FlagsParagraph54:
+    """A shield that finds an attack in the ICR's paragraph 54 and nowhere else."""
+
+    name = "test shield"
+
+    def scan(self, texts):
+        from strata.knowledge.shields import Scan
+
+        return [Scan(value("icr-para-54")["quote"] in text, "flagged by the test") for text in texts]
+
+
+def test_a_prompt_shields_hit_is_kept_with_its_result_and_counted_in_data_readiness(fresh):
+    from strata.config import load_thresholds
+    from strata.lakehouse import passages
+
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 3  # the ICR Reviews and the ICR: enough for paragraph 54
+    report = passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, shield=FlagsParagraph54())
+
+    flagged = rows(fresh, "SELECT p.paragraph, p.document_type, s.attack_detected, s.detail "
+                          "FROM strata.silver.passages AS p JOIN strata.silver.passage_shields AS s "
+                          "ON s.text_hash = p.text_hash WHERE s.attack_detected")
+    assert flagged == [{"paragraph": "54", "document_type": ICR, "attack_detected": True,
+                        "detail": "flagged by the test"}]
+    hits = rows(fresh, "SELECT count, denominator FROM strata.ops.data_readiness WHERE run_id = :run_id "
+                       "AND measure = 'passages_prompt_shields_hit'", run_id=report.run_id)
+    assert hits == [{"count": 1, "denominator": report.passages}]
+
+
 def squash(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
