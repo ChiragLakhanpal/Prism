@@ -24,5 +24,5 @@ build-backend = "hatchling.build"
 packages = ["src/strata"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "ops/dayone/tests", "ops/wizard/tests"]
 addopts = "-q -p no:cacheprovider"

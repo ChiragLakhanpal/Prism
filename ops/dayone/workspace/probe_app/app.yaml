@@ -1,0 +1,8 @@
+# The probes write the settings in at deploy time. The secret comes from the app resource
+# "appinsights", which points at APPLICATIONINSIGHTS_CONNECTION_STRING in the secret scope.
+command: ["python", "app.py"]
+env:
+  - name: STRATA_DAYONE_SETTINGS
+    value: '__STRATA_DAYONE_SETTINGS__'
+  - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+    valueFrom: appinsights

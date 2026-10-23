@@ -1,0 +1,165 @@
+# The day-one tests and the names, caps and paths around them.
+#
+# This is the one place to change a test's wording, a cap, a probe's target or a gap fill.
+# The wizard (ops/wizard/strata-setup.sh), the probes (ops/dayone/probe_*.py) and the
+# results document (docs/day-one-results.md) all read it through ops/dayone/dayone.py.
+
+results_document = "docs/day-one-results.md"
+
+[names]
+secret_scope = "strata"            # the app's Databricks secret scope
+oauth_profile = "strata"           # the Databricks CLI profile the browser sign-in saves
+ai_search_endpoint = "strata-search"
+resource_group = "WorldBank-demo"
+foundry_resource = "wb-strata"
+foundry_project = "Strata"
+appinsights_resource = "wb-strata-insights"
+budget = "strata-monthly"
+# The probe app takes Strata's own app slot. The app shell ticket deploys the real app over it.
+app = "strata"
+workspace_folder = "strata-dayone"  # under /Workspace/Users/<you>/
+# The probes keep their test files in a schema of their own, so nothing lands in workspace.default,
+# which fairshare may use. Strata's own catalog comes with ticket 04.
+schema = "workspace.strata_dayone"
+volume = "workspace.strata_dayone.files"
+search_table = "workspace.strata_dayone.passages"
+search_index = "workspace.strata_dayone.passages_index"
+
+[payg]
+deadline = "2026-11-10"
+credit_usd = 197                   # the free Azure credit, in US dollars
+who = "The subscription owner (the user)"
+
+# Hard caps. Budgets only send email; these limits stop spend (PLAN.md section 2).
+[caps]
+monthly_budget_usd = 50
+budget_alert_percents = [50, 80, 100]
+budget_forecast_percent = 100
+appinsights_daily_cap_gb = 0.15
+
+# One entry per model role. The deployment name comes from the .env key named here.
+[caps.deployments.agent]
+env_key = "STRATA_MODEL_AGENT"
+deployment_type = "Global Standard"
+sku = "GlobalStandard"
+tokens_per_minute = 100000
+
+[caps.deployments.draft]
+env_key = "STRATA_MODEL_DRAFT"
+deployment_type = "Global Standard"
+sku = "GlobalStandard"
+tokens_per_minute = 30000
+
+[caps.deployments.batch]
+env_key = "STRATA_MODEL_BATCH"
+deployment_type = "Global Batch"
+sku = "GlobalBatch"
+# A Global Batch deployment limits queued tokens, so its cap is an enqueued-token limit.
+enqueued_tokens = 2000000
+# This assumes Azure reports a Global Batch deployment's sku.capacity in thousands of enqueued
+# tokens. The first live run checks it against the portal.
+capacity_unit = 1000
+
+[caps.deployments.embed]
+env_key = "STRATA_MODEL_EMBED"
+deployment_type = "Global Standard"
+sku = "GlobalStandard"
+tokens_per_minute = 150000
+dimensions = 1024
+
+# Test 1: one address per host. A probe counts a host as reached when it gets an HTTP answer;
+# a 403 where this computer gets another answer counts as blocked. Each address answered 200
+# from this computer on October 23, 2026.
+[hosts]
+"search.worldbank.org" = "https://search.worldbank.org/api/v3/wds?format=json&rows=1&fl=docty"
+"documents1.worldbank.org" = "https://documents1.worldbank.org/curated/en/212451501293669530/pdf/Kenya-off-grid-PAD-07072017.pdf"
+"datacatalogapi.worldbank.org" = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00975&resourceId=RS00909&type=json&top=1"
+"api.worldbank.org" = "https://api.worldbank.org/v2/country/KEN?format=json"
+
+# Test 3: the probe looks for a Project Appraisal Document of at least min_pages pages among
+# these projects, in this order, then among the latest PADs for fallback_country. On October 23,
+# 2026, P160009's PAD (Kenya Off-Grid Solar Access Project) had 131 pages. The demo plan's PAD
+# (P156634) had 103 and the showcase's (P130164) had 100, so they are too short for this test.
+[pad]
+projects = ["P160009"]
+fallback_country = "Kenya"
+max_downloads = 6
+min_pages = 120
+search_api = "https://search.worldbank.org/api/v3/wds"
+
+# Test 5: the question the probe asks the Genie space.
+[genie]
+question = "How many trips are in the table?"
+
+# Each test: its question (the first sentence of its item in PLAN.md section 14), a short
+# title, the command that answers it, the path the build takes when it passes, and the gap
+# fill PLAN.md section 14 names for when it fails ("" when it names none).
+[tests.1]
+title = "The World Bank hosts from a notebook, a job and the app"
+question = "Free Edition reaches `search.worldbank.org`, `documents1.worldbank.org`, `datacatalogapi.worldbank.org` and `api.worldbank.org` from a notebook, a job and the app."
+command = "uv run --script ops/dayone/probe_hosts.py --env-file .env"
+default_path = "Ingestion runs in Databricks, and jobs fetch from the World Bank hosts."
+gap_fill = "A Container Apps job fetches the files and pushes them into the volume."
+
+[tests.2]
+title = "Foundry and Azure OpenAI from a job"
+question = "Free Edition reaches the Foundry and Azure OpenAI endpoints from a job, not only from the app."
+command = "uv run --script ops/dayone/probe_azure_from_job.py --env-file .env"
+default_path = "The nightly job calls Foundry and Azure OpenAI directly."
+gap_fill = ""
+
+[tests.3]
+title = "ai_parse_document on a long PAD"
+question = "`ai_parse_document` runs on a 120-page PAD."
+command = "uv run --script ops/dayone/probe_parse_pad.py --env-file .env"
+default_path = "`ai_parse_document` reads route B pages."
+gap_fill = "Content Understanding `prebuilt-layout` reads route B pages."
+
+[tests.4]
+title = "An AI Search endpoint and a hybrid index"
+question = "An AI Search endpoint and a hybrid index can be created."
+command = "uv run --script ops/dayone/probe_ai_search.py --env-file .env"
+default_path = "Strata's own AI Search endpoint holds a hybrid index of passages."
+gap_fill = ""
+
+[tests.5]
+title = "The Genie conversation API as the token's user"
+question = "The Genie conversation API answers as the token's user."
+command = "uv run --script ops/dayone/probe_genie.py --env-file .env"
+default_path = "The Genie conversation API answers structured questions as the viewer."
+gap_fill = ""
+
+[tests.6]
+title = "An outside email joins the workspace and opens the app"
+question = "An outside email can join the workspace and open the app."
+command = "bash ops/wizard/strata-setup.sh"
+default_path = "Reviewers join the workspace and open the Databricks App."
+gap_fill = "A Container Apps copy of the app runs behind Entra sign-in for reviewers."
+
+[tests.7]
+title = "A personal access token or a service principal"
+question = "A personal access token or a service principal can be created."
+command = "bash ops/wizard/strata-setup.sh"
+default_path = "Scripts and probes reach Databricks with a personal access token."
+gap_fill = ""
+
+[tests.8]
+title = "The four models within the subscription's quota"
+question = "The four models deploy within the subscription's quota."
+command = "uv run --script ops/dayone/probe_caps.py --env-file .env"
+default_path = "The four deployments named in .env serve Strata, each with the cap set in `ops/dayone/dayone.toml`."
+gap_fill = ""
+
+[tests.9]
+title = "Foundry evaluations after an Entra sign-in"
+question = "Foundry evaluations run after an Entra sign-in."
+command = "bash ops/wizard/strata-setup.sh"
+default_path = "Foundry runs the evaluations: groundedness, relevance, task adherence and tool use."
+gap_fill = ""
+
+[tests.10]
+title = "Traces from the app in Application Insights"
+question = "Traces reach Application Insights from the app."
+command = "uv run --script ops/dayone/probe_traces.py --env-file .env"
+default_path = "The app sends its traces to Application Insights."
+gap_fill = ""
