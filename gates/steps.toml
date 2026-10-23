@@ -25,6 +25,10 @@ run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
 show = true
 
 [[step]]
+name = "Lint the SQL: every table in three parts, every value a bound parameter"
+run = ["uv", "run", "--frozen", "python", "gates/sql_lint.py"]
+
+[[step]]
 name = "Run the Python tests: the gate, the fixture and its ground truth, the ground-truth SQL, the catalog, the config files, the nightly job, the bundle commands and the server"
 run = ["uv", "run", "--frozen", "pytest"]
 

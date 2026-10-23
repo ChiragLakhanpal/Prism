@@ -15,6 +15,7 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
   - 48 come from P156634's notices and awards. Two of the signed ones have no row in the awards dataset, and only their award notices give the signing date. The three canceled ones are marked Canceled in their agency's plan of March 19, 2025.
   - The four still open come from P176758 and P170941. The fixture holds every notice for each of the four and every award row for the two projects. Their bids were due after October 9, 2026, the demo plan's date.
 - CPIA and WGI cover Kenya and India. IEG ratings and IDA credits cover the two projects.
+- One Kenya notice from before the 2016 Procurement Regulations, OP00034393 of September 14, 2015, gives its method as International Competitive Bidding (ICB), so a test can prove that silver stores it as Request for Bids, Open - International.
 
 ## What is here
 
@@ -26,7 +27,7 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 | `recorded/documents/<project>/<name>.pages.txt` | The text of each PDF page of the same document, one page after each form feed, read from the PDF's text layer |
 | `placeholder/` | Five plan rows that ticket 01 typed in. Ticket 08 replaces them with rows read from the recorded plans |
 
-The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops, which ticket 07 builds from it.
+The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer, so the public-date check skips it. The gate then builds bronze, silver, gold and the data readiness measures from the recorded awards, notices and projects with the nightly job's own tasks, which read these files in place of the live APIs. `config/sources.toml` names, for each source the job fetches, the dataset here whose files stand in for it.
 
 Every recorded file starts with its source and its license line, which is CC BY 4.0. Notices keep their contact names, emails and phone numbers on purpose, because the lakehouse must strip them at ingestion (CLAUDE.md rule 8).
 

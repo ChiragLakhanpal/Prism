@@ -133,7 +133,7 @@ def build(engine: Engine, folder: Path = TABLES, create_schemas: bool = True) ->
     definitions = table_definitions(folder, schemas)
     if create_schemas:
         for schema in schemas:
-            engine.run(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{schema}")  # names from the bundle, never values
+            engine.run(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{schema}")  # sql-lint: names only, from the bundle
     for definition in definitions:
         engine.run(definition.sql)
     check_public_from(engine)

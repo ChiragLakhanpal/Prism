@@ -122,8 +122,8 @@ class DuckDBEngine:
         import duckdb
 
         connection = duckdb.connect()
-        connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",
-                           [str(path) if path else ":memory:"])
+        connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
+                           [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
         connection.execute("USE strata")
         connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
         return cls(connection)

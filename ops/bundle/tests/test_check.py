@@ -98,9 +98,11 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 # ── The sample query on both engines ─────────────────────────────────────
 
 def deployed_warehouse():
-    """A SQL warehouse after the deploy: DuckDB with the catalog's tables built."""
+    """A SQL warehouse after the deploy and one run of the nightly job: DuckDB with the catalog's
+    tables built and filled, here from the recorded pages."""
     engine = DuckDBEngine.open()
     catalog.build(engine)
+    nightly.run_locally(engine)
     return engine
 
 
