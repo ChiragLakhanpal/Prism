@@ -205,14 +205,15 @@ def test_an_old_award_that_names_a_person_in_capitals_or_as_its_supplier_keeps_n
 # Rows that name a firm or a country, not a person, as the review found them, each with whether the
 # row keeps its description. A firm's name can start with a title, DR can stand for the Democratic
 # Republic of the Congo, and a firm can be hired for a person's services, with its legal form written
-# out or as S.A. at the end of its name. The first two firms are public company names, and the person
-# and the other two firms are made up.
+# out, as S.A. at the end of its name, or not at all. The first two firms are public company names, and
+# the person and the other three firms are made up.
 FIRMS = [({"supplier": "DR. REDDY'S LABORATORIES LTD"}, True),
          ({"supplier": "DR. SAUER & PARTNERS"}, True),
          ({"contract_description": "Trade corridor study for Rwanda and DR Congo"}, True),
          ({"contract_description": "TRADE CORRIDOR STUDY FOR RWANDA AND DR CONGO"}, True),
          ({"contract_description": "Services of Dr. Jane Doe", "supplier": "ABC CONSULTING LTD"}, False),
-         ({"contract_description": "Services of Dr. Jane Doe", "supplier": "ABC INGENIERIA S.A."}, False)]
+         ({"contract_description": "Services of Dr. Jane Doe", "supplier": "ABC INGENIERIA S.A."}, False),
+         ({"contract_description": "Services of Dr. Jane Doe", "supplier": "ABC ENTERPRISES"}, False)]
 
 
 @pytest.mark.parametrize(("named", "keeps_description"), FIRMS, ids=lambda case: str(case))

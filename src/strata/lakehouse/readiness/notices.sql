@@ -1,6 +1,8 @@
 -- The notices source's data readiness measures, per country and for every country (subject all):
 --   coverage_rows            notices held, of the notices the source reported for the same requests.
 --                            Per country only for requests that held that country's notices alone.
+--                            Every page bronze holds counts, as for every search source
+--                            (strata.lakehouse.pages.reads_every_page).
 --   coverage_years           fiscal years with notices, of the fiscal years from the first to the last
 --   linked_project           notices whose project record is held, of all notices
 --   contact_details_removed  notices that had contact names, addresses, emails, phone numbers or

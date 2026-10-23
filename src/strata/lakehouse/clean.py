@@ -113,11 +113,16 @@ PERSONAL_TITLE = re.compile(
     r"(?:MR|MRS|DR(?!\.?\s+(?i:congo)\b)|CAPT|PROF)\.?)\s+[A-Z]")
 
 # A word that names a firm, not a person, in any case: a legal form such as LTD or GMBH, a word such
-# as PARTNERS or LABORATORIES, or an ampersand. CONSULTANT alone is not one, as a person is one.
-# A two-letter legal form such as S.A., B.V., AG or CO counts only where a firm writes it, at the end
-# of the name or before a comma or a bracket, as a person's initials can read the same.
-FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|INC|PLC|SARL|GMBH|COMPANY|CORP(?:ORATION)?|"
-                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?)\b|&|"
+# as PARTNERS, ENTERPRISES or UNIVERSITY that is never part of a person's name, or an ampersand.
+# CONSULTANT alone is not one, as a person is one. A two-letter legal form such as S.A., B.V., AG or
+# CO counts only where a firm writes it, at the end of the name or before a comma or a bracket, as a
+# person's initials can read the same.
+FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|LLP|INC|PLC|PVT|PTY|SARL|GMBH|COMPANY|CORP(?:ORATION)?|"
+                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?|ENGINEERING|"
+                  r"ENTERPRISES?|SOLUTIONS?|SERVICES|SUPPLIES|SUPPLIERS|INVESTMENTS?|INTERNATIONAL|HOLDINGS|"
+                  r"TECHNOLOGIES|SYSTEMS|INDUSTRIES|INDUSTRIAL|TRADING|CONSTRUCTION|CONTRACTORS|VENTURES?|"
+                  r"MOTORS|MERCHANTS|HARDWARE|LOGISTICS|AGENC(?:Y|IES)|UNIVERSITY|INSTITUTE|FOUNDATION|"
+                  r"ASSOCIATION|AUTHORITY)\b|&|"
                   r"\b(?:S\.?A|B\.?V|AG|CO)\b\.?\s*(?:[,(]|$)", re.I)
 
 

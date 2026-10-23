@@ -1,6 +1,8 @@
 -- The projects source's data readiness measures, per country and for every country (subject all):
 --   coverage_rows        projects held, of the projects the source reported for the same requests.
 --                        Per country only for requests that held that country's projects alone.
+--                        Every page bronze holds counts, as for every search source
+--                        (strata.lakehouse.pages.reads_every_page).
 --   coverage_years       approval fiscal years with projects, of the fiscal years from the first to the last
 --   linked_sector        projects mapped to one sector of Strata's taxonomy (config/sectors.toml), of
 --                        all projects. A project is left out when its record lists no major sector, or
