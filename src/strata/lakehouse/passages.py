@@ -5,18 +5,27 @@ For the showcase project and then the demo plan's project (config/slice.toml), a
 
 1. Fetches the project's list from the documents API into bronze.document_lists, and each document of
    a type the reader has a template for (src/strata/reader/templates.py) into bronze.document_texts and
-   bronze.document_pages, with the plan reader's fetcher (src/strata/lakehouse/plans.py). It takes each
-   project's ICR Reviews, ICRs, PADs and ISRs in that order, newest first, and stops when it holds
-   ingestion.passage_documents documents whose published text divides into their PDF's pages
-   (config/thresholds.toml). A document already in bronze is not fetched again. A document whose text
-   does not divide, such as a scan, is kept with every page routed to Route B, and does not count.
+   bronze.document_pages, with the plan reader's fetcher (src/strata/lakehouse/plans.py), which takes
+   out emails and phone numbers first. It takes each project's ICR Reviews, ICRs, PADs and ISRs in that
+   order, newest first, and stops when it holds ingestion.passage_documents documents whose published
+   text divides into their PDF's pages (config/thresholds.toml). A document already in bronze is not
+   fetched again. A document whose text does not divide, such as a scan, is kept with every page
+   routed to Route B, and does not count.
 2. Gives each document its version of its report: a report re-issued under the same number has a
    second version, which replaces the first for current answers from the day it became public.
 3. Reads each document through Route A (src/strata/reader/passages.py) into page routes and passages,
    each passage with the short header that is prepended before embedding. These become
    silver.documents, silver.document_page_routes and silver.passages.
+4. Scans each passage text the shield has not scanned (Prompt Shields on the workspace, an offline
+   stand-in here) and keeps every result in silver.passage_shields. A hit is kept and counted.
+5. Embeds each passage text, header first, that the model has not embedded, into
+   silver.passage_embeddings, and syncs strata.gold.passage, the AI Search index's source table.
+6. Writes its data readiness measures for each project to strata.ops.data_readiness: documents and
+   pages per route, the pages whose paragraph numbering was found, the passages linked to a project,
+   embedded and screened, Prompt Shields' hits, the contact details taken out, and freshness.
 
-Bronze only grows. Silver is rebuilt from bronze for each project on every run.
+Bronze only grows. Silver is rebuilt from bronze for each project of the run on every run. On the
+workspace, ops/documents/run_live.py runs it with the live adapters and then syncs the index.
 
 Run it on the fixture and print what it wrote:
 
@@ -53,7 +62,12 @@ def _now() -> dt.datetime:
 
 
 def _date(value) -> dt.date | None:
-    return plans._date(value)
+    """A date from DuckDB (a date or a timestamp) or from the warehouse or an API (ISO text)."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, dt.datetime):
+        return value.date()
+    return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
 
 
 def _rows(engine: Engine, sql: str, **params) -> list[dict]:
@@ -236,12 +250,13 @@ class Read:
     reading: route_a.Reading
 
 
-def read_documents(engine: Engine, chosen: list[Held], max_tokens: int) -> list[Read]:
-    """Each chosen document read through Route A, then written to silver for its project."""
+def read_documents(engine: Engine, chosen: list[Held], max_tokens: int, run_projects: list[str]) -> list[Read]:
+    """Each chosen document read through Route A, then written to silver, which is rebuilt for every
+    project of the run: a project the cap left out this time keeps no passages from an earlier run."""
     found = [Read(held, route_a.read(held.text, held.pdf_pages, TEMPLATES[held.listed.document_type], max_tokens))
              for held in chosen]
     projects = {held.listed.project_id: project(engine, held.listed.project_id) for held in chosen}
-    for project_id in projects:
+    for project_id in dict.fromkeys([*run_projects, *projects]):
         for table in ("documents", "document_page_routes", "passages"):
             engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
                        {"project_id": project_id})
@@ -422,7 +437,7 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     started = clock()
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
     chosen = choose(engine, documents, endpoint, projects, int(limits.value("ingestion.passage_documents")))
-    found = read_documents(engine, chosen.documents, int(limits.value("passages.max_tokens")))
+    found = read_documents(engine, chosen.documents, int(limits.value("passages.max_tokens")), projects)
     scanned = screen(engine, shield, clock)
     embedded = embed(engine, embedder, clock)
     gold.sync(engine, "passage")
