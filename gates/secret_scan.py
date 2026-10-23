@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""The gate's secret scan, with no network: the staged changes and the full history of HEAD.
+"""The gate's secret scan. It reads the staged changes and the full history of HEAD, with no network.
 
-It looks at every added line for the key shapes Strata's .env.example holds (a Databricks
-personal access token, an Azure OpenAI key, an Application Insights connection string)
-and a few common others (Azure storage keys, private keys, GitHub tokens). It names the
-file and the commit but never prints the key. A line that only looks like a key can carry
-the marker `strata-gate: not-a-secret`.
+It checks every added line for the key shapes that Strata's .env.example holds. Those are a
+Databricks personal access token, an Azure OpenAI key and an Application Insights connection
+string. It also checks a few other common shapes, such as Azure storage keys, private keys,
+GitHub tokens and a key assigned in code. It names the file and the commit but never prints
+the key. A line that only looks like a key can carry the marker `strata-gate: not-a-secret`.
 
-Run: python3 gates/secrets.py
+This file is not named secrets.py, because that name would hide Python's own `secrets`
+module from every script in gates/. A test in tests/test_gate.py keeps it that way.
+
+Run it with this command:
+
+    python3 gates/secret_scan.py
 """
 
 import re

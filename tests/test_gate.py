@@ -45,7 +45,7 @@ def repo(tmp_path):
     git(path, "init", "-q", "-b", "work")
     shutil.copytree(ROOT / ".githooks", path / ".githooks")
     (path / "gates").mkdir()
-    for name in ("offline.py", "secrets.py"):
+    for name in ("offline.py", "secret_scan.py"):
         shutil.copy(ROOT / "gates" / name, path / "gates" / name)
     git(path, "config", "core.hooksPath", ".githooks")
     write(path, "README.md", "# A throwaway repo\n")
@@ -65,7 +65,7 @@ def steps_file(limit=120, steps=()):
     """A steps file: the secret scan always runs, then the given test steps."""
     lines = [f"limit_seconds = {limit}", ""]
     lines += ["[[step]]", 'name = "Scan for secrets"',
-              'run = ["python3", "gates/secrets.py"]', "always = true", "git_env = true", ""]
+              'run = ["python3", "gates/secret_scan.py"]', "always = true", "git_env = true", ""]
     for name, run in steps:
         lines += ["[[step]]", f'name = "{name}"', f"run = {run}", ""]
     return "\n".join(lines)
@@ -263,6 +263,12 @@ def test_ordinary_lines_pass_the_secret_scan(repo, line):
     done = commit(repo)
 
     assert done.returncode == 0, done.stdout + done.stderr
+
+
+def test_no_gate_script_hides_a_standard_library_module():
+    """Python puts a script's own folder first on its path, so gates/secrets.py would hide `secrets`."""
+    names = {path.stem for path in (ROOT / "gates").glob("*.py")}
+    assert not names & sys.stdlib_module_names
 
 
 def test_the_hook_finds_the_root_from_a_worktree(repo, tmp_path):

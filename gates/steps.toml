@@ -11,7 +11,7 @@ limit_seconds = 120
 
 [[step]]
 name = "Scan the staged changes and the history for secrets"
-run = ["python3", "gates/secrets.py"]
+run = ["python3", "gates/secret_scan.py"]
 always = true
 git_env = true
 
