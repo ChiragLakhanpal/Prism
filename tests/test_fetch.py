@@ -308,6 +308,23 @@ class FakeCountries:
         return json.dumps({"total": str(len(rows)), "procnotices": rows[offset:offset + size]}).encode()
 
 
+def notices_only(notices, stop_after=None):
+    """The nightly job's live fetch for the notices source alone, as the given source entry; every
+    other source returns nothing. With stop_after, the API stops answering after that many pages."""
+    def fetch(source, engine):
+        if source.key != "notices":
+            return iter(())
+        fetched = nightly.fetch_live(notices, engine)
+        if stop_after is None:
+            return fetched
+        return (page if number < stop_after else _stop() for number, page in enumerate(fetched))
+    return fetch
+
+
+def _stop():
+    raise OSError("The API stopped answering.")
+
+
 def test_a_country_added_to_the_slice_is_fetched_in_full_though_bronze_holds_newer_records_of_another(
         monkeypatch):
     """A source fetched for the slice countries keeps a watermark per country. Bronze holds Kenya's
@@ -322,11 +339,11 @@ def test_a_country_added_to_the_slice_is_fetched_in_full_though_bronze_holds_new
     monkeypatch.setattr("strata.fixture.record.fetch_url", api)
 
     with DuckDBEngine.open() as engine:
-        from strata.lakehouse import bronze, catalog
+        from strata.lakehouse import catalog
 
         catalog.build(engine)
-        bronze.store(engine, source("notices"),
-                     nightly.fetch_live(source("notices", countries=(kenya,), **by_country), engine))
+        nightly.run_task(engine, "fetch_by_watermark", "first",
+                         notices_only(source("notices", countries=(kenya,), **by_country)))
         api.asked.clear()
         fetched = list(nightly.fetch_live(source("notices", page_size=50, countries=(kenya, added), **by_country),
                                           engine))
@@ -345,14 +362,37 @@ def test_a_source_fetched_for_every_country_keeps_one_watermark(monkeypatch):
     monkeypatch.setattr("strata.fixture.record.fetch_url", lambda url: api(url).encode())
 
     with DuckDBEngine.open() as engine:
-        from strata.lakehouse import bronze, catalog
+        from strata.lakehouse import catalog
 
         catalog.build(engine)
-        bronze.store(engine, source("notices"), nightly.fetch_live(source("notices", page_size=100), engine))
+        nightly.run_task(engine, "fetch_by_watermark", "first", notices_only(source("notices", page_size=100)))
         api.asked.clear()
         again = list(nightly.fetch_live(source("notices", page_size=100), engine))
 
     assert len(again) == 1  # the newest page already reaches back to the newest notice held
+
+
+def test_a_fetch_that_failed_partway_sets_no_watermark_so_the_next_run_fetches_what_it_missed(monkeypatch):
+    """Bronze keeps the newest pages of a fetch that failed partway. Their records are newer than the
+    ones the fetch never reached, so a watermark taken from them would stop the next fetch before it
+    reached those. The watermark counts only the pages of fetches that finished."""
+    rows = sorted(recorded("api/notices/P156634.json")["procnotices"], key=lambda row: row["submission_date"],
+                  reverse=True)
+    api = FakeAPI("procnotices", rows, "total")
+    monkeypatch.setattr("strata.fixture.record.fetch_url", lambda url: api(url).encode())
+    notices = source("notices", page_size=100)
+
+    with DuckDBEngine.open() as engine:
+        from strata.lakehouse import catalog
+
+        catalog.build(engine)
+        with pytest.raises(OSError):
+            nightly.run_task(engine, "fetch_by_watermark", "cut short", notices_only(notices, stop_after=2))
+        held = engine.run("SELECT count(*) FROM strata.bronze.api_pages").rows[0][0]
+        again = list(nightly.fetch_live(notices, engine))
+
+    assert held == 2
+    assert [len(page.body["procnotices"]) for page in again] == [100, 100, 100, 99]  # all 399, from the top
 
 
 def test_the_nightly_job_fetches_a_frozen_source_only_while_bronze_holds_none_of_its_pages():

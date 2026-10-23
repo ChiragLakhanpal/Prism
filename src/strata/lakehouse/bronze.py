@@ -25,8 +25,19 @@ COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", 
            "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
 ANY_HELD = "SELECT count(*) AS pages FROM strata.bronze.api_pages WHERE source = :source"
-NEWEST = ("SELECT max(newest_record_on) AS newest FROM strata.bronze.api_pages "
-          "WHERE source = :source AND coalesce(country_code, '') = :country")
+# The watermark counts only pages fetched by a fetch task that finished. A fetch that failed partway
+# kept its newest pages, and the records it never reached are older than those.
+NEWEST = """
+SELECT max(p.newest_record_on) AS newest
+FROM strata.bronze.api_pages AS p
+WHERE p.source = :source
+  AND coalesce(p.country_code, '') = :country
+  AND p.fetched_at <= (
+    SELECT max(r.finished_at)
+    FROM strata.ops.pipeline_runs AS r
+    WHERE r.task_key = 'fetch_by_watermark' AND r.status = 'succeeded'
+  )
+"""
 
 
 def _canonical(value) -> str:
@@ -54,7 +65,8 @@ def content_hash(source: Source, body: dict) -> str:
 
 def newest_held(engine: Engine, source: Source, country_code: str | None) -> dt.date | None:
     """The newest record date bronze holds for one series of a source, the live fetch's watermark:
-    one country's, or with None, the series fetched for every country."""
+    one country's, or with None, the series fetched for every country. Only pages of a fetch task
+    that finished count, so a fetch cut short is made good by the next one."""
     rows = engine.run(NEWEST, {"source": source.key, "country": country_code or ""}).rows
     return rows[0][0] if rows and rows[0][0] else None
 
