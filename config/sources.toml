@@ -233,7 +233,7 @@ cadence = "yearly"
 license = "CC BY 4.0"
 silver_transform = "indicators"
 stratum = "What"
-limitations = ["CPIA scores exist for IDA countries only.", "When the API revises a score, I keep both versions, and a join on a past date uses the version public then."]
+limitations = ["CPIA scores exist for IDA countries only.", "When the API revises a score, I keep both versions, and a join on a past date uses the version public then.", "A score I fetch for the first time counts as public from the day the API last updated it, so I have no score for dates before that day."]
 
 # WGI: the estimate of each of the six dimensions (source 3). The old GE.EST codes no longer work.
 [sources.wgi]
@@ -249,7 +249,7 @@ cadence = "yearly"
 license = "CC BY 4.0"
 silver_transform = "indicators"
 stratum = "What"
-limitations = ["When the API revises a score, I keep both versions, and a join on a past date uses the version public then."]
+limitations = ["When the API revises a score, I keep both versions, and a join on a past date uses the version public then.", "A score I fetch for the first time counts as public from the day the API last updated it, so I have no score for dates before that day."]
 
 # ── Documents ────────────────────────────────────────────────────────────
 
