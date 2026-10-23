@@ -16,7 +16,7 @@
 --                          the list names that is dated on or before it, or that has no date, was read;
 --                          false otherwise, so the delay may be measured from a later date
 -- delay_days               actual_on minus first_planned_on, in days; empty until both are known
--- public_from              the version's public date (ADR 0002)
+-- public_from              the later of the version's and the first listing's public dates (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_step_delays (
   document_id STRING NOT NULL,
   project_id STRING NOT NULL,

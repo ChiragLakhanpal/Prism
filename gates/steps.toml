@@ -60,7 +60,13 @@ name = "Run the Python tests for the wizard and the day-one probes"
 run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
-# The lint reads only the source files, so it needs nothing from the other steps.
+# The two lints read only source files, so each needs nothing from the other steps and runs
+# in a lane of its own.
+[[step]]
+name = "Lint the copy and the components: DESIGN.md's words, strings only from the copy file, tokens only"
+run = ["node", "web/lint/run.ts"]
+lane = "lint"
+
 [[step]]
 name = "Lint the SQL: every table in three parts, every value a bound parameter"
 run = ["uv", "run", "--frozen", "python", "gates/sql_lint.py"]
@@ -72,6 +78,11 @@ run = ["npm", "--prefix", "web", "run", "--silent", "build"]
 lane = "web"
 
 [[step]]
-name = "Run the Playwright tests against the built web app"
+name = "Build the design gallery, which the Playwright tests open and production leaves out"
+run = ["npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+lane = "web"
+
+[[step]]
+name = "Run the Playwright tests against the built web app and the gallery"
 run = ["npm", "--prefix", "web", "run", "--silent", "test"]
 lane = "web"

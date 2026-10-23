@@ -1,0 +1,194 @@
+/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space and
+   breakpoint a component uses comes from here. Change a value in DESIGN.md first; the token
+   test (web/tests/tokens.spec.ts) fails until this file matches it. */
+
+@import "@fontsource/open-sans/400.css";
+@import "@fontsource/open-sans/400-italic.css";
+@import "@fontsource/open-sans/600.css";
+@import "@fontsource/open-sans/700.css";
+@import "@fontsource/roboto-mono/400.css";
+@import "@fontsource/roboto-mono/500.css";
+@import "tailwindcss";
+
+/* Arial, resized to Open Sans's metrics (FinancesOne's values), so text does not move when
+   the web font arrives (DESIGN.md section 3). */
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  size-adjust: 105.22%;
+  ascent-override: 101.58%;
+  descent-override: 27.84%;
+}
+
+/* `static` puts every token on :root, so tests and charts can read them. Tailwind's own
+   defaults are cleared first, so no color, size or space outside DESIGN.md exists. */
+@theme static {
+  --*: initial;
+
+  /* DESIGN.md section 2, word for word. */
+  --color-page: #f5f7f9;  --color-surface: #ffffff;  --color-surface-2: #e7edf3;
+  --color-tint: #e9f7fd;  --color-tint-hover: #f6fcff;
+  --color-line: #dae3eb;  --color-line-strong: #586e84;
+  --color-ink: #181f25;  --color-ink-heading: #012740;  --color-ink-muted: #4b5e71;
+  --color-primary: #004370;  --color-primary-hover: #00538a;  --color-primary-pressed: #012740;
+  --color-link-hover: #066db1;  --color-focus: #b6490c;  --color-bright: #169af3;
+  --color-focus-on-dark: #f5926c;  --color-highlight: #fff1b8;
+  --color-navy: #002244;  --color-scrim: rgba(0,13,26,.57);
+  --color-info-bg: #f6fcff;  --color-info: #00538a;  --color-info-icon: #0071bc;
+  --color-success-bg: #f6fef0;  --color-success: #388004;
+  --color-warning-bg: #fef3d7;  --color-warning: #473201;  --color-warning-icon: #896001;
+  --color-error-bg: #fdf2f2;  --color-error: #9d161d;  --color-error-icon: #c91c25;
+  --color-neutral-bg: #e7edf3;  --color-neutral: #3d4c5c;
+  --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
+
+  /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's
+     default font size; 1rem is 16 px. Color is set by the component, not the step. */
+  --text-display: 2rem;  --text-display--line-height: 1.2;  --text-display--font-weight: 700;
+  --text-h1: 1.75rem;  --text-h1--line-height: 1.2;  --text-h1--font-weight: 700;
+  --text-h2: 1.5rem;  --text-h2--line-height: 1.25;  --text-h2--font-weight: 700;
+  --text-h3: 1.25rem;  --text-h3--line-height: 1.3;  --text-h3--font-weight: 700;
+  --text-title: 1.125rem;  --text-title--line-height: 1.3;  --text-title--font-weight: 700;
+  --text-body: 1rem;  --text-body--line-height: 1.5;  --text-body--font-weight: 400;
+  --text-small: 0.875rem;  --text-small--line-height: 1.45;  --text-small--font-weight: 400;
+  --text-caption: 0.8125rem;  --text-caption--line-height: 1.5;  --text-caption--font-weight: 400;
+  --text-label: 0.75rem;  --text-label--line-height: 1.2;  --text-label--font-weight: 600;
+  --text-label--letter-spacing: 0.02em;
+  --text-button: 0.875rem;  --text-button--line-height: 1.5rem;  --text-button--font-weight: 700;
+  --text-button--letter-spacing: -0.5px;
+  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
+  --default-font-family: var(--font-sans);
+  --default-mono-font-family: var(--font-mono);
+
+  /* DESIGN.md section 4. Spacing classes count in 4 px steps; web/lint/rules.ts allows only
+     the steps on the space scale. Breakpoints are in rem. */
+  --spacing: 0.25rem;
+  --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
+  --container-prose: 65ch;
+  --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
+
+  /* DESIGN.md section 10: motion runs 120 to 200 ms, and none under reduced motion. */
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --animate-spin: spin 1s linear infinite;
+  --animate-fade-in: fade-in 120ms ease-out;
+  --animate-menu-in: menu-in 150ms ease-out;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes menu-in {
+    from { opacity: 0; transform: translateY(-4px); }
+  }
+}
+
+/* The page grid (DESIGN.md section 4): 12 columns, gutters of 16, 24 and 32 px, margins of
+   28, 48 and 72 px, and content at most 1456 px wide. */
+:root {
+  --layout-margin: 28px;
+  --layout-gutter: 16px;
+  --layout-max: 1456px;
+}
+@media (width >= 48rem) {
+  :root { --layout-margin: 48px; --layout-gutter: 24px; }
+}
+@media (width >= 64rem) {
+  :root { --layout-margin: 72px; --layout-gutter: 32px; }
+}
+
+@utility layout {
+  width: 100%;
+  max-width: calc(var(--layout-max) + 2 * var(--layout-margin));
+  margin-inline: auto;
+  padding-inline: var(--layout-margin);
+}
+
+@utility layout-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--layout-gutter);
+}
+
+/* Color changes for hover and press. Tailwind's transition-colors also animates outline-color,
+   which would fade the focus outline in from the text color; this leaves the outline out, so
+   focus shows at once. */
+@utility transition-paint {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: var(--default-transition-timing-function);
+  transition-duration: var(--default-transition-duration);
+}
+
+/* A row of tabs that scrolls sideways (DESIGN.md section 5). It hides its scroll bar, which
+   would push the hairline down, and fades out over 32 px on each side that has more tabs, so a
+   reader can tell the row goes on. A mask only reads alpha, so it adds no color. Tabs.tsx sets
+   data-more as the row scrolls. */
+@utility tab-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  --tab-fade: 2rem;
+  &[data-more="start"] {
+    mask-image: linear-gradient(to right, transparent, black var(--tab-fade));
+  }
+  &[data-more="end"] {
+    mask-image: linear-gradient(to left, transparent, black var(--tab-fade));
+  }
+  &[data-more="both"] {
+    mask-image: linear-gradient(to right, transparent, black var(--tab-fade), black calc(100% - var(--tab-fade)), transparent);
+  }
+}
+
+/* Text that screen readers skip but a copy keeps, such as the brackets around "[1]". */
+@utility clip-visually {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@layer base {
+  html {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100dvh;
+    background: var(--color-page);
+  }
+
+  /* DESIGN.md section 10: a 2 px focus outline with a 2 px offset, never removed. */
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+  .on-navy :focus-visible,
+  .on-navy:focus-visible {
+    outline-color: var(--color-focus-on-dark);
+  }
+
+  table,
+  [data-numbers] {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

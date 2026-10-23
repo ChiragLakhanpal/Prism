@@ -35,6 +35,10 @@ Light theme only: the World Bank publishes no dark theme.
 | `primary-pressed` | `#012740` | blue-90 | Pressed |
 | `link-hover` | `#066db1` | blue-55 | Link hover |
 | `focus` | `#b6490c` | keyboard-focus-on-light | Focus outline |
+| `focus-on-dark` | `#f5926c` | keyboard-focus-on-dark | Focus outline on the navy bar. Strata: `focus` is 3.01:1 on navy |
+| `highlight` | `#fff1b8` | Strata (the blueprint's highlighter) | Matched words in a quoted passage, under `ink` text |
+| `navy` | `#002244` | brand navy | The top navigation bar only |
+| `scrim` | `rgba(0,13,26,.57)` | Strata | Behind a full-screen sheet below 768 px |
 | `bright` | `#169af3` | blue-40 | Decoration on white only, never text |
 
 | State | Background | Text | Icon, border | Icon (lucide) | Strata meaning |
@@ -55,6 +59,10 @@ Light theme only: the World Bank publishes no dark theme.
 | link-hover | surface | 5.48 | Link hover |
 | state text | its own background | info 7.79, success 4.78, warning 11.03, error 7.47, neutral 7.46 | Badges, alerts |
 | focus | surface / page / surface-2 | 5.32 / 4.95 / 4.51 | Focus ring (needs 3:1) |
+| focus-on-dark | navy | 7.02 | Focus ring on the navy bar (needs 3:1) |
+| white | navy | 16.00 | Wordmark, tabs, the view switch and the selected tab's underline |
+| line-strong | navy | 3.03 | Tab hover underline on the navy bar (needs 3:1) |
+| ink / ink-muted | highlight | 14.69 / 5.90 | Highlighted words. The fill is 1.13:1 on surface, so screen readers also hear where a highlight starts and ends |
 | line-strong | surface / page | 5.28 / 4.92 | Control borders (needs 3:1) |
 | bright | surface | 3.02 | Non-text only |
 
@@ -66,6 +74,8 @@ Light theme only: the World Bank publishes no dark theme.
   --color-ink: #181f25;  --color-ink-heading: #012740;  --color-ink-muted: #4b5e71;
   --color-primary: #004370;  --color-primary-hover: #00538a;  --color-primary-pressed: #012740;
   --color-link-hover: #066db1;  --color-focus: #b6490c;  --color-bright: #169af3;
+  --color-focus-on-dark: #f5926c;  --color-highlight: #fff1b8;
+  --color-navy: #002244;  --color-scrim: rgba(0,13,26,.57);
   --color-info-bg: #f6fcff;  --color-info: #00538a;  --color-info-icon: #0071bc;
   --color-success-bg: #f6fef0;  --color-success: #388004;
   --color-warning-bg: #fef3d7;  --color-warning: #473201;  --color-warning-icon: #896001;
@@ -77,7 +87,9 @@ Light theme only: the World Bank publishes no dark theme.
 }
 ```
 
-Brand navy `#002244` is used only for the top navigation bar that carries the logo, as The Loop specifies; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
+Brand navy `#002244` (`navy`) is used only for the top navigation bar that carries the logo, as The Loop specifies; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
+
+On the navy bar, the selected tab's underline is white and the hover underline is `line-strong`, and the focus outline is `focus-on-dark` (`#f5926c`, WB keyboard-focus-on-dark, 7.02:1 on navy). Strata: `primary` on navy is 1.55:1, so `primary` underlines tabs only on light surfaces.
 
 ## 3. Typography
 
@@ -111,26 +123,26 @@ Every size is a step on the World Bank's scale. Use sentence case, tabular numer
 |---|---|---|
 | Space | 2, 4, 8, 12, 16, 24, 32, 40, 48, 64 px | spacing tokens |
 | Grid | 12 columns; gutter 16 / 24 / 32 px (below 768 / from 768 / from 1024); margin 28 / 48 / 72 px; max width 1456 px | grid tokens |
-| Breakpoints | 768, 1024 (1200, 1400 for wide tables) | worldbank.org media queries |
+| Breakpoints | 768, 1024 (1200, 1400 for wide tables), written in rem (48rem, 64rem, 75rem, 87.5rem) so a larger default font size reaches them sooner. Strata: 360 (22.5rem) is used only by the navigation's Menu button | worldbank.org media queries |
 | Radius | Pill: buttons, search, badges. 8: cards, inputs. 4: images | border-radius tokens |
 | Elevation | Cards: none, use `line`. Popovers and dialogs: 1px `line` and `0 5px 25px rgba(160,158,143,.25)` | worldbank.org section shadow |
-| Scrim | `rgba(0,13,26,.57)` | Strata |
+| Scrim | `scrim`, `rgba(0,13,26,.57)` | Strata |
 | Targets | 24 x 24 px minimum; buttons 44 px tall | WCAG 2.5.8 |
 
 ## 5. Components
 
-- **Top navigation** (WB). Navy `#002244` bar, 56px tall: the logo, then the Strata wordmark (which links Home), then five tabs (Packages, Projects, Lessons, Drafts, Data), with the view switch ("View: World Bank staff ▾") on the right. Under it, a white band holds the one box (search a project, check a plan, describe a package, or ask; "/" focuses it, and it lists what Enter will do) and the data-freshness stamp. Nouns navigate; verbs act.
-- **Buttons** (WB). Pill, 2px border, 14px bold. Primary: `primary` fill, white text. Secondary: `primary` outline, `tint` hover. Ghost: `primary` text, `tint-hover` hover. Buttons act; links navigate.
-- **Tabs.** 16px bold; the selected tab gets a 3px `primary` underline (Strata: WB's `#169af3` underline is 2.81:1). Five tabs at most.
+- **Top navigation** (WB). Navy `#002244` bar, 56px tall: the logo, then the Strata wordmark (which links Home), then five tabs (Packages, Projects, Lessons, Drafts, Data), with the view switch ("View: World Bank staff ▾") on the right. The view switch is a 32 px pill, like a chip (section 10), so the five tabs and the pill fit in the bar from 1024 px. Under it, a white band holds the one box (search a project, check a plan, describe a package, or ask; "/" focuses it, and it lists what Enter will do) and the data-freshness stamp. Nouns navigate; verbs act. Below 1024 px (64rem) a labeled Menu button holds the tabs and the view switch, because the bar is 844 px wide with all five tabs; below 360 px the button stacks its icon over its label. The logo slot gives the logo clear space of half its height on every side.
+- **Buttons** (WB). Pill, 2px border, 14px bold. Primary: `primary` fill, white text. Secondary: `primary` outline, `tint` hover. Ghost: `primary` text, `tint-hover` hover. A ghost button in a column of text sits flush: 8 px side padding and no side border, pulled left 8 px, so its icon starts on the text's edge, its label on the edge of a list under it, and its hover fill and focus ring stay inside a card's 16 px padding. Buttons act; links navigate.
+- **Tabs.** 16px bold; the selected tab gets a 3px `primary` underline on light surfaces (Strata: WB's `#169af3` underline is 2.81:1) and a 3px white underline on the navy bar (Strata: `primary` is 1.55:1 on navy). Five tabs at most. Tabs that change the address are links with `aria-current`, not ARIA tabs. Tabs on a light surface never wrap. When the row is wider than its column, as five section tabs are below 48rem, it scrolls sideways inside its own strip, with the hairline under the whole strip. The selected tab starts in the middle of the strip, or at the row's end when the middle is less than 32 px from it. Each side with more tabs out of sight fades out over 32 px, so a reader can tell the row goes on. A tab that gets keyboard focus scrolls clear of the fade, with its whole focus ring in view. A click or a tap never scrolls the strip, and once a reader has pressed, scrolled or focused it, the strip never moves by itself. So a press lands on the tab it was aimed at.
 - **Cards** (The Loop). `surface`, 1px `line`, radius 8. Titles 80 characters or fewer, blurbs 140, eight cards per group at most.
-- **Tables.** Title sentence, count line ("Showing 1–20 of 99 sources"), `surface-2` header, units in column heads, numbers right-aligned, source line below.
+- **Tables.** Title sentence, count line ("Showing 1–20 of 99 sources"), `surface-2` header, units in column heads, numbers right-aligned, source line below. The title, count and source lines show only with the rows. While the rows load, skeleton lines hold their places under the real column heads, at fixed column widths; an empty table shows only its empty-state card, and a failed one only its error alert. Below 768 px each row becomes a card. A table whose columns need more than the 672 px a 768 px screen leaves, such as the plan check, becomes cards below 1024 px instead (`cardsBelow="lg"`). The row's name is its heading. Each column head sits above its value, the head in `caption` `ink-muted` and the value in `small`. Every value starts at one left edge. Text runs the full width of the card. When a card has two or more numbers, they share a grid of 120 px columns, in tabular numerals. Each field sits at the bottom of its grid row, so the values in a row line up.
 - **Alerts.** State background, 4px left border, icon, one sentence.
 - **Icons.** The World Bank's icon font is not public; use `lucide-react` (ISC). Icon-only buttons need an `aria-label`.
 
 | Strata component | Spec |
 |---|---|
 | Evidence card | Card with a `label` eyebrow naming the stratum (names as in GLOSSARY.md), a `title`, a quoted excerpt of two or three sentences with the matching words highlighted, and a source line ("Source:" bold, document type, project ID in mono, date, paragraph and page). Citation number top right. Claims are past tense. |
-| Citation marker | Inline `[1]`: 12px bold `primary`, 1px border, pill, 20px tall. Accessible name such as "Source 1: Implementation Completion and Results Report, June 30, 2021, paragraph 54". Hover or focus opens the evidence card; click opens the source at its page; Escape closes. |
+| Citation marker | Inline `[1]`: 12px bold `primary`, 1px border, pill, 20px tall. Accessible name such as "Source 1: Implementation Completion and Results Report, June 30, 2021, paragraph 54". Hover or focus opens the evidence card; click opens the source at its page; Escape closes. A marker never starts a line. A word joiner ties it to the last word of the sentence it cites, so a reader never takes it for the source of the next sentence. |
 | Disagreement card | Both claims side by side (stacked below 768px), in the order they were written, with equal weight, each with its source line and date. One carries the tag "Strata leans on this", one sentence names the rule, and a line says what changes if you keep the other. Warning state and the badge "Two reports disagree" only when it changes a number or claim in the answer or draft; otherwise an info note, "Sources differ". Shown only beside the claim it concerns. Never red: a disagreement is not an error. |
 | Check line | Neutral, never green: "Checked: 23 of 23 numbers match records; 14 of 14 quotes are on their pages. Not checked: whether these are the right comparables." Sits under "In short", with the removed box open below it. |
 | Evidence drawer | Opens beside the page, never over it: `clamp(400px, 40vw, 600px)`, about 65 characters a line; a full-screen sheet below 768px. Opens at what was clicked, with a switcher for the claim's other sources, the whole numbered paragraph with the matching words highlighted, "Open at page N" as a link, and "Wrong passage" and "Not useful" grouped at the bottom. 44 px close; focus returns to the marker. |
@@ -140,7 +152,10 @@ Every size is a step on the World Bank's scale. Use sentence case, tabular numer
 | Range chart | Two lanes on one month axis (see section 6). Lane 1, the past range: each dot one real comparable package, hollow for packages still open. Lane 2, the time estimate: a navy bar for the middle half, a thin line to the 8-in-10 point, a white notch at the middle. The plan is a full-height line through both lanes with a count readout ("4 of 40 signed within 6 months"), draggable with keyboard and number input. The title is the finding; a sentence says why the lanes differ. |
 | Draft bar | Sticky bottom bar on drafts, 1px top `line`, held to the document column. Left: what exporting does and is not ("A working draft for the borrower's PPSD. Exporting sends nothing and is not a World Bank review, clearance or no-objection.") and "You opened 3 of 14 sources". Right: Mark as checked (primary), Export to Word (secondary), with Discard set apart and undoable. States: Draft → Checked by you → Exported. Ends on a success state. |
 | Following row | 2px top divider. Status first, then the project name as a link; country and project ID (mono) and closing date; the signals that put it there, one line each, past tense, with counts; one next action ("Add to mission brief"). The status definition sits on the column header. |
-| Status badge | Pill, padding 4/12, 16px icon, 14px text. One icon shape per state; the text always names the state: Needs a look, Watch, No signals. |
+| Status badge | Pill, padding 4/12, 16px icon, 14px text. One icon shape per state; the text always names the state: Needs a look (warning, `triangle-alert`), Watch (info, `info`), No signals (neutral, `circle`, an empty ring, never a check mark). Data readiness adds Partial (warning, `triangle-alert`) and Gap (neutral, `circle-dashed`, dashed border); plan checks add Data note (neutral, `circle-dashed`, dashed border). A dashed border marks something missing from the record. Badges mark exceptions only. |
+| Empty-state card | A card with a 24px `circle-dashed` icon in `line-strong`, a first-person sentence as its heading in `title` ("I have nothing to brief you on yet."), one or two `body` sentences that say what will appear and what fills it, and at most one link. No illustration and no shadow. |
+| Freshness stamp | `caption` in `ink-muted` with tabular numerals, a link to the Data page with a dotted underline. States: a static skeleton for the first second, "Reading the data date", "Data through Oct 21" (the year is added when it is not the current one), "No data loaded yet", and "I can't read the data date." with a `circle-x` icon. Not a live region. |
+| Highlight | Matched words in a quoted passage: `highlight` fill under `ink` text. Screen readers hear "Highlight starts." and "Highlight ends.", because most do not announce a `<mark>`. |
 
 ## 6. Data visualization
 
@@ -168,7 +183,7 @@ From the World Bank Data Visualization Style Guide (draft, March 19, 2025) and i
 | Legends | Only when direct labels fail |
 | Tooltip | 0.5px grey200 border; header s semibold; number m bold |
 | Annotations | Label s semibold uppercase textSubtle; line 3px reference |
-| Numbers | Comma thousands; K from 10,000, then M, B; 2 decimals below 1, 1 up to 100, 0 above; years have no comma |
+| Numbers | Comma thousands; K from 10,000, then M, B; 2 decimals below 1, 1 up to 100, 0 above; years have no comma. Strata: a STEP amount in a table is never shortened to K, M or B; it keeps STEP's form, cents included (1,230,000.00), so it matches the record to the cent |
 
 Use category colors in order, only when color separates categories, and pair color with labels or shapes. Strata: cat1, cat2, cat4 and cat9 fall below 3:1 on white, so essential marks use the text variants.
 
@@ -178,7 +193,7 @@ Use category colors in order, only when color separates categories, and pair col
 
 ## 7. Writing
 
-All copy lives in one file, so it can be reviewed and translated in one place.
+All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and translated in one place. The gate's copy lint (`web/lint/`) checks it for rules 3, 8 and 19 and for GLOSSARY.md's Avoid terms, and fails when a component renders text that is not from it. The design gallery, which is for development only, keeps its sample text in `web/src/gallery/copy.ts`, and the same lint checks it.
 
 1. Full sentences a 10th grader follows: short words, no jargon, nothing that sounds like a model wrote it ("use", not "utilize").
 2. Buttons are short verb phrases: "Open the report", "Start a package".
@@ -221,7 +236,7 @@ All copy lives in one file, so it can be reviewed and translated in one place.
 ## 10. Accessibility (WCAG 2.2 AA)
 
 - Only the checked pairs above: text 4.5:1; large text and essential marks 3:1.
-- Focus: 2px `focus` outline, 2px offset, never removed or covered.
+- Focus: 2px `focus` outline, 2px offset, never removed or covered; `focus-on-dark` on the navy bar. Color transitions leave the outline out, so focus shows at once. When a resize hides the focused control, such as the view switch below 1024 px, focus moves to the control that now holds the same thing.
 - Targets 24 x 24 px or larger.
 - Never color alone: badges pair icon and text; charts add labels and shapes; text links are underlined.
 - Charts: the finding as the title, `role="img"` with a name, a "Show the table" toggle, and tooltips on focus that Escape closes.

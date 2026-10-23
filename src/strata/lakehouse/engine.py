@@ -36,6 +36,16 @@ class EngineError(RuntimeError):
     """A statement an engine could not run, with the reason the engine gave."""
 
 
+class PermissionDenied(EngineError):
+    """The token cannot read what the statement asks for: a grant is missing, or the workspace refused the
+    token itself. The app runs as each viewer (ADR 0003), so this is the viewer's own permission."""
+
+
+# How the warehouse says a grant is missing: Unity Catalog's error class, the API's error code, or the
+# SQL standard's state for an insufficient privilege.
+PERMISSION_MARKERS = ("INSUFFICIENT_PERMISSIONS", "PERMISSION_DENIED", "SQLSTATE: 42501")
+
+
 @dataclass(frozen=True)
 class Result:
     """The columns and rows one statement returned."""
@@ -258,7 +268,8 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
                 return json.loads(response.read() or b"{}")
         except urllib.error.HTTPError as error:
             detail = error.read().decode(errors="replace")[:400]
-            raise EngineError(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
+            refused = PermissionDenied if error.code in (401, 403) else EngineError
+            raise refused(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
 
     return call
 
@@ -298,9 +309,11 @@ class WarehouseEngine:
 
         status = reply.get("status", {})
         if status.get("state") != "SUCCEEDED":
-            message = status.get("error", {}).get("message", "it gave no reason")
-            raise EngineError(f"The warehouse did not run the statement. Its state was {status.get('state')}: "
-                              f"{message}")
+            error = status.get("error", {})
+            message = error.get("message", "it gave no reason")
+            said = f"{error.get('error_code', '')} {message}"
+            refused = PermissionDenied if any(marker in said for marker in PERMISSION_MARKERS) else EngineError
+            raise refused(f"The warehouse did not run the statement. Its state was {status.get('state')}: {message}")
 
         return self._result(reply)
 

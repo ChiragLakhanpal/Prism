@@ -18,9 +18,27 @@ daily_page_cap = 500
 # table but the documents' text and layout, as strata.ops.table_sizes records each run.
 structured_data_limit_bytes = 500_000_000
 
-# Plan-check thresholds: planned completion passed, days before closing, the actual-to-estimate
-# ratio and the data notes (ticket 09).
+# Plan-check thresholds (ticket 09). check_plan (src/strata/tools/check_plan.py) reads them, returns
+# the values it used, and the Check a plan screen fills its definition of each mark from them.
+# Source: the ticket's fixed checks and the blueprint's Check a plan wireframe. Each value is a
+# starting value for the owner to confirm.
 [plan_check]
+# Needs a look: an activity with no signed contract whose planned completion passed. The planned
+# completion is the first published planned date of its Contract Completion step. Only activities
+# estimated at this many US dollars or more get this mark, so the mark stays on the packages where
+# a missed date matters most. A smaller activity still pending near closing gets Watch from
+# days_before_closing. The wireframe marks the US$1,230,000.00 package and leaves the
+# US$295,000.00 one, whose planned completion also passed, to the closing-date check.
+completion_passed_min_estimated_usd = 1_000_000
+# Watch: an activity with no signed contract that is still pending this many days or fewer before
+# the project's closing date, or after it.
+days_before_closing = 90
+# Watch: a signed amount at least this many times its estimate, "far above the estimate". The
+# reason also says how many days after its first published planned date the contract was signed.
+# A late signing alone is not marked: most signings are late (about 22% of 656 works contracts in
+# STEP were signed on their planned date, in the World Bank's procurement delay study,
+# documents.worldbank.org, 099062824153516589), so a mark on each would hide the exceptions.
+actual_to_estimate_ratio = 2.0
 
 # Signals on followed projects: late direct selection, closing-date moves, rating downgrades,
 # disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).

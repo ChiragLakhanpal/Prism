@@ -1,0 +1,26 @@
+// The frame every page shares: the navy bar, the box band, the page, and the independent-demo
+// footer (DESIGN.md sections 5 and 8). The page grows, so the footer sits at the bottom of
+// short pages.
+import type { ReactNode } from "react";
+import { copy } from "../copy";
+
+export function Footer() {
+  return (
+    <footer className="border-t border-line">
+      <p className="layout py-6 text-caption text-ink-muted">{copy.footer}</p>
+    </footer>
+  );
+}
+
+export function Frame({ nav, band, children }: { nav: ReactNode; band: ReactNode; children: ReactNode }) {
+  return (
+    <div className="flex min-h-dvh flex-col bg-page">
+      {nav}
+      {band}
+      <main id="main" tabIndex={-1} className="flex-1 pb-16 focus-visible:outline-none">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
+}

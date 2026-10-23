@@ -1,0 +1,42 @@
+// The capture command covers every gallery page at 1440, 1024 and 390 px, with hover and
+// keyboard-focus shots, so design reviews are repeatable (criterion 10 of ticket 02). The
+// whole command is not a gate step; these tests check its list of shots and run one of them.
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, test } from "@playwright/test";
+import { galleryCopy } from "../src/gallery/copy";
+import { SHOTS, WIDTHS } from "../capture/shots";
+
+test("the capture list photographs every gallery page at 1440, 1024 and 390 px", () => {
+  expect(WIDTHS).toEqual([1440, 1024, 390]);
+  for (const slug of Object.keys(galleryCopy.pages)) {
+    const shot = SHOTS.find((candidate) => candidate.path === `/gallery/${slug}` && !candidate.act);
+    expect(shot, slug).toBeDefined();
+    expect(shot!.widths ?? WIDTHS).toEqual(WIDTHS);
+  }
+});
+
+test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
+  expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
+  expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);
+  expect(SHOTS.some((shot) => shot.server === "app" && shot.api?.["/api/me"]?.recorded === "me.json")).toBe(true);
+});
+
+test("the capture command takes a shot and saves it as a picture", () => {
+  test.setTimeout(60_000);
+  const out = mkdtempSync(join(tmpdir(), "strata-capture-"));
+  // The child picks its own free ports, so it never clashes with this run's servers.
+  const env: Record<string, string | undefined> = { ...process.env, STRATA_CAPTURE_DIR: out };
+  delete env.STRATA_TEST_WEB_PORT;
+  delete env.STRATA_TEST_GALLERY_PORT;
+  const done = spawnSync(
+    "npx",
+    ["playwright", "test", "--config", "playwright.capture.config.ts", "-g", " badges at 390 px$", "--reporter=line"],
+    { cwd: fileURLToPath(new URL("..", import.meta.url)), env, encoding: "utf8" },
+  );
+  expect(done.status, done.stdout + done.stderr).toBe(0);
+  expect(statSync(join(out, "badges--390.png")).size).toBeGreaterThan(1000);
+});

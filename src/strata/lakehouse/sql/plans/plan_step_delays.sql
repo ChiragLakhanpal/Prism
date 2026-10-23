@@ -8,6 +8,10 @@
 -- first listing has no Planned date for the step, or its tables have not been read yet, the first
 -- planned date and the delay stay empty. When an older listed version went unread, the delay is
 -- still measured from the first listing read, and first_listing_confirmed says it is not confirmed.
+--
+-- A row rests on two versions, its own and the first listing, so it is public only once both are
+-- (ADR 0002): its public_from is the later of the two. An earlier-dated plan can be disclosed after
+-- a later-dated one, and an as-of answer must not see a delay measured from a plan not yet public.
 INSERT INTO strata.silver.plan_step_delays (
   document_id, project_id, activity_reference_no, step, step_order, planned_on, actual_on,
   first_planned_on, first_planned_document, first_planned_plan_date, first_listing_confirmed, delay_days,
@@ -27,7 +31,7 @@ SELECT
   l.first_listing_confirmed,
   CASE WHEN s.actual_on IS NOT NULL AND f.planned_on IS NOT NULL
        THEN CAST(datediff(s.actual_on, f.planned_on) AS INT) END AS delay_days,
-  s.public_from
+  GREATEST(s.public_from, v.public_from) AS public_from
 FROM strata.silver.plan_steps AS s
 LEFT JOIN strata.silver.plan_listings AS l
   ON l.project_id = s.project_id
