@@ -78,9 +78,9 @@ def test_strata_ops_wins_when_its_round_trip_is_within_the_budget(document):
     assert outcome.chosen == "strata.ops"
     assert "- Status: run" in text
     assert "- Chosen store: strata.ops" in text
-    assert "strata.ops: the first statement took 6,000 ms. Of 10 tries at a write and a read, the middle time was " \
+    assert "strata.ops: getting ready, with its first statement, took 6,000 ms. Of 10 tries at a write and a read, the middle time was " \
            "400 ms and the longest was 400 ms." in text
-    assert "Lakebase: the first statement took 900 ms. Of 10 tries at a write and a read, the middle time was " \
+    assert "Lakebase: getting ready, with its first statement, took 900 ms. Of 10 tries at a write and a read, the middle time was " \
            "30 ms and the longest was 30 ms." in text
     assert "- Last run: October 24, 2026" in text
     assert not (document.parent / "adr").exists()

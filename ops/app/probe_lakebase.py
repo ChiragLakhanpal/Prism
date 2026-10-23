@@ -8,8 +8,9 @@ Run it from the main checkout after the wizard, before ticket 15 writes the firs
 
     uv run --script ops/app/probe_lakebase.py --env-file .env
 
-It times the same small job in each store: write one row, then read it back, ten times, after
-one first statement that wakes the store up. It applies the rule in docs/app-state.md, with the
+It times the same small job in each store: write one row, then read it back, ten times, after it
+gets each store ready, which it times on its own. For Lakebase, that includes starting or making
+the database. It applies the rule in docs/app-state.md, with the
 budget in config/thresholds.toml (app_state.round_trip_budget_ms), and writes the times and the
 chosen store into docs/app-state.md. When Lakebase wins, it also writes an ADR named
 NNNN-app-state-lives-in-lakebase.md in docs/adr, numbered one after the highest ADR there. It never
@@ -67,9 +68,9 @@ class Timing:
             return f"{self.store}: I could not make a database. {self.unavailable}"
         if self.unavailable:
             return f"{self.store}: I made a database, but a write or a read failed. {self.unavailable}"
-        return (f"{self.store}: the first statement took {self.first_ms:,.0f} ms. Of {len(self.round_trips_ms)} "
-                f"tries at a write and a read, the middle time was {self.middle_ms:,.0f} ms and the longest was "
-                f"{max(self.round_trips_ms):,.0f} ms.")
+        return (f"{self.store}: getting ready, with its first statement, took {self.first_ms:,.0f} ms. "
+                f"Of {len(self.round_trips_ms)} tries at a write and a read, the middle time was "
+                f"{self.middle_ms:,.0f} ms and the longest was {max(self.round_trips_ms):,.0f} ms.")
 
 
 @dataclass

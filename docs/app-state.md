@@ -6,7 +6,7 @@ Usage events and agent runs are not app state. They are logs that the dashboard 
 
 ## How the probe decides
 
-The probe times the same small job in each store: write one row, then read it back. It does this ten times in each store, after one first statement that wakes the store up, which it times on its own. Following a project or marking a draft as checked must feel immediate, so the budget for a write and a read is one second (`app_state.round_trip_budget_ms` in `config/thresholds.toml`, from Nielsen's limit for a person's flow of thought).
+The probe times the same small job in each store: write one row, then read it back. It does this ten times in each store, after it gets each store ready, which it times on its own. For Lakebase, that includes starting or making the database. Following a project or marking a draft as checked must feel immediate, so the budget for a write and a read is one second (`app_state.round_trip_budget_ms` in `config/thresholds.toml`, from Nielsen's limit for a person's flow of thought).
 
 - `strata.ops` wins when its middle time is within the budget. It needs no second store, no second set of credentials and no second copy of the access rules.
 - Lakebase wins only when `strata.ops`'s middle time is over the budget, and Free Edition lets the probe create a Lakebase database whose middle time is within it.
