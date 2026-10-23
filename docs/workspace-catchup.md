@@ -144,3 +144,37 @@ Then run the nightly job a second time from the main checkout:
     uv run --script ops/bundle/check.py job-run --env-file .env
 
 Then run the query again. It worked if the job run exits 0 and the count is the same as before (the verifier's observation O2). A page's records are now hashed in a fixed order, so the same awards in a new order make no new page. If the count grew, read `newest_record_on` in the new rows before you call it a failure, because Finances One may have published new awards between the two runs.
+
+## Ticket 09, step 1 of 3: turn on user authorization for the App
+
+The merger parked this step on October 23, 2026, after merge commit f9cc969. It needs the Databricks keys in `.env`. Run it after ticket 06 has deployed the App `strata` from `build/strata` at f9cc969 or later, with `DATABRICKS_WAREHOUSE_ID` set in the App's environment. Without that variable, the plan-check routes answer HTTP 503 with the code `no_data_service`.
+
+Run this from the main checkout:
+
+    databricks apps update strata --json '{"user_api_scopes": ["sql"]}'
+
+If the command line refuses the field, open the App in the workspace, choose Configure, then User authorization, and add the scope `sql`. Each user signs in to the App again to agree to the new scope.
+
+It worked if `databricks apps get strata -o json` lists `sql` under `effective_user_api_scopes`, and `GET /api/me` on the App, opened in a browser as a signed-in user, returns `"has_token": true`. That shows each request now carries `X-Forwarded-Access-Token`. As in ticket 03's steps, add `-p strata` if the default profile points at a different workspace.
+
+## Ticket 09, step 2 of 3: a user who cannot read strata gets a permission error
+
+The merger parked this step on October 23, 2026, after merge commit f9cc969. Run it after step 1. The App's address is the `url` field of `databricks apps get strata -o json`.
+
+Sign in to the App in a browser as a user with no USE CATALOG on `strata`, and open:
+
+    <App url>/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?asof=2026-10-22
+
+It worked if the answer is HTTP 403 with the body `{"code": "permission"}` and no rows. That also shows the warehouse's error text matches `PERMISSION_MARKERS` in `src/strata/lakehouse/engine.py`.
+
+Then open the same address as a user who has USE CATALOG and USE SCHEMA on `strata` but no SELECT. It should also be HTTP 403. If it is HTTP 503 with the code `data_service`, find the answer's reference in the server log. If the warehouse said `TABLE_OR_VIEW_NOT_FOUND`, add that marker to `PERMISSION_MARKERS`, so this user gets the permission error instead.
+
+## Ticket 09, step 3 of 3: the plan check on the warehouse equals the recorded answer
+
+The merger parked this step on October 23, 2026, after merge commit f9cc969. Run it after step 1, and after ticket 08's step 1 (`ops/plans/run_live.py`) has filled the plan tables on the warehouse.
+
+Sign in to the App in a browser as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`, and open:
+
+    <App url>/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?asof=2026-10-22
+
+It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json`. Its counts say 9 activities were checked: 1 `needs_a_look`, 2 `watch`, 3 `data_note` and 3 with no mark. This one call also proves that check_plan's four SQL files in `src/strata/tools/sql/check_plan/` run on the SQL warehouse without transpiling (`GREATEST` over columns that may be empty, and a correlated subquery in `project.sql`).

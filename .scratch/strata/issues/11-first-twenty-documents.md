@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 5; ADRs 0002 and 0004; the blueprint's "How doc
 
 **Blocked by:** 05 (Fixtures for the demo plan and the showcase project); 09 (The tool registry with the as-of contract, and check_plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P1
 **Design review:** no
@@ -24,3 +24,4 @@ Read first: docs/PLAN.md section 5; ADRs 0002 and 0004; the blueprint's "How doc
 
 
 - October 23, 2026, orchestrator: ticket 08 already fetches a project's document list and pages (src/strata/reader/documents.py: fetch_listing, fetch_url, NotFetched) and reads a page's layout through an ai_parse_document adapter with a recorded offline parser (src/strata/reader/layout.py: PARSERS, AiParseDocument; config/models.toml's [layout] parser picks one). Build on those modules and add to them; do not write a second fetcher or a second parser adapter. The 20 documents are recorded under data/fixture/recorded/documents/<project>/ as text with page maps (ticket 05). Every live call is a workspace step.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/11-first-twenty-documents, as soon as ticket 09 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
