@@ -92,6 +92,8 @@ The server reads its data as each viewer, from one of two places, chosen when it
 
 With neither, the routes that need data answer HTTP 503 with the code `no_data_service`.
 
+On this computer no Databricks App forwards a viewer, so `/api/freshness` answers 401 and the app shows the alert that says so. The screen tests in `web/tests/` answer `/api` from the recordings in `tests/fixtures/api` instead, as `npm --prefix web run capture` does.
+
 Each request a viewer makes, except `/api/health` and the web app's files, writes one usage event to `strata.ops.usage_events` and sends one trace. `src/strata/server/settings.py` says which environment variables set the app's own credentials for the usage events, the Application Insights connection string and the web app. Without the app's credentials, as on this computer, the server keeps no usage events.
 
 ## Deploy the app
