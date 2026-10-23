@@ -16,28 +16,29 @@ import sys
 
 ALLOW = "strata-gate: not-a-secret"
 SECRET_NAME = r"[A-Z][A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|CONNECTION_STRING)"
+# Most specific first: a line is reported as the first shape it matches.
 SHAPES = [
     ("a Databricks personal access token", r"\bdapi[0-9a-f]{32}(?:-\d+)?\b"),
-    ("a secret assigned in an environment file",
-     rf"^\s*(?:export\s+)?{SECRET_NAME}\s*[:=]\s*['\"]?[A-Za-z0-9_\-+/=.:;]{{16,}}['\"]?\s*(?:#.*)?$"),
     ("an Application Insights connection string",
      r"InstrumentationKey=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"),
     ("an Azure storage or service key", r"(?:AccountKey|SharedAccessKey)=[A-Za-z0-9+/]{30,}={0,2}"),
     ("an Azure AI services key", r"\b[A-Za-z0-9]{52}JQQJ99[A-Za-z0-9][A-L][A-Za-z0-9]{23}\b"),
     ("a private key", r"-----BEGIN (?:[A-Z0-9]+ )*PRIVATE KEY-----"),
     ("a GitHub token", r"\b(?:gh[pousr]_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{60,})\b"),
+    ("a secret assigned in an environment file",
+     rf"^\s*(?:export\s+)?{SECRET_NAME}\s*[:=]\s*['\"]?[A-Za-z0-9_\-+/=.:;]{{16,}}['\"]?\s*(?:#.*)?$"),
 ]
-FINDER = re.compile("|".join(f"(?P<s{i}>{pattern})" for i, (_, pattern) in enumerate(SHAPES)))
+COMPILED = [(name, re.compile(pattern)) for name, pattern in SHAPES]
+FINDER = re.compile("|".join(f"(?:{pattern})" for _, pattern in SHAPES))
 COMMIT_MARK = "\x01"
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)")
 
 
 def shape_of(line):
-    """The name of the key shape a line holds, or None."""
-    if ALLOW in line:
+    """The name of the most specific key shape a line holds, or None."""
+    if ALLOW in line or not FINDER.search(line):
         return None
-    match = FINDER.search(line)
-    return SHAPES[int(match.lastgroup[1:])][0] if match else None
+    return next(name for name, pattern in COMPILED if pattern.search(line))
 
 
 def git(*args):

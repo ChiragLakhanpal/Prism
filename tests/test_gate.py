@@ -185,7 +185,8 @@ def test_a_planted_key_blocks_the_commit_and_it_passes_once_removed(repo):
 
     output = blocked.stdout + blocked.stderr
     assert blocked.returncode != 0
-    assert "settings.py" in output
+    assert "settings.py, line 1" in output
+    assert "a Databricks personal access token" in output
     assert fake_databricks_token() not in output, "the scan must not print the key itself"
 
     write(repo, "settings.py", "TOKEN_FOR_DEMO = None\n")
@@ -222,7 +223,8 @@ def test_a_key_in_the_history_fails_the_gate_even_when_only_markdown_is_staged(r
     output = done.stdout + done.stderr
     assert done.returncode != 0
     assert "old.cfg" in output
-    assert "An old mistake" in output or git(repo, "rev-parse", "--short", "HEAD~1").stdout.strip() in output
+    assert "a Databricks personal access token" in output
+    assert "An old mistake" in output
 
 
 @pytest.mark.parametrize("line", [
