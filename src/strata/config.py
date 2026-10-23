@@ -1,12 +1,13 @@
 """The registry and config files for the change drill, each read through one function.
 
 Each file in config/ is one of the spec's single places ("Ten single places"), so a change
-request lands in one file (CLAUDE.md rule 9). This module reads four of them:
+request lands in one file (CLAUDE.md rule 9). This module reads five of them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
 - load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
+- load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -67,6 +68,12 @@ class _Entry:
             return None
         if not isinstance(value, int) or isinstance(value, bool):
             self._fail(key, "must be a whole number")
+        return value
+
+    def boolean(self, key: str) -> bool:
+        value = self.table.get(key)
+        if not isinstance(value, bool):
+            self._fail(key, "must be true or false")
         return value
 
     def date(self, key: str) -> dt.date:
@@ -364,3 +371,108 @@ def load_thresholds(path: Path = CONFIG_DIR / "thresholds.toml") -> Thresholds:
         if not isinstance(table, dict):
             raise ConfigError(f"In {path.name}, {section} must sit under a [section] heading.")
     return Thresholds(path, data)
+
+
+# ── The tool registry ────────────────────────────────────────────────────
+
+PARAMETER_TYPES = ("string", "date", "integer", "number", "boolean")
+ROW_CONTRACT = ("evidence_id", "public_from", "source")  # spec, seam 2: every row carries these
+ADAPTER = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
+TOOL_NAME = re.compile(r"[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class ToolParameter:
+    name: str
+    type: str
+    required: bool
+    description: str
+
+
+@dataclass(frozen=True)
+class ToolResult:
+    """The shape of what a tool returns beside the envelope every tool shares."""
+
+    row: str
+    row_fields: tuple[str, ...]
+    source_fields: tuple[str, ...]
+    fields: tuple[str, ...]
+    reasons: tuple[str, ...] = ()  # the codes a reason in a row's marks may have
+    abstentions: tuple[str, ...] = ()  # the reasons the tool may give for returning no rows
+
+
+@dataclass(frozen=True)
+class Tool:
+    """One tool, defined once: what it does, what it takes, what runs it and what it returns."""
+
+    name: str
+    description: str
+    adapter: str
+    benchmark: str
+    sources: tuple[str, ...]
+    parameters: tuple[ToolParameter, ...]
+    result: ToolResult
+
+    def parameter(self, name: str) -> ToolParameter:
+        found = [parameter for parameter in self.parameters if parameter.name == name]
+        if not found:
+            raise ConfigError(f"The tool {self.name} has no parameter {name}.")
+        return found[0]
+
+
+def load_tools(path: Path = CONFIG_DIR / "tools.toml") -> dict[str, Tool]:
+    """Every tool in the registry, by name, in the file's order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"tools"})
+    tools = {}
+    for name, table in data.get("tools", {}).items():
+        if not TOOL_NAME.fullmatch(name):
+            raise ConfigError(f"In {path.name}, the tool name {name!r} must be lower case letters, digits and _.")
+        entry = _Entry(path, f"tools.{name}", table)
+        parameters, result = _tool_parameters(path, name, table), _tool_result(path, name, table)
+        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result"})
+        adapter = entry.text("adapter")
+        if not ADAPTER.fullmatch(adapter):
+            entry._fail("adapter", f"must name a function as module:function, such as strata.tools.{name}:{name}")
+        tools[name] = Tool(name=name, description=entry.text("description"), adapter=adapter,
+                           benchmark=entry.text("benchmark"), sources=entry.texts("sources"),
+                           parameters=parameters, result=result)
+    return tools
+
+
+def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter, ...]:
+    parameters = []
+    for entry in _tables(path, table, "parameters"):
+        entry.where = f"tools.{name}.{entry.where}"
+        entry.only({"name", "type", "required", "description"})
+        parameter = ToolParameter(entry.text("name"), entry.text("type"), entry.boolean("required"),
+                                  entry.text("description"))
+        if parameter.type not in PARAMETER_TYPES:
+            entry._fail("type", f"must be one of {', '.join(PARAMETER_TYPES)}")
+        parameters.append(parameter)
+    names = [parameter.name for parameter in parameters]
+    if len(set(names)) != len(names):
+        raise ConfigError(f"In {path.name}, tools.{name} names a parameter twice.")
+    as_of = [parameter for parameter in parameters if parameter.name == "as_of"]
+    if not as_of or as_of[0].type != "date" or as_of[0].required:
+        raise ConfigError(f"In {path.name}, tools.{name} needs an optional as_of parameter of type date, because "
+                          f"every tool can answer as of a past date (ADR 0002). Add a [[tools.{name}.parameters]] "
+                          f'table with name = "as_of", type = "date" and required = false.')
+    return tuple(parameters)
+
+
+def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
+    if "result" not in table:
+        raise ConfigError(f"In {path.name}, tools.{name} has no result shape. Add a [tools.{name}.result] table "
+                          f"with row, row_fields, source_fields and fields.")
+    entry = _Entry(path, f"tools.{name}.result", table["result"])
+    entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions"})
+    result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
+                        entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"))
+    missing = [field for field in ROW_CONTRACT if field not in result.row_fields]
+    if missing:
+        entry._fail("row_fields", f"must include {', '.join(ROW_CONTRACT)}, so every row can be cited and dated; "
+                                  f"it lacks {', '.join(missing)}")
+    if not result.source_fields:
+        entry._fail("source_fields", "must name the fields of each row's source line")
+    return result

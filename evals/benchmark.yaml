@@ -1,0 +1,37 @@
+# The benchmark file: questions with their expected answers or citations (docs/PLAN.md section 10;
+# spec, "Ten single places", item 9). It holds four kinds of question: sql, documents, estimates and
+# refusals. Ticket 33 adds the runner that asks each one through the live answer contract, and the
+# other kinds.
+#
+# Each tool in the tool registry (config/tools.toml) names its question here by id, and changing a
+# tool's contract means updating its question in the same change (CLAUDE.md rule 4). The offline
+# gate calls each tool question's tool with its arguments on the fixture database and checks the
+# expected answer (tests/test_tools.py).
+#
+# Each question has: id, kind, tool (for a question a tool answers), the question as a person would
+# ask it, the tool's arguments, the expected answer, the ground-truth SQL that checks the same
+# answer, and where the expected answer comes from.
+
+questions:
+  - id: check-plan-nwwda-2026-10-09
+    kind: sql
+    tool: check_plan
+    question: >-
+      As of October 22, 2026, which activities in the Northern Water Works Development Agency's
+      Procurement Plan of October 9, 2026 for P156634 need a look, which are worth watching, and
+      which have data notes?
+    arguments:
+      project_id: P156634
+      implementing_agency: Northern Water Works Development Agency
+      plan_date: "2026-10-09"
+      as_of: "2026-10-22"
+    expected:
+      needs_a_look: [KE-NWWDA-541055-CW-RFB]
+      watch: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      data_note: [KE-NWWDA-199461-GO-RFB, KE-NWWDA-503455-CW-RFQ, KE-NWWDA-541061-CW-RFQ]
+      unmarked: [KE-NWWDA-199471-GO-RFQ, KE-NWWDA-207796-CS-INDV, NWWDA-WSDP-03-2019-2020]
+    ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
+    source: >-
+      The marks the blueprint's Check a plan wireframe gives the plan's eight activities
+      (tests/ground_truth/values.toml, plan_row wireframe_mark), and the ninth activity the
+      wireframe leaves out, with no mark (values.toml, plan.also_lists).

@@ -15,7 +15,7 @@
 -- first_listing_confirmed  whether the first listing is the first published one; false when an older
 --                          listed version went unread, so the delay may be measured from a later date
 -- delay_days               actual_on minus first_planned_on, in days; empty until both are known
--- public_from              the version's public date (ADR 0002)
+-- public_from              the later of the version's and the first listing's public dates (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_step_delays (
   document_id STRING NOT NULL,
   project_id STRING NOT NULL,

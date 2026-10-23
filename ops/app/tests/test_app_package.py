@@ -91,7 +91,9 @@ class OnlyTheLeanRequirements:
 sys.meta_path.insert(0, OnlyTheLeanRequirements())
 import strata.server.__main__
 from strata.server.settings import app_from_env
-app_from_env({"STRATA_WEB_DIST": sys.argv[2], "STRATA_LOCAL_DB": sys.argv[2] + "/none.duckdb"})
+app_from_env({"STRATA_WEB_DIST": sys.argv[2], "DATABRICKS_HOST": "https://strata.invalid",
+              "DATABRICKS_WAREHOUSE_ID": "wh-1", "DATABRICKS_CLIENT_ID": "strata-app",
+              "DATABRICKS_CLIENT_SECRET": "not-a-real-key"})
 print("started")
 """
 

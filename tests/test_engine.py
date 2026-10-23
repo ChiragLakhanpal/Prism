@@ -6,12 +6,13 @@ runs the real thing.
 """
 
 import datetime as dt
-import threading
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import io
+import urllib.error
+import urllib.request
 
 import pytest
 
-from strata.lakehouse.engine import (AccessDenied, DuckDBEngine, EngineError, SparkEngine, WarehouseEngine,
+from strata.lakehouse.engine import (DuckDBEngine, EngineError, PermissionDenied, SparkEngine, WarehouseEngine,
                                      http_transport)
 
 SQL = "SELECT event, happened_on FROM strata.ops.events WHERE happened_on <= CAST(:as_of AS DATE)"
@@ -80,38 +81,27 @@ def test_a_statement_the_warehouse_refuses_raises_its_reason():
 
 
 @pytest.mark.parametrize("error", [
-    {"error_code": "BAD_REQUEST",
-     "message": "[INSUFFICIENT_PERMISSIONS] User does not have USE CATALOG on Catalog 'strata'."},
-    {"error_code": "PERMISSION_DENIED", "message": "User does not have SELECT on Table 'strata.ops.data_readiness'."},
-])
-def test_a_statement_refused_for_want_of_a_permission_raises_access_denied(error):
+    {"error_code": "BAD_REQUEST", "message": "[INSUFFICIENT_PERMISSIONS] Insufficient privileges:\n"
+                                             "User does not have USE CATALOG on Catalog 'strata'. SQLSTATE: 42501"},
+    {"error_code": "PERMISSION_DENIED", "message": "User does not have SELECT on Table 'strata.gold.project'."},
+], ids=["missing-grant", "permission-denied"])
+def test_a_statement_refused_for_a_missing_grant_raises_permission_denied(error):
     warehouse = FakeWarehouse([{"statement_id": "s-1", "status": {"state": "FAILED", "error": error}}])
 
-    with pytest.raises(AccessDenied):
+    with pytest.raises(PermissionDenied):
         WarehouseEngine("wh-1", warehouse).run(SQL)
 
 
-def test_a_workspace_that_answers_403_raises_access_denied():
-    class Refuses(BaseHTTPRequestHandler):
-        def do_POST(self):
-            body = b'{"error_code": "PERMISSION_DENIED", "message": "You do not have permission to use the warehouse."}'
-            self.send_response(403)
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+@pytest.mark.parametrize("code, refused", [(401, PermissionDenied), (403, PermissionDenied), (500, EngineError)])
+def test_a_token_the_workspace_refuses_raises_permission_denied(monkeypatch, code, refused):
+    def urlopen(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, code, "Refused", {}, io.BytesIO(b'{"message": "Refused."}'))
 
-        def log_message(self, *args):
-            pass
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
 
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Refuses)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    try:
-        call = http_transport(f"http://127.0.0.1:{server.server_address[1]}", "not-a-real-key")
-        with pytest.raises(AccessDenied, match="permission to use the warehouse"):
-            WarehouseEngine("wh-1", call).run(SQL)
-    finally:
-        server.shutdown()
-        server.server_close()
+    with pytest.raises(refused) as raised:
+        http_transport("strata.test", "not-a-real-key")("POST", "/api/2.0/sql/statements/", {})
+    assert isinstance(raised.value, PermissionDenied) == (refused is PermissionDenied)
 
 
 def test_spark_gets_the_same_text_and_named_parameters():

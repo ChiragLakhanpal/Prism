@@ -12,6 +12,7 @@ import datetime as dt
 import json
 import threading
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 import httpx
@@ -20,8 +21,9 @@ import pytest
 from strata.dbx import Viewer
 from strata.fixture import recorded as fmt
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import AccessDenied, DuckDBEngine, EngineError, Result
+from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, Result
 from strata.server.app import create_app
+from strata.server.engines import duckdb_file
 
 ROOT = Path(__file__).resolve().parents[1]
 RECORDED = Path(__file__).parent / "fixtures" / "api"
@@ -52,9 +54,9 @@ def get(app, path, headers=None):
     return asyncio.run(go())
 
 
-def fixture_engine(fixture_db):
-    """The fixture database, opened read-only for each request, whoever the viewer is."""
-    return lambda viewer: DuckDBEngine.open(fixture_db, read_only=True)
+def each_viewer_gets(engine_class):
+    """An engine made for each request's viewer from engine_class(viewer)."""
+    return lambda viewer: nullcontext(engine_class(viewer))
 
 
 @pytest.fixture
@@ -81,7 +83,7 @@ def at(day):
 
 
 def test_the_stamp_gives_the_day_the_fixture_s_daily_sources_were_last_loaded(fixture_db):
-    response = get(create_app(sql_as=fixture_engine(fixture_db)), "/api/freshness", ANA)
+    response = get(create_app(engine_for=duckdb_file(fixture_db)), "/api/freshness", ANA)
 
     assert response.status_code == 200
     assert response.json() == recorded("freshness.json")
@@ -101,7 +103,7 @@ def test_a_catalog_with_no_rows_loaded_gives_the_empty_stamp(empty_catalog):
                            [("run-0", "fetch_by_watermark", "succeeded", 0, at("2026-10-22"), at("2026-10-22"),
                              dt.date(2026, 10, 22))])
 
-    response = get(create_app(sql_as=lambda viewer: DuckDBEngine.open(empty_catalog, read_only=True)),
+    response = get(create_app(engine_for=duckdb_file(empty_catalog)),
                    "/api/freshness", ANA)
 
     assert response.status_code == 200
@@ -119,7 +121,7 @@ def test_the_stamp_gives_the_stalest_daily_source_from_each_source_s_newest_meas
         ("awards", "KE", "fresh_newest_record", dt.date(2026, 10, 2), "daily", at("2026-10-21")),
     ])
 
-    response = get(create_app(sql_as=lambda viewer: DuckDBEngine.open(empty_catalog, read_only=True)),
+    response = get(create_app(engine_for=duckdb_file(empty_catalog)),
                    "/api/freshness", ANA)
 
     assert response.json() == {"data_through": "2026-10-20"}
@@ -128,7 +130,7 @@ def test_the_stamp_gives_the_stalest_daily_source_from_each_source_s_newest_meas
 def test_with_no_forwarded_identity_the_stamp_says_so_and_runs_no_query():
     asked = []
 
-    response = get(create_app(sql_as=lambda viewer: asked.append(viewer)), "/api/freshness")
+    response = get(create_app(engine_for=lambda viewer: asked.append(viewer)), "/api/freshness")
 
     assert response.status_code == 401
     assert response.json() == recorded("freshness-no-identity.json")
@@ -138,9 +140,9 @@ def test_with_no_forwarded_identity_the_stamp_says_so_and_runs_no_query():
 def test_when_the_warehouse_refuses_the_viewer_the_stamp_says_they_have_no_access():
     class Refusing:
         def run(self, sql, params=None):
-            raise AccessDenied("[INSUFFICIENT_PERMISSIONS] User does not have USE CATALOG on Catalog 'strata'.")
+            raise PermissionDenied("[INSUFFICIENT_PERMISSIONS] User does not have USE CATALOG on Catalog 'strata'.")
 
-    response = get(create_app(sql_as=lambda viewer: Refusing()), "/api/freshness", ANA)
+    response = get(create_app(engine_for=each_viewer_gets(lambda viewer: Refusing())), "/api/freshness", ANA)
 
     assert response.status_code == 403
     assert response.json() == recorded("freshness-no-access.json")
@@ -151,7 +153,7 @@ def test_a_warehouse_that_fails_gives_an_error_and_keeps_its_reason_private():
         def run(self, sql, params=None):
             raise EngineError("The warehouse did not run the statement: the secret detail")
 
-    response = get(create_app(sql_as=lambda viewer: Failing()), "/api/freshness", ANA)
+    response = get(create_app(engine_for=each_viewer_gets(lambda viewer: Failing())), "/api/freshness", ANA)
 
     assert response.status_code == 502
     assert response.json() == {"code": "unreadable"}
@@ -164,7 +166,7 @@ def test_a_warehouse_slower_than_the_stamp_s_timeout_gives_a_timeout():
             time.sleep(0.2)
             return Result(("data_through",), ((None,),))
 
-    response = get(create_app(sql_as=lambda viewer: Slow(), stamp_timeout_seconds=0.02), "/api/freshness", ANA)
+    response = get(create_app(engine_for=each_viewer_gets(lambda viewer: Slow()), stamp_timeout_seconds=0.02), "/api/freshness", ANA)
 
     assert response.status_code == 504
     assert response.json() == {"code": "timeout"}
@@ -192,7 +194,7 @@ def test_overlapping_requests_from_two_viewers_each_run_their_query_with_their_o
                 return Result(("warehouse_user",), ((owner,),))
             return Result(("data_through",), ((dt.date(2026, 10, 21),),))
 
-    app = create_app(sql_as=AsViewer)
+    app = create_app(engine_for=each_viewer_gets(AsViewer))
 
     async def both():
         transport = httpx.ASGITransport(app=app)

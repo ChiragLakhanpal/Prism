@@ -80,11 +80,19 @@ To start only the server, run `uv run python -m strata.server`. It prints the ad
 - `GET /api/health` says the server is up.
 - `GET /api/me` names the viewer that the Databricks App forwarded. It never returns the viewer's token.
 - `GET /api/me/warehouse` runs one query as the viewer and returns the user the warehouse says ran it.
-- `GET /api/freshness` returns the data-freshness stamp's day, read from `strata.ops` as the viewer: the earliest day a daily source was last loaded, or `null` before any has loaded. It answers 401 when no viewer was forwarded, 403 when the warehouse refuses the viewer, 504 after `app.stamp_timeout_seconds` in `config/thresholds.toml`, and 502 when the warehouse fails.
+- `GET /api/freshness` returns the data-freshness stamp's day, read from `strata.ops` as the viewer: the earliest day a daily source was last loaded, or `null` before any has loaded. It answers 401 when no viewer was forwarded, 403 with the code `permission` when the warehouse refuses the viewer, 504 after `app.stamp_timeout_seconds` in `config/thresholds.toml`, and 502 when the warehouse fails.
 - `POST /api/ask` takes `{"question": "..."}` and streams the run's events as `text/event-stream`, ending with a `done` event that carries the run id. Until the agent exists, the run sends one `error` event with the code `no_agent`.
+- `GET /api/projects/{project_id}/procurement/{agency_id}` checks an implementing agency's latest Procurement Plan, and `GET /api/projects/{project_id}/procurement/{agency_id}/{version}` checks the version with that plan date, such as `2026-10-09`. Each runs the tool registry's `check_plan` as the viewer and returns its result as JSON. Both take `?asof=` (a date) and `?view=` (`staff`, `piu` or `public`). Until ticket 40 applies each view's rules, every view gets the World Bank staff result. A viewer whose token cannot read the strata catalog gets HTTP 403 with the code `permission` and no rows. When the data service fails, or its database file cannot be opened, the answer is HTTP 503 with the code `data_service` and a reference to look up in the server log. When a tool breaks its contract, the answer is HTTP 500 with the code `tool_contract` and a reference.
 - Every other address outside `/api` gets the built web app (`web/dist`, or `STRATA_WEB_DIST`), whose router shows the page or the not-found page.
 
-Each request a viewer makes, except `/api/health`, writes one usage event to `strata.ops.usage_events` and sends one trace. `src/strata/server/settings.py` says which environment variables set the warehouse, the app's own credentials for the usage events, the Application Insights connection string and the web app. On this computer, with no warehouse set, the queries read the gate's fixture database, and the server keeps no usage events.
+The server reads its data as each viewer, from one of two places, chosen when it starts:
+
+- `STRATA_DATABASE_FILE` names a DuckDB file, which each request opens read-only. To run against the gate's fixture, set it to `data/out/fixture.duckdb`.
+- Otherwise, `DATABRICKS_HOST` and `DATABRICKS_WAREHOUSE_ID` name the workspace and its SQL warehouse, and each query runs with the token the Databricks App forwarded for the viewer.
+
+With neither, the routes that need data answer HTTP 503 with the code `no_data_service`.
+
+Each request a viewer makes, except `/api/health` and the web app's files, writes one usage event to `strata.ops.usage_events` and sends one trace. `src/strata/server/settings.py` says which environment variables set the app's own credentials for the usage events, the Application Insights connection string and the web app. Without the app's credentials, as on this computer, the server keeps no usage events.
 
 ## Deploy the app
 
@@ -136,12 +144,15 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The document reader: documents and their pages, the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
 | The live plan run on the workspace | `ops/plans/run_live.py` |
 | The knowledge model | `src/strata/knowledge/` (later) |
-| The tool registry and its tools | `src/strata/tools/` (later) |
+| The tool registry: one entry per tool, with its parameters (always an optional `as_of` date), adapter, benchmark question and result shape. Adding a tool is one entry plus its adapter | `config/tools.toml` |
+| The registry at work (the agent's tool list, calling a tool by name, the tool contract) and the tools, with their SQL. `check_plan` is the first | `src/strata/tools/` |
+| Which engine runs a viewer's queries in the server | `src/strata/server/engines.py` |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |
-| The registry and config files for the change drill: the source registry, the slice file, the model file and the thresholds file, each read by one function in `src/strata/config.py` | `config/` |
+| The registry and config files for the change drill: the source registry, the slice file, the model file, the thresholds file and the tool registry, each read by one function in `src/strata/config.py` | `config/` |
 | The rest of the change drill's config files: the evidence ladder, the package form and roles | `config/` (later) |
-| The benchmark and evaluation sets | `evals/` (later) |
+| The benchmark file, with one question per tool so far. Ticket 33 adds the runner and the other kinds of question | `evals/benchmark.yaml` |
+| The other evaluation sets | `evals/` (later) |
 | The dashboard definition | `dashboard/` (later) |
 | The credentials wizard and the day-one probes | `ops/` (ticket 03) |
 

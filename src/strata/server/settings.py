@@ -4,8 +4,9 @@
 reads only the environment it is given:
 
 - DATABRICKS_HOST and DATABRICKS_WAREHOUSE_ID (the app's sql-warehouse resource): each viewer's
-  queries run on that warehouse with their own forwarded token. Without them, STRATA_LOCAL_DB or
-  the gate's fixture database (data/out/fixture.duckdb) stands in, read-only, on this computer.
+  queries run on that warehouse with their own forwarded token. On this computer,
+  STRATA_DATABASE_FILE names a DuckDB file, such as the gate's fixture database, to read instead
+  (src/strata/server/engines.py decides).
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
   service principal: usage events are written to strata.ops.usage_events with its token.
   Without them, the server keeps no usage events.
@@ -32,14 +33,12 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from strata.config import load_thresholds
-from strata.lakehouse.engine import DuckDBEngine, EngineError, Transport, WarehouseEngine, http_transport
-from strata.server import tracing
+from strata.lakehouse.engine import EngineError, Transport, WarehouseEngine, http_transport
+from strata.server import engines, tracing
 from strata.server.app import create_app
 from strata.server.usage import UsageLog
-from strata.server.viewer_sql import SqlAs, warehouse_as_viewer
 
 ROOT = Path(__file__).resolve().parents[3]
-FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 WEB_DIST = ROOT / "web" / "dist"
 TOKEN_PATH = "/oidc/v1/token"
 # A token is renewed this long before Databricks says it expires.
@@ -80,16 +79,6 @@ def as_the_app(host: str, client_id: str, client_secret: str) -> Transport:
     return lambda method, path, body: http_transport(host, token())(method, path, body)
 
 
-def _sql_as(environ: Mapping[str, str], timeout: float) -> SqlAs | None:
-    host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
-    if host and warehouse:
-        return warehouse_as_viewer(host, warehouse, timeout)
-    local = Path(environ.get("STRATA_LOCAL_DB") or FIXTURE_DB)
-    if local.is_file():
-        return lambda viewer: DuckDBEngine.open(local, read_only=True)
-    return None
-
-
 def _usage(environ: Mapping[str, str], flush_seconds: float) -> UsageLog | None:
     host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
     client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
@@ -104,7 +93,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
-    return create_app(sql_as=_sql_as(environ, timeout), stamp_timeout_seconds=timeout,
+    return create_app(engine_for=engines.from_environment(environ), stamp_timeout_seconds=timeout,
                       usage=_usage(environ, thresholds.value("app.usage_flush_seconds")),
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

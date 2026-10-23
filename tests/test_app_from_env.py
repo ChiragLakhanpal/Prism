@@ -105,7 +105,7 @@ def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_buil
     (tmp_path / "assets" / "app-1a2b.js").write_text("console.log('Strata')")
 
     stamp, page, asset, missing = serve(
-        app_from_env({"STRATA_LOCAL_DB": str(fixture_db), "STRATA_WEB_DIST": str(tmp_path)}),
+        app_from_env({"STRATA_DATABASE_FILE": str(fixture_db), "STRATA_WEB_DIST": str(tmp_path)}),
         [("/api/freshness", ANA), ("/projects/P130164", ANA), ("/assets/app-1a2b.js", {}), ("/api/nothing", {})])
 
     assert stamp.json() == json.loads((RECORDED / "freshness.json").read_text())
