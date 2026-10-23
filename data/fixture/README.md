@@ -25,9 +25,14 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 | `recorded/documents/<project>/<name>.txt` | The text the World Bank publishes for a document, byte for byte, after a few header lines |
 | `recorded/documents/<project>/<name>.pages.txt` | The text of each PDF page of the same document, one page after each form feed, read from the PDF's text layer |
 | `recorded/documents/<project>/<name>.words.json` | For each Procurement Plan (`words = true` in `sources.toml`), every word on each PDF page with its box, read with poppler's `pdftotext -bbox`. Offline, the layout parser reads the plans' tables from these words, because `ai_parse_document` runs only on the workspace |
-| `placeholder/` | Five plan rows that ticket 01 typed in. Ticket 08 replaces them with rows read from the recorded plans |
 
 The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops, which ticket 07 builds from it.
+
+## The plans as STEP rows
+
+The gate then runs the plan reader (`src/strata/lakehouse/plans.py`) over the recorded plans, exactly as the nightly job runs it on the workspace, but with the recorded files in place of the World Bank's hosts and the recorded words in place of `ai_parse_document`. It fills `strata.bronze`, `strata.silver.plan_versions`, `plan_listings`, `plan_rows`, `plan_steps`, `plan_step_delays` and `plan_data_notes`, and `strata.ops.parse_runs` and `strata.ops.data_readiness`.
+
+The documents API lists about 240 Procurement Plan versions for P156634, and the fixture records 11 of them, so the run reads 11 and says so in `strata.ops.data_readiness` (`plan_versions_read`). Each of the 11 is an agency's latest version, the version before it, or the first version to list one of its activities, so the layout parser reads the tables of all 11: 15 table pages. The other 22 pages hold the plans' narrative and are read from their text. No recorded plan re-dates a step that an earlier version planned, so a re-dated step needs another version recorded (ticket 27).
 
 Every recorded file starts with its source and its license line, which is CC BY 4.0. Notices keep their contact names, emails and phone numbers on purpose, because the lakehouse must strip them at ingestion (CLAUDE.md rule 8).
 

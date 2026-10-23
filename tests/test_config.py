@@ -78,8 +78,11 @@ def test_a_slice_file_whose_years_run_backwards_is_refused(tmp_path):
 
 # ── The source registry ──────────────────────────────────────────────────
 
-def test_the_source_registry_loads_with_no_sources_until_the_first_is_added():
-    assert config.load_sources() == {}
+def test_the_source_registry_loads_and_names_the_documents_api_that_plan_versions_come_from():
+    documents = config.load_sources()["documents"]
+
+    assert documents.endpoint == "https://search.worldbank.org/api/v3/wds"
+    assert documents.stratum == "How"
 
 
 AWARDS = """

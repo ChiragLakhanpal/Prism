@@ -35,8 +35,8 @@ It runs the steps in `gates/steps.toml` in order and stops at the first one that
 
 1. Scan the staged changes and the history of the branch for secrets.
 2. Test the guard hook.
-3. Build the fixture database from the recorded sources, and print its size.
-4. Run the Python tests. They cover the gate, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job, the bundle commands and the server.
+3. Build the fixture database from the recorded sources, read P156634's Procurement Plans into STEP rows, and print its size.
+4. Run the Python tests. They cover the gate, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job, the plan reader, the bundle commands and the server.
 5. Type check and bundle the web app.
 6. Run the Playwright tests against the built web app.
 
@@ -95,8 +95,10 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The nightly job's tasks | `src/strata/lakehouse/nightly.py` |
 | The bundle: the strata catalog, its schemas, the volume, the grants and the nightly job, with its notes | `databricks.yml` and `bundle/` |
 | The deploy command and the workspace checks for the bundle | `ops/bundle/` |
-| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (sources and transforms later) |
-| The document reader | `src/strata/reader/` (later) |
+| The lakehouse: sources, transforms and data readiness | `src/strata/lakehouse/` (more sources and transforms later) |
+| The plan reader: a project's Procurement Plans into STEP rows, with delay from the first published planned date and data notes, under the daily page cap | `src/strata/lakehouse/plans.py` and `src/strata/lakehouse/sql/plans/` (`uv run --frozen python -m strata.lakehouse.plans` runs it on the fixture) |
+| The document reader: documents and their pages, the layout parser (Route B, offline and live) and STEP's words | `src/strata/reader/` |
+| The live plan run on the workspace | `ops/plans/run_live.py` |
 | The knowledge model | `src/strata/knowledge/` (later) |
 | The tool registry and its tools | `src/strata/tools/` (later) |
 | The agent: instructions, sync, the answer loop, the verifier and workflows | `src/strata/agent/` (later) |

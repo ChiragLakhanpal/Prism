@@ -117,8 +117,8 @@ def test_overlapping_questions_from_two_viewers_each_run_as_their_own_viewer():
 def test_evidence_that_came_back_in_one_turn_is_not_there_in_the_next():
     async def runner(turn):
         if turn.question == "First":
-            turn.facts.record("strata.placeholder.plan_rows:KE-NWWDA-541055-CW-RFB", {"process_status": "Pending Implementation"})
-        yield Event("step", {"came_back": turn.facts.came_back("strata.placeholder.plan_rows:KE-NWWDA-541055-CW-RFB")})
+            turn.facts.record("strata.silver.plan_rows:KE-NWWDA-541055-CW-RFB", {"process_status": "Pending Implementation"})
+        yield Event("step", {"came_back": turn.facts.came_back("strata.silver.plan_rows:KE-NWWDA-541055-CW-RFB")})
 
     app = create_app(runner=runner)
 

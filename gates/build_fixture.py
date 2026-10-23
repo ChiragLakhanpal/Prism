@@ -11,13 +11,14 @@ It builds three things, with no network:
   (each API response as JSON), `recorded.documents` (each document's published text) and
   `recorded.pages` (the text of each PDF page, numbered from 1). Ticket 07's lakehouse run
   turns these into bronze, silver and gold. The `recorded` schema is the fixture's copy of
-  the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops,
-  which ticket 07 builds from it.
-- The placeholder tables. Each CSV file in data/fixture/placeholder becomes a table in the
-  schema `placeholder`. Ticket 08 replaces them with plan rows read from the recorded plans.
+  the sources, not a catalog layer. The public-date check covers bronze, silver, gold and ops.
+- The demo project's Procurement Plans as STEP rows. The plan reader (src/strata/lakehouse/plans.py)
+  runs over the recorded plans with the offline document source and layout parser, and fills
+  bronze, silver.plan_versions, plan_rows, plan_steps, plan_step_delays and plan_data_notes, and
+  the ops tables, exactly as it does on the workspace.
 
 The tests attach the database as `strata`, so they query strata.recorded.pages and
-strata.placeholder.plan_rows. It builds into a new file and swaps it in, so a failed build
+strata.silver.plan_rows. It builds into a new file and swaps it in, so a failed build
 never leaves a half-built database behind. Run it with this command:
 
     uv run --frozen python gates/build_fixture.py
@@ -25,19 +26,19 @@ never leaves a half-built database behind. Run it with this command:
 
 import json
 import os
-import re
 import sys
 from pathlib import Path
 
+from strata.config import load_slice
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog
+from strata.lakehouse import catalog, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
+from strata.reader.documents import NotFetched
 
 ROOT = Path(__file__).resolve().parents[1]
-PLACEHOLDER = ROOT / "data" / "fixture" / "placeholder"
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
-TABLE_NAME = re.compile(r"[a-z][a-z0-9_]*")
+DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
 RECORDED_TABLES = """
 CREATE SCHEMA recorded;
 CREATE TABLE recorded.files (file VARCHAR PRIMARY KEY, source VARCHAR NOT NULL, license VARCHAR NOT NULL,
@@ -48,15 +49,6 @@ CREATE TABLE recorded.pages (document VARCHAR NOT NULL, pdf_page INTEGER NOT NUL
                              PRIMARY KEY (document, pdf_page));
 """
 
-
-def load_placeholder(con, source):
-    con.execute("CREATE SCHEMA placeholder")
-    for table in sorted(source.glob("*.csv")):
-        if not TABLE_NAME.fullmatch(table.stem):
-            raise SystemExit(f"The fixture file {table.name} needs a lower-case table name. Use only "
-                             "letters, digits and underscores, and start with a letter.")
-        con.execute(f"CREATE TABLE placeholder.{table.stem} AS SELECT * FROM read_csv(?, header = true)",
-                    [str(table)])
 
 
 def load_recorded(con, manifest):
@@ -83,9 +75,9 @@ def load_recorded(con, manifest):
                 con.execute("INSERT INTO recorded.documents VALUES (?, ?, ?)", [source.file, file.source, file.body])
 
 
-def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABLES):
-    """Build the database at out from the table definitions, the placeholder folder and a loaded
-    manifest (by default, sources.toml)."""
+def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
+    """Build the database at out from the table definitions and a loaded manifest (by default,
+    sources.toml), then read the Procurement Plans of the project plans_for (none when it is None)."""
     manifest = manifest or fmt.load_manifest()
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
@@ -94,10 +86,11 @@ def build(out=FIXTURE_DB, source=PLACEHOLDER, manifest=None, tables=catalog.TABL
     try:
         with DuckDBEngine.open(building) as engine:
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
-            load_placeholder(engine.connection, source)
             load_recorded(engine.connection, manifest)
+            if plans_for:
+                plans.run_on_fixture(engine, plans_for, manifest=manifest)
             catalog.check_public_from(engine)  # every table in the catalog's schemas, whatever made it
-    except (CatalogError, EngineError) as error:  # one sentence, never a traceback
+    except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)
         raise SystemExit(str(error)) from error
     except BaseException:

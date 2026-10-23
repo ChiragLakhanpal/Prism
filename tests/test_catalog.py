@@ -145,5 +145,8 @@ def test_a_definition_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
         catalog.table_definitions(folder)
 
 
-def test_this_ticket_ships_one_table_definition_the_pipeline_runs():
-    assert [definition.full_name for definition in catalog.table_definitions()] == ["strata.ops.pipeline_runs"]
+def test_the_catalog_defines_the_pipeline_runs_and_each_table_once():
+    names = [definition.full_name for definition in catalog.table_definitions()]
+
+    assert "strata.ops.pipeline_runs" in names
+    assert len(names) == len(set(names))

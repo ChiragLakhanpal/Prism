@@ -1,8 +1,8 @@
-"""Building the fixture database and checking the recorded files. Each CSV file in the
-placeholder folder becomes a table, and a bad file name or a table definition DuckDB cannot run
-stops the build before it writes anything. Every recorded file is listed in sources.toml with its source and license line, the
-files stay inside their size limits, and every response stamped with a daily as_of_date leaves
-it out of the refresh diff."""
+"""Building the fixture database and checking the recorded files. A table definition DuckDB cannot
+run, or a plan the plan reader cannot fetch, stops the build before it writes anything. Every
+recorded file is listed in sources.toml with its source and license line, the files stay inside
+their size limits, and every response stamped with a daily as_of_date leaves it out of the refresh
+diff."""
 
 import importlib.util
 from pathlib import Path
@@ -20,17 +20,16 @@ def builder():
     return module
 
 
-def test_a_fixture_file_whose_name_starts_with_an_underscore_stops_the_build(tmp_path):
+def test_a_project_whose_document_list_was_never_recorded_stops_the_build_with_one_sentence(tmp_path):
     from strata.fixture import recorded as fmt
 
-    source = tmp_path / "placeholder"
-    source.mkdir()
-    (source / "_plan_rows.csv").write_text("plan_id\nP1\n")
+    (tmp_path / "sources.toml").write_text('recorded = "recorded"\n')
     out = tmp_path / "fixture.duckdb"
 
-    with pytest.raises(SystemExit, match="start with a letter"):
-        builder().build(out=out, source=source, manifest=fmt.load_manifest())
+    with pytest.raises(SystemExit, match="no recording of https://search.worldbank.org/api/v3/wds") as stopped:
+        builder().build(out=out, manifest=fmt.load_manifest(tmp_path / "sources.toml"), plans_for="P156634")
 
+    assert isinstance(stopped.value.code, str)
     assert not out.exists()
 
 
@@ -39,11 +38,10 @@ def test_a_table_definition_duckdb_cannot_run_stops_the_build_with_one_sentence(
     tables.mkdir(parents=True)
     (tables / "pipeline_runs.sql").write_text(
         "CREATE TABLE IF NOT EXISTS strata.ops.pipeline_runs (run_id STRING COMMENT 'the run', public_from DATE)\n")
-    (tmp_path / "placeholder").mkdir()
     out = tmp_path / "fixture.duckdb"
 
     with pytest.raises(SystemExit, match="transpile step could not rewrite") as stopped:
-        builder().build(out=out, source=tmp_path / "placeholder", tables=tmp_path / "tables")
+        builder().build(out=out, tables=tmp_path / "tables")
 
     assert isinstance(stopped.value.code, str)
     assert not out.exists()
@@ -87,11 +85,9 @@ def test_the_fixture_database_holds_every_recorded_file_with_its_source_license_
         {"Source": "https://documents.example/icr.txt", **header}, b"Published text"))
     (files / "documents" / "P000001" / "icr.pages.txt").write_bytes(fmt.text_file(
         {"Source": "https://documents.example/icr.pdf", **header}, b"First page\fSecond page"))
-    placeholder = tmp_path / "placeholder"
-    placeholder.mkdir()
     out = tmp_path / "fixture.duckdb"
 
-    builder().build(out=out, source=placeholder, manifest=fmt.load_manifest(tmp_path / "sources.toml"))
+    builder().build(out=out, manifest=fmt.load_manifest(tmp_path / "sources.toml"), plans_for=None)
 
     with duckdb.connect() as con:
         con.execute("ATTACH ? AS strata (READ_ONLY)", [str(out)])

@@ -1,0 +1,228 @@
+"""P156634's Procurement Plans read into STEP rows: seam 1, the lakehouse run over the fixture.
+
+The gate builds the fixture database by running the plan reader over the recorded plans
+(gates/build_fixture.py), so most tests read what that run wrote. Every expected value comes from
+tests/ground_truth/values.toml, which quotes the plans with their PDF pages, never from Strata's code.
+"""
+
+import datetime as dt
+import re
+import tomllib
+from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
+from strata.lakehouse.engine import DuckDBEngine
+
+ROOT = Path(__file__).resolve().parents[1]
+GROUND_TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
+NWWDA = "Northern Water Works Development Agency"
+DEMO_PLAN = dt.date(2026, 10, 9)
+
+
+def value(key: str) -> dict:
+    return next(entry for entry in GROUND_TRUTH["value"] if entry["id"] == key)
+
+
+def amount(text: str) -> Decimal:
+    return Decimal(text.replace(",", ""))
+
+
+def squash(text: str) -> str:
+    """values.toml's quotes match ignoring whitespace, because a PDF cell drops the space where it wraps."""
+    return re.sub(r"\s+", "", text)
+
+
+@pytest.fixture(scope="module")
+def db(fixture_db):
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        yield engine
+
+
+def rows(engine, sql: str, **params) -> list[dict]:
+    result = engine.run(sql, params)
+    return [dict(zip(result.columns, row)) for row in result.rows]
+
+
+DEMO_ROWS = """
+SELECT r.*
+FROM strata.silver.plan_rows AS r
+JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
+WHERE v.implementing_agency = :agency AND v.plan_date = :plan_date
+"""
+
+
+def test_the_october_9_plans_eight_activities_match_the_check_a_plan_wireframe(db):
+    found = {row["activity_reference_no"]: row for row in rows(db, DEMO_ROWS, agency=NWWDA, plan_date=DEMO_PLAN)}
+
+    expected = GROUND_TRUTH["plan_row"]
+    assert len(expected) == 8
+    assert set(found) == {row["reference"] for row in expected} | set(GROUND_TRUTH["plan"]["also_lists"])
+    for row in expected:
+        got = found[row["reference"]]
+        assert squash(got["description"]) == squash(row["description"]), row["reference"]
+        assert (got["method"], got["market_approach"], got["review_type"], got["process_status"]) == (
+            row["method"], row["market_approach"], row["review_type"], row["process_status"]), row["reference"]
+        assert got["estimated_amount_usd"] == amount(row["estimated_amount_usd"]), row["reference"]
+        assert got["actual_amount_usd"] == amount(row["actual_amount_usd"]), row["reference"]
+        assert got["pdf_page"] == GROUND_TRUTH["plan"]["pdf_page"]
+
+
+DEMO_STEP = """
+SELECT d.*, r.actual_amount_usd, r.process_status
+FROM strata.silver.plan_step_delays AS d
+JOIN strata.silver.plan_versions AS v ON v.document_id = d.document_id
+JOIN strata.silver.plan_rows AS r
+  ON r.document_id = d.document_id AND r.activity_reference_no = d.activity_reference_no
+WHERE v.implementing_agency = :agency AND v.plan_date = :plan_date
+  AND d.activity_reference_no = :reference AND d.step = :step
+"""
+
+
+def demo_step(engine, reference: str, step: str) -> dict:
+    found = rows(engine, DEMO_STEP, agency=NWWDA, plan_date=DEMO_PLAN, reference=reference, step=step)
+    assert len(found) == 1, (reference, step)
+    return found[0]
+
+
+def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_date(db):
+    signed = demo_step(db, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
+
+    first = value("plan-229129-first-planned-signing")
+    assert signed["actual_on"] == value("plan-229129-signed")["value"]
+    assert (signed["first_planned_on"], signed["first_planned_plan_date"]) == (first["value"], first["date"])
+    assert signed["delay_days"] == value("plan-229129-days-late")["value"]
+    assert signed["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
+
+
+def test_ke_nwwda_541055_plans_completion_on_july_31_2026_and_shows_no_signed_contract(db):
+    completion = demo_step(db, "KE-NWWDA-541055-CW-RFB", "Contract Completion")
+    signed = demo_step(db, "KE-NWWDA-541055-CW-RFB", "Signed Contract")
+
+    assert completion["planned_on"] == value("plan-541055-planned-completion")["value"]
+    assert signed["actual_on"] is None and signed["delay_days"] is None
+    assert signed["process_status"] == value("plan-541055-status")["value"]
+
+
+def test_the_october_9_plan_has_a_data_note_for_the_method_and_for_each_actual_amount_of_zero(db):
+    notes = rows(db, """
+        SELECT n.activity_reference_no, n.note, n.reference_method_code, n.method, n.actual_amount_usd
+        FROM strata.silver.plan_data_notes AS n
+        JOIN strata.silver.plan_versions AS v ON v.document_id = n.document_id
+        WHERE v.implementing_agency = :agency AND v.plan_date = :plan_date
+        ORDER BY n.activity_reference_no""", agency=NWWDA, plan_date=DEMO_PLAN)
+
+    zero = Decimal(str(value("plan-503455-actual-zero")["value"]))
+    assert [(n["activity_reference_no"], n["note"]) for n in notes] == [
+        ("KE-NWWDA-199461-GO-RFB", "method_differs_from_reference"),
+        ("KE-NWWDA-503455-CW-RFQ", "actual_amount_zero"),
+        ("KE-NWWDA-541061-CW-RFQ", "actual_amount_zero"),
+    ]
+    assert (notes[0]["reference_method_code"], notes[0]["method"]) == (
+        value("plan-199461-reference-method")["value"], value("plan-199461-method-column")["value"])
+    assert notes[1]["actual_amount_usd"] == notes[2]["actual_amount_usd"] == zero
+
+
+def test_each_plan_version_is_public_from_its_disclosure_date_and_in_its_agencys_series(db):
+    versions = rows(db, """
+        SELECT plan_date, implementing_agency, series_order, is_latest, public_from
+        FROM strata.silver.plan_versions WHERE implementing_agency = :agency ORDER BY plan_date""", agency=NWWDA)
+
+    first_listed = [value("plan-229129-first-planned-signing")["date"], value("plan-541055-first-listed")["value"]]
+    assert all(v["public_from"] == v["plan_date"] for v in versions)  # each was disclosed on its own date
+    assert set(first_listed) <= {v["plan_date"] for v in versions}
+    assert [v["series_order"] for v in versions] == list(range(1, len(versions) + 1))
+    assert [v["is_latest"] for v in versions] == [False] * (len(versions) - 1) + [True]
+    assert versions[-1]["plan_date"] == DEMO_PLAN
+
+
+# ── Runs on a fresh database: each page parsed once, under the daily page cap ──
+
+def clock(day: dt.date):
+    """A clock that starts at noon UTC on a day and moves a second each time it is read. A test moves
+    it to another day through now.state["day"]."""
+    state = {"day": day, "ticks": 0}
+
+    def now():
+        state["ticks"] += 1
+        return dt.datetime.combine(state["day"], dt.time(12), dt.UTC) + dt.timedelta(seconds=state["ticks"])
+
+    now.state = state
+    return now
+
+
+@pytest.fixture
+def fresh():
+    from strata.lakehouse import catalog
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        yield engine
+
+
+def plan_run(engine, now, thresholds=None):
+    from strata.lakehouse import plans
+
+    return plans.run_on_fixture(engine, "P156634", clock=now, **({"thresholds": thresholds} if thresholds else {}))
+
+
+def counts(engine) -> dict:
+    tables = ("bronze.document_lists", "bronze.document_texts", "bronze.document_pages", "bronze.layout_pages")
+    return {table: engine.run(f"SELECT count(*) AS n FROM strata.{table}").rows[0][0] for table in tables}
+
+
+def test_a_second_run_parses_no_new_pages_and_strata_ops_shows_the_pages_read_by_each_route(fresh):
+    now = clock(dt.date(2026, 10, 23))
+    first = plan_run(fresh, now)
+    before = counts(fresh)
+    second = plan_run(fresh, now)
+
+    assert counts(fresh) == before  # nothing fetched twice, and no page parsed twice
+    runs = rows(fresh, "SELECT run_id, pages_parsed, stopped_at_cap FROM strata.ops.parse_runs ORDER BY started_at")
+    assert [(r["run_id"], r["pages_parsed"], r["stopped_at_cap"]) for r in runs] == [
+        (first.run_id, before["bronze.layout_pages"], False), (second.run_id, 0, False)]
+    measured = {r["measure"]: (r["count"], r["denominator"]) for r in rows(
+        fresh, "SELECT measure, count, denominator FROM strata.ops.data_readiness WHERE run_id = :run_id",
+        run_id=second.run_id)}
+    route_a, route_b = measured["pages_read_route_a"], measured["pages_read_route_b"]
+    assert route_b[0] == route_b[1] == before["bronze.layout_pages"] > 0
+    assert route_a[0] + route_b[0] == route_a[1] == before["bronze.document_pages"]
+
+
+def cap(tmp_path, pages: int):
+    from strata.config import CONFIG_DIR, load_thresholds
+
+    text = (CONFIG_DIR / "thresholds.toml").read_text()
+    assert "daily_page_cap = 500" in text
+    path = tmp_path / "thresholds.toml"
+    path.write_text(text.replace("daily_page_cap = 500", f"daily_page_cap = {pages}"))
+    return load_thresholds(path)
+
+
+def test_a_lower_daily_page_cap_stops_the_run_at_the_cap_and_records_where_it_stopped(fresh, tmp_path):
+    now = clock(dt.date(2026, 10, 23))
+    plan_run(fresh, now, cap(tmp_path, 4))
+    plan_run(fresh, now, cap(tmp_path, 4))  # the same day: the cap is spent
+    day_one = demo_step(fresh, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
+    now.state["day"] = dt.date(2026, 10, 24)
+    plan_run(fresh, now, cap(tmp_path, 4))  # the next day: four more pages
+    day_two = demo_step(fresh, "KE-NWWDA-229129-CW-RFB", "Signed Contract")
+
+    runs = rows(fresh, """
+        SELECT p.pages_parsed, p.parsed_earlier_today, p.stopped_at_cap, p.stopped_at_pdf_page, v.plan_date
+        FROM strata.ops.parse_runs AS p
+        LEFT JOIN strata.silver.plan_versions AS v ON v.document_id = p.stopped_at_document_id
+        ORDER BY p.started_at""")
+    # Newest versions first: October 9, August 17 and July 31, 2026 and March 5, 2026 fill day one,
+    # so the run stops at page 3 of the July 21, 2025 plan; day two starts there.
+    assert [(r["pages_parsed"], r["parsed_earlier_today"], r["stopped_at_cap"]) for r in runs] == [
+        (4, 0, True), (0, 4, True), (4, 0, True)]
+    assert (runs[0]["plan_date"], runs[0]["stopped_at_pdf_page"]) == (dt.date(2025, 7, 21), 3)
+    assert runs[1]["plan_date"] == dt.date(2025, 7, 21)
+    assert fresh.run("SELECT count(*) FROM strata.bronze.layout_pages").rows[0][0] == 8
+    # On day one the plan that first lists KE-NWWDA-229129-CW-RFB, of April 21, 2021, waits, so its
+    # delay stays empty rather than being measured from a later plan; on day two it is read.
+    assert day_one["actual_on"] == value("plan-229129-signed")["value"]
+    assert day_one["first_planned_on"] is None and day_one["delay_days"] is None
+    assert day_two["delay_days"] == value("plan-229129-days-late")["value"]
