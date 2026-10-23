@@ -1,0 +1,245 @@
+Source: https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634: the demo plan. Documents API id 40132287.
+Pages: 3, one after each form feed, read from the PDF's text layer
+
+Page 1 of 2
+WATER AND SANITATION DEVELOPMENT PROJECT (WSDP)
+SUMMARY PROCUREMENT PLAN (first eighteen months)
+I. General
+The following procurement plan has been developed for project implementation during the 
+first eighteen months and provides the basis for the procurement methods and bank 
+prior/post review thresholds.  It covers the three categories, namely, Works; Consultancies; 
+and Goods. The plan will be updated when need arises to reflect the actual project 
+implementation needs. 
+1. Project information:  
+Country / Borrower: Republic of Kenya 
+Project: Water and Sanitation Development Project (WSDP) 
+IDA Credit No.  6029 & 6030
+Project Implementing Agencies: (a) Ministry of Water and Irrigation, (b) 
+WaSREB, (c) Water Service Providers: Kilifi-Mariakani Water and Sewerage 
+Company (Kimawasco),; Taita-Voi Water and Sewerage Company (Tavevo); 
+Mombasa Water Supply and Sanitation Company (Mowassco); Kwale Water and 
+Sewerage Company (Kwawasco); Garissa Water and Sewerage Company 
+(Gawasco); Wajir Water and Sewerage Company (Wajwasco); and Malindi 
+Water and Sewerage Company; and (d) Counties: Kilifi; Taita Taveta; 
+Mombasa; Kwale; Garissa; and Wajir 
+2. Bank’s approval Date of the First Eighteen Months’ Procurement Plan: 
+June 15, 2017
+3. Date of General Procurement Notice: June 14, 2017
+4. Period covered by this procurement plan: June 2017 to December 2018
+II: Works, Goods and Consultancy Services: Thresholds for Procurement Methods 
+and Bank’s Prior Review
+The Table below provides the details of Thresholds for Procurement Methods and Bank’s 
+Prior Review for Works, Goods and Consultancy Services
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure AuthorizedPage 2 of 2
+Expenditure 
+Category
+Contract Value 
+(Threshold) 
+(US$ 000)
+Procurement 
+Method
+Contract Subject to 
+Prior Review 
+15,000 or more ICB Contracts above $5 
+million
+Below 15,000 NCB First contract per 
+entity and Contracts 
+above $5 million
+Below or equal 
+200 
+Shopping None unless contract 
+specified in the PP
+1. Works
+No threshold Direct 
+Contracting
+As specified in PP
+1,000 or more ICB First contract per 
+entity and Contracts 
+above $1.5 million
+Below 1,000 NCB First contract per 
+entity
+Below or equal 
+to 100
+Shopping None unless contract 
+specified in the PP
+2. Goods
+ 
+No threshold Direct 
+Contracting
+As specified in PP
+Firms* QCBS,LCS,FBS, 
+QBS
+First contract per 
+entity and Contracts 
+above $0.5 million
+Firms* 
+(Estimated cost  
+less than 
+$300,000)
+CQS First contract per 
+entity
+Individual IC (at least 3 
+CVs)
+All contract of 
+estimated cost above 
+$200,000 and more
+3. Consultancy 
+Services
+No threshold Single Source All 
+*Assignments whose estimated cost is less $300,000 could be Open-National 
+(Shortlist could comprise of all national firms)
+NB:  All terms of reference for consulting services will be subject to IDA’s prior 
+review.Page 1
+PROCUREMENT
+PLAN Kenya : Water and Sanitation Development Project
+General Information
+Country: Kenya Bank’s Approval Date of the Original Procurement Plan: 2019-11-08
+Revised Plan Date(s): (comma delineated, leave blank if none)2026-10-09
+Project ID: P156634 GPN Date: 2017-06-13
+Project Name: Water and Sanitation Development Project
+Loan / Credit No: IDA / 60300
+Executing Agency(ies):Northern Water Works Development Agency
+WORKS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) High SEA/SH Risk Procurement Document Type EstimatedAmount (US$) Actual Amount (US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned
+ KE-NWWDA-229129-CW-RFB
+/ Drilling of 4 Number Explor
+atory Boreholes In Wajir Cou
+nty
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Bids Open - National Single Stage - One Envelope N 300,000.00 1,245,092.76 Signed 2021-04-23 2021-09-16 2021-04-28 2021-09-17 2021-05-19 2021-10-19 2021-05-26 2021-12-03 2021-07-01 2022-01-03 2021-10-15
+ KE-NWWDA-503455-CW-RFQ
+/ Drilling 4 No. New Explorato
+ry Boreholes in Arbajahan an
+d Sarman in Wajir County
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited - National Single Stage - One Envelope N Request for Quotations (Non Bank-SPD) 220,000.00 0.00 Signed 2025-07-23 2025-07-23 2025-08-06 2025-08-13 2025-09-15
+ KE-NWWDA-541061-CW-RFQ
+/ Equipping of Exploratory Bo
+reholes Project - Lot 2- Nurgo
+ws Water Supply
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited - National Single Stage - One Envelope N Request for Quotations (Non Bank-SPD) 290,000.00 0.00 Completed 2026-03-11 2026-04-15 2026-03-31 2026-05-11 2026-06-30
+ KE-NWWDA-541055-CW-RFB
+/ Equipping of Exploratory Bo
+reholes Project-Lot 1- Sarma
+n - Tarbaj Water Supply
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Bids Open - National Single Stage - One Envelope N
+Request for Bids -
+Small Works SPD
+(1 envelope proce
+ss)
+1,230,000.00 0.00 Pending Implementation 2026-03-09 2026-03-10 2026-04-01 2026-04-06 2026-04-24 2026-07-31
+ KE-NWWDA-541062-CW-RFQ
+/ Equipping of Exploratory Bo
+reholes project- Lot 3- Qaras
+Water Supply
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited - National Single Stage - One Envelope N Request for Quotations (Non Bank-SPD) 295,000.00 0.00 Pending Implementation 2026-03-11 2026-03-31 2026-06-30
+GOODS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ KE-NWWDA-199461-GO-RFB
+/ Supply and Delivery 1 No. 4
+x 4 Wheel drive, manual tran
+smission of engine capacity 4
+,100 - 4,200 cc
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited Single Stage - One Envelope N 95,000.00 103,996.17 Completed 2020-12-19 2021-05-21 2021-02-06 2021-07-19 2021-05-07 2022-01-30
+ KE-NWWDA-199471-GO-RFQ
+/ supply and delivery of Lapt
+ops, desktops and photocopi
+er.
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Request for Quotations Limited Single Stage - One Envelope N 15,000.00 14,856.89 Completed 2020-12-19 2021-02-10 2021-02-06 2021-03-19 2021-05-07 2021-04-02
+NON CONSULTING SERVICES
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+CONSULTING FIRMS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Expression of InterestNotice Short List and Draft Request for Proposals Request for Proposalsas Issued Opening of TechnicalProposals / Minutes  Evaluation of Technical Proposal Combined EvaluationReport and Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ NWWDA-WSDP-03-2019-202
+0 / Consultancy Services for
+Comparison of Water Supply
+Options, Preparation of Detail
+ed Designs, Tender Documen
+ts, Safeguards Documents an
+d Construction Supervision of
+Wajir Water Supply
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Prior Quality And Cost-Based Selection Open - International 2,000,000.00 1,021,300.12 Signed 2019-11-05 2019-11-19 2019-11-26 2019-12-04 2020-01-09 2021-01-25 2020-02-06 2021-03-16 2020-03-07 2021-06-14 2020-04-11 2021-08-25 2020-05-16 2021-09-24 2021-05-16
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Invitation to Identified/Selected Consultant Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ KE-NWWDA-207796-CS-IND
+V / consultancy services for e
+nvironmental safeguards exp
+ert
+IDA / 60300
+Component 2: Expansion of
+water supply and sanitation
+services in underserved nort
+heastern counties of Kenya (
+US$110 of wh ich IDA US$10
+0 million).
+Post Individual Consultant Selection Open 60,000.00 71,200.35 Completed 2020-12-14 2020-12-07 2021-02-01 2021-04-16 2021-02-22 2021-06-17 2021-03-29 2021-07-06 2022-06-22 2024-04-29

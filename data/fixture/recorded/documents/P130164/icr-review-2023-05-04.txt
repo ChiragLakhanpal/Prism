@@ -1,0 +1,768 @@
+Source: https://documents.worldbank.org/curated/en/099050423040030393/text/P1301640b1a4d202008b910ba796c7180f1.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: IEG's ICR Review for P130164 re-issued under the same number on May 4, 2023 (ICRR0021929). Documents API id 34056616.
+
+     Independent Evaluation Group (IEG)                           Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+                                                                               Report Number: ICRR0021929
+
+1. Project Data
+
+
+
+ Project ID                                 Project Name
+ P130164                                    IN: Rajasthan Road Sector Modernization
+
+ Country                                    Practice Area(Lead)
+ India                                      Transport
+
+
+ L/C/TF Number(s)                          Closing Date (Original)              Total Project Cost (USD)
+ IDA-53100                                 31-Dec-2018                                       121,630,912.86
+
+ Bank Approval Date                        Closing Date (Actual)
+ 29-Oct-2013                               31-Dec-2018
+
+                                           IBRD/IDA (USD)                                    Grants (USD)
+
+ Original Commitment                          160,000,000.00                                             0.00
+
+ Revised Commitment                           131,877,656.13                                             0.00
+
+ Actual                                       121,630,912.86                                             0.00
+
+
+
+
+ Prepared by                Reviewed by                  ICR Review Coordinator        Group
+ Kavita Mathur              Peter Nigel Freeman          Ramachandra Jammi             IEGSD (Unit 4)
+
+
+
+
+2. Project Objectives and Components
+
+DEVOBJ_TBL
+a. Objectives
+   The Project Development Objectives (PDOs) were to “improve rural connectivity, enhance road safety and
+   strengthen road sector management capacity of Rajasthan” (Financing Agreement page 5 and the Project
+   Appraisal Document para 16).
+
+   The PDOs remained unchanged.
+
+
+
+                                                                                                Page 1 of 14
+     Independent Evaluation Group (IEG)                              Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+
+b. Were the project objectives/key associated outcome targets revised during implementation?
+  Yes
+
+  Did the Board approve the revised objectives/key associated outcome targets?
+  Yes
+
+  Date of Board Approval
+  27-Jul-2017
+
+c. Will a split evaluation be undertaken?
+   No
+
+d. Components
+   The project had three components:
+
+   Component A: Rural Connectivity Improvement (appraisal estimate US$197.0 million, of which
+   US$138.0 million was Bank financing; total actual cost US$163 million, actual Bank financing US$111.7
+   million). The project planned to finance the construction of about 2,500 kms of rural roads to provide
+   connectivity to about 1,300 revenue villages with population between 250 and 499 people in the areas of
+   the state not covered by the Pradhan Mantri Gram Sadak Yojana (PMGSY) or (National) Prime Minister's
+   Rural Roads Program. This component would also introduce cost-effective low volume technologies. The
+   roads would be built to a bitumen surface standard and would include all necessary bridges and cross
+   drainage works to maintain year round connectivity.
+
+   Component B: Road Sector Modernization and Performance Enhancement (appraisal estimate
+   US$11.0 million, of which US$7.7 million was Bank financing; total actual cost US$4.0 million, actual Bank
+   financing US$2.8 million). This component would support the Roads Sector Modernization Plan (RSMP) in
+   the following key areas:
+
+         improvement of the policy framework;
+
+         modernization of engineering practices and business procedures;
+
+         sustainable asset management;
+
+         institutional and human resource development of the Public Works Department (PWD);
+
+         enhancing governance & accountability in PWD; and
+
+         preparation of a pipeline of feasible projects for implementation.
+
+   Component C: Road Safety Management (appraisal estimate US$15.0 million, of which US$10.5 million
+   was Bank financing; total actual cost US$9.2 million, actual Bank financing US$6.3 million). This component
+   would support the strengthening of road safety management systems in Rajasthan with the objective of
+
+
+
+
+                                                                                                   Page 2 of 14
+    Independent Evaluation Group (IEG)                               Implementation Completion Report (ICR) Review
+    IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+  reducing the number of fatalities and serious injuries from traffic accidents in the state. This was to be
+  accomplished through:
+
+        Safe Corridor Demonstration Program (SCDP);
+
+        the establishment of a Road Safety Strategy;
+
+        road safety education and awareness programs;
+
+        road safety audits; and
+
+        procurement of road safety equipment and related training materials for some ongoing initiatives.
+
+  The project also included incremental operating cost of US$1.5 million.
+
+  Note: The total actual cost by component is not available in the ICR. The project team provided this
+  information to IEG.
+
+
+
+e. Comments on Project Cost, Financing, Borrower Contribution, and Dates
+  Project Cost: The actual project cost was US$177.6 million, significantly lower than the appraisal estimate
+  of US$227 million. The ICR does not explain the reason why the actual project cost was 22% lower than the
+  appraisal amount. The project team clarified that this was due to: (a) the strong devaluation during project
+  implementation which resulted in lowering the project cost by 8%; and (b) the cancellation of some activities
+  some activities that further reduced the project cost by 14%.
+
+  Financing: The actual credit amount was US$121.6 million, lower than the appraisal commitment of
+  US$160.0 million.
+
+  At the time of project preparation, the project received US$3 million as a Project Preparation Advance
+  (PPA). Since the PPA was scarcely used (disbursement of only US$2,277) at the time of restructuring, the
+  undisbursed amount was reallocated to Category 1 activities (works and goods) (ICR para 18 and
+  Restructuring Paper para 8c).
+
+  Borrower Contribution: The actual borrower contribution was US$56.0 million, substantially lower than the
+  appraisal commitment of US$67.0 million. The state govt did not utilize full IDA credit for this project. The
+  total unutilized funds at the time of project closing was XDR.20.26 million (approximately US$29 million
+  considering the devaluation).
+
+  Dates: The project was approved on October 29, 2013 and became effective on March 10, 2014. The
+  project closed on December 31, 2018 as planned.
+
+  Split rating: The PDOs remained unchanged, but changes were made to the results framework. The
+  indicator “increased percentage of core network in good/fair condition” was dropped because of lack of data
+  on the condition of road network. This is not a good indicator as it measures the condition of the core
+  network and not the rural roads improved under the project. To measure the road sector management
+
+
+                                                                                                     Page 3 of 14
+     Independent Evaluation Group (IEG)                               Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+   capacity a new indicator “Road Asset Management System was Operational” was added. However, this is
+   still an output indicator and not an outcome indicator. In the circumstances a split rating is not appropriate.
+
+
+
+
+3. Relevance of Objectives
+
+Rationale
+Context: Rajasthan is one of the largest states of India, covering nearly 10% of the total area of the country
+and about 5% of total population. However, it is one of the the low-income states of India. At appraisal in
+2013, its per capita income (US$943) was about 20% lower than the national average
+(US$1,185). Rajasthan had a state road network of 193,017 km, including 7,260 km of national highways,
+10,953 km of state highways, 9,900 km of major district roads, 25,033 km of other district roads, and
+139,871 km of village roads. Road density, was only about 60 km per 100 square km, lower than the
+national average of 110 km. About 75% of the State’s population was rural and mainly dependent on
+agriculture for livelihood.
+
+The capacity of the Public Works Department (PWD) to manage the road sector was weak. The gaps in
+road investment planning, engineering practices, and business processes were found to be hindering the
+overall capacity of the PWD to handle the state’s road network. There was a need to revamp the overall
+PWD structure, processes and practices.
+
+Road fatalities in Rajasthan were above national average: the number of persons killed per 100 accidents in
+Rajasthan roads was about 40 compared to a national average of 29, and the state ranked fifth in the total
+number of fatalities in 2011, contributing to 6.5% of all fatalities in India.
+
+Previous Sector Experience: The Bank has had a long engagement in India’s rural road sector in
+Rajasthan through the multi-state national Pradhan Mantri’s Gram Sadak Yojana (PGMSY) program and
+the Rural Roads Project (PAD para 13). This engagement had been in response to a clearly identified need
+and the state government’s priority to increase connectivity in rural areas throughout the state. According to
+the PAD (para 15), this project would also have synergy with other Bank funded operations such as
+National Highways Inter-connectivity Improvement Project and Rajasthan Agriculture Competitiveness
+Project.
+
+Alignment with Bank Strategy: The project objectives were consistent with the Country Partnership
+Strategy (for the period FY13-17) which focused on three engagement areas: Integration, Transformation
+and Inclusion. Connectivity of people living in rural areas would achieve the goal of inclusion.
+
+The project objectives continued to be relevant throughout project implementation. At completion, the
+project objectives were fully aligned with the Country Partnership Framework (CPF) FY18–22 focus area
+“investing in transport and connectivity infrastructure as a growth enabler”. In addition, the project objective
+to “strengthen road sector management capacity of Rajasthan” was fully aligned with the CPFs pathway
+“strengthening the public sector” for “Hows” of the World Bank engagement (para 31).
+
+Alignment with Government and Rajasthan State Government Strategies: The project was highly
+relevant to India’s development priorities as stated in the 12th Five-Year Plan (2012-2017). The plan
+emphasized: (a) improved connectivity of villages with population 250 and above, (b) upgrading all
+
+                                                                                                      Page 4 of 14
+                                      Independent Evaluation Group (IEG)                            Implementation Completion Report (ICR) Review
+                                      IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+               highways and district roads to all-weather roads, and (c) building missing links between other villages. The
+               project was expected to help Rajasthan in implementing PGMSY. One of the main objectives of this type of
+               program was to connect habitations in villages to main corridors and economic centers, through the
+               provision of better-quality and safer road infrastructure.
+
+               In response to the greater need for high-quality infrastructure and better rural connectivity, the Government
+               of Rajasthan’s Industrial and Investment Promotion Policy (2010) also promoted widening of the state
+               highways and upgrading of the secondary network.
+
+               The relevance of the PDO is rated high.
+
+
+               Rating Relevance TBL
+
+
+
+
+               Rating
+               High
+
+
+   4. Achievement of Objectives (Efficacy)
+
+EFFICACY_TBL
+
+
+
+
+                             OBJECTIVE 1
+                             Objective
+                             Improve rural connectivity.
+
+                             Rationale
+                             Theory of Change: The Theory of Change (ToC) was not a requirement at the time of project preparation.
+                             Based on the information in the PAD, the ToC is retrofitted. The project was built on the premise or
+                             assumption that physical investments in the rural roads (construction) in Rajasthan in conjunction with piloting
+                             of cost-effective technologies for upgradation and maintenance of rural roads would improve rural
+                             connectivity. This was to be measured through the outcome indicator “increased share of rural population with
+                             access to an all-season road”.
+
+                             Outputs
+
+                                        The project constructed 2,334 km of roads, slightly lower than the original target of 2,500 km.
+
+                                        The intermediate indicator "Cost effective technologies piloted for road design and construction and
+                                          upgradation/maintenance of existing gravel roads" was partially achieved, with 61 km completed at
+                                          project closure compared to the original target of 100 km. An additional 67 km was completed at the
+                                          time of the writing of ICR (ICR para 27).
+
+                                        The project introduced a Project Assessment Tool (PAT) to the Project Management Consultant and
+                                          the engineers at the Public Works Department. This tool was useful in increasing the of frequency of
+                                          senior engineers’ site visits, thereby improving the quality of works. It also ensured better
+                                          management of environmental and social safeguards and the health and safety of workers on site.
+
+
+                                                                                                                                    Page 5 of 14
+   Independent Evaluation Group (IEG)                              Implementation Completion Report (ICR) Review
+   IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+Outcomes
+
+The project provided connectivity to 1,300 villages as targeted. At project closure, 80.8% of the rural
+population had access to an all-season road achieving the target of 81% (baseline was 67%).
+
+
+
+Rating
+Substantial
+
+
+OBJECTIVE 2
+Objective
+Enhance road safety.
+
+Rationale
+Theory of Change: The establishment of a Road Safety Strategy, implementation of Safe Corridor
+Demonstration Program (SCDP) and road safety education and awareness programs, and building the
+capacity for road safety audits, was expected to improve road safety. This would be measured through a
+reduction in annual fatality count on the model road safety corridor.
+
+Outputs
+
+      The Road Safety Policy was prepared by the Road Safety Cell created under the project. The ICR
+       reports (para 32) that some of the priority actions highlighted in the action plan were implemented but
+       does not provide any details.
+
+      Road safety audits were carried out for 1,025 km of project roads and roads linking the project roads.
+
+      Road safety awareness campaigns were successfully implemented by non-governmental
+       organizations (NGOs) (hired through the project) in different sub-regions (Jaipur, Udaipur, etc.).
+       However, these were completed only a few months prior to the project closure.
+
+      The intermediate indicator "Model road safety corridor(s) developed’ was not achieved. The Deeg-
+       Alwar-Behror section (114 km of State Highway 14) was selected for the Safe Corridor Demonstration
+       Program (SCDP). The SCDP was one of the key project activities aiming at demonstrating the positive
+       impact of adequate and site-specific road safety measures to reduce road accidents and fatalities.
+       However, by project closure the associated works and goods had not been procured (ICR para 33).
+
+Outcomes
+
+Road safety was not improved. The outcome indicator “a reduction in annual average fatality count of road
+users on model road safety corridors’ was not achieved. In 2018, the actual count of fatalities was 61,
+negatively exceeding the target of 30 (baseline was 46).
+
+
+
+Rating
+                                                                                                   Page 6 of 14
+   Independent Evaluation Group (IEG)                            Implementation Completion Report (ICR) Review
+   IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+Negligible
+
+
+OBJECTIVE 3
+Objective
+Strengthen road sector management capacity of Rajasthan.
+
+Rationale
+Theory of Change: The project would support the Roads Sector Modernization Plan (RSMP) through the
+improvement of the policy framework, modernization of engineering practices and business procedures, and
+institutional and human resource development of the Public Works Department (PWD). These activities were
+expected to strengthen the road sector management capacity of Rajasthan.
+
+Outputs
+
+      A report on Human Resources policies and procedures was developed in March 2017. By the time of
+       the writing of the ICR, the key recommendations were under discussion.
+
+      The Road Sector Policy was revised, and the Financing Strategy was developed. However, the
+       Policy/Strategy has yet to be approved by the Cabinet.
+
+      The ‘Computerization of key business processes in the Public Works Department’ was not completed.
+
+      The development and deployment of the Road Asset Management System (RAMS) was not
+       completed. The contract for the System Providing Consultant (SPC), responsible for the development
+       of the system, was signed on August 2, 2018, just a few months before project closure. By project
+       closure, the data collection services (network condition assessment required for the system
+       development and use) had not been procured (ICR para 38).
+
+      A report on modernizing the business practices of the Public Works Department was prepared by the
+       consulting firm Deloitte in September 2017. However, the recommendations have not been
+       implemented.
+
+      An Integrated Financial Management System (IFMS) was adopted for the entire state.
+
+Outcome
+
+The project did not strengthen the road sector management capacity as most activities for achieving this
+objective were either not initiated or partially completed. The Road Asset Management System was not
+operationalized. New engineering and business procedures to strengthen the road sector institutional
+capacity were not adopted.
+
+
+
+Rating
+Negligible
+
+
+
+                                                                                                Page 7 of 14
+                               Independent Evaluation Group (IEG)                            Implementation Completion Report (ICR) Review
+                               IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+
+OVERALL EFF TBL
+
+
+
+
+                  OBJ_TBL
+
+
+
+
+                            OVERALL EFFICACY
+                            Rationale
+                            The project made a substantial contribution to improving rural connectivity throughout Rajasthan. However,
+                            the project was not successful in enhancing overall road safety and strengthening road sector management
+                            capacity of the state of Rajasthan. The overall efficacy is rated modest.
+
+
+
+                            Overall Efficacy Rating                                 Primary Reason
+                            Modest                                                  Low achievement
+
+
+    5. Efficiency
+   Economic Efficiency: At appraisal, economic analysis was carried out on a sample of Phase 1 roads (513
+   roads covering 510 villages representing about 1227 km). The following benefits were considered: (a) increase
+   in household income through agriculture and non-agriculture based activities; (b) additional employment
+   benefits; and (c) traffic related benefits such as savings in Vehicle Operating Cost (VOC) and savings in travel
+   time. Both the economic rates of return (ERR) and modified ERR (assumes that the returns from the investment
+   only yield the opportunity cost of capital, both at 12%) were calculated along with associated Net Present Value
+   discounted at 12% (EOCC). The base case ERR was 14% (PAD Annex 6 pages 66 and 69).
+
+   Ex-post ERR was calculated using the appraisal methodology and included the 2,400 km roads completed
+   under the project. These roads provided connectivity to 1,300 villages. The ex-post ERR was 15.9%. The ICR
+   (page 42) explains that although both the construction costs and maintenance costs increased about 20%; the
+   benefits of value of time (VOT) savings decreased about 20%, and the benefits generated by additional
+   employment decreased 3.3%; the drastically increased vehicle operating cost (VOC) savings of almost 80% and
+   increased income per capita of almost 50% due to rural road connectivity resulted in better returns of the
+   investment.
+
+   The ICR notes that about 70% of civil works were completed by January 2015, that is, within one year after
+   contract signature, and about 90% of civil works were completed by March 2016, within two years of project
+   implementation (ICR para 26).
+
+   Regarding Components B and C, which accounted for 12% of the total project costs, civil works experienced
+   delays but were completed. However, the investments made in improving road safety management and in
+   strengthening the institutional framework to modernize the sector were not achieved (because the Road Asset
+   Management System was not operationalized; computerization of key business processes in the Public Works
+   Department (PWD) was not completed; a report on modernizing the business practices of the PWD was
+   prepared, however, the recommendations were not implemented), thus negatively affecting the overall efficiency
+   of the project. (ICR para 11 and 43).
+
+   Overall, efficiency is rated modest.
+
+
+
+
+                                                                                                                           Page 8 of 14
+     Independent Evaluation Group (IEG)                             Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+Efficiency Rating
+Modest
+
+
+a. If available, enter the Economic Rate of Return (ERR) and/or Financial Rate of Return (FRR) at appraisal
+  and the re-estimated value at evaluation:
+                               Rate Available?            Point value (%)          *Coverage/Scope (%)
+                                                                                   0
+ Appraisal                                               14.00
+                                                                                    Not Applicable
+                                                                                   88.00
+ ICR Estimate                                            16.00
+                                                                                    Not Applicable
+
+* Refers to percent of total project cost for which ERR/FRR was calculated.
+
+6. Outcome
+
+The project objectives were highly relevant to the country and government strategies. The achievement of the
+first objective “improvement in rural connectivity” is rated substantial; while the achievement of the second
+objective “road safety enhanced” and the third objective “road sector management capacity of the state of
+Rajasthan strengthened” are rated negligible. The project efficiency is modest. Overall, the outcome is rated
+moderately unsatisfactory.
+
+
+a. Outcome Rating
+   Moderately Unsatisfactory
+
+
+7. Risk to Development Outcome
+
+Institutional Risk. The risk that the achieved development outcomes will not be sustained is substantial.
+The project contributed to the improvement in rural connectivity. However, the road sector management
+capacity of the state of Rajasthan was not strengthened. The ICR notes (para 35) that the successful
+implementation of the new Road Asset Management System (RAMS) requires: (a) continuous dialogue with
+the relevant stakeholders (Finance Department, Public Works Department) to ensure their buy-in so that the
+introduction of the new system is not seen as an additional burden; and (b) the data collection services
+(network condition assessment) are functioning.
+
+Financial Risk. The utilization of RAMs would also require allocation of appropriate maintenance budget.
+The maintenance budget needs were estimated at US$800 million, compared to US$278 million actually
+provisioned by the state. The current process for maintenance budget allocation is carried out by the Finance
+Department on a yearly basis without long-term planning. Consequently, the financial risk is high.
+
+
+
+
+                                                                                                   Page 9 of 14
+     Independent Evaluation Group (IEG)                             Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+
+8. Assessment of Bank Performance
+
+a. Quality-at-Entry
+  The project was designed to support the Government's PMGSY. It was fully aligned with the Bank and
+  country priorities. The project preparation was inadequate. The project could have benefitted from
+  additional preliminary studies to showcase the relevance of proposed project activities to achieve specific
+  outcomes (such as the need to develop a proper Road Asset Management System) (ICR para 84). There
+  was lack of endorsement by decision-makers. Most of the Project Preparation Advance was unspent. The
+  safeguards identification was satisfactory. However, there were some shortcomings:
+
+        The project design was inadequate. For example, the road safety component and related
+         development outcomes could have been focused on rural roads only instead of highway corridors.
+         The Road Sector Modernization Component required more implementation time and buy-in from
+         key stakeholders.
+
+        The results framework was weak. There was no indicator to measure the sub-objective
+         “strengthening road sector management capacity”.
+
+
+
+  Quality-at-Entry Rating
+  Moderately Unsatisfactory
+
+
+b. Quality of supervision
+ The project had three different Task Team Leaders over the five years implementation period. Regular
+ supervision missions including technical and site visits were carried out by the team and included transport
+ experts as well as financial, procurement, and safeguards specialists, when necessary. The ICR reports
+ (para 76) that the Aide Memoires were candid in documenting progress, delays, and challenges, as well as
+ implementation progress and development outcome ratings.
+
+ The main shortcoming of supervision effort was the inaction regarding component 2 and 3. Even after the
+ mid-term review identified that the achievement of the PDO was being adversely impacted by delays and
+ non-completion of components 2 and 3, the team did not modify the scope of these components, changed
+ the PDO, or extend the closing date.
+
+
+
+  Quality of Supervision Rating
+  Moderately Unsatisfactory
+
+  Overall Bank Performance Rating
+  Moderately Unsatisfactory
+
+
+
+
+                                                                                                  Page 10 of 14
+     Independent Evaluation Group (IEG)                            Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+9. M&E Design, Implementation, & Utilization
+
+a. M&E Design
+ To measure the first sub-objective “improved rural connectivity” the project included the following outcome
+ indicators: (a) an increased share of rural population with access to an all-season road; and (b) increased
+ percentage of core road network in good/fair condition as a share of the total classified network. The
+ indicator “increased percentage of core network in good/fair condition” was not a good indicator as it
+ measures the condition of core network and not the rural roads improved under the project. The project
+ could have included international roughness index (IRI) for selected roads to demonstrate that good-quality
+ roads were indeed provided through the project. It also included output indicators such as the number of
+ rural people with access to an all-season road.
+
+ To measure the second sub-objective “enhanced road safety” the project included the following outcome
+ indicator: a reduction in annual fatality count on model road safety corridors.
+
+ However, there was no outcome indicator linked to the third sub-objective “road sector modernization”.
+
+
+
+b. M&E Implementation
+  The mid-term review found that it would take more time before the road asset management system under
+  development would start to provide information on Rajasthan's road network condition (Amendment
+  Letter to the Financing Agreement and Performance Monitoring Indicators page 3). Also, there was no
+  existing data on the condition of the core road network. Therefore, the indicator “share of roads in
+  good/fair condition” was dropped during restructuring (July 2017).
+
+  To measure the road sector management capacity a new indicator “Road Asset Management System
+  was Operational” was added. However, this is still an output indicator and not an outcome indicator.
+
+
+
+c. M&E Utilization
+  The ICR reports (para 65) that the project M&E findings were regularly shared with stakeholders through
+  progress reports and the World Bank’s Aide Memoires after each supervision mission. These reports
+  contributed to the decision to restructure the project.
+
+  However, the M&E utilization had a major shortcoming. The increase in road fatalities during project
+  implementation did not result in stronger actions by the client.
+
+
+
+  M&E Quality Rating
+  Modest
+
+10. Other Issues
+
+a. Safeguards
+
+                                                                                                 Page 11 of 14
+    Independent Evaluation Group (IEG)                             Implementation Completion Report (ICR) Review
+    IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+  The project was classified as an Environmental Category “B” and the project was expected to have site-
+  specific adverse environmental and social impacts. The following safeguards policies were triggered:
+  Environmental Assessment (OP/BP 4.01), Natural Habitats (OP/BP 4.04), Forests (OP/BP 4.36), Physical
+  and Cultural Resources (OP/BP 4.11), Indigenous Peoples (OP/BP 4.10), and Involuntary Resettlement
+  (OP/BP 4.12). However, the degree of compliance with these safeguards is not properly addressed in the
+  ICR.
+
+  Environmental Assessment (OP/BP/GP 4.01). The ICR does not report on the compliance with
+  Environmental Assessment safeguards.
+
+  Natural Habitats (OP/BP 4.04). The PAD states (para 70) that the projects would not finance roads
+  passing through designated protected areas, but the larger institutional development plan for the road
+  sector in Rajasthan would need to address the issues of biodiversity management and appropriate
+  strategies and mechanisms would have to be built into the institutional systems to ensure that the over-all
+  network planning/development and road selection/construction takes into account such factors. Accordingly,
+  the operational policies on Natural Habitats was triggered for the project.
+
+  The ICR does not report on the compliance with Natural Habitats safeguards.
+
+  Forests (OP/BP 4.36). The project encountered major issues relating to forest clearance. For the 26 roads
+  requiring forest clearance (around 3% of total project roads), road works were initiated and completed
+  before getting appropriate clearances for 8 roads (ICR para 56). This was in violation of the Bank’s policy.
+  The Bank escalated this matter to higher level officials in the Department of Economic Affairs, Ministry of
+  Finance; Principal Secretary, Public Works Department – Government of Rajasthan; Chief Secretary,
+  Government of Rajasthan; as well as the Bank’s management. The ICR notes (para 71) that the
+  Government of Rajasthan shall ensure that proper resolution is found, even if the project is closed.
+
+  Physical and Cultural Resources (OP/BP 4.11). The ICR does not report on the compliance with Physical
+  Cultural Resources safeguards.
+
+  Indigenous Peoples (OP/BP 4.10). The ICR does not report on the compliance with Indigenous Peoples
+  safeguards.
+
+  Involuntary Resettlement (OP/BP 4.12). The ICR notes that there were no major resettlement issues as
+  most roads were built or upgraded in the right-of-way. Land acquisition was mainly handled through
+  voluntary land donations (a common practice in Rajasthan). The mutation process (that is the actual
+  transfer of the land title ownership and not just of the land use or destination) was difficult but was
+  adequately managed through proper consultations with landowners (ICR para 70).
+
+
+
+
+b. Fiduciary Compliance
+  Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the
+  main concern raised in the reports was the lack of dedicated staff and financial management experts to
+  handle financial management related issues.
+
+
+
+                                                                                                 Page 12 of 14
+     Independent Evaluation Group (IEG)                                Implementation Completion Report (ICR) Review
+     IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+   Procurement: A procurement and contract management manual was prepared for the project (ICR para
+   72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity
+   in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical
+   Departments. Moreover, the coordination and collaboration with relevant departments was missing which
+   led to the non-execution of a critical contract related to the deployment and installation of road safety
+   equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in
+   rebidding of one-third of the contracts (108 out of 328) (ICR para 54).
+
+
+
+
+c. Unintended impacts (Positive or Negative)
+   ---
+
+d. Other
+   ---
+
+11. Ratings
+                                                                                  Reason for
+Ratings                         ICR                      IEG
+                                                                                  Disagreements/Comment
+                                Moderately            Moderately
+Outcome
+                                Unsatisfactory        Unsatisfactory
+                                Moderately            Moderately
+Bank Performance
+                                Unsatisfactory        Unsatisfactory
+Quality of M&E                  Modest                Modest
+
+Quality of ICR                  ---                   Substantial
+
+
+12. Lessons
+
+The ICR provided the following lessons (presented here with some minor modifications):
+
+      Lack of full endorsement of programs by the key decision makers at preparation can
+         negatively affect project outcomes. The introduction of new systems required
+         endorsement from relevant stakeholders early on during implementation process to ensure
+         ownership. For example, full operationalization of the Road Asset Management System
+         (RAMS) did not occur by project closure because of the lack of buy-in from the Finance
+         Department and the Public Works Department.
+
+      The implementation of efficient business processes is likely to benefit from additional
+         preliminary studies. Sound preparation before project approval with studies carried out to
+         showcase the relevance of proposed activities to achieve specific outcomes (such as the
+         need to develop a proper Road Asset Management System), is best practice. In-depth
+         upstream discussions/workshops with the client – in particular the finance and technical
+         departments, should also be considered for most projects.
+
+
+                                                                                                    Page 13 of 14
+       Independent Evaluation Group (IEG)                             Implementation Completion Report (ICR) Review
+       IN: Rajasthan Road Sector Modernization (P130164)
+
+
+
+        The mutation process (that is the actual transfer of the land title ownership and not
+         just of the land use or destination) for the donated land is difficult, so clear guidelines
+         need to be developed. Some commendable work was done in the project to make sure that
+         the land ownership was legally transferred. This knowledge can be replicated in future
+         projects in Rajasthan or possibly other states in India.
+
+IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest
+and other administrative clearances need to be in place prior to awarding contracts. The
+project experience shows that some of the road works were dropped due to forest clearance issues.
+
+
+
+13. Assessment Recommended?
+
+  No
+
+14. Comments on Quality of ICR
+
+The ICR provides a candid analysis of the issues that affected project implementation and offers an insightful
+analysis of shortcomings at project preparation stage that affected the project´s outcomes. It is results oriented
+and the quality of evidence is sound. Figure 2 is insightful as it highlights the major implementation gaps in what
+was achieved relative to the expectations. Overall, the quality of ICR is rated substantial.
+
+
+
+  a. Quality of ICR Rating
+       Substantial
+
+
+
+
+                                                                                                    Page 14 of 14
+

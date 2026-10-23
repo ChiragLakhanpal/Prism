@@ -25,7 +25,7 @@ run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
 show = true
 
 [[step]]
-name = "Run the Python tests: the gate, the ground-truth SQL, the catalog, the config files, the nightly job, the bundle commands and the server"
+name = "Run the Python tests: the gate, the fixture and its ground truth, the ground-truth SQL, the catalog, the config files, the nightly job, the bundle commands and the server"
 run = ["uv", "run", "--frozen", "pytest"]
 
 [[step]]

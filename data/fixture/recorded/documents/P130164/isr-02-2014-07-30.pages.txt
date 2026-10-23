@@ -1,0 +1,208 @@
+Source: https://documents.worldbank.org/curated/en/183091468034867647/pdf/ISR-Disclosable-P130164-07-30-2014-1406759831327.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: ISR 2 for P130164, 2014-07-30. Documents API id 19901331.
+Pages: 4, one after each form feed, read from the PDF's text layer
+
+The World Bank
+Page 1 of 4
+Public Disclosure CopyPublic Disclosure Copy
+Report No:  ISR15280
+Implementation Status & Results
+India
+Rajasthan Road Sector Modernization Project (P130164)
+Operation Name: Rajasthan Road Sector Modernization Project (P130164) Project Stage: Implementation Seq.No: 2 Status: ARCHIVED Archive Date: 30-Jul-2014
+Country: India Approval FY: 2014
+Product Line:IBRD/IDA Region: SOUTH ASIA Lending Instrument: Specific Investment Loan
+Implementing Agency(ies): Rajasthan State Public Works Department
+Key Dates
+Board Approval Date 29-Oct-2013 Original Closing Date 31-Dec-2018 Planned Mid Term Review Date 01-Feb-2016 Last Archived ISR Date 22-Feb-2014
+Effectiveness Date 10-Mar-2014 Revised Closing Date 31-Dec-2018 Actual Mid Term Review Date
+Project Development Objectives
+Project Development Objective (from Project Appraisal Document)
+The project development objective is to improve rural connectivity, enhance road safety and strengthen road sector management capacity of the state of Rajasthan.
+Has the Project Development Objective been changed since Board Approval of the Project?
+Yes No
+Component(s)
+Component Name Component Cost
+Component A- Rural Connectivity Improvement 138.00
+Component B - Road Sector Modernization and Performance Enhancement 7.75
+Component C - Road Safety Management 10.55
+None 0.00
+None 0.00
+Overall Ratings
+Previous Rating Current Rating
+Progress towards achievement of PDO Satisfactory Satisfactory
+Overall Implementation Progress (IP) Satisfactory Moderately Satisfactory
+Overall Risk Rating Substantial Substantial
+Implementation Status Overview
+The credit has been made effective on March 10, 2014. Taking advantage of the retroactive financing provision of the credit agreement, the project has made good progress in civil 
+works; awarded 832 roads (1930km) out of the total 1043 roads (2521 km) - 73% achievement. 94 roads have been substantially completed thereby connecting 94 villages to the 
+network. The total value of civil works completed and certified is equivalent to $34 million (25%). Actual expenditure of the project as of May 19, 2014 stands at approximately $28 
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+The World Bank
+Page 2 of 4
+Public Disclosure CopyPublic Disclosure Copy
+Report No:  ISR15280
+million which equates to 20 % financial progress. Preparatory activities for procurement of consultants for institutional development and road safety demonstration corridor are 
+delayed.
+Locations
+Country First Administrative Division Location Planned Actual
+India Rajasthan State of Rajasthan ✔
+Results
+Project Development Objective Indicators
+Indicator Name Core Unit of Measure Baseline Current End Target
+Share of rural population with access to an all-
+season road
+ Percentage Value 67.00 67.00 80.00
+Date
+Comments
+01-Sep-2013
+The baseline value refers to 
+the Population category: 
+250-500
+This report is yet to be 
+submitted by PWD at the end 
+of the fiscal year
+31-Dec-2015
+Number of rural people with access to an all-
+season road
+ Number
+Sub Type
+ Supplemental
+Value 34000000.00 34000000.00 34300000.00
+Roads in good and fair condition as a share of 
+total classified roads
+ Percentage Value 50.00 0.00 60.00
+Date
+Comments
+31-Mar-2014
+Value is arbitrary until it will 
+be established after condition 
+survey in March 2014
+To be entered after condition 
+survey in March 2014
+30-Jun-2018
+Value is arbitrary until it will 
+be established after condition 
+survey in March 2014
+Size of the total classified network  Kilometers
+Sub Type
+ Supplemental
+Value 133435.00 133435.00 135935.00
+A reduction in annual average fatality count of 
+road users on model road safety corridors
+ Text Value To be established when 
+corridors are slected
+To be established when 
+corridors are slected
+Date
+Comments
+31-Mar-2014 30-Jun-2018
+Intermediate Results IndicatorsThe World Bank
+Page 3 of 4
+Public Disclosure CopyPublic Disclosure Copy
+Report No:  ISR15280
+Indicator Name Core Unit of Measure Baseline Current End Target
+Roads constructed, Rural  Kilometers Value 0.00 256.37 2500.00
+Date
+Comments
+01-Sep-2013
+94 villages have been 
+connected and a BT length of 
+256.37 km
+31-Dec-2015
+Cost effective technologies piloted for road 
+design and construction and upgradation/
+maintenance of existing gravel roads
+ Text Value 0 100 km rural roads piolted for 
+new technology
+Date
+Comments
+31-Jan-2014
+that 118 km length of road for 
+piloting of cost effective 
+technologies has now been 
+identified
+31-Dec-2015
+Computerization of key business processes in 
+PWD
+ Yes/No Value No Yes
+Date
+Comments
+06-Aug-2013
+Most key processes are 
+manual
+A consultant selection is 
+underway
+31-Dec-2015
+Re-engineering and 
+computerization of key 
+processes completed
+Model road safety corridor(s) developed  Kilometers Value 0.00 100.00
+Date
+Comments
+31-Jan-2014
+iRAP survey and intervention 
+design consultant selection is 
+initiated
+31-Dec-2015
+Average star rating achieved on model road 
+safety corridor(s)
+ Text Value 3
+Date
+Comments
+31-Mar-2014
+to be established after the 
+iRAP survey
+iRAP survey consultant 
+selection is initiated
+31-Dec-2015
+Road safety policy and action plan approved 
+and implemented
+ Yes/No Value No Yes
+Date
+Comments
+31-Jan-2014
+a road safety expert is being 
+hired for the task
+31-Dec-2015
+Policy & Plan approved and 
+disseminated
+Road Asset management System in place  Yes/No Value No Yes
+Date
+Comments
+31-Jan-2014
+There is a maintenance 
+management system in place 
+but not functioning as a full 
+fledged asset management 
+tool
+Consultant selection is 
+underway to develop the 
+system
+31-Dec-2015
+Asset Management System in 
+placeThe World Bank
+Page 4 of 4
+Public Disclosure CopyPublic Disclosure Copy
+Report No:  ISR15280
+Data on Financial Performance (as of 26-Jun-2014)
+Financial Agreement(s) Key Dates
+Project Ln/Cr/Tf Status Approval Date Signing Date Effectiveness Date Original Closing Date Revised Closing Date
+P130164 IDA-53100 Effective 29-Oct-2013 02-Jan-2014 10-Mar-2014 31-Dec-2018 31-Dec-2018
+Disbursements (in Millions)
+Project Ln/Cr/Tf Status Currency Original Revised Cancelled Disbursed Undisbursed % Disbursed
+P130164 IDA-53100 Effective XDR  105.60  105.60  0.00  14.71  90.89  14.00 
+Disbursement Graph
+Key Decisions Regarding Implementation
+PWD needs to focus on implementation of the sector modernization and road safety components, strengthen the PMU through experts hired from the market.  
+PWD needs to adopt the PMGSY On-line Monitoring, Management and Accounting System (OMMAS) as a monitoring tool for the project. This will not only improve project 
+management but also enhance transparency and accountability to the public.
+Restructuring History
+There has been no restructuring to date.
+Related Projects
+There are no related projects.

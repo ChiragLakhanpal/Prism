@@ -1,0 +1,2887 @@
+Source: https://documents.worldbank.org/curated/en/258481572631321132/text/India-Rajasthan-Road-Sector-Modernization-Project.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-23
+About: The Implementation Completion and Results Report for P130164, October 10, 2019 (ICR4803). Documents API id 31525018.
+
+                                                   Document of
+                                              The World Bank
+                                           FOR OFFICIAL USE ONLY
+
+
+                                                                                       Report No: ICR00004803
+
+
+
+                  IMPLEMENTATION COMPLETION AND RESULTS REPORT
+                                                       ON A
+
+                                                      CREDIT
+
+                                 IN THE AMOUNT OF SDR 105.6 MILLION
+
+                                      (US$160 MILLION EQUIVALENT)
+
+                                                      TO THE
+
+                                              REPUBLIC OF INDIA
+
+                                                     FOR THE
+                         RAJASTHAN ROAD SECTOR MODERNIZATION PROJECT
+
+
+                                               October 10, 2019
+
+
+
+
+Transport Global Practice
+South Asia Region
+
+
+
+ This document has a restricted distribution and may be used by recipients only in the performance of their official
+ duties. Its contents may not otherwise be disclosed without World Bank authorization.
+                        CURRENCY EQUIVALENTS
+
+              (Exchange Rate Effective December 27, 2018)
+
+
+                      Currency Unit = Indian Rupee (INR)
+                           INR 70.4 = US$1
+                           US$1.39 = SDR 1
+
+                             FISCAL YEAR
+                           April 1 – March 31
+
+                   ABBREVIATIONS AND ACRONYMS
+
+DPR     Detailed Project Report
+EIRR    Economic Internal Rate of Return
+GOR     Government of Rajasthan
+HDM-4   Highway Development and Management Model
+HR      Human Resources
+ICR     Implementation Completion and Results Report
+IFMS    Integrated Financial Management System
+iRAP    International Road Assessment Programme
+IRI     International Roughness Index
+IRR     Internal Rate of Return
+ISR     Implementation Status and Results Report
+ITS     Intelligent Transport Services
+M&E     Monitoring and Evaluation
+MDR     Major District Road
+MIRR    Modified Internal Rate of Return
+MMGSY   Mukhya Mantri Gram Sadak Yojana
+MTR     Midterm Review
+NGO     Nongovernmental Organization
+NPV     Net Present Value
+PAD     Project Appraisal Document
+PAT     Performance Assessment Tool
+PDO     Project Development Objective
+PIU     Project Implementation Unit
+PMC     Project Management Consultant
+PMGSY   Prime Minister Gram Sadak Yojana
+PPA     Project Preparation Advance
+PPP     Public-Private Partnership
+PS      Principal Secretary
+PWD     Public Works Department
+RAMS    Road Asset Management System
+RF      Results Framework
+RSMP    Road Sector Modernization Plan
+SCDP    Safe Corridor Demonstration Program
+SDC     System Defining Consultant
+SH      State Highway
+SHA     State Highway Authority
+SPC     System Providing Consultant
+VOC     Vehicle Operating Cost
+VOT     Value of Time
+
+
+
+
+             Regional Vice President: Hartwig Schafer
+                    Country Director: Junaid Kamal Ahmad
+       Senior Global Practice Director: Guangzhe Chen
+                   Practice Manager: Shomik Raj Mehndiratta
+                Task Team Leader(s): Justin Runji, Reenu Aneja
+                ICR Main Contributor: Oceane Keou
+                                                         TABLE OF CONTENTS
+
+
+DATA SHEET ......................................................................................................................... 1
+I.    PROJECT CONTEXT AND DEVELOPMENT OBJECTIVES ....................................................... 5
+      A. CONTEXT AT APPRAISAL .........................................................................................................5
+      B. SIGNIFICANT CHANGES DURING IMPLEMENTATION (IF APPLICABLE) .......................................9
+II.   OUTCOME .................................................................................................................... 11
+      A. RELEVANCE OF PDOs ............................................................................................................11
+      B. ACHIEVEMENT OF PDOs (EFFICACY) ......................................................................................12
+      C. EFFICIENCY ...........................................................................................................................17
+      D. JUSTIFICATION OF OVERALL OUTCOME RATING ....................................................................17
+      E. OTHER OUTCOMES AND IMPACTS (IF ANY)............................................................................18
+III. KEY FACTORS THAT AFFECTED IMPLEMENTATION AND OUTCOME ................................ 18
+      A. KEY FACTORS DURING PREPARATION ...................................................................................18
+      B. KEY FACTORS DURING IMPLEMENTATION .............................................................................19
+IV. BANK PERFORMANCE, COMPLIANCE ISSUES, AND RISK TO DEVELOPMENT OUTCOME .. 20
+      A. QUALITY OF MONITORING AND EVALUATION (M&E) ............................................................20
+      B. ENVIRONMENTAL, SOCIAL, AND FIDUCIARY COMPLIANCE .....................................................21
+      C. BANK PERFORMANCE ...........................................................................................................22
+      D. RISK TO DEVELOPMENT OUTCOME .......................................................................................23
+V. LESSONS AND RECOMMENDATIONS ............................................................................. 24
+ANNEX 1. RESULTS FRAMEWORK AND KEY OUTPUTS ........................................................... 25
+ANNEX 2. BANK LENDING AND IMPLEMENTATION SUPPORT/SUPERVISION ......................... 33
+ANNEX 3. PROJECT COST BY COMPONENT ........................................................................... 35
+ANNEX 4. EFFICIENCY ANALYSIS ........................................................................................... 36
+ANNEX 5. BORROWER, CO-FINANCIER AND OTHER PARTNER/STAKEHOLDER COMMENTS ... 44
+ANNEX 6. REVISED THEORY OF CHANGE .............................................................................. 48
+ANNEX 7. BORROWER ICR REPORT ...................................................................................... 49
+ANNEX 8. COMPARATIVE ASSESSMENT OF STATES’ INITIATIVES........................................... 50
+        The World Bank
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+DATA SHEET
+
+
+BASIC INFORMATION
+
+Product Information
+Project ID                                               Project Name
+
+P130164                                                  Rajasthan Road Sector Modernization Project
+
+Country                                                  Financing Instrument
+
+India                                                    Investment Project Financing
+
+Original EA Category                                     Revised EA Category
+
+Partial Assessment (B)
+
+
+
+Organizations
+
+Borrower                                                  Implementing Agency
+
+Department of Economic Affairs, Ministry of Finance,
+                                                          Rajasthan State Public Works Department
+Govt. of India
+
+
+Project Development Objective (PDO)
+Original PDO
+The project development objective is to improve rural connectivity, enhance road safety and strengthen road sector
+managementcapacity of the state of Rajasthan.
+
+
+
+
+                                                                                                          Page 1 of 62
+       The World Bank
+       Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+FINANCING
+
+                                    Original Amount (US$)      Revised Amount (US$)       Actual Disbursed (US$)
+ World Bank Financing
+                                             160,000,000                131,877,656                 121,630,913
+ IDA-53100
+ Total                                       160,000,000                131,877,656                 121,630,913
+ Non-World Bank Financing
+                                                           0                          0                              0
+
+
+
+
+ Borrower/Recipient                           67,000,000                 56,000,000                  56,000,000
+ Total                                        67,000,000                 56,000,000                  56,000,000
+ Total Project Cost                          227,000,000                187,877,656                 177,630,913
+
+
+KEY DATES
+
+Approval                Effectiveness          MTR Review            Original Closing       Actual Closing
+29-Oct-2013             10-Mar-2014            16-May-2016           31-Dec-2018            31-Dec-2018
+
+
+
+RESTRUCTURING AND/OR ADDITIONAL FINANCING
+
+Date(s)                      Amount Disbursed (US$M) Key Revisions
+27-Jul-2017                                     92.51 Change in Results Framework
+                                                      Change in Components and Cost
+                                                      Reallocation between Disbursement Categories
+                                                      Other Change(s)
+
+
+
+KEY RATINGS
+
+Outcome                                 Bank Performance                     M&E Quality
+Moderately Unsatisfactory               Moderately Unsatisfactory            Modest
+
+
+RATINGS OF PROJECT PERFORMANCE IN ISRs
+
+                                                                                                   Actual
+ No.              Date ISR Archived            DO Rating                  IP Rating            Disbursements
+                                                                                                  (US$M)
+ 01                   22-Feb-2014             Satisfactory               Satisfactory                          .60
+
+
+
+                                                                                                          Page 2 of 62
+     The World Bank
+     Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+02                    30-Jul-2014                Satisfactory        Moderately Satisfactory      22.71
+03                    23-Jan-2015                Satisfactory        Moderately Satisfactory      23.33
+04                    04-Jun-2015                Satisfactory        Moderately Satisfactory      69.91
+05                    20-Nov-2015                Satisfactory        Moderately Satisfactory      75.55
+06                    21-Jan-2016                Satisfactory        Moderately Satisfactory      75.55
+07                    26-Aug-2016                Satisfactory             Satisfactory            89.79
+08                    05-Mar-2017                Satisfactory             Satisfactory            91.58
+09                    23-May-2017                Satisfactory             Satisfactory            91.58
+10                    26-Jul-2017         Moderately Satisfactory    Moderately Satisfactory      92.51
+11                    18-Dec-2017         Moderately Satisfactory    Moderately Satisfactory     105.12
+                                                 Moderately
+12                    10-Apr-2018                                   Moderately Unsatisfactory    105.12
+                                                Unsatisfactory
+                                                 Moderately
+13                    28-Dec-2018                                   Moderately Unsatisfactory    112.59
+                                                Unsatisfactory
+
+SECTORS AND THEMES
+
+Sectors
+Major Sector/Sector                                                                                  (%)
+
+
+Transportation                                                                                      100
+       Public Administration - Transportation                                                          3
+       Rural and Inter-Urban Roads                                                                    97
+
+
+Themes
+Major Theme/ Theme (Level 2)/ Theme (Level 3)                                                        (%)
+Private Sector Development                                                                            10
+         Public Private Partnerships                                                                  10
+
+Urban and Rural Development                                                                          100
+         Rural Development                                                                          100
+                   Rural Infrastructure and service delivery                                        100
+
+
+
+
+                                                                                                Page 3 of 62
+       The World Bank
+       Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ADM STAFF
+Role                                          At Approval                       At ICR
+
+Regional Vice President:                      Philippe H. Le Houerou            Hartwig Schafer
+
+Country Director:                             Onno Ruhl                         Junaid Kamal Ahmad
+
+Director:                                     John Henry Stein                  Guangzhe Chen
+
+Practice Manager:                             Karla Gonzalez Carvajal           Shomik Raj Mehndiratta
+
+Task Team Leader(s):                          Ashok Kumar, Mesfin Wodajo Jijo   Justin Runji, Reenu Aneja
+
+ICR Contributing Author:                                                        Oceane Keou
+
+
+
+
+                                                                                                         Page 4 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+  I. PROJECT CONTEXT AND DEVELOPMENT OBJECTIVES
+
+  A. CONTEXT AT APPRAISAL
+
+ Context
+
+ 1.      At project appraisal in 2013, Rajasthan—one of the largest states of India covering nearly 10
+ percent of total area of the country—had nearly 5 percent of the total population of India (5.2 percent as
+ of today). Being one of the low-income states of India, its per capita income (US$943) was about 20
+ percent lower than the national average (US$1,185). About 75 percent of the state’s population was rural
+ and mainly depending on agriculture for its livelihood. It was identified that the state had good potential
+ for growth in agriculture and agro-based industries, mining and minerals processing, tourism, and cottage
+ industries, but this potential was underutilized due to inadequate road infrastructure and market links.
+
+ 2.       Considering the need for high-quality infrastructure and better rural connectivity, the Industrial
+ and Investment Promotion Policy, adopted by the Government of Rajasthan (GOR) in 2010, and Eleventh
+ Five Year Plan of India (2007–2012) both promoted the implementation of a number of initiatives to
+ accelerate economic growth and facilitate sustainable socioeconomic development, including widening
+ of state highways (SHs) and upgrading of secondary network. The Twelfth Five Year Plan (2012–2017)
+ carried forward the achievements of the Eleventh Five Year Plan with the completion of 16 mega-highway
+ projects and supporting works for improved connectivity of villages with population 250 and above. The
+ target for economic growth under the Twelfth Five Year Plan had been revised to 7.7 percent compared
+ to 6.5 percent under the previous plan—part of it expected to be generated from increased investments
+ in the transport sector by (a) connecting all villages of 250 inhabitants and above, (b) upgrading all
+ highways and district roads to all-weather roads, and (c) building missing links between other villages.
+
+ 3.      In 2013, Rajasthan had a state road network of 193,017 km, including 7,260 km of national
+ highways, 10,953 km of SHs, 9,900 km of major district roads (MDRs), 25,033 km of other district roads,
+ and 139,871 km of village roads. Road density in Rajasthan, as identified during preparation, was only
+ about 60 km per 100 km2, lower than the national average of 110 km per 100 km2. Development costs
+ and maintenance costs of the road network in Rajasthan kept increasing, with maintenance budget needs
+ estimated at US$800 million overall, compared to US$278 million actually provisioned by the state. In
+ terms of development of the rural road network, the Government of India Prime Minister Gram Sadak
+ Yojana (PMGSY) allowed to increase the share of village roads with bitumen surfacing from 76 percent to
+ 98 percent focusing on the connectivity of villages of more than 500 inhabitants and of villages of 250
+ people and more in desert and tribal areas. Providing all-weather access to all local roads under the
+ PMGSY threshold became a priority of the GOR during the Twelfth Five Year Plan period. In terms of
+ development of the primary and secondary networks, most highways and MDRs are in poor condition due
+ to a lack of appropriate maintenance. To ensure economic growth by leveraging the provision of new
+ access from rural areas to economic poles, investing in the highway network is critical as well.
+
+ 4.       Efforts in proper development and maintenance of the network were identified as being critical
+ as traffic growth had dramatically increased, with a 14 percent compounded year-on-year increase in the
+ number of cars and 5.8 million more vehicles overall (more than 75 percent being two-wheelers)
+ registered in Rajasthan in 2012 compared to 2002. This led to an increase in road fatalities. Severity Index
+ (number of persons killed per 100 accidents) of Rajasthan roads was about 40 compared to a national
+
+
+                                                                                                         Page 5 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ average of 29, and the state ranked fifth in the total number of fatalities in 2011, contributing to 6.5
+ percent of all fatalities in India.
+
+ 5.       To ensure adequate management of the network and identified issues including the need for
+ improved road safety management, the need for modernizing the Public Works Department (PWD) was
+ stressed during project appraisal. Gaps in investment planning, engineering practices, and business
+ processes were found to be hindering the overall capacity of the PWD to handle such large network. One
+ major component was thus incorporated into the project, aiming at revamping the overall PWD structure,
+ processes, and practices. Road sector modernization and institutional strengthening in Rajasthan were
+ identified as the core focus of the project. The goal was to build the capacity of the PWD staff and provide
+ adequate support to bring more efficiency in business procedures and asset management practices.
+
+ Theory of Change (Results Chain)
+
+ 6.       The Theory of Change was not a requirement at the time of project preparation and is being
+ introduced for the purpose of the Implementation Completion and Results Report (ICR). Figure 1 shows
+ the original Theory of Change, based on the project components, expected outputs and intermediate
+ results, with longer-term outcomes the project was expected to contribute to beyond its closing date. The
+ components were designed under the following assumptions: component A – the PIUs adequate capacity
+ to implement good quality works, based on the experience from the PMGSY scheme in Rajasthan;
+ components B and C – the buy-in and championship from a high-level official for institutional reforms and
+ road safety; components B and C – adequate membership of the working groups and task forces.
+
+ Project Development Objectives (PDOs)
+
+ 7.      The Project Development Objective was to improve rural connectivity, enhance road safety and
+ strengthen road sector management capacity of the state of Rajasthan.
+
+ Key Expected Outcomes and Outcome Indicators
+
+ 8.       The project was expected to benefit around 1,300 small villages by providing them with all-season
+ access to socioeconomic opportunities. Road users were expected to benefit from a safer transport
+ system implemented on demonstration corridors. Lastly, modernization of the PWD was expected to
+ significantly improve the overall sector management, thus benefiting indirectly all road users.
+
+ 9.       It had thus been agreed that the progress toward achievement of the PDO would be measured by
+ the following outcome indicators. An outcome indicator linked to the third sub-objective (road sector
+ modernization) was missing at the time of approval.
+         •    Connectivity: Share of rural population with access to an all-season road (main)
+         •    Connectivity: Number of rural people with access to an all-season road (supplemental)
+         •    Connectivity: Percentage of core road network in good/fair condition as a share of the total
+              classified network (main)
+         •    Connectivity: Size of total classified network (supplemental)
+         •    Road safety: A reduction in annual fatality count on model road safety corridors
+
+
+                                                                                                         Page 6 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                        Figure 1. Original Theory of Change
+
+
+
+
+                                                                                              Page 7 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ Components
+
+ 10.     The project had three main components, as presented below:
+
+         •    Component A - Rural Connectivity Improvement (planned: US$197 million, including IDA
+              credit US$138 million)
+
+              This component was designed to support the construction of about 2,500 km of rural roads
+              to provide connectivity to about 1,300 revenue villages with population between 250 and
+              499 in the areas of the state not covered by the PMGSY and introduce good practices of cost-
+              effective low-volume technologies. The roads would predominantly be built to a bitumen
+              surface standard and will include all necessary bridges and cross-drainage works to maintain
+              year-round connectivity.
+
+         •    Component B - Road Sector Modernization and Performance Enhancement (planned: US$11
+              million, including IDA credit US$7.75 million)
+
+              This component was designed to support implementation of a Road Sector Modernization
+              Plan (RSMP) that would help the PWD in establishing a dynamic and systematic mechanism
+              for sector reforms. The RSMP was intended to be reviewed on a continuous basis and
+              implemented in a phased manner based on subsets of key priority measures. It had been
+              agreed that the implementation of the RSMP would go beyond the proposed project
+              implementation period. The RSMP would target the following key areas:
+
+                  (a)   Improvement of the policy framework;
+                  (b)   Modernization of engineering practices and business procedures;
+                  (c)   Sustainable asset management;
+                  (d)   Institutional and human resources (HR) development;
+                  (e)   Preparation of a pipeline of feasible projects for implementation;
+                  (f)   Enhancement of governance and accountability in the PWD.
+
+
+         •    Component C - Road Safety Management (planned: US$15 million, including IDA credit
+              US$10.55 million)
+
+              This component was designed to support the strengthening of road safety management
+              systems in Rajasthan with the objective of reducing the number of fatalities and serious
+              injuries from traffic accidents in the state. This was to be accomplished through:
+
+                  (a)   Safe Corridor Demonstration Program (SCDP);
+                  (b)   The establishment of a Road Safety Strategy;
+                  (c)   Road safety education and awareness programs; and
+                  (d)   Road safety audits.
+
+
+                                                                                                      Page 8 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                              Table 1. Project Cost Table at Approval (US$, millions)
+                                                Costs Including                          % Bank
+                 Component                                        Bank Financing                    GOR Financing
+                                                 Contingency                            Financing
+  A - Rural Connectivity Improvement                  197               138.00             70           59.00
+  (a) Civil Works (2,500 km)                          195               136.60             70           58.40
+  (b) Project Management and Audit Services             2                 1.40             70            0.60
+  B - Road Sector Modernization                        11                 7.75             70            3.25
+  C - Road Safety Management                          15                 10.55            70             4.45
+  Incremental Operating Costs                          1                  0.70            70             0.30
+                        Subtotal Project Cost        224                157.00            70            67.00
+             Refinancing preparation advance           3                  3.00            n.a.           0.00
+                           Total Project Cost        227                160.00            70            67.00
+
+
+  B. SIGNIFICANT CHANGES DURING IMPLEMENTATION (IF APPLICABLE)
+
+ 11.     The project was approved on October 29, 2013 and planned to close on December 31, 2018. The
+ project was restructured once on July 27, 2017. Disbursement under the project as of May 31, 2017, was
+ XDR 63.95 million (approximately US$88.5 million), which was 60.56 percent of the total loan amount of
+ XDR 105.60 million. At that time, around 90 percent of the civil works were completed. The disbursement
+ was lagging at about six months equivalent to around US$17 million. The main delays in project
+ implementation were related to the implementation of both institutional strengthening components,
+ Components B and C.
+
+ Revised PDOs and Outcome Targets
+
+ 12.     The PDOs remained unchanged, that is, to improve rural connectivity, enhance road safety and
+ strengthen road sector management capacity of the state of Rajasthan, but changes were made to the
+ key indicators and outcome targets. The details are in the revised Theory of Change (Annex 6).
+
+ Revised PDO Indicators
+
+ 13.     The progress toward the achievement of the PDOs was to be assessed through the following
+ revised outcome indicators (the justification for revision is indicated in paragraph 19.b):
+
+         •     Connectivity: Share of rural population with access to an all-season road (main)
+         •     Connectivity: Number of rural people with access to an all-season road (supplemental)
+         •     Connectivity: Percentage of core road network in good/fair condition as a share of the total
+               classified network (removed)
+         •     Connectivity: Size of total classified network (main, instead of supplemental)
+         •     Road safety: A reduction in annual fatality count on model road safety corridors
+         •     Road sector management capacity: Road Asset Management System Operational (added)
+
+
+
+                                                                                                                Page 9 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ Revised Components
+
+ 14.     The scope of the main components was not revised.
+
+ Other Changes
+
+ 15.      In addition to the Results Framework (RF) revisions, other changes were made related to the
+ financing plan, that is, the World Bank share of financing in the civil works component, and to the budget
+ allocation between disbursement categories (and associated disbursement estimates per component).
+
+ 16.    There were no changes in the institutional and implementation arrangements and disbursement
+ arrangements. No additional safeguard policy was triggered due to the proposed restructuring.
+
+ Rationale for Changes and Their Implication on the Original Theory of Change
+
+ 17.      As identified during the Midterm Review (MTR) (end of May 2016), the need for restructuring was
+ identified in three areas:
+
+         (a) Adjusting the share of the World Bank’s financing for expenditures related to civil works by
+             retroactively increasing the World Bank’s financing percentage from 70 percent to 80 percent;
+
+         (b) Revising monitoring and evaluation (M&E) indicators;
+
+         (c) Reallocating funds between categories.
+
+ 18.     The rationale for restructuring was as follows:
+
+         (a) Increased World Bank share of financing in works components. The costs of civil works
+             included the agency fees, which were not eligible for World Bank financing. The World Bank’s
+             share of financing at 70 percent of civil works was applied only on the construction cost minus
+             the agency fees, which yielded the actual World Bank’s share to be only 62 percent versus
+             what was planned at 70 percent. Therefore, the restructuring suggested the increase of the
+             World Bank’s financing percentage to 80 percent for civil works retroactively to ensure that
+             the overall World Bank’s share of financing was indeed kept at 70 percent.
+
+         (b) Revising the RF to reflect some changes proposed to the outcome and intermediate
+             indicators to (i) improve rural connectivity, (ii) enhance road safety, and (iii) strengthen road
+             sector management capacity of the state of Rajasthan. This meant adding three PDO-level
+             indicators and dropping one PDO-level indicator; adding two intermediate indicators to
+             properly monitor the achievements of the three sub-objectives; and ensuring links between
+             the outcomes, activities, outputs of the three components. The project was indeed initially
+             approved without a relevant outcome indicator capturing the third dimension of the PDO.
+             Changes made to the indicators also allowed to remove indicators that proved to be difficult
+             to measure (for example, share of roads in good/fair condition).
+
+         (c) Reallocation between categories. At the time of project preparation, the project received
+             US$3 million as a Project Preparation Advance (PPA). Since the PPA was not fully used
+             (disbursement of US$2,277) at the time of restructuring, the allocation in the loan to refinance
+
+                                                                                                         Page 10 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+             it (Category 2) remained unused. Therefore, the GOR proposed to reallocate the remaining
+             amount to Category 1 activities.
+
+ 19.      Table 2 shows the revised project cost table after restructuring considering the refined costs
+ estimates per component after initiating the procurement process for the relevant activities under the
+ respective components. It is worth noting that both cost allocations for Components B and C increased
+ after restructuring.
+
+                              Table 2. Revised Project Cost Table (US$, millions)
+                                            Costs Including         Bank             % Bank        GOR
+                Component
+                                             Contingency          Financing         Financing   Financing
+  A - Rural Connectivity Improvement             192.17             134.52             70         57.65
+  B - Road Sector Modernization                    13.47              9.43             70          4.04
+  C - Road Safety Management                       19.86             13.90             70          5.96
+  Incremental Operating Costs                       1.50              1.05             70          0.45
+                     Subtotal Project Cost       227.00             158.90             70         68.10
+         Refinancing preparation advance            0.00              0.00             n.a.        0.00
+                         Total Project Cost      227.00             158.90             70         68.10
+
+ 20.     The revised Theory of Change (Annex 6) takes into account the abovementioned changes made
+ in the RF through the restructuring.
+
+
+  II. OUTCOME
+
+ 21.      Although the project had a restructuring with a change in key associated outcome indicators, the
+ PDO or scope of components remained the same. Therefore, the split-rating method will not be used for
+ this ICR. The achievement of the three dimensions of the PDO will be assessed based on the actual project-
+ level outcomes.
+
+  A. RELEVANCE OF PDOs
+
+ Assessment of Relevance of PDOs and Rating
+
+ 22.      At the project closing date, the project remained highly relevant to the country’s current
+ development priorities and World Bank’s engagement. The World Bank has been involved in the road
+ sector in Rajasthan for over 10 years through various projects and programs such as the PMGSY as a
+ response to a clearly identified need and the state government’s priority to increase connectivity in rural
+ areas throughout the state. One of the main objectives of this type of programs is to connect habitations
+ in villages to main corridors and economic centers, through the provision of better-quality and safer road
+ infrastructure. An expected long-term outcome is to diversify Rajasthan’s local economy.
+
+ 23.     The FY18–22 Country Partnership Framework stipulates that the government continues to (a)
+ pursue policies aimed at strengthening public sector institutions by improving implementation
+ capabilities, (b) target connectivity constraints by supporting the development and maintenance of
+
+
+                                                                                                       Page 11 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ national and state roads, and (c) prioritize leveraging of private sector financing by strengthening the
+ framework for private sector participation using innovative PPP contracting and risk mitigation
+ enhancement instruments.
+
+ 24.     This project approved in 2013 is thus still fully in line with the strategic directions, as it contributes
+ mainly to the first two strategic pillars by providing infrastructure in good condition to facilitate all-season
+ connectivity while contributing to a limited extent to the road sector modernization in Rajasthan.
+ Therefore, the rating for relevance is High.
+
+  B. ACHIEVEMENT OF PDOs (EFFICACY)
+
+ Assessment of Achievement of Each Objective/Outcome
+
+ Outcome 1: Rural connectivity improved
+ Outcome achieved - rated Substantial
+
+ 25.    Two PDO-level indicators and two intermediate indicators of the project’s RF support the first
+ PDO outcome.
+
+ 26.     The outcome indicator ‘Share of rural population with access to an all-season road - with the
+ number of rural people with access to an all-season road’ was satisfactorily achieved, reaching actual
+ values of 80.8 percent and 33,490,396, respectively, compared with a target of 81 percent and
+ 33,489,250. Besides, the indicator ‘Size of total classified network’ was achieved, with a final value of
+ 135,788 km against a target of 135,935 km. About 70 percent of civil works were completed by January
+ 2015, that is, within one year after contract signature, and about 90 percent of civil works were completed
+ by March 2016, within a little over two years of project implementation.
+
+ 27.      The intermediate indicator ‘Roads constructed’ was mostly achieved, with 2,334 km of roads built
+ compared to an initial target of 2,500 km. In Rajasthan, out of 19,945 unconnected villages in rural areas
+ as identified during the preparation of the Eleventh Five Year Plan of India, 55 percent (10,995 villages)
+ are eligible to be covered by the PMGSY program, and the remaining 8,950 unconnected habitations fall
+ under the Mukhya Mantri Gram Sadak Yojana (MMGSY) program. Civil works completed under this project
+ provided connectivity to around 1,300 habitations, thus having an actual impact on connectivity of remote
+ rural areas as it represents a share of about 15% of the entire MMGSY program. The intermediate
+ indicator ‘Cost effective technologies piloted for road design and construction and
+ upgradation/maintenance of existing gravel roads’ was partially achieved with a result of 61 km
+ completed at project closure, and 67 km completed at the time of the ICR, instead of 100 km.
+
+ 28.      Overall, it can be noted that almost all civil works under the project were completed as planned.
+ The quality of civil works kept on improving throughout the duration of project implementation. The
+ introduction of the Performance Assessment Tool (PAT) with relevant training for the Project
+ Management Consultant (PMC) and PWD engineers was beneficial in getting management’s attention
+ toward better quality of works and in increasing frequency of senior engineers’ site visits. The PAT also
+ helped in ensuring better management of environmental and social safeguards and the health and safety
+ of workers on site. The successful implementation of this component, in addition to the implementation
+ of the rest of the MMGSY program funded by the state of Rajasthan and of the PMGSY program, led to a
+ significant increase in connectivity of rural areas in the state.
+
+
+                                                                                                              Page 12 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ Outcome 2: Road safety enhanced
+ Outcome not achieved - rated Negligible
+
+ 29.    One PDO-level indicator and three intermediate indicators of the project’s RF support the second
+ PDO outcome.
+
+ 30.     The outcome indicator ‘A reduction in annual average fatality count of road users on model road
+ safety corridors’ was not achieved. The target of 30 (average fatality count on model road safety highway
+ corridors) was even negatively exceeded, as the actual count in 2018 was 61. The increase in fatalities is
+ due to the lack of proper safety measures and is inherently correlated to the increase in traffic over the
+ years, which requires stricter safety management. In 2018, Rajasthan was ranked 9th out of 29 Indian
+ states, with 15.1 deaths per lakh population (and 6th out of 29 in total number of deaths, with 10,320
+ total deaths in 2018). 1
+
+ 31.      The intermediate indicator ‘Model road safety corridor(s) developed’ was not achieved. Based on
+ the initial International Road Assessment Programme (iRAP) survey of various highways (about 700 km)
+ and accident analysis carried out from February 2016, one corridor was selected as Demonstration Safe
+ Corridor (and approved by the relevant Project Working Group headed by the Transport Commissioner)
+ to pilot road safety interventions: the Deeg-Alwar-Behror section (114 km) of SH-14. Unfortunately, at
+ project closure, the expected target of 100 km of corridor covered by road safety measures was not
+ achieved. Relevant technical designs and specifications for Intelligent Transport Services (ITS) and mobile
+ road safety equipment (including speed laser guns, automatic speed control systems, cameras for both
+ speed detection and incident detection, and crash data collection and management system) intended for
+ the Police and Transport Departments in Rajasthan were completed only a few months before project
+ closure. These designed measures, expected to contribute to the increase in average iRAP star rating of
+ the selected sections, could not be implemented within the life of the project. ‘Average star rating on
+ model road safety corridor(s)’ was thus not achieved.
+
+ 32.      The intermediate indicator ‘Road safety policy and action plan approved and implemented’ was
+ achieved. The Road Safety Policy was prepared by the Road Safety Cell created under the project and
+ comprised representatives from different sectors/departments, including the Transport, Police, Medical,
+ PWD, and Local Self Government Departments. It is worth underlining here that the political context with
+ the existence of a Supreme Court Directive on Road Safety was a key factor driving the development and
+ approval of the Road Safety Policy and action plan under the project. Efforts were thus made in developing
+ the Road Safety Policy and implementing some of the priority actions highlighted in the action plan. A
+ Road Safety Fund was set up allowing to channel more financing toward the implementation of road
+ safety measures. Road safety audits were carried out for 1,025 km of project roads and roads of higher
+ category linking the project roads. Awareness campaigns managed by the Transport Department targeting
+ road users were successfully implemented by hired nongovernmental organizations (NGOs) in different
+ subregions (Jaipur, Udaipur, and so on) a few months before project closure. More than 100,000 people
+ participated in the campaigns. Training sessions related to accidents investigations were provided to the
+ police. There was unfortunately no outcome indicator indicating the resulting trend in fatalities on project
+ rural roads after completion of civil works and safety training or measures.
+
+
+
+
+ 1   Times of India.
+
+                                                                                                        Page 13 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ 33.     Despite the proven efforts in executing part of the Road Safety action plan, the lack of
+ commitment to ensure (a) the implementation of strategic road safety measures/works along the selected
+ corridor and (b) the provision of adequate road safety equipment (with the introduction of ITS and
+ enforcement equipment) for the Police and Transport Department services, under the SCDP, may explain
+ the increase in road fatalities on the selected corridor. The SCDP was one of the key project activities
+ aiming at demonstrating the positive impact of adequate and site-specific road safety measures to reduce
+ road accidents and fatalities. As per the progress made at project closure and after project closure, the
+ associated works and goods are yet to be procured and implemented. The PWD decided to take up and
+ finance the implementation of the SCDP using state funds and has determined implementation
+ arrangements. To avoid issues faced in 2018 during the bidding process, it is recommended that the civil
+ works and the ITS equipment be procured separately considering the different expertise and contract
+ period required for the maintenance phase. At the time of this ICR, PWD reported that some budget was
+ allocated, and arrangements made to acquire mobile road safety equipment for the Police Department.
+
+ Outcome 3: Road sector management capacity of the state of Rajasthan strengthened
+ Outcome not achieved - rated Negligible
+
+ 34.    One PDO-level indicator and three intermediate indicators of the project’s RF support the third
+ PDO outcome.
+
+ 35.     The outcome indicator ‘Road Asset Management System Operational’ was not achieved. The
+ expectation was that the Road Asset Management System (RAMS) would be developed, fully functional,
+ and in use by project closure. While the system has been designed during project implementation, it still
+ remains to be fully developed and implemented at the time of this ICR. Successful implementation of a
+ new RAMS requires (a) continuous pedagogy toward relevant stakeholders (Finance Department, PWD,
+ Project Implementation Units [PIUs], and so on) to ensure their buy-in and ensure that the introduction
+ of the new system is not seen as an additional burden, which was the case for some of them, and (b)
+ incremental implementation (design, system development, road network condition assessment, data
+ compilation, relevant training for assimilation, piloting, and full deployment/system in use). Laying out
+ these requirements shows that five years may not have been enough to achieve the initially expected
+ outcome.
+
+ 36.      Based on the achievements made at project closure (and considering the progress made at the
+ time of this ICR), out of three intermediate indicators two were satisfactorily achieved, namely the
+ ‘Training Plan and HR Policy & Procedures developed’ and ‘Sector Policy and Financing Framework
+ developed’. The intermediate indicator ‘Computerization of key business processes in PWD’ was not
+ satisfactorily completed.
+
+ 37.     The main issue to be tackled by the project, as identified during project preparation, was related
+ to the current gap in the road sector institutional development in Rajasthan. The PWD institutional
+ structure and procedures are not efficient enough and adequate to manage the growing state road
+ network. Proper asset management practice is nonexistent. In addition, most standard operating
+ procedures are manually driven, and there are gaps in communication between the PWD divisions, which
+ tend to work in silos. The proposed activities to strengthen the road sector institutional capacity in
+ Rajasthan in view of the latest industry practices were thus justified. But the component scope was rather
+ ambitious or required more ground preparation/upstream discussions.
+
+
+
+                                                                                                      Page 14 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ 38.     The proposed activities, which were led by the Road Sector Modernization Task Force headed by
+ the Principal Secretary (PS), can be classified in five categories:
+
+         (a) Development and implementation of a Road Sector Policy and Financing Strategy. As per
+             the project’s related indicator, the Road Sector Policy was revised, and the Financing Strategy
+             developed. Nevertheless, the Policy/Strategy has yet to be approved by the Cabinet.
+
+         (b) Development and deployment/operationalization of a sound RAMS to ensure sustainability
+             of the investments through strategic financing decisions. The Contract Agreement with the
+             System Defining Consultant (SDC), responsible for the system design, was signed on
+             December 28, 2015 and mobilized on January 13, 2016. The contract for the System Providing
+             Consultant (SPC), responsible for the development of the system, was signed on August 2,
+             2018, a few months before project closure. Data collection services (network condition
+             assessment required for the system development and use) are still to be procured. The
+             development and deployment of the RAMS are thus not completed at the time of this ICR.
+
+         (c) Adoption and implementation of new road engineering and business procedures. A
+             report/gap analysis was completed by Deloitte in September 2017, which provided
+             recommendations for business procedures modernization. The proposed actions (for
+             example, e-measurement book/e-billing, online procurement and contract management
+             manuals, change in institutional structure), which represented a key opportunity to effectively
+             make the PWD’s services more efficient in the management of the road network, have not
+             been prioritized and not been implemented during the project period. One achievement that
+             can be reported is the implementation of an Integrated Financial Management System (IFMS)
+             for the state as a whole. In terms of institutional structure, it had been agreed that a separate
+             State Highway Agency would be more relevant to manage the state highway network.
+             Deloitte also prepared sample Detailed Project Reports (DPRs) showcasing the use of
+             innovative engineering/cost-effective techniques. The state will consider these
+             recommendations using the state budget. Piloting of a new software for works management
+             is ongoing. Donors’ support in the future to streamline these processes could be a plus.
+
+         (d) Development of institutional and human resources. A report on HR policies and procedures
+             was developed in March 2017. Key recommendations are under discussion, but their
+             implementation has not been approved yet.
+
+         (e) Improvement of road safety management practices. Refer to the Road Safety Management
+             component.
+
+ 39.     Example of the need for adequate preparation or preliminary studies. Improving asset
+ management practices in Rajasthan is particularly critical considering that several actors are involved in
+ the decision-making process regarding the financial resources allocated to maintenance works and the
+ selection of road sections to be treated. The current process for maintenance budget allocation is carried
+ out by the Finance Department on a yearly basis without long-term planning. Furthermore, while the
+ Finance Department makes the overall decision at the state level, Local Governments (elected bodies at
+ the local level) are the budget holders and responsible for the management of maintenance works locally.
+ Despite the criticality of the issue, it took over a year after Board approval to reach an agreement with
+ relevant stakeholders to pursue implementation of the RAMS. This illustrates the difficulty and resistance
+
+
+                                                                                                         Page 15 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ often faced when new institutional mechanisms are being put in place. Figure 2 summarizes the major
+ implementation gaps relative to this component, that is, what was achieved relative to the expectations.
+
+                            Figure 2. Road Sector Modernization and Reforms Needs
+
+                                  Road Sector Policy and Financing Strategy
+
+                                                                      Financing
+                                                    Policy             Strategy
+                         Policy developed
+                                                   approved          endorsed by
+                                                                     Finance Dpt
+
+                                              Asset Management
+
+                                                     RAMS              RAMS
+                                                  developed /        operational
+                          RAMS designed          Road condition      and used by
+                                                 data collected       operators
+
+                           Road Engineering and Business Procedures Improvement
+
+                                                                        Selected
+                                                  Key actions            actions
+                         Report completed
+                                                  prioritized          piloted or
+                                                                     implemented
+
+                               Institutional and Human Resources Development
+
+                                                                        Selected
+                                                  Key actions            actions
+                         Report completed
+                                                   approved            piloted or
+                                                                     implemented
+
+                                            Road Safety Management
+                        Plan approved and                            Ex post iRAP
+                                                    SCDP
+                           SCDP designs                                 survey
+                                                 implemented
+                            completed                                 completed
+
+
+ Note: Blue denotes achieved under the project; grey denotes expected outputs.
+
+ Justification of Overall Efficacy Rating
+
+ 40.     For this ICR, the assessment of achievement of efficacy takes into account the three dimensions
+ of the PDO, namely (a) to improve rural connectivity, (b) to enhance road safety, and (c) to strengthen
+ road sector management capacity of the state of Rajasthan, and is measured based on the actual project-
+ level outcomes against the expected outcomes.
+
+ 41.     The above analysis indicates that the project did make a substantial contribution to improving the
+ operating conditions of the state rural roads, with presumed increased riding conditions of the project
+ roads (even though the International Roughness Index [IRI] was not assessed for all project roads at
+ project closure), and to improving the level of connectivity throughout Rajasthan. Nevertheless, the
+
+
+                                                                                                      Page 16 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ project was not successful in enhancing overall road safety, as measured by network fatalities which
+ increased by more than 30 percent in 2018 compared to 2013, considering that road safety design
+ interventions on the selected model corridor were not implemented. Besides, the project was not able to
+ achieve the main outcome related to road sector modernization, as most activities under this component
+ were either not initiated or partially completed. More specifically, the RAMS was not fully developed
+ (system production is ongoing and not completed at the time of this ICR). The RAMS was thus not
+ implemented nor operationalized by project closure. Accordingly, the overall efficacy is rated Modest.
+
+  C. EFFICIENCY
+
+ Assessment of Efficiency and Rating
+
+ 42.      Component 1 - quantitative assessment. Although both the construction costs and maintenance
+ costs increased about 20 percent, the benefits of Value of Time (VOT) saving decreased about 20 percent,
+ and the benefits generated by additional employment decreased 3.33 percent; the drastically increased
+ vehicle operating cost (VOC) saving of almost 80 percent and increased income per capita of almost 50
+ percent due to rural road connectivity resulted in better returns of the investment. Both internal rate of
+ return (IRR) and net present value (NPV) at the ICR phase are greater than expected at the appraisal phase.
+ The updated valuation shows that at the ICR phase, the investment in rural roads is efficient, with an IRR
+ of 15.87 percent.
+
+                              Table 3. Economic Evaluation Results (INR per Road)
+                                 Project Appraisal Document (PAD)                         ICR
+                                               (2013)                                   (2019)
+  NPV (12%)                                   740,607                                 1,639,837
+  IRR (%)                                       14.11                                    15.87
+  MIRR (%)                                      12.82                                    13.49
+  NPV/cost                                       1.27                                     1.36
+
+ 43.     Components 2 and 3 - qualitative assessment. Components 2 and 3 accounted for 12 percent of
+ the total project cost at approval. While civil works were successfully achieved, it is important to note that
+ the expected outcomes from the investments made in improving road safety management and in
+ strengthening the institutional framework to modernize the sector were not achieved, negatively
+ affecting the overall efficiency of the project.
+
+ 44.     Based on the above and on the full economic analysis presented in annex 4, the efficiency rating
+ is Substantial.
+
+  D. JUSTIFICATION OF OVERALL OUTCOME RATING
+
+ 45.     Based on the ratings for PDOs’ Relevance, Efficacy, and Efficiency, the overall outcome is rated
+ Moderately Unsatisfactory (Table 4). This overall outcome rating is in line with the assessment made in
+ the last Implementation Support Mission. Despite achieving many successes, primarily with the
+ completion of all civil works, the overall project outcome is still considered Moderately Unsatisfactory
+ nine months after project closure, considering that issues or activities identified as pending at project
+ closure have not been all satisfactorily addressed at the time of the ICR.
+
+
+                                                                                                          Page 17 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                       Table 4. Overall Outcome Rating
+                  Relevance of PDO                      High
+                  Efficacy                              Modest
+                  Efficiency                            Substantial
+                  Overall Outcome Rating                Moderately Unsatisfactory
+
+
+  E. OTHER OUTCOMES AND IMPACTS (IF ANY)
+
+ Gender
+
+ 46.    While the project did not include specific activities to address potential gender issues, positive
+ unintended impacts can be underlined. During the MTR, communities indeed specifically reported that
+ owing to the construction of all-weather rural roads in areas with poor connectivity, women and/or girls
+ were able to travel more frequently to attend schools and engage more with other communities.
+
+ Poverty Reduction and Shared Prosperity
+
+ 47.      Improved rural roads led to major changes. Better connections to markets and urban centers
+ resulted in (a) more favorable prices for agricultural products, (b) increased employment opportunities
+ for the villagers, and (c) reduced travel time and cost. In Rajasthan, the project contributed to an increase
+ in household income (and welfare), specifically in rural areas. Increase in per capita income (weighted
+ average) through agricultural and nonagricultural activities indeed increased from an estimated INR 1,954
+ at 2013 price levels to INR 2,792 at 2018 price levels. Based on project survey findings, additional
+ employment for villagers residing in the project catchment areas was generated by the project in different
+ sectors including trade and agriculture. The education and health benefits from improved access are also
+ substantial.
+
+
+  III. KEY FACTORS THAT AFFECTED IMPLEMENTATION AND OUTCOME
+
+  A. KEY FACTORS DURING PREPARATION
+
+ 48.     Overall, the project design was unfortunately inadequate. In particular, regarding the institutional
+ strengthening components, the possibilities of designing a different set of activities could have been
+ explored (during preparation or restructuring) by the project team. For example, the road safety
+ component and related development outcomes could have been focused on rural roads only instead of
+ highway corridors. Project appraisal should have brought out the various capacity constraints of the
+ implementation agency. This would have allowed to focus on activities where PWD had appropriate
+ capacity to implement the defined activities and achieve the expected outcomes.
+
+ 49.      The guidance role of the World Bank team in relation to the client when it comes to the selection
+ of priority actions to be implemented under the project is important but always delicate. Ownership, from
+ the government side, of activities to be implemented under the project is essential. It appeared that a few
+ project stakeholders were not fully convinced by the relevance of some activities under Components B
+ and C, which resulted in a reduced involvement during the implementation of said activities.
+
+                                                                                                         Page 18 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ 50.     The Capacity and Governance risk ratings were identified as Moderate during project preparation.
+ Considering the initial ambitious project scope (covering both rural roads and highways), these ratings
+ might have been identified as Substantial with additional mitigation measures to strengthen the Client’s
+ capacity.
+
+ 51.      The M&E framework was lacking some indicators, not allowing to quantitatively validate the
+ achievement of important outcomes, such as the actual condition of project roads at project closure or
+ the impact of implemented rural road safety measures on fatalities. This can be explained in part because
+ of the lack of proper methodology or existing data system for the state to collect this level of information,
+ which prevented the project team from integrating these indicators in the M&E framework.
+
+  B. KEY FACTORS DURING IMPLEMENTATION
+
+ Factors Subject to the Control of the Government and/or Implementing Entities
+
+ 52.     The implementation of some activities was subject to the creation of working groups or task forces
+ responsible for said activities. Yet, a stronger leadership may have been required for some of these tasks
+ to guarantee timely implementation. For example, the Road Sector Modernization Task Force leads might
+ not have been fully inclined to pursue the recommendations provided under this activity.
+
+ 53.       As regards procurement, procurement officials for all districts received procurement trainings
+ which helped to some extent in expediting execution and ensuring compliance. Yet, general capacity
+ issues did slow down the implementation of key activities. There was a lack of expertise available in the
+ PWD to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover,
+ the coordination and collaboration with relevant departments was missing which led to the non-execution
+ of a critical contract related to the deployment and installation of road safety equipment.
+
+ 54.    Another lesson to be highlighted is that the works contract estimates should have been based on
+ the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.
+
+ 55.    To avoid cost and time overruns and contract administration issues, forest and other
+ administrative clearances should have been in place prior to awarding contracts. Some of the road works
+ were dropped due to land and/or forest clearance issues (cf. below).
+
+ 56.     The critical environmental safeguard issue, which was the need for forest clearance for 26 roads
+ (around 3 percent of total project roads), affected project performance. In total, 26 roads under the
+ project were passing through forest areas. Stage 1 forest clearances for 13 roads (category C3) had been
+ received, and 2 roads had already moved to Stage 2 clearances by the closure of the project, the remaining
+ are being processed as of now. Civil works for 8 roads (category C1) were completed without completing
+ the forest clearance process, which remains a non-compliance under the Government of India and World
+ Bank’s safeguards requirements. As of October 2019, the Borrower has reported that Stage 1 clearance
+ for one road has been received, the remaining roads are still under process. For the 7 roads (category C2)
+ which had not started due to impending clearances, Stage 1 clearance for 4 roads has been processed,
+ one road is under process, and the pending two roads have been de-sanctioned. PWD is in the process of
+ getting all relevant clearances, depositing the compensatory afforestation funds and implementing
+ compensatory tree planting works. The state of Rajasthan assured that all forest clearances would be
+ completed in the coming months.
+
+
+                                                                                                         Page 19 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ 57.     Lastly, PWD had little to no experience in conducting large-scale awareness campaigns in
+ collaboration with NGOs. Awareness campaigns were completed just before project closure.
+
+ Factors Subject to the Control of the World Bank
+
+ 58.     The World Bank experience in implementing the PMGSY proved helpful in supporting the GOR,
+ particularly when it comes to the preparation of rural roads works DPRs, civil works management, and
+ implementation of new construction technologies.
+
+ 59.      Additional studies/briefs demonstrating the relevance of specific activities (such as the need to
+ develop a proper Road Asset Management System) to achieve expected outcomes, or in-depth
+ discussions/workshops with the client, in particular the Finance Department, would have been useful. It
+ would have allowed the World Bank to secure endorsement from relevant stakeholders for successful
+ project implementation.
+
+ 60.      Formal restructuring only happened a year after the conclusions of the MTR suggesting project
+ restructuring were drawn. The time frame between the MTR and the actual restructuring should have
+ been minimized to start implementing adequate countermeasures and potentially complete more
+ activities and expected outputs by project closure.
+
+
+  IV. BANK PERFORMANCE, COMPLIANCE ISSUES, AND RISK TO DEVELOPMENT OUTCOME
+
+  A. QUALITY OF MONITORING AND EVALUATION (M&E)
+
+ M&E Design
+
+ 61.     The design of the M&E framework was weak in some areas. As mentioned in the PAD, in projects
+ with a strong focus on institutional development, there is a need to choose more granular
+ targets/indicators to measure achievements and impacts. Yet, some indicators were either not precisely
+ defined (such as the indicator ‘Computerization of key business processes in PWD’) or missing (such as a
+ specific outcome indicator to measure the third dimension of the PDO related to road sector
+ modernization).
+
+ 62.    The fact that a specific outcome-level indicator to properly measure the third dimension of the
+ PDO was missing may explain why the focus was somewhat lost during project implementation when it
+ comes to ensuring that activities related to the road sector modernization are discussed and carried out
+ on time.
+
+ 63.     Regarding the improvement of rural road connectivity, the improved condition, that is, IRI, of
+ selected roads could have been considered as an outcome-level indicator, as a way to further demonstrate
+ that good-quality roads were indeed provided through the project.
+
+ M&E Implementation
+
+ 64.     Reporting from the implementation units on the M&E framework was regularly monitored. As
+ indicated in previous Aide Memoires, data collection was difficult for some indicators due to problems of
+
+                                                                                                      Page 20 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ data availability, methodology, or data reliability. For example, the indicator pertaining to the percentage
+ of core road network in good/fair condition, which was crucial to confirm the project roads condition at
+ project closing, was eventually dropped as there were no existing data on core roads condition level.
+
+ M&E Utilization
+
+ 65.     The project M&E findings were regularly shared with stakeholders through progress reports and
+ the World Bank’s Aide Memoires after each mission. Some of the indicators’ values were useful in
+ verifying that the project outputs were achieved or not achievable. It was instrumental when deciding to
+ process the project restructuring.
+
+ 66.      Nevertheless, two observations can be made. First, the difficulty to measure the percentage of
+ core roads in good condition could have been addressed by supporting the client in carrying out a full road
+ network condition assessment earlier on during project implementation, considering that a network
+ condition assessment was also required as part of the development and use of a RAMS. Moreover, the
+ noted increase in road fatalities during project implementation should have alerted the project team and
+ the client of the urgent need for stronger actions to be promptly taken building on the work that had been
+ initiated under the Road Safety Management component.
+
+ Justification of Overall Rating of Quality of M&E
+
+ 67.     Based on the above, the quality of M&E is rated Modest.
+
+  B. ENVIRONMENTAL, SOCIAL, AND FIDUCIARY COMPLIANCE
+
+ 68.     The vast experience of the PWD in implementing the PMGSY, with support from the World Bank,
+ helped the PWD manage safeguards or fiduciary matters during project implementation. The Project
+ Director was indeed in charge of both the PMGSY and MMGSY.
+
+ 69.     Safeguards. The project was expected to have site-specific adverse environmental and social
+ impacts. The following safeguards policies were triggered: OP/BP 4.01 (Environmental Assessment),
+ OP/BP 4.04 (Natural Habitats), OP/BP 4.36 (Forests), OP/BP 4.11 (Physical and Cultural Resources), OP/BP
+ 4.10 (Indigenous Peoples), and OP/BP 4.12 (Involuntary Resettlement).
+
+ 70.      Most safeguards issues identified during the project were appropriately addressed. There were
+ no major resettlement issues. Most roads were built or upgraded in the right-of-way. Land acquisition
+ was mainly handled through voluntary donations (a system widely used under the PMGSY and MMGSY).
+ While voluntary land donation seems to be common practice in Rajasthan, the mutation process—that is,
+ actual transfer of the land title ownership and not just of the land use or destination—is difficult but was
+ adequately managed under this project through proper consultations with landowners. The main
+ safeguards issue pertained to the need for forest clearance for 26 roads under the project.
+
+ 71.      Forest clearance issue. For some of the roads where forest clearance was required, works were
+ initiated and completed by the client before getting the appropriate clearance, considering that it would
+ lead to penalties, which is not in compliance with World Bank guidelines. Details are provided in the ‘key
+ factors during implementation’ section. The matter was escalated to the: Department of Economic Affairs,
+
+
+
+                                                                                                        Page 21 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ Ministry of Finance; Principle Secretary, PWD, GOR; Chief Secretary, GOR; and World Bank’s management.
+ The GOR shall ensure that proper resolution is found, even if the project is closed.
+
+ 72.    Procurement. A procurement and contract management manual was prepared and adopted for
+ the project. PIUs at the district level were responsible for the preparation of post-review/single-bid
+ packages and for technical and financial evaluations. Final reviews were handled by the PWD. Other
+ procurement related issues identified are detailed in the ‘key factors during implementation’ section.
+
+ 73.     Financial management. All audit reports were submitted. The main issue identified pertained to
+ the lack of dedicated staff and financial management experts to handle financial management related
+ issues and report accordingly. The next project financial report is expected to be submitted by December
+ 2019, after finalization of this ICR.
+
+  C. BANK PERFORMANCE
+
+ Quality at Entry
+
+ 74.      The World Bank team prepared an important project with activities including civil works as well
+ as institutional strengthening activities that were planned to support the Government of India’s priorities
+ and met all World Bank requirements. The project civil works, as designed, were essential to upgrade the
+ existing road infrastructure to reinforce rural road connectivity in Rajasthan by connecting smaller villages
+ in areas not targeted by the PMGSY program. The PAD was especially articulate regarding the background
+ analysis and rationale behind the project. Preparation was carried out with adequate technical and
+ financial resources, being fully consistent with the World Bank’s fiduciary and safeguards requirements.
+
+ 75.     However, notable shortcomings include:
+
+ (a) An inadequate project design, considering the complexity of implementing the activities related to
+     the Road Sector Modernization and Road Safety Management components, which required more
+     implementation time and full commitment of all relevant stakeholders;
+
+ (b) The inconsistency between the project title/main intent and the importance given (in content and
+     financial terms) to the different components composing the projects;
+
+ (c) Inadequate design of the original RF with the last dimension of the PDO not covered by relevant
+     outcome indicators; and lack of precise methodology or tools to appropriately capture road condition
+     data and to measure the outcome in terms of road safety on rural roads.
+
+ Quality of Supervision
+
+ 76.     The project was implemented over a period of more than five years with three different task team
+ leaders. All World Bank team leaders and team members provided full support to the client. The project
+ was closely supervised by the different World Bank teams, and sufficient budget and staff resources were
+ allocated. Regular supervision missions and technical visits, including site visits, were conducted
+ throughout the project implementation. The team composition reflected the project supervision needs,
+ including transport experts; engineers; and financial, procurement, and safeguards specialists, both from
+ Washington, D.C. and from the field. Mission Aide Memoires were well written, reflecting progress,
+
+
+                                                                                                         Page 22 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ delays, and challenges and including honest ratings on the project implementation objectives and
+ implementation progress. The last mission took place in August 2018, six months before project closure,
+ and no subsequent mission (de facto no ICR mission) took place.
+
+ 77.     Rural roads upgrading, or construction works are generally difficult to supervise, considering the
+ large number of contracts and worksites. The World Bank team decision to introduce the PAT in Rajasthan,
+ with relevant training, to frequently monitor the implementation and quality of civil works completed
+ proved to be highly beneficial to the client and well received by the different PIUs.
+
+ 78.      Nevertheless, one may question why it had been decided to pursue the implementation of
+ Components 2 and 3 without modifying the scope of these components, changing the PDO, or extending
+ the project implementation period, considering the assessment made during the MTR. Indeed, it was
+ clearly identified at the MTR that the achievement of part of the PDO was compromised by the major
+ delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant
+ stakeholders.
+
+ Justification of Overall Rating of Bank Performance
+
+ 79.     Based on the above, the World Bank performance is rated Moderately Unsatisfactory.
+
+  D. RISK TO DEVELOPMENT OUTCOME
+
+ 80.     The risk that the achieved development outcomes will not be sustained is Substantial.
+
+ 81.       The Rajasthan Road Sector Modernization Project has contributed to strengthening rural
+ connectivity and providing all-weather roads in underserved rural areas. Nevertheless, considering that
+ asset management practices still require major improvement to ensure sustainability of the investments,
+ it is urgent that practices are put in place and efforts made to finalize the RAMS and implement strategic
+ maintenance with appropriate maintenance budget allocated over years.
+
+ 82.      Outcomes achieved related to road safety enhancement with an expected reduction of road
+ fatalities and related to the increase in the PWD’s operational and business processes efficiency were
+ minimum. Considering that some activities were initiated (for example, design of safe corridor safety
+ measures, acquisition of road safety/enforcement equipment and gap analysis of the current PWD
+ processes), efforts should be pursued by the GOR to actually implement some of the recommendations
+ provided during project implementation.
+
+ 83.      These issues are worth flagging and discussing during the implementation of subsequent
+ transport projects with support from donors as needed. As of now, the GOR indicated their plan to pursue
+ the development and implementation of the RAMS. The RAMS maintenance is planned to be funded
+ through state budget for 5 years. Lastly, according to the state latest arrangements, further improvement
+ of business processes and the implementation of the SCDP (road safety drawings completed at the time
+ of the ICR and yet to be implemented), are expected to be implemented through state funds.
+
+
+
+
+                                                                                                      Page 23 of 62
+    The World Bank
+    Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+      V. LESSONS AND RECOMMENDATIONS
+
+     84.      Level of readiness. Lack of full endorsement at preparation by the decision makers can critically
+     affect project outcomes. It is important to get endorsement from relevant stakeholders early on during
+     the preparation process to ensure ownership for all components/activities (need to identify a champion).
+     Proper assessment of relevant stakeholders’ level of readiness and of how to adequately break down
+     activities in different phases to ensure smooth implementation in a given period is critical as well (for
+     example, development, implementation, and full operationalization of a functional RAMS require a few
+     years and could not have been successfully achieved during the initial project implementation period).
+
+     85.      Preparation. This project may have benefitted from additional preliminary studies. Ground
+     preparation before project approval with studies carried out to showcase the relevance of proposed
+     activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management
+     System), or with in-depth upstream discussions/workshops with the client – in particular the finance and
+     technical departments, is a best practice that must be considered for most projects.
+
+     86.     Sector modernization and implementation of efficient business processes. Implementing new
+     management standards and business procedures to generate increased efficiency must be adapted based
+     on the network characteristics. The sector gap analysis reflected that a separate State Highway Agency
+     (SHA) would be more relevant to manage the state highway network. It is recommended to assess what
+     business process is transferrable from the PWD to the SHA and what can be improved when setting up
+     the SHA, based on the recommendations.
+
+     87.      System to optimize resource allocation. Developing and implementing a Road Asset
+     Management System at the state level is important to assess and understand the road assets value and
+     location to then optimize budget allocation for new construction investments or maintenance operations
+     and avoid arbitrary decision or political bias. This assessment must be carried out at the central level by
+     the Finance Department of Rajasthan, but in close collaboration with local entities that are currently
+     responsible for the implementation of maintenance works. It is thus recommended that the RAMS, once
+     finalized, be discussed not only at the central level but also at the local level with local entities.
+
+     88.      Mutation process for the donated land. Voluntary donation of land under the PMGSY and
+     MMGSY programs is a system that appears to be applied throughout Rajasthan, but the mutation process
+     remains difficult. Commendable work done on the ground to make sure that the land ownership was
+     legally transferred can be replicated in future projects in Rajasthan or even other states in India.
+
+     89.      Social enhancement works. Enhancing social settings next to the road bed for communities in
+     selected areas (for example, provision of local access) proved to be successful under this project. Similar
+     consultation is needed for future projects to accommodate the social needs that will in turn bring the buy-
+     in of the community.
+
+     90.    Annex 8 provides a comparative assessment of states’ initiatives (cases of Karnataka, Andhra
+     Pradesh & Telangana and Rajasthan states) with further lessons to be learned from introducing or
+     implementing organizational and sector modernization reforms in Indian states.
+.
+
+
+
+                                                                                                           Page 24 of 62
+    The World Bank
+    Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                    ANNEX 1. RESULTS FRAMEWORK AND KEY OUTPUTS
+
+
+
+A. RESULTS INDICATORS
+
+A.1 PDO Indicators
+
+
+ Objective/Outcome: To improve rural connectivity
+                                                                                            Formally Revised    Actual Achieved at
+ Indicator Name                   Unit of Measure Baseline              Original Target
+                                                                                            Target              Completion
+
+ Share of rural population        Percentage        67.00               81.00                                   80.86
+ with access to an all-season
+ road                                               01-Sep-2013         31-Dec-2018                             31-Dec-2018
+
+   Number of rural people         Number            33115250.00         33489250.00                             33490396.00
+   with access to an all-season
+   road
+
+ Comments (achievements against targets):
+
+
+
+                                                                                             Formally Revised   Actual Achieved at
+ Indicator Name                   Unit of Measure Baseline              Original Target
+                                                                                             Target             Completion
+
+ Size of total classified         Kilometers        133435.00           135935.00                               135788.00
+ network
+                                                    31-Mar-2014         31-Dec-2018                             31-Dec-2018
+
+
+ Comments (achievements against targets):
+
+
+                                                                                                                         Page 25 of 62
+    The World Bank
+    Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+ Objective/Outcome: To enhance road safety
+                                                                                                  Formally Revised   Actual Achieved at
+ Indicator Name                  Unit of Measure Baseline                Original Target
+                                                                                                  Target             Completion
+
+ A reduction in annual average   Number          46.00                   30.00                                       61.00
+ fatality count of road users
+ on model road safety                            31-Mar-2014             31-Dec-2018                                 31-Dec-2018
+ corridors
+
+
+Comments (achievements against targets):
+
+
+
+ Objective/Outcome: To strengthen road sector management capacity
+                                                                                                  Formally Revised   Actual Achieved at
+ Indicator Name                  Unit of Measure Baseline                Original Target
+                                                                                                  Target             Completion
+
+ Road Asset Management           Text            Existing system not     RAMS Operational                            The RAMS still under
+ System Operational                              user-friendly and not   (developed and in use)                      development by SPC
+                                                 in use                                                              and undergoing the
+                                                                                                                     User Acceptance Test
+
+                                                 31-Mar-2014             31-Dec-2018                                 30-Jun-2019
+
+
+Comments (achievements against targets):
+System Defining Consultant (SDC) Contract Agreement was signed on 28 December 2015 and mobilized on 13 January 2016. Contract for SPC
+was signed on August 02, 2018. Procurement for services for data collection is still to be procured.
+
+
+
+
+                                                                                                                              Page 26 of 62
+    The World Bank
+    Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+A.2 Intermediate Results Indicators
+
+ Component: Component A- Rural Connectivity Improvement
+                                                                                                Formally Revised        Actual Achieved at
+ Indicator Name                  Unit of Measure Baseline               Original Target
+                                                                                                Target                  Completion
+
+ Roads constructed, Rural        Kilometers      0.00                   2500.00                                         2334.00
+
+                                                 01-Sep-2013            31-Dec-2018                                     31-Dec-2018
+
+
+ Comments (achievements against targets):
+
+
+
+                                                                                                Formally Revised        Actual Achieved at
+ Indicator Name                  Unit of Measure Baseline               Original Target
+                                                                                                Target                  Completion
+
+ Cost effective technologies     Kilometers      0.00                   100.00                                          67.00
+ piloted for road design and
+ construction and                                31-Jan-2014            31-Dec-2018                                     30-Jun-2019
+ upgradation/maintenance of
+ existing gravel roads
+
+
+ Comments (achievements against targets):
+The intermediate indicator ‘Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing
+gravel roads’ was partially achieved with a result of 61 km completed at project closure, and 67 km completed at the time of the ICR, instead
+of 100 km.
+
+
+
+
+                                                                                                                                  Page 27 of 62
+    The World Bank
+    Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+Component: Component B - Road Sector Modernization and Performance Enhancement
+                                                                                            Formally Revised       Actual Achieved at
+ Indicator Name                Unit of Measure Baseline              Original Target
+                                                                                            Target                 Completion
+
+ Computerization of key         Yes/No           N                   Y                                             N
+ business processes in PWD
+                                                 06-Aug-2013         31-Dec-2018                                   30-Jun-2019
+
+
+Comments (achievements against targets):
+Most processes in PWD were manual at the beginning of the project. Considering that the expectation was to improve and implement a series
+of new and/or more efficient business processes, based on the assessment and recommendations provided for the modernization of key
+business processes, this target can not be considered as achieved. By project closure, the Integrated Financial Management System (IFMS)
+[implemented at the state level to improve management of FM related issues] was indeed the only new system implemented under this
+project.
+
+
+
+
+                                                                                            Formally Revised       Actual Achieved at
+ Indicator Name                Unit of Measure Baseline              Original Target
+                                                                                            Target                 Completion
+
+ Sector Policy and Financing    Yes/No           N                   Y                                             Y
+ Framework developed
+                                                 30-Dec-2016         31-Dec-2018                                   31-Dec-2018
+
+
+Comments (achievements against targets):
+
+
+
+ Indicator Name                Unit of Measure Baseline              Original Target        Formally Revised       Actual Achieved at
+
+                                                                                                                             Page 28 of 62
+   The World Bank
+   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                                                Target             Completion
+Training Plan and HR Policy &   Yes/No          N             Y                                    Y
+Procedures developed
+                                                30-Dec-2016   31-Dec-2018                          31-Dec-2018
+
+
+Comments (achievements against targets):
+
+
+
+Component: Component C - Road Safety Management
+                                                                                Formally Revised   Actual Achieved at
+Indicator Name                  Unit of Measure Baseline      Original Target
+                                                                                Target             Completion
+
+Model road safety corridor(s)   Kilometers      0.00          100.00                               0.00
+developed
+                                                31-Jan-2014   31-Dec-2018                          31-Dec-2018
+
+
+Comments (achievements against targets):
+
+
+
+                                                                                Formally Revised   Actual Achieved at
+Indicator Name                  Unit of Measure Baseline      Original Target
+                                                                                Target             Completion
+
+Average star rating achieved    Number          0.00          3.00                                 0.00
+on model road safety
+corridor(s)                                     31-Mar-2014   31-Dec-2018                          31-Dec-2018
+
+
+Comments (achievements against targets):
+
+
+
+
+                                                                                                            Page 29 of 62
+   The World Bank
+   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                                                Formally Revised   Actual Achieved at
+Indicator Name                  Unit of Measure Baseline      Original Target
+                                                                                Target             Completion
+
+Road safety policy and action   Yes/No          N             Y                                    Y
+plan approved and
+implemented                                     31-Jan-2014   31-Dec-2018                          31-Dec-2018
+
+
+Comments (achievements against targets):
+
+
+
+
+                                                                                                            Page 30 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+ I.         KEY OUTPUTS BY COMPONENT
+
+      Objective/Outcome 1 - To improve rural connectivity
+                                                                       1. Increased share of rural population with access to an all-season
+      Outcome Indicators                                               road
+                                                                       2. Increased size of total classified network
+                                                                       1. Rural roads connecting about 1,300 revenue villages with
+                                                                       population between 250 and 499 constructed
+      Intermediate Results Indicators
+                                                                       2. Cost effective technologies piloted for road design and
+                                                                       construction and upgradation/maintenance of existing gravel roads
+                                                                       1. Rural roads constructed
+      Key Outputs by Component
+                                                                       2. Cost effective technologies piloted
+      (linked to the achievement of the Objective/Outcome 1)
+                                                                       3. Rural roads condition improved
+
+      Objective/Outcome 2 - To enhance road safety
+
+                                                                       1. A reduction in annual average fatality count of road users on
+      Outcome Indicators
+                                                                       model road safety corridors
+                                                                       1. Model road safety corridor(s) developed
+      Intermediate Results Indicators                                  2. Average star rating achieved on model road safety corridor(s)
+                                                                       3. Road safety policy and action plan approved and implemented
+                                                                       1. Model road safety civil works implemented on selected corridors
+                                                                       (state level major road)
+      Key Outputs by Component                                         2. Star rating of 3 achieved on selected corridors
+      (linked to the achievement of the Objective/Outcome 2)           3. Road Safety Policy and action plan approved and implemented
+                                                                       4. Road safety awareness campaigns completed
+                                                                       5. Road safety audits completed on rural road network
+
+      Objective/Outcome 3 - To strengthen road sector management capacity
+
+      Outcome Indicators                                               1. Road Asset Management System Operational
+
+
+                                                                                                                                     Page 31 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                            1. Sector Policy and Financing Framework developed
+                                                            2. Computerization of key business processes in PWD
+   Intermediate Results Indicators
+                                                            3. RAMS in place and innovative forms of contracting used
+                                                            4. Training Plan and HR Policy & Procedures developed
+                                                            1. Improved sector policy framework
+                                                            2. Engineering practices and key business procedures
+                                                            modernized/computerized
+   Key Outputs by Component
+                                                            3. RAMS developed and in use
+   (linked to the achievement of the Objective/Outcome 3)
+                                                            4. Institutional and Human Resource Policy and Strategy developed
+                                                            5. Preparatory studies (Feasibility Studies and DPRs) prepared for
+                                                            future projects
+
+
+
+
+                                                                                                                        Page 32 of 62
+        The World Bank
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                     ANNEX 2. BANK LENDING AND IMPLEMENTATION SUPPORT/SUPERVISION
+
+ A. TASK TEAM MEMBERS
+
+Name                                                       Role
+Preparation
+Ashok Kumar, Mesfin Wodajo Jijo                            Task Team Leader(s)
+Anand Kumar Srivastava                                     Procurement Specialist(s)
+Savinay Grover                                             Financial Management Specialist
+Radia Benamghar                                            Team Member
+Venkata Rao Bayana                                         Social Specialist
+Neha Vyas                                                  Environmental Specialist
+Farah Zahir                                                Economist
+Elena Chesheva                                             Team Member
+Dominic Pasquale Patella                                   Team Member
+Carylann Lobo                                              Monitoring
+Satyendra Prasad                                           Governance Specialist
+
+Supervision/ICR
+Justin Runji, Reenu Aneja                                  Task Team Leader(s)
+Priti Jain                                                 Procurement Specialist(s)
+Anantha Krishna Karur                                      Financial Management Specialist
+Radia Benamghar                                            Team Member
+I. U. B. Reddy                                             Social Specialist
+Genevieve Maria Dutta                                      Team Member
+Mesfin Wodajo Jijo                                         Team Member
+Raman V. Krishnan                                          Team Member
+Sharlene Jehanbux Chichgar                                 Environmental Specialist
+Tema Alawari Kio-Michael                                   Team Member
+Oceane Keou                                                ICR TTL
+
+
+
+
+                                                                                             Page 33 of 62
+        The World Bank
+        Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+B. STAFF TIME AND COST
+
+
+                                                                Staff Time and Cost
+Stage of Project Cycle
+                                No. of staff weeks                       US$ (including travel and consultant costs)
+Preparation
+FY12                            6.000                                                                    20,959.56
+FY13                            61.459                                                                  258,993.89
+FY14                            29.063                                                                  109,948.54
+FY15                            .367                                                                       1,018.56
+FY16                            0                                                                              0.00
+
+Total                           96.89                                                                   390,920.55
+Supervision/ICR
+FY14                            23.259                                                                  277,763.89
+FY15                            41.560                                                                  245,127.90
+FY16                            37.710                                                                  213,678.69
+FY17                            36.523                                                                  228,787.35
+FY18                            35.430                                                                  274,979.16
+FY19                            31.259                                                                  174,373.15
+FY20                            7.789                                                                    30,110.04
+Total                           213.53                                                                1,444,820.18
+
+
+
+
+                                                                                                        Page 34 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                             ANNEX 3. PROJECT COST BY COMPONENT
+
+                                                 Amount at
+                      Amount at    Amount after   Approval
+                                                             Actual at Project Percentage of
+                       Approval    Restructuring     with
+    Components                                                Closing (US$,     Approval with
+                        (US$,          (US$,     Devaluation
+                                                                 millions)     Devaluation (%)
+                       millions)     millions)      (US$,
+                                                  millions)
+Component A -           138.00       134.52        125.75        111.66              89
+Rural Connectivity
+Improvement
+Component B - Road         7.75         9.43              7.06       2.76            39
+Sector
+Modernization and
+Performance
+Enhancement
+Component C - Road       10.55         13.90              9.61       6.28            65
+Safety Management
+Incremental                0.70         1.05              0.64       1.00           156
+Operating Cost
+Refinancing                3.00         0.00              2.73       0.00             0
+preparation
+advance
+Total                   160.00        159.00            145.79    121.70             83
+
+
+
+
+                                                                                           Page 35 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                      ANNEX 4. EFFICIENCY ANALYSIS
+
+1.      In 2013, the project was originally approved with three key components in which the World Bank
+financing constituted 70 percent of the project cost:
+
+        (a)   Rural Connectivity Improvement
+
+              •    Civil Works (2,500 km)
+
+              •    Project Management and Audit Services
+
+        (b)   Road Sector Modernization and Performance Enhancement
+
+        (c)   Road Safety Management
+
+2.       For all the road sections, the evaluation was carried out using general approach followed for the
+rural roads project, in which all the potential future benefits from beneficiaries like increase in agriculture
+production, increased employment, travel benefits, etc. were captured, and costs and provided economic
+decision criteria for low-traffic rural road construction and maintenance activities.
+
+3.      In 2017, the project was restructured. The restructuring covered the changes of:
+
+        (a)   Increased World Bank share of financing in works components for expenditures related to
+              civil works by retroactively increasing the World Bank’s financing percentage from 70
+              percent to 80 percent;
+
+        (b)   Revision of the results monitoring framework of M&E indicators; and
+
+        (c)   Reallocation between categories.
+
+4.      The ex-post economic evaluation follows the methodologies conducted for the ex-ante evaluation
+in the PAD and the changed outcome indicator in the Restructuring Paper. Costs and benefits of the ‘with
+project’ scenario were compared with those of the ‘without project’ scenario. Economic viability was
+assessed using two indicators of Net Present Value (NPV) and Economic Internal Rate of Return (EIRR).
+
+5.      Project costs. The main costs are from:
+
+        (a)   The initial investment costs;
+
+        (b)   The subsequent maintenance costs to keep the road in good condition.
+
+6.      Project benefits. The benefits estimated in the Economic Analysis (EA) for the original project
+include the following:
+
+        (a)   Increase in household income through agriculture and non-agriculture-based activities;
+
+
+
+                                                                                                          Page 36 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+            (b)      Additional employment benefits;
+
+            (c)      Traffic-related benefits:
+
+                     (i)    Vehicle Operating Cost (VOC) savings from having an improved road surface;
+
+                     (ii)   Travel time savings for road users due to the improved driving conditions.
+
+7.      Unit prices of the updated project costs and benefits are based on prices in India for the RRSMP
+in 2018. The evaluation was conducted using U.S. dollar with exchange rate of INR 65.17: USD 1 2, which
+was close to the market rate and so no shadow foreign exchange rate was considered necessary. The 12
+percent discount rate is used according to the normal practices for World Bank-funded rural road projects
+at project appraisal.
+
+A. Cost of Construction and Maintenance
+
+8.      Project costs. The analysis used the project life cycle costs which included not only capital costs
+required for the investment but also operation and maintenance costs throughout the evaluation period.
+
+9.     Capital costs. The capital cost for the RRSMP included costs for civil works, project management,
+and audit services.
+
+            Table 4.1. Total RRSMP Disbursement - Component Costs (World Bank Financing) (US$, millions)
+                                                                                                         % Disbursed (with
+                                          PAD                 Restructuring                  ICR
+                                                                                                            devaluation)
+                                         (2013)                  (2017)
+                                                                                                      (2019)
+    Financial cost                        160                      158.9                    121.7               83
+
+
+                            Table 4.2. Annual Disbursement (World Bank Financing) (US$, millions)
+                                 Total      2014           2015            2016          2017           2018      2019
+    Disbursement amount          85.34      15.12          37.33           11.50          9.58          5.29      6.52
+    U.S. dollar equivalent      121.63      23.33          52.22           16.03         13.54          7.47      9.04
+
+10.    Maintenance costs. The maintenance cost mechanism assumed in the PAD was valid and has
+been updated using current 2019 prices. As shown in table 4.3, maintenance cost per road increased 18.61
+percent in 2019 than in 2013.
+
+
+
+
+2   The exchange rate conducted in evaluation is the five years’ average market rate between 2014 to 2018.
+
+                                                                                                                      Page 37 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                              Table 4.3. Updated Maintenance Cost per Road (INR)
+                                    2019                          2030                               2033
+                                                       Periodical Maintenance at
+                       Annual Maintenance 1% / 2                                         Annual Maintenance 1%
+                                                            10th Year - 35%
+                          PAD                ICR          PAD             ICR                PAD              ICR
+Maintenance cost         34,946             41,449     2,446,191       2,901,402            69,891           82,897
+(annual)
+Maintenance cost         34,946             41,449     3,180,049       3,771,823         3,389,722          4,020,515
+(in total)
+
+11.      At the aggregate level, the project funded about 2,500 km (around 2,400 km has been completed)
+of rural roads to provide connectivity to about 1,300 revenue villages with population between 250 and
+499. Table 4.4 shows the district-wise average construction costs and completed details of the 1,032 rural
+roads in 2019 compared to the sample of 513 Phase 1 rural roads in 2013 at a cost of INR 4,193 million in
+Rajasthan state.
+
+                             Table 4.4. District-wise Cost Distribution of Rural Roads
+                                              Average    Average Length         Average Cost           Average Cost
+  S.                        No. of Roads     Population      of Road                 (INR,                 (INR,
+            District                       Coverage/Road   (km/Road)            millions/Road)         millions/km)
+ No.
+                            2013      2019  2013    2019  2013     2019         2013       2019        2013      2019
+  1    Ajmer                 12         14   375     341   1.65     1.78         4.553 5.76           2.7628      3.23
+  2    Alwar                 11         23   417     378   1.38     1.53         4.159 5.21           3.0194      3.39
+  3    Baran                 19         72   366     385   2.54     2.57         9.007 14.32          3.5467      5.57
+  4    Bharatpur             25         38   372     417   1.74     1.77         6.574 7.17           3.7835      4.05
+  5    Bhilwara              93        147   363     364   2.28     2.26         7.672 8.66           3.3638      3.78
+   6   Bundi                 14        24       413    368      2.72     2.46       9.679 13.28       3.5542      5.41
+   7   Chittorgarh           84       175       348    352      2.36     2.25       9.169 9.90        3.879       4.40
+   8   Dausa                  4        47       351    467      1.68     2.21       4.698 8.55        2.792       3.87
+   9   Dholpur               13        26       386    387      1.96     2.38       5.155 8.38        2.6328      3.52
+  10   Hanumangarh            3        10       399    377      3.58     2.67       9.297 9.37        2.5944      3.50
+  11   Jaipur                34        34       336    342      2.02     2.00       7.468 8.04        3.7023      4.01
+  12   Jhalawar              28       106       385    398      2.54     2.25       8.840    11.24    3.4824      5.00
+  13   Karauli                4         4       374    374      2.19     2.20       6.855    10.20    3.1249      4.65
+  14   Kota                  12        10       345    299      2.51     2.31       9.993    11.46    3.9826      4.97
+  15   Pratapgarh            n.a.       8       n.a.   365      n.a.     2.61       n.a.     10.02      n.a.      3.84
+  16   Rajsamand             21        65       364    408      2.01     2.20       6.304     8.96    3.1425      4.07
+  17   Sawai Madhopur        17        37       376    384      2.65     2.31      11.156    11.11    4.2122      4.80
+  18   Sirohi                 1         1       318    318      3.40     3.40      16.155 16.89       4.7515      4.97
+  19   Sriganganagar         40        47       339    334      3.38     3.29       8.587 9.31        2.5443      2.83
+  20   Tonk                  45        93       372    355      2.38     2.40       8.259 9.56        3.4719      3.98
+  21   Udaipur               33        51       351    361      3.17     2.83       9.779 9.41        3.0828      3.33
+Source: 2013, PWD, Rajasthan.
+
+
+                                                                                                                      Page 38 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                     Table 4.5. Summary of Cost and Beneficiaries
+                                                          Length of Road
+        No. of Roads No. of Villages     Population                         Cost per Road (Lacs)   Cost per km (INR)
+                                                               (km)
+        2013 2019 2013        2019      2013     2019     2013      2019     2013       2019       2013         2019
+
+Total    513   1,032   510   1,300 178,477 386,147 1,227.04 2,403.18 41,935.65 49,589.20 3,417,545 4,185,671
+Avera                                   362.02   374.17     2.41     2.33      81.75       97.47
+ge
+Source: 2013, PWD, Rajasthan.
+
+12.    As shown in table 4.5, the construction cost per road increased by around 19 percent and the
+construction cost per km increased 22.48 percent in 2019 than in 2013.
+
+B. Project Benefits
+
+13.     Improved rural roads lead to major changes: (a) better connections to markets result in more
+favorable prices for agriculture products; (b) better access to nearby market/urban centers provide
+employment opportunities and create additional employment to the villagers; and (c) increase in the
+vehicle ownership pattern and the resultant additional vehicle trips for various work and social trips result
+in reduced travel time and cost. The education and health benefits from improved roads access are
+substantial, especially as they have been already captured in the saving in travel time and cost. The total
+benefits from new road provision are closely correlated with the number of people served by those roads.
+
+(i) Increase in Household Income (Per Capita Increase in Total Annual Income)
+
+14.      In Rajasthan, as new all-weather roads have been paved, household income (and welfare) has
+been raised. Per capita income, in terms of weighted average through agriculture and non-agriculture
+activities, has been raised from the estimated INR 1,954 at 2013 price levels to INR 2,792 at 2018 price
+levels, as shown in table 4.6.
+
+            Table 4.6. Details of Increase in Per Capita Annual Income Due to Rural Road Connectivity
+Average increase in agricultural income per acre (INR)a                                                 3,074
+Average landholding per person (acres)a                                                                  0.56
+ Per capita increase in agricultural annual income (INR)a                                              1,735
+ Per capita increase in nonagricultural annual income (INR)a                                            807
+ Per capita increase in total annual income (weighted) INR -2010   a
+                                                                                                       1,577
+ Per capita increase in total annual income (weighted) INR - 2013 @7.4%                                1,954
+ Per capita increase in total annual income (weighted) INR -2018 @7.4%                                 2,792
+Note: a. The estimation for ‘Per capita increase in total annual income (weighted) INR’ is based on 7.4 percent
+increase rate.
+
+
+15.    In Rajasthan, based on the survey data in 2010, the agricultural productivity had increased by
+18.23 percent due to the road connectivity from INR 16,850 per acre to INR 19,923 per acre and 24.57
+percent increase in income from non-farm activities from INR 19,050 to INR 23,730 per capita. The
+
+
+                                                                                                                  Page 39 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+occupation composition in Rajasthan is assumed fixed (no updated survey data), and the agriculture and
+non-agriculture-based occupation is 83 percent and 17 percent, respectively.
+
+                         Table 4.7. Assessment Benefits to the Rural Roads in Rajasthan
+
+                      Total No. of Sample                        No. of Vehicles
+    Rural Road                             Economic                                          Employment
+                         Beneficiaries                                           Motorized Opportunities
+     Scenario                              Well-being   Bicycle      Rickshaw
+                           Assessed                                               Vehicle
+ Before rural roads           200              91          40            15         48             61
+                                           [45.50%]    [20.00%]      [07.50%]    [24.00%]      [30.50%]
+ After rural roads                            195         144           100        136            200
+                                           [97.50%]    [72.00%]      [50.00%]    [68.00%]     [100.00%]
+Source: Evaluation Study on Rural Roads Component of Bharat Nirman, Programme Evaluation Organization
+Planning Commission Government of India, New Delhi, May 2010.
+
+16.      The overall increased income due to rural road connectivity in Rajasthan per road from 2019 to
+2033 is INR 17,137,306, with 1.6 percent per capita production growth. The household income increased
+47.69 percent per road construction in 2019 compared to the 2013 estimation.
+
+(ii) Increase in Income through Additional Employment Generation
+
+17.     Based on the survey findings, the rural road connectivity could generate additional employment
+for the village population in trade and agriculture-related industrial establishments and in the nearby
+towns to the tune of 10–15 persons. With the assumption of 300 working days and INR 150 as daily wage
+and 10 additional employment per village, an additional income of INR 0.45 million is estimated as
+employment benefit. With average population size of 374 persons, the per capita income through
+additional employment is estimated as INR 1,202.66 per year.
+
+                   Table 4.8. Additional Employment Benefits due to Rural Road Connectivity
+Additional employment generated per village (number)                                             10
+Total additional annual income (INR)                                                          450,000
+Average village population (number)                                                            374.17
+Per capita additional employment generation (INR)                                             1,202.66
+
+18.     The overall increased employment benefits due to rural road connectivity in Rajasthan per road
+from 2019 to 2033 is INR 7,224,038 with 1.6 percent per capita growth of employment rate. The additional
+employment benefits decreased 3.33 percent per road construction in 2019 compared to the 2013
+estimation.
+
+(iii) Traffic-related Benefits
+
+19.     The traffic forecast assumes that the vehicle generation pattern will change to approximately
+those found in the presently connected villages when villages are connected with an all-weather road.
+Vehicle generation pattern used in the present analysis for without and with all-weather road connectivity
+is summed up in Table 4.9. The traffic was assumed to grow at 5 percent for the normal traffic. No attempt
+
+
+                                                                                                         Page 40 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+is made to differentiate between ‘normal’ and ‘generated’ traffic and to apply different values to the flows
+in general.
+
+                                            Table 4.9. Travel Pattern/Traffic Forecast
+                                                                       Vehicle km/1,000 Population
+                 Vehicle Category
+                                                            Before Connectivity             After Connectivity
+    Cycle                                                           34                             124
+    Rickshaw                                                          13                                      86
+    Motorized vehicle                                                 41                                     117
+    Motorcycle                                                        15                                      46
+    Car                                                               14                                      39
+    Tractor                                                           12                                      13
+    Bus                                                                0                                      16
+ Truck                                                        0                               3
+Note: Estimated based on the data from ‘Report No: 29742-IN, PAD, Rural Roads Project, August 2004.
+*As estimated at the time of project appraisal as these data are not available.
+
+20.      The savings in the VOCs and passenger time value for each vehicle type were adapted from the
+Rural Roads Project 1 (RRP1) evaluation studies 3 with suitable update to the 2013 level in the PAD
+compared to the 2019 level in the ICR. The unit values adopted from the initial analysis are summed up in
+tables 4.10 and 4.11. Considerable benefits in health, education, and other social sector areas like
+accessibility to markets, railway stations, bus stands, post offices, banks, and so on in terms of reduced
+travel time and operating cost were reported from the evaluation study results. However, all these
+accessibility benefits to social services will be reflected in the additional vehicular trips generated after
+the road improvements. Thus, only traffic-related benefits in terms of VOC savings and savings in travel
+time were considered as the third benefit to avoid duplication of benefit calculations.
+
+21.      For benefit calculations, existing traffic and generated traffic are treated separately. Differences
+in unit rates of VOC and travel time were used to estimate the benefits for the existing traffic (before
+connectivity). For generated traffic, 50 percent of the VOC and time cost for the improved situation were
+treated as project benefit.
+
+                                      Table 4.10. Vehicle Travel Time Cost (INR/Vehicle km)
+                                                             Value of Travel Time
+                                                                    Average
+                                               Average Speed                      Average Load
+    Vehicle Type              INR/h                                Occupancy                                  INR/Vehicle km
+                                                  (km/h) a
+                                                                                      (ton)
+                                                                      (Nos.)
+                      2013        2019         2013     2019     2013      2019   2013     2019               2013     2019
+    Motorcycle        27.8        34.41         25        35       1.5      1.71   —        —                  1.67     1.68
+    Car               66.3        82.13         20        40       4        3.23   —        —                 13.26     6.63
+    Tractor            6.8         8.44         15        15      —          —      2        2                 0.91     1.13
+    Bus                18.3       22.68         20         30        25       30.00        —         —        22.88    22.68
+
+3   (a) Report No: 29742-IN, PAD, Rural Roads Project, August 2004 and (b) ICR, Rural Roads Project, July 2012.
+
+                                                                                                                          Page 41 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                       Value of Travel Time
+                                                              Average
+                                        Average Speed                        Average Load
+  Vehicle Type          INR/h                                Occupancy                         INR/Vehicle km
+                                           (km/h) a
+                                                                                 (ton)
+                                                                (Nos.)
+                  2013       2019       2013     2019       2013     2019   2013      2019      2013     2019
+ Truck              8.5      10.48       15        25        —         —      9         9        5.09     3.77
+Note: Estimation for 2013 was based on the data available from Indian Roads Congress, SP 30, 2009, and base
+figures have been taken from project appraisal report of the RRSMP.
+a. Average speed after construction of road has been considered based on experience.
+
+                   Table 4.11. Unit Rates for Calculating VOC and Travel Time for Rural Roads
+                           Value of Time: INR/Vehicle km                          VOC: INR/Vehicle km
+  Vehicle Type
+                            2013                       2019                   2013                     2019
+ Motorcycle                 1.67                       1.68                     1.59                   3.20
+ Car                       13.26                       6.63                     6.39                  10.15
+ Tractor                    0.91                       1.13                   14.30                   14.30a
+ Bus                       22.88                      22.68                   14.02                   25.50
+ Truck                     14.30                       5.09                   14.30                   27.04
+Note: a. Data for tractor VOC is not available and is estimated based on the data available from Indian Roads
+Congress, SP 30, 2009. The data are based on roughness factor of 15 m/km and roughness of 3,000 mm/km
+including passenger cost.
+
+22.     VOC savings. The unit VOCs in with and without cases were calculated. The overall VOC saving
+due to rural road connectivity in Rajasthan per road from 2019 to 2033 is INR 634,143 with 5 percent
+growth rate in traffic. VOC saving increased 79.51 percent per road construction in 2019 compared to the
+2013 estimation.
+
+23.      Passenger travel time savings. Travel time savings were assumed to be obtained when trips are
+shorter and faster as a result of the investment in the construction of the rural roads. Similar to VOCs,
+VOTs used in the analysis were also updated using the recent survey result. The overall VOT saving due to
+rural road connectivity in Rajasthan per road from 2019 to 2033 is INR 378,149 with 5 percent growth rate
+in traffic. VOT saving decreased 19.77 percent per road construction in 2019 compared to the 2013
+estimation.
+
+C. Economic Analysis Results
+
+24.      Updated economic evaluation results. Although both the construction costs and maintenance
+costs increased about 20 percent, the benefits of VOT saving decreased about 20 percent, and the benefits
+generated by additional employment decreased 3.33 percent; the drastically increased VOC saving of
+almost 80 percent and increased income per capita of almost 50 percent due to rural road connectivity
+resulted in better returns of the investment. Both IRR and NPV at the ICR phase are greater than those
+expected at the appraisal phase. The updated valuation shows that at the ICR phase, the investment in
+rural roads is efficient, with an IRR of 15.87 percent.
+
+
+
+
+                                                                                                                Page 42 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                             Table 4.12. Economic Evaluation Results (INR/Road)
+                                                PAD                                       ICR
+                                              (2013)                                    (2019)
+NPV (12%)                                    740,607                                  1,639,837
+IRR (%)                                        14.11                                     15.87
+MIRR (%)                                       12.82                                     13.49
+NPV/cost                                        1.27                                      1.36
+
+
+
+25.      The base analysis and their sensitivity tests indicated a relatively wide spread in the economic
+results as shown in Table 4.13 below.
+
+             Table 4.13. Results of Sensitivity Analysis of Economic Evaluation Results (INR/Road)
+                  Sensitivity Scenario                             EIRR (%)                  MIRR (%)
+Base Case                                                           15.87                     13.49
+20% increase in Construction Cost                                   14.42                     13.04
+20% increase in O&M Cost                                            15.35                     13.26
+20% decrease in project benefit                                     10.67                      11.47
+Combined effect (Worst Scenario)                                     6.71                       9.87
+
+
+26.      The Results of the Sensitivity Analysis of Economic Evaluation Results show that the investment
+in rural road is efficient even with the combined effect in the worst scenario – 20 percent increase in
+construction cost, 20 percent increase in O&M cost, and 20 percent decrease in project benefit, with an
+EIRR of 6.71 percent and an MIRR of 9.87 percent.
+
+
+
+
+                                                                                                        Page 43 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+       ANNEX 5. BORROWER, CO-FINANCIER AND OTHER PARTNER/STAKEHOLDER COMMENTS
+
+91.     The Borrower’s comments are attached below.
+
+92.      The World Bank thanks the state of Rajasthan for the comprehensive comments on this ICR. First,
+it is important to note that the World Bank policy requires that project rating be based on achievements
+at project closing (December 31, 2018). In the case of the present ICR, all progress made until December
+31, 2018 and the progress made until June 30, 2019 was reflected in the ICR, based on the inputs provided
+in the Borrower’s ICR and further communication with the project team and the Client. The final ICR thus
+emphasizes and recognizes post-closing date efforts and further progress made by the Borrower, as the
+World Bank had agreed that the progress made post-closing date to address remaining issues such as road
+safety works, forest clearance, etc., would be considered to some extent in the final evaluation.
+
+93.     The World Bank has discussed and taken note of the Borrower’s opinion regarding the rating.
+Achievements made related to the civil works at project closure were rated positively. Considering the
+works completed within 6 months after project closure, the rating related to the first outcome remains
+positive. Yet, some of the remaining issues or activities under the two other components are either not
+implemented, not completed or are not fully resolved at the time of this ICR despite the noted progress.
+The proposed ratings will thus remain the same. The World Bank encourages the Borrower to pursue
+these efforts and is committed to provide the necessary support.
+
+
+
+
+                                                                                                    Page 44 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+                                                        Page 45 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+                                                        Page 46 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+
+                                                        Page 47 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                 ANNEX 6. REVISED THEORY OF CHANGE
+
+
+
+
+                                                                                     Page 48 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                 ANNEX 7. BORROWER ICR REPORT
+
+94.    The Borrower’s ICR can be found at the link below:
+
+https://worldbankgroup-
+my.sharepoint.com/:f:/g/personal/okeou_worldbank_org/EqcTLoy24B5GuYFM05OOPEIB8H6Fss19UzPQ
+ENqKo3qayA?e=wRhkPH
+
+
+
+
+                                                                                      Page 49 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                       ANNEX 8. COMPARATIVE ASSESSMENT OF STATES’ INITIATIVES
+    Comparative Assessment of State’s Initiatives: Case of Karnataka, Andhra Pradesh &
+                               Telangana and Rajasthan
+
+Background and Objective:
+1.       The World Bank (“the Bank”) has been extensively involved in the Indian transport sector over the
+past 70 years. By the end of 2018, it had closed 62 projects (loans and credits) totalling $11.1 billion to the
+sector, or about 15 percent of the Bank portfolios of loans and credits closed this far in the country. Roads
+and highways accounted for 63% (active and closed projects combined) of the total investments in the
+transport sector. The Bank has successfully implemented and closed 29 road projects including National
+Highways, State Highways and rural roads in India worth US$ 8.77 billion and has an active portfolio of 11
+projects (one NH, 7 SHs and 3 rural roads) worth US$3.2 billion across nine states of India including two
+centrally funded projects of national highways and rural roads where civil works are also being
+implemented in additional nine states. In addition, four projects worth US$989 million in the state of
+Meghalaya, Himachal Pradesh, Tamil Nadu and including one National Highways project are under
+preparation and scheduled to be delivered in the current fiscal year i.e. FY20.
+
+2.      In view of the above, it is worthwhile to take stock of the performance of the portfolio and assess
+the impact of Bank support in the sector. As part of that effort this note presents a comparative review
+of three state roads projects that have closed at about the same time: Second Karnataka State Highway
+Improvement Project (KSHIP II), Andhra Pradesh & Telangana Road Sector Project (APTRSP) and Rajasthan
+Road Sector Modernization (RRSMP). This note focuses particularly on elements of project design and
+impact related to institutional development in the three projects.
+
+Strategic Framework:
+3.       Project Designs consistent with the Strategic Framework. Three key reports frame the Bank’s
+intervention in the state roads sector in India. The 1995 India: Transport Sector- Long Term Issues 4 report
+examined the ways to respond to the national economic reforms initiatives and proposed policy and
+institutional reforms to improve regulation of private transport operations, as well as the provision and
+maintenance of physical infrastructure. This was updated in year 2001-02 5 with the objective to provide
+policy dialogue between the Bank and the Government of India and laid the Bank’s sector assistance
+strategy for Transport. This was followed by a review 6 of highway agencies in the South Asia Region to
+help governments and policy makers identify reforms required to modernize and strengthen the capacity
+and performance of their road agencies to deliver large investment programs through performance
+monitoring as a tool. These studies have laid the foundation for the sector assistance strategy for road
+sector modernisation and highlighted the essential elements of the strategic framework which are shown
+in the figure 1 below with the objective to transform road agencies from the role of “provider” to
+
+
+4 India: Transport Sector – Long Term Issues, The World Bank Group
+5 India: Transport Sector – The Challenges Ahead, 2002, Report No. 24457, The World Bank Group
+6 A Review of the Highway Agencies in South Asia Region, 2002, Transport Research Support, DFID and the World Bank
+
+
+
+                                                                                                                     Page 50 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+“manager” of road infrastructure. The project designs of the three projects was consistent with this
+approach and strategic framework.
+
+4.       This framework is broadly consistent with the engagement framework recommended by the IEG
+Report on “A Decade of Action in Transport” 7 of supporting private sector development and improving
+governance and institutional capacity. Though the approach of improving institutional capacity in
+procurement, financial management and asset management etc. are all in line with that strategy, there is
+one key difference – in terms of the focus on corporatisation and creating bankable institutions. Although
+Bank support has seen some success in encouraging the establishment of commercially run road agencies
+and the creation of road funds to bring greater stability into financing recurrent road expenditures,
+especially in Africa. The judgment was that in Indian states, an initial focus on strengthening existing
+institutions was more politically feasible with only incremental steps towards corporatisation and
+bankable institutions till date. The private sector development in the South Asia region has been
+encouraged mainly through road construction and maintenance management.
+                                       Figure 1: Strategic Framework
+
+
+
+
+Project Design:
+5.      All three projects were designed as investment project finance (IPF) operations with institutional
+strengthening components complementing primarily infrastructure projects. The civil works focused on
+the investment and maintenance requirements of the state’s core road network. The investment support
+
+7Independent Evaluation Group: A Decade of Action in Transport - An Evaluation of World Bank Assistance to the Transport
+Sector: 1995-2005, IEG (2007), The World Bank.
+
+                                                                                                                       Page 51 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+was combined with strengthening institutional capacity of the road departments at the state level through
+introduction of sound strategic and regulatory framework, organisational reforms, modernisation of
+business and engineering practices and human resource development through training of staff,
+contractors and consultants. The engagement also provided support to reduce maintenance backlog by
+funding periodic maintenance in the state of Andhra Pradesh and Karnataka with introduction of modern
+maintenance equipment replacing manual operations and piloting alternative contracting methods based
+on performance. Further, the investment components were also designed to aid institutional
+strengthening: the Karnataka and Andhra Pradesh projects included important pilots/demonstrations for
+private sector participation for infrastructure development and innovations in contractual arrangements
+to increase operational efficiency and the implementation capacity of state institutions.
+
+6.      Focusing on Institutional Strengthening through Road Sector Modernisation. In case of
+Rajasthan, though the civil works were mainly on rural roads, however, the road sector modernisation
+agenda including road safety was designed to focus on transformation of the entire Public Works
+Department into a modern road agency by adopting best practices and strengthen institutional
+effectiveness. The key elements of this road sector modernization approach were like the Institutional
+Development Action Plan prepared in KSHIP II and APTRSP.
+
+Project Interventions:
+7.      The civil works in all three projects focused on improving the quality of core road network through
+upgradation, widening and maintenance of priority roads in Andhra Pradesh, Telangana as well as in
+Karnataka whereas in Rajasthan, the works were focusing on providing all-weather road connectivity to
+the rural population of the state. In Andhra Pradesh & Telangana, the focus was to improve riding quality
+and capacity of the network by reducing the maintenance backlog through adoption of long-term output
+and performance-based maintenance contracts on a significant part of the core road network and pilot
+transactions to increase states capacity to engage private sector to finance, develop and manage two road
+concessions on public-private partnership (PPP) basis. In Karnataka, project activities mainly focused
+towards highway financing modernization and strengthen the capacity of the government to attract
+private sector financing through adoption of PPP– Design, Build, Finance, Operate, Maintain and Transfer
+(DBFOMT) contracts and commercial financing through domestic financial institutions. In addition, the
+project interventions were focusing on enhancing the institutional effectiveness in all states through
+structured institutional strengthening and development action plans in Andhra Pradesh, Telangana and
+Karnataka and road sector modernisation plan in Rajasthan. The road safety demonstration corridor
+approach was adopted in all four states. A snapshot of project interventions in provided in the table one
+below and a detailed comparison of the design and interventions is at Appendix-1.
+
+                                      Table 1: Summary of Project Interventions
+                                                                      AP   Telangana   Karnataka   Rajasthan
+ Civil Works – Upgradation/ Widening/ Maintenance/ connectivity                                     
+ Highway Financing Modernisation                                                                    
+ Institutional Strengthening & Road Sector Modernization                                            
+ Road Safety Management – Demo Corridor                                                             
+ Road Safety Management – Policy & Institutional Actions                                           
+Note:  - substantially done;  - partly done;  - yet to be done
+
+                                                                                                          Page 52 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+Results Achieved:
+8.      Element 1. Policy & Planning. Defined policy & planning framework for effective road sector
+management: The first key element of the sector modernization agenda is for the road agencies to clearly
+define a road sector policy with the comprehensive vision/mission statement, backed by a legal and
+regulatory framework, covering development, asset management and safety. The international
+experience suggests that creating a policy framework ensures adequate flow of resources to the sector.
+Additionally, in order to effectively prioritize expenditures (both capital and maintenance) and channel
+them for most impact – it is important for road agencies to put in place a masterplan/core road network.
+A systematic effort was made in Karnataka, Andhra Pradesh and Telangana with reasonable success to
+adopt a road sector policy framework; develop network level master plans and finalize a core road
+network to replace the ad hoc systems of planning, budgeting and investment. However, in Rajasthan, the
+experience was less successful. While a comprehensive road sector policy was developed it has not been
+formally adopted by state government. Though the state government has identified the core road
+network and finalise the strategic road network which led to development of State Highway Development
+Program, currently being supported by the Bank through ongoing engagement.
+
+                                         Table 2: Policy & Planning Framework
+                                                                      AP       Telangana       Karnataka       Rajasthan
+ Road Sector Policy                                                                                             
+ Network Level Master Plans & Finalised Core Road Network                                                       
+Note:  - substantially done;  - partly done;  - yet to be done
+
+9.        Element 2. Adequacy of Funds. Framework to ensure adequacy of funds and stabilise road
+financing: The second key element of sector modernization is to ensure an adequate and stable financing
+base for managing the asset base and finance new expansion. Adoption of a comprehensive and
+structured framework would ensure adequacy of funds for cost-effective, efficient and sustainable asset
+management including capital works as well as maintenance. The fundamental need here is to identify an
+adequate funding base via a combination of road user charges and stable transfers from the general
+revenue base. A sound funding base facilitates the development of a range of financing options including:
+private financing for projects, domestic borrowing and multilateral financing, ring-fencing and
+securitization of revenue proceeds. The state of Karnataka has shown high level of ownership in
+successfully implementing reforms to improve highway financing by endorsing a new road sector policy
+with appropriate financing strategy 8. The state of Andhra Pradesh and Karnataka have strengthened the
+budgetary discipline through multi-year planning based on asset management data, however, the current
+financial system and governing mechanism does not allow for multi-year budgeting. The draft road fund
+bills in Andhra Pradesh and Telangana and road sector policy including the financing plan in Rajasthan are
+still under the consideration of the Government. However, the fundamental issues such as prioritizing
+maintenance over capital works, appropriate balance between capital and recurrent expenditure;
+
+
+
+8 Financing Strategy included adoption of user-pay principle approach, amending Highway Act to allow tolling on state highway,
+increasing PPP transactions in the road sector, ring-fencing and securitization of toll proceeds for annuity payments and
+framework for domestic borrowings.
+
+                                                                                                                         Page 53 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+adequate and appropriate cost sharing between central and state governments; and multi-year budgeting
+remain unaddressed due to political economy and constraints of existing systems.
+                                              Table 3: Financing Framework
+                                                 AP      Telangana     Karnataka          Rajasthan
+        Financing Strategy                                                                 
+        Road Fund                                                                          
+        Multi-Year Budget Planning                                                         
+      Note:  - substantially done;  - partly done;  - yet to be done
+
+10.      Element 3. Efficiency of expenditures. Strengthening network management approaches. A
+comprehensive and integrated road asset management system (RAMS) 9 ensures systematic management
+of the network in a sustainable and cost-effective way using scientific life-cycle based approach. This
+approach affects the full range of activities including planning, engineering, finance, programming, and
+actual works. It supports preparation of both annual and multi-year investment plans for maintaining the
+road network considering the condition, function, available funding, resources and prioritization. The
+state of Andhra Pradesh and Karnataka have achieved considerable success in institutionalising this
+system and are currently using Multi-year rolling plans including annual investment and maintenance
+plans prepared through the RAMS. The use of RAMS has increased credibility of budget requests from
+the PWD and resulted in significantly higher outlays for maintenance. The budget planning & allocation
+decisions are based on the outputs of the RAMS replacing the old ad hoc systems. Many other states have
+also attempted for similar network level system for asset management such as Tamil Nadu, Assam, Orissa,
+however, the key achievement in Andhra Pradesh and Karnataka that they have adopted a strategic and
+holistic approach through the backward and forward integration of the system for planning, investment,
+maintenance, financial allocation and monitoring and supervision. These states have established Asset
+Management cell with dedicated staff for operations and close monitoring of these systems. The state of
+Andhra Pradesh has also pioneered in developing an IT-Command and Control Centre which is a
+comprehensive console (web and GIS map platform) utilising RAMS and MIS for decision support. On the
+other hand, Rajasthan has not been able to complete the development of the system and it is still at the
+nascent stage due to lack of support and ownership of the relevant stakeholder department including the
+finance department. Though after bifurcation, it has been non-starter in case of state of Telangana also.
+                                         Table 4: Asset Management System
+                                                    AP     Telangana Karnataka                 Rajasthan
+               Road Asset Management System                                                     
+            Note:  - substantially done;  - partly done;  - yet to be done
+
+11.     Element 4. Implementation Capacity. Enhancing the implementation Capacity through
+innovative contracting approaches, use of digital tools for program management and institutional
+strengthening:
+
+
+
+9A comprehensive and integrated road assets management system includes – Pavement Management, Bridge Management,
+Traffic Data Management, Transport Modelling Tool, Traffic Incident Management, Monitoring & Evaluation, Environment and
+Social Information System, Road Safety Management, Cross Asset Prioritization System.
+
+                                                                                                                   Page 54 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+     a. Adoption of innovative contracting approaches: The implementation of innovative contracting
+        models to boost private sector investment in construction and maintenance of road assets resulted
+        in improving efficiency, economies of scale and implementation capacity by shifting focus from
+        traditional input and process-based to output and performance-based approach. It involved
+        adoption of toll based Public private partnership contracts, long-term performance-based
+        maintenance (LTPBM) contracts in Andhra Pradesh and Telangana; and annuity-based Design,
+        built, finance, operate and Transfer (DBFOMT) model and co-financing framework from domestic
+        financial institutions in Karnataka. This approach of long-term concessions resulted in substantial
+        reduction and/or elimination of time and cost over runs due to inbuilt incentive mechanism of
+        concession stake in capital expenditure. 10 This output and performance-based approach resulted
+        in securing good operation and maintenance of assets financially and legally and payment is linked
+        to service standards. The framework is now being replicated by the government for infrastructure
+        development including expressways, corridor development, highways, water supply and
+        renewable energy at national as well as sub-national level.
+                                     Table 5: Implementation Capacity
+                                                              AP     Telangana        Karnataka   Rajasthan
+           PPP-Toll Based BOT/ DBFOMT                                                             
+           Long Term Output & Performance Based
+                                                                                                  
+           Maintenance Contracts
+          Note:  - substantially done;  - partly done;  - yet to be done
+
+     b. Enhanced implementation Capacity through use of digital tools for program management: These
+        projects have been successful in adopting digital project management systems which are currently
+        being mainstreamed for monitoring and supervision of all construction and maintenance works
+        based on work life cycle approach (irrespective of funding sources) at the Department level. These
+        systems have been further integrated with the GIS based IT command and control centre in the
+        state of Andhra Pradesh. One of the notable initiatives undertaken in Rajasthan was the adoption
+        of innovative Performance Assessment Tool (PAT) with relevant training for staff was beneficial in
+        getting management’s attention towards better quality of works and creating performance
+        competition among divisions and PIUs. The PAT also helped in ensuring better management of
+        environmental and social safeguards, and health and safety of workers on site.
+
+     c. Improved sector governance through institutional strengthening: A strategic and holistic approach
+        of institutional strengthening was adopted under these projects based on five broad common
+        themes: Strategic & Regulatory Framework; Organisational Reforms, Business & Management
+        Processes; Asset Sustainability; Performance & Accountability; and Human Resource
+        Development. Structured and streamlined institutional development and strengthening Action
+        Plans (IDSAP) based on institutional development assessments and strategies were drawn in the
+        state of Karnataka and Andhra Pradesh. These actions plans for institutional strengthening focused
+
+
+10See https://blogs.worldbank.org/transport/our-infrastructure-projects-can-help-build-many-things-
+including-stronger-institutions
+
+                                                                                                         Page 55 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+       on organisational functional realignments from a provider to manager role; restructuring of field
+       offices; support for operationalisation of Road Development Corporations, core business process
+       including planning, programming works, effective procurement and contract management,
+       strengthening program monitoring through online project management systems, revision of
+       department codes and systemize quality control; financial mechanism by modernising planning
+       and budgeting function through use of financial management systems; establishing road
+       information systems and strengthening of state’s environment and social management
+       capabilities. The state of Andhra Pradesh and Karnataka have shown a high level of ownership in
+       implementation of these actions plans and the dedicated staff have champions to lead the
+       initiatives towards successful implementation and mainstreaming such as ISO certifications for
+       quality management and environmental management, E-learning management system and project
+       management system are being scaled up at the departmental level. However, the institutional
+       mechanism of the road sector modernisation working group has been unsuccessful in delivering
+       the reform agenda in case of Rajasthan. A comparison of the detailed outputs achieved under these
+       action plans in the three projects is at Appendix-2.
+                                    Table 6: Institutional Strengthening
+                                                      AP        Telangana   Karnataka   Rajasthan
+       Strategic & Regulatory Framework                                                 
+       Business Process Reengineering                                                   
+       Asset Sustainability                                                             
+       Performance & Accountability                                                     
+       Human Resource Development                                                       
+       Note:  - substantially done;  - partly done;  - yet to be done
+
+12.      Element 5. Safety. Result focused approach to road safety management. An incremental
+approach to road safety management was adopted in all the three projects to reduce the road accidents
+and fatalities in a sustainable manner through policy and institutional reforms and multi-sectoral
+demonstration corridor pilots. The interventions were centred around developing the policy framework,
+road safety strategy and actions plans, incorporation of road safety engineering measures in design,
+construction and maintenance of investment programs, and pilot safety demonstration corridors with
+multi-stakeholder interventions based on globally accepted safe system approach. This comprehensive
+and holistic approach of road safety demonstration corridors was highly successful in the state of
+Karnataka which validates that physical/ engineering improvements are not enough to bring reduction in
+road fatalities in the face of rising traffic volume, however, engineering measures necessarily be
+accompanied by robust programs for enforcement, education and awareness and post-crash
+management. It requires coordinated effort from different stakeholder departments with proper
+institutional structure and synergies can be achieved if designed and integrated well with other programs
+being implemented by the respective departments. 11 This approach resulted in reasonable success in in
+
+
+
+11See https://blogs.worldbank.org/transport/human-lives-need-not-be-lost-road-crashes-much-less-
+current-levels-0
+
+
+                                                                                                    Page 56 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+Andhra Pradesh 12 and Telangana where creation of the road safety cell within the Transport Department
+in Andhra Pradesh has proven effective for planning and tracking impacts of road safety initiatives and
+managing data for road safety indicators. On the other hand, it was unsuccessful in the state of Rajasthan
+where the road safety interventions on the selected corridor could not be undertaken during the project
+period due to lack of ownership and proper institutional arrangement for implementation. Table 7
+summarises the project interventions in the Bank funded road projects.
+                                     Table 7: Road Safety Interventions
+ Themes                                                   Andhra     Telangana                                       Karnataka          Rajasthan
+                                                          Pradesh
+ Safe Corridor Demonstration Program - Multi-sectoral
+                                                                                                                                            
+ interventions based on iRAP surveys
+ Institutional Structure                                                                                                                    
+ Policy & Strategy                                                                                                                          
+ Capacity Building                                                                                                                          
+ Black Spot improvement program                                                                                                             
+Note:  - substantially done;  - partly done;  - yet to be done
+
+13.      Success Factors: The analysis of the three ICRs suggest the four key factors contributed to the
+achievement/ success in these states including: Ownership, Strategic & Holistic Approach and Constant
+learning and Innovation approach. The state government of Karnataka and Andhra Pradesh have shown
+greater level of ownership leading to successful implementation of the reform agenda in both states. The
+projects have used a strategic and comprehensive approach to road sector management which is also
+consistent with the strategic framework in these states including planning, financing, efficiency,
+implementation capacity and safety. The assessment also showed that the support to system planning,
+institutional strengthening, private sector participation and road safety was highly successful in Karnataka
+and achieved reasonable success in case of Andhra Pradesh with constant learning and innovative
+approach adopted in these states. The performance was average in case of Telangana and Rajasthan
+where road sector modernisation could not be achieved as planned and designed reflecting lower level of
+ownership.
+
+                                                Table 8: Analysis of Key Success Factors
+
+                                     Andhra Pradesh                    Telangana                       Karnataka                    Rajasthan
+                              Ownership Strategic Constant Ownership    Strategic Constant Ownership   Strategic Constant Ownership Strategic Constant
+                                        & Holistic Learning &          & Holistic Learning &           & Holistic Learning &        & Holistic Learning &
+                                        Approach Innovation            Approach Innovation             Approach Innovation          Approach Innovation
+Policy & Planning Framework                                                                                                             
+Financing Framework                                                                                                                     
+Asset Management                                                                                                                        
+Institutional Capacity                                                                                                                  
+Road Safety Management                                                                                                                  
+Note:  - substantially done;  - partly done;  - yet to be done
+
+
+ See https://blogs.worldbank.org/transport/road-safety-action-pays-and-demonstration-corridors-are-
+12
+
+here-prove-it
+
+                                                                                                                                                    Page 57 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+Key Takeaways and Recommendations:
+
+14.      State Highway engagement remain relevant today: The state highways and major district roads
+(MDRs) constitute the secondary system of road transportation in the country carrying about 40 percent
+of the total road traffic. Neglect of this strategic secondary network, serving as the bridge between the
+National Highways and rural roads, could result in the ‘missing middle’ in the increasingly integrated
+overall road network and could seriously impact the overall road transport cost and logistic efficiency of
+the country. Traditionally, the development of national highways and rural road network has been
+boosted by centrally sponsored schemes like National Highway Development Program (now rebranded as
+Bharatmala) and Pradhan Mantri Gram Sadak Yojana. The vital feeder/ collector network of state
+highways and MDRs, however, have been neglected due to chronic underfunding, in absence of any
+comprehensive National program and/or individual state-run programs. The inadequate and unstable
+funding has also made systematic planning and improvement of the state highways difficult in most of the
+states, resulting in deteriorating condition and lower level of services, even compared to rural roads at
+times. Except financing from MDBs such as World Bank and ADBs, the states have not been able to attract
+or mobilize enough private/ commercial financing for state highways and MDRs in comparison to national
+highways or even rural roads. Therefore, as recommended by the Working Group of Twelfth Five Year
+Plan of the Planning Commission, resource mobilization for the sector needs to be enhanced, adequately
+supplemented with adequate external financing sources from MDBs and suitably leveraged with private
+sector financing.
+
+15.      State Highway Sector Agenda is evolving. Keeping in line with the evolving agenda in highway
+sector in India encompassing improved transport and logistic efficiency, safety and services, as enshrined
+in the flagship Bharatmala program, the state highway agenda need to also evolve towards improved
+logistic efficiency, safety and services, resource efficiency and climate resilience. The state highway
+institutions also need to consolidate the gains from reform initiatives undertaken during the last decade
+to emerge as independent, bankable institutions running on commercial principles to attract private
+sector financing and manage assets and services more efficiently.
+
+16.      The Bank’s contribution to this institutional and sector evolution has been significant and
+effective – though not universally successful. IEG’s seminal report for the transport sector, ‘A Decade of
+Action in Transport’ 2007, highlights the importance of creating public sector capacity for attracting
+private sector financing. The report has also highlighted in several emerging middle-income countries how
+the Bank has played a significant role in strengthening the institutional capacity of the public sector in
+procurement, financial management, asset management and project management as well as improving
+the investment climate which has played a critical role in attracting private investments and bringing
+private sector efficiency in asset management and services. India has not been an exception. The
+aforementioned analysis clearly indicates that Bank engagement has resulted in significant success in
+Karnataka and Andhra Pradesh and has contributed to encouraging private sector development in
+financing, construction and maintenance, sustainable management of the sector through adoption of
+network level master plans, core road network and asset management system, scientific planning,
+financing framework, innovative contracting approaches, improving institutional strengthening and
+
+
+                                                                                                     Page 58 of 62
+The World Bank
+Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+providing safer network. Relatively modest success was seen in Rajasthan and Telangana though,
+reflecting low level of ownership and willingness to change. The Bank experience in the sector suggest
+that pace of institutional reform has been incremental and slow with significant variance across states
+based on their capacity, public sector governance structure and reform commitment. Notwithstanding
+significant sector reform in quite a few states, major institutional reform and transition of the public sector
+road agencies towards commercial autonomous roads authorities remains a work in progress and yet to
+commence in some states.
+
+17.     The Bank’s engagement strategy in the state road sector is evolving: To support the much-
+needed transformation in the state highway agenda, Bank’s approach towards engaging with the state
+road sector is also rapidly evolving with the ongoing new generation of state road projects such as
+Rajasthan State Highway projects targeting towards operationalising a corporatized autonomous highway
+authority with a mandate to mobilize commercial financing by leveraging public resources at its disposal.
+In the current pipeline projects, the direction now is moving towards stronger focus, though in an
+incremental manner, on corporatized institutions, logistics and transport services, and developing an
+integrated multimodal transport framework. A more cohesive and results-focused road safety
+management approach has been adopted in Uttar Pradesh State Road Project.
+
+18.     Delivery instruments are also evolving: From conventional investment project financing (IPF),
+most projects are increasingly adopting result-based financing approach through Disbursement linked
+Indicators with IPF such as Rajasthan State Highways Project. Some pipeline projects are also exploring
+the possibility of Development Policy loan combined with IPF to support reform on logistics, transports
+services and corporatized institutions.
+
+19.      Time to redefine engagement strategy through national platforms: Moving forward, to respond
+to the menacing impacts of transport expansion, the strategic approach towards engaging in the state
+highway sector needs to be redefined by considering this evaluation and the ongoing assessment of the
+Bank’s contribution to this sector in India. The focus of the Bank’s transport operations needs to move
+beyond intercity highways and give more attention to issues of growing urgency including congestion,
+logistics efficiency, bankable institutions, transport services, safety, affordability and sustainability. The
+future strategy also needs to explore possibilities of developing National Platform for creating
+benchmarking among states for strategic investment and distinguished support for advanced states
+versus lagging states. A Road Transport Community of Practise need to be developed under the lighthouse
+India approach for enhancing knowledge and experience sharing among states with stronger role of
+institutions such as NITI Aayog, Indian Roads Congress and Central Road Research Institute.
+
+
+
+
+                                                                                                          Page 59 of 62
+   The World Bank
+   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                                 Appendix-1
+                                     Key Interventions under the Projects
+
+Core Areas       APTRSP                               KSHIP II                           RRSMP
+Civil Works      upgrade and maintain the Core        Improvement & maintenance          Increasing share of rural
+                 Road Network (CRN):                  works of selected priority         population with access to
+                  • 429 km upgraded efficiently       core road network                  an all-season road
+                  in an environmental and              • 269 km upgraded through          • Construction of 2500
+                  socially sustainable way.            traditional item-rate contracts    km of rural roads
+                  • 6,241 km of roads under            • 562 km to be upgraded &
+                  Long-term performance-based          O&M through PPP- DBFOMT
+                  maintenance contract                 concession
+Highway          Technical assistance to               • KRDCL        to     generate    ---
+Financing        strengthen the capacity of the        additional road user revenue
+Modernisation/ GOAP to attract private sector          and commit them for
+PPP facilitation participation:                        mobilising debt financing
+                 • RDC manages concession of           and/or making payments for
+                   three roads of those selected       PPP transactions
+                   for PPP transactions                • Upgrading and O&M of
+                                                       400 km through co-financing
+                                                       arrangements
+Road Safety      • Multi-sectoral Demonstration        • Multi-sectoral                   • Multi-sectoral
+                   projects carried out in at least    Demonstration projects on          Demonstration projects on
+                   two road corridors                  two road corridors                 two road corridors
+                 • Comprehensive GOAP road             • Lead Agency established          • Star rating for Model
+                   safety functions, capacity and      • Policy and Institutional         Corridor
+                   action plan(s) put in place         Actions                            • Road Safety Policy and
+                 • Black-spot improvements                                                Action Plan
+                   initiated
+                                                                                          • Road Safety Awareness
+                                                                                          Campaign
+Institutional     Institutional Strengthening         Institutional Development          Implementation of a Road
+Development       Action Plan                         and Strengthening Action           Sector Modernisation Plan:
+and Road                                              Plan                                • Sector Policy &
+Sector            • Strategic & Regulatory                                                financing framework
+Modernisation       Framework                         • Business Process                  • Engineering practices
+                  • Organisation,                       Effectiveness                     and key procedures
+                    Management & Systems              • Performance and                   modernized
+                  • Human Resources                     Accountability                    • Road Asset
+                    Development                       • Asset Sustainability              Management System &
+                                                      • Human Resources                   innovative forms of
+                                                                                          contracting
+                                                                                          • Training Plan and HR
+                                                                                          policy & Procedures
+                                                                                          developed
+
+
+
+                                                                                                            Page 60 of 62
+   The World Bank
+   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+                                              Appendix-2
+         Comparison of Institutional Development/Strengthening/ Road Sector Modernization Plan
+
+Themes                   APTRSP                        KSHIP II                      RRSMP
+Strategic & Regulatory   • AP Road Act                 • Road Sector Policy          • Road Sector Policy
+Framework (Policy &      • State Level Road            • Karnataka State             • Financing Framework for
+financing)                 Network Master Plan           Highway Act -tolling          the Network –
+                         • Core Road Network             powers for both public        construction and
+                         • Road Fund                     and PPP roads                 maintenance
+                         • Encouraging PPP &           • New Road Asset              • Encouraging private
+                           performance-based CRN         Maintenance Policy            participation
+                           maintenance contracts       • Establishing Core Road
+                         • Road Safety Action            Network
+                           Program                     • Financing Strategy &
+                         • Black spot rectification      Institutional Measures
+                           program                       for CRN
+                                                       • Road Fund
+                                                       • Increase private sector
+                                                         participation
+                                                       • Finalise and roll out of
+                                                         State Level Road Master
+                                                         Plan
+Modernisation of Key     • Revised Departmental        • Revised Departmental        • Modern Project
+Organisation, Business     Code                          Code & its cyclical           Preparation and
+Process Effectiveness    • IT-ICT-MIS Strategy           review and updating           management practices
+(Business and            • Financial Powers & FM         including E&SM, Safety      • Design & construction
+Engineering Practices,     tools                       • IT-ICT-MIS Strategy           standards
+Processes)               • MIS                         • Financial Management        • Cost-effective new
+                         • Staffing powers defined       & Information System          technologies for road
+                         • Dedicated HRM & HRD         • ISO Certification for         construction
+                           functions & capacity          Environmental               • PWD-wide procurement
+                         • PPP roles & capacity          Management                    and contract
+                                                       • IT Based Project              management manual
+                                                         Management System           • Computerisation of PWD
+                                                                                       offices
+Performance and          • GAAP                        • GAAP                        • E-procurement
+Accountability           • Road User Satisfaction      • Road User Satisfaction      • Improved public
+(including                 Surveys                       Surveys                       disclosure & information
+Governance)              • ISO Certification Quality   • Quality Management            sharing
+                           Management                    System -ISO Certification
+                                                       • Quality control-
+                                                         Laboratory/Equipment
+                                                       • E-procurement
+                                                       • E-billing &E-contract
+                                                         management
+
+                                                                                                        Page 61 of 62
+   The World Bank
+   Rajasthan Road Sector Modernization Project (P130164)
+
+
+
+Themes                 APTRSP                        KSHIP II                    RRSMP
+Asset Sustainability   • Planning & Budgeting        • Road Asset Maintenance • Asset Management
+(Road Asset              based on Road Asset           and Management              System
+Management)              Management System             System integrated with    • Prioritised Annual Plans
+                                                       RIS & GIS                   for construction &
+                                                     • Planning & Road Asset       maintenance based on
+                                                       Management Centre           RAMS
+                                                     • Asset Maintenance Plan • Area-wide maintenance
+                                                                                   contract system
+Human Resources        • Training Needs              • Training Needs            • Training & Capacity
+Development              Assessment                    Assessment                  Building
+(Training & Capacity   • Multi-Year Staff Training   • Multi-Year Staff Training
+Building)                Program                       Program
+                       • New Staff Appraisal         • New Staff Appraisal
+                         Policy & Process              Policy & Process
+                         Implementation                Implementation
+                       • Specific PPP Training       • Separate Budget Head
+                         Program                       for Staff Training
+                                                     • High Impact Training
+                                                       Plan
+
+
+
+
+                                                                                                     Page 62 of 62
+

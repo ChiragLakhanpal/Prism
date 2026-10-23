@@ -1,0 +1,29 @@
+{
+ "source": "https://search.worldbank.org/api/v3/wds?format=json&id=34442292&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid,projectid,count",
+ "license": "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0.",
+ "recorded": "2026-10-23",
+ "about": "A document whose date (December 31, 2026) is later than both its disclosure date and the day it was recorded, so public_from must fall back to the first fetch.",
+ "response": {
+  "rows": 10,
+  "os": 0,
+  "page": 1,
+  "total": 1,
+  "documents": {
+   "D34442292": {
+    "id": "34442292",
+    "count": "Brazil",
+    "docty": "Loan Agreement",
+    "lang": "English",
+    "docdt": "2026-12-31T05:00:00Z",
+    "display_title": "Official Documents- Loan Agreement for Loan 9619-BR.pdf",
+    "disclosure_date": "2025-01-01T14:42:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099010125194536043/pdf/P179365-20b99485-9b6e-49ed-93ee-9976c1043be5.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099010125194536043/text/P179365-20b99485-9b6e-49ed-93ee-9976c1043be5.txt",
+    "projectid": "P179365",
+    "guid": "099010125194536043",
+    "url": "http://documents.worldbank.org/curated/en/099010125194536043"
+   },
+   "facets": {}
+  }
+ }
+}

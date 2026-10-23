@@ -1,0 +1,3 @@
+# Recorded sources keep the bytes the World Bank published, including Windows line ends and
+# form feeds, so git must never convert them.
+data/fixture/recorded/** -text
