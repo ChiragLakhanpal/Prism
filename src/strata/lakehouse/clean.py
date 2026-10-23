@@ -114,16 +114,19 @@ PERSONAL_TITLE = re.compile(
 
 # A word that names a firm, not a person, in any case: a legal form such as LTD or GMBH, a word such
 # as PARTNERS, ENTERPRISES or UNIVERSITY that is never part of a person's name, or an ampersand.
-# CONSULTANT alone is not one, as a person is one. A two-letter legal form such as S.A., B.V., AG or
-# CO counts only where a firm writes it, at the end of the name or before a comma or a bracket, as a
-# person's initials can read the same.
+# CONSULTANT alone is not one, as a person is one.
 FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|LLP|INC|PLC|PVT|PTY|SARL|GMBH|COMPANY|CORP(?:ORATION)?|"
                   r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?|ENGINEERING|"
                   r"ENTERPRISES?|SOLUTIONS?|SERVICES|SUPPLIES|SUPPLIERS|INVESTMENTS?|INTERNATIONAL|HOLDINGS|"
                   r"TECHNOLOGIES|SYSTEMS|INDUSTRIES|INDUSTRIAL|TRADING|CONSTRUCTION|CONTRACTORS|VENTURES?|"
                   r"MOTORS|MERCHANTS|HARDWARE|LOGISTICS|AGENC(?:Y|IES)|UNIVERSITY|INSTITUTE|FOUNDATION|"
-                  r"ASSOCIATION|AUTHORITY)\b|&|"
-                  r"\b(?:S\.?A|B\.?V|AG|CO)\b\.?\s*(?:[,(]|$)", re.I)
+                  r"ASSOCIATION|AUTHORITY)\b|&", re.I)
+
+# A two-letter legal form such as S.A., B.V., AG or CO, where a firm writes it: at the end of the name
+# or before a comma or a bracket. A person's initials or surname can end a name the same way, as in
+# DOE, S.A. or JOHN CO, so this form alone never makes a titled supplier a firm, and it does not
+# keep the name of the person a description names.
+LEGAL_FORM = re.compile(r"\b(?:S\.?A|B\.?V|AG|CO)\b\.?\s*(?:[,(]|$)", re.I)
 
 
 def names_a_person(procurement_category, description) -> bool:
@@ -133,21 +136,36 @@ def names_a_person(procurement_category, description) -> bool:
 
 
 def names_a_firm(name) -> bool:
-    """Whether a supplier's name has a word that names a firm."""
-    return bool(FIRM.search(text(name) or ""))
+    """Whether a supplier's name has a word that names a firm, or a two-letter legal form."""
+    written = text(name) or ""
+    return bool(FIRM.search(written) or LEGAL_FORM.search(written))
 
 
 def titled(name) -> bool:
     """Whether a supplier is written as a person, in any category: a personal title before the name,
     and no word that names a firm, so DR. REDDY'S LABORATORIES LTD stays a firm."""
-    return bool(PERSONAL_TITLE.match(text(name) or "")) and not names_a_firm(name)
+    written = text(name) or ""
+    return bool(PERSONAL_TITLE.match(written)) and not FIRM.search(written)
+
+
+def _words(written: str) -> set[str]:
+    return set(re.findall(r"[A-Z]+", written.upper()))
+
+
+def is_the_named_person(description, supplier) -> bool:
+    """Whether every word of the supplier's name is in the description from its personal title on,
+    so the supplier is the person the description names."""
+    written = text(description) or ""
+    title = PERSONAL_TITLE.search(written)
+    return bool(title) and _words(text(supplier) or "") <= _words(written[title.start():])
 
 
 def hires_a_named_person(procurement_category, description, supplier) -> bool:
     """Whether a contract is with a person whom the row may name: its supplier is written with a
-    personal title, or its description names a person and its supplier names no firm. A firm hired
-    for a person's services keeps its name."""
-    return titled(supplier) or (names_a_person(procurement_category, description) and not names_a_firm(supplier))
+    personal title, or its description names a person and its supplier names no firm or is that
+    person. A firm hired for a person's services keeps its name."""
+    return titled(supplier) or (names_a_person(procurement_category, description)
+                                and (not names_a_firm(supplier) or is_the_named_person(description, supplier)))
 
 
 STEP_REFERENCE = re.compile(

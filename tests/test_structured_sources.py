@@ -142,9 +142,10 @@ def test_an_old_award_to_a_person_reaches_silver_and_gold_with_no_name_and_no_de
 
 
 # A row that names a person, in each place and form the review found: a title with its period, in
-# either case, a title in capitals without one, a supplier written with a title, and initials such as
-# S.A. or B.V. that a firm could use as its legal form. A description that names a person comes with
-# that person as the supplier, written without a title, so the row names no firm. The names are made up.
+# either case, a title in capitals without one, a supplier written with a title, and initials or a
+# surname, such as S.A. or SA, that a firm could use as its legal form, at the start or the end of the
+# name. A description that names a person comes with that person as the supplier, written without a
+# title, so the row names no firm or is that person. The names are made up.
 NAMED = [{"contract_description": "Hiring the Consultancy Services of Dr. Jane Doe as Social Specialist",
           "supplier": "JANE DOE"},
          {"contract_description": "INDIVIDUAL CONSULTANCY SERVICES OF MR. JOHN DOE, M&E SPECIALIST",
@@ -152,7 +153,9 @@ NAMED = [{"contract_description": "Hiring the Consultancy Services of Dr. Jane D
          {"contract_description": "CONSULTANCY SERVICES OF DR JOHN DOE", "supplier": "JOHN DOE"},
          {"supplier": "MR. JOHN DOE"},
          {"supplier": "DR. S.A. DOE"},
-         {"contract_description": "CONSULTANCY SERVICES OF DR. B.V. DOE", "supplier": "B.V. DOE"}]
+         {"contract_description": "CONSULTANCY SERVICES OF DR. B.V. DOE", "supplier": "B.V. DOE"},
+         {"supplier": "MRS. JANE SA"},
+         {"contract_description": "CONSULTANCY SERVICES OF DR. S.A. DOE", "supplier": "DOE, S.A."}]
 
 
 @pytest.mark.parametrize("named", NAMED, ids=lambda named: next(iter(named.values())))
