@@ -31,20 +31,22 @@ Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also run
 
     .githooks/pre-commit
 
-It runs the steps in `gates/steps.toml` in order and stops at the first one that fails. Today it has these steps:
+It runs the steps in `gates/steps.toml`. Steps that do not depend on each other run side by side, in lanes. Today it has these steps:
 
-1. Scan the staged changes and the history of the branch for secrets.
-2. Test the guard hook.
-3. Build the fixture database from the recorded sources, and print its size.
-4. Run the Python tests. They cover the gate, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job, the bundle commands and the server.
-5. Type check and bundle the web app.
-6. Run the Playwright tests against the built web app.
+1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
+2. Run four lanes side by side:
+   - The guard lane tests the guard hook.
+   - The python lane builds the fixture database from the recorded sources and prints its size. Then it runs the Python tests that may read that database: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server, the fixture and its ground truth, the ground-truth SQL on DuckDB, the catalog and its table definitions, the config files, the nightly job and the bundle commands.
+   - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers.
+   - The web lane type checks and bundles the web app, then runs the Playwright tests against it.
 
-The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when a run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
+The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
 
-The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a check, add a step to `gates/steps.toml`. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Write the query in Databricks SQL, with three-part names such as `strata.ops.pipeline_runs`; the engine adapter rewrites it for DuckDB. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. A `-- param: name = value` line binds a parameter, and a `-- engines: duckdb, databricks` line marks a query that `ops/bundle/check.py same-rows` also runs on the workspace's SQL warehouse. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
+The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Write the query in Databricks SQL, with three-part names such as `strata.ops.pipeline_runs`; the engine adapter rewrites it for DuckDB. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. A `-- param: name = value` line binds a parameter, and a `-- engines: duckdb, databricks` line marks a query that `ops/bundle/check.py same-rows` also runs on the workspace's SQL warehouse. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
 
 The fixture build also creates the strata catalog's schemas and tables from `src/strata/lakehouse/tables/`, and it stops when any table has no `public_from` column. To add a table, add one file there, `<schema>/<table>.sql`, that starts with `CREATE TABLE IF NOT EXISTS strata.<schema>.<table> (`.
+
+To add a check, add a step to `gates/steps.toml`. A step with no `lane` key runs alone. It waits for every step above it, and every step below it waits for it. To run a step side by side with others, give it a lane, such as `lane = "web"`, and put it among the steps that have lanes. It runs after the steps above it in the same lane. Use a new lane's name when the step needs nothing from the other steps. A step that needs another step's output goes in that step's lane, below it. A new pytest step names the folders it tests, and the gate's own tests check that each folder in `testpaths` in `pyproject.toml` runs in exactly one step. A test folder whose tests read the fixture database goes in the python lane, below the build, and in `FIXTURE_READERS` in `tests/test_gate.py`, which checks that it runs after the build.
 
 To run the nightly job's tasks in order on an empty DuckDB database and see the rows they write, run `uv run --frozen python -m strata.lakehouse.nightly`. To deploy the catalog and the job to the shared workspace, follow `bundle/README.md`.
 
@@ -84,6 +86,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The web app, with its `api`, `sse`, `store` and `export` libraries | `web/src/` and `web/src/lib/` |
 | The copy file, for now | `web/src/copy.ts` |
 | Python tests for seams 1, 2, 3 and 5, and for the gate | `tests/` |
+| The guard that keeps every Python test off the network | `conftest.py` at the root |
 | Screen tests (seam 4) | `web/tests/` |
 | Responses recorded once and shared by the server and screen tests | `tests/fixtures/api/` |
 | Fixture inputs, and the fixture database the gate builds | `data/fixture/`, and `data/out/`, which git ignores |

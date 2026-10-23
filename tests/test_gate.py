@@ -4,11 +4,15 @@ Each test builds a throwaway repo that holds this repo's hook and gate runner, w
 list of steps, so a step can fail, sleep or plant a key without touching this repo.
 """
 
+import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import textwrap
+import time
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -68,12 +72,17 @@ def write(repo, name, text):
 
 
 def steps_file(limit=120, steps=()):
-    """A steps file: the secret scan always runs, then the given test steps."""
+    """A steps file: the secret scan always runs, then the given test steps.
+
+    Each step is (name, run) or (name, run, lane).
+    """
     lines = [f"limit_seconds = {limit}", ""]
     lines += ["[[step]]", 'name = "Scan for secrets"',
               'run = ["python3", "gates/secret_scan.py"]', "always = true", "git_env = true", ""]
-    for name, run in steps:
-        lines += ["[[step]]", f'name = "{name}"', f"run = {run}", ""]
+    for name, run, *lane in steps:
+        lines += ["[[step]]", f'name = "{name}"', f"run = {run}"]
+        lines += [f'lane = "{lane[0]}"'] if lane else []
+        lines += [""]
     return "\n".join(lines)
 
 
@@ -413,6 +422,223 @@ def test_the_hook_finds_the_root_from_a_worktree(repo, tmp_path):
 
     assert done.returncode != 0
     assert "The worktree copy ran." in done.stdout + done.stderr
+
+
+# Lanes. Each step below runs step.py, which notes in log.txt when it starts and finishes,
+# waits, and can fail. The tests run the hook by hand, as a person does, to read its exit code.
+
+STEP = """\
+    import os, sys, time
+    name, seconds = sys.argv[1], float(sys.argv[2])
+    def note(word):
+        with open("log.txt", "a") as log:
+            log.write(f"{name} {word} {os.getpid()}\\n")
+    note("started")
+    time.sleep(seconds)
+    note("finished")
+    if sys.argv[3:] == ["fail"]:
+        raise SystemExit(f"{name} found a total of 3, not 4.")
+    """
+
+
+def wait(name, seconds, lane=None, fails=False):
+    """A step that waits, then passes or fails."""
+    run = json.dumps(["python3", "step.py", name, str(seconds)] + (["fail"] if fails else []))
+    return (name, run, lane) if lane else (name, run)
+
+
+def run_gate(repo, steps, limit=120):
+    """Write the steps file and step.py, run the hook by hand, and time it."""
+    write(repo, "gates/steps.toml", steps_file(limit=limit, steps=steps))
+    write(repo, "step.py", STEP)
+    started = time.monotonic()
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
+    return done, time.monotonic() - started
+
+
+def test_steps_in_different_lanes_run_side_by_side_and_steps_in_one_lane_take_turns(repo):
+    apart, apart_seconds = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="two")])
+    shared, shared_seconds = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="one")])
+
+    assert apart.returncode == 0, apart.stdout + apart.stderr
+    assert shared.returncode == 0, shared.stdout + shared.stderr
+    assert apart_seconds < 3.5, apart.stdout
+    assert shared_seconds > 4, shared.stdout
+
+
+def logged(repo):
+    """The lines step.py wrote, such as "A started", in the order the steps wrote them."""
+    return [" ".join(line.split()[:2]) for line in (repo / "log.txt").read_text().splitlines()]
+
+
+def test_a_step_with_no_lane_waits_for_the_lanes_before_it_and_the_steps_after_it_wait_for_it(repo):
+    done, _ = run_gate(repo, [wait("A", 0.6, lane="one"), wait("B", 0.3, lane="two"), wait("Alone", 0.3),
+                              wait("C", 0, lane="one"), wait("D", 0, lane="two")])
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    log = logged(repo)
+    assert {"A finished", "B finished"} <= set(log[:log.index("Alone started")]), log
+    assert {"C started", "D started"} <= set(log[log.index("Alone finished"):]), log
+
+
+def pid_of(repo, name):
+    return next(int(line.split()[2]) for line in (repo / "log.txt").read_text().splitlines()
+                if line.startswith(f"{name} started"))
+
+
+def was_still_running(pid):
+    """True when the process is alive. It is then stopped, so a failing test leaves nothing behind."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    os.kill(pid, signal.SIGKILL)
+    return True
+
+
+def test_a_failing_step_stops_the_other_lanes_and_prints_its_output(repo):
+    done, took = run_gate(repo, [wait("Check", 0.5, lane="one", fails=True), wait("Long", 30, lane="two")])
+
+    output = done.stdout + done.stderr
+    assert not was_still_running(pid_of(repo, "Long"))
+    assert done.returncode == 1, output
+    assert took < 10, output
+    assert "Check found a total of 3, not 4." in output
+    assert 'The step "Check" exited with code 1.' in output
+
+
+def test_the_limit_covers_the_whole_run_and_stops_every_lane(repo):
+    # "Short" alone fits in the limit, but not after the step before it.
+    steps = [wait("Warm up", 1), wait("Short", 1.5, lane="one"), wait("Long", 30, lane="two")]
+
+    done, took = run_gate(repo, steps, limit=2)
+
+    output = done.stdout + done.stderr
+    assert not was_still_running(pid_of(repo, "Short"))
+    assert not was_still_running(pid_of(repo, "Long"))
+    assert done.returncode == 1, output
+    assert took < 10, output
+    assert "The gate failed because it ran longer than 2 seconds, the limit in gates/steps.toml." in output
+    assert 'It stopped during "Short" and "Long".' in output
+
+
+def test_ctrl_c_stops_every_lane(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[wait("A", 30, lane="one"), wait("B", 30, lane="two")]))
+    write(repo, "step.py", STEP)
+    gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            text=True, env=clean_env())
+    for _ in range(100):
+        if (repo / "log.txt").exists() and len(logged(repo)) == 2:
+            break
+        time.sleep(0.05)
+    time.sleep(0.5)  # Ctrl-C lands while the gate waits on the lanes, as when a person presses it.
+
+    gate.send_signal(signal.SIGINT)
+    output, _ = gate.communicate(timeout=20)
+
+    assert not was_still_running(pid_of(repo, "A"))
+    assert not was_still_running(pid_of(repo, "B"))
+    assert gate.returncode == 130, output
+    assert '"A" was stopped' in output and '"B" was stopped' in output, output
+    assert "The gate was stopped before it finished, so the commit did not go through." in output
+
+
+def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(repo):
+    write(repo, "gates/steps.toml", steps_file() + '\n[[step]]\nname = "Build"\nrun = ["true"]\nlane = 2\n')
+
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
+
+    assert done.returncode != 0
+    assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python".' \
+        in done.stdout + done.stderr
+
+
+# This repo's own steps file.
+
+def gate_steps():
+    with open(ROOT / "gates" / "steps.toml", "rb") as handle:
+        return tomllib.load(handle)["step"]
+
+
+# The test folders whose tests may read the fixture database, so they must run after its build.
+# ops/bundle/tests reads it through ops/bundle/check.py when the database exists.
+FIXTURE_READERS = (Path("tests"), Path("ops/bundle/tests"))
+
+
+def folders_in_testpaths():
+    with open(ROOT / "pyproject.toml", "rb") as handle:
+        return [Path(path) for path in tomllib.load(handle)["tool"]["pytest"]["ini_options"]["testpaths"]]
+
+
+def paths_tested(step):
+    """The paths a pytest step names after "pytest", or every folder in testpaths when it names none."""
+    if "pytest" not in step["run"]:
+        return []
+    args = step["run"][step["run"].index("pytest") + 1:]
+    named = [Path(arg) for arg in args if not arg.startswith("-") and (ROOT / arg).exists()]
+    return named or folders_in_testpaths()
+
+
+def overlap(one, other):
+    """Whether two paths are the same, or one lies inside the other."""
+    return one == other or one in other.parents or other in one.parents
+
+
+def reads_the_fixture_database(step):
+    return any(overlap(path, reader) for path in paths_tested(step) for reader in FIXTURE_READERS)
+
+
+def steps_that_may_start_before_the_fixture_build(steps):
+    build = next(i for i, step in enumerate(steps) if "gates/build_fixture.py" in step["run"])
+    early = []
+    for i, step in enumerate(steps):
+        if not reads_the_fixture_database(step):
+            continue
+        lanes = steps[build].get("lane"), step.get("lane")
+        alone_between = any("lane" not in other for other in steps[build + 1:i])
+        if i < build or not (None in lanes or lanes[0] == lanes[1] or alone_between):
+            early.append(step["name"])
+    return early
+
+
+def gate_steps_per_test_folder(steps):
+    """For each folder in testpaths, how many steps run some or all of its tests."""
+    tested = [path for step in steps for path in paths_tested(step)]
+    return {folder: sum(overlap(folder, path) for path in tested) for folder in folders_in_testpaths()}
+
+
+def test_the_fixture_database_is_built_before_the_python_tests_that_read_it():
+    steps = gate_steps()
+
+    assert any(reads_the_fixture_database(step) for step in steps), "no step runs the tests that read the fixture database"
+    assert steps_that_may_start_before_the_fixture_build(steps) == []
+
+
+def test_each_test_folder_in_pyproject_runs_in_exactly_one_gate_step():
+    runs = gate_steps_per_test_folder(gate_steps())
+
+    assert runs and all(count == 1 for count in runs.values()), runs
+
+
+# Edits to the steps file that the two checks above must catch: each adds a second pytest step,
+# in the web lane, that runs tests a step in another lane already runs and that may read the
+# fixture database while the python lane is still building it.
+SECOND_PYTEST_STEPS = {
+    "every folder in testpaths": [],
+    "a folder inside tests": ["tests/ground_truth"],
+    "a file inside tests": ["tests/test_fixture.py"],
+    "the bundle tests": ["ops/bundle/tests"],
+    "every folder under ops": ["ops"],
+}
+
+
+@pytest.mark.parametrize("paths", SECOND_PYTEST_STEPS.values(), ids=SECOND_PYTEST_STEPS.keys())
+def test_a_second_pytest_step_in_another_lane_fails_both_steps_file_checks(paths):
+    extra = {"name": "Extra", "run": ["uv", "run", "--frozen", "pytest", *paths], "lane": "web"}
+    steps = [*gate_steps(), extra]
+
+    assert steps_that_may_start_before_the_fixture_build(steps) == ["Extra"]
+    assert any(count > 1 for count in gate_steps_per_test_folder(steps).values())
 
 
 if __name__ == "__main__":
