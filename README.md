@@ -82,7 +82,7 @@ To start only the server, run `uv run python -m strata.server`. It prints the ad
 - `GET /api/me/warehouse` runs one query as the viewer and returns the user the warehouse says ran it.
 - `GET /api/freshness` returns the data-freshness stamp's day, read from `strata.ops` as the viewer: the earliest day a daily source was last loaded, or `null` before any has loaded. It answers 401 when no viewer was forwarded, 403 with the code `permission` when the warehouse refuses the viewer, 504 after `app.stamp_timeout_seconds` in `config/thresholds.toml`, and 502 when the warehouse fails.
 - `POST /api/ask` takes `{"question": "..."}` and streams the run's events as `text/event-stream`, ending with a `done` event that carries the run id. Until the agent exists, the run sends one `error` event with the code `no_agent`.
-- `GET /api/projects/{project_id}/procurement/{agency_id}` checks an implementing agency's latest Procurement Plan, and `GET /api/projects/{project_id}/procurement/{agency_id}/{version}` checks the version with that plan date, such as `2026-10-09`. Each runs the tool registry's `check_plan` as the viewer and returns its result as JSON. Both take `?asof=` (a date) and `?view=` (`staff`, `piu` or `public`). Until ticket 40 applies each view's rules, every view gets the World Bank staff result. A viewer whose token cannot read the strata catalog gets HTTP 403 with the code `permission` and no rows. When the data service fails, or its database file cannot be opened, the answer is HTTP 503 with the code `data_service` and a reference. When a tool breaks its contract, the answer is HTTP 500 with the code `tool_contract` and a reference. The reference is the request's trace id, so it finds the request in the server log, in Application Insights and in its usage event.
+- `GET /api/projects/{project_id}/procurement/{agency_id}` checks an implementing agency's latest Procurement Plan, and `GET /api/projects/{project_id}/procurement/{agency_id}/{version}` checks the version with that plan date, such as `2026-10-09`. Each runs the tool registry's `check_plan` as the viewer and returns its result as JSON. Both take `?asof=` (a date) and `?view=` (`staff`, `piu` or `public`). Until ticket 40 applies each view's rules, every view gets the World Bank staff result. A viewer whose token cannot read the strata catalog gets HTTP 403 with the code `permission` and no rows. When the data service fails, or its database file cannot be opened, the answer is HTTP 503 with the code `data_service` and a reference. When a tool breaks its contract, the answer is HTTP 500 with the code `tool_contract` and a reference. The reference is the request's trace id, so it finds the request in the server log, in Application Insights and in its usage event. A warehouse query that runs longer than `app.stamp_timeout_seconds` counts as the data service failing.
 - Every other address outside `/api` gets the built web app (`web/dist`, or `STRATA_WEB_DIST`), whose router shows the page or the not-found page.
 
 The server reads its data as each viewer, from one of two places, chosen when it starts:
@@ -94,7 +94,7 @@ With neither, the routes that need data answer HTTP 503 with the code `no_data_s
 
 On this computer no Databricks App forwards a viewer, so `/api/freshness` answers 401 and the app shows the alert that says so. The screen tests in `web/tests/` answer `/api` from the recordings in `tests/fixtures/api` instead, as `npm --prefix web run capture` does.
 
-Each request a viewer makes, except `/api/health` and the web app's files, writes one usage event to `strata.ops.usage_events` and sends one trace. `src/strata/server/settings.py` says which environment variables set the app's own credentials for the usage events, the Application Insights connection string and the web app. Without the app's credentials, as on this computer, the server keeps no usage events.
+Each request a viewer makes, except `/api/health` and the web app's files, writes one usage event to `strata.ops.usage_events` and sends one trace, whatever the route answers. An error that no route expects, such as a bug, answers HTTP 500 with the code `internal` and a reference, and its details stay in the server log. `src/strata/server/settings.py` says which environment variables set the app's own credentials for the usage events, the Application Insights connection string and the web app. Without the app's credentials, as on this computer, the server keeps no usage events.
 
 ## Deploy the app
 
@@ -112,7 +112,7 @@ It takes these steps, in order:
 6. It lets the app's own service principal write usage events.
 7. It prints the app's address.
 
-Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the usage events stop being written.
+Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the server can't write usage events.
 
 Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
 
@@ -132,7 +132,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The app's deploy, its `app.yaml` and its lean requirements file, and the Lakebase probe | `ops/app/`, with the probe's result in `docs/app-state.md` |
 | The web app, with its `api`, `sse`, `store`, `export`, `router` and `freshness` libraries | `web/src/` and `web/src/lib/` |
 | The app's routes: which page an address opens and the tab it selects | `web/src/routes.ts` |
-| The World Bank logo, with where and when it was downloaded | `web/src/assets/` |
+| The World Bank Group logo, with where and when it was downloaded | `web/src/assets/` |
 | The copy file: every string a person reads | `web/src/copy.ts` |
 | The design tokens: DESIGN.md sections 2 to 4 as the Tailwind theme, and the self-hosted fonts | `web/src/styles/app.css` |
 | The components, and the number and date rules Num follows | `web/src/components/` and `web/src/lib/format.ts` |

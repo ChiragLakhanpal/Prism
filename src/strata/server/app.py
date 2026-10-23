@@ -20,7 +20,8 @@
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
 (src/strata/server/usage.py) and sends one trace (src/strata/server/tracing.py), whose id the
-event keeps. An /api span is named by its route, such as GET /api/projects/{project_id}/..., and
+event keeps, whatever the route answers. An error no route expects answers 500 with the code
+internal and a reference, and its details stay in the server log. An /api span is named by its route, such as GET /api/projects/{project_id}/..., and
 an error's reference is the request's trace id.
 
 Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer.
@@ -131,7 +132,15 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             span.set_attribute("http.request.method", request.method)
             span.set_attribute("url.path", path)
             span.set_attribute("strata.view", STAFF)
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception:  # an error no route expected: its details stay in the server log
+                reference = request_reference()
+                log.exception("%s failed in a way I did not expect, reference %s.", name, reference)
+                response = JSONResponse({"code": "internal", "trace_id": reference}, status_code=500)
+            finally:  # whatever the route did, the request is counted
+                if usage is not None:
+                    usage.record(UsageEvent(viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
             # One operation per route in Application Insights, not one per project or agency.
             route = getattr(request.scope.get("route"), "path", None)
             if route and path.startswith("/api/"):
@@ -139,8 +148,6 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
             span.set_attribute("http.response.status_code", response.status_code)
             if response.status_code >= 500:
                 span.set_status(trace.StatusCode.ERROR)
-        if usage is not None:
-            usage.record(UsageEvent(viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
         return response
 
     def read_as(viewer: Viewer, read: Callable[[Engine], object]):

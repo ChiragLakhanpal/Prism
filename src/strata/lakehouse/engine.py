@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import http.client
 import json
 import re
 import time
@@ -244,6 +245,10 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
             detail = error.read().decode(errors="replace")[:400]
             refused = PermissionDenied if error.code in (401, 403) else EngineError
             raise refused(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
+        except (OSError, http.client.HTTPException) as error:  # a reset, DNS, TLS or a read that timed out
+            raise EngineError(f"I could not reach the workspace for {method} {path}: {error}") from error
+        except json.JSONDecodeError as error:
+            raise EngineError(f"I could not read the workspace's answer to {method} {path}: {error}") from error
 
     return call
 

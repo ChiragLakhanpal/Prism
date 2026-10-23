@@ -13,8 +13,9 @@
 [ingestion]
 daily_page_cap = 500
 
-# The app (ticket 06). The server stops waiting for the warehouse after stamp_timeout_seconds, and
-# the data-freshness stamp then shows its error state. Source: the 06 design brief ("Error (timeout
+# The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
+# gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the
+# plan check answers 503. Source: the 06 design brief ("Error (timeout
 # after 30 seconds, set in the app config, or a server error)"). Usage events wait at most
 # usage_flush_seconds before the server writes them to strata.ops.usage_events in one insert, so a
 # page never waits for the warehouse to log it; 10 is a starting value for the owner to confirm.

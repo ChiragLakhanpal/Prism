@@ -3,13 +3,14 @@
 The adoption measures (weekly users, the page each visit starts on and the API routes it calls,
 which view people use) read these rows. The web app's router changes pages without asking the
 server, so later pages in a visit are not recorded. An event keeps the viewer's user id, never
-their email, because every account user can read strata.ops. The server keeps each event in memory and writes them in one insert at a time, from a
-background thread every usage_flush_seconds (config/thresholds.toml) and once more when the
-server stops, so no request waits for the warehouse. A write that fails is logged and its
-events wait for the next one; a request never fails because its event could not be written.
+their email, because every account user can read strata.ops. The server keeps each event in
+memory and writes them in one insert at a time, from a background thread every
+usage_flush_seconds (config/thresholds.toml) and once more when the server stops, so no request
+waits for the warehouse. A write that fails is logged and its events wait for the next one; a
+request never fails because its event could not be written.
 
-On the Databricks App the rows are written as the app's own service principal, because a
-viewer only reads (ADR 0003): the deploy grants the principal MODIFY on this one table.
+On the Databricks App the rows are written with the app's own service principal, so no viewer's
+token can change another person's rows. The deploy grants the principal MODIFY on this one table.
 """
 
 from __future__ import annotations

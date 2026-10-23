@@ -11,6 +11,9 @@ Databricks App the same spans go to Application Insights (a workspace step).
 import asyncio
 import datetime as dt
 import time
+import urllib.error
+import urllib.request
+from contextlib import nullcontext
 
 import duckdb
 import httpx
@@ -22,7 +25,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
-from strata.server.engines import duckdb_file
+from strata.server.engines import duckdb_file, warehouse_as_viewer
 from strata.server.usage import UsageLog
 
 ANA = {
@@ -192,3 +195,45 @@ def test_a_usage_log_that_cannot_write_never_breaks_a_request():
     [response] = serve(create_app(usage=UsageLog(broken, flush_seconds=None)), [("/api/me", ANA)])
 
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize("path, status, code", [
+    ("/api/freshness", 502, "unreadable"),
+    ("/api/me/warehouse", 502, "unreadable"),
+    ("/api/projects/P156634/procurement/AGENCY-1", 503, "data_service"),
+])
+def test_a_warehouse_connection_that_resets_gives_the_route_s_error_and_still_writes_its_usage_event(
+        ops, monkeypatch, path, status, code):
+    def urlopen(request, timeout):
+        raise urllib.error.URLError(ConnectionResetError(54, "Connection reset by peer"))
+
+    monkeypatch.setattr(urllib.request, "urlopen", urlopen)
+    usage = UsageLog(lambda: DuckDBEngine.open(ops), flush_seconds=None)
+    app = create_app(usage=usage, engine_for=warehouse_as_viewer("strata.test", "wh-1"))
+
+    [response] = serve(app, [(path, ANA)])
+
+    assert response.status_code == status
+    assert response.json()["code"] == code
+    assert [row[:2] for row in events(ops)] == [("4021@1984", path)]
+
+
+def test_a_request_that_breaks_in_a_way_the_server_did_not_expect_still_writes_its_usage_event(ops):
+    class Broken:
+        def run(self, sql, params=None):
+            raise KeyError("a bug, not the warehouse")
+
+    exporter, provider = traced()
+    usage = UsageLog(lambda: DuckDBEngine.open(ops), flush_seconds=None)
+    app = create_app(usage=usage, tracer_provider=provider, engine_for=lambda viewer: nullcontext(Broken()))
+
+    [response] = serve(app, [("/api/projects/P156634/procurement/AGENCY-1", ANA)])
+
+    [span] = exporter.get_finished_spans()
+    reference = format(span.context.trace_id, "032x")
+    assert response.status_code == 500
+    assert response.json() == {"code": "internal", "trace_id": reference}
+    assert "a bug" not in response.text
+    assert span.attributes["http.response.status_code"] == 500
+    assert [row[:2] + row[4:5] for row in events(ops)] == [
+        ("4021@1984", "/api/projects/P156634/procurement/AGENCY-1", reference)]
