@@ -316,6 +316,20 @@ def test_the_ground_truth_sql_expects_the_counts_values_toml_holds():
     assert case.expected[1:] == [("gold", *counts), ("ops", *counts)]
 
 
+def test_the_comparables_sql_expects_the_counts_values_toml_holds():
+    """Rule 4: values.toml's [comparables] writes the counts once. The SQL check's expect lines must
+    say the same: 45 signed (two of them only in their award notice), 3 canceled and 4 still open."""
+    from strata.lakehouse import ground_truth
+
+    criteria = TRUTH["comparables"]
+    case = ground_truth.read(ROOT / "tests" / "ground_truth" / "kenya_comparables_signed.sql")
+
+    in_award_notice = criteria["signed_only_in_award_notice"]
+    assert case.expected[1:] == [("award notice", str(in_award_notice)), ("canceled", str(criteria["canceled"])),
+                                 ("contract awards", str(criteria["signed"] - in_award_notice)),
+                                 ("still open", str(criteria["still_open"]))]
+
+
 def test_each_source_is_fresh_as_of_its_fetch_with_its_cadence(gold):
     kenya = measures(gold)
 
@@ -395,6 +409,25 @@ def test_a_notice_that_says_ncb_is_stored_as_request_for_bids_open_national(gold
 
 
 # ── Joint ventures and individual consultants ────────────────────────────
+
+def test_a_package_takes_its_process_status_from_the_newest_plan_that_lists_it(gold):
+    """values.toml, [[comparable]]: the KIMAWASCO plan of March 19, 2025 marks three works packages
+    Canceled. A package no plan read so far lists, such as one still open on P176758 or P170941,
+    has no Process Status."""
+    package = ("SELECT p.process_status, v.plan_date, p.process_status_public_from FROM strata.gold.package AS p "
+               "LEFT JOIN strata.silver.plan_versions AS v ON v.document_id = p.process_status_document_id "
+               "WHERE p.step_reference = :reference")
+    canceled = [c for c in TRUTH["comparable"] if "canceled_in" in c]
+    still_open = [c for c in TRUTH["comparable"] if "signed" not in c and "canceled_in" not in c]
+
+    for comparable in canceled:
+        plan_date = dt.date.fromisoformat(comparable["canceled_in"].rsplit("procurement-plan-", 1)[1])
+        status, listed_on, public_from = one(gold, package, reference=comparable["reference"]).values()
+        assert (status, listed_on) == ("Canceled", plan_date), comparable["reference"]
+        assert public_from is not None
+    assert len(canceled) == 3
+    assert one(gold, package, reference=still_open[0]["reference"])["process_status"] is None
+
 
 def test_the_joint_venture_award_becomes_one_joint_venture_supplier_linked_to_its_members(gold):
     venture = TRUTH["awkward"]["joint_venture"]  # contract 1624689, members 503708 and 503711

@@ -1,6 +1,6 @@
 -- A package: one planned procurement, keyed by its STEP reference (GLOSSARY.md), from its notices
--- and its contracts. The plan's own columns (Method, Process Status and the planned dates) come
--- from the Procurement Plans that ticket 08 reads.
+-- and its contracts, with the Process Status of the newest Procurement Plan that lists it
+-- (silver.plan_rows). The plan's planned dates are in silver.plan_steps and plan_step_delays.
 --
 -- procurement_category      from the first specific procurement notice's group, else the contract's
 -- procurement_method        the contract's method, else the notice's, never the reference's
@@ -14,6 +14,10 @@
 -- award_notice_id           its first Contract Award notice that gives a signature date
 -- contract_count            its contracts in the awards dataset
 -- review_type               Prior or Post, from its contracts
+-- process_status            Process Status, word for word, in the newest plan version that lists
+--                           it, such as Canceled or Signed; empty when no plan read so far lists it
+-- process_status_document_id   that plan version (silver.plan_versions), which a claim cites
+-- process_status_public_from   that plan version's public date (ADR 0002)
 -- public_from               the earliest public_from of its notices and contracts (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.gold.package (
   step_reference STRING NOT NULL,
@@ -31,5 +35,8 @@ CREATE TABLE IF NOT EXISTS strata.gold.package (
   award_notice_id STRING,
   contract_count INT NOT NULL,
   review_type STRING,
+  process_status STRING,
+  process_status_document_id STRING,
+  process_status_public_from DATE,
   public_from DATE NOT NULL
 )

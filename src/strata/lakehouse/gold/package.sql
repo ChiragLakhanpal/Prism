@@ -1,6 +1,7 @@
 -- strata.gold.package: each STEP reference that a notice or a contract carries, from every project.
 -- A package is signed on its earliest contract in the awards dataset or, when it has none there,
--- on the Contract Signature Date of its Contract Award notice.
+-- on the Contract Signature Date of its Contract Award notice. Its Process Status is the one in
+-- the newest plan version that lists it, by plan date.
 -- key: step_reference
 WITH notices AS (
   SELECT *
@@ -47,6 +48,13 @@ contracts AS (
   WHERE step_reference IS NOT NULL
   GROUP BY step_reference
 ),
+planned AS (
+  SELECT r.activity_reference_no AS step_reference, r.process_status, r.document_id, v.public_from
+  FROM strata.silver.plan_rows AS r
+  JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
+  QUALIFY row_number() OVER (PARTITION BY r.activity_reference_no
+                             ORDER BY v.plan_date DESC, v.public_from DESC, r.document_id DESC, r.pdf_page) = 1
+),
 refs AS (
   SELECT step_reference FROM noticed
   UNION
@@ -71,9 +79,13 @@ SELECT
   a.notice_id AS award_notice_id,
   CAST(coalesce(c.contract_count, 0) AS INT) AS contract_count,
   c.review_type,
+  p.process_status,
+  p.document_id AS process_status_document_id,
+  p.public_from AS process_status_public_from,
   least(n.public_from, c.public_from) AS public_from
 FROM refs AS r
 LEFT JOIN noticed AS n ON n.step_reference = r.step_reference
 LEFT JOIN contracts AS c ON c.step_reference = r.step_reference
 LEFT JOIN first_notice AS f ON f.step_reference = r.step_reference
 LEFT JOIN award_notice AS a ON a.step_reference = r.step_reference
+LEFT JOIN planned AS p ON p.step_reference = r.step_reference
