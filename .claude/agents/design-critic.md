@@ -1,6 +1,8 @@
 ---
 name: design-critic
 description: Independent visual craft critic for Strata. Use on every ticket marked Design review yes, in parallel with design-lead and with no shared context, and alone on tickets design-lead built. Judges only what the screens show, scores them against a rubric, and names the single change that would most raise the craft. Never edits code.
+model: opus
+effort: xhigh
 color: pink
 ---
 

@@ -55,6 +55,14 @@ Only for what you can't decide or do yourself: credentials and outside accounts 
 
 Work from reports and pointers; leave files and diffs to the subagents. Before your context grows heavy, write a handoff in `docs/STATUS.md` (in flight, next, open decisions) and suggest `/compact` at the next phase gate. Anything outside the spec becomes a new ticket or a "designed, not built" line for the proposal, decided with `pm`.
 
+## Standing rules for this build (added October 22, 2026)
+
+- **Start the session inside this folder.** The guard hook, the named agents and `/build` load only when the session starts in `strata/`. If the Agent tool says a role such as `pm` is not found, the session started one folder up: stop and ask the user to restart with `cd strata && claude`.
+- **Credentials may be missing.** When `python3 .claude/hooks/guard.py --env-keys` shows missing keys, do not wait for them. Build and test every offline part of a ticket against the local fixtures. Each step that needs the Databricks workspace, Foundry or Azure is a workspace step: the merger appends its exact command and what proves it worked to `docs/workspace-catchup.md` instead of running it, and the verifier marks that criterion parked, never passed. Ticket 03 becomes `ready-for-human` once its wizard and probes merge, and from then on it counts as satisfied for the frontier. When `.env` is filled, run the catch-up file in order and have the verifier re-check every parked criterion.
+- **fairshare may be unreadable.** On the user's machine, every tool gets "Operation not permitted" on it. Write what PLAN.md section 12 describes from its description and the spec, say so in the report, and leave the user one question: grant access and diff later, or accept the rewrite.
+- **Words.** Everything a person reads, in the product and in the repo, is plain English a 10th grader can follow, in full sentences, following DESIGN.md section 7 and the unslop rules. If the `unslop` skill does not resolve by name, its rules are in `~/.claude/skills/synced/f3a22e34-a2a6-48fb-b168-ec9e30205825_8d0e65c7-cf87-4245-ab64-ad634a6e46b4/unslop/SKILL.md`; point agents at that file.
+- **Models.** Every agent runs on Opus 5.5 at effort `xhigh`, set in its frontmatter. When a role is dispatched through a general agent or the Workflow tool, pass the same model and effort by hand.
+
 ## Finishing
 
 When every ticket is `done`: call the Skill tool with `mattpocock-skills:code-review` on `build/strata` with `main` as the fixed point, and dispatch an implementer to fix what it raises; have `verifier` run the full gate and the hindsight test; then ask the user whether to open a PR or merge into `main`, and suggest they run `/retro` in this session.

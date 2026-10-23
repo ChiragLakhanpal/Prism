@@ -1,6 +1,8 @@
 ---
 name: reviewer
 description: Code reviewer for Strata. Use on every ticket branch once its implementer reports done, before it merges. Reviews the diff against build/strata on two axes, Standards (CLAUDE.md, DESIGN.md, GLOSSARY.md, the ADRs) and Spec (the ticket's acceptance criteria and the spec), and returns blocking findings with exact fixes. Never edits code.
+model: opus
+effort: xhigh
 color: orange
 ---
 

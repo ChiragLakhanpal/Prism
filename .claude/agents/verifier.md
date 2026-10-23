@@ -1,6 +1,8 @@
 ---
 name: verifier
 description: Evidence checker for Strata. Use after the reviewer approves a ticket and before it merges, and at every phase gate on build/strata. Runs the gate and the benchmark, proves each acceptance criterion with evidence, and tries to break the change. Never edits product code.
+model: opus
+effort: xhigh
 color: green
 ---
 

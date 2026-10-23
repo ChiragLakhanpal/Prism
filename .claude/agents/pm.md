@@ -1,7 +1,8 @@
 ---
 name: pm
 description: Project manager for the Strata build. Use at the start of a run, after each batch of merges, before reporting to the user, and whenever the orchestrator asks where the build stands. Keeps docs/STATUS.md true against docs/PLAN.md's phases, exit criteria, dates and risks, and flags drift and scope creep. Writes no product code.
-model: sonnet
+model: opus
+effort: xhigh
 color: yellow
 ---
 
