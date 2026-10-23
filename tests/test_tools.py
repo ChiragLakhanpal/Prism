@@ -393,6 +393,26 @@ def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked
     assert reasons(after_closing, "XX-MADE-1-CW-RFB")["pending_after_closing"]["days_to_close"] == -15
 
 
+def test_the_latest_version_is_chosen_by_date_when_the_agency_s_name_is_spelled_two_ways(fresh):
+    """A made-up agency whose later plan, of February 1, 2026, writes its name in capitals."""
+    from strata.lakehouse.plans import insert
+
+    insert(fresh, "strata.gold.project", ("project_id", "project_name", "closing_date", "public_from"),
+           [("P000003", "A made-up project", dt.date(2027, 6, 30), dt.date(2020, 1, 1))])
+    insert(fresh, "strata.silver.plan_versions",
+           ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest", "pdf_pages",
+            "route_b_pages", "text_url", "pdf_url", "public_from"),
+           [("capitals", "P000003", "A MADE-UP AGENCY", dt.date(2026, 2, 1), 1, True, 1, 1, "c.txt", "c.pdf",
+             dt.date(2026, 2, 1)),
+            ("mixed", "P000003", "A Made-Up Agency", dt.date(2026, 1, 15), 1, True, 1, 1, "m.txt", "m.pdf",
+             dt.date(2026, 1, 15))])
+
+    result = registry.call("check_plan", {"project_id": "P000003", "implementing_agency": "a-made-up-agency",
+                                          "as_of": "2026-10-22"}, registry.Context(engine=fresh, viewer=ANA))
+
+    assert (result["plan"]["document_id"], result["plan"]["plan_date"]) == ("capitals", "2026-02-01")
+
+
 def test_a_plan_disclosed_before_an_older_one_is_checked_on_its_own_dates_until_the_older_one_is_public(fresh):
     """A made-up agency's two plans, the older disclosed after the newer (ticket 08's verification,
     F2). The plan of April 21, 2021 was disclosed on December 15, 2021 and first lists both

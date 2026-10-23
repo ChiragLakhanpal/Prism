@@ -141,6 +141,8 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None) 
     """The plan version to check, or the abstention that says why there is none."""
     versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
                 if row["implementing_agency"]]
+    # By date, so the latest is last even when an agency's name is spelled two ways.
+    versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
     public = [version for version in versions if version["public_from"] <= call.as_of]
     wanted = asked.strip().lower()
     mine = [v for v in versions if v["implementing_agency"].lower() == wanted or agency_id(v["implementing_agency"]) == wanted]
@@ -151,9 +153,9 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None) 
         return None, {"reason": "no_plan_from_agency", "implementing_agency": asked,
                       "agencies": [{"implementing_agency": name, "agency_id": agency_id(name),
                                     "latest_plan_date": _iso(date)} for name, date in sorted(agencies.items())]}
-    name = mine[0]["implementing_agency"]
     mine_public = [version for version in mine if version["public_from"] <= call.as_of]
     latest = mine_public[-1] if mine_public else None
+    name = (latest or mine[-1])["implementing_agency"]  # as its latest plan spells it
     agency = {"implementing_agency": name, "agency_id": agency_id(name),
               "latest_plan_date": _iso(latest["plan_date"]) if latest else None}
     if plan_date is None:

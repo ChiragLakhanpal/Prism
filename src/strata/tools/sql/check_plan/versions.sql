@@ -12,4 +12,4 @@ SELECT
   public_from
 FROM strata.silver.plan_versions
 WHERE project_id = :project_id
-ORDER BY implementing_agency, plan_date, public_from, document_id
+ORDER BY plan_date, public_from, document_id
