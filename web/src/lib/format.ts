@@ -5,8 +5,9 @@ import { copy } from "../copy";
 
 // DESIGN.md section 7, rules 6 and 15: no percentage or "in 10" from fewer than 20 cases,
 // and under 50 cases the count stands beside "about N in 10". The tools will abstain below
-// 20 comparables too. When the thresholds file lands with them (config/, later), these two
-// values move there and this file reads them, so each is defined once (CLAUDE.md rules 4, 9).
+// 20 comparables too. config/thresholds.toml exists, but these two values are not in it yet.
+// Ticket 12's find_comparables abstains below 20, so it adds 20 there, and this file then reads
+// both values from it, so each is defined once (CLAUDE.md rules 4 and 9).
 export const FEWEST_FOR_A_FREQUENCY = 20;
 export const FEWEST_FOR_A_PERCENTAGE = 50;
 
@@ -54,7 +55,8 @@ function compact(value: number): string | null {
 export type NumberOptions = {
   // The tool's own rounding. Strata states a number at the rounding the tool returned.
   decimals?: number;
-  // False writes the whole number with comma thousands, as for STEP amounts to the cent.
+  // False writes the number in full with comma thousands. A STEP amount also passes
+  // decimals: 2, so it shows its cents as STEP does.
   compact?: boolean;
 };
 

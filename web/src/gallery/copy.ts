@@ -171,7 +171,7 @@ export const galleryCopy = {
         "Below 1, it keeps two decimals.",
         "From 1 to 100, it keeps one decimal.",
         "Above 100, it keeps no decimals.",
-        "A STEP amount in a table stays whole, with comma thousands, as the record has it.",
+        "A STEP amount in a table keeps STEP's form, cents included, so it matches the record.",
       ],
     },
     counts: {

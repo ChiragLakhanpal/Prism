@@ -167,7 +167,7 @@ test("Num shows 6 of 12 as a count and 31 of 37 beside about 8 in 10, on screen"
     "1 of 300, less than 1 percent",
   ]);
   await expect(page.locator("[data-state-section=formats] table [data-num]")).toHaveText([
-    "1,234", "12.5K", "296K", "1.3M", "2.5B", "0.46", "45.7", "457", "2,450,000",
+    "1,234", "12.5K", "296K", "1.3M", "2.5B", "0.46", "45.7", "457", "2,450,000.00",
   ]);
   await expect(page.locator("[data-state-section=counts] table [data-num]")).toHaveText([
     "seven", "14", "2024", "March 4, 2024", "Mar 4, 2024",
@@ -318,8 +318,25 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
       const text = (await answer.locator("h3, p").first().boundingBox())!;
       // The card's 1 px border stays clear of the fill and the ring.
       expect(button.x - ring, `${state} at ${width}`).toBeGreaterThan(card.x + 1);
-      // The icon box starts within 2 px of the text, the width of the button's clear border.
-      expect(Math.abs(icon.x - text.x), `${state} at ${width}`).toBeLessThanOrEqual(2);
+      // The icon box starts on the text's edge: a flush button has no side border to push it in.
+      expect(Math.abs(icon.x - text.x), `${state} at ${width}`).toBeLessThan(0.5);
+    }
+  }
+});
+
+test("the steps list starts its text under the toggle's text, on one inner edge", async ({ page }) => {
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/answer");
+    for (const state of ["ready", "abstained"]) {
+      const answer = page.locator(`[data-answer=${state}]`);
+      // Found by place, not by name: its name changes to "Hide the steps" once it opens.
+      const toggle = answer.locator(":scope > div > button[aria-expanded]");
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const label = (await toggle.locator("span").boundingBox())!;
+      const step = (await answer.locator("[data-steps] li > span:last-child").first().boundingBox())!;
+      expect(Math.abs(step.x - label.x), `${state} at ${width}`).toBeLessThan(0.5);
     }
   }
 });

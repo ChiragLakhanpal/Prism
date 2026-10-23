@@ -147,7 +147,7 @@ const rows: Row[] = sample.tableRows.map(([reference, method, amount, late]) => 
   cells: {
     c0: mono(reference),
     c1: method,
-    c2: <Num value={Number(amount)} options={{ compact: false }} />,
+    c2: <Num value={Number(amount)} options={{ compact: false, decimals: 2 }} />,
     c3: <Num value={Number(late)} />,
   },
 }));
@@ -218,8 +218,8 @@ const FORMATS: { sent: string; num: NumValue }[] = [
     sent: String(value),
     num: { value } as NumValue,
   })),
-  // A STEP amount, as Table's sample shows it: whole, so it reads as the record does.
-  { sent: "2450000", num: { value: 2450000, options: { compact: false } } as NumValue },
+  // A STEP amount, as Table's sample shows it: in STEP's form, cents included.
+  { sent: "2450000.00", num: { value: 2450000, options: { compact: false, decimals: 2 } } as NumValue },
 ];
 const COUNTS: { sent: string; num: NumValue }[] = [
   { sent: "7", num: { count: 7 } },
