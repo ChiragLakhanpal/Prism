@@ -1,0 +1,11 @@
+{
+ "about": "An answer of the AI Search (Databricks Vector Search) REST operation GET /api/2.0/vector-search/indexes/{index} for a Delta Sync index that has finished its sync. It is written by hand in the shape the operation documents, because the gate's machine has no workspace token. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "response": {
+  "name": "strata.gold.passage_index",
+  "endpoint_name": "strata-search",
+  "primary_key": "passage_id",
+  "index_type": "DELTA_SYNC",
+  "status": {"ready": true, "indexed_row_count": 733, "message": "Index is ready."}
+ }
+}

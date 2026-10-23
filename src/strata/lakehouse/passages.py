@@ -459,6 +459,15 @@ def run_on_fixture(engine: Engine, manifest=None, **options) -> Report:
     return run(engine, documents, recorded, **options)
 
 
+def print_measures(engine: Engine, run_id: str) -> None:
+    """The run's data readiness measures, one a line."""
+    for row in _rows(engine, "SELECT subject, measure, count, denominator, as_of FROM strata.ops.data_readiness "
+                             "WHERE run_id = :run_id AND source = :source ORDER BY subject, measured_at, measure",
+                     run_id=run_id, source=SOURCE):
+        shown = f"as of {row['as_of']}" if row["as_of"] else f"{row['count']} of {row['denominator']}"
+        print(f"  {row['subject']} {row['measure']}: {shown}")
+
+
 def _print_fixture_run() -> int:
     from strata.lakehouse import catalog, nightly
     from strata.lakehouse.engine import DuckDBEngine
@@ -467,8 +476,9 @@ def _print_fixture_run() -> int:
         catalog.build(engine)
         nightly.run_locally(engine)
         report = run_on_fixture(engine)
-    print(f"Run {report.run_id} read {report.documents} documents into {report.passages} passages. "
-          f"{report.scans} more had no text Route A could read, so their pages wait for Route B.")
+        print(f"Run {report.run_id} read {report.documents} documents into {report.passages} passages. "
+              f"{report.scans} more had no text Route A could read, so their pages wait for Route B.")
+        print_measures(engine, report.run_id)
     return 0
 
 

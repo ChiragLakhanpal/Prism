@@ -102,6 +102,102 @@ def test_on_the_sql_warehouse_each_vector_is_bound_as_json_text_that_from_json_r
     assert {"name": "e0", "value": "[0.25, -0.5]", "type": "STRING"} in body["parameters"]
 
 
+# ── AI Search ────────────────────────────────────────────────────────────
+
+class Workspace:
+    """A workspace REST transport that keeps each request and answers from a table of paths."""
+
+    def __init__(self, answers):
+        self.answers, self.requests = answers, []
+
+    def __call__(self, method, path, body=None):
+        self.requests.append((method, path, body))
+        found = self.answers.get((method, path))
+        if isinstance(found, Exception):
+            raise found
+        return found if found is not None else {}
+
+
+class FixedVector:
+    name, dimensions = "text-embedding-3-large", 4
+
+    def embed(self, texts):
+        return [[0.1, 0.2, 0.3, 0.4] for _ in texts]
+
+
+def test_ai_search_asks_a_hybrid_query_with_the_reranker_and_the_filters_and_reads_the_ranked_ids():
+    import datetime as dt
+
+    from strata.knowledge.search import AiSearch, Filters
+
+    path = "/api/2.0/vector-search/indexes/strata.gold.passage_index/query"
+    workspace = Workspace({("POST", path): answer("ai_search/query.json")})
+    filters = Filters(dt.date(2021, 1, 1), project_id="P130164", document_type="Implementation Completion Report Review",
+                      published_from=dt.date(2020, 1, 1))
+
+    hits = AiSearch(workspace, FixedVector()).search("works estimates market rates rebidding", filters, 3)
+
+    assert [(hit.passage_id, hit.score) for hit in hits.hits] == [
+        ("31525018/v1/54", 0.0327), ("34056616/v2/10.b", 0.0322), ("31525018/v1/55", 0.0301)]
+    [(method, sent_to, body)] = workspace.requests
+    assert (method, sent_to) == ("POST", path)
+    assert (body["query_type"], body["num_results"], body["query_vector"]) == ("HYBRID", 3, [0.1, 0.2, 0.3, 0.4])
+    assert body["reranker"]["parameters"]["columns_to_rerank"] == ["header", "text"]
+    assert json.loads(body["filters_json"]) == {
+        "public_day <=": 20210101, "replaced_day >": 20210101, "project_id": "P130164",
+        "document_type": "Implementation Completion Report Review", "public_day >=": 20200101}
+
+
+def test_the_index_is_made_over_gold_passage_with_its_change_feed_and_synced_after_each_run():
+    from strata.knowledge.search import AiSearchIndex
+
+    index = "/api/2.0/vector-search/indexes/strata.gold.passage_index"
+    workspace = Workspace({("GET", index): LookupError("missing")})
+    statements = []
+
+    made = AiSearchIndex(workspace, "strata-search", 1024).ensure(statements.append)
+
+    assert made is True
+    assert statements == ["ALTER TABLE strata.gold.passage SET TBLPROPERTIES (delta.enableChangeDataFeed = true)"]
+    [_, (method, path, body)] = workspace.requests
+    assert (method, path) == ("POST", "/api/2.0/vector-search/indexes")
+    assert (body["endpoint_name"], body["primary_key"], body["index_type"]) == ("strata-search", "passage_id",
+                                                                                 "DELTA_SYNC")
+    spec = body["delta_sync_index_spec"]
+    assert spec["source_table"] == "strata.gold.passage"
+    assert spec["embedding_vector_columns"] == [{"name": "embedding", "embedding_dimension": 1024}]
+
+    workspace.answers[("GET", index)] = answer("ai_search/index.json")
+    synced = AiSearchIndex(workspace, "strata-search", 1024)
+    assert synced.ensure(statements.append) is False
+    synced.sync()
+    assert workspace.requests[-1][:2] == ("POST", f"{index}/sync")
+    state = synced.state()
+    assert (state.ready, state.rows) == (True, 733)
+
+
+def test_on_the_workspace_search_passages_uses_ai_search_with_the_viewers_own_token():
+    import datetime as dt
+
+    from strata.dbx import Viewer
+    from strata.knowledge.search import AiSearch, searcher_for
+    from strata.tools.registry import Call
+
+    class Warehouse:
+        name = "databricks"
+
+    call = Call(Warehouse(), Viewer(email="ana.example@worldbank.org", name="Ana", token="token-for-ana-only"),
+                "staff", dt.date(2026, 10, 23), None)
+    environ = {"DATABRICKS_HOST": "https://example.cloud.databricks.com",
+               "AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/v1",
+               "AZURE_OPENAI_API_KEY": "not-a-real-key"}
+
+    searcher = searcher_for(call, environ)
+
+    assert isinstance(searcher, AiSearch)
+    assert searcher.embedder.name == "text-embedding-3-large" and searcher.embedder.dimensions == 1024
+
+
 def test_the_content_safety_endpoint_is_the_foundry_resource_of_the_azure_openai_endpoint():
     from strata.knowledge.shields import content_safety_endpoint
 
