@@ -294,3 +294,139 @@ def _grid(table: _Header, body: list[Word], height: float) -> Table:
             texts[index] = f"{texts[index]} {_text(group)}".strip()
         grid.append(tuple(texts))
     return Table(title=title, header_rows=2, rows=tuple(grid))
+
+
+# ── Live: ai_parse_document on the SQL warehouse ─────────────────────────
+
+PARSE_SQL = """
+SELECT to_json(ai_parse_document(content, map('version', '2.0'))) AS parsed
+FROM READ_FILES(:path, format => 'binaryFile')
+"""
+VOLUME = "/Volumes/strata/bronze/files/layout"  # the bundle's bronze files volume
+
+
+class AiParseDocument:
+    """The layout parser on the workspace. Each page goes to the volume as a PDF of its own, so the
+    daily page cap counts what ai_parse_document actually reads, and the warehouse parses it.
+
+    engine runs SQL on the warehouse, upload(path, data) writes a file to a volume, and fetch(url)
+    returns a PDF's bytes. If day-one test 3 chooses Content Understanding, a parser with the same
+    name and parse method takes this one's place.
+    """
+
+    name = "ai_parse_document"
+
+    def __init__(self, engine, upload, fetch, volume: str = VOLUME):
+        self.engine, self.upload, self.fetch, self.volume = engine, upload, fetch, volume.rstrip("/")
+        self._pdfs: dict[str, bytes] = {}
+
+    def parse(self, page: Page) -> list[Table]:
+        url = https(page.pdf_url)
+        if url not in self._pdfs:
+            self._pdfs = {url: self.fetch(url)}  # keep one PDF at a time: pages come document by document
+        path = f"{self.volume}/{page.document_id}/page-{page.pdf_page}.pdf"
+        self.upload(path, single_page(self._pdfs[url], page.pdf_page))
+        result = self.engine.run(PARSE_SQL, {"path": path})
+        if not result.rows or not result.rows[0][0]:
+            raise RuntimeError(f"ai_parse_document returned nothing for {path}.")
+        return tables_from_parsed(json.loads(result.rows[0][0]))
+
+
+def single_page(pdf: bytes, number: int) -> bytes:
+    """One page of a PDF, as a PDF of its own."""
+    import io
+
+    from pypdf import PdfReader, PdfWriter
+
+    writer = PdfWriter()
+    writer.add_page(PdfReader(io.BytesIO(pdf)).pages[number - 1])
+    out = io.BytesIO()
+    writer.write(out)
+    return out.getvalue()
+
+
+def tables_from_parsed(parsed: dict) -> list[Table]:
+    """The tables in ai_parse_document's output (version 2.0), each titled by the element before it.
+
+    A table's header rows end with the row of Planned and Actual heads; they become two rows, each
+    column's name and its head, as the offline parser gives them. A table with no such row, such as
+    one continued from the page before, keeps every row as a body row.
+    """
+    tables, title = [], ""
+    for element in (parsed.get("document") or {}).get("elements") or []:
+        content = (element.get("content") or "").strip()
+        if element.get("type") != "table":
+            if content:
+                title = " ".join(content.split())
+            continue
+        grid = html_grid(content)
+        heads_at = next((i for i, row in enumerate(grid) if sum(cell in PLANNED_ACTUAL for cell in row) >= 2), None)
+        if heads_at is None:
+            tables.append(Table(title, 0, tuple(grid)))
+            continue
+        labels = []
+        for column in range(len(grid[heads_at])):
+            parts: list[str] = []
+            for row in grid[:heads_at + 1]:
+                cell = row[column] if column < len(row) else ""
+                if cell and cell not in PLANNED_ACTUAL and cell not in parts:
+                    parts.append(cell)
+            labels.append(" ".join(parts))
+        heads = tuple(cell if cell in PLANNED_ACTUAL else "" for cell in grid[heads_at])
+        tables.append(Table(title, 2, (tuple(labels), heads, *grid[heads_at + 1:])))
+    return tables
+
+
+def html_grid(markup: str) -> list[tuple[str, ...]]:
+    """An HTML table as rows of cells, with each spanned cell's text repeated in every place it spans."""
+    from html.parser import HTMLParser
+
+    class Cells(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.rows: list[list[tuple[str, int, int]]] = []
+            self.cell: list[str] | None = None
+            self.spans = (1, 1)
+
+        def handle_starttag(self, tag, attrs):
+            attributes = dict(attrs)
+            if tag == "tr":
+                self.rows.append([])
+            elif tag in ("td", "th"):
+                if not self.rows:
+                    self.rows.append([])
+                self.cell = []
+                self.spans = (int(attributes.get("rowspan") or 1), int(attributes.get("colspan") or 1))
+            elif tag == "br" and self.cell is not None:
+                self.cell.append(" ")
+
+        def handle_endtag(self, tag):
+            if tag in ("td", "th") and self.cell is not None:
+                self.rows[-1].append((" ".join("".join(self.cell).split()), *self.spans))
+                self.cell = None
+
+        def handle_data(self, data):
+            if self.cell is not None:
+                self.cell.append(data)
+
+    parser = Cells()
+    parser.feed(markup)
+    grid: list[list[str | None]] = []
+    for r, row in enumerate(parser.rows):
+        while len(grid) <= r:
+            grid.append([])
+        column = 0
+        for text, rowspan, colspan in row:
+            while column < len(grid[r]) and grid[r][column] is not None:
+                column += 1
+            for down in range(rowspan):
+                while len(grid) <= r + down:
+                    grid.append([])
+                target = grid[r + down]
+                while len(target) < column + colspan:
+                    target.append(None)
+                for across in range(colspan):
+                    target[column + across] = text
+            column += colspan
+    width = max((len(row) for row in grid), default=0)
+    return [tuple((cell or "") for cell in row) + ("",) * (width - len(row)) for row in grid]

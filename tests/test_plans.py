@@ -226,3 +226,62 @@ def test_a_lower_daily_page_cap_stops_the_run_at_the_cap_and_records_where_it_st
     assert day_one["actual_on"] == value("plan-229129-signed")["value"]
     assert day_one["first_planned_on"] is None and day_one["delay_days"] is None
     assert day_two["delay_days"] == value("plan-229129-days-late")["value"]
+
+
+# ── The live layout parser, through the same port ──
+
+AI_PARSE_DOCUMENT = {  # the shape of ai_parse_document's version 2.0 output, written by hand: the gate
+    "document": {  # cannot reach the workspace, and the live plan run (ops/plans/run_live.py) reads the real one
+        "pages": [{"id": 0}],
+        "elements": [
+            {"id": 0, "type": "section_header", "content": "WORKS", "bbox": [{"coord": [15, 112, 33, 117], "page_id": 0}]},
+            {"id": 1, "type": "table", "bbox": [{"coord": [15, 118, 792, 160], "page_id": 0}], "content": (
+                "<table><tr><th rowspan='2'>Activity Reference No. / Description</th><th rowspan='2'>Method</th>"
+                "<th rowspan='2'>Actual Amount (US$)</th><th rowspan='2'>Process Status</th>"
+                "<th colspan='2'>Signed Contract</th><th>Contract Completion</th></tr>"
+                "<tr><th>Planned</th><th>Actual</th><th>Planned</th></tr>"
+                "<tr><td>KE-NWWDA-229129-CW-RFB / Drilling of 4 Number Exploratory Boreholes In Wajir County</td>"
+                "<td>Request for Bids</td><td>1,245,092.76</td><td>Signed</td><td>2021-07-01</td><td>2022-01-03</td>"
+                "<td>2021-10-15</td></tr></table>")},
+        ],
+    },
+    "metadata": {"version": "2.0"},
+}
+
+
+def test_the_live_layout_parser_sends_one_page_to_ai_parse_document_and_reads_its_tables_as_step_rows():
+    import io
+    import json
+
+    from pypdf import PdfReader, PdfWriter
+
+    from strata.lakehouse.engine import Result
+    from strata.reader import step
+    from strata.reader.layout import AiParseDocument, Page
+
+    writer = PdfWriter()
+    for _ in range(3):
+        writer.add_blank_page(width=792, height=612)
+    pdf = io.BytesIO()
+    writer.write(pdf)
+    uploaded, statements = {}, []
+
+    class Warehouse:
+        def run(self, sql, params=None):
+            statements.append((sql, params))
+            return Result(("parsed",), ((json.dumps(AI_PARSE_DOCUMENT),),))
+
+    parser = AiParseDocument(Warehouse(), upload=uploaded.__setitem__, fetch=lambda url: pdf.getvalue())
+    tables = parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 3))
+    reading = step.plan_rows([(3, tables)])
+
+    path = "/Volumes/strata/bronze/files/layout/40132287/page-3.pdf"
+    assert list(uploaded) == [path] and len(PdfReader(io.BytesIO(uploaded[path])).pages) == 1
+    assert "ai_parse_document" in statements[0][0] and statements[0][1] == {"path": path}
+    [row] = reading.rows
+    signed = next(s for s in row.steps if s.step == "Signed Contract")
+    assert (row.section, row.activity_reference_no, row.fields["method"], row.fields["process_status"]) == (
+        "WORKS", "KE-NWWDA-229129-CW-RFB", "Request for Bids", "Signed")
+    assert row.fields["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
+    assert (signed.planned_on, signed.actual_on) == (value("plan-229129-first-planned-signing")["value"],
+                                                     value("plan-229129-signed")["value"])

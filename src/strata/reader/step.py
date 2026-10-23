@@ -216,11 +216,21 @@ class Reading:
 
 
 def plan_rows(pages: list[tuple[int, list[Table]]]) -> Reading:
-    """Every activity in a plan's STEP tables, one PlanRow each, from (PDF page, tables) pairs."""
-    reading = Reading()
+    """Every activity in a plan's STEP tables, one PlanRow each, from (PDF page, tables) pairs.
+
+    A table with no header rows continues the table before it onto a new page, so it is read with
+    that table's title and header when it has as many columns.
+    """
+    reading, last = Reading(), None
     for pdf_page, tables in pages:
         for table in tables:
+            if table.header_rows == 0:
+                if last is None or len(last.rows[0]) != len(table.rows[0] if table.rows else ()):
+                    reading.rows_without_reference += len(table.rows)
+                    continue
+                table = Table(last.title, 2, (*last.rows[:2], *table.rows))
             _read_table(table, pdf_page, reading)
+            last = table
     return reading
 
 

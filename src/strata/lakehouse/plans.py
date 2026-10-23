@@ -73,8 +73,13 @@ def _sql(name: str) -> str:
     return (resources.files("strata.lakehouse") / "sql" / "plans" / name).read_text()
 
 
-def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 100) -> int:
+CHUNK = {"duckdb": 200}  # rows per INSERT statement; the warehouse takes fewer, so each statement stays small
+WAREHOUSE_CHUNK = 20
+
+
+def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
     """Insert rows with every value bound as a named parameter, a chunk of rows per statement."""
+    chunk = CHUNK.get(getattr(engine, "name", ""), WAREHOUSE_CHUNK)
     for start in range(0, len(rows), chunk):
         params, values = {}, []
         for n, row in enumerate(rows[start:start + chunk]):
