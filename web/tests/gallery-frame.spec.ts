@@ -130,6 +130,19 @@ test("the view pill opens who is signed in and which view this is", async ({ pag
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeFocused();
 });
 
+// Turning a tablet to portrait hides the pill below 1024 px. The popover closes with it, as the
+// Menu closes when the window widens, rather than hang from nothing at the top of the page.
+test("narrowing the window below 1024 px closes the open view popover", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/navigation");
+  await page.getByRole("button", { name: "View: World Bank staff" }).click();
+  const dialog = page.getByRole("dialog", { name: "Your view" });
+  await expect(dialog).toBeVisible();
+  await page.setViewportSize({ width: 900, height: 900 });
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
+});
+
 test("the footer reads DESIGN.md section 8's disclaimer word for word on every page the gallery renders", async ({ page }) => {
   const footer = await footerSentence();
   const paths = await galleryPaths(page);

@@ -90,8 +90,6 @@ export const NON_COPY_PROPS = new Set([
   "show",
   "widths",
   "htmlFor",
-  "inputMode",
-  "enterKeyHint",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
 ]);

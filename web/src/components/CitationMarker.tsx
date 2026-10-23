@@ -5,6 +5,11 @@
 //
 // The brackets sit in the page but out of sight, so a copied answer reads "[1]". An ::after
 // pads the hit area to 24 by 24 px without changing the line. No state changes its size.
+//
+// The marker never starts a line. A word joiner (U+2060) ties it to the last word of the
+// sentence it cites, and the span around both keeps the browser from breaking between them,
+// so the last word wraps with its marker. A marker at the head of a line would read as the
+// source of the next sentence (CLAUDE.md rule 2).
 import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -60,11 +65,18 @@ export function CitationMarker({
       <span className="clip-visually">]</span>
     </a>
   );
-  return preview ? (
-    <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]">
-      {preview}
-    </Tooltip>
-  ) : (
-    marker
+  return (
+    <span className="whitespace-nowrap">
+      {WORD_JOINER}
+      {preview ? (
+        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]">
+          {preview}
+        </Tooltip>
+      ) : (
+        marker
+      )}
+    </span>
   );
 }
+
+const WORD_JOINER = "\u2060";

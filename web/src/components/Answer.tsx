@@ -135,10 +135,11 @@ export function Answer({ state }: { state: AnswerState }) {
       return (
         <div data-answer="error">
           {state.steps.length > 0 && <Steps steps={state.steps} />}
+          {/* The alert keeps the answer's measure, as the check line and the removed box do. */}
           <Alert
             state="error"
             live="alert"
-            className="mt-4"
+            className="mt-4 max-w-prose"
             action={
               <Button variant="secondary" onClick={state.onRetry}>
                 {copy.answer.tryAgain}

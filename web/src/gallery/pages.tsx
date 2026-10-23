@@ -191,6 +191,8 @@ const ratioRows: Row[] = RATIOS.map(([part, whole, style], index) => ({
   },
 }));
 
+// Each row is named by what Num shows, as in the ratio table, so a card below 768 px leads
+// with the formatted number and not the raw value.
 const valueColumns: Column[] = [
   { key: "value", header: h.value, numeric: true, width: "w-1/5" },
   { key: "rule", header: h.rule },
@@ -286,6 +288,20 @@ export const PAGES: GalleryPage[] = [
             <Button variant="secondary">{sample.secondary}</Button>
             <Button variant="ghost">{sample.ghost}</Button>
           </Inline>
+        ),
+      },
+      {
+        // DESIGN.md section 5: a ghost button in a column of text sits flush, so its icon lines
+        // up with the text and its fill and focus ring stay inside the card.
+        id: "flush",
+        title: t.flush,
+        body: (
+          <Panel>
+            <p className="max-w-prose text-body">{sample.flushText}</p>
+            <Button variant="ghost" flush icon={ChevronDown} className="mt-2">
+              {sample.ghost}
+            </Button>
+          </Panel>
         ),
       },
       {
@@ -463,7 +479,7 @@ export const PAGES: GalleryPage[] = [
             title={reference.formats.title}
             count={{ noun: reference.formats.noun, total: FORMATS.length }}
             columns={valueColumns}
-            rowHeader="value"
+            rowHeader="shows"
             state={{ status: "ready", rows: valueRows(FORMATS, reference.formats.rules) }}
             source={reference.source}
           />
@@ -478,7 +494,7 @@ export const PAGES: GalleryPage[] = [
             title={reference.counts.title}
             count={{ noun: reference.counts.noun, total: COUNTS.length }}
             columns={valueColumns}
-            rowHeader="value"
+            rowHeader="shows"
             state={{ status: "ready", rows: valueRows(COUNTS, reference.counts.rules) }}
             source={reference.source}
           />

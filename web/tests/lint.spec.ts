@@ -103,6 +103,7 @@ test("the gate fails when a component renders a string that is not from the copy
     `const words = "Close the source"; export const A = () => <button aria-label={words} />;`,
     // A key read from a local lookup object, and a default prop value.
     `const words = { empty: "Nothing here yet." }; export const A = () => <p>{words.empty}</p>;`,
+    `const words = { empty: "Nothing here yet." }; export const A = () => <p>{words["empty"]}</p>;`,
     `export function A({ body = "Nothing here yet." }) { return <p>{body}</p>; }`,
     // A STEP method and a person's name are read by someone, so these props are copy too.
     `export const A = () => <Row method="Request for Bids" />;`,
@@ -127,7 +128,7 @@ test("a component that takes every string from the copy file passes the string l
     `    <Answer state={{ status: "empty", message: copy.empty }} aria-live="polite" />`,
     `    <ol style={{ minHeight: "calc(6 * 1.45em)" }}><li key="read">{copy.read}</li></ol>`,
     `    <Num part={1} whole={2} show="count" style="table" />{matchMedia(WIDE).matches && copy.wide}`,
-    `    <div className={LOOK.box} />`,
+    `    <div className={LOOK.box} /><div className={LOOK["box"]} />`,
     `  </section>`,
     `);`,
   ].join("\n");

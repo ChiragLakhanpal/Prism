@@ -81,6 +81,8 @@ export const SHOTS: Shot[] = [
   { name: "buttons--hover-secondary", path: "/gallery/buttons", act: hover("[data-button=secondary]") },
   { name: "buttons--hover-ghost", path: "/gallery/buttons", act: hover("[data-button=ghost]") },
   { name: "buttons--focus-primary", path: "/gallery/buttons", act: focus("[data-button=primary]") },
+  { name: "buttons--hover-flush", path: "/gallery/buttons", act: hover("[data-state-section=flush] button") },
+  { name: "buttons--focus-flush", path: "/gallery/buttons", act: focus("[data-state-section=flush] button") },
   { name: "buttons--focus-disabled", path: "/gallery/buttons", act: focus("[data-state-section=disabled] button") },
   { name: "links--hover-link", path: "/gallery/links", act: hover("[data-state-section=text-link] a") },
   { name: "links--focus-link", path: "/gallery/links", act: focus("[data-state-section=text-link] a") },
@@ -100,6 +102,8 @@ export const SHOTS: Shot[] = [
 
   // The answer, the document and the table.
   { name: "answer--steps-open", path: "/gallery/answer", act: click("[data-state-section=ready] [aria-expanded]") },
+  { name: "answer--hover-steps", path: "/gallery/answer", act: hover("[data-state-section=ready] [aria-expanded]") },
+  { name: "answer--focus-steps", path: "/gallery/answer", act: focus("[data-state-section=ready] [aria-expanded]") },
   { name: "answer--focus-retry", path: "/gallery/answer", act: focus("[data-state-section=error] button") },
   { name: "document--focus-pdf-link", path: "/gallery/document", act: focus("[data-document=ready] a") },
   { name: "table--focus-region", path: "/gallery/table", widths: WIDE, act: focus("[data-table] [role=region]") },

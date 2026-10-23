@@ -67,6 +67,14 @@ function ViewLines({ viewer }: { viewer: Viewer }) {
 function ViewSwitch({ viewer, defaultOpen }: { viewer: Viewer; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   const body = useRef<HTMLDivElement>(null);
+
+  // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
+  useEffect(() => {
+    const wide = window.matchMedia(WIDE);
+    const close = () => !wide.matches && setOpen(false);
+    wide.addEventListener("change", close);
+    return () => wide.removeEventListener("change", close);
+  }, []);
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
       <RadixPopover.Trigger

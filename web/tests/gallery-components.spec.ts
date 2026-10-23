@@ -57,6 +57,44 @@ test("the citation marker's accessible name names the source, and a copy of it r
   ).toBeVisible();
 });
 
+// CLAUDE.md rule 2: the marker shows which claim a source backs. A marker that wraps to the
+// next line sits at the head of the next sentence and points at the wrong claim. Answers come
+// from a model, so their line ends move; the marker must hold to its sentence at any width.
+test("a citation marker stays on the line of the sentence it cites, at every width", async ({ page }) => {
+  for (const path of ["/gallery/citations", "/gallery/answer"]) {
+    for (const width of [1440, 1280, 1024, 768, 390, 360, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(path);
+      await expect(page.locator("[data-citation]").first()).toBeVisible();
+      const apart = await page.locator("[data-citation]").evaluateAll((markers) =>
+        markers.flatMap((marker) => {
+          // Only markers that follow a sentence: in a paragraph, or in an answer's "In short".
+          const block = marker.closest("p, [data-answer] > div");
+          if (!block) return [];
+          let last: Text | null = null;
+          const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+          while (walker.nextNode()) {
+            const node = walker.currentNode as Text;
+            if (marker.contains(node) || marker.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING) break;
+            if (node.data.trim()) last = node;
+          }
+          if (!last) return [];
+          // The last character of that text, and the line it sits on.
+          const end = last.data.trimEnd().length;
+          const range = document.createRange();
+          range.setStart(last, end - 1);
+          range.setEnd(last, end);
+          const char = range.getBoundingClientRect();
+          const box = marker.getBoundingClientRect();
+          const middle = box.top + box.height / 2;
+          return middle > char.top && middle < char.bottom ? [] : [`marker ${marker.textContent} after "${last.data.trimEnd().slice(-20)}"`];
+        }),
+      );
+      expect(apart, `${path} at ${width} px`).toEqual([]);
+    }
+  }
+});
+
 test("hovering or focusing a marker shows its evidence card, and Escape closes it", async ({ page }) => {
   await page.goto("/gallery/citations");
   const marker = page.locator("p").getByRole("link", { name: /^Source 1:/ });
@@ -225,7 +263,7 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
     for (const state of ["ready", "abstained", "empty", "refused"]) {
       const answer = page.locator(`[data-answer=${state}]`);
       const card = (await answer.locator("xpath=..").boundingBox())!;
-      const toggle = page.locator(`[data-answer=${state}] > div:last-child > button`);
+      const toggle = answer.getByRole("button", { name: /I took$/ });
       // DESIGN.md section 10's focus ring: a 2 px outline at a 2 px offset.
       const ring = 4;
       const button = (await toggle.boundingBox())!;
