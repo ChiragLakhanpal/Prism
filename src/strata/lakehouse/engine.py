@@ -268,21 +268,22 @@ class WarehouseEngine:
         return cls(warehouse_id, http_transport(host, token))
 
     def run(self, sql: str, params: Params = None) -> Result:
+        # The warehouse holds the first answer at most this long: within 5 to 50 seconds, and never
+        # longer than this engine waits in all, unless that is under the API's 5 second floor.
+        wait = max(5, min(50, int(self.timeout_seconds)))
         reply = self.transport("POST", STATEMENTS, {
             "statement": sql,
             "warehouse_id": self.warehouse_id,
             "parameters": [_parameter(name, value) for name, value in (params or {}).items()],
-            # The warehouse holds the first answer at most this long: within 5 to 50 seconds, and
-            # never longer than this engine waits in all.
-            "wait_timeout": f"{max(5, min(50, int(self.timeout_seconds)))}s",
+            "wait_timeout": f"{wait}s",
             "on_wait_timeout": "CONTINUE",
             "format": "JSON_ARRAY",
             "disposition": "INLINE",
         })
-        waited = 0.0
+        waited = float(wait)  # a reply that is still running means the warehouse held the call this long
         while reply.get("status", {}).get("state") in WAITING:
             if waited >= self.timeout_seconds:
-                raise EngineError(f"The warehouse took longer than {self.timeout_seconds:.0f} seconds, "
+                raise EngineError(f"The warehouse took longer than {waited:.0f} seconds, "
                                   f"so I stopped waiting for statement {reply.get('statement_id')}.")
             self.sleep(self.poll_seconds)
             waited += self.poll_seconds

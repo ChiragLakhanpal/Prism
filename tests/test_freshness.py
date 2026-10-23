@@ -21,7 +21,7 @@ import pytest
 from strata.dbx import Viewer, viewer_from_headers
 from strata.fixture import recorded as fmt
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, Result
+from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, Result, WarehouseEngine
 from strata.server.app import create_app
 from strata.server import engines
 from strata.server.engines import duckdb_file
@@ -185,10 +185,24 @@ def test_a_stamp_read_that_gives_up_also_stops_the_warehouse_wait_behind_it():
 
     engine_for = engines.warehouse_as_viewer("strata.test", "wh-1", transport=lambda host, token: still_running,
                                              timeout_seconds=0)
-    with pytest.raises(EngineError, match="longer than 0 seconds"), engine_for(viewer_from_headers(ANA)) as engine:
+    with pytest.raises(EngineError, match="longer than 5 seconds"), engine_for(viewer_from_headers(ANA)) as engine:
         engine.run("SELECT 1")
 
     assert calls == [("POST", "5s")]
+
+
+def test_a_warehouse_that_held_the_first_call_for_the_whole_timeout_is_not_polled_for_as_long_again():
+    # A reply that is still running means the warehouse held the call for its whole wait_timeout,
+    # so that time counts, and a 30 second read gives up at 30 seconds, not 60.
+    slept = []
+
+    def still_running(method, path, body):
+        return {"statement_id": "s-1", "status": {"state": "PENDING"}}
+
+    with pytest.raises(EngineError, match="longer than 30 seconds"):
+        WarehouseEngine("wh-1", still_running, timeout_seconds=30, sleep=slept.append).run("SELECT 1")
+
+    assert slept == []
 
 
 def test_the_environment_s_warehouse_gives_up_at_the_stamp_s_timeout():
