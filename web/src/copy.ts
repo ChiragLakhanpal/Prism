@@ -124,6 +124,15 @@ export const copy = {
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
     item: (sentence: string, reason: string) => `"${sentence}" ${reason}`,
+    // One sentence for each reason the verifier gives, keyed by its code (REASONS in
+    // src/strata/agent/verifier.py). A test fails when a code has no sentence here.
+    reasons: {
+      number_not_in_records: "No record supports this number.",
+      date_not_in_records: "No record supports this date.",
+      id_not_returned: "It cited a source I did not retrieve for this question.",
+      no_source: "It cited no source.",
+      quote_not_on_page: "The quote is not on the page it cites.",
+    },
   },
 
   // Steps while an answer is built, and the answer itself.

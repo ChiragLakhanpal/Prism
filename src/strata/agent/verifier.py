@@ -82,7 +82,7 @@ DATES = (
     (re.compile(rf"\b({MONTH})\s+(\d{{4}})\b"), lambda m: When(int(m[2]), _month(m[1]))),
 )
 # A number standing on its own: not part of a word or an id such as P130164, IDA-60290 or 10.b.
-NUMBER = re.compile(r"(?<![\w.,:/-])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?![\w/-]|[.,]\d|\.[A-Za-z])")
+STANDALONE_NUMBER = re.compile(r"(?<![\w.,:/-])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?![\w/-]|[.,]\d|\.[A-Za-z])")
 YEARS = range(1900, 2101)
 
 
@@ -104,7 +104,7 @@ def mentions(text: str) -> list[Mention]:
             except ValueError:
                 continue  # not a real date, such as February 30
             found.append(Mention("date", match.group(0), when, *match.span()))
-    for match in NUMBER.finditer(text):
+    for match in STANDALONE_NUMBER.finditer(text):
         if not free(*match.span()):
             continue
         written = match.group(0)

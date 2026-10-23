@@ -75,6 +75,15 @@ dates = []
 quote = { text = "108 of 328 works contracts had to be bid again", passage_id = "strata.gold.passage:31525018/v1/54" }
 
 [[cases]]
+id = "p156634-plan-not-yet-public"
+says = """The agent asks check_plan for the October 9, 2026 plan as of October 1, 2026. The tool abstains, \
+and the agent gets no date after October 1, 2026 in what comes back."""
+question = "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-01
+recording = "p156634-plan-not-yet-public"
+
+[[cases]]
 id = "p130164-fourth-round"
 says = """The agent asks for a fourth round of tool calls, which never runs, then cites ICR paragraph 88, which \
 only that round would have found. The answer keeps what the first three rounds support."""
