@@ -124,6 +124,31 @@ numbers = []
 dates = []
 
 [[cases]]
+id = "p130164-quote-cut-from-a-number"
+says = """The agent quotes "10" from paragraph 54, which says 108 of 328. A quote cut from inside a number is not \
+word for word, so the verifier removes the sentence whether its quote holds only "10" or the full words."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The ICR said \"10\" works contracts were bid again."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["10"]
+dates = []
+quote = { text = "10", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "The ICR said \"10\" works contracts were bid again."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["10"]
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases]]
 id = "p156634-plan-not-yet-public"
 says = """The agent asks check_plan for the October 9, 2026 plan as of October 1, 2026. The tool abstains, \
 and the agent gets no date after October 1, 2026 in what comes back."""

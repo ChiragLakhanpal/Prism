@@ -13,7 +13,8 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
-3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation.
+3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation, and
+   starts and ends where the page's words do: "10" is not a quote from "108 of 328".
    The quote checked is the one the person reads: the words in the sentence's double quotes must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
@@ -306,15 +307,21 @@ def quoted_spans(sentence: str) -> list[tuple[int, int]]:
 
 
 def find_quote(quote: str, text: str) -> tuple[int, int] | None:
-    """Where the quote is in the text, word for word but for whitespace and line-end hyphenation."""
+    """Where the quote is in the text, word for word but for whitespace and line-end hyphenation. It must
+    start and end where the text's words do, so "10" is not in "108 of 328" and "ding" is not in "rebidding"."""
     wanted, _ = _normalized(quote)
     if not wanted:
         return None
     held, where = _normalized(text)
     start = held.find(wanted)
-    if start < 0:
-        return None
-    return where[start], where[start + len(wanted) - 1] + 1
+    while start >= 0:
+        end = start + len(wanted)
+        cut_at_start = wanted[0].isalnum() and start > 0 and held[start - 1].isalnum()
+        cut_at_end = wanted[-1].isalnum() and end < len(held) and held[end].isalnum()
+        if not cut_at_start and not cut_at_end:
+            return where[start], where[end - 1] + 1
+        start = held.find(wanted, start + 1)
+    return None
 
 
 # ── The checks ───────────────────────────────────────────────────────────

@@ -185,6 +185,20 @@ def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_p
     assert checks["sentences"] == {"written": 6, "kept": 3, "removed": 3}
 
 
+def test_a_quote_cut_from_inside_a_number_is_not_on_its_page(ask_case):
+    """Paragraph 54 says "108 of 328" (values.toml, icr-para-54). A quoted "10" starts where 108 starts but
+    ends inside it, so it is not word for word and backs no number, whatever the claim's quote holds."""
+    parsed, _ = ask_case("p130164-quote-cut-from-a-number")
+
+    assert [(item["sentence"], [(reason["code"], reason["text"]) for reason in item["reasons"]])
+            for item in of(parsed, "removed")] == [
+        ('The ICR said "10" works contracts were bid again.', [("quote_not_on_page", ICR_54)]),
+        ('The ICR said "10" works contracts were bid again.', [("quote_not_on_page", ICR_54)]),
+    ]
+    checks = of(parsed, "checks")[0]
+    assert checks["numbers"] == {"total": 4, "matched": 2}
+
+
 def test_a_fourth_round_of_tool_calls_gets_no_results_and_the_answer_rests_on_the_first_three(ask_case):
     parsed, agent = ask_case("p130164-fourth-round")
 
@@ -471,7 +485,8 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
             'Its market approach was "Single Stage - Two Envelope".',
             "It went to market as Single Stage - Two Envelope.",
             "Thirty-seven firms bid for it.",
-            'The plan called it "Equipping of boreholes, Lot 9".')]
+            'The plan called it "Equipping of boreholes, Lot 9".',
+            'Its STEP reference held "1".')]
 
     agent = CallsThenAnswers([("check_plan", {
         "project_id": "P156634", "implementing_agency": "Northern Water Works Development Agency",
@@ -481,7 +496,9 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
 
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
         'Its market approach was "Single Stage - Two Envelope".', "It went to market as Single Stage - Two Envelope."]
-    assert removed_reasons(parsed) == [[("number_not_in_records", "Thirty-seven")], [("quote_not_on_page", None)]]
+    # KE-NWWDA-541062-CW-RFQ holds a 1 only inside 541062, so a quoted "1" is not on the record.
+    assert removed_reasons(parsed) == [
+        [("number_not_in_records", "Thirty-seven")], [("quote_not_on_page", None)], [("quote_not_on_page", None)]]
 
 
 def logged_runs(ops_db):
