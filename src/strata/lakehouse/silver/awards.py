@@ -53,7 +53,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         individual = person or (supplier or "").upper() == INDIVIDUAL_CONSULTANT
         rows.append((
             clean.text(record.get("wb_contract_number")),
-            clean.text(record.get("supplier_id")),
+            clean.supplier_id(record.get("supplier_id")),
             clean.text(record.get("project_id")),
             clean.text(record.get("project_name")),
             clean.text(record.get("borrower_country_code")),

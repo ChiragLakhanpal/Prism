@@ -24,6 +24,9 @@ resources:
         - environment_key: default
           spec:
             environment_version: "2"
+            # bronze_to_gold matches supplier names with Splink, on DuckDB inside the task (ticket 19). The
+            # pin is pyproject.toml's, and tests/test_suppliers.py keeps the two the same.
+            dependencies: ["splink==5.0.0"]
       tasks:
         - task_key: fetch_by_watermark
           environment_key: default

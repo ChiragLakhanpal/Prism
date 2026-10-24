@@ -137,7 +137,69 @@ def isr_rating(gold, value):
     assert (row["value"], row["public_from"]) == (value["value"], dt.date(2026, 6, 30))
 
 
+def awarded_bidder(gold, value):
+    """An awarded bidder of an award notice, read from its text into silver.notice_bidders with its STEP
+    supplier ID, or as an unnamed individual consultant, public from the notice's own date (ticket 19)."""
+    notice = one(gold, "SELECT public_from FROM strata.gold.notice WHERE notice_id = :notice", notice=value["notice"])
+    found = gold.run("SELECT name, step_supplier_id, individual_consultant, public_from FROM strata.silver.notice_bidders "
+                     "WHERE notice_id = :notice", {"notice": value["notice"]}).rows
+    expected = ((None, None, True, notice["public_from"]) if value["value"] == "Individual Consultant"
+                else (value["name"], value["value"], False, notice["public_from"]))
+    assert expected in found
+
+
+def contract_supplier_id(gold, value):
+    """A contract keeps the supplier_id the awards dataset gives it, public from its signing date."""
+    contract = one(gold, "SELECT supplier_id, contract_signing_date, public_from FROM strata.gold.contract "
+                         "WHERE contract_id = :number", number=value["contract"])
+    assert contract["supplier_id"] == value["value"]
+    assert contract["public_from"] == contract["contract_signing_date"]
+
+
+def awarded_bidder_without_an_id(gold, value):
+    """An awarded bidder a notice writes with no STEP supplier ID keeps its name, public from the notice's date."""
+    notice = one(gold, "SELECT public_from FROM strata.gold.notice WHERE notice_id = :notice", notice=value["notice"])
+    found = gold.run("SELECT name, step_supplier_id, individual_consultant, public_from FROM strata.silver.notice_bidders "
+                     "WHERE notice_id = :notice", {"notice": value["notice"]}).rows
+    assert (value["value"], None, False, notice["public_from"]) in found
+
+
+def contract_member(gold, value):
+    """A supplier of a contract, by the supplier_id the awards dataset gives it, public from the signing date."""
+    member = one(gold, "SELECT cs.public_from, c.contract_signing_date FROM strata.gold.contract_supplier AS cs "
+                       "JOIN strata.gold.contract AS c ON c.contract_id = cs.contract_id "
+                       "WHERE cs.contract_id = :number AND cs.supplier_id = :supplier",
+                 number=value["contract"], supplier=value["value"])
+    assert member["public_from"] == member["contract_signing_date"]
+
+
+def no_supplier_written_null(gold, value):
+    """A supplier the awards write as the word null, with supplier_id 0, is no supplier: the contract has
+    none, and no supplier is named null or keyed 0 (ticket 19)."""
+    contract = one(gold, "SELECT supplier_id, supplier_count FROM strata.gold.contract WHERE contract_id = :number",
+                   number=value["contract"])
+    named = gold.run("SELECT count(*) FROM strata.gold.supplier WHERE lower(name) = :word OR supplier_id = '0' "
+                     "OR lower(country) = :word", {"word": value["value"]}).rows
+    assert contract["supplier_id"] is None and named == ((0,),)
+
+
 CHECKS = {
+    "award-supplier-written-null": no_supplier_written_null,
+    "notice-losai-no-id": awarded_bidder_without_an_id,
+    "notice-losai-391987": awarded_bidder,
+    "award-losai-477806": contract_member,
+    "award-china-railway-426408": contract_member,
+    "supplier-id-tradecon-notice": awarded_bidder,
+    "supplier-id-tradecon-award": contract_supplier_id,
+    "supplier-id-jedel-notice": awarded_bidder,
+    "supplier-id-jedel-award": contract_supplier_id,
+    "supplier-id-geoscintex-notice": awarded_bidder,
+    "supplier-id-geoscintex-award": contract_supplier_id,
+    "notice-bidder-503708": awarded_bidder,
+    "notice-bidder-503711": awarded_bidder,
+    "notice-firm-636626": awarded_bidder,
+    "notice-firm-637051": awarded_bidder,
+    "notice-individual-consultant": awarded_bidder,
     "notice-icb-code": notice_method_as_written,
     "notice-icb-name": notice_method_as_written,
     "award-541055-signed": contract_signed,
@@ -393,6 +455,7 @@ def test_each_measure_has_the_kind_the_spec_names(gold):
     assert kinds == {"coverage_rows": "coverage", "coverage_years": "coverage", "linked_step_reference": "linked",
                      "linked_notice": "linked", "linked_project": "linked", "linked_sector": "linked",
                      "contact_details_removed": "stripped", "fresh_fetched": "fresh", "fresh_newest_record": "fresh",
+                     "awarded_bidder_id_on_award": "linked", "awarded_bidder_id_same_name": "linked",
                      "projects_with_contracts_lacking_step_reference": "fix",
                      "gap_years_contracts_in_local_currency": "fix", "gap_years_projects_in_local_currency": "fix"}
 

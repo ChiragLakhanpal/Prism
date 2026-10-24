@@ -9,9 +9,11 @@ reads only the environment it is given:
   (src/strata/server/engines.py decides).
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
   service principal: usage events are written to strata.ops.usage_events, each answer stream's run
-  to strata.ops.agent_runs, and each source a viewer opens in the evidence drawer to
-  strata.ops.evidence_opened, with its token. Without them, the server keeps no usage events and
-  records no opened sources, and runs go to the server log only.
+  to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
+  strata.ops.evidence_opened, and each decision or label a person gives a candidate pair of supplier
+  name matching to strata.ops.supplier_review_decisions or supplier_pair_labels, with its token.
+  Without them, the server keeps no usage events, records no opened sources, decisions or labels, and
+  runs go to the server log only.
 - FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET (the app's
   four foundry-* secret resources, which ops/app/deploy_app.py sets): /api/ask answers through the
   Foundry agent (src/strata/agent/runner.py). Without them, it says there is no agent.
@@ -44,6 +46,7 @@ from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEng
 from strata.server import engines, tracing
 from strata.server.app import create_app
 from strata.server.evidence import OpenedLog
+from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -105,5 +108,6 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       usage=UsageLog(the_app, thresholds.value("app.usage_flush_seconds")) if the_app else None,
                       runs=RunLog(the_app) if the_app else None,
                       opened=OpenedLog(the_app) if the_app else None,
+                      supplier_log=SupplierLog(the_app) if the_app else None,
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

@@ -21,11 +21,17 @@
 -- contract_amount, contract_currency   the amount in the currency the source gives it in
 -- amount_basis           US dollars; or, for a contract from a notice, US dollars from award notices
 --                        when the notice prices it in USD, else local currency from award notices
--- supplier_id            the contract's supplier: the member, or the joint venture (JV-...) when
---                        it has several members, which gold.contract_supplier lists; empty for the
---                        FY2001 to FY2016 dataset and for notices, which give no STEP supplier ID
--- supplier_count         how many supplier rows the dataset gives for the contract; 0 for a notice
--- joint_venture          true when it has more than one supplier row
+-- supplier_id            the contract's supplier (gold.supplier): the member, or the joint venture
+--                        (JV- and its members' supplier IDs) when it has several members, which
+--                        gold.contract_supplier lists. For the FY2001 to FY2016 dataset, which has no
+--                        supplier_id column, and for notices, it is the supplier each row resolved to
+--                        (strata.silver.supplier_resolution): its STEP supplier ID first, its name
+--                        only where it has none (ticket 19). Empty for an individual consultant with
+--                        no ID.
+-- supplier_count         how many suppliers the source gives for the contract: its award rows, the
+--                        notice's awarded bidders, or, for the FY2001 to FY2016 dataset, its rows once
+--                        a row that names a joint venture's members is read as one row per member
+-- joint_venture          true when it has more than one supplier
 -- public_from            the signing date for an awards dataset; the notice date for a notice (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.gold.contract (
   contract_id STRING NOT NULL,

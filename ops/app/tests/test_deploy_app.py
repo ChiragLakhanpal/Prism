@@ -156,7 +156,7 @@ def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_
     assert "FOUNDRY_CLIENT_SECRET" in out and "there is no agent" in out
 
 
-def test_the_app_s_own_principal_may_write_usage_events_agent_runs_and_opened_sources_and_nothing_more(tmp_path, capsys):
+def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_sources_and_supplier_decisions_and_nothing_more(tmp_path, capsys):
     workspace = FakeWorkspace()
 
     deploy(workspace, tmp_path, capsys)
@@ -167,6 +167,9 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_and_opened_so
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.usage_events TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.agent_runs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.evidence_opened TO `{PRINCIPAL}`",
+        f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{PRINCIPAL}`",
     ]
 
 

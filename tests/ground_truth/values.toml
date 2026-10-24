@@ -1197,6 +1197,237 @@ quote = "INDIVIDUAL CONSULTANT"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1668349].supplier"
 
+# Awarded bidders in award notices (ticket 19). An award notice writes each awarded bidder as its
+# name with its STEP supplier ID in brackets, then its address and its country. Consultant notices
+# write "Awarded Firm(s):", and a person hired as an individual consultant is written
+# "Individual Consultant" with no name and no ID.
+
+[[value]]
+id = "notice-bidder-503708"
+says = "Award notice OP00125855 for KE-KIMAWASCO-158691-CW-RFB lists the joint venture's first member as an awarded bidder, with STEP supplier ID 503708."
+value = "503708"
+name = "SALAMA ROAD AND BRIDGE CORPORATION LTD"
+notice = "OP00125855"
+quote = "SALAMA ROAD AND BRIDGE CORPORATION LTD (503708)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125855].notice_text"
+
+[[value]]
+id = "notice-bidder-503711"
+says = "The same notice lists the joint venture's second member as an awarded bidder, with STEP supplier ID 503711."
+value = "503711"
+name = "AGUNGA & COMPANY LIMITED"
+notice = "OP00125855"
+quote = "AGUNGA & COMPANY LIMITED (503711)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125855].notice_text"
+
+[[value]]
+id = "notice-firm-636626"
+says = "Award notice OP00192301, a consultant award, lists its first awarded firm with STEP supplier ID 636626, followed by the line Registry ID: 24."
+value = "636626"
+name = "GEOSPATIAL RESEARCH INTERNATIONAL (GRI)"
+notice = "OP00192301"
+quote = "GEOSPATIAL RESEARCH INTERNATIONAL (GRI) (636626)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00192301].notice_text"
+
+[[value]]
+id = "notice-firm-637051"
+says = "The same notice lists its second awarded firm with STEP supplier ID 637051, followed by the firms' evaluation scores."
+value = "637051"
+name = "AFRICAN SYSTEMS LLC"
+notice = "OP00192301"
+quote = "AFRICAN SYSTEMS LLC (637051)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00192301].notice_text"
+
+[[value]]
+id = "notice-individual-consultant"
+says = "Award notice OP00410598 for KE-MAWASCO-501974-CS-INDV writes its awarded firm as Individual Consultant, with no name and no STEP supplier ID."
+value = "Individual Consultant"
+notice = "OP00410598"
+quote = "Individual Consultant"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00410598].notice_text"
+
+# The same firm with another STEP supplier ID in its award notice than in the awards dataset, on the
+# same STEP reference. docs/PLAN.md section 3 said the two IDs are equal. Over every award notice in
+# the fixture they agree for most awarded bidders, not all (the supplier ID counts below).
+
+[[value]]
+id = "supplier-id-tradecon-notice"
+says = "Award notice OP00371083 for KE-KIMAWASCO-481608-GO-RFB gives TRADECON (MSA) LTD the STEP supplier ID 987415."
+value = "987415"
+name = "TRADECON (MSA) LTD"
+notice = "OP00371083"
+quote = "TRADECON (MSA) LTD (987415)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00371083].notice_text"
+
+[[value]]
+id = "supplier-id-tradecon-award"
+says = "The awards dataset gives the same firm's contract 1853775 for KE-KIMAWASCO-481608-GO-RFB the supplier_id 987343."
+value = "987343"
+contract = "1853775"
+quote = "987343"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1853775].supplier_id"
+
+[[value]]
+id = "supplier-id-jedel-notice"
+says = "Award notice OP00336086 for KE-TAVEVO-451075-CW-RFB gives JEDEL ENTERPRISES LTD the STEP supplier ID 936306."
+value = "936306"
+name = "JEDEL ENTERPRISES LTD"
+notice = "OP00336086"
+quote = "JEDEL ENTERPRISES LTD (936306)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00336086].notice_text"
+
+[[value]]
+id = "supplier-id-jedel-award"
+says = "The awards dataset gives the same firm's contract 1821548 for KE-TAVEVO-451075-CW-RFB the supplier_id 936302."
+value = "936302"
+contract = "1821548"
+quote = "936302"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1821548].supplier_id"
+
+[[value]]
+id = "supplier-id-geoscintex-notice"
+says = "Award notice OP00352129 for KE-TAVEVO-462185-GO-RFQ gives GEOSCINTEX LIMITED the STEP supplier ID 944048."
+value = "944048"
+name = "GEOSCINTEX LIMITED"
+notice = "OP00352129"
+quote = "GEOSCINTEX LIMITED (944048)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00352129].notice_text"
+
+[[value]]
+id = "supplier-id-geoscintex-award"
+says = "The awards dataset gives the same firm's contract 1836962 for KE-TAVEVO-462185-GO-RFQ the supplier_id 944054."
+value = "944054"
+contract = "1836962"
+quote = "944054"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1836962].supplier_id"
+
+[[value]]
+id = "notice-bidder-no-id"
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB, signed in the FY2017-19 gap, writes its awarded bidder with no STEP supplier ID."
+value = "AMIT CONSTRUCTION"
+notice = "OP00044090"
+quote = "AMIT CONSTRUCTION"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+
+# Supplier rows with no STEP supplier ID that name matching compares (ticket 19). The FY2001 to FY2016
+# awards dataset has no supplier_id column, and cuts long names off; some award notices write an
+# awarded bidder with no ID. Each value is the name as its record writes it.
+
+[[value]]
+id = "fy2001-thales-1326397"
+says = "The FY2001 to FY2016 awards give contract 1326397 for P124109 to THALES AIR SYSTEMS S.A, of France, with no supplier ID."
+value = "THALES AIR SYSTEMS S.A"
+contract = "1326397"
+quote = "THALES AIR SYSTEMS S.A"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1326397].supplier"
+
+[[value]]
+id = "fy2001-thales-1326726"
+says = "The same dataset gives contract 1326726 for P124109 to a supplier written the same way, of France."
+value = "THALES AIR SYSTEMS S.A"
+contract = "1326726"
+quote = "THALES AIR SYSTEMS S.A"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1326726].supplier"
+
+[[value]]
+id = "fy2001-china-railway"
+says = "The FY2001 to FY2016 awards give contract 1519849 for P124109 to CHINA RAILWAY NO. 10 ENGINEERING GROUP, of China, with no supplier ID."
+value = "CHINA RAILWAY NO. 10 ENGINEERING GROUP"
+contract = "1519849"
+quote = "CHINA RAILWAY NO. 10 ENGINEERING GROUP"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1519849].supplier"
+
+[[value]]
+id = "award-china-railway-426408"
+says = "The awards since FY2020 give contract 1676946 for P156634 to China Railway No.10 Engineering Group Co., Ltd., of China, with supplier_id 426408. It shares no project with contract 1519849."
+value = "426408"
+name = "China Railway No.10 Engineering Group Co., Ltd."
+contract = "1676946"
+quote = "426408"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1676946].supplier_id"
+
+[[value]]
+id = "fy2001-intercontinental-cut-off"
+says = "The FY2001 to FY2016 awards give contract 1527581 for P124109 to M/S INTERCONTINENTAL CONSULTANTS & TEC, of India: a name cut off at the dataset's 40 characters."
+value = "M/S INTERCONTINENTAL CONSULTANTS & TEC"
+contract = "1527581"
+quote = "M/S INTERCONTINENTAL CONSULTANTS & TEC"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1527581].supplier"
+
+[[value]]
+id = "fy2001-intercontinental-and-tech"
+says = "The same dataset gives contract 1541213 for P124109 to INTERCONTINENTAL CONSULTANTS AND TECH, of India."
+value = "INTERCONTINENTAL CONSULTANTS AND TECH"
+contract = "1541213"
+quote = "INTERCONTINENTAL CONSULTANTS AND TECH"
+record = "api/awards/P124109-fy2001-2016.json"
+at = "data[contract_number=1541213].supplier"
+
+[[value]]
+id = "fy2001-joint-venture-row"
+says = "The FY2001 to FY2016 awards give contract 1536431 for P130164 to two firms in one row: ECORYS NEDERLAND B.V. IN JV WITH ECORYS INDIA PVT. LTD., of India."
+value = "ECORYS NEDERLAND B.V. IN JV WITH ECORYS INDIA PVT. LTD."
+contract = "1536431"
+members = ["ECORYS NEDERLAND B.V.", "ECORYS INDIA PVT. LTD."]
+quote = "ECORYS NEDERLAND B.V. IN JV WITH ECORYS INDIA PVT. LTD."
+record = "api/awards/P130164-fy2001-2016.json"
+at = "data[contract_number=1536431].supplier"
+
+[[value]]
+id = "notice-losai-no-id"
+says = "Award notice OP00054114 for KE-MOWI-30792-CS-QCBS writes its second awarded firm, LOSAI MANAGEMENT LIMITED of Kenya, with no STEP supplier ID."
+value = "LOSAI MANAGEMENT LIMITED"
+notice = "OP00054114"
+quote = "LOSAI MANAGEMENT LIMITED"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00054114].notice_text"
+
+[[value]]
+id = "notice-losai-391987"
+says = "Award notice OP00150904 for MOWS-WSDP-02-2019-2020 writes LOSAI MANAGEMENT LIMITED with the STEP supplier ID 391987."
+value = "391987"
+name = "LOSAI MANAGEMENT LIMITED"
+notice = "OP00150904"
+quote = "LOSAI MANAGEMENT LIMITED (391987)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00150904].notice_text"
+
+[[value]]
+id = "award-losai-477806"
+says = "The awards since FY2020 give LOSAI MANAGEMENT LTD., of Kenya, a share of contract 1663748 for KE-WAJWASCO-154020-CS-QCBS, with supplier_id 477806."
+value = "477806"
+name = "LOSAI MANAGEMENT LTD."
+contract = "1663748"
+quote = "477806"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1663748&supplier_id=477806].supplier_id"
+
+[[value]]
+id = "award-supplier-written-null"
+says = "The awards since FY2020 write contract 1800527 for P176758's supplier as the word null, with supplier_id 0 and supplier_country null: no supplier is named and no STEP supplier ID is given."
+value = "null"
+contract = "1800527"
+quote = "null"
+record = "api/awards/P176758-P170941.json"
+at = "data[wb_contract_number=1800527].supplier"
+
 [[value]]
 id = "notice-icb-code"
 says = "Notice OP00034393, a Kenya Invitation for Bids of September 14, 2015 for the Nairobi bulk water supply, gives its method's code as ICB, an old name that silver maps to Request for Bids, Open - International."
@@ -1339,6 +1570,30 @@ with_notice = 239
 with_notice_counted = "The contracts with a STEP reference that a recorded notice's bid_reference_no also carries, once both are written in capitals with single hyphens."
 notices = 404
 notices_counted = "The distinct notice ids in the three notice files whose project_ctry_name is Kenya: 399 for P156634, four for the packages still open on October 9, 2026, and the 2015 ICB notice."
+
+# Awarded bidders' STEP supplier IDs against the awards dataset's supplier_id, over every Contract
+# Award notice in the fixture (ticket 19). Counted on October 24, 2026 from the recorded files by a
+# script written apart from Strata's code: it took each notice's text with its HTML tags as line
+# breaks, kept the lines between an "Awarded ..." heading and the next Evaluated, Rejected or
+# Beneficial Ownership heading that end with an ID of three or more digits in brackets, and matched
+# each notice's bid_reference_no to the award rows' borrower_contract_reference_number by the STEP
+# reference each holds, read with hyphens in place of the slashes and stray spaces some rows use.
+# The blueprint's "7 of 7 checks" names no checks, so these counts replace it.
+[counts.supplier_ids]
+says = "How often an awarded bidder in an award notice carries the supplier_id the awards dataset gives for the same STEP reference."
+notice_files = ["api/notices/P130164.json", "api/notices/P156634.json", "api/notices/kenya-works-open-on-2026-10-09.json", "api/notices/kenya-icb-2015.json"]
+awards = ["api/awards/P156634.json", "api/awards/P176758-P170941.json"]
+award_notices = 231
+with_id = 223
+with_id_counted = "The awarded bidders whose line ends with a STEP supplier ID in brackets, once per notice. Every one is in a Kenya notice; India's one award notice writes no ID."
+on_award = 204
+on_award_counted = "Those whose notice's STEP reference is also on award rows."
+agrees = 137
+agrees_counted = "Those whose ID is one of the supplier_id values on the award rows of that STEP reference."
+same_name = 157
+same_name_counted = "Those whose name, in capitals with only letters and digits kept, is a supplier's name on the award rows of that STEP reference: 158 in the recorded files, less the awarded bidder of OP00131058, whose name the fetch removes as a person's contact detail, so Strata never reads it."
+same_name_agrees = 128
+same_name_agrees_counted = "Those whose ID is the supplier_id the award rows give that same name. The other 29 carry another ID, such as TRADECON (MSA) LTD (supplier-id-tradecon-notice and supplier-id-tradecon-award)."
 
 # FY2017 to FY2019, which neither awards dataset covers. Each Contract Award notice in the
 # fixture whose Contract Signature Date falls in one of those fiscal years, read from the notice's
