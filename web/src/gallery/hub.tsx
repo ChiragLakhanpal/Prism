@@ -13,7 +13,6 @@ import summary from "../../../tests/fixtures/api/summary-p130164.json";
 import { useRef, useState, type ReactNode } from "react";
 import { BaselinePanel } from "../components/BaselinePanel";
 import { ChangeTables } from "../components/ChangeTables";
-import { FactTable } from "../components/FactTable";
 import { ListSearch } from "../components/ListSearch";
 import { Pagination } from "../components/Pagination";
 import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";

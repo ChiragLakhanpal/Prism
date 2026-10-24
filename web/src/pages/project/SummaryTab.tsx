@@ -22,6 +22,7 @@ import { Fill } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
 import { Num } from "../../components/Num";
 import { SkeletonLine } from "../../components/Skeleton";
+import { Source } from "../../components/Source";
 import { Table, type Column, type Row } from "../../components/Table";
 import { copy } from "../../copy";
 import type { EvidenceEvent } from "../../lib/answer";
@@ -49,6 +50,7 @@ function numberSources(summary: Summary): Map<string, number> {
   };
   summary.dates.forEach((fact) => cite(fact.source));
   summary.history.rows.forEach((row) => cite(row.source));
+  if (summary.history.source) cite(summary.history.source);
   summary.money.forEach((fact) => cite(fact.source));
   summary.ratings.forEach((fact) => cite(fact.source));
   summary.who.forEach((fact) => cite(fact.source));
@@ -210,6 +212,11 @@ function History({ summary, numbers, events }: { summary: Summary; numbers: Map<
       <div className="mt-4" data-closing-history="none">
         {title}
         <p className="mt-1 max-w-prose text-body text-ink">{words.history.none}</p>
+        {summary.history.source && (
+          <Source className="mt-1">
+            <SourceCell source={summary.history.source} numbers={numbers} events={events} />
+          </Source>
+        )}
       </div>
     );
   }

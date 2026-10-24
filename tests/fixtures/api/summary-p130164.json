@@ -37,7 +37,12 @@
   ],
   "history": {
     "known": true,
-    "rows": []
+    "rows": [],
+    "source": {
+      "evidence_id": "strata.gold.project_closing_date:P130164/2013-10-31",
+      "kind": "loan_history",
+      "date": "2013-10-31"
+    }
   },
   "money": [
     {
@@ -245,6 +250,36 @@
             "key": "implementing_agency",
             "value": "Rajasthan State Public Works Department",
             "kind": "text"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_closing_date:P130164/2013-10-31",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_closing_date:P130164/2013-10-31",
+        "public_from": "2013-10-31",
+        "reference": "P130164",
+        "source": {
+          "source_key": "loan_history",
+          "project_id": "P130164",
+          "document_date": "2013-10-31"
+        },
+        "fields": [
+          {
+            "key": "closing_date",
+            "value": "2018-12-31",
+            "kind": "date"
+          },
+          {
+            "key": "reported_on",
+            "value": "2013-10-31",
+            "kind": "date"
           }
         ]
       },

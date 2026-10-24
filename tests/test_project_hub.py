@@ -149,6 +149,11 @@ def test_p130164_s_summary_gives_every_value_with_its_source_in_one_small_answer
     # The ICR data sheet and every monthly history row give one closing date, so the date never moved.
     assert "original_closing_date" not in found
     assert (summary["history"]["known"], summary["history"]["rows"]) == (True, [])
+    # "The closing date did not change after approval." cites the monthly history it reads, from the first
+    # month the history holds (October 2013, the month the credit was approved).
+    assert summary["history"]["source"] == {"evidence_id": "strata.gold.project_closing_date:P130164/2013-10-31",
+                                            "kind": "loan_history", "date": "2013-10-31"}
+    assert "strata.gold.project_closing_date:P130164/2013-10-31" in {event["id"] for event in summary["sources"]}
     # US$ millions to one decimal, from the credit's record (credit-ida53100-*): 160,000,000,
     # 121,630,912.89 and 30,696,577.26.
     assert [found[key]["value"] for key in ("commitment", "disbursed", "canceled")] == ["160.0", "121.6", "30.7"]
@@ -281,6 +286,22 @@ def test_the_source_view_corrects_a_wrong_page_paragraph_or_address(hub):
     # A page the layout parser could not read, and a document listed but not read.
     assert get(hub, f"{SOURCE}/icr-2019-10-10?page=5").json()["page_state"] == "unread"
     assert get(hub, f"{SOURCE}/30152361").json()["state"] == "doc_unread"
+
+
+def test_each_hardest_document_s_page_opens_in_the_source_view(hub):
+    """The Data readiness page's hardest documents link "Open at page" to the source view by each
+    document's id (ticket 21 repoints ticket 18's link): each lands on its page, read or not."""
+    shelf = get(hub, "/api/data/readiness?asof=2026-10-23").json()["stress_shelf"]
+    landed = {}
+    for entry in shelf:
+        document = entry["document"]
+        if not document or entry["hard_page"] is None:
+            continue
+        body = get(hub, f"/api/projects/{document['project_id']}/documents/{document['document_id']}"
+                        f"?page={entry['hard_page']}&asof=2026-10-23").json()
+        landed[entry["key"]] = (body["state"], body["page"], body["page_state"])
+    assert landed == {"p130164_pad": ("page", 65, "read"), "longest_pad": ("page", 6, "unread"),
+                      "long_plan": ("page", 3, "read"), "french_report": ("page", 13, "read")}
 
 
 # ── What changed between a plan and the version before it ────────────────

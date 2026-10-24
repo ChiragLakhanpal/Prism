@@ -21,7 +21,7 @@ import { IntentBox } from "./components/IntentBox";
 import { RETURNING } from "./components/Popover";
 import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
-import { answer, ask, removedScopes } from "./lib/answer";
+import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { draftScope } from "./lib/drafts";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
@@ -113,6 +113,7 @@ export function App() {
   const who = useStore(viewer);
   const { freshness, problem } = useStore(stamp);
   const run = useStore(answer);
+  const kept = useStore(earlier);
   const seen = useStore(visited);
   const from = useStore(origin);
   const narrow = useNarrow();
@@ -123,8 +124,8 @@ export function App() {
   const evidenceId = evidenceIn(here.search);
   const asOf = params.get("asof");
   const view = params.get("view");
-  // The answer shows on the history entry it was asked on.
-  const shown = run && run.asked.key === here.key ? run : null;
+  // The answer shows on the history entry it was asked on: the current one, or the last one finished there.
+  const shown = run && run.asked.key === here.key ? run : (kept[here.key] ?? null);
 
   useEffect(() => {
     const stop = startRouter();

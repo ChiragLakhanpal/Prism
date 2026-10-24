@@ -413,7 +413,7 @@ export function AnswerPanel({
   // Focus goes back to the box, where the question still is, but its list stays shut over the page
   // you return to until you press Down, type or click in it (the 14 brief, section 6.4).
   const close = () => {
-    closeAnswer();
+    closeAnswer(run);
     const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");
     box?.setAttribute(RETURNING, "");
     box?.focus();

@@ -123,6 +123,8 @@ test("P130164's Summary renders from records with no request to a route that cal
   await expect(summary.locator("[data-fact=closing_date]")).toContainText("Dec 31, 2018");
   await expect(summary.locator("[data-fact=closing_date] [data-fact-source]")).toHaveText(/^Projects API, Aug 1, 2023\u2060\[1\]$/);
   await expect(summary.locator("[data-closing-history=none]")).toContainText("The closing date did not change after approval.");
+  // That sentence cites the monthly history it reads, as source 2.
+  await expect(summary.locator("[data-closing-history=none] [data-source]")).toHaveText(/^Source: Loan history, Oct 2013\u2060\[2\]$/);
   // The lead's amounts are the Money table's cells, word for word.
   for (const [key, value] of [["commitment", "160.0"], ["disbursed", "121.6"], ["canceled", "30.7"]]) {
     await expect(summary.locator(`[data-fact=${key}] td`).first()).toHaveText(value);
@@ -246,6 +248,9 @@ test("Back from the source view restores the page with its answer and the drawer
   await page.getByRole("dialog").getByRole("link", { name: "Open at page 23", exact: true }).click();
   await expect(page.locator("[data-highlighted]")).toBeFocused();
   await expect(panel(page)).toHaveCount(0);
+  // A question asked on the source view does not take the first page's answer away.
+  await askFromTheBox(page);
+  await landed(page);
 
   await page.goBack();
 

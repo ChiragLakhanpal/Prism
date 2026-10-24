@@ -47,7 +47,6 @@ export type CheckedPlan = CheckPlanResult & {
 const whole = (value: number) => formatNumber(value, { compact: false });
 const amount = (text: string) => formatNumber(Number(text), { decimals: 2, compact: false });
 const day = (iso: string) => <Num date={iso} />;
-const mono = (text: ReactNode) => <span className="font-mono">{text}</span>;
 
 // A number's tooltip: what it is and the values it comes from, one per line.
 function Explain({ lines }: { lines: [ReactNode, ReactNode][] }) {

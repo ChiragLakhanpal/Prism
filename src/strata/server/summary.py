@@ -7,7 +7,7 @@ evidence drawer shows it, so a citation marker opens at once:
 - dates: the approval date and the closing date from the projects API's record, and the original
   closing date from the monthly loan history (gold.project_closing_date) when it differs;
 - the closing date history: each month the history first showed a new closing date, and how many
-  times the date moved, a count the route makes (CLAUDE.md rule 1);
+  times the date moved, a count the route makes (CLAUDE.md rule 1), with the history's own source;
 - money: the commitment, disbursed and canceled amounts summed over the project's loans and credits
   (gold.loan), in US$ millions to one decimal, each a column the route works out;
 - ratings: the latest ISR's ratings as its own overall ratings table prints them (silver.isr_ratings,
@@ -224,6 +224,10 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         history_rows.append({"first_recorded": _iso(row["reported_on"]), "before": _iso(row["previous_closing_date"]),
                              "after": _iso(row["closing_date"]),
                              "source": sources.cite(event, kind="loan_history", date=_iso(row["reported_on"]))})
+    # The history as a whole, which says whether the closing date moved, cites the month it last changed,
+    # or its first month when it never did.
+    history_source = (sources.cite(_history_record(project_id, history[-1]), kind="loan_history",
+                                   date=_iso(history[-1]["reported_on"])) if history else None)
     if history and _day(history[0]["closing_date"]) != closing:
         first = history[0]
         dates.append(_fact("original_closing_date", _iso(first["closing_date"]), sources.cite(
@@ -298,7 +302,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
                  "commitment": totals.get("commitment"), "disbursed": totals.get("disbursed"),
                  "canceled": totals.get("canceled"), "disbursed_as_of": disbursed_as_of},
         "dates": dates,
-        "history": {"known": bool(history), "rows": history_rows},
+        "history": {"known": bool(history), "rows": history_rows, "source": history_source},
         "money": money,
         "ratings": ratings,
         "who": who,

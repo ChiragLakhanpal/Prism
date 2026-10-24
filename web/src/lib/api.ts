@@ -187,7 +187,8 @@ export type Summary = {
     disbursed_as_of: string | null;
   };
   dates: Fact[];
-  history: { known: boolean; rows: { first_recorded: string; before: string; after: string; source: FactSource }[] };
+  // The history's own source: the month the closing date last changed, or the history's first month.
+  history: { known: boolean; rows: { first_recorded: string; before: string; after: string; source: FactSource }[]; source?: FactSource | null };
   money: Fact[];
   ratings: Fact[];
   who: Fact[];
