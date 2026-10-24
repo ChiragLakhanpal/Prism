@@ -98,8 +98,28 @@ actual_to_estimate_ratio = 2.0
 # The PPSD guidance's Table I thresholds, which decide when the Long Form applies (ticket 36).
 [ppsd_table_i]
 
-# When a data readiness measure counts as Partial or Gap (ticket 16).
+# When a data readiness measure counts as Partial or Gap (ticket 16; the 16 design brief, section 4).
+# data_readiness_for (src/strata/tools/data_readiness_for.py) reads them, and the dashboard's Data
+# readiness page uses the same values. Each is a starting value for the owner to confirm.
 [data_readiness]
+# Partial: a linked share, a read-well share, or the share of a readiness row's checks, under these.
+linked_min_share = 0.9
+read_well_min_share = 0.9
+check_min_share = 0.9
+# A share is written only from this many rows; below it, a cell shows the count alone ("6 of 12"),
+# as DESIGN.md section 7, rules 6 and 15 say. web/src/lib/format.ts's FEWEST_FOR_A_FREQUENCY holds
+# the same rule until ticket 12 reads it from here, and tests/test_data_readiness.py checks they agree.
+fewest_for_a_share = 20
+# From this many rows a share is a whole percent ("528 of 603, 88%"); from fewest_for_a_share up to
+# it, "about N in 10" (DESIGN.md section 7, rule 15). The dashboard charts a share only from here.
+# format.ts's FEWEST_FOR_A_PERCENTAGE holds the same value until ticket 12, and the test checks it.
+fewest_for_a_percentage = 50
+# Partial when late: a source's latest fetch is older than its schedule allows plus this many days.
+# Daily data are on time when they are less than two days old.
+late_grace_days = 1
+# How many days each cadence in the source registry allows between fetches. A frozen source, and a
+# readiness row whose schedule is "as published", are never late.
+schedule_days = { daily = 1, weekly = 7, monthly = 31, quarterly = 92, yearly = 366 }
 
 # Supplier matching: when a pair merges, goes to the model or goes to a person (ticket 19).
 [supplier_matching]

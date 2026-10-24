@@ -41,7 +41,9 @@ import { DefinitionWindow, Term } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import type { Section } from "../components/TopNav";
 import { copy } from "../copy";
+import type { Readiness, ReadinessState, RegistryState } from "../lib/dataPages";
 import { formatDate } from "../lib/format";
+import { ReadinessView } from "../pages/data/DataReadiness";
 import { galleryCopy } from "./copy";
 
 const s = galleryCopy.states;
@@ -892,6 +894,11 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   {
+    slug: "readiness",
+    current: "data",
+    sections: readinessSections(),
+  },
+  {
     // Ticket 10's Check a plan (web/src/components/PlanCheck.tsx). The page's own states, with
     // the real plan, are captured from the production build (web/capture/shots.ts).
     slug: "plan-check",
@@ -954,3 +961,55 @@ export const PAGES: GalleryPage[] = [
     ],
   },
 ];
+
+// The Data readiness page in each state, from the gallery's made-up sample.
+function readinessSections(): GalleryPage["sections"] {
+  const words = galleryCopy.readiness;
+  const result = words.result as unknown as Readiness;
+  const ready = (changes: Partial<Readiness>): ReadinessState => ({ status: "ready", result: { ...result, ...changes } });
+  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes } };
+  const states: [string, string, ReadinessState, boolean?][] = [
+    ["ready", words.sections.ready, ready({})],
+    [
+      "filtered",
+      words.sections.filtered,
+      ready({
+        filter: { sources: ["sample", "notes"], unknown: 1, from: "find_comparables", shown: 2, total: 4 },
+        sources: result.sources.slice(0, 3),
+        kinds: [],
+        fixes: result.fixes.slice(0, 1),
+        headline: { text: words.filteredHeadline, segments: [{ text: words.filteredHeadline }] },
+      }),
+    ],
+    ["loading", words.sections.loading, { status: "loading" }],
+    ["slow", words.sections.slow, { status: "loading" }, true],
+    ["empty", words.sections.empty, ready({ abstention: { reason: "no_measures" }, rows: [], sources: [], kinds: [], fixes: [], headline: null, measured: null })],
+    [
+      "unmeasured",
+      words.sections.unmeasured,
+      ready({ headline: null, headline_abstention: { reason: "unmeasured", unmeasured: 1, sources: 4 } }),
+    ],
+    [
+      "before-first",
+      words.sections.beforeFirst,
+      ready({
+        abstention: { reason: "before_first_measure", first_measured_on: galleryCopy.sampleDate },
+        as_of: "2026-10-01",
+        rows: [],
+        sources: [],
+        kinds: [],
+        fixes: [],
+        headline: null,
+        measured: null,
+      }),
+    ],
+    ["timeout", words.sections.timeout, { status: "error", reason: "timeout", seconds: 30 }],
+    ["permission", words.sections.permission, { status: "error", reason: "permission" }],
+    ["error", words.sections.error, { status: "error", reason: "other" }],
+  ];
+  return states.map(([id, title, state, slow]) => ({
+    id,
+    title,
+    body: <ReadinessView state={state} known={known} slow={slow} />,
+  }));
+}

@@ -10,9 +10,11 @@ import {
   formatDate,
   formatNumber,
   formatRatio,
+  formatToolShare,
   formatYear,
   type DateStyle,
   type NumberOptions,
+  type ToolShare,
 } from "../lib/format";
 import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 
@@ -20,8 +22,11 @@ export type NumValue =
   | { value: number; options?: NumberOptions }
   | { count: number; capital?: boolean }
   | { year: number }
-  | { date: string; style?: DateStyle }
-  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" };
+  // today, an ISO date, decides whether a short date needs its year; the browser's date when unset.
+  | { date: string; style?: DateStyle; today?: string }
+  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
+  // A share a tool rounded, written as it came: the browser divides nothing.
+  | { share: ToolShare; style?: "sentence" | "table" };
 
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
@@ -36,9 +41,28 @@ export function numText(num: NumValue): string {
   if ("value" in num) return formatNumber(num.value, num.options);
   if ("count" in num) return formatCount(num.count, { capital: num.capital });
   if ("year" in num) return formatYear(num.year);
-  if ("date" in num) return formatDate(num.date, { style: num.style });
+  if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
+  if ("share" in num) return formatToolShare(num.share, { style: num.style }).text;
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
+}
+
+// A number as Num and MeasureNum show it. A share keeps its count and its frequency each on one
+// line, so "20 of 21, more than 9 in 10" can break only after the comma. Anything else is its text.
+export function numBody(num: NumValue): ReactNode {
+  return written(num, numText(num));
+}
+
+function written(num: NumValue, text: string): ReactNode {
+  if (!("share" in num)) return text;
+  const { frequency } = formatToolShare(num.share, { style: num.style });
+  if (!frequency || !text.endsWith(frequency)) return text;
+  return (
+    <>
+      <span className="whitespace-nowrap">{text.slice(0, text.length - frequency.length).trimEnd()}</span>{" "}
+      <span className="whitespace-nowrap">{frequency}</span>
+    </>
+  );
 }
 
 // A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
@@ -46,10 +70,11 @@ const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence
 
 export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
   const text = numText(num as NumValue);
+  const body = written(num as NumValue, text);
   if (!check) {
     return (
       <span data-num className={cx("tabular-nums", sentenceDate(num as NumValue) && "whitespace-nowrap", className)}>
-        {text}
+        {body}
       </span>
     );
   }
@@ -67,7 +92,7 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
             className,
           )}
         >
-          {text}
+          {body}
         </button>
       }
     >

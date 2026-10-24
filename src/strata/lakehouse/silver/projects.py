@@ -31,6 +31,8 @@ TABLES = {
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("project_id",)
+# Each record's fiscal year, by which the dashboard splits coverage_rows (strata.lakehouse.readiness).
+FISCAL_YEAR = "approval_fiscal_year"
 
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:

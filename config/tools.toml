@@ -32,6 +32,16 @@
 #                  not used, may have. The screens' copy writes one sentence per code, so a code is
 #                  renamed here, in the tool and in the copy together.
 #   abstentions    every reason the tool may give for returning no rows, for the same reason
+#
+# [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
+# readiness page lists each such kind under "What you can ask" (ticket 16):
+#   kind           its key in web/src/copy.ts's dataReadiness.kinds, which holds its words
+#   ready_for      the measure whose count goes in its "Ready for" cell: the readiness row's id
+#                  (config/sources.toml), the measure's name and, when no column or check of that
+#                  row shows the measure, counted_in, the table it counts, which its window names.
+#                  Such a measure also needs its window's words in web/src/copy.ts's
+#                  dataReadiness.measureWindows (web/tests/lint.spec.ts checks both).
+#   draws_on       the readiness rows whose gaps hold its answers back
 
 [tools.check_plan]
 description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
@@ -46,6 +56,11 @@ prior-review queue, complaints, contract amendments or contract management repor
 adapter = "strata.tools.check_plan:check_plan"
 benchmark = "check-plan-nwwda-2026-10-09"
 sources = ["documents", "projects"]
+
+[tools.check_plan.readiness]
+kind = "plan_check"
+ready_for = { row = "plans", measure = "latest_activities_with_step_rows" }
+draws_on = ["plans", "projects"]
 
 [[tools.check_plan.parameters]]
 name = "project_id"
@@ -98,6 +113,11 @@ is left out, and the coverage line says how many. Quote a passage only word for 
 adapter = "strata.tools.search_passages:search_passages"
 benchmark = "search-passages-icr-rebidding"
 sources = ["documents", "projects"]
+
+[tools.search_passages.readiness]
+kind = "document_search"
+ready_for = { row = "reports", measure = "passages_embedded", counted_in = "strata.gold.passage" }
+draws_on = ["reports", "projects"]
 
 [[tools.search_passages.parameters]]
 name = "query"
@@ -165,3 +185,50 @@ source_fields = ["document_type", "project_id", "project_name", "document_id", "
 fields = ["query", "filters", "search"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
+
+[tools.data_readiness_for]
+description = """Says how fit each data source is to support answers, from Strata's data readiness \
+measures: for each source, how many rows it holds and over how many fiscal years (coverage), how many \
+link to projects, notices or STEP references (linked), how many pages were read without losing their \
+paragraph numbers or table rows (read well), and when it was last fetched against how often it updates \
+(fresh). It names the known gaps no dataset fills, such as the contract awards for fiscal 2017 to 2019, \
+says which kinds of question each source is ready for and what holds them back, and ranks the fixes by \
+how many projects each would add evidence to. Every number is the latest measure, as of the date. Name \
+sources to see only the ones behind an answer. It gives no composite score."""
+adapter = "strata.tools.data_readiness_for:data_readiness_for"
+benchmark = "data-readiness-kenya-awards"
+sources = ["awards", "awards_fy2001_2016", "ieg_ratings", "ida_credits", "ibrd_loans", "ida_credit_history",
+           "ibrd_loan_history", "notices", "projects", "cpia", "wgi", "documents"]
+
+[[tools.data_readiness_for.parameters]]
+name = "sources"
+type = "string"
+required = false
+description = """The source registry's keys of the sources to show, separated by commas, such as \
+awards,notices. Leave it out for every source."""
+
+[[tools.data_readiness_for.parameters]]
+name = "from_tool"
+type = "string"
+required = false
+description = """The tool whose coverage line named the sources, such as find_comparables, so the \
+headline can say which answer they are behind. Leave it out when you name no sources."""
+
+[[tools.data_readiness_for.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only measures taken on or before this date, and judge freshness as of it. Leave it out for today."
+
+[tools.data_readiness_for.result]
+row = """One measure behind the page: its latest count and denominator, or its date, for the source \
+as a whole or summed over the projects it was measured for, with its share when it has enough rows: a \
+whole percent, or about N in 10 for fewer rows, and whether a part rounds to an end of its scale."""
+row_fields = ["evidence_id", "public_from", "source", "source_key", "measure", "kind", "subjects", "count",
+              "denominator", "share_percent", "share_bound", "in_ten", "in_ten_exact", "as_of", "measured_on",
+              "run_ids"]
+source_fields = ["table", "source_key", "measure", "subjects", "measured_on", "counted_in"]
+fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "headline_abstention",
+          "parse_failures", "measured"]
+reasons = ["not_measured", "unknown_source"]
+abstentions = ["no_measures", "before_first_measure", "unknown_sources"]

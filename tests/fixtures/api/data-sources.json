@@ -1,0 +1,123 @@
+{
+  "datasets": [
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+      "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+      "catalog_url": "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-(since-fy-2020)/DS00005",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "awards_fy2001_2016",
+      "dataset_name": "Contract Awards in Investment Project Financing (since FY 2001 - FY 2016)",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-(since-fy-2001-fy-2016)/DS01004",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "ieg_ratings",
+      "dataset_name": "IEG World Bank Project Performance Ratings",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/ieg-world-bank-project-performance-ratings/DS00053",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "ida_credits",
+      "dataset_name": "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/ida-statement-of-credits-grants-and-guarantees-latest-available-snapshot/DS00001",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "ibrd_loans",
+      "dataset_name": "IBRD Statement of Loans and Guarantees - Latest Available Snapshot",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/ibrd-statement-of-loans-and-guarantees-latest-available-snapshot/DS00047",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "ida_credit_history",
+      "dataset_name": "IDA Statement Of Credits, Grants and Guarantees - Historical Data",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/ida-statement-of-credits-grants-and-guarantees-historical-data/DS00976",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "ibrd_loan_history",
+      "dataset_name": "IBRD Statement Of Loans and Guarantees - Historical Data",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://financesone.worldbank.org/ibrd-statement-of-loans-and-guarantees-historical-data/DS00975",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices",
+      "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+      "catalog_url": "https://projects.worldbank.org/en/projects-operations/procurement",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://datacatalog.worldbank.org/search/dataset/0037800/world-bank-projects-operations",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "cpia",
+      "dataset_name": "Country Policy and Institutional Assessment",
+      "data_source": "World Development Indicators",
+      "catalog_url": "https://datacatalog.worldbank.org/search/dataset/0038988/country-policy-and-institutional-assessment",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    },
+    {
+      "key": "wgi",
+      "dataset_name": "Worldwide Governance Indicators",
+      "data_source": "World Bank Group",
+      "catalog_url": "https://datacatalog.worldbank.org/search/dataset/0038026/worldwide-governance-indicators",
+      "name_checked": "2026-10-23",
+      "license": "CC BY 4.0"
+    }
+  ],
+  "collections": [
+    {
+      "name": "Procurement Plans",
+      "publisher": "the borrower's implementing agency",
+      "origin": "the World Bank's Documents & Reports"
+    },
+    {
+      "name": "Project Appraisal Documents (PADs)",
+      "publisher": "the World Bank",
+      "origin": "the World Bank's Documents & Reports"
+    },
+    {
+      "name": "Implementation Status and Results Reports (ISRs)",
+      "publisher": "the World Bank",
+      "origin": "the World Bank's Documents & Reports"
+    },
+    {
+      "name": "Implementation Completion and Results Reports (ICRs)",
+      "publisher": "the World Bank",
+      "origin": "the World Bank's Documents & Reports"
+    },
+    {
+      "name": "Implementation Completion and Results Report Reviews (ICR Reviews)",
+      "publisher": "the Independent Evaluation Group (IEG)",
+      "origin": "the World Bank's Documents & Reports"
+    }
+  ],
+  "readiness_rows": 13,
+  "kinds": 2,
+  "known_gaps": 1,
+  "fixes": 4
+}

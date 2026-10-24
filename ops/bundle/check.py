@@ -8,6 +8,7 @@ Run each check from the main checkout, after the deploy (ops/bundle/deploy.py):
 
     uv run --script ops/bundle/check.py job-run --env-file .env
     uv run --script ops/bundle/check.py same-rows --env-file .env
+    uv run --script ops/bundle/check.py readiness --env-file .env
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
 job-run    Starts the nightly job by hand, waits for it, and checks that strata.ops.pipeline_runs
@@ -19,6 +20,9 @@ same-rows  Runs each ground-truth query marked for databricks (tests/ground_trut
            the demo plan's recorded Procurement Plans into them and runs the nightly job's tasks
            over the recorded pages, as the fixture build does. Run it after the live plan run
            (ops/plans/run_live.py) and job-run, because some files read what they wrote.
+readiness  Builds the Data readiness page on the SQL warehouse with data_readiness_for, as the app
+           does, and checks that its awards row's rows held and contracts with a STEP reference
+           match a direct query on strata.ops.data_readiness. It also prints Kenya's own measures.
 schedules  Reads fairshare's nightly job and Strata's, with how long their recent runs took, and
            checks that the two never run at the same time on any day of the next year. With
            --write it records both schedules in the bundle's notes, bundle/README.md.
@@ -147,6 +151,54 @@ def same_rows(workspace) -> int:
     return 1 if failed else 0
 
 
+# ── readiness ────────────────────────────────────────────────────────────
+
+# The page's reading rule, written apart from the tool: the newest measured_at of each subject and
+# measure. The page shows the awards for every country (subject all); Kenya's rows are printed too.
+LATEST_AWARDS = """
+SELECT subject, measure, count, denominator
+FROM strata.ops.data_readiness
+WHERE source = 'awards' AND subject IN ('all', 'KE') AND measure IN ('coverage_rows', 'linked_step_reference')
+QUALIFY row_number() OVER (PARTITION BY subject, measure ORDER BY measured_at DESC) = 1
+"""
+
+
+def _pair(found: tuple[int, int] | None) -> str:
+    return f"{found[0]} of {found[1]}" if found else "none"
+
+
+def readiness_check(workspace) -> int:
+    from strata.dbx import Viewer
+    from strata.tools import registry
+
+    engine = workspace.engine()
+    page = registry.call("data_readiness_for", {}, registry.Context(engine, Viewer(name="the workspace check")))
+    awards = [row for row in page["sources"] if row["id"] == "awards" and row["type"] == "measured"]
+    if not awards:
+        reason = (page["abstention"] or {}).get("reason", "no measures for the awards")
+        print(f"The Data readiness page has no awards row to compare: data_readiness_for answered {reason}.")
+        return 1
+    shown = {}
+    for column in ("coverage", "linked"):
+        index = awards[0]["cells"][column]["row"]
+        shown[column] = None if index is None else (page["rows"][index]["count"], page["rows"][index]["denominator"])
+    direct = {(str(subject), str(measure)): (int(count), int(denominator))
+              for subject, measure, count, denominator in engine.run(LATEST_AWARDS).rows}
+    whole = {"coverage": direct.get(("all", "coverage_rows")), "linked": direct.get(("all", "linked_step_reference"))}
+    matches = shown == whole
+    print("The Data readiness page's awards row " + ("matches" if matches else "differs from")
+          + " a direct query on strata.ops.data_readiness:")
+    rows_shown = shown["coverage"][0] if shown["coverage"] else "none"
+    rows_direct = whole["coverage"][0] if whole["coverage"] else "none"
+    print(f"  award rows held: {rows_shown} on the page, {rows_direct} in the query")
+    print(f"  contracts with a STEP reference: {_pair(shown['linked'])} on the page, {_pair(whole['linked'])} in the query")
+    kenya_rows, kenya_linked = direct.get(("KE", "coverage_rows")), direct.get(("KE", "linked_step_reference"))
+    if kenya_rows and kenya_linked:
+        print(f"Kenya's own measures, for comparison: {kenya_rows[0]} award rows; {_pair(kenya_linked)} contracts "
+              "with a STEP reference.")
+    return 0 if matches else 1
+
+
 # ── schedules ────────────────────────────────────────────────────────────
 
 def _when(facts: dict) -> str:
@@ -256,6 +308,8 @@ def parse(argv: list[str] | None = None) -> argparse.Namespace:
     run.add_argument("--run-id", help="Check this finished run instead of starting one.")
     commands.add_parser("same-rows", parents=[shared],
                         help="Run the sample queries on DuckDB and on the SQL warehouse.")
+    commands.add_parser("readiness", parents=[shared],
+                        help="Check the Data readiness page's awards row against a direct query.")
     times = commands.add_parser("schedules", parents=[shared], help="Check fairshare's and Strata's nightly schedules.")
     times.add_argument("--fairshare-job", help="fairshare's nightly job, when its name does not contain fairshare.")
     times.add_argument("--write", action="store_true", help="Record both schedules in bundle/README.md.")
@@ -281,6 +335,8 @@ def main(argv: list[str] | None = None, workspace=None, env: dict | None = None)
         return job_run(workspace, args.run_id)
     if args.command == "same-rows":
         return same_rows(workspace)
+    if args.command == "readiness":
+        return readiness_check(workspace)
     return schedules(workspace, args.fairshare_job, args.write, args.notes, dt.date.today())
 
 

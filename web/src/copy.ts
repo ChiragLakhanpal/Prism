@@ -9,6 +9,8 @@
 // each definition keeps one home.
 
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
+// STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
+const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
 export const copy = {
   appName: "Strata",
@@ -107,15 +109,22 @@ export const copy = {
         "to check.",
       link: "Go to Packages",
     },
+    // The Data tab's three pages share one title and purpose, and each names itself in the browser
+    // tab (the 16 design brief, section 2).
     data: {
       title: "Data",
-      purpose:
-        "This page shows what the data I hold are ready for, where each source comes from and its license. It also " +
-        "explains how I turn records and documents into answers.",
-      emptyTitle: "I can't show data readiness on this page yet.",
-      emptyBody:
-        "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. " +
-        "The date at the top of every page says how recent the data I hold are.",
+      documentTitle: "Data readiness",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
+    },
+    dataSources: {
+      title: "Data",
+      documentTitle: "Sources and licenses",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
+    },
+    dataHow: {
+      title: "Data",
+      documentTitle: "How Strata works",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
     },
     notFound: {
       title: "Page not found",
@@ -557,6 +566,464 @@ export const copy = {
     latestLink: (date: string) => `Plan of ${date}`,
     error: "I couldn't load this plan's check because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't show this plan.",
+  },
+
+  // The Data readiness page (the 16 design brief). Every number on it comes from the
+  // data_readiness_for tool, and the page computes none.
+  dataReadiness: {
+    tabs: {
+      label: "Data pages",
+      readiness: "Data readiness",
+      sources: "Sources and licenses",
+      how: "How Strata works",
+    },
+    // The info alert above the headline when a coverage line opened the page. The noun comes from
+    // server.fromNouns, by the tool the link names, never from the link's own words.
+    // Templates whose {slots} the page fills with Num, so each number keeps its form and its check.
+    filtered: {
+      many: "I'm showing only the {count} sources behind {fromNoun}.",
+      one: "I'm showing only the source behind {fromNoun}.",
+      unknown: "I didn't recognize {count} of the sources in this link.",
+      noneKnown: "I couldn't find the sources this link names. They may have been renamed since the link was made.",
+      showAll: "Show all sources",
+    },
+    provenance: "I built this from the measures below, taken {date}. No model wrote it.",
+    provenanceRange: "I built this from the measures below, taken {from} to {to}. No model wrote it.",
+    // Under a headline Strata doesn't give, where "this" would point at nothing.
+    provenanceAbstained: "I took the measures below on {date}.",
+    provenanceAbstainedRange: "I took the measures below from {from} to {to}.",
+    // The source line under each table.
+    sourceLine: "Strata's data readiness measures, taken {date}.",
+    kinds: {
+      title: "What you can ask",
+      caption: "Each kind of question, what it can draw on, and what holds it back.",
+      kind: "What you can ask",
+      readyFor: "Ready for",
+      readyForAbout: "records it can draw on",
+      readyForDefinition:
+        "What each kind of question can draw on, counted from the latest measures. A badge says the answers are " +
+        "Partial, or that a Gap leaves nothing to draw on.",
+      holds: "What holds it back",
+      holdsAbout: "gaps that limit answers",
+      holdsDefinition:
+        "The gaps in the sources each kind of question draws on. The biggest gaps come first: the ones whose fix " +
+        "would add evidence to the most projects.",
+      // Each kind, by the key its tool gives in config/tools.toml, and what its number counts.
+      names: {
+        plan_check: "Checking a plan against its own dates",
+        document_search: "What project documents say",
+      } as Record<string, string>,
+      // The plan check's count words STEP's format as the Procurement Plans row does.
+      counts: {
+        plan_check: "activity entries in the latest plan versions with rows in STEP's format",
+        document_search: "passages you can search",
+      } as Record<string, string>,
+      // The same, for a count of one.
+      countsOne: {
+        plan_check: "activity entry in the latest plan versions with rows in STEP's format",
+        document_search: "passage you can search",
+      } as Record<string, string>,
+      // A count that names STEP first on its view spells it out, when the tool marks its kind
+      // spell_out: the plan check's view, and a view whose headline it leaves out (DESIGN.md
+      // section 7, rule 10).
+      countsSpelled: {
+        plan_check: `activity entries in the latest plan versions with rows in the format of ${STEP_SPELLED}`,
+      } as Record<string, string>,
+      countsSpelledOne: {
+        plan_check: `activity entry in the latest plan versions with rows in the format of ${STEP_SPELLED}`,
+      } as Record<string, string>,
+    },
+    sources: {
+      title: "Sources",
+      showing: "Showing {shown} of {total} sources.",
+      source: "Source",
+      columns: {
+        coverage: { label: "Coverage", about: "rows and fiscal years" },
+        linked: { label: "Linked", about: "to projects and other records" },
+        read_well: { label: "Read well", about: "read without errors" },
+        fresh: { label: "Fresh", about: "latest data, how often" },
+      },
+      definitions: {
+        coverage:
+          "How many rows or documents I hold for this source, and which fiscal years they span. Fiscal years run " +
+          "from July to June.",
+        linked:
+          "How many of these rows I could join to the record they need: a project, a notice, a Procurement Plan, " +
+          "a sector or a borrower country. A row that doesn't join can't count in answers that need the join.",
+        read_well:
+          "How many pages or rows I read without losing their paragraph numbers or table rows. Records the World " +
+          "Bank publishes as tables need no reading.",
+        fresh:
+          "The date of the latest data I fetched, and how often the source updates. A frozen source no longer changes.",
+      },
+      scope: {
+        every_country: "All countries",
+        projects: "For {count} projects",
+        oneProject: "For one project",
+        join: ", ",
+        lastJoin: " and ",
+      },
+      years: "in {count} fiscal years",
+      yearsOne: "in {count} fiscal year",
+      yearsOf: "in {count} of {total} fiscal years",
+      // What a fiscal-years count counts, in its tooltip.
+      yearsNoun: "fiscal years",
+      yearsNounOne: "fiscal year",
+      gapYears: (from: string, to: string) => `fiscal ${from}–${to}`,
+      publishedAsTable: "Published as a table",
+      notMeasured: "Not measured yet",
+      // A column the registry gives this row no measure for, so no run will measure it.
+      noMeasure: "No measure",
+      // A row with no freshness measure whose documents arrive as their authors publish them.
+      asPublished: "As published",
+      notMeasuredRow: "Not measured yet. The next data run measures it.",
+      nonePublished: "None published",
+      // A no-break space keeps the dot with the date, so a narrow cell breaks only after it:
+      // "Jun 30 ·" on one line and "as published" on the next.
+      fresh: "{date}\u00a0· {schedule}",
+      late: "{days} days late",
+      lateOne: "{days} day late",
+    },
+    failures: {
+      title: "Plan pages the layout parser couldn't read",
+      none: "The layout parser read every Procurement Plan page it tried.",
+      page: "page {page}, last tried {date}",
+      document: "Document",
+    },
+    fixes: {
+      title: "Fixes that would unlock the most",
+      caption: "Ranked by how many projects each fix would add evidence to.",
+      projects: "Would add evidence to {count} projects.",
+      oneProject: "Would add evidence to {count} project.",
+      projectsNoun: "projects",
+      projectsNounOne: "project",
+      // With no fix to rank: the first only when nothing in view falls short, and the second (the
+      // third with one source in view) when something does but the registry lists no fix for it.
+      none: "Nothing I measured falls short, so there are no fixes to rank.",
+      noneKnown: "I don't have a fix to suggest for these sources.",
+      noneKnownOne: "I don't have a fix to suggest for this source.",
+    },
+    // The window a number opens, by its measure, for each measure that fills no column of the
+    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml). A
+    // number from a column's measure opens that column's window instead. web/tests/lint.spec.ts
+    // fails when a check or a fix's own measure has no entry here.
+    measureWindows: {
+      latest_activities_with_confirmed_first_listing_read: {
+        title: "First listing confirmed",
+        definition:
+          "How many activity entries in the latest plan versions I could trace back to the plan version that first " +
+          "listed them. I count an entry only when I also read that version's whole table. I confirm a first " +
+          "listing only when I have read every older or undated plan version in the project's document list.",
+      },
+      // Three datasets share the name Contract awards, so this one names its years, as the dashboard
+      // does; the measure counts only that dataset (design review r6 P2).
+      projects_with_contracts_lacking_step_reference: {
+        title: "Projects with contracts that lack a STEP reference",
+        definition:
+          "How many projects have at least one contract with no STEP reference. I count them out of every project " +
+          "with a contract in Contract awards since fiscal 2020.",
+      },
+      // The fiscal years stay in the registry's known gap, so these name no years (CLAUDE.md rule 9).
+      gap_years_contracts_in_local_currency: {
+        title: "Award-notice contracts in local currency",
+        definition:
+          "How many of the contracts I built from award notices have their amount in local currency. I build " +
+          "these contracts only for the fiscal years that no awards dataset covers.",
+      },
+      gap_years_projects_in_local_currency: {
+        title: "Projects with award-notice contracts in local currency",
+        definition:
+          "How many projects have a contract with its amount in local currency, among the contracts I built from " +
+          "award notices. I count them out of every project with a contract I built from those notices. I build " +
+          "these contracts only for the fiscal years that no awards dataset covers.",
+      },
+      // The document search's Ready for number: its title repeats the cell's own words (review r7 B1).
+      passages_embedded: {
+        title: "Passages you can search",
+        definition: "How many of the passages I read you can search. I count them out of every passage I read.",
+      },
+    } as Record<string, { title: string; definition: string }>,
+    loading: {
+      slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",
+    },
+    // DESIGN.md's Empty-state card, before the first data run.
+    empty: {
+      title: "I haven't measured any sources yet.",
+      body: "The measures appear here after the first data run.",
+      link: "See the datasets I'm set up to read",
+    },
+    abstain: {
+      unmeasured: "I'm not giving a headline: {count} of the {total} sources below have no measures yet. Their rows say so.",
+      unmeasuredOne: "I'm not giving a headline: {count} of the {total} sources below has no measures yet. Its row says so.",
+      // When no source in view has measures: the second when the view holds one source.
+      unmeasuredAll: "I'm not giving a headline: none of the sources below has measures yet. Their rows say so.",
+      unmeasuredAllOne: "I'm not giving a headline: the source below has no measures yet. Its row says so.",
+      beforeFirst: "I have no measures taken on or before {asked}. I took my first measures on {first}.",
+      showToday: "Show today's measures",
+    },
+    errors: {
+      timeout: "I couldn't load the measures, because the database didn't answer within {seconds} seconds. Try again in a minute.",
+      permission:
+        "I couldn't load the measures, because your account doesn't have access to them. Ask the person who runs " +
+        "Strata to give your account access.",
+      other:
+        "I couldn't load the measures, because the server returned an error. Try again. If it fails again, tell the " +
+        "person who runs Strata.",
+      tryAgain: "Try again",
+    },
+    // Each number's tooltip and the window a click opens (the 16 brief, section 5.8).
+    number: {
+      ratio: (part: string, whole: string, noun: string, date: string) => `${part} of ${whole} ${noun}. Measured ${date}.`,
+      count: (count: string, noun: string, date: string) => `${count} ${noun}. Measured ${date}.`,
+      day: (day: string, date: string) => `The latest data are from ${day}. Measured ${date}.`,
+      // A shortfall: how many of the whole lack what the gap names.
+      missing: (part: string, whole: string, noun: string, lack: string, date: string) =>
+        `${part} of ${whole} ${noun} lack ${lack}. Measured ${date}.`,
+      missingOne: (part: string, whole: string, noun: string, lack: string, date: string) =>
+        `${part} of ${whole} ${noun} lacks ${lack}. Measured ${date}.`,
+      // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
+      // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
+      unread: (part: string, whole: string, noun: string, date: string) =>
+        `${part} of ${whole} ${noun} I couldn't read without errors. Measured ${date}.`,
+      kinds: "Counted from the table of what you can ask, below.",
+      sources: "Counted from the rows of the Sources table below.",
+      moreGaps: "Counted from the gaps listed under Sources, below.",
+      // A fix's project count that no measure counted: the projects whose rows fall short.
+      projects: (count: string, date: string) => `The records behind this gap come from ${count} projects. Measured ${date}.`,
+      projectsOne: (count: string, date: string) => `The records behind this gap come from ${count} project. Measured ${date}.`,
+      // A number the reader clicked that is neither the measure's count nor its denominator.
+      missingLabel: "Missing",
+      days: "Days late",
+      numerator: "Counted",
+      denominator: "Out of",
+      measured: "Measured",
+      countedIn: "Counted in",
+      latest: "Latest data",
+    },
+    // The Sources and licenses page (the 16 brief, section 7). Dataset names come only from the
+    // source registry; DESIGN.md section 8 gives every fixed sentence here word for word.
+    sourcesPage: {
+      lead: "Here is every dataset and document I use, credited the way the World Bank asks.",
+      datasets: "Datasets",
+      datasetCount: "{count} datasets.",
+      attribution: { before: "The World Bank: ", after: (source: string, license: string) => `: ${source}. License: ${license}.` },
+      documents: "Documents and rules",
+      collection: (name: string, publisher: string, origin: string) => `${name}, published by ${publisher}, from ${origin}.`,
+      authorizes: {
+        before: "The World Bank Group authorizes the use of this material subject to the terms and conditions on its website, ",
+        link: "Legal",
+        after: ".",
+      },
+      terms: { before: "Terms of use: ", link: "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets" },
+      changes: "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+      caveat: "The World Bank does not guarantee the accuracy of the data.",
+      empty: "I haven't been set up to read any datasets yet.",
+      emptyBody: "Each dataset appears here, credited the way the World Bank asks, once I'm set up to read it.",
+      failed: "I couldn't load the list of sources, because the server didn't answer. Try again.",
+    },
+    howPage: {
+      lead:
+        "This page is for the figures that show how I turn World Bank records and documents into cited answers. They " +
+        "are not drawn yet.",
+      next: {
+        before: "Until they are, ",
+        readiness: "Data readiness",
+        middle: " shows what each source covers, and ",
+        sources: "Sources and licenses",
+        after: " lists every dataset I use.",
+      },
+    },
+    // The sentences the tool builds on the server: the headline, the gaps and what holds each kind
+    // of question back. src/strata/tools/data_readiness_for.py fills each {slot} from the measures
+    // and reads these words from src/strata/tools/data_readiness_copy.json, which
+    // `node web/lint/server-copy.ts --write` writes from this object. The lint lane fails when that
+    // file is out of date, so the words have one home. No model writes these sentences.
+    server: {
+      kinds: "Of the {kindCount} kinds of question below, I can answer {clauses}.",
+      kindsAllFull: "I can answer all {kindCount} kinds of question below in full.",
+      kindsAllPartial: "I can answer each of the {kindCount} kinds of question below in part.",
+      kindsAllGap: "I can't answer any of the {kindCount} kinds of question below yet.",
+      kindsOne: "I can answer the one kind of question below {clause}.",
+      clauseFull: "{n} in full",
+      clausePart: "{n} in part",
+      clauseNone: "{n} not at all",
+      oneFull: "in full",
+      onePart: "in part",
+      oneNone: "not at all",
+      clauseJoin: ", ",
+      clauseLastJoin: " and ",
+      gapsTwo: "The biggest gaps are {gap1} and {gap2}.",
+      gapsOne: "The biggest gap is {gap1}.",
+      gapsNone: "Nothing I measured holds these answers back.",
+      filteredOne: "One source is behind {fromNoun}.",
+      filteredFew: "{SourceCount} sources are behind {fromNoun}.",
+      filteredMany: "The {sourceCount} sources below are behind {fromNoun}.",
+      // What holds a kind of question back: its top two gaps, each as a sentence, then how many more.
+      moreOne: "I list one more gap under Sources.",
+      more: "I list {n} more gaps under Sources.",
+      nothingHolds: "Nothing I measured holds it back.",
+      // The gap phrases, by what kind of gap it is. A shortfall has a form for one record short
+      // (One), for every record short (All) and for the only record, which falls short (Only); the
+      // tool uses a form only when holds has it too, and otherwise the plain form.
+      gap: {
+        published: "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
+        linked: "the {missing} of {total} {noun} that lack {lack}",
+        linkedOne: "the {missing} of {total} {noun} that lacks {lack}",
+        linkedAll: "the {total} {noun}, none of which has {lack}",
+        linkedOnly: "the {total} {noun} that lacks {lack}",
+        check: "the {missing} of {total} {noun} that lack {lack}",
+        checkOne: "the {missing} of {total} {noun} that lacks {lack}",
+        checkAll: "the {total} {noun}, none of which has {lack}",
+        checkOnly: "the {total} {noun} that lacks {lack}",
+        readWell: "the {missing} of {total} {noun} I couldn't read without errors",
+        late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
+        lateOneDay: "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
+        declared: "the {sourceNoun}, which cover {note}",
+        noRows: "the {sourceNoun}, of which I hold no rows yet",
+      },
+      // The same gaps as full sentences, under "What holds it back", filled from the same slots.
+      holds: {
+        published: "No World Bank dataset publishes the {sourceNoun} for fiscal {fromYear} to {toYear}.",
+        linked: "Of {total} {noun}, {missing} lack {lack}.",
+        linkedOne: "Of {total} {noun}, {missing} lacks {lack}.",
+        linkedAll: "None of the {total} {noun} has {lack}.",
+        linkedOnly: "The {total} {noun} lacks {lack}.",
+        check: "Of {total} {noun}, {missing} lack {lack}.",
+        checkOne: "Of {total} {noun}, {missing} lacks {lack}.",
+        checkAll: "None of the {total} {noun} has {lack}.",
+        checkOnly: "The {total} {noun} lacks {lack}.",
+        readWell: "I couldn't read {missing} of {total} {noun} without errors.",
+        late: "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
+        lateOneDay: "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
+        declared: "The {sourceNoun} cover {note}.",
+        noRows: "I hold no rows of the {sourceNoun} yet.",
+      },
+      // STEP spelled out (DESIGN.md section 7, rule 10). A kind's count spells STEP out only when the
+      // headline above it doesn't already hold these words (kinds.countsSpelled).
+      stepSpelled: STEP_SPELLED,
+      // What a late source's count of days counts, in its tooltip.
+      daysLate: "days late",
+      dayLate: "day late",
+      // The coverage line a reader opened the page from, by the tool that wrote it. The page never
+      // shows words from its address.
+      fromNouns: {
+        find_comparables: "the past range",
+        check_plan: "the plan check",
+        search_passages: "the document search",
+        ask: "the answer",
+        unknown: "the coverage line you opened",
+      },
+      // How often each source updates, as its registry cadence or a readiness row's schedule says.
+      schedules: {
+        daily: "daily",
+        weekly: "weekly",
+        monthly: "monthly",
+        quarterly: "quarterly",
+        yearly: "yearly",
+        frozen: "frozen",
+        "as published": "as published",
+      },
+      months: [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+      ],
+      // The dashboard's Data readiness page (the 16 design brief, section 10), which
+      // src/strata/dashboard builds from code. Each chart's title names what it measures and never
+      // states a number, because a title is fixed when the dashboard is deployed; the day's finding
+      // is the headline in its own tile. DESIGN.md section 6 records why.
+      dashboard: {
+        name: "Strata",
+        page: "Data readiness",
+        introHeading: "Data readiness",
+        intro:
+          "How fit each source is to support answers. These are the same measures as the Data readiness page in " +
+          "Strata. Pick a measure date to compare the two.",
+        measureDate: "Measure date",
+        measureDateAbout: "Every tile shows the newest measures taken on or before this date. It starts on today's date.",
+        headline: "What the measures say",
+        headlineAbout: "The day's headline, written by the same code as the Data readiness page in Strata.",
+        measuredOn: "Measured on",
+        headlineColumn: "Headline",
+        awardRows: "Contract-award rows per fiscal year, by dataset",
+        awardRowsAbout:
+          "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts " +
+          "them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for " +
+          "each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows.",
+        fiscalYear: "Fiscal year",
+        rows: "Rows",
+        dataset: "Dataset",
+        sourceRows: "Rows per fiscal year, by source",
+        sourceRowsAbout:
+          "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the " +
+          "Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its " +
+          "Coverage column in Strata counts them, so its years add up to that number on the same date. The award " +
+          "notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of " +
+          "contract-award rows.",
+        source: "Source",
+        links: "Share of rows that link, by link",
+        // {fewest} is config/thresholds.toml's data_readiness.fewest_for_a_percentage, filled in when
+        // src/strata/dashboard writes the dashboard file.
+        linksAbout:
+          "Each link with {fewest} rows or more, as the share of its rows that link. The table of freshness and " +
+          "link counts lists every link with its counts.",
+        link: "Link",
+        share: "Share (%)",
+        routes: "Share of pages read well, by route",
+        routesAbout:
+          "Each reading route with {fewest} Procurement Plan pages or more, as the share of its pages it read " +
+          "without losing their table rows.",
+        route: "Route",
+        freshness: "Freshness, links and pages read well, by source",
+        freshnessAbout:
+          "Each source's latest data, how often it updates, how late it is, its link counts and its status. The " +
+          "last rows give the Procurement Plan pages each reading route read well. It is the table for the two " +
+          "charts of shares.",
+        latestData: "Latest data",
+        updates: "Updates",
+        daysLate: "Days late",
+        linked: "Linked",
+        readWell: "Read well",
+        status: "Status",
+        fixes: "Fixes ranked by what they would unlock",
+        fixesAbout: "Ranked by how many projects each fix would add evidence to, as on the Data readiness page.",
+        rank: "Rank",
+        fix: "Fix",
+        projects: "Projects it would add evidence to",
+        notes: "Source: Strata's data readiness measures in strata.ops.",
+        // What each dataset is, by its name in src/strata/dashboard, as AI/BI shows it in its data panel.
+        datasets: {
+          readiness_headline: "The day's headline",
+          award_rows_by_year: "Contract-award rows per fiscal year",
+          rows_by_year: "Rows per fiscal year, by source",
+          readiness_links: "Shares of rows that link",
+          readiness_routes: "Shares of pages read well",
+          readiness_sources: "Freshness, links and pages read well",
+          readiness_fixes: "Fixes",
+        } as Record<string, string>,
+        // The rows of the chart and the table of rows per fiscal year, in their order: each source by
+        // its key in config/sources.toml, and a known gap by its id. The snapshot counts each source's
+        // rows as its Coverage cell counts them (strata.dashboard.snapshot), and the table of freshness
+        // and links names the awards datasets with these same labels.
+        years: {
+          awards: "Contract awards, since FY2020",
+          awards_fy2001_2016: "Contract awards, FY2001–16",
+          fy2017_2019: "Award notices, FY2017–19",
+          notices: "Procurement notices",
+          projects: "Projects",
+          ieg_ratings: "IEG ratings",
+        } as Record<string, string>,
+        // A fiscal year as the dashboard writes it, with its last two digits, such as FY20, and the
+        // column for rows with none.
+        fiscalYearLabel: "FY{year}",
+        noYear: "No fiscal year",
+        // The snapshot's row names: a source with what its rows span, a known gap, and a link.
+        sourceLabel: "{label}, {covers}",
+        gapLabel: "{label}, FY{fromYear}–{toYear}",
+        linkLabel: "{label}: {counts}",
+        // A link's counts in the table of freshness and link counts, in numerals, as tables write them.
+        linkedCount: "{count} of {denominator}",
+      },
+    },
   },
 
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts

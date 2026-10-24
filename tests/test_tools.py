@@ -170,6 +170,20 @@ def test_every_tool_names_its_benchmark_question_and_reads_only_registered_sourc
         assert set(tool.sources) <= set(sources), f"{tool.name} reads a source the source registry lacks"
 
 
+def test_each_tool_that_answers_a_kind_of_question_names_it_and_the_readiness_rows_it_draws_on():
+    """The 16 brief, section 5.1: a kind of question appears on the Data readiness page only when its
+    tool is in the registry, and the tool's entry names its kind and the source rows it reads."""
+    rows = {row.id for source in config.load_sources().values() for row in source.readiness}
+    tools = config.load_tools()
+
+    kinds = {name: tool.readiness.kind for name, tool in tools.items() if tool.readiness}
+    assert kinds == {"check_plan": "plan_check", "search_passages": "document_search"}
+    for name in kinds:
+        readiness = tools[name].readiness
+        assert set(readiness.draws_on) <= rows, name
+        assert readiness.ready_for_row in readiness.draws_on, name
+
+
 def marked(result, question) -> dict[str, list[str]]:
     """check_plan's answer: the references under each mark, in the benchmark question's shape."""
     found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
@@ -188,7 +202,15 @@ def in_top_three(result, question) -> dict[str, list[str]]:
             "left_out": sorted(left_out)}
 
 
-ANSWERS = {"check_plan": marked, "search_passages": in_top_three}
+def link_rate_and_gaps(result, question) -> dict[str, list]:
+    """data_readiness_for's answer: the awards row's STEP-reference measure, and the known gaps shown."""
+    [awards] = [row for row in result["sources"] if row["id"] == "awards"]
+    linked = result["rows"][awards["cells"]["linked"]["row"]]
+    return {"linked_step_reference": [linked["count"], linked["denominator"]],
+            "known_gaps": [row["id"] for row in result["sources"] if row["type"] == "gap"]}
+
+
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": link_rate_and_gaps}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -197,6 +219,8 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
+    if question["tool"] == "data_readiness_for":
+        return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
 

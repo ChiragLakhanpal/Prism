@@ -468,7 +468,7 @@ def measure(engine: Engine, project_id: str, run_id: str, versions: list[Version
         ("plan_versions_read", "coverage", len(versions), listed),
         ("pages_read_route_a", "read_well", sum(1 for page in route_a if page.has_text), len(route_a)),
         ("pages_read_route_b", "read_well", sum(1 for page in route_b if page in parsed), len(route_b)),
-        ("step_rows_with_reference", "read_well", read.with_reference, read.with_reference + read.without_reference),
+        ("step_rows_with_reference", "linked", read.with_reference, read.with_reference + read.without_reference),
         ("latest_activities_with_step_rows", "read_well",
          sum(1 for v in latest for a in v.listings if (v.document_id, a) in with_rows), latest_listed),
         ("latest_activities_with_confirmed_first_listing_read", "coverage",

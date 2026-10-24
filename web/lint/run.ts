@@ -6,13 +6,20 @@
 // definitions in GLOSSARY.md that Term shows, and every component in web/src for text that
 // is not from a copy file, for a Term that names a word GLOSSARY.md does not define, and for
 // classes outside DESIGN.md's tokens. It prints one line per problem and exits with 1 when it
-// finds any. Tests pass --copy, --component, --glossary and --design to point it at other
-// files; Term's words are always looked up in the repo's GLOSSARY.md.
+// finds any. Tests pass --copy, --component, --glossary, --registry and --design to point it at
+// other files; Term's words are always looked up in the repo's GLOSSARY.md.
+//
+// Two more files hold words people read. The source registry, config/sources.toml, holds each
+// source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
+// sentences), and every one is checked like the copy. src/strata/tools/data_readiness_copy.json is
+// the server's copy of copy.dataReadiness.server, and the lint fails when it is out of date
+// (web/lint/server-copy.ts writes it again).
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyChecker } from "./copy.ts";
 import { copyStrings, lineOf, literalText, offTokenClasses, termLiterals } from "./source.ts";
+import { SERVER_COPY_FILE, serverCopyIsCurrent } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
@@ -35,8 +42,20 @@ function options(argv: string[]) {
     copy: given.copy ?? (custom ? [] : COPY_FILES),
     components: given.component ?? (custom ? [] : sourceFiles(join(WEB, "src")).filter((file) => !COPY_FILES.includes(file))),
     glossary: given.glossary ?? (custom ? [] : [join(REPO, "GLOSSARY.md")]),
+    registry: given.registry ?? (custom ? [] : [join(REPO, "config", "sources.toml")]),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
+    custom,
   };
+}
+
+// The source registry's values that people read, each with its line: labels, nouns, notes, what a
+// number counts, fix sentences, collections and data sources. Addresses and ids are left out.
+const REGISTRY_WORDS = /\b(label|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+
+function registryWords(text: string): { line: number; text: string }[] {
+  return text.split("\n").flatMap((line, index) =>
+    line.trimStart().startsWith("#") ? [] : [...line.matchAll(REGISTRY_WORDS)].map((match) => ({ line: index + 1, text: match[2] })),
+  );
 }
 
 // GLOSSARY.md's definitions, which Term and DefinitionWindow show. Avoid lines are skipped.
@@ -48,7 +67,7 @@ function glossaryDefinitions(text: string): { line: number; text: string }[] {
 }
 
 function main(): number {
-  const { copy, components, glossary, design } = options(process.argv.slice(2));
+  const { copy, components, glossary, registry, design, custom } = options(process.argv.slice(2));
   const check = copyChecker(design);
   const problems: string[] = [];
   const at = (file: string, line: number) => `${relative(process.cwd(), file) || file}:${line}`;
@@ -66,6 +85,17 @@ function main(): number {
     for (const { line, text } of glossaryDefinitions(readFileSync(file, "utf8"))) {
       for (const problem of check(text)) problems.push(`${at(file, line)}: "${text.trim()}" ${problem}`);
     }
+  }
+  for (const file of registry) {
+    for (const { line, text } of registryWords(readFileSync(file, "utf8"))) {
+      for (const problem of check(text)) problems.push(`${at(file, line)}: "${text.trim()}" ${problem}`);
+    }
+  }
+  if (!custom && !serverCopyIsCurrent()) {
+    problems.push(
+      `${at(SERVER_COPY_FILE, 1)}: it is out of date with copy.dataReadiness.server in web/src/copy.ts. ` +
+        "Run node web/lint/server-copy.ts --write.",
+    );
   }
   for (const file of components) {
     const source = readFileSync(file, "utf8");

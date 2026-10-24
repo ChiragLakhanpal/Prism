@@ -5,6 +5,8 @@ Each source in the registry names its silver transform, a module in this package
 - TABLES      each silver table it fills, with the columns it writes, in order
 - RECORD_KEY  the columns of its first table that tell one of the source's records from another,
               which the data readiness measures count (strata.lakehouse.readiness)
+- FISCAL_YEAR optional: the column of its first table that holds each record's fiscal year, by
+              which the dashboard's Data readiness page splits the records the measures count
 - parse()     one page's records turned into rows for each of its tables
 
 Two sources may share a transform, as the IDA credits and the IBRD loans share loans, when their

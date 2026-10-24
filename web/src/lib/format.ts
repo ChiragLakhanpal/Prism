@@ -137,10 +137,48 @@ export function formatRatio(part: number, whole: number, options: { style?: "sen
   return { text: frequency ? copy.num.countWithFrequency(count, frequency) : count, count, frequency };
 }
 
-export type DateStyle = "sentence" | "table" | "short";
+// A share a tool worked out (CLAUDE.md rule 1): its count and denominator, and the frequency the
+// tool rounded by the same rules as formatRatio, so the browser divides nothing. src/strata/tools/
+// data_readiness_for.py's share() gives these columns: share_percent from 50 cases, in_ten from 20,
+// and share_bound when a part rounds to an end of its scale.
+export type ToolShare = {
+  count: number;
+  denominator: number;
+  share_percent: number | null;
+  share_bound: "under" | "over" | null;
+  in_ten: number | null;
+  in_ten_exact: boolean | null;
+};
+
+export function formatToolShare(share: ToolShare, options: { style?: "sentence" | "table" } = {}): Ratio {
+  const count = copy.num.of(formatNumber(share.count, { compact: false }), formatNumber(share.denominator, { compact: false }));
+  const table = options.style === "table";
+  let frequency: string | null = null;
+  if (share.share_percent !== null) {
+    frequency =
+      share.share_bound === "under"
+        ? table ? copy.num.underOnePercentShort : copy.num.underOnePercent
+        : share.share_bound === "over"
+          ? table ? copy.num.overNinetyNinePercentShort : copy.num.overNinetyNinePercent
+          : table ? copy.num.percentShort(share.share_percent) : copy.num.percent(share.share_percent);
+  } else if (share.in_ten !== null) {
+    frequency =
+      share.share_bound === "under"
+        ? copy.num.fewerThanOneInTen
+        : share.share_bound === "over"
+          ? copy.num.moreThanNineInTen
+          : share.in_ten_exact
+            ? copy.num.inTen(share.in_ten)
+            : copy.num.aboutInTen(share.in_ten);
+  }
+  return { text: frequency ? copy.num.countWithFrequency(count, frequency) : count, count, frequency };
+}
+
+export type DateStyle = "sentence" | "table" | "short" | "month";
 
 // Section 7, rule 13: "March 4, 2024" in sentences and "Mar 4, 2024" in tables. "short" is the
-// freshness stamp's form: "Oct 21" in the current year and "Dec 30, 2025" in any other.
+// freshness stamp's form: "Oct 21" in the current year and "Dec 30, 2025" in any other. "month" is
+// a frozen source's on the Data readiness page: "Jun 2016".
 // Dates arrive as ISO dates ("2024-03-04") and are read in UTC, so no time zone moves them.
 export function formatDate(iso: string, options: { style?: DateStyle; today?: string } = {}): string {
   const style = options.style ?? "sentence";
@@ -150,7 +188,7 @@ export function formatDate(iso: string, options: { style?: DateStyle; today?: st
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
     month: style === "sentence" ? "long" : "short",
-    day: "numeric",
+    day: style === "month" ? undefined : "numeric",
     year: style === "short" && sameYear ? undefined : "numeric",
   }).format(date);
 }
