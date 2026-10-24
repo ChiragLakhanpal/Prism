@@ -673,6 +673,8 @@ It worked if the first ends "1 of the 1 expected passages are in the top three."
 
 ## Ticket 35, step 1 of 5: the Foundry review notes writer matches the repo
 
+**Ran on October 24, 2026 (orchestrator).** The first run printed the instructions' diff and ended "I made version 1 of strata-review-notes-writer, which matches the repo." The `--check` run exited 0 and printed that version 1 matches the repo, under the guardrail strata-guardrail.
+
 The merger parked this step on October 24, 2026, after merge commit 0756ed6. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`. At 08:46 on October 24 that key was set, but `DATABRICKS_TOKEN` and `APPLICATIONINSIGHTS_CONNECTION_STRING` were missing and day-one test 7 had failed, so the build's standing rule kept all five of this ticket's steps here. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. The writer runs under the same guardrail.
 
 Run this from the main checkout, and then run it again with `--check`:
@@ -752,6 +754,8 @@ Run this from the main checkout:
 It worked if it exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for both `past_range_criteria_ke_works_rfb.sql` and `past_range_coverage_ke_works_rfb.sql` (criteria 1 and 3, live half). As of October 22, 2026, the coverage file's rows are canceled 3, matched 65, no STEP reference 3, no notice 10 and used 49. The warehouse returns every value as text, and this is the first time find_comparables' date and amount handling runs there. If the warehouse holds Kenya works packages that the fixture does not record, the command prints the DuckDB rows, the warehouse rows and the expected rows side by side. Tell the orchestrator before you change a file's expected rows.
 
 ## Ticket 12, step 2 of 3: the Foundry agent offers find_comparables
+
+**Ran on October 24, 2026 (orchestrator).** Ticket 13's step 1 ran from the tree after bbab425, so the first sync printed find_comparables among the tools and the sentence about citing a tool's summary, and made version 1. The `--check` run exited 0.
 
 The merger parked this step on October 24, 2026, after merge commit bbab425. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 12 adds the find_comparables tool to `config/tools.toml` and changes `src/strata/agent/instructions/orchestrator.md`, so the agent in Foundry no longer matches the repo. If ticket 13's step 1 ran from bbab425 or later, the first command below has nothing to change, and the `--check` run is enough.
 
