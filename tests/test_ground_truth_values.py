@@ -365,3 +365,56 @@ def test_a_contract_signed_in_the_fy2017_2019_gap_is_in_no_award_dataset():
     assert rows, "the FY2001 to FY2016 awards file is empty"
     assert all(row["borrower_contract_reference_number"] != case["reference"] for row in rows)
     assert datetime.date(2016, 7, 1) <= BY_ID["award-7431-signed"]["value"] <= datetime.date(2019, 6, 30)
+
+
+# ── The stress shelf (ticket 18) ──────────────────────────────────────────
+
+SHELF = TRUTH["stress_shelf"]
+
+
+def shelf_quotes():
+    """Every quote the stress shelf's ground truth places on a PDF page, as (id, document, page, quote)."""
+    annex, plan, report, longest = (SHELF[key] for key in ("pad_risk_annex", "long_plan", "french_report",
+                                                           "longest_pad"))
+    found = [("annex-title", annex["document"], annex["title"]["pdf_page"], annex["title"]["quote"])]
+    found += [(f"annex-{rating['risk']}", annex["document"], rating["pdf_page"], rating["quote"])
+              for rating in annex["ratings"]]
+    found += [("plan-table", plan["document"], plan["table_starts"]["pdf_page"], plan["table_starts"]["quote"]),
+              ("report-paragraph", report["document"], report["first_paragraph"]["pdf_page"],
+               report["first_paragraph"]["quote"]),
+              ("longest-pad", longest["document"], longest["quote"]["pdf_page"], longest["quote"]["quote"])]
+    return found
+
+
+@pytest.mark.parametrize(("name", "document", "number", "quote"), shelf_quotes(), ids=lambda value: str(value))
+def test_each_stress_shelf_quote_is_word_for_word_on_its_page(name, document, number, quote):
+    assert word_for_word(quote, page(document, number)), f"{name}: {quote!r} is not on page {number} of {document}"
+
+
+def test_the_risk_annex_hand_count_is_one_rated_risk_per_rating_row_and_its_pages_are_the_annex():
+    annex = SHELF["pad_risk_annex"]
+    assert len(annex["ratings"]) == annex["risks"]
+    assert {rating["pdf_page"] for rating in annex["ratings"]} <= set(range(annex["first_pdf_page"],
+                                                                             annex["last_pdf_page"] + 1))
+    pages = fmt.pages(RECORDED / f"{annex['document']}.pages.txt")
+    assert len(pages) == annex["pdf_pages"]
+    assert [number for number, text in enumerate(pages, 1) if not text.strip()] == annex["empty_pages"]
+    assert "Annex 5" in pages[annex["last_pdf_page"]]  # the next annex starts on the page after
+
+
+def test_the_long_plan_lists_its_activities_and_the_documents_have_the_pages_the_ground_truth_says():
+    plan = SHELF["long_plan"]
+    text = fmt.read(RECORDED / f"{plan['document']}.txt").body
+    references = set(re.findall(r"\b[A-Z]{2}-[A-Z]+-\d+-(?:CW|GO|CS|NC)-[A-Z]+(?:-2)?\b", text))
+    assert len(references) == plan["activity_references"]
+    assert sum(reference.endswith("-2") for reference in references) == plan["with_a_second_issue"]
+    for key in ("long_plan", "french_report", "longest_pad"):
+        assert len(fmt.pages(RECORDED / f"{SHELF[key]['document']}.pages.txt")) == SHELF[key]["pdf_pages"], key
+    recorded = [len(fmt.pages(path)) for path in RECORDED.glob("documents/*/*.pages.txt")]
+    assert max(recorded) == SHELF["over_parser_limit"]["longest_pages"] < 500
+
+
+def test_each_similar_experience_quote_is_one_paragraph_of_its_notice():
+    case = SHELF["similar_experience"]
+    for notice in case["notices"]:
+        assert word_for_word(notice["quote"], str(resolve(case["record"], notice["at"]))), notice["notice"]

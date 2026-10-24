@@ -16,6 +16,12 @@ last_fiscal_year = 2025
 # sector is one of these.
 sectors = ["water", "transport"]
 
+# The slice's project count that docs/PLAN.md section 3 planned. Each document run counts the
+# projects the criteria above select from strata.gold.project, and records the count, with the
+# difference from this one and its reason, in strata.ops.data_readiness (measure slice_projects).
+# The page shows the run's count, never this one.
+planned_projects = 128
+
 # Each country with its ISO 3166 codes: two letters for the projects API, three for the indicators.
 [[countries]]
 name = "Kenya"
@@ -51,23 +57,70 @@ implementing_agency = "Northern Water Works Development Agency"
 agency_short_name = "NWWDA"
 plan_date = 2026-10-09
 
-# The hardest documents, each read and given a recorded outcome on the Data readiness page.
-# An entry without a project_id is a slot the document slice ticket (18) fills when it finds one.
+# The stress shelf: the hardest documents, each read and given a recorded outcome on the Data
+# readiness page, in this order (docs/PLAN.md section 3; the 18 design brief, section 4). The
+# document run (src/strata/lakehouse/passages.py) reads each shelf project by name, as it does the
+# showcase and the demo plan, and writes each entry's outcome to strata.ops.stress_shelf.
+#
+# Each entry has:
+#   key          a name for the entry, unique on the shelf
+#   kind         scan_annex, longest_pad, large_plan, other_language or over_parser_limit. The kind
+#                picks the entry's words on the page (web/src/copy.ts, dataReadiness.shelf) and what
+#                its outcome counts.
+#   project_id and document_id
+#                a fixed document: its project and its id in the documents API
+#   rule         or a rule that picks the document at run time, from the documents the run read:
+#                longest (the one of document_type with the most PDF pages) or over_parser_limit
+#                (the longest over the layout parser's page limit, ingestion.parser_part_pages in
+#                config/thresholds.toml). An entry names a document or a rule, never both.
+#   part         for scan_annex: the hard part, by its key in the copy file's shelf parts, with
+#                first_page and last_page, the PDF pages it spans
+#   expected_rows and counted_on
+#                for scan_annex: how many rows the hard part holds, counted by a person from the PDF,
+#                and the day they counted. Without them the row says it has nothing to check against.
+#   language     for other_language: the document's language, as an ISO 639-1 code
+#
+# The page's words never say "stress shelf": it calls the section "The hardest documents I read".
+
+# The P130164 PAD, a scan whose Annex 4, the Operational Risk Assessment Framework, is set in two
+# columns that the scan's text layer runs together. The eight rated risks were counted from the
+# PDF (tests/ground_truth/values.toml, stress_shelf.pad_risk_annex).
 [[stress_shelf]]
+key = "p130164_pad"
+kind = "scan_annex"
 project_id = "P130164"
-document_type = "PAD"
-why = "A 100-page scan with a garbled two-column risk annex."
+document_id = "18381488"
+part = "risk_annex"
+first_page = 65
+last_page = 70
+expected_rows = 8
+counted_on = 2026-10-24
 
+# The longest PAD of the documents the run read.
 [[stress_shelf]]
-document_type = "PAD"
-why = "The longest PAD in the slice."
+key = "longest_pad"
+kind = "longest_pad"
+rule = "longest"
+document_type = "Project Appraisal Document"
 
+# The Horn of Africa Gateway Development Project's Procurement Plan of September 24, 2026, whose text
+# lists hundreds of activities over 12 pages of STEP tables.
 [[stress_shelf]]
-document_type = "Procurement Plan"
-why = "A Procurement Plan with hundreds of rows."
+key = "long_plan"
+kind = "large_plan"
+project_id = "P161305"
+document_id = "40129238"
 
+# A completion report in French: Haiti's Rebuilding Energy Infrastructure and Access Project, ICR4990.
 [[stress_shelf]]
-why = "A completion report in French."
+key = "french_report"
+kind = "other_language"
+project_id = "P127203"
+document_id = "33407968"
+language = "fr"
 
+# The longest document over the layout parser's page limit, read in parts, if the run read one.
 [[stress_shelf]]
-why = "A document over 500 pages, if the slice has one."
+key = "over_parser_limit"
+kind = "over_parser_limit"
+rule = "over_parser_limit"

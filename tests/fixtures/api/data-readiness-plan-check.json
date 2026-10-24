@@ -1014,8 +1014,8 @@
       "subjects": [
         "all"
       ],
-      "count": 93,
-      "denominator": 93,
+      "count": 94,
+      "denominator": 94,
       "share_percent": 100,
       "share_bound": null,
       "in_ten": null,
@@ -1076,8 +1076,8 @@
       "subjects": [
         "all"
       ],
-      "count": 91,
-      "denominator": 92,
+      "count": 92,
+      "denominator": 93,
       "share_percent": 99,
       "share_bound": null,
       "in_ten": null,
@@ -1113,7 +1113,7 @@
       "share_bound": null,
       "in_ten": null,
       "in_ten_exact": null,
-      "as_of": "2026-10-23",
+      "as_of": "2026-10-24",
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"

@@ -1,0 +1,3211 @@
+{
+ "source": "https://search.worldbank.org/api/v3/wds?format=json&proid=P161305&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc",
+ "license": "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0.",
+ "recorded": "2026-10-24",
+ "about": "Every document the Documents API lists for the Horn of Africa Gateway Development Project (P161305), a Kenya transport project in the slice, whose Procurement Plan of September 24, 2026 is on the stress shelf (ticket 18).",
+ "response": {
+  "rows": 500,
+  "os": 0,
+  "page": 1,
+  "total": 226,
+  "documents": {
+   "D40129959": {
+    "id": "40129959",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-09-28T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-09-28T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099092826150511429/pdf/P161305-4d096c5a-6a47-49b0-a170-e8d3d0eacb9b.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099092826150511429/text/P161305-4d096c5a-6a47-49b0-a170-e8d3d0eacb9b.txt",
+    "guid": "099092826150511429",
+    "url": "http://documents.worldbank.org/curated/en/099092826150511429"
+   },
+   "D40129238": {
+    "id": "40129238",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-09-24T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-09-24T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099092426095539747/pdf/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099092426095539747/text/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.txt",
+    "guid": "099092426095539747",
+    "url": "http://documents.worldbank.org/curated/en/099092426095539747"
+   },
+   "D40124611": {
+    "id": "40124611",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR08899",
+    "docdt": "2026-08-27T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 13",
+    "disclosure_date": "2026-08-27T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099082726130598577/pdf/P161305-05279a18-1f3f-470f-822b-3c2b2e3153dc.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099082726130598577/text/P161305-05279a18-1f3f-470f-822b-3c2b2e3153dc.txt",
+    "guid": "099082726130598577",
+    "url": "http://documents.worldbank.org/curated/en/099082726130598577"
+   },
+   "D40122498": {
+    "id": "40122498",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-08-14T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-08-14T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099081426074058191/pdf/P161305-d7798c2c-5b33-474d-9b9a-9234bc631011.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099081426074058191/text/P161305-d7798c2c-5b33-474d-9b9a-9234bc631011.txt",
+    "guid": "099081426074058191",
+    "url": "http://documents.worldbank.org/curated/en/099081426074058191"
+   },
+   "D40123957": {
+    "id": "40123957",
+    "docty": "Agreement",
+    "lang": "English",
+    "docdt": "2026-08-11T04:00:00Z",
+    "display_title": "Official Documents- Amendment Letter to the Financing Agreement for Credit 6768-KE.pdf",
+    "disclosure_date": "2026-08-24T16:27:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099082426103574154/pdf/P161305-1dc55179-9cfc-4388-9538-2c8c7abea81b.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099082426103574154/text/P161305-1dc55179-9cfc-4388-9538-2c8c7abea81b.txt",
+    "guid": "099082426103574154",
+    "url": "http://documents.worldbank.org/curated/en/099082426103574154"
+   },
+   "D40119601": {
+    "id": "40119601",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-07-30T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-07-30T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099073026005041454/pdf/P161305-100a9493-7ba5-4430-ae1d-47fed6edaaea.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099073026005041454/text/P161305-100a9493-7ba5-4430-ae1d-47fed6edaaea.txt",
+    "guid": "099073026005041454",
+    "url": "http://documents.worldbank.org/curated/en/099073026005041454"
+   },
+   "D40115787": {
+    "id": "40115787",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-07-08T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-07-08T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099070826052531771/pdf/P161305-7cbf0cfe-aec7-43b0-9de4-c2c6474af1c4.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099070826052531771/text/P161305-7cbf0cfe-aec7-43b0-9de4-c2c6474af1c4.txt",
+    "guid": "099070826052531771",
+    "url": "http://documents.worldbank.org/curated/en/099070826052531771"
+   },
+   "D40105948": {
+    "id": "40105948",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-05-29T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-05-29T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099052926101519964/pdf/P161305-3ecf1081-45f0-4911-b1d9-2fa08fdb8a83.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099052926101519964/text/P161305-3ecf1081-45f0-4911-b1d9-2fa08fdb8a83.txt",
+    "guid": "099052926101519964",
+    "url": "http://documents.worldbank.org/curated/en/099052926101519964"
+   },
+   "D40105622": {
+    "id": "40105622",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-05-28T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-05-28T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099052826062511043/pdf/P161305-d6b03d63-a755-4e52-b531-7e3e08fbb423.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099052826062511043/text/P161305-d6b03d63-a755-4e52-b531-7e3e08fbb423.txt",
+    "guid": "099052826062511043",
+    "url": "http://documents.worldbank.org/curated/en/099052826062511043"
+   },
+   "D40104470": {
+    "id": "40104470",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-05-21T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-05-21T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099052126120513218/pdf/P161305-648fa436-863c-4ff3-aa50-4a68d0132735.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099052126120513218/text/P161305-648fa436-863c-4ff3-aa50-4a68d0132735.txt",
+    "guid": "099052126120513218",
+    "url": "http://documents.worldbank.org/curated/en/099052126120513218"
+   },
+   "D40103815": {
+    "id": "40103815",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-05-19T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-05-19T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099051926050553340/pdf/P161305-73953335-c382-41e9-9c60-5c8c95b3229d.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099051926050553340/text/P161305-73953335-c382-41e9-9c60-5c8c95b3229d.txt",
+    "guid": "099051926050553340",
+    "url": "http://documents.worldbank.org/curated/en/099051926050553340"
+   },
+   "D40112809": {
+    "id": "40112809",
+    "docty": "Agreement",
+    "lang": "English",
+    "docdt": "2026-05-15T04:00:00Z",
+    "display_title": "Official Documents- Omnibus Amendment to Financing Agreements and Loan Agreement to Introduce the Rapid Response Option with Republic of Kenya (see Annex 1 (a) for List of Financing Agreements).pdf",
+    "disclosure_date": "2026-06-26T17:08:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099062626111535554/pdf/P161305-73a8c0f5-ae3b-4bca-b467-9156a7fd8013.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099062626111535554/text/P161305-73a8c0f5-ae3b-4bca-b467-9156a7fd8013.txt",
+    "guid": "099062626111535554",
+    "url": "http://documents.worldbank.org/curated/en/099062626111535554"
+   },
+   "D40101515": {
+    "id": "40101515",
+    "docty": "Climate Co-Benefits Assessment",
+    "lang": "English",
+    "docdt": "2026-05-06T04:00:00Z",
+    "display_title": "Climate Finance Assessment (P161305)",
+    "disclosure_date": "2026-05-06T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099050626142726834/pdf/P161305-87deb917-f950-408d-9f6b-bd4320ab537e.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099050626142726834/text/P161305-87deb917-f950-408d-9f6b-bd4320ab537e.txt",
+    "guid": "099050626142726834",
+    "url": "http://documents.worldbank.org/curated/en/099050626142726834"
+   },
+   "D40100117": {
+    "id": "40100117",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-04-29T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-04-29T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099042926064545495/pdf/P161305-ec8c84cd-dde2-4c35-be53-2766170867ce.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099042926064545495/text/P161305-ec8c84cd-dde2-4c35-be53-2766170867ce.txt",
+    "guid": "099042926064545495",
+    "url": "http://documents.worldbank.org/curated/en/099042926064545495"
+   },
+   "D40100116": {
+    "id": "40100116",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-04-29T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-04-29T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099042926064562066/pdf/P161305-1380b185-bfb3-4e94-9039-2e16ee159a71.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099042926064562066/text/P161305-1380b185-bfb3-4e94-9039-2e16ee159a71.txt",
+    "guid": "099042926064562066",
+    "url": "http://documents.worldbank.org/curated/en/099042926064562066"
+   },
+   "D40097186": {
+    "id": "40097186",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-04-14T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-04-14T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099041426004026719/pdf/P161305-bf540621-0bd5-4903-9b8b-5187e7f8bf56.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099041426004026719/text/P161305-bf540621-0bd5-4903-9b8b-5187e7f8bf56.txt",
+    "guid": "099041426004026719",
+    "url": "http://documents.worldbank.org/curated/en/099041426004026719"
+   },
+   "D40097200": {
+    "id": "40097200",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-04-14T04:00:00Z",
+    "display_title": " - - P161305-  - Procurement Plan",
+    "disclosure_date": "2026-04-14T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099041426024512401/pdf/P161305-bca66ac6-b24e-4ef2-9923-ad1dad524e38.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099041426024512401/text/P161305-bca66ac6-b24e-4ef2-9923-ad1dad524e38.txt",
+    "guid": "099041426024512401",
+    "url": "http://documents.worldbank.org/curated/en/099041426024512401"
+   },
+   "D40092555": {
+    "id": "40092555",
+    "docty": "Project Paper",
+    "lang": "English",
+    "repnb": "PPIAF000282",
+    "docdt": "2026-03-17T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of Horn of Africa Gateway Development Project is to improve: (a) the movement of people and goods and digital connectivity and access to social services to communities at designated locations along the targeted sections of the Isiolo-Mandera Regional Road Corridor; and (b) the capacity of selected transport related institutions in Kenya. This paper seeks an additional financing (AF) of 290 million US dollars to cover cost overruns in the project’s original activities, thereby safeguarding and enhancing development impact. The higher costs stem primarily from: (i) technical modifications to enhance the climate resilience of World Bank–financed road sections and bridges, and (ii) disproportionate increases in the prices of certain construction materials since the project’s 2020 appraisal. The AF, as with the parent project, aligns with the World Bank Group’s Country Partnership Framework (CPF) for Kenya (2023-2028), which emphasizes expanding infrastructure to underserved areas, improving regional connectivity, and developing major roads that address poverty, inequality, fragility and climate resilience. There have been no changes to the PDOs, design, scope, or safeguards category. However, certain activities will be reallocated across categories through restructuring to rationalize the workload and ensure alignment with the respective institutional mandates.\n"
+    },
+    "display_title": "Kenya - Horn of Africa Gateway Development Project : Additional Financing\n",
+    "disclosure_date": "2026-03-27T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099031826171014550/pdf/BOSIB-25930229-feb8-42ea-9de2-3f5de38756b1.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099031826171014550/text/BOSIB-25930229-feb8-42ea-9de2-3f5de38756b1.txt",
+    "guid": "099031826171014550",
+    "url": "http://documents.worldbank.org/curated/en/099031826171014550"
+   },
+   "D40089889": {
+    "id": "40089889",
+    "docty": "Project Information and Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "repnb": "ISDSIA0119",
+    "docdt": "2026-03-04T05:00:00Z",
+    "display_title": "Project Information Document-Integrated Safeguards Data Sheet - Horn of Africa Gateway Development Project - P161305",
+    "disclosure_date": "2026-03-04T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099030426111527190/pdf/P161305-235a23a3-eca8-473b-af9d-972fd90f7c62.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099030426111527190/text/P161305-235a23a3-eca8-473b-af9d-972fd90f7c62.txt",
+    "guid": "099030426111527190",
+    "url": "http://documents.worldbank.org/curated/en/099030426111527190"
+   },
+   "D40087346": {
+    "id": "40087346",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-02-18T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-02-18T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021826004016250/pdf/P161305-e1bffa0f-a52f-4e09-a2fb-0ac3adf60c69.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021826004016250/text/P161305-e1bffa0f-a52f-4e09-a2fb-0ac3adf60c69.txt",
+    "guid": "099021826004016250",
+    "url": "http://documents.worldbank.org/curated/en/099021826004016250"
+   },
+   "D40085395": {
+    "id": "40085395",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-02-10T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-02-10T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021026025039348/pdf/P161305-c2b401a4-38ff-4621-a8d9-7aca17e0c6ad.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021026025039348/text/P161305-c2b401a4-38ff-4621-a8d9-7aca17e0c6ad.txt",
+    "guid": "099021026025039348",
+    "url": "http://documents.worldbank.org/curated/en/099021026025039348"
+   },
+   "D40085448": {
+    "id": "40085448",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-02-10T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-02-10T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021026071513457/pdf/P161305-b47e0ab2-9475-4723-9c85-5cb26333745f.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021026071513457/text/P161305-b47e0ab2-9475-4723-9c85-5cb26333745f.txt",
+    "guid": "099021026071513457",
+    "url": "http://documents.worldbank.org/curated/en/099021026071513457"
+   },
+   "D40082080": {
+    "id": "40082080",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2026-01-22T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2026-01-22T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012226062028737/pdf/P161305-a13c36b7-7b25-48a2-9aae-c0ac76d8c2f2.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012226062028737/text/P161305-a13c36b7-7b25-48a2-9aae-c0ac76d8c2f2.txt",
+    "guid": "099012226062028737",
+    "url": "http://documents.worldbank.org/curated/en/099012226062028737"
+   },
+   "D40082280": {
+    "id": "40082280",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR06835",
+    "docdt": "2026-01-22T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 12",
+    "disclosure_date": "2026-01-22T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012226163040308/pdf/P161305-3ebddd40-ac57-486a-9c91-c0b2c4bb66fb.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012226163040308/text/P161305-3ebddd40-ac57-486a-9c91-c0b2c4bb66fb.txt",
+    "guid": "099012226163040308",
+    "url": "http://documents.worldbank.org/curated/en/099012226163040308"
+   },
+   "D40081991": {
+    "id": "40081991",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096765",
+    "docdt": "2025-12-18T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-22T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012226005016308/pdf/P161305-6217a53f-544a-40d7-8e02-3cd56717b98e.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012226005016308/text/P161305-6217a53f-544a-40d7-8e02-3cd56717b98e.txt",
+    "guid": "099012226005016308",
+    "url": "http://documents.worldbank.org/curated/en/099012226005016308"
+   },
+   "D40081990": {
+    "id": "40081990",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096943",
+    "docdt": "2025-12-18T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-22T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012226004516017/pdf/P161305-fa688006-bf6f-455b-91b2-436d354837e4.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012226004516017/text/P161305-fa688006-bf6f-455b-91b2-436d354837e4.txt",
+    "guid": "099012226004516017",
+    "url": "http://documents.worldbank.org/curated/en/099012226004516017"
+   },
+   "D40082787": {
+    "id": "40082787",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096726",
+    "docdt": "2025-12-17T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-25T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012526122039380/pdf/P161305-9be6927c-4b7b-4158-987a-1bf4f2427c02.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012526122039380/text/P161305-9be6927c-4b7b-4158-987a-1bf4f2427c02.txt",
+    "guid": "099012526122039380",
+    "url": "http://documents.worldbank.org/curated/en/099012526122039380"
+   },
+   "D40082786": {
+    "id": "40082786",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096953",
+    "docdt": "2025-12-09T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-25T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012526121025753/pdf/P161305-dcb59f6d-c26a-4e20-9dc0-58f129328b84.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012526121025753/text/P161305-dcb59f6d-c26a-4e20-9dc0-58f129328b84.txt",
+    "guid": "099012526121025753",
+    "url": "http://documents.worldbank.org/curated/en/099012526121025753"
+   },
+   "D40082785": {
+    "id": "40082785",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096716",
+    "docdt": "2025-12-09T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-25T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012526113510146/pdf/P161305-b14349e8-4f7e-47e6-8195-8b12eb5a2738.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012526113510146/text/P161305-b14349e8-4f7e-47e6-8195-8b12eb5a2738.txt",
+    "guid": "099012526113510146",
+    "url": "http://documents.worldbank.org/curated/en/099012526113510146"
+   },
+   "D40081992": {
+    "id": "40081992",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096721",
+    "docdt": "2025-12-04T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2026-01-22T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012226005599639/pdf/P161305-d0d20583-8930-4376-8765-a467a208d9c7.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012226005599639/text/P161305-d0d20583-8930-4376-8765-a467a208d9c7.txt",
+    "guid": "099012226005599639",
+    "url": "http://documents.worldbank.org/curated/en/099012226005599639"
+   },
+   "D40071943": {
+    "id": "40071943",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-11-28T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-11-28T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099112825113514323/pdf/P161305-d4ea493b-5113-4d9f-870b-562f5c553466.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099112825113514323/text/P161305-d4ea493b-5113-4d9f-870b-562f5c553466.txt",
+    "guid": "099112825113514323",
+    "url": "http://documents.worldbank.org/curated/en/099112825113514323"
+   },
+   "D40068185": {
+    "id": "40068185",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-11-16T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-11-16T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099111625112125412/pdf/P161305-18703095-dd51-4f7f-a85e-393fce33612e.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099111625112125412/text/P161305-18703095-dd51-4f7f-a85e-393fce33612e.txt",
+    "guid": "099111625112125412",
+    "url": "http://documents.worldbank.org/curated/en/099111625112125412"
+   },
+   "D40065402": {
+    "id": "40065402",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-10-29T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-10-29T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099102925074041776/pdf/P161305-843519e4-0c82-41b6-bf2b-143fe4fa2dd3.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099102925074041776/text/P161305-843519e4-0c82-41b6-bf2b-143fe4fa2dd3.txt",
+    "guid": "099102925074041776",
+    "url": "http://documents.worldbank.org/curated/en/099102925074041776"
+   },
+   "D40043571": {
+    "id": "40043571",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR04908",
+    "docdt": "2025-09-16T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 11",
+    "disclosure_date": "2025-09-16T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099091625131531689/pdf/P161305-427ebaae-a479-4abb-baee-340c0b2a3e54.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099091625131531689/text/P161305-427ebaae-a479-4abb-baee-340c0b2a3e54.txt",
+    "guid": "099091625131531689",
+    "url": "http://documents.worldbank.org/curated/en/099091625131531689"
+   },
+   "D40035515": {
+    "id": "40035515",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-07-31T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-07-31T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099073125081015243/pdf/P161305-43abeddb-f293-4a40-b605-3ff0ff16e855.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099073125081015243/text/P161305-43abeddb-f293-4a40-b605-3ff0ff16e855.txt",
+    "guid": "099073125081015243",
+    "url": "http://documents.worldbank.org/curated/en/099073125081015243"
+   },
+   "D40035532": {
+    "id": "40035532",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-07-31T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-07-31T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099073125085534698/pdf/P161305-2f4c302f-ba60-4e95-b08a-5bf8be835e32.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099073125085534698/text/P161305-2f4c302f-ba60-4e95-b08a-5bf8be835e32.txt",
+    "guid": "099073125085534698",
+    "url": "http://documents.worldbank.org/curated/en/099073125085534698"
+   },
+   "D40029442": {
+    "id": "40029442",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-07-11T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-07-11T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099071125100033688/pdf/P161305-25878e86-f1bd-4e07-ada7-0eb2a321e4eb.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099071125100033688/text/P161305-25878e86-f1bd-4e07-ada7-0eb2a321e4eb.txt",
+    "guid": "099071125100033688",
+    "url": "http://documents.worldbank.org/curated/en/099071125100033688"
+   },
+   "D40020833": {
+    "id": "40020833",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "docdt": "2025-06-11T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-06-11T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099061125044016504/pdf/P161305-a9a6335e-8ca2-44df-adac-7a18feb2430b.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099061125044016504/text/P161305-a9a6335e-8ca2-44df-adac-7a18feb2430b.txt",
+    "guid": "099061125044016504",
+    "url": "http://documents.worldbank.org/curated/en/099061125044016504"
+   },
+   "D40010108": {
+    "id": "40010108",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP112662",
+    "docdt": "2025-04-30T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-04-30T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099043025140594751/pdf/P161305-0a2cf4ef-782f-4626-8f31-40748cadbdb2.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099043025140594751/text/P161305-0a2cf4ef-782f-4626-8f31-40748cadbdb2.txt",
+    "guid": "099043025140594751",
+    "url": "http://documents.worldbank.org/curated/en/099043025140594751"
+   },
+   "D40007262": {
+    "id": "40007262",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP111998",
+    "docdt": "2025-04-16T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-04-16T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099041625055160924/pdf/P161305-c9074b25-fada-47be-a72e-3baaeefa1fd5.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099041625055160924/text/P161305-c9074b25-fada-47be-a72e-3baaeefa1fd5.txt",
+    "guid": "099041625055160924",
+    "url": "http://documents.worldbank.org/curated/en/099041625055160924"
+   },
+   "D34461603": {
+    "id": "34461603",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR02924",
+    "docdt": "2025-03-03T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 10",
+    "disclosure_date": "2025-03-03T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099030225233042758/pdf/P161305-15a77cf7-27f2-4a73-bf9c-20d9573dd969.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099030225233042758/text/P161305-15a77cf7-27f2-4a73-bf9c-20d9573dd969.txt",
+    "guid": "099030225233042758",
+    "url": "http://documents.worldbank.org/curated/en/099030225233042758"
+   },
+   "D34461601": {
+    "id": "34461601",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR02924",
+    "docdt": "2025-03-03T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 10",
+    "disclosure_date": "2025-03-03T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099030225232525572/pdf/P161305-c9ad9162-3764-4b4a-8960-dce0972d2604.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099030225232525572/text/P161305-c9ad9162-3764-4b4a-8960-dce0972d2604.txt",
+    "guid": "099030225232525572",
+    "url": "http://documents.worldbank.org/curated/en/099030225232525572"
+   },
+   "D34454066": {
+    "id": "34454066",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP108739",
+    "docdt": "2025-02-07T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-02-07T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099020725034024403/pdf/P161305-1467889d-7e7a-4c9c-a2f2-0551bd0dbfd5.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099020725034024403/text/P161305-1467889d-7e7a-4c9c-a2f2-0551bd0dbfd5.txt",
+    "guid": "099020725034024403",
+    "url": "http://documents.worldbank.org/curated/en/099020725034024403"
+   },
+   "D34452791": {
+    "id": "34452791",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP108549",
+    "docdt": "2025-02-04T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-02-04T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099020425075026228/pdf/P161305-d4447ab2-d2b3-44ba-8d78-adf3cca266a7.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099020425075026228/text/P161305-d4447ab2-d2b3-44ba-8d78-adf3cca266a7.txt",
+    "guid": "099020425075026228",
+    "url": "http://documents.worldbank.org/curated/en/099020425075026228"
+   },
+   "D34451513": {
+    "id": "34451513",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP108377",
+    "docdt": "2025-01-30T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-01-30T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099013025093538761/pdf/P161305-76ac39d0-3693-4734-8324-e5703fd7c3a2.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099013025093538761/text/P161305-76ac39d0-3693-4734-8324-e5703fd7c3a2.txt",
+    "guid": "099013025093538761",
+    "url": "http://documents.worldbank.org/curated/en/099013025093538761"
+   },
+   "D34450733": {
+    "id": "34450733",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP108291",
+    "docdt": "2025-01-29T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-01-29T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012925040524226/pdf/P161305-417684c2-1629-46d7-b983-3280f2f88e8d.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012925040524226/text/P161305-417684c2-1629-46d7-b983-3280f2f88e8d.txt",
+    "guid": "099012925040524226",
+    "url": "http://documents.worldbank.org/curated/en/099012925040524226"
+   },
+   "D34450330": {
+    "id": "34450330",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP108225",
+    "docdt": "2025-01-28T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2025-01-28T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099012825044573015/pdf/P161305-37b7bc25-5a55-40c8-bea0-ccf257dc305e.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099012825044573015/text/P161305-37b7bc25-5a55-40c8-bea0-ccf257dc305e.txt",
+    "guid": "099012825044573015",
+    "url": "http://documents.worldbank.org/curated/en/099012825044573015"
+   },
+   "D34456877": {
+    "id": "34456877",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096715",
+    "docdt": "2025-01-20T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725023042530/pdf/P161305-e22eb6ad-a450-4103-943d-ef32eef25b1d.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725023042530/text/P161305-e22eb6ad-a450-4103-943d-ef32eef25b1d.txt",
+    "guid": "099021725023042530",
+    "url": "http://documents.worldbank.org/curated/en/099021725023042530"
+   },
+   "D34456875": {
+    "id": "34456875",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096952",
+    "docdt": "2025-01-07T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725023528039/pdf/P161305-45fef1c7-5e97-40ff-b089-6b2051179909.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725023528039/text/P161305-45fef1c7-5e97-40ff-b089-6b2051179909.txt",
+    "guid": "099021725023528039",
+    "url": "http://documents.worldbank.org/curated/en/099021725023528039"
+   },
+   "D34456849": {
+    "id": "34456849",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096725",
+    "docdt": "2024-12-30T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725022536969/pdf/P161305-8dbd2820-2f74-423b-8613-706d94c8a949.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725022536969/text/P161305-8dbd2820-2f74-423b-8613-706d94c8a949.txt",
+    "guid": "099021725022536969",
+    "url": "http://documents.worldbank.org/curated/en/099021725022536969"
+   },
+   "D34456864": {
+    "id": "34456864",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096764",
+    "docdt": "2024-12-27T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725023036713/pdf/P161305-f705e41e-be9d-413e-af36-e9e27968ab28.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725023036713/text/P161305-f705e41e-be9d-413e-af36-e9e27968ab28.txt",
+    "guid": "099021725023036713",
+    "url": "http://documents.worldbank.org/curated/en/099021725023036713"
+   },
+   "D34456876": {
+    "id": "34456876",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096720",
+    "docdt": "2024-12-20T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725023144983/pdf/P161305-dd82f1b6-2199-4d52-a79f-13908ac6772f.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725023144983/text/P161305-dd82f1b6-2199-4d52-a79f-13908ac6772f.txt",
+    "guid": "099021725023144983",
+    "url": "http://documents.worldbank.org/curated/en/099021725023144983"
+   },
+   "D34456866": {
+    "id": "34456866",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0096942",
+    "docdt": "2024-12-05T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2025-02-17T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099021725022522193/pdf/P161305-b427495e-b60f-4a24-96a0-e97f81317250.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099021725022522193/text/P161305-b427495e-b60f-4a24-96a0-e97f81317250.txt",
+    "guid": "099021725022522193",
+    "url": "http://documents.worldbank.org/curated/en/099021725022522193"
+   },
+   "D34422413": {
+    "id": "34422413",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP105308",
+    "docdt": "2024-11-14T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-11-14T05:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099111424105031665/pdf/P161305-f6efb7f7-2708-4f4c-b6a9-8cd4065e9318.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099111424105031665/text/P161305-f6efb7f7-2708-4f4c-b6a9-8cd4065e9318.txt",
+    "guid": "099111424105031665",
+    "url": "http://documents.worldbank.org/curated/en/099111424105031665"
+   },
+   "D34406917": {
+    "id": "34406917",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP103934",
+    "docdt": "2024-10-17T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-10-17T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099101724093527146/pdf/P161305-c23187a2-20da-4727-b576-824e6faad00c.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099101724093527146/text/P161305-c23187a2-20da-4727-b576-824e6faad00c.txt",
+    "guid": "099101724093527146",
+    "url": "http://documents.worldbank.org/curated/en/099101724093527146"
+   },
+   "D34378103": {
+    "id": "34378103",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP101035",
+    "docdt": "2024-08-16T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-08-16T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099081624084541616/pdf/P161305-082d2d13-c3f1-439b-8088-9866e1b494b9.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099081624084541616/text/P161305-082d2d13-c3f1-439b-8088-9866e1b494b9.txt",
+    "guid": "099081624084541616",
+    "url": "http://documents.worldbank.org/curated/en/099081624084541616"
+   },
+   "D34378101": {
+    "id": "34378101",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP101034",
+    "docdt": "2024-08-16T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-08-16T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099081624084541264/pdf/P161305-1b6cbc06-b2a0-4caa-97a2-29ab4c8f96f6.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099081624084541264/text/P161305-1b6cbc06-b2a0-4caa-97a2-29ab4c8f96f6.txt",
+    "guid": "099081624084541264",
+    "url": "http://documents.worldbank.org/curated/en/099081624084541264"
+   },
+   "D34370683": {
+    "id": "34370683",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR01244",
+    "docdt": "2024-07-30T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 9",
+    "disclosure_date": "2024-07-30T04:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099073024101534140/pdf/P161305-0cc1bca5-77a1-4d0a-836b-5cbad31cf2d5.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099073024101534140/text/P161305-0cc1bca5-77a1-4d0a-836b-5cbad31cf2d5.txt",
+    "guid": "099073024101534140",
+    "url": "http://documents.worldbank.org/curated/en/099073024101534140"
+   },
+   "D34369363": {
+    "id": "34369363",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP100065",
+    "docdt": "2024-07-26T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-07-25T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099072624070026583/pdf/P161305-688ea95c-851b-4b31-96f0-34813258eddf.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099072624070026583/text/P161305-688ea95c-851b-4b31-96f0-34813258eddf.txt",
+    "guid": "099072624070026583",
+    "url": "http://documents.worldbank.org/curated/en/099072624070026583"
+   },
+   "D34368342": {
+    "id": "34368342",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP99939",
+    "docdt": "2024-07-24T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-07-23T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099072424090525097/pdf/P161305-4a424f46-29ed-4ca4-8c32-0491a08572d1.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099072424090525097/text/P161305-4a424f46-29ed-4ca4-8c32-0491a08572d1.txt",
+    "guid": "099072424090525097",
+    "url": "http://documents.worldbank.org/curated/en/099072424090525097"
+   },
+   "D34365306": {
+    "id": "34365306",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP99559",
+    "docdt": "2024-07-16T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-07-15T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099071624094533957/pdf/P161305-b3b9cb18-157a-43cc-86de-a393240e8b35.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099071624094533957/text/P161305-b3b9cb18-157a-43cc-86de-a393240e8b35.txt",
+    "guid": "099071624094533957",
+    "url": "http://documents.worldbank.org/curated/en/099071624094533957"
+   },
+   "D34363396": {
+    "id": "34363396",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP99320",
+    "docdt": "2024-07-11T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-07-10T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099071124084512053/pdf/P161305-68601a27-0328-432b-8524-142c6f3f6354.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099071124084512053/text/P161305-68601a27-0328-432b-8524-142c6f3f6354.txt",
+    "guid": "099071124084512053",
+    "url": "http://documents.worldbank.org/curated/en/099071124084512053"
+   },
+   "D34362786": {
+    "id": "34362786",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP99216",
+    "docdt": "2024-07-10T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-07-09T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099071024055515869/pdf/P161305-3a7da154-c1db-4f7f-a56d-eb3247233e19.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099071024055515869/text/P161305-3a7da154-c1db-4f7f-a56d-eb3247233e19.txt",
+    "guid": "099071024055515869",
+    "url": "http://documents.worldbank.org/curated/en/099071024055515869"
+   },
+   "D34363528": {
+    "id": "34363528",
+    "docty": "Agreement",
+    "lang": "English",
+    "docdt": "2024-07-03T04:00:00Z",
+    "display_title": "Official Documents- First Amendment to the Financing Agreement for Credit 6768-KE.pdf",
+    "disclosure_date": "2024-07-11T08:47:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099071124155074776/pdf/P161305-c22fb498-5a0a-49d5-a01e-52fe458ece8c.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099071124155074776/text/P161305-c22fb498-5a0a-49d5-a01e-52fe458ece8c.txt",
+    "guid": "099071124155074776",
+    "url": "http://documents.worldbank.org/curated/en/099071124155074776"
+   },
+   "D34348391": {
+    "id": "34348391",
+    "docty": "Project Paper",
+    "lang": "English",
+    "repnb": "RES00046",
+    "docdt": "2024-06-24T04:00:00Z",
+    "display_title": "Disclosable Restructuring Paper - Horn of Africa Gateway Development Project - P161305",
+    "disclosure_date": "2024-06-23T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099062424170014321/pdf/P161305-d86a7b92-951b-49f4-9913-916e37bcfdbe.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099062424170014321/text/P161305-d86a7b92-951b-49f4-9913-916e37bcfdbe.txt",
+    "guid": "099062424170014321",
+    "url": "http://documents.worldbank.org/curated/en/099062424170014321"
+   },
+   "D34348040": {
+    "id": "34348040",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP98652",
+    "docdt": "2024-06-24T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-06-23T15:00:00Z",
+    "pdfurl": "https://documents.worldbank.org/curated/en/099062424083027029/pdf/P161305-a903ecf0-6d70-415b-8357-27df6417cbcd.pdf",
+    "txturl": "https://documents.worldbank.org/curated/en/099062424083027029/text/P161305-a903ecf0-6d70-415b-8357-27df6417cbcd.txt",
+    "guid": "099062424083027029",
+    "url": "http://documents.worldbank.org/curated/en/099062424083027029"
+   },
+   "D34322161": {
+    "id": "34322161",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP97165",
+    "docdt": "2024-05-21T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-05-20T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099052124084031022/pdf/P1613051fd50c50841b7ba1b19ba0638265.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099052124084031022/text/P1613051fd50c50841b7ba1b19ba0638265.txt",
+    "guid": "099052124084031022",
+    "url": "http://documents.worldbank.org/curated/en/099052124084031022"
+   },
+   "D34316368": {
+    "id": "34316368",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP96656",
+    "docdt": "2024-05-10T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-05-09T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099051024054041566/pdf/P1613051f8559e0571abe21777fe919df25.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099051024054041566/text/P1613051f8559e0571abe21777fe919df25.txt",
+    "guid": "099051024054041566",
+    "url": "http://documents.worldbank.org/curated/en/099051024054041566"
+   },
+   "D34315935": {
+    "id": "34315935",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP96607",
+    "docdt": "2024-05-09T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-05-08T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099050924084027402/pdf/P16130514f8a780061bd2912b2cb216479f.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099050924084027402/text/P16130514f8a780061bd2912b2cb216479f.txt",
+    "guid": "099050924084027402",
+    "url": "http://documents.worldbank.org/curated/en/099050924084027402"
+   },
+   "D34264444": {
+    "id": "34264444",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078695",
+    "docdt": "2024-02-09T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-22T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099022224050027991/pdf/P161305163e5e80fc19c4b126e089b7c4db.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099022224050027991/text/P161305163e5e80fc19c4b126e089b7c4db.txt",
+    "guid": "099022224050027991",
+    "url": "http://documents.worldbank.org/curated/en/099022224050027991"
+   },
+   "D34260724": {
+    "id": "34260724",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078709",
+    "docdt": "2024-02-02T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-19T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099021924004031271/pdf/P1613051946bbb022182091d0c0dee11f3e.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099021924004031271/text/P1613051946bbb022182091d0c0dee11f3e.txt",
+    "guid": "099021924004031271",
+    "url": "http://documents.worldbank.org/curated/en/099021924004031271"
+   },
+   "D34248546": {
+    "id": "34248546",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP91837",
+    "docdt": "2024-01-30T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-01-30T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099013024125036165/pdf/P1613051a8f4e30ee185ad170d605e026e7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099013024125036165/text/P1613051a8f4e30ee185ad170d605e026e7.txt",
+    "guid": "099013024125036165",
+    "url": "http://documents.worldbank.org/curated/en/099013024125036165"
+   },
+   "D34246044": {
+    "id": "34246044",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR59696",
+    "docdt": "2024-01-26T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 08",
+    "disclosure_date": "2024-01-26T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099012624010086485/pdf/P16130514f68c20d41870e1e83c0001e613.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099012624010086485/text/P16130514f68c20d41870e1e83c0001e613.txt",
+    "guid": "099012624010086485",
+    "url": "http://documents.worldbank.org/curated/en/099012624010086485"
+   },
+   "D34238641": {
+    "id": "34238641",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP91112",
+    "docdt": "2024-01-15T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2024-01-15T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099011524021512605/pdf/P161305184547302b189c11e551aaa1a570.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099011524021512605/text/P161305184547302b189c11e551aaa1a570.txt",
+    "guid": "099011524021512605",
+    "url": "http://documents.worldbank.org/curated/en/099011524021512605"
+   },
+   "D34253038": {
+    "id": "34253038",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0072126",
+    "docdt": "2023-12-28T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-06T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099020624072084959/pdf/P1613051deac4d01419bf816ac01cd6f250.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099020624072084959/text/P1613051deac4d01419bf816ac01cd6f250.txt",
+    "guid": "099020624072084959",
+    "url": "http://documents.worldbank.org/curated/en/099020624072084959"
+   },
+   "D34260723": {
+    "id": "34260723",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0081328",
+    "docdt": "2023-12-21T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-19T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099021924003595023/pdf/P16130519200a602e1be681ecbb165d50b7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099021924003595023/text/P16130519200a602e1be681ecbb165d50b7.txt",
+    "guid": "099021924003595023",
+    "url": "http://documents.worldbank.org/curated/en/099021924003595023"
+   },
+   "D34260726": {
+    "id": "34260726",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0094131",
+    "docdt": "2023-12-15T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-19T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099021924010026701/pdf/P161305127a5b700f190d7144f953c25003.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099021924010026701/text/P161305127a5b700f190d7144f953c25003.txt",
+    "guid": "099021924010026701",
+    "url": "http://documents.worldbank.org/curated/en/099021924010026701"
+   },
+   "D34194153": {
+    "id": "34194153",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP88449",
+    "docdt": "2023-11-09T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-11-09T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099110923115018998/pdf/P16130504088a80bb0935f071997408a6c4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099110923115018998/text/P16130504088a80bb0935f071997408a6c4.txt",
+    "guid": "099110923115018998",
+    "url": "http://documents.worldbank.org/curated/en/099110923115018998"
+   },
+   "D34253039": {
+    "id": "34253039",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078702",
+    "docdt": "2023-11-09T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2024-02-06T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099020624072523602/pdf/P16130515d36970d51850d1856a62afa69d.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099020624072523602/text/P16130515d36970d51850d1856a62afa69d.txt",
+    "guid": "099020624072523602",
+    "url": "http://documents.worldbank.org/curated/en/099020624072523602"
+   },
+   "D34192822": {
+    "id": "34192822",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP88288",
+    "docdt": "2023-11-07T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-11-07T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099110723100536510/pdf/P1613050d1adb8054086c7096c6e3a17eb4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099110723100536510/text/P1613050d1adb8054086c7096c6e3a17eb4.txt",
+    "guid": "099110723100536510",
+    "url": "http://documents.worldbank.org/curated/en/099110723100536510"
+   },
+   "D34192457": {
+    "id": "34192457",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP88245",
+    "docdt": "2023-11-07T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-11-07T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099110723003530280/pdf/P16130503e63c20c80999b0172a13d3f690.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099110723003530280/text/P16130503e63c20c80999b0172a13d3f690.txt",
+    "guid": "099110723003530280",
+    "url": "http://documents.worldbank.org/curated/en/099110723003530280"
+   },
+   "D34192181": {
+    "id": "34192181",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP88227",
+    "docdt": "2023-11-06T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-11-06T17:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099110623120036309/pdf/P1613050a01ffb0070967205d5ad80cb8f9.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099110623120036309/text/P1613050a01ffb0070967205d5ad80cb8f9.txt",
+    "guid": "099110623120036309",
+    "url": "http://documents.worldbank.org/curated/en/099110623120036309"
+   },
+   "D34170095": {
+    "id": "34170095",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR56605",
+    "docdt": "2023-09-28T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 07",
+    "disclosure_date": "2023-09-27T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099092823102012955/pdf/P1613050e27ef20940a72d0531b1e8ef9f4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099092823102012955/text/P1613050e27ef20940a72d0531b1e8ef9f4.txt",
+    "guid": "099092823102012955",
+    "url": "http://documents.worldbank.org/curated/en/099092823102012955"
+   },
+   "D34168967": {
+    "id": "34168967",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP86290",
+    "docdt": "2023-09-26T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-09-25T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099092623113537669/pdf/P1613050674c980580935e09a739c1f2f8d.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099092623113537669/text/P1613050674c980580935e09a739c1f2f8d.txt",
+    "guid": "099092623113537669",
+    "url": "http://documents.worldbank.org/curated/en/099092623113537669"
+   },
+   "D34168960": {
+    "id": "34168960",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP86287",
+    "docdt": "2023-09-26T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-09-25T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099092623110021247/pdf/P16130500f53e90de0bdbb034a48eb8d2f5.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099092623110021247/text/P16130500f53e90de0bdbb034a48eb8d2f5.txt",
+    "guid": "099092623110021247",
+    "url": "http://documents.worldbank.org/curated/en/099092623110021247"
+   },
+   "D34168969": {
+    "id": "34168969",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP86289",
+    "docdt": "2023-09-26T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-09-25T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099092623113038858/pdf/P1613050d1fcb205609db10446b803c9be2.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099092623113038858/text/P1613050d1fcb205609db10446b803c9be2.txt",
+    "guid": "099092623113038858",
+    "url": "http://documents.worldbank.org/curated/en/099092623113038858"
+   },
+   "D34158767": {
+    "id": "34158767",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP85550",
+    "docdt": "2023-09-11T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-09-10T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099091123010539245/pdf/P1613050f3023b0f209c9b07be31786b436.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099091123010539245/text/P1613050f3023b0f209c9b07be31786b436.txt",
+    "guid": "099091123010539245",
+    "url": "http://documents.worldbank.org/curated/en/099091123010539245"
+   },
+   "D34106052": {
+    "id": "34106052",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP80481",
+    "docdt": "2023-05-18T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-05-17T15:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099062923140122852/pdf/P161305079d3660d70a4dc0b947793916b5.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099062923140122852/text/P161305079d3660d70a4dc0b947793916b5.txt",
+    "guid": "099062923140122852",
+    "url": "http://documents.worldbank.org/curated/en/099062923140122852"
+   },
+   "D34054037": {
+    "id": "34054037",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP79635",
+    "docdt": "2023-05-02T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-05-02T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099050223021541257/pdf/P161305023aa82010091d6016314a7507ca.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099050223021541257/text/P161305023aa82010091d6016314a7507ca.txt",
+    "guid": "099050223021541257",
+    "url": "http://documents.worldbank.org/curated/en/099050223021541257"
+   },
+   "D34054490": {
+    "id": "34054490",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP79699",
+    "docdt": "2023-05-02T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-05-02T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099050223144042574/pdf/P1613050bc9b8e05b0a01c076e9bd02bdf0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099050223144042574/text/P1613050bc9b8e05b0a01c076e9bd02bdf0.txt",
+    "guid": "099050223144042574",
+    "url": "http://documents.worldbank.org/curated/en/099050223144042574"
+   },
+   "D34054488": {
+    "id": "34054488",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP79698",
+    "docdt": "2023-05-02T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-05-02T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099050223143519157/pdf/P1613050206cbb0b90b6e20fb0c7ff06dce.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099050223143519157/text/P1613050206cbb0b90b6e20fb0c7ff06dce.txt",
+    "guid": "099050223143519157",
+    "url": "http://documents.worldbank.org/curated/en/099050223143519157"
+   },
+   "D34050200": {
+    "id": "34050200",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP79436",
+    "docdt": "2023-04-26T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-04-26T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099042623075526393/pdf/P16130508c05390c50bad10ded35029ae86.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099042623075526393/text/P16130508c05390c50bad10ded35029ae86.txt",
+    "guid": "099042623075526393",
+    "url": "http://documents.worldbank.org/curated/en/099042623075526393"
+   },
+   "D34042138": {
+    "id": "34042138",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP78916",
+    "docdt": "2023-04-14T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-04-14T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099041423031510220/pdf/P16130503a6d530d20b3ad091c8771b8606.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099041423031510220/text/P16130503a6d530d20b3ad091c8771b8606.txt",
+    "guid": "099041423031510220",
+    "url": "http://documents.worldbank.org/curated/en/099041423031510220"
+   },
+   "D34014058": {
+    "id": "34014058",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP76845",
+    "docdt": "2023-03-03T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-03-03T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099132003032325081/pdf/P1613050016c4c0eb09c1808a46e7628e6f.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099132003032325081/text/P1613050016c4c0eb09c1808a46e7628e6f.txt",
+    "guid": "099132003032325081",
+    "url": "http://documents.worldbank.org/curated/en/099132003032325081"
+   },
+   "D34014063": {
+    "id": "34014063",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP76847",
+    "docdt": "2023-03-03T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-03-03T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099133003032325671/pdf/P16130509133880a709aec07fe4a3bfa128.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099133003032325671/text/P16130509133880a709aec07fe4a3bfa128.txt",
+    "guid": "099133003032325671",
+    "url": "http://documents.worldbank.org/curated/en/099133003032325671"
+   },
+   "D34009613": {
+    "id": "34009613",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR54063",
+    "docdt": "2023-02-26T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 06",
+    "disclosure_date": "2023-02-26T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099094602272314937/pdf/P1613050f6bb0f00d0be6000999fff9c219.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099094602272314937/text/P1613050f6bb0f00d0be6000999fff9c219.txt",
+    "guid": "099094602272314937",
+    "url": "http://documents.worldbank.org/curated/en/099094602272314937"
+   },
+   "D34007465": {
+    "id": "34007465",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP76410",
+    "docdt": "2023-02-22T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-02-22T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099145502222318861/pdf/P1613050e8c0a003008b8c0437805365732.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099145502222318861/text/P1613050e8c0a003008b8c0437805365732.txt",
+    "guid": "099145502222318861",
+    "url": "http://documents.worldbank.org/curated/en/099145502222318861"
+   },
+   "D34000874": {
+    "id": "34000874",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP75897",
+    "docdt": "2023-02-13T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-02-13T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099035502132355675/pdf/P16130508e029509a09c1603871a040b0a9.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099035502132355675/text/P16130508e029509a09c1603871a040b0a9.txt",
+    "guid": "099035502132355675",
+    "url": "http://documents.worldbank.org/curated/en/099035502132355675"
+   },
+   "D33997761": {
+    "id": "33997761",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP75693",
+    "docdt": "2023-02-08T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2023-02-08T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099054002082315243/pdf/P1613050b74ab60660b634026505dddb7ae.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099054002082315243/text/P1613050b74ab60660b634026505dddb7ae.txt",
+    "guid": "099054002082315243",
+    "url": "http://documents.worldbank.org/curated/en/099054002082315243"
+   },
+   "D33990258": {
+    "id": "33990258",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0044628",
+    "docdt": "2022-12-23T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099080201312330745/pdf/P16130506f025f0f5083fe02a1b1809d593.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099080201312330745/text/P16130506f025f0f5083fe02a1b1809d593.txt",
+    "guid": "099080201312330745",
+    "url": "http://documents.worldbank.org/curated/en/099080201312330745"
+   },
+   "D33990246": {
+    "id": "33990246",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078708",
+    "docdt": "2022-12-19T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099080201312316402/pdf/P16130504be3c50ca0ba530902558e1dc29.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099080201312316402/text/P16130504be3c50ca0ba530902558e1dc29.txt",
+    "guid": "099080201312316402",
+    "url": "http://documents.worldbank.org/curated/en/099080201312316402"
+   },
+   "D33990276": {
+    "id": "33990276",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078694",
+    "docdt": "2022-12-14T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099080201312326312/pdf/P1613050818bb00bf0838b0f5394707f8b2.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099080201312326312/text/P1613050818bb00bf0838b0f5394707f8b2.txt",
+    "guid": "099080201312326312",
+    "url": "http://documents.worldbank.org/curated/en/099080201312326312"
+   },
+   "D33991419": {
+    "id": "33991419",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0081327",
+    "docdt": "2022-12-14T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099210501312340365/pdf/P161305154b6630291982716be0126d0111.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099210501312340365/text/P161305154b6630291982716be0126d0111.txt",
+    "guid": "099210501312340365",
+    "url": "http://documents.worldbank.org/curated/en/099210501312340365"
+   },
+   "D33991418": {
+    "id": "33991418",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0072125",
+    "docdt": "2022-11-30T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099210801312313547/pdf/P161305106df8000818545106cf970687a7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099210801312313547/text/P161305106df8000818545106cf970687a7.txt",
+    "guid": "099210801312313547",
+    "url": "http://documents.worldbank.org/curated/en/099210801312313547"
+   },
+   "D33941544": {
+    "id": "33941544",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP72582",
+    "docdt": "2022-11-21T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-11-21T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099635011212246185/pdf/P1613050d469400570a3a604179af3b8338.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099635011212246185/text/P1613050d469400570a3a604179af3b8338.txt",
+    "guid": "099635011212246185",
+    "url": "http://documents.worldbank.org/curated/en/099635011212246185"
+   },
+   "D33992119": {
+    "id": "33992119",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0078701",
+    "docdt": "2022-11-21T05:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2023-01-24T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099155002012333959/pdf/P16130503600cd0810837308e06cae8b67e.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099155002012333959/text/P16130503600cd0810837308e06cae8b67e.txt",
+    "guid": "099155002012333959",
+    "url": "http://documents.worldbank.org/curated/en/099155002012333959"
+   },
+   "D33936725": {
+    "id": "33936725",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP72255",
+    "docdt": "2022-11-14T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-11-14T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099825111142210206/pdf/P16130509fbde80db09592021f5824b393d.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099825111142210206/text/P16130509fbde80db09592021f5824b393d.txt",
+    "guid": "099825111142210206",
+    "url": "http://documents.worldbank.org/curated/en/099825111142210206"
+   },
+   "D33934313": {
+    "id": "33934313",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP72098",
+    "docdt": "2022-11-09T05:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-11-09T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099230011092264859/pdf/P16130505169510c10b355029578f758650.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099230011092264859/text/P16130505169510c10b355029578f758650.txt",
+    "guid": "099230011092264859",
+    "url": "http://documents.worldbank.org/curated/en/099230011092264859"
+   },
+   "D33931813": {
+    "id": "33931813",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP71930",
+    "docdt": "2022-11-04T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-11-04T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099750011042214760/pdf/P161305060da5207b09dec03dfac774b568.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099750011042214760/text/P161305060da5207b09dec03dfac774b568.txt",
+    "guid": "099750011042214760",
+    "url": "http://documents.worldbank.org/curated/en/099750011042214760"
+   },
+   "D33928677": {
+    "id": "33928677",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP71666",
+    "docdt": "2022-10-31T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-10-31T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099920010312218031/pdf/P1613050c5aacb0600989f0c99001e114f7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099920010312218031/text/P1613050c5aacb0600989f0c99001e114f7.txt",
+    "guid": "099920010312218031",
+    "url": "http://documents.worldbank.org/curated/en/099920010312218031"
+   },
+   "D33923066": {
+    "id": "33923066",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP71306",
+    "docdt": "2022-10-21T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-10-21T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099730010212296539/pdf/P161305062e7ee0eb08da007b2667461cce.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099730010212296539/text/P161305062e7ee0eb08da007b2667461cce.txt",
+    "guid": "099730010212296539",
+    "url": "http://documents.worldbank.org/curated/en/099730010212296539"
+   },
+   "D33917618": {
+    "id": "33917618",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP70996",
+    "docdt": "2022-10-14T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-10-14T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099930010142236806/pdf/P1613050b628be0dc0ad9f0ecb3e2db0a2a.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099930010142236806/text/P1613050b628be0dc0ad9f0ecb3e2db0a2a.txt",
+    "guid": "099930010142236806",
+    "url": "http://documents.worldbank.org/curated/en/099930010142236806"
+   },
+   "D33915331": {
+    "id": "33915331",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP70807",
+    "docdt": "2022-10-11T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-10-11T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099300010112230682/pdf/P16130500f93ca03b0928e0c51ae38eb006.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099300010112230682/text/P16130500f93ca03b0928e0c51ae38eb006.txt",
+    "guid": "099300010112230682",
+    "url": "http://documents.worldbank.org/curated/en/099300010112230682"
+   },
+   "D33904470": {
+    "id": "33904470",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP70028",
+    "docdt": "2022-09-22T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-09-22T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099305009222218022/pdf/P1613050c4aded0b608ccf00cf22019ef2d.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099305009222218022/text/P1613050c4aded0b608ccf00cf22019ef2d.txt",
+    "guid": "099305009222218022",
+    "url": "http://documents.worldbank.org/curated/en/099305009222218022"
+   },
+   "D33897638": {
+    "id": "33897638",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR52385",
+    "docdt": "2022-09-14T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Horn of Africa Gateway Development Project - P161305 - Sequence No : 05",
+    "disclosure_date": "2022-09-14T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099145009142221197/pdf/P16130505710550760a52d04ee44f94278d.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099145009142221197/text/P16130505710550760a52d04ee44f94278d.txt",
+    "guid": "099145009142221197",
+    "url": "http://documents.worldbank.org/curated/en/099145009142221197"
+   },
+   "D33878833": {
+    "id": "33878833",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP67982",
+    "docdt": "2022-08-08T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- Horn of Africa Gateway Development Project - Procurement Plan",
+    "disclosure_date": "2022-08-08T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099855008082211767/pdf/P161305069f54c0910991b0b7c000037ddc.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099855008082211767/text/P161305069f54c0910991b0b7c000037ddc.txt",
+    "guid": "099855008082211767",
+    "url": "http://documents.worldbank.org/curated/en/099855008082211767"
+   },
+   "D33870197": {
+    "id": "33870197",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP67131",
+    "docdt": "2022-07-19T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-07-19T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099650107192260941/pdf/P16130504ef0fb02a0bd030f039e332e311.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099650107192260941/text/P16130504ef0fb02a0bd030f039e332e311.txt",
+    "guid": "099650107192260941",
+    "url": "http://documents.worldbank.org/curated/en/099650107192260941"
+   },
+   "D33847555": {
+    "id": "33847555",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP66197",
+    "docdt": "2022-06-22T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-06-22T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099845006222228185/pdf/P16130500c15e70e60ba150827f13a49c30.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099845006222228185/text/P16130500c15e70e60ba150827f13a49c30.txt",
+    "guid": "099845006222228185",
+    "url": "http://documents.worldbank.org/curated/en/099845006222228185"
+   },
+   "D33847539": {
+    "id": "33847539",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP66195",
+    "docdt": "2022-06-22T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-06-22T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099800006222233896/pdf/P1613050b4e4060ed0ad2e0e3b6b5c0e8d9.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099800006222233896/text/P1613050b4e4060ed0ad2e0e3b6b5c0e8d9.txt",
+    "guid": "099800006222233896",
+    "url": "http://documents.worldbank.org/curated/en/099800006222233896"
+   },
+   "D33847686": {
+    "id": "33847686",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP66205",
+    "docdt": "2022-06-22T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-06-22T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099010006222217604/pdf/P1613050d7e55a0510a0ce0f3f459f2d7ea.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099010006222217604/text/P1613050d7e55a0510a0ce0f3f459f2d7ea.txt",
+    "guid": "099010006222217604",
+    "url": "http://documents.worldbank.org/curated/en/099010006222217604"
+   },
+   "D33846743": {
+    "id": "33846743",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP66150",
+    "docdt": "2022-06-21T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - EASTERN AND SOUTHERN AFRICA- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-06-21T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099305106212225373/pdf/P1613050b98960018081e00f1345d3484d2.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099305106212225373/text/P1613050b98960018081e00f1345d3484d2.txt",
+    "guid": "099305106212225373",
+    "url": "http://documents.worldbank.org/curated/en/099305106212225373"
+   },
+   "D33821089": {
+    "id": "33821089",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP64680",
+    "docdt": "2022-05-17T04:00:00Z",
+    "display_title": "Eastern and Southern Africa - Eastern and Southern Africa- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-05-18T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099425005182213581/pdf/P1613050bf86500d208c6a096bc7093a188.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099425005182213581/text/P1613050bf86500d208c6a096bc7093a188.txt",
+    "guid": "099425005182213581",
+    "url": "http://documents.worldbank.org/curated/en/099425005182213581"
+   },
+   "D33948392": {
+    "id": "33948392",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0074386",
+    "docdt": "2022-05-06T04:00:00Z",
+    "display_title": "Kenya - EASTERN AND SOUTHERN AFRICA - P161305 - Horn of Africa Gateway Development Project - Audited Financial Statement",
+    "disclosure_date": "2022-12-01T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099720112012223926/pdf/P16130505d81cd0860b455049e8e16fdb99.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099720112012223926/text/P16130505d81cd0860b455049e8e16fdb99.txt",
+    "guid": "099720112012223926",
+    "url": "http://documents.worldbank.org/curated/en/099720112012223926"
+   },
+   "D33804503": {
+    "id": "33804503",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP63843",
+    "docdt": "2022-04-26T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-04-27T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099015004272260161/pdf/P16130501d7b100520b9b10743f4d2437e4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099015004272260161/text/P16130501d7b100520b9b10743f4d2437e4.txt",
+    "guid": "099015004272260161",
+    "url": "http://documents.worldbank.org/curated/en/099015004272260161"
+   },
+   "D33801719": {
+    "id": "33801719",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP63467",
+    "docdt": "2022-04-19T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-04-20T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099506104262218823/pdf/P1613050540ea307d0b04b044eacd885f02.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099506104262218823/text/P1613050540ea307d0b04b044eacd885f02.txt",
+    "guid": "099506104262218823",
+    "url": "http://documents.worldbank.org/curated/en/099506104262218823"
+   },
+   "D33763457": {
+    "id": "33763457",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP62237",
+    "docdt": "2022-03-21T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-03-22T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099520003222225045/pdf/P161305047491707d0ab5b05d2c3999df7b.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099520003222225045/text/P161305047491707d0ab5b05d2c3999df7b.txt",
+    "guid": "099520003222225045",
+    "url": "http://documents.worldbank.org/curated/en/099520003222225045"
+   },
+   "D33755575": {
+    "id": "33755575",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP61728",
+    "docdt": "2022-03-10T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-03-10T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099925003102211852/pdf/Eastern0Africa0nt0Plan0220310192331.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099925003102211852/text/Eastern0Africa0nt0Plan0220310192331.txt",
+    "guid": "099925003102211852",
+    "url": "http://documents.worldbank.org/curated/en/099925003102211852"
+   },
+   "D33751171": {
+    "id": "33751171",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "repnb": "ISR50321",
+    "docdt": "2022-03-07T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - P161305 - Sequence No : 04",
+    "disclosure_date": "2022-03-07T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099705003072221821/pdf/Disclosable0Ve05000Sequence0No00004.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099705003072221821/text/Disclosable0Ve05000Sequence0No00004.txt",
+    "guid": "099705003072221821",
+    "url": "http://documents.worldbank.org/curated/en/099705003072221821"
+   },
+   "D33737832": {
+    "id": "33737832",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP60838",
+    "docdt": "2022-02-21T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-02-21T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099855002212239341/pdf/Eastern0Africa0nt0Plan0220221085153.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099855002212239341/text/Eastern0Africa0nt0Plan0220221085153.txt",
+    "guid": "099855002212239341",
+    "url": "http://documents.worldbank.org/curated/en/099855002212239341"
+   },
+   "D33726121": {
+    "id": "33726121",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP60419",
+    "docdt": "2022-02-10T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-02-10T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099745002102230807/pdf/Eastern0Africa0nt0Plan0220210074128.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099745002102230807/text/Eastern0Africa0nt0Plan0220210074128.txt",
+    "guid": "099745002102230807",
+    "url": "http://documents.worldbank.org/curated/en/099745002102230807"
+   },
+   "D33720098": {
+    "id": "33720098",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP60022",
+    "docdt": "2022-02-02T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-02-02T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099710002022228882/pdf/Eastern0Africa00Procurement0Plan046.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099710002022228882/text/Eastern0Africa00Procurement0Plan046.txt",
+    "guid": "099710002022228882",
+    "url": "http://documents.worldbank.org/curated/en/099710002022228882"
+   },
+   "D33696589": {
+    "id": "33696589",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP58998",
+    "docdt": "2022-01-06T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2022-01-06T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099705001062216484/pdf/Eastern0Africa00Procurement0Plan045.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099705001062216484/text/Eastern0Africa00Procurement0Plan045.txt",
+    "guid": "099705001062216484",
+    "url": "http://documents.worldbank.org/curated/en/099705001062216484"
+   },
+   "D33810051": {
+    "id": "33810051",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0044627",
+    "docdt": "2021-12-30T05:00:00Z",
+    "display_title": "Kenya - AFRICA EAST - P161305 - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Audited Financial Statement",
+    "disclosure_date": "2022-05-04T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099305105042225754/pdf/P1613050297a5f0e209a360409bd39fe057.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099305105042225754/text/P1613050297a5f0e209a360409bd39fe057.txt",
+    "guid": "099305105042225754",
+    "url": "http://documents.worldbank.org/curated/en/099305105042225754"
+   },
+   "D33784257": {
+    "id": "33784257",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0072124",
+    "docdt": "2021-12-20T05:00:00Z",
+    "display_title": "Kenya - AFRICA EAST - P161305 - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Audited Financial Statement",
+    "disclosure_date": "2022-04-12T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099815004122242030/pdf/P1613050b2000209a0a2c80d6e2be51ba1e.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099815004122242030/text/P1613050b2000209a0a2c80d6e2be51ba1e.txt",
+    "guid": "099815004122242030",
+    "url": "http://documents.worldbank.org/curated/en/099815004122242030"
+   },
+   "D33810055": {
+    "id": "33810055",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0072296",
+    "docdt": "2021-12-09T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST - P161305 - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Audited Financial Statement",
+    "disclosure_date": "2022-05-04T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099310005042292416/pdf/P1613050b8c9db07e0ab7e025e9d2053d54.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099310005042292416/text/P1613050b8c9db07e0ab7e025e9d2053d54.txt",
+    "guid": "099310005042292416",
+    "url": "http://documents.worldbank.org/curated/en/099310005042292416"
+   },
+   "D33810057": {
+    "id": "33810057",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "repnb": "SCA0072307",
+    "docdt": "2021-12-06T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST - P161305 - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Audited Financial Statement",
+    "disclosure_date": "2022-05-04T03:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099315105042219569/pdf/P1613050e3360f03c0853f0cb01b333de98.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099315105042219569/text/P1613050e3360f03c0853f0cb01b333de98.txt",
+    "guid": "099315105042219569",
+    "url": "http://documents.worldbank.org/curated/en/099315105042219569"
+   },
+   "D33654664": {
+    "id": "33654664",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP57762",
+    "docdt": "2021-12-02T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-12-02T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099240012022178216/pdf/Eastern0Africa00Procurement0Plan044.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099240012022178216/text/Eastern0Africa00Procurement0Plan044.txt",
+    "guid": "099240012022178216",
+    "url": "http://documents.worldbank.org/curated/en/099240012022178216"
+   },
+   "D33647166": {
+    "id": "33647166",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP57539",
+    "docdt": "2021-11-29T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-11-29T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099855011292160038/pdf/Eastern0Africa00Procurement0Plan043.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099855011292160038/text/Eastern0Africa00Procurement0Plan043.txt",
+    "guid": "099855011292160038",
+    "url": "http://documents.worldbank.org/curated/en/099855011292160038"
+   },
+   "D33642128": {
+    "id": "33642128",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "repnb": "STEP57439",
+    "docdt": "2021-11-25T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-11-25T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099839111252127185/pdf/Eastern0Africa00Procurement0Plan042.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099839111252127185/text/Eastern0Africa00Procurement0Plan042.txt",
+    "guid": "099839111252127185",
+    "url": "http://documents.worldbank.org/curated/en/099839111252127185"
+   },
+   "D33616887": {
+    "id": "33616887",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088b77c91_1_0"
+    },
+    "repnb": "STEP56989",
+    "docdt": "2021-11-16T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-11-16T10:15:58Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/419471637057762587/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/419471637057762587/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "419471637057762587",
+    "url": "http://documents.worldbank.org/curated/en/419471637057762587"
+   },
+   "D33468778": {
+    "id": "33468778",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088a3f925_1_0"
+    },
+    "repnb": "STEP55282",
+    "docdt": "2021-10-06T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-10-06T07:13:43Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/947401633504426645/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/947401633504426645/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "947401633504426645",
+    "url": "http://documents.worldbank.org/curated/en/947401633504426645"
+   },
+   "D33449695": {
+    "id": "33449695",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088a04e50_1_0"
+    },
+    "repnb": "STEP54952",
+    "docdt": "2021-09-29T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-09-29T08:28:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/929071632904130027/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/929071632904130027/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "929071632904130027",
+    "url": "http://documents.worldbank.org/curated/en/929071632904130027"
+   },
+   "D33436223": {
+    "id": "33436223",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0889d6311_1_0"
+    },
+    "repnb": "STEP54701",
+    "docdt": "2021-09-23T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-09-23T07:45:03Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/182571632383106404/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/182571632383106404/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "182571632383106404",
+    "url": "http://documents.worldbank.org/curated/en/182571632383106404"
+   },
+   "D33404194": {
+    "id": "33404194",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08897709e_1_0"
+    },
+    "repnb": "STEP54085",
+    "docdt": "2021-09-10T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-09-10T13:28:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/417621631280525885/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/417621631280525885/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "417621631280525885",
+    "url": "http://documents.worldbank.org/curated/en/417621631280525885"
+   },
+   "D33389047": {
+    "id": "33389047",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0889502f7_1_0"
+    },
+    "repnb": "ISR47910",
+    "docdt": "2021-09-06T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - P161305 - Sequence No : 03",
+    "disclosure_date": "2021-09-06T07:39:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/351721630913967240/pdf/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-03.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/351721630913967240/text/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-03.txt",
+    "guid": "351721630913967240",
+    "url": "http://documents.worldbank.org/curated/en/351721630913967240"
+   },
+   "D33386008": {
+    "id": "33386008",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0889440bd_1_0"
+    },
+    "repnb": "STEP53790",
+    "docdt": "2021-09-03T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-09-03T07:52:13Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/203931630655537878/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/203931630655537878/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "203931630655537878",
+    "url": "http://documents.worldbank.org/curated/en/203931630655537878"
+   },
+   "D33365594": {
+    "id": "33365594",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0888feb10_1_0"
+    },
+    "repnb": "STEP53384",
+    "docdt": "2021-08-25T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-08-25T06:45:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/914221629873925585/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/914221629873925585/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "914221629873925585",
+    "url": "http://documents.worldbank.org/curated/en/914221629873925585"
+   },
+   "D33356131": {
+    "id": "33356131",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0888e1af9_1_0"
+    },
+    "repnb": "STEP53226",
+    "docdt": "2021-08-20T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-08-20T12:31:09Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/365761629462672694/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/365761629462672694/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "365761629462672694",
+    "url": "http://documents.worldbank.org/curated/en/365761629462672694"
+   },
+   "D33335314": {
+    "id": "33335314",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08889ec1c_1_0"
+    },
+    "repnb": "STEP52868",
+    "docdt": "2021-08-11T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-08-11T13:00:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/789111628686826891/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/789111628686826891/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "789111628686826891",
+    "url": "http://documents.worldbank.org/curated/en/789111628686826891"
+   },
+   "D33232699": {
+    "id": "33232699",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088781734_1_0"
+    },
+    "repnb": "ISR47286",
+    "docdt": "2021-06-29T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - P161305 - Sequence No : 02",
+    "disclosure_date": "2021-06-29T18:10:25Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/622701624990226051/pdf/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-02.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/622701624990226051/text/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-02.txt",
+    "guid": "622701624990226051",
+    "url": "http://documents.worldbank.org/curated/en/622701624990226051"
+   },
+   "D33226138": {
+    "id": "33226138",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088772776_1_0"
+    },
+    "repnb": "STEP51184",
+    "docdt": "2021-06-28T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-06-28T17:57:55Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/205971624903077976/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/205971624903077976/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "205971624903077976",
+    "url": "http://documents.worldbank.org/curated/en/205971624903077976"
+   },
+   "D33226140": {
+    "id": "33226140",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088772973_1_0"
+    },
+    "repnb": "STEP51183",
+    "docdt": "2021-06-28T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-06-28T17:54:40Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/547371624902881990/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/547371624902881990/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "547371624902881990",
+    "url": "http://documents.worldbank.org/curated/en/547371624902881990"
+   },
+   "D33208966": {
+    "id": "33208966",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08874743d_1_0"
+    },
+    "repnb": "STEP51037",
+    "docdt": "2021-06-24T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-06-24T13:04:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/905721624539864499/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/905721624539864499/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "905721624539864499",
+    "url": "http://documents.worldbank.org/curated/en/905721624539864499"
+   },
+   "D33147614": {
+    "id": "33147614",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08869d47a_1_0"
+    },
+    "repnb": "STEP50136",
+    "docdt": "2021-06-07T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-06-07T12:13:24Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/456131623068006250/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/456131623068006250/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "456131623068006250",
+    "url": "http://documents.worldbank.org/curated/en/456131623068006250"
+   },
+   "D33124878": {
+    "id": "33124878",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08864b2c6_1_0"
+    },
+    "repnb": "STEP49796",
+    "docdt": "2021-05-31T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-31T09:16:23Z",
+    "guid": "991231622452584445",
+    "url": "http://documents.worldbank.org/curated/en/991231622452584445"
+   },
+   "D33125348": {
+    "id": "33125348",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08864c375_1_0"
+    },
+    "repnb": "STEP49807",
+    "docdt": "2021-05-31T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-31T11:21:02Z",
+    "guid": "288701622460065534",
+    "url": "http://documents.worldbank.org/curated/en/288701622460065534"
+   },
+   "D33216769": {
+    "id": "33216769",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08875b78f_1_0"
+    },
+    "repnb": "STEP49796",
+    "docdt": "2021-05-31T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-31T18:10:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/390421624644643647/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/390421624644643647/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "390421624644643647",
+    "url": "http://documents.worldbank.org/curated/en/390421624644643647"
+   },
+   "D33212562": {
+    "id": "33212562",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088750f46_1_0"
+    },
+    "repnb": "STEP49807",
+    "docdt": "2021-05-31T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-06-01T03:56:15Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/957731624593380126/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/957731624593380126/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "957731624593380126",
+    "url": "http://documents.worldbank.org/curated/en/957731624593380126"
+   },
+   "D33073135": {
+    "id": "33073135",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0885b732a_1_0"
+    },
+    "repnb": "STEP49099",
+    "docdt": "2021-05-13T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-13T06:30:49Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/471691620887461241/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/471691620887461241/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "471691620887461241",
+    "url": "http://documents.worldbank.org/curated/en/471691620887461241"
+   },
+   "D33055138": {
+    "id": "33055138",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0885811a3_1_0"
+    },
+    "repnb": "STEP48797",
+    "docdt": "2021-05-06T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-06T09:12:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/234151620292341780/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/234151620292341780/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "234151620292341780",
+    "url": "http://documents.worldbank.org/curated/en/234151620292341780"
+   },
+   "D33047814": {
+    "id": "33047814",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088569df2_1_0"
+    },
+    "repnb": "STEP48668",
+    "docdt": "2021-05-04T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-04T07:42:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/182091620114157589/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/182091620114157589/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "182091620114157589",
+    "url": "http://documents.worldbank.org/curated/en/182091620114157589"
+   },
+   "D33047811": {
+    "id": "33047811",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088569e6e_1_0"
+    },
+    "repnb": "STEP48669",
+    "docdt": "2021-05-04T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-05-04T07:45:29Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/590021620114330273/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/590021620114330273/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "590021620114330273",
+    "url": "http://documents.worldbank.org/curated/en/590021620114330273"
+   },
+   "D33018521": {
+    "id": "33018521",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08850e900_1_0"
+    },
+    "repnb": "STEP48193",
+    "docdt": "2021-04-22T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-04-22T11:46:40Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/474621619092005018/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/474621619092005018/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "474621619092005018",
+    "url": "http://documents.worldbank.org/curated/en/474621619092005018"
+   },
+   "D33015573": {
+    "id": "33015573",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088504e11_1_0"
+    },
+    "repnb": "STEP48121",
+    "docdt": "2021-04-21T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-04-21T13:19:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/602791619011165034/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/602791619011165034/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "602791619011165034",
+    "url": "http://documents.worldbank.org/curated/en/602791619011165034"
+   },
+   "D32995860": {
+    "id": "32995860",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0884c68e2_1_0"
+    },
+    "repnb": "STEP47763",
+    "docdt": "2021-04-14T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-04-14T06:02:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/616241618380154333/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/616241618380154333/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "616241618380154333",
+    "url": "http://documents.worldbank.org/curated/en/616241618380154333"
+   },
+   "D32935612": {
+    "id": "32935612",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0884091e8_1_0"
+    },
+    "repnb": "STEP46804",
+    "docdt": "2021-03-23T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-03-23T07:15:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/877431616483722777/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/877431616483722777/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "877431616483722777",
+    "url": "http://documents.worldbank.org/curated/en/877431616483722777"
+   },
+   "D32921028": {
+    "id": "32921028",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0883da591_1_0"
+    },
+    "repnb": "STEP46570",
+    "docdt": "2021-03-17T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-03-17T14:48:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/622731615992493051/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/622731615992493051/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "622731615992493051",
+    "url": "http://documents.worldbank.org/curated/en/622731615992493051"
+   },
+   "D32915076": {
+    "id": "32915076",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0883c940c_1_0"
+    },
+    "repnb": "STEP46460",
+    "docdt": "2021-03-16T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-03-16T07:11:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/874561615878715247/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/874561615878715247/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "874561615878715247",
+    "url": "http://documents.worldbank.org/curated/en/874561615878715247"
+   },
+   "D32882006": {
+    "id": "32882006",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0883611ac_1_0"
+    },
+    "repnb": "STEP45964",
+    "docdt": "2021-03-04T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-03-04T12:27:20Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/442671614860847636/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/442671614860847636/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "442671614860847636",
+    "url": "http://documents.worldbank.org/curated/en/442671614860847636"
+   },
+   "D32855711": {
+    "id": "32855711",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08830d026_1_0"
+    },
+    "repnb": "STEP45498",
+    "docdt": "2021-02-23T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-02-23T16:19:15Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/471121614097162652/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/471121614097162652/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "471121614097162652",
+    "url": "http://documents.worldbank.org/curated/en/471121614097162652"
+   },
+   "D32855253": {
+    "id": "32855253",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08830c5d2_1_0"
+    },
+    "repnb": "STEP45483",
+    "docdt": "2021-02-23T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-02-23T14:11:20Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/281001614089481349/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/281001614089481349/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "281001614089481349",
+    "url": "http://documents.worldbank.org/curated/en/281001614089481349"
+   },
+   "D32836476": {
+    "id": "32836476",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0882cd812_1_0"
+    },
+    "repnb": "STEP45109",
+    "docdt": "2021-02-16T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-02-16T13:53:02Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/262451613483585721/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/262451613483585721/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "262451613483585721",
+    "url": "http://documents.worldbank.org/curated/en/262451613483585721"
+   },
+   "D32836453": {
+    "id": "32836453",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0882cdcc8_1_0"
+    },
+    "repnb": "STEP45108",
+    "docdt": "2021-02-16T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-02-16T13:47:41Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/786441613483266245/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/786441613483266245/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "786441613483266245",
+    "url": "http://documents.worldbank.org/curated/en/786441613483266245"
+   },
+   "D32793835": {
+    "id": "32793835",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08824703e_1_0"
+    },
+    "repnb": "STEP44355",
+    "docdt": "2021-02-01T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-02-01T06:18:28Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/891601612160312207/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/891601612160312207/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "891601612160312207",
+    "url": "http://documents.worldbank.org/curated/en/891601612160312207"
+   },
+   "D32784366": {
+    "id": "32784366",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08822a8bf_1_0"
+    },
+    "repnb": "STEP44220",
+    "docdt": "2021-01-28T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-01-28T07:55:58Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/235831611820562279/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/235831611820562279/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "235831611820562279",
+    "url": "http://documents.worldbank.org/curated/en/235831611820562279"
+   },
+   "D32784501": {
+    "id": "32784501",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08822ab44_1_0"
+    },
+    "repnb": "STEP44223",
+    "docdt": "2021-01-28T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-01-28T08:30:32Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/975641611822635064/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/975641611822635064/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "975641611822635064",
+    "url": "http://documents.worldbank.org/curated/en/975641611822635064"
+   },
+   "D32764767": {
+    "id": "32764767",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0881e9de6_1_0"
+    },
+    "repnb": "STEP43883",
+    "docdt": "2021-01-20T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2021-01-20T17:45:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/590361611164712157/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/590361611164712157/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "590361611164712157",
+    "url": "http://documents.worldbank.org/curated/en/590361611164712157"
+   },
+   "D32794028": {
+    "id": "32794028",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08824782e_1_0"
+    },
+    "repnb": "SCA0019449",
+    "docdt": "2020-12-31T05:00:00Z",
+    "display_title": "OAG NETIP_REPORT 30TH JUNE 2020.pdf",
+    "disclosure_date": "2020-01-31T07:07:09Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/880731612163230516/pdf/OAG-NETIP-REPORT-30TH-JUNE-2020-pdf.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/880731612163230516/text/OAG-NETIP-REPORT-30TH-JUNE-2020-pdf.txt",
+    "guid": "880731612163230516",
+    "url": "http://documents.worldbank.org/curated/en/880731612163230516"
+   },
+   "D32661974": {
+    "id": "32661974",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0880bc6aa_1_0"
+    },
+    "repnb": "STEP42450",
+    "docdt": "2020-12-11T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-12-11T16:59:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/296311607705947086/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/296311607705947086/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "296311607705947086",
+    "url": "http://documents.worldbank.org/curated/en/296311607705947086"
+   },
+   "D32647576": {
+    "id": "32647576",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088093bbe_1_0"
+    },
+    "repnb": "ISR44156",
+    "docdt": "2020-12-08T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - P161305 - Sequence No : 01",
+    "disclosure_date": "2020-12-08T13:42:24Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/511551607434948675/pdf/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-01.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/511551607434948675/text/Disclosable-Version-of-the-ISR-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305-Sequence-No-01.txt",
+    "guid": "511551607434948675",
+    "url": "http://documents.worldbank.org/curated/en/511551607434948675"
+   },
+   "D32636466": {
+    "id": "32636466",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0880722a8_1_0"
+    },
+    "repnb": "STEP42087",
+    "docdt": "2020-12-04T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-12-04T10:55:47Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/434311607079352227/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/434311607079352227/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "434311607079352227",
+    "url": "http://documents.worldbank.org/curated/en/434311607079352227"
+   },
+   "D32615637": {
+    "id": "32615637",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08802fa11_1_0"
+    },
+    "repnb": "STEP41800",
+    "docdt": "2020-11-27T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-11-27T09:47:50Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/280661606470475247/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/280661606470475247/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "280661606470475247",
+    "url": "http://documents.worldbank.org/curated/en/280661606470475247"
+   },
+   "D32609451": {
+    "id": "32609451",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08801baf9_1_0"
+    },
+    "repnb": "STEP41690",
+    "docdt": "2020-11-25T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-11-25T08:51:50Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/324431606294314064/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/324431606294314064/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "324431606294314064",
+    "url": "http://documents.worldbank.org/curated/en/324431606294314064"
+   },
+   "D32609610": {
+    "id": "32609610",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08801beee_1_0"
+    },
+    "repnb": "STEP41692",
+    "docdt": "2020-11-25T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-11-25T09:09:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/494651606295392338/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/494651606295392338/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "494651606295392338",
+    "url": "http://documents.worldbank.org/curated/en/494651606295392338"
+   },
+   "D32582072": {
+    "id": "32582072",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087fc4e33_1_0"
+    },
+    "repnb": "STEP41289",
+    "docdt": "2020-11-16T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-11-16T09:14:34Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/328901605518080283/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/328901605518080283/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "328901605518080283",
+    "url": "http://documents.worldbank.org/curated/en/328901605518080283"
+   },
+   "D32582653": {
+    "id": "32582653",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087fc62ad_1_0"
+    },
+    "repnb": "SCA0019448",
+    "docdt": "2020-11-10T05:00:00Z",
+    "display_title": "NETIP.pdf",
+    "disclosure_date": "2020-01-31T12:21:58Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/131351605529324078/pdf/NETIP-pdf.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/131351605529324078/text/NETIP-pdf.txt",
+    "guid": "131351605529324078",
+    "url": "http://documents.worldbank.org/curated/en/131351605529324078"
+   },
+   "D32543850": {
+    "id": "32543850",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087f506c5_1_0"
+    },
+    "repnb": "STEP40674",
+    "docdt": "2020-11-02T05:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-11-02T14:20:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/384631604326832142/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/384631604326832142/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "384631604326832142",
+    "url": "http://documents.worldbank.org/curated/en/384631604326832142"
+   },
+   "D32530238": {
+    "id": "32530238",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087f3d63a_1_0"
+    },
+    "repnb": "STEP40614",
+    "docdt": "2020-10-30T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-10-30T08:00:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/500311604044865192/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/500311604044865192/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "500311604044865192",
+    "url": "http://documents.worldbank.org/curated/en/500311604044865192"
+   },
+   "D32517892": {
+    "id": "32517892",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087f18e9c_1_0"
+    },
+    "repnb": "STEP40443",
+    "docdt": "2020-10-27T04:00:00Z",
+    "display_title": "Eastern Africa - AFRICA EAST- P161305- HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Procurement Plan",
+    "disclosure_date": "2020-10-27T07:18:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/925291603783137672/pdf/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/925291603783137672/text/Eastern-Africa-AFRICA-EAST-P161305-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-Procurement-Plan.txt",
+    "guid": "925291603783137672",
+    "url": "http://documents.worldbank.org/curated/en/925291603783137672"
+   },
+   "D32633460": {
+    "id": "32633460",
+    "docty": "Minutes",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088069404_1_0"
+    },
+    "repnb": "154741",
+    "docdt": "2020-10-08T04:00:00Z",
+    "display_title": "Minutes of a Virtual Meeting of the Executive Directors of the Bank and IDA and the Boards of Directors of IFC and MIGA on October 8, 2020 and Record of Approvals September 2 thru October 8",
+    "disclosure_date": "2020-12-13T03:01:38Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/396751607828498644/pdf/Minutes-of-a-Virtual-Meeting-of-the-Executive-Directors-of-the-Bank-and-IDA-and-the-Boards-of-Directors-of-IFC-and-MIGA-on-October-8-2020-and-Record-of-Approvals-September-2-thru-October-8.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/396751607828498644/text/Minutes-of-a-Virtual-Meeting-of-the-Executive-Directors-of-the-Bank-and-IDA-and-the-Boards-of-Directors-of-IFC-and-MIGA-on-October-8-2020-and-Record-of-Approvals-September-2-thru-October-8.txt",
+    "guid": "396751607828498644",
+    "url": "http://documents.worldbank.org/curated/en/396751607828498644"
+   },
+   "D32489601": {
+    "id": "32489601",
+    "docty": "Financing Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087ebc027_1_0"
+    },
+    "docdt": "2020-10-07T04:00:00Z",
+    "display_title": "Official Documents- Financing Agreement for Credit 6768-KE",
+    "disclosure_date": "2020-10-15T18:12:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/138541602783925878/pdf/Official-Documents-Financing-Agreement-for-Credit-6768-KE.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/138541602783925878/text/Official-Documents-Financing-Agreement-for-Credit-6768-KE.txt",
+    "guid": "138541602783925878",
+    "url": "http://documents.worldbank.org/curated/en/138541602783925878"
+   },
+   "D32489591": {
+    "id": "32489591",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087ebc02b_1_0"
+    },
+    "docdt": "2020-09-25T04:00:00Z",
+    "display_title": "Official Documents- Disbursement and Financial Information Letter for Credit 6768-KE",
+    "disclosure_date": "2020-10-15T18:17:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/469451602784188331/pdf/Official-Documents-Disbursement-and-Financial-Information-Letter-for-Credit-6768-KE.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/469451602784188331/text/Official-Documents-Disbursement-and-Financial-Information-Letter-for-Credit-6768-KE.txt",
+    "guid": "469451602784188331",
+    "url": "http://documents.worldbank.org/curated/en/469451602784188331"
+   },
+   "D32351810": {
+    "id": "32351810",
+    "docty": "Project Appraisal Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087d01481_1_0"
+    },
+    "repnb": "PAD2535",
+    "docdt": "2020-08-19T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the Horn of Africa Gateway Development Project for Kenya are to improve: (a) the movement of people and goods and digital connectivity and access to social services to communities at designated locations along the targeted sections of the Isiolo-Mandera Regional Road Corridor; and (b) the capacity of selected transport related institutions in Kenya. The project comprise the following components and sub-components: (1) Improving Movement of People, Goods, and Digital Connectivity component will improve selected roads sections along the Isiolo-Mandera Regional corridor by KeNHA and improve Digital Connectivity and institutional strengthening of ICTA. (2) Facilitation of Regional Trade and Transport component will support to KRA to facilitate trade and support to KeNHA to facilitate transport. (3) Improving Access to Selected Basic Social Services at Designated Locations along Isiolo-Mandera Regional Road Corridor by KeNHA component will support KeNHA to provide socioeconomic infrastructure and services based on a needs assessment by KeNHA at the community level. (4) Institutional Strengthening of Selected Transport and Related Institutions component will strengthen the Institutional Capacities of KeNHA and Associated Institutions; strengthen of the Frontier Counties Development Council; strengthen of the Directorate of Occupational Safety Health and Services; and strengthen the capacity of the National Land Commission (NLC). (5)  Contingent Emergency Response component will provide preparedness and rapid response measures to address disaster, emergency and/or catastrophic events, in accordance with the applicable CERC Manual."
+    },
+    "display_title": "Kenya - Horn of Africa Gateway Development Project",
+    "disclosure_date": "2020-09-11T14:02:38Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/607871599876158923/pdf/Kenya-Horn-of-Africa-Gateway-Development-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/607871599876158923/text/Kenya-Horn-of-Africa-Gateway-Development-Project.txt",
+    "guid": "607871599876158923",
+    "url": "http://documents.worldbank.org/curated/en/607871599876158923"
+   },
+   "D32234831": {
+    "id": "32234831",
+    "docty": "Project Information and Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087b846d1_1_0"
+    },
+    "repnb": "PIDISDSA23018",
+    "docdt": "2020-07-11T04:00:00Z",
+    "display_title": "Project Information Document-Integrated Safeguards Data Sheet - HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - P161305",
+    "disclosure_date": "2020-07-11T15:35:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/228601594481758503/pdf/Project-Information-Document-Integrated-Safeguards-Data-Sheet-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/228601594481758503/text/Project-Information-Document-Integrated-Safeguards-Data-Sheet-HORN-OF-AFRICA-GATEWAY-DEVELOPMENT-PROJECT-P161305.txt",
+    "guid": "228601594481758503",
+    "url": "http://documents.worldbank.org/curated/en/228601594481758503"
+   },
+   "D31881120": {
+    "id": "31881120",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0877294f1_1_0"
+    },
+    "repnb": "STEP31415",
+    "docdt": "2020-03-19T04:00:00Z",
+    "display_title": "Africa - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2020-03-19T12:11:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/978991584619892164/pdf/Africa-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/978991584619892164/text/Africa-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "978991584619892164",
+    "url": "http://documents.worldbank.org/curated/en/978991584619892164"
+   },
+   "D32160314": {
+    "id": "32160314",
+    "docty": "Board Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087ab077d_1_0"
+    },
+    "repnb": "149894",
+    "docdt": "2020-03-01T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The Horn of Africa Gateway Development Project development objectives are to improve the movement of people and goods, digital and social services to communities at designated locations along the targeted sections of the Isiolo-Mandera regional trade corridor, and capacity building of\nselected transport and related institutions. The higher level objective of the project is to enhance connectivity among the Horn of Africa countries, access to seaports; facilitation of domestic and regional trade and integration, improve security and road safety."
+    },
+    "display_title": "Africa - Horn of Africa Gateway Development Project : Environmental and Social Management Framework and Environmental and Social Impact Assessments",
+    "disclosure_date": "2020-06-22T09:29:33Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/760571592861442133/pdf/Africa-Horn-of-Africa-Gateway-Development-Project-Environmental-and-Social-Management-Framework-and-Environmental-and-Social-Impact-Assessments.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/760571592861442133/text/Africa-Horn-of-Africa-Gateway-Development-Project-Environmental-and-Social-Management-Framework-and-Environmental-and-Social-Impact-Assessments.txt",
+    "guid": "760571592861442133",
+    "url": "http://documents.worldbank.org/curated/en/760571592861442133"
+   },
+   "D31746045": {
+    "id": "31746045",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087579fde_1_0"
+    },
+    "repnb": "SFG5875",
+    "docdt": "2020-01-01T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide project affected person (PAP) with cash compensation at full replacement cost; (2) compensation of the land at replacement value on good faith, National Land Commission (NLC) to access the closed registry to determine the land owner; (3) payment in full, of just compensation for any damage resulting from the entry. The amount to be negotiated directly with the owner of the land and property; (4) provision of replacement facilities within the settlement, with a higher capacity to serve more community members; (5) cash compensation only where recognized committees exist to facilitate and oversee the relocation and replacement of facilities; (6) three months transitional assistance based on anticipated income or possible future benefits for period of relocation or business stoppage, verification by NLC; and (7) first option is re-alignment of road route to avoid the facilities where feasible."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Resettlement Plan (Vol. 2 of 3) : Reviewing and Updating of the Resettlement Action Plan for Upgrading to Bitumen Standards of Modogashe-Samatar-Wajir Road",
+    "disclosure_date": "2020-01-31T10:30:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/712371580725890293/pdf/Reviewing-and-Updating-of-the-Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Modogashe-Samatar-Wajir-Road.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/712371580725890293/text/Reviewing-and-Updating-of-the-Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Modogashe-Samatar-Wajir-Road.txt",
+    "guid": "712371580725890293",
+    "url": "http://documents.worldbank.org/curated/en/712371580725890293"
+   },
+   "D31758538": {
+    "id": "31758538",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0875a20e9_1_0"
+    },
+    "repnb": "SFG5875",
+    "docdt": "2020-01-01T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide project affected person (PAP) with cash compensation at full replacement cost; (2) compensation of the land at replacement value on good faith, National Land Commission (NLC) to access the closed registry to determine the land owner; (3) payment in full, of just compensation for any damage resulting from the entry. The amount to be negotiated directly with the owner of the land and property; (4) provision of replacement facilities within the settlement, with a higher capacity to serve more community members; (5) cash compensation only where recognized committees exist to facilitate and oversee the relocation and replacement of facilities; (6) three months transitional assistance based on anticipated income or possible future benefits for period of relocation or business stoppage, verification by NLC; and (7) first option is re-alignment of road route to avoid the facilities where feasible."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Resettlement Plan (Vol. 3 of 3) : Resettlement Action Plan for Upgrading to Bitumen Standards of Wajir - Elwak Road Section 175 km (A13)",
+    "disclosure_date": "2020-02-05T04:43:16Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/839811580964232607/pdf/Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Wajir-Elwak-Road-Section-175-km-A13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/839811580964232607/text/Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Wajir-Elwak-Road-Section-175-km-A13.txt",
+    "guid": "839811580964232607",
+    "url": "http://documents.worldbank.org/curated/en/839811580964232607"
+   },
+   "D31598336": {
+    "id": "31598336",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087f6179a_2_0"
+    },
+    "repnb": "SFG5875",
+    "docdt": "2020-01-01T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide project affected person (PAP) with cash compensation at full replacement cost; (2) compensation of the land at replacement value on good faith, National Land Commission (NLC) to access the closed registry to determine the land owner; (3) payment in full, of just compensation for any damage resulting from the entry. The amount to be negotiated directly with the owner of the land and property; (4) provision of replacement facilities within the settlement, with a higher capacity to serve more community members; (5) cash compensation only where recognized committees exist to facilitate and oversee the relocation and replacement of facilities; (6) three months transitional assistance based on anticipated income or possible future benefits for period of relocation or business stoppage, verification by NLC; and (7) first option is re-alignment of road route to avoid the facilities where feasible."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Resettlement Plan (Vol. 1 of 3) : Resettlement Action Plan for Upgrading to Bitumen Standards of Isiolo - Kulamawe - Modogashe Road Section, 190 km (A13)",
+    "disclosure_date": "2020-11-03T06:20:18Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/972921575267660630/pdf/Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Isiolo-Kulamawe-Modogashe-Road-Section-190-km-A13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/972921575267660630/text/Resettlement-Action-Plan-for-Upgrading-to-Bitumen-Standards-of-Isiolo-Kulamawe-Modogashe-Road-Section-190-km-A13.txt",
+    "guid": "972921575267660630",
+    "url": "http://documents.worldbank.org/curated/en/972921575267660630"
+   },
+   "D31599214": {
+    "id": "31599214",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087388364_1_0"
+    },
+    "repnb": "STEP27294",
+    "docdt": "2019-12-01T05:00:00Z",
+    "display_title": "Kenya - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2019-12-01T07:35:05Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/815661575185707726/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/815661575185707726/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "815661575185707726",
+    "url": "http://documents.worldbank.org/curated/en/815661575185707726"
+   },
+   "D31595551": {
+    "id": "31595551",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08737b9e0_1_0"
+    },
+    "repnb": "SFG5908",
+    "docdt": "2019-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide and implement a traffic management plan; (2) employee awareness on company procedures for dealing with spills and leaks from oil storage tanks; (3) provision of adequate drainage facilities to channel water from one side of the road to the other; (4) manual removal of the invasive species such as the Prosopis Juliflora (Mathenge) at material and work sites to prevent proliferation; (5) proper solid and liquid wastes disposal mainly from the construction camps, sites, and offices; (6) hiring unskilled construction and skilled (if available) labor from the local population as far as possible; (7) avoiding night time construction when noise is loudest near residential areas or areas near wildlife; (8) ensure that all construction machines and equipment are in good working conditions and to manufacturer’s specifications to prevent occupational hazards; and (9) ensuring than each employee signs a code of conduct that covers child protection. Ensuring no children are employed on site in accordance with national labor laws."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Environmental Assessment (Vol. 2 of 3) : Environmental and Social Impact Assessment for Wajir - El Wak (A13) Road",
+    "disclosure_date": "2019-11-28T05:58:37Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/380871575007146233/pdf/Environmental-and-Social-Impact-Assessment-for-Wajir-El-Wak-A13-Road.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/380871575007146233/text/Environmental-and-Social-Impact-Assessment-for-Wajir-El-Wak-A13-Road.txt",
+    "guid": "380871575007146233",
+    "url": "http://documents.worldbank.org/curated/en/380871575007146233"
+   },
+   "D31645441": {
+    "id": "31645441",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0874239af_1_0"
+    },
+    "repnb": "SFG5908",
+    "docdt": "2019-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide and implement a traffic management plan; (2) employee awareness on company procedures for dealing with spills and leaks from oil storage tanks; (3) provision of adequate drainage facilities to channel water from one side of the road to the other; (4) manual removal of the invasive species such as the Prosopis Juliflora (Mathenge) at material and work sites to prevent proliferation; (5) proper solid and liquid wastes disposal mainly from the construction camps, sites, and offices; (6) hiring unskilled construction and skilled (if available) labor from the local population as far as possible; (7) avoiding night time construction when noise is loudest near residential areas or areas near wildlife; (8) ensure that all construction machines and equipment are in good working conditions and to manufacturer’s specifications to prevent occupational hazards; and (9) ensuring than each employee signs a code of conduct that covers child protection. Ensuring no children are employed on site in accordance with national labor laws."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Environmental Assessment (Vol. 3 of 3) : Review and Update of the Environmental and Social Impact Assessment for the Upgrading to Bitumen Standards of Modogashe - Samatar - Wajir Road Section 157 km (A13)",
+    "disclosure_date": "2019-12-17T08:09:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/371991576570219478/pdf/Review-and-Update-of-the-Environmental-and-Social-Impact-Assessment-for-the-Upgrading-to-Bitumen-Standards-of-Modogashe-Samatar-Wajir-Road-Section-157-km-A13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/371991576570219478/text/Review-and-Update-of-the-Environmental-and-Social-Impact-Assessment-for-the-Upgrading-to-Bitumen-Standards-of-Modogashe-Samatar-Wajir-Road-Section-157-km-A13.txt",
+    "guid": "371991576570219478",
+    "url": "http://documents.worldbank.org/curated/en/371991576570219478"
+   },
+   "D31595547": {
+    "id": "31595547",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08737b939_1_0"
+    },
+    "repnb": "SFG5908",
+    "docdt": "2019-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) provide and implement a traffic management plan; (2) employee awareness on company procedures for dealing with spills and leaks from oil storage tanks; (3) provision of adequate drainage facilities to channel water from one side of the road to the other; (4) manual removal of the invasive species such as the Prosopis Juliflora (Mathenge) at material and work sites to prevent proliferation; (5) proper solid and liquid wastes disposal mainly from the construction camps, sites, and offices; (6) hiring unskilled construction and skilled (if available) labor from the local population as far as possible; (7) avoiding night time construction when noise is loudest near residential areas or areas near wildlife; (8) ensure that all construction machines and equipment are in good working conditions and to manufacturer’s specifications to prevent occupational hazards; and (9) ensuring than each employee signs a code of conduct that covers child protection. Ensuring no children are employed on site in accordance with national labor laws."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Environmental Assessment (Vol. 1 of 3) : Environmental and Social Impact Assessment for Upgrading to Bitumen Standards of Isiolo - Modogashe Road Section 190 km (A10-B84)",
+    "disclosure_date": "2019-11-28T05:52:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/457011575006756659/pdf/Environmental-and-Social-Impact-Assessment-for-Upgrading-to-Bitumen-Standards-of-Isiolo-Modogashe-Road-Section-190-km-A10-B84.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/457011575006756659/text/Environmental-and-Social-Impact-Assessment-for-Upgrading-to-Bitumen-Standards-of-Isiolo-Modogashe-Road-Section-190-km-A10-B84.txt",
+    "guid": "457011575006756659",
+    "url": "http://documents.worldbank.org/curated/en/457011575006756659"
+   },
+   "D31595620": {
+    "id": "31595620",
+    "docty": "Environmental Assessment",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08737b9e9_1_0"
+    },
+    "repnb": "SFG5912",
+    "docdt": "2019-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) segregate waste at source, hiring of licensed waste handlers for generation of sewage and solid waste; water and environmental pollution; (2) ensure adequate monitoring of drainage effects, especially if construction works are carried out during the wet season; (3) avoid use of equipment such as stone crushers at site near residential areas, which produce significant amount of particulate matter (wet crushing should be encouraged, location of the facilities away from settlements or residential areas; (4) avoid using of construction equipment producing excessive noise at night; (5) prevent discharge of fuel, lubricants, chemicals, and wastes into adjacent rivers and drains to avoid water and soil pollution; and (6) mobilize and strengthen child protection institutions and structures near construction sites."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Environmental Assessment : Environmental and Social Management Framework",
+    "disclosure_date": "2019-11-28T06:16:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/566001575008202220/pdf/Environmental-and-Social-Management-Framework.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/566001575008202220/text/Environmental-and-Social-Management-Framework.txt",
+    "guid": "566001575008202220",
+    "url": "http://documents.worldbank.org/curated/en/566001575008202220"
+   },
+   "D31598316": {
+    "id": "31598316",
+    "docty": "Resettlement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087384559_1_0"
+    },
+    "repnb": "SFG5876",
+    "docdt": "2019-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) in the case where there is no alternative land available, cash compensation at full replacement value should be provided; (2) compensation will be paid by replacing structures (huts, houses, outbuildings, latrines, storage facilities, and fences etc.) to improved quality where possible; (3) compensation will be provided for community assets identified through the socio-economic survey. In all cases these will be provided in kind and new facilities will be provided even if there are existing facilities at the new location that will be augmented to replace the loss; (4) compensation will be paid for the lost income and production during the transition period (time lag between losing the business and re-establishment). This will be estimated based on the daily or monthly income of the affected parties; (5) beekeepers will be compensated by the value of one season’s production costs of honey for each hive that is moved and any reasonable costs associated with moving the hive; and (6) compensation for removal of limbs will be prorated on the basis of the number of square meters of surface area removed."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Resettlement Plan : Resettlement Policy Framework",
+    "disclosure_date": "2019-11-29T06:41:16Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/477451575268919739/pdf/Resettlement-Policy-Framework.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/477451575268919739/text/Resettlement-Policy-Framework.txt",
+    "guid": "477451575268919739",
+    "url": "http://documents.worldbank.org/curated/en/477451575268919739"
+   },
+   "D31595647": {
+    "id": "31595647",
+    "docty": "Indigenous Peoples Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08737bafa_1_0"
+    },
+    "repnb": "SFG5874",
+    "docdt": "2019-10-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of the North Eastern Transport Improvement Project for Kenya are to improve the movement of goods and people along the Isiolo-Wajir section of the Isiolo-Garissa- Wajir- Mandera- Mogadishu road corridor and to enhance internet connectivity between Northeastern and the rest of Kenya. Some of the negative impacts and mitigation measures include: (1) develop human immunodeficiency virus (HIV) and acquired immunodeficiency syndrome (AIDS) management strategies in consultation with national aids control council; (2) develop traffic management plan and road safety and mitigation plan; (3) develop community health and safety management plan; (4) develop waste management plan for waste risks; and (5) manage sexual exploitation and abuse risks for the project."
+    },
+    "display_title": "Kenya - North Eastern Transport Improvement Project : Social Assessment : Social Assessment for the Proposed Upgrading of Isiolo-Wajir-Mandera Road Corridor (A13)",
+    "disclosure_date": "2019-11-28T06:39:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/576091575009604904/pdf/Social-Assessment-for-the-Proposed-Upgrading-of-Isiolo-Wajir-Mandera-Road-Corridor-A13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/576091575009604904/text/Social-Assessment-for-the-Proposed-Upgrading-of-Isiolo-Wajir-Mandera-Road-Corridor-A13.txt",
+    "guid": "576091575009604904",
+    "url": "http://documents.worldbank.org/curated/en/576091575009604904"
+   },
+   "D31442754": {
+    "id": "31442754",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08715cd0c_1_0"
+    },
+    "repnb": "STEP24986",
+    "docdt": "2019-09-29T04:00:00Z",
+    "display_title": "Kenya - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2019-09-29T15:17:43Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/416491569770265661/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/416491569770265661/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "416491569770265661",
+    "url": "http://documents.worldbank.org/curated/en/416491569770265661"
+   },
+   "D31289826": {
+    "id": "31289826",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086f3fe38_1_0"
+    },
+    "repnb": "STEP22946",
+    "docdt": "2019-07-30T04:00:00Z",
+    "display_title": "Kenya - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2019-07-30T06:48:13Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/315081564469295423/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/315081564469295423/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "315081564469295423",
+    "url": "http://documents.worldbank.org/curated/en/315081564469295423"
+   },
+   "D30684546": {
+    "id": "30684546",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08676fb48_1_0"
+    },
+    "repnb": "STEP15336",
+    "docdt": "2018-12-11T05:00:00Z",
+    "display_title": "Kenya - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-12-11T13:44:27Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/506381544535873138/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/506381544535873138/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "506381544535873138",
+    "url": "http://documents.worldbank.org/curated/en/506381544535873138"
+   },
+   "D30664583": {
+    "id": "30664583",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0866843fd_1_0"
+    },
+    "docdt": "2018-11-23T05:00:00Z",
+    "display_title": "Official Documents- Agreement for Second Preparation Advance V2360-KE",
+    "disclosure_date": "2018-12-04T16:37:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/459431543939741322/pdf/ITK171540-201811041107.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/459431543939741322/text/ITK171540-201811041107.txt",
+    "guid": "459431543939741322",
+    "url": "http://documents.worldbank.org/curated/en/459431543939741322"
+   },
+   "D30664600": {
+    "id": "30664600",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0866843fe_1_0"
+    },
+    "docdt": "2018-11-23T05:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Second Preparation Advance V2360-KE",
+    "disclosure_date": "2018-12-04T16:40:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/650851543939863972/pdf/ITK171540-201811041109.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/650851543939863972/text/ITK171540-201811041109.txt",
+    "guid": "650851543939863972",
+    "url": "http://documents.worldbank.org/curated/en/650851543939863972"
+   },
+   "D30444628": {
+    "id": "30444628",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0861822d7_1_0"
+    },
+    "docdt": "2018-09-24T04:00:00Z",
+    "display_title": "Kenya - AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-09-24T18:35:55Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/111691579907506942/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/111691579907506942/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "111691579907506942",
+    "url": "http://documents.worldbank.org/curated/en/111691579907506942"
+   },
+   "D30340347": {
+    "id": "30340347",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085e9d56d_1_0"
+    },
+    "repnb": "STEP11733",
+    "docdt": "2018-08-10T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-08-10T10:04:33Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/235361533895474312/pdf/Plan-Archive-12.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/235361533895474312/text/Plan-Archive-12.txt",
+    "guid": "235361533895474312",
+    "url": "http://documents.worldbank.org/curated/en/235361533895474312"
+   },
+   "D30340792": {
+    "id": "30340792",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085e9f1bc_1_0"
+    },
+    "repnb": "STEP11747",
+    "docdt": "2018-08-10T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-08-10T13:15:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/468281533906957956/pdf/Plan-Archive-13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/468281533906957956/text/Plan-Archive-13.txt",
+    "guid": "468281533906957956",
+    "url": "http://documents.worldbank.org/curated/en/468281533906957956"
+   },
+   "D29745141": {
+    "id": "29745141",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0857f7f70_1_0"
+    },
+    "repnb": "STEP8086",
+    "docdt": "2018-03-23T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-03-23T16:10:20Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/716931521821424994/pdf/Plan-Archive-11.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/716931521821424994/text/Plan-Archive-11.txt",
+    "guid": "716931521821424994",
+    "url": "http://documents.worldbank.org/curated/en/716931521821424994"
+   },
+   "D29730043": {
+    "id": "29730043",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0857c0c65_1_0"
+    },
+    "repnb": "STEP7935",
+    "docdt": "2018-03-19T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-03-19T08:46:31Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/602121521449195051/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/602121521449195051/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "602121521449195051",
+    "url": "http://documents.worldbank.org/curated/en/602121521449195051"
+   },
+   "D29686159": {
+    "id": "29686159",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08571d9cd_1_0"
+    },
+    "repnb": "STEP7501",
+    "docdt": "2018-03-02T05:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- Northeastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2018-03-02T17:03:41Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/915561520010223278/pdf/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/915561520010223278/text/Kenya-AFRICA-P161305-Northeastern-Transport-Improvement-Project-Procurement-Plan.txt",
+    "guid": "915561520010223278",
+    "url": "http://documents.worldbank.org/curated/en/915561520010223278"
+   },
+   "D28023288": {
+    "id": "28023288",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08504b01b_1_0"
+    },
+    "repnb": "STEP4160",
+    "docdt": "2017-10-03T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2017-10-03T07:30:16Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/789461507015817396/pdf/Plan-Archive-7.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/789461507015817396/text/Plan-Archive-7.txt",
+    "guid": "789461507015817396",
+    "url": "http://documents.worldbank.org/curated/en/789461507015817396"
+   },
+   "D27947784": {
+    "id": "27947784",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084f3f35e_1_0"
+    },
+    "repnb": "STEP3553",
+    "docdt": "2017-08-31T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2017-08-31T11:50:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/695011504180218914/pdf/Plan-Archive-6.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/695011504180218914/text/Plan-Archive-6.txt",
+    "guid": "695011504180218914",
+    "url": "http://documents.worldbank.org/curated/en/695011504180218914"
+   },
+   "D27278114": {
+    "id": "27278114",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084a0e4dc_1_0"
+    },
+    "repnb": "STEP1268",
+    "docdt": "2017-03-17T04:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2017-03-17T13:26:41Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/321821489757202407/pdf/Plan-Archive-4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/321821489757202407/text/Plan-Archive-4.txt",
+    "guid": "321821489757202407",
+    "url": "http://documents.worldbank.org/curated/en/321821489757202407"
+   },
+   "D27206644": {
+    "id": "27206644",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084963793_1_0"
+    },
+    "repnb": "STEP1042",
+    "docdt": "2017-02-20T05:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2017-02-20T13:56:19Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/207001487598979980/pdf/Plan-Archive-3.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/207001487598979980/text/Plan-Archive-3.txt",
+    "guid": "207001487598979980",
+    "url": "http://documents.worldbank.org/curated/en/207001487598979980"
+   },
+   "D27233709": {
+    "id": "27233709",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08499f77d_1_0"
+    },
+    "docdt": "2017-02-10T05:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Advance V063-KE",
+    "disclosure_date": "2017-03-11T16:31:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/113771488385959196/pdf/ITK425962-201702011130.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/113771488385959196/text/ITK425962-201702011130.txt",
+    "guid": "113771488385959196",
+    "url": "http://documents.worldbank.org/curated/en/113771488385959196"
+   },
+   "D27233705": {
+    "id": "27233705",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08499f77c_1_0"
+    },
+    "docdt": "2017-02-10T05:00:00Z",
+    "display_title": "Official Documents- Agreement for Advance V063-KE",
+    "disclosure_date": "2017-03-11T16:27:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/988131488385834011/pdf/ITK425962-201702011124.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/988131488385834011/text/ITK425962-201702011124.txt",
+    "guid": "988131488385834011",
+    "url": "http://documents.worldbank.org/curated/en/988131488385834011"
+   },
+   "D27105273": {
+    "id": "27105273",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08488a85b_1_0"
+    },
+    "repnb": "STEP840",
+    "docdt": "2017-01-17T05:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2017-01-18T04:54:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/102981484715250072/pdf/Plan-Archive-2.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/102981484715250072/text/Plan-Archive-2.txt",
+    "guid": "102981484715250072",
+    "url": "http://documents.worldbank.org/curated/en/102981484715250072"
+   },
+   "D27005157": {
+    "id": "27005157",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08479019f_1_0"
+    },
+    "repnb": "STEP622",
+    "docdt": "2016-12-08T05:00:00Z",
+    "display_title": "Kenya/AFRICA- P161305- North Eastern Transport Improvement Project - Procurement Plan",
+    "disclosure_date": "2016-12-08T05:20:22Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/349941481174423938/pdf/Plan-Archive-1.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/349941481174423938/text/Plan-Archive-1.txt",
+    "guid": "349941481174423938",
+    "url": "http://documents.worldbank.org/curated/en/349941481174423938"
+   },
+   "D26874700": {
+    "id": "26874700",
+    "docty": "Project Information and Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08464900a_1_0"
+    },
+    "repnb": "PIDISDSC19793",
+    "docdt": "2016-10-19T04:00:00Z",
+    "display_title": "Concept Integrated Safeguards Data Sheet-Integrated Safeguards Document - North Eastern Transport Improvement Project - P161305",
+    "disclosure_date": "2016-10-19T12:02:30Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/723611476878552454/pdf/ITM00184-P161305-10-19-2016-1476878547937.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/723611476878552454/text/ITM00184-P161305-10-19-2016-1476878547937.txt",
+    "guid": "723611476878552454",
+    "url": "http://documents.worldbank.org/curated/en/723611476878552454"
+   },
+   "facets": {}
+  }
+ }
+}

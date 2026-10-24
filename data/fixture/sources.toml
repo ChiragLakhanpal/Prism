@@ -82,6 +82,13 @@ dataset = "projects"
 url = "https://search.worldbank.org/api/v3/projects?format=json&id=P130164&fl=*"
 about = "The project record for the India Rajasthan Road Sector Modernization Project (P130164), the closed showcase project."
 
+[[source]]
+file = "api/projects/P127203.json"
+kind = "json"
+dataset = "projects"
+url = "https://search.worldbank.org/api/v3/projects?format=json&id=P127203&fl=*"
+about = "The project record for Haiti's Rebuilding Energy Infrastructure and Access Project (P127203), whose completion report in French is on the stress shelf (ticket 18)."
+
 # Document lists, with each document's date and disclosure date
 
 [[source]]
@@ -97,6 +104,20 @@ kind = "json"
 dataset = "document_list"
 url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P130164&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
 about = "Every document the Documents API lists for P130164, including the ICR Review of March 27, 2020 and its re-issue of May 4, 2023 under the same report number."
+
+[[source]]
+file = "api/documents/P161305.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P161305&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
+about = "Every document the Documents API lists for the Horn of Africa Gateway Development Project (P161305), a Kenya transport project in the slice, whose Procurement Plan of September 24, 2026 is on the stress shelf (ticket 18)."
+
+[[source]]
+file = "api/documents/P127203.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P127203&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
+about = "Every document the Documents API lists for P127203 in Haiti, including its completion report ICR4990 in English and in French under one report number (ticket 18)."
 
 [[source]]
 file = "api/documents/dated-in-the-future.json"
@@ -509,6 +530,9 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/836241468260649073/text/815940PAD0Box30official0use0only090.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf"
 about = "The Project Appraisal Document for P130164, October 1, 2013 (report 81594-IN), a scan. Documents API id 18381488."
+# Its words are recorded for the layout parser's stand-in, which reads its pages and its two-column
+# risk annex, Annex 4 on PDF pages 65 to 70 (ticket 18).
+words = true
 
 [[source]]
 file = "documents/P130164/isr-01-2014-02-22"
@@ -637,4 +661,24 @@ dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/099050423040030393/text/P1301640b1a4d202008b910ba796c7180f1.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/099050423040030393/pdf/P1301640b1a4d202008b910ba796c7180f1.pdf"
 about = "IEG's ICR Review for P130164 re-issued under the same number on May 4, 2023 (ICRR0021929). Documents API id 34056616."
+
+# The stress shelf's documents (ticket 18): the hardest documents Strata reads, each with a recorded
+# outcome on the Data readiness page.
+
+[[source]]
+file = "documents/P161305/procurement-plan-2026-09-24"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099092426095539747/text/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099092426095539747/pdf/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.pdf"
+about = "The Procurement Plan of September 24, 2026 for the Horn of Africa Gateway Development Project (P161305), whose text lists hundreds of activities: the stress shelf's long plan. Documents API id 40129238."
+words = true
+
+[[source]]
+file = "documents/P127203/icr-fr-2021-07-29"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/310191631508626407/text/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf"
+about = "The completion report for P127203 in French, July 29, 2021 (ICR4990): the stress shelf's report in another language. Documents API id 33407968."
 

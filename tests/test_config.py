@@ -52,7 +52,54 @@ def test_the_slice_file_names_the_showcase_project_and_the_demo_plan():
     assert pilot.demo_plan.implementing_agency == "Northern Water Works Development Agency"
     assert pilot.demo_plan.agency_short_name == "NWWDA"
     assert pilot.demo_plan.plan_date == dt.date(2026, 10, 9)
-    assert ("P130164", "PAD") in [(item.project_id, item.document_type) for item in pilot.stress_shelf]
+    assert pilot.planned_projects == 128  # docs/PLAN.md section 3
+
+
+# The stress shelf (docs/PLAN.md section 3, and the 18 design brief, section 4.1): the P130164 PAD with its
+# two-column risk annex, the longest PAD, a long Procurement Plan, a completion report in French and a
+# document over the layout parser's limit, in that order. The hand count of the annex's risks is
+# tests/ground_truth/values.toml's.
+SHELF_TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]
+
+
+def test_the_stress_shelf_names_five_entries_each_with_a_kind_and_a_document_or_a_rule():
+    shelf = config.load_slice().stress_shelf
+
+    assert [item.kind for item in shelf] == ["scan_annex", "longest_pad", "large_plan", "other_language",
+                                             "over_parser_limit"]
+    assert len({item.key for item in shelf}) == 5
+    annex = SHELF_TRUTH["pad_risk_annex"]
+    pad = shelf[0]
+    assert (pad.project_id, pad.document_id, pad.part) == ("P130164", annex["document_id"], "risk_annex")
+    assert (pad.first_page, pad.last_page) == (annex["first_pdf_page"], annex["last_pdf_page"])
+    assert (pad.expected_rows, pad.counted_on) == (annex["risks"], annex["counted_on"])
+    assert (shelf[1].rule, shelf[1].document_type, shelf[1].document_id) == (
+        "longest", "Project Appraisal Document", None)
+    assert (shelf[2].project_id, shelf[2].document_id) == ("P161305", SHELF_TRUTH["long_plan"]["document_id"])
+    assert (shelf[3].document_id, shelf[3].language) == (SHELF_TRUTH["french_report"]["document_id"], "fr")
+    assert (shelf[4].rule, shelf[4].document_id) == ("over_parser_limit", None)
+
+
+@pytest.mark.parametrize(("old", "new", "says"), [
+    ('kind = "scan_annex"', 'kind = "a_hard_one"', r"stress_shelf\[1\]\.kind must be one of"),
+    ('rule = "longest"', 'rule = "longest"\ndocument_id = "18381488"\nproject_id = "P130164"',
+     r"stress_shelf\[2\] names a document_id and a rule"),
+    ('expected_rows = ', 'not_expected_rows = ', r"stress_shelf\[1\] has keys I do not know: not_expected_rows"),
+    ('part = "risk_annex"\n', '', r"stress_shelf\[1\]\.part is missing"),
+    ('language = "fr"', 'language = "French"', r"stress_shelf\[4\]\.language must be a two-letter"),
+])
+def test_a_stress_shelf_entry_of_the_wrong_shape_is_refused_with_a_sentence(tmp_path, old, new, says):
+    path = copy("slice.toml", tmp_path, old=old, new=new)
+
+    with pytest.raises(ConfigError, match=says):
+        config.load_slice(path)
+
+
+def test_a_hand_count_needs_the_day_it_was_counted(tmp_path):
+    path = copy("slice.toml", tmp_path, old="counted_on = ", new="# counted_on = ")
+
+    with pytest.raises(ConfigError, match=r"stress_shelf\[1\]\.counted_on.*the day a person counted"):
+        config.load_slice(path)
 
 
 def test_adding_a_country_to_the_slice_is_one_entry(tmp_path):

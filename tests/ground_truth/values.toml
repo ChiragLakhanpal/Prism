@@ -1340,3 +1340,86 @@ says = "Every major sector code listed for a project of the slice's four countri
 codes = ["AAX", "AX", "BBX", "BX", "CX", "DDX", "DX", "EEX", "EX", "FFX", "FX", "GX", "HHX", "HX", "IX", "JX",
          "LLX", "LX", "MX", "NNX", "NX", "PX", "QX", "SSX", "SX", "TTX", "TX", "UX", "VX", "WWX", "WX", "XX",
          "YX", "YYX"]
+
+# The stress shelf (ticket 18; docs/PLAN.md section 3): the hardest documents Strata reads. Each count
+# and page below was read from the recorded files or the PDF by a person, apart from Strata's code.
+# tests/test_ground_truth_values.py checks each quote on its PDF page.
+
+# The P130164 PAD's Annex 4, the Operational Risk Assessment Framework (ORAF), set in two columns on
+# PDF pages 65 to 70 (printed pages 53 to 58). Counted by hand from the PDF on October 24, 2026: each
+# risk with its own Rating row, seven risk categories and the overall implementation risk. The
+# lettered descriptions under a risk, such as (a) to (d) under Capacity, belong to that risk's row.
+[stress_shelf.pad_risk_annex]
+says = "The P130164 PAD's risk annex holds eight rated risks, on PDF pages 65 to 70."
+document = "documents/P130164/pad-2013-10-01"
+document_id = "18381488"
+project = "P130164"
+pdf_pages = 100
+first_pdf_page = 65
+last_pdf_page = 70
+counted_on = 2026-10-24
+risks = 8
+title = { pdf_page = 65, quote = "Annex 4 - Operational Risk Assessment Framework (ORAF)" }
+ratings = [
+  { risk = "Stakeholder Risk", rating = "Low", pdf_page = 65, quote = "Stakeholder Risk Rating Low" },
+  { risk = "Capacity", rating = "Low", pdf_page = 65, quote = "Capacity Rating Low" },
+  { risk = "Governance", rating = "Moderate", pdf_page = 66, quote = "Governance Rating Moderate" },
+  { risk = "Design", rating = "Substantial", pdf_page = 68, quote = "Design Rating Substantial" },
+  { risk = "Social and Environmental", rating = "Moderate", pdf_page = 68, quote = "Social and Environmental Rating Moderate" },
+  { risk = "Program and Donor", rating = "NA", pdf_page = 69, quote = "Program and Donor Rating NA" },
+  { risk = "Delivery Monitoring and Sustainability", rating = "Low", pdf_page = 69, quote = "Delivery Monitoring and Sustainability Rating Low" },
+  { risk = "Overall Implementation Risk", rating = "Substantial", pdf_page = 70, quote = "Overall Implementation Risk: Rating Substantial" },
+]
+# The scan's text layer is empty on these PDF pages, so no reader can read them from it.
+empty_pages = [4, 6, 12]
+
+# The longest PAD the fixture records: P156634's, April 5, 2017 (PAD2077), 103 PDF pages. P130164's
+# has 100.
+[stress_shelf.longest_pad]
+says = "The longest PAD in the fixture is P156634's, with 103 PDF pages."
+document = "documents/P156634/pad-2017-04-05"
+document_id = "27348420"
+project = "P156634"
+pdf_pages = 103
+quote = { pdf_page = 1, quote = "Report No: PAD2077" }
+
+# P161305's Procurement Plan of September 24, 2026: 14 PDF pages, its STEP tables on pages 3 to 14.
+# Its published text lists 212 distinct Activity Reference No. values, counted with the pattern
+# [A-Z]{2}-[A-Z]+-[0-9]+-(CW|GO|CS|NC)-[A-Z]+ with an optional -2, which 15 re-issued activities
+# carry (KE-NLC-202672-CS-INDV-2, for one).
+[stress_shelf.long_plan]
+says = "P161305's plan of September 24, 2026 lists 212 activities, in tables that start on PDF page 3."
+document = "documents/P161305/procurement-plan-2026-09-24"
+document_id = "40129238"
+project = "P161305"
+pdf_pages = 14
+table_starts = { pdf_page = 3, quote = "PROCUREMENT PLAN Kenya : Horn of Africa Gateway Development Project" }
+activity_references = 212
+with_a_second_issue = 15
+
+# P127203's completion report in French (ICR4990, July 29, 2021), 87 PDF pages. The documents API
+# lists the same report in English under the same number; the fixture records only the French one.
+[stress_shelf.french_report]
+says = "P127203's completion report in French starts its first numbered paragraph on PDF page 13."
+document = "documents/P127203/icr-fr-2021-07-29"
+document_id = "33407968"
+project = "P127203"
+language = "French"
+pdf_pages = 87
+first_paragraph = { pdf_page = 13, quote = "1. Au lendemain du tremblement de terre de janvier 2010 qui a ravagé Haïti" }
+
+# No recorded document has more than 500 PDF pages: the longest is P156634's PAD, with 103.
+[stress_shelf.over_parser_limit]
+says = "No document the fixture records has more than 500 PDF pages."
+longest_pages = 103
+
+# Requests for Expression of Interest whose qualification text asks for experience on similar work,
+# for a search of "similar experience" (no notice uses those two words side by side). Each quote is
+# one paragraph of the notice's text.
+[stress_shelf.similar_experience]
+says = "Two P156634 notices ask for experience with similar work in one paragraph."
+record = "api/notices/P156634.json"
+notices = [
+  { notice = "OP00118817", at = "procnotices[id=OP00118817].notice_text", quote = "Working experience on similar projects in Kenya." },
+  { notice = "OP00128730", at = "procnotices[id=OP00128730].notice_text", quote = "Documented evidence and experience with similar successful assignments corroborated by recommendations of the clients;" },
+]

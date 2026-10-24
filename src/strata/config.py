@@ -453,13 +453,29 @@ class DemoPlan:
     plan_date: dt.date
 
 
+# The stress shelf's kinds, in the order the 18 design brief lists them, and the rules that pick a
+# document at run time.
+SHELF_KINDS = ("scan_annex", "longest_pad", "large_plan", "other_language", "over_parser_limit")
+SHELF_RULES = ("longest", "over_parser_limit")
+
+
 @dataclass(frozen=True)
 class ShelfItem:
-    """One document on the stress shelf. Without a project_id it is a slot still to fill."""
+    """One entry on the stress shelf: a fixed document (project_id and document_id) or a rule that
+    picks one at run time, with what its kind needs (config/slice.toml says what each key means)."""
 
-    why: str
+    key: str
+    kind: str
     project_id: str | None = None
+    document_id: str | None = None
+    rule: str | None = None
     document_type: str | None = None
+    part: str | None = None
+    first_page: int | None = None
+    last_page: int | None = None
+    expected_rows: int | None = None
+    counted_on: dt.date | None = None
+    language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -471,10 +487,53 @@ class Slice:
     showcase: Showcase
     demo_plan: DemoPlan
     stress_shelf: tuple[ShelfItem, ...]
+    planned_projects: int | None = None  # docs/PLAN.md section 3's planning figure, never shown as a finding
 
     @property
     def fiscal_years(self) -> range:
         return range(self.first_fiscal_year, self.last_fiscal_year + 1)
+
+    @property
+    def named_projects(self) -> tuple[str, ...]:
+        """The projects the document run reads by name, whatever the criteria select: the showcase,
+        the demo plan's project and each fixed shelf document's project, once each, in that order."""
+        named = [self.showcase.project_id, self.demo_plan.project_id,
+                 *(item.project_id for item in self.stress_shelf if item.project_id)]
+        return tuple(dict.fromkeys(named))
+
+
+def _shelf_item(entry: _Entry) -> ShelfItem:
+    entry.only({"key", "kind", "project_id", "document_id", "rule", "document_type", "part", "first_page",
+                "last_page", "expected_rows", "counted_on", "language"})
+    kind = entry.text("kind")
+    if kind not in SHELF_KINDS:
+        entry._fail("kind", f"must be one of {', '.join(SHELF_KINDS)}")
+    document_id, rule = entry.text("document_id", required=False), entry.text("rule", required=False)
+    if (document_id is None) == (rule is None):
+        raise ConfigError(f"In {entry.path.name}, {entry.where} names a document_id and a rule, or neither. "
+                          "Name one: a fixed document with its project_id, or a rule that picks one.")
+    if rule is not None and rule not in SHELF_RULES:
+        entry._fail("rule", f"must be one of {', '.join(SHELF_RULES)}")
+    if rule == "longest" and entry.text("document_type", required=False) is None:
+        entry._fail("document_type", "is missing. The longest rule picks the longest document of that type")
+    item = {"key": entry.text("key"), "kind": kind, "document_id": document_id, "rule": rule,
+            "project_id": entry.project_id("project_id", required=document_id is not None),
+            "document_type": entry.text("document_type", required=False)}
+    if kind == "scan_annex":
+        item |= {"part": entry.text("part"), "first_page": entry.integer("first_page"),
+                 "last_page": entry.integer("last_page")}
+        if not 1 <= item["first_page"] <= item["last_page"]:
+            entry._fail("last_page", "must come on or after first_page, and both from 1")
+        if "expected_rows" in entry.table:
+            if "counted_on" not in entry.table:
+                entry._fail("counted_on", "is missing. A hand count needs the day a person counted it")
+            item |= {"expected_rows": entry.integer("expected_rows"), "counted_on": entry.date("counted_on")}
+    if kind == "other_language":
+        language = entry.text("language")
+        if not re.fullmatch(r"[a-z]{2}", language):
+            entry._fail("language", "must be a two-letter ISO 639-1 code, such as fr")
+        item["language"] = language
+    return ShelfItem(**item)
 
 
 def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
@@ -482,7 +541,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     data = _read(path)
     top = _Entry(path, "the file", data)
     top.only({"first_fiscal_year", "last_fiscal_year", "sectors", "countries", "showcase", "demo_plan",
-              "stress_shelf"})
+              "stress_shelf", "planned_projects"})
 
     countries = []
     for entry in _tables(path, data, "countries"):
@@ -513,11 +572,10 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     plan = _Entry(path, "demo_plan", data.get("demo_plan"))
     plan.only({"project_id", "project_name", "implementing_agency", "agency_short_name", "plan_date"})
 
-    shelf = []
-    for entry in _tables(path, data, "stress_shelf"):
-        entry.only({"project_id", "document_type", "why"})
-        shelf.append(ShelfItem(why=entry.text("why"), project_id=entry.project_id("project_id", required=False),
-                               document_type=entry.text("document_type", required=False)))
+    shelf = [_shelf_item(entry) for entry in _tables(path, data, "stress_shelf")]
+    keys = [item.key for item in shelf]
+    if len(set(keys)) != len(keys):
+        raise ConfigError(f"In {path.name}, two stress_shelf entries share a key. Give each its own.")
 
     return Slice(
         countries=tuple(countries),
@@ -528,6 +586,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
         demo_plan=DemoPlan(plan.project_id("project_id"), plan.text("project_name"),
                            plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date")),
         stress_shelf=tuple(shelf),
+        planned_projects=top.integer("planned_projects", required=False),
     )
 
 
