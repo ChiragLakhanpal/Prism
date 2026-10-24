@@ -7,6 +7,7 @@ the stream on every answer. Expected passages, numbers and quotes come from the 
 """
 
 import asyncio
+import dataclasses
 import datetime as dt
 import json
 import re
@@ -19,10 +20,14 @@ import pytest
 from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
 from strata.agent.scripted import ScriptedAgent, load_cases, stream_text
+from strata.config import load_tools
 from strata.harness.turn import Event, TraceIds
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
+from strata.reader.passages import TABLE_SUMMARY
 from strata.server.app import create_app
+from strata.tools.check_plan import check_plan
+from strata.tools.search_passages import search_passages
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
 ICR_54 = "strata.gold.passage:31525018/v1/54"
@@ -387,6 +392,95 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
         "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b."]
     assert of(parsed, "checks")[0]["numbers"]["matched"] == 0
+
+
+class CallsThenAnswers:
+    """An agent that makes one round of tool calls, then answers with the claims answer() writes from
+    the tool results it got back, as a list of each call's output."""
+
+    name, version = "strata-orchestrator", None
+
+    def __init__(self, calls, answer):
+        self.calls, self.answer, self.round = calls, answer, 0
+
+    def respond(self, items, previous_response_id):
+        self.round += 1
+        if self.round == 1:
+            return {"id": "resp_1", "output": [
+                {"type": "function_call", "call_id": f"call_{number}", "name": name, "arguments": json.dumps(arguments)}
+                for number, (name, arguments) in enumerate(self.calls, 1)]}
+        return Answers(*self.answer([json.loads(item["output"]) for item in items])).respond(items, previous_response_id)
+
+
+def with_adapter(name, adapter):
+    """The tool registry with one tool's adapter replaced by a stand-in in this file."""
+    tools = load_tools()
+    return {**tools, name: dataclasses.replace(tools[name], adapter=f"test_answer_stream:{adapter}")}
+
+
+def as_table_summaries(call, **arguments):
+    """search_passages, with every passage it finds marked as a table's one summary passage."""
+    result = search_passages(call, **arguments)
+    for row in result["rows"]:
+        row["parse_route"] = TABLE_SUMMARY
+    return result
+
+
+def with_two_envelopes(call, **arguments):
+    """check_plan, with KE-NWWDA-541062-CW-RFQ's market approach set to STEP's Single Stage - Two Envelope."""
+    result = check_plan(call, **arguments)
+    for row in result["rows"]:
+        if row["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ":
+            row["market_approach"] = "Single Stage - Two Envelope"
+    return result
+
+
+def ask_with_tools(fixture_db, agent, tools):
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    return events(ask_with(create_app(runner=answer_runner(lambda turn: agent, engine_for, tools=tools,
+                                                           today=lambda: TODAY))))
+
+
+def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
+    """A table's summary passage is the reader's words for a table, not the report's, so even a number
+    inside a quote from it must match a record (spec, check 1)."""
+    rebidding = "108 of 328 cases had to go through rebidding"
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "works contracts advertised again rebidding", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim(f'The report said "{rebidding}".', kind="quote", evidence_ids=[ICR_54],
+                               numbers=["108", "328"], quote={"text": rebidding, "passage_id": ICR_54})])
+
+    parsed = ask_with_tools(fixture_db, agent, with_adapter("search_passages", "as_table_summaries"))
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "108"), ("number_not_in_records", "328")]]
+
+
+def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fixture_db):
+    """"Two" in STEP's market approach "Single Stage - Two Envelope" is a name, not a count, whether or not
+    the sentence quotes it. Words quoted from a record's text value must still be in it word for word."""
+    def answer(outputs):
+        [cited] = [row["evidence_id"] for row in outputs[0]["rows"]
+                   if row["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ"]
+        return [claim(sentence, kind="record", evidence_ids=[cited]) for sentence in (
+            'Its market approach was "Single Stage - Two Envelope".',
+            "It went to market as Single Stage - Two Envelope.",
+            "Thirty-seven firms bid for it.",
+            'The plan called it "Equipping of boreholes, Lot 9".')]
+
+    agent = CallsThenAnswers([("check_plan", {
+        "project_id": "P156634", "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09", "as_of": "2026-10-23"})], answer)
+
+    parsed = ask_with_tools(fixture_db, agent, with_adapter("check_plan", "with_two_envelopes"))
+
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        'Its market approach was "Single Stage - Two Envelope".', "It went to market as Single Stage - Two Envelope."]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "Thirty-seven")], [("quote_not_on_page", None)]]
 
 
 def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
