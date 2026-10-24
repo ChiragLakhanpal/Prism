@@ -16,7 +16,7 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation and
    whether a quote mark is curly or straight, and starts and ends where the page's words do: "10" is not
    a quote from "108 of 328".
-   The quote checked is the one the person reads: the words in the sentence's double quotes must be in
+   The quote checked is the one the person reads: the words in the sentence's quote marks must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
    cited record's text value, such as a STEP description, are on that record.
@@ -315,13 +315,15 @@ def _normalized(text: str) -> tuple[str, list[int]]:
     return "".join(out), where
 
 
-# The words a sentence puts in double quotes. The agent is told to use straight ones; curly ones count too.
-QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+# The words a sentence puts in quote marks. The agent is told to use straight double ones in every language;
+# curly ones count too, and so do the « » French writes, without the spaces inside them.
+QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d|\u00ab\s*([^\u00bb]+?)\s*\u00bb')
 
 
 def quoted_spans(sentence: str) -> list[tuple[int, int]]:
     """Where each run of quoted words sits in the sentence, inside its quote marks."""
-    return [match.span(1) if match.group(1) is not None else match.span(2) for match in QUOTED.finditer(sentence)]
+    return [next(match.span(group) for group in (1, 2, 3) if match.group(group) is not None)
+            for match in QUOTED.finditer(sentence)]
 
 
 def find_quote(quote: str, text: str) -> tuple[int, int] | None:

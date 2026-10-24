@@ -177,12 +177,13 @@ def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_p
         ("In 108 districts the works ran late.",
          [("quote_not_in_sentence", ICR_54), ("number_not_in_records", "108")]),
         ('The ICR called the delay "avoidable".', [("quote_not_on_page", None)]),
+        ("Le rapport dit que les contrats sont \u00ab jamais revus \u00bb.", [("quote_not_on_page", None)]),
     ]
     assert copy_reasons()["quote_not_in_sentence"]["item"] == "It cited a quote that the sentence does not show."
     checks = of(parsed, "checks")[0]
     # The base answer quotes twice, both on their pages; each planted sentence quotes, and none is found.
-    assert checks["quotes"] == {"total": 5, "found": 2}
-    assert checks["sentences"] == {"written": 6, "kept": 3, "removed": 3}
+    assert checks["quotes"] == {"total": 6, "found": 2}
+    assert checks["sentences"] == {"written": 7, "kept": 3, "removed": 4}
 
 
 def test_a_quote_cut_from_inside_a_number_is_not_on_its_page(ask_case):

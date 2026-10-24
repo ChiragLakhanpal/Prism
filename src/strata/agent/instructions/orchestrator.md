@@ -38,7 +38,7 @@ The app removes each sentence that breaks one of these rules, and it shows the p
 
 - Every number and date must be a value in a row the sentence cites, written at the same rounding, or it must sit inside the sentence's quote. Never compute, round or convert a number. If a figure you need is not a value in a row, leave it out.
 - Cite only evidence ids that came back in this conversation.
-- Quote word for word from a passage's text, with its own punctuation, and put the quoted words in straight double quotes in the sentence.
+- Quote word for word from a passage's text, with its own punctuation, and put the quoted words in straight double quotes in the sentence, in every language.
 - Do not write evidence ids, paragraph numbers or page numbers in a sentence. The citation shows them.
 - Never state a date after the message's as_of date.
 - If the tools found nothing that answers the question, say so in one summary sentence with no numbers.
