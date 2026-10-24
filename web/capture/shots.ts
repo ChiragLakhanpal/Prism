@@ -3,6 +3,7 @@
 // open the design gallery; app shots open the production build with /api answered from the
 // recordings in tests/fixtures/api, so design reviews are repeatable. To review a new screen,
 // add its routes and states here.
+import { readFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { galleryCopy } from "../src/gallery/copy";
 
@@ -18,6 +19,10 @@ export type Shot = {
   // A real interaction before the photo, such as a hover or a keyboard focus. Shots with an
   // action photograph the window around the element; the others photograph the whole page.
   act?: (page: Page) => Promise<void>;
+  // /api paths that never answer, for a page's loading state.
+  pending?: string[];
+  // Photograph the whole page even after an action, such as the plan check with its fold open.
+  full?: boolean;
 };
 
 const hover = (selector: string) => async (page: Page) => {
@@ -53,13 +58,12 @@ const type = (selector: string, text: string) => async (page: Page) => {
 const WIDE = [1440, 1024];
 const NARROW = [390];
 
-// The app's routes, as the 06 design brief lists them, and both not-found pages.
+// The app's routes, as the 06 design brief lists them, and both not-found pages. All projects, a
+// project's page and Check a plan have their own shots below (ticket 10).
 const ROUTES: [string, string][] = [
   ["home", "/"],
   ["packages", "/packages"],
   ["package", "/packages/KE-NWWDA-541055-CW-RFB"],
-  ["projects", "/projects"],
-  ["project", "/projects/P130164"],
   ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
@@ -83,6 +87,87 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
     ...rest,
   };
 }
+
+// Ticket 10's screens. A state the fixture cannot reach, such as a partial check, is the recorded
+// plan check with one value changed, so it still shows real rows.
+const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
+const PLAN_API = `/api${PLAN}`;
+const RECORDED = new URL("../../tests/fixtures/api/", import.meta.url);
+const PLAN_FILE = "check-plan-p156634-nwwda-2026-10-09.json";
+
+function derived(name: string, edit: (body: Record<string, any>) => void): string {
+  const body = JSON.parse(readFileSync(new URL(name, RECORDED), "utf8"));
+  edit(body);
+  return JSON.stringify(body);
+}
+
+const partial = derived(PLAN_FILE, (body) => {
+  const row = body.rows.find((r: { activity_reference_no: string }) => r.activity_reference_no === "KE-NWWDA-541062-CW-RFQ");
+  row.planned_completion_on = null;
+  row.marks.push({ mark: "data_note", reasons: [{ code: "no_planned_date", mark: "data_note", step: "Contract Completion", evidence_ids: [row.evidence_id] }] });
+  Object.assign(body.counts, { checked: 8, not_fully_checked: 1, data_note: 4 });
+});
+// With no closing date, check_plan runs no closing-date check: the Needs a look reason names no
+// closing date, the activity pending near closing loses its Watch, and the fold grows to four.
+const noClosingDate = derived(PLAN_FILE, (body) => {
+  body.project.closing_date = null;
+  body.project.days_to_close = null;
+  body.checks_run = ["own_dates", "estimate"];
+  for (const row of body.rows) {
+    for (const mark of row.marks) for (const reason of mark.reasons) Object.assign(reason, { closing_date: null, days_to_close: null });
+    row.marks = row.marks.filter((mark: { reasons: { code: string }[] }) => !mark.reasons.every((reason) => reason.code.startsWith("pending_")));
+  }
+  Object.assign(body.counts, { watch: 1, marked: 5, unmarked: 4 });
+});
+const noActivities = derived(PLAN_FILE, (body) => {
+  body.rows = [];
+  body.counts = null;
+  body.abstention = { reason: "no_activities", plan_date: "2026-10-09" };
+});
+const planShot = (name: string, answer: Answer, rest: Partial<Shot> = {}, path = PLAN): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, [`/api${path.split("#")[0]}`]: answer } });
+const plan: Answer = { recorded: PLAN_FILE };
+const SERVICE_DOWN = '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}';
+
+const PLAN_SHOTS: Shot[] = [
+  planShot("check-plan", plan),
+  planShot("check-plan--loading", plan, { pending: [PLAN_API] }),
+  planShot("check-plan--open", plan, { act: click("[data-fold] button:visible") }),
+  planShot("check-plan--open-page", plan, { full: true, act: click("[data-fold] button:visible") }),
+  planShot("check-plan--partial", { body: partial }),
+  planShot("check-plan--no-closing-date", { body: noClosingDate }),
+  planShot("check-plan--no-activities", { body: noActivities }),
+  planShot("check-plan--agency-no-plan", { recorded: "check-plan-p156634-wajir-no-plan.json" }, {}, "/projects/P156634/procurement/wajir-water-and-sewerage-company"),
+  planShot(
+    "check-plan--version-not-found",
+    { recorded: "check-plan-p156634-nwwda-2026-10-10-not-found.json" },
+    {},
+    "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-10",
+  ),
+  planShot("check-plan--error", { status: 503, body: SERVICE_DOWN }),
+  planShot("check-plan--permission", { status: 403, body: '{"code":"permission"}' }),
+  planShot("check-plan--hover-show", plan, { widths: [1440, 390], act: hover("[data-fold] button:visible") }),
+  planShot("check-plan--focus-show", plan, { widths: [1440, 390], act: focus("[data-fold] button:visible") }),
+  planShot("check-plan--num-days-late", plan, { widths: [1440, 390], act: focus(":is([id='KE-NWWDA-229129-CW-RFB'], li:has([data-activity='KE-NWWDA-229129-CW-RFB'])) button[data-num]:visible") }),
+  planShot("check-plan--definition", plan, { widths: [1440], act: click("[data-view=table] thead [data-term]") }),
+  planShot("check-plan--focus-breadcrumb", plan, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
+  planShot("check-plan--deep-link", plan, {}, `${PLAN}#KE-NWWDA-207796-CS-INDV`),
+  planShot("check-plan--320", plan, { widths: [320] }),
+];
+
+const PROJECT_SHOTS: Shot[] = [
+  planShot("project", { recorded: "project-p156634.json" }, {}, "/projects/P156634"),
+  planShot("project--loading", { recorded: "project-p156634.json" }, { pending: ["/api/projects/P156634"] }, "/projects/P156634"),
+  planShot("project--no-plans", { recorded: "project-p130164.json" }, {}, "/projects/P130164/procurement"),
+  planShot("project--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects/P156634"),
+  planShot("project--not-found", { status: 404, body: '{"code":"unknown_project"}' }, {}, "/projects/P999999"),
+  planShot("project--focus-version", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: focus("[data-agency] a:visible") }, "/projects/P156634"),
+  planShot("projects", { recorded: "projects.json" }, {}, "/projects"),
+  planShot("projects--loading", { recorded: "projects.json" }, { pending: ["/api/projects"] }, "/projects"),
+  planShot("projects--more", { recorded: "projects.json" }, { act: click("[data-projects-page] button") }, "/projects"),
+  planShot("projects--empty", { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' }, {}, "/projects"),
+  planShot("projects--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects"),
+];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
@@ -155,24 +240,29 @@ export const SHOTS: Shot[] = [
   app("app--stamp-error", "/", { freshness: { status: 502, body: '{"code":"unreadable"}' } }),
   app("app--no-access", "/", { freshness: { status: 403, recorded: "freshness-no-access.json" } }),
   app("app--no-identity", "/", { me: { body: SIGNED_OUT }, freshness: { status: 401, recorded: "freshness-no-identity.json" } }),
-  app("app--view-piu", "/projects?view=piu"),
-  app("app--view-public", "/projects?view=public"),
-  app("app--asof", "/projects?asof=2016-08-26"),
-  app("app--asof-unreadable", "/projects?asof=last-tuesday"),
+  app("app--view-piu", "/lessons?view=piu"),
+  app("app--view-public", "/lessons?view=public"),
+  app("app--asof", "/lessons?asof=2016-08-26"),
+  app("app--asof-unreadable", "/lessons?asof=last-tuesday"),
   app("app--box-with-text", "/", {}, { act: type("[data-box-band] input", "P130164") }),
   app("app--view-open", "/", {}, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
   app("app--view-error", "/", { me: { status: 502, body: '{"detail":"Bad Gateway"}' } }, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
-  app("app--menu-open", "/projects/P130164", {}, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),
-  app("app--1024-with-scrollbar", "/projects", {}, {
+  app("app--menu-open", "/lessons", {}, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),
+  app("app--1024-with-scrollbar", "/lessons", {}, {
     widths: [1024],
     act: async (page) => {
       await page.addStyleTag({ content: "body { margin-right: 15px; }" });
     },
   }),
   app("app--320", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", {}, { widths: [320] }),
-  app("app--hover-selected-tab", "/projects", {}, { widths: WIDE, act: hover("[data-nav-bar] [aria-current=page]") }),
+  app("app--hover-selected-tab", "/lessons", {}, { widths: WIDE, act: hover("[data-nav-bar] [aria-current=page]") }),
   app("app--focus-wordmark", "/", {}, { act: focus("[data-nav-bar] a[href='/']") }),
   app("app--focus-empty-link", "/", {}, { act: focus("[data-empty-state] a") }),
   app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
+
+  // Ticket 10: Check a plan, a project's page and All projects, in every state the 10 brief
+  // lists (section 10), with /api answered from the recordings.
+  ...PLAN_SHOTS,
+  ...PROJECT_SHOTS,
 ];

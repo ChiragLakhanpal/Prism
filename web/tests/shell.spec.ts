@@ -243,7 +243,7 @@ const ADDRESS_ALERTS: [string, string][] = [
 for (const [query, sentence] of ADDRESS_ALERTS) {
   test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
     await mockShell(page);
-    await page.goto(`/projects${query}`);
+    await page.goto(`/lessons${query}`);
 
     const alert = page.locator("[data-alert=info]");
     await expect(alert).toHaveText(sentence);
@@ -254,9 +254,9 @@ for (const [query, sentence] of ADDRESS_ALERTS) {
 
 test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ page }) => {
   await mockShell(page);
-  await page.goto("/projects?view=staff&lang=fr&evidence=ev-1");
+  await page.goto("/lessons?view=staff&lang=fr&evidence=ev-1");
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Projects");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
   await expect(page.locator("[data-alert]")).toHaveCount(0);
 });
 
@@ -296,7 +296,7 @@ test("the box says what Enter will do before anyone presses it, and Escape close
 test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge never clips it", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 390, height: 900 });
-  await page.goto("/projects");
+  await page.goto("/lessons");
   await page.getByRole("button", { name: "Menu" }).click();
   await page.keyboard.press("Tab");
 

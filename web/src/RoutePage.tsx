@@ -2,13 +2,33 @@
 // two short sentences that say what it is for, and an empty-state card that says, in the first
 // person, what the page can't show yet and what will appear there. The not-found pages have no card: their purpose
 // already says what to do, and their one link follows it.
+//
+// All projects, a project's page and Check a plan are built (ticket 10), so they render their own
+// pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
+import { CheckPlanPage } from "./pages/CheckPlanPage";
+import { ProjectPage } from "./pages/ProjectPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
 
 export function RoutePage({ match }: { match: Match }) {
+  const { pid, agencyId, version } = match.values;
+  if (match.key === "projects") return <ProjectsPage />;
+  if (match.key === "project") return <ProjectPage pid={pid} />;
+  if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
+  return (
+    <div className="layout-grid">
+      <div className="col-span-12 md:col-span-8">
+        <PlaceholderPage match={match} />
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderPage({ match }: { match: Match }) {
   const words: { title: string; purpose: string; emptyTitle?: string; emptyBody?: string; link?: string } = copy.pages[match.key];
   const link = words.link && match.linkHref ? { href: match.linkHref, text: <WithIds template={words.link} values={match.values} /> } : undefined;
   return (
@@ -17,7 +37,7 @@ export function RoutePage({ match }: { match: Match }) {
       {words.emptyTitle && words.emptyBody ? (
         <EmptyState
           className="mt-6 lg:mt-8"
-          title={<WithIds template={words.emptyTitle} values={match.values} />}
+          title={<WithIds whole template={words.emptyTitle} values={match.values} />}
           body={words.emptyBody}
           link={link}
         />

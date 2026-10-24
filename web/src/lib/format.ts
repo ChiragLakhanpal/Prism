@@ -74,9 +74,13 @@ export function formatYear(year: number): string {
   return String(year);
 }
 
-// Section 7, rule 12: one to nine in words, numerals from 10.
-export function formatCount(count: number): string {
-  if (Number.isInteger(count) && count >= 1 && count <= 9) return copy.num.words[count - 1];
+// Section 7, rule 12: one to nine in words, numerals from 10. A word that starts a sentence takes
+// a capital ("One needs a look").
+export function formatCount(count: number, options: { capital?: boolean } = {}): string {
+  if (Number.isInteger(count) && count >= 1 && count <= 9) {
+    const word = copy.num.words[count - 1];
+    return options.capital ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+  }
   return grouped(defaultDecimals(count)).format(count);
 }
 

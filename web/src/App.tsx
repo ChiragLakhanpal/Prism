@@ -19,7 +19,7 @@ import { formatDate } from "./lib/format";
 import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
 import { RoutePage } from "./RoutePage";
-import { fill, matchRoute } from "./routes";
+import { fill, isDay, matchRoute } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
@@ -58,14 +58,6 @@ function Box() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-function realDay(text: string): boolean {
-  const day = DAY.exec(text);
-  if (!day) return false;
-  const date = new Date(`${text}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
-}
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
@@ -78,7 +70,7 @@ function alerts(problem: Problem, search: string): { state: "error" | "info"; te
   if (view !== null && view !== "staff") found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
   if (asOf !== null) {
-    found.push({ state: "info", text: realDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
+    found.push({ state: "info", text: isDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
   }
   return found;
 }
@@ -134,17 +126,19 @@ export function App() {
       band={<BoxBand box={<Box />} stamp={<FreshnessStamp freshness={freshness} />} />}
     >
       <div className="layout layout-grid pt-6 md:pt-8 lg:pt-10">
-        <div className="col-span-12 md:col-span-8">
-          {slot.length > 0 && (
-            <div className="mb-6 flex flex-col gap-2">
-              {slot.map((alert) => (
-                <Alert key={alert.text} state={alert.state} live={alert.state === "error" ? "alert" : undefined}>
-                  {alert.text}
-                </Alert>
-              ))}
-            </div>
-          )}
-          <RoutePage match={match} />
+        {slot.length > 0 && (
+          <div className="col-span-12 mb-6 flex flex-col gap-2 md:col-span-8">
+            {slot.map((alert) => (
+              <Alert key={alert.text} state={alert.state} live={alert.state === "error" ? "alert" : undefined}>
+                {alert.text}
+              </Alert>
+            ))}
+          </div>
+        )}
+        {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a
+            table that needs the width, such as the plan check, spans all 12. */}
+        <div className="col-span-12">
+          <RoutePage key={here.pathname} match={match} />
         </div>
       </div>
     </Frame>

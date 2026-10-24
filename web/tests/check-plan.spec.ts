@@ -1,0 +1,355 @@
+// Check a plan (ticket 10) at seam 4: the NWWDA plan of October 9, 2026 for P156634, against the
+// response recorded from check_plan in tests/fixtures/api, which the server tests check the server
+// against. The words below are the ticket's, the blueprint wireframe's and the 10 design brief's,
+// copied here so the test checks the copy file against an independent source.
+//
+// The plan lists nine activities. The wireframe draws eight and leaves out KE-NWWDA-207796-CS-INDV,
+// which has no signals, so the screen shows six marked activities and folds three.
+import AxeBuilder from "@axe-core/playwright";
+import type { Page } from "@playwright/test";
+import { expect, mockApi, recorded, test } from "./mocked";
+
+const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
+const API = `/api${PLAN}`;
+const MARKED = [
+  "KE-NWWDA-541055-CW-RFB",
+  "KE-NWWDA-229129-CW-RFB",
+  "KE-NWWDA-541062-CW-RFQ",
+  "KE-NWWDA-503455-CW-RFQ",
+  "KE-NWWDA-541061-CW-RFQ",
+  "KE-NWWDA-199461-GO-RFB",
+];
+const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
+const FINDING = "One needs a look and two are worth watching; three have data notes.";
+const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+
+type Answer = { status?: number; body: string };
+
+async function openPlan(page: Page, width = 1440, answer?: Answer, path = PLAN) {
+  await page.setViewportSize({ width, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api${path.split("#")[0]}`]: answer ?? { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+  });
+  await page.goto(path);
+}
+
+const view = (page: Page, name: "table" | "cards") => page.locator(`[data-view=${name}]`);
+// The STEP references the view shows, top to bottom: each row header's or card heading's first line.
+const refsIn = (page: Page, name: "table" | "cards") =>
+  view(page, name).locator("[data-activity]").evaluateAll((elements) =>
+    elements
+      .filter((element) => element.getClientRects().length > 0)
+      .map((element) => (element.firstElementChild ?? element).textContent?.trim()),
+  );
+
+async function axe(page: Page) {
+  // Let the fold's fade-in finish, so contrast is measured on what stays on screen.
+  await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
+  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
+}
+
+test("the plan check finds every activity, states the finding, and folds the activities with no signals", async ({ page }) => {
+  await openPlan(page);
+  const main = page.getByRole("main");
+
+  await expect(main.getByRole("heading", { level: 1 })).toHaveText("Northern Water Works Development Agency");
+  await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
+  await expect(main.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities");
+  await expect(view(page, "table")).toBeVisible();
+  expect(await refsIn(page, "table")).toEqual(MARKED);
+  const fold = view(page, "table").locator("[data-fold]");
+  await expect(fold).toContainText(
+    "Three more activities have no signals: KE-NWWDA-199471-GO-RFQ, NWWDA-WSDP-03-2019-2020 and KE-NWWDA-207796-CS-INDV.",
+  );
+
+  // The visible badges of each kind equal the counts in the finding.
+  const table = view(page, "table");
+  await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(1);
+  await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(2);
+  await expect(table.locator("[data-badge=data-note]:visible")).toHaveCount(3);
+  await expect(page.getByRole("link", { name: "Water and Sanitation Development Project (P156634)" }).first()).toHaveAttribute(
+    "href",
+    "/projects/P156634",
+  );
+});
+
+test("Show them opens the folded activities by mouse, and Hide them folds them again", async ({ page }) => {
+  await openPlan(page);
+  const show = view(page, "table").getByRole("button", { name: "Show them" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+
+  await show.click();
+
+  const hide = view(page, "table").getByRole("button", { name: "Hide them" });
+  await expect(hide).toHaveAttribute("aria-expanded", "true");
+  await expect(hide).toBeFocused();
+  expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing all 9 activities");
+  for (const ref of FOLDED) {
+    await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
+  }
+
+  await hide.click();
+  expect(await refsIn(page, "table")).toEqual(MARKED);
+});
+
+test("Show them opens the folded activities from the keyboard, and focus stays on the button", async ({ page }) => {
+  await openPlan(page);
+  const button = view(page, "table").locator("[data-fold] button");
+  await button.focus();
+
+  await page.keyboard.press("Enter");
+  await expect(button).toHaveText("Hide them");
+  await expect(button).toBeFocused();
+  expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
+
+  await page.keyboard.press("Space");
+  await expect(button).toHaveText("Show them");
+  expect(await refsIn(page, "table")).toEqual(MARKED);
+});
+
+test("each reason is built from the copy file's sentence and the tool's values, and reads as the wireframe does", async ({ page }) => {
+  await openPlan(page);
+  const row = (ref: string) => view(page, "table").locator(`tr[id="${ref}"]`);
+
+  await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText(
+    "Planned completion July 31, 2026 passed with no signed contract. The project closes October 31, 2026.",
+  );
+  await expect(row("KE-NWWDA-229129-CW-RFB")).toContainText(
+    "Signed January 3, 2022, 186 days after its planned date, at US$1,245,092.76, about 4 times its estimate.",
+  );
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText("Still pending, 9 days before the project closes.");
+  await expect(row("KE-NWWDA-199461-GO-RFB")).toContainText(
+    "The reference ends in RFB (Request for Bids), but the Method column says Request for Quotations. I use the Method column.",
+  );
+  await expect(row("KE-NWWDA-503455-CW-RFQ")).toContainText("Signed, but Actual Amount reads 0.00.");
+  await expect(row("KE-NWWDA-541061-CW-RFQ")).toContainText("Completed, but Actual Amount reads 0.00.");
+});
+
+test("column names and values are STEP's, word for word", async ({ page }) => {
+  await openPlan(page);
+  const table = view(page, "table").locator("table");
+
+  await expect(table.locator("thead th")).toHaveText([
+    "Activity",
+    "Method · market approach",
+    "Review",
+    "Estimated (US$)",
+    "Process status",
+    "What Strata found",
+  ]);
+  const cells = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td');
+  await expect(cells.nth(0)).toHaveText("Request for Bids · Open - National");
+  await expect(cells.nth(1)).toHaveText("Post");
+  await expect(cells.nth(2)).toHaveText("1,230,000.00");
+  await expect(cells.nth(3)).toHaveText("Pending Implementation");
+  await expect(table.locator('tr[id="KE-NWWDA-199461-GO-RFB"] td').nth(0)).toHaveText("Request for Quotations · Limited");
+});
+
+test("the table follows DESIGN.md: title sentence, count line, surface-2 header, units in the heads, numbers right-aligned in tabular numerals, a source line, and references in Roboto Mono", async ({ page }) => {
+  await openPlan(page);
+  const table = view(page, "table").locator("table");
+
+  const header = await table.locator("thead").evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(header).toBe("rgb(231, 237, 243)");
+  const amountHead = table.locator("thead th").nth(3);
+  const amount = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td').nth(2);
+  for (const cell of [amountHead, amount]) {
+    expect(await cell.evaluate((el) => getComputedStyle(el).textAlign)).toBe("right");
+  }
+  expect(await amount.evaluate((el) => getComputedStyle(el).fontVariantNumeric)).toContain("tabular-nums");
+  const ref = table.locator('[data-activity="KE-NWWDA-541055-CW-RFB"] span').first();
+  expect(await ref.evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0])).toBe('"Roboto Mono"');
+
+  const source = page.locator("[data-plan-check] [data-source]");
+  await expect(source).toContainText(
+    "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, disclosed October 9, 2026.",
+  );
+  const [tableBox, sourceBox] = [await table.boundingBox(), await source.boundingBox()];
+  expect(sourceBox!.y).toBeGreaterThan(tableBox!.y + tableBox!.height);
+  await expect(page.getByRole("link", { name: "The plan on the World Bank's documents site (opens in a new tab)" })).toHaveAttribute(
+    "target",
+    "_blank",
+  );
+});
+
+test("marks are status badges with an icon and their name; Data note is neutral and dashed", async ({ page }) => {
+  await openPlan(page);
+  const badges = view(page, "table").locator("[data-badge]");
+
+  for (const badge of await badges.all()) {
+    await expect(badge.locator("svg[aria-hidden=true]")).toHaveCount(1);
+    await expect(badge).toHaveText(/^(Needs a look|Watch|Data note)$/);
+  }
+  const note = view(page, "table").locator("[data-badge=data-note]").first();
+  expect(await note.evaluate((el) => [getComputedStyle(el).borderStyle, getComputedStyle(el).backgroundColor])).toEqual([
+    "dashed",
+    "rgb(231, 237, 243)",
+  ]);
+});
+
+test("the page says what Strata cannot see, as the wireframe does", async ({ page }) => {
+  await openPlan(page);
+
+  await expect(page.locator("[data-not-visible]")).toHaveText(
+    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP.",
+  );
+});
+
+test("a number explains itself on focus, and What Strata found opens its definition", async ({ page }) => {
+  await openPlan(page);
+  const days = view(page, "table").locator('tr[id="KE-NWWDA-229129-CW-RFB"] button[data-num]').filter({ hasText: "186" });
+
+  await days.focus();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("Planned signing date, as first published");
+  await expect(tip).toContainText("July 1, 2021, in the plan of April 21, 2021");
+  await expect(tip).toContainText("Days between them186");
+  await page.keyboard.press("Escape");
+  await expect(tip).toHaveCount(0);
+  await expect(days).toBeFocused();
+
+  const term = view(page, "table").getByRole("button", { name: "What Strata found" });
+  await term.click();
+  const definition = page.getByRole("dialog", { name: "What Strata found" });
+  await expect(definition).toContainText("An activity needs a look when its planned completion passed with no signed contract");
+  await expect(definition).toContainText("US$1,000,000.00");
+  await page.keyboard.press("Escape");
+  await expect(definition).toHaveCount(0);
+  await expect(term).toBeFocused();
+});
+
+test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {
+  await openPlan(page, 1440, undefined, `${PLAN}#KE-NWWDA-207796-CS-INDV`);
+
+  const target = view(page, "table").locator('[data-activity="KE-NWWDA-207796-CS-INDV"]');
+  await expect(target).toBeFocused();
+  await expect(view(page, "table").getByRole("button", { name: "Hide them" })).toBeVisible();
+});
+
+test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
+  for (const width of [1023, 768, 390]) {
+    await openPlan(page, width);
+    await expect(view(page, "table")).toBeHidden();
+    expect(await refsIn(page, "cards"), `${width} px`).toEqual(MARKED);
+  }
+  await expect(page.getByRole("heading", { level: 3, name: "Needs a look KE-NWWDA-541055-CW-RFB" })).toBeVisible();
+  await view(page, "cards").getByRole("button", { name: "Show them" }).click();
+  expect(await refsIn(page, "cards")).toEqual([...MARKED, ...FOLDED]);
+  // Below 768 px the breadcrumb shows only its parent.
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link")).toHaveText("Procurement");
+});
+
+test("at 1024 px the plan check is a table", async ({ page }) => {
+  await openPlan(page, 1024);
+
+  await expect(view(page, "cards")).toBeHidden();
+  expect(await refsIn(page, "table")).toEqual(MARKED);
+});
+
+test("while the check loads, skeletons hold its places and a status says so", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await page.goto(PLAN);
+
+  await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(1);
+  await expect(page.locator("[data-plan-skeleton] thead th")).toHaveText([
+    "Activity",
+    "Method · market approach",
+    "Review",
+    "Estimated (US$)",
+    "Process status",
+    "What Strata found",
+  ]);
+  await expect(page.getByText("Still checking this plan.")).toBeVisible({ timeout: 5000 });
+  release();
+  await expect(page.getByRole("status").filter({ hasText: "Checked nine activities." })).toHaveCount(1);
+});
+
+test("an agency with no plan says so and links to the project's plans", async ({ page }) => {
+  await openPlan(page, 1440, { body: await recorded("check-plan-p156634-wajir-no-plan.json") }, "/projects/P156634/procurement/wajir-water-and-sewerage-company");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Wajir Water and Sewerage Company");
+  const card = page.locator("[data-empty-state]");
+  await expect(card.getByRole("heading", { level: 2 })).toHaveText("I don't have a Procurement Plan from Wajir Water and Sewerage Company yet.");
+  await expect(card).toContainText("I can check a plan only after the World Bank discloses it and I have read it.");
+  await expect(card.getByRole("link", { name: "All Procurement Plans for this project" })).toHaveAttribute("href", "/projects/P156634/procurement");
+  await expect(page.locator("[data-check-pill]")).toHaveCount(0);
+});
+
+test("a version the agency never published names the latest one", async ({ page }) => {
+  const path = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-10";
+  await openPlan(page, 1440, { body: await recorded("check-plan-p156634-nwwda-2026-10-10-not-found.json") }, path);
+
+  const card = page.locator("[data-empty-state]");
+  await expect(card.getByRole("heading", { level: 2 })).toHaveText("I don't have a plan from this agency dated October 10, 2026.");
+  await expect(card).toContainText("The latest plan I have from this agency is dated October 9, 2026.");
+  await expect(card.getByRole("link", { name: "Plan of Oct 9, 2026" })).toHaveAttribute("href", PLAN);
+});
+
+test("a service that didn't answer gives Try again and a reference; Try again that works moves focus to the finding", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  const good = await recorded("check-plan-p156634-nwwda-2026-10-09.json");
+  let calls = 0;
+  await page.route(`**${API}`, (route) => {
+    calls += 1;
+    return calls === 1
+      ? route.fulfill({ status: 503, contentType: "application/json", body: '{"code": "data_service", "trace_id": "0af7651916cd43dd8448eb211c80319c"}' })
+      : route.fulfill({ status: 200, contentType: "application/json", body: good });
+  });
+  await page.goto(PLAN);
+
+  await expect(page.getByRole("alert")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
+  await expect(page.getByText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.")).toBeVisible();
+  await page.getByRole("button", { name: "Try again" }).click();
+
+  await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeFocused();
+});
+
+test("an account that can't read Strata's tables is told what to ask for, with no retry", async ({ page }) => {
+  await openPlan(page, 1440, { status: 403, body: '{"code": "permission"}' });
+
+  await expect(page.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show this plan.");
+  await expect(page.getByText("Ask your workspace admin for read access to the strata catalog.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
+});
+
+test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px, folded and open, and the page reflows at 320 px", async ({ page }) => {
+  for (const width of [1440, 1024, 390]) {
+    await openPlan(page, width);
+    await expect(page.locator("[data-plan-check]")).toBeVisible();
+    expect(await axe(page), `${width} px`).toEqual([]);
+    await page.locator("[data-fold] button:visible").click();
+    expect(await axe(page), `${width} px, open`).toEqual([]);
+  }
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+test("axe finds no violations in the loading, empty and error states", async ({ page }) => {
+  const states: [string, Answer, string?][] = [
+    ["empty", { body: await recorded("check-plan-p156634-wajir-no-plan.json") }, "/projects/P156634/procurement/wajir-water-and-sewerage-company"],
+    ["error", { status: 503, body: '{"code": "data_service", "trace_id": "0af7651916cd43dd8448eb211c80319c"}' }],
+    ["permission", { status: 403, body: '{"code": "permission"}' }],
+  ];
+  for (const [name, answer, path] of states) {
+    for (const width of [1440, 390]) {
+      await openPlan(page, width, answer, path);
+      await expect(page.locator(`[data-check-plan-page=${name === "empty" ? "ready" : "error"}]`)).toBeVisible();
+      expect(await axe(page), `${name} at ${width} px`).toEqual([]);
+    }
+  }
+});

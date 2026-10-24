@@ -83,7 +83,11 @@ for (const slug of SLUGS) {
           const width = rect.width + pad(after.left) + pad(after.right);
           const height = rect.height + pad(after.top) + pad(after.bottom);
           const isButton = el.hasAttribute("data-button");
-          const ok = width >= 24 && height >= 24 && (!isButton || Math.round(rect.height) === 44);
+          // A number you can check sits inside a sentence, such as "186 days", so it is an inline
+          // target, which WCAG 2.5.8 exempts from the width; it still keeps a line 24 px tall (the
+          // 10 brief, section 5).
+          const inSentence = el.hasAttribute("data-num");
+          const ok = (inSentence || width >= 24) && height >= 24 && (!isButton || Math.round(rect.height) === 44);
           const label = `${el.tagName.toLowerCase()} "${el.textContent?.trim().slice(0, 30)}"`;
           return ok ? [] : [`${label} ${Math.round(width)}x${Math.round(height)}`];
         });

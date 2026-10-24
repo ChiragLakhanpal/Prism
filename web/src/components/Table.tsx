@@ -48,7 +48,8 @@ export type TableState =
 
 // What the count line counts: "Showing all 4 activities", or "Showing 1–20 of 99 sources"
 // when the rows are one page of more.
-export type Count = { noun: string; total: number; from?: number; to?: number };
+// one is the noun for a single row ("version"), so one row reads "Showing 1 version".
+export type Count = { noun: string; one?: string; total: number; from?: number; to?: number };
 
 type Level = 2 | 3 | 4 | 5;
 
@@ -58,6 +59,9 @@ const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
   md: { table: "md:block", cards: "md:hidden" },
   lg: { table: "lg:block", cards: "lg:hidden" },
 };
+// The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
+// breakpoint as cardsBelow="lg".
+export const CARD_BREAKPOINTS = SHOW;
 
 const n = (value: number) => formatNumber(value, { compact: false });
 
@@ -69,7 +73,8 @@ const CARD_FIELDS = "mt-2 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] g
 const cardField = (column: Column, shared: boolean) =>
   cx("flex min-w-0 flex-col justify-end", !(column.numeric && shared) && "col-span-full");
 
-function countText({ noun, total, from, to }: Count): string {
+function countText({ noun, one, total, from, to }: Count): string {
+  if (total === 1 && one) return copy.table.showingOne(one);
   return from !== undefined && to !== undefined && (from > 1 || to < total)
     ? copy.table.showing(n(from), n(to), n(total), noun)
     : copy.table.showingAll(n(total), noun);
