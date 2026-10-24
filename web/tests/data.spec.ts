@@ -406,6 +406,19 @@ test("the plan check's first-listing number opens a window named for that check,
   await expect(window).not.toContainText("fiscal years");
 });
 
+// Review r7 B1: the document search's Ready for number counts passages, which fill no column, so
+// its window names them and the table they were counted in, not Coverage and its fiscal years.
+test("the document search's Ready for number opens a window named for the passages you can search, with their table", async ({ page }) => {
+  await mockData(page, FULL);
+  await open(page);
+
+  await table(page, "kinds").locator("[data-cell='document_search:readyFor'] [data-num]").click();
+  const window = page.getByRole("dialog", { name: "Passages you can search" });
+  await expect(window).toContainText("How many of the passages I read you can search.");
+  await expect(window).not.toContainText("fiscal years");
+  await expect(window.locator(".font-mono")).toHaveText("strata.gold.passage");
+});
+
 // Design r6 P4: the table name is what a reader copies or searches for, so at 320 px it breaks
 // only after a dot ("strata.silver." then "plan_listings"), never inside a word.
 test("at 320 px a window's table name breaks only after a dot", async ({ page }) => {

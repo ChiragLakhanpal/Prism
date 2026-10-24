@@ -151,6 +151,10 @@ class Measures:
         newest for a source whose documents arrive as they are published."""
         key = (source, measure)
         if key in self.index:
+            # A row first used with no table takes the one a later use names, so the order in which
+            # the page's parts use a measure never leaves its window without a table.
+            used = self.rows[self.index[key]]["source"]
+            used["counted_in"] = used["counted_in"] or counted_in
             return self.index[key]
         found = self.latest.get(key)
         if not found:
@@ -496,7 +500,17 @@ def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | No
         if source is None:
             raise ToolContractError(f"The tool {tool.name}'s readiness names the row {kind.ready_for_row!r}, which "
                                     "no source in config/sources.toml has.")
-        ready_for = page.measures.use(source, kind.ready_for_measure)
+        # Its window names the table it counted: the column's or check's that shows the measure, or
+        # the tool registry's own when none does (review r7 B1).
+        [row] = [found for found in page.sources[source].readiness if found.id == kind.ready_for_row]
+        shown = {column.measure: column.counted_in
+                 for column in (*(getattr(row, name) for name in READINESS_COLUMNS), *row.checks) if column}
+        counted_in = shown.get(kind.ready_for_measure) or kind.ready_for_counted_in
+        if counted_in is None:
+            raise ToolContractError(f"The tool {tool.name}'s ready_for measure {kind.ready_for_measure!r} needs "
+                                    f"counted_in in config/tools.toml, because no column or check of the row "
+                                    f"{kind.ready_for_row!r} shows it.")
+        ready_for = page.measures.use(source, kind.ready_for_measure, counted_in)
         mine = [found for found in ranked if found.row_id in kind.draws_on]
         if ready_for is None or not page.measures.rows[ready_for]["count"]:
             status = "gap"

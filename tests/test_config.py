@@ -255,6 +255,32 @@ def test_a_fix_on_a_measure_no_column_shows_must_say_what_it_counts(tmp_path):
         config.load_sources(path)
 
 
+def test_a_fix_on_a_measure_no_column_shows_must_name_the_table_it_counts(tmp_path):
+    """Review r7: every number's window names the table it was counted in, and no column gives one."""
+    path = copy("sources.toml", tmp_path, 'noun = "contracts in local currency"\ncounted_in = "strata.gold.contract"\n',
+                'noun = "contracts in local currency"\n')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[2\]\.counted_in must name the table"):
+        config.load_sources(path)
+
+
+def test_a_fix_s_projects_measure_must_name_the_table_it_counts(tmp_path):
+    path = copy("sources.toml", tmp_path, 'projects_counted_in = "strata.gold.contract"\nsentence = "Find', 'sentence = "Find')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[1\]\.projects_counted_in must name the table"):
+        config.load_sources(path)
+
+
+def test_a_kind_s_ready_for_names_its_table_when_no_column_of_its_row_shows_the_measure():
+    """Review r7 B1: the document search's Ready for counts passages, which no column of the reports
+    row shows, so the tool registry names their table. The plan check's is the plans row's Read well
+    measure, whose table the source registry already names once."""
+    tools = config.load_tools()
+
+    assert tools["search_passages"].readiness.ready_for_counted_in == "strata.gold.passage"
+    assert tools["check_plan"].readiness.ready_for_counted_in is None
+
+
 def _texts(value):
     """Every string in a loaded TOML value."""
     if isinstance(value, str):

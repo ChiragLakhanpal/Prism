@@ -1413,7 +1413,7 @@
       },
       "source_key": "documents",
       "measure": "step_rows_with_reference",
-      "kind": "read_well",
+      "kind": "linked",
       "subjects": [
         "P156634"
       ],
@@ -1697,7 +1697,7 @@
           "P156634"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.passage"
       },
       "source_key": "documents",
       "measure": "passages_embedded",

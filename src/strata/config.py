@@ -380,8 +380,14 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
         noun = fix.text("noun", required=False)
         if noun is None and fix.text("measure") not in shown:
             fix._fail("noun", "must say what its measure counts, because no column of this source shows that measure")
+        # Every number's window names the table it was counted in (review r7).
+        if fix.text("counted_in", required=False) is None and fix.text("measure") not in shown:
+            fix._fail("counted_in", "must name the table its measure counts, because no column of this source shows "
+                                    "that measure")
         if fix.text("projects_counted_in", required=False) and not fix.text("projects", required=False):
             fix._fail("projects_counted_in", "names the table of the projects measure, so it needs projects")
+        if fix.text("projects", required=False) and not fix.text("projects_counted_in", required=False):
+            fix._fail("projects_counted_in", "must name the table the projects measure counts")
         fixes.append(Fix(fix.text("sentence"), fix.text("measure"), fix.text("projects", required=False), gap_id, noun,
                          fix.text("counted_in", required=False), fix.text("projects_counted_in", required=False)))
     fields["fixes"] = tuple(fixes)
@@ -710,12 +716,14 @@ class ToolReadiness:
     """The kind of question a tool answers, as the Data readiness page's "What you can ask" shows it:
     its words are copy.ts's dataReadiness.kinds[kind], the number in its "Ready for" cell is
     ready_for_measure in the readiness row ready_for_row, and what holds it back comes from the rows
-    it draws on (config/sources.toml, [[sources.<key>.readiness]])."""
+    it draws on (config/sources.toml, [[sources.<key>.readiness]]). ready_for_counted_in is the
+    table that measure counts, when no column or check of its row shows it and so names it."""
 
     kind: str
     ready_for_row: str
     ready_for_measure: str
     draws_on: tuple[str, ...]
+    ready_for_counted_in: str | None = None
 
 
 @dataclass(frozen=True)
@@ -764,11 +772,12 @@ def _tool_readiness(path: Path, name: str, table: dict) -> ToolReadiness | None:
     entry = _Entry(path, f"tools.{name}.readiness", table["readiness"])
     entry.only({"kind", "ready_for", "draws_on"})
     ready_for = _Entry(path, f"tools.{name}.readiness.ready_for", entry.table.get("ready_for"))
-    ready_for.only({"row", "measure"})
+    ready_for.only({"row", "measure", "counted_in"})
     draws_on = entry.texts("draws_on")
     if ready_for.text("row") not in draws_on:
         ready_for._fail("row", "must be one of the rows in draws_on")
-    return ToolReadiness(entry.text("kind"), ready_for.text("row"), ready_for.text("measure"), draws_on)
+    return ToolReadiness(entry.text("kind"), ready_for.text("row"), ready_for.text("measure"), draws_on,
+                         ready_for.text("counted_in", required=False))
 
 
 def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter, ...]:

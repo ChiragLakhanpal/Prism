@@ -737,6 +737,11 @@ export const copy = {
           "award notices. I count them out of every project with a contract I built from those notices. I build " +
           "these contracts only for the fiscal years that no awards dataset covers.",
       },
+      // The document search's Ready for number: its title repeats the cell's own words (review r7 B1).
+      passages_embedded: {
+        title: "Passages you can search",
+        definition: "How many of the passages I read you can search. I count them out of every passage I read.",
+      },
     } as Record<string, { title: string; definition: string }>,
     loading: {
       slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",

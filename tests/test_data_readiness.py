@@ -245,6 +245,42 @@ def test_a_fix_s_numbers_name_the_table_they_were_counted_in(engine):
         assert result["rows"][fix["projects_row"]]["source"]["counted_in"] == "strata.gold.contract", gap
 
 
+def test_every_row_behind_a_number_names_the_table_it_was_counted_in_on_every_view(engine):
+    """Review r7 B1: every number's window names the table it was counted in. The document search's
+    Ready for row named none, because the tool used its measure with no table. The views are the full
+    page, each kind's own view and each source alone, so a row a filtered view adds first is checked."""
+    views = [{}, *({"from_tool": name} for name, tool in config.load_tools().items() if tool.readiness),
+             *({"sources": key} for key in config.load_sources())]
+
+    for arguments in views:
+        result = readiness(engine, **arguments)
+        assert [(row["source_key"], row["measure"]) for row in result["rows"]
+                if not row["source"]["counted_in"]] == [], arguments
+    result = readiness(engine)
+    [search] = [kind for kind in result["kinds"] if kind["kind"] == "document_search"]
+    assert result["rows"][search["ready_for"]]["source"]["counted_in"] == "strata.gold.passage"
+
+
+def test_each_measure_in_a_column_is_written_with_that_column_as_its_kind(engine):
+    """Review r7 P1: a number inside a sentence opens the window of its measure's kind, so every
+    measure the registry puts in a column, and each coverage column's years, is written with that
+    column as its kind. The plans' Activity Reference No. link was written as read_well."""
+    wrong = []
+    for key, source in config.load_sources().items():
+        for row in source.readiness:
+            for column in COLUMNS:
+                given = getattr(row, column)
+                for measure in (given.measure, given.years) if given else ():
+                    if measure is None:
+                        continue
+                    kinds = [found["kind"] for found in query(
+                        engine, "SELECT DISTINCT kind FROM strata.ops.data_readiness "
+                                "WHERE source = :source AND measure = :measure", source=key, measure=measure)]
+                    if kinds != [column]:
+                        wrong.append((row.id, column, measure, kinds))
+    assert wrong == []
+
+
 def test_a_shortfall_says_what_its_records_lack_so_its_tooltip_can_name_them(engine):
     """Design r3, low polish: the headline's 75 says these are the contracts that lack a reference."""
     result = readiness(engine)

@@ -19,7 +19,8 @@
 -- kind         coverage, linked, read_well or fresh, or stripped for the contact details removed
 --              (the dashboard's Governance page shows personal data stripped), screened for what
 --              Prompt Shields found in the passages, or fix for what a fix on the Data readiness
---              page would unlock, such as the projects it would add evidence to
+--              page would unlock, such as the projects it would add evidence to. A measure the
+--              page shows in a column has that column as its kind (tests/test_data_readiness.py)
 -- count        how many; empty for a freshness measure
 -- denominator  out of how many; empty for a freshness measure
 -- as_of        for a freshness measure: the day of the last fetch, or of the newest record

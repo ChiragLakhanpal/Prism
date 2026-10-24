@@ -99,38 +99,59 @@ type Registry = {
   sources: Record<
     string,
     {
-      readiness?: (Record<string, unknown> & { checks?: { measure: string }[] })[];
+      readiness?: (Record<string, unknown> & { id: string; label: string; covers?: string; checks?: { measure: string }[] })[];
       fixes?: { measure: string; projects?: string }[];
     }
   >;
 };
 
-test("every measure in config/sources.toml that fills no column has its own window words in the copy file", async () => {
-  // Design r5 B1: a check's number opened Coverage's window. A check, or a fix's measure that no
-  // column shows, has words of its own in copy.dataReadiness.measureWindows, so a new one can never
-  // fall back to a column's name and definition.
-  const { copy } = await import("../src/copy.ts");
-  const path = fileURLToPath(new URL("../../config/sources.toml", import.meta.url));
-  // Python's tomllib reads the registry as the server does; the web app has no TOML reader.
+type Tools = { tools: Record<string, { readiness?: { ready_for: { row: string; measure: string } } }> };
+
+// Python's tomllib reads a registry as the server does; the web app has no TOML reader.
+function readRegistry<T>(name: string): T {
+  const path = fileURLToPath(new URL(`../../config/${name}`, import.meta.url));
   const read = spawnSync("python3", ["-c", "import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], 'rb')), default=str))", path], {
     encoding: "utf8",
   });
   expect(read.status, read.stderr).toBe(0);
-  const registry = JSON.parse(read.stdout) as Registry;
+  return JSON.parse(read.stdout) as T;
+}
+
+test("every measure a number on /data can open that fills no column has its own window words in the copy file", async () => {
+  // Design r5 B1 and review r7 B1: a check's number, and then a kind's Ready for number, opened
+  // Coverage's window. Every measure the page can show comes from one of three places: a column, a
+  // check or a fix in config/sources.toml, or a kind's Ready for in config/tools.toml. Each one that
+  // no column of its row shows has words of its own in copy.dataReadiness.measureWindows, so a new
+  // one can never fall back to a column's name and definition.
+  const { copy } = await import("../src/copy.ts");
+  const registry = readRegistry<Registry>("sources.toml");
   const columns = ["coverage", "linked", "read_well", "fresh"];
   const needed: string[] = [];
   const columnMeasures = new Set<string>();
+  const rowColumns = new Map<string, Set<string>>();
   for (const source of Object.values(registry.sources)) {
     const rows = source.readiness ?? [];
-    const shown = new Set(rows.flatMap((row) => columns.map((column) => (row[column] as { measure?: string } | undefined)?.measure)));
-    for (const measure of shown) if (measure) columnMeasures.add(measure);
+    for (const row of rows) {
+      const filled = columns.flatMap((column) => {
+        const given = row[column] as { measure?: string; years?: string } | undefined;
+        return [given?.measure, given?.years].filter((measure): measure is string => Boolean(measure));
+      });
+      rowColumns.set(row.id, new Set(filled));
+      for (const measure of filled) columnMeasures.add(measure);
+    }
+    const shown = new Set(rows.flatMap((row) => [...(rowColumns.get(row.id) ?? [])]));
     needed.push(...rows.flatMap((row) => (row.checks ?? []).map((check) => check.measure)));
     for (const fix of source.fixes ?? []) {
       if (!shown.has(fix.measure)) needed.push(fix.measure);
       if (fix.projects) needed.push(fix.projects);
     }
   }
+  const readyFor = Object.values(readRegistry<Tools>("tools.toml").tools).flatMap((tool) => (tool.readiness ? [tool.readiness.ready_for] : []));
+  for (const { row, measure } of readyFor) if (!rowColumns.get(row)?.has(measure)) needed.push(measure);
+  // Each place adds at least one, so a reader that silently found none can't pass.
   expect(needed).toContain("latest_activities_with_confirmed_first_listing_read");
+  expect(needed).toContain("gap_years_projects_in_local_currency");
+  expect(needed).toContain("passages_embedded");
   const words = copy.dataReadiness.measureWindows;
   const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
   expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
@@ -141,6 +162,10 @@ test("every measure in config/sources.toml that fills no column has its own wind
     Object.keys(words).filter((measure) => columnMeasures.has(measure)),
     "a column's number opens the column's window",
   ).toEqual([]);
+  // Review r7 P3: fix 1's window names the awards dataset by the registry's label and years, so the
+  // two can't drift apart.
+  const awards = registry.sources.awards.readiness?.[0];
+  expect(words.projects_with_contracts_lacking_step_reference.definition).toContain(`${awards?.label} ${awards?.covers}`);
 });
 
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {

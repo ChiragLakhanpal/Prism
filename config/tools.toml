@@ -37,7 +37,10 @@
 # readiness page lists each such kind under "What you can ask" (ticket 16):
 #   kind           its key in web/src/copy.ts's dataReadiness.kinds, which holds its words
 #   ready_for      the measure whose count goes in its "Ready for" cell: the readiness row's id
-#                  (config/sources.toml) and the measure's name
+#                  (config/sources.toml), the measure's name and, when no column or check of that
+#                  row shows the measure, counted_in, the table it counts, which its window names.
+#                  Such a measure also needs its window's words in web/src/copy.ts's
+#                  dataReadiness.measureWindows (web/tests/lint.spec.ts checks both).
 #   draws_on       the readiness rows whose gaps hold its answers back
 
 [tools.check_plan]
@@ -113,7 +116,7 @@ sources = ["documents", "projects"]
 
 [tools.search_passages.readiness]
 kind = "document_search"
-ready_for = { row = "reports", measure = "passages_embedded" }
+ready_for = { row = "reports", measure = "passages_embedded", counted_in = "strata.gold.passage" }
 draws_on = ["reports", "projects"]
 
 [[tools.search_passages.parameters]]

@@ -1413,7 +1413,7 @@
       },
       "source_key": "documents",
       "measure": "step_rows_with_reference",
-      "kind": "read_well",
+      "kind": "linked",
       "subjects": [
         "P156634"
       ],
