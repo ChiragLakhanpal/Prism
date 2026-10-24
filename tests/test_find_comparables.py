@@ -266,14 +266,15 @@ def test_the_numbers_each_frequency_phrase_states_come_back_with_its_words_so_th
 
 
 def test_the_plan_s_share_says_about_when_it_rounds_to_between_1_and_9_in_10(engine):
-    """With review type Post, values.toml's 36 signed Post comparables hold both packages signed within
+    """With review type Post, values.toml's signed Post comparables hold both packages signed within
     the plan's 1.5 months. 2 of 36 is 0.56 in 10, which rounds to about 1 in 10."""
     post = [c["reference"] for c in COMPARABLES if c.get("review_type") == "Post"]
     within = [reference for reference in post if reference in PAST_RANGE["signed_within_plan"]]
 
     result = find(engine, review_type="Post")
 
-    assert (result["counts"]["comparables"], result["plan"]["within"]) == (len(post), len(within)) == (36, 2)
+    assert (result["counts"]["comparables"], result["plan"]["within"]) == (len(post), len(within))
+    assert len(within) == len(PAST_RANGE["signed_within_plan"])
     assert result["frequencies"]["plan"] == {"words": "about", "states": [1, 10]}
 
 

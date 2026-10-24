@@ -430,16 +430,19 @@ function Populated({ result }: { result: ComparablesResult }) {
         <Fill template={words.title.abstain} slots={{ n: <Num count={total} /> }} />
       );
   } else if (result.plan) {
-    const { within: w, in10 } = result.plan;
+    const w = result.plan.within;
     const t = words.title;
-    const template = w === 0 ? t.none : w === total ? t.all : in10 === 0 ? t.fewerThanOne : in10 === 10 ? t.moreThanNine : t.about;
+    // The words for the share come from the tool with its numbers (CLAUDE.md rule 4).
+    const share = result.frequencies?.plan ?? null;
+    const template =
+      w === 0 ? t.none : w === total ? t.all : share?.words === "fewer_than" ? t.fewerThanOne : share?.words === "more_than" ? t.moreThanNine : t.about;
     title = (
       <Fill
         template={template}
         slots={{
           within: count(w, explainCounts),
           total: count(total, explainCounts),
-          in10: in10 === null ? null : count(in10, explainCounts),
+          in10: share === null ? null : count(share.states[0], explainCounts),
           plan: <Num value={result.plan.months} options={{ decimals: 1, compact: false }} check={explainPlan} />,
         }}
       />

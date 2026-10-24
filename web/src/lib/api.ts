@@ -249,6 +249,12 @@ export type ComparablesResult = {
     in10: number | null;
   } | null;
   quantile_dots: { k: number; days: number; months: number; reached: boolean }[] | null;
+  // The numbers each "in 10" phrase states, and the words that go with the plan's share, as the tool
+  // decided them: the screen picks its title from these words and never works them out again.
+  frequencies: {
+    q80: [number, number] | null;
+    plan: { words: "fewer_than" | "about" | "more_than"; states: [number, number] } | null;
+  } | null;
   thresholds: { min_comparables: number; quantile_dots_above: number; quantile_dots: number; max_plan_months: number; canceled_as_still_open: boolean };
   sources: { key: string; dataset_name: string }[];
   records_through: string | null;

@@ -132,6 +132,10 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
             within,
             in10: options.abstain ? null : Math.round((within * 10) / total),
           },
+    // Every sample's share falls between 1 and 9 in 10, so the tool's words for it are "about".
+    frequencies: options.abstain
+      ? null
+      : { q80: [8, 10], plan: options.plan === false ? null : { words: "about", states: [Math.round((within * 10) / total), 10] } },
     quantile_dots:
       total > 60 && !options.abstain
         ? Array.from({ length: 20 }, (_, index) => {
@@ -158,6 +162,7 @@ const rangeEmpty = (abstention: ComparablesResult["abstention"], matched: number
   counts: null,
   past_range: null,
   plan: null,
+  frequencies: null,
   abstention,
   coverage: matched
     ? { matched, used: 0, not_used: [{ reason: "no_notice", count: matched, evidence_ids: [] }] }

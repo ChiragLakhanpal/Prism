@@ -320,8 +320,9 @@ def _plan(package: dict, rows: list[dict], ranged: bool) -> dict | None:
 
 def _frequencies(plan: dict | None, past_range: dict, total: int) -> dict:
     """The numbers each frequency phrase states: "8 in 10 were signed within", and the plan's "about N in
-    10", "fewer than 1 in 10" or "more than 9 in 10" with the words that go with them, by the rule the
-    screen's title uses (web/src/components/PastRange.tsx)."""
+    10", "fewer than 1 in 10" or "more than 9 in 10" with the words that go with them. This is the one
+    place the words are decided: the screen's title (web/src/components/PastRange.tsx) reads them from
+    the result."""
     share = None
     if plan is not None and plan["in10"] is not None and 0 < plan["within"] < total:
         in10 = plan["in10"]

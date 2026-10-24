@@ -183,6 +183,7 @@ const COMPARABLES = "comparables-ke-nwwda-541055.json";
 const comparables = (name: string): Answer => ({ recorded: name });
 const noPlanDates = derived(COMPARABLES, (body) => {
   body.plan = null;
+  body.frequencies.plan = null;
   body.package.planned_notice_on = null;
   body.package.planned_signing_on = null;
 });

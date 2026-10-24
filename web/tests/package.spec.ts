@@ -47,6 +47,12 @@ async function derived(name: string, edit: (body: Comparables) => void): Promise
   return { body: JSON.stringify(body) };
 }
 
+// A plan row with no planned dates: no plan, so no share of it either.
+const noPlan = (body: Comparables) => {
+  body.plan = null;
+  (body.frequencies as { plan: unknown }).plan = null;
+};
+
 async function signedWithin(months: number): Promise<number> {
   const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables;
   return body.rows.filter((row) => !row.still_open && row.months <= months).length;
@@ -100,6 +106,18 @@ test("the workspace names the package, lists its facts in STEP's field names, an
     "/data?sources=notices,awards,documents,projects&from=find_comparables",
   );
   await expect(section(page).locator("[data-source]").first()).toContainText("Records run through October 13, 2026.");
+});
+
+test("the title states the plan's share in the words find_comparables returned with it", async ({ page }) => {
+  // The tool decides the words (CLAUDE.md rule 4); here it says "about" 1 in 10 for the same 2 of 49.
+  const about = await derived("comparables-ke-nwwda-541055.json", (body) => {
+    body.frequencies = { q80: [8, 10], plan: { words: "about", states: [1, 10] } };
+  });
+  await openPackage(page, { comparables: about });
+  await ready(page);
+  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+    "2 of 49 comparable packages, about 1 in 10, were signed within the plan's 1.5 months.",
+  );
 });
 
 test("the chart draws each comparable as a dot on a month axis, hollow if still open, with the middle half as a band and the middle as a tick", async ({ page }) => {
@@ -839,7 +857,7 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
 const SERVICE_DOWN = '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}';
 const STATES: [string, () => Promise<Parameters<typeof openPackage>[1]>][] = [
   ["populated", async () => ({})],
-  ["no plan dates", async () => ({ comparables: await derived("comparables-ke-nwwda-541055.json", (body) => (body.plan = null)) })],
+  ["no plan dates", async () => ({ comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) })],
   ["quantile dots", async () => ({ comparables: { body: await recorded("comparables-ke-nwwda-541055-any-category.json") } })],
   ["abstention", async () => ({ comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") } })],
   ["no match", async () => ({ comparables: { body: await recorded("comparables-ke-nwwda-541055-india.json") } })],
@@ -946,7 +964,7 @@ test("below 768 px the section's sentence leads the chart in the page's order, s
 });
 
 test("a plan row with no planned dates has no plan line until you type months", async ({ page }) => {
-  await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", (body) => (body.plan = null)) });
+  await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);
 
   await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
