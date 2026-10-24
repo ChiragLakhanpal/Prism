@@ -21,7 +21,7 @@ import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle,
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
 import { getJson, type CheckPlanResult } from "../lib/api";
-import { draftHref, newKey, startWriting, stopped, writingHref, type Existing } from "../lib/drafts";
+import { draftHref, newKey, startWriting, stopped, writingHref, type Existing, type ExistingDraft } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
@@ -56,24 +56,27 @@ function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: bool
 // visit (the 35 design review).
 const LOOKUP_WAIT_MS = 300;
 
-// The review notes the team already started on this plan version. The lookup starts as soon as its key is
-// known, often at mount; the wait is counted from when the check is ready, so a lookup that answers while
-// a slow check is still loading is always shown. Settled when the lookup answers, or LOOKUP_WAIT_MS after
-// the check is ready, whichever comes first. With no version to look up, it is settled.
-function useExistingDraft(pid: string, agencyId: string, version: string | undefined, enabled: boolean, checkReady: boolean) {
-  const [answer, setAnswer] = useState<{ key: string; draft: Existing["draft"] } | null>(null);
+// The review notes the team already started on this plan version. The lookup starts at mount on both
+// routes: with a version in the address it asks for that version; with none it asks for every version of
+// the agency's plans and takes the one the check shows once it is ready. The wait is counted from when the
+// check is ready, so a lookup that answers while a slow check is still loading is always shown. Settled
+// when the lookup answers, or LOOKUP_WAIT_MS after the check is ready, whichever comes first.
+function useExistingDraft(pid: string, agencyId: string, version: string | undefined, enabled: boolean, planDate: string | null) {
+  const [answer, setAnswer] = useState<{ key: string; found: Existing } | null>(null);
   const [gaveUp, setGaveUp] = useState<string | null>(null);
-  const key = enabled && version ? `${pid}/${agencyId}/${version}` : null;
+  const key = enabled ? `${pid}/${agencyId}/${version ?? ""}` : null;
   useEffect(() => {
-    if (!key || !version) return;
+    if (!key) return;
     const controller = new AbortController();
-    const query = new URLSearchParams({ kind: "review_notes", project_id: pid, agency_id: agencyId, plan_date: version });
+    const query = new URLSearchParams({ kind: "review_notes", project_id: pid, agency_id: agencyId });
+    if (version) query.set("plan_date", version);
     getJson<Existing>(`/api/drafts/existing?${query.toString()}`, { signal: controller.signal }).then(
-      (found) => setAnswer({ key, draft: found.draft }),
-      () => setAnswer({ key, draft: null }),
+      (found) => setAnswer({ key, found }),
+      () => setAnswer({ key, found: { draft: null } }),
     );
     return () => controller.abort();
   }, [key]);
+  const checkReady = planDate !== null;
   const answered = answer !== null && answer.key === key;
   useEffect(() => {
     if (!key || !checkReady || answered) return;
@@ -82,7 +85,9 @@ function useExistingDraft(pid: string, agencyId: string, version: string | undef
   }, [key, checkReady, answered]);
   // Once the wait is over, a late answer never shows, so the page never moves after it is drawn.
   const late = key !== null && gaveUp === key;
-  return { settled: key === null || answered || late, draft: !late && answered ? answer.draft : null };
+  const found = !late && answered ? answer.found : null;
+  const draft = found && planDate ? ("by_plan_date" in found ? (found.by_plan_date[planDate] ?? null) : found.draft) : null;
+  return { settled: key === null || answered || late, draft };
 }
 
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
@@ -101,7 +106,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const ready = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
   // The populated page waits, at most LOOKUP_WAIT_MS after the check is ready, for the notice that names an
   // open draft.
-  const lookup = useExistingDraft(pid, ready?.plan.agency_id ?? agencyId, ready?.plan.plan_date ?? version, !preview, ready !== null);
+  const lookup = useExistingDraft(pid, agencyId, version, !preview, ready?.plan.plan_date ?? null);
   const waiting = ready !== null && !lookup.settled;
   const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked));
@@ -339,7 +344,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
 // Above the page, in brief 06's alert slot's place: "I stopped writing ..." once after "Stop writing", and
 // a notice naming the review notes the team already started on this plan version, newest first.
-function DraftNotices({ existing }: { existing: Existing["draft"] }) {
+function DraftNotices({ existing }: { existing: ExistingDraft | null }) {
   // Read once, then cleared, so the notice shows on this visit only.
   const [stoppedHere] = useState(() => stopped.get());
   useEffect(() => stopped.set(null), []);

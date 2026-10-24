@@ -9,7 +9,8 @@
 - GET /api/drafts lists the viewer's team's drafts and the viewer's own in three groups, to_check, checked
   and exported, newest first by their last change, and the viewer's own discarded drafts.
 - GET /api/drafts/existing?kind=&project_id=&agency_id=&plan_date= names the newest draft of that kind
-  the viewer's team has open (in Draft or Checked by you) on that plan version, or null.
+  the viewer's team has open (in Draft or Checked by you) on that plan version, or null. With no plan_date,
+  it answers {"by_plan_date": {...}}: the newest open draft on each version of that agency's plans.
 - GET /api/drafts/{draft_id} gives one draft as its page shows it, with how many of its sources the
   viewer opened since it was saved, and the holds that keep it from export.
 - POST /api/drafts/{draft_id}/{check|export|discard|restore} takes {"expected_state": "draft",
@@ -232,22 +233,32 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
     @app.get("/api/drafts/existing")
     def existing_draft(kind: str = Query(max_length=64), project_id: str = Query(max_length=16),
-                       agency_id: str = Query(max_length=200), plan_date: dt.date = Query(),
+                       agency_id: str = Query(max_length=200), plan_date: dt.date | None = Query(None),
                        viewer: Viewer = Depends(current_viewer)):
+        """The newest open draft of that kind on that plan version, or, with no plan date, on each version of
+        that agency's plans, by its date: the plan check with no version in its address asks before it knows
+        which version it shows, so the answer is there by the time the check is (the 35 review)."""
         if not viewer.user_id:
             return refused(401, "no_identity")
 
+        def named(draft: Saved) -> dict:
+            return {"draft_id": draft.draft_id, "created_at": runtime.iso(draft.created_at),
+                    "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)}}
+
         def read():
-            found = [draft for draft in store.for_team(access.team(viewer).key, viewer.user_id)
-                     if draft.kind == kind and draft.state.state in runtime.OPEN_STATES
-                     and draft.content["subject"].get("project_id") == project_id
-                     and draft.content["subject"].get("agency_id") == agency_id
-                     and draft.content["subject"].get("plan_date") == plan_date.isoformat()]
-            if not found:
-                return {"draft": None}
-            newest = max(found, key=lambda draft: draft.created_at)
-            return {"draft": {"draft_id": newest.draft_id, "created_at": runtime.iso(newest.created_at),
-                              "author": {"name": newest.author_name, "you": is_author(viewer, newest.author_id)}}}
+            newest: dict[str, Saved] = {}
+            for draft in store.for_team(access.team(viewer).key, viewer.user_id):
+                subject = draft.content["subject"]
+                if (draft.kind != kind or draft.state.state not in runtime.OPEN_STATES
+                        or subject.get("project_id") != project_id or subject.get("agency_id") != agency_id):
+                    continue
+                version = subject.get("plan_date")
+                if version not in newest or draft.created_at > newest[version].created_at:
+                    newest[version] = draft
+            if plan_date is None:
+                return {"by_plan_date": {version: named(draft) for version, draft in sorted(newest.items())}}
+            found = newest.get(plan_date.isoformat())
+            return {"draft": named(found) if found else None}
         return guarded("an open draft", read)
 
     # ── One draft ────────────────────────────────────────────────────────

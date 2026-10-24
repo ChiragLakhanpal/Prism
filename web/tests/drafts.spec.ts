@@ -151,6 +151,29 @@ test("an open draft the lookup finds before a slow plan check is drawn is named,
   expect((await action.boundingBox())!.y).toBe(before);
 });
 
+test("on the agency's latest plan, with no version in the address, the lookup starts at once and its notice shows above a slow check", async ({ page }) => {
+  // The one box sends a STEP reference on an agency's latest plan here, so the lookup cannot wait for the
+  // check to say which version it shows (the 35 review, round 3).
+  const latest = PLAN.slice(0, PLAN.lastIndexOf("/"));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/api/drafts/existing")) asked.push(new URL(request.url()).search);
+  });
+  await serve(page, {
+    [`/api${latest}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json"), delay: 1200 },
+    "/api/drafts/existing": { body: await recorded("drafts-existing-latest.json"), delay: 500 },
+  });
+  await page.goto(latest);
+  const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
+  await expect(action).toBeVisible({ timeout: 5000 });
+  await expect(page.locator("[data-existing-draft]")).toHaveText("You started review notes on this plan on October 23, 2026.");
+  expect(asked).toEqual(["?kind=review_notes&project_id=P156634&agency_id=northern-water-works-development-agency"]);
+  const before = (await action.boundingBox())!.y;
+  await page.waitForTimeout(1000);
+  expect((await action.boundingBox())!.y).toBe(before);
+});
+
 // ── Writing ──────────────────────────────────────────────────────────────
 
 test("drafting shows the marked activities at once, then becomes the saved draft in place, and Back returns to the plan check", async ({ page }) => {

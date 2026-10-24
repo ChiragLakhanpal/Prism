@@ -120,6 +120,9 @@ def answers(folder: Path) -> dict[str, str]:
                 key: value for key, value in NWWDA.items()})
             found["drafts-existing-yours.json"] = await get("/api/drafts/existing", ANA, **{
                 key: value for key, value in NWWDA.items()})
+            # The plan check with no version in its address asks with no plan date, before it knows the version.
+            found["drafts-existing-latest.json"] = await get("/api/drafts/existing", ANA, **{
+                key: value for key, value in NWWDA.items() if key != "plan_date"})
             # Ben's own /api/me, for the screens that show Ana's draft to her teammate.
             found["drafts-me-teammate.json"] = await get("/api/me", BEN)
             later(2)

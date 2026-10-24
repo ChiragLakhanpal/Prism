@@ -511,3 +511,19 @@ def test_check_a_plan_finds_the_team_s_open_draft_on_the_same_plan_version(draft
     act(app, draft_id, "check", "draft")
     act(app, draft_id, "export", "checked")
     assert call(app, "GET", "/api/drafts/existing", BEN, params=asked).json() == {"draft": None}
+
+
+def test_with_no_plan_date_the_lookup_names_the_open_draft_on_each_plan_version(drafting):
+    """The plan check with no version in its address asks before it knows the plan's date (the 35 review)."""
+    app = drafting()
+    asked = {"kind": "review_notes", "project_id": "P156634", "agency_id": NWWDA["agency_id"]}
+    assert call(app, "GET", "/api/drafts/existing", BEN, params=asked).json() == {"by_plan_date": {}}
+    _, draft_id = draft_review_notes(app)
+
+    found = call(app, "GET", "/api/drafts/existing", BEN, params=asked).json()["by_plan_date"]
+    other_agency = call(app, "GET", "/api/drafts/existing", BEN, params={**asked, "agency_id": "another-agency"}).json()
+
+    assert found == {"2026-10-09": {"draft_id": draft_id, "created_at": "2026-10-23T14:00:00Z",
+                                    "author": {"name": "Ana Example", "you": False}}}
+    assert other_agency == {"by_plan_date": {}}
+    assert call(app, "GET", "/api/drafts/existing", CY, params=asked).json() == {"by_plan_date": {}}
