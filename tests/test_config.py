@@ -172,7 +172,14 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "awards"
 stratum = "What"
-known_gaps = ["Awards for FY2017 to FY2019 are in neither dataset."]
+
+[[sources.awards_copy.known_gaps]]
+id = "copy_gap"
+label = "Contract awards"
+noun = "contract awards"
+first_fiscal_year = 2017
+last_fiscal_year = 2019
+note = "No World Bank dataset publishes contract awards for these years."
 """
 
 
@@ -185,7 +192,119 @@ def test_a_source_is_one_entry_in_the_registry(tmp_path):
     assert awards.dataset_id == "DS00005"
     assert awards.cadence == "daily"
     assert (awards.api, awards.page_size, awards.ignore_keys) == ("finances_one", 1000, ("as_of_date",))
-    assert awards.known_gaps == ("Awards for FY2017 to FY2019 are in neither dataset.",)
+    assert [(gap.first_fiscal_year, gap.last_fiscal_year) for gap in awards.known_gaps] == [(2017, 2019)]
+
+
+# ── What the Data readiness page reads from the registry (ticket 16) ─────
+
+def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_as_plans_and_reports():
+    """The 16 brief, section 5.1: one row per source, in the registry's order, What before How
+    before Why. The documents source holds two readers' measures, so it shows as two rows."""
+    sources = config.load_sources()
+
+    assert all(source.readiness for source in sources.values())
+    awards = sources["awards"].readiness[0]
+    assert (awards.label, awards.linked.measure, awards.fresh.measure) == (
+        "Contract awards", "linked_step_reference", "fresh_fetched")
+    assert awards.read_well is None  # STEP publishes awards as a table, so nothing needs reading
+    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [("plans", "How"), ("reports", "Why")]
+    ids = [row.id for source in sources.values() for row in source.readiness]
+    assert len(ids) == len(set(ids))
+
+
+def test_the_registry_declares_the_fiscal_2017_to_2019_awards_as_a_known_gap():
+    """The ticket: no dataset publishes contract awards for fiscal 2017 to 2019 (PLAN.md section 3)."""
+    gaps = config.load_sources()["awards"].known_gaps
+
+    assert [(gap.first_fiscal_year, gap.last_fiscal_year) for gap in gaps] == [(2017, 2019)]
+    assert gaps[0].note.startswith("No World Bank dataset publishes contract awards for these years.")
+
+
+def test_each_dataset_names_its_data_source_and_the_day_its_name_was_checked_against_the_catalog():
+    """PLAN.md section 18 asks for the exact dataset names on the attribution page."""
+    sources = config.load_sources()
+
+    datasets = {key: source.attribution for key, source in sources.items() if source.attribution}
+    assert set(datasets) == set(sources) - {"documents"}
+    assert datasets["awards"].data_source == "Systematic Tracking of Exchanges in Procurement (STEP)"
+    assert all(isinstance(found.name_checked, dt.date) for found in datasets.values())
+    assert all(found.catalog_url.startswith("https://") for found in datasets.values())
+    assert [collection.name for collection in sources["documents"].collections][0] == "Procurement Plans"
+
+
+def test_a_data_readiness_column_with_a_key_the_registry_does_not_know_is_refused(tmp_path):
+    path = copy("sources.toml", tmp_path, 'linked = { measure = "linked_step_reference"',
+                'linked = { mesure = "linked_step_reference"')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.readiness\[1\]\.linked has keys I do not know: mesure"):
+        config.load_sources(path)
+
+
+def test_a_fix_names_the_measure_whose_numbers_fill_its_sentence(tmp_path):
+    fixes = config.load_sources()["awards"].fixes
+
+    assert {fix.measure for fix in fixes} >= {"linked_step_reference"}
+    assert all("{" in fix.sentence for fix in fixes)
+
+
+def test_a_fix_on_a_measure_no_column_shows_must_say_what_it_counts(tmp_path):
+    """Its numbers' tooltips need a noun (design review B1), and no column gives one."""
+    path = copy("sources.toml", tmp_path, 'noun = "contracts in local currency"\n', "")
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[2\]\.noun must say what its measure counts"):
+        config.load_sources(path)
+
+
+def test_a_fix_on_a_measure_no_column_shows_must_name_the_table_it_counts(tmp_path):
+    """Review r7: every number's window names the table it was counted in, and no column gives one."""
+    path = copy("sources.toml", tmp_path, 'noun = "contracts in local currency"\ncounted_in = "strata.gold.contract"\n',
+                'noun = "contracts in local currency"\n')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[2\]\.counted_in must name the table"):
+        config.load_sources(path)
+
+
+def test_a_fix_s_projects_measure_must_name_the_table_it_counts(tmp_path):
+    path = copy("sources.toml", tmp_path, 'projects_counted_in = "strata.gold.contract"\nsentence = "Find', 'sentence = "Find')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[1\]\.projects_counted_in must name the table"):
+        config.load_sources(path)
+
+
+def test_a_kind_s_ready_for_names_its_table_when_no_column_of_its_row_shows_the_measure():
+    """Review r7 B1: the document search's Ready for counts passages, which no column of the reports
+    row shows, so the tool registry names their table. The plan check's is the plans row's Read well
+    measure, whose table the source registry already names once."""
+    tools = config.load_tools()
+
+    assert tools["search_passages"].readiness.ready_for_counted_in == "strata.gold.passage"
+    assert tools["check_plan"].readiness.ready_for_counted_in is None
+
+
+def _texts(value):
+    """Every string in a loaded TOML value."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _texts(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _texts(item)
+
+
+def _split_field_names(path):
+    """The registry's words that write STEP's "Reference No." with a space a narrow cell may break."""
+    return [text for text in _texts(tomllib.loads(path.read_text())) if "Reference No." in text]
+
+
+def test_a_step_field_name_in_the_registry_keeps_its_no_break_space(tmp_path):
+    """Review r5 P3: "Activity Reference No." keeps a no-break space, so the Sources table at 1024 px
+    never leaves "No." alone on a line, as the registry's comment says."""
+    assert _split_field_names(ROOT / "config" / "sources.toml") == []
+
+    typed = copy("sources.toml", tmp_path, 'lack = "an Activity Reference\\u00A0No."', 'lack = "an Activity Reference No."')
+    assert _split_field_names(typed), "the check finds a plain space"
 
 
 def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):

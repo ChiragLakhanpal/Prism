@@ -32,7 +32,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const header = useRef<HTMLDivElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
-  useScrollPadding(header, Boolean(pkg), { from: "48rem", gap: 16 });
+  useScrollPadding(header, Boolean(pkg), { gap: 16 });
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {

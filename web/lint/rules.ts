@@ -98,6 +98,15 @@ export const NON_COPY_PROPS = new Set([
   "breakpoint",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
+  // The Data readiness page (ticket 16): which tooltip a measure's number gets ("ratio", "count" or
+  // "day"), which column's definition its window shows ("linked"), and which rows a readiness
+  // table's skeleton stands for ("kinds" or "sources"). What a clicked number is ("missing" or
+  // "days") goes under role, above.
+  "tooltipKind",
+  "windowColumn",
+  "skeletonRows",
+  // The one box's scope chip: "project" or "package", which picks the placeholder.
+  "scopeKind",
   // SVG settings in the range chart: a text's alignment ("start", "end"), a paint ("none") and a
   // path's drawing commands, such as the chevron after a dot past the axis ("M 10 4 L 13 7").
   "textAnchor",

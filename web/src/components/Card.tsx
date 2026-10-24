@@ -24,7 +24,7 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={cx("rounded-md border border-line bg-surface p-4 md:p-6", className)}>
+    <section className={cx("rounded-md border border-line bg-surface p-4 @md/page:p-6", className)}>
       {title && createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
       {children && <div className={cx(Boolean(title) && "mt-2", "text-body text-ink")}>{children}</div>}
       {source && <Source className="mt-4">{source}</Source>}
@@ -48,7 +48,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <section data-empty-state className={cx("flex gap-3 rounded-md border border-line bg-surface p-4 md:p-6", className)}>
+    <section data-empty-state className={cx("flex gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6", className)}>
       <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
       <div className="min-w-0">
         {createElement(`h${level}`, { className: "text-title text-balance text-ink-heading" }, title)}

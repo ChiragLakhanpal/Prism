@@ -68,6 +68,10 @@
   --spacing: 0.25rem;
   --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
   --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
+  /* The same four breakpoints as container sizes. The page column is a size container (ticket 14),
+     so a page lays out by the page area's width, which the evidence drawer narrows: its classes use
+     @md/page:, @lg/page: and @xl/page: where the bar and the band use md:, lg: and xl:. */
+  --container-md: 48rem;  --container-lg: 64rem;  --container-xl: 75rem;  --container-2xl: 87.5rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 
@@ -78,6 +82,11 @@
   --animate-spin: spin 1s linear infinite;
   --animate-fade-in: fade-in 120ms ease-out;
   --animate-menu-in: menu-in 150ms ease-out;
+  /* The evidence drawer (the 14 brief, section 8): its content fades in over 160 ms, the matching
+     words then settle into their highlight over 200 ms, and below 768 px the sheet slides up. */
+  --animate-drawer-in: fade-in 160ms ease-out;
+  --animate-settle: settle 200ms ease-out 160ms backwards;
+  --animate-sheet-in: sheet-in 200ms ease-out;
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
@@ -86,6 +95,12 @@
   }
   @keyframes menu-in {
     from { opacity: 0; transform: translateY(-4px); }
+  }
+  @keyframes settle {
+    from { background-color: transparent; }
+  }
+  @keyframes sheet-in {
+    from { transform: translateY(2rem); opacity: 0; }
   }
 }
 
@@ -101,6 +116,15 @@
 }
 @media (width >= 64rem) {
   :root { --layout-margin: 72px; --layout-gutter: 32px; }
+}
+/* In the page column, the margins and gutters follow the page area's width, not the window's, so a
+   page beside the evidence drawer lays out as a narrower window would (the 14 brief, section 2.5). */
+[data-page-column] > * { --layout-margin: 28px; --layout-gutter: 16px; }
+@container page (width >= 48rem) {
+  [data-page-column] > * { --layout-margin: 48px; --layout-gutter: 24px; }
+}
+@container page (width >= 64rem) {
+  [data-page-column] > * { --layout-margin: 72px; --layout-gutter: 32px; }
 }
 
 @utility layout {

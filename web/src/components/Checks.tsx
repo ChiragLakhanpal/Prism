@@ -1,7 +1,10 @@
 // The three lines that say how far to trust an answer (DESIGN.md section 5).
 //
 // Check line: what the verifier checked and what it did not, in the neutral state and never
-// success green, because a green banner reads as "safe".
+// success green, because a green banner reads as "safe". Its text starts on the removed box's text
+// edge, 48 px in (the box's 4 px border, 16 px padding, 16 px icon and 12 px gap), so the two read
+// as one column, with no check-mark icon (ticket 02's round 7 review). Dates the verifier matched
+// get their own clause, so "numbers" never counts a date (ticket 14).
 // Coverage line: a sentence with its denominator, linked to Data readiness. The gap sentence
 // ends the first sentence when some cases lacked what the count needs; a period ends it when
 // none did.
@@ -19,21 +22,24 @@ export type NotChecked = keyof typeof copy.checkLine.notCheckedClauses;
 
 export function CheckLine({
   numbers,
+  dates,
   quotes,
   notChecked,
 }: {
   numbers?: { matched: number; total: number };
+  dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
   notChecked: NotChecked[];
 }) {
   const words = copy.checkLine;
   const clauses = [
     numbers && numbers.total > 0 && words.numbers(n(numbers.matched), numbers.total, n(numbers.total)),
+    dates && dates.total > 0 && words.dates(n(dates.matched), dates.total, n(dates.total)),
     quotes && quotes.total > 0 && words.quotes(n(quotes.found), quotes.total, n(quotes.total)),
   ].filter((clause): clause is string => Boolean(clause));
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
-    <p data-check-line data-numbers className="rounded-md bg-neutral-bg px-3 py-2 text-small text-neutral">
+    <p data-check-line data-numbers className="rounded-md bg-neutral-bg py-2 pr-4 pl-12 text-small text-neutral">
       <span className="font-semibold">{words.checked}</span> {checked}
       {words.end}{" "}
       {notChecked.length > 0 && (

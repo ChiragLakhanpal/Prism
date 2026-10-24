@@ -98,6 +98,18 @@ class LiveWorkspace:
         job_id = self._job_id(name)
         return self.w.jobs.get(job_id).settings.as_dict() if job_id is not None else None
 
+    def dashboard(self, name: str) -> dict | None:
+        """The AI/BI dashboard with this name, with its pages and its SQL warehouse, or None."""
+        import json
+
+        for found in self.w.lakeview.list():
+            if found.display_name == name:
+                full = self.w.lakeview.get(found.dashboard_id)
+                pages = json.loads(full.serialized_dashboard or "{}").get("pages", [])
+                return {"name": name, "pages": [page.get("displayName") for page in pages],
+                        "warehouse_id": full.warehouse_id}
+        return None
+
     def job_names(self) -> list[str]:
         return sorted(job.settings.name for job in self.w.jobs.list() if job.settings and job.settings.name)
 
@@ -136,11 +148,13 @@ class LiveWorkspace:
     # ── The bundle ──
 
     def deploy_bundle(self) -> tuple[int, str]:
-        """Run `databricks bundle deploy` from the checkout's root with the env file's credentials."""
+        """Run `databricks bundle deploy` from the checkout's root with the env file's credentials, and its
+        SQL warehouse for the dashboard's queries."""
         cli = shutil.which("databricks")
         if cli is None:
             return 1, "The Databricks CLI is not on the path. Install version 0.287.0 or later."
-        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET], cwd=REPO,
+        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET,
+                               "--var", f"warehouse_id={self.env['DATABRICKS_WAREHOUSE_ID']}"], cwd=REPO,
                               env=cli_env(self.env, dict(os.environ)),
                               capture_output=True, text=True, timeout=1800)
         return done.returncode, (done.stdout + done.stderr).strip()

@@ -2,7 +2,7 @@
 
 App state is what people make in Strata and expect to find again: the projects they follow, packages, drafts and their states, uploads and feedback. The spec keeps it in `strata.ops`, written with bound parameters through the SQL warehouse, unless a check shows that a Lakebase database (Databricks' managed Postgres) would be simpler on Free Edition (`docs/PLAN.md` section 18; spec, "The app"). Ticket 06 settles the question before any app state is written. Ticket 15 writes the first app state, the packages a person plans, so the probe below runs before it.
 
-Usage events and agent runs are not app state. They are logs that the dashboard reads from `strata.ops`, so they stay there whatever the probe finds: usage events in `strata.ops.usage_events` from ticket 06, and agent runs from ticket 13.
+Usage events and agent runs are not app state. They are logs that the dashboard reads from `strata.ops`, so they stay there whatever the probe finds: usage events in `strata.ops.usage_events` from ticket 06, and agent runs from ticket 13. Ticket 14 adds `strata.ops.evidence_opened`, one row per viewer and source opened in the evidence drawer, which the evidence pack's export reads (ticket 35); the app writes it as its own service principal, with a `MERGE`.
 
 ## How the probe decides
 

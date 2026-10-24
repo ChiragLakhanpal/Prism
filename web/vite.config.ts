@@ -30,9 +30,10 @@ export default defineConfig(async ({ command, mode }) => {
       port: Number(process.env.STRATA_WEB_PORT) || (await freePort()),
       strictPort: true,
       proxy: serverPort ? { "/api": serverUrl } : undefined,
-      // The dev server serves web/ and one file above it: GLOSSARY.md, which web/src/glossary.ts
-      // reads for Term's definitions.
-      fs: { allow: [webRoot, join(repoRoot, "GLOSSARY.md")] },
+      // The dev server serves web/ and two things above it: GLOSSARY.md, which web/src/glossary.ts
+      // reads for Term's definitions, and the answer streams in tests/fixtures/api, which the design
+      // gallery plays (ticket 14).
+      fs: { allow: [webRoot, join(repoRoot, "GLOSSARY.md"), join(repoRoot, "tests", "fixtures", "api")] },
     },
     preview: { host: "127.0.0.1", strictPort: true },
   };

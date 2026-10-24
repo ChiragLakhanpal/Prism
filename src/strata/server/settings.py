@@ -8,12 +8,13 @@ reads only the environment it is given:
   STRATA_DATABASE_FILE names a DuckDB file, such as the gate's fixture database, to read instead
   (src/strata/server/engines.py decides).
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
-  service principal: usage events are written to strata.ops.usage_events, and each answer
-  stream's run to strata.ops.agent_runs, with its token. Without them, the server keeps no usage
-  events, and runs go to the server log only.
-- FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET: /api/ask
-  answers through the Foundry agent (src/strata/agent/runner.py). Without them, it says there is
-  no agent.
+  service principal: usage events are written to strata.ops.usage_events, each answer stream's run
+  to strata.ops.agent_runs, and each source a viewer opens in the evidence drawer to
+  strata.ops.evidence_opened, with its token. Without them, the server keeps no usage events and
+  records no opened sources, and runs go to the server log only.
+- FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET (the app's
+  four foundry-* secret resources, which ops/app/deploy_app.py sets): /api/ask answers through the
+  Foundry agent (src/strata/agent/runner.py). Without them, it says there is no agent.
 - APPLICATIONINSIGHTS_CONNECTION_STRING (the app's appinsights secret resource): traces go to
   Application Insights (src/strata/server/tracing.py).
 - STRATA_WEB_DIST: the built web app to serve, by default web/dist when it exists.
@@ -42,6 +43,7 @@ from strata.config import load_thresholds
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.server import engines, tracing
 from strata.server.app import create_app
+from strata.server.evidence import OpenedLog
 from strata.server.usage import UsageLog
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -102,5 +104,6 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       stamp_timeout_seconds=timeout,
                       usage=UsageLog(the_app, thresholds.value("app.usage_flush_seconds")) if the_app else None,
                       runs=RunLog(the_app) if the_app else None,
+                      opened=OpenedLog(the_app) if the_app else None,
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

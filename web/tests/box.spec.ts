@@ -1,0 +1,362 @@
+// The one box (ticket 14) at seam 4: as you type it lists what Enter will do, from one set of intent
+// rules, and nothing happens until you choose. The lookups are answered from the responses recorded
+// in tests/fixtures/api, which the server tests check the server against. The words are the ticket's
+// and the 14 design brief's, copied here so the test checks the copy file against an independent source.
+import type { Page, Request } from "@playwright/test";
+import { expect, mockApi, recorded, test } from "./mocked";
+
+const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency";
+
+async function open(page: Page, path = "/", extra: Record<string, { status?: number; body: string }> = {}) {
+  const asked: Request[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/ask") asked.push(request);
+  });
+  const unrecorded = await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/projects/P130164": { body: await recorded("project-p130164.json") },
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/lookup/loan": { body: await recorded("lookup-loan-ida-60290.json") },
+    "/api/lookup/activity": { body: await recorded("lookup-activity-ke-nwwda-541055-cw-rfb.json") },
+    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    ...extra,
+  });
+  await page.goto(path);
+  await expect(page.locator("main h1")).toBeVisible();
+  return { asked, unrecorded };
+}
+
+const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
+const options = (page: Page) => page.getByRole("listbox", { name: "What Enter will do" }).getByRole("option");
+
+async function typeInBox(page: Page, text: string) {
+  await page.keyboard.press("/");
+  await expect(box(page)).toBeFocused();
+  await page.keyboard.type(text);
+}
+
+test("typing a project ID lists Open first, with the project's name once it is looked up, and Enter opens it", async ({ page }) => {
+  const { asked } = await open(page);
+
+  await typeInBox(page, "P130164");
+
+  await expect(options(page).first()).toHaveAccessibleName("Open P130164 Rajasthan Road Sector Modernization Project, India");
+  await expect(options(page).first()).toHaveAttribute("aria-selected", "true");
+  await expect(box(page)).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(/\/projects\/P130164$/);
+  await expect(page.locator("main h1")).toBeFocused();
+  await expect(box(page)).toHaveValue("");
+  expect(asked).toEqual([]);
+});
+
+for (const written of ["IDA60290", "IDA-60290", "IDA / 60290", "60290"]) {
+  test(`the loan number ${written} opens the project it finances`, async ({ page }) => {
+    await open(page);
+
+    await typeInBox(page, written);
+
+    await expect(options(page).first()).toHaveAccessibleName(
+      "Open the project for IDA-60290 P156634, Water and Sanitation Development Project",
+    );
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/projects\/P156634$/);
+  });
+}
+
+test("a bare five-digit number offers Ask this first until the lookup finds its loan", async ({ page }) => {
+  let answer: () => void = () => {};
+  const held = new Promise<void>((resolve) => (answer = resolve));
+  await open(page);
+  await page.route("**/api/lookup/loan**", async (route) => {
+    await held;
+    await route.fulfill({ contentType: "application/json", body: await recorded("lookup-loan-ida-60290.json") });
+  });
+
+  await typeInBox(page, "60290");
+
+  await expect(options(page)).toHaveCount(1);
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+  answer();
+  await expect(options(page).first()).toHaveAccessibleName(/^Open the project for IDA-60290/);
+  await expect(options(page).nth(1)).toHaveAccessibleName("Ask this Across all projects");
+});
+
+test("a STEP reference opens its plan's check with that activity in view and focused", async ({ page }) => {
+  await open(page);
+
+  await typeInBox(page, "KE-NWWDA-541055-CW-RFB");
+
+  await expect(options(page).first()).toHaveAccessibleName(
+    "Show KE-NWWDA-541055-CW-RFB in its plan In the Northern Water Works Development Agency plan of October 9, 2026, P156634",
+  );
+  await page.keyboard.press("Enter");
+
+  await expect(page).toHaveURL(new RegExp(`${PLAN}#KE-NWWDA-541055-CW-RFB$`));
+  const row = page.locator("[data-view=table] [data-activity='KE-NWWDA-541055-CW-RFB']");
+  await expect(row).toBeFocused();
+  await expect(row).toBeInViewport();
+  await expect(page.locator("tr[id='KE-NWWDA-541055-CW-RFB']")).toHaveAttribute("data-named", "true");
+});
+
+// The critique of ticket 14, round 2: a landing that cuts the title or the box at the top edge reads as
+// a scroll gone wrong. The whole row or card is in view, its badges included, and the band and the title
+// are each wholly in view or wholly scrolled away.
+for (const width of [1440, 390, 320]) {
+  test(`at ${width} px landing on a STEP reference cuts neither the band nor the title at the top edge`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    await typeInBox(page, "KE-NWWDA-541055-CW-RFB");
+    await expect(options(page).first()).toContainText("Northern Water Works Development Agency");
+    await page.keyboard.press("Enter");
+
+    const view = width >= 1024 ? "table" : "cards";
+    const row = page.locator(`[data-view=${view}] [data-activity='KE-NWWDA-541055-CW-RFB']`);
+    await expect(row).toBeFocused();
+    await expect(row.locator("xpath=ancestor-or-self::*[self::tr or self::li][1]")).toBeInViewport({ ratio: 1 });
+    await page.waitForTimeout(100);
+    for (const part of ["[data-box-band]", "main h1"]) {
+      const box = (await page.locator(part).boundingBox())!;
+      expect(box.y >= 0 || box.y + box.height <= 0, `${part} at ${Math.round(box.y)} px, ${Math.round(box.height)} px tall`).toBe(true);
+    }
+    // No line of text above the row is left as a sliver at the top edge or under the sticky header: a
+    // line counts as cut when a whole pixel of it sits on each side.
+    const cut = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>("[data-plan-header]");
+      const edge = header && getComputedStyle(header).position === "sticky" ? header.getBoundingClientRect().bottom : 0;
+      const walker = document.createTreeWalker(document.querySelector("main")!, NodeFilter.SHOW_TEXT);
+      const lines: string[] = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim() || (header && header.contains(node)) || node.parentElement?.closest(".sr-only")) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+          if (rect.width > 0 && rect.top <= edge - 1 && rect.bottom >= edge + 1) {
+            lines.push(`"${node.textContent.trim()}" from ${Math.round(rect.top)} to ${Math.round(rect.bottom)} px`);
+          }
+        }
+      }
+      return lines;
+    });
+    expect(cut).toEqual([]);
+  });
+}
+
+test("free text offers Ask this, and nothing is sent until the person chooses it", async ({ page }) => {
+  const { asked } = await open(page);
+
+  await typeInBox(page, "Why were works contracts advertised again?");
+
+  await expect(options(page)).toHaveCount(1);
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+  await expect(options(page).first()).toContainText("Enter");
+  await page.waitForTimeout(400);
+  expect(asked).toEqual([]);
+  await expect(page.getByRole("region", { name: "Answer" })).toHaveCount(0);
+});
+
+test("free text that holds one project ID also offers to open it, second", async ({ page }) => {
+  await open(page);
+
+  await typeInBox(page, "Why were works contracts in P130164 advertised again?");
+
+  await expect(options(page)).toHaveCount(2);
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+  await expect(options(page).nth(1)).toHaveAccessibleName(/^Open P130164/);
+  await page.keyboard.press("ArrowDown");
+  await expect(options(page).nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(box(page)).toHaveAttribute("aria-activedescendant", (await options(page).nth(1).getAttribute("id"))!);
+});
+
+test("an ID no record holds says so under the list, and Ask this is the only option", async ({ page }) => {
+  await open(page, "/", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } });
+
+  await typeInBox(page, "P999999");
+
+  await expect(page.getByText("I have no project P999999.")).toBeVisible();
+  await expect(options(page)).toHaveCount(1);
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+});
+
+// DESIGN.md section 3: Roboto Mono for IDs, wherever the box writes one.
+async function idFaces(page: Page, id: string) {
+  return page.locator("[data-box-band]").evaluate(
+    (band, wanted) =>
+      Array.from(band.querySelectorAll("*"))
+        .filter((element) => element.children.length === 0 && element.textContent === wanted)
+        .map((element) => getComputedStyle(element).fontFamily.split(",")[0].replaceAll('"', "")),
+    id,
+  );
+}
+
+test("every ID the box writes is in Roboto Mono: in an option, its second line and the not-found line", async ({ page }) => {
+  await open(page, "/", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } });
+
+  await typeInBox(page, "IDA-60290");
+  await expect(options(page).first()).toContainText("P156634, Water and Sanitation Development Project");
+  expect(await idFaces(page, "IDA-60290")).toEqual(["Roboto Mono"]);
+  expect(await idFaces(page, "P156634")).toEqual(["Roboto Mono"]);
+
+  await box(page).fill("KE-NWWDA-541055-CW-RFB");
+  await expect(options(page).first()).toContainText("P156634");
+  expect(await idFaces(page, "P156634")).toEqual(["Roboto Mono"]);
+
+  await box(page).fill("P999999");
+  await expect(page.getByText("I have no project P999999.")).toBeVisible();
+  expect(await idFaces(page, "P999999")).toEqual(["Roboto Mono"]);
+});
+
+test("a lookup that fails says so, and the person can still ask", async ({ page }) => {
+  await open(page, "/", { "/api/lookup/activity": { status: 503, body: '{"code":"data_service"}' } });
+
+  await typeInBox(page, "KE-NWWDA-541055-CW-RFB");
+
+  await expect(page.getByText("I couldn't look up KE-NWWDA-541055-CW-RFB just now. You can still ask about it.")).toBeVisible();
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+});
+
+test("focused and empty, the box gives its hint; Escape closes the list, then empties the box", async ({ page }) => {
+  await open(page);
+
+  await page.keyboard.press("/");
+  await expect(box(page)).toHaveAccessibleDescription(
+    "Type a project ID such as P130164, a STEP reference, a loan number, or a question.",
+  );
+  // DESIGN.md section 3: the hint's sample ID is in Roboto Mono, as every other ID the box writes.
+  expect(await idFaces(page, "P130164")).toEqual(["Roboto Mono"]);
+  await page.keyboard.type("P130164");
+  await expect(options(page)).toHaveCount(2);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("listbox")).toHaveCount(0);
+  await expect(box(page)).toHaveValue("P130164");
+  await expect(box(page)).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(box(page)).toHaveValue("");
+});
+
+test("on a project page the box carries a removable scope chip, and Backspace in the empty box removes it", async ({ page }) => {
+  await open(page, "/projects/P130164");
+
+  await expect(box(page)).toHaveAccessibleName("Open a project or package, or ask a question");
+  await expect(box(page)).toHaveAccessibleDescription(/Questions you ask here cover P130164 only\./);
+  await expect(page.locator("[data-box-band]").getByText("Ask about this project")).toBeVisible();
+  const remove = page.getByRole("button", { name: "Remove the scope P130164" });
+  await expect(remove).toBeVisible();
+
+  await page.keyboard.press("/");
+  await page.keyboard.type("Why?");
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Within P130164");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Backspace");
+
+  await expect(remove).toHaveCount(0);
+  await expect(page.locator("[data-box-band] [role=status]")).toHaveText(
+    "The scope is removed. Questions now cover all projects.",
+  );
+  await page.keyboard.type("Why?");
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
+});
+
+test("/ focuses the box from anywhere outside a text field, and is not typed", async ({ page }) => {
+  await open(page);
+  await page.locator("main h1").focus();
+
+  await page.keyboard.press("/");
+
+  await expect(box(page)).toBeFocused();
+  await expect(box(page)).toHaveValue("");
+  await expect(box(page)).toHaveAttribute("aria-keyshortcuts", "/");
+});
+
+// Tickets 12 and 14 together: on a package page the chip holds a STEP reference, which is far longer
+// than a P-code. When the chip and a box you can type in do not fit on one line, the chip takes a row
+// of its own above the text; a reference wider than that row breaks after a hyphen inside the chip.
+// The page never scrolls sideways, and what you type stays in view.
+const LONG_REF = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
+
+async function openPackage(page: Page, ref: string, width: number) {
+  await page.setViewportSize({ width, height: 900 });
+  const known = ref === "KE-NWWDA-541055-CW-RFB";
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api/packages/${ref}`]: known ? { body: await recorded("package-ke-nwwda-541055.json") } : { status: 404, body: '{"code":"unknown_package"}' },
+    [`/api/packages/${ref}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+  await page.goto(`/packages/${encodeURIComponent(ref)}`);
+  await expect(page.locator("main h1")).toBeVisible();
+}
+
+const rect = async (page: Page, selector: string) => (await page.locator(selector).boundingBox())!;
+
+for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
+  test(`at every width the scope chip keeps ${ref.length === 22 ? "a STEP reference" : "a 40-character reference"} whole inside the box, and the box stays wide enough to type in`, async ({ page }) => {
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await openPackage(page, ref, width);
+      const chip = page.locator("[data-box-band] [data-scope-chip]");
+      await expect(chip).toContainText(ref);
+
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
+      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+      const inner = await rect(page, "[data-box-band] [data-scope-chip]");
+      expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
+      expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
+      // Room for about ten characters of a question.
+      const field = await rect(page, "[data-box-band] input");
+      expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
+      // The "/" hint, where a keyboard is assumed, stays at the end of the text field's row.
+      const hint = page.locator("[data-box-band] kbd");
+      if (await hint.isVisible()) {
+        const key = await hint.boundingBox();
+        expect(Math.round(key!.y + key!.height / 2), `${width} px: the / hint`).toBe(Math.round(field.y + field.height / 2));
+      }
+    }
+  });
+}
+
+test("a reference wider than its row breaks after a hyphen inside the chip, and one that fits a line moves there whole", async ({ page }) => {
+  for (const [width, wider] of [[320, true], [390, true], [768, false]] as const) {
+    await openPackage(page, LONG_REF, width);
+    const lines = await page.locator("[data-box-band] [data-scope-chip] .font-mono").evaluate((element) => {
+      const rows = new Map<number, string>();
+      const text = element.firstChild!;
+      for (let i = 0; i < text.textContent!.length; i++) {
+        const range = document.createRange();
+        range.setStart(text, i);
+        range.setEnd(text, i + 1);
+        const top = Math.round(range.getBoundingClientRect().top);
+        rows.set(top, (rows.get(top) ?? "") + range.toString());
+      }
+      return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, line]) => line);
+    });
+    expect(lines.join(""), `${width} px`).toBe(LONG_REF);
+    // At 768 px "Within" comes first, and the reference fits on the chip's next line whole.
+    if (!wider) expect(lines, `${width} px`).toEqual([LONG_REF]);
+    else expect(lines.length, `${width} px: ${lines.join(" | ")}`).toBeGreaterThan(1);
+    for (const [index, line] of lines.entries()) {
+      expect(line.startsWith("-"), `${width} px, line ${index + 1}: ${lines.join(" | ")}`).toBe(false);
+      if (index > 0) expect(lines[index - 1].endsWith("-"), `${width} px: ${lines.join(" | ")}`).toBe(true);
+    }
+  }
+});
+
+test("a P-code's chip and a STEP reference's chip on a wide screen sit on one row with the text, in a 44 px box", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await open(page, "/projects/P130164");
+  const single = async (label: string) => {
+    const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+    const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+    const field = await rect(page, "[data-box-band] input");
+    expect(Math.round(outer.height), label).toBe(44);
+    expect(Math.round(chip.height), label).toBe(32);
+    expect(Math.round(chip.y + chip.height / 2), label).toBe(Math.round(field.y + field.height / 2));
+    expect(Math.round(field.x - (chip.x + chip.width)), `${label}: the gap after the chip`).toBe(8);
+  };
+  await single("P130164 at 320 px");
+
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
+  await single("KE-NWWDA-541055-CW-RFB at 1440 px");
+});

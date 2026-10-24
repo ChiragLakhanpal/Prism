@@ -154,19 +154,55 @@ def stream_text(case: Case, database: Path = FIXTURE_DB) -> str:
     return asyncio.run(ask())
 
 
+def failed_stream_text(code: str) -> str:
+    """The answer stream the server sends when a run cannot answer, with the error code it gives: the agent
+    did not respond (agent_unavailable), or a content filter stopped the question (content_filter)."""
+    import asyncio
+
+    import httpx
+
+    from strata.harness.turn import RunError
+    from strata.server.app import create_app
+
+    async def runner(turn):
+        raise RunError(code, f"A recorded stream for the screen tests: {code}.")
+        yield
+
+    app = create_app(runner=runner, new_run_id=lambda: RECORDED_RUN_ID, trace_ids=lambda: RECORDED_TRACES)
+
+    async def ask():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            response = await client.post("/api/ask", headers={"X-Forwarded-User": "4021@1984"},
+                                         json={"question": "Why were works contracts in P130164 advertised again?",
+                                               "scope": "P130164"})
+            return response.text
+
+    return asyncio.run(ask())
+
+
 def main(argv: list[str] | None = None) -> int:
     """Print a scripted case's answer stream, as tests/fixtures/api keeps it for the screen tests:
 
         uv run --frozen python -m strata.agent.scripted p130164-rebidding > tests/fixtures/api/ask-p130164-rebidding.sse
+
+    or, with --error and a code, the stream of a run that could not answer:
+
+        uv run --frozen python -m strata.agent.scripted --error agent_unavailable > tests/fixtures/api/ask-agent-unavailable.sse
     """
     import argparse
     import sys
 
+    from strata.harness.turn import ERROR_CODES
+
     parser = argparse.ArgumentParser(prog="python -m strata.agent.scripted", description=main.__doc__.split("\n")[0])
-    parser.add_argument("case", choices=sorted(load_cases()))
+    parser.add_argument("case", nargs="?", choices=sorted(load_cases()))
+    parser.add_argument("--error", choices=ERROR_CODES, help="print the stream of a run that ends with this error")
     parser.add_argument("--database", type=Path, default=FIXTURE_DB, help="the fixture database (gates/build_fixture.py)")
     args = parser.parse_args(argv)
-    sys.stdout.write(stream_text(load_cases()[args.case], args.database))
+    if (args.case is None) == (args.error is None):
+        parser.error("name a case or an --error code, not both")
+    sys.stdout.write(failed_stream_text(args.error) if args.error else stream_text(load_cases()[args.case], args.database))
     return 0
 
 

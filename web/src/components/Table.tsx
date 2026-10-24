@@ -66,8 +66,8 @@ type Level = 2 | 3 | 4 | 5;
 // Where the rows turn into cards. The class names are written out whole, so Tailwind finds them.
 export type CardsBelow = "md" | "lg";
 const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
-  md: { table: "md:block", cards: "md:hidden" },
-  lg: { table: "lg:block", cards: "lg:hidden" },
+  md: { table: "@md/page:block", cards: "@md/page:hidden" },
+  lg: { table: "@lg/page:block", cards: "@lg/page:hidden" },
 };
 // The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
 // breakpoint as cardsBelow="lg".
@@ -174,8 +174,8 @@ export function Table({
             <SkeletonLine className="text-title" width="w-2/5" />
           ) : (
             <>
-              <SkeletonText className="text-title md:hidden" widths={["w-full", "w-3/5"]} />
-              <div className="hidden md:block">
+              <SkeletonText className="text-title @md/page:hidden" widths={["w-full", "w-3/5"]} />
+              <div className="hidden @md/page:block">
                 <SkeletonLine className="text-title" width="w-3/5" />
               </div>
             </>

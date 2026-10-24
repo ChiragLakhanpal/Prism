@@ -1,8 +1,9 @@
 # The bundle's notes
 
-Strata's Declarative Automation Bundle is `databricks.yml` at the root of the repo, with the files in this folder. It declares two things on the Free Edition workspace that Strata shares with fairshare.
+Strata's Declarative Automation Bundle is `databricks.yml` at the root of the repo, with the files in this folder. It declares three things on the Free Edition workspace that Strata shares with fairshare.
 
 - `catalog.yml` declares the catalog `strata`, its schemas `bronze`, `silver`, `gold` and `ops`, and the volume `strata.bronze.files`. It also gives the people who use the app read access, so the app can run each query as the viewer (ADR 0003). The bundle variable `readers` names them, and it is `account users`, everyone who can sign in to the workspace.
+- `dashboard.yml` declares the AI/BI dashboard `Strata`, whose file `dashboards/strata.lvdash.json` `src/strata/dashboard` writes from code. Its first page is Data readiness. Its queries run with each viewer's own credentials on the SQL warehouse the deploy passes as the variable `warehouse_id`. The measure task writes `strata.ops.readiness_snapshot`, the Data readiness page as the app builds it, which the dashboard reads.
 - `nightly.yml` declares the job `strata nightly`. Its ten tasks run one at a time, in the order of `docs/PLAN.md` section 11, and each writes one row to `strata.ops.pipeline_runs`. Three tasks have their work: `fetch_by_watermark` fetches every structured source in `config/sources.toml` into bronze, for every country (the monthly loan history for the slice's countries), `bronze_to_gold` builds silver and gold from them, and `measure_data_readiness` writes the data readiness measures to `strata.ops.data_readiness` and each table's size to `strata.ops.table_sizes`. The other seven do nothing yet.
 
 A bundle does not declare tables. Each table is defined once, in `src/strata/lakehouse/tables/<schema>/<table>.sql`, and each view in `src/strata/lakehouse/views/<schema>/<view>.sql`, and the deploy command creates them on the SQL warehouse. The gate builds the same definitions on DuckDB, and it fails when a table has no `public_from` column (ADR 0002).
@@ -15,13 +16,14 @@ You need the Databricks CLI 0.287.0 or later, because only the direct deployment
 
 It lists what the workspace holds, deploys the bundle, creates the tables, and prints what changed. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
 
-Then run these three checks, also from the main checkout:
+Then run these four checks, also from the main checkout:
 
     uv run --script ops/bundle/check.py job-run --env-file .env
     uv run --script ops/bundle/check.py same-rows --env-file .env
+    uv run --script ops/bundle/check.py readiness --env-file .env
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
-The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the two sample queries, `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
+The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the two sample queries, `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third builds the Data readiness page on the SQL warehouse and checks that its awards row's rows held and STEP-reference link rate match a direct query on `strata.ops.data_readiness`. The fourth reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
 
 Some things to know before the first deploy:
 

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 5 (Suppliers); the blueprint's "Suppliers resol
 
 **Blocked by:** 17 (Every structured source, for every country, kept as published)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md section 5 (Suppliers); the blueprint's "Suppliers resol
 - [ ] strata.ops reports how many pairs are labeled and the auto-merge precision on them with its interval; the auto-merge threshold is set so that precision on the labeled pairs is at least 0.98.
 - [ ] The fixture's joint venture is one supplier linked to its members.
 - [ ] The supplier tables expose no score, rank or rating column, and no tool returns a supplier profile.
+
+## Comments
+
+- October 24, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/19-supplier-entity-resolution, at the start of the P2 wave; every ticket it waited on is done. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

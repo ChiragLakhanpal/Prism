@@ -79,7 +79,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Since ticket 13 merged, it also lists `strata.ops.agent_runs` as new, where each answer's run is logged. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Since ticket 13 merged, it also lists `strata.ops.agent_runs` as new, where each answer's run is logged. Since ticket 14 merged, it also lists `strata.ops.evidence_opened` as new, where the App records which sources each viewer opened. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -439,3 +439,66 @@ Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEM
     <App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
 
 It worked if the deploy exits 0 with its last line `Strata is running at https://...`, and on the page the pill reads "9 activities checked", the h2 reads "One needs a look and two are worth watching; three have data notes." and the count line reads "Showing 6 of 9 activities" (criterion 8, the first half of P1's exit criterion). Three things change with the date. The Watch for KE-NWWDA-541062-CW-RFQ says "N days before the project closes", and N counts down to October 31, 2026. After that date, the closing-date reasons change their wording. The App's as-of date is today's date in UTC.
+
+## Ticket 16, step 1 of 4: deploy the Strata dashboard with the bundle
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. It needs the Databricks keys in `.env`, including `DATABRICKS_WAREHOUSE_ID`, because the dashboard's queries run on that SQL warehouse. Ticket 04's step 1 runs the same command. Run it again here if that deploy came from a commit before 69e97c8, because the dashboard and its snapshot table arrived in this merge.
+
+Run this from the main checkout, and then run it a second time:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if both runs exit 0. The first run prints "The dashboard Strata is new." and lists `strata.ops.readiness_snapshot` as a new table. The second run prints "No changes." Then open the dashboard Strata in the workspace. Its first page must be Data readiness (criterion 6, deploy half). The page stays empty until the nightly job has run once after this deploy, because the job's readiness task writes the snapshot it reads. So run ticket 04's step 2 next: `uv run --script ops/bundle/check.py job-run --env-file .env`.
+
+## Ticket 16, step 2 of 4: the Data readiness page's awards row against a direct query
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after step 1 and after the nightly job has run (ticket 04's step 2). It needs the Databricks keys in `.env`.
+
+Run these from the main checkout, one after the other:
+
+    uv run --script ops/bundle/check.py readiness --env-file .env
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the first command exits 0 and prints "The Data readiness page's awards row matches a direct query on strata.ops.data_readiness:", then two lines that each show the same numbers on the page and in the query: "award rows held: N on the page, N in the query" and "contracts with a STEP reference: A of B on the page, A of B in the query". It then prints Kenya's own measures on one line, "Kenya's own measures, for comparison: ...". On the fixture these were 632 award rows and 528 of 603 contracts with a STEP reference. On the workspace the page's awards row counts every country, so expect larger numbers there and Kenya's on the last line. The second command must print `true` for `kenya_step_reference_link_rate.sql` (criterion 1, workspace half). Exit 1 from the first command means the page and the query differ, and the two lines show by how much.
+
+## Ticket 16, step 3 of 4: the plans' link measure is written with the kind linked
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after the next live plan run, which is ticket 08's step 1 (`uv run --script ops/plans/run_live.py --env-file .env`).
+
+Run this in the workspace's SQL editor:
+
+    SELECT subject, kind, count, denominator, measured_at FROM strata.ops.data_readiness WHERE source = 'documents' AND measure = 'step_rows_with_reference' ORDER BY measured_at DESC LIMIT 5
+
+It worked if the newest row for each project carries kind `linked`. Rows written before this merge keep `read_well`, and that is not a failure: the page reads only the newest row for each source, subject and measure, by `measured_at`, so the new run corrects what it shows with no backfill.
+
+## Ticket 16, step 4 of 4: the dashboard's Data readiness page beside /data on the same date
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after steps 1 to 3 and after the App is deployed from 69e97c8 or later with `uv run --script ops/app/deploy_app.py --env-file .env` (ticket 06's step 1).
+
+Open the App's `/data` page and note its measure date. Then open the dashboard Strata, go to its Data readiness page and set its date to that measure date.
+
+It worked if both show the same headline sentence, the same fixes in the same order with the same project counts, the same link counts, and the same status (Partial or Gap) for each source (criterion 6). If live data make the Procurement Plans' link the biggest gap, check that the headline spells STEP out before it uses the short form, and that no sentence ends in two periods ("lack an Activity Reference No.."). Design review round 8's P1 says the second one can happen only on live data.
+
+## Ticket 14, step 1 of 2: the showcase question from the box on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit 069a6ca. Run it after ticket 04's step 1 deployed from 069a6ca or later, because that deploy makes `strata.ops.agent_runs` and `strata.ops.evidence_opened`, and the App deploy below grants its service principal MODIFY on both. Also run it after ticket 09's step 1 (user authorization), ticket 11's step 1 (the passages and the AI Search index) and ticket 13's step 1 (the Foundry agent). It needs the Databricks keys in `.env` and all four Foundry keys: `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_TENANT_ID`, `FOUNDRY_CLIENT_ID` and `FOUNDRY_CLIENT_SECRET`. The wizard does not make the last two yet, so `.env.example` keeps them as commented lines and `guard.py --env-keys` does not list them. Uncomment both in `.env` and fill them from the Entra app registration the App reaches the agent as, which needs the Azure AI User role on the Foundry project. Ticket 06's step 1 and ticket 10's step 1 run the same deploy command. Run it again here if that deploy came from a commit before 069a6ca, because the box's intents, the answer panel, the evidence drawer and the Foundry keys arrived in this merge.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its step 3 prints "I saved the Foundry agent's four keys in the secret scope, so /api/ask answers through the agent." (not ".env has no ..."), and its last line is `Strata is running at https://...`. Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`, open `<App url>/projects/P130164`, press "/", type "Why were works contracts in P130164 advertised again?" and choose "Ask this". It passes when the steps stream in one at a time and "In short" lands with a [1] marker (criterion 7). A click on [1] must open the drawer at ICR ¶54 with this meta line, word for word: "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66". The check line's counts must equal the `checks` event in the browser's network tab for `POST /api/ask`. Then open "Show the four steps I took", copy its Answer ID, and run this in the workspace's SQL editor:
+
+    SELECT run_id, status, sentences_kept, numbers_matched, numbers_total, quotes_found, quotes_total FROM strata.ops.agent_runs WHERE run_id = '<Answer ID>'
+
+It must return one row whose counts match the check line. If the panel says there is no agent, the App started without the Foundry keys: check step 3's line above.
+
+## Ticket 14, step 2 of 2: an opened source writes one row for the viewer
+
+The merger parked this step on October 24, 2026, after merge commit 069a6ca. Run it right after step 1, in the same App and as the same user, because step 1's click on [1] is the first open.
+
+Run this in the workspace's SQL editor:
+
+    SELECT viewer_id, evidence_id, times_opened FROM strata.ops.evidence_opened WHERE evidence_id = 'strata.gold.passage:31525018/v1/54'
+
+It worked if it returns one row for your user id with `times_opened` 1 (criterion 5, live write). Then press Escape to close the drawer, click [1] again and run the query again. It must still return one row for you, now with `times_opened` 2. This proves the MERGE runs on Delta as the App's own service principal. If the first query returns no row, check that the deploy's step 6 ran ("Letting the app's own service principal write usage events, agent runs and opened sources to strata.ops."), and that the address has no `?view=`, because a preview of another view records nothing.

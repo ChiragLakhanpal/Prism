@@ -60,6 +60,21 @@ export const galleryCopy = {
       purpose:
         "This page shows the body of a cited answer in each of its states. In each sample, the sentences, the table, the check line and the steps count the same things.",
     },
+    box: {
+      title: "The one box",
+      purpose:
+        "As you type, the box lists what Enter will do. An ID opens its page, and anything else offers Ask this. On a project or package page it holds a scope chip you can remove.",
+    },
+    "answer-panel": {
+      title: "Answer panel",
+      purpose:
+        "The answer to a question asked from the box, in the page under the band. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
+    },
+    evidence: {
+      title: "Evidence card and drawer",
+      purpose:
+        "A marker's hover or focus shows the evidence card. A click opens the drawer beside the page, at the whole paragraph with the matching words highlighted. Below 768 px the drawer fills the screen.",
+    },
     document: {
       title: "Document passage",
       purpose: "A passage is one numbered paragraph, word for word, with the matching words highlighted.",
@@ -73,6 +88,11 @@ export const galleryCopy = {
       title: "Skeleton",
       purpose:
         "Skeletons are static blocks sized to the content they stand in for. Each line is as tall as the line of text it holds a place for, so nothing moves when the content arrives.",
+    },
+    readiness: {
+      title: "Data readiness",
+      purpose:
+        "The Data readiness page in each of its states: the headline, what you can ask, one row per source with a badge only for Partial or Gap, and the fixes. Below 768 px each table becomes cards.",
     },
     "plan-check": {
       title: "Plan check",
@@ -114,6 +134,40 @@ export const galleryCopy = {
     withGap: "With a gap",
     withoutGap: "With nothing missing",
     french: "A passage in French",
+    hint: "Focused and empty: the hint",
+    project: "A project ID",
+    loan: "A loan number",
+    loanPending: "A bare number, before its lookup finds a loan",
+    activity: "A STEP reference",
+    activityPending: "A STEP reference, while it is looked up",
+    question: "A question",
+    questionWithId: "A question that holds a project ID",
+    notFound: "An ID no record holds",
+    lookupFailed: "A lookup that failed",
+    scoped: "On a project page, with its scope chip",
+    scopedLong: "On a package page with a long reference: the chip takes a row of its own",
+    streamingSteps: "Streaming: two steps done, one running, one to do",
+    allChecked: "Ready, with every check passed",
+    readyRemoved: "Ready, with one sentence removed",
+    unsupported: "Every sentence failed a check",
+    emptyScoped: "Nothing found, within a project",
+    emptyUnscoped: "Nothing found, across all projects",
+    dropped: "The connection dropped",
+    asOf: "Asked as of a date",
+    preview: "Asked from a page whose address asks for the public view",
+    card: "Evidence card",
+    cardVisited: "Evidence card, for a source opened before",
+    fromAnswer: "Opened from the answer",
+    switcher: "A sentence with two sources",
+    switcherSection: "A sentence quoting an ISR section and citing an ICR annex",
+    fromLink: "Opened from a link",
+    section: "An ISR section, which has no paragraph number",
+    cardSection: "Evidence card, for a quote from an ISR section",
+    cardRecord: "Evidence card, for a record",
+    record: "A record",
+    unknown: "An ID no source has",
+    unknownAsOf: "An ID no source has as of the address's date",
+    drawerPreview: "In a preview",
   },
 
   notes: {
@@ -279,6 +333,15 @@ export const galleryCopy = {
   },
 
   sample: {
+    // The questions the recorded answer streams answer (tests/fixtures/agent/cases.toml).
+    showcaseQuestion: "Why were works contracts in P130164 advertised again?",
+    bridgesQuestion: "Which firms built the bridges in P130164?",
+    boxQuestion: "Why were works contracts advertised again?",
+    unknownProject: "P999999",
+    boxProject: "P130164",
+    // A reference longer than any in the fixture, to show the scope chip at its widest.
+    boxPackageLong: "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC",
+    boxLoan: "IDA-60290",
     primary: "Mark as checked",
     secondary: "Export to Word",
     ghost: "Show them",
@@ -553,5 +616,105 @@ export const galleryCopy = {
       "loader-circle",
       "file-down",
     ],
+  },
+  // The Data readiness page's samples (web/src/pages/data/DataReadiness.tsx). Every count and name
+  // is made up for the gallery; the page's real numbers come from data_readiness_for.
+  readiness: {
+    sections: {
+      ready: "Every source",
+      filtered: "Opened from a coverage line",
+      loading: "Loading",
+      slow: "Loading, after three seconds",
+      empty: "No measures yet",
+      unmeasured: "A source with no measures",
+      beforeFirst: "A date before the first measure",
+      timeout: "The database did not answer",
+      permission: "No access",
+      error: "A server error",
+    },
+    rows: 4,
+    kinds: 2,
+    fixes: 2,
+    filteredHeadline: "Two sources are behind the past range. The biggest gap is the 180 of 1,200 sample contracts that lack a STEP reference.",
+    result: {
+      tool: "data_readiness_for",
+      as_of: "2026-10-21",
+      view: "staff",
+      abstention: null,
+      measured: { first: "2026-10-21", last: "2026-10-21" },
+      parse_failures: [],
+      routes: [],
+      headline_abstention: null,
+      filter: { sources: null, unknown: 0, from: null, shown: 4, total: 4 },
+      headline: {
+        text: "Of the two kinds of question below, I can answer one in full and one in part. The biggest gaps are the 180 of 1,200 sample contracts that lack a STEP reference and the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes.",
+        segments: [
+          { text: "Of the " },
+          { number: 2, row: null, noun: null },
+          { text: " kinds of question below, I can answer " },
+          { number: 1, row: null, noun: null },
+          { text: " in full and " },
+          { number: 1, row: null, noun: null },
+          { text: " in part. The biggest gaps are the " },
+          { number: 180, row: 2, noun: "sample contracts", role: "missing" },
+          { text: " of " },
+          { number: 1200, row: 2, noun: "sample contracts" },
+          { text: " sample contracts that lack a STEP reference and the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes." },
+        ],
+      },
+      rows: [
+        { evidence_id: "strata.ops.data_readiness:sample/all/coverage_rows", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "coverage_rows", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.awards" }, source_key: "sample", measure: "coverage_rows", kind: "coverage", subjects: ["all"], count: 1240, denominator: 1240, share_percent: 100, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/coverage_years", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "coverage_years", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.awards" }, source_key: "sample", measure: "coverage_years", kind: "coverage", subjects: ["all"], count: 7, denominator: 7, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/linked_step_reference", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "linked_step_reference", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.gold.contract" }, source_key: "sample", measure: "linked_step_reference", kind: "linked", subjects: ["all"], count: 1020, denominator: 1200, share_percent: 85, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/fresh_fetched", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "fresh_fetched", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.bronze.api_pages" }, source_key: "sample", measure: "fresh_fetched", kind: "fresh", subjects: ["all"], count: null, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: "2026-10-18", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/projects_lacking", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "projects_lacking", subjects: ["all"], measured_on: "2026-10-21", counted_in: null }, source_key: "sample", measure: "projects_lacking", kind: "fix", subjects: ["all"], count: 12, denominator: 40, share_percent: null, share_bound: null, in_ten: 3, in_ten_exact: true, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/coverage_rows", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "coverage_rows", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.notices" }, source_key: "notes", measure: "coverage_rows", kind: "coverage", subjects: ["all"], count: 800, denominator: 800, share_percent: 100, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/coverage_years", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "coverage_years", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.notices" }, source_key: "notes", measure: "coverage_years", kind: "coverage", subjects: ["all"], count: 9, denominator: 10, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/linked_project", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "linked_project", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.gold.notice" }, source_key: "notes", measure: "linked_project", kind: "linked", subjects: ["all"], count: 792, denominator: 800, share_percent: 99, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/fresh_fetched", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "fresh_fetched", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.bronze.api_pages" }, source_key: "notes", measure: "fresh_fetched", kind: "fresh", subjects: ["all"], count: null, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: "2026-10-21", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/read", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "read", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.silver.passages" }, source_key: "papers", measure: "read", kind: "read_well", subjects: ["P000000"], count: 140, denominator: 160, share_percent: 88, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/fresh", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "fresh", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.bronze.document_texts" }, source_key: "papers", measure: "fresh", kind: "fresh", subjects: ["P000000"], count: null, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: "2026-06-30", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/passages", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "passages", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.gold.passage" }, source_key: "papers", measure: "passages", kind: "coverage", subjects: ["P000000"], count: 600, denominator: 600, share_percent: 100, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+      ],
+      sources: [
+        { type: "measured", id: "sample", source_key: "sample", label: "Sample awards", stratum: "What", scope: { kind: "every_country" }, covers: "since fiscal 2020", cells: {
+          coverage: { measure: "coverage_rows", row: 0, counts: "award rows held", noun: "award rows", status: null, note: null, years_row: 1 },
+          linked: { measure: "linked_step_reference", row: 2, counts: "sample contracts carry a STEP reference", noun: "sample contracts", status: "partial", note: null },
+          read_well: { published_as_table: true },
+          fresh: { measure: "fresh_fetched", row: 3, counts: "last fetched", noun: "fetches", status: "partial", note: null, schedule: "daily", late_days: 2 },
+        } },
+        { type: "gap", id: "sample_gap", source_key: "sample", label: "Sample awards", first_fiscal_year: 2017, last_fiscal_year: 2019, note: "No sample dataset publishes awards for these years. Sample notices cover most of them." },
+        { type: "measured", id: "notes", source_key: "notes", label: "Sample notices", stratum: "What", scope: { kind: "every_country" }, covers: null, cells: {
+          coverage: { measure: "coverage_rows", row: 5, counts: "notices held", noun: "notices", status: null, note: null, years_row: 6 },
+          linked: { measure: "linked_project", row: 7, counts: "notices have their project record", noun: "notices", status: null, note: null },
+          read_well: { published_as_table: true },
+          fresh: { measure: "fresh_fetched", row: 8, counts: "last fetched", noun: "fetches", status: null, note: null, schedule: "daily", late_days: null },
+        } },
+        { type: "measured", id: "papers", source_key: "papers", label: "Sample reports", stratum: "Why", scope: { kind: "projects", count: 1 }, covers: null, cells: {
+          coverage: { measure: "passages", row: 11, counts: "passages read", noun: "passages", status: null, note: null },
+          linked: { measure: null, row: null },
+          read_well: { measure: "read", row: 9, counts: "body pages with their paragraph numbers found", noun: "body pages", status: "partial", note: null },
+          fresh: { measure: "fresh", row: 10, counts: "newest report", noun: "reports", status: null, note: null, schedule: "as published", late_days: null },
+        } },
+        { type: "unmeasured", id: "scores", source_key: "scores", label: "Sample scores", stratum: "What", scope: { kind: "countries", names: ["Kenya", "Bangladesh"] }, covers: null, cells: {
+          coverage: { measure: "coverage_rows", row: null }, linked: { measure: "linked_country", row: null }, read_well: { published_as_table: true }, fresh: { measure: "fresh_fetched", row: null },
+        } },
+      ],
+      kinds: [
+        { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, spell_out: false, holds_back: [
+          [{ text: "Of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts, " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " lack a STEP reference." }],
+          [{ text: "I list one more gap under Sources." }],
+        ] },
+        { kind: "document_search", tool: "search_passages", status: "ready", ready_for: 11, spell_out: false, holds_back: [[{ text: "Nothing I measured holds it back." }]] },
+      ],
+      gaps: [
+        { id: "sample/linked", type: "linked", status: "partial", row_id: "sample", source_key: "sample", column: "linked", projects: 12, phrase: [{ text: "the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts that lack a STEP reference" }] },
+        { id: "sample_gap", type: "published", status: "gap", row_id: "sample", source_key: "sample", column: null, projects: null, phrase: [{ text: "the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes" }] },
+      ],
+      fixes: [
+        { rank: 1, gap: "sample/linked", projects: 12, row: 2, projects_row: 4, projects_from: "measure", sentence: [{ text: "Find a STEP reference for the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " sample contracts that lack one." }] },
+        { rank: 2, gap: "papers/read_well", projects: 1, row: 9, projects_row: null, projects_from: "subjects", sentence: [{ text: "Use the layout parser on the " }, { number: 20, row: 9, noun: "body pages", role: "missing" }, { text: " body pages where I found no paragraph numbers." }] },
+      ],
+    },
   },
 } as const;

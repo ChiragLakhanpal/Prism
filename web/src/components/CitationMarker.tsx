@@ -12,6 +12,10 @@
 // sentence it cites, and the span around both keeps the browser from breaking between them,
 // so the last word wraps with its marker. A marker at the head of a line would read as the
 // source of the next sentence (CLAUDE.md rule 2).
+//
+// In the answer panel (ticket 14) the marker is a real link to the page with ?evidence=<id>, so it
+// can open in a new tab; a click opens the evidence drawer instead, and the marker says whether the
+// drawer shows its source (aria-expanded, with aria-controls naming the drawer).
 import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -25,6 +29,9 @@ export function CitationMarker({
   opened = false,
   active = false,
   onOpen,
+  drawerId,
+  evidenceId,
+  sentence,
 }: {
   n: number;
   // The document type, date and paragraph, as the name reads them.
@@ -36,19 +43,30 @@ export function CitationMarker({
   opened?: boolean;
   // Its source is open in the evidence drawer now.
   active?: boolean;
-  onOpen?: () => void;
+  // Opens the source; it gets the marker, so focus can come back to it.
+  onOpen?: (marker: HTMLElement) => void;
+  // The evidence drawer's id, when a click opens it.
+  drawerId?: string;
+  // The source and the sentence the marker cites, so focus can find it again.
+  evidenceId?: string;
+  sentence?: number;
 }) {
   const marker = (
     <a
       href={href}
       data-citation={n}
       aria-label={copy.citation.name(n, source, opened)}
-      aria-current={active ? "true" : undefined}
+      aria-current={active && !drawerId ? "true" : undefined}
+      aria-expanded={drawerId ? active : undefined}
+      aria-controls={drawerId}
+      data-citation-id={evidenceId}
+      data-sentence={sentence}
       onClick={
         onOpen &&
         ((event) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
-          onOpen();
+          onOpen(event.currentTarget);
         })
       }
       className={cx(
@@ -71,7 +89,8 @@ export function CitationMarker({
     <span className="whitespace-nowrap">
       {WORD_JOINER}
       {preview ? (
-        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]">
+        // The marker whose source the drawer shows in full opens no card beside it.
+        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]" quiet={active && Boolean(drawerId)}>
           {preview}
         </Tooltip>
       ) : (
@@ -81,4 +100,6 @@ export function CitationMarker({
   );
 }
 
-const WORD_JOINER = "\u2060";
+// Ties a marker or an icon to the word before it, so neither starts a line. A copied answer drops it
+// (Answer.tsx).
+export const WORD_JOINER = "\u2060";

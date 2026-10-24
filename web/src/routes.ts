@@ -34,6 +34,18 @@ export function isDay(text: string): boolean {
   return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(text);
 }
 
+// The Data tab's sub-pages under /data (the 16 design brief, section 2): Data readiness is /data.
+export const DATA_PAGES = { dataSources: "sources", dataHow: "how-strata-works" } as const;
+export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow: "/data/how-strata-works" } as const;
+
+// Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
+// the answer, by their source registry keys, and the tool that wrote the line, such as
+// find_comparables, which the page turns into words from the copy file.
+export function dataReadinessHref(sources: string[], from: string): string {
+  const query = new URLSearchParams({ sources: sources.join(","), from });
+  return `${DATA_HREF.data}?${query.toString().replaceAll("%2C", ",")}`;
+}
+
 function page(key: PageKey, section?: Section, values: Record<string, string> = {}): Match {
   return { key, section, values, linkHref: LINKS[key]?.(values) };
 }
@@ -69,6 +81,8 @@ export function matchRoute(pathname: string): Match {
   if (first === "lessons" && parts.length === 1) return page("lessons", "lessons");
   if (first === "drafts" && parts.length === 1) return page("drafts", "drafts");
   if (first === "data" && parts.length === 1) return page("data", "data");
+  if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataSources) return page("dataSources", "data");
+  if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataHow) return page("dataHow", "data");
   if (first !== "projects") return page("notFound");
   if (parts.length === 1) return page("projects", "projects");
 

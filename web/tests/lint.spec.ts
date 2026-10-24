@@ -2,16 +2,17 @@
 // same command the gate runs, web/lint/run.ts, on files it writes, and checks that the
 // command fails on the mistake and passes once the mistake is gone.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { footerSentence } from "./design-md";
+import { placements, readRegistry, type SourceRegistry } from "./registries";
 
 const RUN = fileURLToPath(new URL("../lint/run.ts", import.meta.url));
 
-function lint(files: { copy?: string; component?: string }) {
+function lint(files: { copy?: string; component?: string; registry?: string }) {
   const dir = mkdtempSync(join(tmpdir(), "strata-lint-"));
   const args = [RUN];
   if (files.copy !== undefined) {
@@ -21,6 +22,10 @@ function lint(files: { copy?: string; component?: string }) {
   if (files.component !== undefined) {
     writeFileSync(join(dir, "Thing.tsx"), files.component);
     args.push("--component", join(dir, "Thing.tsx"));
+  }
+  if (files.registry !== undefined) {
+    writeFileSync(join(dir, "sources.toml"), files.registry);
+    args.push("--registry", join(dir, "sources.toml"));
   }
   const done = spawnSync("node", args, { encoding: "utf8" });
   return { code: done.status, output: done.stdout + done.stderr };
@@ -50,6 +55,79 @@ for (const [name, wrong, right, reason] of MISTAKES) {
     expect(passed.code).toBe(0);
   });
 }
+
+test("the copy lint checks the words the source registry puts on the Data readiness page, and not its addresses", () => {
+  const entry = (note: string) =>
+    `[sources.cpia]\nendpoint = "https://api.worldbank.org/v2/clear"\n# I flag nothing here.\n\n` +
+    `[[sources.cpia.declared]]\ncolumn = "coverage"\nnote = "${note}"\n`;
+  const failed = lint({ registry: entry("IDA countries only, as flagged by IDA") });
+  expect(failed.code, failed.output).toBe(1);
+  expect(failed.output).toMatch(/sources\.toml:7: "IDA countries only, as flagged by IDA" uses "flagged"/);
+
+  const passed = lint({ registry: entry("IDA countries only") });
+  expect(passed.output).toBe("");
+  expect(passed.code).toBe(0);
+});
+
+test("the server's copy of the Data readiness sentences says what the copy file says", async () => {
+  const { serverCopyIsCurrent } = await import("../lint/server-copy.ts");
+  expect(serverCopyIsCurrent(), "run node web/lint/server-copy.ts --write").toBe(true);
+});
+
+test("every kind of question in config/tools.toml has its words in the copy file, and its tool a coverage-line noun", async () => {
+  // Review r3 P6: adding a kind is one entry in config/tools.toml, and a kind with no words here would
+  // leave its numbers saying nothing about what they count.
+  const { copy } = await import("../src/copy.ts");
+  const tools = readFileSync(fileURLToPath(new URL("../../config/tools.toml", import.meta.url)), "utf8");
+  const kinds = [...tools.matchAll(/^\[tools\.(\w+)\.readiness\]\s*\nkind = "(\w+)"/gm)].map(([, tool, kind]) => ({ tool, kind }));
+  expect(kinds.length).toBeGreaterThan(0);
+  // Review r4 P5: a block written in another order fails here instead of being skipped.
+  expect(kinds.length, "every [tools.*.readiness] block starts with its kind line").toBe(
+    [...tools.matchAll(/^\[tools\.\w+\.readiness\]/gm)].length,
+  );
+  const words = copy.dataReadiness;
+  // A count that spells STEP out has a form for one as well.
+  expect(Object.keys(words.kinds.countsSpelledOne)).toEqual(Object.keys(words.kinds.countsSpelled));
+  for (const { tool, kind } of kinds) {
+    expect(words.kinds.names[kind], `copy.dataReadiness.kinds.names.${kind}`).toBeTruthy();
+    expect(words.kinds.counts[kind], `copy.dataReadiness.kinds.counts.${kind}`).toBeTruthy();
+    expect(words.kinds.countsOne[kind], `copy.dataReadiness.kinds.countsOne.${kind}`).toBeTruthy();
+    expect((words.server.fromNouns as Record<string, string>)[tool], `copy.dataReadiness.server.fromNouns.${tool}`).toBeTruthy();
+  }
+});
+
+test("every measure a number on /data can open that fills no column has its own window words in the copy file", async () => {
+  // Design r5 B1 and review r7 B1: a check's number, and then a kind's Ready for number, opened
+  // Coverage's window. Every measure the page can show comes from one of three places: a column, a
+  // check or a fix in config/sources.toml, or a kind's Ready for in config/tools.toml. Each one that
+  // no column of its row shows has words of its own in copy.dataReadiness.measureWindows, so a new
+  // one can never fall back to a column's name and definition, and each names its table.
+  const { copy } = await import("../src/copy.ts");
+  const { placed, conflicts } = placements();
+  expect(conflicts, "a measure's window is chosen by its name, so each is placed one way").toEqual([]);
+  const measureOf = (key: string) => key.slice(key.indexOf("/") + 1);
+  const needed = [...placed].filter(([, placement]) => placement.column === null).map(([key]) => measureOf(key));
+  // Each place adds at least one, so a reader that silently found none can't pass.
+  expect(needed).toContain("latest_activities_with_confirmed_first_listing_read");
+  expect(needed).toContain("gap_years_projects_in_local_currency");
+  expect(needed).toContain("passages_embedded");
+  const words = copy.dataReadiness.measureWindows;
+  const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
+  expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+  expect([...placed].filter(([, placement]) => !placement.table).map(([key]) => key), "every window names its table").toEqual([]);
+  // Review r6 P3: the words are keyed by measure name alone, and a column's measure names repeat
+  // across sources, so words for one would retitle every cell of that column that counts it.
+  const columnMeasures = new Set([...placed].filter(([, placement]) => placement.column !== null).map(([key]) => measureOf(key)));
+  expect(columnMeasures).toContain("linked_project");
+  expect(
+    Object.keys(words).filter((measure) => columnMeasures.has(measure)),
+    "a column's number opens the column's window",
+  ).toEqual([]);
+  // Review r7 P3: fix 1's window names the awards dataset by the registry's label and years, so the
+  // two can't drift apart.
+  const awards = readRegistry<SourceRegistry>("sources.toml").sources.awards.readiness?.[0];
+  expect(words.projects_with_contracts_lacking_step_reference.definition).toContain(`${awards?.label} ${awards?.covers}`);
+});
 
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {
   const failed = lint({ copy: "export const copy = {\n  done: (n: number) => `I flagged ${n} rows.`,\n};\n" });

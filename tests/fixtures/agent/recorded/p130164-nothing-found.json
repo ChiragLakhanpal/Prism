@@ -1,0 +1,51 @@
+{
+ "about": "Two answers of the Foundry agent strata-orchestrator through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first asks for one tool call; the second finds nothing in the passages that answers the question and gives no claims. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Which firms built the bridges in P130164?",
+ "scope": "P130164",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p130164_nothing_found_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p130164_nothing_found_1",
+     "call_id": "call_p130164_nothing_found_1",
+     "name": "search_passages",
+     "status": "completed",
+     "arguments": "{\"query\": \"firms that built the bridges\", \"project_id\": \"P130164\", \"as_of\": \"2026-10-23\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p130164_nothing_found_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p130164_nothing_found_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": []}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

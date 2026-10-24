@@ -68,7 +68,6 @@ const ROUTES: [string, string][] = [
   ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
-  ["data", "/data"],
   ["not-found", "/nowhere"],
   ["not-a-project", "/projects/130164"],
 ];
@@ -87,6 +86,15 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
     ...rest,
   };
 }
+
+// A Data tab shot (ticket 16): the page with the Data readiness answer it names, recorded from the
+// server on the fixture, and the registry's datasets.
+function data(name: string, path: string, readiness: Answer = { recorded: "data-readiness.json" }, rest: Partial<Shot> = {}, sources: Answer = { recorded: "data-sources.json" }): Shot {
+  const shot = app(`data--${name}`, path, {}, rest);
+  return { ...shot, api: { ...shot.api, "/api/data/readiness": readiness, "/api/data/sources": sources } };
+}
+
+const FILTERED = "/data?sources=awards,notices&from=find_comparables";
 
 // Ticket 10's screens. A state the fixture cannot reach, such as a partial check, is the recorded
 // plan check with one value changed, so it still shows real rows.
@@ -171,6 +179,102 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("projects--more", { recorded: "projects.json" }, { act: click("[data-projects-page] button") }, "/projects"),
   planShot("projects--empty", { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' }, {}, "/projects"),
   planShot("projects--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects"),
+];
+
+// Ticket 14: the one box, the answer panel and the evidence drawer, as the 14 brief's section 11 lists
+// them. The answers are the streams ticket 13's server writes, recorded in tests/fixtures/api.
+const QUESTION = "Why were works contracts in P130164 advertised again?";
+const ICR_54 = "strata.gold.passage:31525018/v1/54";
+const ISR_S4 = "strata.gold.passage:19095337/v1/s4";
+
+const typeInBox = (text: string) => async (page: Page) => {
+  await page.keyboard.press("/");
+  await page.keyboard.type(text);
+  await page.waitForTimeout(400);
+};
+
+const askInBox = (text = QUESTION, wait = true) => async (page: Page) => {
+  await typeInBox(text)(page);
+  await page.keyboard.press("Enter");
+  if (wait) await page.locator("[data-answer-panel] [data-answer]:not([data-answer=streaming])").waitFor();
+  await page.waitForTimeout(300);
+};
+
+const then = (...acts: ((page: Page) => Promise<void>)[]) => async (page: Page) => {
+  for (const act of acts) await act(page);
+};
+
+const BOX_API: Shot["api"] = {
+  "/api/projects/P130164": { recorded: "project-p130164.json" },
+  "/api/projects/P156634": { recorded: "project-p156634.json" },
+  "/api/lookup/loan": { recorded: "lookup-loan-ida-60290.json" },
+  "/api/lookup/activity": { recorded: "lookup-activity-ke-nwwda-541055-cw-rfb.json" },
+  "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+  "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+};
+
+// A shot of the box or the answer on P130164's page, with the stream it answers with.
+const answerShot = (name: string, stream: string, rest: Partial<Shot> = {}, path = "/projects/P130164"): Shot =>
+  app(name, path, {}, { full: true, ...rest, api: { ...app(name, path).api, ...BOX_API, "/api/ask": { recorded: stream }, ...rest.api } });
+
+const ANSWER = "ask-p130164-removed-number.sse";
+const marker = "[data-answer-panel] [data-citation='1']";
+
+const ANSWER_SHOTS: Shot[] = [
+  answerShot("box--hint", ANSWER, { full: false, act: (page) => page.keyboard.press("/") }, "/"),
+  answerShot("box--project", ANSWER, { full: false, act: typeInBox("P130164") }, "/"),
+  ...["IDA60290", "IDA-60290", "60290", "IDA / 60290"].map((loan, index) =>
+    answerShot(`box--loan-${index + 1}`, ANSWER, { full: false, widths: index ? [1440] : WIDTHS, act: typeInBox(loan) }, "/"),
+  ),
+  answerShot("box--step-reference", ANSWER, { full: false, act: typeInBox("KE-NWWDA-541055-CW-RFB") }, "/"),
+  answerShot("box--free-text", ANSWER, { full: false, act: typeInBox("Why were works contracts advertised again?") }, "/"),
+  answerShot("box--free-text-with-id", ANSWER, { full: false, act: typeInBox(QUESTION) }, "/"),
+  answerShot("box--lookup-pending", ANSWER, { full: false, pending: ["/api/lookup/activity"], act: typeInBox("KE-NWWDA-541055-CW-RFB") }, "/"),
+  answerShot("box--not-found", ANSWER, { full: false, api: { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } }, act: typeInBox("P999999") }, "/"),
+  answerShot("box--lookup-failed", ANSWER, { full: false, api: { "/api/lookup/activity": { status: 503, body: '{"code":"data_service"}' } }, act: typeInBox("KE-NWWDA-541055-CW-RFB") }, "/"),
+  answerShot("box--scoped", ANSWER, { full: false, act: typeInBox("Why?") }),
+  answerShot("box--scope-removed", ANSWER, { full: false, act: click("[data-scope-chip] button") }),
+  answerShot("box--step-landing", ANSWER, { full: false, act: then(typeInBox("KE-NWWDA-541055-CW-RFB"), async (page) => {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(600);
+  }), api: { "/api/projects/P156634/procurement/northern-water-works-development-agency": { recorded: PLAN_FILE } } }, "/"),
+  answerShot("answer--streaming", ANSWER, { pending: ["/api/ask"], act: askInBox(QUESTION, false) }),
+  answerShot("answer--ready", ANSWER, { act: askInBox() }),
+  answerShot("answer--all-checks-passed", "ask-p130164-rebidding.sse", { act: askInBox() }),
+  answerShot("answer--hover-marker", ANSWER, { full: false, widths: WIDE, act: then(askInBox(), hover(marker)) }),
+  answerShot("answer--focus-marker", ANSWER, { full: false, act: then(askInBox(), focus(marker)) }),
+  answerShot("answer--drawer", ANSWER, { full: false, act: then(askInBox(), click(marker)) }),
+  answerShot("answer--drawer-visited", ANSWER, { full: false, act: then(askInBox(), click(marker), async (page) => {
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(250);
+  }) }),
+  answerShot("answer--drawer-from-link", ANSWER, { full: false }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
+  answerShot("answer--drawer-loading", ANSWER, { full: false, pending: ["/api/evidence"] }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
+  answerShot("answer--drawer-failed", ANSWER, { full: false, api: { "/api/evidence": { status: 503, body: SERVICE_DOWN } } }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
+  answerShot("answer--drawer-unknown", ANSWER, { full: false, api: { "/api/evidence": { status: 404, body: '{"code":"unknown_evidence"}' } } }, "/projects/P130164?evidence=strata.gold.passage%3Anothing"),
+  // The ICR of October 10, 2019, linked as of a date before it was public.
+  answerShot("answer--drawer-unknown-as-of", ANSWER, { full: false, api: { "/api/evidence": { status: 404, body: '{"code":"unknown_evidence"}' } } }, `/projects/P130164?asof=2016-08-26&evidence=${encodeURIComponent(ICR_54)}`),
+  answerShot("answer--drawer-preview", ANSWER, { full: false }, `/projects/P130164?view=public&evidence=${encodeURIComponent(ICR_54)}`),
+  // An ISR section has no paragraph number: the drawer names the section, and its long name wraps.
+  answerShot("answer--drawer-section", ANSWER, { full: false, widths: [...WIDTHS, 320], api: { "/api/evidence": { recorded: "evidence-isr-p130164-s4.json" } } }, `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`),
+  // An answer whose fourth sentence quotes the table in an ISR section and also cites the ICR's Annex 1.A.
+  answerShot("answer--isr-card", "ask-p130164-isr-section.sse", { full: false, widths: WIDE, act: then(askInBox(), hover("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
+  answerShot("answer--isr-drawer", "ask-p130164-isr-section.sse", { full: false, widths: [...WIDTHS, 320], act: then(askInBox(), click("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
+  answerShot("answer--error", "ask-agent-unavailable.sse", { act: askInBox() }),
+  answerShot("answer--no-agent", "ask-no-agent.sse", { act: askInBox() }),
+  answerShot("answer--refused", "ask-content-filter.sse", { act: askInBox() }),
+  answerShot("answer--empty-scoped", "ask-p130164-nothing-found.sse", { act: askInBox("Which firms built the bridges in P130164?") }),
+  answerShot("answer--empty-unscoped", "ask-p130164-nothing-found.sse", { act: askInBox("Which firms built the bridges?") }, "/"),
+  answerShot("answer--unsupported", "ask-p130164-before-the-icr.sse", { act: askInBox() }),
+  answerShot("answer--as-of", ANSWER, { act: askInBox() }, "/projects/P130164?asof=2026-10-01"),
+  answerShot("answer--preview", ANSWER, { act: askInBox() }, "/projects/P130164?view=public"),
+  answerShot("answer--320", ANSWER, { widths: [320], act: askInBox() }),
+  // The plan check beside an open drawer: at 1024 px the page area is 614 px wide, so its table
+  // becomes activity cards (the 14 brief, section 2.5).
+  app("check-plan--drawer", `${PLAN}?evidence=${encodeURIComponent(ICR_54)}`, {}, {
+    widths: [1440, 1024],
+    api: { ...app("x", PLAN).api, [PLAN_API]: plan, "/api/evidence": { recorded: "evidence-icr-p130164-54.json" }, "/api/evidence/opened": { body: '{"opened":[]}' } },
+  }),
 ];
 
 // Ticket 12: the package workspace for KE-NWWDA-541055-CW-RFB, in every state the 12 brief lists, with
@@ -355,7 +459,7 @@ export const SHOTS: Shot[] = [
   app("app--view-public", "/lessons?view=public"),
   app("app--asof", "/lessons?asof=2016-08-26"),
   app("app--asof-unreadable", "/lessons?asof=last-tuesday"),
-  app("app--box-with-text", "/", {}, { act: type("[data-box-band] input", "P130164") }),
+  app("app--box-with-text", "/", { }, { act: type("[data-box-band] input", "P130164"), api: { ...app("x", "/").api, ...BOX_API } }),
   app("app--view-open", "/", {}, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
   app("app--view-error", "/", { me: { status: 502, body: '{"detail":"Bad Gateway"}' } }, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
   app("app--menu-open", "/lessons", {}, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),
@@ -372,9 +476,37 @@ export const SHOTS: Shot[] = [
   app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 
+  // The Data tab (ticket 16): every state of Data readiness, Sources and licenses and How Strata
+  // works, and its focus and hover states. The loading states are the gallery's readiness page.
+  data("readiness", "/data"),
+  data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
+  data("filtered-plan-check", "/data?sources=documents,projects&from=check_plan", { recorded: "data-readiness-plan-check.json" }),
+  data("filtered-unknown-key", "/data?sources=awards,not-a-source&from=find_comparables", { recorded: "data-readiness-unknown-key.json" }),
+  data("no-known-key", "/data?sources=not-a-source", { recorded: "data-readiness-no-known-key.json" }),
+  data("empty", "/data", { recorded: "data-readiness-empty.json" }),
+  data("unmeasured", "/data", { recorded: "data-readiness-unmeasured.json" }),
+  data("before-first", "/data?asof=2026-10-01", { recorded: "data-readiness-before-first.json" }),
+  data("timeout", "/data", { status: 504, recorded: "data-readiness-timeout.json" }),
+  data("no-access", "/data", { status: 403, recorded: "data-readiness-no-access.json" }),
+  data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
+  data("sources", "/data/sources"),
+  data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"known_gaps":0,"kinds":0,"fixes":0}' }),
+  data("how", "/data/how-strata-works"),
+  data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
+  data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
+  data("focus-show-all", FILTERED, { recorded: "data-readiness-filtered.json" }, { act: focus("main [data-alert=info] a") }),
+  data("term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=sources] thead [data-term] >> nth=1") }),
+  data("focus-num", "/data", undefined, { act: focus("[data-headline] [data-num] >> nth=2") }),
+  data("num-window", "/data", undefined, { act: click("[data-headline] [data-num] >> nth=2") }),
+  data("hover-num", "/data", undefined, { widths: WIDE, act: hover("[data-cell='awards:linked'] [data-num]") }),
+  data("fix-projects-window", "/data", undefined, { widths: WIDE, act: click("[data-fixes] li >> nth=0 >> p.text-small [data-num]") }),
+  data("hover-link", "/data", { recorded: "data-readiness-empty.json" }, { act: hover("[data-readiness=empty] a") }),
+  data("cards-320", "/data", undefined, { widths: [320] }),
+
   // Ticket 10: Check a plan, a project's page and All projects, in every state the 10 brief
   // lists (section 10), with /api answered from the recordings.
   ...PLAN_SHOTS,
   ...PROJECT_SHOTS,
+  ...ANSWER_SHOTS,
   ...PACKAGE_SHOTS,
 ];

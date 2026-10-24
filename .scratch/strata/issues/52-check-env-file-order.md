@@ -6,16 +6,28 @@ Read first: `ops/bundle/check.py`; the tests under `ops/bundle/tests/`; `docs/wo
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** ops
 **Phase:** P1
 **Design review:** no
 
-- [ ] `uv run --script ops/bundle/check.py job-run --env-file .env`, `... same-rows --env-file .env` and `... schedules --env-file .env --write` parse without error, and so do the forms with `--env-file` before the subcommand; a test under `ops/bundle/tests/` proves that each of the six forms parses to the same arguments, without reading any real environment file.
-- [ ] With a missing environment file, each form stops with the same one-sentence message as before, and a wrong option still exits with code 2.
-- [ ] Every command line in `docs/workspace-catchup.md`, `check.py` and the ground-truth SQL comments works as written; the ticket changes none of them unless one is wrong for another reason, and then the report says which.
-- [ ] The gate passes by hand on the branch with build/strata merged in, and the python and ops lanes' test counts are reported.
+- [x] `uv run --script ops/bundle/check.py job-run --env-file .env`, `... same-rows --env-file .env` and `... schedules --env-file .env --write` parse without error, and so do the forms with `--env-file` before the subcommand; a test under `ops/bundle/tests/` proves that each of the six forms parses to the same arguments, without reading any real environment file.
+- [x] With a missing environment file, each form stops with the same one-sentence message as before, and a wrong option still exits with code 2.
+- [x] Every command line in `docs/workspace-catchup.md`, `check.py` and the ground-truth SQL comments works as written; the ticket changes none of them unless one is wrong for another reason, and then the report says which.
+- [x] The gate passes by hand on the branch with build/strata merged in, and the python and ops lanes' test counts are reported.
 
 ## Comments
 
 - October 23, 2026, orchestrator: opened after the P0 phase gate's re-check found that every catch-up command for the bundle checks fails as written. The user will run those commands after the wizard, so the fix lands before then. It is a fix the catch-up file depends on, not new scope. Dispatched to an implementer in its own worktree on branch strata/52-check-env-file-order; a side run builds, reviews and verifies it, and the next wave merges it first.
+- October 23, 2026, merger: merged into build/strata as merge commit 8babf24 (parents 97b05e6 and 5fb8404, so the branch's history is kept). The history scan found no keys, and Git merged it with no conflicts. The first commit attempt went red in the ops lane: `ops/wizard/tests/test_wizard.py::test_a_second_run_after_the_app_is_deployed_finishes_test_six` exited 1 at the wizard's stage 10 question while the machine's load average was 22. This branch changes nothing under `ops/wizard`, nothing there changed since the branch's base, and the test passed alone three times. So I undid that attempt with `git merge --abort` and ran the merge again from the start. The gate then passed in 43.3 seconds on the merge commit, and in 43.6 seconds when I ran it again by hand on build/strata. The branch was built in the worktree `.claude/worktrees/wf_264385dd-569-1`, which I remove right after this commit. The branch stays.
+  - **Evidence.** Review round 1 (`.notes/52-review.md`) found nothing blocking and five polish items. Verify round 1 (`.notes/52-verify.md`) passed all four criteria and parked none. Criterion 1: on build/strata's old parser, the three forms with `--env-file` after the subcommand exited 2 with "unrecognized arguments". On the branch, all six forms parse to the same arguments, and through `uv run --offline --script` each one stops at a missing file with the wizard sentence. Eight top-level forms give the same arguments as before. Criterion 2: `main()` on the six forms returned 2 with the same sentence, and 13 wrong command lines still exited 2. One message changed: `job-run --env-file` with no value now says "expected one argument". Criterion 3: 29 written command lines parsed on the branch and none on the old parser, and the branch changes none of them. Criterion 4: the gate passed by hand in 61.8 seconds under load. The python lane collects 865 tests and the ops lane 144. `ops/bundle/tests/test_check.py` has 28 tests, up from 15, and the 13 new ones ran in 0.21 seconds. Six mutation probes, one of them taking out the shared parent parser, each failed at least one test.
+  - **Workspace results.** The builder named no workspace step, so nothing ran and I parked nothing. All 10 keys are still missing. The live runs of the bundle checks stay parked under tickets 04, 07, 08, 11 and 17 in `docs/workspace-catchup.md`, and those commands now parse as written.
+  - **Open polish, not blocking.** Review polish P1 to P5 are open at 5fb8404. P1: the last assertion in `ops/bundle/tests/test_check.py` (line 363) passes from the docstring line alone, so it would not notice if the join of check.py lines 174 and 175 broke. P2: the test name that ends in "main_checkout_s" claims more than the test proves. P3: the tests write the six forms out twice. P4: `parse()`'s docstring starts with a fragment. P5: a comment says Python splits a message that the author wrote as two literals.
+  - **Follow-ups.**
+    1. The ticket counted 22 written command lines, but the repo has 29, and the new scan test `test_every_check_command_the_repo_writes_parses_as_written` covers all of them. The extra 7 are bundle/README.md's 4, one in each run_live script (`ops/plans/run_live.py` and `ops/documents/run_live.py`), and the schedules note that check.py writes into bundle/README.md.
+    2. A fresh ticket worktree has no `web/node_modules`, so a builder's first gate run fails in the lint and web lanes until `scripts/install` runs there.
+    3. The wizard test named above failed once under load and passed alone three times. It may wait on something that slows down when the machine is busy, which is worth a look in a later ops ticket.
+    4. From the review: the gate skips tests on commits that stage only Markdown. When a park commit adds a check.py command to `docs/workspace-catchup.md`, run `uv run --frozen pytest ops/bundle/tests/test_check.py -k every_check_command` before committing.
+  - **Decisions parked for the user.**
+    1. When `--env-file` is given both before and after the subcommand, the later value wins, which is argparse's rule, and a test pins it. Pick: keep that. The other choice was to require the two values to match and stop when they differ.
+  - **What this unblocks.** Nothing. No ticket lists 52 under Blocked by.

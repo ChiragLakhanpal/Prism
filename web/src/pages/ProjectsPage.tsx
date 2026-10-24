@@ -37,8 +37,8 @@ const PROJECT_SKELETON = (
     <span aria-hidden="true" className="-mt-1 flex h-7 items-center">
       <Skeleton className="h-[1em] w-16" />
     </span>
-    <SkeletonText className="text-small xl:hidden" widths={["w-full", "w-2/5"]} />
-    <SkeletonLine className="hidden text-small xl:flex" width="w-3/5" />
+    <SkeletonText className="text-small @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+    <SkeletonLine className="hidden text-small @xl/page:flex" width="w-3/5" />
   </>
 );
 
@@ -134,10 +134,10 @@ export function ProjectsPage() {
 
   return (
     <div className="layout-grid">
-      <div className="col-span-12 md:col-span-8">
+      <div className="col-span-12 @md/page:col-span-8">
         <PageHeader title={copy.pages.projects.title} purpose={copy.pages.projects.purpose} />
       </div>
-      <div className="col-span-12 mt-6 lg:mt-8" data-projects-page={load.status}>
+      <div className="col-span-12 mt-6 @lg/page:mt-8" data-projects-page={load.status}>
         {body}
       </div>
     </div>

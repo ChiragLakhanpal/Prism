@@ -1,0 +1,15 @@
+# Strata's AI/BI dashboard (ticket 16; docs/PLAN.md section 9). src/strata/dashboard defines its pages
+# and tiles in code and writes dashboards/strata.lvdash.json, which this resource deploys with the
+# rest of the bundle, by the same one command (bundle/README.md). Its first page is Data readiness.
+#
+# Each viewer's own credentials run its queries (embed_credentials false), as the app runs each
+# query as the viewer (ADR 0003). The deploy passes the SQL warehouse from the env file as the
+# bundle variable warehouse_id.
+
+resources:
+  dashboards:
+    strata:
+      display_name: Strata
+      file_path: dashboards/strata.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      embed_credentials: false

@@ -33,7 +33,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   const result = load.status === "ready" ? load.data : null;
   const checked = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
-  useScrollPadding(header, Boolean(checked), { from: "64rem", gap: 8 });
+  useScrollPadding(header, Boolean(checked), { gap: 8 });
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
@@ -92,8 +92,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             // An agency's name takes two lines below 768 px and one from it, as most do.
             <>
               <span className="sr-only">{words.status.checking}</span>
-              <SkeletonText className="md:hidden" widths={["w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden md:flex" width="w-3/5 max-w-[560px]" />
+              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden @md/page:flex" width="w-3/5 max-w-[560px]" />
             </>
           }
           plan={<SkeletonLine width="w-60" />}

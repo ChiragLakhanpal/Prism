@@ -19,7 +19,7 @@ import pytest
 
 from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
-from strata.agent.scripted import ScriptedAgent, load_cases, stream_text
+from strata.agent.scripted import ScriptedAgent, failed_stream_text, load_cases, stream_text
 from strata.config import load_tools
 from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
@@ -113,6 +113,15 @@ def test_the_p130164_question_streams_steps_then_an_answer_citing_icr_paragraph_
     assert kinds[-1] == "done"
 
 
+def test_each_evidence_event_names_its_stratum_and_its_document_s_short_name(ask_case):
+    """The evidence card's eyebrow ("Why · evaluation") and the drawer's source switcher ("ICR ¶54") read
+    them from the stream, so the browser never decides which stratum a document belongs to."""
+    parsed, _ = ask_case("p130164-rebidding")
+
+    assert [(evidence["id"], evidence["stratum"], evidence["short_name"]) for evidence in of(parsed, "evidence")] == [
+        (ICR_54, "Why", "ICR"), ("strata.gold.passage:31525018/v1/55", "Why", "ICR")]
+
+
 def test_a_number_no_record_holds_is_removed_with_the_copy_files_reason(ask_case):
     parsed, _ = ask_case("p130164-number-with-no-record")
 
@@ -163,6 +172,18 @@ def test_a_quote_that_is_not_word_for_word_on_its_page_is_removed(ask_case):
     assert checks["quotes"] == {"total": 3, "found": 2}
     # The misquote's two numbers are not backed by a quote that is on its page.
     assert checks["numbers"] == {"total": 4, "matched": 2}
+
+
+def test_a_quote_whose_passage_did_not_come_back_is_never_counted_as_on_its_page(ask_case):
+    """As of October 15, 2019 the ICR of October 10, 2019 was not yet public (from November 2, 2019), so
+    no tool returned paragraphs 54 or 55. Neither quote was compared with any page, so the check line
+    may not say they are on their pages."""
+    parsed, _ = ask_case("p130164-rebidding", asof=dt.date(2019, 10, 15))
+
+    checks = of(parsed, "checks")[0]
+    assert checks["sources"] == {"total": 2, "returned": 0}
+    assert checks["quotes"] == {"total": 2, "found": 0}
+    assert checks["sentences"] == {"written": 3, "kept": 0, "removed": 3}
 
 
 def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_page(ask_case):
@@ -711,13 +732,57 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
 
 
 @pytest.mark.parametrize("case_id, recorded", [("p130164-rebidding", "ask-p130164-rebidding.sse"),
-                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse")])
+                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse"),
+                                               ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
+                                               ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse"),
+                                               ("p130164-isr-section", "ask-p130164-isr-section.sse")])
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 
     assert sent == (RECORDED / recorded).read_text(), (
         f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted {case_id} "
         f"> tests/fixtures/api/{recorded}")
+
+
+@pytest.mark.parametrize("code, recorded", [("agent_unavailable", "ask-agent-unavailable.sse"),
+                                            ("content_filter", "ask-content-filter.sse")])
+def test_the_server_sends_the_failed_streams_the_screen_tests_serve(code, recorded):
+    sent = failed_stream_text(code)
+
+    assert events(sent) == [("error", {"code": code}), ("done", {"run_id": "run-0001", "trace_ids": {
+        "application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}})]
+    assert sent == (RECORDED / recorded).read_text(), (
+        f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted --error {code} "
+        f"> tests/fixtures/api/{recorded}")
+
+
+def test_a_number_matched_to_an_isr_section_sits_inside_the_highlight_of_the_quote_that_backs_it(ask_case):
+    """A passage backs a number only inside quoted words (check 1), so a number the verifier matched to an
+    ISR's section is always inside that quote, and the quote's highlight shows it in the evidence card and
+    drawer. A second source the sentence cites but does not quote gets no highlight."""
+    isr, annex = "strata.gold.passage:19095337/v1/s4", "strata.gold.passage:31525018/v1/s38"
+    parsed, _ = ask_case("p130164-isr-section")
+
+    [quoting] = [sentence for sentence in of(parsed, "sentence") if isr in sentence["evidence_ids"]]
+    assert quoting["evidence_ids"] == [isr, annex]
+    assert quoting["numbers"] == [{"text": "67.00", "evidence_id": isr}, {"text": "67.00", "evidence_id": isr},
+                                  {"text": "80.00", "evidence_id": isr}]
+    sources = {evidence["id"]: evidence for evidence in of(parsed, "evidence")}
+    [highlight] = sources[isr]["highlights"]
+    assert highlight["sentence"] == quoting["index"]
+    # values.toml, isr-1-rural-access-end-target.
+    assert sources[isr]["row"]["text"][highlight["start"]:highlight["end"]] == "Percentage Value 67.00 67.00 80.00"
+    assert sources[annex]["highlights"] == []
+    assert (sources[isr]["row"]["paragraph_numbered"], sources[annex]["row"]["paragraph_numbered"]) == (False, False)
+    assert of(parsed, "removed") == []
+
+
+def test_an_agent_that_finds_nothing_to_cite_writes_no_sentence_and_the_checks_count_none(ask_case):
+    parsed, _ = ask_case("p130164-nothing-found")
+
+    assert of(parsed, "sentence") == [] and of(parsed, "removed") == []
+    assert of(parsed, "checks")[0]["sentences"] == {"written": 0, "kept": 0, "removed": 0}
+    assert parsed[-1][0] == "done"
 
 
 def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():

@@ -221,7 +221,7 @@ test("Tab in the view popover closes it and moves on to the box; Shift+Tab close
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
   await page.keyboard.press("Tab");
 
-  await expect(page.locator("[data-box-band]").getByRole("textbox")).toBeFocused();
+  await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await pill.click();
@@ -236,7 +236,9 @@ const ADDRESS_ALERTS: [string, string][] = [
   ["?view=piu", "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view."],
   ["?view=public", "I can't show the public preview yet, so you are seeing the World Bank staff view."],
   ["?view=board", "I don't know the view in this link, so you are seeing the World Bank staff view."],
-  ["?asof=2016-08-26", "I can't show pages as of August 26, 2016 yet, so you are seeing today's data."],
+  // The answer panel and the evidence drawer do use the date (App.tsx sends it to /api/ask, and
+  // EvidenceDrawer.tsx to /api/evidence), so the alert speaks for the page and names both.
+  ["?asof=2016-08-26", "I can't show this page as of August 26, 2016 yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use August 26, 2016."],
   ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
 ];
 
@@ -257,7 +259,8 @@ test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ pa
   await page.goto("/lessons?view=staff&lang=fr&evidence=ev-1");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
-  await expect(page.locator("[data-alert]")).toHaveCount(0);
+  // The page's alert slot stays empty; the evidence drawer beside the page answers ?evidence= itself.
+  await expect(page.getByRole("main").locator("[data-alert]")).toHaveCount(0);
 });
 
 test("error alerts come before the address's info alerts", async ({ page }) => {
@@ -266,31 +269,6 @@ test("error alerts come before the address's info alerts", async ({ page }) => {
 
   await expect(page.locator("[data-alert]")).toHaveCount(3);
   await expect(page.locator("[data-alert]").first()).toHaveAttribute("data-alert", "error");
-});
-
-test("the box says what Enter will do before anyone presses it, and Escape closes that line, then clears the box", async ({ page }) => {
-  await mockShell(page);
-  await page.goto("/");
-  await page.getByRole("heading", { level: 1 }).click();
-
-  await page.keyboard.press("/");
-  const box = page.locator("[data-box-band]").getByRole("textbox", { name: /Search a project/ });
-  await expect(box).toBeFocused();
-  await box.fill("P130164");
-  const status = page.locator("[data-box-band]").getByRole("status");
-  await expect(status).toHaveText("I can't open projects or answer questions from this box yet.");
-  await expect(box).toHaveAccessibleDescription("I can't open projects or answer questions from this box yet.");
-
-  await box.press("Enter");
-  await expect(status).toHaveText("I can't open projects or answer questions from this box yet.");
-  expect(new URL(page.url()).pathname).toBe("/");
-
-  await box.press("Escape");
-  await expect(status).toHaveCount(0);
-  await expect(box).toHaveValue("P130164");
-  await box.press("Escape");
-  await expect(box).toHaveValue("");
-  await expect(box).toBeFocused();
 });
 
 test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge never clips it", async ({ page }) => {
@@ -366,5 +344,5 @@ test("/ closes an open Menu and focuses the box", async ({ page }) => {
   await page.keyboard.press("/");
 
   await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
-  await expect(page.locator("[data-box-band]").getByRole("textbox")).toBeFocused();
+  await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
 });

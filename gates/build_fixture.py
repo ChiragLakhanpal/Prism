@@ -15,6 +15,9 @@ It builds four things, with no network:
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
   plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
   adds it to the nightly job.
+- The Data readiness page as data_readiness_for builds it, in strata.ops.readiness_snapshot, written
+  once the plan reader, the nightly job and the passage reader have all measured, as the dashboard
+  reads it (strata.dashboard.snapshot).
 - Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
   (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
   the fixture can never drift from the code that makes the real tables. They run after the plan
@@ -30,12 +33,15 @@ never leaves a half-built database behind. Run it with this command:
     uv run --frozen python gates/build_fixture.py
 """
 
+import datetime as dt
+import itertools
 import json
 import os
 import sys
 from pathlib import Path
 
 from strata.config import load_slice
+from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
 from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
@@ -46,6 +52,19 @@ ROOT = Path(__file__).resolve().parents[1]
 RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readiness measures carry
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
+# The fixture's runs read pages recorded on October 23, 2026, and take their measures that morning,
+# at 05:00 in Washington, when the nightly job starts. Every run of the build takes them at the same
+# times, so a page or a test pinned to that day reads the same measures whatever day the gate runs.
+RUNS_START = dt.datetime(2026, 10, 23, 9, 0, tzinfo=dt.UTC)
+
+
+def fixture_clock(start=RUNS_START):
+    """A clock that starts at start and moves on one millisecond each time it is read, so the rows the
+    runs write keep the order they were written in."""
+    ticks = itertools.count()
+    return lambda: start + dt.timedelta(milliseconds=next(ticks))
+
+
 RECORDED_TABLES = """
 CREATE SCHEMA recorded;
 CREATE TABLE recorded.files (file VARCHAR PRIMARY KEY, source VARCHAR NOT NULL, license VARCHAR NOT NULL,
@@ -90,16 +109,19 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
         leftover.unlink(missing_ok=True)
+    clock = fixture_clock()
     try:
         with DuckDBEngine.open(building) as engine:
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
             load_recorded(engine.connection, manifest)
             if plans_for:
-                plans.run_on_fixture(engine, plans_for, manifest=manifest)
+                plans.run_on_fixture(engine, plans_for, manifest=manifest, clock=clock)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 nightly.run_locally(engine, run_id=RUN_ID,
-                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest))
-                passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID)
+                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)
+                passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
+                # The dashboard's copy of the Data readiness page, once every reader has measured.
+                snapshot.write(engine, RUN_ID, clock)
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
     except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)

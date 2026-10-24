@@ -51,13 +51,19 @@ def fetch_recorded(source: Source, engine: Engine) -> Iterable[pages.Page]:
     return pages.recorded_pages(source)
 
 
+def _now() -> dt.datetime:
+    return dt.datetime.now(dt.UTC)
+
+
 @dataclass(frozen=True)
 class Run:
-    """What a task works with: the engine, the job run's id and where pages come from."""
+    """What a task works with: the engine, the job run's id, where pages come from, and the clock
+    its measures are taken by (the fixture build fixes it, so the fixture's measures never move)."""
 
     engine: Engine
     run_id: str
     fetch: Fetch
+    clock: Callable[[], dt.datetime] = _now
 
 
 def _nothing_yet(run: Run) -> int:
@@ -88,8 +94,12 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _measure_data_readiness(run: Run) -> int:
-    """The data readiness measures of every source, and the room each table takes."""
-    return readiness.measure(run.engine, run.run_id) + storage.measure(run.engine, run.run_id)
+    """The data readiness measures of every source, the room each table takes, and the Data readiness
+    page built from them for the dashboard (strata.dashboard.snapshot)."""
+    from strata.dashboard import snapshot
+
+    measured = readiness.measure(run.engine, run.run_id, run.clock) + storage.measure(run.engine, run.run_id, run.clock)
+    return measured + snapshot.write(run.engine, run.run_id, run.clock)
 
 
 # Each task's work, by the task key the bundle uses. Each returns the number of rows it changed.
@@ -112,10 +122,6 @@ def _record_sql() -> str:
     return (resources.files("strata.lakehouse") / "sql" / "record_pipeline_run.sql").read_text()
 
 
-def _now() -> dt.datetime:
-    return dt.datetime.now(dt.UTC)
-
-
 def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
              clock: Callable[[], dt.datetime] = _now) -> None:
     """Do one task's work and record it. A task that fails is recorded as failed, then raises again."""
@@ -123,7 +129,7 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
     started = clock()
     status, changed = "failed", 0
     try:
-        changed = work(Run(engine, run_id, fetch))
+        changed = work(Run(engine, run_id, fetch, clock))
         status = "succeeded"
     finally:
         finished = clock()
@@ -133,7 +139,7 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
         })
 
 
-def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live) -> int:
+def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Callable[[], dt.datetime] = _now) -> int:
     """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. Pages come
     from the live APIs, as on Databricks, unless fetch says otherwise; run_locally() passes the
     recorded fixture."""
@@ -145,7 +151,7 @@ def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live) -> int:
     if args.task not in TASKS:
         raise SystemExit(f"The nightly job has no task called {args.task}. "
                          f"Its tasks are: {', '.join(TASKS)}.")
-    run_task(engine, args.task, args.run_id, fetch)
+    run_task(engine, args.task, args.run_id, fetch, clock)
     return 0
 
 
@@ -192,14 +198,15 @@ def window(bundle=None) -> Window:
                   job["schedule"]["timezone_id"], int(job["timeout_seconds"]) // 60)
 
 
-def run_locally(engine: Engine, bundle=None, run_id: str | None = None, fetch: Fetch = fetch_recorded) -> str:
+def run_locally(engine: Engine, bundle=None, run_id: str | None = None, fetch: Fetch = fetch_recorded,
+                clock: Callable[[], dt.datetime] = _now) -> str:
     """Run every task of the job in order on engine, with the parameters the bundle gives and pages
-    from the recorded fixture. Returns the run id."""
+    from the recorded fixture, each timed by clock. Returns the run id."""
     run_id = run_id or f"local-{_now():%Y%m%dT%H%M%S%f}"
     for task in job_tasks(bundle):
         argv = [part.replace("{{job.run_id}}", run_id).replace("{{task.name}}", task.key)
                 for part in task.parameters]
-        main(argv, engine, fetch)
+        main(argv, engine, fetch, clock)
     return run_id
 
 
