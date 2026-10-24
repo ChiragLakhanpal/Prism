@@ -13,6 +13,7 @@ dependencies = [
     "pytz>=2026.5",
     "opentelemetry-api>=1.45.1",
     "fpdf2==2.8.9",
+    "splink==5.0.0",
 ]
 
 [dependency-groups]

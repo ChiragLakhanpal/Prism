@@ -24,16 +24,17 @@ It needs npm, which builds the web app. It does these things, in order:
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it.
 6. It grants the app's own service principal what the server needs to write usage events, agent
-   runs, opened sources and drafts, and nothing more: USE CATALOG on strata, USE SCHEMA on
-   strata.ops, and SELECT and MODIFY on strata.ops.usage_events, agent_runs, evidence_opened,
-   drafts, draft_states, draft_exports and draft_files. Viewers read as themselves, through the
-   bundle's grants.
+   runs, opened sources, drafts, and decisions and labels on supplier pairs, and nothing more: USE
+   CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on strata.ops.usage_events,
+   agent_runs, evidence_opened, drafts, draft_states, draft_exports and draft_files, SELECT on
+   strata.ops.supplier_pairs, and SELECT and MODIFY on strata.ops.supplier_review_decisions and
+   strata.ops.supplier_pair_labels. Viewers read as themselves, through the bundle's grants.
 7. It prints the app's address.
 
 Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
 grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
-app's USE CATALOG and USE SCHEMA, and its usage events, agent runs, opened sources and drafts stop being
-written.
+app's USE CATALOG and USE SCHEMA, and its usage events, agent runs, opened sources, drafts, decisions
+and labels stop being written.
 
 This was written from docs/PLAN.md section 12's description of fairshare's lakehouse/app_deploy.py,
 because fairshare could not be read on the build machine.
@@ -120,15 +121,18 @@ def resources(env: dict, scope: str) -> list[dict]:
 
 
 def grants(principal: str) -> list[str]:
-    """What the app's own service principal needs to write usage events, agent runs, opened sources and
-    drafts with their states, exports and files (ticket 35)."""
+    """What the app's own service principal needs to write usage events, agent runs, opened sources, drafts
+    with their states, exports and files (ticket 35), and decisions and labels on supplier pairs."""
     if not PRINCIPAL.fullmatch(principal):
         raise ValueError(f"{principal!r} is not a service principal's application id.")
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
               "draft_files")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
-            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables]]
+            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
+            f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
+            f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",
+            f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`"]
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:

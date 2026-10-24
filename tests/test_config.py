@@ -411,6 +411,28 @@ def test_an_embedding_role_without_its_dimensions_is_refused(tmp_path):
         config.load_models(path)
 
 
+def test_the_supplier_matching_model_names_an_existing_role_as_its_judge():
+    """Ticket 19 adds no role: the judge of the uncertain middle is one of the four."""
+    matching = config.load_supplier_matching()
+
+    assert matching.judge_role in config.ROLES
+    assert list(config.load_models()) == list(config.ROLES)
+
+
+def test_a_supplier_matching_judge_that_is_not_a_role_is_refused(tmp_path):
+    path = copy("models.toml", tmp_path, old='judge_role = "draft"', new='judge_role = "judge"')
+
+    with pytest.raises(ConfigError, match=r"models\.toml.*supplier_matching\.judge_role"):
+        config.load_supplier_matching(path)
+
+
+def test_supplier_matching_levels_whose_m_values_do_not_add_up_to_1_are_refused(tmp_path):
+    path = copy("models.toml", tmp_path, old="same_name = { m = 0.80,", new="same_name = { m = 0.70,")
+
+    with pytest.raises(ConfigError, match=r"models\.toml.*supplier_matching\.name\.m values must add up to 1"):
+        config.load_supplier_matching(path)
+
+
 def test_only_the_model_file_names_a_deployment_or_the_embedding_size():
     """Swapping a model is one line (spec, "Ten single places"), so no other file repeats what it holds.
 

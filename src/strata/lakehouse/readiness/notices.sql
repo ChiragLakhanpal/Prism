@@ -7,6 +7,13 @@
 --   linked_project           notices whose project record is held, of all notices
 --   contact_details_removed  notices that had contact names, addresses, emails, phone numbers or
 --                            web addresses removed when they were fetched, of the notices held
+--   awarded_bidder_id_on_award   awarded bidders of Contract Award notices whose STEP supplier ID is
+--                            on the award rows of the same STEP reference, of the awarded bidders with
+--                            an ID whose STEP reference has award rows (ticket 19)
+--   awarded_bidder_id_same_name  of the awarded bidders with an ID named the same as a supplier on
+--                            those award rows (in capitals, letters and digits only), those whose ID
+--                            is the one the award rows give that name. docs/PLAN.md section 3 says
+--                            the two IDs are equal; these two measures show how often they are.
 --   fresh_fetched            per country: the day of the last fetch, with the source's cadence
 --   fresh_newest_record      per country: the newest notice fetched, with the source's cadence
 -- Notices name their country in words, which gold.country turns into its code. The measures for
@@ -88,6 +95,52 @@ fresh AS (
   SELECT country_code, CAST(max(fetched_at) AS DATE) AS fetched_on, max(newest_record_on) AS newest
   FROM pages
   GROUP BY country_code
+),
+awarded AS (
+  SELECT
+    l.country_code,
+    b.step_supplier_id,
+    upper(regexp_replace(b.name, '[^A-Za-z0-9]', '')) AS squashed_name,
+    l.step_reference
+  FROM latest AS l
+  JOIN strata.silver.notice_bidders AS b ON b.notice_id = l.notice_id AND b.page_hash = l.page_hash
+  WHERE b.step_supplier_id IS NOT NULL AND l.country_code IS NOT NULL
+),
+award_rows AS (
+  SELECT DISTINCT step_reference, supplier_id, upper(regexp_replace(supplier, '[^A-Za-z0-9]', '')) AS squashed_name
+  FROM strata.silver.awards_current
+  WHERE step_reference IS NOT NULL AND supplier_id IS NOT NULL
+),
+compared AS (
+  SELECT
+    a.country_code,
+    EXISTS (SELECT 1 FROM award_rows AS r WHERE r.step_reference = a.step_reference) AS on_award,
+    EXISTS (SELECT 1 FROM award_rows AS r
+            WHERE r.step_reference = a.step_reference AND r.supplier_id = a.step_supplier_id) AS same_id,
+    EXISTS (SELECT 1 FROM award_rows AS r
+            WHERE r.step_reference = a.step_reference AND r.squashed_name = a.squashed_name) AS same_name,
+    EXISTS (SELECT 1 FROM award_rows AS r
+            WHERE r.step_reference = a.step_reference AND r.squashed_name = a.squashed_name
+              AND r.supplier_id = a.step_supplier_id) AS same_name_same_id
+  FROM awarded AS a
+),
+supplier_ids AS (
+  SELECT
+    country_code AS subject,
+    count(CASE WHEN on_award THEN 1 END) AS on_award,
+    count(CASE WHEN same_id THEN 1 END) AS same_id,
+    count(CASE WHEN same_name THEN 1 END) AS same_name,
+    count(CASE WHEN same_name_same_id THEN 1 END) AS same_name_same_id
+  FROM compared
+  GROUP BY country_code
+  UNION ALL
+  SELECT
+    'all',
+    count(CASE WHEN on_award THEN 1 END),
+    count(CASE WHEN same_id THEN 1 END),
+    count(CASE WHEN same_name THEN 1 END),
+    count(CASE WHEN same_name_same_id THEN 1 END)
+  FROM compared
 )
 SELECT
   'notices' AS source,
@@ -116,6 +169,18 @@ SELECT 'notices', subject, 'contact_details_removed', 'stripped', CAST(with_cont
   'This counts the notices that had contact names, addresses, emails, phone numbers or web addresses removed before they were kept, out of the notices held.'
 FROM held
 WHERE notices > 0
+UNION ALL
+SELECT 'notices', subject, 'awarded_bidder_id_on_award', 'linked', CAST(same_id AS BIGINT), CAST(on_award AS BIGINT),
+  CAST(NULL AS DATE),
+  'This counts the awarded bidders whose STEP supplier ID is on the award rows of the same STEP reference, out of the awarded bidders with an ID whose STEP reference has award rows.'
+FROM supplier_ids
+WHERE on_award > 0
+UNION ALL
+SELECT 'notices', subject, 'awarded_bidder_id_same_name', 'linked', CAST(same_name_same_id AS BIGINT),
+  CAST(same_name AS BIGINT), CAST(NULL AS DATE),
+  'This counts the awarded bidders that the award rows of the same STEP reference name the same way and give the same STEP supplier ID. It is out of the awarded bidders with an ID that those rows name the same way.'
+FROM supplier_ids
+WHERE same_name > 0
 UNION ALL
 SELECT 'notices', country_code, 'fresh_fetched', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), fetched_on, :cadence
 FROM fresh

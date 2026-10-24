@@ -10,10 +10,12 @@ reads only the environment it is given:
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
   service principal: usage events are written to strata.ops.usage_events, each answer stream's run
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
-  strata.ops.evidence_opened, and drafts to strata.ops.drafts and the tables beside it (ticket 35),
-  with its token. Without them, the server keeps no usage events, records no opened sources and keeps
-  no drafts, and runs go to the server log only. On this computer, STRATA_APP_STATE_FILE can name a
-  DuckDB file that keeps the opened sources and the drafts instead.
+  strata.ops.evidence_opened, drafts to strata.ops.drafts and the tables beside it (ticket 35), and
+  each decision or label a person gives a candidate pair of supplier name matching to
+  strata.ops.supplier_review_decisions or supplier_pair_labels, with its token. Without them, the server
+  keeps no usage events, records no opened sources, decisions or labels and keeps no drafts, and runs go
+  to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
+  opened sources and the drafts instead.
 - DATABRICKS_HOST also gives the one access rule (src/strata/server/access.py) each viewer's workspace
   groups, read from the SCIM API with their own token, which config/roles.toml turns into a team.
 - FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET (the app's
@@ -51,6 +53,7 @@ from strata.server import engines, tracing
 from strata.server.access import Access, NoGroups, WorkspaceGroups
 from strata.server.app import create_app
 from strata.server.evidence import OpenedLog
+from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -131,5 +134,6 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       drafts=DraftStore(state) if state else None,
                       writers=agent_runner.writers_from_environment(environ),
                       access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
+                      supplier_log=SupplierLog(the_app) if the_app else None,
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)
