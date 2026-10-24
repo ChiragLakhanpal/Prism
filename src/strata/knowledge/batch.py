@@ -152,7 +152,7 @@ class HeldAnswers:
 
 
 RECORDED_ABOUT = ("The batch role's answers (config/models.toml, on Global Batch) to the assertion requests for "
-                  "P130164's ICR and its two ICR Reviews, as lines of the Batch API's output file, keyed by "
+                  "P130164's PAD, its ICR and its two ICR Reviews, as lines of the Batch API's output file, keyed by "
                   "custom_id, recorded by ops/assertions/batch_live.py --record. One assertion, marked planted, was "
                   "written by hand with a quote that is not on its page, so the gate proves the check rejects it; "
                   "each new recording keeps it.")

@@ -85,6 +85,22 @@ def test_the_icrs_account_of_the_mid_term_review_is_an_assertion_about_that_mome
     assert paragraph["read_by"].startswith("gpt-5.4-nano")
 
 
+def test_the_pads_overall_risk_is_an_assertion_about_the_appraisal_in_the_pad_tier(engine):
+    """The batch model read the PAD like the ICR (tests/fixtures/azure/batch_assertions.json): its overall risk,
+    rated in paragraph 49 on PDF page 26, comes back in the pad tier ("Written at appraisal"), for the
+    appraisal, which the PAD dates for itself, and public from the day the documents API disclosed it."""
+    shelf = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]
+    risk = by_document(engine, "18381488")["overall_risk"]
+
+    assert (risk["subject_kind"], risk["subject_id"], risk["value"]) == ("project", "P130164", "Substantial")
+    assert (risk["evidence_tier"], risk["form"]) == ("pad", "narrative")
+    assert risk["period_event"] == "appraisal"
+    assert risk["period_start"] == risk["period_end"] == risk["made_at"] == TRUTH["pad-overall-risk"]["date"]
+    assert risk["public_from"].isoformat() == shelf["pad_disclosed"]["value"][:10]
+    assert risk["evidence_id"] == f"strata.gold.passage:18381488/v1/{TRUTH['pad-overall-risk']['paragraph']}"
+    assert (risk["pdf_page"], risk["quote"]) == (TRUTH["pad-overall-risk"]["pdf_page"], value("pad-overall-risk"))
+
+
 def test_an_extracted_assertion_whose_quote_is_not_on_its_cited_page_is_rejected_and_counted(engine):
     """The recording plants one outcome rating whose words are not in paragraph 45. It never becomes an
     assertion, and the run counts it with its reason in strata.ops.assertion_rejections."""
