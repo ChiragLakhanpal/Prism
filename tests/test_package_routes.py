@@ -94,5 +94,13 @@ def test_a_reference_no_plan_lists_is_not_found(fixture_app):
 
 def test_a_criterion_the_tool_does_not_take_is_a_bad_request(fixture_app):
     response = get(fixture_app, "/api/packages/KE-NWWDA-541055-CW-RFB/comparables?size_from_usd=lots", ANA)
+    unknown = get(fixture_app, "/api/packages/KE-NWWDA-541055-CW-RFB/comparables?colour=blue", ANA)
 
-    assert response.status_code == 422
+    assert (response.status_code, unknown.status_code) == (422, 422)
+
+
+def test_the_package_comes_from_the_address_and_never_from_the_query(fixture_app):
+    body = get(fixture_app, "/api/packages/KE-NWWDA-541055-CW-RFB/comparables?asof=2026-10-22"
+                            "&step_reference=KE-NWWDA-541062-CW-RFQ", ANA).json()
+
+    assert body["package"]["step_reference"] == "KE-NWWDA-541055-CW-RFB"

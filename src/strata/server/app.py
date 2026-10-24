@@ -291,7 +291,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     criteria[name] = dt.date.fromisoformat(criteria[name])
                 except ValueError:
                     return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
-        return run_tool("find_comparables", {"step_reference": step_reference, **criteria}, viewer, view, asof)
+        return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
 
     @app.get("/api/health")
     def health() -> dict:

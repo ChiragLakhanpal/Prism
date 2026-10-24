@@ -59,11 +59,11 @@ const WIDE = [1440, 1024];
 const NARROW = [390];
 
 // The app's routes, as the 06 design brief lists them, and both not-found pages. All projects, a
-// project's page and Check a plan have their own shots below (ticket 10).
+// project's page and Check a plan have their own shots below (ticket 10), and so does the package
+// workspace (ticket 12).
 const ROUTES: [string, string][] = [
   ["home", "/"],
   ["packages", "/packages"],
-  ["package", "/packages/KE-NWWDA-541055-CW-RFB"],
   ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
@@ -228,7 +228,7 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--focus-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
   packageShot("package--focus-slider", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[role=slider]") }),
   packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
-  packageShot("package--table-open", comparables(COMPARABLES), { widths: wideAndNarrow, full: true, act: click("[aria-controls][aria-expanded]:visible") }),
+  packageShot("package--table-open", comparables(COMPARABLES), { widths: wideAndNarrow, full: true, act: click("[data-past-range] button[aria-controls][aria-expanded]") }),
   packageShot("package--320", comparables(COMPARABLES), { widths: [320] }),
 ];
 

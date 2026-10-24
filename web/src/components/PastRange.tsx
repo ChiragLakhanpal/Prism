@@ -241,7 +241,7 @@ function Looked({ result }: { result: ComparablesResult }) {
 function Note({ result }: { result: ComparablesResult }) {
   const { fields, parts } = criteriaParts(result, "note");
   return (
-    <p className="text-ink-muted" data-chart-note>
+    <p className="text-chart-text-subtle" data-chart-note>
       <span className="font-bold text-chart-text">{words.note.label}</span>{" "}
       {fields.length > 0 && (
         <>
