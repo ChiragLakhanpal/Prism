@@ -8,11 +8,13 @@ never from the code.
 """
 
 import datetime as dt
+import shutil
 import tomllib
 from pathlib import Path
 
 import pytest
 
+from strata.knowledge import assertions, batch
 from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -228,3 +230,85 @@ def test_every_assertion_has_its_subject_attribute_value_period_dates_source_and
     assert {row["subject_kind"] for row in found} <= {"project", "package"}
     assert all(row["period_start"] <= row["period_end"] for row in found)
     assert len({row["assertion_id"] for row in found}) == len(found)
+
+
+# ── The live batch model's answers, held across runs ─────────────────────
+
+class LiveStandIn:
+    """A batch model named as the live one is, by its deployment, that answers from the recording, answers every
+    request with an error, or says its batch is still running. It keeps what it was asked."""
+
+    def __init__(self, deployment: str, error: str | None = None, pending: str | None = None):
+        self.name = self.deployment = deployment
+        self.error, self.pending, self.asked = error, pending, []
+        self.recorded = batch.RecordedBatch(deployment=deployment)
+
+    def answer(self, requests, resume=None):
+        self.asked.append(([request.custom_id for request in requests], resume))
+        if self.pending:
+            raise batch.BatchPending(f"Batch {self.pending} was still in_progress.", batch_id=self.pending)
+        if self.error:
+            return [batch.Answer(request.custom_id, None, self.error) for request in requests]
+        return self.recorded.answer(requests)
+
+
+@pytest.fixture
+def copy_db(fixture_db, tmp_path):
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+    with DuckDBEngine.open(copy) as engine:
+        yield engine
+
+
+def the_showcase(engine) -> list[tuple[str, str]]:
+    return [(row["first_assertion_id"], row["second_assertion_id"]) for row in disagreements(engine, "P130164")
+            if row["attribute"] == "pdo_progress"]
+
+
+def test_a_run_with_no_live_model_keeps_what_the_live_model_read_from_the_answers_bronze_holds(copy_db):
+    """On Databricks the nightly job has no Azure OpenAI keys until ticket 43. A run with no live model replays
+    the answers bronze holds from the batch role's deployment, so the showcase disagreement the live run wrote
+    is still there the morning after."""
+    live = LiveStandIn("not-a-real-deployment")
+    assertions.run(copy_db, ["P130164"], model=live)
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+
+    report = assertions.run(copy_db, ["P130164"], model=batch.HeldAnswers("not-a-real-deployment"))
+
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+    assert report.rejected == 1
+
+
+def test_an_answer_the_batch_gave_as_an_error_is_asked_again_on_the_next_run(copy_db):
+    """Global Batch can answer a request with an error, such as status 429. That is no answer: the next run
+    asks again, and the showcase disagreement comes back."""
+    failing = LiveStandIn("not-a-real-deployment", error="status 429")
+    assertions.run(copy_db, ["P130164"], model=failing)
+    assert the_showcase(copy_db) == []
+
+    working = LiveStandIn("not-a-real-deployment")
+    assertions.run(copy_db, ["P130164"], model=working)
+
+    [(asked, _)] = working.asked
+    assert asked == failing.asked[0][0]
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+
+
+def test_a_batch_still_running_keeps_the_rest_of_the_run_and_is_waited_for_on_the_next_run(copy_db):
+    """A batch that has not finished when the run stops waiting does not stop the run: the ISR, record and IEG
+    assertions are kept and the pending reports are counted. The next run waits for the same batch instead of
+    asking, and paying, again."""
+    running = LiveStandIn("not-a-real-deployment", pending="batch-not-a-real-id")
+    report = assertions.run(copy_db, ["P130164"], model=running)
+
+    [(asked, resume)] = running.asked
+    assert resume is None and report.pending == len(asked) > 0
+    assert len(isr_assertions(copy_db)) == 13
+    assert the_showcase(copy_db) == []
+
+    finished = LiveStandIn("not-a-real-deployment")
+    report = assertions.run(copy_db, ["P130164"], model=finished)
+
+    assert finished.asked == [(asked, "batch-not-a-real-id")]
+    assert report.pending == 0
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]

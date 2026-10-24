@@ -8,7 +8,12 @@ a custom_id. Assertions (strata.knowledge.assertions) use it now; proposed lesso
 - AzureOpenAIBatch, live. It writes the requests as one JSONL file, uploads it through the v1 API's files
   operation (purpose batch), creates a batch on the chat completions endpoint with a 24-hour window, waits
   for it within a time limit, and reads its output file. A batch that has not finished in time raises
-  BatchPending, so the run keeps what it had and asks again on a later night.
+  BatchPending with the batch's id. The run keeps that id with the requests in bronze and, on a later run,
+  waits for the same batch instead of asking, and paying, again (resume); a batch that failed, expired or
+  was cancelled is asked again.
+- HeldAnswers asks nothing. A run with no live model, such as the nightly job before ticket 43 gives it
+  the Azure OpenAI keys, uses it to replay the answers bronze holds from the batch role's deployment, so
+  what the live model read is kept.
 - RecordedBatch, offline. It answers each request with the line a recording holds for its custom_id
   (tests/fixtures/azure/batch_assertions.json), in the Batch API's output-line shape, so the gate runs the
   same reading code as the live run. A request the recording does not hold gets no answer.
@@ -16,7 +21,7 @@ a custom_id. Assertions (strata.knowledge.assertions) use it now; proposed lesso
   keeps the assertion planted by hand, so the gate still proves the quote check rejects it.
 
 from_environment() gives the live model when AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY are set, and
-None otherwise; with no model, the run reads no assertions from text.
+None otherwise.
 """
 
 from __future__ import annotations
@@ -37,6 +42,7 @@ RECORDING = Path(__file__).resolve().parents[3] / "tests" / "fixtures" / "azure"
 ENDPOINT = "/chat/completions"
 WINDOW = "24h"
 FINISHED = ("completed", "failed", "expired", "cancelled")
+ENDED_WITHOUT_ANSWERS = ("failed", "expired", "cancelled")  # a held batch in one of these is asked again
 
 
 @dataclass(frozen=True)
@@ -70,8 +76,9 @@ class BatchModel(Protocol):
     name: str  # what reads, kept with each answer and each assertion
     deployment: str  # the deployment the requests name
 
-    def answer(self, requests: list[Request]) -> list[Answer]:
-        """The answers it has, one per request it answered, in any order."""
+    def answer(self, requests: list[Request], resume: str | None = None) -> list[Answer]:
+        """The answers it has, one per request it answered, in any order. resume names a batch an earlier run
+        sent these requests in, which is still running: the model waits for it instead of asking again."""
 
 
 class BatchError(RuntimeError):
@@ -79,7 +86,11 @@ class BatchError(RuntimeError):
 
 
 class BatchPending(BatchError):
-    """The batch did not finish within the time the run gives it. It is asked about again on a later run."""
+    """The batch did not finish within the time the run gives it. A later run waits for it by its id."""
+
+    def __init__(self, message: str, batch_id: str | None = None):
+        super().__init__(message)
+        self.batch_id = batch_id
 
 
 def request_line(request: Request, deployment: str) -> dict:
@@ -123,8 +134,21 @@ class RecordedBatch:
         self.name = f"{self.deployment} ({'recorded' if self.recorded else 'written by hand in its shape'})"
         self.lines = {line["custom_id"]: line for line in held["lines"]}
 
-    def answer(self, requests: list[Request]) -> list[Answer]:
+    def answer(self, requests: list[Request], resume: str | None = None) -> list[Answer]:
         return read_lines([self.lines[request.custom_id] for request in requests if request.custom_id in self.lines])
+
+
+class HeldAnswers:
+    """Asks nothing: a run with it uses only the answers bronze already holds from the batch role's deployment.
+    Its name is the deployment's, as the live model's is, so those answers are found by what read them."""
+
+    def __init__(self, deployment: str | None = None):
+        from strata.config import load_models
+
+        self.deployment = self.name = deployment or load_models()["batch"].deployment
+
+    def answer(self, requests: list[Request], resume: str | None = None) -> list[Answer]:
+        return []
 
 
 RECORDED_ABOUT = ("The batch role's answers (config/models.toml, on Global Batch) to the assertion requests for "
@@ -214,24 +238,31 @@ class AzureOpenAIBatch:
         except ValueError as error:
             raise BatchError(f"Azure OpenAI's answer to {method} {path} is not JSON.") from error
 
-    def answer(self, requests: list[Request]) -> list[Answer]:
-        return read_lines(self.output_lines(requests))
+    def answer(self, requests: list[Request], resume: str | None = None) -> list[Answer]:
+        return read_lines(self.output_lines(requests, resume))
 
-    def output_lines(self, requests: list[Request]) -> list[dict]:
-        """The batch's output file, one line per request it answered, as the Batch API wrote it."""
-        if not requests:
-            return []
+    def _submit(self, requests: list[Request]) -> dict:
+        """Upload the requests as one JSONL file and create a batch of them."""
         lines = "\n".join(json.dumps(request_line(request, self.deployment), ensure_ascii=False)
                           for request in requests) + "\n"
         body, content_type = multipart({"purpose": "batch"}, "requests.jsonl", lines.encode())
         uploaded = json.loads(self.transport("POST", f"{self.base}/files", self.headers, body, content_type))
-        batch = self._json("POST", "/batches", {"input_file_id": uploaded["id"], "endpoint": ENDPOINT,
-                                                "completion_window": WINDOW})
+        return self._json("POST", "/batches", {"input_file_id": uploaded["id"], "endpoint": ENDPOINT,
+                                               "completion_window": WINDOW})
+
+    def output_lines(self, requests: list[Request], resume: str | None = None) -> list[dict]:
+        """The batch's output file, one line per request it answered, as the Batch API wrote it. With resume,
+        the batch an earlier run sent these requests in is waited for, unless it ended with no answers."""
+        if not requests:
+            return []
+        batch = self._json("GET", f"/batches/{resume}") if resume else None
+        if batch is None or batch.get("status") in ENDED_WITHOUT_ANSWERS:
+            batch = self._submit(requests)
         waited = 0.0
         while batch.get("status") not in FINISHED:
             if waited >= self.wait_seconds:
                 raise BatchPending(f"Batch {batch.get('id')} was still {batch.get('status')} after {waited:.0f} "
-                                   f"seconds.")
+                                   f"seconds.", batch_id=batch.get("id"))
             self.sleep(self.poll_seconds)
             waited += self.poll_seconds
             batch = self._json("GET", f"/batches/{batch['id']}")

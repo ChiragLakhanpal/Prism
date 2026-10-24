@@ -18,8 +18,8 @@ assertion whose quote is not word for word on its cited page is rejected and cou
 get_disagreements its benchmark question through the tool registry, with the env file's own token as the
 viewer, and checks that ISR 7 and the ICR's paragraph 78 come back as one disagreement leaning on the ICR.
 It exits 0 when they do, 1 when the run finished but they did not, or the batch was still running when the
-run stopped waiting (run it again later; answers already held are not asked for again), and 2 when it
-could not run. Then check the ground-truth queries on both engines:
+run stopped waiting (run it again later: it waits for the same batch, and answers already held are not
+asked for again), and 2 when it could not run. Then check the ground-truth queries on both engines:
 
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
@@ -29,7 +29,8 @@ The recording. With --record, it asks the live batch model the requests the gate
 planted by hand so the gate still proves the rejection. It needs only AZURE_OPENAI_ENDPOINT and
 AZURE_OPENAI_API_KEY. Run the gate after it: a live answer that reads more than the hand-written one (such
 as item 8.b of the ICR Reviews, which restates what the mid-term review found) can change what the tests
-expect, and the tests then say which value moved.
+expect, and the tests then say which value moved. When the batch is still running after an hour, it prints
+the batch's id; run it again with --batch and that id to wait for the same batch instead of asking again.
 
 The live run needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN, AZURE_OPENAI_ENDPOINT and
 AZURE_OPENAI_API_KEY.
@@ -62,7 +63,7 @@ AZURE = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
 WORKSPACE = ("DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID", "DATABRICKS_TOKEN")
 
 
-def record(model: batch.AzureOpenAIBatch) -> int:
+def record(model: batch.AzureOpenAIBatch, resume: str | None = None) -> int:
     """Ask the live model the requests the recording answers, and write its answers as the new recording."""
     if not FIXTURE_DB.exists():
         print(f"There is no fixture database at {FIXTURE_DB.relative_to(REPO)}. Run the gate first "
@@ -77,9 +78,9 @@ def record(model: batch.AzureOpenAIBatch) -> int:
     requests = [request for request in asked if request.custom_id in wanted]
     print(f"I'm asking {model.deployment} about {len(requests)} reports on Global Batch.")
     try:
-        written = batch.recording(model.output_lines(requests), held, dt.date.today().isoformat())
+        written = batch.recording(model.output_lines(requests, resume), held, dt.date.today().isoformat())
     except batch.BatchPending as error:
-        print(f"{error} Run this again later.")
+        print(f"{error} Run this again later with --batch {error.batch_id} to wait for it.")
         return 1
     except batch.BatchError as error:
         print(f"The recording stopped: {error}")
@@ -101,14 +102,15 @@ def run_live(env: dict, model: batch.AzureOpenAIBatch) -> int:
     run_id = f"live-{dt.datetime.now(dt.UTC):%Y%m%dT%H%M%S}"
     try:
         report = assertions.run(engine, assertions.default_projects(engine), model=model, run_id=run_id)
-    except batch.BatchPending as error:
-        print(f"{error} Run this again later; the answers already held are not asked for again.")
-        return 1
     except (EngineError, batch.BatchError) as error:
         print(f"The run stopped: {error}")
         return 2
     print(f"Run {run_id} holds {report.assertions} assertions and {report.disagreements} disagreements, and "
           f"rejected {report.rejected} assertions read from text.")
+    if report.pending:
+        print(f"The answers about {report.pending} reports are still in a running batch. Run this again later: "
+              "it waits for the same batch, and the answers already held are not asked for again.")
+        return 1
 
     questions = yaml.safe_load((REPO / "evals" / "benchmark.yaml").read_text())["questions"]
     question = next(q for q in questions if q["id"] == QUESTION)
@@ -138,6 +140,8 @@ def main(argv=None) -> int:
     parser.add_argument("--env-file", help="the env file with the workspace's address, warehouse, token and keys")
     parser.add_argument("--record", action="store_true",
                         help="write the live answers to the gate's recording instead of running on the warehouse")
+    parser.add_argument("--batch", help="with --record: the id of a batch an earlier recording left running, to "
+                                        "wait for it instead of asking again")
     args = parser.parse_args(argv)
     try:
         env = load_workspace_env(Path(args.env_file) if args.env_file else None)
@@ -150,7 +154,7 @@ def main(argv=None) -> int:
               "(ops/wizard/strata-setup.sh).")
         return 2
     model = batch.from_environment(env)
-    return record(model) if args.record else run_live(env, model)
+    return record(model, args.batch) if args.record else run_live(env, model)
 
 
 if __name__ == "__main__":

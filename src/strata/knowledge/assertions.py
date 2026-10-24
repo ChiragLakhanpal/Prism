@@ -34,7 +34,7 @@ from importlib import resources
 
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
 from strata.config import SIDES, Ladder, load_ladder
-from strata.knowledge.batch import Answer, BatchModel, RecordedBatch, Request
+from strata.knowledge.batch import Answer, BatchModel, BatchPending, RecordedBatch, Request
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
 
@@ -363,26 +363,53 @@ def periods(engine: Engine, project_id: str) -> Periods:
     return Periods((approved, closing) if approved and closing and approved <= closing else None, moments)
 
 
+PENDING = "pending:"  # how bronze holds a request in a batch still running: this, then the batch's id
+
+
+def _keep(engine: Engine, model: BatchModel, answers: list[Answer], hashes: dict[str, str], public: dict[str, dt.date],
+          when: dt.datetime) -> None:
+    engine.insert_rows("strata.bronze.batch_answers", ("custom_id", "request_hash", "read_by", "content", "error",
+                                                       "answered_at", "public_from"),
+                       [(answer.custom_id, hashes[answer.custom_id], model.name, answer.content, answer.error, when,
+                         public[answer.custom_id]) for answer in answers])
+
+
 def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], clock: Callable[[], dt.datetime]
-        ) -> dict[str, Answer]:
+        ) -> tuple[dict[str, Answer], int]:
     """The model's answer to each request: one held in bronze for the same request from the same reader, or a
-    new one, which is kept there. Only requests with no answer held go to the model."""
+    new one, which is kept there; and how many requests wait on a batch still running. Only requests with no
+    answer held go to the model, and an error is no answer, so its request is asked again. A request held as
+    pending in a batch an earlier run sent is waited for in that batch rather than asked again."""
     hashes = {request.custom_id: request.digest(model.deployment) for _, request in asked}
+    joined = ",".join(hashes.values()) or "-"
     held: dict[str, Answer] = {}
-    for row in _rows(engine, _sql("answers_held.sql"), read_by=model.name, hashes=",".join(hashes.values()) or "-"):
+    for row in _rows(engine, _sql("answers_held.sql"), read_by=model.name, hashes=joined):
         held.setdefault(row["request_hash"], Answer(row["custom_id"], row["content"], row["error"]))
     answers = {custom_id: held[digest] for custom_id, digest in hashes.items() if digest in held}
-    waiting = [(report, request) for report, request in asked if request.custom_id not in answers]
-    if waiting:
+    latest: dict[str, str] = {}  # each request's newest row with no answer: an error, or pending in a batch
+    for row in _rows(engine, _sql("answers_pending.sql"), read_by=model.name, hashes=joined):
+        latest.setdefault(row["request_hash"], row["error"] or "")
+    batches: dict[str | None, list[tuple[Report, Request]]] = {}
+    for report, request in asked:
+        if request.custom_id not in answers:
+            error = latest.get(hashes[request.custom_id], "")
+            batches.setdefault(error.removeprefix(PENDING) if error.startswith(PENDING) else None, []).append(
+                (report, request))
+    pending = 0
+    for resume, waiting in batches.items():
         public = {request.custom_id: report.public_from for report, request in waiting}
-        new = [answer for answer in model.answer([request for _, request in waiting]) if answer.custom_id in public]
-        when = clock()
-        engine.insert_rows("strata.bronze.batch_answers", ("custom_id", "request_hash", "read_by", "content", "error",
-                                                           "answered_at", "public_from"),
-                           [(answer.custom_id, hashes[answer.custom_id], model.name, answer.content, answer.error,
-                             when, public[answer.custom_id]) for answer in new])
+        try:
+            new = [answer for answer in model.answer([request for _, request in waiting], resume=resume)
+                   if answer.custom_id in public]
+        except BatchPending as running:
+            pending += len(waiting)
+            if running.batch_id and running.batch_id != resume:
+                _keep(engine, model, [Answer(custom_id, None, f"{PENDING}{running.batch_id}") for custom_id in public],
+                      hashes, public, clock())
+            continue
+        _keep(engine, model, new, hashes, public, clock())
         answers |= {answer.custom_id: answer for answer in new}
-    return answers
+    return answers, pending
 
 
 def _page_of(passage: dict, page) -> bool:
@@ -449,17 +476,16 @@ def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, 
     return kept, rejected
 
 
-def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel | None, run_id: str,
-                    clock: Callable[[], dt.datetime], dates: Periods) -> tuple[list[Assertion], list[Rejection]]:
+def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel, run_id: str,
+                    clock: Callable[[], dt.datetime], dates: Periods) -> tuple[list[Assertion], list[Rejection], int]:
     """The assertions the batch model read from the project's reports, each kept only when its quote is word
-    for word in the passage it cites, on the page it cites, and the ones rejected. With no model, none."""
-    if model is None:
-        return [], []
+    for word in the passage it cites, on the page it cites, the ones rejected, and how many reports wait on a
+    batch still running."""
     found = reports(engine, project_id, ladder)
     if not found:
-        return [], []
+        return [], [], 0
     asked = [(report, request(report, ladder)) for report in found]
-    answers = ask(engine, model, asked, clock)
+    answers, pending = ask(engine, model, asked, clock)
     when = clock()
     kept, rejected = [], []
     for report, question in asked:
@@ -470,7 +496,7 @@ def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: Batc
             rejected += less
     # One passage can state one attribute once: a second assertion of the same id is a repeat.
     unique = {assertion.assertion_id: assertion for assertion in reversed(kept)}
-    return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected
+    return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected, pending
 
 
 # ── Disagreements and the evidence ladder ────────────────────────────────
@@ -595,6 +621,7 @@ class RunReport:
     assertions: int
     rejected: int
     disagreements: int
+    pending: int = 0  # reports whose answers wait on a batch still running, which a later run waits for
 
 
 def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection],
@@ -611,22 +638,24 @@ def write(engine: Engine, projects: list[str], assertions: list[Assertion], reje
                                  [astuple(row) for row in disagreements]))
 
 
-def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder: Ladder | None = None,
+def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladder | None = None,
         run_id: str = "local", clock: Callable[[], dt.datetime] = _now) -> RunReport:
     """Every assertion of the run's projects, rebuilt, with the rejected ones counted and the disagreements
-    between the rest decided by the ladder."""
+    between the rest decided by the ladder. A run with no live model passes HeldAnswers, so the assertions
+    read from text come from the answers bronze holds."""
     ladder = ladder or load_ladder()
-    made, rejected = [], []
+    made, rejected, pending = [], [], 0
     for project_id in projects:
         dates = periods(engine, project_id)
         made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder)
         made += ieg_assertions(engine, project_id, ladder, dates)
-        more, less = text_assertions(engine, project_id, ladder, model, run_id, clock, dates)
+        more, less, waiting = text_assertions(engine, project_id, ladder, model, run_id, clock, dates)
         made += more
         rejected += less
+        pending += waiting
     found = detect(made, ladder)
     write(engine, projects, made, rejected, found)
-    return RunReport(len(made), len(rejected), len(found))
+    return RunReport(len(made), len(rejected), len(found), pending)
 
 
 def redetect(engine: Engine, projects: list[str], ladder: Ladder) -> int:

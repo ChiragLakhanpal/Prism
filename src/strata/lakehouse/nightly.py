@@ -109,12 +109,13 @@ def _bronze_to_gold(run: Run) -> int:
 def _detect_disagreements(run: Run) -> int:
     """The assertions of every project Strata holds documents or records for, rebuilt, and the disagreements
     between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
-    asks the live batch model to read the reports; on Databricks the job passes no Azure OpenAI keys until
-    ticket 43 wires its tasks, so until then it reads assertions from records and ISR tables only. Any other
-    run replays the recorded answers."""
+    asks the live batch model to read the reports. On Databricks the job passes no Azure OpenAI keys until
+    ticket 43 wires its tasks, so until then it replays the answers bronze holds from the batch role's
+    deployment, such as those ops/assertions/batch_live.py asked for, and keeps what the live model read.
+    Any other run replays the recorded answers."""
     from strata.knowledge import assertions, batch
 
-    model = batch.from_environment() if run.fetch is fetch_live else batch.RecordedBatch()
+    model = (batch.from_environment() or batch.HeldAnswers()) if run.fetch is fetch_live else batch.RecordedBatch()
     projects = assertions.default_projects(run.engine)
     report = assertions.run(run.engine, projects, model=model, run_id=run.run_id, clock=run.clock)
     return report.assertions + report.rejected + report.disagreements

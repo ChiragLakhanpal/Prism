@@ -434,6 +434,55 @@ def test_a_batch_still_running_when_the_run_stops_waiting_is_asked_about_again_l
     assert slept == [60, 60]
 
 
+def test_a_batch_an_earlier_run_left_running_is_waited_for_by_its_id_and_not_asked_again():
+    """The pending batch's id is kept with its requests, so the next run polls that batch and reads its output
+    instead of uploading the requests and paying for them again."""
+    from strata.knowledge.batch import BatchPending, Request
+
+    model, _ = live_batch(BatchService([], polls=10), wait_seconds=60, poll_seconds=60)
+    with pytest.raises(BatchPending) as running:
+        model.answer([Request("assertions:31525018/v1", "the rules", {})])
+    assert running.value.batch_id == "batch-not-a-real-id"
+
+    service = BatchService([recorded_lines()[0]], polls=0)
+    model, _ = live_batch(service)
+    [answer] = model.answer([Request("assertions:31525018/v1", "the rules", {})], resume="batch-not-a-real-id")
+
+    assert answer.custom_id == "assertions:31525018/v1" and answer.content
+    assert [(method, url.split("/v1", 1)[1]) for method, url, *_ in service.requests] == [
+        ("GET", "/batches/batch-not-a-real-id"), ("GET", "/files/file-not-a-real-output/content")]
+
+
+def test_a_held_batch_that_failed_is_asked_again():
+    from strata.knowledge.batch import Request
+
+    service = BatchService([recorded_lines()[0]], polls=0)
+
+    def failed_before(method, url, headers, body, content_type):
+        if url.endswith("/batches/batch-that-failed"):
+            service.requests.append((method, url, headers, body, content_type))
+            return json.dumps({"id": "batch-that-failed", "status": "failed"}).encode()
+        return service(method, url, headers, body, content_type)
+
+    model, _ = live_batch(failed_before)
+    [answer] = model.answer([Request("assertions:31525018/v1", "the rules", {})], resume="batch-that-failed")
+
+    assert answer.content
+    assert [(method, url.split("/v1", 1)[1]) for method, url, *_ in service.requests][:3] == [
+        ("GET", "/batches/batch-that-failed"), ("POST", "/files"), ("POST", "/batches")]
+
+
+def test_held_answers_ask_nothing_and_read_as_the_batch_roles_deployment():
+    """A run with no live model replays what bronze holds from the deployment the live model is named by."""
+    from strata.config import load_models
+    from strata.knowledge.batch import HeldAnswers, Request
+
+    held = HeldAnswers()
+
+    assert held.name == held.deployment == load_models()["batch"].deployment
+    assert held.answer([Request("assertions:31525018/v1", "the rules", {})], resume="batch-not-a-real-id") == []
+
+
 def test_a_batch_that_ends_without_an_output_file_stops_the_run():
     from strata.knowledge.batch import BatchError, Request
 
