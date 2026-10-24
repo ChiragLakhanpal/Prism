@@ -86,6 +86,9 @@ class LiveApps:
     def run_sql(self, statement: str) -> None:
         warehouse(self.w, self.env).run(statement)
 
+    def put_secret(self, scope: str, key: str, value: str) -> None:
+        self.w.secrets.put_secret(scope, key, string_value=value)
+
 
 def warehouse(w, env: dict) -> WarehouseEngine:
     return WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], lambda method, path, body: w.api_client.do(method, path, body=body))

@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "ops" / "app"))
@@ -18,12 +19,17 @@ PROBE = "Strata day-one probe app"
 PRINCIPAL = "6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5"
 ENV = {"DATABRICKS_HOST": "https://dbc-1.cloud.databricks.com", "DATABRICKS_TOKEN": "not-a-real-key",
        "DATABRICKS_WAREHOUSE_ID": "wh-1"}
+# The Foundry agent's four keys (src/strata/agent/runner.py), which the app reads from secret resources.
+FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "https://wb-strata.services.ai.azure.com/api/projects/Strata",
+           "FOUNDRY_TENANT_ID": "tenant-0001", "FOUNDRY_CLIENT_ID": "client-0001",
+           "FOUNDRY_CLIENT_SECRET": "not-a-real-key"}
 
 
 class FakeWorkspace:
     def __init__(self, app=None):
         self.apps = {} if app is None else {"strata": dict(app)}
         self.uploaded, self.deployed, self.configured, self.statements, self.started = {}, [], [], [], []
+        self.secrets = {}
 
     def me(self):
         return "owner@example.org"
@@ -54,6 +60,9 @@ class FakeWorkspace:
     def run_sql(self, statement):
         self.statements.append(statement)
 
+    def put_secret(self, scope, key, value):
+        self.secrets[(scope, key)] = value
+
 
 def built(dist):
     def build():
@@ -64,15 +73,15 @@ def built(dist):
     return build
 
 
-def deploy(workspace, tmp_path, capsys, build=None):
-    code = deploy_app.deploy(workspace, ENV, build_web=build or built(tmp_path / "dist"), dist=tmp_path / "dist")
+def deploy(workspace, tmp_path, capsys, build=None, env=None):
+    code = deploy_app.deploy(workspace, env or ENV, build_web=build or built(tmp_path / "dist"), dist=tmp_path / "dist")
     return code, capsys.readouterr().out
 
 
 def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_prints_its_address(tmp_path, capsys):
     workspace = FakeWorkspace()
 
-    code, out = deploy(workspace, tmp_path, capsys)
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
 
     assert code == 0
     files = workspace.uploaded["files"]
@@ -101,7 +110,42 @@ def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_
     assert scopes == ["sql"]
 
 
-def test_the_app_s_own_principal_may_write_usage_events_and_agent_runs_and_nothing_more(tmp_path, capsys):
+def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file_has_them(tmp_path, capsys):
+    """Without the four keys the deployed /api/ask says there is no agent (ticket 13's verify)."""
+    workspace = FakeWorkspace()
+
+    code, _ = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
+
+    assert code == 0
+    assert workspace.secrets == {("strata", key): value for key, value in FOUNDRY.items()}
+    [(_, _, resources, _)] = workspace.configured
+    assert resources[2:] == [
+        {"name": name, "secret": {"scope": "strata", "key": key, "permission": "READ"}}
+        for name, key in (("foundry-endpoint", "FOUNDRY_PROJECT_ENDPOINT"), ("foundry-tenant", "FOUNDRY_TENANT_ID"),
+                          ("foundry-client-id", "FOUNDRY_CLIENT_ID"), ("foundry-client-secret", "FOUNDRY_CLIENT_SECRET"))]
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert {entry["name"]: entry.get("valueFrom") for entry in started["env"] if entry["name"].startswith("FOUNDRY_")} == {
+        "FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": "foundry-tenant",
+        "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
+
+
+def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_path, capsys):
+    workspace = FakeWorkspace()
+    env = ENV | {key: value for key, value in FOUNDRY.items() if key != "FOUNDRY_CLIENT_SECRET"}
+
+    code, out = deploy(workspace, tmp_path, capsys, env=env)
+
+    assert code == 0
+    assert workspace.secrets == {}
+    [(_, _, resources, _)] = workspace.configured
+    assert [resource["name"] for resource in resources] == ["sql-warehouse", "appinsights"]
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert [entry["name"] for entry in started["env"] if entry["name"].startswith("FOUNDRY_")] == []
+    assert started["command"] == ["python", "-m", "strata.server"]
+    assert "FOUNDRY_CLIENT_SECRET" in out and "there is no agent" in out
+
+
+def test_the_app_s_own_principal_may_write_usage_events_agent_runs_and_opened_sources_and_nothing_more(tmp_path, capsys):
     workspace = FakeWorkspace()
 
     deploy(workspace, tmp_path, capsys)
@@ -111,6 +155,7 @@ def test_the_app_s_own_principal_may_write_usage_events_and_agent_runs_and_nothi
         f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.usage_events TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.agent_runs TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.evidence_opened TO `{PRINCIPAL}`",
     ]
 
 

@@ -4,6 +4,7 @@
 # The platform sets DATABRICKS_APP_PORT, DATABRICKS_HOST, and the app's own DATABRICKS_CLIENT_ID and
 # DATABRICKS_CLIENT_SECRET. It forwards each viewer's token in a header, because the deploy gives
 # the app the "sql" user authorization scope. src/strata/server/settings.py says what each one does.
+# The deploy leaves the four FOUNDRY_ entries out of the copy it uploads when .env lacks any of them.
 command: ["python", "-m", "strata.server"]
 env:
   - name: PYTHONPATH
@@ -17,3 +18,12 @@ env:
     valueFrom: sql-warehouse
   - name: APPLICATIONINSIGHTS_CONNECTION_STRING
     valueFrom: appinsights
+  # The Foundry agent's four keys, which the deploy saves in the secret scope (src/strata/agent/runner.py).
+  - name: FOUNDRY_PROJECT_ENDPOINT
+    valueFrom: foundry-endpoint
+  - name: FOUNDRY_TENANT_ID
+    valueFrom: foundry-tenant
+  - name: FOUNDRY_CLIENT_ID
+    valueFrom: foundry-client-id
+  - name: FOUNDRY_CLIENT_SECRET
+    valueFrom: foundry-client-secret

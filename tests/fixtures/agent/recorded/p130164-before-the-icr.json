@@ -1,0 +1,51 @@
+{
+ "about": "The answers of p130164-rebidding.json, asked as of October 15, 2019, before the ICR of October 10, 2019 was public (from November 2, 2019). Written by hand, because the gate's machine has no key. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Why were works contracts in P130164 advertised again?",
+ "scope": "P130164",
+ "as_of": "2019-10-15",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p130164_before_icr_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p130164_before_icr_1",
+     "call_id": "call_p130164_before_icr_1",
+     "name": "search_passages",
+     "status": "completed",
+     "arguments": "{\"query\": \"works contracts advertised again rebidding\", \"project_id\": \"P130164\", \"as_of\": \"2019-10-15\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p130164_before_icr_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p130164_before_icr_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [{\"sentence\": \"The completion report says the works contract estimates should have been based on the market rate, because \\\"108 of 328 cases had to go through rebidding\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/54\"], \"numbers\": [\"108\", \"328\"], \"dates\": [], \"quote\": {\"text\": \"108 of 328 cases had to go through rebidding\", \"passage_id\": \"strata.gold.passage:31525018/v1/54\"}}, {\"sentence\": \"It also says \\\"forest and other administrative clearances should have been in place prior to awarding contracts\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/55\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"forest and other administrative clearances should have been in place prior to awarding contracts\", \"passage_id\": \"strata.gold.passage:31525018/v1/55\"}}, {\"sentence\": \"The completion report is dated October 10, 2019.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/54\"], \"numbers\": [], \"dates\": [\"October 10, 2019\"], \"quote\": null}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

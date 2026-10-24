@@ -19,7 +19,7 @@ import pytest
 
 from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
-from strata.agent.scripted import ScriptedAgent, load_cases, stream_text
+from strata.agent.scripted import ScriptedAgent, failed_stream_text, load_cases, stream_text
 from strata.config import load_tools
 from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
@@ -672,13 +672,35 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
 
 
 @pytest.mark.parametrize("case_id, recorded", [("p130164-rebidding", "ask-p130164-rebidding.sse"),
-                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse")])
+                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse"),
+                                               ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
+                                               ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse")])
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 
     assert sent == (RECORDED / recorded).read_text(), (
         f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted {case_id} "
         f"> tests/fixtures/api/{recorded}")
+
+
+@pytest.mark.parametrize("code, recorded", [("agent_unavailable", "ask-agent-unavailable.sse"),
+                                            ("content_filter", "ask-content-filter.sse")])
+def test_the_server_sends_the_failed_streams_the_screen_tests_serve(code, recorded):
+    sent = failed_stream_text(code)
+
+    assert events(sent) == [("error", {"code": code}), ("done", {"run_id": "run-0001", "trace_ids": {
+        "application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}})]
+    assert sent == (RECORDED / recorded).read_text(), (
+        f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted --error {code} "
+        f"> tests/fixtures/api/{recorded}")
+
+
+def test_an_agent_that_finds_nothing_to_cite_writes_no_sentence_and_the_checks_count_none(ask_case):
+    parsed, _ = ask_case("p130164-nothing-found")
+
+    assert of(parsed, "sentence") == [] and of(parsed, "removed") == []
+    assert of(parsed, "checks")[0]["sentences"] == {"written": 0, "kept": 0, "removed": 0}
+    assert parsed[-1][0] == "done"
 
 
 def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():

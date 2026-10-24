@@ -202,3 +202,21 @@ kind = "summary"
 evidence_ids = ["strata.gold.passage:31525018/v1/88"]
 numbers = []
 dates = []
+
+[[cases]]
+id = "p130164-nothing-found"
+says = """The agent searches P130164's documents for the firms that built its bridges, finds nothing that answers \
+the question, and writes no claims. The answer panel says it found nothing, with no check line."""
+question = "Which firms built the bridges in P130164?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-nothing-found"
+
+[[cases]]
+id = "p130164-before-the-icr"
+says = """The showcase answer, asked as of October 15, 2019, before the ICR of October 10, 2019 was public. No tool \
+returns its paragraphs, so every sentence is removed and no quote counts as on its page."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2019-10-15
+recording = "p130164-before-the-icr"
