@@ -361,6 +361,25 @@ test("a press on the empty part of the chip's row puts the cursor in the text fi
   await expect(page.locator("[data-box-band] input")).toBeFocused();
 });
 
+// The whole box shows the text cursor, so a press anywhere in it outside the chip acts as a press on
+// the field: on the "/" hint and on the search icon too. The chip keeps the pointer's own cursor.
+test("a press on the box's / hint or its search icon puts the cursor in the text field, and the chip keeps its own cursor", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page);
+  const input = page.locator("[data-box-band] input");
+  for (const part of ["kbd", "svg"]) {
+    await page.locator("main h1").click();
+    await expect(input, part).not.toBeFocused();
+    const target = page.locator(`[data-box-band] form > [data-focus-ring] ${part}`).first();
+    await expect(target, part).toBeVisible();
+    await target.click();
+    await expect(input, part).toBeFocused();
+  }
+
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
+  expect(await page.locator("[data-box-band] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
+});
+
 test("a P-code's chip and a STEP reference's chip on a wide screen sit on one row with the text, in a 44 px box", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
   await open(page, "/projects/P130164");

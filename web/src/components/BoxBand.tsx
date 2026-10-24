@@ -41,16 +41,19 @@ export type BoxOption = {
 // chip and a text field you can type in do not fit on one line, the chip takes a row of its own above
 // the text (OneBox wraps). A reference wider than that row stays whole and readable as one ID
 // (MonoWords): each part between spaces moves to the next line whole when it fits there, and breaks
-// after a hyphen when it is wider than the line, as the package workspace's own references do. On one line the chip is the
-// 32 px pill it always was; on more it is a box with the same 16 px corners.
+// after a hyphen when it is wider than the line, as the package workspace's own references do. On
+// one line the chip is the 32 px pill it always was; on more it is a box with the same 16 px corners.
+// It keeps the pointer's own cursor (cursor-auto), so its ID shows the text cursor only where you
+// can select it, and a press on it does not put the cursor in the text field.
 //
-// Its -mr-3 and the text field's ml-3 cancel out on one line, leaving the box's 8 px gap after the
-// chip; when the text field wraps under the chip, its ml-3 lines its text up with the reference's.
+// Its -mr-3 and the text group's left margin (mx-3) cancel out on one line, leaving the box's 8 px
+// gap after the chip; when the text field wraps under the chip, that margin lines its text up with
+// the reference's.
 function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void }) {
   return (
     <span
       data-scope-chip
-      className="my-1 -mr-3 flex min-h-8 max-w-full min-w-0 items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
+      className="my-1 -mr-3 flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
     >
       <span className="min-w-0 py-1 text-small">
         <span className="mr-2 hidden text-ink-muted md:inline">{copy.box.chipWithin}</span>
@@ -162,11 +165,12 @@ export function OneBox({
           pushes the text field to a second row, the corners stay 22 px, so the chip's own corner stays clear
           of them. With a chip the box keeps 4 px on each side, so a chip that fills its row sits 5 px from
           both edges, and the text group's own 12 px margin keeps the text row's 16 px on the right.
-          A press on the box's empty part, such as the rest of the chip's row, acts as a press on the field. */}
+          The box shows the text cursor, so a press anywhere in it outside the field, a button or the chip,
+          such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on the field. */}
       <div
         data-focus-ring
         onPointerDown={(event) => {
-          if (event.target !== event.currentTarget) return;
+          if ((event.target as Element).closest("input, button, [data-scope-chip]")) return;
           event.preventDefault();
           input.current?.focus();
           onPointerDown?.();
