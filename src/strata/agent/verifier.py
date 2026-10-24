@@ -13,8 +13,9 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
-3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation, and
-   starts and ends where the page's words do: "10" is not a quote from "108 of 328".
+3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation and
+   whether a quote mark is curly or straight, and starts and ends where the page's words do: "10" is not
+   a quote from "108 of 328".
    The quote checked is the one the person reads: the words in the sentence's double quotes must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
@@ -282,9 +283,14 @@ def _supports(mention: Mention, numbers: set, days: set) -> bool:
 HYPHEN_BREAK = re.compile(r"(?<=\w)-[ \t]*\r?\n\s*(?=\w)")
 
 
+# Curly quote marks, written straight before quotes are compared, since a model often straightens them.
+STRAIGHT = str.maketrans({"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"'})
+
+
 def _normalized(text: str) -> tuple[str, list[int]]:
-    """The text with each run of whitespace as one space and each line-end hyphenation joined, and
-    where each of its characters sits in the original text."""
+    """The text with each run of whitespace as one space, each line-end hyphenation joined and each curly
+    quote mark straight, and where each of its characters sits in the original text."""
+    text = text.translate(STRAIGHT)  # one character for one, so each place in the text stays where it was
     out: list[str] = []
     where: list[int] = []
     i = 0

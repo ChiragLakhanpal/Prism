@@ -490,6 +490,27 @@ def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
     assert removed_reasons(parsed) == [[("number_not_in_records", "108"), ("number_not_in_records", "328")]]
 
 
+def test_a_quote_with_straight_quote_marks_matches_a_page_with_curly_ones(fixture_db):
+    """The PAD's Annex 3, paragraph 51 writes "the World Bank’s prior review" with a curly apostrophe
+    (evals/shield_passages.toml). A model often writes a straight one; the quote is still word for word,
+    and its highlight covers the page's own words."""
+    annex = "strata.gold.passage:27348420/v1/annex3.51"
+    words = "shall be subject to the World Bank's prior review"
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "contracts subject to the World Bank's prior review", "project_id": "P156634",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim(f'The PAD said some contracts "{words}".', kind="quote", evidence_ids=[annex],
+                               quote={"text": words, "passage_id": annex})])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert of(parsed, "removed") == []
+    [evidence] = of(parsed, "evidence")
+    [highlight] = evidence["highlights"]
+    assert evidence["row"]["text"][highlight["start"]:highlight["end"]] == (
+        "shall be subject to the World Bank\u2019s prior review")
+
+
 def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fixture_db):
     """"Two" in STEP's market approach "Single Stage - Two Envelope" is a name, not a count, whether or not
     the sentence quotes it. A number word in lower case is a count even when a value holds it beside the
