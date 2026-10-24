@@ -27,6 +27,8 @@ PLAN = TRUTH["plan"]
 # "page" and its number are joined by a no-break space, so they never part at a line end (DESIGN.md section 7).
 SOURCE_LINE = (f"Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, "
                f"page\u00a0{PLAN['pdf_page']}.")
+# A CSV has no line ends to protect, and a search for "page 3" in a spreadsheet must find it: a plain space.
+CSV_SOURCE_LINE = SOURCE_LINE.replace("\u00a0", " ")
 PDF_URL = CHECKED["plan"]["pdf_url"]
 STEM = "review-notes-P156634-northern-water-works-development-agency-2026-10-09"
 
@@ -105,7 +107,7 @@ def test_the_evidence_pack_lists_every_source_and_whether_its_author_opened_it_a
     assert table[0] == ["Number", "Evidence ID", "Source", "Cited in", "Opened before export", "Last opened (UTC)",
                         "Kept another source", "Reason"]
     assert [(row[0], row[1], row[2], row[3], row[4]) for row in table[1:]] == [
-        (str(number), ROW_OF[ref], SOURCE_LINE, ref, "Yes" if ref == MARKED[1] else "No")
+        (str(number), ROW_OF[ref], CSV_SOURCE_LINE, ref, "Yes" if ref == MARKED[1] else "No")
         for number, ref in enumerate(MARKED, 1)]
     # The column heading says UTC, so each moment does not repeat it.
     assert table[2][5] == "October 23, 2026, 14:02" and table[1][5] == table[3][5] == ""
@@ -125,7 +127,7 @@ def test_an_evidence_pack_row_with_a_comma_a_quote_and_a_line_break_reads_back_c
 
     assert written.endswith("\r\n") and "\r\n" in written.split("Reason", 1)[1]
     assert list(csv.reader(io.StringIO(written)))[1] == [
-        "1", ROW_OF[MARKED[0]], SOURCE_LINE, f"{MARKED[0]}, {MARKED[1]}", "Yes", "October 23, 2026, 14:02", "Yes", reason]
+        "1", ROW_OF[MARKED[0]], CSV_SOURCE_LINE, f"{MARKED[0]}, {MARKED[1]}", "Yes", "October 23, 2026, 14:02", "Yes", reason]
 
 
 def test_the_files_go_to_the_author_s_team_and_no_one_else(exported):

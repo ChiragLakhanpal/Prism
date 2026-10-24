@@ -14,7 +14,7 @@ import { StepsTaken } from "../components/Answer";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
-import { DiscardedNotice, DraftBar, ExportSuccess } from "../components/DraftBar";
+import { BAR_BUTTONS, BAR_MAIN, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, type NoteRow } from "../components/DraftNotes";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
@@ -151,7 +151,7 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
           </h1>
           <p className="mt-2 text-body text-ink-muted">{subtitle}</p>
         </div>
-        <div className="min-w-0 @lg/page:mt-2">{state}</div>
+        <div className="min-w-0 @lg/page:mt-2 xl:mt-2">{state}</div>
       </div>
     </div>
   );
@@ -175,10 +175,29 @@ export function subtitleOf(kind: KindWords, agency: string, planDate: string): R
   return <Fill template={kind.subtitle} slots={{ agency, date: <Num date={planDate} /> }} />;
 }
 
+// The page's width without a classic scroll bar, which 100vw counts, for app.css's document column, so the
+// column lines up with the navy bar and the footer, which center in the same width.
+function useWindowInline() {
+  useLayoutEffect(() => {
+    const root = document.documentElement;
+    const update = () => root.style.setProperty("--window-inline", `${root.clientWidth}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+      root.style.removeProperty("--window-inline");
+    };
+  }, []);
+}
+
 // The column: columns 1 to 7 from a page area of 1200 px, all 12 below. It is the notes' size container.
 // In a window of 1200 px or more it keeps the same place and width when the evidence drawer narrows the
 // page area (the 35 brief, section 3.2; app.css, "A draft's document column").
 export function DocumentColumn({ children }: { children: ReactNode }) {
+  useWindowInline();
   return (
     <div className="layout-grid">
       <div data-document-column className="@container/doc col-span-12 min-w-0 @xl/page:col-span-7">
@@ -259,14 +278,17 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     }
   }, [ready]);
 
-  // Focus moves where the brief says once the server has answered and the page has drawn.
+  // Focus moves where the brief says once the server has answered and the page has drawn. The bar, the
+  // discarded notice and the h1 sit in sticky parts that are already in view, and the page's scroll padding
+  // would otherwise make the browser scroll the notes away (DESIGN.md section 10).
   useEffect(() => {
     const target = focusNext.current;
     focusNext.current = null;
-    if (target === "export") exportButton.current?.focus();
-    if (target === "check") checkButton.current?.focus();
-    if (target === "discarded") discarded.current?.focus();
-    if (target === "heading") document.querySelector<HTMLElement>("main h1")?.focus();
+    const still = { preventScroll: true };
+    if (target === "export") exportButton.current?.focus(still);
+    if (target === "check") checkButton.current?.focus(still);
+    if (target === "discarded") discarded.current?.focus(still);
+    if (target === "heading") document.querySelector<HTMLElement>("main h1")?.focus(still);
     if (target === "success" && success.current) {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       success.current.closest("section")?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
@@ -282,6 +304,25 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   }, [draft, opens]);
   const numbers = useMemo(() => new Map(draft?.sources.map((source) => [source.evidence_id, source.number]) ?? []), [draft]);
   const openedCount = draft ? draft.sources.filter((source) => opened.has(source.evidence_id)).length : 0;
+
+  // The note whose marker opened the drawer stays in view beside its source. From a window of 1200 px
+  // nothing moves; below that the narrower column may turn the notes into cards, which moves the note, so
+  // the same marker in the view now shown is brought just clear of the sticky header or bar, and only if
+  // one of them hides it (the 35 brief, section 3.1).
+  const openId = evidenceIn(here.search);
+  const openSentence = from && from.serial === null ? from.sentence : null;
+  // It waits a second frame, so the scroll padding has followed the bar, which may wrap taller.
+  useEffect(() => {
+    if (!openId || openSentence === null) return;
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const selector = `[data-draft-notes] [data-citation-id="${CSS.escape(openId)}"][data-sentence="${openSentence}"]`;
+        const shown = [...document.querySelectorAll<HTMLElement>(selector)].find((marker) => marker.getClientRects().length > 0);
+        shown?.scrollIntoView({ block: "nearest" });
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [openId, openSentence]);
 
   if (loaded.status === "loading") return <DraftSkeleton />;
   if (loaded.status === "missing") {
@@ -320,7 +361,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const kind: KindWords = copy.draft.kinds[d.kind];
   const subject = d.subject;
   const planHref = `/projects/${subject.project_id}/procurement/${subject.agency_id}/${subject.plan_date}`;
-  const open = { id: evidenceIn(here.search), sentence: from && from.serial === null ? from.sentence : null };
+  const open = { id: openId, sentence: openSentence };
 
   const onAct = async (action: Action) => {
     if (busy) return;
@@ -514,17 +555,27 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
 
 // While the draft loads (the 35 brief, section 8.3): the places of the header, the lede, the method, the
 // check line, the removed box, the steps disclosure, the count line, the table's real head over three
-// rows, the sources and the bar, each the height of what it stands for, so nothing moves when it loads.
+// rows, the sources, the page's last lines and the bar, each the height of what it stands for at its
+// width, so nothing moves when it loads. Below 48rem the subtitle, the lede, the method and the check line
+// take more lines, the breadcrumb is the short link back to Drafts, and the bar stacks its buttons. The
+// bar's frame sticks as the bar will, with its consequence sentence, which is true before the draft loads.
 function DraftSkeleton() {
   const kind = SKELETON_KIND;
+  // Lines that differ below 48rem and from it: one set is shown at each width.
+  const lines = (narrow: string[], wide: string[], className: string) => (
+    <>
+      <SkeletonText className={cx(className, "md:hidden")} widths={narrow} />
+      <SkeletonText className={cx(className, "hidden md:flex")} widths={wide} />
+    </>
+  );
   return (
     <DocumentColumn>
       <div data-draft-page="loading" aria-busy="true">
         <p role="status" className="sr-only">
           {words.page.loading}
         </p>
-        <nav aria-hidden="true" className="text-caption">
-          <SkeletonLine width="w-[200px] max-w-full" />
+        <nav aria-hidden="true" className="flex h-7 items-center text-caption">
+          <Skeleton className="h-[1em] w-16 md:w-[200px] md:max-w-full" />
         </nav>
         {/* The h1, the subtitle and the stepper, which the subtitle's length puts on a line of its own. */}
         <div className="mt-4 border-b border-line py-4">
@@ -532,16 +583,17 @@ function DraftSkeleton() {
             <span className="sr-only">{copy.pages.draft.title}</span>
             <SkeletonLine width="w-[200px] max-w-full" />
           </h1>
-          <SkeletonLine className="mt-2 text-body" width="w-[280px] max-w-full" />
+          {lines(["w-full", "w-full", "w-1/3"], ["w-[280px] max-w-full"], "mt-2 text-body")}
           <SkeletonLine className="mt-2 text-small @lg/page:mt-4" width="w-[300px] max-w-full" />
         </div>
         <div className="mt-6 max-w-[72ch]">
-          <SkeletonText className="text-title" widths={["w-full", "w-2/5"]} />
-          <SkeletonText className="mt-2 text-body" widths={["w-full", "w-4/5"]} />
+          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "text-title")}
+          {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
-          {/* The check line, four lines of small text in its box, and the one-line removed box. */}
-          <Skeleton className="h-24 w-full" radius="rounded-sm" />
+          {/* The check line, seven lines of small text in its box below 48rem and four from it, and the
+              one-line removed box. */}
+          <Skeleton className="h-40 w-full md:h-24" radius="rounded-sm" />
           <Skeleton className="h-11 w-full" radius="rounded-sm" />
         </div>
         <div className="mt-4 flex h-11 items-center">
@@ -562,7 +614,7 @@ function DraftSkeleton() {
             </thead>
             <tbody>
               {[0, 1, 2].map((index) => (
-                <tr key={index} className="h-30 border-t border-line align-top">
+                <tr key={index} className="h-36 border-t border-line align-top">
                   <td className="p-3">
                     <Skeleton className="h-7 w-28" radius="rounded-pill" />
                     <SkeletonText className="mt-1" widths={["w-4/5", "w-3/5"]} />
@@ -576,8 +628,8 @@ function DraftSkeleton() {
           </table>
         </div>
         <ul aria-hidden="true" className="mt-2 flex flex-col gap-3 @min-[35rem]/doc:hidden">
-          {[0, 1, 2].map((index) => (
-            <li key={index} className="h-50 rounded-md border border-line bg-surface p-4">
+          {["h-72", "h-72", "h-77"].map((height, index) => (
+            <li key={index} className={cx(height, "rounded-md border border-line bg-surface p-4")}>
               <Skeleton className="h-7 w-28" radius="rounded-pill" />
               <SkeletonText className="mt-2 text-small" widths={["w-4/5", "w-full", "w-3/5"]} />
             </li>
@@ -585,18 +637,33 @@ function DraftSkeleton() {
         </ul>
         <div className="mt-8">
           <SkeletonLine className="text-title" width="w-24" />
-          <SkeletonLine className="mt-2 text-caption" width="w-4/5 max-w-[72ch]" />
+          {lines(["w-full", "w-3/5"], ["w-4/5 max-w-[72ch]"], "mt-2 text-caption")}
           <div className="mt-4 flex flex-col gap-4">
             {[0, 1, 2].map((index) => (
-              <SkeletonText key={index} className="text-small" widths={["w-4/5", "w-3/5", "w-2/5"]} />
+              <div key={index} className="h-35 @min-[35rem]/doc:h-26 @min-[50rem]/doc:h-21">
+                <SkeletonText className="text-small" widths={["w-4/5", "w-3/5", "w-2/5"]} />
+              </div>
             ))}
           </div>
         </div>
-        <section aria-label={words.bar.label} className="mt-8 border-t border-line bg-surface px-4 py-3 md:px-6">
-          <SkeletonText className="max-w-[80ch] text-small" widths={["w-full", "w-full", "w-2/5"]} />
-          <div className="mt-3 flex justify-between gap-2">
-            <Skeleton className="h-11 w-28" radius="rounded-pill" />
-            <Skeleton className="h-11 w-40" radius="rounded-pill" />
+        <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{copy.checkPlan.notVisible}</p>
+        <SkeletonLine className="mt-2 text-caption" width="w-64 max-w-full" />
+        <section aria-label={words.bar.label} className={cx("z-10 mt-8 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY)}>
+          <p className="max-w-[80ch] text-small text-ink">
+            {/* The kind's lead sentence before the consequence, and the opened count and hold line after it,
+                each in two parts, so they wrap over as many lines as the words will. */}
+            <Skeleton inline className="w-[36ch]" /> <Skeleton inline className="w-[20ch]" /> <Consequence />{" "}
+            <Skeleton inline className="w-[24ch]" /> <Skeleton inline className="w-[30ch]" />
+          </p>
+          <div className={BAR_BUTTONS}>
+            <div>
+              <Skeleton className="h-11 w-24" radius="rounded-pill" />
+            </div>
+            <div className={BAR_MAIN}>
+              {/* Full width while stacked, and each button's width in a row. */}
+              <Skeleton className="h-11 w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-36" radius="rounded-pill" />
+              <Skeleton className="h-11 w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-40" radius="rounded-pill" />
+            </div>
           </div>
         </section>
       </div>

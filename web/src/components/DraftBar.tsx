@@ -35,6 +35,48 @@ const SETTLE_MS = 400;
 // Sticky only in a window at least 768 px wide and 640 px tall (48rem by 40rem). Every class name with
 // this media query is written out whole, so Tailwind finds it.
 export const STICKY = "[@media(min-width:48rem)_and_(min-height:40rem)]:sticky [@media(min-width:48rem)_and_(min-height:40rem)]:bottom-0";
+// The fixed consequence sentence, with each hyphenated word kept whole at a line end, so its key word never
+// breaks as "no-" and "objection". The draft page's skeleton shows it too, since it is true before the
+// draft loads (the 35 brief, section 8.3).
+export function Consequence() {
+  const parts = copy.draft.bar.consequence.split(/(\S+-\S+)/);
+  return (
+    <>
+      {parts.map((part, index) =>
+        index % 2 === 1 ? (
+          <span key={index} className="whitespace-nowrap">
+            {part}
+          </span>
+        ) : (
+          part
+        ),
+      )}
+    </>
+  );
+}
+
+// The bar's two rows of buttons: stacked below the sticky size (Discard, a 1px rule with 16 px above and
+// below, then the full-width buttons 8 px apart), and one row with Discard at the far left when it sticks.
+// The draft page's skeleton draws its pills with the same classes, so they stand where the buttons will.
+// Each class is spelled out in full, so Tailwind finds it.
+export const BAR_BUTTONS = cx(
+  "mt-3 flex flex-col",
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:flex-row [@media(min-width:48rem)_and_(min-height:40rem)]:items-center",
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:justify-between [@media(min-width:48rem)_and_(min-height:40rem)]:gap-2",
+);
+export const BAR_MAIN = cx(
+  "mt-4 flex flex-col gap-2 border-t border-line pt-4",
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:mt-0 [@media(min-width:48rem)_and_(min-height:40rem)]:flex-row",
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:border-t-0 [@media(min-width:48rem)_and_(min-height:40rem)]:pt-0",
+);
+export const BAR_BUTTON_WIDTH = "w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-auto";
+
+// The discarded notice takes the bar's place, so when it sticks it ends the scrolling notes the same way: a
+// 1px rule above it and 12 px of the page above and below the alert, so no text is cut at the alert's edge.
+const STICKY_FRAME = cx(
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:border-t [@media(min-width:48rem)_and_(min-height:40rem)]:border-line",
+  "[@media(min-width:48rem)_and_(min-height:40rem)]:py-3",
+);
 
 export type BarProps = {
   draft: Draft;
@@ -104,8 +146,8 @@ export const DraftBar = forwardRef(function DraftBar(
       className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY, className)}
     >
       <p className="max-w-[80ch] text-small text-ink" data-bar-lead>
-        {mine ? words.barLead : words.barLeadTeammate(author)} {bar.consequence}{" "}
-        <TextLink href={`#${SOURCES_ID}`} onClick={focusSources} data-opened-link>
+        {mine ? words.barLead : words.barLeadTeammate(author)} <Consequence />{" "}
+        <TextLink href={`#${SOURCES_ID}`} onClick={focusSources} className="whitespace-nowrap" data-opened-link>
           {bar.opened(whole(opened), whole(draft.opened.of))}
         </TextLink>
         {bar.end}
@@ -134,13 +176,7 @@ export const DraftBar = forwardRef(function DraftBar(
         {status}
       </p>
       {mine ? (
-        <div
-          className={cx(
-            "mt-3 flex flex-col",
-            "[@media(min-width:48rem)_and_(min-height:40rem)]:flex-row [@media(min-width:48rem)_and_(min-height:40rem)]:items-center",
-            "[@media(min-width:48rem)_and_(min-height:40rem)]:justify-between [@media(min-width:48rem)_and_(min-height:40rem)]:gap-2",
-          )}
-        >
+        <div className={BAR_BUTTONS}>
           <div>
             <Button
               variant="ghost"
@@ -154,13 +190,7 @@ export const DraftBar = forwardRef(function DraftBar(
               {bar.discard}
             </Button>
           </div>
-          <div
-            className={cx(
-              "mt-4 flex flex-col gap-2 border-t border-line pt-4",
-              "[@media(min-width:48rem)_and_(min-height:40rem)]:mt-0 [@media(min-width:48rem)_and_(min-height:40rem)]:flex-row",
-              "[@media(min-width:48rem)_and_(min-height:40rem)]:border-t-0 [@media(min-width:48rem)_and_(min-height:40rem)]:pt-0",
-            )}
-          >
+          <div className={BAR_MAIN}>
             <Button
               ref={exportRef}
               variant={exportPrimary ? "primary" : "secondary"}
@@ -169,7 +199,7 @@ export const DraftBar = forwardRef(function DraftBar(
               loading={busy === "export"}
               busyLabel={bar.busy.export}
               onClick={exportClick}
-              className="w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-auto"
+              className={BAR_BUTTON_WIDTH}
             >
               {bar.export}
             </Button>
@@ -182,7 +212,7 @@ export const DraftBar = forwardRef(function DraftBar(
                 loading={busy === "check"}
                 busyLabel={bar.busy.check}
                 onClick={() => onAct("check")}
-                className="w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-auto"
+                className={BAR_BUTTON_WIDTH}
               >
                 {bar.check}
               </Button>
@@ -306,7 +336,7 @@ export const DiscardedNotice = forwardRef(function DiscardedNotice(
   ref: Ref<HTMLElement>,
 ) {
   return (
-    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice className={cx("z-10 bg-page", STICKY, className)}>
+    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice className={cx("z-10 bg-page", STICKY, STICKY_FRAME, className)}>
       <Alert state="info">
         <span ref={sentenceRef} tabIndex={-1} className="focus:outline-none" data-discarded-sentence>
           {sentence}

@@ -291,12 +291,15 @@ def snapshot(draft: dict, say: Say) -> dict:
 
 
 def pack_csv(rows: list[dict]) -> bytes:
+    """The evidence pack as a CSV. The source line's no-break space keeps "page" with its number on a page; a
+    CSV has no line ends, and a search for "page 3" in a spreadsheet must find it, so it gets a plain space."""
     pack = words()["files"]["pack"]
     out = io.StringIO()
     writer = csv.writer(out, lineterminator="\r\n")
     writer.writerow(pack["csvColumns"])
     for row in rows:
-        writer.writerow([row["number"], row["evidence_id"], row["source"], pack["citedJoin"].join(row["cited_in"]),
+        source = row["source"].replace("\u00a0", " ")
+        writer.writerow([row["number"], row["evidence_id"], source, pack["citedJoin"].join(row["cited_in"]),
                          pack["yes"] if row["opened"] else pack["no"], Say.moment(row["last_opened_at"]),
                          pack["yes"] if row["kept_another"] else pack["no"], row["reason"] or ""])
     return out.getvalue().encode("utf-8")

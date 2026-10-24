@@ -877,7 +877,7 @@ export const copy = {
           agent_output: "I wrote review notes I couldn't check, so I saved nothing.",
           data_service: "I couldn't read my check of the plan, because the data service didn't answer. I saved nothing.",
           // The app's own account could not save the draft: nothing the viewer can fix.
-          draft_store: "I couldn't save the draft, because Strata can't write to its drafts tables right now. I saved nothing.",
+          draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
           no_plan: "I couldn't find this version of the plan, so I wrote nothing and saved nothing.",
           nothing_marked: "No activity in this plan needs a look or is worth watching, so I saved nothing.",
           // The viewer's own read of the plan's check was refused.
@@ -999,7 +999,7 @@ export const copy = {
       notFoundBody: "The link may be incomplete, or the draft may belong to another team.",
       notFoundLink: "Go to Drafts",
       error: "I couldn't load this draft because the data service didn't answer.",
-      draftStore: "I can't show this draft, because Strata can't read its drafts tables right now.",
+      draftStore: "I can't show this draft, because I can't read my drafts tables right now.",
       permission: "Your account can't read Strata's tables, so I can't show this draft.",
       publicTitle: "The public view has no drafts.",
       publicBody: "Drafts belong to the team that made them. Leave the preview to see yours.",
@@ -1030,7 +1030,7 @@ export const copy = {
       more: (count: string) => `Show ${count} more`,
       loading: "Loading your team's drafts.",
       error: "I couldn't load your team's drafts because the data service didn't answer.",
-      draftStore: "I can't list your team's drafts, because Strata can't read its drafts tables right now.",
+      draftStore: "I can't list your team's drafts, because I can't read my drafts tables right now.",
       permission: "Your account can't read Strata's tables, so I can't list your team's drafts.",
     },
     // The export's files (section 6.7), which the server writes from src/strata/drafts/copy.json

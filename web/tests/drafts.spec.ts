@@ -136,6 +136,21 @@ test("an open draft the lookup finds late is not put above a plan check already 
   expect((await action.boundingBox())!.y).toBe(before);
 });
 
+test("an open draft the lookup finds before a slow plan check is drawn is named, and the page does not move after", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, {
+    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json"), delay: 1200 },
+    "/api/drafts/existing": { body: await recorded("drafts-existing-yours.json"), delay: 500 },
+  });
+  await page.goto(PLAN);
+  const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
+  await expect(action).toBeVisible({ timeout: 5000 });
+  await expect(page.locator("[data-existing-draft]")).toHaveText("You started review notes on this plan on October 23, 2026.");
+  const before = (await action.boundingBox())!.y;
+  await page.waitForTimeout(1000);
+  expect((await action.boundingBox())!.y).toBe(before);
+});
+
 // ── Writing ──────────────────────────────────────────────────────────────
 
 test("drafting shows the marked activities at once, then becomes the saved draft in place, and Back returns to the plan check", async ({ page }) => {
@@ -167,12 +182,17 @@ test("drafting shows the marked activities at once, then becomes the saved draft
 test("a draft written in this visit, opened again from Drafts after it was checked, shows the state the server holds", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const draft = { body: await recorded("drafts-review-notes-draft.json") };
+  // The Drafts tab as the server lists it once Ana has checked draft-0001: under Checked, not yet exported.
+  const list = JSON.parse(await recorded("drafts-list.json"));
+  const entry = list.groups.exported.find((one: { draft_id: string }) => one.draft_id === "draft-0001");
+  list.groups.exported = list.groups.exported.filter((one: { draft_id: string }) => one !== entry);
+  list.groups.checked.unshift(Object.assign(entry, { state: "checked", exported: null }));
   const asked = await serve(page, {
     [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
     "POST /api/drafts": { body: await recorded("drafts-write-review-notes.sse") },
     [`GET /api${DRAFT}`]: draft,
     "POST /api/drafts/draft-0001/check": { body: await recorded("drafts-review-notes-checked.json") },
-    "/api/drafts": { body: await recorded("drafts-list.json") },
+    "/api/drafts": { body: JSON.stringify(list) },
   });
   await page.goto(PLAN);
   await page.getByRole("button", { name: "Draft review notes (3 rows)" }).click();
@@ -182,7 +202,7 @@ test("a draft written in this visit, opened again from Drafts after it was check
 
   draft.body = await recorded("drafts-review-notes-checked.json");
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Drafts" }).click();
-  await page.locator(`[data-draft-group=exported] a[href="${DRAFT}"]`).click();
+  await page.locator(`[data-draft-group=checked] a[href="${DRAFT}"]`).click();
 
   await expect(page.locator("[aria-current=step]")).toHaveText("Checked by you");
   await expect(page.locator("[data-page-status]")).toHaveText("");
@@ -216,8 +236,12 @@ test("a writer that does not answer, or notes that all fail the checks, save not
 
   stream.body = await recorded("drafts-write-nothing-survived.sse");
   await page.getByRole("button", { name: "Try again" }).click();
-  await expect(page.getByRole("heading", { name: "I couldn't write a note that passed my checks, so I saved no draft." })).toBeVisible();
+  const heading = page.getByRole("heading", { name: "I couldn't write a note that passed my checks, so I saved no draft." });
+  await expect(heading).toBeVisible();
   await expect(page.locator("[data-removed-lead]")).toHaveText("I removed all three sentences.");
+  // No step is running, so the finished steps start at the heading's edge, with no empty icon rail.
+  const step = await page.locator("[data-step=done] > span:last-child").first().boundingBox();
+  expect(Math.round(step!.x)).toBe(Math.round((await heading.boundingBox())!.x));
 });
 
 test("a reload of the writing page says I'm not writing, and links back to the plan check", async ({ page }) => {
@@ -289,6 +313,8 @@ test("opening a source counts it in the bar and the Sources list at once, and th
       return [Math.round(box.x), Math.round(box.top + window.scrollY), Math.round(box.width)];
     });
   const before = await place();
+  const headerHeight = () => page.locator("[data-draft-header]").evaluate((element) => element.getBoundingClientRect().height);
+  const tall = await headerHeight();
 
   await notes(page).locator("[data-citation='2']").first().click();
 
@@ -302,6 +328,50 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   const drawer = await page.getByRole("dialog").boundingBox();
   expect(column!.x + column!.width).toBeLessThanOrEqual(drawer!.x);
   expect(await place()).toEqual(before);
+  // The header keeps its height too, so nothing under it moves up.
+  expect(await headerHeight()).toBe(tall);
+});
+
+test("opening a source, by click or by Enter, or switching to another, keeps the window still and the note in view above the bar", async ({ page }) => {
+  const scrollY = () => page.evaluate(() => window.scrollY);
+  for (const [width, height] of [[1440, 900], [1024, 768]]) {
+    for (const how of ["click", "Enter"]) {
+      const where = `${how} at ${width} by ${height}`;
+      await openDraft(page, { width, height });
+      const marker = notes(page).locator("[data-citation='2']").first();
+      // Put the second note's marker 450 px down the window.
+      const top = (await marker.boundingBox())!.y;
+      await page.evaluate((by) => window.scrollBy(0, by), top - 450);
+      await expect.poll(async () => Math.abs((await marker.boundingBox())!.y - 450)).toBeLessThanOrEqual(2);
+      const before = await scrollY();
+
+      if (how === "click") await marker.click();
+      else {
+        await marker.focus();
+        await page.keyboard.press("Enter");
+      }
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
+      // The marker shown now (in the cards, if the notes turned into cards) sits in the window above the bar.
+      const clear = async () => {
+        const [box, edge] = [await notes(page).locator("[data-citation='2']").first().boundingBox(), await bar(page).boundingBox()];
+        return box!.y >= 0 && box!.y + box!.height <= edge!.y;
+      };
+      await expect.poll(clear, { message: where }).toBe(true);
+      // From 1200 px the notes keep their place. At 1024 px the narrower column turns the notes into cards,
+      // which moves the note, so the page scrolls only the few pixels that keep its marker clear of the bar.
+      expect(Math.abs((await scrollY()) - before), where).toBeLessThanOrEqual(width >= 1200 ? 8 : 40);
+    }
+  }
+
+  // With the drawer open, the next note's source opens in it without moving the window either.
+  const next = notes(page).locator("[data-citation='3']").first();
+  await page.evaluate((by) => window.scrollBy(0, by), (await next.boundingBox())!.y - 400);
+  await expect.poll(async () => Math.abs((await next.boundingBox())!.y - 400)).toBeLessThanOrEqual(2);
+  const before = await scrollY();
+  await next.click();
+  await expect(page.getByRole("dialog")).toContainText("KE-NWWDA-541062-CW-RFQ");
+  expect(Math.abs((await scrollY()) - before)).toBeLessThanOrEqual(8);
 });
 
 test("Mark as checked saves, moves the state on and makes Export to Word the solid button, with focus on it", async ({ page }) => {
@@ -378,9 +448,52 @@ test("Discard is undone by Restore the draft, which puts the bar back in the sta
   await expect(sentence).toHaveText("You discarded these review notes, so your team no longer sees them in Drafts.");
   await expect(sentence).toBeFocused();
   await expect(page.getByText("Discarded on October 23, 2026")).toBeVisible();
+  // Stuck to the window's bottom edge, the notice ends the scrolling notes as the bar did: a 1px rule above
+  // it, with 12 px of the page's background on each side of the alert.
+  const frame = await page.locator("[data-discarded-notice]").evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.position, style.borderTopWidth, style.borderTopStyle, style.paddingTop, style.paddingBottom];
+  });
+  expect(frame).toEqual(["sticky", "1px", "solid", "12px", "12px"]);
   await page.getByRole("button", { name: "Restore the draft" }).click();
   await expect(bar(page).getByRole("button", { name: "Mark as checked" })).toBeFocused();
   await expect(bar(page).locator("[data-bar-status]")).toHaveText("You restored the draft.");
+});
+
+test("Mark as checked, Discard and Restore the draft move focus into the sticky bar without scrolling the notes", async ({ page }) => {
+  const discarded = JSON.parse(await recorded("drafts-review-notes-discarded.json"));
+  Object.assign(discarded, { draft_id: "draft-0001" });
+  const scrollY = () => page.evaluate(() => window.scrollY);
+  const from300 = async () => {
+    await page.evaluate(() => window.scrollTo(0, 300));
+    await expect.poll(scrollY).toBe(300);
+  };
+  // A click where the button is, as a person makes it: Playwright's own click first scrolls the button out
+  // of the page's scroll padding, which would hide what the page does.
+  const press = async (name: string) => {
+    const box = (await page.getByRole("button", { name, exact: true }).boundingBox())!;
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  };
+
+  await openDraft(page, { answers: { "POST /api/drafts/draft-0001/check": { body: await recorded("drafts-review-notes-checked.json") } } });
+  await from300();
+  await press("Mark as checked");
+  await expect(bar(page).getByRole("button", { name: "Export to Word" })).toBeFocused();
+  expect(Math.abs((await scrollY()) - 300), "Mark as checked").toBeLessThanOrEqual(2);
+
+  await openDraft(page, {
+    answers: {
+      "POST /api/drafts/draft-0001/discard": { body: JSON.stringify(discarded) },
+      "POST /api/drafts/draft-0001/restore": { body: await recorded("drafts-review-notes-draft.json") },
+    },
+  });
+  await from300();
+  await press("Discard");
+  await expect(page.locator("[data-discarded-sentence]")).toBeFocused();
+  expect(Math.abs((await scrollY()) - 300), "Discard").toBeLessThanOrEqual(2);
+  await press("Restore the draft");
+  await expect(bar(page).getByRole("button", { name: "Mark as checked" })).toBeFocused();
+  expect(Math.abs((await scrollY()) - 300), "Restore the draft").toBeLessThanOrEqual(2);
 });
 
 test("a refused act shows its failure in the bar and keeps the state; a change made elsewhere reloads the draft", async ({ page }) => {
@@ -504,22 +617,39 @@ test("Discard's label starts on the bar text's left edge", async ({ page }) => {
   expect(Math.abs(label - text)).toBeLessThanOrEqual(1);
 });
 
-test("the loading skeleton puts the table where the loaded draft puts it", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  let release = () => {};
-  const held = new Promise<void>((resolve) => (release = resolve));
-  await serve(page, {});
+test("the loading skeleton puts the notes and the bar where the loaded draft puts them, with the bar's sentence", async ({ page }) => {
   const body = await recorded("drafts-review-notes-draft.json");
-  await page.route("**/api/drafts/draft-0001", async (route) => {
-    await held;
-    await route.fulfill({ contentType: "application/json", body });
-  });
-  await page.goto(DRAFT);
-  const top = (selector: string) => page.locator(selector).evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
-  const loading = await top("[data-draft-page=loading] table");
-  release();
-  const loaded = await top("[data-draft-notes] table");
-  expect(Math.abs(loaded - loading)).toBeLessThanOrEqual(12);
+  await serve(page, {});
+  for (const [width, height, notesView] of [[1440, 900, "table"], [390, 844, "ul"]] as const) {
+    await page.setViewportSize({ width, height });
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route("**/api/drafts/draft-0001", async (route) => {
+      await held;
+      await route.fulfill({ contentType: "application/json", body });
+    });
+    await page.goto(DRAFT);
+    const box = (selector: string) =>
+      page.locator(selector).evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { top: rect.top + window.scrollY, inWindow: rect.top, height: rect.height };
+      });
+    const where = `${width} by ${height}`;
+    const skeleton = page.locator("[data-draft-page=loading]");
+    // The bar's consequence sentence is true before the draft loads, so it is there as text.
+    await expect(bar(page)).toContainText(CONSEQUENCE);
+    const [notesBefore, barBefore] = [await box(`[data-draft-page=loading] ${notesView}:visible`), await box("[data-draft-page=loading] section")];
+    await expect(skeleton).toBeVisible();
+    release();
+    await expect(page.locator("[data-draft-page=draft]")).toBeVisible();
+    const notesAfter = await box(`[data-draft-notes] [data-view]:visible`);
+    const barAfter = await box("[data-draft-bar]");
+    expect(Math.abs(notesAfter.top - notesBefore.top), where).toBeLessThanOrEqual(12);
+    expect(Math.abs(barAfter.height - barBefore.height), where).toBeLessThanOrEqual(12);
+    // Where the bar sticks, the skeleton's bar already sits on the window's bottom edge.
+    if (width >= 768) expect(Math.round(barBefore.inWindow + barBefore.height), where).toBe(height);
+    await page.unroute("**/api/drafts/draft-0001");
+  }
 });
 
 test("the notes are a table on a wide column, and cards below 560 px of column, as at 390 px or beside the drawer at 1024 px", async ({ page }) => {
@@ -535,6 +665,23 @@ test("the notes are a table on a wide column, and cards below 560 px of column, 
   await openDraft(page, { width: 1024, height: 900, path: `${DRAFT}?evidence=${encodeURIComponent("strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB")}` });
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("[data-draft-notes] [data-view=cards]")).toBeVisible();
+  // In the bar beside the drawer, the consequence sentence's key word and the opened count each stay on one line.
+  const lines = (words: string) =>
+    bar(page).locator("[data-bar-lead]").evaluate((lead, words) => {
+      const walker = document.createTreeWalker(lead, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = node.textContent!.indexOf(words);
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + words.length);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      }
+      return 0;
+    }, words);
+  expect(await lines("no-objection")).toBe(1);
+  await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 3 sources");
+  expect(await lines("You opened 1 of 3 sources")).toBe(1);
 });
 
 test("the draft pages have no WCAG 2.2 AA violations at 1440, 1024 and 390 px", async ({ page }) => {

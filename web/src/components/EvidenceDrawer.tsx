@@ -444,9 +444,12 @@ export function EvidenceDrawer({
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
 
-  // Focus moves to the heading when a marker or a number asked for it, or when a link opens the sheet.
+  // Focus moves to the heading when a marker or a number asked for it, or when a link opens the sheet. Beside
+  // the page the panel is sticky and its heading already in view, so the window must not scroll: the page's
+  // scroll padding for its own sticky header would otherwise move the note away from its source (DESIGN.md
+  // section 10). The sheet is fixed, so scrolling it into view moves nothing.
   useEffect(() => {
-    if (takeFocusRequest() || (narrow && !from)) heading.current?.focus();
+    if (takeFocusRequest() || (narrow && !from)) heading.current?.focus({ preventScroll: !narrow });
   }, [requests, id]);
 
   // On open, the drawer scrolls only when the first highlight is out of view, and then puts it in the

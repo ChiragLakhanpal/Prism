@@ -51,39 +51,38 @@ function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: bool
   }, [header, active]);
 }
 
-// How long the populated page waits for the existing-draft lookup. A notice that arrived after the page was
-// drawn would push it down, so a later answer is dropped for this visit (the 35 design review).
+// How long the populated page waits for the existing-draft lookup once the plan check is ready to draw. A
+// notice that arrived after the page was drawn would push it down, so a later answer is dropped for this
+// visit (the 35 design review).
 const LOOKUP_WAIT_MS = 300;
 
-// The review notes the team already started on this plan version: settled when the lookup answers, or
-// LOOKUP_WAIT_MS after it starts, whichever comes first. With no version to look up, it is settled.
-function useExistingDraft(pid: string, agencyId: string, version: string | undefined, enabled: boolean) {
-  const [found, setFound] = useState<{ key: string; draft: Existing["draft"] } | null>(null);
+// The review notes the team already started on this plan version. The lookup starts as soon as its key is
+// known, often at mount; the wait is counted from when the check is ready, so a lookup that answers while
+// a slow check is still loading is always shown. Settled when the lookup answers, or LOOKUP_WAIT_MS after
+// the check is ready, whichever comes first. With no version to look up, it is settled.
+function useExistingDraft(pid: string, agencyId: string, version: string | undefined, enabled: boolean, checkReady: boolean) {
+  const [answer, setAnswer] = useState<{ key: string; draft: Existing["draft"] } | null>(null);
+  const [gaveUp, setGaveUp] = useState<string | null>(null);
   const key = enabled && version ? `${pid}/${agencyId}/${version}` : null;
   useEffect(() => {
     if (!key || !version) return;
-    let late = false;
     const controller = new AbortController();
-    const timer = setTimeout(() => {
-      late = true;
-      setFound({ key, draft: null });
-    }, LOOKUP_WAIT_MS);
     const query = new URLSearchParams({ kind: "review_notes", project_id: pid, agency_id: agencyId, plan_date: version });
-    const settle = (draft: Existing["draft"]) => {
-      if (late) return;
-      clearTimeout(timer);
-      setFound({ key, draft });
-    };
     getJson<Existing>(`/api/drafts/existing?${query.toString()}`, { signal: controller.signal }).then(
-      (answer) => settle(answer.draft),
-      () => settle(null),
+      (found) => setAnswer({ key, draft: found.draft }),
+      () => setAnswer({ key, draft: null }),
     );
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
+    return () => controller.abort();
   }, [key]);
-  return { settled: key === null || found?.key === key, draft: found?.key === key ? found.draft : null };
+  const answered = answer !== null && answer.key === key;
+  useEffect(() => {
+    if (!key || !checkReady || answered) return;
+    const timer = setTimeout(() => setGaveUp(key), LOOKUP_WAIT_MS);
+    return () => clearTimeout(timer);
+  }, [key, checkReady, answered]);
+  // Once the wait is over, a late answer never shows, so the page never moves after it is drawn.
+  const late = key !== null && gaveUp === key;
+  return { settled: key === null || answered || late, draft: !late && answered ? answer.draft : null };
 }
 
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
@@ -100,8 +99,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   const result = load.status === "ready" ? load.data : null;
   const ready = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
-  // The populated page waits, at most LOOKUP_WAIT_MS, for the notice that names an open draft.
-  const lookup = useExistingDraft(pid, ready?.plan.agency_id ?? agencyId, ready?.plan.plan_date ?? version, !preview);
+  // The populated page waits, at most LOOKUP_WAIT_MS after the check is ready, for the notice that names an
+  // open draft.
+  const lookup = useExistingDraft(pid, ready?.plan.agency_id ?? agencyId, ready?.plan.plan_date ?? version, !preview, ready !== null);
   const waiting = ready !== null && !lookup.settled;
   const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked));

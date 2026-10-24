@@ -191,12 +191,12 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
         />
         <div className="mt-6">
           {/* Four lines are kept while the steps stream in, so they never push the table down; once
-              writing has stopped, the space goes. */}
+              writing has stopped, the space goes, and so does the icon rail, since no step is running. */}
           <Steps
             steps={failed ? steps.filter((step) => step.state === "done") : steps}
             stillWorking={stillWorking}
             reserveLines={failed || current.phase === "nothing" ? 0 : 4}
-            rail={!failed}
+            rail={!failed && current.phase !== "nothing"}
           />
         </div>
         {current.phase === "nothing" ? (
