@@ -180,6 +180,21 @@ def test_only_an_abstention_the_registry_lists_as_keeping_its_rows_may_come_with
         config.load_tools(path)
 
 
+def test_the_screen_s_copy_file_has_a_phrase_for_every_reason_and_the_abstention_s_sentence():
+    """A reason code added to the registry without its phrase would leave a gap in the coverage line."""
+    import re
+
+    copy = (ROOT / "web" / "src" / "copy.ts").read_text()
+    past_range = copy[copy.index("\n  pastRange: {"):]
+    reasons = past_range[past_range.index("\n    reasons: {"):]
+    reasons = reasons[:reasons.index("\n    },")]
+    phrases = set(re.findall(r"^ {6}(\w+):", reasons, flags=re.MULTILINE))
+
+    assert set(config.load_tools()["find_comparables"].result.reasons) - phrases == set()
+    # The spec's sentence for fewer than 20 comparables, with N filled from the rows on screen.
+    assert "I'm not giving a range: only {n} comparable packages. Here are all {n}." in past_range
+
+
 def with_past_range(**changed):
     """The thresholds file with some of its [past_range] values changed."""
     found = config.load_thresholds()
