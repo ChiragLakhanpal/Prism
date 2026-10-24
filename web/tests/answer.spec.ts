@@ -73,6 +73,32 @@ test("the steps still to come are listed in muted text while the answer streams"
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
 });
 
+// DESIGN.md section 3: Roboto Mono for IDs, so the P-code keeps one face from the Asked line to the steps.
+test("the folded steps set the project ID in Roboto Mono, as the Asked line does", async ({ page }) => {
+  await open(page);
+  await askFromTheBox(page);
+  await landed(page);
+
+  await panel(page).getByRole("button", { name: "Show the four steps I took" }).click();
+  const found = panel(page).locator("[data-steps] li").filter({ hasText: "I found 10 passages for P130164." });
+  await expect(found).toBeVisible();
+  const faces = await panel(page).evaluate((element) =>
+    Array.from(element.querySelectorAll("[data-asked] *, [data-steps] *"))
+      .filter((child) => child.children.length === 0 && child.textContent === "P130164")
+      .map((child) => getComputedStyle(child).fontFamily.split(",")[0].replaceAll('"', "")),
+  );
+  expect(faces).toEqual(["Roboto Mono", "Roboto Mono"]);
+
+  // The answer ID under the opened steps starts on the steps' text edge, under the button's label.
+  const textLeft = (element: Element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    return Math.round(range.getClientRects()[0].left);
+  };
+  const stepLeft = await found.locator(":scope > span").last().evaluate(textLeft);
+  expect(await panel(page).locator("[data-steps] + p").evaluate(textLeft)).toBe(stepLeft);
+});
+
 test("hovering or focusing a marker shows the evidence card: stratum, title, highlighted excerpt and source line", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);

@@ -5,11 +5,13 @@
 // (ticket 02's round 7 critique, settled with the 14 brief). A live region announces each step
 // once, never token by token; the answer panel keeps its own and turns this one off. The list
 // reserves its height, so new steps do not push the page.
+import type { ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 
-export type Step = { key: string; running: string; done: string; state: "running" | "done" | "todo" };
+// A line may set an ID in mono, so it is a node; the answer panel's own status line says the words.
+export type Step = { key: string; running: ReactNode; done: ReactNode; state: "running" | "done" | "todo" };
 
 export function Steps({
   steps,

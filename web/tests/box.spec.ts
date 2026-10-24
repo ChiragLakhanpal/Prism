@@ -137,6 +137,34 @@ test("an ID no record holds says so under the list, and Ask this is the only opt
   await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
 });
 
+// DESIGN.md section 3: Roboto Mono for IDs, wherever the box writes one.
+async function idFaces(page: Page, id: string) {
+  return page.locator("[data-box-band]").evaluate(
+    (band, wanted) =>
+      Array.from(band.querySelectorAll("*"))
+        .filter((element) => element.children.length === 0 && element.textContent === wanted)
+        .map((element) => getComputedStyle(element).fontFamily.split(",")[0].replaceAll('"', "")),
+    id,
+  );
+}
+
+test("every ID the box writes is in Roboto Mono: in an option, its second line and the not-found line", async ({ page }) => {
+  await open(page, "/", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } });
+
+  await typeInBox(page, "IDA-60290");
+  await expect(options(page).first()).toContainText("P156634, Water and Sanitation Development Project");
+  expect(await idFaces(page, "IDA-60290")).toEqual(["Roboto Mono"]);
+  expect(await idFaces(page, "P156634")).toEqual(["Roboto Mono"]);
+
+  await box(page).fill("KE-NWWDA-541055-CW-RFB");
+  await expect(options(page).first()).toContainText("P156634");
+  expect(await idFaces(page, "P156634")).toEqual(["Roboto Mono"]);
+
+  await box(page).fill("P999999");
+  await expect(page.getByText("I have no project P999999.")).toBeVisible();
+  expect(await idFaces(page, "P999999")).toEqual(["Roboto Mono"]);
+});
+
 test("a lookup that fails says so, and the person can still ask", async ({ page }) => {
   await open(page, "/", { "/api/lookup/activity": { status: 503, body: '{"code":"data_service"}' } });
 

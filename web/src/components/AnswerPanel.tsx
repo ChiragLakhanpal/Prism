@@ -73,10 +73,19 @@ function stepLines(step: StepEvent, checks: ChecksEvent | null): { running: stri
   };
 }
 
+// A step's line with its project ID in mono, as every ID Strata writes (DESIGN.md section 3).
+function withMonoId(text: string, id: string | null | undefined): ReactNode {
+  if (!id || !text.includes(id)) return text;
+  return text.split(id).flatMap((part, index) => (index === 0 ? [part] : [<Fragment key={index}>{mono(id)}</Fragment>, part]));
+}
+
 export function stepsOf(run: Run): Step[] {
   const started = run.steps.length > 0 || run.phase !== "streaming";
   const steps: Step[] = [{ key: "read", ...copy.steps.read, state: started ? "done" : "running" }];
-  for (const step of run.steps) steps.push({ key: step.id, ...stepLines(step, run.checks), state: step.status });
+  for (const step of run.steps) {
+    const lines = stepLines(step, run.checks);
+    steps.push({ key: step.id, running: withMonoId(lines.running, step.project_id), done: withMonoId(lines.done, step.project_id), state: step.status });
+  }
   if (run.phase === "streaming") {
     if (!run.steps.some((step) => step.kind === "write")) steps.push({ key: "todo-write", running: "", done: copy.steps.write.todo, state: "todo" });
     if (!run.steps.some((step) => step.kind === "check")) steps.push({ key: "todo-check", running: "", done: copy.steps.check.todo, state: "todo" });

@@ -87,7 +87,8 @@ function StepsTaken({ steps: all, runId }: { steps: Step[]; runId: string }) {
       </Button>
       <div id={id} hidden={!open} className="mt-2">
         <Steps steps={steps} />
-        <p className="mt-2 text-caption text-ink-muted">
+        {/* On the steps' text edge, past their icon rail, so the opened list has one left edge. */}
+        <p className="mt-2 pl-6 text-caption text-ink-muted">
           {copy.steps.answerId} <span className="font-mono">{runId}</span>
         </p>
       </div>
