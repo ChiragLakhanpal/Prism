@@ -1547,7 +1547,9 @@ export const copy = {
       removed: (label: string) => `${label} removed.`,
       recomputed: (field: string, from: string, to: string) => `${field} changed from ${from} to ${to}, computed from the thresholds.`,
       kept: (label: string, value: string) => `${label} kept as ${value}.`,
-      updated: "Updated the past range.",
+      // After a rerun, with section 1's title as it reads now: the finding, or the sentence that says why
+      // there is no range.
+      updated: (title: string) => `Updated. ${title}`,
     },
     // Section 1's additions for a planned package.
     section: {

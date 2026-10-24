@@ -438,6 +438,8 @@ def test_the_packages_tab_lists_the_person_s_packages_with_the_plans_they_checke
     # check-plan-p156634-nwwda-2026-10-09.json: the October 9, 2026 plan's nine activities, all checked.
     assert (second["implementing_agency"], second["plan_date"], second["activities"], second["latest"]) == (
         "Northern Water Works Development Agency", "2026-10-09", 9, False)
+    # P156634 is Kenya's Water and Sanitation Development Project (tests/ground_truth/values.toml).
+    assert second["country_name"] == "Kenya"
     assert mine["counts"] == {"packages": 1, "plan_checks": 1, "total": 2}
     assert call(app, "GET", "/api/planned-packages", BEN).json()["counts"] == {"packages": 0, "plan_checks": 1, "total": 1}
 

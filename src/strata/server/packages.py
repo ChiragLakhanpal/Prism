@@ -77,8 +77,12 @@ class ChangeRequest(BaseModel):
 
 
 @cache
+def _sql(name: str) -> str:
+    return (resources.files("strata.packages") / "sql" / f"{name}.sql").read_text()
+
+
 def _countries_sql() -> str:
-    return (resources.files("strata.packages") / "sql" / "countries.sql").read_text()
+    return _sql("countries")
 
 
 def frame(event: Event) -> str:
@@ -107,6 +111,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
     def codes(viewer: Viewer) -> dict[str, str]:
         return {entry["code"]: entry["name"] for entry in countries(viewer)}
+
+    def project_countries(viewer: Viewer, project_ids: set[str]) -> dict[str, str | None]:
+        """Each checked plan's project's country code, read as the viewer, one project at a time: a person has
+        checked the plans of a few projects."""
+        found = {}
+        with engine_for(viewer) as engine:
+            for project_id in sorted(project_ids):
+                rows = engine.run(_sql("project_country"), {"project_id": project_id}).rows
+                found[project_id] = rows[0][0] if rows else None
+        return found
 
     def find(viewer: Viewer, view: str, as_of: dt.date | None, query: dict) -> dict:
         with engine_for(viewer) as engine:
@@ -202,8 +216,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
         def read():
             names = codes(viewer)
-            return workflow.list_rows(store.mine(viewer.user_id), store.plan_checks(viewer.user_id), form, thresholds,
-                                      names)
+            checks = store.plan_checks(viewer.user_id)
+            return workflow.list_rows(store.mine(viewer.user_id), checks, form, thresholds, names,
+                                      project_countries(viewer, {check.project_id for check in checks}))
         return guarded("the viewer's packages", read)
 
     # ── One package ──────────────────────────────────────────────────────

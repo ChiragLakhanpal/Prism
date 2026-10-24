@@ -136,7 +136,7 @@ export function PastRange({
           {status}
         </p>
       )}
-      {lead && !body && state.status === "ready" && <div className="mt-2">{lead}</div>}
+      {lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>}
       {body}
       {!body && state.status === "loading" && <PastRangeSkeleton />}
       {!body && state.status === "error" && (

@@ -534,7 +534,11 @@ export function RangeChart({
       setDismissed(null);
       // A click on a dot opens its records; a tap shows its details, whose button opens them, since dots
       // are too small and close to tap one by one (the 15 brief, section 3).
-      if (onOpen && event.pointerType === "mouse" && dotRefs.current[found]) onOpen(dots[found].key, dotRefs.current[found]!);
+      // The press keeps the browser from moving focus, so focus goes into the drawer, as a keyboard's Enter sends it.
+      if (onOpen && event.pointerType === "mouse" && dotRefs.current[found]) {
+        event.preventDefault();
+        onOpen(dots[found].key, dotRefs.current[found]!);
+      }
     } else if (event.pointerType !== "mouse") {
       setHover(null);
     }

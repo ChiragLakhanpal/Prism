@@ -138,8 +138,11 @@ export type Planning = {
 };
 
 export const planning = createStore<Planning | null>(null);
-// A package's page, read once by the page that saved it, so the next page renders at once.
-export const preloaded = createStore<Record<string, PlannedPage>>({});
+// A package's page, handed over once by the reading page that saved it, so the package's page renders at once,
+// with whether the reading page's h1 had focus, so the new h1 takes it (focus never moves when the reading
+// finishes). The package's page takes it out, so a later visit reads the package as it is then.
+export type Handed = PlannedPage & { focusHeading: boolean };
+export const preloaded = createStore<Record<string, Handed>>({});
 
 let controller: AbortController | null = null;
 const newKey = () => Math.random().toString(36).slice(2, 10);

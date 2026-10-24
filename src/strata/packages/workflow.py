@@ -75,9 +75,10 @@ def package_view(saved: Saved, form: Form, thresholds: Thresholds) -> dict:
 
 
 def list_rows(packages: list[Saved], checks: list[PlanCheck], form: Form, thresholds: Thresholds,
-              country_names: dict[str, str]) -> dict:
+              country_names: dict[str, str], project_countries: dict[str, str | None] | None = None) -> dict:
     """The Packages tab's rows, newest first: the person's packages, by when each was last saved, and the plans
-    they checked, by when they last opened each."""
+    they checked, by when they last opened each, with their projects' countries by code."""
+    project_countries = project_countries or {}
     rows = []
     for saved in packages:
         shown = criteria_of.view(form, criteria_of.Criteria.from_json(saved.criteria), thresholds)
@@ -89,7 +90,8 @@ def list_rows(packages: list[Saved], checks: list[PlanCheck], form: Form, thresh
     for check in checks:
         rows.append({"type": "plan_check", "project_id": check.project_id, "agency_id": check.agency_id,
                      "implementing_agency": check.implementing_agency, "plan_date": check.plan_date.isoformat(),
-                     "latest": check.latest, "activities": check.activities, "country_name": None,
+                     "latest": check.latest, "activities": check.activities,
+                     "country_name": country_names.get(project_countries.get(check.project_id) or ""),
                      "last_worked_on": iso(check.opened_at)})
     rows.sort(key=lambda row: row["last_worked_on"], reverse=True)
     return {"rows": rows, "counts": {"packages": len(packages), "plan_checks": len(checks), "total": len(rows)}}

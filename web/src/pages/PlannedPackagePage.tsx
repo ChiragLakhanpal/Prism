@@ -43,6 +43,7 @@ import {
   type Change,
   type FieldValue,
   type FormField,
+  type Handed,
   type PackageForm,
   type PlannedPackage,
   type PlannedPage,
@@ -161,16 +162,18 @@ function Header({
   title,
   stamp,
   headerRef,
+  headingRef,
   loading = false,
 }: {
   title: ReactNode;
   stamp: ReactNode;
   headerRef?: RefObject<HTMLDivElement | null>;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
   loading?: boolean;
 }) {
   return (
     <div ref={headerRef} data-package-header className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-0 @md/page:z-10">
-      <h1 tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
+      <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
         {title}
       </h1>
       {loading ? (
@@ -196,21 +199,25 @@ const crumbs = (title: ReactNode) => [{ text: words.breadcrumbPackages, href: "/
 
 // ── Reading the sentence ─────────────────────────────────────────────────
 
+// The steps so far: each one done, then the one in progress, which is the next one not done while the stream
+// is open, even before its own event comes. Steps still to come are left out, and the list holds their height.
 function readingSteps(current: Planning): Step[] {
   const s = words.steps;
   const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
   const order: (keyof typeof s)[] = current.read ? ["read", "compute", "save", "compare"] : ["save", "compare"];
-  return order.map((id) => ({
-    key: id,
-    running: s[id].running,
-    done: s[id].done,
-    state: by[id]?.status === "done" ? "done" : by[id]?.status === "running" ? "running" : "todo",
-  }));
+  const shown: Step[] = [];
+  for (const id of order) {
+    const done = by[id]?.status === "done";
+    shown.push({ key: id, running: s[id].running, done: s[id].done, state: done ? "done" : "running" });
+    if (!done) break;
+  }
+  return shown;
 }
 
 function ReadingPage() {
   const current = useStore(planningStore);
   const opening = useRef(false);
+  const heading = useRef<HTMLHeadingElement>(null);
 
   // A reload, or an address with no reading behind it: the Packages tab, with the box in plan mode.
   useEffect(() => {
@@ -224,7 +231,8 @@ function ReadingPage() {
     if (!current || !current.packageId || !current.package || !current.form || opening.current) return;
     opening.current = true;
     const id = current.packageId;
-    preloaded.set((all) => ({ ...all, [id]: { package: current.package!, form: current.form! } }));
+    const focusHeading = document.activeElement === heading.current;
+    preloaded.set((all) => ({ ...all, [id]: { package: current.package!, form: current.form!, focusHeading } }));
     navigate(`/packages/${encodeURIComponent(id)}`, { replace: true, quiet: true });
   }, [current?.packageId, current?.form]);
 
@@ -239,7 +247,7 @@ function ReadingPage() {
       <div data-planned-package={current.phase === "no_package" ? "no-package" : failed ? "failed" : "reading"} aria-busy={!failed && current.phase === "reading"}>
         <Breadcrumb trail={crumbs(words.titleNew)} held />
         <div className="mt-4">
-          <Header title={words.titleNew} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />
+          <Header title={words.titleNew} headingRef={heading} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />
         </div>
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
         <section aria-labelledby="what-i-understood" className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-criteria-card>
@@ -336,7 +344,11 @@ function applied(pkg: PlannedPackage, form: PackageForm, change: Change): Planne
 }
 
 function SavedPackage({ packageId, preview }: { packageId: string; preview: boolean }) {
-  const handed = useStore(preloaded)[packageId];
+  // The reading page's hand-over, taken once: a later visit reads the package as it is then.
+  const [handed] = useState<Handed | null>(() => preloaded.get()[packageId] ?? null);
+  useEffect(() => {
+    if (handed) preloaded.set(({ [packageId]: _taken, ...rest }) => rest);
+  }, [handed, packageId]);
   const [page, setPage] = useState<{ status: "loading" } | { status: "ready"; data: PlannedPage } | { status: "error"; error: ApiError | null; attempt: number }>(
     handed ? { status: "ready", data: handed } : { status: "loading" },
   );
@@ -390,7 +402,7 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
       </DocumentColumn>
     );
   }
-  return <Workspace initial={page.data} preview={preview} />;
+  return <Workspace initial={page.data} preview={preview} focusHeading={handed?.focusHeading ?? false} />;
 }
 
 function LoadingPackage() {
@@ -416,7 +428,7 @@ function LoadingPackage() {
   );
 }
 
-function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolean }) {
+function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; preview: boolean; focusHeading: boolean }) {
   const form = initial.form;
   const [pkg, setPkg] = useState(initial.package);
   const [saving, setSaving] = useState<Saving>({ status: "saved", at: initial.package.saved_at });
@@ -427,9 +439,13 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
   const [updating, setUpdating] = useState(false);
   const [skeleton, setSkeleton] = useState(false);
   const [showWithout, setShowWithout] = useState(false);
+  // How many reruns have answered, so the live region can say the section's new title once each.
+  const [sayUpdated, setSayUpdated] = useState(0);
+  const sectionRoot = useRef<HTMLDivElement>(null);
   const narrow = useNarrowWindow();
   const opening = useOpenComparable();
   const header = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const chips = useRef<Record<string, HTMLButtonElement | null>>({});
   const request = useRef<AbortController | null>(null);
@@ -440,6 +456,10 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
   useScrollPadding(header, true, { gap: 16 });
 
   useEffect(() => setPageTitle(words.documentTitle(title)), [title]);
+  // Arriving from the reading page, whose h1 had focus: this page's h1 takes it, so focus stays where it was.
+  useEffect(() => {
+    if (focusHeading) heading.current?.focus({ preventScroll: true });
+  }, [focusHeading]);
 
   // Leaving the page while the last save failed asks the browser's leave-page question; nothing else does.
   useEffect(() => {
@@ -465,7 +485,7 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
       .then(
         (result) => {
           setSection({ status: "ready", result, query });
-          if (!quiet) setAnnounce(words.announce.updated);
+          if (!quiet) setSayUpdated((count) => count + 1);
         },
         (error: unknown) => {
           if (!controller.signal.aborted) setSection({ status: "error", error: error instanceof ApiError ? error : null, query });
@@ -500,6 +520,17 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
     }
   }, [mine?.compared]);
   useEffect(() => () => request.current?.abort(), []);
+  // Once a rerun has drawn, say "Updated." with the section's title as it reads now: its finding, the
+  // sentence that says why there is no range, or the plan prompt's count.
+  useEffect(() => {
+    if (sayUpdated === 0) return;
+    const frame = requestAnimationFrame(() => {
+      const shown = sectionRoot.current?.querySelector("[data-finding], [data-no-chart] h3, [data-plan-prompt] [data-found]");
+      const title = shown?.textContent?.replace(/\s+/g, " ").trim();
+      if (title) setAnnounce(words.announce.updated(title));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [sayUpdated]);
 
   const field = (key: string) => form.fields.find((one) => one.key === key)!;
 
@@ -679,7 +710,7 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
     );
   }
 
-  const lead = result && !prompting ? <CriteriaLine result={result} /> : undefined;
+  const lead = result && missing.length === 0 ? <CriteriaLine result={result} /> : undefined;
 
   return (
     <DocumentColumn>
@@ -688,6 +719,7 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
         <div className="mt-4">
           <Header
             headerRef={header}
+            headingRef={heading}
             title={title}
             stamp={<SavedStamp saving={saving} preview={preview} onRetry={failedChange ? () => send(failedChange, pkg) : undefined} />}
           />
@@ -701,7 +733,7 @@ function Workspace({ initial, preview }: { initial: PlannedPage; preview: boolea
           </div>
           <ComputedNote pkg={pkg} form={form} />
         </section>
-        <div className="mt-6 @lg/page:mt-8">
+        <div ref={sectionRoot} className="mt-6 @lg/page:mt-8">
           <PastRange
             state={state}
             headingRef={sectionHeading}
@@ -732,7 +764,8 @@ function CriteriaLine({ result }: { result: ComparablesResult }) {
   const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
   const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
   parts.push(s.notices(from, to));
-  const abstained = result.abstention?.reason === "too_few_comparables";
+  // With too few comparables, or none it could measure, say how to compare with more.
+  const abstained = result.abstention?.reason === "too_few_comparables" || result.abstention?.reason === "none_measurable";
   return (
     <div className="flex flex-col gap-1">
       <p className="text-small text-ink-muted" data-criteria-line>
@@ -779,7 +812,7 @@ export function PlanPrompt({
   return (
     <div className="mt-4 flex flex-col gap-3" style={{ minHeight: CHART_HEIGHT }} data-plan-prompt>
       <p className="max-w-prose text-body text-ink">{words.section.promptQuestion}</p>
-      <p className="text-body text-ink">
+      <p className="text-body text-ink" data-found>
         <Fill template={words.section.promptFound(count, "{n}")} slots={{ n: <Num count={count} /> }} />
       </p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
