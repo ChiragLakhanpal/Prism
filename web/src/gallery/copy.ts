@@ -145,7 +145,7 @@ export const galleryCopy = {
     notFound: "An ID no record holds",
     lookupFailed: "A lookup that failed",
     scoped: "On a project page, with its scope chip",
-    scopedLong: "On a package page with a long reference: the chip takes a row of its own",
+    scopedLong: "On a package page with a long reference, in a narrow box: the chip takes a row of its own",
     streamingSteps: "Streaming: two steps done, one running, one to do",
     allChecked: "Ready, with every check passed",
     readyRemoved: "Ready, with one sentence removed",

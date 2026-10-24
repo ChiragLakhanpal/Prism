@@ -419,17 +419,20 @@ function BoxSample({
   scope = null,
   scopeKind = "project",
   lookups = LOOKUPS,
+  narrow = false,
 }: {
   text: string;
   hint?: boolean;
   scope?: string | null;
   scopeKind?: "project" | "package";
   lookups?: Record<string, Lookup>;
+  // A box about as narrow as the band's at 390 px, at every width of the gallery.
+  narrow?: boolean;
 }) {
   const [value, setValue] = useState(text);
   const { options, notes } = boxList(value, scope, lookups);
   return (
-    <div className="min-h-[15rem] max-w-prose">
+    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : "max-w-prose")}>
       <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} scopeKind={scopeKind} focusedHint={hint} shortcut={false} />
     </div>
   );
@@ -1051,7 +1054,7 @@ export const PAGES: GalleryPage[] = [
       {
         id: "scoped-long",
         title: s.scopedLong,
-        body: <BoxSample text={sample.boxQuestion} scope={sample.boxPackageLong} scopeKind="package" />,
+        body: <BoxSample text={sample.boxQuestion} scope={sample.boxPackageLong} scopeKind="package" narrow />,
       },
     ],
   },
