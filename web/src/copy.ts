@@ -1147,6 +1147,8 @@ export const copy = {
     pages: {
       label: "Pages of this document",
       position: (page: string, pages: string) => `Page ${page} of ${pages}`,
+      // While the page loads, no tool has returned the document's page count yet.
+      positionOnly: (page: string) => `Page ${page}`,
       goLabel: "Go to page",
       goButton: "Open page",
     },

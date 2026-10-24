@@ -268,6 +268,31 @@ test("the source view opens the ICR at page 23 with paragraph 54 highlighted and
   await expect(page).toHaveTitle("ICR of Oct 10, 2019, page 23 | Strata");
 });
 
+test("while a page of the source view loads, its page bar gives the page from the address and no total, and keeps Next page's place", async ({ page }) => {
+  // The 21 design review, round 2, B2: no tool has returned the page count yet (CLAUDE.md rule 1).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, await hubApi());
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route((url) => url.pathname === "/api/projects/P130164/documents/icr-2019-10-10", async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("source-icr-p130164-23-54.json") });
+  });
+  await page.goto("/projects/P130164/documents/icr-2019-10-10?page=23&para=54");
+  const bar = main(page).getByRole("navigation", { name: "Pages of this document" });
+  await expect(bar.locator("[data-page-lead]")).toHaveText("Page 23");
+  await expect(bar).not.toContainText(" of ");
+  // Unseen, so it is out of the accessibility tree, but it holds its place in the bar.
+  await expect(bar.getByRole("link", { name: "Next page", includeHidden: true })).toHaveCSS("visibility", "hidden");
+  await expect(bar.getByRole("spinbutton", { name: "Go to page" })).not.toHaveAttribute("max");
+
+  release();
+
+  await expect(page.locator("[data-source-page=read]")).toBeVisible();
+  await expect(bar.first().locator("[data-page-lead]")).toHaveText("Page 23 of 66");
+  await expect(bar.first().getByRole("link", { name: "Next page" })).toHaveCSS("visibility", "visible");
+});
+
 test("the drawer's Open at page 23 lands on the source view with paragraph 54 highlighted, and Back returns to the drawer", async ({ page }) => {
   await open(page, `/projects/P130164?evidence=${encodeURIComponent("strata.gold.passage:31525018/v1/54")}`);
   const drawer = page.getByRole("dialog");

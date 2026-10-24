@@ -19,8 +19,8 @@ for (const shot of SHOTS) {
         responses[path] = { status: answer.status, body: answer.recorded ? await recorded(answer.recorded) : (answer.body ?? "") };
       }
       await mockApi(page, responses);
-      // A path the shot holds never answers, so its page stays in its loading state.
-      for (const path of shot.pending ?? []) await page.route(`**${path}`, () => undefined);
+      // A path the shot holds never answers, whatever its query, so its page stays in its loading state.
+      for (const path of shot.pending ?? []) await page.route((url) => url.pathname.endsWith(path) || (url.pathname + url.search).endsWith(path), () => undefined);
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`${base}${shot.path}`);
       await page.locator("main").waitFor();

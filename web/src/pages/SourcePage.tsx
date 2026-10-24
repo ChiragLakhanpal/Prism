@@ -111,14 +111,16 @@ export function PageBar({
   const inputId = useId();
   const [value, setValue] = useState(String(page));
   useEffect(() => setValue(String(page)), [page]);
-  const last = pages ?? page;
+  // Until the page arrives no tool has said how many pages the document has (CLAUDE.md rule 1), so the bar
+  // gives only the page from the address, Next page keeps its place unseen, and the field has no maximum.
+  const atEnd = pages === null || page >= pages;
   const link = "inline-flex h-11 items-center gap-1 text-small";
   const go = (event: FormEvent) => {
     event.preventDefault();
     const to = Number(value);
     if (!Number.isInteger(to) || to < 1) return;
     onMove();
-    navigate(pageAddress(pid, doc, Math.min(to, last)));
+    navigate(pageAddress(pid, doc, pages === null ? to : Math.min(to, pages)));
   };
   return (
     <nav aria-label={words.pages.label} data-page-bar className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-y border-line py-2">
@@ -130,7 +132,7 @@ export function PageBar({
       {full ? (
         <>
           <p ref={positionRef} tabIndex={-1} data-page-lead className="text-caption text-ink-muted tabular-nums focus:outline-none">
-            {words.pages.position(whole(page), whole(last))}
+            {pages === null ? words.pages.positionOnly(whole(page)) : words.pages.position(whole(page), whole(pages))}
           </p>
           <form onSubmit={go} className="order-last flex w-full items-center gap-3 @md/page:order-none @md/page:w-auto">
             <label htmlFor={inputId} className="text-small text-ink">
@@ -141,7 +143,7 @@ export function PageBar({
               type="number"
               inputMode="numeric"
               min={1}
-              max={last}
+              max={pages ?? undefined}
               value={value}
               onChange={(event) => setValue(event.target.value)}
               className="h-11 w-[6ch] min-w-16 rounded-md border border-line-strong bg-surface px-2 text-right text-body text-ink tabular-nums"
@@ -154,7 +156,7 @@ export function PageBar({
       ) : (
         <span aria-hidden="true" />
       )}
-      <TextLink href={pageAddress(pid, doc, page + 1)} onClick={onMove} className={cx(link, page >= last && "invisible")} aria-label={copy.pagination.next}>
+      <TextLink href={pageAddress(pid, doc, page + 1)} onClick={onMove} className={cx(link, atEnd && "invisible")} aria-label={copy.pagination.next}>
         <span className="xs:hidden">{copy.pagination.nextShort}</span>
         <span className="hidden xs:inline">{copy.pagination.next}</span>
         <ChevronRight aria-hidden="true" className="size-4 shrink-0" />

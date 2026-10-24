@@ -114,6 +114,32 @@ test("the list search filters on the server as you type, by name, project ID or 
   await expect(page).toHaveURL(/\/projects$/);
 });
 
+test("while a search waits on the server, the list keeps its rows at full contrast and says it is searching, with no axe violations", async ({ page }) => {
+  // The 21 design review, round 2, B1: a fade to 60 percent dropped muted text under 4.5:1, so the
+  // count line and aria-busy alone say the list is updating. Packages uses the same Table.
+  const cases: [string, Record<string, Answer>, string, string, string][] = [
+    ["/projects", await projects(), "/api/projects", "Search projects", "Searching projects."],
+    ["/projects/P156634/procurement", await p156634(), "/api/projects/P156634/packages", "Search packages", "Searching packages."],
+  ];
+  for (const [path, api, list, name, searching] of cases) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, path, api);
+    // The search is never answered, so the list stays in its searching state.
+    await page.route((url) => url.pathname === list && url.searchParams.has("q"), () => undefined);
+    await page.getByRole("searchbox", { name }).fill("kenya");
+    const table = page.locator("[aria-busy=true]").filter({ has: page.locator("[data-table-view=table]") });
+    await expect(table).toBeVisible();
+    await expect(table.getByText(searching)).toBeVisible();
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const view of await page.locator("[data-table-view]").all()) {
+        expect(await view.evaluate((element) => getComputedStyle(element).opacity), `${path} at ${width} px`).toBe("1");
+      }
+      expect(await axe(page), `${path} searching at ${width} px`).toEqual([]);
+    }
+  }
+});
+
 test("All projects' skeleton rows and cards are as tall as its rows and cards, so the page does not jump when they arrive", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });

@@ -239,7 +239,7 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("projects--page-2", { recorded: "projects-page-2.json" }, {}, "/projects?page=2"),
   planShot("projects--india", { recorded: "projects-india.json" }, {}, "/projects?q=india"),
   planShot("projects--no-match", { recorded: "projects-no-match.json" }, {}, "/projects?q=atlantis"),
-  // A search the server has not answered after 400 ms keeps the rows, dimmed, and says it is searching.
+  // A search the server has not answered after 400 ms keeps the rows and says it is searching.
   planShot("projects--searching", { recorded: "projects.json" }, {
     act: async (page) => {
       await page.route((url) => url.pathname === "/api/projects" && url.searchParams.has("q"), () => undefined);

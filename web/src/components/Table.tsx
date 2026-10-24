@@ -136,8 +136,9 @@ export function Table({
   // A list whose heading and search sit above the table (ticket 21's All projects and Packages): the id
   // of that heading, which names the table, so the table draws no title of its own in any state.
   labelledBy?: string;
-  // A new page of rows is on its way, such as while a search waits for its answer: the rows stay, dimmed,
-  // marked busy, and this sentence takes the count line's place (the 21 brief, section 8.1).
+  // A new page of rows is on its way, such as while a search waits for its answer: the rows stay at full
+  // contrast, marked busy, and this sentence takes the count line's place (the 21 brief, section 8.1, as the
+  // round 2 design review changed it: a fade dropped muted text under 4.5:1).
   busy?: ReactNode;
   // The count line takes focus after Previous page or Next page (data-page-lead, App.tsx), so the new range is read.
   countLead?: boolean;
@@ -239,7 +240,7 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="table"
-        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table, Boolean(busy) && "opacity-60")}
+        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table)}
       >
         <table
           aria-labelledby={loading ? undefined : titleId}
@@ -299,7 +300,7 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="cards"
-        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards, Boolean(busy) && "opacity-60")}
+        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards)}
       >
         {skeletonRows.map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
