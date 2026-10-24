@@ -326,6 +326,48 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         "One lesson was about estimates.", "No one said why."]
 
 
+def claim(sentence, **fields):
+    return {"sentence": sentence, "kind": "summary", "evidence_ids": [], "numbers": [], "dates": [], "quote": None,
+            **fields}
+
+
+def removed_reasons(parsed):
+    return [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")]
+
+
+def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is_a_number_a_record_must_hold():
+    """Every digit run is a number unless its whole token is an id: a project, a loan, a STEP reference, a
+    passage or a section label. "45-day", "US$1.2M", "300k" and "3x" are read as their digits, "10-15" and
+    "2019/20" as two numbers each, and number words go past nine. "Half" and "a dozen" are numbers too."""
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
+        claim("Bids were opened within a 45-day period."),
+        claim("The contracts totaled US$1.2M."),
+        claim("Bids were opened in 10-15 days."),
+        claim("About 300k people were reached, 3x the target."),
+        claim("Most works were signed in 2019/20."),
+        claim("Twelve packages were signed."),
+        claim("Forty-five contracts were bid again."),
+        claim("A dozen bids came in, and half were rejected."),
+        claim("Bids took a while to open.", numbers=["45-day"]),
+        claim("The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b."),
+    ), no_engine))))
+
+    assert removed_reasons(parsed) == [
+        [("number_not_in_records", "45")],
+        [("number_not_in_records", "1.2")],
+        [("number_not_in_records", "10"), ("number_not_in_records", "15")],
+        [("number_not_in_records", "300"), ("number_not_in_records", "3")],
+        [("date_not_in_records", "2019"), ("number_not_in_records", "20")],
+        [("number_not_in_records", "Twelve")],
+        [("number_not_in_records", "Forty-five")],
+        [("number_not_in_records", "A dozen"), ("number_not_in_records", "half")],
+        [("number_not_in_records", "45")],
+    ]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b."]
+    assert of(parsed, "checks")[0]["numbers"]["matched"] == 0
+
+
 def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
     parsed, _ = ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(tmp_path / "no-tables.duckdb")))
 

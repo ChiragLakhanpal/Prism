@@ -6,9 +6,11 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
    rounding, or appears inside the sentence's quote from a cited passage that is not a table summary.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
-   still checked, and so is a number written as a word ("six", or "one" as a count). A passage backs only its dates, such as its report's date: its text is never a
-   value, and its page, paragraph and version numbers say where it is, not what the report counted,
-   so a number from a passage must be quoted.
+   still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
+   (ID_SHAPES); so is a number written in words ("forty-five", or "one" as a count), and an amount no
+   row holds as written ("half"). A passage backs only its dates, such as its report's date: its text
+   is never a value, and its page, paragraph and version numbers say where it is, not what the report
+   counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
 3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation.
@@ -66,7 +68,7 @@ class When:
 class Mention:
     kind: str  # "number" or "date"
     text: str
-    value: Decimal | When
+    value: Decimal | When | str  # a str is an amount no row holds as written, such as "half"
     start: int | None = None
     end: int | None = None
 
@@ -83,24 +85,94 @@ DATES = (
                                                                                   int(m[1]))),
     (re.compile(rf"\b({MONTH})\s+(\d{{4}})\b"), lambda m: When(int(m[2]), _month(m[1]))),
 )
-# A number standing on its own: not part of a word or an id such as P130164, IDA-60290 or 10.b.
-STANDALONE_NUMBER = re.compile(r"(?<![\w.,:/-])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?![\w/-]|[.,]\d|\.[A-Za-z])")
+# Every digit run is a number, wherever it sits ("45-day", "US$1.2M", "300k", "10-15"), unless its whole
+# token is one of these ids. A fiscal year is read before them, so FY19-20 is not taken for a name.
+ID_SHAPES = (
+    r"\bstrata\.\w+\.\w+:[^\s,;()\"]*[^\s,;()\".]",  # an evidence id, strata.gold.passage:31525018/v1/54
+    r"\b\d+/v\d+/[\w.]*\w",  # a passage id, 31525018/v1/54
+    r"\bP\d{6}\b",  # a project, P130164
+    r"\b(?:IDA|IBRD|TF)[- ]?[A-Z0-9]*\d[A-Z0-9]*\b",  # a credit, loan or trust fund, IDA-60290 or IBRD 8541
+    r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+\b",  # a STEP reference, KE-NWWDA-541062-CW-RFQ, or a name such as COVID-19
+    r"\b(?:[IVX]+|\d+)\.[A-Za-z]\b",  # a section label, III.B or 10.b
+)
+ID = re.compile("|".join(ID_SHAPES))
+DIGITS = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?")
 # A World Bank fiscal year, FY2019 or FY19: a number a row must hold, such as a fiscal_year column.
 FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
-# DESIGN.md section 7 writes one to nine in words. "One" is also a pronoun ("one lesson", "no one"), so it
-# is a number only as a count: "one of 37", "one in 10".
-WORDS = ("two", "three", "four", "five", "six", "seven", "eight", "nine")
-NUMBER_WORD = re.compile(r"\b(" + "|".join(WORDS) + r")\b|\b(one)(?= (?:of|in) (?:the )?\d)", re.I)
+# DESIGN.md section 7 writes one to nine in words, and a model may write any number so. Words joined by a
+# space or a hyphen make one number: "forty-five", "three hundred and twenty-eight", "a dozen". "One" alone
+# is also a pronoun ("one lesson", "no one"), so it is a number only as a count: "one of 37", "one in 10".
+SMALL = {word: value for value, word in enumerate((
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
+    "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"), 1)}
+SMALL |= {word: value for value, word in zip(range(20, 100, 10), (
+    "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"), strict=True)}
+SCALES = {"hundred": 100, "thousand": 1000, "dozen": 12}
+# Amounts no row holds as written: a proportion or a vague count. A sentence that states one is removed.
+VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens"}
+FRACTIONS = {"third", "quarter"}  # as "a third" or "a quarter"
+WORD = re.compile(r"[A-Za-z]+")
+COUNT_AFTER_ONE = re.compile(r" (?:of|in) (?:the )?(?:\d|(?:" + "|".join(SMALL) + r")\b)", re.I)
+
+
+def _word_value(words: list[str]) -> Decimal:
+    total = current = 0
+    for word in words:
+        if word in SMALL:
+            current += SMALL[word]
+        elif word in ("a", "an"):
+            current = 1
+        elif word == "thousand":
+            total, current = total + (current or 1) * 1000, 0
+        elif word in SCALES:
+            current = (current or 1) * SCALES[word]
+    return Decimal(total + current)
+
+
+def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
+    """Each number written in words: where it is, and its value, or its word when no row can hold it."""
+    tokens = list(WORD.finditer(text))
+    lower = [token.group(0).lower() for token in tokens]
+
+    def gap(i: int) -> str:
+        return text[tokens[i].end():tokens[i + 1].start()] if i + 1 < len(tokens) else ""
+
+    found, i = [], 0
+    while i < len(tokens):
+        word, after = lower[i], lower[i + 1] if i + 1 < len(tokens) else ""
+        if word in VAGUE:
+            found.append((tokens[i].start(), tokens[i].end(), word))
+        elif word in ("a", "an") and gap(i) == " " and after in FRACTIONS:
+            found.append((tokens[i].start(), tokens[i + 1].end(), f"a {after}"))
+            i += 1
+        elif word in SMALL or (word in ("a", "an") and gap(i) == " " and after in SCALES):
+            j = i
+            while j + 1 < len(tokens):
+                if gap(j) in (" ", "-") and (lower[j + 1] in SMALL or lower[j + 1] in SCALES):
+                    j += 1
+                elif lower[j] in SCALES and gap(j) == " " and lower[j + 1] == "and" and gap(j + 1) == " " \
+                        and j + 2 < len(tokens) and lower[j + 2] in SMALL:
+                    j += 2
+                else:
+                    break
+            alone_one = j == i and word == "one"
+            if not alone_one or COUNT_AFTER_ONE.match(text, tokens[i].end()):
+                found.append((tokens[i].start(), tokens[j].end(), _word_value(lower[i:j + 1])))
+            i = j
+        i += 1
+    return found
 
 
 def mentions(text: str) -> list[Mention]:
     """The numbers and dates a text states, each with its place in the text. A four-digit number that
     could be a year is read as a year."""
     found: list[Mention] = []
+    ids: list[tuple[int, int]] = []
 
     def free(start: int, end: int) -> bool:
-        return all(end <= other.start or start >= other.end for other in found)
+        return all(end <= other.start or start >= other.end for other in found) and all(
+            end <= id_start or start >= id_end for id_start, id_end in ids)
 
     for pattern, build in DATES:
         for match in pattern.finditer(text):
@@ -116,13 +188,11 @@ def mentions(text: str) -> list[Mention]:
         if free(*match.span()):
             year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
             found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
-    for match in NUMBER_WORD.finditer(text):
-        if not free(*match.span()):
-            continue
-        word = match.group(0)
-        found.append(Mention("number", word, Decimal(1 if word.lower() == "one" else WORDS.index(word.lower()) + 2),
-                             *match.span()))
-    for match in STANDALONE_NUMBER.finditer(text):
+    ids += [match.span() for match in ID.finditer(text) if free(*match.span())]
+    for start, end, value in _number_words(text):
+        if free(start, end):
+            found.append(Mention("number", text[start:end], value, start, end))
+    for match in DIGITS.finditer(text):
         if not free(*match.span()):
             continue
         written = match.group(0)
