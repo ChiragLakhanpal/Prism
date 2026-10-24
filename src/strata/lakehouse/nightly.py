@@ -89,12 +89,16 @@ def _fetch_by_watermark(run: Run) -> int:
 
 
 def _bronze_to_gold(run: Run) -> int:
-    """Silver from bronze, the awarded bidders read from award notices, then gold (ticket 19 resolves
-    suppliers here, since the bundle's task list belongs to ticket 43 and docs/PLAN.md section 11)."""
-    from strata.knowledge.suppliers import bidders
+    """Silver from bronze, the awarded bidders read from award notices, each supplier row resolved to its
+    supplier, then gold. Ticket 19 resolves suppliers here, since the bundle's task list belongs to
+    ticket 43 and docs/PLAN.md section 11. Only a run that fetches from the live APIs asks the live
+    model about the uncertain middle of name matching; any other run uses the offline stand-in."""
+    from strata.knowledge.suppliers import bidders, judge, resolve
 
     added = sum(silver.run(run.engine, source) for source in _paged())
     added += bidders.store(run.engine)
+    deciding = judge.from_environment() if run.fetch is fetch_live else judge.SameNameStandIn()
+    added += resolve.run(run.engine, run.run_id, deciding, run.clock)
     return added + gold.build(run.engine)
 
 

@@ -171,3 +171,31 @@ def test_a_project_in_common_makes_the_same_name_likelier_to_be_one_supplier():
 
     assert shared[0].probability > apart[0].probability
     assert (shared[0].projects_level, apart[0].projects_level) == ("shared", "none_shared")
+
+
+# ── Each supplier, resolved over the fixture ─────────────────────────────
+
+def contract_supplier(engine, contract_id):
+    found = rows(engine, "SELECT c.supplier_id, s.name, s.kind, s.resolved_on FROM strata.gold.contract AS c "
+                         "LEFT JOIN strata.gold.supplier AS s ON s.supplier_id = c.supplier_id "
+                         "WHERE c.contract_id = :contract_id", contract_id=contract_id)
+    assert len(found) == 1, f"gold.contract holds {len(found)} rows for {contract_id}"
+    return found[0]
+
+
+def pair(engine, left_name, right_name):
+    found = rows(engine, "SELECT * FROM strata.ops.supplier_pairs WHERE (left_name = :one AND right_name = :other) "
+                         "OR (left_name = :other AND right_name = :one)", one=left_name, other=right_name)
+    return found
+
+
+def test_rows_with_no_step_supplier_id_named_alike_in_one_country_on_one_project_are_one_supplier(fixture):
+    first, second = VALUES["fy2001-thales-1326397"], VALUES["fy2001-thales-1326726"]
+
+    one, other = contract_supplier(fixture, first["contract"]), contract_supplier(fixture, second["contract"])
+
+    assert one["supplier_id"] is not None and one["supplier_id"] == other["supplier_id"]
+    assert (one["name"], one["kind"], one["resolved_on"]) == (first["value"], "firm", "name")
+    [found] = [p for p in pair(fixture, first["value"], second["value"]) if p["left_key"].startswith(first["contract"])
+               or p["right_key"].startswith(first["contract"])]
+    assert (found["route"], found["outcome"], found["decided_by"]) == ("auto_merge", "merge", "threshold")

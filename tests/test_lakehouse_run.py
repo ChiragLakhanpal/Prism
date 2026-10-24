@@ -156,7 +156,28 @@ def contract_supplier_id(gold, value):
     assert contract["public_from"] == contract["contract_signing_date"]
 
 
+def awarded_bidder_without_an_id(gold, value):
+    """An awarded bidder a notice writes with no STEP supplier ID keeps its name, public from the notice's date."""
+    notice = one(gold, "SELECT public_from FROM strata.gold.notice WHERE notice_id = :notice", notice=value["notice"])
+    found = gold.run("SELECT name, step_supplier_id, individual_consultant, public_from FROM strata.silver.notice_bidders "
+                     "WHERE notice_id = :notice", {"notice": value["notice"]}).rows
+    assert (value["value"], None, False, notice["public_from"]) in found
+
+
+def contract_member(gold, value):
+    """A supplier of a contract, by the supplier_id the awards dataset gives it, public from the signing date."""
+    member = one(gold, "SELECT cs.public_from, c.contract_signing_date FROM strata.gold.contract_supplier AS cs "
+                       "JOIN strata.gold.contract AS c ON c.contract_id = cs.contract_id "
+                       "WHERE cs.contract_id = :number AND cs.supplier_id = :supplier",
+                 number=value["contract"], supplier=value["value"])
+    assert member["public_from"] == member["contract_signing_date"]
+
+
 CHECKS = {
+    "notice-losai-no-id": awarded_bidder_without_an_id,
+    "notice-losai-391987": awarded_bidder,
+    "award-losai-477806": contract_member,
+    "award-china-railway-426408": contract_member,
     "supplier-id-tradecon-notice": awarded_bidder,
     "supplier-id-tradecon-award": contract_supplier_id,
     "supplier-id-jedel-notice": awarded_bidder,

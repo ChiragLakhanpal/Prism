@@ -45,6 +45,7 @@ LEVELS = {
         ("none_shared", "ELSE"),
     ),
 }
+NO_NAME = "name_norm_l IS NULL OR name_norm_r IS NULL"  # never true, since a row with no name is not compared
 NO_PROJECTS = "projects_l IS NULL OR projects_r IS NULL OR len(projects_l) = 0 OR len(projects_r) = 0"
 # Two rows are compared when they share a country and their first word or the first five letters of
 # their name, and at least one of them has no STEP supplier ID.
@@ -95,7 +96,7 @@ def settings(model: SupplierMatching) -> dict:
         "unique_id_column_name": "key",
         "probability_two_random_records_match": model.prior,
         "blocking_rules_to_generate_predictions": list(BLOCKING),
-        "comparisons": [_comparison("name", "name_norm", model, None),
+        "comparisons": [_comparison("name", "name_norm", model, NO_NAME),
                         _comparison("projects", "projects", model, NO_PROJECTS)],
         "retain_intermediate_calculation_columns": True,
         "additional_columns_to_retain": ["group_key"],

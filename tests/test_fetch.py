@@ -182,7 +182,9 @@ def test_a_page_whose_records_changed_is_kept_again_and_gold_takes_the_new_value
 
 def test_a_supplier_row_a_later_fetch_drops_leaves_gold(fixture_copy):
     """values.toml, awkward.joint_venture: contract 1624689 went to members 503708 and 503711. When
-    a later fetch holds the contract with one member only, gold counts that member alone."""
+    a later fetch holds the contract with one member only, gold counts that member alone. The joint
+    venture stays a supplier, because award notice OP00125855 still lists both members, but it signs
+    no contract (ticket 19: one supplier across the awards and the award notices)."""
     def revised(source, engine):
         for page in pages.recorded_pages(source):
             body = copy.deepcopy(page.body)
@@ -199,8 +201,10 @@ def test_a_supplier_row_a_later_fetch_drops_leaves_gold(fixture_copy):
     members = fixture_copy.run("SELECT supplier_id, joint_venture_id FROM strata.gold.contract_supplier "
                                "WHERE wb_contract_number = '1624689'").rows
     assert members == (("503708", None),)
-    ventures = fixture_copy.run("SELECT count(*) FROM strata.gold.supplier WHERE supplier_id = 'JV-503708-503711'")
-    assert ventures.rows == ((0,),)
+    signed = fixture_copy.run("SELECT count(*) FROM strata.gold.contract WHERE supplier_id = 'JV-503708-503711'")
+    assert signed.rows == ((0,),)
+    venture = fixture_copy.run("SELECT kind, member_count FROM strata.gold.supplier WHERE supplier_id = 'JV-503708-503711'")
+    assert venture.rows == (("joint venture", 2),)
 
 
 def test_a_joint_venture_whose_members_sit_on_two_pages_keeps_both_when_only_one_page_changes():
