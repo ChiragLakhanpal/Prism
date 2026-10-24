@@ -260,6 +260,10 @@ class Source:
     scope: str | None = None
     country_filter: str | None = None
     page_size: int | None = None
+    # The most records the API pages through in one fetch. The search API refuses an offset above
+    # 100,000 ("Value must be between 0 and 100000. Parameter name: $skip"), so a fetch of a source
+    # with more records stops there, and the readiness measures show the rows it could not reach.
+    max_offset: int | None = None
     fixture_dataset: str | None = None
     dataset_id: str | None = None
     resource_id: str | None = None
@@ -286,7 +290,7 @@ class Source:
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url")
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url", "max_offset")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -304,7 +308,7 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
         entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS + SOURCE_ATTRIBUTION
                        + SOURCE_PAGE))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
-        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL}
+        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL if name != "max_offset"}
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
         if fields["cadence"] not in CADENCES:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
@@ -443,6 +447,9 @@ def _paging(entry: _Entry, table: dict, fields: dict) -> dict:
                                 "source its own reader fetches names none")
     paging = {name: entry.text(name) for name in needed if name != "page_size"}
     paging["page_size"] = entry.integer("page_size")
+    paging["max_offset"] = entry.integer("max_offset", required=False)
+    if paging["max_offset"] is not None and paging["max_offset"] < paging["page_size"]:
+        entry._fail("max_offset", "must be at least page_size")
     if paging["api"] not in APIS:
         entry._fail("api", f"must be one of {', '.join(APIS)}")
     if paging["page_size"] < 1:

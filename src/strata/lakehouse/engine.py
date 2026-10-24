@@ -37,6 +37,10 @@ class EngineError(RuntimeError):
     """A statement an engine could not run, with the reason the engine gave."""
 
 
+class RowTooLarge(EngineError):
+    """One row's values pass the limit the Statement Execution API puts on a statement's parameters."""
+
+
 class PermissionDenied(EngineError):
     """The token cannot read what the statement asks for: a grant is missing, or the workspace refused the
     token itself. The app runs as each viewer (ADR 0003), so this is the viewer's own permission."""
@@ -290,14 +294,16 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
 PARAMETER_CHARACTERS = 900_000
 
 
-def _parts(rows: list[tuple], chunk: int, chunk_characters: int):
-    """rows in parts of at most `chunk` rows whose values hold at most `chunk_characters` characters.
+def _characters(row: tuple) -> int:
+    """How many characters a row's values take as parameters."""
+    return sum(len(str(value)) for value in row if value is not None)
 
-    A single row over the limit still goes alone, so the warehouse says what is wrong with it.
-    """
+
+def _parts(rows: list[tuple], chunk: int, chunk_characters: int):
+    """rows in parts of at most `chunk` rows whose values hold at most `chunk_characters` characters."""
     part, size = [], 0
     for row in rows:
-        row_size = sum(len(str(value)) for value in row if value is not None)
+        row_size = _characters(row)
         if part and (len(part) >= chunk or size + row_size > chunk_characters):
             yield part
             part, size = [], 0
@@ -362,6 +368,12 @@ class WarehouseEngine:
         """
         _names(table, columns)
         rows = list(rows)
+        for row in rows:
+            size = _characters(row)
+            if size > chunk_characters:
+                raise RowTooLarge(f"A row for {table} holds {size:,} characters of values, and the warehouse's "
+                                  f"Statement Execution API takes at most {chunk_characters:,} in one statement's "
+                                  "parameters, so the row cannot be written this way.")
         for part in _parts(rows, chunk, chunk_characters):
             params = {f"v{number}_{column}": value for number, row in enumerate(part)
                       for column, value in zip(range(len(columns)), row, strict=True)}
