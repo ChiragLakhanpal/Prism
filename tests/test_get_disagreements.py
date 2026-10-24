@@ -145,6 +145,35 @@ def test_reordering_the_ladder_in_its_config_flips_the_side_strata_leans_on(fixt
     assert row["if_you_keep"]["assertion_id"] == PARAGRAPH_78
 
 
+def test_each_side_is_a_citable_record_and_a_side_read_from_a_passage_carries_its_words(engine, tmp_path):
+    """The answer loop keeps each side under its own evidence id (config/tools.toml, nested_rows), so each
+    side is cited and dated like a row, and a side that rests on a passage carries the passage's text, which
+    holds its quote word for word. A record backs its own values and has no text. The trajectories and the
+    rejected count come back as the summary record the agent cites them by."""
+    result = get_disagreements(engine, subject_id="P130164", as_of="2026-10-23")
+    tool = config.load_tools()["get_disagreements"]
+
+    [row] = about(result, "pdo_progress")
+    isr_7, paragraph = row["sides"]
+    assert TRUTH["icr-para-78"]["quote"] in " ".join(paragraph["text"].split())
+    assert "Progress towards achievement of PDO" in isr_7["text"]
+    assert all(side["public_from"] <= result["as_of"] for row in result["rows"] for side in row["sides"])
+    package = get_disagreements(engine, subject_id="KE-MOWASCO-307378-GO-RFB", as_of="2026-10-23")
+    assert [side["text"] for side in package["rows"][0]["sides"]] == [None, None]
+    assert result["summary"]["evidence_id"] == "strata.tools.get_disagreements:P130164@2026-10-23"
+    assert (result["summary"]["trajectories"], result["summary"]["rejected"]) == (result["trajectories"],
+                                                                                result["rejected"])
+    unsourced = {**row, "sides": [{**isr_7, "evidence_id": None}, paragraph]}
+    with pytest.raises(registry.ToolContractError, match="has no evidence id"):
+        registry.check_contract(tool, {**result, "rows": [unsourced]})
+
+    path = tmp_path / "tools.toml"
+    path.write_text((ROOT / "config" / "tools.toml").read_text().replace('nested_rows = ["sides"]',
+                                                                         'nested_rows = ["both_sides"]'))
+    with pytest.raises(config.ConfigError, match="both_sides, which row_fields does not list"):
+        config.load_tools(path)
+
+
 # ── Ties between records ─────────────────────────────────────────────────
 
 def sides_of(row) -> list[tuple[str, str]]:

@@ -1,7 +1,8 @@
 -- get_disagreements: the assertions about a subject (a project with its packages, or one package by its STEP
 -- reference) whose source was public on the as-of date (ADR 0002), read as the viewer. The tool keeps the
 -- ones no later version had replaced by then. An assertion that rests on a passage comes with the paragraph
--- as the report numbers it, its printed page and its document's key in the source view's address.
+-- as the report numbers it, its printed page, its document's key in the source view's address and the
+-- passage's text, which a claim quotes from.
 SELECT
   a.assertion_id,
   a.subject_kind,
@@ -35,7 +36,8 @@ SELECT
   p.paragraph,
   p.paragraph_numbered,
   p.printed_page,
-  p.doc_key
+  p.doc_key,
+  p.text
 FROM strata.gold.assertion AS a
 LEFT JOIN strata.gold.passage AS p ON a.evidence_id = concat(:passages, p.passage_id)
 WHERE (a.project_id = :subject_id OR (a.subject_kind = :package AND a.subject_id = :subject_id))

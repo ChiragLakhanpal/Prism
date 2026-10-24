@@ -37,6 +37,9 @@
 #   summary_fields the fields that hold derived figures the agent may state, such as a past range or a
 #                  count. The registry returns them as one more citable record, the result's summary,
 #                  with its own evidence id, so the verifier can back each figure (CLAUDE.md rule 1).
+#   nested_rows    the row fields that hold records of their own, each with its own evidence_id and
+#                  public_from, such as each side of a disagreement. The answer loop keeps each one as a
+#                  citable record beside its row, so a claim can cite or quote it.
 #
 # [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
 # readiness page lists each such kind under "What you can ask" (ticket 16):
@@ -370,7 +373,9 @@ treat as true if you kept the other side. Ratings of successive periods, such as
 a trajectory, not a disagreement, and come back under trajectories. A report re-issued under the same number \
 replaces its earlier version, unless the as-of date comes before the re-issue. It also counts the assertions \
 read from the project's reports that were left out because their quote was not word for word on the cited page. \
-When an answer rests on one side of a disagreement, show both sides."""
+Cite a disagreement by its row's evidence id, and each side by the side's own evidence id: quote a side's words \
+from its text. The trajectories and the count of left-out assertions come back in the result's summary, which \
+you cite for them. When an answer rests on one side of a disagreement, show both sides."""
 adapter = "strata.tools.get_disagreements:get_disagreements"
 benchmark = "get-disagreements-p130164"
 sources = ["documents", "ieg_ratings", "awards", "awards_fy2001_2016", "notices"]
@@ -407,3 +412,9 @@ source_fields = ["table", "project_id", "subject_id", "evidence_ids"]
 fields = ["subject", "trajectories", "rejected"]
 reasons = ["replaced_by_later_version"]
 abstentions = ["unknown_subject", "unknown_attribute", "no_assertions"]
+# The ratings of each trajectory, its runs and the count of left-out assertions are figures the agent may
+# state, so they come back as one citable record too.
+summary_fields = ["trajectories", "rejected"]
+# Each side is the assertion as its source made it, under the evidence id of the passage or record it rests
+# on, with the passage's text when it rests on one, so a claim can cite it or quote from it.
+nested_rows = ["sides"]

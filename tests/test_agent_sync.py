@@ -47,6 +47,20 @@ def test_the_instructions_name_the_summary_record_wherever_a_tool_returns_one():
         assert "summary, which you cite for them" in described
 
 
+def test_the_instructions_say_a_record_inside_a_row_is_cited_by_its_own_evidence_id():
+    """get_disagreements returns each side of a disagreement as a record of its own (nested_rows), so the agent
+    is told it may cite a side, and quote it only from its text (CLAUDE.md rule 2)."""
+    from strata.config import load_tools
+
+    nested = [name for name, tool in load_tools().items() if tool.result.nested_rows]
+    instructions = agent_definition(load_agent("orchestrator"), guardrail_id="local/strata-guardrail")[
+        "definition"]["instructions"]
+    tools_section = instructions.split("## Your tools", 1)[1]
+
+    assert nested == ["get_disagreements"]
+    assert "Cite such a record by its evidence_id, and quote it only from its text." in tools_section
+
+
 def test_the_agent_is_told_which_words_go_with_the_plan_s_share():
     """"About 1 in 10" and "fewer than 1 in 10" state the same numbers, so find_comparables returns the words
     with them, and its description tells the agent what each code says (CLAUDE.md rule 1)."""

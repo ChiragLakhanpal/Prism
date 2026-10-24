@@ -676,6 +676,47 @@ def test_a_past_range_the_agent_states_in_strata_s_words_is_backed_by_find_compa
     assert (evidence["tool"], evidence["row"]["public_from"]) == ("find_comparables", "2026-10-22")
 
 
+def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajectory_and_the_rejected_count(fixture_db):
+    """get_disagreements returns each side of a disagreement as a record of its own, under the evidence id
+    ticket 11 or 18 issued for it, and its trajectories and rejected count as one citable summary record
+    (CLAUDE.md rules 1 and 2). So the agent can quote the ICR's paragraph 78 from its side, state ISR 7's
+    rating and date, and say how the ISRs' ratings ran, and a number no record holds is still removed. The
+    values are tests/ground_truth/values.toml's."""
+    truth = {entry["id"]: entry for entry in TRUTH["value"]}
+    words = truth["icr-para-78"]["value"]
+    isr_7_date = truth["isr-7-date"]["value"]
+
+    def answer(outputs):
+        [result] = outputs
+        [row] = [row for row in result["rows"] if row["attribute"] == "pdo_progress"]
+        isr_7, paragraph = row["sides"]
+        summary = result["summary"]["evidence_id"]
+        return [
+            claim(f'The ICR said "{words}".', kind="quote", evidence_ids=[paragraph["evidence_id"]],
+                  quote={"text": words, "passage_id": paragraph["evidence_id"]}),
+            claim(f"ISR 7 rated progress towards the PDO Satisfactory on {isr_7_date:%B} {isr_7_date.day}, "
+                  f"{isr_7_date.year}.", kind="record", evidence_ids=[isr_7["evidence_id"], row["evidence_id"]]),
+            claim("ISRs 1 to 9 rated it Satisfactory and ISRs 12 and 13 rated it Moderately Unsatisfactory.",
+                  kind="record", evidence_ids=[summary]),
+            claim("I left out 1 assertion read from the project's reports.", kind="record", evidence_ids=[summary]),
+            claim("ISRs 1 to 14 rated it Satisfactory.", kind="record", evidence_ids=[summary]),
+        ]
+
+    agent = CallsThenAnswers([("get_disagreements", {"subject_id": "P130164", "as_of": "2026-10-23"})], answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert [sentence["text"].split(" ")[:2] for sentence in of(parsed, "sentence")] == [
+        ["The", "ICR"], ["ISR", "7"], ["ISRs", "1"], ["I", "left"]]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "14")]]
+    evidence = {item["id"]: item for item in of(parsed, "evidence")}
+    side = evidence["strata.gold.passage:31525018/v1/78"]
+    assert (side["kind"], side["tool"]) == ("passage", "get_disagreements")
+    [highlight] = side["highlights"]
+    assert side["row"]["text"][highlight["start"]:highlight["end"]] == words
+    assert of(parsed, "checks")[0]["quotes"] == {"total": 1, "found": 1}
+
+
 def logged_runs(ops_db):
     with DuckDBEngine.open(ops_db, read_only=True) as engine:
         result = engine.run("SELECT * FROM strata.ops.agent_runs")

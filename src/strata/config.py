@@ -861,6 +861,7 @@ class ToolResult:
     abstentions: tuple[str, ...] = ()  # the reasons the tool may give for returning no rows
     abstentions_with_rows: tuple[str, ...] = ()  # the abstentions that still come with rows
     summary_fields: tuple[str, ...] = ()  # the derived figures returned as one citable record, the summary
+    nested_rows: tuple[str, ...] = ()  # the row fields whose items are citable records of their own
 
 
 @dataclass(frozen=True)
@@ -959,14 +960,17 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
     entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions", "abstentions_with_rows",
-                "summary_fields"})
+                "summary_fields", "nested_rows"})
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
                         entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"),
-                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"))
+                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"), entry.texts("nested_rows"))
     # A summary carries the tool's own fields, and the coverage line's counts, which every result has.
     strays = [field for field in result.summary_fields if field not in (*result.fields, "coverage")]
     if strays:
         entry._fail("summary_fields", f"names {', '.join(strays)}, which fields does not list")
+    strays = [field for field in result.nested_rows if field not in result.row_fields]
+    if strays:
+        entry._fail("nested_rows", f"names {', '.join(strays)}, which row_fields does not list")
     unlisted = [reason for reason in result.abstentions_with_rows if reason not in result.abstentions]
     if unlisted:
         entry._fail("abstentions_with_rows", f"names {', '.join(unlisted)}, which abstentions does not list")

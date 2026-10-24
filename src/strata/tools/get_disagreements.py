@@ -10,7 +10,8 @@ A subject is a project, with its packages, or one package by its STEP reference.
 - one row per disagreement, with both sides in the order they were written. A side keeps its source's own
   field name and value word for word, its quote and page when it was read from a report, its date, its
   evidence tier and the evidence id a claim cites; a side that rests on a passage also gives the paragraph
-  as the report numbers it and its document's key in the source view's address. The row names the side
+  as the report numbers it, its document's key in the source view's address and the passage's text. Each
+  side is a citable record of its own (config/tools.toml, nested_rows), so a claim can quote it. The row names the side
   Strata leans on and the id of the ladder's rule that decided (config/evidence_ladder.toml), and under
   if_you_keep the value you would treat as true if you kept the other side. The tool returns ids and
   values, never a sentence, as check_plan returns reason codes: the screens write the rule's sentence
@@ -22,6 +23,7 @@ A subject is a project, with its packages, or one package by its STEP reference.
   ratings in order and its runs of equal ratings. A trajectory is never a disagreement.
 - rejected: how many assertions read from the project's reports the run left out, by reason, such as a
   quote that was not word for word on its cited page.
+The registry returns the trajectories and the rejected count as one more citable record, the summary.
 
 A report re-issued under the same number replaces its earlier version from the day the re-issue became
 public: a disagreement with a replaced side is left out of current answers, and the coverage line counts it.
@@ -42,7 +44,7 @@ from strata.tools.registry import Call
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
-PASSAGE_FIELDS = ("paragraph", "paragraph_numbered", "printed_page", "doc_key")
+PASSAGE_FIELDS = ("paragraph", "paragraph_numbered", "printed_page", "doc_key", "text")
 
 
 def _sql(name: str) -> str:
@@ -93,6 +95,8 @@ def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
         "paragraph_numbered": _boolean(passage.get("paragraph_numbered")),
         "printed_page": passage.get("printed_page"),
         "doc_key": passage.get("doc_key"),
+        # The passage's text, which a claim quotes from; empty for a record, which backs its own values.
+        "text": passage.get("text"),
         "field_name": assertion.field_name,
         "value": assertion.value,
         "value_form": assertion.value_form,
