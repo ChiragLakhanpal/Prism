@@ -34,19 +34,19 @@ Some things to know before the first deploy:
 
 ## The nightly window
 
-The job starts at 05:00 in Washington (`America/New_York`) and stops after 150 minutes, at 07:30 at the latest. These are the reasons.
+The job starts at 03:00 in Washington (`America/New_York`) and stops after 150 minutes, at 05:30 at the latest. These are the reasons.
 
-- **Review hours.** The panel works in Washington. The job stops by 07:30, half an hour before review hours start at 08:00, so no task is running when a review starts. I have not checked when the daily compute quota resets. The workspace catch-up records it.
-- **fairshare's job.** I could not read fairshare's files on the build machine, so I chose this window without fairshare's schedule. The window misses any job that starts at an hour from 18:00 to midnight in Washington, or at midnight UTC, and finishes within four hours. That holds on every day of the year, including the night the clocks go forward, when midnight to 05:00 lasts only four hours. `tests/test_nightly.py` checks it for each day of a year.
+- **fairshare's job.** fairshare's job runs daily at 06:00 in Chicago, which is 07:00 in Washington, and its longest run took 21 minutes (the block below). Strata's window ends ninety minutes before it starts, and would miss it even if it ran four hours. The window also misses any job that starts at an hour from 18:00 to 22:00 in Washington, or at midnight UTC, and finishes within four hours. That holds on every day of the year, on both sides of the clock changes; 23:00 is left out because on the night the clocks go forward four hours from 23:00 end at 04:00. `tests/test_nightly.py` checks each of these for each day of a year. The job first ran at 05:00; the `schedules` check found that window reaching into fairshare's on every day, and the hour moved on October 24, 2026. 03:00 exists on every night in Washington, which 02:00 does not on the night the clocks go forward.
+- **Review hours.** The panel works in Washington. The job stops by 05:30, two and a half hours before review hours start at 08:00, so no task is running when a review starts. I have not checked when the daily compute quota resets. The workspace catch-up records it.
 - **The daily quota.** The two jobs share one daily compute quota and five concurrent job tasks. Strata's tasks run one at a time, so the job never uses more than one of the five.
 
 The block below records both schedules and how long each job's runs took, as measured on the workspace. Fill it with the `schedules` check above. If the check finds that the two meet, change the hour in `nightly.yml` and run the deploy again.
 
 <!-- bundle:schedules -->
-- fairshare's job: Not measured yet. I could not read fairshare's files on the build machine, and the check needs the credentials in `.env`.
-- Strata's job: strata nightly, daily at 05:00 America/New_York. It stops after 150 minutes. Nobody has measured its runs yet.
-- Overlap: not checked yet.
-- Measured: never. Run `uv run --script ops/bundle/check.py schedules --env-file .env --write`.
+- fairshare's job: fairshare nightly, daily at 06:00 America/Chicago. Its longest of the last 19 runs took 21 minutes.
+- Strata's job: strata nightly, daily at 03:00 America/New_York. Its longest of the last four runs took 122 minutes, and it stops after 150 minutes.
+- Overlap: none. With these durations the two jobs share no minute on any day from October 24, 2026 to October 24, 2027, and the same holds if Strata's job runs to its limit.
+- Measured: October 24, 2026, with `uv run --script ops/bundle/check.py schedules --env-file .env --write`.
 <!-- /bundle:schedules -->
 
 To keep the job to manual runs, set the default of `nightly_pause_status` in `databricks.yml` to `PAUSED` and deploy again.
