@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 6 and 8 (Exports); the blueprint's Draft wiref
 
 **Blocked by:** 10 (Check a plan, on screen, for the NWWDA plan); 14 (Ask from the one box: the answer panel and the evidence drawer)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 6 and 8 (Exports); the blueprint's Draft wiref
 - [ ] A test proves export makes no outbound call: the files are only offered to the person.
 - [ ] The Drafts tab lists only the author's team's drafts, under To check, Checked and Exported.
 - [ ] The page follows the blueprint's Draft wireframe (states in the sticky header, the bar held to the document column, Discard set apart) and DESIGN.md section 5's Draft bar; scroll padding keeps focused elements clear of the sticky bar (DESIGN.md section 10); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/35-drafts-runtime-and-review-notes, as soon as ticket 14 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
