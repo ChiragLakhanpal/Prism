@@ -296,7 +296,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
                              asof: dt.date | None = None, view: str = "staff",
                              viewer: Viewer = Depends(current_viewer)):
-        arguments = {"sources": sources, "from_tool": from_tool}
+        # An empty value reads as left out, so a link that writes sources= or from= opens the page.
+        arguments = {"sources": sources or None, "from_tool": from_tool or None}
         return await as_viewer(viewer, lambda engine: registry.call(
             "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof)),
             lambda result: result, say_timeout=True)

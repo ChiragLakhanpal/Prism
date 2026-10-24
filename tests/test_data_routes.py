@@ -80,6 +80,19 @@ def test_the_page_s_answers_on_the_fixture_are_the_recorded_ones(fixture_app, vi
     assert "token-for-ana-only" not in response.text
 
 
+@pytest.mark.parametrize("empty, absent", [
+    (f"sources=&from=find_comparables&{ON_THE_FIXTURE_DAY}", f"from=find_comparables&{ON_THE_FIXTURE_DAY}"),
+    (f"sources=awards&from=&{ON_THE_FIXTURE_DAY}", f"sources=awards&{ON_THE_FIXTURE_DAY}"),
+])
+def test_an_empty_sources_or_from_value_is_read_as_left_out(fixture_app, empty, absent):
+    # A link that writes sources= or from= with nothing after it opens the same page as one that
+    # leaves the value out, never a server error (ticket 16's V1).
+    answered = get(fixture_app, f"/api/data/readiness?{empty}", ANA)
+
+    assert answered.status_code == 200
+    assert answered.json() == get(fixture_app, f"/api/data/readiness?{absent}", ANA).json()
+
+
 @pytest.fixture
 def engine_on(tmp_path):
     """An app that reads a catalog this test builds under tmp_path."""

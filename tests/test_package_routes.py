@@ -11,6 +11,7 @@ import asyncio
 import json
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import urlencode
 
 import httpx
 import pytest
@@ -77,6 +78,24 @@ def test_each_recorded_answer_is_what_the_route_gives_the_viewer_on_the_fixture(
     assert response.json() == json.loads((RECORDED / name).read_text())
     assert [viewer.token for viewer in viewers_seen] == ["token-for-ana-only"]
     assert "token-for-ana-only" not in response.text
+
+
+COMPARABLES = sorted(path.name for path in RECORDED.glob("comparables-*.json"))
+
+
+@pytest.mark.parametrize("name", COMPARABLES)
+def test_each_coverage_line_s_link_opens_data_readiness_without_an_error(fixture_app, name):
+    # The link the package page writes under a coverage line (PastRange.tsx, through routes.ts's
+    # dataReadinessHref): the answer's sources by key, left out when there are none, and the tool.
+    answer = json.loads((RECORDED / name).read_text())
+    query = {"from": answer["tool"], "asof": "2026-10-23"}
+    if answer["sources"]:
+        query["sources"] = ",".join(source["key"] for source in answer["sources"])
+
+    response = get(fixture_app, f"/api/data/readiness?{urlencode(query, safe=',')}", ANA)
+
+    assert response.status_code == 200
+    assert "code" not in response.json()
 
 
 def test_the_comparables_route_runs_find_comparables_through_the_registry_with_the_page_s_as_of_date(fixture_app):
