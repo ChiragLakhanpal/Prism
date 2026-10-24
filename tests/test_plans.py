@@ -314,6 +314,44 @@ def test_when_every_listed_version_is_read_each_first_listing_is_confirmed(fresh
     assert signed["delay_days"] == value("plan-229129-days-late")["value"]
 
 
+class OneTextTooLarge:
+    """A DuckDB engine that refuses the first plan text as the SQL warehouse refuses a text past the
+    Statement Execution API's limit on parameters (RowTooLarge), and takes every other row."""
+
+    def __init__(self, engine):
+        self.engine, self.refused = engine, []
+        self.run, self.table_bytes = engine.run, engine.table_bytes
+
+    def insert_rows(self, table, columns, rows, **options):
+        from strata.lakehouse.engine import RowTooLarge
+
+        if table == "strata.bronze.document_texts" and not self.refused:
+            self.refused.append(rows[0][0])
+            raise RowTooLarge("A row for strata.bronze.document_texts holds 4,910,702 characters of values.")
+        return self.engine.insert_rows(table, columns, rows, **options)
+
+
+def test_a_plan_whose_text_the_warehouse_cannot_take_is_left_out_counted_and_named(fresh, capsys):
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import plans
+    from strata.reader.layout import RecordedLayout
+
+    manifest = fmt.load_manifest()
+    engine = OneTextTooLarge(fresh)
+    report = plans.run(engine, OnlyRecordedPlans(manifest), RecordedLayout(manifest), "P156634",
+                       clock=clock(dt.date(2026, 10, 23)))
+    plans.print_measures(report)
+
+    [refused] = engine.refused
+    assert [document_id for document_id, _ in report.not_kept] == [refused]
+    assert rows(fresh, "SELECT count(*) AS n FROM strata.bronze.document_texts WHERE document_id = :id",
+                id=refused)[0]["n"] == 0
+    versions, listed = measured(fresh, report.run_id)["plan_versions_read"]
+    assert versions == listed - 1
+    assert (f"1 plan was fetched but not kept, because the SQL warehouse takes a statement's parameters only "
+            f"up to about 1 MB: {refused} (") in capsys.readouterr().out
+
+
 def cap(tmp_path, pages: int):
     from strata.config import CONFIG_DIR, load_thresholds
 

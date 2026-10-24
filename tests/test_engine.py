@@ -168,6 +168,19 @@ def test_the_warehouse_splits_an_insert_whose_values_would_pass_the_apis_size_li
     assert {"name": "v0_2", "value": "z" * 400, "type": "STRING"} in warehouse.calls[1][2]["parameters"]
 
 
+def test_a_row_too_large_for_the_apis_parameters_is_refused_before_anything_is_sent():
+    from strata.lakehouse.engine import RowTooLarge
+
+    warehouse = FakeWarehouse([succeeded([])])
+    text = ("1", "33218784", "x" * 1_001)
+
+    with pytest.raises(RowTooLarge, match="1,010 characters of values.*at most 1,000"):
+        WarehouseEngine("wh-1", warehouse).insert_rows("strata.bronze.document_texts", COLUMNS, [text],
+                                                       chunk_characters=1_000)
+
+    assert warehouse.calls == []
+
+
 def test_the_warehouse_adds_rows_in_one_insert_whose_every_value_is_a_parameter():
     warehouse = FakeWarehouse([succeeded([])])
 
