@@ -167,6 +167,8 @@ def _series(source, get, country, code, indicator, watermark, clock) -> Iterator
         total = reported_total(source, body)
         if len(held) < source.page_size or (total is not None and offset >= total):
             break
+        if source.max_offset is not None and offset >= source.max_offset:
+            break  # the API refuses a page past this offset, so the rest stays out of reach
         if not reads_every_page(source) and watermark is not None:
             oldest = min((day for day in (clean.parse_date(record.get(source.watermark_field))
                                           for record in held) if day), default=None)

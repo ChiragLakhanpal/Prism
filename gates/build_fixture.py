@@ -44,6 +44,7 @@ from pathlib import Path
 from strata.config import load_slice
 from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
+from strata.knowledge import assertions
 from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
@@ -126,6 +127,8 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
+                # Assertions and disagreements, once the passages they rest on are read (ticket 20).
+                assertions.run_on_fixture(engine, run_id=RUN_ID, clock=clock)
                 # The dashboard's copy of the Data readiness page, once every reader has measured.
                 snapshot.write(engine, RUN_ID, clock)
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it

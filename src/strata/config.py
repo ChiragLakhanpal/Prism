@@ -1,7 +1,7 @@
 """The registry and config files for the change drill, each read through one function.
 
 Each file in config/ is one of the spec's single places ("Ten single places"), so a change
-request lands in one file (CLAUDE.md rule 9). This module reads six of them:
+request lands in one file (CLAUDE.md rule 9). This module reads them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
@@ -15,6 +15,9 @@ request lands in one file (CLAUDE.md rule 9). This module reads six of them:
                      (strata.agent.definition builds the agent's definition from it)
 - load_draft_kinds() config/drafts.toml, the draft-kind registry: each kind of draft and its holds
 - load_roles()       config/roles.toml, the roles file: the teams that share drafts, by workspace group
+- load_ladder()      config/evidence_ladder.toml, the evidence ladder: the rules that choose the
+                     assertion Strata leans on when two disagree, the evidence tiers, the attributes
+                     an assertion can be about and their rating scales
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -255,12 +258,19 @@ class Source:
     scope: str | None = None
     country_filter: str | None = None
     page_size: int | None = None
+    # The most records the API pages through in one fetch. The search API refuses an offset above
+    # 100,000 ("Value must be between 0 and 100000. Parameter name: $skip"), so a fetch of a source
+    # with more records stops there, and the readiness measures show the rows it could not reach.
+    max_offset: int | None = None
     fixture_dataset: str | None = None
     dataset_id: str | None = None
     resource_id: str | None = None
     stratum: str | None = None
     # A record's own page on the World Bank's site, with {id} for its id, such as a notice's page.
     record_url: str | None = None
+    # The form of assertion each of its rows gives the evidence ladder, such as contract_record for a dataset of
+    # signed contracts (ticket 20, src/strata/knowledge/assertions.py).
+    assertion_form: str | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -281,7 +291,8 @@ class Source:
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url")
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url", "max_offset",
+                   "assertion_form")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -299,7 +310,7 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
         entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS + SOURCE_ATTRIBUTION
                        + SOURCE_PAGE))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
-        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL}
+        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL if name != "max_offset"}
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
         if fields["cadence"] not in CADENCES:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
@@ -438,6 +449,9 @@ def _paging(entry: _Entry, table: dict, fields: dict) -> dict:
                                 "source its own reader fetches names none")
     paging = {name: entry.text(name) for name in needed if name != "page_size"}
     paging["page_size"] = entry.integer("page_size")
+    paging["max_offset"] = entry.integer("max_offset", required=False)
+    if paging["max_offset"] is not None and paging["max_offset"] < paging["page_size"]:
+        entry._fail("max_offset", "must be at least page_size")
     if paging["api"] not in APIS:
         entry._fail("api", f"must be one of {', '.join(APIS)}")
     if paging["page_size"] < 1:
@@ -858,6 +872,7 @@ class ToolResult:
     abstentions: tuple[str, ...] = ()  # the reasons the tool may give for returning no rows
     abstentions_with_rows: tuple[str, ...] = ()  # the abstentions that still come with rows
     summary_fields: tuple[str, ...] = ()  # the derived figures returned as one citable record, the summary
+    nested_rows: tuple[str, ...] = ()  # the row fields whose items are citable records of their own
 
 
 @dataclass(frozen=True)
@@ -956,14 +971,17 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
     entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions", "abstentions_with_rows",
-                "summary_fields"})
+                "summary_fields", "nested_rows"})
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
                         entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"),
-                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"))
+                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"), entry.texts("nested_rows"))
     # A summary carries the tool's own fields, and the coverage line's counts, which every result has.
     strays = [field for field in result.summary_fields if field not in (*result.fields, "coverage")]
     if strays:
         entry._fail("summary_fields", f"names {', '.join(strays)}, which fields does not list")
+    strays = [field for field in result.nested_rows if field not in result.row_fields]
+    if strays:
+        entry._fail("nested_rows", f"names {', '.join(strays)}, which row_fields does not list")
     unlisted = [reason for reason in result.abstentions_with_rows if reason not in result.abstentions]
     if unlisted:
         entry._fail("abstentions_with_rows", f"names {', '.join(unlisted)}, which abstentions does not list")
@@ -1148,3 +1166,188 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
             entry._fail("groups", "must name at least one workspace group")
         teams.append(Team(key, entry.text("name"), entry.texts("groups")))
     return Roles(tuple(teams))
+
+
+# ── The evidence ladder ──────────────────────────────────────────────────
+
+CLASSES = ("judgment", "moment")  # an outcome judgment, or a fact about a moment
+KINDS = ("rating", "date", "amount")
+TIES = ("tieSpecific", "tieRecent")  # the more specific source, then the more recent one
+# The forms an assertion takes, as the readers in strata.knowledge.assertions write them: a rating in its
+# own field, a rating or account told in running text, a record of the signed contract in an awards
+# dataset, a Contract Award notice, and a package's row in a Procurement Plan.
+FORMS = ("rating_field", "narrative", "contract_record", "award_notice", "plan_row")
+SIDES = ("satisfactory", "unsatisfactory")
+
+
+@dataclass(frozen=True)
+class LadderRule:
+    """One rule of the ladder. A tier rule ranks the sides by their evidence tier, in the order of tiers.
+    A moment rule leans on the side made at the moment it describes: a side of a tier in at_the_moment,
+    or one made within its own period."""
+
+    id: str
+    applies_to: str
+    tiers: tuple[str, ...] = ()
+    at_the_moment: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class Tier:
+    """An evidence tier: the document types whose reports are in it. Its "written when" words are in the
+    screens' copy file (web/src/copy.ts, disagreement.written)."""
+
+    key: str
+    document_types: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Attribute:
+    key: str
+    kind: str  # rating, date or amount
+    class_: str  # judgment or moment
+    scale: str | None
+    names: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Scale:
+    key: str
+    satisfactory: tuple[str, ...] = ()
+    unsatisfactory: tuple[str, ...] = ()
+    values: tuple[str, ...] = ()  # a scale with no sides, such as risk
+
+    @property
+    def ratings(self) -> tuple[str, ...]:
+        return self.satisfactory + self.unsatisfactory + self.values
+
+
+@dataclass(frozen=True)
+class Ladder:
+    path: Path
+    rules: tuple[LadderRule, ...]
+    ties: tuple[str, ...]
+    specificity: tuple[tuple[str, ...], ...]  # forms, most specific group first
+    tiers: dict[str, Tier]
+    attributes: dict[str, Attribute]
+    scales: dict[str, Scale]
+    no_rating: tuple[str, ...]
+
+    def tier_of(self, document_type: str | None) -> str | None:
+        """The evidence tier of a report by its document type, or None for a type the ladder does not rank."""
+        return next((tier.key for tier in self.tiers.values() if document_type in tier.document_types), None)
+
+    def attribute(self, key: str) -> Attribute:
+        if key not in self.attributes:
+            raise ConfigError(f"The evidence ladder has no attribute {key}. Add it to config/evidence_ladder.toml.")
+        return self.attributes[key]
+
+    def attribute_named(self, name: str) -> Attribute | None:
+        """The attribute a report's or a record's field name means, word for word, or None."""
+        return next((attribute for attribute in self.attributes.values() if name in attribute.names), None)
+
+    def rule_for(self, attribute: str) -> LadderRule | None:
+        """The first rule that applies to the attribute's class."""
+        return next((rule for rule in self.rules if rule.applies_to == self.attribute(attribute).class_), None)
+
+    def rating(self, attribute: str, value: str | None) -> str | None:
+        """The value as its scale writes it (case aside), or None when it is no rating or not on the scale."""
+        scale = self.scales.get(self.attribute(attribute).scale or "")
+        text = (value or "").strip()
+        if scale is None or not text or text in self.no_rating:
+            return None
+        return next((rating for rating in scale.ratings if rating.lower() == text.lower()), None)
+
+    def side(self, attribute: str, rating: str | None) -> str | None:
+        """Which side of the line a rating falls on: satisfactory, unsatisfactory, or None for a scale with no sides."""
+        scale = self.scales.get(self.attribute(attribute).scale or "")
+        if scale is None or rating is None:
+            return None
+        return "satisfactory" if rating in scale.satisfactory else "unsatisfactory" if rating in scale.unsatisfactory \
+            else None
+
+    def specificity_of(self, form: str) -> int:
+        """The place of a form's group in the specificity order: 0 is the most specific."""
+        return next(at for at, group in enumerate(self.specificity) if form in group)
+
+
+def _ladder_rule(path: Path, entry: _Entry, tiers: dict) -> LadderRule:
+    entry.only({"id", "applies_to", "tiers", "at_the_moment"})
+    applies_to = entry.text("applies_to")
+    if applies_to not in CLASSES:
+        entry._fail("applies_to", f"must be {' or '.join(CLASSES)}")
+    ranked, at_the_moment = entry.texts("tiers"), entry.texts("at_the_moment")
+    if bool(ranked) == bool(at_the_moment):
+        raise ConfigError(f"In {path.name}, {entry.where} needs either tiers (an order of evidence tiers) or "
+                          f"at_the_moment (the tiers whose sources are records made at the moment), not both.")
+    for key in ("tiers", "at_the_moment"):
+        named = entry.texts(key)
+        unknown = [tier for tier in named if tier not in tiers]
+        if unknown:
+            entry._fail(key, f"names {', '.join(unknown)}, which [tiers] does not define")
+        if len(set(named)) != len(named):
+            entry._fail(key, "names a tier twice")
+    return LadderRule(entry.text("id"), applies_to, ranked, at_the_moment)
+
+
+def load_ladder(path: Path = CONFIG_DIR / "evidence_ladder.toml") -> Ladder:
+    """The evidence ladder: its rules in order, its ties, the evidence tiers, the attributes an assertion can
+    be about and their rating scales."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"rules", "ties", "tiers", "attributes", "scales"})
+    tiers = {}
+    for key, table in (data.get("tiers") or {}).items():
+        entry = _Entry(path, f"tiers.{key}", table)
+        entry.only({"document_types"})
+        tiers[key] = Tier(key, entry.texts("document_types"))
+    if not tiers:
+        raise ConfigError(f"{path.name} names no evidence tier. Add a [tiers.<name>] table for each one.")
+    rules = tuple(_ladder_rule(path, entry, tiers) for entry in _tables(path, data, "rules"))
+    if not rules:
+        raise ConfigError(f"{path.name} has no rule. Add a [[rules]] table for outcome judgments and one for moments.")
+    if len({rule.id for rule in rules}) != len(rules):
+        raise ConfigError(f"In {path.name}, two rules share an id. Each rule's id names its sentence in the copy.")
+    ties = _Entry(path, "ties", data.get("ties"))
+    ties.only({"order", "specificity"})
+    order = ties.texts("order")
+    if not set(order) <= set(TIES) or len(set(order)) != len(order):
+        ties._fail("order", f"can use only {' and '.join(TIES)}, each once")
+    groups = ties.table.get("specificity")
+    if not isinstance(groups, list) or not all(isinstance(group, list) for group in groups):
+        ties._fail("specificity", "must be a list of groups of forms, such as [[\"rating_field\"], [\"narrative\"]]")
+    listed = [form for group in groups for form in group]
+    if sorted(listed) != sorted(FORMS):
+        ties._fail("specificity", f"must list each of these forms once: {', '.join(FORMS)}")
+    scales_table = data.get("scales") or {}
+    scales_entry = _Entry(path, "scales", scales_table)
+    scales = {}
+    for key, table in scales_table.items():
+        if key == "no_rating":
+            continue
+        entry = _Entry(path, f"scales.{key}", table)
+        entry.only({"satisfactory", "unsatisfactory", "values"})
+        scale = Scale(key, entry.texts("satisfactory"), entry.texts("unsatisfactory"), entry.texts("values"))
+        if not scale.ratings:
+            entry._fail("values", "is missing. A scale needs its ratings, with satisfactory and unsatisfactory "
+                                  "sides or as plain values")
+        scales[key] = scale
+    attributes = {}
+    for key, table in (data.get("attributes") or {}).items():
+        entry = _Entry(path, f"attributes.{key}", table)
+        entry.only({"kind", "class", "scale", "names"})
+        kind, class_ = entry.text("kind"), entry.text("class")
+        if kind not in KINDS:
+            entry._fail("kind", f"must be one of {', '.join(KINDS)}")
+        if class_ not in CLASSES:
+            entry._fail("class", f"must be {' or '.join(CLASSES)}")
+        scale = entry.text("scale", required=(kind == "rating"))
+        if scale is not None and scale not in scales:
+            entry._fail("scale", f"names {scale}, which [scales] does not define")
+        if not entry.texts("names"):
+            entry._fail("names", "must list the field names that mean this attribute")
+        attributes[key] = Attribute(key, kind, class_, scale, entry.texts("names"))
+    names = [name for attribute in attributes.values() for name in attribute.names]
+    if len(set(names)) != len(names):
+        raise ConfigError(f"In {path.name}, a field name means two attributes. Each name must mean one.")
+    return Ladder(path, rules, order, tuple(tuple(group) for group in groups), tiers, attributes, scales,
+                  scales_entry.texts("no_rating"))

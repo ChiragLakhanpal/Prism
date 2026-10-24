@@ -32,8 +32,8 @@ THRESHOLD = re.compile(r"\{([a-z_]+(?:\.[a-z_]+)+)\}")
 def instructions(spec: AgentSpec, folder: Path = INSTRUCTIONS, tools: dict[str, Tool] | None = None,
                  thresholds: Thresholds | None = None) -> str:
     """The agent's instructions: its file, with each threshold it names filled in, then one section that
-    lists every tool in the registry with its description. When a tool returns a summary record, the
-    section says the agent may cite it."""
+    lists every tool in the registry with its description. When a tool returns a summary record, or records
+    inside its rows, the section says the agent may cite them."""
     limits = thresholds or load_thresholds()
     registered = tools if tools is not None else load_tools()
     text = (folder / spec.instructions).read_text().rstrip()
@@ -50,6 +50,9 @@ def instructions(spec: AgentSpec, folder: Path = INSTRUCTIONS, tools: dict[str, 
         lead += (" A tool may also return a summary: one record with its own evidence_id that holds figures "
                  "worked out from the rows, such as a past range or a count. Cite the summary for those "
                  "figures, as you cite a row.")
+    if any(tool.result.nested_rows for tool in registered.values() if tool.name in names):
+        lead += (" A row may also hold records of their own, each with its own evidence_id, such as each side "
+                 "of a disagreement. Cite such a record by its evidence_id, and quote it only from its text.")
     return "\n\n".join([text, "## Your tools", lead, *listed]) + "\n"
 
 

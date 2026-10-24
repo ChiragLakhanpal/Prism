@@ -93,6 +93,8 @@ It worked if both runs exit 0. The first run lists the catalog, the four schemas
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
+**Two runs on October 24, 2026 (orchestrator), both failed.** Run 282381151628775 failed on every task before any work: splink 5.0.0 pulls in a pyarrow that serverless environment version 2 (numpy 1.23) cannot import, so `bundle/nightly.yml` now uses version 4. Run 344940414051390 then failed in `fetch_by_watermark` after 20 minutes, twice over: the notices search API answers 400 to an offset above 100,000 ("Value must be between 0 and 100000. Parameter name: $skip") and reports 424,135 notices. Bronze kept awards (296 pages), awards_fy2001_2016 (147), ieg_ratings (13), ida_credits (12), ibrd_loans (10), ida_credit_history (178), ibrd_loan_history (39) and notices (237). The source now names `max_offset = 100000` in `config/sources.toml`, where the fetch stops, with a limitation line for the readiness page. The third run is recorded below when it finishes.
+
 The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 1, because the deploy makes the job and `strata.ops.pipeline_runs`.
 
 Run this from the main checkout:
@@ -787,3 +789,52 @@ Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEM
     <App url>/packages/KE-NWWDA-541055-CW-RFB
 
 It worked if the deploy exits 0 with its last line `Strata is running at https://...`, and the page shows the "Planning" eyebrow over "1 · How long it took", with a title that counts the comparable packages signed within the plan's 1.5 months. On the fixture, as of October 24, 2026, the server's answer was 49 comparable packages (45 signed and 4 still open), a middle half of 3.3 to 7.9 months, a middle of 4.4 months, 8 in 10 signed within 9.1 months, and 2 signed within the plan's 1.5 months. Its coverage line began "Based on 49 of 65 matching packages". The four still-open packages gain a day each day, so the quartiles can move by a tenth of a month as the date moves. Then open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` and choose "See the past range" on the KE-NWWDA-541055-CW-RFB row. It must open the same page, with focus on its heading.
+
+## Ticket 20, step 1 of 4: the live batch model reads the reports, and ISR 7 meets paragraph 78
+
+The merger parked this step on October 24, 2026, after merge commit da1ab20. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`.
+
+Run it after these steps. Ticket 07's step 1 fills the contracts and notices. Ticket 17's step 1 fills the IEG ratings dataset. Ticket 18's step 2 reads the documents into passages and fills `strata.silver.isr_ratings`. Then deploy again from da1ab20 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`. The deploy on October 24 came before this merge, and this merge adds four tables: `strata.bronze.batch_answers`, `strata.gold.assertion`, `strata.gold.disagreement` and `strata.ops.assertion_rejections`. The deploy must list those four as new, and it changes no existing table.
+
+The batch role's deployment is gpt-5.4-nano (`config/models.toml`, `[roles.batch]`). Day-one test 8 found it deployed as GlobalStandard, and Azure's Batch API takes only a Global Batch (or Data Zone Batch) deployment. Until decision 2 in `docs/STATUS.md` is answered, expect this step to stop with exit 2 and the error Azure gives. Do not change `config/models.toml` to get past it; tell the orchestrator.
+
+Run this from the main checkout:
+
+    uv run --script ops/assertions/batch_live.py --env-file .env
+
+It worked if it exits 0 and prints "Run <run id> holds N assertions and N disagreements", then a line that names `strata.gold.passage:26733307/v1/s4` and `strata.gold.passage:31525018/v1/78` with "I lean on strata.gold.passage:31525018/v1/78 (outcome)", and ends "The showcase disagreement came back as the benchmark expects." (criteria 1 and 7, live half). Exit 1 means the run finished without that row, or the batch was still running when the script stopped waiting after an hour. Run the same command again later: it waits for the same batch, and answers already held are not asked for again. Exit 2 means it could not run, and the line it prints says why. On the fixture the run wrote 1,261 assertions, 1 rejection (`quote_not_on_page`, the planted 31525018/v1/45) and 34 disagreements. The warehouse's counts may differ if the World Bank's hosts list newer documents.
+
+## Ticket 20, step 2 of 4: the morning after a nightly run, the text assertions are still there
+
+The merger parked this step on October 24, 2026, after merge commit da1ab20. Run it the morning after the first nightly run that follows step 1. It needs the same keys as step 1.
+
+The nightly job's `detect_disagreements` task has no Azure keys until ticket 43 passes them, so it replays the answers that step 1's live model gave (`HeldAnswers`, the review's B2 fix) rather than deleting the assertions read from text. Check first that the night's run finished:
+
+    SELECT task_key, state, finished_at FROM strata.ops.pipeline_runs WHERE task_key = 'detect_disagreements' ORDER BY finished_at DESC LIMIT 1
+
+Then run this from the main checkout:
+
+    uv run --script ops/assertions/batch_live.py --env-file .env
+
+It worked if the query shows the task finished after step 1, and the command again exits 0 and ends "The showcase disagreement came back as the benchmark expects." That proves the night's run kept what the live model read. If `config/evidence_ladder.toml` changed between step 1 and the night, every request changes and the night's run finds no held answer (the review's F5, parked decision 1 in ticket 20's done comment). In that case run step 1 again before you read this result.
+
+## Ticket 20, step 3 of 4: the showcase disagreement on DuckDB and on the SQL warehouse
+
+The merger parked this step on October 24, 2026, after merge commit da1ab20. Run it after step 1. It needs the Databricks keys in `.env`. It is the same command as ticket 04's step 3, and one run after step 1 serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `p130164_isr_7_against_icr_paragraph_78.sql`. Its one expected row is ISR 7's side `strata.gold.passage:26733307/v1/s4` (Satisfactory, made 2016-08-26) against `strata.gold.passage:31525018/v1/78` (PDF page 27, public 2019-11-02), for the period from the mid-term review on 2016-05-16, leaning on paragraph 78 under the `outcome` rule. If the warehouse's row differs, the command prints the DuckDB, warehouse and expected rows side by side. Tell the orchestrator before you change the file's expected row.
+
+## Ticket 20, step 4 of 4: re-record the batch answers from the live model
+
+The merger parked this step on October 24, 2026, after merge commit da1ab20. It needs only `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`, and a Global Batch deployment for the batch role (see step 1). It reads `data/out/fixture.duckdb`, which the gate builds, so run `.githooks/pre-commit` once first if that file is missing.
+
+Run this from the main checkout:
+
+    uv run --script ops/assertions/batch_live.py --record --env-file .env
+    .githooks/pre-commit
+
+If the first command prints a batch id because the batch was still running after an hour, run it again with `--batch <id>` to wait for the same batch instead of asking again. It worked if the first command exits 0 and ends "I wrote N answers to tests/fixtures/azure/batch_assertions.json. Run the gate next.", and the gate then passes on the live recording, which now also asks about the P130164 PAD. The recording keeps the planted assertion, so the gate still proves the rejection. A live answer that reads more than the hand-written one (such as item 8.b of the ICR Reviews) can move a value the tests expect, and the failing test names it. Do not edit the test to match; tell the orchestrator. The new recording is a tracked file, so the orchestrator commits it once the gate passes.

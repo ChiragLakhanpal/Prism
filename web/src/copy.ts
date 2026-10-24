@@ -372,6 +372,14 @@ export const copy = {
         running: () => "I'm looking for lessons.",
         done: (count: number, countText: string) => `I found ${countText} ${count === 1 ? "lesson" : "lessons"}.`,
       },
+      get_disagreements: {
+        running: (scope: string | null) =>
+          scope ? `I'm checking where sources disagree about ${scope}.` : "I'm checking where sources disagree.",
+        done: (count: number, countText: string, scope: string | null) =>
+          count === 0
+            ? `I found no sources that disagree${scope ? ` about ${scope}` : ""}.`
+            : `I found ${countText} ${count === 1 ? "disagreement" : "disagreements"} between sources${scope ? ` about ${scope}` : ""}.`,
+      },
     },
     otherTool: { running: (tool: string) => `I'm using ${tool}.`, done: (tool: string) => `I used ${tool}.` },
     write: {
@@ -620,6 +628,39 @@ export const copy = {
       PAD: "appraisal document",
       ISR: "status report",
     } as Record<string, string>,
+  },
+
+  // The words a disagreement card writes from what get_disagreements returns (ticket 20; the 23 brief,
+  // section 7.5). The tool returns ids and values, never a sentence, as check_plan returns reason codes.
+  // Templates whose {slots} the card fills: {lean} and {other} are the two sides' short names.
+  disagreement: {
+    // One sentence per rule id in config/evidence_ladder.toml, rules and ties alike. Reordering the
+    // ladder changes which id comes back, not these words. A test fails when an id lacks its sentence.
+    rule: {
+      // Brief 23's words, changed in ticket 20's review (round 2, P3): a tie is between two records as often
+      // as two reports, the other side of an outcome judgment can itself be written after closing, and
+      // GLOSSARY.md avoids "fact" for an assertion.
+      outcome: "For a judgment of how a project went, I lean on the later, more independent report, here {lean}. I keep {other} beside it.",
+      moment: "For something that happened at one moment, I lean on the record made at that moment, here {lean}.",
+      tieSpecific: "The two sources rank the same, so I lean on the more specific one, {lean}.",
+      tieRecent: "The two sources rank the same and are equally specific, so I lean on the more recent one, {lean}.",
+    },
+    // When a side's source was written, by its evidence tier (config/evidence_ladder.toml, [tiers]).
+    written: {
+      pad: "Written at appraisal",
+      isr: "Written during the project",
+      icr: "Written after the project closed",
+      ieg: "Written by IEG after the project closed",
+      record: "Recorded on this date",
+    },
+    // One phrase per reason code on get_disagreements' coverage line (config/tools.toml,
+    // [tools.get_disagreements.result] reasons), as find_comparables words its own.
+    reasons: {
+      replaced_by_later_version: (count: number) =>
+        count === 1
+          ? "{count} disagreement rested on a document that a later version replaced"
+          : "{count} disagreements rested on documents that later versions replaced",
+    },
   },
 
   // Tables (DESIGN.md section 5): a title sentence, a count line and a source line.

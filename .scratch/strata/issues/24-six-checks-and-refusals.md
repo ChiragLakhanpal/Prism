@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 6 (The verifier, Refusals); the blueprint's "Ho
 
 **Blocked by:** 13 (One cited answer through the Foundry agent and the verifier); 20 (Assertions, disagreements and the evidence ladder)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md section 6 (The verifier, Refusals); the blueprint's "Ho
 - [ ] Every refusal category appears in the benchmark file as a must-refuse question.
 - [ ] The check line reads from verifier counts in the form "Checked: N of N numbers match records; M of M quotes are on their pages. Not checked: whether these are the right comparables." and uses the neutral state (DESIGN.md section 5).
 - [ ] The removed box lists every removed sentence with its reason, the first one open by default, as in the blueprint's Package workspace wireframe; refusal and removal states are captured at 1440, 1024 and 390 px and pass axe.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/24-six-checks-and-refusals, as soon as ticket 20 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

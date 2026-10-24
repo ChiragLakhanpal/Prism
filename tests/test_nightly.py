@@ -61,8 +61,8 @@ def no_pages(source, engine):
     return ()
 
 
-# The tasks that have their work so far (ticket 07); ticket 43 gives the rest theirs.
-WORKING = {"fetch_by_watermark", "bronze_to_gold", "measure_data_readiness"}
+# The tasks that have their work so far (tickets 07 and 20); ticket 43 gives the rest theirs.
+WORKING = {"fetch_by_watermark", "bronze_to_gold", "detect_disagreements", "measure_data_readiness"}
 
 
 def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(engine):
@@ -75,6 +75,38 @@ def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(eng
     for _, _, _, started, finished, public_from in rows:
         assert started <= finished
         assert public_from == finished.astimezone(dt.UTC).date()
+
+
+def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_model_only_on_a_live_run(
+        engine, monkeypatch):
+    """detect_disagreements rebuilds the assertions and disagreements of every project with records. A run
+    that fetches from the live APIs asks the live batch model. When the job has no Azure OpenAI keys there is
+    none, and the run replays the answers bronze holds from the batch role's deployment, so it keeps what the
+    live model read. Any other run uses the recorded answers."""
+    from strata.knowledge import batch
+
+    asked, replayed = [], []
+
+    class Replays(batch.HeldAnswers):
+        def __init__(self, deployment=None):
+            super().__init__(deployment)
+            replayed.append(self.name)
+
+    monkeypatch.setattr("strata.knowledge.batch.from_environment", lambda: asked.append("live"))
+    monkeypatch.setattr("strata.knowledge.batch.HeldAnswers", Replays)
+    nightly.run_locally(engine)
+
+    assert asked == [] and replayed == []
+    held = engine.run("SELECT count(*) FROM strata.gold.assertion WHERE form = :form",
+                      {"form": "contract_record"}).rows[0][0]
+    assert held > 0
+
+    nightly.main(["--task", "detect_disagreements", "--run-id", "2", "--src", "src"], engine)
+
+    assert asked == ["live"]
+    assert replayed == [config.load_models()["batch"].deployment]
+    assert engine.run("SELECT count(*) FROM strata.gold.assertion WHERE form = :form",
+                      {"form": "contract_record"}).rows[0][0] == held
 
 
 def test_two_runs_keep_their_rows_apart(engine):
