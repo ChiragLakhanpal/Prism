@@ -175,7 +175,9 @@ export const copy = {
     placeholderNarrow: "Open a project, or ask",
     placeholderProject: "Ask about this project",
     placeholderPackage: "Ask about this package",
-    hint: "Type a project ID such as P130164, a STEP reference, a loan number, or a question.",
+    // {pid} is hintId, set in Roboto Mono.
+    hint: "Type a project ID such as {pid}, a STEP reference, a loan number, or a question.",
+    hintId: "P130164",
     listName: "What Enter will do",
     enter: "Enter",
     option: {
@@ -437,6 +439,8 @@ export const copy = {
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
     missing: "I have no source with this ID. The link may be incomplete.",
+    // The server gives the same answer for a source not public by the address's as-of date.
+    missingAsOf: (date: string) => `I have no source with this ID as of ${date}. It may not have been public yet, or the link may be incomplete.`,
   },
 
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
@@ -505,6 +509,8 @@ export const copy = {
     numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
     numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
     numTooltipRecord: "Matches the {kind} record {reference}.",
+    // A date a passage backs because it is its report's date, not because the paragraph holds it.
+    numTooltipReportDate: "Matches the date of the {kind} for {pid}.",
     // What a number's tooltip calls each kind of document, by its short name.
     docKinds: {
       ICR: "completion report",

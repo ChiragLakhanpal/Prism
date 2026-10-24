@@ -66,7 +66,9 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
           tabIndex={check.tabStop === false ? -1 : undefined}
           onClick={check.onOpen}
           className={cx(
-            "inline cursor-pointer py-0.5 text-left tabular-nums",
+            // A button lays out as an inline block, so its padding would make its line taller than the
+            // body's 24 px; the negative margin keeps the 28 px hit area inside the line's own height.
+            "inline cursor-pointer -my-0.5 py-0.5 text-left tabular-nums",
             DOTTED_UNDERLINE,
             className,
           )}

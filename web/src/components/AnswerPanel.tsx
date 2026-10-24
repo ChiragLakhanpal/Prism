@@ -23,7 +23,7 @@ import {
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
 import { formatCount, formatDate } from "../lib/format";
-import { passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
+import { highlightsFor, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -133,8 +133,17 @@ function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
     : copy.evidence.markerSourceSection(fields.docType, fields.date, place.text);
 }
 
-// "Matches paragraph 54 of the completion report for P130164.", with the ID in Roboto Mono.
-function numTooltip(evidence: EvidenceEvent | undefined): ReactNode {
+// Whether the words a sentence quotes from a passage hold this value, ignoring runs of whitespace.
+function quoted(evidence: EvidenceEvent, sentence: number, value: string): boolean {
+  const squeeze = (text: string) => text.replace(/\s+/g, " ");
+  const text = passageFields(evidence).text;
+  return highlightsFor(evidence, sentence).some(([start, end]) => squeeze(text.slice(start, end)).includes(squeeze(value)));
+}
+
+// "Matches paragraph 54 of the completion report for P130164.", with the ID in Roboto Mono. A passage
+// backs a number only inside the words a sentence quotes, but it also backs its report's date, which
+// the paragraph may not hold: then the tooltip names the report's date.
+function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: number; text: string } | null): ReactNode {
   if (!evidence) return null;
   const words = copy.evidence;
   if (evidence.kind === "record") {
@@ -145,6 +154,7 @@ function numTooltip(evidence: EvidenceEvent | undefined): ReactNode {
   const kind = words.docKinds[evidence.short_name ?? ""] ?? fields.docType;
   const place = placeOf(fields);
   const pid = <span className="font-mono">{fields.pcode}</span>;
+  if (date && !quoted(evidence, date.sentence, date.text)) return <Fill template={words.numTooltipReportDate} slots={{ kind, pid }} />;
   return place.kind === "paragraph" ? (
     <Fill template={words.numTooltip} slots={{ para: place.text, kind, pid }} />
   ) : (
@@ -156,16 +166,19 @@ function numTooltip(evidence: EvidenceEvent | undefined): ReactNode {
 // a tooltip naming the source, and a click that opens it. Numbers are not tab stops; the markers carry
 // the keyboard to the same sources.
 function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
-  const found: { start: number; end: number; text: string; id: string }[] = [];
+  const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before
   // the numbers, so each list keeps its own place in the text.
-  for (const mentions of [sentence.numbers, sentence.dates]) {
+  for (const [mentions, date] of [
+    [sentence.numbers, false],
+    [sentence.dates, true],
+  ] as const) {
     let cursor = 0;
     for (const mention of mentions) {
       const id = mention.evidence_id ?? sentence.evidence_ids[0];
       const start = sentence.text.indexOf(mention.text, cursor);
       if (!id || start < 0) continue;
-      found.push({ start, end: start + mention.text.length, text: mention.text, id });
+      found.push({ start, end: start + mention.text.length, text: mention.text, id, date });
       cursor = start + mention.text.length;
     }
   }
@@ -175,7 +188,7 @@ function sentenceText(sentence: SentenceEvent, evidence: Record<string, Evidence
   for (const mention of found) {
     if (mention.start < at) continue;
     parts.push(sentence.text.slice(at, mention.start));
-    const tooltip = numTooltip(evidence[mention.id]);
+    const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     parts.push(
       <Num
         key={mention.start}
@@ -390,7 +403,7 @@ export function AnswerPanel({
   }, [run.phase, run.serial]);
 
   // Focus goes back to the box, where the question still is, but its list stays shut over the page
-  // you return to until you press Down or type (the 14 brief, section 6.4).
+  // you return to until you press Down, type or click in it (the 14 brief, section 6.4).
   const close = () => {
     closeAnswer();
     const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");

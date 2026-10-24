@@ -121,6 +121,26 @@ for (const width of [1440, 390, 320]) {
       const box = (await page.locator(part).boundingBox())!;
       expect(box.y >= 0 || box.y + box.height <= 0, `${part} at ${Math.round(box.y)} px, ${Math.round(box.height)} px tall`).toBe(true);
     }
+    // No line of text above the row is left as a sliver at the top edge or under the sticky header: a
+    // line counts as cut when a whole pixel of it sits on each side.
+    const cut = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>("[data-plan-header]");
+      const edge = header && getComputedStyle(header).position === "sticky" ? header.getBoundingClientRect().bottom : 0;
+      const walker = document.createTreeWalker(document.querySelector("main")!, NodeFilter.SHOW_TEXT);
+      const lines: string[] = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim() || (header && header.contains(node)) || node.parentElement?.closest(".sr-only")) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+          if (rect.width > 0 && rect.top <= edge - 1 && rect.bottom >= edge + 1) {
+            lines.push(`"${node.textContent.trim()}" from ${Math.round(rect.top)} to ${Math.round(rect.bottom)} px`);
+          }
+        }
+      }
+      return lines;
+    });
+    expect(cut).toEqual([]);
   });
 }
 
@@ -204,6 +224,8 @@ test("focused and empty, the box gives its hint; Escape closes the list, then em
   await expect(box(page)).toHaveAccessibleDescription(
     "Type a project ID such as P130164, a STEP reference, a loan number, or a question.",
   );
+  // DESIGN.md section 3: the hint's sample ID is in Roboto Mono, as every other ID the box writes.
+  expect(await idFaces(page, "P130164")).toEqual(["Roboto Mono"]);
   await page.keyboard.type("P130164");
   await expect(options(page)).toHaveCount(2);
   await page.keyboard.press("Escape");

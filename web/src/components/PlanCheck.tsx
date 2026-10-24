@@ -420,8 +420,9 @@ function visibleActivity(ref: string): HTMLElement | null {
   return found[0] ?? null;
 }
 
-// The space left above a named activity when the page lands on it.
-const LANDING_GAP = 16;
+// The space left above a named activity when the page lands on it: the cards' own gap, so the line
+// above a card lands just past the edge instead of leaving a sliver of it in view.
+const LANDING_GAP = 12;
 
 // Brings a named activity into view without cutting the box band or the page's title at the top
 // edge: the page from its top when the activity fits on the first screen, or else the activity just
@@ -676,13 +677,11 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   return (
     <div aria-hidden="true" data-plan-skeleton>
       <EightColumns prose className="mt-6">
-        {/* The finding's count words are buttons whose 2 px padding makes a line 4 px taller.
-            The finding takes two lines below 768 px, both with a count word, and at the eight
-            columns' 1024 to 1199 px, where the second line has none. It takes one line at the full
-            width from 768 px and from 1200 px. The method sentence takes five lines below 768 px
-            and three from it. */}
-        <div className="py-0.5">
-          <SkeletonText className="gap-1 text-title @md/page:hidden @lg/page:flex @lg/page:gap-0 @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+        {/* The finding takes two lines below 768 px and at the eight columns' 1024 to 1199 px, and
+            one line at the full width from 768 px and from 1200 px. Its count words keep to the
+            line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
+        <div>
+          <SkeletonText className="text-title @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
           <SkeletonLine className="hidden text-title @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}

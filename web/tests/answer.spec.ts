@@ -213,6 +213,21 @@ test("reloading with the evidence parameter reopens the drawer at that source, w
   expect(new URL(page.url()).search).toBe("");
 });
 
+// The server answers 404 (unknown_evidence) for an ID it lacks and for a source not public by the as-of
+// date (src/strata/server/app.py). The ICR of October 10, 2019 was not public on August 26, 2016, so an
+// as-of link to it names the date as a reason, not only the link.
+test("a link to a source as of a date before it was public says it may not have been public yet", async ({ page }) => {
+  await open(page, { width: 390 });
+  await page.route("**/api/evidence?**", (route) => route.fulfill({ status: 404, contentType: "application/json", body: '{"code":"unknown_evidence"}' }));
+  await page.goto(`/projects/P130164?asof=2016-08-26&evidence=${encodeURIComponent(ICR_54)}`);
+
+  await expect(drawer(page)).toContainText(
+    "I have no source with this ID as of August 26, 2016. It may not have been public yet, or the link may be incomplete.",
+  );
+  await page.goto(`/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`);
+  await expect(drawer(page)).toContainText("I have no source with this ID. The link may be incomplete.");
+});
+
 test("Back closes a drawer the page opened, and the answer stays", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
@@ -430,10 +445,57 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   // The ICR's annex is cited but not quoted, so its section has no highlight, and the drawer says so.
   await tabs.first().press("ArrowRight");
   await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex /);
+  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex\s1\.A$/);
   await expect(drawer(page).locator("[data-passage] mark")).toHaveCount(0);
   await expect(drawer(page)).toContainText("This sentence does not quote the section, so no words are highlighted.");
 });
+
+// A section's closing ID, such as "1.A" in "Annex 1.A", stays with the word before it, as a short
+// section keeps to one line in the meta line; a long ISR section name still wraps between its words.
+test("a section's closing ID never breaks from its name in the card's source line, the drawer's heading or its tab", async ({ page }) => {
+  await open(page, { stream: "ask-p130164-isr-section.sse" });
+  await askFromTheBox(page);
+  await landed(page);
+  const annex = panel(page).locator("[data-sentence-text='3'] [data-citation='4']");
+  const text = async (locator: import("@playwright/test").Locator) => (await locator.textContent()) ?? "";
+
+  await annex.hover();
+  expect(await text(page.locator("[data-evidence-card] [data-source]"))).toContain("Annex\u00a01.A,");
+  await annex.click();
+  await expect(drawer(page).getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
+  expect(await text(drawer(page).getByRole("heading", { level: 2 }))).toContain("section Annex\u00a01.A");
+  expect(await text(drawer(page).getByRole("tab").nth(1))).toBe("ICR, Annex\u00a01.A");
+  expect(await text(drawer(page).getByRole("tab").first())).toBe("ISR, Project Development Objective Indicators");
+});
+
+// DESIGN.md section 3 sets body text at 16/24, so a line that holds a number you can check is as tall as
+// one that does not. The ISR answer's fourth sentence holds three of them.
+for (const width of [1440, 390]) {
+  test(`at ${width} px the lines of In short sit 24 px apart, with or without a number you can check`, async ({ page }) => {
+    await open(page, { stream: "ask-p130164-isr-section.sse", width });
+    await askFromTheBox(page);
+    await landed(page);
+    const block = panel(page).locator("[data-in-short]");
+    await expect(block.locator("button[data-num]")).toHaveCount(6);
+    // The bottom of each line of plain text, leaving out the numbers (buttons) and the markers (links).
+    const bottoms = await block.evaluate((element) => {
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      const seen: number[] = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (node.parentElement?.closest("button, a, .sr-only")) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of range.getClientRects()) {
+          if (rect.width > 0 && !seen.some((bottom) => Math.abs(bottom - rect.bottom) < 4)) seen.push(rect.bottom);
+        }
+      }
+      return seen.sort((a, b) => a - b);
+    });
+    expect(bottoms.length).toBeGreaterThan(3);
+    const gaps = bottoms.slice(1).map((bottom, at) => Math.round(bottom - bottoms[at]));
+    expect(gaps).toEqual(gaps.map(() => 24));
+  });
+}
 
 // WCAG 2.2 SC 2.4.11, Focus Not Obscured: the drawer scrolls to the ISR's highlight on open, and the tab
 // that Tab then moves to must never sit hidden under the drawer's sticky header (the 14 design review,
@@ -548,6 +610,25 @@ test("a date written before the numbers in a sentence is checkable too", async (
   await landed(page);
 
   await expect(panel(page).locator("[data-sentence-text='2'] [data-num]")).toHaveText(["October 10, 2019", "108", "328"]);
+});
+
+// A passage backs a number only inside quoted words, but it also backs its report's date, which is in
+// the drawer's meta line and not in the paragraph (src/strata/agent/verifier.py, check 1). The tooltip
+// points where the value is.
+test("a number's tooltip names the paragraph it was quoted from, and a date's names the report's date when the paragraph does not hold it", async ({ page }) => {
+  await open(page);
+  await askFromTheBox(page);
+  await landed(page);
+
+  await panel(page).locator("[data-sentence-text='0'] [data-num]").first().hover();
+  await expect(page.getByRole("tooltip")).toHaveText("Matches paragraph 54 of the completion report for P130164.");
+  await page.mouse.move(5, 880);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+
+  const date = panel(page).locator("[data-sentence-text='2'] [data-num]");
+  await expect(date).toHaveText("October 10, 2019");
+  await date.hover();
+  await expect(page.getByRole("tooltip")).toHaveText("Matches the date of the completion report for P130164.");
 });
 
 test("Close the answer closes the panel and its drawer, and returns focus to the box without opening its list until you ask for it", async ({ page }) => {

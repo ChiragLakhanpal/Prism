@@ -1,6 +1,7 @@
 // The evidence card (DESIGN.md section 5; the 14 brief, section 4.4): what a citation marker's hover
-// or keyboard focus shows. The stratum eyebrow and the marker's number, the source as its title, two or
-// three whole sentences around the match with the matching words highlighted, and the source line. It
+// or keyboard focus shows. The stratum eyebrow and the marker's number, the source as its title, the
+// sentences the match is in, whole, with the neighbors that fit in 280 characters (lib/sources.ts,
+// excerpt), with the matching words highlighted, and the source line. It
 // holds no links or buttons, so a keyboard never has to enter it; a click on the marker opens the
 // whole paragraph in the evidence drawer.
 import { copy } from "../copy";

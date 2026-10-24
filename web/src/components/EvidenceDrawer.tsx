@@ -13,6 +13,7 @@ import { copy } from "../copy";
 import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
+import { formatDate } from "../lib/format";
 import {
   closeEvidence,
   evidenceIn,
@@ -264,6 +265,7 @@ export function EvidenceDrawerView({
   from,
   narrow,
   preview,
+  asOf = null,
   dialogId = "evidence-drawer",
   sample = false,
   panelRef,
@@ -281,6 +283,8 @@ export function EvidenceDrawerView({
   narrow: boolean;
   // A preview of another view records nothing, and the drawer says so.
   preview: boolean;
+  // The address's as-of date, which the drawer read the source as of.
+  asOf?: string | null;
   dialogId?: string;
   // A design gallery sample: as wide as its frame, and not held in view.
   sample?: boolean;
@@ -385,7 +389,7 @@ export function EvidenceDrawerView({
                 <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />
               </div>
             )}
-            {data.status === "missing" && <Alert state="neutral">{copy.document.missing}</Alert>}
+            {data.status === "missing" && <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>}
             {data.status === "failed" && (
               <Alert
                 state="error"
@@ -503,6 +507,7 @@ export function EvidenceDrawer({
       from={from}
       narrow={narrow}
       preview={preview}
+      asOf={asOf}
       panelRef={panel}
       headingRef={heading}
       onClose={closeEvidence}

@@ -244,9 +244,14 @@ const ANSWER_SHOTS: Shot[] = [
   answerShot("answer--drawer-loading", ANSWER, { full: false, pending: ["/api/evidence"] }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
   answerShot("answer--drawer-failed", ANSWER, { full: false, api: { "/api/evidence": { status: 503, body: SERVICE_DOWN } } }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
   answerShot("answer--drawer-unknown", ANSWER, { full: false, api: { "/api/evidence": { status: 404, body: '{"code":"unknown_evidence"}' } } }, "/projects/P130164?evidence=strata.gold.passage%3Anothing"),
+  // The ICR of October 10, 2019, linked as of a date before it was public.
+  answerShot("answer--drawer-unknown-as-of", ANSWER, { full: false, api: { "/api/evidence": { status: 404, body: '{"code":"unknown_evidence"}' } } }, `/projects/P130164?asof=2016-08-26&evidence=${encodeURIComponent(ICR_54)}`),
   answerShot("answer--drawer-preview", ANSWER, { full: false }, `/projects/P130164?view=public&evidence=${encodeURIComponent(ICR_54)}`),
   // An ISR section has no paragraph number: the drawer names the section, and its long name wraps.
   answerShot("answer--drawer-section", ANSWER, { full: false, widths: [...WIDTHS, 320], api: { "/api/evidence": { recorded: "evidence-isr-p130164-s4.json" } } }, `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`),
+  // An answer whose fourth sentence quotes the table in an ISR section and also cites the ICR's Annex 1.A.
+  answerShot("answer--isr-card", "ask-p130164-isr-section.sse", { full: false, widths: WIDE, act: then(askInBox(), hover("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
+  answerShot("answer--isr-drawer", "ask-p130164-isr-section.sse", { full: false, widths: [...WIDTHS, 320], act: then(askInBox(), click("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
   answerShot("answer--error", "ask-agent-unavailable.sse", { act: askInBox() }),
   answerShot("answer--no-agent", "ask-no-agent.sse", { act: askInBox() }),
   answerShot("answer--refused", "ask-content-filter.sse", { act: askInBox() }),

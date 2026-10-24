@@ -11,6 +11,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboard
 import { CircleX, Search, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { Fill } from "./Fill";
 import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
 
@@ -219,7 +220,7 @@ export function OneBox({
         >
           {showHint && (
             <p id={hintId} className="px-4 py-2 text-caption text-ink-muted">
-              {copy.box.hint}
+              <Fill template={copy.box.hint} slots={{ pid: <span className="font-mono">{copy.box.hintId}</span> }} />
             </p>
           )}
           {showList && (

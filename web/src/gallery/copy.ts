@@ -155,6 +155,7 @@ export const galleryCopy = {
     cardRecord: "Evidence card, for a record",
     record: "A record",
     unknown: "An ID no source has",
+    unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",
   },
 

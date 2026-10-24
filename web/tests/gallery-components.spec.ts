@@ -832,7 +832,7 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   // The switcher's tabs name two sections, and a long tab wraps inside its pill.
   const tabs = page.locator("[data-state-section=switcher-section]").getByRole("tab");
   await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
-  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex /);
+  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex\s/);
   await expect(page.locator("[data-state-section=switcher-section] [data-passage] mark")).toHaveText(
     "Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.",
   );

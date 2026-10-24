@@ -307,7 +307,21 @@ const ICR_54_SENT = RUNS.ready.evidence[ICR_54_ID];
 
 
 // The drawer as a sample: opened from a sentence of an answer, or with its source in a given state.
-function DrawerSample({ id, run = null, sentence, data, preview = false }: { id: string; run?: Run | null; sentence?: number; data?: DrawerData; preview?: boolean }) {
+function DrawerSample({
+  id,
+  run = null,
+  sentence,
+  data,
+  preview = false,
+  asOf = null,
+}: {
+  id: string;
+  run?: Run | null;
+  sentence?: number;
+  data?: DrawerData;
+  preview?: boolean;
+  asOf?: string | null;
+}) {
   const dialogId = useId();
   const [current, setCurrent] = useState(id);
   const evidence = run?.evidence[current];
@@ -322,6 +336,7 @@ function DrawerSample({ id, run = null, sentence, data, preview = false }: { id:
         from={from}
         narrow={false}
         preview={preview}
+        asOf={asOf}
         dialogId={dialogId}
         sample
         onClose={() => {}}
@@ -952,6 +967,7 @@ export const PAGES: GalleryPage[] = [
       { id: "loading", title: s.loading, body: <DrawerSample id={ICR_54_ID} data={{ status: "loading" }} /> },
       { id: "failed", title: s.error, body: <DrawerSample id={ICR_54_ID} data={{ status: "failed", onRetry: () => {} }} /> },
       { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },
+      { id: "unknown-as-of", title: s.unknownAsOf, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} asOf="2016-08-26" /> },
       { id: "preview", title: s.drawerPreview, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} preview /> },
     ],
   },

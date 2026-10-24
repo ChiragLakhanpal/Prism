@@ -28,7 +28,14 @@ export type PassageFields = {
 export type Place = { kind: "paragraph" | "section"; text: string };
 
 export function placeOf(fields: PassageFields): Place {
-  return fields.numbered ? { kind: "paragraph", text: fields.para } : { kind: "section", text: fields.section ?? fields.para };
+  return fields.numbered ? { kind: "paragraph", text: fields.para } : { kind: "section", text: keepClosingId(fields.section ?? fields.para) };
+}
+
+// A section's closing ID, such as "1.A" in "Annex 1.A" or "III.B", is tied to the word before it by a
+// no-break space, so a heading or a tab never ends a line on "Annex". A name of words alone, such as
+// "Project Development Objective Indicators", still wraps between them.
+function keepClosingId(section: string): string {
+  return section.replace(/ (\S*[0-9.]\S*)$/, "\u00a0$1");
 }
 
 export function shortProjectName(name: string): string {
