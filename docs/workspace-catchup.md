@@ -579,6 +579,8 @@ It must return one row whose reviewer is your user id, as `<App url>/api/me` sho
 
 ## Ticket 19, step 4 of 5: the live judge on the fixture's uncertain pairs
 
+**Ran on October 24, 2026 (orchestrator).** Exit 0. gpt-5.4 judged the three pairs the thresholds sent it: CHINA RAILWAY NO. 10 ENGINEERING GROUP against China Railway No.10 Engineering Group Co., Ltd. (merge, 0.98), and M/S INTERCONTINENTAL CONSULTANTS & TEC against INTERCONTINENTAL CONSULTANTS AND TECH twice (merge, 0.97 and 0.98). The first answer is saved over `tests/fixtures/azure/supplier_judge.json` with `"recorded": true`. The saved first answer is the Intercontinental pair's (0.97), and the hand-written fixture had said 0.93, so `tests/test_knowledge_adapters.py` now expects 0.97, with a comment; the test checks the adapter's wire format, and the pair in its question is unchanged. The gate passed on the commit that holds both.
+
 The merger parked this step on October 24, 2026, after merge commit a7bcc99. It needs `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`, and the fixture database at `data/out/fixture.duckdb`, which the gate builds. It writes nothing to any database.
 
 Run this from the main checkout, then review the diff and run the gate:
