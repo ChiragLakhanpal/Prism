@@ -83,6 +83,9 @@ function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: Tooltip
     const says = count === 1 ? words.number.missingOne : words.number.missing;
     return says(n(count), n(row.denominator), said(noun, row.denominator), lack, measured);
   }
+  if (kind === "missing" && row.kind === "read_well" && count !== undefined && row.denominator !== null) {
+    return words.number.unread(n(count), n(row.denominator), said(noun, row.denominator), measured);
+  }
   if (kind === "ratio" && row.count !== null && row.denominator !== null) {
     return words.number.ratio(n(row.count), n(row.denominator), said(noun, row.denominator), measured);
   }
@@ -119,7 +122,7 @@ export function MeasureValue({
     <MeasureNum
       value={value}
       className={className}
-      tooltip={tooltip(row, noun, measures.asOf, role === "missing" && lack ? "missing" : tooltipKind, count, lack)}
+      tooltip={tooltip(row, noun, measures.asOf, role === "missing" && (lack || row.kind === "read_well") ? "missing" : tooltipKind, count, lack)}
       measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null)}
     />
   );

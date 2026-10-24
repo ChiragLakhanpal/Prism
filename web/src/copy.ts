@@ -776,6 +776,10 @@ export const copy = {
         `${part} of ${whole} ${noun} lack ${lack}. Measured ${date}.`,
       missingOne: (part: string, whole: string, noun: string, lack: string, date: string) =>
         `${part} of ${whole} ${noun} lacks ${lack}. Measured ${date}.`,
+      // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
+      // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
+      unread: (part: string, whole: string, noun: string, date: string) =>
+        `${part} of ${whole} ${noun} I couldn't read without errors. Measured ${date}.`,
       kinds: "Counted from the table of what you can ask, below.",
       sources: "Counted from the rows of the Sources table below.",
       moreGaps: "Counted from the gaps listed under Sources, below.",

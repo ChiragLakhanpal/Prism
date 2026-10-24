@@ -213,6 +213,28 @@ test("from 768 px no cell's text in the Sources table runs into the next cell's"
     return Math.max(0, ...Array.from(range.getClientRects()).map((line) => Math.round(edge - line.left)));
   });
   expect(spill, "px the dateless Fresh cell's text runs past its own cell").toBe(0);
+  // "Not measured yet" is not a value, so it is set as DESIGN.md section 5 sets it: regular, in
+  // ink-muted (critique r6).
+  const look = await fresh.getByText(/Not measured yet/).evaluate((element) => {
+    const probe = document.createElement("span");
+    probe.style.color = "var(--color-ink-muted)";
+    document.body.append(probe);
+    const muted = getComputedStyle(probe).color;
+    probe.remove();
+    return { muted: getComputedStyle(element).color === muted, weight: getComputedStyle(element).fontWeight };
+  });
+  expect(look).toEqual({ muted: true, weight: "400" });
+});
+
+// Critique r6: at 390 px the tables' source line broke its date ("taken Oct" then "23, 2026.").
+test("at 390 px each table's source line keeps its date on one line", async ({ page }) => {
+  await mockData(page, FULL);
+  await open(page, "/data", 390);
+
+  const dates = page.locator("[data-readiness-table] [data-source] [data-num]");
+  await expect(dates).toHaveCount(2);
+  await expect(dates.first()).toHaveText("Oct 23, 2026");
+  expect(await dates.evaluateAll((all) => all.map((date) => date.getClientRects().length))).toEqual([1, 1]);
 });
 
 test("each column head holds its definition, and its label opens the full definition", async ({ page }) => {
@@ -300,6 +322,15 @@ test("every number's tooltip names what it counts, and its window shows the numb
       hasText: "75 of 603 contracts lack a reference from Systematic Tracking of Exchanges in Procurement (STEP). Measured Oct 23, 2026.",
     }),
   ).toBeVisible();
+  // A shortfall of pages I couldn't read lacks nothing the registry names, so its tooltip says
+  // what went wrong with them, as its sentence does (critique r6).
+  const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^30$/ });
+  await unread.focus();
+  await expect(
+    page.getByRole("tooltip").filter({ hasText: "30 of 175 body pages I couldn't read without errors. Measured Oct 23, 2026." }),
+  ).toBeVisible();
+  await page.keyboard.press("Escape");
+
   await shortfall.click();
   const window = page.getByRole("dialog", { name: "Linked" });
   await expect(window).toContainText("Missing75");

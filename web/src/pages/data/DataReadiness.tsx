@@ -83,8 +83,9 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
       <Stack>
         {/* The date and the schedule each keep to one line, and the dot stays with the date, so the
             cell wraps only after the dot and never spills into the next cell. With no date, "Not
-            measured yet" wraps like other text, since it is too wide for a narrow cell (review r5 P2). */}
-        <span className="font-semibold">
+            measured yet" wraps like other text, since it is too wide for a narrow cell (review r5 P2),
+            and is set in ink-muted, since it is not a value. */}
+        <span className={row.as_of ? "font-semibold" : "text-ink-muted"}>
           <Template
             text={words.sources.fresh}
             values={{
@@ -326,8 +327,11 @@ function Provenance({ result }: { result: Readiness }) {
   );
 }
 
+// The date stays on one line, as a sentence's date does, so a narrow screen never splits it.
 function sourceLine(result: Readiness): ReactNode {
-  return result.measured ? <Template text={words.sourceLine} values={{ date: day(result.measured.last, result.as_of, "table") }} /> : null;
+  if (!result.measured) return null;
+  const date = <Num date={result.measured.last} style="table" today={result.as_of} className="whitespace-nowrap" />;
+  return <Template text={words.sourceLine} values={{ date }} />;
 }
 
 function FilterNotice({ result }: { result: Readiness }) {
