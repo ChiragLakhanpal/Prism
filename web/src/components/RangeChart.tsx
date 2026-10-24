@@ -146,10 +146,13 @@ function useTextWidths(keys: string[]) {
 }
 
 // A surface rect under a label, its box plus 2 px, drawn after the plan line: where the label cannot
-// move off the line, the line stops cleanly above it and resumes below it (DESIGN.md section 6).
-function Knockout({ kind, box }: { kind: string; box: Box | undefined }) {
+// move off the line, the line stops cleanly above it and resumes below it (DESIGN.md section 6). It
+// ends at the floor, the top of the axis line's stroke, so the axis runs whole under row C.
+function Knockout({ kind, box, floor }: { kind: string; box: Box | undefined; floor: number }) {
   if (!box || box.width === 0) return null;
-  return <rect data-knockout={kind} x={box.x - 2} y={box.y - 2} width={box.width + 4} height={box.height + 4} className="fill-surface" />;
+  const top = box.y - 2;
+  const bottom = Math.min(box.y + box.height + 2, floor);
+  return <rect data-knockout={kind} x={box.x - 2} y={top} width={box.width + 4} height={bottom - top} className="fill-surface" />;
 }
 
 // A 3 px surface halo under text that sits over marks (DESIGN.md section 6).
@@ -684,7 +687,7 @@ export function RangeChart({
         )}
 
         {/* The axis. */}
-        <line x1={PAD} x2={plotRight} y1={axisY} y2={axisY} strokeWidth={1} className="stroke-line-strong" />
+        <line data-axis x1={PAD} x2={plotRight} y1={axisY} y2={axisY} strokeWidth={1} className="stroke-line-strong" />
         {ticks.map((tick, index) => (
           <g key={tick}>
             <line x1={x(tick)} x2={x(tick)} y1={axisY} y2={axisY + 4} strokeWidth={1} className="stroke-line-strong" />
@@ -750,8 +753,8 @@ export function RangeChart({
           </g>
         )}
         {/* Row C: the statistics' labels, over the plan line, each on its knockout and with its halo. */}
-        {middleLabel && stats?.q50 != null && <Knockout kind="middle" box={boxes.middle} />}
-        {in10Label && stats?.q80 != null && <Knockout kind="in10" box={boxes.in10} />}
+        {middleLabel && stats?.q50 != null && <Knockout kind="middle" box={boxes.middle} floor={axisY - 0.5} />}
+        {in10Label && stats?.q80 != null && <Knockout kind="in10" box={boxes.in10} floor={axisY - 0.5} />}
         {middleLabel && stats?.q50 != null && (
           <text ref={ref("middle")} data-row-c="middle" x={middleX} y={rowC1} fontSize={type.s} className="fill-chart-text" style={HALO}>
             {middleLabel}

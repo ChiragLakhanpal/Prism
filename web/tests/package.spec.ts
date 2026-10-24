@@ -272,6 +272,23 @@ test("the plan line never runs through a statistic's label: the label moves off 
   }
 });
 
+test("the statistics' labels and their knockouts stop above the axis, so the axis line runs whole under them", async ({ page }) => {
+  for (const comparables of ["comparables-ke-nwwda-541055.json", "comparables-ke-nwwda-541055-any-category.json"]) {
+    for (const width of [1440, 1024, 390]) {
+      await openPackage(page, { width, comparables: { body: await recorded(comparables) } });
+      await ready(page);
+      const overlaps = await page.evaluate(() => {
+        // The axis is a 1 px line, so its stroke starts half a pixel above its y.
+        const axis = document.querySelector("[data-chart-drawing] [data-axis]")!.getBoundingClientRect().top - 0.5;
+        return [...document.querySelectorAll("[data-chart-drawing] [data-knockout]")]
+          .map((knockout) => [knockout.getAttribute("data-knockout"), knockout.getBoundingClientRect().bottom - axis] as const)
+          .filter(([, over]) => over > 0.01);
+      });
+      expect(overlaps, `${comparables} at ${width} px`).toEqual([]);
+    }
+  }
+});
+
 test("below 768 px the reset button takes the helper's place while the line is off the plan, so the chart sits about 16 px under the control", async ({ page }) => {
   for (const width of [390, 320]) {
     await openPackage(page, { width });
