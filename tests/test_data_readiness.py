@@ -316,8 +316,8 @@ def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_sh
             sum(entry["count"] for entry in stored), sum(entry["denominator"] for entry in stored)), measure
         assert row["evidence_id"].startswith("strata.ops.data_readiness:documents/")
     assert [route["label"] for route in result["routes"]] == [
-        "Published text (Route A)", "Layout parser (Route B)", "Report pages, published text (Route A)",
-        "Report pages, layout parser (Route B)"]
+        "Plan pages, published text", "Plan pages, layout parser", "Report pages, published text",
+        "Report pages, layout parser"]
 
 
 def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine):

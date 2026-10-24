@@ -64,6 +64,7 @@ def test_the_slice_counts_the_projects_its_criteria_select_and_records_how_that_
     assert f"planned {case['planned']}, {case['planned'] - case['count']} fewer" in measure["detail"]
     assert "Kenya 17, Bangladesh 0, Vietnam 0, Pakistan 0" in measure["detail"]
     assert "holds no such project for Bangladesh, Vietnam and Pakistan" in measure["detail"]
+    assert "approve" not in measure["detail"].lower()  # DESIGN.md section 7, rule 19
     # The run read the documents of each selected project whose list the fixture records, and the named
     # ones: the showcase (India) and the French report's project (Haiti) are outside the criteria.
     assert selected == {"P130164", "P156634", "P127203"}
@@ -149,6 +150,25 @@ def test_a_low_daily_page_cap_stops_the_layout_parser_and_the_shelf_says_where_r
     assert pad.read_pages < pad.pdf_pages
 
 
+def test_a_plan_whose_own_reader_stopped_at_the_cap_shows_on_the_shelf_as_stopped_there(tmp_path):
+    """The plan reader parses the shelf's Procurement Plan under its own run, so the shelf looks at any parse
+    run of the plan's project that day, not only the passage reader's (review r2 P13)."""
+    from strata.config import load_thresholds
+    from strata.lakehouse import catalog, passages, plans
+
+    limits = load_thresholds()
+    limits.values["ingestion"]["daily_page_cap"] = 5
+    with DuckDBEngine.open(tmp_path / "capped-plan.duckdb") as engine:
+        catalog.build(engine)
+        plans.run_on_fixture(engine, "P161305", thresholds=limits, clock=later_that_day(), run_id="plans-capped")
+        report = passages.run_on_fixture(engine, projects=["P161305"], thresholds=limits, clock=later_that_day(),
+                                         run_id="passages-capped")
+    [plan] = [row for row in report.shelf if row.shelf_key == "long_plan"]
+
+    assert (plan.state, plan.daily_page_cap) == ("stopped_at_cap", 5)
+    assert plan.read_pages < plan.pdf_pages
+
+
 # ── The stress shelf ─────────────────────────────────────────────────────
 
 def shelf(engine) -> dict[str, dict]:
@@ -163,9 +183,10 @@ def test_the_shelf_records_one_outcome_for_each_of_its_five_entries_in_the_slice
                                              "over_parser_limit"]
 
 
-def test_the_p130164_pad_risk_annex_recovers_each_rated_risk_on_its_page_and_counts_them_against_the_hand_count(db):
+def test_the_p130164_pad_risk_annex_recovers_each_rated_risk_on_its_page_with_no_hand_count_to_check_against(db):
     """Criterion 3. The annex is set in two columns that the scan's text layer runs together, so the page
-    router sends it to the layout parser as a risk table, which recovers one row per rated risk."""
+    router sends it to the layout parser as a risk table, which recovers one row per rated risk. No person
+    has counted the annex's risks from the PDF's page images, so the outcome has no denominator."""
     annex = SHELF["pad_risk_annex"]
     risk_rows = rows(db, "SELECT pdf_page, cells FROM strata.silver.passages WHERE document_id = :document_id "
                          "AND kind = 'table_row' ORDER BY table_row", document_id=annex["document_id"])
@@ -175,9 +196,9 @@ def test_the_p130164_pad_risk_annex_recovers_each_rated_risk_on_its_page_and_cou
              for row in risk_rows]
     assert found == [(rating["risk"], rating["rating"], rating["pdf_page"]) for rating in annex["ratings"]]
     assert (outcome["count"], outcome["denominator"], outcome["denominator_from"]) == (
-        len(annex["ratings"]), annex["risks"], "hand_count")
+        len(annex["ratings"]), None, None)
     assert (outcome["counted_on"], outcome["hard_page"], outcome["unreadable"]) == (
-        annex["counted_on"], annex["first_pdf_page"], False)
+        None, annex["first_pdf_page"], False)
     assert outcome["parser_pages"] == annex["pdf_pages"]  # a scan: every page goes to the layout parser
     routes = rows(db, "SELECT pdf_page FROM strata.silver.document_page_routes WHERE document_id = :document_id "
                       "AND reason = 'risk_table' ORDER BY pdf_page", document_id=annex["document_id"])
@@ -190,7 +211,10 @@ def test_the_risk_annex_has_one_summary_passage_which_the_verifier_never_lets_ba
                          "WHERE document_id = :document_id AND kind = 'table_summary'", document_id=annex["document_id"])
 
     assert summary["passage_id"] == f"{annex['document_id']}/v1/table{annex['first_pdf_page']}"
-    assert "not the document's own words" in summary["text"]
+    # The summary starts with the table; its kind, and the drawer's caption, say Strata wrote it.
+    assert summary["text"].startswith(f"The table on PDF pages {annex['first_pdf_page']} to {annex['last_pdf_page']} of "
+                                      f"the Project Appraisal Document is titled {annex['title']['quote']}. It has "
+                                      f"{annex['risks']} rows")
     assert all(rating["risk"] in summary["text"] for rating in annex["ratings"])
 
 
@@ -206,6 +230,8 @@ def test_the_scanned_pad_keeps_its_numbered_paragraphs_with_their_pages_as_the_l
 
 
 def test_the_longest_pad_is_chosen_at_run_time_and_counts_its_pages_read_well_against_its_pdf(db):
+    """The longest PAD of the slice's own projects (review r2 P3): P156634's 103 pages. The P130164 PAD, the
+    showcase's, is read too, but India is outside the slice."""
     longest = SHELF["longest_pad"]
     outcome = shelf(db)["longest_pad"]
 
@@ -213,6 +239,22 @@ def test_the_longest_pad_is_chosen_at_run_time_and_counts_its_pages_read_well_ag
         longest["document_id"], longest["pdf_pages"], longest["pdf_pages"])
     assert outcome["denominator_from"] == "pdf_pages"
     assert 0 < outcome["count"] <= outcome["pdf_pages"]
+
+
+def test_the_longest_rule_never_chooses_a_document_of_a_project_outside_the_slice(db):
+    """A longer PAD of a project the slice file names but its criteria don't select, such as the showcase in
+    India, is left out of the longest rule (review r2 P3)."""
+    from strata.config import load_slice, load_thresholds
+    from strata.lakehouse import stress_shelf
+
+    held = stress_shelf.documents(db)
+    held["1"] = stress_shelf.Document("1", "P130164", "Project Appraisal Document", dt.date(2013, 10, 1), 900,
+                                      "https://example.org/long.pdf", "en")
+    [item] = [entry for entry in load_slice().stress_shelf if entry.key == "longest_pad"]
+    found = stress_shelf.outcome(db, "longest", item, 2, held, load_thresholds(), "test parser",
+                                 dt.datetime(2026, 10, 23, 11, tzinfo=dt.UTC), selected=("P156634",))
+
+    assert found.document_id == SHELF["longest_pad"]["document_id"]
 
 
 def test_the_stress_shelf_plan_outcome_counts_its_activities_that_became_step_rows(db):
@@ -278,6 +320,81 @@ def test_a_document_over_the_parsers_limit_is_read_in_parts_and_keeps_its_pages_
     assert (outcome.document_id, outcome.parts, outcome.hard_page) == (annex["document_id"], 3, 41)
     # The parser read every page but the three whose text layer is empty, each as the page with its number.
     assert (outcome.count, outcome.denominator) == (annex["pdf_pages"] - len(annex["empty_pages"]), annex["pdf_pages"])
+
+
+def test_a_page_the_parser_read_with_another_page_s_words_does_not_match_its_pdf_page(tmp_path):
+    """The check behind criterion 6 can fail (review r2 P1): it compares the words the parser read for a page
+    with the words of the PDF page that has that number. Here part 2's page 45 is given page 46's words, as
+    a parser that numbered a part's pages wrongly would give them."""
+    from strata.config import load_slice, load_thresholds
+    from strata.lakehouse import catalog, passages, stress_shelf
+
+    annex = SHELF["pad_risk_annex"]
+    limits = load_thresholds()
+    limits.values["ingestion"]["parser_part_pages"] = 40
+    with DuckDBEngine.open(tmp_path / "parts.duckdb") as engine:
+        catalog.build(engine)
+        passages.run_on_fixture(engine, projects=["P130164"], thresholds=limits, clock=later_that_day(), run_id="parts")
+        engine.run("UPDATE strata.bronze.layout_pages SET text = (SELECT text FROM strata.bronze.layout_pages "
+                   "WHERE document_id = :document_id AND pdf_page = 46), tables = (SELECT tables FROM "
+                   "strata.bronze.layout_pages WHERE document_id = :document_id AND pdf_page = 46) "
+                   "WHERE document_id = :document_id AND pdf_page = 45", {"document_id": annex["document_id"]})
+        found = stress_shelf.record(engine, "parts-again", load_slice(), limits, "test parser",
+                                    dt.datetime(2026, 10, 23, 11, tzinfo=dt.UTC))
+    [outcome] = [row for row in found if row.kind == "over_parser_limit"]
+
+    assert outcome.count == annex["pdf_pages"] - len(annex["empty_pages"]) - 1
+
+
+# ── Project Papers and PPARs (review r2 B3) ──────────────────────────────
+
+def test_a_project_paper_of_the_slice_is_read_into_numbered_passages_on_their_pages(db):
+    """The reader reads a Project Paper as it reads a PAD: P156634's restructuring paper of May 24, 2021
+    numbers its paragraphs 1 to 11 under sections I.A, I.B and II (values.toml, project-paper-para-7)."""
+    case = next(entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]
+                if entry["id"] == "project-paper-para-7")
+    numbered = rows(db, "SELECT p.paragraph, p.section_path, p.pdf_page, p.text, p.parse_route FROM strata.silver.passages AS p "
+                        "JOIN strata.silver.documents AS d ON d.document_id = p.document_id "
+                        "WHERE d.project_id = :project AND d.document_type = :document_type AND d.document_date = :date "
+                        "AND p.paragraph_numbered", project=case["project"], document_type=case["document_type"],
+                    date=case["date"])
+    [seventh] = [row for row in numbered if row["paragraph"] == str(case["paragraph"])]
+
+    assert len(numbered) == case["paragraphs"]
+    assert (seventh["section_path"], seventh["pdf_page"], seventh["parse_route"]) == (case["section"], case["pdf_page"], "A")
+    assert seventh["text"].startswith(case["quote"])
+
+
+PPAR_TEXT = """Project Performance Assessment Report
+Contents
+1. Background, Context, and Design ..........................1
+2. Results ...................................................4
+
+1. Background, Context, and Design
+1.1     The state lies in the fertile plains of two rivers, and its farmers draw on both
+for irrigation.
+1.2     The project was approved in 2013 and closed in 2020.
+2. Results, What Worked, and Why?
+2.1     The project results are aligned with its two objectives.
+\f2.2     The regulatory reforms lacked sufficient preparation, so the new agencies
+struggled to issue licenses.
+2.3     The measurement of water flow improved.
+"""
+
+
+def test_a_ppar_numbers_its_paragraphs_within_each_chapter_and_each_is_a_passage():
+    """IEG's PPARs number paragraphs 1.1, 1.2, then 2.1 under each chapter's heading. No fixture project lists
+    a PPAR, so this reads a hand-written one of two pages, written the way a PPAR is set out."""
+    from strata.reader import passages as route_a
+    from strata.reader.templates import TEMPLATES
+
+    reading = route_a.read(PPAR_TEXT, 2, TEMPLATES["Project Performance Assessment Report"], 500)
+
+    assert [(p.paragraph, p.section_path, p.pdf_page) for p in reading.passages] == [
+        ("1.1", "1", 1), ("1.2", "1", 1), ("2.1", "2", 1), ("2.2", "2", 2), ("2.3", "2", 2)]
+    assert reading.passages[3].text == ("2.2 The regulatory reforms lacked sufficient preparation, so the new agencies "
+                                        "struggled to issue licenses.")
+    assert all(p.paragraph_numbered for p in reading.passages)
 
 
 # ── The ISR rating history, the documents' keys and the header's sector word ──

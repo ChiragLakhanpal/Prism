@@ -352,9 +352,13 @@ class Page:
         if name == "coverage" and column.years:
             cell["years_row"] = self.row_ref(source, ReadinessColumn(column.years, "", "", column.counted_in))
         if name == "coverage" and column.projects:
-            # A document collection's projects: those the slice criteria selected at run time.
-            cell["projects_row"] = self.row_ref(source, ReadinessColumn(column.projects, "", "", "strata.gold.project"))
-        if name == "read_well" and row.routes:
+            # A document collection's projects: those its documents belong to, so the two numbers on its
+            # line count the same documents (design review r2 B1).
+            cell["projects_row"] = self.row_ref(source, ReadinessColumn(column.projects, "", "", column.counted_in))
+        if name == "coverage" and column.slice_read:
+            # The pilot projects whose documents were read, out of those the slice criteria selected.
+            cell["slice_row"] = self.row_ref(source, ReadinessColumn(column.slice_read, "", "", column.counted_in))
+        if name == "read_well" and row.read_well_by_route:
             # The share across both routes, and each route's part of it for the window: the published
             # text, then the layout parser (config/sources.toml lists them in that order).
             cell["routes"] = [{"route": route, "row": self.shared(self.measures.use(source.key, found.measure,
@@ -410,8 +414,11 @@ class Page:
             from strata.config import load_slice
 
             chosen = load_slice()
+            # shelf: whether the hardest documents show below, whose projects the reader also reads; the
+            # result sets it once it has the shelf (design review r2 B1).
             return {"kind": "slice", "sectors": list(chosen.sectors), "countries": [c.name for c in chosen.countries],
-                    "first_fiscal_year": chosen.first_fiscal_year, "last_fiscal_year": chosen.last_fiscal_year}
+                    "first_fiscal_year": chosen.first_fiscal_year, "last_fiscal_year": chosen.last_fiscal_year,
+                    "shelf": False}
         if source.scope == EVERY_COUNTRY:
             return {"kind": "every_country"}
         if source.scope == SLICE_COUNTRIES:
@@ -588,17 +595,21 @@ def shelf(page: Page, in_view: set[str], filtered: bool) -> tuple[list[dict], di
             if found["state"] in ("read", "stopped_at_cap"):
                 entry |= {"hard_page": _whole(found["hard_page"]), "parts": _whole(found["parts"]),
                           "denominator_from": found["denominator_from"],
-                          "counted_on": _iso(_date(found["counted_on"])),
-                          "parser_row": _shelf_row(page, found, "stress_shelf_parser_pages",
-                                                   _whole(found["parser_pages"]), _whole(found["pdf_pages"]))}
+                          "counted_on": _iso(_date(found["counted_on"]))}
+            # Each row only for a number the page shows: a reading stopped at the cap shows the pages read
+            # so far in place of the parser's pages and the outcome.
             if found["state"] == "read":
+                entry["parser_row"] = _shelf_row(page, found, "stress_shelf_parser_pages",
+                                                 _whole(found["parser_pages"]), _whole(found["pdf_pages"]))
                 entry["outcome_row"] = _shelf_row(page, found, f"stress_shelf_{item.kind}", _whole(found["count"]),
                                                   _whole(found["denominator"]))
                 entry["status"] = _shelf_status(found, threshold)
             elif found["state"] == "stopped_at_cap":
                 entry["read_pages_row"] = _shelf_row(page, found, "stress_shelf_read_pages",
                                                      _whole(found["read_pages"]), _whole(found["pdf_pages"]))
-            elif found["state"] == "no_document" and found["longest_pages"] not in (None, ""):
+            elif found["state"] == "no_document" and item.kind == "over_parser_limit" \
+                    and found["longest_pages"] not in (None, ""):
+                # The longest document read, which the over-limit entry's note names.
                 entry["longest_row"] = _shelf_row(page, found, "stress_shelf_longest_pages",
                                                   _whole(found["longest_pages"]), None)
         if entry["status"] == "gap":
@@ -763,6 +774,11 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
             if (first_rows[row["source_key"]] if row["type"] == "gap" else row["id"]) in in_view]
     ranked = [found for found in every_gap if found.row_id in in_view]
     stress_shelf, shelf_gaps = shelf(page, in_view, filtered)
+    # The readers also read the projects of the hardest documents, such as the showcase in India, so a row
+    # that covers the slice names them whenever the section shows below it.
+    for row in rows:
+        if row.get("scope", {}).get("kind") == "slice":
+            row["scope"]["shelf"] = bool(stress_shelf)
     kinds = _kinds(page, every_gap, in_view, from_tool if filtered else None, shelf_gaps)
     fixes = page.fixes(ranked)
     routes = page.routes(in_view)

@@ -32,6 +32,9 @@ export type ReadinessColumn = {
   width?: string;
   // More classes for the column's head and cells in the table, such as extra padding.
   className?: string;
+  // "hidden": in a card, the column's label is for screen readers only, and its value stands 16 px
+  // down on its own line, as the shelf's "Open at page" link does (the 18 brief, section 2.4).
+  cardLabel?: "hidden";
 };
 
 export type ReadinessRow =
@@ -43,19 +46,27 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // Skeleton rows as tall, on average, as the rows they stand for, measured on the fixture's page at
 // 1440 and 1024 px, and below 768 px a card's body as tall as a real card's.
 // The hardest documents' rows were measured on the fixture's page too (ticket 18), and the Sources rows
-// again once its document rows changed.
-const ROW_HEIGHT = { kinds: "h-[7.875rem] xl:h-[7.3125rem]", sources: "h-[7.875rem] xl:h-[6.9375rem]", shelf: "h-[8.25rem] xl:h-[6.4375rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.75rem]", sources: "h-[16rem]", shelf: "h-[22.25rem]" } as const;
+// again once its document rows changed, and again once the reports' Coverage gained its pilot projects
+// line and its scope caption the hardest documents' projects (design review r2). Below 768 px a card
+// stands a little taller than a real one, so the cards also hold the place of the source line under
+// them, which wraps there.
+const ROW_HEIGHT = { kinds: "h-[7.875rem] xl:h-[7.3125rem]", sources: "h-[8.4rem] xl:h-[7.2675rem]", shelf: "h-[8.3375rem] xl:h-[6.4625rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[16.75rem]", sources: "h-[16.36rem]", shelf: "h-[21.1rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";
 const CELL = "px-4 py-3 wrap-anywhere text-ink";
+// A number column's head and cells line up on the right, and so does the text inside a label button or
+// a number that wraps: a button keeps its own alignment, so it is set here (critique r2).
+const NUMERIC_HEAD = "text-right [&_[data-term]]:text-right";
+const NUMERIC_CELL = "text-right [&>*]:items-end [&_[data-num]]:text-right";
 
 function Heading({ label, about }: { label: ReactNode; about: ReactNode }) {
   return (
     <>
       <span className="block">{label}</span>
-      <span className="block text-caption font-normal text-ink-muted">{about}</span>
+      {/* Balanced, so a short definition never leaves one word on a line of its own (design review r2 P7). */}
+      <span className="block text-caption font-normal text-balance text-ink-muted">{about}</span>
     </>
   );
 }
@@ -125,7 +136,7 @@ export function ReadinessTable({
                 <Heading label={head.label} about={head.about} />
               </th>
               {columns.map((column) => (
-                <th key={column.key} scope="col" className={cx(HEAD, column.numeric ? "text-right" : "text-left", column.width, column.className)}>
+                <th key={column.key} scope="col" className={cx(HEAD, column.numeric ? NUMERIC_HEAD : "text-left", column.width, column.className)}>
                   <Heading label={column.label} about={column.about} />
                 </th>
               ))}
@@ -156,7 +167,7 @@ export function ReadinessTable({
                     <td
                       key={column.key}
                       data-cell={`${row.id}:${column.key}`}
-                      className={cx(CELL, column.numeric && "text-right [&>*]:items-end", column.className)}
+                      className={cx(CELL, column.numeric && NUMERIC_CELL, column.className)}
                     >
                       {row.cells?.[column.key]}
                     </td>
@@ -207,11 +218,18 @@ export function ReadinessTable({
               <dl className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-3">
                 {columns.slice(0, spanAt).map((column) => (
                   <div key={column.key} className={cx("flex min-w-0 flex-col", (!column.numeric || !numberGrid) && "col-span-full")}>
-                    <dt className="text-caption text-ink-muted">
-                      {/* At the small size, so the label that opens its definition is a 24 px target. */}
-                      <span className="block text-small font-semibold text-ink">{column.label}</span>
-                      <span className="block">{column.about}</span>
-                    </dt>
+                    {column.cardLabel === "hidden" ? (
+                      // The grid's 12 px gap and the value's 4 px top make the 16 px the brief draws.
+                      <dt className="clip-visually">
+                        <span>{column.name}</span> <span>{column.about}</span>
+                      </dt>
+                    ) : (
+                      <dt className="text-caption text-ink-muted">
+                        {/* At the small size, so the label that opens its definition is a 24 px target. */}
+                        <span className="block text-small font-semibold text-ink">{column.label}</span>
+                        <span className="block">{column.about}</span>
+                      </dt>
+                    )}
                     <dd className="mt-1 text-small wrap-anywhere text-ink">{row.cells?.[column.key]}</dd>
                   </div>
                 ))}

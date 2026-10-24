@@ -551,8 +551,8 @@ class Selection:
         planned count and its reason."""
         names = [country.name for country in chosen.countries]
         counts = ", ".join(f"{name} {self.by_country.get(name, 0)}" for name in names)
-        said = (f"The slice criteria (the {' and '.join(chosen.sectors)} projects of {_listed(names)} approved in "
-                f"fiscal {chosen.first_fiscal_year} to {chosen.last_fiscal_year}) selected {len(self.selected)} "
+        said = (f"The slice criteria (the {' and '.join(chosen.sectors)} projects of {_listed(names)} with a Board "
+                f"date in fiscal {chosen.first_fiscal_year} to {chosen.last_fiscal_year}) selected {len(self.selected)} "
                 f"projects from strata.gold.project: {counts}.")
         if self.planned is None or self.planned == len(self.selected):
             return said
@@ -626,7 +626,8 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
     strata.ops.data_readiness. For each project: documents and pages per route, the pages each route
     read well, the pages whose paragraph numbering was found, the passages linked to a project,
     freshness, the contact details taken out, and what Prompt Shields found. For the slice: the
-    projects its criteria selected, with each country's count in its detail sentence."""
+    projects its criteria selected, with each country's count in its detail sentence, and how many of them
+    the run read documents for."""
     linked = {str(row[0]) for row in engine.run("SELECT project_id FROM strata.gold.project").rows}
     indexed = {str(project): int(count) for project, count in engine.run(
         "SELECT project_id, count(*) AS n FROM strata.gold.passage GROUP BY project_id").rows}
@@ -661,6 +662,8 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
 
         per("documents_read", "coverage", len(items), len(items),
             "This counts the documents the run read, through either route.")
+        per("documents_read_projects", "coverage", 1, 1,
+            "This counts the project once, because the run read at least one of its documents.")
         per("document_pages_read_well", "read_well", sum(_read_well_a(item) + _read_well_b(item) for item in items),
             len(pages), "This counts the pages read well across both routes, out of every page of the documents "
             "read: a page of published text that has text, and a page the layout parser recovered a table or "
@@ -706,6 +709,11 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
                      "every section read.", when, when.date()))
     if selection is not None and chosen is not None:
         add("all", "slice_projects", "coverage", len(selection.selected), None, selection.detail(chosen))
+        read = {item.held.listed.project_id for item in found}
+        add("all", "slice_projects_read", "coverage", sum(project in read for project in selection.selected),
+            len(selection.selected), "This counts the projects the slice criteria selected of which the run read at "
+            "least one document, out of the projects they selected. A project whose documents wait for a later run "
+            "under the daily page cap, or that lists no document of a type the reader knows, is not counted.")
     engine.insert_rows("strata.ops.data_readiness", MEASURE_COLUMNS, rows)
     return len(rows)
 
@@ -754,7 +762,8 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     when = clock()
     measure(engine, run_id, found, picked.with_contacts, shield.name, when, selection, chosen)
     documents_read(engine, run_id, found, when)
-    shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when)
+    shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when,
+                                selection.selected)
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.passages) for item in found), scanned, embedded, len(selection.selected), notices,
                   tuple(shelf))

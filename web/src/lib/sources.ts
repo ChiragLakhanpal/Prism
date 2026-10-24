@@ -26,6 +26,8 @@ export type PassageFields = {
   scanned: boolean;
   tableTitle: string | null;
   tableRow: number | null;
+  // The last PDF page a passage runs onto, such as a table's summary that covers pages 65 to 70.
+  lastPage: number | null;
   cells: [string, string][];
   noticeId: string | null;
   noticeUrl: string | null;
@@ -45,6 +47,12 @@ export function placeOf(fields: PassageFields): Place {
 // "Project Development Objective Indicators", still wraps between them.
 function keepClosingId(section: string): string {
   return section.replace(/ (\S*[0-9.]\S*)$/, "\u00a0$1");
+}
+
+// A table's title keeps the ID of an annex, appendix or table with its word, "Annex 4", so a narrow
+// meta line or heading never ends a line on "Annex" (design review r2 P8).
+function keepIdWithWord(title: string): string {
+  return title.replace(/\b(Annex|Annexe|Appendix|Table|Schedule) (?=[0-9A-Z])/g, "$1\u00a0");
 }
 
 export function shortProjectName(name: string): string {
@@ -69,8 +77,9 @@ export function passageFields(evidence: EvidenceEvent): PassageFields {
     pdfUrl: (source.pdf_url ?? null) as string | null,
     kind: (row.kind ?? "paragraph") as PassageFields["kind"],
     scanned: Boolean(row.scanned),
-    tableTitle: (row.table_title ?? null) as string | null,
+    tableTitle: row.table_title ? keepIdWithWord(String(row.table_title)) : null,
     tableRow: (row.table_row ?? null) as number | null,
+    lastPage: (row.last_pdf_page ?? null) as number | null,
     cells: (row.cells ?? []) as [string, string][],
     noticeId: (row.notice_id ?? source.notice_id ?? null) as string | null,
     noticeUrl: (source.notice_url ?? null) as string | null,

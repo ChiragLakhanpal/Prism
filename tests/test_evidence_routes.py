@@ -176,6 +176,8 @@ NEW_KINDS = [
     ("evidence-pad-p130164-risk-summary.json", "strata.gold.passage:18381488/v1/table65", "table_summary",
      "layout_parser", True),
     ("evidence-notice-op00118817.json", "strata.gold.passage:OP00118817/v1/s8", "notice_text", "published_text", False),
+    ("evidence-notice-op00118817-qualifications.json", "strata.gold.passage:OP00118817/v1/s5", "notice_text",
+     "published_text", False),
     ("evidence-icr-p127203-fr.json", "strata.gold.passage:33407968/v1/1", "paragraph", "published_text", False),
 ]
 

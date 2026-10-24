@@ -55,14 +55,18 @@ for (const width of [1440, 1024, 390]) {
     );
     expect(keys).toEqual(KEYS);
 
-    // Every number is the server's row, "{count} of {total}" with no percentage.
+    // Every number is the server's row, "{count} of {total}" with no percentage, or the count alone when
+    // there is nothing to check it against.
     for (const entry of answer.stress_shelf.filter((found: { state: string }) => found.state === "read")) {
       const outcome = answer.rows[entry.outcome_row];
       const parser = answer.rows[entry.parser_row];
       const cells = row(page, width, entry.key);
-      await expect(cells.locator("[data-num]").filter({ hasText: /\d+ of \d+/ })).toHaveText([
+      // The document's date is a Num too; the measures are the numbers alone.
+      await expect(cells.locator("[data-num]").filter({ hasText: /^[\d,]+( of [\d,]+)?$/ })).toHaveText([
         `${parser.count} of ${parser.denominator}`,
-        `${outcome.count.toLocaleString("en-US")} of ${outcome.denominator.toLocaleString("en-US")}`,
+        outcome.denominator === null
+          ? outcome.count.toLocaleString("en-US")
+          : `${outcome.count.toLocaleString("en-US")} of ${outcome.denominator.toLocaleString("en-US")}`,
       ]);
       // The link opens the World Bank's PDF at the hard part's page, in a new tab, named for its document.
       const link = cells.getByRole("link");
@@ -76,8 +80,14 @@ for (const width of [1440, 1024, 390]) {
     }
     // The fixture's outcomes all reach the read-well threshold, so no row has a badge.
     await expect(visible(page, width).getByText(/^(Partial|Gap)$/)).toHaveCount(0);
-    await expect(row(page, width, "p130164_pad")).toContainText("A scanned document whose risk annex is set in two columns.");
-    await expect(row(page, width, "p130164_pad")).toContainText("risk rows recovered");
+    // No person has counted the annex's risks, so the row says what it recovered and has nothing to
+    // check it against; and it says it checks the risks and ratings, not the text beside them.
+    await expect(row(page, width, "p130164_pad")).toContainText(
+      "A scanned document whose risk annex is set in two columns. I check its risks and ratings, not the text beside them.",
+    );
+    await expect(row(page, width, "p130164_pad")).toContainText("rated risks recovered");
+    await expect(row(page, width, "p130164_pad")).toContainText("I have no count of the annex's risks to check this against.");
+    await expect(row(page, width, "p130164_pad")).not.toContainText("counted by hand");
     await expect(row(page, width, "p130164_pad")).toContainText("where the risk annex starts");
     await expect(row(page, width, "french_report")).toContainText("passages marked as French");
     await expect(row(page, width, "over_parser_limit")).toContainText(
@@ -99,7 +109,7 @@ test("a Gap is the one row that stands out, and What holds it back links down to
   await openData(page, { file: "data-readiness-shelf-gap.json" });
   await expect(shelf(page)).toBeVisible();
 
-  await expect(row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome']")).toContainText("0 of 8risk rows recoveredGap");
+  await expect(row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome']")).toContainText("0 of 8rated risks recoveredGap");
   await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:outcome']")).toContainText("Partial");
   await expect(visible(page, 1440).getByText(/^(Partial|Gap)$/)).toHaveCount(2);
 
@@ -133,11 +143,21 @@ test("a row with nothing to show spans one note across its last three cells, wit
 
   // No hand count: the number alone, and what it lacks.
   await expect(row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome']")).toContainText(
-    "8risk rows recoveredI have no count of the annex's risks to check this against.",
+    "8rated risks recoveredI have no count of the annex's risks to check this against.",
   );
-  await expect(span("longest_pad")).toHaveText("I found no Project Appraisal Document among the documents I read.");
-  await expect(row(page, 1440, "longest_pad").locator("th")).toContainText("The longest Project Appraisal DocumentChosen when I read the documents.");
-  await expect(span("long_plan")).toHaveText("6 of 14 pages read so farI stopped at today's limit of 30 pages. The next run reads the rest.");
+  // A rule that found no document says what I looked for, and nothing that contradicts it (critique r2).
+  await expect(span("longest_pad")).toHaveText("I found no Project Appraisal Document of the pilot projects among the documents I read.");
+  await expect(row(page, 1440, "longest_pad").locator("th")).toHaveText("The longest Project Appraisal Document");
+  await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:hard']")).toHaveText(
+    "I looked for the longest Project Appraisal Document of the pilot projects.",
+  );
+  // The read pages and the page count are one number, and the cap says it covers the whole run.
+  await expect(span("long_plan")).toHaveText(
+    "6 of 14 pages read so farI stopped at today's limit of 30 pages, which covers every document in the run. The next run reads the rest.",
+  );
+  await expect(span("long_plan").locator("[data-num]")).toHaveText(["6 of 14", "30"]);
+  await span("long_plan").locator("[data-num]").nth(1).focus();
+  await expect(page.getByRole("tooltip").filter({ hasText: "The most pages I send the layout parser in one day. It is my own setting, not a measure." })).toBeVisible();
   await expect(span("french_report")).toHaveText("Not read yet. The next document run reads it.");
   for (const key of ["longest_pad", "long_plan", "french_report"]) {
     await expect(span(key)).toHaveAttribute("colspan", "3");
@@ -152,6 +172,11 @@ test("before the first document run every row says it is not read yet, and the s
 
   await expect(visible(page, 1440).locator("[data-row]")).toHaveCount(5);
   await expect(visible(page, 1440).locator("td[colspan='3']")).toHaveText(Array(5).fill("Not read yet. The next document run reads it."));
+  // Before any reading, a rule's row never says I read the document (critique r2).
+  await expect(row(page, 1440, "longest_pad").locator("th")).toHaveText("The longest Project Appraisal DocumentI choose it when I read the documents.");
+  await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:hard']")).toHaveText(
+    "The longest Project Appraisal Document of the pilot projects.",
+  );
 });
 
 test("a filtered view shows only the rows on its sources, and leaves the section out when none are", async ({ page }) => {
@@ -173,16 +198,19 @@ test("while the measures load, the section shows its title and one skeleton row 
   await expect(page.locator("[data-readiness=loading]")).toHaveAttribute("aria-busy", "true");
 });
 
-test("an outcome's number says what it counts and opens a window with what it was counted against, the parser and the table", async ({ page }) => {
+test("an outcome's number says what it counts and opens a window with what it checks, the parser and the table", async ({ page }) => {
   await openData(page, { file: "data-readiness.json" });
   const number = row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome'] [data-num]");
 
   await number.focus();
-  await expect(page.getByRole("tooltip").filter({ hasText: "8 of 8 risk rows. Measured Oct 23, 2026." })).toBeVisible();
+  await expect(page.getByRole("tooltip").filter({ hasText: "8 rated risks. Measured Oct 23, 2026." })).toBeVisible();
   await number.click();
   const window = page.getByRole("dialog", { name: "Outcome" });
-  await expect(window).toContainText("What I recovered from the hard part, counted against what the document holds.");
-  await expect(window).toContainText("Counted against8 risks in the annex, counted by hand from the PDF on Oct 24, 2026");
+  // The annex's outcome says it checks names and ratings, not the text the scan runs together (design r2 B2).
+  await expect(window).toContainText(
+    "A risk counts when I read its name and its rating from the risk table. I don't check the description and mitigation text beside them, which the scan sets in two columns. Open the page to compare.",
+  );
+  await expect(window).not.toContainText("Counted against");
   await expect(window.locator(".font-mono")).toHaveText(["recorded words (pdftotext -bbox)", "strata.ops.stress_shelf"]);
   await page.keyboard.press("Escape");
   await expect(number).toBeFocused();
@@ -194,15 +222,39 @@ test("an outcome's number says what it counts and opens a window with what it wa
   );
 });
 
-test("the project reports' row counts documents for the slice's projects, and its Read well window splits the share by route", async ({ page }) => {
+test("with a hand count, the outcome's window says what it was counted against", async ({ page }) => {
+  await openData(page, { file: "data-readiness-shelf-gap.json" });
+  await row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome'] [data-num]").click();
+
+  await expect(page.getByRole("dialog", { name: "Outcome" })).toContainText(
+    "Counted against8 rated risks in the annex, counted by hand from the PDF on Oct 20, 2026",
+  );
+});
+
+test("the project reports' row counts the projects its documents belong to, then the pilot projects read, and its Read well window splits the share by route", async ({ page }) => {
   const answer = await json("data-readiness.json");
   const reports = answer.sources.find((found: { id: string }) => found.id === "reports");
   const cell = (column: string) => page.locator(`[data-readiness-table=sources] [data-table-view=table] [data-cell='reports:${column}']`);
   await openData(page, { file: "data-readiness.json" });
 
-  await expect(cell("coverage")).toContainText(`documents for ${answer.rows[reports.cells.coverage.projects_row].count} projects`);
+  // Both numbers on the line count the same documents (design review r2 B1): the projects are the
+  // documents' own, and the pilot projects read are a line of their own.
+  const documents = answer.rows[reports.cells.coverage.row];
+  const projects = answer.rows[reports.cells.coverage.projects_row];
+  const pilot = answer.rows[reports.cells.coverage.slice_row];
+  expect(projects.count).toBe(documents.subjects.length);
+  expect([pilot.count, pilot.denominator]).toEqual([1, 17]);
+  expect(projects.count).toBe(3);
+  await expect(cell("coverage")).toContainText("documents for three projects");
+  await expect(cell("coverage")).toContainText("1 of 17 pilot projects");
+  await cell("coverage").locator("[data-num]").nth(1).click();
+  await expect(page.getByRole("dialog", { name: "Projects with documents read" })).toContainText("strata.silver.documents");
+  await page.keyboard.press("Escape");
+  await cell("coverage").locator("[data-num]").nth(2).click();
+  await expect(page.getByRole("dialog", { name: "Pilot projects read" })).toContainText("strata.silver.documents");
+  await page.keyboard.press("Escape");
   await expect(page.locator("[data-readiness-table=sources] [data-row=reports] th")).toContainText(
-    "Water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025",
+    "Water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025, and the projects of the hardest documents below",
   );
   const [text, parser] = reports.cells.read_well.routes.map((route: { row: number }) => answer.rows[route.row]);
   await cell("read_well").locator("[data-num]").click();
@@ -211,6 +263,74 @@ test("the project reports' row counts documents for the slice's projects, and it
   await expect(window).toContainText(`Layout parser${parser.count} of ${parser.denominator} pages read well`);
   await page.keyboard.press("Escape");
   await expect(page.locator("[data-readiness-table=sources] [data-table-view=table] [data-cell='notice_text:read_well']")).toHaveText("Published as text");
+});
+
+// Critique r2: from 768 to about 1100 px a wrapped head label sat on the left over right-aligned numbers,
+// and "100 of 100" broke after "of". Each number column's head and numbers keep to its right edge, and a
+// "{n} of {d}" pair stays on one line.
+for (const width of [768, 1024]) {
+  test(`at ${width} px the number columns' heads and numbers line up on the right, and no pair breaks`, async ({ page }) => {
+    await openData(page, { file: "data-readiness-shelf-gap.json" }, { width });
+    const table = visible(page, width);
+    await expect(table).toBeVisible();
+    const columns = ["parser", "outcome"];
+    const heads = table.locator("thead th");
+    for (const [index, column] of columns.entries()) {
+      const head = heads.nth(index + 2);
+      const label = head.locator("[data-term]");
+      const [h, l] = [(await head.boundingBox())!, (await label.boundingBox())!];
+      expect(Math.abs(h.x + h.width - 16 - (l.x + l.width)), `the ${column} head's label`).toBeLessThanOrEqual(1.5);
+      const cells = table.locator(`td[data-cell$=':${column}']`);
+      for (let i = 0; i < (await cells.count()); i += 1) {
+        const number = cells.nth(i).locator("[data-num]");
+        if ((await number.count()) === 0) continue;
+        const [c, n] = [(await cells.nth(i).boundingBox())!, (await number.first().boundingBox())!];
+        expect(n.x + n.width, `${column} row ${i} keeps to the right`).toBeGreaterThanOrEqual(c.x + c.width - 16 - 1.5);
+        expect(n.x + n.width, `${column} row ${i} stays in its cell`).toBeLessThanOrEqual(c.x + c.width);
+        expect(n.height, `${column} row ${i} is one line`).toBeLessThan(32);
+      }
+    }
+  });
+}
+
+// Review r2 P12: every number on the shelf opens a window with its own title, counted in the shelf's table.
+test("every number on the shelf opens its own window, counted in the shelf's table", async ({ page }) => {
+  const { copy } = await import("../src/copy.ts");
+  const windows = copy.dataReadiness.shelf.windows;
+  const titles: Record<string, string> = {
+    parser_row: windows.parser.title,
+    outcome_row: windows.outcome.title,
+    read_pages_row: windows.read.title,
+    longest_row: windows.longest.title,
+  };
+  for (const file of ["data-readiness.json", "data-readiness-shelf-abstentions.json"]) {
+    const answer = await json(file);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await openData(page, { file });
+    await expect(shelf(page)).toBeVisible();
+    for (const entry of answer.stress_shelf) {
+      for (const [field, title] of Object.entries(titles)) {
+        const index = entry[field];
+        if (index === null) continue;
+        const measure = answer.rows[index].measure;
+        const number = row(page, 1440, entry.key).locator(`[data-num][data-measure='${measure}']`);
+        await number.click();
+        const window = page.getByRole("dialog", { name: title });
+        await expect(window, `${file} ${entry.key} ${field}`).toBeVisible();
+        await expect(window.locator(".font-mono").last()).toHaveText("strata.ops.stress_shelf");
+        await page.keyboard.press("Escape");
+        await expect(window).toBeHidden();
+      }
+    }
+  }
+});
+
+test("in a card, the Page field's label is for screen readers, so the link stands on its own line", async ({ page }) => {
+  await openData(page, { file: "data-readiness.json" }, { width: 390 });
+  const card = row(page, 390, "p130164_pad");
+
+  await expect(card.locator("dt.clip-visually")).toHaveText("Page where the hard part starts");
+  await expect(card.locator("dt:not(.clip-visually)", { hasText: /^Page/ })).toHaveCount(0);
 });
 
 test("at 320 px the hardest documents reflow as cards with no sideways scroll", async ({ page }) => {
@@ -245,13 +365,13 @@ const KINDS = [
     id: "strata.gold.passage:18381488/v1/table65",
     file: "evidence-pad-p130164-risk-summary.json",
     heading: "Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
-    note: "I wrote this summary of the table on page 65. It is not the document's own words, and I never use it to back a number.",
+    note: "I wrote this summary of the table on PDF pages 65 to 70. It is not the document's own words, and I never use it to back a number.",
     link: /^Open at page 65 in the World Bank's PDF/,
   },
   {
     name: "a section of a notice's text",
-    id: "strata.gold.passage:OP00118817/v1/s8",
-    file: "evidence-notice-op00118817.json",
+    id: "strata.gold.passage:OP00118817/v1/s5",
+    file: "evidence-notice-op00118817-qualifications.json",
     heading: "Notice OP00118817",
     note: "The whole section, word for word, without contact details.",
     link: /^Open this notice on the World Bank's site/,
@@ -282,8 +402,32 @@ test("a table row shows its cells as column heads and values, and its meta line 
   await expect(drawer(page).locator("[data-meta-line]")).toContainText("PDF page 65 of 100");
 });
 
+test("a table row quoted by a sentence highlights the cell it matched", async ({ page }) => {
+  await openAnswerPage(page, { stream: "ask-p130164-table-row.sse" });
+  await askFromTheBox(page);
+  await landed(page);
+  await panel(page).locator("[data-sentence-text='3'] [data-citation]").click();
+
+  const rating = drawer(page).locator("[data-row-cells] tbody tr").nth(1);
+  await expect(rating.locator("th")).toHaveText("Rating");
+  await expect(rating.locator("td mark")).toHaveText("Highlight starts. Low Highlight ends.");
+  await expect(drawer(page).locator("[data-row-cells] mark")).toHaveCount(1);
+  await expect(drawer(page)).not.toContainText("so no words are highlighted");
+  expect(await violations(page)).toEqual([]);
+});
+
+test("a table's summary names every page of its table in its meta line", async ({ page }) => {
+  await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(KINDS[2].id)}`, evidence: KINDS[2].file });
+
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("PDF pages 65 to 70 of 100");
+  await expect(drawer(page).locator("[data-passage]")).toContainText(
+    "The table on PDF pages 65 to 70 of the Project Appraisal Document is titled Annex 4 - Operational Risk Assessment Framework (ORAF).",
+  );
+});
+
 test("a notice's text shows where contact details were removed and never the raw marker", async ({ page }) => {
-  await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(KINDS[3].id)}`, evidence: KINDS[3].file });
+  const id = "strata.gold.passage:OP00118817/v1/s8";
+  await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(id)}`, evidence: "evidence-notice-op00118817.json" });
 
   await expect(drawer(page).locator("[data-passage]")).toContainText("Telephone: (contact details removed), Email address: (contact details removed)");
   await expect(drawer(page)).not.toContainText("[contact removed]");

@@ -162,6 +162,15 @@ export const galleryCopy = {
     unknown: "An ID no source has",
     unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",
+    // Ticket 18's kinds of passage (design review r2 P9).
+    scanned: "A paragraph the layout parser read from a scanned page",
+    tableRow: "A row of a table, opened from a link",
+    tableRowQuoted: "A row of a table, opened from a sentence that quotes its rating",
+    tableSummary: "A table's summary, which never backs a number",
+    notice: "A section of a notice's text, its qualifications",
+    noticeContacts: "A section of a notice's text, with contact details removed",
+    frenchParagraph: "A paragraph in French",
+    removedSummary: "A sentence removed because only a table's summary held its number",
   },
 
   notes: {
@@ -180,6 +189,7 @@ export const galleryCopy = {
     flush: "A ghost button under text",
     onPage: "A ghost button on the page background",
     textLink: "Text link",
+    externalLink: "External link, which opens the World Bank's PDF in a new tab",
     tabs: "Tabs on a light surface",
     tabsLater: "Tabs with a later one selected",
     cardsBelowLg: "Cards below 1024 px, for a table with wide columns",
@@ -273,6 +283,9 @@ export const galleryCopy = {
     flushText: "Two of the 24 packages were advertised again.",
     icon: "Close the source",
     textLink: "See which data I hold",
+    externalLink: "Open at page 65",
+    externalLinkHref: "https://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf",
+    externalLinkMore: " of the Project Appraisal Document for P130164 in the World Bank's PDF",
     tabsLabel: "Project sections",
     tabs: ["Summary", "Procurement", "Timeline", "Documents", "Connections"],
     cardTitle: "Sample Water Agency, Procurement Plan of October 9, 2026",

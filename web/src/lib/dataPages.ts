@@ -60,10 +60,13 @@ export type Cell = {
   schedule?: string;
   late_days?: number | null;
   published_as_table?: boolean;
-  // Ticket 18: a row whose records arrive as text; a document collection's projects, the slice's; and
+  // Ticket 18: a row whose records arrive as text; a document collection's projects, those its documents
+  // belong to; and
   // its Read well share split by route for its window, the published text first.
   published_as_text?: boolean;
   projects_row?: number | null;
+  // A document collection's pilot projects read, out of every pilot project (design review r2 B1).
+  slice_row?: number | null;
   routes?: { route: "published_text" | "layout_parser"; row: number | null }[];
 };
 
@@ -71,8 +74,9 @@ export type Scope =
   | { kind: "every_country" }
   | { kind: "countries"; names: string[] }
   | { kind: "projects"; count: number }
-  // A document collection's slice, from the slice file (ticket 18).
-  | { kind: "slice"; sectors: string[]; countries: string[]; first_fiscal_year: number; last_fiscal_year: number };
+  // A document collection's slice, from the slice file (ticket 18), and whether the hardest documents,
+  // whose projects are read too, show below.
+  | { kind: "slice"; sectors: string[]; countries: string[]; first_fiscal_year: number; last_fiscal_year: number; shelf: boolean };
 
 export type SourceRow =
   | {

@@ -22,7 +22,7 @@ import datetime as dt
 import json
 from importlib import resources
 
-from strata.config import load_slice
+from strata.config import load_slice, load_sources
 from strata.knowledge.search import Filters, searcher_for
 from strata.reader.passages import NOTICE_TEXT, ROUTE_B
 from strata.reader.templates import template_for
@@ -86,7 +86,8 @@ def passage_row(found: dict) -> dict:
             "pdf_url": found["pdf_url"],
             "doc_key": found["doc_key"],
             "notice_id": str(found["document_id"]) if notice else None,
-            "notice_url": found["notice_url"],
+            # A notice's own page, from the source registry's address for it (CLAUDE.md rule 9).
+            "notice_url": notice_page(str(found["document_id"])) if notice else None,
         },
         "passage_id": found["passage_id"],
         "document_id": str(found["document_id"]),
@@ -122,6 +123,12 @@ def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
     result = engine.run(_sql("passages.sql"), {"ids": passage_id, "as_of": as_of})
     rows = [dict(zip(result.columns, row)) for row in result.rows]
     return passage_row(rows[0]) if rows else None
+
+
+def notice_page(notice_id: str) -> str | None:
+    """A notice's own page on the World Bank's site, from config/sources.toml (notices' record_url)."""
+    address = load_sources()["notices"].record_url
+    return address.replace("{id}", notice_id) if address else None
 
 
 def search_passages(call: Call, query: str, project_id: str | None = None, document_type: str | None = None,

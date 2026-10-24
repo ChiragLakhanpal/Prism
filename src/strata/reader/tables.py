@@ -107,12 +107,14 @@ def _listed(items: list[str]) -> str:
 
 def summary(table: WholeTable, document_type: str) -> str:
     """The table's one summary passage, in Strata's words: what the table is, where, its columns and
-    the first cell of each row (with a risk's rating). It is never the document's own words."""
+    the first cell of each row (with a risk's rating). It is never the document's own words; its kind,
+    table_summary, says so, and the evidence drawer's caption says who wrote it, so the text starts with
+    the table (design review r2 P2)."""
     pages = (f"PDF page {table.pdf_page}" if table.pdf_page == table.last_pdf_page
              else f"PDF pages {table.pdf_page} to {table.last_pdf_page}")
-    titled = f", titled {table.title}," if table.title else ""
+    titled = f" is titled {table.title}. It has" if table.title else " has"
     named = [f"{row.cells[0][1]} ({row.value('Rating')})" if table.risk and row.value("Rating")
              else row.cells[0][1] for row in table.rows if row.cells]
     rows = "one row" if len(table.rows) == 1 else f"{len(table.rows)} rows"
-    return (f"Strata's summary of a table on {pages} of the {document_type}{titled} not the document's own "
-            f"words. It has {rows} and the columns {_listed(list(table.columns))}. Its rows: {'; '.join(named)}.")
+    return (f"The table on {pages} of the {document_type}{titled} {rows} and the columns "
+            f"{_listed(list(table.columns))}. Its rows: {'; '.join(named)}.")

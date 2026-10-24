@@ -111,7 +111,19 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
             ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
             ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
           ]),
-    ...(fields.page ? [{ text: fields.pages ? words.page(String(fields.page), String(fields.pages)) : words.pageOnly(String(fields.page)), whole: true }] : []),
+    ...(fields.page
+      ? [
+          {
+            text:
+              fields.kind === "table_summary" && fields.lastPage && fields.lastPage !== fields.page && fields.pages
+                ? words.pageRange(String(fields.page), String(fields.lastPage), String(fields.pages))
+                : fields.pages
+                  ? words.page(String(fields.page), String(fields.pages))
+                  : words.pageOnly(String(fields.page)),
+            whole: true,
+          },
+        ]
+      : []),
     ...(language ? [{ text: copy.evidence.inLanguage(language), whole: true }] : []),
   ].filter((part) => part.text !== "");
   return (
@@ -129,9 +141,29 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   );
 }
 
+// Where each cell's value sits in the row's text, which joins the cells as "Risk: Capacity; Rating: Low",
+// so a highlight in the text lands on the cell it matched. Null when the text is not that join.
+function cellSpans(fields: ReturnType<typeof passageFields>): [number, number][] | null {
+  const spans: [number, number][] = [];
+  let at = 0;
+  for (const [label, value] of fields.cells) {
+    const start = at + label.length + 2;
+    spans.push([start, start + value.length]);
+    at = start + value.length + 2;
+  }
+  return fields.cells.map(([label, value]) => `${label}: ${value}`).join("; ") === fields.text ? spans : null;
+}
+
+// A highlight's part inside one cell, counted from the cell's own start.
+function inCell([start, end]: [number, number], ranges: [number, number][]): [number, number][] {
+  return ranges.filter(([from, to]) => from < end && to > start).map(([from, to]) => [Math.max(from, start) - start, Math.min(to, end) - start]);
+}
+
 // A table row's cells: each column head as a row header on the left and its value on the right, as the
-// layout parser read them. A Procurement Plan's heads are STEP's own field names.
-function RowCells({ fields }: { fields: ReturnType<typeof passageFields> }) {
+// layout parser read them. A Procurement Plan's heads are STEP's own field names. The cell whose value a
+// sentence quoted carries the highlight (the 18 brief, section 7.2).
+function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>; ranges: [number, number][] }) {
+  const spans = cellSpans(fields);
   return (
     <table data-row-cells className="m-4 w-[calc(100%-2rem)] border-collapse text-small">
       <thead className="sr-only">
@@ -146,7 +178,9 @@ function RowCells({ fields }: { fields: ReturnType<typeof passageFields> }) {
             <th scope="row" className="w-2/5 py-2 pr-3 text-left font-semibold text-ink">
               {label}
             </th>
-            <td className={cx("py-2 wrap-break-word text-ink", /^[\d,.\s]+$/.test(value) && "text-right tabular-nums")}>{value}</td>
+            <td className={cx("py-2 wrap-break-word text-ink", /^[\d,.\s]+$/.test(value) && "text-right tabular-nums")}>
+              {spans ? highlighted(value, inCell(spans[index], ranges), true) : value}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -177,12 +211,18 @@ function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEve
     <>
       <div className="rounded-md border border-line">
         <MetaLine evidence={evidence} />
-        {summary && fields.page && <p className="px-4 pt-3 text-caption text-ink-muted">{copy.evidence.summaryNote(String(fields.page))}</p>}
-        {fromAnswer && ranges.length === 0 && !row && (
-          <p className="px-4 pt-3 text-caption text-ink-muted">{section ? copy.evidence.noHighlightSection : copy.evidence.noHighlight}</p>
+        {summary && fields.page && (
+          <p className="px-4 pt-3 text-caption text-ink-muted">
+            {copy.evidence.summaryNote(String(fields.page), fields.lastPage && fields.lastPage !== fields.page ? String(fields.lastPage) : null)}
+          </p>
+        )}
+        {fromAnswer && ranges.length === 0 && (
+          <p className="px-4 pt-3 text-caption text-ink-muted">
+            {row ? copy.evidence.noHighlightRow : section ? copy.evidence.noHighlightSection : copy.evidence.noHighlight}
+          </p>
         )}
         {row ? (
-          <RowCells fields={fields} />
+          <RowCells fields={fields} ranges={ranges} />
         ) : (
           <p data-passage data-kind={fields.kind} lang={fields.lang ?? undefined} className="max-w-prose p-4 text-body text-ink">
             {notice ? withoutMarkers(highlighted(fields.text, ranges, true)) : highlighted(fields.text, ranges, true)}

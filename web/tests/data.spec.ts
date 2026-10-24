@@ -151,7 +151,7 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   // A limit the source declares sits on its own line, under what the number counts.
   await expect(cell(page, "cpia:coverage")).toContainText("264scores heldIDA countries onlyin 21 fiscal years");
   // A share breaks only after its comma: its count and its frequency each stay on one line.
-  await expect(cell(page, "reports:read_well").locator("[data-num] .whitespace-nowrap")).toHaveText(["608 of 632,", "96%"]);
+  await expect(cell(page, "reports:read_well").locator("[data-num] .whitespace-nowrap")).toHaveText(["625 of 650,", "96%"]);
   // CPIA and WGI scores are a source's own values; no score of Strata's rates a source.
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
@@ -326,10 +326,10 @@ test("every number's tooltip names what it counts, and its window shows the numb
   ).toBeVisible();
   // The reports' check names what its pages lack, so its tooltip says so, as its sentence does
   // (critique r6; ticket 18 made paragraph numbers a check of the reports' row).
-  const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^59$/ });
+  const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^70$/ });
   await unread.focus();
   await expect(
-    page.getByRole("tooltip").filter({ hasText: "59 of 250 body pages lack paragraph numbers I could find. Measured Oct 23, 2026." }),
+    page.getByRole("tooltip").filter({ hasText: "70 of 264 body pages lack paragraph numbers I could find. Measured Oct 23, 2026." }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
 

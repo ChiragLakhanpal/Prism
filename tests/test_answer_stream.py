@@ -689,7 +689,8 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
                                                ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
                                                ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse"),
                                                ("p130164-isr-section", "ask-p130164-isr-section.sse"),
-                                               ("p130164-number-from-a-table-summary", "ask-p130164-table-summary.sse")])
+                                               ("p130164-number-from-a-table-summary", "ask-p130164-table-summary.sse"),
+                                               ("p130164-rating-from-a-table-row", "ask-p130164-table-row.sse")])
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 

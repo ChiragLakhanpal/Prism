@@ -372,6 +372,14 @@ pdf_url = "https://documents.worldbank.org/curated/en/899451500992254422/pdf/Ken
 about = "The Project Appraisal Document for P156634, April 5, 2017 (PAD2077). Documents API id 27348420."
 
 [[source]]
+file = "documents/P156634/project-paper-2021-05-24"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/897271621840231892/text/Disclosable-Restructuring-Paper-Water-and-Sanitation-Development-Project-P156634.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/897271621840231892/pdf/Disclosable-Restructuring-Paper-Water-and-Sanitation-Development-Project-P156634.pdf"
+about = "A Project Paper for P156634: the restructuring paper of May 24, 2021 (RES45456), which revised the project's results framework after its midterm review, so the passage reader reads a Project Paper (ticket 18). Documents API id 33103725."
+
+[[source]]
 file = "documents/P156634/isr-01-2017-11-27"
 kind = "document"
 dataset = "documents"

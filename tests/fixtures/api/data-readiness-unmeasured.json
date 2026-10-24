@@ -1113,7 +1113,7 @@
       "share_bound": null,
       "in_ten": null,
       "in_ten_exact": null,
-      "as_of": "2026-10-24",
+      "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"
@@ -1346,74 +1346,6 @@
       ]
     },
     {
-      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_a",
-      "public_from": "2026-10-23",
-      "source": {
-        "table": "strata.ops.data_readiness",
-        "source_key": "documents",
-        "measure": "pages_read_route_a",
-        "subjects": [
-          "P156634",
-          "P161305"
-        ],
-        "measured_on": "2026-10-23",
-        "counted_in": "strata.bronze.document_pages"
-      },
-      "source_key": "documents",
-      "measure": "pages_read_route_a",
-      "kind": "read_well",
-      "subjects": [
-        "P156634",
-        "P161305"
-      ],
-      "count": 24,
-      "denominator": 24,
-      "share_percent": null,
-      "share_bound": null,
-      "in_ten": null,
-      "in_ten_exact": null,
-      "as_of": null,
-      "measured_on": "2026-10-23",
-      "run_ids": [
-        "plans-P156634-20261023T090000000000",
-        "plans-P161305-20261023T090000018000"
-      ]
-    },
-    {
-      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_b",
-      "public_from": "2026-10-23",
-      "source": {
-        "table": "strata.ops.data_readiness",
-        "source_key": "documents",
-        "measure": "pages_read_route_b",
-        "subjects": [
-          "P156634",
-          "P161305"
-        ],
-        "measured_on": "2026-10-23",
-        "counted_in": "strata.bronze.layout_pages"
-      },
-      "source_key": "documents",
-      "measure": "pages_read_route_b",
-      "kind": "read_well",
-      "subjects": [
-        "P156634",
-        "P161305"
-      ],
-      "count": 27,
-      "denominator": 27,
-      "share_percent": null,
-      "share_bound": null,
-      "in_ten": null,
-      "in_ten_exact": null,
-      "as_of": null,
-      "measured_on": "2026-10-23",
-      "run_ids": [
-        "plans-P156634-20261023T090000000000",
-        "plans-P161305-20261023T090000018000"
-      ]
-    },
-    {
       "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/latest_activities_with_confirmed_first_listing_read",
       "public_from": "2026-10-23",
       "source": {
@@ -1470,8 +1402,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 38,
-      "denominator": 38,
+      "count": 39,
+      "denominator": 39,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -1483,26 +1415,61 @@
       ]
     },
     {
-      "evidence_id": "strata.ops.data_readiness:documents/all/slice_projects",
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/documents_read_projects",
       "public_from": "2026-10-23",
       "source": {
         "table": "strata.ops.data_readiness",
         "source_key": "documents",
-        "measure": "slice_projects",
+        "measure": "documents_read_projects",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.documents"
+      },
+      "source_key": "documents",
+      "measure": "documents_read_projects",
+      "kind": "coverage",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 3,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/all/slice_projects_read",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "slice_projects_read",
         "subjects": [
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": "strata.gold.project"
+        "counted_in": "strata.silver.documents"
       },
       "source_key": "documents",
-      "measure": "slice_projects",
+      "measure": "slice_projects_read",
       "kind": "coverage",
       "subjects": [
         "all"
       ],
-      "count": 17,
-      "denominator": null,
+      "count": 1,
+      "denominator": 17,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -1536,8 +1503,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 1377,
-      "denominator": 1377,
+      "count": 1400,
+      "denominator": 1400,
       "share_percent": 100,
       "share_bound": null,
       "in_ten": null,
@@ -1571,8 +1538,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 608,
-      "denominator": 632,
+      "count": 625,
+      "denominator": 650,
       "share_percent": 96,
       "share_bound": null,
       "in_ten": null,
@@ -1606,8 +1573,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 511,
-      "denominator": 511,
+      "count": 528,
+      "denominator": 528,
       "share_percent": 100,
       "share_bound": null,
       "in_ten": null,
@@ -1642,7 +1609,7 @@
         "P156634"
       ],
       "count": 97,
-      "denominator": 121,
+      "denominator": 122,
       "share_percent": 80,
       "share_bound": null,
       "in_ten": null,
@@ -1711,9 +1678,9 @@
         "P130164",
         "P156634"
       ],
-      "count": 191,
-      "denominator": 250,
-      "share_percent": 76,
+      "count": 194,
+      "denominator": 264,
+      "share_percent": 73,
       "share_bound": null,
       "in_ten": null,
       "in_ten_exact": null,
@@ -1874,8 +1841,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 2175,
-      "denominator": 2175,
+      "count": 2198,
+      "denominator": 2198,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -1915,6 +1882,74 @@
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_a",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_a",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_a",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 24,
+      "denominator": 24,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_b",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_b",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.layout_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_b",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 27,
+      "denominator": 27,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
       ]
     }
   ],
@@ -2539,17 +2574,7 @@
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "status": null,
-          "note": null,
-          "routes": [
-            {
-              "route": "published_text",
-              "row": 43
-            },
-            {
-              "route": "layout_parser",
-              "row": 44
-            }
-          ]
+          "note": null
         },
         "fresh": {
           "measure": null,
@@ -2577,24 +2602,26 @@
           "Pakistan"
         ],
         "first_fiscal_year": 2012,
-        "last_fiscal_year": 2025
+        "last_fiscal_year": 2025,
+        "shelf": true
       },
-      "covers": "their appraisal, status and completion reports",
+      "covers": "with their appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports",
       "cells": {
         "coverage": {
           "measure": "documents_read",
-          "row": 46,
+          "row": 44,
           "counts": "documents",
           "counts_one": "document",
           "noun": "documents",
           "noun_one": "document",
           "status": null,
           "note": null,
-          "projects_row": 47
+          "projects_row": 45,
+          "slice_row": 46
         },
         "linked": {
           "measure": "passages_linked_to_project",
-          "row": 48,
+          "row": 47,
           "counts": "passages with their project record",
           "counts_one": "passage with its project record",
           "noun": "passages",
@@ -2604,7 +2631,7 @@
         },
         "read_well": {
           "measure": "document_pages_read_well",
-          "row": 49,
+          "row": 48,
           "counts": "pages read well",
           "counts_one": "page read well",
           "noun": "report pages",
@@ -2614,17 +2641,17 @@
           "routes": [
             {
               "route": "published_text",
-              "row": 50
+              "row": 49
             },
             {
               "route": "layout_parser",
-              "row": 51
+              "row": 50
             }
           ]
         },
         "fresh": {
           "measure": "documents_fresh",
-          "row": 52,
+          "row": 51,
           "counts": "newest report",
           "counts_one": null,
           "noun": "reports",
@@ -2655,13 +2682,14 @@
           "Pakistan"
         ],
         "first_fiscal_year": 2012,
-        "last_fiscal_year": 2025
+        "last_fiscal_year": 2025,
+        "shelf": true
       },
-      "covers": "scope and qualification text",
+      "covers": "with their notices' scope and qualification text",
       "cells": {
         "coverage": {
           "measure": "notice_text_passages",
-          "row": 54,
+          "row": 53,
           "counts": "sections of notices' text",
           "counts_one": "section of a notice's text",
           "noun": "sections of notices' text",
@@ -2671,7 +2699,7 @@
         },
         "linked": {
           "measure": "notice_text_linked",
-          "row": 55,
+          "row": 54,
           "counts": "sections with their project record",
           "counts_one": "section with its project record",
           "noun": "sections of notices' text",
@@ -2703,7 +2731,7 @@
           },
           {
             "number": 258,
-            "row": 45,
+            "row": 43,
             "noun": "activity entries in the latest plan versions",
             "noun_one": "activity entry in the latest plan versions",
             "role": "missing",
@@ -2732,15 +2760,15 @@
       "kind": "document_search",
       "tool": "search_passages",
       "status": "partial",
-      "ready_for": 58,
+      "ready_for": 57,
       "holds_back": [
         [
           {
             "text": "Of "
           },
           {
-            "number": 250,
-            "row": 53,
+            "number": 264,
+            "row": 52,
             "noun": "body pages",
             "noun_one": "body page",
             "role": null,
@@ -2756,8 +2784,8 @@
             "text": ", "
           },
           {
-            "number": 59,
-            "row": 53,
+            "number": 70,
+            "row": 52,
             "noun": "body pages",
             "noun_one": "body page",
             "role": "missing",
@@ -2791,8 +2819,8 @@
           "text": "the "
         },
         {
-          "number": 59,
-          "row": 53,
+          "number": 70,
+          "row": 52,
           "noun": "body pages",
           "noun_one": "body page",
           "role": "missing",
@@ -2802,8 +2830,8 @@
           "text": " of "
         },
         {
-          "number": 250,
-          "row": 53,
+          "number": 264,
+          "row": 52,
           "noun": "body pages",
           "noun_one": "body page",
           "role": null,
@@ -2914,7 +2942,7 @@
         },
         {
           "number": 258,
-          "row": 45,
+          "row": 43,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "role": "missing",
@@ -3099,7 +3127,7 @@
       "rank": 1,
       "gap": "reports/document_pages_paragraph_numbering_found",
       "projects": 3,
-      "row": 53,
+      "row": 52,
       "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
@@ -3107,8 +3135,8 @@
           "text": "Use the layout parser on the "
         },
         {
-          "number": 59,
-          "row": 53,
+          "number": 70,
+          "row": 52,
           "noun": "body pages",
           "noun_one": "body page",
           "role": "missing",
@@ -3124,7 +3152,7 @@
       "gap": "awards/linked",
       "projects": 2,
       "row": 2,
-      "projects_row": 56,
+      "projects_row": 55,
       "projects_from": "measure",
       "sentence": [
         {
@@ -3147,8 +3175,8 @@
       "rank": 3,
       "gap": "fy2017_2019",
       "projects": 2,
-      "row": 59,
-      "projects_row": 57,
+      "row": 58,
+      "projects_row": 56,
       "projects_from": "measure",
       "sentence": [
         {
@@ -3156,7 +3184,7 @@
         },
         {
           "number": 7,
-          "row": 59,
+          "row": 58,
           "noun": "contracts in local currency",
           "noun_one": null,
           "role": null,
@@ -3183,7 +3211,7 @@
       "rank": 4,
       "gap": "plans/latest_activities_with_confirmed_first_listing_read",
       "projects": 2,
-      "row": 45,
+      "row": 43,
       "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
@@ -3192,7 +3220,7 @@
         },
         {
           "number": 258,
-          "row": 45,
+          "row": 43,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "role": "missing",
@@ -3207,27 +3235,27 @@
   "routes": [
     {
       "measure": "pages_read_route_a",
-      "label": "Published text (Route A)",
+      "label": "Plan pages, published text",
       "noun": "plan pages with published text",
-      "row": 43
+      "row": 59
     },
     {
       "measure": "pages_read_route_b",
-      "label": "Layout parser (Route B)",
+      "label": "Plan pages, layout parser",
       "noun": "plan table pages",
-      "row": 44
+      "row": 60
     },
     {
       "measure": "document_pages_read_route_a",
-      "label": "Report pages, published text (Route A)",
+      "label": "Report pages, published text",
       "noun": "report pages of published text",
-      "row": 50
+      "row": 49
     },
     {
       "measure": "document_pages_read_route_b",
-      "label": "Report pages, layout parser (Route B)",
+      "label": "Report pages, layout parser",
       "noun": "report pages sent to the layout parser",
-      "row": 51
+      "row": 50
     }
   ],
   "headline": null,

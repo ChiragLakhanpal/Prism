@@ -82,15 +82,18 @@ plan_date = 2026-10-09
 #   part         for scan_annex: the hard part, by its key in the copy file's shelf parts, with
 #                first_page and last_page, the PDF pages it spans
 #   expected_rows and counted_on
-#                for scan_annex: how many rows the hard part holds, counted by a person from the PDF,
-#                and the day they counted. Without them the row says it has nothing to check against.
+#                for scan_annex: how many rated risks the hard part holds, counted by a person from the
+#                PDF's page images, and the day they counted. Without them the row shows the risks
+#                recovered and says it has nothing to check against (the 18 brief, decision 12).
 #   language     for other_language: the document's language, as an ISO 639-1 code
 #
 # The page's words never say "stress shelf": it calls the section "The hardest documents I read".
 
 # The P130164 PAD, a scan whose Annex 4, the Operational Risk Assessment Framework, is set in two
-# columns that the scan's text layer runs together. The eight rated risks were counted from the
-# PDF (tests/ground_truth/values.toml, stress_shelf.pad_risk_annex).
+# columns that the scan's text layer runs together. No person has counted its rated risks from the
+# PDF's page images yet, so this entry has no expected_rows. The builder counted eight from the
+# scan's text layer (tests/ground_truth/values.toml, stress_shelf.pad_risk_annex), which is not a
+# hand count. Once a person counts them, add expected_rows and counted_on with the day they counted.
 [[stress_shelf]]
 key = "p130164_pad"
 kind = "scan_annex"
@@ -99,8 +102,6 @@ document_id = "18381488"
 part = "risk_annex"
 first_page = 65
 last_page = 70
-expected_rows = 8
-counted_on = 2026-10-24
 
 # The longest PAD of the documents the run read.
 [[stress_shelf]]

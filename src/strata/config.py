@@ -139,7 +139,10 @@ class ReadinessColumn:
     years: str | None = None  # for coverage: the measure that counts its fiscal years
     counts_one: str | None = None  # counts in the singular, for a count or a denominator of one
     noun_one: str | None = None  # noun in the singular, likewise
-    projects: str | None = None  # for a document collection's coverage: the measure that counts its projects
+    # For a document collection's coverage: the measure that counts the projects its documents belong to,
+    # and the one that counts the slice's projects whose documents were read, out of the slice's projects.
+    projects: str | None = None
+    slice_read: str | None = None
 
 
 @dataclass(frozen=True)
@@ -147,7 +150,7 @@ class ReadinessRoute:
     """One way a reader reads a source's pages, whose pages read well the dashboard charts by route."""
 
     measure: str  # the measure in strata.ops.data_readiness that counts the pages it read well
-    label: str  # its name on the dashboard's chart, such as "Layout parser (Route B)"
+    label: str  # its name on the dashboard's chart, such as "Plan pages, layout parser"
     noun: str  # what the measure counts, in the plural
     counted_in: str  # the table it counts, by its three-part name
 
@@ -169,6 +172,8 @@ class ReadinessRow:
     checks: tuple[ReadinessColumn, ...] = ()  # more measures that hold answers back when they fall short
     routes: tuple[ReadinessRoute, ...] = ()  # the reading routes of a paged reader, for the dashboard
     published_as: str | None = None  # "text": a row whose records arrive as text, with nothing to read well
+    # Whether its Read well counts the same pages its routes do, so its window splits it by route.
+    read_well_by_route: bool = False
 
 
 @dataclass(frozen=True)
@@ -252,6 +257,8 @@ class Source:
     dataset_id: str | None = None
     resource_id: str | None = None
     stratum: str | None = None
+    # A record's own page on the World Bank's site, with {id} for its id, such as a notice's page.
+    record_url: str | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -272,7 +279,7 @@ class Source:
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter")
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -312,11 +319,12 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
 
 def _column(path: Path, where: str, table) -> ReadinessColumn:
     entry = _Entry(path, where, table)
-    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one", "projects"})
+    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one", "projects",
+                "slice_read"})
     return ReadinessColumn(entry.text("measure"), entry.text("counts"), entry.text("noun"), entry.text("counted_in"),
                            entry.text("lack", required=False), entry.text("years", required=False),
                            entry.text("counts_one", required=False), entry.text("noun_one", required=False),
-                           entry.text("projects", required=False))
+                           entry.text("projects", required=False), entry.text("slice_read", required=False))
 
 
 def _route(path: Path, where: str, table) -> ReadinessRoute:
@@ -335,7 +343,7 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     for row in _tables(path, table, "readiness"):
         row.where = f"sources.{key}.{row.where}"
         row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", "routes", "published_as",
-                  *READINESS_COLUMNS})
+                  "read_well_by_route", *READINESS_COLUMNS})
         row_stratum = row.text("stratum", required=False) or stratum
         if row_stratum not in STRATA:
             row._fail("stratum", f"must be one of {', '.join(STRATA)}, here or on the source")
@@ -343,6 +351,11 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
         if schedule not in (None, AS_PUBLISHED):
             row._fail("schedule", f'can only be "{AS_PUBLISHED}"; leave it out to use the source\'s cadence')
         published_as = row.text("published_as", required=False)
+        by_route = row.table.get("read_well_by_route", False)
+        if not isinstance(by_route, bool):
+            row._fail("read_well_by_route", "must be true or false")
+        if by_route and not row.table.get("routes"):
+            row._fail("read_well_by_route", "needs routes to split Read well into")
         if published_as not in (None, "text"):
             row._fail("published_as", 'can only be "text": a row whose records arrive as text')
         if published_as and "read_well" in row.table:
@@ -359,7 +372,7 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
                                               for n, check in enumerate(checks, 1)),
                                  routes=tuple(_route(path, f"{row.where}.routes[{n}]", route)
                                               for n, route in enumerate(routes, 1)),
-                                 published_as=published_as))
+                                 published_as=published_as, read_well_by_route=by_route))
     fields["readiness"] = tuple(rows)
     gaps = []
     for gap in _tables(path, table, "known_gaps"):

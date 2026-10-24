@@ -23,6 +23,11 @@ daily_page_cap = 500
 # page as a PDF of its own, so a part's pages go one at a time. Source: ticket 18 ("a document over
 # 500 pages ... divided past the parser's limit"); a value for the owner to confirm.
 parser_part_pages = 500
+# The share of their words that the words read for a page, by the layout parser or from the published
+# text, and the words of the PDF page with that number must share for the stress shelf to call its
+# page number right (src/strata/lakehouse/stress_shelf.py, over_parser_limit). Half allows for the
+# parser's reading order and for running heads. A value for the owner to confirm.
+page_match_shared_words = 0.5
 # The passage reader (src/strata/lakehouse/passages.py) reads at most this many documents whose
 # published text Route A can read: the slice file's named projects first (the showcase, the demo plan
 # and the stress shelf's), then the projects the slice criteria select, each project's ICR Reviews,

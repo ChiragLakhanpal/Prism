@@ -42,6 +42,10 @@ _Avoid_: Table description
 The hardest documents Strata reads, each with a recorded outcome on the Data readiness page, which shows them as "The hardest documents I read".
 _Avoid_: Stress shelf (in user-facing copy), benchmark documents
 
+**Pilot projects**:
+The water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan with a Board date in fiscal 2012 to 2025, whose documents Strata reads, as `config/slice.toml` sets them. Strata's code calls them the slice.
+_Avoid_: Slice (in user-facing copy), pilot slice
+
 **Assertion**:
 A dated claim a source makes about a project, package or contract, such as a rating, a date or an amount.
 _Avoid_: Fact, statement

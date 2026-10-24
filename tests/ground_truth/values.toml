@@ -69,6 +69,22 @@ pdf_page = 27
 printed_page = "23 of 62"
 
 [[value]]
+id = "project-paper-para-7"
+says = "P156634's restructuring paper of May 24, 2021, a Project Paper, gives the midterm review as the start of its rationale, in paragraph 7 of section I.B."
+value = "During the midterm review that took place in September/October 2020"
+quote = "7. During the midterm review that took place in September/October 2020, the Bank and the implementing agencies assessed the likelihood that envisaged contracts could be executed within the project implementation period."
+document = "documents/P156634/project-paper-2021-05-24"
+document_type = "Project Paper"
+project = "P156634"
+date = 2021-05-24
+section = "I.B"
+paragraph = 7
+pdf_page = 5
+# Its numbered paragraphs run from 1 on PDF page 4 to 11 on PDF page 6; the results framework tables
+# after them number none of their own.
+paragraphs = 11
+
+[[value]]
 id = "icr-date"
 says = "The ICR is dated October 10, 2019."
 value = 2019-10-10
@@ -1621,13 +1637,15 @@ codes = ["AAX", "AX", "BBX", "BX", "CX", "DDX", "DX", "EEX", "EX", "FFX", "FX", 
          "YX", "YYX"]
 
 # The stress shelf (ticket 18; docs/PLAN.md section 3): the hardest documents Strata reads. Each count
-# and page below was read from the recorded files or the PDF by a person, apart from Strata's code.
-# tests/test_ground_truth_values.py checks each quote on its PDF page.
+# and page below was read from the recorded files, apart from Strata's code. tests/test_ground_truth_values.py
+# checks each quote on its PDF page.
 
 # The P130164 PAD's Annex 4, the Operational Risk Assessment Framework (ORAF), set in two columns on
-# PDF pages 65 to 70 (printed pages 53 to 58). Counted by hand from the PDF on October 24, 2026: each
-# risk with its own Rating row, seven risk categories and the overall implementation risk. The
-# lettered descriptions under a risk, such as (a) to (d) under Capacity, belong to that risk's row.
+# PDF pages 65 to 70 (printed pages 53 to 58). Counted from the scan's text layer (the recorded
+# .pages.txt) on October 24, 2026, by the builder: each risk with its own Rating row, seven risk
+# categories and the overall implementation risk. The lettered descriptions under a risk, such as (a)
+# to (d) under Capacity, belong to that risk's row. Each rating is quoted on its page. A person has not
+# yet checked the count against the page images, so config/slice.toml gives the shelf no hand count.
 [stress_shelf.pad_risk_annex]
 says = "The P130164 PAD's risk annex holds eight rated risks, on PDF pages 65 to 70."
 document = "documents/P130164/pad-2013-10-01"
@@ -1636,7 +1654,7 @@ project = "P130164"
 pdf_pages = 100
 first_pdf_page = 65
 last_pdf_page = 70
-counted_on = 2026-10-24
+text_layer_counted_on = 2026-10-24
 risks = 8
 title = { pdf_page = 65, quote = "Annex 4 - Operational Risk Assessment Framework (ORAF)" }
 ratings = [

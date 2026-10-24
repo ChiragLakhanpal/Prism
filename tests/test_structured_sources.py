@@ -634,8 +634,9 @@ def test_each_source_has_coverage_linked_and_fresh_measures_for_the_data_readine
     assert {"coverage", "linked", "fresh"} <= kinds, key
     assert {"fresh_fetched", "fresh_newest_record"} <= set(found), key
     assert all(row["count"] is not None and row["denominator"] for row in found.values() if row["kind"] != "fresh")
-    # The day the fixture was recorded. Ticket 18 recorded one project record, P127203's, a day later.
-    assert found["fresh_fetched"]["as_of"] == (dt.date(2026, 10, 24) if key == "projects" else dt.date(2026, 10, 23))
+    # The day the fixture was recorded. Ticket 18 recorded one project record, P127203's, a day later, and a
+    # measure sees only the fetches made before it (review r2 P4).
+    assert found["fresh_fetched"]["as_of"] == dt.date(2026, 10, 23)
     assert found["fresh_fetched"]["detail"] == config.load_sources()[key].cadence
     assert all(row["detail"] for row in found.values())
 

@@ -52,9 +52,6 @@ SELECT
   p.tokens,
   d.pdf_url,
   d.doc_key,
-  CASE WHEN p.kind = 'notice_text'
-       THEN concat('https://projects.worldbank.org/en/projects-operations/procurement-detail/', p.document_id)
-  END AS notice_url,
   v.embedding,
   v.model AS embedding_model,
   s.shield,

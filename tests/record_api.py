@@ -53,6 +53,8 @@ FROM_THE_FIXTURE = {
     "evidence-pad-p130164-risk-row.json": "/api/evidence?id=strata.gold.passage:18381488/v1/table65.2",
     "evidence-pad-p130164-risk-summary.json": "/api/evidence?id=strata.gold.passage:18381488/v1/table65",
     "evidence-notice-op00118817.json": "/api/evidence?id=strata.gold.passage:OP00118817/v1/s8",
+    # The same notice's qualification text, the kind of section the drawer is for (critique r2).
+    "evidence-notice-op00118817-qualifications.json": "/api/evidence?id=strata.gold.passage:OP00118817/v1/s5",
     "evidence-icr-p127203-fr.json": "/api/evidence?id=strata.gold.passage:33407968/v1/1",
 }
 # The states the fixture does not hold: the database each is read from, and the address.
@@ -95,10 +97,15 @@ def without_wgi(folder: Path) -> Path:
 
 # The hardest documents' states the fixture does not reach (ticket 18), each the fixture's measures with
 # its shelf outcomes changed, so the server builds the page from them: a Gap (nothing recovered from the
-# risk annex, recorded as unreadable) and a Partial; each abstention (no hand count, stopped at the
-# daily page cap, not read yet, no document fits); and a shelf never read.
+# risk annex, recorded as unreadable, against a hand count, as the slice file holds one once a person
+# counts the annex) and a Partial; each abstention (no hand count, stopped at the daily page cap, not
+# read yet, no document fits); and a shelf never read. The fixture itself has no hand count (review r2
+# B1), so the default page shows the risks recovered with nothing to check them against.
+HAND_COUNT = ("UPDATE strata.ops.stress_shelf SET denominator = 8, denominator_from = 'hand_count', "
+              "counted_on = DATE '2026-10-20' WHERE shelf_key = :key", {"key": "p130164_pad"})
 SHELF_STATES = {
     "data-readiness-shelf-gap.json": [
+        HAND_COUNT,
         ("UPDATE strata.ops.stress_shelf SET count = 0, unreadable = true WHERE shelf_key = :key", {"key": "p130164_pad"}),
         ("UPDATE strata.ops.stress_shelf SET count = 80 WHERE shelf_key = :key", {"key": "longest_pad"}),
     ],
@@ -112,6 +119,7 @@ SHELF_STATES = {
         ("DELETE FROM strata.ops.stress_shelf WHERE shelf_key = :key", {"key": "french_report"}),
     ],
     "data-readiness-shelf-two-gaps.json": [
+        HAND_COUNT,
         ("UPDATE strata.ops.stress_shelf SET count = 0, unreadable = true WHERE shelf_key = :key", {"key": "p130164_pad"}),
         ("UPDATE strata.ops.stress_shelf SET count = 0 WHERE shelf_key = :key", {"key": "longest_pad"}),
     ],

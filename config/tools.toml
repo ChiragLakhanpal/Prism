@@ -103,8 +103,9 @@ abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "versi
                "no_activities"]
 
 [tools.search_passages]
-description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs and \
-ICR Reviews) and the scope and qualification text of procurement notices, by words and by meaning, and \
+description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \
+ICR Reviews, Project Papers and PPARs) and the scope and qualification text of procurement notices, by \
+words and by meaning, and \
 returns the best passages first. A passage is one numbered paragraph, or a part of a long one, with its \
 document, section, paragraph number and PDF page, so a citation can point to it. Its kind says what it is: \
 a paragraph (from the published text, or read by the layout parser from a scanned page), one row of a \
@@ -139,8 +140,8 @@ description = "Only passages of this project, P followed by six digits, such as 
 name = "document_type"
 type = "string"
 required = false
-description = """Only passages of this type of document: PAD, ISR, ICR or ICR Review, or the documents \
-API's full name, such as Implementation Completion and Results Report."""
+description = """Only passages of this type of document: PAD, ISR, ICR, ICR Review, Project Paper or PPAR, \
+or the documents API's full name, such as Implementation Completion and Results Report."""
 
 [[tools.search_passages.parameters]]
 name = "country"

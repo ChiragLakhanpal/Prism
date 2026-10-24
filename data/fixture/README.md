@@ -47,11 +47,13 @@ The gate loads these files into the schema `strata.recorded`. The `recorded` sch
 
 The stress shelf holds the hardest documents Strata reads (`config/slice.toml`, `[[stress_shelf]]`), and the fixture records what it needs of each:
 
-- The P130164 PAD, a scan of 100 PDF pages whose text layer is empty on pages 4, 6 and 12, with its words, so the offline layout parser reads every page and the risk annex, Annex 4, on PDF pages 65 to 70. A person counted its eight rated risks in the PDF on October 24, 2026 (`tests/ground_truth/values.toml`, `[stress_shelf.pad_risk_annex]`).
+- The P130164 PAD, a scan of 100 PDF pages whose text layer is empty on pages 4, 6 and 12, with its words, so the offline layout parser reads every page and the risk annex, Annex 4, on PDF pages 65 to 70. The builder counted its eight rated risks from the scan's text layer (the recorded `.pages.txt`) on October 24, 2026, and quoted each rating on its page (`tests/ground_truth/values.toml`, `[stress_shelf.pad_risk_annex]`). A person has not yet checked the count against the page images, so `config/slice.toml` gives the shelf no hand count, and the page shows the risks recovered with nothing to check them against.
 - The longest PAD the fixture records is P156634's, with 103 PDF pages; the run picks it by its rule.
 - P161305's Procurement Plan of September 24, 2026, with its words: 14 PDF pages whose STEP tables list 212 activities, most of them on pages that carry on a table from the page before with no header. P161305's project record is in the Kenya projects file, and its document list is recorded, so the plan reader reads it in the gate as it reads the demo plan's.
 - P127203's completion report in French (ICR4990, July 29, 2021), with P127203's project record and document list. The list also names the English report under the same number, which the fixture does not record.
 - No recorded document has more than 500 pages, so the shelf's last entry records that none needed dividing.
+
+The passage reader also reads Project Papers and PPARs (ticket 18, review round 2). The fixture records one Project Paper, P156634's restructuring paper of May 24, 2021 (RES45456, 18 PDF pages), whose numbered paragraphs 1 to 11 the tests check; the reader skips the project's other nine Project Papers, which the fixture does not record. No fixture project lists a PPAR, so a test reads a hand-written one.
 
 The passage reader also reads the scope and qualification text of the run's projects' notices into passages, from `strata.silver.notices.notice_text`, never from these recorded files, whose notices keep their contact details on purpose.
 

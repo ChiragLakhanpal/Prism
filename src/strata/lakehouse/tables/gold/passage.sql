@@ -20,7 +20,6 @@
 -- pdf_pages            how many pages the document's PDF has; empty for a notice
 -- pdf_url              where the document's PDF is; empty for a notice
 -- doc_key              the document's key in its project (silver.documents); empty for a notice
--- notice_url           a notice's own page on the World Bank's site; empty for a document
 -- embedding            the vector of the header, a line break and the text (silver.passage_embeddings)
 -- embedding_model      the model that made it
 -- shield               the shield that scanned the passage at ingestion (silver.passage_shields)
@@ -62,7 +61,6 @@ CREATE TABLE IF NOT EXISTS strata.gold.passage (
   tokens INT NOT NULL,
   pdf_url STRING,
   doc_key STRING,
-  notice_url STRING,
   embedding ARRAY<FLOAT> NOT NULL,
   embedding_model STRING NOT NULL,
   shield STRING,

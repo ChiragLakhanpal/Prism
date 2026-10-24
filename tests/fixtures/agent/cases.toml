@@ -266,3 +266,24 @@ kind = "summary"
 evidence_ids = ["strata.gold.passage:18381488/v1/table65"]
 numbers = ["8"]
 dates = []
+
+[[cases]]
+id = "p130164-rating-from-a-table-row"
+says = """The agent finds a row of the PAD's risk annex, read from the scan by the layout parser, and quotes the \
+capacity risk's rating word for word. The quote is on the row's page, so the sentence stands, and the drawer \
+highlights the rating's cell (ticket 18; design review r2 P1)."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "Capacity risk rating Low engineering designs supervision", project_id = "P130164", document_type = "PAD", as_of = "2026-10-23" } }]
+
+[[cases.plant_claims]]
+sentence = "The appraisal document rated its capacity risk \"Low\"."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:18381488/v1/table65.2"]
+numbers = []
+dates = []
+quote = { text = "Low", passage_id = "strata.gold.passage:18381488/v1/table65.2" }

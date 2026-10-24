@@ -72,7 +72,9 @@ def test_the_stress_shelf_names_five_entries_each_with_a_kind_and_a_document_or_
     pad = shelf[0]
     assert (pad.project_id, pad.document_id, pad.part) == ("P130164", annex["document_id"], "risk_annex")
     assert (pad.first_page, pad.last_page) == (annex["first_pdf_page"], annex["last_pdf_page"])
-    assert (pad.expected_rows, pad.counted_on) == (annex["risks"], annex["counted_on"])
+    # No person has counted the annex's risks from the PDF's page images yet, so the entry has no hand
+    # count and the page says it has nothing to check against (the 18 brief, decision 12).
+    assert (pad.expected_rows, pad.counted_on) == (None, None)
     assert (shelf[1].rule, shelf[1].document_type, shelf[1].document_id) == (
         "longest", "Project Appraisal Document", None)
     assert (shelf[2].project_id, shelf[2].document_id) == ("P161305", SHELF_TRUTH["long_plan"]["document_id"])
@@ -84,7 +86,7 @@ def test_the_stress_shelf_names_five_entries_each_with_a_kind_and_a_document_or_
     ('kind = "scan_annex"', 'kind = "a_hard_one"', r"stress_shelf\[1\]\.kind must be one of"),
     ('rule = "longest"', 'rule = "longest"\ndocument_id = "18381488"\nproject_id = "P130164"',
      r"stress_shelf\[2\] names a document_id and a rule"),
-    ('expected_rows = ', 'not_expected_rows = ', r"stress_shelf\[1\] has keys I do not know: not_expected_rows"),
+    ('last_page = 70\n', 'last_page = 70\nnot_expected_rows = 8\n', r"stress_shelf\[1\] has keys I do not know: not_expected_rows"),
     ('part = "risk_annex"\n', '', r"stress_shelf\[1\]\.part is missing"),
     ('language = "fr"', 'language = "French"', r"stress_shelf\[4\]\.language must be a two-letter"),
 ])
@@ -96,10 +98,17 @@ def test_a_stress_shelf_entry_of_the_wrong_shape_is_refused_with_a_sentence(tmp_
 
 
 def test_a_hand_count_needs_the_day_it_was_counted(tmp_path):
-    path = copy("slice.toml", tmp_path, old="counted_on = ", new="# counted_on = ")
+    path = copy("slice.toml", tmp_path, old="last_page = 70\n", new="last_page = 70\nexpected_rows = 8\n")
 
     with pytest.raises(ConfigError, match=r"stress_shelf\[1\]\.counted_on.*the day a person counted"):
         config.load_slice(path)
+
+
+def test_a_hand_count_with_its_day_is_read(tmp_path):
+    path = copy("slice.toml", tmp_path, old="last_page = 70\n", new="last_page = 70\nexpected_rows = 8\ncounted_on = 2026-11-02\n")
+
+    pad = config.load_slice(path).stress_shelf[0]
+    assert (pad.expected_rows, pad.counted_on) == (8, dt.date(2026, 11, 2))
 
 
 def test_adding_a_country_to_the_slice_is_one_entry(tmp_path):

@@ -21,7 +21,8 @@ A template says:
                and the levels nest under it: Annex 2.A.
 - paragraph    the start of a numbered paragraph, whose first group is its number, such as 54. A
                report numbers its paragraphs one after another, so a line that does not follow the
-               last number, or that runs into columns of a table, is not a new paragraph.
+               last number, or that runs into columns of a table, is not a new paragraph. IEG's PPAR
+               numbers them within each chapter, 2.10, and starts each chapter again at 1.
 - items        for a report whose numbered sections are its paragraphs, such as IEG's ICR Review
                (6. Outcome, then a. Outcome Rating), the lettered items inside each section. The
                paragraph is the section's number with the item's letter, 10.b, as IEG cites it.
@@ -148,9 +149,40 @@ ICR_FR = Template(
     language="fr",
 )
 
+# A Project Paper, here a restructuring paper (P156634's of May 24, 2021): "I. PROJECT STATUS AND RATIONALE
+# FOR RESTRUCTURING", then "A.      Project status", with its paragraphs numbered 1, 2, 3 through the
+# paper. Its results framework tables come after, set out in columns, and give no paragraphs.
+PROJECT_PAPER = Template(
+    document_type="Project Paper",
+    short_name="Project Paper",
+    stratum="Why",
+    body_start=_heading("I", TITLE_WORDS),
+    levels=(_heading(ROMAN, TITLE_WORDS), _heading("[A-H]", TITLE_WORDS)),
+    annex=re.compile(r"^\s*ANNEX\s+(\d+)[.:]?\s+\S.*$"),
+    paragraph=NUMBERED,
+    minor_headings=True,
+)
+
+# IEG's Project Performance Assessment Report numbers its chapters ("2. Results, What Worked, What Didn't
+# Work, and Why?") and its paragraphs within each chapter ("2.1     The project results ..."), and closes
+# with lettered appendixes. No fixture project lists one yet, so a test reads a hand-written one.
+CHAPTER = r"([A-Z][^.…]*[A-Za-z)?])"
+PPAR = Template(
+    document_type="Project Performance Assessment Report",
+    short_name="PPAR",
+    stratum="Why",
+    body_start=re.compile(rf"^\s*(1)\.\s+{CHAPTER}\s*$"),
+    levels=(re.compile(rf"^\s*(\d{{1,2}})\.\s+{CHAPTER}\s*$"),),
+    annex=re.compile(r"^\s*Appendix\s+([A-Z])\.?\s+\S.*$"),
+    paragraph=re.compile(r"^\s*(\d{1,2}\.\d{1,2})\s+(\S.*)$"),
+    minor_headings=True,
+)
+
 # The types the reader reads, in the order it takes them: the evaluations first, then the
-# appraisal, then the status reports.
-TEMPLATES: dict[str, Template] = {template.document_type: template for template in (ICR_REVIEW, ICR, PAD, ISR)}
+# appraisal, the restructurings and the status reports. A Country Partnership Framework is listed by
+# country, not by project, so the reader, which lists a project's documents, does not take it yet.
+TEMPLATES: dict[str, Template] = {template.document_type: template
+                                  for template in (PPAR, ICR_REVIEW, ICR, PAD, PROJECT_PAPER, ISR)}
 # The reports in another language, by their type and language.
 LANGUAGES: dict[tuple[str, str], Template] = {(t.document_type, t.language): t for t in (ICR_FR,)}
 

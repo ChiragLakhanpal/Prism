@@ -21,6 +21,8 @@ import check  # noqa: E402
 from strata.lakehouse import catalog, nightly, passages, plans  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, Result  # noqa: E402
 
+FIXTURE_DB = Path(__file__).resolve().parents[3] / "data" / "out" / "fixture.duckdb"
+
 
 class FakeWorkspace:
     def __init__(self, order=None, state="SUCCESS", jobs=None, warehouse=None):
@@ -102,9 +104,11 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 @functools.cache
 def deployed_warehouse():
     """A SQL warehouse after the deploy, the live plan run, one run of the nightly job and the live
-    passage run: DuckDB with the catalog's tables built and filled, here from the recorded plans,
-    pages and documents. The tests only read it, so each worker builds it once: since ticket 18 the
-    passage run reads the whole document slice, and a build takes a few seconds."""
+    passage run: the fixture database the gate's python lane builds first, from the recorded plans,
+    pages and documents, opened read-only, since the tests only read it. Building it again here took
+    each worker a few seconds once the passage run read the whole document slice (review r2 P14)."""
+    if FIXTURE_DB.exists():
+        return DuckDBEngine.open(FIXTURE_DB, read_only=True)
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)

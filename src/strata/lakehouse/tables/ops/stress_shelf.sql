@@ -20,10 +20,11 @@
 -- hard_page           the PDF page where the hard part starts
 -- parser_pages        the pages the page router sent to the layout parser
 -- count, denominator  the outcome: what was recovered, out of what the document holds
--- denominator_from    where the denominator comes from: hand_count (a person counted it in the PDF),
---                     pdf_pages, text_references (the activity references its text lists) or
---                     passages_made; empty when there is nothing to check against
--- counted_on          for a hand count, the day a person counted it
+-- denominator_from    where the denominator comes from: hand_count (the entry's expected_rows in
+--                     config/slice.toml, which a person counts from the PDF's page images), pdf_pages,
+--                     text_references (the activity references its text lists) or passages_made;
+--                     empty when there is nothing to check against, as for an entry with no hand count
+-- counted_on          for a hand count, the day config/slice.toml gives for it (counted_on)
 -- unreadable          whether the layout parser could read none of the hard part's pages
 -- parts               for a document over the layout parser's limit, the parts it was read in
 -- parser              the layout parser's name

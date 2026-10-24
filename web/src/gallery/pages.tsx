@@ -26,7 +26,29 @@ import { POPOVER } from "../components/Popover";
 import type { Run } from "../lib/answer";
 import type { Lookup } from "../lib/intents";
 import { cx } from "../lib/cx";
-import { FAILED, ICR_54, ICR_54_ID, ISR_S4, ISR_S4_SENT, LOOKUPS, PENDING, PLAN_RECORD, RUNS, SECTION_SWITCHER_RUN, STEP_REF, SWITCHER_RUN } from "./answers";
+import {
+  FAILED,
+  FRENCH,
+  ICR_54,
+  ICR_54_ID,
+  ISR_S4,
+  ISR_S4_SENT,
+  LOOKUPS,
+  NOTICE,
+  NOTICE_CONTACTS,
+  PENDING,
+  PLAN_RECORD,
+  RISK_ROW,
+  RISK_SUMMARY,
+  RUNS,
+  SCANNED,
+  SECTION_SWITCHER_RUN,
+  STEP_REF,
+  SWITCHER_RUN,
+  TABLE_ROW_RUN,
+  TABLE_SUMMARY_RUN,
+} from "./answers";
+import { ExternalLink } from "../components/ExternalLink";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
@@ -550,6 +572,17 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       {
+        id: "external-link",
+        title: t.externalLink,
+        body: (
+          <p className="text-body">
+            <ExternalLink href={sample.externalLinkHref} name={sample.externalLinkMore}>
+              {sample.externalLink}
+            </ExternalLink>
+          </p>
+        ),
+      },
+      {
         id: "tabs",
         title: t.tabs,
         body: (
@@ -972,6 +1005,15 @@ export const PAGES: GalleryPage[] = [
       { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },
       { id: "unknown-as-of", title: s.unknownAsOf, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} asOf="2016-08-26" /> },
       { id: "preview", title: s.drawerPreview, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} preview /> },
+      // Ticket 18's kinds of passage (the 18 brief, section 7), each as the server gave it on the fixture.
+      { id: "scanned", title: s.scanned, body: <DrawerSample id={SCANNED.id} data={{ status: "ready", evidence: SCANNED }} /> },
+      { id: "table-row", title: s.tableRow, body: <DrawerSample id={RISK_ROW.id} data={{ status: "ready", evidence: RISK_ROW }} /> },
+      { id: "table-row-quoted", title: s.tableRowQuoted, body: <DrawerSample id={RISK_ROW.id} run={TABLE_ROW_RUN} sentence={3} /> },
+      { id: "table-summary", title: s.tableSummary, body: <DrawerSample id={RISK_SUMMARY.id} data={{ status: "ready", evidence: RISK_SUMMARY }} /> },
+      { id: "notice", title: s.notice, body: <DrawerSample id={NOTICE.id} data={{ status: "ready", evidence: NOTICE }} /> },
+      { id: "notice-contacts", title: s.noticeContacts, body: <DrawerSample id={NOTICE_CONTACTS.id} data={{ status: "ready", evidence: NOTICE_CONTACTS }} /> },
+      { id: "french", title: s.frenchParagraph, body: <DrawerSample id={FRENCH.id} data={{ status: "ready", evidence: FRENCH }} /> },
+      { id: "removed-summary", title: s.removedSummary, body: <PanelSample run={TABLE_SUMMARY_RUN} /> },
     ],
   },
   {

@@ -825,7 +825,7 @@
                 "showTitle": true,
                 "title": "Share of pages read well, by route",
                 "showDescription": true,
-                "description": "Each reading route with 50 pages or more, of the Procurement Plans or the project reports, as the share of its pages it read well: the published text, and the layout parser for scans and tables."
+                "description": "The share of pages each reading route read well, for routes with 50 pages or more. The routes are the published text and the layout parser, which reads scans and tables. The pages come from Procurement Plans and project reports."
               },
               "mark": {
                 "colors": [

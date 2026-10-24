@@ -1113,7 +1113,7 @@
       "share_bound": null,
       "in_ten": null,
       "in_ten_exact": null,
-      "as_of": "2026-10-24",
+      "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"
@@ -1470,74 +1470,6 @@
       ]
     },
     {
-      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_a",
-      "public_from": "2026-10-23",
-      "source": {
-        "table": "strata.ops.data_readiness",
-        "source_key": "documents",
-        "measure": "pages_read_route_a",
-        "subjects": [
-          "P156634",
-          "P161305"
-        ],
-        "measured_on": "2026-10-23",
-        "counted_in": "strata.bronze.document_pages"
-      },
-      "source_key": "documents",
-      "measure": "pages_read_route_a",
-      "kind": "read_well",
-      "subjects": [
-        "P156634",
-        "P161305"
-      ],
-      "count": 24,
-      "denominator": 24,
-      "share_percent": null,
-      "share_bound": null,
-      "in_ten": null,
-      "in_ten_exact": null,
-      "as_of": null,
-      "measured_on": "2026-10-23",
-      "run_ids": [
-        "plans-P156634-20261023T090000000000",
-        "plans-P161305-20261023T090000018000"
-      ]
-    },
-    {
-      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_b",
-      "public_from": "2026-10-23",
-      "source": {
-        "table": "strata.ops.data_readiness",
-        "source_key": "documents",
-        "measure": "pages_read_route_b",
-        "subjects": [
-          "P156634",
-          "P161305"
-        ],
-        "measured_on": "2026-10-23",
-        "counted_in": "strata.bronze.layout_pages"
-      },
-      "source_key": "documents",
-      "measure": "pages_read_route_b",
-      "kind": "read_well",
-      "subjects": [
-        "P156634",
-        "P161305"
-      ],
-      "count": 27,
-      "denominator": 27,
-      "share_percent": null,
-      "share_bound": null,
-      "in_ten": null,
-      "in_ten_exact": null,
-      "as_of": null,
-      "measured_on": "2026-10-23",
-      "run_ids": [
-        "plans-P156634-20261023T090000000000",
-        "plans-P161305-20261023T090000018000"
-      ]
-    },
-    {
       "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/latest_activities_with_confirmed_first_listing_read",
       "public_from": "2026-10-23",
       "source": {
@@ -1594,8 +1526,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 38,
-      "denominator": 38,
+      "count": 39,
+      "denominator": 39,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -1607,26 +1539,61 @@
       ]
     },
     {
-      "evidence_id": "strata.ops.data_readiness:documents/all/slice_projects",
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/documents_read_projects",
       "public_from": "2026-10-23",
       "source": {
         "table": "strata.ops.data_readiness",
         "source_key": "documents",
-        "measure": "slice_projects",
+        "measure": "documents_read_projects",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.documents"
+      },
+      "source_key": "documents",
+      "measure": "documents_read_projects",
+      "kind": "coverage",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 3,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/all/slice_projects_read",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "slice_projects_read",
         "subjects": [
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": "strata.gold.project"
+        "counted_in": "strata.silver.documents"
       },
       "source_key": "documents",
-      "measure": "slice_projects",
+      "measure": "slice_projects_read",
       "kind": "coverage",
       "subjects": [
         "all"
       ],
-      "count": 17,
-      "denominator": null,
+      "count": 1,
+      "denominator": 17,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -1660,8 +1627,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 1377,
-      "denominator": 1377,
+      "count": 1400,
+      "denominator": 1400,
       "share_percent": 100,
       "share_bound": null,
       "in_ten": null,
@@ -1695,8 +1662,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 608,
-      "denominator": 632,
+      "count": 625,
+      "denominator": 650,
       "share_percent": 96,
       "share_bound": null,
       "in_ten": null,
@@ -1730,8 +1697,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 511,
-      "denominator": 511,
+      "count": 528,
+      "denominator": 528,
       "share_percent": 100,
       "share_bound": null,
       "in_ten": null,
@@ -1766,7 +1733,7 @@
         "P156634"
       ],
       "count": 97,
-      "denominator": 121,
+      "denominator": 122,
       "share_percent": 80,
       "share_bound": null,
       "in_ten": null,
@@ -1835,9 +1802,9 @@
         "P130164",
         "P156634"
       ],
-      "count": 191,
-      "denominator": 250,
-      "share_percent": 76,
+      "count": 194,
+      "denominator": 264,
+      "share_percent": 73,
       "share_bound": null,
       "in_ten": null,
       "in_ten_exact": null,
@@ -2026,7 +1993,7 @@
         "18381488"
       ],
       "count": 8,
-      "denominator": 8,
+      "denominator": null,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -2277,8 +2244,8 @@
         "P130164",
         "P156634"
       ],
-      "count": 2175,
-      "denominator": 2175,
+      "count": 2198,
+      "denominator": 2198,
       "share_percent": null,
       "share_bound": null,
       "in_ten": null,
@@ -2318,6 +2285,74 @@
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_a",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_a",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_a",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 24,
+      "denominator": 24,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_b",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_b",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.layout_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_b",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 27,
+      "denominator": 27,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
       ]
     }
   ],
@@ -2935,17 +2970,7 @@
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "status": null,
-          "note": null,
-          "routes": [
-            {
-              "route": "published_text",
-              "row": 47
-            },
-            {
-              "route": "layout_parser",
-              "row": 48
-            }
-          ]
+          "note": null
         },
         "fresh": {
           "measure": null,
@@ -2973,24 +2998,26 @@
           "Pakistan"
         ],
         "first_fiscal_year": 2012,
-        "last_fiscal_year": 2025
+        "last_fiscal_year": 2025,
+        "shelf": true
       },
-      "covers": "their appraisal, status and completion reports",
+      "covers": "with their appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports",
       "cells": {
         "coverage": {
           "measure": "documents_read",
-          "row": 50,
+          "row": 48,
           "counts": "documents",
           "counts_one": "document",
           "noun": "documents",
           "noun_one": "document",
           "status": null,
           "note": null,
-          "projects_row": 51
+          "projects_row": 49,
+          "slice_row": 50
         },
         "linked": {
           "measure": "passages_linked_to_project",
-          "row": 52,
+          "row": 51,
           "counts": "passages with their project record",
           "counts_one": "passage with its project record",
           "noun": "passages",
@@ -3000,7 +3027,7 @@
         },
         "read_well": {
           "measure": "document_pages_read_well",
-          "row": 53,
+          "row": 52,
           "counts": "pages read well",
           "counts_one": "page read well",
           "noun": "report pages",
@@ -3010,17 +3037,17 @@
           "routes": [
             {
               "route": "published_text",
-              "row": 54
+              "row": 53
             },
             {
               "route": "layout_parser",
-              "row": 55
+              "row": 54
             }
           ]
         },
         "fresh": {
           "measure": "documents_fresh",
-          "row": 56,
+          "row": 55,
           "counts": "newest report",
           "counts_one": null,
           "noun": "reports",
@@ -3051,13 +3078,14 @@
           "Pakistan"
         ],
         "first_fiscal_year": 2012,
-        "last_fiscal_year": 2025
+        "last_fiscal_year": 2025,
+        "shelf": true
       },
-      "covers": "scope and qualification text",
+      "covers": "with their notices' scope and qualification text",
       "cells": {
         "coverage": {
           "measure": "notice_text_passages",
-          "row": 58,
+          "row": 57,
           "counts": "sections of notices' text",
           "counts_one": "section of a notice's text",
           "noun": "sections of notices' text",
@@ -3067,7 +3095,7 @@
         },
         "linked": {
           "measure": "notice_text_linked",
-          "row": 59,
+          "row": 58,
           "counts": "sections with their project record",
           "counts_one": "section with its project record",
           "noun": "sections of notices' text",
@@ -3099,7 +3127,7 @@
           },
           {
             "number": 258,
-            "row": 49,
+            "row": 47,
             "noun": "activity entries in the latest plan versions",
             "noun_one": "activity entry in the latest plan versions",
             "role": "missing",
@@ -3128,15 +3156,15 @@
       "kind": "document_search",
       "tool": "search_passages",
       "status": "partial",
-      "ready_for": 71,
+      "ready_for": 70,
       "holds_back": [
         [
           {
             "text": "Of "
           },
           {
-            "number": 250,
-            "row": 57,
+            "number": 264,
+            "row": 56,
             "noun": "body pages",
             "noun_one": "body page",
             "role": null,
@@ -3152,8 +3180,8 @@
             "text": ", "
           },
           {
-            "number": 59,
-            "row": 57,
+            "number": 70,
+            "row": 56,
             "noun": "body pages",
             "noun_one": "body page",
             "role": "missing",
@@ -3187,8 +3215,8 @@
           "text": "the "
         },
         {
-          "number": 59,
-          "row": 57,
+          "number": 70,
+          "row": 56,
           "noun": "body pages",
           "noun_one": "body page",
           "role": "missing",
@@ -3198,8 +3226,8 @@
           "text": " of "
         },
         {
-          "number": 250,
-          "row": 57,
+          "number": 264,
+          "row": 56,
           "noun": "body pages",
           "noun_one": "body page",
           "role": null,
@@ -3310,7 +3338,7 @@
         },
         {
           "number": 258,
-          "row": 49,
+          "row": 47,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "role": "missing",
@@ -3495,7 +3523,7 @@
       "rank": 1,
       "gap": "reports/document_pages_paragraph_numbering_found",
       "projects": 3,
-      "row": 57,
+      "row": 56,
       "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
@@ -3503,8 +3531,8 @@
           "text": "Use the layout parser on the "
         },
         {
-          "number": 59,
-          "row": 57,
+          "number": 70,
+          "row": 56,
           "noun": "body pages",
           "noun_one": "body page",
           "role": "missing",
@@ -3520,7 +3548,7 @@
       "gap": "awards/linked",
       "projects": 2,
       "row": 2,
-      "projects_row": 60,
+      "projects_row": 59,
       "projects_from": "measure",
       "sentence": [
         {
@@ -3543,8 +3571,8 @@
       "rank": 3,
       "gap": "fy2017_2019",
       "projects": 2,
-      "row": 72,
-      "projects_row": 61,
+      "row": 71,
+      "projects_row": 60,
       "projects_from": "measure",
       "sentence": [
         {
@@ -3552,7 +3580,7 @@
         },
         {
           "number": 7,
-          "row": 72,
+          "row": 71,
           "noun": "contracts in local currency",
           "noun_one": null,
           "role": null,
@@ -3579,7 +3607,7 @@
       "rank": 4,
       "gap": "plans/latest_activities_with_confirmed_first_listing_read",
       "projects": 2,
-      "row": 49,
+      "row": 47,
       "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
@@ -3588,7 +3616,7 @@
         },
         {
           "number": 258,
-          "row": 49,
+          "row": 47,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
           "role": "missing",
@@ -3603,27 +3631,27 @@
   "routes": [
     {
       "measure": "pages_read_route_a",
-      "label": "Published text (Route A)",
+      "label": "Plan pages, published text",
       "noun": "plan pages with published text",
-      "row": 47
+      "row": 72
     },
     {
       "measure": "pages_read_route_b",
-      "label": "Layout parser (Route B)",
+      "label": "Plan pages, layout parser",
       "noun": "plan table pages",
-      "row": 48
+      "row": 73
     },
     {
       "measure": "document_pages_read_route_a",
-      "label": "Report pages, published text (Route A)",
+      "label": "Report pages, published text",
       "noun": "report pages of published text",
-      "row": 54
+      "row": 53
     },
     {
       "measure": "document_pages_read_route_b",
-      "label": "Report pages, layout parser (Route B)",
+      "label": "Report pages, layout parser",
       "noun": "report pages sent to the layout parser",
-      "row": 55
+      "row": 54
     }
   ],
   "headline": {
@@ -3652,8 +3680,8 @@
         "text": "the "
       },
       {
-        "number": 59,
-        "row": 57,
+        "number": 70,
+        "row": 56,
         "noun": "body pages",
         "noun_one": "body page",
         "role": "missing",
@@ -3663,8 +3691,8 @@
         "text": " of "
       },
       {
-        "number": 250,
-        "row": 57,
+        "number": 264,
+        "row": 56,
         "noun": "body pages",
         "noun_one": "body page",
         "role": null,
@@ -3723,7 +3751,7 @@
         "text": "."
       }
     ],
-    "text": "I can answer each of the two kinds of question below in part. The biggest gaps are the 59 of 250 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
+    "text": "I can answer each of the two kinds of question below in part. The biggest gaps are the 70 of 264 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
   },
   "headline_abstention": null,
   "parse_failures": [],
@@ -3752,14 +3780,14 @@
       "part": "risk_annex",
       "language": null,
       "hard_page": 65,
-      "parser_row": 62,
-      "outcome_row": 63,
+      "parser_row": 61,
+      "outcome_row": 62,
       "read_pages_row": null,
       "longest_row": null,
       "status": null,
       "unreadable": false,
-      "denominator_from": "hand_count",
-      "counted_on": "2026-10-24",
+      "denominator_from": null,
+      "counted_on": null,
       "parts": null,
       "parser": "recorded words (pdftotext -bbox)",
       "parser_limit_pages": 500,
@@ -3786,8 +3814,8 @@
       "part": null,
       "language": null,
       "hard_page": 6,
-      "parser_row": 64,
-      "outcome_row": 65,
+      "parser_row": 63,
+      "outcome_row": 64,
       "read_pages_row": null,
       "longest_row": null,
       "status": null,
@@ -3820,8 +3848,8 @@
       "part": null,
       "language": null,
       "hard_page": 3,
-      "parser_row": 66,
-      "outcome_row": 67,
+      "parser_row": 65,
+      "outcome_row": 66,
       "read_pages_row": null,
       "longest_row": null,
       "status": null,
@@ -3854,8 +3882,8 @@
       "part": null,
       "language": "fr",
       "hard_page": 13,
-      "parser_row": 68,
-      "outcome_row": 69,
+      "parser_row": 67,
+      "outcome_row": 68,
       "read_pages_row": null,
       "longest_row": null,
       "status": null,
@@ -3882,7 +3910,7 @@
       "parser_row": null,
       "outcome_row": null,
       "read_pages_row": null,
-      "longest_row": 70,
+      "longest_row": 69,
       "status": null,
       "unreadable": false,
       "denominator_from": null,

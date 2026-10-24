@@ -43,9 +43,11 @@
 #                     measure (in strata.ops.data_readiness), counts (what the number counts, shown
 #                     under it), noun (one counted thing, in the plural), counted_in (the table it
 #                     counts), lack (for a share: what a row that falls short lacks) and, for
-#                     coverage, years (the measure that counts its fiscal years) or projects (for a
-#                     document collection, the measure that counts the slice's projects, shown as
-#                     "documents for {projects} projects"). counts_one and
+#                     coverage, years (the measure that counts its fiscal years), or, for a document
+#                     collection, projects (the measure that counts the projects its documents belong
+#                     to, shown as "documents for {projects} projects") and slice_read (the one that
+#                     counts the pilot projects whose documents were read, out of the pilot projects,
+#                     shown on its own line). counts_one and
 #                     noun_one are their singular forms, for a count or a denominator of one. A
 #                     STEP field name keeps a no-break space (\u00A0) where a narrow cell must not
 #                     split it, as in Activity Reference\u00A0No. A
@@ -57,7 +59,8 @@
 #                     counted_in: the published text first, then the layout parser. A document row's
 #                     Read well window splits its share into the two. published_as = "text" marks a
 #                     row whose records arrive as text, such as notices' text, so its Read well cell
-#                     says "Published as text".
+#                     says "Published as text". read_well_by_route = true marks a row whose Read well
+#                     counts the same pages its routes do, so its window splits the share by route.
 #   [[sources.<key>.known_gaps]]
 #                     fiscal years no dataset publishes, shown as a Gap row under the source: id,
 #                     label, noun, first_fiscal_year, last_fiscal_year and note
@@ -360,6 +363,9 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "notices"
 stratum = "What"
+# Each notice's own page on the World Bank's site, which the evidence drawer's "Open this notice on the
+# World Bank's site" opens (ticket 18). {id} is the notice's id, such as OP00118817.
+record_url = "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
 limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total."]
 
 data_source = "Systematic Tracking of Exchanges in Procurement (STEP)"
@@ -510,31 +516,35 @@ checks = [
   { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activity entries in the latest plan versions whose confirmed first listing was read", noun = "activity entries in the latest plan versions", noun_one = "activity entry in the latest plan versions", lack = "a first listing I could confirm", counted_in = "strata.silver.plan_listings" },
 ]
 routes = [
-  { measure = "pages_read_route_a", label = "Published text (Route A)", noun = "plan pages with published text", counted_in = "strata.bronze.document_pages" },
-  { measure = "pages_read_route_b", label = "Layout parser (Route B)", noun = "plan table pages", counted_in = "strata.bronze.layout_pages" },
+  { measure = "pages_read_route_a", label = "Plan pages, published text", noun = "plan pages with published text", counted_in = "strata.bronze.document_pages" },
+  { measure = "pages_read_route_b", label = "Plan pages, layout parser", noun = "plan table pages", counted_in = "strata.bronze.layout_pages" },
 ]
 
-# The passage reader's reports (tickets 11 and 18): the PADs, ISRs, ICRs and ICR Reviews of the slice's
-# projects, read through either route. Coverage counts the documents read, for the projects the slice
-# criteria select; Read well counts the pages read well across both routes, and its window splits them
-# into the published text and the layout parser.
+# The passage reader's reports (tickets 11 and 18): the PADs, ISRs, ICRs, ICR Reviews, Project Papers and
+# PPARs of the slice's projects and the projects the slice file names, read through either route. One row
+# holds every type (a departure from the 18 brief's row per collection that design review r2 accepted;
+# strata.ops.documents_read and the dashboard's tile 5 count them by type). Coverage counts the documents
+# read and the projects they belong to, and on its own line the pilot projects read; Read well counts the
+# pages read well across both routes, and its window splits them into the published text and the layout
+# parser.
 [[sources.documents.readiness]]
 id = "reports"
 label = "Project reports"
 noun = "project reports"
 stratum = "Why"
-covers = "their appraisal, status and completion reports"
+covers = "with their appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports"
 schedule = "as published"
-coverage = { measure = "documents_read", counts = "documents", counts_one = "document", noun = "documents", noun_one = "document", counted_in = "strata.silver.documents", projects = "slice_projects" }
+coverage = { measure = "documents_read", counts = "documents", counts_one = "document", noun = "documents", noun_one = "document", counted_in = "strata.silver.documents", projects = "documents_read_projects", slice_read = "slice_projects_read" }
 linked = { measure = "passages_linked_to_project", counts = "passages with their project record", counts_one = "passage with its project record", noun = "passages", noun_one = "passage", lack = "a project record I hold", counted_in = "strata.gold.passage" }
+read_well_by_route = true
 read_well = { measure = "document_pages_read_well", counts = "pages read well", counts_one = "page read well", noun = "report pages", noun_one = "report page", counted_in = "strata.silver.document_page_routes" }
 fresh = { measure = "documents_fresh", counts = "newest report", noun = "reports", counted_in = "strata.bronze.document_texts" }
 checks = [
   { measure = "document_pages_paragraph_numbering_found", counts = "body pages with their paragraph numbers found", counts_one = "body page with its paragraph numbers found", noun = "body pages", noun_one = "body page", lack = "paragraph numbers I could find", counted_in = "strata.silver.passages" },
 ]
 routes = [
-  { measure = "document_pages_read_route_a", label = "Report pages, published text (Route A)", noun = "report pages of published text", counted_in = "strata.bronze.document_pages" },
-  { measure = "document_pages_read_route_b", label = "Report pages, layout parser (Route B)", noun = "report pages sent to the layout parser", counted_in = "strata.bronze.layout_pages" },
+  { measure = "document_pages_read_route_a", label = "Report pages, published text", noun = "report pages of published text", counted_in = "strata.bronze.document_pages" },
+  { measure = "document_pages_read_route_b", label = "Report pages, layout parser", noun = "report pages sent to the layout parser", counted_in = "strata.bronze.layout_pages" },
 ]
 
 # Notices' scope and qualification text, which the passage reader reads into passages from
@@ -545,7 +555,7 @@ id = "notice_text"
 label = "Procurement notices' text"
 noun = "procurement notices' text"
 stratum = "What"
-covers = "scope and qualification text"
+covers = "with their notices' scope and qualification text"
 schedule = "as published"
 published_as = "text"
 coverage = { measure = "notice_text_passages", counts = "sections of notices' text", counts_one = "section of a notice's text", noun = "sections of notices' text", noun_one = "section of a notice's text", counted_in = "strata.silver.passages" }

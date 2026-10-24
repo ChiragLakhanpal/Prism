@@ -508,6 +508,8 @@ export const copy = {
       section: (section: string) => `Section ${section}`,
       para: (para: string) => `¶${para}`,
       page: (page: string, pages: string) => `PDF page ${page} of ${pages}`,
+      // A table's summary covers every page of its table.
+      pageRange: (page: string, last: string, pages: string) => `PDF pages ${page} to ${last} of ${pages}`,
       pageOnly: (page: string) => `PDF page ${page}`,
       // The dot ends each part with a no-break space before it, so a line breaks only after a dot,
       // never inside "PDF page 23 of 66" or before a dot.
@@ -515,6 +517,7 @@ export const copy = {
     },
     noHighlight: "This sentence does not quote the paragraph, so no words are highlighted.",
     noHighlightSection: "This sentence does not quote the section, so no words are highlighted.",
+    noHighlightRow: "This sentence does not quote the row, so no words are highlighted.",
     whole: "The whole paragraph, word for word.",
     wholeSection: "The whole section, word for word.",
     // The passages ticket 18 adds (the 18 brief, section 7). The layout parser's text can differ from
@@ -528,8 +531,10 @@ export const copy = {
     // The row's cells: its column heads and its values.
     rowField: "Column",
     rowValue: "Value",
-    summaryNote: (page: string) =>
-      `I wrote this summary of the table on page ${page}. It is not the document's own words, and I never use it to back a number.`,
+    // The summary itself starts with the table, so who wrote it is said once, here, with the table's pages
+    // (design review r2 P2).
+    summaryNote: (page: string, last: string | null) =>
+      `I wrote this summary of the table on ${last ? `PDF pages ${page} to ${last}` : `PDF page ${page}`}. It is not the document's own words, and I never use it to back a number.`,
     noticeTitle: "Notice {id}",
     noticeEyebrow: "What · notice",
     noticeWhole: "The whole section, word for word, without contact details.",
@@ -892,6 +897,8 @@ export const copy = {
         // A document collection's slice (config/slice.toml): "Water and transport projects in Kenya,
         // Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025".
         slice: (sectors: string, countries: string, from: string, to: string) => `${sectors} projects in ${countries}, fiscal ${from} to ${to}`,
+        // When "The hardest documents I read" shows below: their projects are read too (design review r2 B1).
+        sliceShelf: "and the projects of the hardest documents below",
         join: ", ",
         lastJoin: " and ",
       },
@@ -905,19 +912,32 @@ export const copy = {
       publishedAsTable: "Published as a table",
       // A row whose records arrive as text, such as notices' text, with nothing to read well.
       publishedAsText: "Published as text",
-      // A document collection's Coverage (the 18 brief, section 6.1): its documents, for the projects the
-      // slice criteria selected.
+      // A document collection's Coverage (the 18 brief, section 6.1, as design review r2 B1 changed it):
+      // its documents and the projects they belong to, then, on its own line, the pilot projects whose
+      // documents I read, out of every pilot project.
       documentsFor: "documents for {projects} projects",
-      documentsForOne: "document for {projects} projects",
+      documentsForOneProject: "documents for {projects} project",
+      documentForOneProject: "document for {projects} project",
       // What the projects count counts, in its tooltip.
-      projectsNoun: "projects in the slice",
-      projectsNounOne: "project in the slice",
+      projectsNoun: "projects with documents I read",
+      projectsNounOne: "project with documents I read",
+      pilot: "{read} pilot projects",
+      pilotOne: "{read} pilot project",
+      pilotNoun: "pilot projects",
+      pilotNounOne: "pilot project",
       // The Read well window of a document collection: its share across both routes, split by route.
       routes: {
         published_text: "Published text",
         layout_parser: "Layout parser",
       } as Record<string, string>,
       routeRead: (part: string, whole: string) => `${part} of ${whole} pages read well`,
+      // What a route counts as read well, under the split, since the published text's pages count once
+      // placed on their PDF page, which the paragraph-number check goes beyond (review r2 P2).
+      routeCounts: "What counts",
+      routeCountsNote:
+        "A page of published text counts once I have placed its text on its PDF page. A page I sent to the " +
+        "layout parser counts when it gave back a table or text. Whether I found a report's paragraph numbers " +
+        "is a separate check.",
       notMeasured: "Not measured yet",
       // A column the registry gives this row no measure for, so no run will measure it.
       noMeasure: "No measure",
@@ -969,23 +989,33 @@ export const copy = {
         other_language: "Implementation Completion and Results Report",
         over_parser_limit: "Any document over the parser's limit",
       } as Record<string, string>,
-      chosenLater: "Chosen when I read the documents.",
-      // What makes each kind hard, one sentence each, with no number (the 18 brief, section 4.2).
+      // Line 2 of a rule's entry before the reading, when no document is chosen yet (critique r2).
+      chosenLater: "I choose it when I read the documents.",
+      // What makes each kind hard, one sentence each, with no number (the 18 brief, section 4.2). The
+      // risk annex's says what its outcome checks, so the row claims no more than it measured (design
+      // review r2 B2).
       hard: {
-        scan_annex: "A scanned document whose {part} is set in two columns.",
-        longest_pad: "The longest Project Appraisal Document I read.",
+        scan_annex: "A scanned document whose {part} is set in two columns. I check its risks and ratings, not the text beside them.",
+        longest_pad: "The longest Project Appraisal Document I read for the pilot projects.",
         large_plan: "A long Procurement Plan whose columns scramble in the published text.",
         other_language: "A completion report written in {languageName}.",
         over_parser_limit: "More pages than the layout parser takes at once.",
       } as Record<string, string>,
-      lookedFor: "I looked for a document longer than the layout parser takes at once.",
-      parts: { risk_annex: "risk annex" } as Record<string, string>,
+      // A rule's entry before the reading, so the row never says I read what I haven't (critique r2).
+      hardBefore: {
+        longest_pad: "The longest Project Appraisal Document of the pilot projects.",
+      } as Record<string, string>,
+      // A rule's entry that found no document: what I looked for (design review r2 P5).
+      lookedFor: {
+        longest_pad: "I looked for the longest Project Appraisal Document of the pilot projects.",
+        over_parser_limit: "I looked for a document longer than the layout parser takes at once.",
+      } as Record<string, string>,
       // The Layout parser cell: "{count} of {total}", then "pages".
       of: "{count} of {total}",
       pages: "pages",
       // What each kind's outcome counts, under its number.
       counts: {
-        scan_annex: "risk rows recovered",
+        scan_annex: "rated risks recovered",
         longest_pad: "pages read well",
         large_plan: "activities became STEP rows",
         other_language: "passages marked as {languageName}",
@@ -993,7 +1023,7 @@ export const copy = {
       } as Record<string, string>,
       // What each outcome's numbers count, in their tooltips.
       nouns: {
-        scan_annex: "risk rows",
+        scan_annex: "rated risks",
         longest_pad: "pages",
         large_plan: "activities",
         other_language: "passages",
@@ -1004,7 +1034,7 @@ export const copy = {
       } as Record<string, string>,
       // Where each outcome's denominator comes from, in its window.
       denominators: {
-        hand_count: "{denominator} risks in the annex, counted by hand from the PDF on {date}",
+        hand_count: "{denominator} rated risks in the annex, counted by hand from the PDF on {date}",
         pdf_pages: "{denominator} pages in the PDF",
         text_references: "{denominator} activity references I found in its text",
         passages_made: "{denominator} passages I made from it",
@@ -1013,9 +1043,17 @@ export const copy = {
       windows: {
         parser: { title: "Pages sent to the layout parser", definition: "How many of the document's pages I sent to the layout parser, out of its pages in the PDF." },
         outcome: { title: "Outcome", definition: "What I recovered from the hard part, counted against what the document holds." },
+        // An outcome's own definition, by kind, where the general one would claim more than it counts.
+        outcomeKinds: {
+          scan_annex:
+            "A risk counts when I read its name and its rating from the risk table. I don't check the description and " +
+            "mitigation text beside them, which the scan sets in two columns. Open the page to compare.",
+        } as Record<string, string>,
         read: { title: "Pages read so far", definition: "How many of the document's pages I have read, from either route, out of its pages in the PDF." },
         longest: { title: "The longest document I read", definition: "How many pages the longest document I read has, in its PDF." },
-        limit: "The layout parser's page limit, from the thresholds file.",
+        // Strata's own settings, not measures, so each has a tooltip and no window (design review r2 P4).
+        limit: "The most pages I send the layout parser at once. It is my own setting, not a measure.",
+        cap: "The most pages I send the layout parser in one day. It is my own setting, not a measure.",
       },
       windowRows: { from: "Counted against", parser: "Layout parser" },
       noHandCount: "I have no count of the annex's risks to check this against.",
@@ -1024,12 +1062,14 @@ export const copy = {
       // A kind's description in "I found no ... among the documents I read."
       descriptions: {
         scan_annex: "scanned Project Appraisal Document",
-        longest_pad: "Project Appraisal Document",
+        longest_pad: "Project Appraisal Document of the pilot projects",
         large_plan: "Procurement Plan",
         other_language: "completion report in {languageName}",
       } as Record<string, string>,
-      stopped: "{read} of {pages} pages read so far",
-      stoppedNote: "I stopped at today's limit of {cap} pages. The next run reads the rest.",
+      // "{read} of {pages}" is one number, as every pair on the shelf is (design review r2 P4).
+      stopped: "{read} pages read so far",
+      // The limit covers the whole run, so a reader doesn't ask why I stopped short of it (critique r2).
+      stoppedNote: "I stopped at today's limit of {cap} pages, which covers every document in the run. The next run reads the rest.",
       notRead: "Not read yet. The next document run reads it.",
       // The Page cell: the link, then where it lands.
       pageLink: "Open at page {page}",
@@ -1111,12 +1151,26 @@ export const copy = {
           "How many body pages of the reports that number their paragraphs show a paragraph number I could find. " +
           "A passage keeps its paragraph's number, so a citation can name it as the report does.",
       },
-      // A document collection's projects, in its Coverage cell (the 18 brief, section 6.1).
-      slice_projects: {
-        title: "Projects in the slice",
+      // A document collection's projects, in its Coverage cell (the 18 brief, section 6.1; design review
+      // r2 B1): the projects its documents belong to, and the pilot projects I read documents for. The
+      // pilot projects are those of the sectors, countries and fiscal years that config/slice.toml names,
+      // which the row's caption shows, so these words name none of them (CLAUDE.md rule 9).
+      documents_read_projects: {
+        title: "Projects with documents read",
+        definition: "How many projects the documents I read belong to. I count a project once when I read at least one of its documents.",
+      },
+      slice_projects_read: {
+        title: "Pilot projects read",
         definition:
-          "The projects the slice criteria selected when I last read the documents: water and transport projects in " +
-          "the slice's countries, with a Board date in its fiscal years. I read the documents of each one.",
+          "How many pilot projects I read at least one document of, out of every pilot project. The pilot projects " +
+          "are those of the sectors, countries and fiscal years the row's caption names, by their Board date. I read " +
+          "the documents of each one I can, within my daily page limit, so some wait for a later run.",
+      },
+      slice_projects: {
+        title: "Pilot projects",
+        definition:
+          "The projects of the sectors, countries and fiscal years the row's caption names, by their Board date. I " +
+          "read the documents of each one I can, within my daily page limit.",
       },
     } as Record<string, { title: string; definition: string }>,
     loading: {
@@ -1280,7 +1334,6 @@ export const copy = {
       shelfGapOne: "I couldn't read the {part} in the {docType} for {pid}, one of {link}.",
       shelfGapMany: "I couldn't read parts of {count} of {link}, such as the {part} in the {docType} for {pid}.",
       shelfLink: "the hardest documents I read",
-      // The hard part of a stress shelf document, by its key in config/slice.toml.
       // The part of a stress shelf document I couldn't read: the hard part a scan_annex entry names in
       // config/slice.toml, or, for the other kinds, what that kind reads.
       shelfParts: {
@@ -1363,9 +1416,11 @@ export const copy = {
         link: "Link",
         share: "Share (%)",
         routes: "Share of pages read well, by route",
+        // Three short sentences, so the reader never backtracks (design review r2 P10).
         routesAbout:
-          "Each reading route with {fewest} pages or more, of the Procurement Plans or the project reports, as the " +
-          "share of its pages it read well: the published text, and the layout parser for scans and tables.",
+          "The share of pages each reading route read well, for routes with {fewest} pages or more. The routes are " +
+          "the published text and the layout parser, which reads scans and tables. The pages come from Procurement " +
+          "Plans and project reports.",
         route: "Route",
         freshness: "Freshness, links and pages read well, by source",
         freshnessAbout:

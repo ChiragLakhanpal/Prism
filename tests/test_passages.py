@@ -78,13 +78,18 @@ TEN_FIELDS = ("project_id", "document_type", "version", "public_from", "section_
 
 def test_every_paragraph_has_all_ten_fields_filled(db):
     """A paragraph keeps the ten fields, from either route. A table row or summary has no printed page,
-    and a notice's text has no page at all, so they are checked by their own tests below."""
-    passages = rows(db, f"SELECT passage_id, kind, {', '.join(TEN_FIELDS)} FROM strata.silver.passages")
+    and a notice's text has no page at all, so they are checked by their own tests below. A document that
+    prints no page number on any page, such as P156634's restructuring paper, gives none either."""
+    passages = rows(db, f"SELECT passage_id, document_id, kind, {', '.join(TEN_FIELDS)} FROM strata.silver.passages")
     paragraphs = [p for p in passages if p["kind"] == "paragraph"]
+    unprinted = {row["document_id"] for row in rows(db, "SELECT document_id FROM strata.silver.document_page_routes "
+                                                        "GROUP BY document_id HAVING count(printed_page) = 0")}
 
     assert len(paragraphs) > 0
+    assert unprinted == {"33103725"}  # the restructuring paper; every other report prints its page numbers
     empty = [(p["passage_id"], name) for p in paragraphs for name in TEN_FIELDS if p[name] in (None, "")
-             and not (name == "printed_page" and p["parse_route"] == "B")]  # a scan's foot number can be unreadable
+             and not (name == "printed_page" and p["parse_route"] == "B")  # a scan's foot number can be unreadable
+             and not (name == "printed_page" and p["document_id"] in unprinted)]
     assert empty == []
     assert {p["parse_route"] for p in passages} == {"A", "B"}
     assert {p["kind"] for p in passages} == {"paragraph", "table_row", "table_summary", "notice_text"}
@@ -100,15 +105,16 @@ FROM strata.silver.documents AS d
 
 def test_the_fixture_run_reads_every_recorded_report_of_the_slice_and_routes_the_scan_to_route_b(db):
     """Ticket 11 read the first twenty documents; ticket 18 reads the whole slice, which in the fixture is
-    every report recorded for P130164, P156634 and P127203: 37 whose text Route A reads, and one scan."""
+    every report recorded for P130164, P156634 and P127203: 38 whose text Route A reads, one of them
+    P156634's Project Paper, and one scan."""
     documents = rows(db, REPORTS)
     read = [d for d in documents if d["text_paged"]]
     dated = {(d["project_id"], d["document_type"], d["document_date"]) for d in read}
     recorded = sorted((ROOT / "data" / "fixture" / "recorded" / "documents").glob("*/*.pages.txt"))
     reports = [path for path in recorded if not path.name.startswith("procurement-plan")]
 
-    assert len(documents) == len(reports) == 38
-    assert len(read) == 37
+    assert len(documents) == len(reports) == 39
+    assert len(read) == 38
     for key, document_type in [("icr-date", ICR), ("icr-review-date", "Implementation Completion Report Review"),
                                ("icr-review-reissue-date", "Implementation Completion Report Review"),
                                ("isr-7-date", "Implementation Status and Results Report"),
@@ -212,8 +218,9 @@ def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_an
 
 def test_strata_ops_counts_the_documents_that_had_contact_details_taken_out_of_the_documents_fetched(db):
     """Each PAD's data sheet prints a contact (PAD_CONTACTS), and no other document fetched does. The
-    run fetched P130164's ICR, two ICR Reviews, 13 ISRs and its PAD, and P156634's PAD and 19 ISRs."""
-    for project_id, documents in (("P130164", 17), ("P156634", 20)):
+    run fetched P130164's ICR, two ICR Reviews, 13 ISRs and its PAD, and P156634's PAD, its restructuring
+    paper of May 24, 2021 and 19 ISRs."""
+    for project_id, documents in (("P130164", 17), ("P156634", 21)):
         removed = measured(db, project_id)["contact_details_removed"]
 
         assert (removed["kind"], removed["count"], removed["denominator"]) == ("stripped", 1, documents)

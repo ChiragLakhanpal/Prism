@@ -184,7 +184,7 @@ def test_every_dataset_runs_on_the_fixture_on_the_day_it_was_measured(engine):
     for name in dashboard.DATASETS:
         assert dataset_rows(engine, name), name
     assert [row["route"] for row in dataset_rows(engine, "readiness_routes")] == [
-        "Report pages, published text (Route A)", "Report pages, layout parser (Route B)"]
+        "Report pages, published text", "Report pages, layout parser"]
 
 
 def test_a_route_or_a_link_is_charted_only_from_enough_rows_for_a_percentage(empty_catalog_copy):
@@ -194,11 +194,11 @@ def test_a_route_or_a_link_is_charted_only_from_enough_rows_for_a_percentage(emp
     result = {"headline": None, "sources": [], "fixes": [],
               "rows": [{"count": 60, "denominator": 64, "share_percent": 94}, {"count": 15, "denominator": 15,
                                                                                "share_percent": None}],
-              "routes": [{"label": "Published text (Route A)", "row": 0}, {"label": "Layout parser (Route B)", "row": 1}]}
+              "routes": [{"label": "Plan pages, published text", "row": 0}, {"label": "Plan pages, layout parser", "row": 1}]}
     with DuckDBEngine.open(empty_catalog_copy) as engine:
         engine.insert_rows("strata.ops.readiness_snapshot", written.COLUMNS, written.rows(result, "run-1", DAY, at))
         assert [(row["route"], row["share_percent"]) for row in dataset_rows(engine, "readiness_routes")] == [
-            ("Published text (Route A)", 94)]
+            ("Plan pages, published text", 94)]
 
 
 def test_the_dashboard_s_headline_fixes_and_link_shares_are_the_app_s_for_the_same_day(engine, page):
@@ -270,8 +270,8 @@ def test_the_table_of_freshness_and_links_keeps_the_pages_each_route_read_well(e
     rows = dataset_rows(engine, "readiness_sources")
 
     assert {row["source"]: row["read_well"] for row in rows if row["read_well"]} == {
-        "Published text (Route A)": "24 of 24", "Layout parser (Route B)": "27 of 27",
-        "Report pages, published text (Route A)": "511 of 511", "Report pages, layout parser (Route B)": "97 of 121"}
+        "Plan pages, published text": "24 of 24", "Plan pages, layout parser": "27 of 27",
+        "Report pages, published text": "528 of 528", "Report pages, layout parser": "97 of 122"}
 
 
 def test_the_table_of_freshness_and_links_names_each_awards_dataset_as_the_charts_do(engine):

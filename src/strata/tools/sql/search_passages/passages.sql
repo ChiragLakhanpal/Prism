@@ -30,7 +30,6 @@ SELECT
   p.text,
   p.pdf_url,
   p.doc_key,
-  p.notice_url,
   p.attack_detected,
   p.public_from
 FROM strata.gold.passage AS p

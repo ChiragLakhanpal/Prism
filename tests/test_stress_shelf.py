@@ -58,9 +58,9 @@ def test_the_page_lists_the_five_hardest_documents_in_the_slice_file_order_with_
         "Project Appraisal Document", annex["pdf_pages"], annex["first_pdf_page"])
     assert pad["document"]["project_name"] == "Rajasthan Road Sector Modernization Project"
     outcome = result["rows"][pad["outcome_row"]]
-    assert (outcome["count"], outcome["denominator"]) == (annex["risks"], annex["risks"])
-    assert (pad["denominator_from"], pad["counted_on"], pad["status"]) == ("hand_count", annex["counted_on"].isoformat(),
-                                                                         None)
+    # No person has counted the annex's risks, so the outcome has nothing to check against and no badge.
+    assert (outcome["count"], outcome["denominator"]) == (len(annex["ratings"]), None)
+    assert (pad["denominator_from"], pad["counted_on"], pad["status"]) == (None, None, None)
     parser = result["rows"][pad["parser_row"]]
     assert (parser["count"], parser["denominator"]) == (annex["pdf_pages"], annex["pdf_pages"])
     assert {result["rows"][entry["outcome_row"]]["source"]["counted_in"] for entry in shelf if entry["outcome_row"]
@@ -70,6 +70,21 @@ def test_the_page_lists_the_five_hardest_documents_in_the_slice_file_order_with_
     last = shelf[4]
     assert (last["state"], last["document"], last["parser_limit_pages"]) == ("no_document", None, 500)
     assert result["rows"][last["longest_row"]]["count"] == SHELF["over_parser_limit"]["longest_pages"]
+
+
+def test_the_project_reports_count_the_projects_of_their_documents_and_the_pilot_projects_read(fixture):
+    """Coverage's projects are the documents' own (design review r2 B1): the fixture's reports belong to the
+    showcase (India), the French report's project (Haiti) and P156634, the one pilot project of the 17 whose
+    reports the fixture records."""
+    result, *_ = fixture
+    [reports] = [row for row in result["sources"] if row["id"] == "reports"]
+    coverage = reports["cells"]["coverage"]
+    projects, pilot = result["rows"][coverage["projects_row"]], result["rows"][coverage["slice_row"]]
+
+    assert (projects["count"], sorted(projects["subjects"])) == (3, ["P127203", "P130164", "P156634"])
+    assert (pilot["count"], pilot["denominator"]) == (1, SHELF["slice_projects"]["count"])
+    assert {projects["source"]["counted_in"], pilot["source"]["counted_in"]} == {"strata.silver.documents"}
+    assert sorted(result["rows"][coverage["row"]]["subjects"]) == sorted(projects["subjects"])
 
 
 def test_a_filtered_view_shows_only_the_shelf_rows_on_its_sources_and_none_when_none_are(fixture):

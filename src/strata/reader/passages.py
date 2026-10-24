@@ -169,6 +169,7 @@ class _State:
     annex: str | None = None
     section: str | None = None  # an unnumbered report's heading, or an ICR Review's section number
     last: int = 0  # the last paragraph number in this numbering
+    chapter: int = 0  # its chapter, for a report that numbers its paragraphs within chapters (2.10)
     item: str | None = None  # the last item letter in an ICR Review's section
     current: _Paragraph | None = None
     unnumbered: int = 0
@@ -203,19 +204,28 @@ class _State:
             self.current.lines.append((page, line))
 
 
-def _follows(state: _State, number: int) -> bool:
+def _ordinal(number: str) -> tuple[int, int]:
+    """A paragraph number as its chapter and its place: 54 is (0, 54), and a PPAR's 2.10 is (2, 10)."""
+    chapter, _, place = number.rpartition(".")
+    return (int(chapter) if chapter else 0, int(place))
+
+
+def _follows(state: _State, number: tuple[int, int]) -> bool:
     """A paragraph number continues the report's numbering: the next one, allowing for a start
-    the text lost, or 1 when an annex starts its own numbering."""
-    if state.annex and state.last == 0:
-        return number == 1
-    return state.last < number <= state.last + 3
+    the text lost, or 1 when an annex, or a report's next chapter, starts its own numbering."""
+    chapter, place = number
+    if state.annex and state.last == 0 and state.chapter == 0:
+        return place == 1
+    if chapter == state.chapter:
+        return state.last < place <= state.last + 3
+    return state.chapter < chapter <= state.chapter + 2 and place == 1
 
 
 def _numbered_start(state: _State, line: str) -> str | None:
     template = state.template
     if template.items:
         found = template.paragraph.match(line)
-        if found and _follows(state, int(found.group(1))):
+        if found and _follows(state, _ordinal(found.group(1))):
             state.last, state.section, state.item = int(found.group(1)), found.group(1), None
             return found.group(1)
         found = template.items.match(line)
@@ -227,10 +237,10 @@ def _numbered_start(state: _State, line: str) -> str | None:
     found = template.paragraph.match(line)
     if not found or TABLE_GAP.search(found.group(2)):
         return None
-    number = int(found.group(1))
+    number = _ordinal(found.group(1))
     if not _follows(state, number):
         return None
-    state.last = number
+    state.chapter, state.last = number
     return found.group(1)
 
 
@@ -249,7 +259,7 @@ def _heading(state: _State, line: str) -> bool:
         state.close()
         state.annex = template.annex.match(line).group(1)
         state.levels = [None] * len(template.levels)
-        state.last = 0
+        state.last, state.chapter = 0, 0
         return True
     for depth, pattern in enumerate(template.levels):
         found = pattern.match(line)
@@ -271,7 +281,8 @@ def _minor_heading(block: list[str]) -> bool:
             and not line[0].isdigit())
 
 
-LEAD = re.compile(r"^\s*(?:\d{1,3}\.|[•●▪o\-–]|\(\w{1,4}\))\s+")  # a paragraph's number or a bullet, then its gap
+# A paragraph's number (54. or a PPAR's 2.10) or a bullet, then its gap.
+LEAD = re.compile(r"^\s*(?:\d{1,3}\.(?:\d{1,2}\.?)?|[•●▪o\-–]|\(\w{1,4}\))\s+")
 
 
 def _table(block: list[str]) -> bool:

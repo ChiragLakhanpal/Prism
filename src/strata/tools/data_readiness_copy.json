@@ -121,7 +121,7 @@
     "link": "Link",
     "share": "Share (%)",
     "routes": "Share of pages read well, by route",
-    "routesAbout": "Each reading route with {fewest} pages or more, of the Procurement Plans or the project reports, as the share of its pages it read well: the published text, and the layout parser for scans and tables.",
+    "routesAbout": "The share of pages each reading route read well, for routes with {fewest} pages or more. The routes are the published text and the layout parser, which reads scans and tables. The pages come from Procurement Plans and project reports.",
     "route": "Route",
     "freshness": "Freshness, links and pages read well, by source",
     "freshnessAbout": "Each source's latest data, how often it updates, how late it is, its link counts and its status. The last rows give the Procurement Plan and project report pages each reading route read well. It is the table for the two charts of shares.",

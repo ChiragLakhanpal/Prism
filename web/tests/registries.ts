@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 export const COLUMNS = ["coverage", "linked", "read_well", "fresh"] as const;
 export type Column = (typeof COLUMNS)[number];
 
-type Shown = { measure: string; counted_in: string; years?: string; projects?: string };
+type Shown = { measure: string; counted_in: string; years?: string; projects?: string; slice_read?: string };
 export type ReadinessRow = { id: string; label: string; covers?: string; checks?: Shown[] } & Partial<Record<Column, Shown>>;
 type Fix = { measure: string; counted_in?: string; projects?: string; projects_counted_in?: string };
 export type SourceRegistry = { sources: Record<string, { readiness?: ReadinessRow[]; fixes?: Fix[] }> };
@@ -52,10 +52,11 @@ export function placements(): { placed: Map<string, Placement>; conflicts: strin
           place(source, measure, { column, table: given.counted_in });
           inRow.add(measure);
         }
-        // A document collection's projects, the slice's, which strata.gold.project holds (ticket 18).
-        if (given.projects) {
-          place(source, given.projects, { column: null, table: "strata.gold.project" });
-          inRow.add(given.projects);
+        // A document collection's projects, those its documents belong to, and the pilot projects whose
+        // documents were read, both counted in the documents' own table (ticket 18; design review r2 B1).
+        for (const measure of [given.projects, given.slice_read].filter((name): name is string => Boolean(name))) {
+          place(source, measure, { column: null, table: given.counted_in });
+          inRow.add(measure);
         }
       }
       for (const check of row.checks ?? []) {

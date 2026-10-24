@@ -8,9 +8,17 @@ import isrSection from "../../../tests/fixtures/api/ask-p130164-isr-section.sse?
 import nothingFound from "../../../tests/fixtures/api/ask-p130164-nothing-found.sse?raw";
 import rebidding from "../../../tests/fixtures/api/ask-p130164-rebidding.sse?raw";
 import removedNumber from "../../../tests/fixtures/api/ask-p130164-removed-number.sse?raw";
+import tableRow from "../../../tests/fixtures/api/ask-p130164-table-row.sse?raw";
+import tableSummary from "../../../tests/fixtures/api/ask-p130164-table-summary.sse?raw";
 import checkPlan from "../../../tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json";
 import icr54 from "../../../tests/fixtures/api/evidence-icr-p130164-54.json";
 import isrS4 from "../../../tests/fixtures/api/evidence-isr-p130164-s4.json";
+import frenchIcr from "../../../tests/fixtures/api/evidence-icr-p127203-fr.json";
+import noticeContacts from "../../../tests/fixtures/api/evidence-notice-op00118817.json";
+import noticeQualifications from "../../../tests/fixtures/api/evidence-notice-op00118817-qualifications.json";
+import riskRow from "../../../tests/fixtures/api/evidence-pad-p130164-risk-row.json";
+import riskSummary from "../../../tests/fixtures/api/evidence-pad-p130164-risk-summary.json";
+import scanned from "../../../tests/fixtures/api/evidence-pad-p130164-scanned.json";
 import loan from "../../../tests/fixtures/api/lookup-loan-ida-60290.json";
 import activity from "../../../tests/fixtures/api/lookup-activity-ke-nwwda-541055-cw-rfb.json";
 import project from "../../../tests/fixtures/api/project-p130164.json";
@@ -122,3 +130,14 @@ export function planRecord(row: Record<string, unknown>): EvidenceEvent {
 
 // KE-NWWDA-229129-CW-RFB as check_plan returned it for the NWWDA plan of October 9, 2026.
 export const PLAN_RECORD = planRecord(checkPlan.rows[0] as unknown as Record<string, unknown>);
+
+// Ticket 18's kinds of passage, as GET /api/evidence gives them on the fixture, and the two answers that
+// cite a table: one quoting a row's rating, one whose number only the table's summary held.
+export const SCANNED = scanned as unknown as EvidenceEvent;
+export const RISK_ROW = riskRow as unknown as EvidenceEvent;
+export const RISK_SUMMARY = riskSummary as unknown as EvidenceEvent;
+export const NOTICE = noticeQualifications as unknown as EvidenceEvent;
+export const NOTICE_CONTACTS = noticeContacts as unknown as EvidenceEvent;
+export const FRENCH = frenchIcr as unknown as EvidenceEvent;
+export const TABLE_ROW_RUN: Run = played(tableRow, showcase);
+export const TABLE_SUMMARY_RUN: Run = played(tableSummary, showcase);

@@ -50,7 +50,8 @@ export const SHELF_COLUMNS: ReadinessColumn[] = [
     numeric: true,
     width: "w-[18%]",
   },
-  { key: "page", name: words.columns.page.label, label: words.columns.page.label, about: words.columns.page.about, width: "w-[18%] xl:w-[16%]" },
+  // In a card the link stands on its own line, so the Page label is left to screen readers (design review r2 P6).
+  { key: "page", name: words.columns.page.label, label: words.columns.page.label, about: words.columns.page.about, width: "w-[18%] xl:w-[16%]", cardLabel: "hidden" },
 ];
 export const SHELF_HEAD = { label: words.columns.document.label, width: "w-[24%] xl:w-[22%]" };
 
@@ -65,23 +66,30 @@ function Qualifier({ children }: { children: ReactNode }) {
 const languageName = (entry: ShelfEntry) => copy.language.name[entry.document?.language ?? entry.language ?? ""] ?? "";
 const fill = (text: string, entry: ShelfEntry, parts?: number | null) =>
   text
-    .replace("{part}", words.parts[entry.part ?? ""] ?? "")
+    .replace("{part}", copy.dataReadiness.server.shelfParts[entry.part ?? ""] ?? "")
     .replace("{languageName}", languageName(entry))
     .replace("{parts}", String(parts ?? ""));
 
 // "{count} of {total}" in one Num, never a percentage: each row is one document, and its counts are small.
+// The pair never wraps, so a narrow column wraps the words under it and never the number (critique r2).
+const PAIR = "whitespace-nowrap";
 function of(count: number, total: number) {
   return { share: { count, denominator: total, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null }, style: "table" as const };
 }
 
+// An entry that a rule fills at run time, rather than one that names its document.
+const RULES = new Set(["longest_pad", "over_parser_limit"]);
+
 function documentCell(entry: ShelfEntry, asOf: string): { header: ReactNode; caption: ReactNode; lang?: string } {
   const document = entry.document;
   if (!document) {
-    const later = entry.kind === "longest_pad" || entry.kind === "over_parser_limit";
+    // Before the reading, a rule's entry says when I choose its document; after a reading that found
+    // none, it says nothing more, so no line contradicts the note beside it (design review r2 P5).
+    const rule = RULES.has(entry.kind);
     return {
       header: words.entries[entry.kind],
       caption:
-        entry.kind === "over_parser_limit" && entry.state === "no_document" ? null : later ? (
+        rule && entry.state === "no_document" ? null : rule ? (
           words.chosenLater
         ) : entry.project_id ? (
           <span className="font-mono">{entry.project_id}</span>
@@ -134,6 +142,7 @@ function parserCell(entry: ShelfEntry, measures: Measures): ReactNode {
           value={of(row.count, row.denominator)}
           noun={{ many: words.nouns.parser }}
           tooltipKind="ratio"
+          className={PAIR}
           window={windowWords(words.windows.parser.title, words.windows.parser.definition, entry)}
         />
       </span>
@@ -147,9 +156,15 @@ function outcomeCell(entry: ShelfEntry, measures: Measures, asOf: string): React
   const row = measures.rows[entry.outcome_row];
   const noun: Noun = { many: words.nouns[entry.kind] };
   const counts = fill(words.counts[entry.kind], entry, entry.parts);
-  const outcome = words.windows.outcome;
+  const outcome = { title: words.windows.outcome.title, definition: words.windows.outcomeKinds[entry.kind] ?? words.windows.outcome.definition };
+  const badge = entry.status && (
+    <span className="mt-1">
+      <StatusBadge kind={entry.status} />
+    </span>
+  );
   if (row.denominator === null) {
-    // No hand count: the number alone, and what it lacks to be checked against.
+    // No hand count: the number alone, what it lacks to be checked against, and a Gap when nothing
+    // came back.
     return (
       <Stack>
         <span className="font-semibold">
@@ -157,6 +172,7 @@ function outcomeCell(entry: ShelfEntry, measures: Measures, asOf: string): React
         </span>
         <Qualifier>{counts}</Qualifier>
         <Qualifier>{words.noHandCount}</Qualifier>
+        {badge}
       </Stack>
     );
   }
@@ -178,15 +194,12 @@ function outcomeCell(entry: ShelfEntry, measures: Measures, asOf: string): React
           value={of(row.count ?? 0, row.denominator)}
           noun={noun}
           tooltipKind="ratio"
+          className={PAIR}
           window={windowWords(outcome.title, outcome.definition, entry, from)}
         />
       </span>
       <Qualifier>{counts}</Qualifier>
-      {entry.status && (
-        <span className="mt-1">
-          <StatusBadge kind={entry.status} />
-        </span>
-      )}
+      {badge}
     </Stack>
   );
 }
@@ -205,14 +218,15 @@ function pageCell(entry: ShelfEntry): ReactNode {
   );
 }
 
-// The note that spans the last three cells when there is no outcome to show.
+// The note that spans the last three cells when there is no outcome to show, in the table's own small
+// type, so a row that records a non-event never draws the eye before an outcome (design review r2 P3).
 function spanningNote(entry: ShelfEntry, measures: Measures): ReactNode | null {
-  if (entry.state === "not_read") return <span className="text-body text-ink-muted">{words.notRead}</span>;
+  if (entry.state === "not_read") return <span className="text-small text-ink-muted">{words.notRead}</span>;
   if (entry.state === "no_document") {
     if (entry.kind === "over_parser_limit" && entry.longest_row !== null && entry.parser_limit_pages !== null) {
       const longest = measures.rows[entry.longest_row];
       return (
-        <span className="text-body">
+        <span className="text-small">
           <Template
             text={words.noDocumentOver}
             values={{
@@ -231,12 +245,12 @@ function spanningNote(entry: ShelfEntry, measures: Measures): ReactNode | null {
         </span>
       );
     }
-    return <span className="text-body">{words.noDocument.replace("{description}", fill(words.descriptions[entry.kind] ?? "", entry))}</span>;
+    return <span className="text-small">{words.noDocument.replace("{description}", fill(words.descriptions[entry.kind] ?? "", entry))}</span>;
   }
   if (entry.state === "stopped_at_cap" && entry.read_pages_row !== null) {
     const read = measures.rows[entry.read_pages_row];
     return (
-      <span className="flex flex-col gap-0.5 text-body">
+      <span className="flex flex-col gap-0.5 text-small">
         <span>
           <Template
             text={words.stopped}
@@ -245,17 +259,21 @@ function spanningNote(entry: ShelfEntry, measures: Measures): ReactNode | null {
                 <MeasureValue
                   measures={measures}
                   index={entry.read_pages_row}
-                  value={{ value: read.count ?? 0, options: { compact: false } }}
+                  value={of(read.count ?? 0, read.denominator ?? 0)}
                   noun={{ many: words.nouns.read }}
+                  tooltipKind="ratio"
+                  className={PAIR}
                   window={windowWords(words.windows.read.title, words.windows.read.definition, entry)}
                 />
               ),
-              pages: <Num value={read.denominator ?? 0} options={{ compact: false }} />,
             }}
           />
         </span>
-        <span className="text-small text-ink-muted">
-          <Template text={words.stoppedNote} values={{ cap: <Num value={entry.daily_page_cap ?? 0} options={{ compact: false }} /> }} />
+        <span className="text-ink-muted">
+          <Template
+            text={words.stoppedNote}
+            values={{ cap: <MeasureNum value={{ value: entry.daily_page_cap ?? 0, options: { compact: false } }} tooltip={words.windows.cap} /> }}
+          />
         </span>
       </span>
     );
@@ -267,9 +285,13 @@ export function shelfRows(result: Readiness): ReadinessRow[] {
   const measures: Measures = { rows: result.rows, asOf: result.as_of };
   return result.stress_shelf.map((entry): ReadinessRow => {
     const { header, caption } = documentCell(entry, result.as_of);
+    // After a reading that found no document, what I looked for; before any reading, a rule's entry in
+    // words that don't say I read it (design review r2 P5, critique r2).
     const hard =
-      entry.kind === "over_parser_limit" && entry.state === "no_document" ? (
-        words.lookedFor
+      entry.state === "no_document" && words.lookedFor[entry.kind] ? (
+        words.lookedFor[entry.kind]
+      ) : entry.state === "not_read" && words.hardBefore[entry.kind] ? (
+        words.hardBefore[entry.kind]
       ) : (
         fill(words.hard[entry.kind], entry)
       );
