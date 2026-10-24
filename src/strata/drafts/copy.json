@@ -1,0 +1,115 @@
+{
+  "files": {
+    "word": {
+      "review_notes": {
+        "heading": "Review notes on the {agency} plan of {date}",
+        "line": "{project_name} ({project_id}). Procurement Plan of {date}.",
+        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
+        "columns": [
+          "Activity",
+          "Review note"
+        ]
+      }
+    },
+    "pack": {
+      "title": "Evidence pack",
+      "draftId": "Draft ID {id}",
+      "drafted": "Drafted on {date} for {author}.",
+      "checked": "Checked by {author} on {date}.",
+      "exported": "Exported by {author} on {date}.",
+      "opened": "{author} opened {opened} of {total} sources before exporting.",
+      "removedTitle": "Sentences I removed",
+      "removedNone": "I removed no sentences.",
+      "removedItem": "\"{sentence}\" {reason}",
+      "sourcesTitle": "Sources",
+      "columns": [
+        "Number",
+        "Source",
+        "Cited in",
+        "Opened",
+        "Last opened (UTC)",
+        "Kept another source, and why"
+      ],
+      "csvColumns": [
+        "Number",
+        "Evidence ID",
+        "Source",
+        "Cited in",
+        "Opened before export",
+        "Last opened (UTC)",
+        "Kept another source",
+        "Reason"
+      ],
+      "yes": "Yes",
+      "no": "No",
+      "moment": "{date}, {time} UTC",
+      "citedJoin": ", ",
+      "dataCaveat": "The World Bank does not guarantee the accuracy of the data."
+    }
+  },
+  "source": "Source:",
+  "recordSource": "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+  "recordSourceShort": "{doc}, {pid}, {date}.",
+  "checkLine": {
+    "checked": "Checked:",
+    "notChecked": "Not checked:",
+    "numbers": {
+      "one": "{part} of {whole} number matches records",
+      "many": "{part} of {whole} numbers match records"
+    },
+    "quotes": {
+      "one": "{part} of {whole} quote is on its page",
+      "many": "{part} of {whole} quotes are on their pages"
+    },
+    "dates": {
+      "one": "{part} of {whole} date matches records",
+      "many": "{part} of {whole} dates match records"
+    },
+    "sourcesOnly": "every source I cite came back from this search",
+    "notCheckedJoin": ", or ",
+    "notCheckedComma": ", ",
+    "clauseJoin": "; ",
+    "end": ".",
+    "notCheckedClauses": {
+      "sentences": "whether each sentence follows from its sources",
+      "find_comparables": "whether these are the right comparables",
+      "search_passages": "whether I found every passage that matters",
+      "check_plan": "whether the plan's published records are complete",
+      "writer_review_notes": "whether these notes are what you would tell the borrower"
+    }
+  },
+  "removed": {
+    "reasons": {
+      "number_not_in_records": {
+        "item": "No record supports this number.",
+        "joined": "no record supports that number"
+      },
+      "date_not_in_records": {
+        "item": "No record supports this date.",
+        "joined": "no record supports that date"
+      },
+      "id_not_returned": {
+        "item": "It cited a source I did not retrieve for this question.",
+        "joined": "it cited a source I did not retrieve for this question"
+      },
+      "no_source": {
+        "item": "It cited no source.",
+        "joined": "it cited no source"
+      },
+      "quote_not_on_page": {
+        "item": "The quote is not on the page it cites.",
+        "joined": "the quote is not on the page it cited"
+      },
+      "quote_not_in_sentence": {
+        "item": "It cited a quote but did not show the quoted words.",
+        "joined": "it cited a quote but did not show the quoted words"
+      }
+    },
+    "unknownReason": {
+      "item": "It failed a check.",
+      "joined": "it failed a check"
+    }
+  },
+  "notVisible": "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP.",
+  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+}

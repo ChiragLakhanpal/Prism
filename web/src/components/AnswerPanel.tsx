@@ -27,7 +27,7 @@ import { highlightsFor, passageFields, placeOf, recordKind, recordReference } fr
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
-import type { NotChecked, Removed } from "./Checks";
+import { notCheckedFor, type Removed } from "./Checks";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -278,13 +278,6 @@ function names(run: Run): string[] {
   return [...found];
 }
 
-function notChecked(checks: ChecksEvent): NotChecked[] {
-  const clauses: NotChecked[] = ["sentences"];
-  if (checks.tools.includes("find_comparables")) clauses.push("comparables");
-  if (checks.tools.includes("search_passages")) clauses.push("passages");
-  return clauses;
-}
-
 function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWorking: boolean): AnswerState {
   const steps = stepsOf(run);
   const runId = run.runId ?? "";
@@ -354,7 +347,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       numbers: checks.numbers,
       dates: checks.dates,
       quotes: checks.quotes,
-      notChecked: notChecked(checks),
+      notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
     },

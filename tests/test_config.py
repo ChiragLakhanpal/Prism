@@ -442,3 +442,46 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
     path = copy("thresholds.toml", tmp_path, old="[signals]", new="[signals]\nexample_threshold = 30")
 
     assert config.load_thresholds(path).value("signals.example_threshold") == 30
+
+
+# ── The draft-kind registry and the roles file (ticket 35) ───────────────
+
+def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
+    # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and two holds,
+    # not yet checked and a preview, with the hold line for not yet checked named first.
+    [kind] = config.load_draft_kinds().kinds.values()
+
+    assert (kind.key, kind.agent, kind.export) == ("review_notes", "review_notes_writer", "word")
+    assert kind.columns == ("activity", "note")
+    assert kind.holds == ("notChecked", "preview")
+    assert (kind.sources_list, kind.removed_box) == (True, "always")
+
+
+def test_adding_a_draft_kind_is_one_entry(tmp_path):
+    path = copy("drafts.toml", tmp_path, old="[holds.notChecked]", new=(
+        '[kinds.mission_brief]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
+        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["part"]\n'
+        'holds = ["notChecked"]\nsources_list = true\nremoved_box = "always"\nnot_checked = []\n'
+        'files = "mission-brief-{project_id}"\n\n[holds.notChecked]'))
+
+    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief"]
+
+
+def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):
+    path = copy("drafts.toml", tmp_path, old='holds = ["notChecked", "preview"]', new='holds = ["owners"]')
+
+    with pytest.raises(ConfigError, match=r"kinds\.review_notes\.holds names owners"):
+        config.load_draft_kinds(path)
+
+
+def test_the_roles_file_names_each_team_by_its_workspace_groups():
+    teams = config.load_roles().teams
+
+    assert [(team.key, team.groups) for team in teams] == [("kenya-water", ("strata-team-kenya-water",))]
+
+
+def test_a_team_with_no_group_is_refused(tmp_path):
+    path = copy("roles.toml", tmp_path, old='groups = ["strata-team-kenya-water"]', new="groups = []")
+
+    with pytest.raises(ConfigError, match=r"teams\.kenya-water\.groups"):
+        config.load_roles(path)
