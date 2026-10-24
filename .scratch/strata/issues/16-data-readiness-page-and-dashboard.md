@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 5 (Readiness tables, Coverage line), 6 and 8; the
 
 **Blocked by:** 06 (The app shell, deployed as a Databricks App that acts as the viewer); 07 (Kenya's procurement records, bronze to gold); 11 (The first 20 documents read into numbered passages and made searchable)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P1
 **Design review:** yes
@@ -18,3 +18,8 @@ Read first: DESIGN.md sections 5 (Readiness tables, Coverage line), 6 and 8; the
 - [ ] Sources and licenses lists every ingested dataset with the line "The World Bank: [Dataset name]: [Data source]. License: CC BY 4.0.", the terms-of-use link, the changes sentence and the data caveat word for word from DESIGN.md section 8, and the checked dataset names are recorded in the source registry.
 - [ ] The dashboard deploys from code with one command, its Data readiness page shows the same numbers as the app for the same date, and its charts use DESIGN.md section 6's colors (category colors in order, text variants for essential marks).
 - [ ] Loading, empty, error and filtered states are captured at 1440, 1024 and 390 px; below 768 px the tables become cards; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: ticket 11 landed in build/strata (merge commit e0721da) and asked for one reading rule here. The Data readiness page reads the latest row for each source, subject and measure of `strata.ops.data_readiness` (the newest `as_of`), never a sum or an average over runs; ticket 07 wrote the measure shape (a nullable count and denominator, `as_of` and a detail sentence) and tickets 08 and 11 write their measures the same way. Ticket 11 also noted that `contact_details_removed` reads 0 of 0 on every run after the first, so the page must show a measure whose latest row is 0 of 0 without calling it a failure; the first run's row is the one that counts, and ticket 43 fixes the measure itself.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/16-data-readiness-page-and-dashboard, as soon as ticket 06 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

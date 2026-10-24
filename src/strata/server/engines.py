@@ -24,6 +24,8 @@ from strata.lakehouse.engine import (DuckDBEngine, Engine, EngineError, Permissi
                                      http_transport)
 
 EngineFor = Callable[[Viewer], AbstractContextManager[Engine]]
+# How long a warehouse query may run when nothing sets a shorter time: WarehouseEngine's own limit.
+WAREHOUSE_TIMEOUT_SECONDS = 600
 
 
 def duckdb_file(path: Path | str) -> EngineFor:
@@ -41,19 +43,23 @@ def duckdb_file(path: Path | str) -> EngineFor:
 
 
 def warehouse_as_viewer(host: str, warehouse_id: str,
-                        transport: Callable[[str, str], Transport] = http_transport) -> EngineFor:
-    """The SQL warehouse, called with the viewer's own forwarded token."""
+                        transport: Callable[[str, str], Transport] = http_transport,
+                        timeout_seconds: float = WAREHOUSE_TIMEOUT_SECONDS) -> EngineFor:
+    """The SQL warehouse, called with the viewer's own forwarded token. Each query gives up after
+    timeout_seconds, so a read the server has stopped waiting for does not hold its thread."""
     @contextmanager
     def engine_for(viewer: Viewer) -> Iterator[Engine]:
         if not viewer.token:
             raise PermissionDenied("The Databricks App forwarded no token for this viewer, so I ran nothing.")
-        yield WarehouseEngine(warehouse_id, transport(host, viewer.token))
+        yield WarehouseEngine(warehouse_id, transport(host, viewer.token), timeout_seconds=timeout_seconds)
     return engine_for
 
 
-def from_environment(environ: Mapping[str, str] = os.environ) -> EngineFor | None:
-    """The engine the environment names, or None when it names none."""
+def from_environment(environ: Mapping[str, str] = os.environ,
+                     timeout_seconds: float = WAREHOUSE_TIMEOUT_SECONDS) -> EngineFor | None:
+    """The engine the environment names, or None when it names none. A warehouse query gives up
+    after timeout_seconds, which the app sets to the stamp's timeout."""
     if path := environ.get("STRATA_DATABASE_FILE", "").strip():
         return duckdb_file(path)
     host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
-    return warehouse_as_viewer(host, warehouse) if host and warehouse else None
+    return warehouse_as_viewer(host, warehouse, timeout_seconds=timeout_seconds) if host and warehouse else None

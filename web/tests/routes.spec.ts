@@ -1,0 +1,308 @@
+// Every route of docs/PLAN.md section 8 except the deck (seam 4, ticket 06): each states its title
+// and its purpose, shows the empty state that says what will appear there, and sits in the frame
+// with the footer. Unknown addresses show a not-found page in the same frame. The words are the
+// 06 design brief's, copied here so the test checks the copy file against an independent source.
+import AxeBuilder from "@axe-core/playwright";
+import type { Page } from "@playwright/test";
+import { footerSentence } from "./design-md";
+import { expect, mockShell, test } from "./mocked";
+
+type Route = {
+  path: string;
+  h1: string;
+  purpose: string;
+  tab?: string;
+  empty?: { title: string; body: string; link?: [string, string] };
+  link?: [string, string];
+};
+
+const DATA_LINK: [string, string] = ["Go to Data", "/data"];
+
+export const ROUTES: Route[] = [
+  {
+    path: "/",
+    h1: "Your briefing",
+    purpose:
+      "This page lists what changed in the plans and projects you work on, and the drafts waiting for you to check. It comes from fixed checks on public records, and no model writes it.",
+    empty: {
+      title: "I have nothing to brief you on yet.",
+      body: "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts waiting for you.",
+      link: DATA_LINK,
+    },
+  },
+  {
+    path: "/packages",
+    h1: "Packages",
+    tab: "Packages",
+    purpose: "Check a borrower's Procurement Plan against comparable past packages, or plan a new package from one sentence.",
+    empty: {
+      title: "There are no plans or packages here yet.",
+      body: "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of Exchanges in Procurement (STEP).",
+      link: DATA_LINK,
+    },
+  },
+  {
+    path: "/packages/KE-NWWDA-541055-CW-RFB",
+    h1: "Package",
+    tab: "Packages",
+    purpose:
+      "This page shows one package: the past range of comparable packages, a planned date for each step, its risks and its approach options.",
+    empty: {
+      title: "I can't show package KE-NWWDA-541055-CW-RFB on this page yet.",
+      body: "A package appears here after you plan it or check the plan it belongs to.",
+      link: ["Go to Packages", "/packages"],
+    },
+  },
+  {
+    path: "/projects",
+    h1: "Projects",
+    tab: "Projects",
+    purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
+    empty: {
+      title: "I can't list projects on this page yet.",
+      body: "When I can, every project I hold appears here, and the projects you follow come first.",
+      link: DATA_LINK,
+    },
+  },
+  {
+    path: "/projects/P130164",
+    h1: "Project P130164",
+    tab: "Projects",
+    purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
+    empty: {
+      title: "I can't show project P130164 on this page yet.",
+      body: "When I can, this page shows the project's procurement, its reports in date order and its documents.",
+      link: ["Go to Projects", "/projects"],
+    },
+  },
+  {
+    path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+    h1: "Activity IN-RRSMP-7431-CW-RFB",
+    tab: "Projects",
+    purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
+    empty: {
+      title: "I can't trace activity IN-RRSMP-7431-CW-RFB on this page yet.",
+      body: "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
+      link: ["Go to project P130164", "/projects/P130164"],
+    },
+  },
+  {
+    path: "/projects/P130164/documents/icr?page=23&para=54",
+    h1: "Document",
+    tab: "Projects",
+    purpose: "This page opens one project document at the page and paragraph a citation points to.",
+    empty: {
+      title: "I can't open this document here yet.",
+      body: "When I can, each citation opens here at its paragraph and page.",
+      link: ["Go to project P130164", "/projects/P130164"],
+    },
+  },
+  {
+    path: "/lessons",
+    h1: "Lessons",
+    tab: "Lessons",
+    purpose:
+      "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead procurement specialist decides which lessons enter the library.",
+    empty: {
+      title: "There are no lessons in the library yet.",
+      body: "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
+      link: DATA_LINK,
+    },
+  },
+  {
+    path: "/drafts",
+    h1: "Drafts",
+    tab: "Drafts",
+    purpose:
+      "I write drafts for you to check, such as review notes and suggested rows for the borrower's Project Procurement Strategy for Development (PPSD). Only you can mark a draft as checked or export it, and exporting sends nothing.",
+    empty: {
+      title: "You have no drafts to check.",
+      body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
+      link: ["Go to Packages", "/packages"],
+    },
+  },
+  {
+    path: "/data",
+    h1: "Data",
+    tab: "Data",
+    purpose:
+      "This page shows what the data I hold are ready for, where each source comes from and its license. It also explains how I turn records and documents into answers.",
+    empty: {
+      title: "I can't show data readiness on this page yet.",
+      body: "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. The date at the top of every page says how recent the data I hold are.",
+    },
+  },
+];
+
+const NOT_FOUND: Route[] = [
+  {
+    path: "/nowhere",
+    h1: "Page not found",
+    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    link: ["Go to Home", "/"],
+  },
+  // The deck belongs to ticket 47. Until then its address is not found, and nothing links to it.
+  {
+    path: "/present",
+    h1: "Page not found",
+    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    link: ["Go to Home", "/"],
+  },
+  {
+    path: "/projects/130164",
+    h1: "Page not found",
+    purpose: "This address doesn't name a project. A project ID is the letter P followed by six digits.",
+    link: ["Go to Projects", "/projects"],
+  },
+];
+
+async function open(page: Page, path: string, width = 1440) {
+  await mockShell(page);
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(path);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+}
+
+for (const route of [...ROUTES, ...NOT_FOUND]) {
+  test(`${route.path} states its title and purpose, shows what will appear there, and carries the footer`, async ({ page }) => {
+    const unrecorded = await mockShell(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(route.path);
+
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { level: 1 })).toHaveText(route.h1);
+    await expect(page).toHaveTitle(`${route.h1} | Strata`);
+    await expect(main.getByText(route.purpose, { exact: true })).toBeVisible();
+    const card = main.locator("[data-empty-state]");
+    if (route.empty) {
+      await expect(card).toHaveCount(1);
+      await expect(card.getByRole("heading", { level: 2 })).toHaveText(route.empty.title);
+      await expect(card.getByText(route.empty.body, { exact: true })).toBeVisible();
+      await expect(card.getByRole("link")).toHaveCount(route.empty.link ? 1 : 0);
+      if (route.empty.link) {
+        await expect(card.getByRole("link", { name: route.empty.link[0], exact: true })).toHaveAttribute("href", route.empty.link[1]);
+      }
+    } else {
+      await expect(card).toHaveCount(0);
+      await expect(main.getByRole("link", { name: route.link![0], exact: true })).toHaveAttribute("href", route.link![1]);
+    }
+    await expect(page.getByRole("contentinfo")).toHaveText(await footerSentence());
+    const selected = page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]");
+    if (route.tab) await expect(selected).toHaveText(route.tab);
+    else await expect(selected).toHaveCount(0);
+    await expect(page.locator('a[href*="/present"]')).toHaveCount(0);
+    expect(unrecorded).toEqual([]);
+  });
+}
+
+test("IDs from the address render in Roboto Mono", async ({ page }) => {
+  await open(page, "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB");
+
+  const id = page.getByRole("heading", { level: 1 }).getByText("IN-RRSMP-7431-CW-RFB");
+  expect(await id.evaluate((el) => [getComputedStyle(el).fontFamily.split(",")[0], getComputedStyle(el).fontWeight])).toEqual([
+    '"Roboto Mono"',
+    "500",
+  ]);
+});
+
+test("a lowercase p in a project ID is read as P, and the address is rewritten in place", async ({ page }) => {
+  await open(page, "/projects/p130164");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Project P130164");
+  expect(new URL(page.url()).pathname).toBe("/projects/P130164");
+});
+
+test("a tab opens its page without reloading, moves focus to the new title and updates the page title", async ({ page }) => {
+  await open(page, "/");
+  await page.evaluate(() => ((window as unknown as { stillHere: boolean }).stillHere = true));
+  await page.evaluate(() => window.scrollTo(0, 400));
+
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Lessons" }).click();
+
+  const title = page.getByRole("heading", { level: 1 });
+  await expect(title).toHaveText("Lessons");
+  await expect(title).toBeFocused();
+  await expect(page).toHaveTitle("Lessons | Strata");
+  expect(new URL(page.url()).pathname).toBe("/lessons");
+  expect(await page.evaluate(() => (window as unknown as { stillHere?: boolean }).stillHere)).toBe(true);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Lessons");
+
+  await page.goBack();
+  await expect(title).toHaveText("Your briefing");
+  await expect(page.getByRole("link", { name: "Strata", exact: true })).toHaveAttribute("aria-current", "page");
+});
+
+test("the stamp is read once per page load and kept across route changes", async ({ page }) => {
+  let reads = 0;
+  await mockShell(page);
+  await page.route("**/api/freshness", async (route) => {
+    reads += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: '{"data_through": "2026-10-21"}' });
+  });
+  await page.goto("/");
+  await expect(page.locator("[data-stamp]")).toContainText("Data through");
+
+  for (const tab of ["Packages", "Projects", "Data"]) {
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: tab }).click();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(tab);
+  }
+
+  expect(reads).toBe(1);
+});
+
+test("below 768 px a labeled Menu holds the tabs; a row opens its page, closes the Menu and focuses the title", async ({ page }) => {
+  await open(page, "/", 390);
+  const menu = page.getByRole("button", { name: "Menu" });
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+
+  await menu.click();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link")).toHaveText(["Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await nav.getByRole("link", { name: "Drafts" }).click();
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await menu.click();
+  await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Drafts");
+});
+
+test("at 1024 px with a 15 px scrollbar the navy bar fits on one line", async ({ page }) => {
+  // Playwright's Chromium hides scrollbars. A classic scrollbar takes 15 px from the page while
+  // the breakpoints still see the whole 1024 px window, which a 15 px right margin on the body
+  // reproduces.
+  await open(page, "/projects", 1024);
+  await page.addStyleTag({ content: "body { margin-right: 15px; }" });
+  expect(await page.evaluate(() => document.body.getBoundingClientRect().width)).toBe(1009);
+
+  const bar = page.locator("[data-nav-bar] > .layout");
+  expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+  expect((await page.locator("[data-nav-bar]").boundingBox())!.height).toBe(56);
+  const heights = await page.getByRole("navigation", { name: "Main" }).getByRole("link").evaluateAll((links) =>
+    links.map((link) => link.getBoundingClientRect().height),
+  );
+  expect(heights).toEqual([40, 40, 40, 40, 40]);
+  await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
+});
+
+for (const route of [...ROUTES, ...NOT_FOUND]) {
+  test(`${route.path}: a skip link leads, it reflows at 320 px, and axe finds no WCAG 2.2 AA violations`, async ({ page }) => {
+    await open(page, route.path, 1440);
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Skip to main content", exact: true });
+    await expect(skip).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("main")).toBeFocused();
+
+    const check = async () =>
+      (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze()).violations.map(
+        (v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`,
+      );
+    expect(await check(), "1440 px").toEqual([]);
+    await page.setViewportSize({ width: 390, height: 900 });
+    expect(await check(), "390 px").toEqual([]);
+    await page.setViewportSize({ width: 320, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+}

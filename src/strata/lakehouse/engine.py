@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import http.client
 import json
 import re
 import time
@@ -224,9 +225,14 @@ def _parameter(name: str, value) -> dict:
     raise EngineError(f"I cannot bind the parameter {name}, a {type(value).__name__}.")
 
 
+def base_url(host: str) -> str:
+    """The workspace's address, from DATABRICKS_HOST with or without its https://."""
+    return host.rstrip("/") if host.startswith("http") else f"https://{host.rstrip('/')}"
+
+
 def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
     """Calls to one workspace's REST API with one token. The token stays in this closure."""
-    base = host.rstrip("/") if host.startswith("http") else f"https://{host.rstrip('/')}"
+    base = base_url(host)
 
     def call(method: str, path: str, body: dict | None = None) -> dict:
         request = urllib.request.Request(
@@ -239,6 +245,10 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
             detail = error.read().decode(errors="replace")[:400]
             refused = PermissionDenied if error.code in (401, 403) else EngineError
             raise refused(f"The workspace answered {error.code} to {method} {path}: {detail}") from error
+        except (OSError, http.client.HTTPException) as error:  # a reset, DNS, TLS or a read that timed out
+            raise EngineError(f"I could not reach the workspace for {method} {path}: {error}") from error
+        except json.JSONDecodeError as error:
+            raise EngineError(f"I could not read the workspace's answer to {method} {path}: {error}") from error
 
     return call
 
@@ -258,19 +268,22 @@ class WarehouseEngine:
         return cls(warehouse_id, http_transport(host, token))
 
     def run(self, sql: str, params: Params = None) -> Result:
+        # The warehouse holds the first answer at most this long: within 5 to 50 seconds, and never
+        # longer than this engine waits in all, unless that is under the API's 5 second floor.
+        wait = max(5, min(50, int(self.timeout_seconds)))
         reply = self.transport("POST", STATEMENTS, {
             "statement": sql,
             "warehouse_id": self.warehouse_id,
             "parameters": [_parameter(name, value) for name, value in (params or {}).items()],
-            "wait_timeout": "50s",
+            "wait_timeout": f"{wait}s",
             "on_wait_timeout": "CONTINUE",
             "format": "JSON_ARRAY",
             "disposition": "INLINE",
         })
-        waited = 0.0
+        waited = float(wait)  # a reply that is still running means the warehouse held the call this long
         while reply.get("status", {}).get("state") in WAITING:
             if waited >= self.timeout_seconds:
-                raise EngineError(f"The warehouse took longer than {self.timeout_seconds:.0f} seconds, "
+                raise EngineError(f"The warehouse took longer than {waited:.0f} seconds, "
                                   f"so I stopped waiting for statement {reply.get('statement_id')}.")
             self.sleep(self.poll_seconds)
             waited += self.poll_seconds

@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 5, 7 and 10; the blueprint's Check a plan wirefra
 
 **Blocked by:** 06 (The app shell, deployed as a Databricks App that acts as the viewer); 09 (The tool registry with the as-of contract, and check_plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P1
 **Design review:** yes
@@ -24,3 +24,6 @@ Read first: DESIGN.md sections 5, 7 and 10; the blueprint's Check a plan wirefra
 
 
 - October 23, 2026, orchestrator: two things from ticket 08's verification, for whoever builds this screen. First, a description can hold a word that the PDF's line wrap split ("Explor atory"); the rows keep the words as the PDF gives them (a decision parked for the user), so show them as given and do not join them. Second, the October 9 plan lists nine activities and the wireframe shows eight (the ninth is KE-NWWDA-207796-CS-INDV); ticket 09's tool returns all nine, so show all nine unless the 10 brief says otherwise, and record the choice in parkedDecisions. Table's cardsBelow prop ('md' or 'lg') is in ticket 02.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/10-check-a-plan-screen, as soon as ticket 06 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
+
+- October 23, 2026, orchestrator: ticket 06 landed in build/strata (merge commit a976b81) with two small open items that your screen meets first; take both if they are cheap, else carry them in followUps. First, `text-balance` on the card title (`WithIds` in `web/src/components/PageHeader.tsx`) splits a STEP reference such as KE-NWWDA-541055-CW-RFB across lines from 768 to 1279 px and at 390 px; the fix the design-lead and the critic agreed on is a `whole` prop on `WithIds` that keeps a reference on one line when it fits, one DESIGN.md sentence and one test. Second, an address with a NUL byte or a first segment over 255 bytes gets a plain-text 500 outside the frame and writes no usage event; `.notes/06-verify-r3.md` gives a five-line fix in `web_file` (`src/strata/server/app.py`) and its test. Ticket 06's done comment lists its seven parked decisions; the empty-state wording (one set of words that is true whether or not data have loaded) and the "one or two short sentences" purpose rule apply to your screen too.

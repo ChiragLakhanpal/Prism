@@ -1,0 +1,23 @@
+# The Databricks App's packages: only what the server imports, at the versions in uv.lock
+# (docs/PLAN.md section 12: the agent-framework metapackage will not install in an App, so the
+# App gets a lean file of its own). ops/app/tests/test_app_package.py checks both.
+fastapi==0.161.1
+uvicorn==0.54.0
+opentelemetry-api==1.45.1
+# What those three install, pinned at their uv.lock versions too, so the App runs the versions
+# the gate tested (uv export --frozen --no-dev --no-hashes --no-emit-project lists them).
+annotated-doc==0.0.5
+annotated-types==0.8.0
+anyio==4.15.1
+click==8.5.0
+h11==0.16.0
+idna==3.20
+pydantic==2.14.1
+pydantic-core==2.50.1
+starlette==1.9.0
+typing-extensions==4.16.0
+typing-inspection==0.4.4
+# Imported only when the app has an Application Insights connection string. The day-one probe
+# app (ops/dayone/workspace/probe_app) sends its trace with the same version. Its own packages
+# are not in uv.lock, so the App resolves them when it installs.
+azure-monitor-opentelemetry==1.8.11

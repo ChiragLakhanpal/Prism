@@ -18,8 +18,12 @@ export const galleryCopy = {
   pages: {
     navigation: {
       title: "Navigation, box band and footer",
+      purpose: "Every page shares this frame. This page shows Projects as the selected tab.",
+    },
+    pages: {
+      title: "Page header and page alerts",
       purpose:
-        "Every page shares this frame. This page shows Projects as the selected tab. The dashed box stands for the World Bank logo, which ticket 06 adds.",
+        "Every page starts with its title and one or two sentences that say what it is for. Alerts above the title say what I can't show, errors first.",
     },
     buttons: {
       title: "Buttons",
@@ -107,6 +111,9 @@ export const galleryCopy = {
   },
 
   sections: {
+    header: "A page with an ID in its title, and its empty state",
+    notFound: "Not found",
+    pageAlerts: "The alert slot, with every alert a page can show",
     bar: "Navy bar",
     box: "The one box",
     stamp: "Data-freshness stamp",
@@ -201,8 +208,8 @@ export const galleryCopy = {
     cardSource: "A sample plan check made for the gallery, in STEP's columns.",
     emptyTitle: "I have nothing to brief you on yet.",
     emptyBody:
-      "Once I load plans and projects, this page lists the plans that changed, the activities that need a look and the drafts waiting for you.",
-    emptyLink: "See which data I hold",
+      "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts waiting for you.",
+    emptyLink: "Go to Data",
     info: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     success: "You exported the draft to Word.",
     warning: "Two reports disagree about the closing date.",

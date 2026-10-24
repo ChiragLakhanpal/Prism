@@ -455,7 +455,9 @@ test("a loading button keeps its name, its label and its width, and a disabled o
   const loading = page.locator("[data-state-section=loading] button").first();
   await expect(loading).toHaveAccessibleName("Mark as checked");
   await expect(loading).toHaveAttribute("aria-busy", "true");
-  // Every variant keeps its label in sight beside the spinner, at the width it has at rest.
+  // Every variant keeps its label in sight beside the spinner, at the width it has at rest. The
+  // widths are measured once Open Sans has loaded, since the fallback font sets other widths.
+  await fontsSettled(page);
   const width = async (section: string, variant: string) =>
     Math.round((await page.locator(`[data-state-section=${section}] [data-button=${variant}]`).first().boundingBox())!.width);
   expect(await width("loading", "primary")).toBe(await width("variants", "primary"));
