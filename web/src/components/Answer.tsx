@@ -20,6 +20,7 @@ import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CheckLine, RemovedBox, type NotChecked, type Removed } from "./Checks";
+import { WORD_JOINER } from "./CitationMarker";
 import { numText } from "./Num";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Steps, type Step } from "./Steps";
@@ -49,7 +50,7 @@ export type AnswerState =
 function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
   const text = window.getSelection()?.toString();
   if (!text) return;
-  event.clipboardData.setData("text/plain", text.replace(/\u2060/g, ""));
+  event.clipboardData.setData("text/plain", text.replaceAll(WORD_JOINER, ""));
   event.preventDefault();
 }
 

@@ -100,4 +100,6 @@ export function CitationMarker({
   );
 }
 
-const WORD_JOINER = "\u2060";
+// Ties a marker or an icon to the word before it, so neither starts a line. A copied answer drops it
+// (Answer.tsx).
+export const WORD_JOINER = "\u2060";

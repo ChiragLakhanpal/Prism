@@ -2,8 +2,8 @@
 
 - GET /api/evidence?id= gives one source by its evidence id, read as the viewer and as of the page's date,
   in the shape the answer stream's evidence event carries, so a drawer opened from a link shows the same
-  paragraph as one opened from an answer. Its answer for ICR P130164 paragraph 54 is recorded once in
-  tests/fixtures/api, and the screen tests serve the same file.
+  paragraph as one opened from an answer. Its answers for ICR P130164 paragraph 54 and for a section of
+  P130164's first ISR are recorded once in tests/fixtures/api, and the screen tests serve the same files.
 - POST /api/evidence/opened records that a viewer opened a source in the drawer: one row per viewer and
   evidence id in strata.ops.evidence_opened, written by the app's own service principal (a DuckDB file
   here). A preview records nothing; the server decides that, not the browser.
@@ -29,6 +29,8 @@ from strata.server.evidence import OpenedLog
 RECORDED = Path(__file__).parent / "fixtures" / "api"
 ICR_54 = "strata.gold.passage:31525018/v1/54"
 ICR_55 = "strata.gold.passage:31525018/v1/55"
+# ISR 1 of P130164, February 22, 2014: its section on the PDO indicators (values.toml, isr-1-pdo-indicators).
+ISR_1_S4 = "strata.gold.passage:19095337/v1/s4"
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-User": "4021@1984",
        "X-Forwarded-Access-Token": "token-for-ana-only"}
 BEN = {"X-Forwarded-Email": "ben.example@worldbank.org", "X-Forwarded-User": "4022@1984",
@@ -79,6 +81,21 @@ def test_a_passage_opens_by_its_evidence_id_as_the_answer_stream_sent_it(reading
     assert row["source"]["document_type"] == "Implementation Completion and Results Report"
     assert "108 of 328 cases had to go through rebidding" in row["text"]
     assert evidence == json.loads((RECORDED / "evidence-icr-p130164-54.json").read_text())
+
+
+def test_an_isr_section_has_no_paragraph_number_and_is_named_by_its_section(reading):
+    # An ISR numbers no paragraphs, so its passage carries a key for the section ("s4") and says the
+    # paragraph is not numbered; the drawer and the card name the section instead.
+    response = call(create_app(engine_for=reading), "GET", "/api/evidence", ANA, params={"id": ISR_1_S4})
+
+    assert response.status_code == 200
+    evidence = response.json()
+    row = evidence["row"]
+    assert (evidence["id"], evidence["short_name"]) == (ISR_1_S4, "ISR")
+    assert (row["section_path"], row["paragraph_numbered"], row["pdf_page"], row["source"]["pdf_pages"]) == (
+        "Project Development Objective Indicators", False, 2, 4)
+    assert row["source"]["document_date"] == "2014-02-22"
+    assert evidence == json.loads((RECORDED / "evidence-isr-p130164-s4.json").read_text())
 
 
 def test_a_passage_not_yet_public_on_the_page_s_date_is_not_there(reading):

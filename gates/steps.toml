@@ -90,6 +90,6 @@ run = ["npm", "--prefix", "web", "run", "--silent", "build:gallery"]
 lane = "web"
 
 [[step]]
-name = "Run the Playwright tests against the built web app and the gallery"
+name = "Run the Playwright tests against the built web app, the gallery and Vite's dev server"
 run = ["npm", "--prefix", "web", "run", "--silent", "test"]
 lane = "web"

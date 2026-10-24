@@ -5,9 +5,10 @@
 // whole paragraph in the evidence drawer.
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { excerpt, highlightsFor, passageFields, recordKind, recordReference } from "../lib/sources";
+import { excerpt, highlightsFor, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
 import { highlighted } from "./Document";
 import { Fill } from "./Fill";
+import { Num } from "./Num";
 import { DocumentSource, Source } from "./Source";
 
 // A static pill with the marker's number, as the card and the drawer's claim block show it.
@@ -22,15 +23,38 @@ export function SourceNumber({ n }: { n: number }) {
   );
 }
 
+// A record's reference moves to the next line whole when it fits there, and breaks after its hyphens
+// only when it does not (DESIGN.md section 5, Page header; PageHeader.tsx's WithIds).
 export function sourceTitle(evidence: EvidenceEvent) {
   if (evidence.kind === "record") {
-    return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference: <span className="font-mono">{recordReference(evidence)}</span> }} />;
+    const reference = <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
+    return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference }} />;
   }
   const fields = passageFields(evidence);
-  return fields.numbered ? (
-    <Fill template={copy.evidence.title} slots={{ project: fields.project, para: fields.para }} />
+  const place = placeOf(fields);
+  return place.kind === "paragraph" ? (
+    <Fill template={copy.evidence.title} slots={{ project: fields.project, para: place.text }} />
   ) : (
-    <Fill template={copy.evidence.titleSection} slots={{ project: fields.project, section: fields.section ?? fields.para }} />
+    <Fill template={copy.evidence.titleSection} slots={{ project: fields.project, section: place.text }} />
+  );
+}
+
+// A record's source line, the same in the evidence card and the drawer (the 14 brief, section 5.11):
+// "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9,
+// 2026, page 3."
+export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEvent; className?: string }) {
+  const source = recordSource(evidence);
+  const words = copy.evidence;
+  const date = source.date ? <Num date={source.date} /> : null;
+  const pid = <span className="font-mono">{source.pcode}</span>;
+  return (
+    <Source className={className}>
+      {source.agency && source.page && date ? (
+        <Fill template={words.recordSource} slots={{ doc: source.docType, agency: source.agency, pid, date, page: String(source.page) }} />
+      ) : (
+        <Fill template={words.recordSourceShort} slots={{ doc: source.docType, pid, date: date ?? recordReference(evidence) }} />
+      )}
+    </Source>
   );
 }
 
@@ -61,12 +85,12 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
             docType={fields.docType}
             pcode={fields.pcode}
             date={fields.date}
-            para={fields.para}
+            place={placeOf(fields)}
             page={fields.page ?? 0}
           />
         </>
       )}
-      {!fields && <Source className="mt-2">{recordReference(evidence)}</Source>}
+      {!fields && <RecordSourceLine className="mt-2" evidence={evidence} />}
       {visited && <p className="mt-1 text-caption text-ink-muted">{copy.evidence.visited}</p>}
     </div>
   );

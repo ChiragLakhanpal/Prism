@@ -22,6 +22,15 @@ export type PassageFields = {
   pdfUrl: string | null;
 };
 
+// Where in its document a passage sits: a numbered paragraph ("54", or an item such as 10.b), or else
+// its section. An ISR numbers no paragraphs, so ticket 11 keys each section ("s4") and marks the
+// passage unnumbered; that key is never shown, since no reader could find "paragraph s4" in the PDF.
+export type Place = { kind: "paragraph" | "section"; text: string };
+
+export function placeOf(fields: PassageFields): Place {
+  return fields.numbered ? { kind: "paragraph", text: fields.para } : { kind: "section", text: fields.section ?? fields.para };
+}
+
 export function shortProjectName(name: string): string {
   return name.replace(/\s+Project$/, "");
 }

@@ -23,7 +23,7 @@ import {
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
 import { formatCount, formatDate } from "../lib/format";
-import { passageFields, recordKind, recordReference } from "../lib/sources";
+import { passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -117,9 +117,10 @@ function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
   if (!evidence) return id;
   if (evidence.kind === "record") return copy.evidence.markerRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
-  return fields.numbered
-    ? copy.evidence.markerSource(fields.docType, fields.date, fields.para)
-    : copy.evidence.markerSourceSection(fields.docType, fields.date, fields.section ?? fields.para);
+  const place = placeOf(fields);
+  return place.kind === "paragraph"
+    ? copy.evidence.markerSource(fields.docType, fields.date, place.text)
+    : copy.evidence.markerSourceSection(fields.docType, fields.date, place.text);
 }
 
 function numTooltip(evidence: EvidenceEvent | undefined): string | null {
@@ -127,7 +128,10 @@ function numTooltip(evidence: EvidenceEvent | undefined): string | null {
   if (evidence.kind === "record") return copy.evidence.numTooltipRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
   const kind = copy.evidence.docKinds[evidence.short_name ?? ""] ?? fields.docType;
-  return copy.evidence.numTooltip(fields.para, kind, fields.pcode);
+  const place = placeOf(fields);
+  return place.kind === "paragraph"
+    ? copy.evidence.numTooltip(place.text, kind, fields.pcode)
+    : copy.evidence.numTooltipSection(place.text, kind, fields.pcode);
 }
 
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,

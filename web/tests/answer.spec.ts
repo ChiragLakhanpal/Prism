@@ -7,6 +7,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { readEvents } from "../src/lib/sse";
 import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTION } from "./answer-page";
+import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
 const META =
@@ -304,20 +305,84 @@ test("an answer whose every sentence failed a check says so, and lists each one 
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
 });
 
-// The recorded showcase stream, with one event changed, for shapes no recorded stream has yet.
+// The recorded showcase stream, with one event changed, for shapes no recorded stream has yet. A change
+// that returns a list puts those events in the one's place.
 async function changed(stream: string, type: string, index: number, change: (data: any) => any) {
-  const blocks = (await recorded(stream)).split("\n\n");
+  return changedText(await recorded(stream), type, index, change);
+}
+
+function changedText(text: string, type: string, index: number, change: (data: any) => any) {
   let seen = -1;
-  return blocks
+  return text
+    .split("\n\n")
     .map((block) => {
       if (!block.startsWith(`event: ${type}\n`)) return block;
       seen += 1;
       if (seen !== index) return block;
-      const data = JSON.parse(block.split("\ndata: ")[1]);
-      return `event: ${type}\ndata: ${JSON.stringify(change(data))}`;
+      const result = change(JSON.parse(block.split("\ndata: ")[1]));
+      return (Array.isArray(result) ? result : [result]).map((data) => `event: ${type}\ndata: ${JSON.stringify(data)}`).join("\n\n");
     })
     .join("\n\n");
 }
+
+// An ISR numbers no paragraphs: ticket 11 keys each section ("s4") and marks the passage unnumbered.
+// The showcase answer with its third sentence citing ISR 1's section on the PDO indicators
+// (tests/ground_truth/values.toml, isr-1-pdo-indicators), then ICR paragraph 54, as no recorded stream
+// does yet.
+const ISR_S4 = "strata.gold.passage:19095337/v1/s4";
+async function citingAnIsrSection() {
+  const isr = JSON.parse(await recorded("evidence-isr-p130164-s4.json"));
+  let stream = await changed("ask-p130164-removed-number.sse", "sentence", 2, (data) => ({
+    ...data,
+    text: "The first status report set an end target of 80.00 for the share of rural people with an all-season road.",
+    evidence_ids: [ISR_S4, ICR_54],
+    numbers: [{ text: "80.00", evidence_id: ISR_S4 }],
+    dates: [],
+  }));
+  stream = changedText(stream, "evidence", 1, (data) => [data, isr]);
+  return stream;
+}
+
+test("a sentence that cites an ISR section names the section, never a paragraph, in the card, a number's tooltip and the switcher", async ({ page }) => {
+  const stream = await citingAnIsrSection();
+  await open(page);
+  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+  await askFromTheBox(page);
+  await landed(page);
+  const sentence = panel(page).locator("[data-sentence-text='2']");
+  const isrMarker = sentence.locator("[data-citation='3']");
+
+  await expect(isrMarker).toHaveAccessibleName(
+    "Source 3: Implementation Status and Results Report, February 22, 2014, section Project Development Objective Indicators",
+  );
+  await isrMarker.hover();
+  const card = page.locator("[data-evidence-card]");
+  await expect(card.locator("[data-source]")).toHaveText(
+    "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
+  );
+  const cardText = await card.textContent();
+  await page.mouse.move(5, 880);
+  await expect(card).toBeHidden();
+
+  await sentence.locator("[data-num]").hover();
+  await expect(page.getByRole("tooltip")).toHaveText("Matches the section Project Development Objective Indicators of the status report for P130164.");
+
+  await isrMarker.click();
+  const tabs = drawer(page).getByRole("tab");
+  await expect(tabs.first()).toHaveText("ISR, Project Development Objective Indicators");
+  await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
+  await expect(tabs.nth(1)).toHaveAccessibleName("ICR paragraph 54");
+  await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
+    "Implementation Status and Results Report · Rajasthan Road Sector Modernization (P130164) · February 22, 2014 · " +
+      "Section Project Development Objective Indicators · PDF page 2 of 4",
+  );
+  // The sentence quotes nothing, so no words are highlighted, and the drawer says so of the section.
+  await expect(drawer(page)).toContainText("This sentence does not quote the section, so no words are highlighted.");
+  await expect(drawer(page)).toContainText("The whole section, word for word.");
+  for (const text of [cardText, await tabs.first().textContent(), await drawer(page).locator("[data-meta-line]").textContent()]) {
+    expect(text).not.toMatch(/\bs4\b|¶/);
+  }
+});
 
 test("a reason code with no sentence in the copy file makes no claim about the removed sentence", async ({ page }) => {
   const stream = await changed("ask-p130164-removed-number.sse", "removed", 0, (data) => ({ ...data, reason: "a_new_check", reasons: [{ check: 9, code: "a_new_check", text: null }] }));
@@ -457,6 +522,13 @@ test("a copied answer keeps its markers as [1] and drops the word joiners that t
   expect(copied).toContain('cases had to go through rebidding".[1]');
 });
 
+// The sheet is fixed and scrolls inside itself, so the page's own width stays 320 px whatever the sheet
+// holds; its scrolling panel must not be wider than the screen either.
+const sheetScrollsSideways = (page: Page) =>
+  drawer(page)
+    .locator(":scope > div")
+    .evaluate((panel) => panel.scrollWidth > panel.clientWidth);
+
 test("the answer reflows at 320 px with nothing scrolling sideways", async ({ page }) => {
   await open(page, { width: 320 });
   await askFromTheBox(page);
@@ -466,6 +538,16 @@ test("the answer reflows at 320 px with nothing scrolling sideways", async ({ pa
   await marker(page, 1).click();
   await expect(drawer(page)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  expect(await sheetScrollsSideways(page)).toBe(false);
+});
+
+test("at 320 px a long section name wraps in the sheet's meta line, and the page part keeps to one line", async ({ page }) => {
+  await open(page, { width: 320, path: `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`, evidence: "evidence-isr-p130164-s4.json" });
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section Project Development Objective Indicators");
+
+  expect(await sheetScrollsSideways(page)).toBe(false);
+  const pagePart = drawer(page).locator("[data-meta-part]").filter({ hasText: "PDF page 2 of 4" });
+  expect(await pagePart.evaluate((part) => part.getClientRects().length)).toBe(1);
 });
 
 // The client side of the stream, moved here from ticket 13's stream.spec.ts: the panel reads the

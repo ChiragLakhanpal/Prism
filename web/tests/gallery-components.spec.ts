@@ -798,6 +798,43 @@ test("the drawer's record view writes the STEP amount in STEP's form, right-alig
   );
 });
 
+// The 14 brief, section 5.11: one source line for a record, in its card and in its drawer. An ISR section
+// (tests/ground_truth/values.toml, isr-1-pdo-indicators) is cited by its section, never by its key "s4".
+test("a record's evidence card ends with its drawer's source line, and an ISR section's card and drawer name the section", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/gallery/evidence");
+  const recordSource = "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3.";
+  await expect(page.locator("[data-card-sample=record] [data-source]")).toHaveText(recordSource);
+  await expect(page.locator("[data-state-section=record] [data-source]")).toHaveText(recordSource);
+  // The STEP reference in a record's heading moves to its own line whole when it fits there: at 430 px
+  // the drawer sample's heading is too narrow for "Activity" and the reference together.
+  await page.setViewportSize({ width: 430, height: 900 });
+  for (const where of ["[data-card-sample=record]", "[data-state-section=record] [role=dialog] h2"]) {
+    const reference = page.locator(where).locator(".font-mono", { hasText: "KE-NWWDA-229129-CW-RFB" });
+    const lines = await reference.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+    });
+    expect(lines, where).toBe(1);
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+
+  await expect(page.locator("[data-card-sample=section] [data-source]")).toHaveText(
+    "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
+  );
+  const section = page.locator("[data-state-section=section] [role=dialog]");
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
+  await expect(section).toContainText("The whole section, word for word.");
+  await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
+  // The switcher's tabs name a section and a paragraph, and a long tab wraps inside its pill.
+  const tabs = page.locator("[data-state-section=switcher-section]").getByRole("tab");
+  await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
+  await expect(tabs.nth(1)).toHaveAccessibleName("ICR paragraph 54");
+  const overflow = await tabs.first().evaluate((tab) => tab.scrollWidth > tab.clientWidth || tab.getBoundingClientRect().right > window.innerWidth);
+  expect(overflow).toBe(false);
+});
+
 test("the drawer's meta line breaks only after a middle dot, and the switcher's tabs read ICR ¶54", async ({ page }) => {
   for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 });

@@ -177,6 +177,7 @@ const PROJECT_SHOTS: Shot[] = [
 // them. The answers are the streams ticket 13's server writes, recorded in tests/fixtures/api.
 const QUESTION = "Why were works contracts in P130164 advertised again?";
 const ICR_54 = "strata.gold.passage:31525018/v1/54";
+const ISR_S4 = "strata.gold.passage:19095337/v1/s4";
 
 const typeInBox = (text: string) => async (page: Page) => {
   await page.keyboard.press("/");
@@ -244,6 +245,8 @@ const ANSWER_SHOTS: Shot[] = [
   answerShot("answer--drawer-failed", ANSWER, { full: false, api: { "/api/evidence": { status: 503, body: SERVICE_DOWN } } }, `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`),
   answerShot("answer--drawer-unknown", ANSWER, { full: false, api: { "/api/evidence": { status: 404, body: '{"code":"unknown_evidence"}' } } }, "/projects/P130164?evidence=strata.gold.passage%3Anothing"),
   answerShot("answer--drawer-preview", ANSWER, { full: false }, `/projects/P130164?view=public&evidence=${encodeURIComponent(ICR_54)}`),
+  // An ISR section has no paragraph number: the drawer names the section, and its long name wraps.
+  answerShot("answer--drawer-section", ANSWER, { full: false, widths: [...WIDTHS, 320], api: { "/api/evidence": { recorded: "evidence-isr-p130164-s4.json" } } }, `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`),
   answerShot("answer--error", "ask-agent-unavailable.sse", { act: askInBox() }),
   answerShot("answer--no-agent", "ask-no-agent.sse", { act: askInBox() }),
   answerShot("answer--refused", "ask-content-filter.sse", { act: askInBox() }),

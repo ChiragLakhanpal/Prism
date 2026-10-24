@@ -24,20 +24,17 @@ import {
   takeFocusRequest,
   type Origin,
 } from "../lib/evidence";
-import { highlightsFor, passageFields, recordReference, recordSource } from "../lib/sources";
+import { highlightsFor, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { highlighted } from "./Document";
-import { eyebrow, SourceNumber, sourceTitle } from "./EvidenceCard";
-import { Fill } from "./Fill";
+import { WORD_JOINER } from "./CitationMarker";
+import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
-import { Source } from "./Source";
 import { TextLink } from "./TextLink";
-
-const WORD_JOINER = "\u2060";
 
 export type DrawerData =
   | { status: "loading" }
@@ -70,31 +67,43 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
 
-// The meta line, with each part whole: after the document type and the project's name, which may
-// wrap, a part ("October 10, 2019", "Section III.B", "PDF page 23 of 66") keeps to one line, and each
-// dot stays with the part before it, so a line breaks only after a dot.
+// A section name this long or shorter, such as "III.B" or "Annex 3.C", keeps to one line in the meta
+// line. An ISR's section names run to 40 characters ("Project Development Objective Indicators") and
+// wrap, or a 320 px sheet would scroll sideways.
+const SHORT_SECTION = 12;
+
+// The meta line. The document type and the project's name may wrap; the date, a short section, the
+// paragraph and the page ("October 10, 2019", "Section III.B", "¶54", "PDF page 23 of 66") each keep
+// to one line. Each dot stays with the part before it, so a line breaks only after a dot or inside a
+// long section's name.
 function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   const fields = passageFields(evidence);
+  const place = placeOf(fields);
   const words = copy.evidence.meta;
-  const parts: ReactNode[] = [
-    fields.docType,
-    <>
-      {words.project.split(/\{(\w+)\}/).map((part, index) =>
-        index % 2 === 0 ? part : part === "pcode" ? <span key={index} className="font-mono">{fields.pcode}</span> : <span key={index}>{fields.project}</span>,
-      )}
-    </>,
-    fields.date,
-    fields.section ? words.section(fields.section) : null,
-    fields.numbered ? words.para(fields.para) : null,
-    fields.page ? (fields.pages ? words.page(String(fields.page), String(fields.pages)) : words.pageOnly(String(fields.page))) : null,
-  ].filter((part) => part !== null && part !== "");
+  const parts: { text: ReactNode; whole: boolean }[] = [
+    { text: fields.docType, whole: false },
+    {
+      text: (
+        <>
+          {words.project.split(/\{(\w+)\}/).map((part, index) =>
+            index % 2 === 0 ? part : part === "pcode" ? <span key={index} className="font-mono">{fields.pcode}</span> : <span key={index}>{fields.project}</span>,
+          )}
+        </>
+      ),
+      whole: false,
+    },
+    { text: fields.date, whole: true },
+    ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
+    ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
+    ...(fields.page ? [{ text: fields.pages ? words.page(String(fields.page), String(fields.pages)) : words.pageOnly(String(fields.page)), whole: true }] : []),
+  ].filter((part) => part.text !== "");
   return (
     <p data-meta-line className="rounded-t-md bg-surface-2 px-3 py-2 text-caption text-ink-muted">
       {parts.map((part, index) => (
         <Fragment key={index}>
           {index > 0 && " "}
-          <span data-meta-part className={index >= 2 ? "whitespace-nowrap" : undefined}>
-            {part}
+          <span data-meta-part className={part.whole ? "whitespace-nowrap" : undefined}>
+            {part.text}
             {index < parts.length - 1 && words.dot}
           </span>
         </Fragment>
@@ -105,18 +114,21 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
 
 function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean }) {
   const fields = passageFields(evidence);
+  const section = placeOf(fields).kind === "section";
   const ranges = highlightsFor(evidence, sentence);
   const pdf = fields.pdfUrl && fields.page ? `${fields.pdfUrl}#page=${fields.page}` : null;
   return (
     <>
       <div className="rounded-md border border-line">
         <MetaLine evidence={evidence} />
-        {fromAnswer && ranges.length === 0 && <p className="px-4 pt-3 text-caption text-ink-muted">{copy.evidence.noHighlight}</p>}
+        {fromAnswer && ranges.length === 0 && (
+          <p className="px-4 pt-3 text-caption text-ink-muted">{section ? copy.evidence.noHighlightSection : copy.evidence.noHighlight}</p>
+        )}
         <p data-passage lang={fields.lang ?? undefined} className="max-w-prose p-4 text-body text-ink">
           {highlighted(fields.text, ranges, true)}
         </p>
       </div>
-      <p className="text-caption text-ink-muted">{copy.evidence.whole}</p>
+      <p className="text-caption text-ink-muted">{section ? copy.evidence.wholeSection : copy.evidence.whole}</p>
       {pdf !== null && (
         <p className="text-small">
           {/* The icon sits inline after the last word, tied to it by a word joiner, so it wraps with
@@ -166,22 +178,6 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   );
 }
 
-function RecordSourceLine({ evidence }: { evidence: EvidenceEvent }) {
-  const source = recordSource(evidence);
-  const words = copy.evidence;
-  const date = source.date ? <Num date={source.date} /> : null;
-  const pid = <span className="font-mono">{source.pcode}</span>;
-  return (
-    <Source>
-      {source.agency && source.page && date ? (
-        <Fill template={words.recordSource} slots={{ doc: source.docType, agency: source.agency, pid, date, page: String(source.page) }} />
-      ) : (
-        <Fill template={words.recordSourceShort} slots={{ doc: source.docType, pid, date: date ?? recordReference(evidence) }} />
-      )}
-    </Source>
-  );
-}
-
 // The sources of the sentence the drawer was opened from: one pill-shaped tab each. Left and Right move
 // between them, Home and End jump to the ends, and selection follows focus.
 function SourceSwitcher({
@@ -204,16 +200,19 @@ function SourceSwitcher({
     if (!evidence) return id;
     if (evidence.kind === "record") return recordReference(evidence);
     const fields = passageFields(evidence);
+    const place = placeOf(fields);
+    const short = evidence.short_name ?? fields.docType;
+    if (place.kind === "section") return <span>{copy.evidence.switcherSection(short, place.text)}</span>;
     // One inline span, so the space after the short name stays: a tab is a flex container, and flex
     // drops a text node that holds only a space.
     return (
       <span>
-        {evidence.short_name ?? fields.docType}{" "}
+        {short}{" "}
         <span aria-hidden="true" data-para-mark>
           {copy.evidence.paraMark}
         </span>
         <span className="sr-only">{copy.evidence.paraSpoken}</span>
-        {fields.para}
+        {place.text}
       </span>
     );
   };
@@ -244,7 +243,7 @@ function SourceSwitcher({
             onClick={() => onChoose(id)}
             onKeyDown={onKeyDown}
             className={cx(
-              "inline-flex h-8 items-center rounded-pill border border-line-strong px-3 text-small text-ink transition-paint duration-150",
+              "inline-flex min-h-8 items-center rounded-pill border border-line-strong px-3 py-1 text-left text-small text-ink transition-paint duration-150",
               selected ? "bg-tint shadow-[inset_0_0_0_1px_var(--color-primary)]" : "bg-surface hover:bg-tint-hover",
             )}
           >

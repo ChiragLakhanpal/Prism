@@ -10,7 +10,10 @@ export const ICR_54 = "strata.gold.passage:31525018/v1/54";
 
 export type Seen = { asked: Request[]; opened: Request[] };
 
-export async function open(page: Page, { path = "/projects/P130164", stream = "ask-p130164-removed-number.sse", width = 1440, status = 200 } = {}) {
+export async function open(
+  page: Page,
+  { path = "/projects/P130164", stream = "ask-p130164-removed-number.sse", evidence = "evidence-icr-p130164-54.json", width = 1440, status = 200 } = {},
+) {
   const seen: Seen = { asked: [], opened: [] };
   page.on("request", (request) => {
     const where = new URL(request.url()).pathname;
@@ -32,7 +35,7 @@ export async function open(page: Page, { path = "/projects/P130164", stream = "a
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P130164": { body: await recorded("project-p130164.json") },
     "/api/ask": { status, body: status === 200 ? await recorded(stream) : '{"detail":"no"}' },
-    "/api/evidence": { body: await recorded("evidence-icr-p130164-54.json") },
+    "/api/evidence": { body: await recorded(evidence) },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   });
   await page.goto(path);

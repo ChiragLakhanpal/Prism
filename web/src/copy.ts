@@ -418,10 +418,16 @@ export const copy = {
   document: {
     // The source line's words on each side of the project ID, which shows in mono:
     // "Implementation Completion and Results Report, " P000000 ", June 30, 2021, paragraph 54,
-    // page 23."
+    // page 23." A no-break space keeps each word with its number, so no line ends on "paragraph".
     sourceLine: (docType: string, date: string, para: string, page: string) => ({
       before: `${docType}, `,
-      after: `, ${date}, paragraph ${para}, page ${page}.`,
+      after: `, ${date}, paragraph\u00a0${para}, page\u00a0${page}.`,
+    }),
+    // A passage with no paragraph number, such as an ISR's, is cited by its section: "...,
+    // February 22, 2014, section Project Development Objective Indicators, page 2."
+    sourceLineSection: (docType: string, date: string, section: string, page: string) => ({
+      before: `${docType}, `,
+      after: `, ${date}, section\u00a0${section}, page\u00a0${page}.`,
     }),
     highlightStarts: "Highlight starts.",
     highlightEnds: "Highlight ends.",
@@ -461,9 +467,11 @@ export const copy = {
     close: "Close the source",
     fromAnswer: "From the answer",
     switcher: "Sources for this sentence",
-    // A switcher tab reads "ICR ¶54", and a screen reader hears "ICR paragraph 54".
+    // A switcher tab reads "ICR ¶54", and a screen reader hears "ICR paragraph 54". A section reads
+    // "ISR, Project Development Objective Indicators".
     paraMark: "¶",
     paraSpoken: "paragraph ",
+    switcherSection: (short: string, section: string) => `${short}, ${section}`,
     // The meta line, word for word as the ticket writes it: "Implementation Completion and Results
     // Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 ·
     // PDF page 23 of 66". The project ID shows in Roboto Mono.
@@ -478,7 +486,9 @@ export const copy = {
       dot: "\u00a0·",
     },
     noHighlight: "This sentence does not quote the paragraph, so no words are highlighted.",
+    noHighlightSection: "This sentence does not quote the section, so no words are highlighted.",
     whole: "The whole paragraph, word for word.",
+    wholeSection: "The whole section, word for word.",
     preview: "The address asks for a preview, so I'm not recording the sources you open.",
     // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
     // 2019, paragraph 54".
@@ -487,6 +497,7 @@ export const copy = {
     markerRecord: (kind: string, reference: string) => `${kind} ${reference}`,
     // A number in a sentence says which source the verifier matched it to.
     numTooltip: (para: string, docKind: string, pcode: string) => `Matches paragraph ${para} of the ${docKind} for ${pcode}.`,
+    numTooltipSection: (section: string, docKind: string, pcode: string) => `Matches the section ${section} of the ${docKind} for ${pcode}.`,
     numTooltipRecord: (kind: string, reference: string) => `Matches the ${kind} record ${reference}.`,
     // What a number's tooltip calls each kind of document, by its short name.
     docKinds: {

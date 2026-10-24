@@ -9,6 +9,7 @@ import rebidding from "../../../tests/fixtures/api/ask-p130164-rebidding.sse?raw
 import removedNumber from "../../../tests/fixtures/api/ask-p130164-removed-number.sse?raw";
 import checkPlan from "../../../tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json";
 import icr54 from "../../../tests/fixtures/api/evidence-icr-p130164-54.json";
+import isrS4 from "../../../tests/fixtures/api/evidence-isr-p130164-s4.json";
 import loan from "../../../tests/fixtures/api/lookup-loan-ida-60290.json";
 import activity from "../../../tests/fixtures/api/lookup-activity-ke-nwwda-541055-cw-rfb.json";
 import project from "../../../tests/fixtures/api/project-p130164.json";
@@ -74,6 +75,21 @@ export const SWITCHER_RUN: Run = {
 export const ICR_54 = icr54 as unknown as EvidenceEvent;
 export const ICR_54_ID = ICR_54.id;
 export const ICR_55_ID = "strata.gold.passage:31525018/v1/55";
+
+// A section of P130164's first ISR, which numbers no paragraphs, as GET /api/evidence answers it.
+export const ISR_S4 = isrS4 as unknown as EvidenceEvent;
+
+// The showcase answer with its third sentence citing that ISR section and ICR paragraph 54, for a
+// switcher whose tabs name a section and a paragraph.
+export const SECTION_SWITCHER_RUN: Run = {
+  ...RUNS.ready,
+  evidence: { ...RUNS.ready.evidence, [ISR_S4.id]: ISR_S4 },
+  sentences: RUNS.ready.sentences.map((sentence) =>
+    sentence.index === 2
+      ? { ...sentence, text: sample.isrSentence, evidence_ids: [ISR_S4.id, ...sentence.evidence_ids], numbers: [{ text: sample.isrNumber, evidence_id: ISR_S4.id }], dates: [] }
+      : sentence,
+  ),
+};
 
 // The box's lookups as the server answered them (tests/fixtures/api).
 const intent = (text: string) => intentsFor(text).ids[0];

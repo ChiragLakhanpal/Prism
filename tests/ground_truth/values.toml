@@ -157,6 +157,18 @@ date = 2018-04-10
 pdf_page = 1
 
 [[value]]
+id = "isr-1-pdo-indicators"
+says = "ISR 1 has a section on the PDO indicators on PDF page 2 of 4. An ISR numbers no paragraphs, so a passage from it is cited by its section's name (tests/fixtures/api/evidence-isr-p130164-s4.json)."
+value = "Project Development Objective Indicators"
+quote = "Results\nProject Development Objective Indicators\nIndicator Name Core Unit of Measure Baseline Current End Target"
+document = "documents/P130164/isr-01-2014-02-22"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2014-02-22
+section = "Project Development Objective Indicators"
+pdf_page = 2
+
+[[value]]
 id = "award-7431-signed"
 says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017, in FY2017, which neither award dataset covers; only the award notice records it."
 value = 2017-06-15

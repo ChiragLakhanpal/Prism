@@ -108,7 +108,7 @@ export function Document({ state }: { state: DocumentState }) {
         docType={passage.docType}
         pcode={passage.pcode}
         date={passage.date}
-        para={passage.para}
+        place={{ kind: "paragraph", text: String(passage.para) }}
         page={passage.page}
       />
       <p className="mt-2 text-small">
