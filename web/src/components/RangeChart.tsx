@@ -824,7 +824,10 @@ export function RangeChart({
           ref={tipRef}
           aria-hidden="true"
           data-dot-tooltip
-          onPointerEnter={() => clearTimeout(hideTimer.current)}
+          onPointerEnter={() => {
+            clearTimeout(hideTimer.current);
+            clearTimeout(restTimer.current);
+          }}
           onPointerLeave={(event) => {
             if (event.pointerType === "touch") return;
             // Back in the band toward its dot, the tooltip keeps its dot; on another dot outside it, that
