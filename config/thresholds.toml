@@ -153,8 +153,43 @@ late_grace_days = 1
 # readiness row whose schedule is "as published", are never late.
 schedule_days = { daily = 1, weekly = 7, monthly = 31, quarterly = 92, yearly = 366 }
 
-# Supplier matching: when a pair merges, goes to the model or goes to a person (ticket 19).
+# Supplier matching: when a pair merges, goes to the model or goes to a person (ticket 19). A STEP
+# supplier ID decides first; only a row with no ID is matched by name (docs/PLAN.md section 5). Each
+# candidate pair gets Splink's match probability from the name-matching model in config/models.toml's
+# [supplier_matching], and these values route it. strata.knowledge.suppliers.resolve reads them, and
+# strata.knowledge.suppliers.quality and the labeling tool (src/strata/server/suppliers.py) read the
+# precision target and the labeled-pair counts.
 [supplier_matching]
+# A pair below this probability is not kept as a candidate at all. Source: none yet; a starting
+# value for the owner to confirm. It keeps the weak pairs a person may still label.
+candidate_min_probability = 0.01
+# A pair from this probability up to auto_merge_min_probability goes to the model, which decides
+# merge or no merge. A pair below it is kept apart. Source: the spec's "a model adjudicates the
+# uncertain middle"; 0.5 is where a match becomes likelier than not.
+model_min_probability = 0.5
+# A pair at or above this probability merges with no model and no person. Source: a starting value
+# for the owner to confirm. With the model file's starting values, only the same name with a project
+# in common reaches it. The labeled pairs decide it: strata.ops.supplier_match_quality reports the
+# lowest value at which auto-merge precision on them stays at precision_target.
+auto_merge_min_probability = 0.99
+# The model's merge or no merge stands only when it is at least this sure. Below it, or when the
+# model is not sure, the pair goes to a person. Source: a starting value for the owner to confirm.
+model_confidence_min = 0.9
+# The model is asked about at most this many new pairs in one nightly run, the likeliest first. The
+# rest wait for a person (review_reason no_model) and are asked on a later night. It keeps the first
+# live night inside the job's time limit and its cost. Source: a starting value for the owner to confirm.
+model_pairs_per_run = 500
+# Auto-merge precision should be at least this on the labeled pairs, and that many pairs should be
+# labeled. Source: docs/PLAN.md section 5 ("auto-merge precision of at least 0.98 on 1,000 labeled
+# pairs"). docs/STATUS.md decision 5, on labeling time, is still open.
+precision_target = 0.98
+labeled_pairs_target = 1000
+# Below this many labeled auto-merged pairs, Strata reports counts only, with no precision and no
+# interval. Source: DESIGN.md section 7, rules 6 and 15 (no percentage or range from fewer than 20 cases).
+min_labeled_pairs_for_precision = 20
+# The z value of the precision's 95% Wilson score interval. Source: the normal distribution's
+# 97.5th percentile, 1.959964.
+interval_z = 1.959964
 
 # The score a contract and a passage need to be linked as "appeared together" (ticket 22).
 [links]

@@ -6,15 +6,19 @@
 --                     shares and is counted once, and its supplier is the joint venture, JV- and its
 --                     members' IDs.
 -- awards_fy2001_2016  prior-review contract awards from FY2001 to FY2016, in US dollars, with no
---                     STEP supplier ID, from the newest fetch of each row.
+--                     STEP supplier ID, from the newest fetch of each row. Its supplier is the one
+--                     name matching resolved (strata.silver.supplier_resolution).
 -- notices             FY2017 to FY2019, which neither awards dataset covers: each Contract Award
 --                     notice whose contract was signed in those years (or, with no signature date,
 --                     whose notice was published in them) is a contract, with the signed price in
 --                     the currency the notice names, labeled as US dollars or local currency from
 --                     award notices. A notice with no signature date whose STEP reference is
 --                     already a contract's from an awards dataset is that contract, published after
---                     its signing, so it is left out rather than counted twice.
+--                     its signing, so it is left out rather than counted twice. Its supplier is
+--                     the awarded bidder the notice lists, by the STEP supplier ID the notice writes
+--                     or as name matching resolved it (strata.silver.supplier_resolution).
 -- A contract number in both datasets is kept once, from the later dataset.
+-- A joint venture's supplier is JV- and its members' supplier IDs, from whichever source.
 -- key: contract_id
 WITH contracts AS (
   SELECT
@@ -61,6 +65,16 @@ since_fy2020 AS (
   FROM first_row AS f
   JOIN contracts AS c ON c.wb_contract_number = f.wb_contract_number
 ),
+resolved AS (
+  SELECT
+    source,
+    contract_id,
+    count(*) AS supplier_count,
+    min(coalesce(joint_venture_id, supplier_id)) AS supplier_id,
+    count(joint_venture_id) > 0 AS joint_venture
+  FROM strata.silver.supplier_resolution
+  GROUP BY source, contract_id
+),
 old_rows AS (
   SELECT *
   FROM strata.silver.awards_fy2001_2016
@@ -104,12 +118,13 @@ fy2001_2016 AS (
     CAST(c.contract_amount_usd AS DECIMAL(20, 2)) AS contract_amount,
     'USD' AS contract_currency,
     'US dollars' AS amount_basis,
-    CAST(NULL AS STRING) AS supplier_id,
-    CAST(c.supplier_count AS INT) AS supplier_count,
-    c.supplier_count > 1 AS joint_venture,
+    r.supplier_id,
+    CAST(coalesce(r.supplier_count, c.supplier_count) AS INT) AS supplier_count,
+    coalesce(r.joint_venture, c.supplier_count > 1) AS joint_venture,
     f.public_from
   FROM old_first AS f
   JOIN old_contracts AS c ON c.contract_number = f.contract_number
+  LEFT JOIN resolved AS r ON r.source = 'awards_fy2001_2016' AND r.contract_id = f.contract_number
   LEFT JOIN strata.gold.project AS p ON p.project_id = f.project_id
   LEFT JOIN strata.gold.country AS n ON n.country_name = f.borrower_country
 ),
@@ -150,12 +165,13 @@ from_notices AS (
     signed_contract_currency AS contract_currency,
     CASE WHEN signed_contract_currency = 'USD' THEN 'US dollars, from award notices'
          ELSE 'local currency, from award notices' END AS amount_basis,
-    CAST(NULL AS STRING) AS supplier_id,
-    CAST(0 AS INT) AS supplier_count,
-    false AS joint_venture,
-    public_from
+    r.supplier_id,
+    CAST(coalesce(r.supplier_count, 0) AS INT) AS supplier_count,
+    coalesce(r.joint_venture, false) AS joint_venture,
+    n.public_from
   FROM award_notices AS n
   LEFT JOIN awarded AS a ON a.awarded_reference = n.step_reference
+  LEFT JOIN resolved AS r ON r.source = 'notices' AND r.contract_id = n.notice_id
   WHERE n.fiscal_year BETWEEN 2017 AND 2019
     AND NOT (n.contract_signature_date IS NULL AND a.awarded_reference IS NOT NULL)
 ),

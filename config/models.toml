@@ -41,3 +41,36 @@ parser = "ai_parse_document"
 index = "strata.gold.passage_index"
 reranker = "databricks_reranker"
 rerank_columns = ["header", "text"]
+
+# The name-matching model for suppliers (ticket 19; docs/PLAN.md section 5). A STEP supplier ID
+# decides first. A row with no ID is matched by name with Splink's Fellegi-Sunter model, on DuckDB
+# inside the nightly task on both engines, against the suppliers with IDs and the other rows with no
+# ID in its country. strata.config.load_supplier_matching() reads this table, and
+# config/thresholds.toml's [supplier_matching] routes each pair by the probability it gives.
+#
+# judge_role  the role above whose deployment decides the pairs in the uncertain middle: draft, the
+#             judge. No role is added for it.
+# prior       how likely two rows from the same country are to be one supplier before their names are
+#             compared
+# Each comparison lists its levels, most alike first. m is how often two rows of one supplier fall in
+# a level, u how often two rows of different suppliers do, and each column adds up to 1. The levels'
+# rules are in src/strata/knowledge/suppliers/matching.py. Source: starting values for the owner to
+# confirm, written so that only the same name with a project in common reaches the auto-merge
+# threshold. The labeled pairs in strata.ops.supplier_pair_labels are what to estimate them from.
+[supplier_matching]
+judge_role = "draft"
+prior = 0.001
+
+# Names after normalizing legal forms, transliteration and punctuation.
+[supplier_matching.name]
+same_name = { m = 0.80, u = 0.0001 }
+same_words = { m = 0.03, u = 0.00005 }
+starts_the_other = { m = 0.07, u = 0.0003 }
+nearly_the_same = { m = 0.05, u = 0.001 }
+alike = { m = 0.03, u = 0.01 }
+different = { m = 0.02, u = 0.98855 }
+
+# Whether the two rows share a project.
+[supplier_matching.projects]
+shared = { m = 0.5, u = 0.02 }
+none_shared = { m = 0.5, u = 0.98 }

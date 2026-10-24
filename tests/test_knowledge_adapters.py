@@ -306,3 +306,50 @@ def test_the_content_safety_endpoint_is_the_foundry_resource_of_the_azure_openai
 
     assert content_safety_endpoint("https://wb-strata.openai.azure.com/openai/v1") == (
         "https://wb-strata.cognitiveservices.azure.com")
+
+
+# ── The judge of supplier name matching ──────────────────────────────────
+
+def test_the_live_judge_asks_the_judge_roles_deployment_for_one_json_judgement_per_pair():
+    from strata.knowledge.suppliers.judge import AzureOpenAIJudge, Question, Side
+
+    post = Post(answer("azure/supplier_judge.json"))
+    judge = AzureOpenAIJudge("https://wb-strata.openai.azure.com/openai/v1/", "not-a-real-key", "gpt-5.4", post=post)
+    question = Question("1519849/1|426408",
+                        Side("CHINA RAILWAY NO. 10 ENGINEERING GROUP", "China", ("P124109",), ("1519849",)),
+                        Side("China Railway No.10 Engineering Group Co., Ltd.", "China", ("P156634",),
+                             ("KE-CWSB-233052-CW-RFB",)))
+
+    [judged] = judge.decide([question])
+
+    assert (judged.decision, judged.confidence) == ("merge", 0.93)
+    [(url, headers, body)] = post.requests
+    assert url == "https://wb-strata.openai.azure.com/openai/v1/chat/completions"
+    assert headers == {"api-key": "not-a-real-key"}
+    assert body["model"] == "gpt-5.4" and body["response_format"] == {"type": "json_object"}
+    instructions, pair = body["messages"]
+    assert instructions["role"] == "system" and "Never judge a supplier's quality" in instructions["content"]
+    assert json.loads(pair["content"])["first"]["name"] == "CHINA RAILWAY NO. 10 ENGINEERING GROUP"
+
+
+def test_a_judgement_in_another_shape_stops_the_run():
+    from strata.knowledge.suppliers.judge import AzureOpenAIJudge, JudgeError, Question, Side
+
+    side = Side("A", "Kenya", (), ())
+    unreadable = {"choices": [{"message": {"content": '{"decision": "accept", "confidence": 2}'}}]}
+    judge = AzureOpenAIJudge("https://wb-strata.openai.azure.com/openai/v1", "not-a-real-key", "gpt-5.4",
+                             post=Post(unreadable))
+
+    with pytest.raises(JudgeError):
+        judge.decide([Question("1/1|2", side, side)])
+
+
+def test_the_live_judge_needs_its_keys_and_uses_the_role_the_model_file_names():
+    from strata.config import load_models, load_supplier_matching
+    from strata.knowledge.suppliers.judge import from_environment
+
+    judge = from_environment({"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/v1",
+                              "AZURE_OPENAI_API_KEY": "not-a-real-key"})
+
+    assert from_environment({}) is None
+    assert judge.name == load_models()[load_supplier_matching().judge_role].deployment == load_models()["draft"].deployment

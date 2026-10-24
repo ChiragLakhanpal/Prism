@@ -46,6 +46,15 @@
   unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
   tool registry for the workspace's section 1, with the tool's criteria as query parameters
   (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer.
+- GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
+  pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
+  /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
+  viewer as the reviewer; the next nightly run applies it. GET /api/suppliers/labels gives the labeling
+  tool's next unlabeled pairs, without where Strata sent them, and POST /api/suppliers/labels records a
+  label (src/strata/server/suppliers.py). A write needs a signed-in viewer (401 no_identity) and a pair
+  the latest run found (404 unknown_pair), and is made as the app's own service principal; without it,
+  nothing is recorded (503 not_recorded). No roles file names reviewers yet, so any signed-in viewer
+  may decide.
 - Every other address outside /api gets the built web app, when create_app is given one.
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
@@ -66,12 +75,12 @@ import uuid
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from strata.agent import traces
 from strata.agent.runs import RunLog, run_row
@@ -82,8 +91,9 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
-from strata.server import engines, evidence, lookup, projects, tracing
+from strata.server import engines, evidence, lookup, projects, suppliers, tracing
 from strata.server.evidence import OpenedLog
+from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
@@ -118,6 +128,17 @@ class OpenedRequest(BaseModel):
     view: Literal["staff", "piu", "public"] = "staff"
 
 
+class DecisionRequest(BaseModel):
+    pair_id: str = Field(min_length=1, max_length=512)
+    decision: Literal["merge", "no_merge"]
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+class LabelRequest(BaseModel):
+    pair_id: str = Field(min_length=1, max_length=512)
+    label: Literal["merge", "no_merge"]
+
+
 def current_viewer(request: Request) -> Viewer:
     return viewer_from_headers(request.headers)
 
@@ -141,7 +162,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
                tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None,
                runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current,
-               opened: OpenedLog | None = None) -> FastAPI:
+               opened: OpenedLog | None = None, supplier_log: SupplierLog | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -150,7 +171,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     receives one event per request, and tracer_provider (the process's global one when None) one
     span. runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the
     server log only. trace_ids reads the request's trace ids while its span is open. opened keeps the
-    sources each viewer opened in the evidence drawer; without it, nothing is recorded. web_dist is
+    sources each viewer opened in the evidence drawer; without it, nothing is recorded. supplier_log
+    keeps the decisions and labels people give candidate pairs of supplier name matching; without it,
+    none is recorded. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
     """
@@ -179,7 +202,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 await asyncio.to_thread(usage.stop)
 
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
-    timeout = stamp_timeout_seconds or load_thresholds().value("app.stamp_timeout_seconds")
+    thresholds = load_thresholds()
+    timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
+    labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))
     tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
 
     @app.middleware("http")
@@ -348,6 +373,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         if opened is None or not viewer.user_id:
             return {"opened": []}
         return {"opened": opened.opened(viewer.user_id, evidence_ids)}
+
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
         as_of = asof or registry.today()
@@ -377,6 +403,40 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 except ValueError:
                     return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
         return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+
+    def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):
+        """A decision or a label on a candidate pair, recorded with the viewer's user id, or why it was not."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        if supplier_log is None:
+            return refused(503, "not_recorded")
+        try:
+            write(supplier_log, viewer.user_id)
+        except suppliers.UnknownPair:
+            return refused(404, "unknown_pair")
+        except EngineError:
+            reference = request_reference()
+            log.exception("I could not record a decision or label of %s, reference %s.", viewer.user_id, reference)
+            return refused(503, "data_service", trace_id=reference)
+        return {"recorded": True}
+
+    @app.get("/api/suppliers/review")
+    def supplier_review_list(viewer: Viewer = Depends(current_viewer)):
+        return read_for("the supplier review list", viewer, suppliers.review_list)
+
+    @app.post("/api/suppliers/review")
+    def decide_supplier_pair(body: DecisionRequest, viewer: Viewer = Depends(current_viewer)):
+        return write_about_a_pair(viewer, lambda log_, reviewer: log_.decide(body.pair_id, body.decision, reviewer,
+                                                                            body.reason))
+
+    @app.get("/api/suppliers/labels")
+    def supplier_labeling_list(limit: int = Query(20, ge=1, le=100), viewer: Viewer = Depends(current_viewer)):
+        return read_for("the supplier labeling list", viewer,
+                        lambda engine: suppliers.labeling_list(engine, limit, labeled_pairs_target))
+
+    @app.post("/api/suppliers/labels")
+    def label_supplier_pair(body: LabelRequest, viewer: Viewer = Depends(current_viewer)):
+        return write_about_a_pair(viewer, lambda log_, labeler: log_.label(body.pair_id, body.label, labeler))
 
     @app.get("/api/health")
     def health() -> dict:
