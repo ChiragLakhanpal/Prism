@@ -102,8 +102,11 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
         """The built web app's file at this address, if there is one inside it."""
         if web is None:
             return None
-        candidate = (web / path.lstrip("/")).resolve()
-        return candidate if candidate.is_file() and web in candidate.parents else None
+        try:
+            candidate = (web / path.lstrip("/")).resolve()
+            return candidate if candidate.is_file() and web in candidate.parents else None
+        except (OSError, ValueError):  # an address no file can have: a NUL byte, or a name over 255 bytes
+            return None
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
