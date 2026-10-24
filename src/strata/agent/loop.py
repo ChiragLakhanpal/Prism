@@ -7,8 +7,9 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    as-of date, the view and the language. The as-of date is the page's, and never later than today,
    so the agent never sees or states an event that has not happened.
 2. The agent answers through the Responses API with tool calls or with its claims. Each tool call runs
-   through the tool registry with the viewer's own engine, and every row it returns is kept in the
-   turn's Facts, so the verifier can check the answer against it. The results go back to the agent.
+   through the tool registry with the viewer's own engine, and every row it returns, with its summary
+   of derived figures when it has one, is kept in the turn's Facts, so the verifier can check the
+   answer against it. The results go back to the agent.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
 4. The agent's claims go to the stream, which runs the verifier on them before anything is shown.
@@ -127,6 +128,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             raise AgentError("data_service", str(error)) from error
         for row in result["rows"]:
             turn.facts.record(row["evidence_id"], row, tool=name)
+        if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
+            turn.facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
         return for_agent(result, as_of), note
 

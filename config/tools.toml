@@ -32,6 +32,11 @@
 #                  not used, may have. The screens' copy writes one sentence per code, so a code is
 #                  renamed here, in the tool and in the copy together.
 #   abstentions    every reason the tool may give for returning no rows, for the same reason
+#   abstentions_with_rows   the abstentions that still come with rows, such as find_comparables'
+#                  too_few_comparables: no range, but every comparable. Any other abstention has none.
+#   summary_fields the fields that hold derived figures the agent may state, such as a past range or a
+#                  count. The registry returns them as one more citable record, the result's summary,
+#                  with its own evidence id, so the verifier can back each figure (CLAUDE.md rule 1).
 #
 # [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
 # readiness page lists each such kind under "What you can ask" (ticket 16):
@@ -239,3 +244,116 @@ fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "
           "parse_failures", "measured", "stress_shelf"]
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
+
+[tools.find_comparables]
+description = """Finds the comparable packages for one package in a Procurement Plan and returns their past \
+range: how long each took from its specific procurement notice to its signed contract. It reads notices and \
+contract awards from every project, joined on the STEP reference, and picks comparables by stated criteria: \
+method, category, market approach, review type, size band, region and period. Each criterion you leave out \
+defaults from the package's plan row: its Method, its category and its project's country, with notices from \
+{past_range.period_from} to the plan's date. Market approach, review type and size band stay open unless you \
+give them, because a package still open has no review type or signed amount in any record. Write any to \
+leave a criterion open. It returns one row per comparable, shortest first, with its days and months and \
+whether it is still open, and a coverage line that says how many matching packages it could not use and why. \
+Packages still open are kept as not signed yet (censored), so the range does not look shorter than it was. \
+The past range is Kaplan-Meier: the months by which a quarter, half, three quarters and 8 in 10 of the \
+comparables were signed. Below {past_range.min_comparables} comparables it gives no range and no share and \
+abstains, and still returns every comparable. Above {past_range.quantile_dots_above} it also gives \
+{past_range.quantile_dots} quantile dots. The plan's own months, from its planned notice date to its planned \
+signing date, come back with how many comparables were signed within them. The past range, the count signed \
+within the plan's months, the numbers each "in 10" phrase states and the coverage counts also come back in the \
+result's summary, which you cite for them. In it, frequencies.q80 holds the numbers "8 in 10" states. \
+frequencies.plan says which words go with its numbers: fewer_than for "fewer than 1 in 10", about for "about N \
+in 10" and more_than for "more than 9 in 10"."""
+adapter = "strata.tools.find_comparables:find_comparables"
+benchmark = "find-comparables-ke-nwwda-541055"
+sources = ["notices", "awards", "documents", "projects"]
+
+[[tools.find_comparables.parameters]]
+name = "step_reference"
+type = "string"
+required = true
+description = "The package's STEP activity reference, as its Procurement Plan writes it, such as KE-NWWDA-541055-CW-RFB."
+
+[[tools.find_comparables.parameters]]
+name = "method"
+type = "string"
+required = false
+description = """Only packages with this selection method, by the Procurement Regulations' name, such as \
+Request for Bids. Leave it out for the package's own Method, or write any."""
+
+[[tools.find_comparables.parameters]]
+name = "category"
+type = "string"
+required = false
+description = """Only packages in this procurement category: Works, Goods, Non-consulting Services or \
+Consultant Services. Leave it out for the package's own category, or write any."""
+
+[[tools.find_comparables.parameters]]
+name = "market_approach"
+type = "string"
+required = false
+description = "Only packages with this Market Approach, in STEP's words, such as Open - National. Leave it out to leave it open."
+
+[[tools.find_comparables.parameters]]
+name = "review_type"
+type = "string"
+required = false
+description = "Only packages with this Review Type: Prior or Post. Leave it out to leave it open."
+
+[[tools.find_comparables.parameters]]
+name = "size_from_usd"
+type = "number"
+required = false
+description = "Only packages whose signed contracts add up to at least this many US dollars. Leave it out to leave the size band open."
+
+[[tools.find_comparables.parameters]]
+name = "size_to_usd"
+type = "number"
+required = false
+description = "Only packages whose signed contracts add up to at most this many US dollars. Leave it out to leave the size band open."
+
+[[tools.find_comparables.parameters]]
+name = "country"
+type = "string"
+required = false
+description = """Only packages in this country, by its two-letter ISO code, such as KE. Leave it out for the \
+package's own country, or write any."""
+
+[[tools.find_comparables.parameters]]
+name = "notice_from"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or after this date. Leave it out for {past_range.period_from}."
+
+[[tools.find_comparables.parameters]]
+name = "notice_to"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+
+[[tools.find_comparables.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only notices, contracts and plan versions public on or before this date. A package signed \
+after it comes back as still open. Leave it out for today."""
+
+[tools.find_comparables.result]
+row = """One comparable package: its notice, its signed contract or that it is still open, and its days and \
+months from notice to signature, or so far."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_code", "country_name",
+              "notice_id", "notice_date", "signed_on", "still_open", "days", "months", "rank"]
+source_fields = ["project_id", "notice_id", "contract_id", "award_notice_id", "signed_in"]
+fields = ["package", "criteria", "counts", "past_range", "plan", "frequencies", "quantile_dots", "thresholds",
+          "sources", "records_through"]
+reasons = ["no_step_reference", "no_notice", "canceled", "signed_before_notice", "no_review_type",
+           "no_market_approach", "no_amount"]
+abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables"]
+# An abstention listed here comes with rows: below the floor the tool gives no range, but still
+# returns every comparable (the spec: "it returns every comparable and an abstention").
+abstentions_with_rows = ["too_few_comparables"]
+# The past range, the plan's count, the numbers its frequency phrases state ("8 in 10"), the counts and
+# the coverage line are derived figures, so they come back as one citable record too (spec, "a derived
+# figure the agent needs is returned as a column").
+summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]

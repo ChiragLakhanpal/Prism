@@ -3,7 +3,9 @@
 // right-aligned in tabular numerals, and a source line below. Below 768 px each row becomes a
 // card, so nothing scrolls sideways. A table whose columns need more than the 672 px a 768 px
 // screen leaves, such as ticket 10's plan check, sets cardsBelow="lg" and becomes cards below
-// 1024 px instead. In a card each column's head sits above its value, and
+// 1024 px instead. A table that keeps to columns 1 to 8, whose columns need more room than they
+// leave at 1200 px, such as the past range's, sets cardsBelow="fit" and reads its own width
+// instead of the page area's. In a card each column's head sits above its value, and
 // every value starts at one left edge: text runs the card's full width, and two or more
 // numbers and short values share a grid of 120 px columns, so they sit side by side (the 10
 // brief's activity card).
@@ -39,6 +41,9 @@ export type Column = {
   // A short value, such as a date, a country or a status, which shares a card's grid with the
   // numbers instead of taking the card's full width.
   short?: boolean;
+  // The head a card shows when the table's head carries a definition under its name: the name
+  // alone, so the definition is not repeated in every card. The table's cardsNote then says it once.
+  cardHeader?: ReactNode;
 };
 
 export type Row = { id: string; cells: Record<string, ReactNode> };
@@ -61,10 +66,16 @@ export type Count = { noun: string; one?: string; total: number; from?: number; 
 type Level = 2 | 3 | 4 | 5;
 
 // Where the rows turn into cards. The class names are written out whole, so Tailwind finds them.
-export type CardsBelow = "md" | "lg";
+// md and lg read the page area. fit reads the table's own frame, which is a container of its own
+// then: cards while the frame is under 49rem (784 px, the table-fit container size in app.css). It is
+// for a table whose columns need that much wherever it sits, as the past range's need about 776 px
+// with one line per cell, because a table that keeps to columns 1 to 8 has less room at 1200 px than
+// at 1024 px. The 8 px over leave room for small font differences between systems.
+export type CardsBelow = "md" | "lg" | "fit";
 const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
   md: { table: "@md/page:block", cards: "@md/page:hidden" },
   lg: { table: "@lg/page:block", cards: "@lg/page:hidden" },
+  fit: { table: "@table-fit/table:block", cards: "@table-fit/table:hidden" },
 };
 // The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
 // breakpoint as cardsBelow="lg".
@@ -98,6 +109,7 @@ export function Table({
   rowHeader,
   level = 3,
   cardsBelow = "md",
+  cardsNote,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -109,8 +121,12 @@ export function Table({
   rowHeader: string;
   // The title's heading level; each card's heading is one level below it.
   level?: Level;
-  // Below which breakpoint the rows become cards: md (768 px, the default) or lg (1024 px).
+  // Below which width the rows become cards: a page area of md (768 px, the default) or lg
+  // (1024 px), or fit, a frame of the table's own under 49rem.
   cardsBelow?: CardsBelow;
+  // A sentence that ends the count line's row only while the rows are cards, such as the definition
+  // a column's head carries in the table, said once there because cards have no column heads.
+  cardsNote?: ReactNode;
 }) {
   const titleId = useId();
   const countId = useId();
@@ -159,7 +175,11 @@ export function Table({
   return (
     // The named, focusable scroll region below is the table's one landmark, so this section
     // carries no name of its own.
-    <section data-table={state.status} aria-busy={loading || undefined} className="flex flex-col gap-2">
+    <section
+      data-table={state.status}
+      aria-busy={loading || undefined}
+      className={cx("flex flex-col gap-2", cardsBelow === "fit" && "@container/table")}
+    >
       {loading ? (
         <>
           <LoadingLabel />
@@ -179,15 +199,25 @@ export function Table({
         <>
           {createElement(`h${level}`, { id: titleId, className: "text-title text-ink-heading" }, title)}
           {count && (
-            <p id={countId} className="text-caption text-ink-muted" data-numbers>
-              {countText(count)}
-            </p>
+            // The count, and the cards' note as its own element at the row's end, which wraps to a line
+            // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
+              <p id={countId} data-numbers>
+                {countText(count)}
+              </p>
+              {cardsNote && (
+                <p className={SHOW[cardsBelow].cards} data-cards-note>
+                  {cardsNote}
+                </p>
+              )}
+            </div>
           )}
         </>
       )}
 
-      {/* From 768 px (or 1024 px with cardsBelow="lg"), a table. In a narrow column it scrolls
-          inside its frame, which then takes focus so a keyboard can scroll it too. */}
+      {/* From a page area of 768 px (or 1024 px with cardsBelow="lg", or a frame of 49rem with "fit"),
+          a table. In a narrow column it scrolls inside its frame, which then takes focus so a keyboard
+          can scroll it too. */}
       <div
         tabIndex={loading ? undefined : 0}
         role={loading ? undefined : "region"}
@@ -262,7 +292,7 @@ export function Table({
             <dl className={cx("mt-2", CARD_FIELDS)}>
               {fields.map((column) => (
                 <div key={column.key} className={cardField(column, shared)}>
-                  <dt className="text-caption text-ink-muted">{column.header}</dt>
+                  <dt className="text-caption text-ink-muted">{column.cardHeader ?? column.header}</dt>
                   <dd>
                     <SkeletonLine className="text-small" width={column.numeric ? "w-1/2" : "w-4/5"} />
                   </dd>
@@ -277,7 +307,7 @@ export function Table({
             <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>
               {fields.map((column) => (
                 <div key={column.key} data-card-field={column.numeric ? "number" : "text"} className={cardField(column, shared)}>
-                  <dt className="text-caption text-ink-muted">{column.header}</dt>
+                  <dt className="text-caption text-ink-muted">{column.cardHeader ?? column.header}</dt>
                   <dd className="text-small wrap-break-word text-ink">{row.cells[column.key]}</dd>
                 </div>
               ))}

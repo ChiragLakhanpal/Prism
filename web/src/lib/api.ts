@@ -150,3 +150,114 @@ export type CheckPlanResult = {
     unmarked: number;
   } | null;
 };
+
+// A package as its newest public Procurement Plan row states it (find_comparables' package field,
+// and GET /api/packages/{stepRef}).
+export type PackageFacts = {
+  evidence_id: string;
+  public_from: string;
+  step_reference: string;
+  description: string | null;
+  project_id: string;
+  project_name: string | null;
+  country_code: string | null;
+  country_name: string | null;
+  section: string | null;
+  category: string | null;
+  method: string | null;
+  market_approach: string | null;
+  review_type: string | null;
+  estimated_amount_usd: string | null;
+  process_status: string | null;
+  planned_notice_on: string | null;
+  planned_signing_on: string | null;
+  plan: {
+    document_id: string;
+    implementing_agency: string;
+    agency_id: string;
+    plan_date: string;
+    disclosed_on: string | null;
+    pdf_page: number;
+  };
+};
+
+// GET /api/packages/{stepRef}: the package workspace's header.
+export type PackageResult = { as_of: string; package: PackageFacts };
+
+// One comparable package (config/tools.toml, [tools.find_comparables.result]).
+export type Comparable = {
+  evidence_id: string;
+  public_from: string;
+  source: { project_id: string; notice_id: string; contract_id: string | null; award_notice_id: string | null; signed_in: string | null };
+  step_reference: string;
+  project_id: string;
+  country_code: string | null;
+  country_name: string | null;
+  notice_id: string;
+  notice_date: string;
+  signed_on: string | null;
+  still_open: boolean;
+  days: number;
+  months: number;
+  rank: number;
+};
+
+export type CoverageReason =
+  | "no_step_reference"
+  | "no_notice"
+  | "canceled"
+  | "signed_before_notice"
+  | "no_review_type"
+  | "no_market_approach"
+  | "no_amount";
+
+// GET /api/packages/{stepRef}/comparables: find_comparables' result. Every number the section
+// states is in it, except the plan line's readout, which counts its rows.
+export type ComparablesResult = {
+  tool: "find_comparables";
+  as_of: string;
+  view: string;
+  rows: Comparable[];
+  coverage: { matched: number; used: number; not_used: { reason: CoverageReason; count: number; evidence_ids: string[] }[] };
+  abstention:
+    | { reason: "too_few_comparables"; count: number; min_comparables: number }
+    | { reason: "no_public_notice"; field: string; value: string }
+    | { reason: "no_comparables" | "none_measurable"; matched: number }
+    | { reason: "unknown_package"; step_reference: string }
+    | null;
+  package: PackageFacts | null;
+  criteria: {
+    method: string | null;
+    category: string | null;
+    market_approach: string | null;
+    review_type: string | null;
+    country: string | null;
+    country_name: string | null;
+    notice_from: string;
+    notice_to: string;
+    size_from_usd: number | null;
+    size_to_usd: number | null;
+    from_package: string[];
+  } | null;
+  counts: { comparables: number; signed: number; still_open: number; canceled: number; canceled_as_still_open: boolean } | null;
+  past_range: { q25: number | null; q50: number | null; q75: number | null; q80: number | null } | null;
+  plan: {
+    days: number;
+    months: number;
+    planned_notice_on: string;
+    planned_signing_on: string;
+    plan_date: string;
+    within: number;
+    in10: number | null;
+  } | null;
+  quantile_dots: { k: number; days: number; months: number; reached: boolean }[] | null;
+  // The numbers each "in 10" phrase states, and the words that go with the plan's share, as the tool
+  // decided them: the screen picks its title from these words and never works them out again.
+  frequencies: {
+    q80: [number, number] | null;
+    plan: { words: "fewer_than" | "about" | "more_than"; states: [number, number] } | null;
+  } | null;
+  thresholds: { min_comparables: number; quantile_dots_above: number; quantile_dots: number; max_plan_months: number; canceled_as_still_open: boolean };
+  sources: { key: string; dataset_name: string }[];
+  records_through: string | null;
+};
