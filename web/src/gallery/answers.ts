@@ -7,6 +7,7 @@ import beforeTheIcr from "../../../tests/fixtures/api/ask-p130164-before-the-icr
 import nothingFound from "../../../tests/fixtures/api/ask-p130164-nothing-found.sse?raw";
 import rebidding from "../../../tests/fixtures/api/ask-p130164-rebidding.sse?raw";
 import removedNumber from "../../../tests/fixtures/api/ask-p130164-removed-number.sse?raw";
+import checkPlan from "../../../tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json";
 import icr54 from "../../../tests/fixtures/api/evidence-icr-p130164-54.json";
 import loan from "../../../tests/fixtures/api/lookup-loan-ida-60290.json";
 import activity from "../../../tests/fixtures/api/lookup-activity-ke-nwwda-541055-cw-rfb.json";
@@ -108,3 +109,6 @@ export const STEP_REF = activity.activity_reference_no;
 export function planRecord(row: Record<string, unknown>): EvidenceEvent {
   return { id: String(row.evidence_id), kind: "record", tool: "check_plan", stratum: "What", short_name: null, row, highlights: [] };
 }
+
+// KE-NWWDA-229129-CW-RFB as check_plan returned it for the NWWDA plan of October 9, 2026.
+export const PLAN_RECORD = planRecord(checkPlan.rows[0] as unknown as Record<string, unknown>);

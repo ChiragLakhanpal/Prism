@@ -176,18 +176,24 @@ const blank = <span className="text-ink-muted">{copy.notInPlan}</span>;
 
 // "Request for Bids ·" then "Open - National": the dot is tied to the Method with a no-break space,
 // and the Market Approach moves to the next line whole when it fits there, so no line starts with
-// the dot or with STEP's own dash.
-function methodText(row: Activity): ReactNode {
-  if (!row.method) return blank;
-  return row.market_approach ? (
+// the dot or with STEP's own dash. The evidence drawer's record view writes them the same way.
+export function MethodText({ method, approach }: { method: string; approach?: string | null }) {
+  return approach ? (
     <>
-      {row.method}
+      {method}
       {words.methodDot}{" "}
-      <span className="inline-block max-w-full">{row.market_approach}</span>
+      <span data-market-approach className="inline-block max-w-full">
+        {approach}
+      </span>
     </>
   ) : (
-    row.method
+    method
   );
+}
+
+function methodText(row: Activity): ReactNode {
+  if (!row.method) return blank;
+  return <MethodText method={row.method} approach={row.market_approach} />;
 }
 
 // The rows a mark's count word counts, for its tooltip.

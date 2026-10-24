@@ -143,7 +143,7 @@ export const galleryCopy = {
     emptyUnscoped: "Nothing found, across all projects",
     dropped: "The connection dropped",
     asOf: "Asked as of a date",
-    preview: "Asked in a preview of the public view",
+    preview: "Asked from a page whose address asks for the public view",
     card: "Evidence card",
     cardVisited: "Evidence card, for a source opened before",
     fromAnswer: "Opened from the answer",

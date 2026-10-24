@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { copy } from "../copy";
 import {
   askAgain,
+  citationNumbers,
   closeAnswer,
   removeScope,
   ask,
@@ -22,7 +23,7 @@ import {
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
 import { formatCount, formatDate } from "../lib/format";
-import { passageFields, recordReference } from "../lib/sources";
+import { passageFields, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -114,7 +115,7 @@ export type Opened = { id: string | null; sentence: number | null };
 
 function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
   if (!evidence) return id;
-  if (evidence.kind === "record") return copy.evidence.markerRecord(copy.checkPlan.columns.activity, recordReference(evidence));
+  if (evidence.kind === "record") return copy.evidence.markerRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
   return fields.numbered
     ? copy.evidence.markerSource(fields.docType, fields.date, fields.para)
@@ -123,7 +124,7 @@ function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
 
 function numTooltip(evidence: EvidenceEvent | undefined): string | null {
   if (!evidence) return null;
-  if (evidence.kind === "record") return copy.evidence.numTooltipRecord(copy.checkPlan.columns.activity, recordReference(evidence));
+  if (evidence.kind === "record") return copy.evidence.numTooltipRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
   const kind = copy.evidence.docKinds[evidence.short_name ?? ""] ?? fields.docType;
   return copy.evidence.numTooltip(fields.para, kind, fields.pcode);
@@ -173,17 +174,14 @@ export function AnswerSentences({
   opened: Opened;
   visited: ReadonlySet<string>;
 }) {
-  const numbers = useMemo(() => {
-    const numbering = new Map<string, number>();
-    for (const sentence of run.sentences) for (const id of sentence.evidence_ids) if (!numbering.has(id)) numbering.set(id, numbering.size + 1);
-    return numbering;
-  }, [run.sentences]);
+  const numbers = useMemo(() => citationNumbers(run), [run.sentences]);
   const open = (id: string, sentence: number, marker: HTMLElement | null) =>
-    openEvidence(id, { sentence, marker, runId: run.runId });
+    openEvidence(id, { serial: run.serial, sentence, marker, runId: run.runId });
   return (
     <>
       {run.sentences.map((sentence, index) => {
-        const active = opened.id !== null && opened.sentence === sentence.index;
+        // Its source is open in the drawer, opened from this sentence of this answer.
+        const active = opened.id !== null && opened.sentence === sentence.index && sentence.evidence_ids.includes(opened.id);
         return (
           <Fragment key={sentence.index}>
             {index > 0 && " "}
@@ -316,15 +314,15 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
   };
 }
 
+// "Asked within P130164, as of October 1, 2026." It names no view: until ticket 40 the server
+// applies no view's rules, so a preview would be a claim about something that did not happen.
 function AskedLine({ run }: { run: Run }) {
-  const { scope, asOf, view } = run.asked;
+  const { scope, asOf } = run.asked;
   const words = copy.answer;
-  const preview = view === "piu" || view === "public" ? words.previewViews[view] : null;
   return (
-    <p className="mt-1 text-caption text-ink-muted">
+    <p data-asked className="mt-1 text-caption text-ink-muted">
       {scope ? <Fill template={words.askedWithin} slots={{ id: mono(scope) }} /> : words.askedAcross}
       {asOf && words.askedAsOf(formatDate(asOf))}
-      {preview && words.askedPreview(preview)}
       {words.askedEnd}
     </p>
   );

@@ -6,7 +6,7 @@
 // One question at a time: a new question replaces the run and stops the one before. The run belongs to
 // the history entry it was asked on (web/src/lib/router.ts), so Back to that page shows it again and a
 // full reload drops it.
-import { remember } from "./evidence";
+import { closeDrawerOf, remember } from "./evidence";
 import { StreamError, streamEvents } from "./sse";
 import { createStore } from "./store";
 
@@ -120,6 +120,15 @@ export function withEvent(run: Run, type: string, data: any): Run {
   }
 }
 
+// Each source the answer cites, numbered once, in order of first appearance; a source cited again
+// keeps its number (the 14 brief, section 4.1). The panel's markers and the drawer's claim block both
+// read it, so the two never disagree.
+export function citationNumbers(run: Pick<Run, "sentences">): Map<string, number> {
+  const numbers = new Map<string, number>();
+  for (const sentence of run.sentences) for (const id of sentence.evidence_ids) if (!numbers.has(id)) numbers.set(id, numbers.size + 1);
+  return numbers;
+}
+
 // A run before its first event.
 export function newRun(serialNumber: number, asked: Asked): Run {
   return {
@@ -161,9 +170,17 @@ async function stream(id: number, asked: Asked, signal: AbortSignal) {
   }
 }
 
-// Ask a question: the panel opens at once with its first step, and the stream fills it.
-export function ask(asked: Asked) {
+// The answer on screen is going away: stop its stream and close the drawer it opened.
+function leave() {
   stopping?.abort();
+  const before = answer.get();
+  if (before) closeDrawerOf(before.serial);
+}
+
+// Ask a question: the panel opens at once with its first step, and the stream fills it. A drawer
+// the old answer opened closes with it.
+export function ask(asked: Asked) {
+  leave();
   stopping = new AbortController();
   serial += 1;
   answer.set(newRun(serial, asked));
@@ -176,9 +193,9 @@ export function askAgain() {
   if (run) ask(run.asked);
 }
 
-// "Close the answer": stop a stream in progress and close the panel.
+// "Close the answer": stop a stream in progress, and close the panel and the drawer it opened.
 export function closeAnswer() {
-  stopping?.abort();
+  leave();
   stopping = null;
   answer.set(null);
 }

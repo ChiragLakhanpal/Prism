@@ -23,10 +23,10 @@ import { EvidenceCard } from "../components/EvidenceCard";
 import { EvidenceDrawerView, type DrawerData } from "../components/EvidenceDrawer";
 import { boxList } from "../components/IntentBox";
 import { POPOVER } from "../components/Popover";
-import type { EvidenceEvent, Run } from "../lib/answer";
+import type { Run } from "../lib/answer";
 import type { Lookup } from "../lib/intents";
 import { cx } from "../lib/cx";
-import { FAILED, ICR_54, ICR_54_ID, LOOKUPS, PENDING, planRecord, RUNS, STEP_REF, SWITCHER_RUN } from "./answers";
+import { FAILED, ICR_54, ICR_54_ID, LOOKUPS, PENDING, PLAN_RECORD, RUNS, STEP_REF, SWITCHER_RUN } from "./answers";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
@@ -305,8 +305,6 @@ function PanelSample({ run }: { run: Run }) {
 // ICR P130164 paragraph 54 as the answer stream sent it, with the highlight for its first sentence.
 const ICR_54_SENT = RUNS.ready.evidence[ICR_54_ID];
 
-// A check_plan row, as an answer citing a record would send it.
-const PLAN_RECORD: EvidenceEvent = planRecord((pc.result as unknown as { rows: Record<string, unknown>[] }).rows[0]);
 
 // The drawer as a sample: opened from a sentence of an answer, or with its source in a given state.
 function DrawerSample({ id, run = null, sentence, data, preview = false }: { id: string; run?: Run | null; sentence?: number; data?: DrawerData; preview?: boolean }) {
@@ -314,7 +312,7 @@ function DrawerSample({ id, run = null, sentence, data, preview = false }: { id:
   const [current, setCurrent] = useState(id);
   const evidence = run?.evidence[current];
   const shown: DrawerData = data ?? (evidence ? { status: "ready", evidence } : { status: "missing" });
-  const from = sentence === undefined ? null : { id: current, sentence, marker: null, runId: run?.runId ?? null };
+  const from = sentence === undefined ? null : { id: current, serial: run?.serial ?? null, sentence, marker: null, runId: run?.runId ?? null };
   return (
     <div className="max-w-[37.5rem] overflow-hidden rounded-md border border-line">
       <EvidenceDrawerView

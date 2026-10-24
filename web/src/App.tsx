@@ -178,18 +178,21 @@ export function App() {
             asOf={asOf && isDay(asOf) ? asOf : null}
             onClosed={(inside) => {
               drawerClosed();
-              if (inside) requestAnimationFrame(returnFocus);
+              // Focus goes back to the marker that opened it, and then the drawer's origin is done
+              // with, so a later sheet opened from a link takes focus as a link's sheet should.
+              const was = origin.get();
+              requestAnimationFrame(() => {
+                if (inside) returnFocus();
+                if (origin.get() === was) origin.set(null);
+              });
             }}
           />
         )
       }
     >
       <div className="layout layout-grid pt-6 @md/page:pt-8 @lg/page:pt-10">
-        {shown && (
-          <div className="col-span-12 @lg/page:col-span-8">
-            <AnswerPanel run={shown} opened={{ id: evidenceId, sentence: from && from.id === evidenceId ? from.sentence : null }} visited={seen} />
-          </div>
-        )}
+        {/* The alert slot frames everything on the page, the answer included (DESIGN.md section 5,
+            Page header), so it sits above the answer panel. */}
         {slot.length > 0 && (
           <div className="col-span-12 mb-6 flex flex-col gap-2 @md/page:col-span-8">
             {slot.map((alert) => (
@@ -197,6 +200,15 @@ export function App() {
                 {alert.text}
               </Alert>
             ))}
+          </div>
+        )}
+        {shown && (
+          <div className="col-span-12 @lg/page:col-span-8">
+            <AnswerPanel
+              run={shown}
+              opened={{ id: evidenceId, sentence: from && from.id === evidenceId && from.serial === shown.serial ? from.sentence : null }}
+              visited={seen}
+            />
           </div>
         )}
         {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a

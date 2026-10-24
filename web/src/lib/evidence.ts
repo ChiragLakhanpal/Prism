@@ -15,9 +15,11 @@ export const PARAM = "evidence";
 export const known = createStore<Record<string, EvidenceEvent>>({});
 export const visited = createStore<ReadonlySet<string>>(new Set());
 
-// Where the open drawer came from: the sentence whose marker opened it, and that marker, for the
-// claim block, the switcher and focus on close. A drawer opened from a link has none.
-export type Origin = { id: string; sentence: number | null; marker: HTMLElement | null; runId: string | null };
+// Where the open drawer came from: the answer (its run's serial, web/src/lib/answer.ts), the sentence
+// whose marker opened it, and that marker, for the claim block, the switcher and focus on close. A
+// drawer opened from a link has none. The serial keeps a later answer's sentence from being paired
+// with a source an earlier answer opened (CLAUDE.md rule 2).
+export type Origin = { id: string; serial: number | null; sentence: number | null; marker: HTMLElement | null; runId: string | null };
 export const origin = createStore<Origin | null>(null);
 
 // Whether this session pushed the open drawer's history entry, so closing can go back to the page.
@@ -63,9 +65,15 @@ function markVisited(id: string) {
   visited.set((all) => (all.has(id) ? all : new Set([...all, id])));
 }
 
+// The source the open drawer last recorded, so one opening writes one row even when React's
+// StrictMode runs the drawer's effects twice in development.
+let recorded: string | null = null;
+
 // Record that the viewer opened a source: once now, and once more if the write fails.
 export function recordOpened(id: string, runId: string | null) {
   markVisited(id);
+  if (id === recorded) return;
+  recorded = id;
   const params = new URLSearchParams(address.get().search);
   const body = { evidence_id: id, run_id: runId, route: address.get().pathname, view: params.get("view") ?? "staff" };
   postJson<{ recorded: boolean }>("/api/evidence/opened", body).catch(() =>
@@ -113,4 +121,14 @@ export function closeEvidence() {
 // The drawer closed by any route (Back included): forget that this session opened it.
 export function drawerClosed() {
   pushed = false;
+  recorded = null;
+}
+
+// An answer is going away (a new question, or "Close the answer"): close the drawer it opened. A
+// drawer opened from a link, or from another answer, stays.
+export function closeDrawerOf(serial: number) {
+  const from = origin.get();
+  if (!from || from.serial !== serial) return;
+  origin.set(null);
+  if (evidenceIn(address.get().search) !== null) closeEvidence();
 }

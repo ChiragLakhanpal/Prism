@@ -5,12 +5,10 @@
 // (tests/ground_truth/values.toml, icr-para-54), copied here so the test checks the screen against an
 // independent source.
 import AxeBuilder from "@axe-core/playwright";
-import type { Page, Request } from "@playwright/test";
 import { readEvents } from "../src/lib/sse";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTION } from "./answer-page";
+import { expect, recorded, test } from "./mocked";
 
-const QUESTION = "Why were works contracts in P130164 advertised again?";
-const ICR_54 = "strata.gold.passage:31525018/v1/54";
 const META =
   "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66";
 const REMOVED = "I removed one sentence. It said bids were usually opened within 45 days, and no record supports that number.";
@@ -18,53 +16,6 @@ const CHECK_LINE =
   "Checked: 2 of 3 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages. " +
   "Not checked: whether each sentence follows from its sources, or whether I found every passage that matters.";
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-
-type Seen = { asked: Request[]; opened: Request[] };
-
-async function open(page: Page, { path = "/projects/P130164", stream = "ask-p130164-removed-number.sse", width = 1440, status = 200 } = {}) {
-  const seen: Seen = { asked: [], opened: [] };
-  page.on("request", (request) => {
-    const where = new URL(request.url()).pathname;
-    if (where === "/api/ask") seen.asked.push(request);
-    if (where === "/api/evidence/opened" && request.method() === "POST") seen.opened.push(request);
-  });
-  // Every change to the answer's status line, in order, as a screen reader would hear it.
-  await page.addInitScript(() => {
-    const said: string[] = [];
-    (window as unknown as { said: string[] }).said = said;
-    new MutationObserver(() => {
-      const line = document.querySelector("[data-answer-status]")?.textContent ?? "";
-      if (line && said[said.length - 1] !== line) said.push(line);
-    }).observe(document, { subtree: true, childList: true, characterData: true });
-  });
-  await page.setViewportSize({ width, height: 900 });
-  await mockApi(page, {
-    "/api/me": { body: await recorded("me.json") },
-    "/api/freshness": { body: await recorded("freshness.json") },
-    "/api/projects/P130164": { body: await recorded("project-p130164.json") },
-    "/api/ask": { status, body: status === 200 ? await recorded(stream) : '{"detail":"no"}' },
-    "/api/evidence": { body: await recorded("evidence-icr-p130164-54.json") },
-    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
-  });
-  await page.goto(path);
-  await expect(page.locator("main h1")).toBeVisible();
-  return seen;
-}
-
-const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
-const panel = (page: Page) => page.getByRole("region", { name: "Answer" });
-const drawer = (page: Page) => page.getByRole("dialog");
-const marker = (page: Page, n: number) => panel(page).locator(`[data-citation="${n}"]`).first();
-
-async function askFromTheBox(page: Page, question = QUESTION) {
-  await page.keyboard.press("/");
-  await page.keyboard.type(question);
-  await page.keyboard.press("Enter");
-}
-
-async function landed(page: Page) {
-  await expect(panel(page).locator("[data-answer]:not([data-answer=streaming])")).toBeVisible();
-}
 
 test("Ask this streams the answer into the panel under the band: steps one at a time, then In short, the check line and the removed box", async ({ page }) => {
   const seen = await open(page);
@@ -266,7 +217,7 @@ test("a stream that ends before its done event says the connection dropped", asy
   await askFromTheBox(page);
 
   await expect(panel(page).getByRole("alert")).toContainText("The connection dropped before the answer was ready. Your question is still in the box.");
-  await panel(page).getByRole("button", { name: "Try again" }).isVisible();
+  await expect(panel(page).getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
 test("a question a content filter stopped is a refusal, in plain words, with no alert and no check line", async ({ page }) => {
@@ -317,7 +268,56 @@ test("Close the answer closes the panel and its drawer, and returns focus to the
   await panel(page).getByRole("button", { name: "Close the answer" }).click();
 
   await expect(panel(page)).toHaveCount(0);
+  await expect(drawer(page)).toHaveCount(0);
+  expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
   await expect(box(page)).toBeFocused();
+});
+
+// CLAUDE.md rule 2: a drawer opened from the old answer must never pair the new answer's sentence
+// with the old answer's source.
+test("a new question closes the drawer the old answer opened, and tints no sentence of the new answer", async ({ page }) => {
+  const seen = await open(page);
+  await askFromTheBox(page);
+  await landed(page);
+  await marker(page, 1).click();
+  await expect(drawer(page).locator("[data-claim]")).toBeVisible();
+
+  await box(page).focus();
+  await page.keyboard.press("Enter");
+
+  await expect.poll(() => seen.asked.length).toBe(2);
+  await landed(page);
+  await expect(drawer(page)).toHaveCount(0);
+  expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
+  await expect(panel(page).locator("[data-sentence-text].bg-tint")).toHaveCount(0);
+  await expect(marker(page, 1)).toHaveAttribute("aria-expanded", "false");
+});
+
+test("a drawer opened from a link stays open when you ask a question", async ({ page }) => {
+  await open(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
+  await expect(drawer(page)).toBeVisible();
+
+  await askFromTheBox(page);
+  await landed(page);
+
+  await expect(drawer(page)).toBeVisible();
+  await expect(drawer(page).locator("[data-claim]")).toHaveCount(0);
+  await expect(panel(page).locator("[data-sentence-text].bg-tint")).toHaveCount(0);
+});
+
+// The server applies no view's rules until ticket 40 (src/strata/server/app.py), so the answer must not
+// say it was asked in a preview; the alert above it says what the page shows instead.
+test("an answer asked with ?view=public names no preview, and page alerts sit above it", async ({ page }) => {
+  await open(page, { path: "/projects/P130164?view=public" });
+  await askFromTheBox(page);
+  await landed(page);
+
+  await expect(panel(page).locator("[data-asked]")).toHaveText("Asked within P130164.");
+  const alert = (await page.locator("main [data-alert]").first().boundingBox())!;
+  expect(alert.y + alert.height).toBeLessThanOrEqual((await panel(page).boundingBox())!.y);
+
+  await marker(page, 1).click();
+  await expect(drawer(page)).toContainText("The address asks for a preview, so I'm not recording the sources you open.");
 });
 
 test("the check line never uses the success state", async ({ page }) => {

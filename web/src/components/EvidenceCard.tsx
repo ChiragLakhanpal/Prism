@@ -5,7 +5,7 @@
 // whole paragraph in the evidence drawer.
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { excerpt, highlightsFor, passageFields, recordReference } from "../lib/sources";
+import { excerpt, highlightsFor, passageFields, recordKind, recordReference } from "../lib/sources";
 import { highlighted } from "./Document";
 import { Fill } from "./Fill";
 import { DocumentSource, Source } from "./Source";
@@ -24,7 +24,7 @@ export function SourceNumber({ n }: { n: number }) {
 
 export function sourceTitle(evidence: EvidenceEvent) {
   if (evidence.kind === "record") {
-    return <Fill template={copy.evidence.recordTitle} slots={{ kind: copy.checkPlan.columns.activity, reference: <span className="font-mono">{recordReference(evidence)}</span> }} />;
+    return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference: <span className="font-mono">{recordReference(evidence)}</span> }} />;
   }
   const fields = passageFields(evidence);
   return fields.numbered ? (

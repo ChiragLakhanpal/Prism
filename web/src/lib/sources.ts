@@ -2,6 +2,7 @@
 // 5.13): the evidence card's title and excerpt, the marker's accessible name, and the drawer's meta
 // line. Every field comes from the stream's evidence event (src/strata/agent/verifier.py); nothing
 // here looks anything up.
+import { copy } from "../copy";
 import type { EvidenceEvent } from "./answer";
 import { formatDate } from "./format";
 
@@ -48,6 +49,27 @@ export function passageFields(evidence: EvidenceEvent): PassageFields {
 export function recordReference(evidence: EvidenceEvent): string {
   const row = evidence.row;
   return String(row.activity_reference_no ?? row.reference ?? evidence.id.split(":").slice(1).join(":"));
+}
+
+// What kind of record a What citation names ("Activity", "Contract"), by the table before the colon
+// in its evidence id, so a contract a later tool cites is never called an activity.
+export function recordKind(evidence: EvidenceEvent): string {
+  const table = evidence.id.split(":")[0];
+  return copy.evidence.recordKinds[table] ?? copy.evidence.recordKindOther;
+}
+
+export type RecordSource = { docType: string; agency: string | null; pcode: string; date: string | null; page: number | null };
+
+// Where a record came from, from the source fields its tool returned with it.
+export function recordSource(evidence: EvidenceEvent): RecordSource {
+  const source = (evidence.row.source ?? {}) as Record<string, any>;
+  return {
+    docType: String(source.document_type ?? ""),
+    agency: (source.implementing_agency ?? null) as string | null,
+    pcode: String(source.project_id ?? evidence.row.project_id ?? ""),
+    date: (source.plan_date ?? source.document_date ?? null) as string | null,
+    page: (source.pdf_page ?? null) as number | null,
+  };
 }
 
 // The paragraph's highlights for one sentence of the answer, as [start, end] ranges.

@@ -370,9 +370,9 @@ export const copy = {
     askedWithin: "Asked within {id}",
     askedAcross: "Asked across all projects",
     askedAsOf: (date: string) => `, as of ${date}`,
-    askedPreview: (view: string) => `, in a preview of the ${view} view`,
+    // No view is named: until ticket 40 applies a view's rules on the server, every answer is the
+    // World Bank staff view's. Ticket 40 adds ", in a preview of the {view} view" back.
     askedEnd: ".",
-    previewViews: { piu: "implementing agency", public: "public" },
     // Every sentence the agent wrote failed a check (the 14 brief, section 5.7).
     nothingSurvived: (count: number, countText: string) =>
       count === 1
@@ -432,6 +432,19 @@ export const copy = {
     title: "{project}, paragraph {para}",
     titleSection: "{project}, section {section}",
     recordTitle: "{kind} {reference}",
+    // What a record is called, by the table its evidence id names (web/src/lib/sources.ts).
+    recordKinds: {
+      "strata.silver.plan_rows": "Activity",
+      "strata.gold.contract": "Contract",
+      "strata.gold.package": "Package",
+    } as Record<string, string>,
+    recordKindOther: "Record",
+    // The record view's fields keep STEP's own names; the description's is STEP's "Description".
+    recordDescription: "Description",
+    // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
+    // Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3."
+    recordSource: "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+    recordSourceShort: "{doc}, {pid}, {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
     visited: "You have opened this source.",
@@ -453,11 +466,13 @@ export const copy = {
       para: (para: string) => `¶${para}`,
       page: (page: string, pages: string) => `PDF page ${page} of ${pages}`,
       pageOnly: (page: string) => `PDF page ${page}`,
-      join: " · ",
+      // The dot ends each part with a no-break space before it, so a line breaks only after a dot,
+      // never inside "PDF page 23 of 66" or before a dot.
+      dot: "\u00a0·",
     },
     noHighlight: "The sentence sums up this paragraph, so no words are highlighted.",
     whole: "The whole paragraph, word for word.",
-    preview: "This is a preview, so I'm not recording the sources you open.",
+    preview: "The address asks for a preview, so I'm not recording the sources you open.",
     // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
     // 2019, paragraph 54".
     markerSource: (docType: string, date: string, para: string) => `${docType}, ${date}, paragraph ${para}`,

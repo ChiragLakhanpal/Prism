@@ -7,14 +7,15 @@
 // was opened from and a switcher for that sentence's other sources; the paragraph with the matching
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { copy } from "../copy";
-import type { EvidenceEvent, Run } from "../lib/answer";
+import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
 import {
   closeEvidence,
+  evidenceIn,
   focusRequests,
   known,
   openEvidence,
@@ -23,13 +24,18 @@ import {
   takeFocusRequest,
   type Origin,
 } from "../lib/evidence";
-import { highlightsFor, passageFields, recordReference } from "../lib/sources";
+import { highlightsFor, passageFields, recordReference, recordSource } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { highlighted } from "./Document";
 import { eyebrow, SourceNumber, sourceTitle } from "./EvidenceCard";
+import { Fill } from "./Fill";
+import { Num } from "./Num";
+import { MethodText } from "./PlanCheck";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { Source } from "./Source";
+import { CARD_FIELD, CARD_FIELDS } from "./Table";
 import { TextLink } from "./TextLink";
 
 export type DrawerData =
@@ -63,6 +69,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
 
+// The meta line, with each part whole: after the document type and the project's name, which may
+// wrap, a part ("October 10, 2019", "Section III.B", "PDF page 23 of 66") keeps to one line, and each
+// dot stays with the part before it, so a line breaks only after a dot.
 function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   const fields = passageFields(evidence);
   const words = copy.evidence.meta;
@@ -81,10 +90,13 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   return (
     <p data-meta-line className="rounded-t-md bg-surface-2 px-3 py-2 text-caption text-ink-muted">
       {parts.map((part, index) => (
-        <span key={index}>
-          {index > 0 && words.join}
-          {part}
-        </span>
+        <Fragment key={index}>
+          {index > 0 && " "}
+          <span data-meta-part className={index >= 2 ? "whitespace-nowrap" : undefined}>
+            {part}
+            {index < parts.length - 1 && words.dot}
+          </span>
+        </Fragment>
       ))}
     </p>
   );
@@ -117,32 +129,50 @@ function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEve
   );
 }
 
-// The What stratum's view: the fields of the record a tool returned, under STEP's own names.
+// The What stratum's view: the fields of the record a tool returned, under STEP's own names, laid out
+// as the plan check's activity card lays them out (the 14 brief, section 4.5.3): the Description and
+// the Method across, Review and the amount side by side, the amount right-aligned in STEP's form with
+// its cents (DESIGN.md section 6), then the source line.
 function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
   const columns = copy.checkPlan.columns;
-  const fields: [string, unknown][] = [
-    [columns.method, [row.method, row.market_approach].filter(Boolean).join(copy.checkPlan.methodDot + " ")],
-    [columns.review, row.review_type],
-    [columns.estimated, row.estimated_amount_usd],
-    [columns.status, row.process_status],
-  ];
+  const given = (value: unknown) => value !== null && value !== undefined && value !== "";
+  const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean }[] = [];
+  if (given(row.description)) fields.push({ label: copy.evidence.recordDescription, value: String(row.description), wide: true });
+  if (given(row.method)) fields.push({ label: columns.method, value: <MethodText method={String(row.method)} approach={row.market_approach} />, wide: true });
+  if (given(row.review_type)) fields.push({ label: columns.review, value: String(row.review_type) });
+  if (given(row.estimated_amount_usd)) {
+    fields.push({ label: columns.estimated, value: <Num value={Number(row.estimated_amount_usd)} options={{ decimals: 2, compact: false }} />, numeric: true });
+  }
+  if (given(row.process_status)) fields.push({ label: columns.status, value: String(row.process_status), wide: true });
   return (
-    <dl data-record className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-line p-4" data-numbers>
-      {row.description && (
-        <div className="col-span-full">
-          <dd className="text-small text-ink">{String(row.description)}</dd>
-        </div>
-      )}
-      {fields
-        .filter(([, value]) => value !== null && value !== undefined && value !== "")
-        .map(([label, value]) => (
-          <div key={label}>
-            <dt className="text-caption text-ink-muted">{label}</dt>
-            <dd className="text-small text-ink">{String(value)}</dd>
+    <div className="flex flex-col gap-4 rounded-md border border-line p-4">
+      <dl data-record data-numbers className={CARD_FIELDS}>
+        {fields.map((field) => (
+          <div key={field.label} className={cx(CARD_FIELD, field.wide && "col-span-full", field.numeric && "text-right")}>
+            <dt className="text-caption text-ink-muted">{field.label}</dt>
+            <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
           </div>
         ))}
-    </dl>
+      </dl>
+      <RecordSourceLine evidence={evidence} />
+    </div>
+  );
+}
+
+function RecordSourceLine({ evidence }: { evidence: EvidenceEvent }) {
+  const source = recordSource(evidence);
+  const words = copy.evidence;
+  const date = source.date ? <Num date={source.date} /> : null;
+  const pid = <span className="font-mono">{source.pcode}</span>;
+  return (
+    <Source>
+      {source.agency && source.page && date ? (
+        <Fill template={words.recordSource} slots={{ doc: source.docType, agency: source.agency, pid, date, page: String(source.page) }} />
+      ) : (
+        <Fill template={words.recordSourceShort} slots={{ doc: source.docType, pid, date: date ?? recordReference(evidence) }} />
+      )}
+    </Source>
   );
 }
 
@@ -168,13 +198,17 @@ function SourceSwitcher({
     if (!evidence) return id;
     if (evidence.kind === "record") return recordReference(evidence);
     const fields = passageFields(evidence);
+    // One inline span, so the space after the short name stays: a tab is a flex container, and flex
+    // drops a text node that holds only a space.
     return (
-      <>
+      <span>
         {evidence.short_name ?? fields.docType}{" "}
-        <span aria-hidden="true">{copy.evidence.paraMark}</span>
+        <span aria-hidden="true" data-para-mark>
+          {copy.evidence.paraMark}
+        </span>
         <span className="sr-only">{copy.evidence.paraSpoken}</span>
         {fields.para}
-      </>
+      </span>
     );
   };
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -255,10 +289,12 @@ export function EvidenceDrawerView({
   const passageId = useId();
   const [scrolled, setScrolled] = useState(false);
 
-  // The sentence it was opened from, while that answer is still on the page.
-  const claim = from && from.id === id && from.sentence !== null && run ? run.sentences.find((sentence) => sentence.index === from.sentence) : undefined;
-  const numbering = new Map<string, number>();
-  for (const sentence of run?.sentences ?? []) for (const evidenceId of sentence.evidence_ids) if (!numbering.has(evidenceId)) numbering.set(evidenceId, numbering.size + 1);
+  // The sentence it was opened from, while that same answer is still on the page.
+  const claim =
+    from && run && from.id === id && from.serial === run.serial && from.sentence !== null
+      ? run.sentences.find((sentence) => sentence.index === from.sentence && sentence.evidence_ids.includes(id))
+      : undefined;
+  const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
   const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
 
@@ -395,10 +431,15 @@ export function EvidenceDrawer({
     container.scrollTop = Math.max(0, offset - container.clientHeight / 2);
   }, [id, data.status]);
 
-  // Closed by any route, Back included: say whether focus was inside.
+  // Closed by any route, Back included: say whether focus was inside. A real close has taken
+  // ?evidence= out of the address first; React's StrictMode unmounts and mounts the drawer once in
+  // development with the address unchanged, and that is not a close.
   useLayoutEffect(() => {
     const element = panel.current;
-    return () => onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
+    return () => {
+      if (evidenceIn(window.location.search) !== null) return;
+      onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
+    };
   }, []);
 
   // A sheet holds the page still behind it.
@@ -435,7 +476,7 @@ export function EvidenceDrawer({
       headingRef={heading}
       onClose={closeEvidence}
       onChoose={(next) =>
-        from && openEvidence(next, { sentence: from.sentence, marker: from.marker, runId: from.runId }, { replace: true, focus: false })
+        from && openEvidence(next, { serial: from.serial, sentence: from.sentence, marker: from.marker, runId: from.runId }, { replace: true, focus: false })
       }
     />
   );
