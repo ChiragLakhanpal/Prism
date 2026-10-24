@@ -79,7 +79,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -89,17 +89,17 @@ Run this from the main checkout:
 
     uv run --script ops/bundle/check.py job-run --env-file .env
 
-It worked if the command exits 0 and prints "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That means ten rows in the order of `docs/PLAN.md` section 11 (criterion 2). Since ticket 07 merged, three of the tasks do real work, so the run takes longer and needs the World Bank's public APIs. `fetch_by_watermark` fetches Kenya's awards, notices and projects into `strata.bronze.api_pages`. `bronze_to_gold` fills `strata.silver.awards`, `notices`, `projects` and `project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. `measure_data_readiness` writes Kenya's measures to `strata.ops.data_readiness`. Ticket 07's steps below read what this run wrote.
+It worked if the command exits 0 and prints "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That means ten rows in the order of `docs/PLAN.md` section 11 (criterion 2). Since ticket 07 merged, three of the tasks do real work, so the run takes longer and needs the World Bank's public APIs. Since ticket 17 merged, `fetch_by_watermark` fetches every structured source in `config/sources.toml` into `strata.bronze.api_pages`, for every country: contract awards since FY2020, contract awards FY2001 to FY2016, IEG ratings, IDA credits and IBRD loans, procurement notices, projects, CPIA and WGI. Only the monthly loan history (`ida_credit_history` and `ibrd_loan_history`) is fetched for the slice's countries alone. `bronze_to_gold` fills ticket 07's silver and gold tables (`strata.silver.awards`, `notices`, `projects` and `project_loans`, and `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`) and ticket 17's tables, which step 1 lists. `measure_data_readiness` writes every source's measures to `strata.ops.data_readiness` and each table's size to `strata.ops.table_sizes`. The first run makes about 1,900 requests and may come close to the job's 2.5-hour timeout. If it stops, run the command again: bronze keeps each page as it arrives, and the watermark counts only fetches that finished. Ticket 07's steps below read what this run wrote.
 
 ## Ticket 04, step 3 of 4: the same rows on DuckDB and on the SQL warehouse
 
-The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes. Since ticket 08 merged, this command also checks `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql`, which read the plan tables. Those tables stay empty until ticket 08's step 1 has run, and until then the command exits 1 on those two files even when the deploy is fine. So run this step after ticket 08's step 1, below. Since ticket 07 merged, it also checks `kenya_step_reference_link_rate.sql`, which reads what step 2's job run wrote. Ticket 08's step 2 and ticket 07's step 2 are the same command, and one run covers all three tickets.
+The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, because `pipeline_runs_columns.sql` reads the table that the job writes. Since ticket 08 merged, this command also checks `delay_from_first_published_planned_date.sql` and `data_notes_actual_amount_zero.sql`, which read the plan tables. Those tables stay empty until ticket 08's step 1 has run, and until then the command exits 1 on those two files even when the deploy is fine. So run this step after ticket 08's step 1, below. Since ticket 07 merged, it also checks `kenya_step_reference_link_rate.sql`, which reads what step 2's job run wrote. Since ticket 17 merged, it also checks that ticket's three files, which read what the job wrote for every country. Ticket 08's step 2 and ticket 07's step 2 are the same command, and one run covers all three tickets.
 
 Run this from the main checkout:
 
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
-It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `pipeline_runs_columns.sql`, `delay_from_first_published_planned_date.sql`, `data_notes_actual_amount_zero.sql` and `kenya_step_reference_link_rate.sql` in `tests/ground_truth/` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4).
+It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `pipeline_runs_columns.sql`, `delay_from_first_published_planned_date.sql`, `data_notes_actual_amount_zero.sql` and `kenya_step_reference_link_rate.sql` in `tests/ground_truth/` it prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." (criterion 4). The same must hold for ticket 17's `every_source_holds_the_rows_its_api_reported.sql`, `gap_years_contracts_from_award_notices.sql` and `structured_data_under_the_limit.sql`. Ticket 17's step 1 below gives the rows each must return. Its projection puts structured data at 1.57 GB at full scale, over the 0.5 GB limit, so expect the size file to fail until you answer decision 18 in `docs/STATUS.md`.
 
 ## Ticket 04, step 4 of 4: record both nightly schedules
 
@@ -119,9 +119,9 @@ Run this from the main checkout:
 
     uv run --script ops/plans/run_live.py --env-file .env
 
-It worked if the command exits 0 and prints "Run plans-P156634-... read N plan versions of P156634 ...". In the measures it prints below that, `plan_versions_read`, `pages_read_route_b` and `latest_activities_with_first_listing_read` each show a count equal to the number after "of". `pages_read_route_b` may fall short only if the run also printed "It stopped at the cap ...". On the warehouse, `strata.ops.parse_runs` has a row for P156634 with `pages_parsed` above 0, and `strata.ops.data_readiness` has the run's six measures. The run also proves that real `ai_parse_document` output has the version 2.0 shape the tests were written against. Then run the same command a second time on the same day, in UTC. It worked if that run parses 0 pages (criterion 5).
+It worked if the command exits 0 and prints "Run plans-P156634-... read N plan versions of P156634 ...". In the measures it prints below that, `plan_versions_read`, `pages_read_route_b` and `latest_activities_with_confirmed_first_listing_read` each show a count equal to the number after "of". `pages_read_route_b` may fall short only if the run also printed "It stopped at the cap ...". On the warehouse, `strata.ops.parse_runs` has a row for P156634 with `pages_parsed` above 0, and `strata.ops.data_readiness` has the run's six measures. The run also proves that real `ai_parse_document` output has the version 2.0 shape the tests were written against. Then run the same command a second time on the same day, in UTC. It worked if that run parses 0 pages (criterion 5).
 
-If a fetch from the World Bank's hosts or an upload to the volume fails, the script stops with a Python traceback, not a one-line message. The pages it parsed before that stay in bronze, so run it again.
+If a fetch from the World Bank's hosts or an upload to the volume fails, the script exits 2 and prints "The run stopped before it finished: ...". The pages it parsed before that stay in bronze, so run it again.
 
 ## Ticket 08, step 2 of 2: the plan's queries on DuckDB and on the SQL warehouse
 
@@ -135,11 +135,13 @@ It worked if the command exits 0 and prints "DuckDB and the SQL warehouse return
 
 ## Ticket 07, step 1 of 3: the job fetched Kenya into bronze
 
-The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after ticket 04's steps 1 and 2, because the deploy makes `strata.bronze.api_pages` and the job run fills it. Deploy from `build/strata` at dbc054a or later, so that the first deploy creates `strata.silver.notices` with its `fiscal_year` column and `strata.ops.data_readiness` with `as_of` and `detail`. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so a table that already exists keeps its old columns.
+The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after ticket 04's steps 1 and 2, because the deploy makes `strata.bronze.api_pages` and the job run fills it. Deploy from `build/strata` at f5c933d (ticket 17's merge) or later, so that the first deploy creates `strata.silver.notices` with its `fiscal_year` column, `strata.ops.data_readiness` with `as_of` and `detail`, and ticket 17's tables and columns, which ticket 04's step 1 lists. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so a table that already exists keeps its old columns.
 
 Run this query in the workspace's SQL editor, on the SQL warehouse:
 
-    SELECT source, count(*) AS pages FROM strata.bronze.api_pages WHERE country_code = 'KE' GROUP BY source ORDER BY source
+    SELECT source, count(*) AS pages FROM strata.bronze.api_pages WHERE source IN ('awards', 'notices', 'projects') GROUP BY source ORDER BY source
+
+Since ticket 17 merged, the job asks for these three sources for every country at once, and such a page has no `country_code`, so the query no longer filters on Kenya. Kenya's records come in those pages.
 
 It worked if it returns three rows, `awards`, `notices` and `projects`, each with one page or more (criterion 8).
 
@@ -331,3 +333,52 @@ Run this from the main checkout:
     uv run --script ops/app/probe_lakebase.py --env-file .env
 
 It worked if the result block in `docs/app-state.md` reads `Status: run`, lists real times for both stores, names the chosen store, and gives today's date as the last run (criterion 7). If Lakebase wins, `docs/adr` also holds a new ADR named `NNNN-app-state-lives-in-lakebase.md`, numbered one after the highest ADR there. Commit both files on `build/strata` before ticket 15 starts, so its builder reads the choice.
+
+## Ticket 17, step 1 of 3: every source's rows, the gap years and the size of structured data
+
+The merger parked this step on October 23, 2026, after merge commit f5c933d. It needs the Databricks keys in `.env`. Run it after ticket 04's steps 1 and 2 and ticket 11's step 1. Then run the nightly job once more with `uv run --script ops/bundle/check.py job-run --env-file .env`, so that `strata.ops.table_sizes` measures the passage and vector tables with their rows. It is the same command as ticket 04's step 3, and one run covers every ticket.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it prints "... returned the same 11 rows, and they are the rows the file expects." for `every_source_holds_the_rows_its_api_reported.sql`, with `true` for each of `awards`, `awards_fy2001_2016`, `cpia`, `ibrd_loan_history`, `ibrd_loans`, `ida_credit_history`, `ida_credits`, `ieg_ratings`, `notices`, `projects` and `wgi` (criterion 1). It must print "... the same three rows ..." for `gap_years_contracts_from_award_notices.sql`, with `true,true` for 2017, 2018 and 2019 (criterion 2). It must print "... the same one row ..." for `structured_data_under_the_limit.sql`, with `true,true` under `measured,under_the_limit` (criterion 7).
+
+Then run this in the workspace's SQL editor:
+
+    SELECT table_name, structured, row_count FROM strata.ops.table_sizes WHERE run_id = (SELECT run_id FROM strata.ops.table_sizes ORDER BY measured_at DESC LIMIT 1) AND table_name IN ('strata.gold.passage', 'strata.silver.passage_embeddings')
+
+It worked if it returns two rows, each with `structured` false and `row_count` above 0. Those tables hold passages and vectors, which PLAN.md section 3 leaves out of structured data.
+
+Criterion 7 stays parked until you answer decision 18 in `docs/STATUS.md`. On the fixture, `strata.ops.table_sizes` recorded 36 structured tables with 11,010,048 bytes in all, and the size file returned `true,true`. At full scale the branch projects 1.57 GB: bronze 885 MB, silver 541 MB and gold 146 MB, and notices are 964 MB of it. So as built, expect the size file to return `true,false` and the command to exit 1. To see the bytes per table, run `SELECT table_name, row_count, bytes FROM strata.ops.table_sizes WHERE structured AND run_id = (SELECT run_id FROM strata.ops.table_sizes ORDER BY measured_at DESC LIMIT 1) ORDER BY bytes DESC`.
+
+## Ticket 17, step 2 of 3: P156634's closing date moved three times since 2022
+
+The merger parked this step on October 23, 2026, after merge commit f5c933d. Run it after ticket 04's step 2, because the job fills `strata.gold.project_closing_date` from the monthly loan history.
+
+Run this in the workspace's SQL editor:
+
+    SELECT closing_date, previous_closing_date, reported_on FROM strata.gold.project_closing_date WHERE project_id = 'P156634' AND previous_closing_date IS NOT NULL AND reported_on >= DATE '2022-01-01' ORDER BY reported_on
+
+It worked if it returns three rows: 2024-04-30 after 2022-10-31, reported 2022-11-30; 2025-10-31 after 2024-04-30, reported 2024-04-30; and 2026-10-31 after 2025-10-31, reported 2025-11-30 (criterion 4). These match the fixture's loan history for both credits, IDA60290 and IDA60300. If the history now reports a newer month with another closing date, a fourth row after 2025-11-30 is not a failure.
+
+## Ticket 17, step 3 of 3: a second night adds no pages it should not, and every count still holds
+
+The merger parked this step on October 23, 2026, after merge commit f5c933d. Run it after step 1, on the next night or later.
+
+First run this in the workspace's SQL editor, and note each count:
+
+    SELECT source, count(*) AS pages FROM strata.bronze.api_pages GROUP BY source ORDER BY source
+
+Then run the nightly job again from the main checkout, run the query again, and then run the same-rows check:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the job run exits 0 and a source's page count grew only when its API changed between the two runs. Record how many pages `fetch_by_watermark` added for `awards`. `awards_fy2001_2016`, which has been frozen since March 2022, must add none. The monthly loan history (`ida_credit_history` and `ibrd_loan_history`) must add none unless a new month came out between the two runs (criterion 8).
+
+Run the job a second night. `coverage_rows` for notices and projects still equals the reported total, and `every_source_holds_the_rows_its_api_reported.sql` returns true for every source. `strata.ops.table_sizes` marks `strata.gold.passage` and `strata.silver.passage_embeddings` as not structured. To read the first part, run:
+
+    SELECT source, count, denominator FROM strata.ops.data_readiness WHERE measure = 'coverage_rows' AND subject = 'all' AND source IN ('notices', 'projects') AND run_id = (SELECT run_id FROM strata.ops.data_readiness WHERE measure = 'coverage_rows' ORDER BY measured_at DESC LIMIT 1)
+
+It worked if both rows show `count` equal to `denominator`. On the fixture they read 418 of 418 for notices and 93 of 93 for projects. The same-rows check shows the second part, and the table sizes query in step 1 shows the last. If notices or projects read over the total, see ticket 17's third parked decision in its done comment: the job cannot see a record that a search source withdraws after Strata fetched it.
