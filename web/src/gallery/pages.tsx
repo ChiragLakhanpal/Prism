@@ -77,6 +77,7 @@ import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
+import { draftsPage } from "./drafts";
 
 const s = galleryCopy.states;
 const t = galleryCopy.sections;
@@ -351,7 +352,7 @@ function DrawerSample({
   const [current, setCurrent] = useState(id);
   const evidence = run?.evidence[current];
   const shown: DrawerData = data ?? (evidence ? { status: "ready", evidence } : { status: "missing" });
-  const from = sentence === undefined ? null : { id: current, serial: run?.serial ?? null, sentence, marker: null, runId: run?.runId ?? null };
+  const from = sentence === undefined ? null : { id: current, serial: run?.serial ?? null, sentence, marker: null, runId: run?.runId ?? null, top: null };
   return (
     <div className="max-w-[37.5rem] overflow-hidden rounded-md border border-line">
       <EvidenceDrawerView
@@ -783,9 +784,9 @@ export const PAGES: GalleryPage[] = [
         title: t.checkLine,
         body: (
           <div className="flex max-w-prose flex-col gap-2">
-            <CheckLine numbers={{ matched: 23, total: 23 }} quotes={{ found: 14, total: 14 }} notChecked={["comparables"]} />
+            <CheckLine numbers={{ matched: 23, total: 23 }} quotes={{ found: 14, total: 14 }} notChecked={["find_comparables"]} />
             <CheckLine numbers={{ matched: 1, total: 1 }} notChecked={["sentences"]} />
-            <CheckLine quotes={{ found: 14, total: 14 }} notChecked={["sentences", "passages"]} />
+            <CheckLine quotes={{ found: 14, total: 14 }} notChecked={["sentences", "search_passages"]} />
             <CheckLine notChecked={["sentences"]} />
           </div>
         ),
@@ -869,7 +870,7 @@ export const PAGES: GalleryPage[] = [
                     source={sample.tableSource}
                   />
                 ),
-                checks: { numbers: { matched: 12, total: 12 }, notChecked: ["sentences", "comparables"], removed: [] },
+                checks: { numbers: { matched: 12, total: 12 }, notChecked: ["sentences", "find_comparables"], removed: [] },
               }}
             />
           </Panel>
@@ -1129,6 +1130,7 @@ export const PAGES: GalleryPage[] = [
       { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
+  draftsPage(planSample),
   {
     slug: "icons",
     sections: [

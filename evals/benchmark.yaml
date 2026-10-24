@@ -30,6 +30,9 @@ questions:
       watch: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541062-CW-RFQ]
       data_note: [KE-NWWDA-199461-GO-RFB, KE-NWWDA-503455-CW-RFQ, KE-NWWDA-541061-CW-RFQ]
       unmarked: [KE-NWWDA-199471-GO-RFQ, KE-NWWDA-207796-CS-INDV, NWWDA-WSDP-03-2019-2020]
+      # The activities with a signal (needs a look or watch), which the result's counts.signal counts
+      # and "Draft review notes (3 rows)" drafts a note on (ticket 35).
+      with_a_signal: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities

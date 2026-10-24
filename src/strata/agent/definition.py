@@ -36,10 +36,19 @@ def instructions(spec: AgentSpec, folder: Path = INSTRUCTIONS, tools: dict[str, 
     limits = thresholds or load_thresholds()
     text = (folder / spec.instructions).read_text().rstrip()
     text = THRESHOLD.sub(lambda match: str(limits.value(match.group(1))), text)
-    listed = [f"### {tool['name']}\n\n{tool['description']}" for tool in registry.agent_tools(tools, limits)]
+    offered = agent_tools(spec, tools, limits)
+    if not offered:  # a writer with no tools writes from the facts in its message
+        return text + "\n"
+    listed = [f"### {tool['name']}\n\n{tool['description']}" for tool in offered]
     return "\n\n".join([text, "## Your tools", "Each tool is read-only and runs as the person who asked. "
                         "Its result has rows, each with its evidence_id, public_from date and source line, a "
                         "coverage line and, when it gives no rows, an abstention with its reason.", *listed]) + "\n"
+
+
+def agent_tools(spec: AgentSpec, tools: dict[str, Tool] | None = None, thresholds: Thresholds | None = None) -> list[dict]:
+    """The tools the agent is offered: every tool in the registry, or only those its entry names."""
+    every = registry.agent_tools(tools, thresholds)
+    return every if spec.tools is None else [tool for tool in every if tool["name"] in spec.tools]
 
 
 def agent_definition(spec: AgentSpec, guardrail_id: str, folder: Path = INSTRUCTIONS,
@@ -50,7 +59,7 @@ def agent_definition(spec: AgentSpec, guardrail_id: str, folder: Path = INSTRUCT
             "kind": "prompt",
             "model": load_models()[spec.role].deployment,
             "instructions": instructions(spec, folder, tools, thresholds),
-            "tools": registry.agent_tools(tools if tools is not None else load_tools(), thresholds),
+            "tools": agent_tools(spec, tools if tools is not None else load_tools(), thresholds),
             "rai_config": {"rai_policy_name": guardrail_id},
         },
         "description": spec.description,

@@ -65,7 +65,7 @@ function InShort({ children }: { children: ReactNode }) {
   );
 }
 
-function StepsTaken({ steps: all, runId }: { steps: Step[]; runId: string }) {
+export function StepsTaken({ steps: all, runId, idLabel = copy.steps.answerId }: { steps: Step[]; runId: string; idLabel?: string }) {
   const [open, setOpen] = useState(false);
   const id = useId();
   const steps = all.filter((step) => step.state !== "todo");
@@ -89,7 +89,7 @@ function StepsTaken({ steps: all, runId }: { steps: Step[]; runId: string }) {
         <Steps steps={steps} />
         {/* On the steps' text edge, past their icon rail, so the opened list has one left edge. */}
         <p className="mt-2 pl-6 text-caption text-ink-muted">
-          {copy.steps.answerId} <span className="font-mono">{runId}</span>
+          {idLabel} <span className="font-mono">{runId}</span>
         </p>
       </div>
     </div>

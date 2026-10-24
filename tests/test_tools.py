@@ -189,6 +189,7 @@ def marked(result, question) -> dict[str, list[str]]:
     found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
     for mark in ("needs_a_look", "watch", "data_note"):
         found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
+    found["with_a_signal"] = sorted(ref for ref, given in marks(result).items() if {"needs_a_look", "watch"} & set(given))
     return found
 
 
@@ -307,8 +308,10 @@ def test_check_plan_marks_each_activity_of_the_october_9_plan_as_the_wireframe_d
     expected |= {reference: [] for reference in TRUTH["plan"]["also_lists"]}
     assert marks(result) == expected
     # The screen shows the marked rows and folds the rest, so the counts say how many of each there are.
+    # "signal" counts the activities that need a look or are worth watching, the rows "Draft review
+    # notes (3 rows)" drafts a note on (ticket 35): one Needs a look and two Watch in the wireframe.
     assert result["counts"] == {"activities": 9, "checked": 9, "not_fully_checked": 0, "needs_a_look": 1, "watch": 2,
-                                "data_note": 3, "marked": 6, "unmarked": 3}
+                                "data_note": 3, "signal": 3, "marked": 6, "unmarked": 3}
     assert result["plan"]["plan_date"] == "2026-10-09"
     assert result["abstention"] is None
 

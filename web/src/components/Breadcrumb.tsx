@@ -10,11 +10,20 @@ import { TextLink } from "./TextLink";
 
 export type Crumb = { text: ReactNode; href?: string };
 
-export function Breadcrumb({ trail }: { trail: Crumb[] }) {
-  const parent = [...trail].reverse().find((crumb) => crumb.href);
+export function Breadcrumb({ trail, back, held = false }: {
+  trail: Crumb[];
+  // The step the link back goes to below 768 px, when it is not the last one with a link, such as
+  // "Drafts" on a draft's page (the 35 brief, section 3.6).
+  back?: Crumb;
+  // From a 1200 px window, the whole trail shows whatever the page area's width, as on a draft's page,
+  // whose document column keeps its place there when the evidence drawer narrows the page area. Without
+  // it, opening the drawer would swap the trail for the link back and move the page up.
+  held?: boolean;
+}) {
+  const parent = back ?? [...trail].reverse().find((crumb) => crumb.href);
   return (
     <nav aria-label={copy.breadcrumb.label} data-breadcrumb className="text-caption text-ink-muted">
-      <ol className="hidden flex-wrap items-center gap-x-2 @md/page:flex">
+      <ol className={held ? "hidden flex-wrap items-center gap-x-2 @md/page:flex xl:flex" : "hidden flex-wrap items-center gap-x-2 @md/page:flex"}>
         {trail.map((crumb, index) => (
           <li key={index} className="flex min-w-0 items-center gap-2">
             {index > 0 && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-line-strong" />}
@@ -31,7 +40,7 @@ export function Breadcrumb({ trail }: { trail: Crumb[] }) {
         ))}
       </ol>
       {parent?.href && (
-        <p className="@md/page:hidden">
+        <p className={held ? "@md/page:hidden xl:hidden" : "@md/page:hidden"}>
           <TextLink href={parent.href} className="inline-flex min-h-6 items-center gap-1">
             <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
             <span>{parent.text}</span>

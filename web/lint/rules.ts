@@ -11,8 +11,11 @@ export const SPACE_STEPS = [0.5, 1, 2, 3, 4, 6, 8, 10, 12, 16];
 export const FIXED_TERMS = [
   // DESIGN.md section 8, the footer on every screen ("endorsed" is otherwise rule 19's).
   "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.",
-  // DESIGN.md section 5, Draft bar ("clearance" and "no-objection" are otherwise rule 19's).
-  "A working draft for the borrower's PPSD. Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
+  // DESIGN.md section 5, Draft bar, and section 7, rule 19: the bar's fixed sentence, which every kind's
+  // lead sentence comes before ("clearance" and "no-objection" are otherwise rule 19's).
+  "Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
+  // DESIGN.md section 8, Exported files: the last sentence of the Word file's origin paragraph.
+  "These notes are not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
 ];
@@ -67,6 +70,8 @@ export const GLOSSARY_AVOID: [string, string][] = [
 // off, because a person's name, a STEP method and a file name are all read by someone.
 export const NON_COPY_PROPS = new Set([
   "className",
+  // Skeleton's corner radius class, such as rounded-pill.
+  "radius",
   "href",
   "src",
   "id",

@@ -1,0 +1,158 @@
+{
+  "groups": {
+    "to_check": [
+      {
+        "draft_id": "draft-0002",
+        "kind": "review_notes",
+        "state": "draft",
+        "subject": {
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "agency_id": "northern-water-works-development-agency",
+          "plan_date": "2026-10-09",
+          "document_id": "40132287",
+          "disclosed_on": "2026-10-09",
+          "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+          "as_of": "2026-10-23",
+          "signal": 3
+        },
+        "notes": 2,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-23T14:16:00Z",
+        "changed": {
+          "at": "2026-10-23T14:16:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": null,
+        "exported": null,
+        "opened": {
+          "count": 0,
+          "of": 2
+        }
+      }
+    ],
+    "checked": [
+      {
+        "draft_id": "draft-0003",
+        "kind": "review_notes",
+        "state": "checked",
+        "subject": {
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "agency_id": "northern-water-works-development-agency",
+          "plan_date": "2026-10-09",
+          "document_id": "40132287",
+          "disclosed_on": "2026-10-09",
+          "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+          "as_of": "2026-10-23",
+          "signal": 3
+        },
+        "notes": 2,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-23T14:26:00Z",
+        "changed": {
+          "at": "2026-10-23T14:28:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": {
+          "at": "2026-10-23T14:28:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "exported": null,
+        "opened": null
+      }
+    ],
+    "exported": [
+      {
+        "draft_id": "draft-0001",
+        "kind": "review_notes",
+        "state": "exported",
+        "subject": {
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "agency_id": "northern-water-works-development-agency",
+          "plan_date": "2026-10-09",
+          "document_id": "40132287",
+          "disclosed_on": "2026-10-09",
+          "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+          "as_of": "2026-10-23",
+          "signal": 3
+        },
+        "notes": 3,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-23T14:00:00Z",
+        "changed": {
+          "at": "2026-10-23T14:06:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": {
+          "at": "2026-10-23T14:02:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "exported": {
+          "at": "2026-10-23T14:06:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "opened": null
+      }
+    ]
+  },
+  "counts": {
+    "to_check": 1,
+    "checked": 1,
+    "exported": 1
+  },
+  "discarded": [
+    {
+      "draft_id": "draft-0004",
+      "kind": "review_notes",
+      "state": "discarded",
+      "subject": {
+        "project_id": "P156634",
+        "project_name": "Water and Sanitation Development Project",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "agency_id": "northern-water-works-development-agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "disclosed_on": "2026-10-09",
+        "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+        "as_of": "2026-10-23",
+        "signal": 3
+      },
+      "notes": 3,
+      "author": {
+        "name": "Ana Example",
+        "you": true
+      },
+      "created_at": "2026-10-23T14:38:00Z",
+      "changed": {
+        "at": "2026-10-23T14:40:00Z",
+        "by": "Ana Example",
+        "you": true
+      },
+      "checked": null,
+      "exported": null,
+      "opened": null
+    }
+  ],
+  "discarded_count": 1,
+  "total": 4
+}

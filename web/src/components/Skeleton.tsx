@@ -4,8 +4,16 @@
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 
-export function Skeleton({ className }: { className: string }) {
-  return <span aria-hidden="true" data-skeleton className={cx("block rounded-xs bg-surface-2", className)} />;
+// radius: the shape it stands for, such as rounded-pill for a button or a badge. inline: words inside a line
+// of real text, as tall as the font, so the real words around it wrap as they will once it loads.
+export function Skeleton({ className, radius = "rounded-xs", inline = false }: { className: string; radius?: string; inline?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      data-skeleton
+      className={cx(inline ? "inline-block h-[1em] max-w-full align-[-0.125em]" : "block", "bg-surface-2", radius, className)}
+    />
+  );
 }
 
 // One line of text: a box exactly one line tall in the text style around it (1lh), holding a

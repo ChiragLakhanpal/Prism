@@ -93,6 +93,20 @@ def test_the_app_answers_through_the_foundry_agent_only_when_its_environment_nam
     assert callable(from_environment(named, engine_for))
 
 
+def test_each_draft_kind_writes_through_the_foundry_writer_its_registry_entry_names():
+    """Ticket 35: config/drafts.toml names review notes' writer, review_notes_writer in config/agents.toml."""
+    from strata.agent.runner import writers_from_environment
+
+    named = {"FOUNDRY_PROJECT_ENDPOINT": ENDPOINT, "FOUNDRY_TENANT_ID": "tenant-0001",
+             "FOUNDRY_CLIENT_ID": "client-0001", "FOUNDRY_CLIENT_SECRET": "not-a-real-secret"}
+
+    writer = writers_from_environment(named)("review_notes")
+
+    assert isinstance(writer, FoundryAgent) and writer.name == "strata-review-notes-writer"
+    assert writers_from_environment(named)("not_a_kind") is None
+    assert writers_from_environment({})("review_notes") is None
+
+
 class FakeProject:
     """A Foundry project and its resource's RAI policies behind the HTTP call, kept in memory."""
 

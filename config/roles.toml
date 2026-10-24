@@ -1,0 +1,19 @@
+# The roles file: who sees what Strata keeps for a team (spec, "Ten single places": the roles file sits
+# beside the registries). strata.config.load_roles() reads it, and one server helper,
+# src/strata/server/access.py, applies it to every read of a draft (and later of an upload or a
+# package made from one), so there is one access rule (the 38 design brief, section 11). Tickets 29, 38
+# and 40 add reviewer groups, implementing agency teams and the [views] rules here.
+#
+# [teams.<key>], one team of World Bank staff that shares its drafts:
+#   name     the team's name
+#   groups   the workspace groups whose members are on the team. The server reads a viewer's groups
+#            with their own token. A viewer in the groups of two teams is on the first one in this file.
+#
+# A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
+# when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the
+# author was on their team. Changing who shares drafts is one line here, or a change of group membership
+# in the workspace, and it never hides anyone's own drafts from them.
+
+[teams.kenya-water]
+name = "Kenya water and sanitation"
+groups = ["strata-team-kenya-water"]

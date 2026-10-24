@@ -13,6 +13,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads six of them:
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 - load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
                      (strata.agent.definition builds the agent's definition from it)
+- load_draft_kinds() config/drafts.toml, the draft-kind registry: each kind of draft and its holds
+- load_roles()       config/roles.toml, the roles file: the teams that share drafts, by workspace group
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -992,6 +994,9 @@ class AgentSpec:
     guardrail: Guardrail
     api_version: str
     rai_policy_api_version: str
+    # The tools it may call, by their names in the tool registry, or None for every tool. A writer
+    # that writes from facts the app hands it, such as the review notes writer, has none.
+    tools: tuple[str, ...] | None = None
 
 
 def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
@@ -1002,8 +1007,9 @@ def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
     if key not in agents:
         raise ConfigError(f"{path.name} has no agent {key}. It has {', '.join(agents) or 'none'}.")
     entry = _Entry(path, f"agents.{key}", agents[key])
-    entry.only({"name", "role", "instructions", "guardrail", "description"})
+    entry.only({"name", "role", "instructions", "guardrail", "description", "tools"})
     role = entry.text("role")
+    tools = entry.texts("tools") if "tools" in entry.table else None
     if role not in ROLES:
         entry._fail("role", f"must be one of the model file's roles: {', '.join(ROLES)}")
     rail_key = entry.text("guardrail")
@@ -1018,4 +1024,116 @@ def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
     return AgentSpec(key, entry.text("name"), role, entry.text("instructions"), entry.text("description"),
                      Guardrail(rail_key, rail.text("name"), rail.text("base_policy"), rail.text("severity"),
                                rail.boolean("prompt_shields")),
-                     foundry.text("api_version"), foundry.text("rai_policy_api_version"))
+                     foundry.text("api_version"), foundry.text("rai_policy_api_version"), tools)
+
+
+# ── The draft-kind registry ──────────────────────────────────────────────
+
+REMOVED_BOXES = ("always", "when_removed")
+EXPORTS = ("word",)
+FUNCTION = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
+MODULE = re.compile(r"[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+")
+
+
+@dataclass(frozen=True)
+class Hold:
+    """Something that keeps a draft from export until it lifts, with the words that say what lifts it."""
+
+    key: str
+    test: str  # module:function, given the draft's state and the view
+    copy: str  # the hold line's key under copy.draft.bar.hold
+    capability: str  # what a refused export names (the 40 brief, section 5.1)
+
+
+@dataclass(frozen=True)
+class DraftKind:
+    """One kind of draft: the workflow that writes it, its page's columns and lists, its holds and files."""
+
+    key: str
+    writer: str  # the workflow module
+    agent: str  # its writer in config/agents.toml
+    word: str  # module:function that lays out its Word file
+    export: str
+    csv: tuple[str, ...]
+    columns: tuple[str, ...]
+    holds: tuple[str, ...]
+    sources_list: bool
+    removed_box: str
+    not_checked: tuple[str, ...]
+    files: str
+
+
+@dataclass(frozen=True)
+class DraftKinds:
+    kinds: dict[str, DraftKind]
+    holds: dict[str, Hold]
+
+
+def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
+    """The draft-kind registry, with every hold a kind names defined below it."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"kinds", "holds"})
+    holds = {}
+    for key, table in (data.get("holds") or {}).items():
+        entry = _Entry(path, f"holds.{key}", table)
+        entry.only({"test", "copy", "capability"})
+        if not FUNCTION.fullmatch(entry.text("test")):
+            entry._fail("test", "must name a function as module:function")
+        holds[key] = Hold(key, entry.text("test"), entry.text("copy"), entry.text("capability"))
+    kinds = {}
+    for key, table in (data.get("kinds") or {}).items():
+        entry = _Entry(path, f"kinds.{key}", table)
+        entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
+                    "not_checked", "files"})
+        if not MODULE.fullmatch(entry.text("writer")):
+            entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
+        if not FUNCTION.fullmatch(entry.text("word")):
+            entry._fail("word", "must name a function as module:function")
+        if not all(FUNCTION.fullmatch(name) for name in entry.texts("csv")):
+            entry._fail("csv", "must list functions as module:function")
+        if entry.text("export") not in EXPORTS:
+            entry._fail("export", f"must be one of {', '.join(EXPORTS)}")
+        unknown = [hold for hold in entry.texts("holds") if hold not in holds]
+        if unknown:
+            entry._fail("holds", f"names {', '.join(unknown)}, which [holds] does not define")
+        if entry.text("removed_box") not in REMOVED_BOXES:
+            entry._fail("removed_box", f"must be one of {', '.join(REMOVED_BOXES)}")
+        if not entry.texts("columns"):
+            entry._fail("columns", "must name at least one column")
+        kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
+                               entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
+                               entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
+                               entry.text("files"))
+    if not kinds:
+        raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
+    return DraftKinds(kinds, holds)
+
+
+# ── The roles file ───────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Team:
+    """A team of World Bank staff that shares its drafts, by the workspace groups its members are in."""
+
+    key: str
+    name: str
+    groups: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Roles:
+    teams: tuple[Team, ...]
+
+
+def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
+    """The roles file's teams, in the file's order, each with at least one workspace group."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"teams"})
+    teams = []
+    for key, table in (data.get("teams") or {}).items():
+        entry = _Entry(path, f"teams.{key}", table)
+        entry.only({"name", "groups"})
+        if not entry.texts("groups"):
+            entry._fail("groups", "must name at least one workspace group")
+        teams.append(Team(key, entry.text("name"), entry.texts("groups")))
+    return Roles(tuple(teams))
