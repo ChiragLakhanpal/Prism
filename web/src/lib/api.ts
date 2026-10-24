@@ -54,7 +54,8 @@ export type PlanVersion = {
   read: boolean;
   activities: number | null;
 };
-export type Agency = { implementing_agency: string; agency_id: string; versions: PlanVersion[] };
+// version_count is the route's count of the versions, so the screen never counts them.
+export type Agency = { implementing_agency: string; agency_id: string; versions: PlanVersion[]; version_count: number };
 export type ProjectPage = {
   as_of: string;
   project: { project_id: string; project_name: string; country: string | null; status: string | null; implementing_agencies: string[] };

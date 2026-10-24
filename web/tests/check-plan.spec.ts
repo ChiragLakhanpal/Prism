@@ -78,6 +78,15 @@ test("the plan check finds every activity, states the finding, and folds the act
   );
 });
 
+test("the fold states check_plan's count of unmarked activities and never counts the rows itself", async ({ page }) => {
+  // A response whose count differs from its rows shows which one the screen states.
+  const result = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  result.counts.unmarked = 12;
+  await openPlan(page, 1440, { body: JSON.stringify(result) });
+
+  await expect(view(page, "table").locator("[data-fold]")).toContainText("12 more activities have no signals.");
+});
+
 test("Show them opens the folded activities by mouse, and Hide them folds them again", async ({ page }) => {
   await openPlan(page);
   const show = view(page, "table").getByRole("button", { name: "Show them" });

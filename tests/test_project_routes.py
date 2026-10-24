@@ -104,9 +104,13 @@ def test_a_project_page_gives_its_header_and_each_agency_s_plan_versions_newest_
     assert (latest["is_latest"], latest["read"], latest["activities"], latest["disclosed_on"]) == (
         True, True, 9, "2026-10-09")
     assert not any(version["is_latest"] for version in first["versions"][1:])
+    # The route counts each agency's versions, so the screen's "Showing all 5 versions" counts nothing.
+    counts = {agency["agency_id"]: agency["version_count"] for agency in body["agencies"]}
+    assert counts["northern-water-works-development-agency"] == 5
+    assert counts["kilifi-mariakani-water-and-sewerage-company-ltd"] == 1
     # An agency the project record names that has published no plan is listed with no versions.
     assert {"implementing_agency": "Water Sector Trust Fund", "agency_id": "water-sector-trust-fund",
-            "versions": []} in body["agencies"]
+            "versions": [], "version_count": 0} in body["agencies"]
     assert body["documents_through"] == "2026-10-22"
 
 
@@ -132,3 +136,16 @@ def test_a_viewer_whose_token_cannot_read_strata_gets_a_permission_error(path):
     response = get(create_app(engine_for=engine_for), path)
 
     assert (response.status_code, response.json()) == (403, {"code": "permission"})
+
+
+def test_each_read_version_lists_as_many_activities_as_check_plan_checks(fixture_app):
+    """The Procurement tab's "9" and the plan check's "9 activities checked" are one count."""
+    body = get(fixture_app, "/api/projects/P156634?asof=2026-10-22").json()
+    nwwda = next(agency for agency in body["agencies"] if agency["agency_id"] == "northern-water-works-development-agency")
+
+    read = [version for version in nwwda["versions"] if version["read"]]
+    assert read
+    for version in read:
+        path = f"/api/projects/P156634/procurement/northern-water-works-development-agency/{version['plan_date']}"
+        checked = get(fixture_app, f"{path}?asof=2026-10-22").json()
+        assert version["activities"] == checked["counts"]["activities"], version["plan_date"]

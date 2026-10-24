@@ -11,6 +11,7 @@ ticket. They are never computed the way the tool computes them.
 """
 
 import datetime as dt
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -628,3 +629,16 @@ def test_before_the_project_record_was_last_updated_its_closing_date_is_not_used
     assert "closing_date" not in result["checks_run"]
     assert not any(reason.get("closing_date") for row in result["rows"] for mark in row["marks"]
                    for reason in mark["reasons"])
+
+
+def test_every_reason_code_check_plan_may_return_has_a_sentence_in_the_screen_s_copy_file():
+    """A code added to the registry without a copy sentence would show a badge with no reason."""
+    copy = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_text()
+    check_plan = copy[copy.index("\n  checkPlan: {"):]  # the screen's words, not pages.checkPlan's title
+    reasons = check_plan[check_plan.index("\n    reason: {"):]
+    reasons = reasons[:reasons.index("\n    },")]
+    sentences = set(re.findall(r"^ {6}(\w+):", reasons, flags=re.MULTILINE))
+
+    codes = config.load_tools()["check_plan"].result.reasons
+    assert codes
+    assert set(codes) - sentences == set()

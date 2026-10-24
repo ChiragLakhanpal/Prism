@@ -19,7 +19,7 @@ from functools import cache
 from pathlib import Path
 
 from strata.lakehouse.engine import Engine
-from strata.tools.check_plan import agency_id, implementing_agencies
+from strata.tools.check_plan import agency_id, implementing_agencies, record_is_current
 
 SQL = Path(__file__).resolve().parent / "sql" / "projects"
 PROJECTS_SOURCE = "projects"  # the source registry's key for the projects API (config/sources.toml)
@@ -77,6 +77,8 @@ def _agencies(versions: list[dict], named: list[str]) -> list[dict]:
             "read": read, "activities": int(row["activities"]) if read else None})
     for name in named:
         agencies.setdefault(agency_id(name), {"implementing_agency": name, "agency_id": agency_id(name), "versions": []})
+    for agency in agencies.values():
+        agency["version_count"] = len(agency["versions"])
     return list(agencies.values())
 
 
@@ -86,7 +88,7 @@ def project_page(engine: Engine, project_id: str, as_of: dt.date) -> dict | None
     if not found:
         return None
     record = found[0]
-    current = (_day(record["record_updated_on"]) or _day(record["public_from"])) <= as_of
+    current = record_is_current(record, as_of)
     named = implementing_agencies(record["implementing_agency"]) if current else []
     versions = _rows(engine, "plan_versions", project_id=project_id, as_of=as_of)
     return {

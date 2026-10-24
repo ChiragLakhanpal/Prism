@@ -94,6 +94,14 @@ test("a project's page shows its header, one Procurement tab, and each agency's 
   await expect(page).toHaveURL(/\/projects\/P156634\/procurement\/northern-water-works-development-agency\/2026-10-09$/);
 });
 
+test("an agency's count line states the route's count of its versions", async ({ page }) => {
+  const body = JSON.parse(await recorded("project-p156634.json"));
+  body.agencies[0].version_count = 7;
+  await open(page, "/projects/P156634", { "/api/projects/P156634": { body: JSON.stringify(body) } });
+
+  await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing all 7 versions")).toBeVisible();
+});
+
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {
   await open(page, "/projects/P130164/procurement", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization Project");

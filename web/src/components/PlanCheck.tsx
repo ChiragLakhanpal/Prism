@@ -251,15 +251,16 @@ function Definition({ result }: { result: CheckedPlan }) {
   );
 }
 
-// The fold's sentence: the references when there are a few, else how many.
-function FoldSentence({ rows, id }: { rows: Activity[]; id: string }) {
-  const count = formatCount(rows.length, { capital: true });
+// The fold's sentence: the references when there are a few, else how many. The count is
+// check_plan's (counts.unmarked); the rows only give the references.
+function FoldSentence({ rows, unmarked, id }: { rows: Activity[]; unmarked: number; id: string }) {
+  const count = formatCount(unmarked, { capital: true });
   // Each reference stays whole on one line when it fits there.
   const refs = rows.map((row) => <span className="inline-block max-w-full wrap-anywhere font-mono">{row.activity_reference_no}</span>);
   return (
     <p id={id} className="text-small text-ink-muted">
-      {rows.length <= words.fold.listUpTo ? (
-        <Fill template={words.fold.listed(rows.length)} slots={{ count, refs: <Joined items={refs} /> }} />
+      {unmarked <= words.fold.listUpTo ? (
+        <Fill template={words.fold.listed(unmarked)} slots={{ count, refs: <Joined items={refs} /> }} />
       ) : (
         <Fill template={words.fold.counted} slots={{ count }} />
       )}
@@ -440,8 +441,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
     .filter(({ row }) => row.marks.length > 0)
     .sort((a, b) => Math.min(...a.row.marks.map((m) => RANK[m.mark])) - Math.min(...b.row.marks.map((m) => RANK[m.mark])) || a.index - b.index)
     .map(({ row }) => row);
-  const quiet = result.rows.filter((row) => row.marks.length === 0);
-  const { activities, marked } = result.counts;
+  // The rows with no signals, to render in the fold. How many there are is the tool's count.
+  const unmarkedRows = result.rows.filter((row) => row.marks.length === 0);
+  const { activities, marked, unmarked } = result.counts;
 
   const toggle = () => {
     setOpen((now) => !now);
@@ -454,7 +456,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
     const follow = () => {
       const ref = hashReference();
       if (!ref || !result.rows.some((row) => row.activity_reference_no === ref)) return;
-      if (quiet.some((row) => row.activity_reference_no === ref)) setOpen(true);
+      if (unmarkedRows.some((row) => row.activity_reference_no === ref)) setOpen(true);
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
         target?.scrollIntoView({ block: "center" });
@@ -467,7 +469,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
     // The rows are fixed for a result, so following once per result is enough.
   }, [result]);
 
-  const countLine = open || quiet.length === 0 ? copy.table.showingAll(whole(activities), words.noun) : words.countLine(whole(marked), whole(activities));
+  const countLine = open || unmarked === 0 ? copy.table.showingAll(whole(activities), words.noun) : words.countLine(whole(marked), whole(activities));
 
   return (
     <section aria-labelledby={findingId} data-plan-check>
@@ -504,19 +506,19 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
             {ordered.map((row) => (
               <TableRow key={row.activity_reference_no} row={row} result={result} />
             ))}
-            {quiet.length > 0 && (
+            {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
                 <td colSpan={COLUMNS.length} className="px-3 py-2">
                   <div className="flex flex-wrap items-center gap-x-4">
-                    <FoldSentence rows={quiet} id={sentenceId} />
-                    <FoldButton count={quiet.length} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
+                    <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} />
+                    <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
                   </div>
                 </td>
               </tr>
             )}
           </tbody>
           <tbody id={foldId} hidden={!open}>
-            {quiet.map((row) => (
+            {unmarkedRows.map((row) => (
               <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} />
             ))}
           </tbody>
@@ -528,17 +530,17 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           {ordered.map((row) => (
             <ActivityCard key={row.activity_reference_no} row={row} result={result} />
           ))}
-          {quiet.length > 0 && (
+          {unmarked > 0 && (
             <li className="rounded-md border border-line bg-page p-4" data-fold>
-              <FoldSentence rows={quiet} id={cardSentenceId} />
+              <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={cardSentenceId} />
               <div className="mt-2">
-                <FoldButton count={quiet.length} open={open} controls={foldCardsId} describedBy={cardSentenceId} onToggle={toggle} />
+                <FoldButton count={unmarked} open={open} controls={foldCardsId} describedBy={cardSentenceId} onToggle={toggle} />
               </div>
             </li>
           )}
         </ul>
         <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
-          {quiet.map((row) => (
+          {unmarkedRows.map((row) => (
             <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} />
           ))}
         </ul>

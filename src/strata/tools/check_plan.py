@@ -121,14 +121,27 @@ class Thresholds:
 
 # ── The project and the plan ─────────────────────────────────────────────
 
+def record_date(row: dict) -> dt.date:
+    """The day a projects API record's values became public. The API changes a status, a closing
+    date or the agencies in place, and gold keeps only the newest record, so its values count as
+    public from the day that record was last updated, or the project's own public date when the
+    record has no update date (ADR 0002). project.sql gives both columns."""
+    return _date(row["record_updated_on"]) or _date(row["public_from"])
+
+
+def record_is_current(row: dict, as_of: dt.date) -> bool:
+    """Whether the record's values were public by the as-of date."""
+    return record_date(row) <= as_of
+
+
 def _project(call: Call, project_id: str) -> tuple[dict | None, list[str]]:
     """The project as the result gives it, and the implementing agencies its record names."""
     found = _rows(call, "project.sql", project_id=project_id, as_of=call.as_of)
     if not found:
         return None, []
     row = found[0]
-    record_on = _date(row["record_updated_on"]) or _date(row["public_from"])
-    current = record_on <= call.as_of  # the record's values were public by the as-of date
+    record_on = record_date(row)
+    current = record_is_current(row, call.as_of)
     return {
         "evidence_id": f"strata.gold.project:{row['project_id']}",
         "public_from": _iso(record_on if current else _date(row["public_from"])),

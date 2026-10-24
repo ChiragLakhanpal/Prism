@@ -47,7 +47,7 @@ function Pairs({ pairs }: { pairs: { label: ReactNode; value: ReactNode; wide?: 
 }
 
 function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; through: string | null }) {
-  if (agency.versions.length === 0) {
+  if (agency.version_count === 0) {
     return (
       <section data-agency={agency.agency_id}>
         <h3 className="text-title text-ink-heading">{agency.implementing_agency}</h3>
@@ -90,7 +90,7 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
       <Table
         title={agency.implementing_agency}
         level={3}
-        count={{ noun: plans.noun, one: plans.nounOne, total: agency.versions.length }}
+        count={{ noun: plans.noun, one: plans.nounOne, total: agency.version_count }}
         columns={columns}
         rowHeader="version"
         state={{ status: "ready", rows }}
@@ -184,7 +184,7 @@ export function ProjectPage({ pid }: { pid: string }) {
     tab = (
       <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
     );
-  } else if (load.data.agencies.every((agency) => agency.versions.length === 0)) {
+  } else if (load.data.agencies.every((agency) => agency.version_count === 0)) {
     tab = (
       <EmptyState
         level={3}

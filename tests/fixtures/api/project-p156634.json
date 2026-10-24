@@ -65,7 +65,8 @@
           "read": true,
           "activities": 4
         }
-      ]
+      ],
+      "version_count": 5
     },
     {
       "implementing_agency": "Coast Water Services Board",
@@ -87,7 +88,8 @@
           "read": true,
           "activities": 7
         }
-      ]
+      ],
+      "version_count": 2
     },
     {
       "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
@@ -101,7 +103,8 @@
           "read": true,
           "activities": 22
         }
-      ]
+      ],
+      "version_count": 1
     },
     {
       "implementing_agency": "Ministry of Water and Irrigation",
@@ -131,57 +134,68 @@
           "read": true,
           "activities": 5
         }
-      ]
+      ],
+      "version_count": 3
     },
     {
       "implementing_agency": "Coast Water Works Development Agency",
       "agency_id": "coast-water-works-development-agency",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Garissa Water and Saniation Company",
       "agency_id": "garissa-water-and-saniation-company",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Kwale Water and Sewerage Company Ltd.",
       "agency_id": "kwale-water-and-sewerage-company-ltd",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Malindi Water and Sewerage Company Ltd",
       "agency_id": "malindi-water-and-sewerage-company-ltd",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Ministry of Water, Sanitation and Irrigation",
       "agency_id": "ministry-of-water-sanitation-and-irrigation",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Mombasa Water and Sanitation Services Company",
       "agency_id": "mombasa-water-and-sanitation-services-company",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Tavevo Water and Sewerage Company Ltd",
       "agency_id": "tavevo-water-and-sewerage-company-ltd",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Wajir Water and Sewerage Company",
       "agency_id": "wajir-water-and-sewerage-company",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Water Sector Trust Fund",
       "agency_id": "water-sector-trust-fund",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     },
     {
       "implementing_agency": "Water Services Regulatory Board",
       "agency_id": "water-services-regulatory-board",
-      "versions": []
+      "versions": [],
+      "version_count": 0
     }
   ],
   "documents_through": "2026-10-22"
