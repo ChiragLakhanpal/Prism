@@ -8,6 +8,8 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
+**While the wizard runs.** The user started `bash ops/wizard/strata-setup.sh` on October 24, 2026. It writes `.env` and `docs/day-one-results.md` in the main checkout while tickets merge there. Never read or print `.env`; check which keys are set with `python3 .claude/hooks/guard.py --env-keys`, and while any key a step needs is missing, park the step here as before. Until ticket 53 lands, two of ticket 03's tests fail when `docs/day-one-results.md` holds a recorded result, and the gate refuses a code commit while that file has unstaged changes. So, when the file is dirty at the start of a merge: copy it to the session scratchpad, run `git checkout -- docs/day-one-results.md`, merge and commit as usual, then copy the saved file back over it so the wizard's results stay in the working copy. Do not commit it and do not use `git stash`. Once ticket 53 has merged, the results are committed like any other change and this paragraph goes away.
+
 ## Ticket 03, before every other step: the wizard, the day-one probes and the pay-as-you-go check
 
 The orchestrator added this block on October 23, 2026, after the P0 phase gate found it missing. Ticket 03 is ready-for-human: its criteria 2, 3, 4 and 5 are parked until you run these. Every block below needs the `.env` that the wizard writes, so this comes first.
