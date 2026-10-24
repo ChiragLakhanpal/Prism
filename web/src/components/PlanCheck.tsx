@@ -325,9 +325,10 @@ const CELL = "px-2 py-3 xl:px-3";
 // reference, so a list of links tells the activities apart, and starts with the visible words
 // (WCAG 2.5.3). Every row gets it: a row with no public notice opens the workspace's "not
 // measurable" state, which says why.
-function PastRangeLink({ reference }: { reference: string }) {
+// In a card it sits 12 px under the last field, so it doesn't read as part of the Process status value.
+function PastRangeLink({ reference, inCard = false }: { reference: string; inCard?: boolean }) {
   return (
-    <span className="mt-1 block text-small font-normal">
+    <span className={cx(inCard ? "mt-3" : "mt-1", "block text-small font-normal")}>
       <TextLink
         href={`/packages/${encodeURIComponent(reference)}`}
         aria-label={words.pastRangeLabel(reference)}
@@ -410,7 +411,7 @@ function ActivityCard({ row, result, fresh, named }: { row: Activity; result: Ch
           {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
           {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
-        <PastRangeLink reference={ref} />
+        <PastRangeLink reference={ref} inCard />
       </article>
     </li>
   );
@@ -737,7 +738,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
               ))}
             </dl>
             {/* "See the past range", the card's last line. */}
-            <SkeletonLine className="mt-1 text-small" width="w-32" />
+            <SkeletonLine className="mt-3 text-small" width="w-32" />
           </li>
         ))}
       </ul>

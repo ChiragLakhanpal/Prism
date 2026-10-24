@@ -607,9 +607,11 @@ export const copy = {
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
-      "Each dot is 1 in 20 of the {total} packages, placed by the months from specific procurement notice to signed contract.",
+      "Each dot is 1 in 20 of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
     summary: {
       middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
+      // With no plan dates the title already gives the middle half, so the summary starts here.
+      middleOnly: "The middle one took {q50} months.",
       in10: "8 in 10 were signed within {q80} months.",
       noIn10: "Fewer than 8 in 10 of these packages have been signed so far, so I can't say when 8 in 10 were signed.",
       noUpper: "So many of these packages are still open that I can't place the upper edge of the middle half.",
@@ -656,6 +658,7 @@ export const copy = {
       helper: "The plan row puts the notice on {notice} and the signed contract on {signing}.",
       helperNoPlan:
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
+      helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
       invalid: (max: string) => `Type a number of months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
     },
@@ -667,6 +670,9 @@ export const copy = {
       keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages`,
       plan: "Plan",
       readout: (within: string, total: string, months: string) => `${within} of ${total} signed within ${months} months`,
+      // The same readout as two lines, for a chart under 400 px wide.
+      readoutCount: (within: string, total: string) => `${within} of ${total} signed`,
+      readoutWithin: (months: string) => `within ${months} months`,
       middle: (q25: string, q75: string, q50: string) => `Middle half ${q25} to ${q75}, middle ${q50}`,
       in10: (q80: string) => `8 in 10 within ${q80}`,
       axisLast: (months: string) => `${months} months`,
@@ -683,8 +689,8 @@ export const copy = {
         `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
       tipMonths: (months: string) => `${months} months`,
       tipPast: (months: string) => `Past ${months} months`,
-      tipSigned: (signed: string, notice: string, country: string) => `Signed ${signed}. Notice published ${notice}. ${country}.`,
-      tipOpen: (notice: string, country: string) => `Still open. Notice published ${notice}. ${country}.`,
+      tipSigned: (signed: string, notice: string, country: string) => `Signed ${signed}. Its notice was published ${notice} in ${country}.`,
+      tipOpen: (notice: string, country: string) => `Still open. Its notice was published ${notice} in ${country}.`,
       tipQuantile: (k: string) => `Dot ${k} of 20`,
       tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
       tipQuantileOpen: "Too many of these packages are still open to place this dot.",
@@ -697,6 +703,8 @@ export const copy = {
       // The text alternative: the same numbers the chart draws.
       alt: (total: string, axisMax: string, signed: string, open: string) =>
         `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed and ${open} still open.`,
+      altAllSigned: (total: string, axisMax: string, signed: string) =>
+        `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed.`,
       altDots: (total: string, axisMax: string) =>
         `Dot chart of 20 dots, each 1 in 20 of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
       altRange: (q25: string, q75: string, q50: string, q80: string) =>
@@ -707,14 +715,16 @@ export const copy = {
       altAbstain: "I'm not giving a range for so few.",
       altPlan: (months: string, within: string, total: string) => `A line marks ${months} months, and ${within} of ${total} were signed within it.`,
       altCanceledLeftOut: (count: number, text: string) =>
-        count === 1 ? "I left out the one canceled package, because it is not still open." : `I left out the ${text} canceled packages, because they are not still open.`,
+        count === 1
+          ? "I left out the one canceled package, because it was never signed and is not still open."
+          : `I left out the ${text} canceled packages, because a canceled package was never signed and is not still open.`,
       altCanceledCounted: (count: number, text: string) =>
         count === 1 ? "I counted the one canceled package as still open." : `I counted the ${text} canceled packages as still open.`,
     },
     // What each checkable number counts, in its tooltip.
     explain: {
       counts: (plan: string, total: string, open: string) =>
-        `Packages signed in ${plan} months or less, out of all ${total}, counting the ${open} still open. Select to see the rows.`,
+        `Packages signed in ${plan} months or less, out of all ${total}, including the ${open} still open. Select to see the rows.`,
       quantiles: (total: string, open: string) =>
         `Worked out from all ${total} comparable packages, with the ${open} still open counted as not signed yet. This is the Kaplan-Meier method. Select to see the rows.`,
       plan: (agency: string, date: string) => `From the planned dates in the ${agency} plan of ${date}.`,
@@ -735,6 +745,8 @@ export const copy = {
         signed: "Contract signed",
         months: "Months",
         monthsNote: "From notice to signature, or so far if still open",
+        // Cards have no column heads, so the Months definition ends the count line's row once.
+        monthsCards: "Months run from notice to signature, or so far if still open.",
         within: (months: string) => `Signed within ${months} months`,
       },
       stillOpen: "Still open",
@@ -761,8 +773,12 @@ export const copy = {
           ? "{matched} past package matched this one, but I can't measure how long it took."
           : "{matched} past packages matched this one, but I can't measure how long any of them took.",
       notMeasurableTitle: "I can't measure procurement cycle time for this package.",
+      // STEP's value in quote marks, so the field's name and its value don't run together.
       notMeasurableBody:
-        "I measure it from the specific procurement notice to the signed contract. Packages with the {field} {value} had no public notice to start from.",
+        'I measure it from the specific procurement notice to the signed contract. Packages with the {field} "{value}" had no public notice to start from.',
+      notMeasurableLink: "Back to the plan check",
+      // Packages matched, but none could be measured: what they lacked, with no "Based on 0 of".
+      unmeasuredOf: "Of the {matched}, {gaps}.",
     },
   },
 

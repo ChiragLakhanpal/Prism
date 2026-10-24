@@ -9,41 +9,21 @@
 // Description as the h1 and its STEP reference) sticks from 768 px, and the page keeps scroll
 // padding at its height plus 16 px, so a focused dot or link is never hidden under it. Later tickets
 // add sections below section 1 in the PPSD's order.
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
-import { Skeleton, SkeletonLine } from "../components/Skeleton";
+import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { ComparablesResult, PackageResult } from "../lib/api";
 import { useLoad } from "../lib/load";
+import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.packagePage;
-
-// From 768 px the header sticks; keep focused elements 16 px clear of it.
-function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: boolean) {
-  useEffect(() => {
-    const element = header.current;
-    if (!element || !active) return;
-    const wide = window.matchMedia("(width >= 48rem)");
-    const update = () => {
-      document.documentElement.style.scrollPaddingTop = wide.matches ? `${element.offsetHeight + 16}px` : "";
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    wide.addEventListener("change", update);
-    return () => {
-      observer.disconnect();
-      wide.removeEventListener("change", update);
-      document.documentElement.style.scrollPaddingTop = "";
-    };
-  }, [header, active]);
-}
 
 export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
@@ -52,7 +32,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const header = useRef<HTMLDivElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
-  useScrollPadding(header, Boolean(pkg));
+  useScrollPadding(header, Boolean(pkg), { from: "48rem", gap: 16 });
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -77,7 +57,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           title={
             <>
               <span className="sr-only">{stepRef}</span>
-              <Skeleton className="h-[34px] w-3/5" />
+              {/* A Description takes four lines or so below 768 px and one or two above. */}
+              <SkeletonText className="md:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden md:flex" width="w-3/5" />
             </>
           }
           reference={<SkeletonLine width="w-48" />}
@@ -109,7 +91,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     crumbs = trail(null);
     body = (
       <>
-        <PackageHeader title={mono(stepRef)} reference={mono(stepRef)} sticky={false} />
+        <PackageHeader title={mono(stepRef)} reference={null} sticky={false} />
         <div className="mt-6">
           <LoadError
             error={load.error}
@@ -153,7 +135,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   return (
     <EightColumns breakpoint="xl">
       <div data-package-page={load.status}>
-        <Breadcrumb trail={crumbs} />
+        {/* Below 768 px the trail shows its parent, the project, whose name takes two lines; it holds them while loading. */}
+        <div className={load.status === "loading" ? "min-h-[2lh] text-caption md:min-h-0" : undefined}>
+          <Breadcrumb trail={crumbs} />
+        </div>
         <div className="mt-4">{body}</div>
         {load.status === "loading" && (
           <p role="status" className="sr-only">

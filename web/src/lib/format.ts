@@ -8,7 +8,7 @@ import { copy } from "../copy";
 // config/thresholds.toml as past_range.min_comparables: find_comparables abstains below it and
 // returns it, and the package workspace uses the tool's value. This file still writes both numbers
 // here, because the Node test runner that checks it cannot read the thresholds file the way the
-// bundler can; reading them from there is a follow-up.
+// bundler can; tests/test_find_comparables.py fails when the 20 here and the file's differ.
 export const FEWEST_FOR_A_FREQUENCY = 20;
 export const FEWEST_FOR_A_PERCENTAGE = 50;
 

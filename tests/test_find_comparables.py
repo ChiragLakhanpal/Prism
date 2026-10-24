@@ -237,19 +237,55 @@ def test_the_derived_figures_come_back_as_one_citable_summary_record(engine, tmp
         config.load_tools(path)
 
 
-def test_the_screen_s_copy_file_has_a_phrase_for_every_reason_and_the_abstention_s_sentence():
-    """A reason code added to the registry without its phrase would leave a gap in the coverage line."""
+def block(text: str, *keys: str) -> str:
+    """The body of the object at keys in a TypeScript file, found by its braces, so a formatter that
+    changes the indentation changes nothing here."""
     import re
 
+    for key in keys:
+        found = re.search(rf"\b{key}: \{{", text)
+        assert found, f"no {key} in the copy file"
+        depth, end = 1, found.end()
+        while depth:
+            depth += {"{": 1, "}": -1}.get(text[end], 0)
+            end += 1
+        text = text[found.end():end - 1]
+    return text
+
+
+def top_level_keys(body: str) -> set[str]:
+    import re
+
+    keys, depth = set(), 0
+    for found in re.finditer(r"[{}]|\b(\w+):", body):
+        if found.group(0) in "{}":
+            depth += 1 if found.group(0) == "{" else -1
+        elif depth == 0:
+            keys.add(found.group(1))
+    return keys
+
+
+def test_the_screen_s_copy_file_has_a_phrase_for_every_reason_and_the_abstention_s_sentence():
+    """A reason code added to the registry without its phrase would leave a gap in the coverage line."""
     copy = (ROOT / "web" / "src" / "copy.ts").read_text()
-    past_range = copy[copy.index("\n  pastRange: {"):]
-    reasons = past_range[past_range.index("\n    reasons: {"):]
-    reasons = reasons[:reasons.index("\n    },")]
-    phrases = set(re.findall(r"^ {6}(\w+):", reasons, flags=re.MULTILINE))
+    past_range = block(copy[copy.index("\n  pastRange: {"):], "pastRange")
+
+    phrases = top_level_keys(block(past_range, "reasons"))
 
     assert set(config.load_tools()["find_comparables"].result.reasons) - phrases == set()
     # The spec's sentence for fewer than 20 comparables, with N filled from the rows on screen.
     assert "I'm not giving a range: only {n} comparable packages. Here are all {n}." in past_range
+
+
+def test_the_screen_s_floor_for_about_n_in_10_is_the_thresholds_file_s():
+    """web/src/lib/format.ts writes the floor below which no screen says "about N in 10", because the
+    Node test runner cannot read the thresholds file. It must be past_range.min_comparables (rules 4 and 9)."""
+    import re
+
+    format_ts = (ROOT / "web" / "src" / "lib" / "format.ts").read_text()
+    [written] = re.findall(r"export const FEWEST_FOR_A_FREQUENCY = (\d+);", format_ts)
+
+    assert int(written) == config.load_thresholds().value("past_range.min_comparables")
 
 
 def with_past_range(**changed):

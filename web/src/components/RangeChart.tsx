@@ -25,6 +25,9 @@ export type RangeMark = {
   months: number;
   // A package still open, or a quantile dot the curve never reached, is drawn hollow.
   hollow: boolean;
+  // A quantile dot the curve never reached: it sits past its months, so it is pinned at the plot's
+  // right edge with a chevron, and the axis is not stretched to reach it.
+  beyond?: boolean;
   // The dot's accessible name, from the copy file.
   name: string;
   tip: { header: string; mono: boolean; number: string; line: string };
@@ -50,9 +53,15 @@ export function chartType(width: number): { s: number; m: number; l: number } {
   return { s: 14, m: 16, l: 20 };
 }
 
-// About five ticks: every 3 months up to 12, every 6 up to 36, every 12 above that.
-export function axisFor(largest: number): { max: number; step: number } {
-  const step = largest <= 12 ? 3 : largest > 36 ? 12 : 6;
+// About five ticks: every 3 months up to 12, every 6 up to 36, every 12 above that, stepping up to
+// 24 and 48 so there are at most six labels, or five when the chart is under 400 px wide.
+const STEPS = [3, 6, 12, 24, 48];
+export function axisFor(largest: number, width = Number.POSITIVE_INFINITY): { max: number; step: number } {
+  const most = width < 400 ? 5 : 6;
+  const first = largest <= 12 ? 3 : largest > 36 ? 12 : 6;
+  const steps = STEPS.filter((step) => step >= first);
+  const fits = (step: number) => Math.max(step, Math.ceil(largest / step) * step) / step + 1 <= most;
+  const step = steps.find(fits) ?? steps[steps.length - 1];
   return { max: Math.max(step, Math.ceil(largest / step) * step), step };
 }
 
@@ -94,7 +103,7 @@ function fit(xs: number[], r: number, minR: number, lane: number): Layout {
 
 // The widths of the svg text a label needs to stay inside the plot, read after each render.
 function useTextWidths(keys: string[]) {
-  const refs = useRef<Record<string, SVGTextElement | null>>({});
+  const refs = useRef<Record<string, SVGTextContentElement | null>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [fontsReady, setFontsReady] = useState(0);
   useEffect(() => {
@@ -113,7 +122,7 @@ function useTextWidths(keys: string[]) {
     setWidths((now) => (keys.every((key) => Math.abs((now[key] ?? -1) - next[key]) < 0.5) ? now : next));
   });
   void fontsReady;
-  const ref = useCallback((key: string) => (element: SVGTextElement | null) => {
+  const ref = useCallback((key: string) => (element: SVGTextContentElement | null) => {
     refs.current[key] = element;
   }, []);
   return { widths, ref };
@@ -134,6 +143,7 @@ export function RangeChart({
   plan,
   ownPlan,
   readout,
+  readoutLines,
   keySigned,
   keyHollow,
   keyLead = false,
@@ -160,8 +170,10 @@ export function RangeChart({
   // The plan line's months now, and the plan row's own months, or null when there is none.
   plan: number | null;
   ownPlan: number | null;
-  // The readout's count line, "2 of 49 signed within 1.5 months".
+  // The readout's count line, "2 of 49 signed within 1.5 months", and the same as two lines for a
+  // chart under 400 px wide, "2 of 49 signed" over "within 1.5 months".
   readout: string | null;
+  readoutLines: [string, string] | null;
   // The key: the signed count beside a filled dot and the open count beside a hollow one. With
   // keyLead, the first half is a lead with no dot, such as "Each dot is 1 in 20 of the packages".
   keySigned: string | null;
@@ -189,10 +201,30 @@ export function RangeChart({
   const x = useCallback((months: number) => PAD + (Math.min(months, axisMax) / axisMax) * (width - 2 * PAD), [axisMax, width]);
   const monthsAt = (px: number) => ((px - PAD) / Math.max(1, width - 2 * PAD)) * axisMax;
 
-  const xs = useMemo(() => marks.map((mark) => x(mark.months)), [marks, x]);
   const r0 = big ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
+  const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
-  const laneTop = ROW_A + rowB;
+  const { widths, ref } = useTextWidths([
+    "lane", "keySigned", "keyHollow", "plan", "readout", "readout0", "readout1", "middle", "in10", "tickLast", "tickPrev",
+  ]);
+  // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
+  // chart, its hollow half takes a second line, and row A grows by that line before the first paint.
+  const glyph = narrow ? 4 : 4.5;
+  const signedWidth = widths.keySigned ?? 0;
+  const hollowWidth = widths.keyHollow ?? 0;
+  const signedPart = keySigned ? (keyLead ? 0 : 2 * glyph + 6) + signedWidth : 0;
+  const hollowPart = keyHollow ? 2 * glyph + 6 + hollowWidth : 0;
+  const keyWidth = signedPart + (keySigned && keyHollow ? 16 : 0) + hollowPart;
+  // When the lane label and the key don't both fit on row A, the key keeps the row: it is the legend.
+  const showLaneLabel = (widths.lane ?? 0) + 12 + keyWidth <= width;
+  const keyStart = showLaneLabel ? (widths.lane ?? 0) + 12 : 0;
+  const keyWraps = Boolean(keySigned && keyHollow) && keyStart + keyWidth > width;
+  const lineGap = type.s + 2;
+  const rowA = ROW_A + (keyWraps ? lineGap : 0);
+  const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + 16 : keyStart;
+  const textBaseline = ROW_A / 2 + type.s * 0.35;
+  const hollowY = keyWraps ? lineGap : 0;
+  const laneTop = rowA + rowB;
   const laneBottom = laneTop + layout.lane;
   const axisY = laneBottom + ROW_C;
   const height = axisY + AXIS;
@@ -200,7 +232,6 @@ export function RangeChart({
   const dots = marks.map((mark, index) => ({ ...mark, cx: xs[index], cy: centre + layout.offsets[index] }));
 
   const ticks = Array.from({ length: Math.floor(axisMax / step) + 1 }, (_, index) => index * step);
-  const { widths, ref } = useTextWidths(["lane", "keySigned", "keyHollow", "plan", "readout", "middle", "in10"]);
 
   // ── Hover, focus and the tooltip ─────────────────────────────────────
   const [hover, setHover] = useState<number | null>(null);
@@ -212,14 +243,24 @@ export function RangeChart({
   const tipRef = useRef<HTMLDivElement>(null);
   const shown = focused ?? hover;
   const tipFor = shown !== null && shown !== dismissed && dots[shown] ? dots[shown] : null;
-  const [tipBox, setTipBox] = useState({ w: 0, h: 0 });
+  // The tooltip's size, and the room above the chart inside its card (the closest section), which the
+  // tooltip may use: it sits above its dot whenever it fits inside the card.
+  const [tipBox, setTipBox] = useState({ w: 0, h: 0, room: 0 });
   useLayoutEffect(() => {
     const element = tipRef.current;
-    if (!element) return;
-    const next = { w: element.offsetWidth, h: element.offsetHeight };
-    setTipBox((now) => (now.w === next.w && now.h === next.h ? now : next));
+    const chart = wrapper.current;
+    if (!element || !chart) return;
+    const card = chart.closest("section") ?? chart;
+    const room = Math.max(0, chart.getBoundingClientRect().top - card.getBoundingClientRect().top);
+    const next = { w: element.offsetWidth, h: element.offsetHeight, room };
+    setTipBox((now) => (now.w === next.w && now.h === next.h && Math.abs(now.room - next.room) < 1 ? now : next));
   });
   useEffect(() => () => clearTimeout(hideTimer.current), []);
+  // The tooltip hides 100 ms after the pointer leaves both the dot and the tooltip.
+  const hideLater = () => {
+    clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setHover(null), 100);
+  };
 
   const nearest = (px: number, py: number): number | null => {
     let best: number | null = null;
@@ -249,7 +290,7 @@ export function RangeChart({
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     const { px, py } = local(event);
     const onKnob = (event.target as HTMLElement).closest("[data-plan-knob]") !== null;
-    const nearLine = planX !== null && event.pointerType !== "touch" && Math.abs(px - planX) <= NEAR_LINE && py >= ROW_A && py <= axisY;
+    const nearLine = planX !== null && event.pointerType !== "touch" && Math.abs(px - planX) <= NEAR_LINE && py >= rowA && py <= axisY;
     if (plan !== null && (onKnob || nearLine)) {
       event.preventDefault();
       wrapper.current!.setPointerCapture(event.pointerId);
@@ -283,8 +324,7 @@ export function RangeChart({
       if (found !== hover) setDismissed(null);
       setHover(found);
     } else if (hover !== null) {
-      clearTimeout(hideTimer.current);
-      hideTimer.current = setTimeout(() => setHover(null), 100);
+      hideLater();
     }
   };
 
@@ -315,6 +355,17 @@ export function RangeChart({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [hovered]);
+
+  // A tap anywhere outside the chart hides a tapped dot's details; inside it, onPointerDown decides.
+  useEffect(() => {
+    if (hover === null) return;
+    const onDown = (event: globalThis.PointerEvent) => {
+      if (event.pointerType === "mouse" || wrapper.current?.contains(event.target as Node)) return;
+      setHover(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [hover]);
 
   // Escape during a drag puts the line back where the drag began, wherever focus is.
   useEffect(() => {
@@ -368,39 +419,52 @@ export function RangeChart({
   };
 
   // ── Labels ───────────────────────────────────────────────────────────
-  const glyph = narrow ? 4 : 4.5;
-  const signedWidth = widths.keySigned ?? 0;
-  const hollowWidth = widths.keyHollow ?? 0;
-  const keyWidth =
-    (keySigned ? (keyLead ? 0 : 2 * glyph + 6) + signedWidth + 16 : 0) + (keyHollow ? 2 * glyph + 6 + hollowWidth : 0);
-  // When the lane label and the key don't both fit on row A, the key keeps the row: it is the legend.
-  const showLaneLabel = PAD + (widths.lane ?? 0) + 12 + keyWidth <= plotRight;
-  const keyStart = showLaneLabel ? PAD + (widths.lane ?? 0) + 12 : PAD;
-  const hollowStart = keySigned ? keyStart + (keyLead ? 0 : 2 * glyph + 6) + signedWidth + 16 : keyStart;
-  const textBaseline = ROW_A / 2 + type.s * 0.35;
-
-  // Row B: the readout sits right of the line in the left 55 percent of the plot, else left of it.
-  const onRight = planX !== null && planX <= PAD + 0.55 * (width - 2 * PAD);
-  const readoutWidth = Math.max(widths.readout ?? 0, widths.plan ?? 0);
-  const readoutX =
-    planX === null ? 0 : onRight ? clamp(planX + 10, PAD, plotRight - readoutWidth) : clamp(planX - 10, PAD + readoutWidth, plotRight);
+  // Row B: the readout, one line, or two under 400 px wide, beside the line and never across it. It
+  // sits right of the line in the left 55 percent of the plot and left of it otherwise; when it does
+  // not fit there, on the other side; when it fits on neither, on the side with more room.
   const showPlanWord = plan !== null && ownPlan !== null && plan === ownPlan;
-  const readoutLine1 = ROW_A + type.s + 2;
-  const readoutLine2 = readoutLine1 + type.s + 3;
+  const lines = readout === null ? [] : narrow && readoutLines ? readoutLines : [readout];
+  const lineWidths = lines.length === 2 ? [widths.readout0 ?? 0, widths.readout1 ?? 0] : [widths.readout ?? 0];
+  const readoutWidth = Math.max(...lineWidths, showPlanWord ? (widths.plan ?? 0) : 0);
+  const GAP = 10;
+  let onRight = planX !== null && planX <= PAD + 0.55 * (width - 2 * PAD);
+  if (planX !== null) {
+    const fitsRight = planX + GAP + readoutWidth <= width;
+    const fitsLeft = planX - GAP - readoutWidth >= 0;
+    if (onRight && !fitsRight) onRight = fitsLeft ? false : width - planX >= planX;
+    else if (!onRight && !fitsLeft) onRight = fitsRight ? true : width - planX >= planX;
+  }
+  const readoutX = planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth) : clamp(planX - GAP, readoutWidth, width);
+  const readoutLine1 = rowA + type.s + 2;
+  const readoutStep = type.s + 3;
+  const firstLine = showPlanWord ? readoutLine1 + readoutStep : readoutLine1;
 
-  // Row C: the middle's label centred on its tick, the 8-in-10 label beside its line.
+  // Row C: the middle's label centred on its tick, moved off the plan line when it would cross it,
+  // and the 8-in-10 label beside its line.
   const middleWidth = widths.middle ?? 0;
-  const middleX = stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
+  let middleX = stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
+  if (stats?.q50 != null && planX !== null && middleX - 3 < planX && planX < middleX + middleWidth + 3) {
+    const tick = x(stats.q50);
+    const options = [planX + 6, planX - 6 - middleWidth].filter((start) => start >= PAD && start + middleWidth <= plotRight);
+    if (options.length) middleX = options.reduce((a, b) => (Math.abs(a + middleWidth / 2 - tick) <= Math.abs(b + middleWidth / 2 - tick) ? a : b));
+  }
   const in10Width = widths.in10 ?? 0;
   const q80x = stats?.q80 != null ? x(stats.q80) : 0;
   const in10Right = q80x + 4 + in10Width <= plotRight;
   const rowC1 = laneBottom + type.s + 2;
   const rowC2 = rowC1 + type.s + 4;
 
+  // The axis: the label before the last one is dropped when it comes within 8 px of the last, whose
+  // tick and gridline stay.
+  const lastTick = ticks[ticks.length - 1];
+  const prevTick = ticks.length > 2 ? ticks[ticks.length - 2] : null;
+  const dropPrev = prevTick !== null && x(prevTick) + (widths.tickPrev ?? 0) / 2 > x(lastTick) - (widths.tickLast ?? 0) - 8;
+
   const tipLeft = tipFor ? clamp(tipFor.cx - tipBox.w / 2, 0, width - tipBox.w) : 0;
   const above = tipFor ? tipFor.cy - layout.r - TIP_GAP - tipBox.h : 0;
-  const tipTop = tipFor ? (above >= 0 ? above : tipFor.cy + layout.r + TIP_GAP) : 0;
+  const tipTop = tipFor ? (above >= -tipBox.room ? above : tipFor.cy + layout.r + TIP_GAP) : 0;
   const knobLeft = planX ?? 0;
+  const chevronX = plotRight - 2 + 3;
 
   return (
     <div
@@ -412,10 +476,10 @@ export function RangeChart({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      onPointerLeave={() => {
-        if (drag) return;
-        clearTimeout(hideTimer.current);
-        hideTimer.current = setTimeout(() => setHover(null), 100);
+      onPointerLeave={(event) => {
+        // A finger lifting off sends pointerleave too; a tapped dot keeps its details until the next tap.
+        if (drag || event.pointerType === "touch") return;
+        hideLater();
       }}
       onKeyDown={onWrapperKeyDown}
     >
@@ -431,7 +495,7 @@ export function RangeChart({
         {/* Row A: the lane label and the key. */}
         <text
           ref={ref("lane")}
-          x={PAD}
+          x={0}
           y={textBaseline}
           fontSize={type.s}
           fontWeight={600}
@@ -450,8 +514,8 @@ export function RangeChart({
         )}
         {keyHollow && (
           <>
-            <circle cx={hollowStart + glyph} cy={ROW_A / 2} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
-            <text ref={ref("keyHollow")} x={hollowStart + 2 * glyph + 6} y={textBaseline} fontSize={type.s} className="fill-chart-text">
+            <circle cx={hollowStart + glyph} cy={ROW_A / 2 + hollowY} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
+            <text ref={ref("keyHollow")} x={hollowStart + 2 * glyph + 6} y={textBaseline + hollowY} fontSize={type.s} className="fill-chart-text">
               {keyHollow}
             </text>
           </>
@@ -494,6 +558,15 @@ export function RangeChart({
             ) : (
               <circle cx={dot.cx} cy={dot.cy} r={layout.r} className="fill-chart-cat1-text" />
             )}
+            {dot.beyond && (
+              <path
+                data-beyond
+                d={`M ${chevronX} ${dot.cy - 3} L ${chevronX + 3} ${dot.cy} L ${chevronX} ${dot.cy + 3}`}
+                fill="none"
+                strokeWidth={1.5}
+                className="stroke-chart-cat1-text"
+              />
+            )}
             {hover === index && focused === null && (
               <circle cx={dot.cx} cy={dot.cy} r={layout.r + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
             )}
@@ -506,10 +579,13 @@ export function RangeChart({
           <g key={tick}>
             <line x1={x(tick)} x2={x(tick)} y1={axisY} y2={axisY + 4} strokeWidth={1} className="stroke-line-strong" />
             <text
+              ref={index === ticks.length - 1 ? ref("tickLast") : tick === prevTick ? ref("tickPrev") : undefined}
               x={x(tick)}
               y={axisY + 6 + type.s}
               textAnchor={index === 0 ? "start" : index === ticks.length - 1 ? "end" : "middle"}
               fontSize={type.s}
+              opacity={tick === prevTick && dropPrev ? 0 : 1}
+              data-tick-label
               className="fill-chart-text-subtle tabular-nums"
             >
               {index === ticks.length - 1 ? axisLastLabel : formatNumber(tick, { compact: false })}
@@ -520,11 +596,12 @@ export function RangeChart({
         {/* The plan: a line through everything, with a surface halo, and its readout in row B. */}
         {planX !== null && (
           <g data-plan-line>
-            <line x1={planX} x2={planX} y1={ROW_A} y2={axisY} strokeWidth={4} className="stroke-surface" />
-            <line x1={planX} x2={planX} y1={ROW_A} y2={axisY} strokeWidth={2} className="stroke-chart-grey500" />
+            <line x1={planX} x2={planX} y1={rowA} y2={axisY} strokeWidth={4} className="stroke-surface" />
+            <line x1={planX} x2={planX} y1={rowA} y2={axisY} strokeWidth={2} className="stroke-chart-grey500" />
             {showPlanWord && (
               <text
                 ref={ref("plan")}
+                data-readout-plan
                 x={readoutX}
                 y={readoutLine1}
                 textAnchor={onRight ? "start" : "end"}
@@ -536,18 +613,28 @@ export function RangeChart({
                 {planLabel}
               </text>
             )}
-            {readout && (
+            {lines.length > 0 && (
               <text
                 ref={ref("readout")}
                 data-readout
-                x={readoutX}
-                y={showPlanWord ? readoutLine2 : readoutLine1}
+                y={firstLine}
                 textAnchor={onRight ? "start" : "end"}
                 fontSize={type.s}
                 className="fill-chart-text tabular-nums"
                 style={HALO}
               >
-                {readout}
+                {lines.length === 2 ? (
+                  <>
+                    <tspan ref={ref("readout0")} x={readoutX}>
+                      {lines[0]}
+                    </tspan>{" "}
+                    <tspan ref={ref("readout1")} x={readoutX} dy={readoutStep}>
+                      {lines[1]}
+                    </tspan>
+                  </>
+                ) : (
+                  <tspan x={readoutX}>{lines[0]}</tspan>
+                )}
               </text>
             )}
           </g>
@@ -598,7 +685,7 @@ export function RangeChart({
             "after:absolute after:-inset-x-1.5 after:-inset-y-2.5 after:content-[''] pointer-coarse:after:-inset-x-4",
             drag ? "bg-primary-pressed" : knobHover ? "bg-primary-hover" : "bg-primary",
           )}
-          style={{ left: knobLeft, top: ROW_A, transform: "translateX(-50%)" }}
+          style={{ left: knobLeft, top: rowA, transform: "translateX(-50%)" }}
         >
           <span aria-hidden="true" className="h-3 w-px bg-surface" />
           <span aria-hidden="true" className="h-3 w-px bg-surface" />
@@ -641,11 +728,22 @@ export function RangeChart({
           aria-hidden="true"
           data-dot-tooltip
           onPointerEnter={() => clearTimeout(hideTimer.current)}
-          onPointerLeave={() => {
-            clearTimeout(hideTimer.current);
-            hideTimer.current = setTimeout(() => setHover(null), 100);
+          onPointerLeave={(event) => {
+            if (event.pointerType === "touch") return;
+            // The tooltip may move away from under a pointer that rests on the dot it covered: that dot
+            // takes the tooltip, and nothing hides (WCAG 1.4.13, persistent).
+            const { px, py } = local(event);
+            const found = nearest(px, py);
+            if (found !== null) {
+              clearTimeout(hideTimer.current);
+              if (found !== hover) setDismissed(null);
+              setHover(found);
+              return;
+            }
+            hideLater();
           }}
-          className="absolute z-10 max-w-[240px] animate-fade-in rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
+          // Its width is its content's, up to 240 px, so it never shrinks to the room left of the chart's edge.
+          className="absolute z-10 w-max max-w-[240px] animate-fade-in rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{ left: tipLeft, top: tipTop, fontSize: type.s }}
         >
           <p className={cx("font-semibold text-chart-text", tipFor.tip.mono && "font-mono wrap-anywhere")}>{tipFor.tip.header}</p>

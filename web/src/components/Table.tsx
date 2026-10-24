@@ -39,6 +39,9 @@ export type Column = {
   // A short value, such as a date, a country or a status, which shares a card's grid with the
   // numbers instead of taking the card's full width.
   short?: boolean;
+  // The head a card shows when the table's head carries a definition under its name: the name
+  // alone, so the definition is not repeated in every card. The table's cardsNote then says it once.
+  cardHeader?: ReactNode;
 };
 
 export type Row = { id: string; cells: Record<string, ReactNode> };
@@ -98,6 +101,7 @@ export function Table({
   rowHeader,
   level = 3,
   cardsBelow = "md",
+  cardsNote,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -111,6 +115,9 @@ export function Table({
   level?: Level;
   // Below which breakpoint the rows become cards: md (768 px, the default) or lg (1024 px).
   cardsBelow?: CardsBelow;
+  // A sentence that ends the count line's row only while the rows are cards, such as the definition
+  // a column's head carries in the table, said once there because cards have no column heads.
+  cardsNote?: ReactNode;
 }) {
   const titleId = useId();
   const countId = useId();
@@ -181,6 +188,12 @@ export function Table({
           {count && (
             <p id={countId} className="text-caption text-ink-muted" data-numbers>
               {countText(count)}
+              {cardsNote && (
+                <span className={SHOW[cardsBelow].cards} data-cards-note>
+                  {" "}
+                  {cardsNote}
+                </span>
+              )}
             </p>
           )}
         </>
@@ -262,7 +275,7 @@ export function Table({
             <dl className={cx("mt-2", CARD_FIELDS)}>
               {fields.map((column) => (
                 <div key={column.key} className={cardField(column, shared)}>
-                  <dt className="text-caption text-ink-muted">{column.header}</dt>
+                  <dt className="text-caption text-ink-muted">{column.cardHeader ?? column.header}</dt>
                   <dd>
                     <SkeletonLine className="text-small" width={column.numeric ? "w-1/2" : "w-4/5"} />
                   </dd>
@@ -277,7 +290,7 @@ export function Table({
             <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>
               {fields.map((column) => (
                 <div key={column.key} data-card-field={column.numeric ? "number" : "text"} className={cardField(column, shared)}>
-                  <dt className="text-caption text-ink-muted">{column.header}</dt>
+                  <dt className="text-caption text-ink-muted">{column.cardHeader ?? column.header}</dt>
                   <dd className="text-small wrap-break-word text-ink">{row.cells[column.key]}</dd>
                 </div>
               ))}

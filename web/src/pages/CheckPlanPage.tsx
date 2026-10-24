@@ -8,7 +8,7 @@
 // The header sticks from 1024 px, so the page keeps scroll-padding-top at its height plus 8 px and a
 // focused control is never hidden under it (DESIGN.md section 10). A visually hidden status says
 // "Checking this plan." and then "Checked nine activities.".
-import { useEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { EightColumns } from "../components/EightColumns";
@@ -20,30 +20,10 @@ import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
 import { formatCount, formatDate } from "../lib/format";
 import { useLoad } from "../lib/load";
+import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
-
-// From 1024 px the header sticks; keep focused elements 8 px clear of it.
-function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: boolean) {
-  useEffect(() => {
-    const element = header.current;
-    if (!element || !active) return;
-    const wide = window.matchMedia("(width >= 64rem)");
-    const update = () => {
-      document.documentElement.style.scrollPaddingTop = wide.matches ? `${element.offsetHeight + 8}px` : "";
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    wide.addEventListener("change", update);
-    return () => {
-      observer.disconnect();
-      wide.removeEventListener("change", update);
-      document.documentElement.style.scrollPaddingTop = "";
-    };
-  }, [header, active]);
-}
 
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
   const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`;
@@ -53,7 +33,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   const result = load.status === "ready" ? load.data : null;
   const checked = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
-  useScrollPadding(header, Boolean(checked));
+  useScrollPadding(header, Boolean(checked), { from: "64rem", gap: 8 });
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.

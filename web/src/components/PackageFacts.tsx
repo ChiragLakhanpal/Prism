@@ -8,7 +8,8 @@ import type { PackageFacts } from "../lib/api";
 import { formatNumber } from "../lib/format";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
-import { SkeletonLine } from "./Skeleton";
+import { planCheckHref } from "./PastRange";
+import { SkeletonText } from "./Skeleton";
 import { TextLink } from "./TextLink";
 
 const words = copy.packagePage;
@@ -23,7 +24,8 @@ export function PackageHeader({
   sticky = true,
 }: {
   title: ReactNode;
-  reference: ReactNode;
+  // The STEP reference under the title, or null when the title is the reference itself.
+  reference: ReactNode | null;
   headerRef?: RefObject<HTMLDivElement | null>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
@@ -35,7 +37,7 @@ export function PackageHeader({
       <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">
         {title}
       </Heading>
-      <p className="mt-1 text-small wrap-anywhere text-ink-muted">{reference}</p>
+      {reference !== null && <p className="mt-1 text-small wrap-anywhere text-ink-muted">{reference}</p>}
     </div>
   );
 }
@@ -45,7 +47,7 @@ export function PackageFactsList({ pkg }: { pkg: PackageFacts }) {
   const f = words.facts;
   const missing = <span className="text-ink-muted">{words.missing}</span>;
   const value = (text: string | null) => text ?? missing;
-  const planHref = `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
+  const planHref = planCheckHref(pkg);
   const facts: [string, ReactNode][] = [
     [f.method, value(pkg.method)],
     [f.marketApproach, value(pkg.market_approach)],
@@ -71,15 +73,27 @@ export function PackageFactsList({ pkg }: { pkg: PackageFacts }) {
   );
 }
 
+// The facts' real labels over skeleton values. "In the plan" holds the agency's full name, which
+// takes two lines from 768 px and three below, and Process Status two lines below 768 px.
+const SKELETON_LINES: Partial<Record<keyof typeof words.facts, { narrow: number; wide: number }>> = {
+  processStatus: { narrow: 2, wide: 1 },
+  inPlan: { narrow: 3, wide: 2 },
+};
+
 export function FactsSkeleton() {
+  const lines = (count: number) => Array.from({ length: count }, (_, index) => (index === count - 1 && count > 1 ? "w-3/5" : "w-4/5"));
   return (
     <div aria-hidden="true" className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-3">
-      {Object.values(words.facts).map((label) => (
-        <div key={label} className="flex flex-col">
-          <span className="text-caption text-ink-muted">{label}</span>
-          <SkeletonLine className="text-small" width="w-3/5" />
-        </div>
-      ))}
+      {(Object.entries(words.facts) as [keyof typeof words.facts, string][]).map(([key, label]) => {
+        const held = SKELETON_LINES[key] ?? { narrow: 1, wide: 1 };
+        return (
+          <div key={label} className="flex flex-col">
+            <span className="text-caption text-ink-muted">{label}</span>
+            <SkeletonText className="text-small md:hidden" widths={lines(held.narrow)} />
+            <SkeletonText className="hidden text-small md:flex" widths={lines(held.wide)} />
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 // Skeleton: static surface-2 blocks sized to the content they stand in for, so nothing moves
 // when the content arrives. No shimmer and no motion. The region that is loading sets
 // aria-busy and carries the "Loading" text for screen readers; the blocks are hidden from them.
+import type { CSSProperties } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 
@@ -10,9 +11,10 @@ export function Skeleton({ className }: { className: string }) {
 
 // One line of text: a box exactly one line tall in the text style around it (1lh), holding a
 // bar as tall as the font. A line of skeleton takes the same height as the line it stands for.
-export function SkeletonLine({ width, className }: { width: string; className?: string }) {
+// style sets a text size the type tokens don't name, such as a chart's title by its width.
+export function SkeletonLine({ width, className, style }: { width: string; className?: string; style?: CSSProperties }) {
   return (
-    <span aria-hidden="true" className={cx("flex h-lh items-center", className)}>
+    <span aria-hidden="true" className={cx("flex h-lh items-center", className)} style={style}>
       <Skeleton className={cx("h-[1em]", width)} />
     </span>
   );
@@ -21,9 +23,9 @@ export function SkeletonLine({ width, className }: { width: string; className?: 
 // Lines of text, one per entry, at the given widths, with no gap: a paragraph of n lines. It is a
 // span with display flex, so it can stand in for a heading's text: a heading holds only phrasing
 // content.
-export function SkeletonText({ widths, className }: { widths: string[]; className?: string }) {
+export function SkeletonText({ widths, className, style }: { widths: string[]; className?: string; style?: CSSProperties }) {
   return (
-    <span aria-hidden="true" className={cx("flex flex-col", className)}>
+    <span aria-hidden="true" className={cx("flex flex-col", className)} style={style}>
       {widths.map((width, index) => (
         <SkeletonLine key={index} width={width} />
       ))}

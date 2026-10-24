@@ -92,8 +92,8 @@ test("the workspace names the package, lists its facts in STEP's field names, an
       "Four of the 49 are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
   );
   await expect(section(page).locator("[data-coverage-line]")).toContainText(
-    "Based on 49 of 65 matching packages; 3 lacked the STEP reference that links notice to contract, 10 had no specific procurement notice " +
-      "in the records I hold and 3 were canceled before a contract was signed.",
+    "Based on 49 of 65 matching packages; three lacked the STEP reference that links notice to contract, 10 had no specific procurement " +
+      "notice in the records I hold and three were canceled before a contract was signed.",
   );
   await expect(section(page).locator("[data-coverage-line]").getByRole("link")).toHaveAttribute(
     "href",
@@ -124,9 +124,9 @@ test("the chart draws each comparable as a dot on a month axis, hollow if still 
   await expect(chart.locator("text").filter({ hasText: /^(0|6|12|18 months)$/ })).toHaveCount(4);
   // The text alternative states the same numbers, and says what happened to the canceled packages.
   await expect(page.locator("[data-chart-alt]")).toHaveText(
-    "Dot chart of 49 comparable packages on a month axis from 0 to 18 months: 45 signed and 4 still open. The middle half took " +
+    "Dot chart of 49 comparable packages on a month axis from 0 to 18 months: 45 signed and four still open. The middle half took " +
       "3.3 to 7.9 months, the middle one took 4.4, and 8 in 10 were signed within 9.1. A line marks 1.5 months, and 2 of 49 were " +
-      "signed within it. I left out the 3 canceled packages, because they are not still open.",
+      "signed within it. I left out the three canceled packages, because a canceled package was never signed and is not still open.",
   );
 });
 
@@ -175,6 +175,63 @@ test("dragging the plan line, pressing arrow keys on it or typing months updates
   await expect(readout(page)).toHaveText("2 of 49 signed within 1.5 months");
 });
 
+test("at phone widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
+  const overlap = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
+    a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  for (const width of [390, 320]) {
+    await openPackage(page, { width });
+    await ready(page);
+    const input = page.getByRole("textbox", { name: "Planned months" });
+    for (const months of ["1.5", "6", "9", "14"]) {
+      await input.fill(months);
+      await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      const knob = (await page.getByRole("slider").boundingBox())!;
+      for (const label of await page.locator("[data-readout], [data-readout-plan]").all()) {
+        const box = (await label.boundingBox())!;
+        expect(overlap(box, knob), `${width} px, ${months} months: "${await label.textContent()}"`).toBe(false);
+        const chart = (await page.locator("[data-range-chart]").boundingBox())!;
+        expect(box.x, `${width} px, ${months} months`).toBeGreaterThanOrEqual(chart.x - 0.5);
+        expect(box.x + box.width, `${width} px, ${months} months`).toBeLessThanOrEqual(chart.x + chart.width + 0.5);
+      }
+    }
+  }
+});
+
+test("moving the line or typing a bad number moves nothing else on the page", async ({ page }) => {
+  for (const width of [390, 1440]) {
+    await openPackage(page, { width });
+    await ready(page);
+    // The chart's top on the page, wherever the page is scrolled.
+    const top = () => page.locator("[data-range-chart]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const before = await top();
+
+    await page.getByRole("slider").focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByRole("button", { name: "Use the plan's 1.5 months" })).toBeVisible();
+    expect(await top(), `${width} px, after ArrowRight`).toBe(before);
+
+    await page.getByRole("textbox", { name: "Planned months" }).fill("abc");
+    await expect(page.getByRole("textbox", { name: "Planned months" })).toHaveAttribute("aria-invalid", "true");
+    expect(await top(), `${width} px, after a bad number`).toBe(before);
+  }
+});
+
+test("below 768 px the table's cards say what Months counts once, on the count line's row, not in every card", async ({ page }) => {
+  const definition = "Months run from notice to signature, or so far if still open.";
+  await openPackage(page, { width: 390 });
+  await ready(page);
+  await section(page).getByRole("button", { name: "Show the table" }).click();
+  const cards = page.locator("[data-comparables-table] [data-table-view=cards]");
+
+  await expect(cards.locator("li")).toHaveCount(49);
+  await expect(cards).not.toContainText("so far if still open");
+  await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeVisible();
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeHidden();
+  await expect(page.locator("[data-comparables-table] thead")).toContainText("From notice to signature, or so far if still open");
+});
+
 test("a number that is not between 0.5 and 60 months leaves the line where it was and says why", async ({ page }) => {
   await openPackage(page);
   await ready(page);
@@ -209,7 +266,7 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   await expect(fourth).toHaveAccessibleName(
     "KE-WAJWASCO-372776-CW-RFB, Kenya. Signed after 1.1 months, on October 6, 2023. Dot 4 of 49.",
   );
-  await expect(tip).toContainText("Signed Oct 6, 2023. Notice published Sep 2, 2023. Kenya.");
+  await expect(tip).toContainText("Signed Oct 6, 2023. Its notice was published Sep 2, 2023 in Kenya.");
 
   await page.keyboard.press("Escape");
   await expect(tip).toHaveCount(0);
@@ -243,6 +300,75 @@ test("a dot shows its package on hover and Escape hides it, and a click on the a
   await expect(readout(page)).toHaveText(`${await signedWithin(12)} of 49 signed within 12.0 months`);
 });
 
+async function centre(page: Page, selector: string) {
+  const box = (await page.locator(selector).boundingBox())!;
+  return { x: box.x + box.width / 2, y: box.y + box.height / 2, top: box.y };
+}
+
+test("a tooltip opened first on the last dot keeps its own width and sits above the dot", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    const last = await centre(page, "[data-dot-target='48']");
+
+    await page.mouse.move(last.x, last.y);
+
+    const tip = page.locator("[data-dot-tooltip]");
+    await expect(tip).toContainText("KE-");
+    const box = (await tip.boundingBox())!;
+    expect(box.width, `${width} px`).toBeGreaterThanOrEqual(200);
+    expect(box.y + box.height, `${width} px`).toBeLessThanOrEqual(last.top);
+  }
+});
+
+test("a tooltip stays while the pointer rests on the next dot, even when the first tooltip covered it", async ({ page }) => {
+  await openPackage(page, { width: 390 });
+  await ready(page);
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  const name = async (index: number) =>
+    (await page.locator(`[data-dot-target='${index}']`).getAttribute("aria-label"))!.split(",")[0];
+  const tip = page.locator("[data-dot-tooltip]");
+  const covers = (point: { x: number; y: number }) =>
+    page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest("[data-dot-tooltip]") !== null, point);
+
+  // The first dot whose tooltip covers the next dot, where stacked dots make the pointer land on the
+  // tooltip, which then moves away from under it.
+  let pair: number | null = null;
+  for (let index = 0; index < 48 && pair === null; index++) {
+    const here = await centre(page, `[data-dot-target='${index}']`);
+    await page.mouse.move(here.x, here.y);
+    await expect(tip).toContainText(await name(index));
+    if (await covers(await centre(page, `[data-dot-target='${index + 1}']`))) pair = index;
+  }
+  expect(pair).not.toBeNull();
+  const next = await centre(page, `[data-dot-target='${pair! + 1}']`);
+
+  await page.mouse.move(next.x, next.y);
+  await page.waitForTimeout(300);
+
+  await expect(tip).toContainText(await name(pair! + 1));
+});
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true });
+
+  test("a tapped dot keeps its details until you tap somewhere else", async ({ page }) => {
+    await openPackage(page, { width: 390 });
+    await ready(page);
+    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    const dot = await centre(page, "[data-dot-target='3']");
+
+    await page.touchscreen.tap(dot.x, dot.y);
+    await page.waitForTimeout(500);
+    await expect(page.locator("[data-dot-tooltip]")).toContainText("KE-WAJWASCO-372776-CW-RFB");
+
+    const heading = await centre(page, "[data-finding]");
+    await page.touchscreen.tap(heading.x, heading.y);
+    await expect(page.locator("[data-dot-tooltip]")).toHaveCount(0);
+  });
+});
+
 test("above 60 comparables the lane draws 20 quantile dots, and the table still lists every package 20 at a time", async ({ page }) => {
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-any-category.json") } });
   await ready(page);
@@ -254,6 +380,31 @@ test("above 60 comparables the lane draws 20 quantile dots, and the table still 
   await expect(page.locator("[data-comparables-table]")).toContainText("Showing 1–20 of 103 packages");
   await page.getByRole("button", { name: "Next 20" }).click();
   await expect(page.locator("[data-comparables-table]")).toContainText("Showing 21–40 of 103 packages");
+});
+
+test("a quantile dot the curve never reached is pinned at the plot's edge, so the axis stays readable", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width, comparables: { body: await recorded("comparables-ke-nwwda-541055-any-category.json") } });
+    await ready(page);
+    const chart = page.locator("[data-chart-drawing]");
+
+    // The 20th dot is past its last follow-up, so it sits at the edge with a chevron and keeps its months in its name.
+    await expect(chart.locator("[data-beyond]")).toHaveCount(1);
+    await expect(page.locator("[data-dot-target='19']")).toHaveAccessibleName(/sits past \d+\.\d months\.$/);
+    const labels = await chart.locator("[data-tick-label]").evaluateAll((elements) =>
+      elements.filter((el) => el.getAttribute("opacity") !== "0").map((el) => el.getBoundingClientRect()).map((r) => [r.left, r.right]),
+    );
+    expect(labels.length, `${width} px`).toBeLessThanOrEqual(width < 768 ? 5 : 6);
+    for (let i = 1; i < labels.length; i++) expect(labels[i][0], `${width} px, label ${i}`).toBeGreaterThan(labels[i - 1][1]);
+    const band = (await chart.locator("[data-band]").boundingBox())!;
+    expect(band.width, `${width} px`).toBeGreaterThanOrEqual(40);
+    // The key never runs past the chart's right edge.
+    const box = (await page.locator("[data-range-chart]").boundingBox())!;
+    for (const text of await chart.locator("text").all()) {
+      const r = (await text.boundingBox())!;
+      if (r.width > 0) expect(r.x + r.width, `${width} px: ${await text.textContent()}`).toBeLessThanOrEqual(box.x + box.width + 0.5);
+    }
+  }
 });
 
 test("below 20 comparables there is no range and no share: the copy file's sentence, every package, and the table open", async ({ page }) => {
@@ -269,6 +420,46 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await expect(readout(page)).toHaveText("0 of 7 signed within 1.5 months");
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("[data-comparables-table] table tbody tr")).toHaveCount(7);
+  // With none still open, the text alternative names only the signed ones.
+  await expect(page.locator("[data-chart-alt]")).toHaveText(
+    "Dot chart of 7 comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +
+      "A line marks 1.5 months, and 0 of 7 were signed within it.",
+  );
+});
+
+test("when packages matched but none could be measured, the reasons say how many of them, with no count of none used", async ({ page }) => {
+  await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-non-consulting.json") } });
+  await ready(page);
+
+  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+    "Six past packages matched this one, but I can't measure how long any of them took.",
+  );
+  await expect(section(page).locator("[data-coverage-line]")).toContainText(
+    "Of the six, two lacked the STEP reference that links notice to contract and four had no specific procurement notice in the records I hold.",
+  );
+  await expect(section(page)).not.toContainText("Based on");
+  await expect(section(page).getByRole("link", { name: /^See data readiness/ })).toBeVisible();
+});
+
+test("a package with no public notice quotes its Market Approach and offers the way back to the plan check", async ({ page }) => {
+  await openPackage(page, { ref: "KE-NWWDA-541062-CW-RFQ" });
+  await ready(page);
+
+  await expect(section(page)).toContainText(
+    'I measure it from the specific procurement notice to the signed contract. Packages with the Market Approach "Limited - National" had ' +
+      "no public notice to start from.",
+  );
+  await expect(section(page).getByRole("link", { name: "Back to the plan check" })).toHaveAttribute(
+    "href",
+    "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09#KE-NWWDA-541062-CW-RFQ",
+  );
+});
+
+test("when the whole page fails, the reference is the heading and is not repeated under it", async ({ page }) => {
+  await openPackage(page, { pkg: { status: 503, body: SERVICE_DOWN } });
+  await expect(page.locator("main h1")).toHaveText(REF);
+
+  await expect(page.locator("[data-package-header]")).toHaveText(REF);
 });
 
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.
@@ -299,6 +490,55 @@ for (const [name, options] of STATES) {
   });
 }
 
+test("the page barely moves when the package and then its comparables arrive, at every width", async ({ page }) => {
+  // Every layout shift from the first paint, as the browser scores it (CLS).
+  await page.addInitScript(() => {
+    const seen = ((window as unknown as { shifts: number[] }).shifts = [] as number[]);
+    new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) seen.push((entry as unknown as { value: number }).value);
+    }).observe({ type: "layout-shift", buffered: true });
+  });
+  const later = (ms: number, name: string) => async (route: import("@playwright/test").Route) => {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    await route.fulfill({ contentType: "application/json", body: await recorded(name) });
+  };
+  for (const width of [320, 390, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+    await page.route(`**${API}`, later(400, "package-ke-nwwda-541055.json"));
+    await page.route(`**${API}/comparables`, later(800, "comparables-ke-nwwda-541055.json"));
+
+    await page.goto(PATH);
+    await ready(page);
+    await page.waitForTimeout(200);
+
+    const shift = await page.evaluate(() => (window as unknown as { shifts: number[] }).shifts.reduce((a, b) => a + b, 0));
+    expect(shift, `${width} px`).toBeLessThan(0.1);
+    await page.unrouteAll();
+  }
+});
+
+test("the section's skeleton holds the chart where the chart arrives, with the summary first below 768 px", async ({ page }) => {
+  for (const width of [390, 1440]) {
+    let answer: () => void = () => {};
+    const arrived = new Promise<void>((resolve) => (answer = resolve));
+    await openPackage(page, { width, comparables: null });
+    await page.unroute(`**${API}/comparables`);
+    await page.route(`**${API}/comparables`, async (route) => {
+      await arrived;
+      await route.fulfill({ contentType: "application/json", body: await recorded("comparables-ke-nwwda-541055.json") });
+    });
+    await page.reload();
+    const top = (selector: string) => page.locator(selector).evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const held = await top("[data-chart-skeleton]");
+
+    answer();
+    await ready(page);
+
+    expect(Math.abs((await top("[data-range-chart]")) - held), `${width} px`).toBeLessThanOrEqual(16);
+  }
+});
+
 test("below 768 px the section's sentence leads the chart in the page's order, so focus never jumps", async ({ page }) => {
   await openPackage(page, { width: 390 });
   await ready(page);
@@ -317,12 +557,20 @@ test("a plan row with no planned dates has no plan line until you type months", 
   await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
     "The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signature.",
   );
+  // The title already gives the middle half, so the summary starts with the middle one.
+  await expect(section(page).locator("[data-summary]")).toHaveText(
+    "The middle one took 4.4 months. 8 in 10 were signed within 9.1 months. Four of the 49 are still open. I kept them in the range " +
+      "as not signed yet, so the range does not look shorter than it was.",
+  );
   await expect(page.getByRole("slider")).toHaveCount(0);
-  await expect(section(page).getByText(/^The plan row has no planned notice date or signing date/)).toBeVisible();
+  await expect(section(page).getByText(/^The plan row has no planned notice date or signing date, so there is no plan line yet/)).toBeVisible();
 
   await page.getByRole("textbox", { name: "Planned months" }).fill("4");
   await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", "4");
   await expect(readout(page)).toHaveText(`${await signedWithin(4)} of 49 signed within 4.0 months`);
+  await expect(section(page).getByText(
+    "The plan row has no planned notice date or signing date, so the line shows the months you typed.", { exact: true },
+  )).toBeVisible();
 });
 
 test("each Check a plan row links to its package's past range, named with its reference", async ({ page }) => {

@@ -17,7 +17,7 @@ import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
 import { cx } from "../lib/cx";
-import { formatDate, formatNumber } from "../lib/format";
+import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
@@ -35,6 +35,8 @@ const CHART_HEIGHT = 240;
 
 const months1 = (value: number) => formatNumber(value, { decimals: 1, compact: false });
 const whole = (value: number) => formatNumber(value, { compact: false });
+// A count standing alone in a sentence: one to nine in words (DESIGN.md section 7, rule 12).
+const spelled = (value: number) => formatCount(value);
 const tableDate = (iso: string) => formatDate(iso, { style: "table" });
 
 export type PastRangeState =
@@ -135,6 +137,11 @@ function Ready({ result }: { result: ComparablesResult }) {
         <p className="mt-2 max-w-prose text-body text-ink">
           <Fill template={words.empty.notMeasurableBody} slots={{ field: abstention.field, value: abstention.value }} />
         </p>
+        {result.package && (
+          <p className="mt-4">
+            <TextLink href={planCheckHref(result.package)}>{words.empty.notMeasurableLink}</TextLink>
+          </p>
+        )}
       </NoChart>
     );
   }
@@ -149,7 +156,7 @@ function Ready({ result }: { result: ComparablesResult }) {
         }
       >
         <div className="mt-2">
-          <Coverage result={result} />
+          <Unmeasured result={result} />
         </div>
       </NoChart>
     );
@@ -181,6 +188,10 @@ function NoChart({ title, children }: { title: ReactNode; children: ReactNode })
     </div>
   );
 }
+
+// The plan check with this package's row in view, as the "In the plan" fact links it.
+export const planCheckHref = (pkg: { project_id: string; step_reference: string; plan: { agency_id: string; plan_date: string } }) =>
+  `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
 
 const readinessHref = (result: ComparablesResult) =>
   `/data?sources=${result.sources.map((source) => source.key).join(",")}&from=${result.tool}`;
@@ -253,15 +264,26 @@ function Note({ result }: { result: ComparablesResult }) {
   );
 }
 
+// What each matching package left out lacked, each count under ten in words.
+function gapsOf(result: ComparablesResult, check?: NumCheck) {
+  return result.coverage.not_used.map((entry) => (
+    <Fill key={entry.reason} template={words.reasons[entry.reason](entry.count)} slots={{ count: <Num count={entry.count} check={check} /> }} />
+  ));
+}
+
+// Packages matched but none could be measured: what they lacked, without "Based on 0 of".
+function Unmeasured({ result }: { result: ComparablesResult }) {
+  return (
+    <p data-coverage-line className="text-small text-ink">
+      <Fill template={words.empty.unmeasuredOf} slots={{ matched: <Num count={result.coverage.matched} />, gaps: <Joined items={gapsOf(result)} /> }} />{" "}
+      <TextLink href={readinessHref(result)}>{copy.coverage.link}</TextLink>
+    </p>
+  );
+}
+
 function Coverage({ result, check }: { result: ComparablesResult; check?: NumCheck }) {
   const { coverage } = result;
-  const gaps = coverage.not_used.map((entry) => (
-    <Fill
-      key={entry.reason}
-      template={words.reasons[entry.reason](entry.count)}
-      slots={{ count: <Num value={entry.count} options={{ compact: false }} check={check} /> }}
-    />
-  ));
+  const gaps = gapsOf(result, check);
   return (
     <CoverageLine
       part={coverage.used}
@@ -330,8 +352,13 @@ function Populated({ result }: { result: ComparablesResult }) {
     [rows],
   );
   const within = plan === null ? null : withinOf(plan);
-  const largest = Math.max(...rows.map((row) => row.months), ...(quantile ?? []).map((dot) => dot.months), own ?? 0, axisValue ?? 0, 0.5);
-  const axis = axisFor(largest);
+  // The axis covers what is placed on it: every dot, or every quantile dot the curve reached, the 8-in-10
+  // point, the plan row's months and the months typed. A quantile dot never reached sits at the plot's
+  // edge instead of stretching the axis to its last follow-up.
+  const placed = quantile ? quantile.filter((dot) => dot.reached).map((dot) => dot.months) : rows.map((row) => row.months);
+  const range = abstained ? null : result.past_range;
+  const largest = Math.max(...placed, range?.q80 ?? 0, own ?? 0, axisValue ?? 0, 0.5);
+  const axis = axisFor(largest, width || Number.POSITIVE_INFINITY);
   const say = (months: number) => setAnnounce(words.chart.announce(whole(withinOf(months)), whole(total), months1(months)));
 
   const onPlan = useCallback(
@@ -385,7 +412,6 @@ function Populated({ result }: { result: ComparablesResult }) {
   const explainCoverage: NumCheck = { tooltip: words.explain.coverage };
 
   const type = chartType(width || 800);
-  const range = abstained ? null : result.past_range;
 
   // ── The finding, at the plan row's own months ──
   const count = (value: number, check?: NumCheck) => <Num value={value} options={{ compact: false }} check={check} />;
@@ -435,9 +461,13 @@ function Populated({ result }: { result: ComparablesResult }) {
       </>
     );
   } else {
+    // With no plan dates the title gives the middle half, so the summary starts with the middle one.
+    const titled = !result.plan && range?.q25 != null && range.q75 != null;
     const first =
       range?.q75 == null || range.q25 == null || range.q50 == null ? (
         s.noUpper
+      ) : titled ? (
+        <Fill template={s.middleOnly} slots={{ q50: q(range.q50) }} />
       ) : (
         <Fill template={s.middle} slots={{ q25: q(range.q25), q75: q(range.q75), q50: q(range.q50) }} />
       );
@@ -466,6 +496,7 @@ function Populated({ result }: { result: ComparablesResult }) {
         key: `dot-${dot.k}`,
         months: dot.months,
         hollow: !dot.reached,
+        beyond: !dot.reached,
         name: (dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(total), months1(dot.months)),
         tip: {
           header: c.tipQuantile(whole(dot.k)),
@@ -477,7 +508,11 @@ function Populated({ result }: { result: ComparablesResult }) {
     : rows.map((row, index) => markFor(row, index, total));
 
   const altParts = [
-    quantile ? c.altDots(whole(total), whole(axis.max)) : c.alt(whole(total), whole(axis.max), whole(counts.signed), whole(open)),
+    quantile
+      ? c.altDots(whole(total), whole(axis.max))
+      : open > 0
+        ? c.alt(whole(total), whole(axis.max), spelled(counts.signed), spelled(open))
+        : c.altAllSigned(whole(total), whole(axis.max), spelled(counts.signed)),
   ];
   if (abstained) altParts.push(c.altAbstain);
   else if (range?.q25 != null && range.q75 != null && range.q50 != null) {
@@ -489,10 +524,12 @@ function Populated({ result }: { result: ComparablesResult }) {
   } else altParts.push(c.altNoUpper);
   if (plan !== null && within !== null) altParts.push(c.altPlan(months1(plan), whole(within), whole(total)));
   if (counts.canceled > 0) {
-    altParts.push((counts.canceled_as_still_open ? c.altCanceledCounted : c.altCanceledLeftOut)(counts.canceled, whole(counts.canceled)));
+    altParts.push((counts.canceled_as_still_open ? c.altCanceledCounted : c.altCanceledLeftOut)(counts.canceled, spelled(counts.canceled)));
   }
 
   const readout = plan === null || within === null ? null : c.readout(whole(within), whole(total), months1(plan));
+  const readoutLines: [string, string] | null =
+    plan === null || within === null ? null : [c.readoutCount(whole(within), whole(total)), c.readoutWithin(months1(plan))];
   const valueText =
     plan === null || within === null
       ? null
@@ -542,6 +579,7 @@ function Populated({ result }: { result: ComparablesResult }) {
             plan={plan}
             ownPlan={own}
             readout={readout}
+            readoutLines={readoutLines}
             keySigned={quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed))}
             keyHollow={open > 0 ? c.keyOpen(whole(open)) : null}
             keyLead={Boolean(quantile)}
@@ -676,21 +714,28 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {moved && (
-          <Button variant="ghost" onClick={onReset}>
-            {w.reset(months1(own))}
-          </Button>
+        {/* The reset button keeps its place while hidden, so showing it moves nothing: at the row's end
+            from 768 px, and on a row of its own below. visibility: hidden also takes it out of the tab
+            order and the accessibility tree. */}
+        {own !== null && (
+          <span className={cx(!moved && "invisible")} data-plan-reset>
+            {/* Flush, so on a row of its own below 768 px its label starts on the label's edge above. */}
+            <Button variant="ghost" flush onClick={onReset}>
+              {w.reset(months1(own))}
+            </Button>
+          </span>
         )}
       </div>
-      {invalid && (
-        <p id={ids.error} className="mt-1 text-caption text-error">
-          {w.invalid(whole(maxMonths))}
-        </p>
-      )}
-      <p id={ids.helper} className="mt-1 text-caption text-ink-muted">
+      {/* One caption line is kept for the error, so it appears without moving the chart. */}
+      <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
+        {invalid && w.invalid(whole(maxMonths))}
+      </p>
+      <p id={ids.helper} className="text-caption text-ink-muted">
         {notice && signing ? (
           // Plain plan values, so they carry no popover (ticket 10's rule); the months worked out from them do.
           <Fill template={w.helper} slots={{ notice: <Num date={notice} />, signing: <Num date={signing} /> }} />
+        ) : plan !== null ? (
+          w.helperTyped
         ) : (
           w.helperNoPlan
         )}
@@ -720,9 +765,10 @@ function ComparablesTable({
   const paged = total > result.thresholds.quantile_dots_above;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
+  // From 1024 px a STEP reference keeps to one line, and the Months head's definition to two lines.
   const columns: Column[] = [
-    { key: "package", header: t.columns.package, width: "w-[30%]" },
-    { key: "country", header: t.columns.country, short: true },
+    { key: "package", header: t.columns.package, width: "w-[30%] lg:w-[15.25rem]" },
+    { key: "country", header: t.columns.country, short: true, width: "lg:w-[5.5rem]" },
     { key: "notice", header: t.columns.notice, short: true },
     { key: "signed", header: t.columns.signed, short: true },
     {
@@ -733,17 +779,24 @@ function ComparablesTable({
           <span className="block text-caption font-normal text-ink-muted">{t.columns.monthsNote}</span>
         </>
       ),
+      cardHeader: t.columns.months,
       numeric: true,
+      width: "w-[9rem]",
     },
     ...(plan === null ? [] : [{ key: "within", header: t.columns.within(months1(plan)), short: true }]),
   ];
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
     cells: {
-      package: <span className="font-mono wrap-anywhere">{row.step_reference}</span>,
+      // A reference with no spaces keeps to one line from 1024 px; one with a county's name wraps at its spaces.
+      package: (
+        <span className={cx("font-mono wrap-anywhere", !row.step_reference.includes(" ") && "lg:whitespace-nowrap lg:wrap-normal")}>
+          {row.step_reference}
+        </span>
+      ),
       country: row.country_name ?? copy.notInRecord,
-      notice: tableDate(row.notice_date),
-      signed: row.signed_on ? tableDate(row.signed_on) : t.stillOpen,
+      notice: <span className="lg:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
+      signed: row.signed_on ? <span className="lg:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
       months: months1(row.months),
       within: plan === null ? null : row.still_open ? (row.months <= plan ? t.notYet : t.no) : row.months <= plan ? t.yes : t.no,
     },
@@ -760,6 +813,7 @@ function ComparablesTable({
         count={{ noun: t.noun, one: t.nounOne, total, from: from + 1, to: from + shown.length }}
         columns={columns}
         rowHeader="package"
+        cardsNote={t.columns.monthsCards}
         state={{ status: "ready", rows: tableRows }}
         source={<SourceLine result={result} />}
       />
@@ -779,20 +833,40 @@ function ComparablesTable({
 
 // ── Loading ──────────────────────────────────────────────────────────────
 
+// Sized like the populated section at each width, in its order: below 768 px the summary comes right
+// after the title, and the reset button keeps its own row; from 768 px the summary follows the chart.
 function PastRangeSkeleton() {
+  const lines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
+  // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
     <div aria-hidden="true" className="mt-4" data-past-range-skeleton>
-      <SkeletonText className="text-title" widths={["w-full", "w-3/5"]} />
-      <SkeletonLine className="mt-2 text-body" width="w-4/5" />
-      <div className="mt-4 flex items-center gap-3">
+      <SkeletonText className="pb-2 md:hidden" widths={lines(3)} style={{ fontSize: 16, lineHeight: 1.3 }} />
+      <SkeletonText className="hidden pb-2 md:flex" widths={lines(2)} style={{ fontSize: 20, lineHeight: 1.3 }} />
+      <SkeletonText className="mt-2 pb-2 text-body md:hidden" widths={lines(7, "w-2/5")} />
+      <SkeletonText className="mt-2 md:hidden" widths={lines(3)} style={{ fontSize: 14 }} />
+      <SkeletonLine className="mt-2 hidden md:flex" width="w-4/5" style={{ fontSize: 16 }} />
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SkeletonLine className="text-small" width="w-28" />
         <Skeleton className="h-11 w-[88px] rounded-md" />
+        {/* The reset button's row, held below 768 px. */}
+        <span className="h-11 w-full md:hidden" />
       </div>
-      <div className="mt-4" style={{ height: CHART_HEIGHT }}>
+      <span className="mt-1 block min-h-[1.5em] text-caption" />
+      <SkeletonText className="text-caption md:hidden" widths={lines(2)} />
+      <SkeletonLine className="hidden text-caption md:flex" width="w-3/5" />
+      <div className="mt-4" style={{ height: CHART_HEIGHT }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
-      <SkeletonText className="mt-4 text-body" widths={["w-full", "w-full", "w-2/5"]} />
-      <SkeletonText className="mt-4 text-caption" widths={["w-full", "w-4/5", "w-3/5"]} />
+      <SkeletonText className="mt-4 hidden pb-2 text-body md:flex" widths={lines(3, "w-2/5")} />
+      <div className="mt-4 flex flex-col gap-2">
+        <SkeletonText className="text-caption md:hidden" widths={lines(3)} />
+        <SkeletonText className="hidden md:flex" widths={lines(2)} style={{ fontSize: 14 }} />
+        <SkeletonText className="pb-2 text-small md:hidden" widths={lines(6)} />
+        <SkeletonText className="hidden pb-2 text-small md:flex" widths={lines(2)} />
+        <SkeletonText className="text-caption md:hidden" widths={lines(4)} />
+        <SkeletonText className="hidden md:flex" widths={lines(2)} style={{ fontSize: 14 }} />
+      </div>
+      <span className="mt-4 block h-11" />
     </div>
   );
 }

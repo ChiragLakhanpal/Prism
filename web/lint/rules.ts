@@ -98,9 +98,11 @@ export const NON_COPY_PROPS = new Set([
   "breakpoint",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
-  // SVG settings in the range chart: a text's alignment ("start", "end") and a paint ("none").
+  // SVG settings in the range chart: a text's alignment ("start", "end"), a paint ("none") and a
+  // path's drawing commands, such as the chevron after a dot past the axis ("M 10 4 L 13 7").
   "textAnchor",
   "fill",
+  "d",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,
