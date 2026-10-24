@@ -266,6 +266,33 @@ test("below 768 px the helper sits right under the input, and the reset button's
   }
 });
 
+test("from 768 px the reset button sits on the input's row with its focus ring 8 px clear of the word before it", async ({ page }) => {
+  for (const width of [1440, 1024, 768]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await page.getByRole("slider").focus();
+    await page.keyboard.press("ArrowRight");
+    const reset = page.getByRole("button", { name: "Use the plan's 1.5 months" });
+    await reset.focus();
+
+    const { gap, ring, sameRow } = await page.evaluate(() => {
+      const control = document.querySelector("[data-plan-control]")!;
+      const unit = [...control.querySelectorAll("span")].find((span) => span.textContent === "months")!.getBoundingClientRect();
+      const button = document.activeElement as HTMLElement;
+      const style = getComputedStyle(button);
+      const box = button.getBoundingClientRect();
+      const input = control.querySelector("input")!.getBoundingClientRect();
+      return {
+        gap: box.left - unit.right,
+        ring: parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth),
+        sameRow: box.top < input.bottom && box.bottom > input.top,
+      };
+    });
+    expect(gap - ring, `${width} px`).toBeGreaterThanOrEqual(8);
+    expect(sameRow, `${width} px`).toBe(true);
+  }
+});
+
 test("moving the line or typing a bad number moves nothing else on the page", async ({ page }) => {
   for (const width of [320, 390, 1440]) {
     await openPackage(page, { width });
@@ -642,6 +669,15 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   await expect(reference).toHaveText(REF);
   const lines = await reference.evaluate((el) => el.getClientRects().length);
   expect(lines).toBe(1);
+});
+
+test("a reference too long for the line wraps inside its box, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {
+  const long = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
+  expect(long).toHaveLength(40);
+  await openPackage(page, { width: 320, ref: long, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono")).toHaveText(long);
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.

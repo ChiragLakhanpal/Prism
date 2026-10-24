@@ -699,11 +699,12 @@ function PlanControl({
   // 768 px, and below that on a row of its own after the helper, so the helper stays with its input.
   // Only one of the two is ever displayed. visibility: hidden also takes it out of the tab order and the
   // accessibility tree.
-  const resetButton = (className: string) =>
+  // On a row of its own it sits flush, so its label starts on the label's edge above; in the input's row
+  // it keeps its padding, so its focus ring stays 8 px clear of "months" (DESIGN.md section 5, Buttons).
+  const resetButton = (className: string, flush: boolean) =>
     planRowMonths !== null && (
       <span className={cx(className, !moved && "invisible")} data-plan-reset>
-        {/* Flush, so on a row of its own its label starts on the label's edge above. */}
-        <Button variant="ghost" flush onClick={onReset}>
+        <Button variant="ghost" flush={flush} onClick={onReset}>
           {w.reset(months1(planRowMonths))}
         </Button>
       </span>
@@ -732,7 +733,7 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {resetButton("hidden md:inline")}
+        {resetButton("hidden md:inline", false)}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
       <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
@@ -748,7 +749,7 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
-      {resetButton("mt-2 block md:hidden")}
+      {resetButton("mt-2 block md:hidden", true)}
     </div>
   );
 }

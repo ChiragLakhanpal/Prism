@@ -16,10 +16,11 @@ import { TextLink } from "./TextLink";
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
-// A reference inside a sentence: with no spaces it keeps to one line, so it moves to the next line whole
-// (DESIGN.md section 3, an ID stays readable as one ID); one with a county's name wraps at its spaces.
+// A reference inside a sentence: with no spaces it is one box, so it moves to the next line whole when it
+// fits there (DESIGN.md section 3, an ID stays readable as one ID), and wraps inside only when it is
+// wider than the line, so the page never scrolls sideways; one with a county's name wraps at its spaces.
 export const inlineMono = (text: string) => (
-  <span className={cx("font-mono font-medium", !text.includes(" ") && "whitespace-nowrap")}>{text}</span>
+  <span className={cx("font-mono font-medium", !text.includes(" ") && "inline-block max-w-full wrap-anywhere")}>{text}</span>
 );
 
 export function PackageHeader({
