@@ -358,7 +358,8 @@ function Decided({ queue }: { queue: Queue }) {
         // line's row once (DESIGN.md section 5, Tables).
         cardsNote={q.daysCards}
         columns={[
-          { key: "lesson", header: q.columns.lesson, width: "w-[44%]" },
+          // The days' head takes a quarter, so its name and its definition each keep to one line at 1440 px.
+          { key: "lesson", header: q.columns.lesson, width: "w-[40%]" },
           { key: "outcome", header: q.columns.outcome, width: "w-[20%]", short: true },
           { key: "decided", header: q.columns.decided, width: "w-[16%]", short: true },
           {
@@ -371,7 +372,7 @@ function Decided({ queue }: { queue: Queue }) {
             ),
             cardHeader: q.columns.days,
             numeric: true,
-            width: "w-[20%]",
+            width: "w-[24%]",
           },
         ]}
         state={{ status: "ready", rows }}
