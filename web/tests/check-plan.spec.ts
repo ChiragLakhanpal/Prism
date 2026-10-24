@@ -257,6 +257,20 @@ test("below 1024 px the activities are cards, each headed by its marks and its r
   await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link")).toHaveText("Procurement");
 });
 
+test("from 1024 px the header sticks and focused rows stay 8 px clear of it; below 1024 px it scrolls away", async ({ page }) => {
+  await openPlan(page, 1440);
+  const header = page.locator("[data-plan-header]");
+  await expect(page.locator("[data-plan-check]")).toBeVisible();
+
+  expect(await header.evaluate((el) => getComputedStyle(el).position)).toBe("sticky");
+  const height = await header.evaluate((el) => (el as HTMLElement).offsetHeight);
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${height + 8}px`);
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect.poll(() => header.evaluate((el) => getComputedStyle(el).position)).toBe("static");
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe("");
+});
+
 test("at 1024 px the plan check is a table", async ({ page }) => {
   await openPlan(page, 1024);
 

@@ -124,8 +124,10 @@ const noActivities = derived(PLAN_FILE, (body) => {
   body.counts = null;
   body.abstention = { reason: "no_activities", plan_date: "2026-10-09" };
 });
-const planShot = (name: string, answer: Answer, rest: Partial<Shot> = {}, path = PLAN): Shot =>
-  app(name, path, {}, { ...rest, api: { ...app(name, path).api, [`/api${path.split("#")[0]}`]: answer } });
+// A shot of one of ticket 10's pages, with its one /api read answered. The read's path is the
+// page's own, under /api, unless the shot names it, as /projects/:pid/procurement must.
+const planShot = (name: string, answer: Answer, rest: Partial<Shot> = {}, path = PLAN, read = `/api${path.split("#")[0]}`): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, [read]: answer } });
 const plan: Answer = { recorded: PLAN_FILE };
 const SERVICE_DOWN = '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}';
 
@@ -158,7 +160,7 @@ const PLAN_SHOTS: Shot[] = [
 const PROJECT_SHOTS: Shot[] = [
   planShot("project", { recorded: "project-p156634.json" }, {}, "/projects/P156634"),
   planShot("project--loading", { recorded: "project-p156634.json" }, { pending: ["/api/projects/P156634"] }, "/projects/P156634"),
-  planShot("project--no-plans", { recorded: "project-p130164.json" }, {}, "/projects/P130164/procurement"),
+  planShot("project--no-plans", { recorded: "project-p130164.json" }, {}, "/projects/P130164/procurement", "/api/projects/P130164"),
   planShot("project--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects/P156634"),
   planShot("project--not-found", { status: 404, body: '{"code":"unknown_project"}' }, {}, "/projects/P999999"),
   planShot("project--focus-version", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: focus("[data-agency] a:visible") }, "/projects/P156634"),
