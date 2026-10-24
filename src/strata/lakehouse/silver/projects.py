@@ -9,8 +9,8 @@ so a loan number in any of its forms joins to its project. The team leader's nam
 Each project gets one sector in Strata's taxonomy (config/sectors.toml): the sector of the major
 sector with the largest share, whichever of the API's two taxonomies its codes come from. The API
 keeps only each project's latest ISR ratings and lists some of them twice; each is kept once. Each
-sector keeps its share, and a record that gives an Environmental Assessment Category keeps it, for a
-project's Summary (ticket 21).
+sector keeps its share, and a record that gives an Environmental Assessment Category or a risk rating
+under the Environmental and Social Framework keeps it, for a project's Summary (ticket 21).
 """
 
 from __future__ import annotations
@@ -33,8 +33,14 @@ TABLES = {
     "strata.silver.project_sectors": (
         "project_id", "major_sector_code", "major_sector_name", "sector_code", "sector_name", "share_percent",
         "page_hash", "fetched_at", "public_from"),
-    "strata.silver.project_environment": ("project_id", "ea_category", "page_hash", "fetched_at", "public_from"),
+    "strata.silver.project_environment": (
+        "project_id", "ea_category", "esf_risk", "page_hash", "fetched_at", "public_from"),
 }
+
+# The projects API's field for a project's overall risk rating under the Environmental and Social
+# Framework (ESF), which a project approved since October 2018 has in place of an Environmental
+# Assessment Category. No recorded record holds it, so the name waits for a live check (ticket 21).
+ESF_RISK = "esrc_ovrl_risk_rate"
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("project_id",)
@@ -87,9 +93,9 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
                 loans.append((project_id, loan.normalized, as_written, page_hash, fetched_at, public))
         ratings += _isr_ratings(project_id, record.get("isr_ratings"), page_hash, fetched_at, fetched)
         shares += [(project_id, *sector, page_hash, fetched_at, public) for sector in _sectors(record.get("major_sectors"))]
-        category = clean.text(record.get("envassesmentcategorycode"))
-        if category:
-            environment.append((project_id, category, page_hash, fetched_at, public))
+        category, risk = clean.text(record.get("envassesmentcategorycode")), clean.text(record.get(ESF_RISK))
+        if category or risk:
+            environment.append((project_id, category, risk, page_hash, fetched_at, public))
     return {"strata.silver.projects": projects, "strata.silver.project_loans": loans,
             "strata.silver.project_isr_ratings": ratings, "strata.silver.project_sectors": shares,
             "strata.silver.project_environment": environment}

@@ -1,6 +1,7 @@
--- A project's Summary: its Environmental Assessment Category, from the newest page the projects API
--- returned for it that gives one.
-SELECT ea_category
+-- A project's Summary: its overall risk rating under the Environmental and Social Framework and its
+-- Environmental Assessment Category, from the newest page the projects API returned for it that gives
+-- either.
+SELECT ea_category, esf_risk
 FROM strata.silver.project_environment
 WHERE project_id = :project_id
   AND public_from <= :as_of

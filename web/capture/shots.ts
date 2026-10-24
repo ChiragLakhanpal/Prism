@@ -262,6 +262,8 @@ const HUB_SHOTS: Shot[] = [
   hubShot("summary--active", "/projects/P156634"),
   hubShot("summary--history-unknown", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => Object.assign(body, { history: { known: false, rows: [] }, lead: { ...body.lead, moves: null } })) }),
   hubShot("summary--no-ratings", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.ratings = [])) }),
+  // A project whose record has a risk rating under the ESF shows it in place of its EA category.
+  hubShot("summary--esf", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.ratings = body.ratings.map((fact: Record<string, any>) => (fact.key === "ea_category" ? { ...fact, key: "esf_rating", value: "Substantial" } : fact)))) }),
   hubShot("summary--value-missing", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.dates[0].value = null)) }),
   hubShot("summary--error", "/projects/P130164", {}, { "/api/projects/P130164/summary": { status: 503, body: SERVICE_DOWN } }),
   hubShot("summary--permission", "/projects/P130164", {}, { "/api/projects/P130164/summary": { status: 403, body: '{"code":"permission"}' } }),

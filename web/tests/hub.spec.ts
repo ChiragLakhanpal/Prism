@@ -145,6 +145,21 @@ test("P130164's Summary renders from records with no request to a route that cal
   await expect(drawer).toContainText("Source: World Bank loans and credits data, as of September 30, 2026.");
 });
 
+test("a project with a risk rating under the ESF shows it in the Ratings table, in place of its Environmental Assessment Category", async ({ page }) => {
+  // No recorded project has an ESF rating, so P130164's recorded Summary gets one by hand, as the server
+  // gives it (tests/test_project_hub.py: esf_rating in place of ea_category, cited to the project record).
+  const body = JSON.parse(await recorded("summary-p130164.json"));
+  body.ratings = body.ratings.map((fact: { key: string }) => (fact.key === "ea_category" ? { ...fact, key: "esf_rating", value: "Substantial" } : fact));
+  await open(page, "/projects/P130164", 1440, { "/api/projects/P130164/summary": { body: JSON.stringify(body) } });
+
+  const row = page.locator("[data-summary=ready] [data-fact=esf_rating]");
+  await expect(row.getByRole("rowheader")).toHaveText("Environmental and social risk");
+  await expect(row.getByRole("cell").first()).toHaveText("Substantial");
+  await expect(row.locator("[data-fact-source]")).toHaveText(/^Projects API, Aug 1, 2023⁠\[1\]$/);
+  await expect(page.locator("[data-summary=ready] [data-fact=ea_category]")).toHaveCount(0);
+  await expect(page.locator("[data-summary=ready]")).not.toContainText("Environmental Assessment Category");
+});
+
 // ── Documents ───────────────────────────────────────────────────────────
 
 test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-issue with the ground truth's dates", async ({ page }) => {

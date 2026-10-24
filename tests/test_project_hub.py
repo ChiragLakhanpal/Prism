@@ -122,6 +122,52 @@ def test_silver_keeps_each_project_s_sector_shares_and_environmental_assessment_
     assert list(category) == [("B",)]
 
 
+ESF_FIELD = "esrc_ovrl_risk_rate"  # the projects API's overall risk rating under the ESF
+
+
+def test_a_record_fetched_with_the_projects_endpoint_s_fields_gives_the_same_silver_rows_as_the_full_record():
+    """Seam 1: the nightly fetch asks the projects API for only the fields its endpoint names
+    (config/sources.toml), so each field the silver transform reads must be among them, or a Summary row
+    is empty on the workspace though it shows on the fixture, whose showcase records are fetched whole.
+    P130164 predates the ESF, so a copy of its record with a risk rating stands in for a newer project."""
+    import json
+    from pathlib import Path
+    from urllib.parse import parse_qs, urlsplit
+
+    from strata.config import load_sources
+    from strata.lakehouse.silver import projects as silver_projects
+
+    recorded = Path(__file__).parents[1] / "data" / "fixture" / "recorded" / "api" / "projects" / "P130164.json"
+    full = json.loads(recorded.read_text())["response"]
+    full["projects"]["P000009"] = {**full["projects"]["P130164"], "id": "P000009", ESF_FIELD: "Substantial"}
+    asked = parse_qs(urlsplit(load_sources()["projects"].endpoint).query)["fl"][0].split(",")
+    fetched = {"projects": {pid: {field: value for field, value in record.items() if field in asked}
+                            for pid, record in full["projects"].items()}}
+    at = dt.datetime(2026, 10, 23, tzinfo=dt.UTC)
+
+    assert silver_projects.parse(fetched, "page", at) == silver_projects.parse(full, "page", at)
+
+
+def test_silver_keeps_a_project_s_risk_rating_under_the_environmental_and_social_framework():
+    """Seam 1: a project approved under the Environmental and Social Framework (ESF) has an overall
+    environmental and social risk rating in its record, and often no Environmental Assessment Category.
+    No recorded project has one (P130164 and P156634 predate the ESF, and the Kenya list was fetched
+    without the field), so these records are written by hand, in the API's shape."""
+    from strata.lakehouse.silver import projects as silver_projects
+
+    at = dt.datetime(2026, 10, 23, tzinfo=dt.UTC)
+    body = {"projects": {
+        "P000009": {"id": "P000009", "boardapprovaldate": "2021-06-15T00:00:00Z", ESF_FIELD: "Substantial"},
+        "P000008": {"id": "P000008", "boardapprovaldate": "2015-06-15T00:00:00Z", "envassesmentcategorycode": "A"},
+        "P000007": {"id": "P000007", "boardapprovaldate": "2015-06-15T00:00:00Z"},
+    }}
+
+    rows = silver_projects.parse(body, "page", at)["strata.silver.project_environment"]
+
+    assert [(pid, category, risk) for pid, category, risk, *_ in rows] == [
+        ("P000009", None, "Substantial"), ("P000008", "A", None)]
+
+
 def facts(summary):
     """Every value the Summary shows, by its key: the fact tables' rows and the history's."""
     rows = [row for group in ("dates", "money", "ratings", "who") for row in summary[group]]
@@ -188,6 +234,23 @@ def test_a_project_s_summary_as_of_a_date_uses_only_what_was_public_then(hub):
     assert found["original_closing_date"]["value"] == original
     assert found["closing_date"]["value"] == moved  # the record of today was not public then, so the history's
     assert get(hub, "/api/projects/P999999/summary").status_code == 404
+
+
+def test_a_project_with_a_risk_rating_under_the_esf_shows_it_in_place_of_its_environmental_assessment_category(
+        fixture_db, tmp_path):
+    # No recorded project has an ESF rating, so a copy of the fixture gives P130164's record one by hand.
+    database = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, database)
+    with DuckDBEngine.open(database) as engine:
+        engine.run("UPDATE strata.silver.project_environment SET esf_risk = :risk WHERE project_id = :pid",
+                   {"risk": "Substantial", "pid": "P130164"})
+
+    found = facts(get(app_on(database), "/api/projects/P130164/summary?asof=2026-10-23").json())
+
+    assert found["esf_rating"]["value"] == "Substantial"
+    assert "ea_category" not in found
+    # It is a value of the projects API's record, cited as that record, like the region.
+    assert found["esf_rating"]["source"] == found["region"]["source"]
 
 
 # ── Packages ─────────────────────────────────────────────────────────────

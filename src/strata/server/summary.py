@@ -12,7 +12,8 @@ evidence drawer shows it, so a citation marker opens at once:
   (gold.loan), in US$ millions to one decimal, each a column the route works out;
 - ratings: the latest ISR's ratings as its own overall ratings table prints them (silver.isr_ratings,
   cited to that table's passage), the projects API's latest Procurement rating, IEG's outcome and
-  World Bank performance ratings (gold.ieg_rating), and the Environmental Assessment Category;
+  World Bank performance ratings (gold.ieg_rating), and the overall risk rating under the Environmental and
+  Social Framework, or the Environmental Assessment Category of a project that has none;
 - who: the region, the project's one sector in Strata's taxonomy with the projects API's sectors and
   their shares, and the implementing agencies.
 
@@ -280,8 +281,10 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
                               fiscal_year=review["evaluation_fy"])
         ratings += [_fact("ieg_outcome", review["outcome"], source),
                     _fact("ieg_bank_performance", review["bank_performance"], source)]
-    if environment and current:
-        ratings.append(_fact("ea_category", environment[0]["ea_category"], record_source))
+    if environment and current:  # the ESF risk rating, or the category of a project that predates the ESF
+        risk, category = environment[0]["esf_risk"], environment[0]["ea_category"]
+        ratings.append(_fact("esf_rating", risk, record_source) if risk else
+                       _fact("ea_category", category, record_source))
 
     # Region, sectors and implementing agencies.
     who = [_fact("region", record["region"] if current else None, record_source),
