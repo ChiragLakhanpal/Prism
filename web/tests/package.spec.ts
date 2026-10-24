@@ -648,6 +648,27 @@ test("the page barely moves when the package and then its comparables arrive, at
   }
 });
 
+test("from 768 px the heading's skeleton holds the Description's two lines, so the page under it stays put when the package arrives", async ({ page }) => {
+  for (const width of [1024, 1440]) {
+    let answer: () => void = () => {};
+    const arrived = new Promise<void>((resolve) => (answer = resolve));
+    await openPackage(page, { width, pkg: null, comparables: null });
+    await page.unroute(`**${API}`);
+    await page.route(`**${API}`, async (route) => {
+      await arrived;
+      await route.fulfill({ contentType: "application/json", body: await recorded("package-ke-nwwda-541055.json") });
+    });
+    await page.reload();
+    const purpose = page.getByText(/^This page shows how comparable packages went/);
+    const held = (await purpose.boundingBox())!.y;
+
+    answer();
+    await expect(page.locator("main h1")).toContainText("Equipping of Exploratory");
+
+    expect(Math.abs((await purpose.boundingBox())!.y - held), `${width} px`).toBeLessThanOrEqual(8);
+  }
+});
+
 test("the section's skeleton holds the chart where the chart arrives, with the summary first below 768 px", async ({ page }) => {
   for (const width of [390, 1440]) {
     let answer: () => void = () => {};

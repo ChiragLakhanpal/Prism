@@ -57,9 +57,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           title={
             <>
               <span className="sr-only">{stepRef}</span>
-              {/* A Description takes four lines or so below 768 px and one or two above. */}
+              {/* A Description takes four lines or so below 768 px, and two above, since most STEP
+                  descriptions are longer than one line of the h1. */}
               <SkeletonText className="md:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden md:flex" width="w-3/5" />
+              <SkeletonText className="hidden md:flex" widths={["w-full", "w-2/5"]} />
             </>
           }
           reference={<SkeletonLine width="w-48" />}
