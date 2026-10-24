@@ -425,3 +425,17 @@ Run this from the main checkout, then review the diff and run the gate:
     .githooks/pre-commit
 
 It worked if the recording exits 0 and prints a unified diff for each file in `tests/fixtures/agent/recorded`, with the verifier's counts for each answer, such as "The verifier kept 3 of 3 sentences; 2 of 2 numbers matched and 2 of 2 quotes were on their pages." Each file's `"recorded"` changes from `false` to `true`, and the agent version is filled in. The gate must then pass, because every scripted case replays from the new recordings on the fixture (criterion 8, live half). If it passes, commit the recordings on a branch. If a case no longer gets the answer its test expects, the live agent answers differently from the hand-written recording, so tell the orchestrator before you change a test.
+
+## Ticket 10, step 1 of 1: the NWWDA plan check on the deployed App
+
+The merger parked this step on October 23, 2026, after merge commit bd3c9cb. It needs the Databricks keys in `.env`. Run it after ticket 04's step 1 (the bundle deploy), after ticket 08's step 1 (`ops/plans/run_live.py`) has filled the plan tables on the warehouse, and after ticket 09's step 1 has turned on user authorization. Ticket 06's step 1 runs the same deploy command. Run it again here if that deploy came from a commit before bd3c9cb, because the Check a plan, project and All projects pages arrived in this merge.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`, and open:
+
+    <App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if the deploy exits 0 with its last line `Strata is running at https://...`, and on the page the pill reads "9 activities checked", the h2 reads "One needs a look and two are worth watching; three have data notes." and the count line reads "Showing 6 of 9 activities" (criterion 8, the first half of P1's exit criterion). Three things change with the date. The Watch for KE-NWWDA-541062-CW-RFQ says "N days before the project closes", and N counts down to October 31, 2026. After that date, the closing-date reasons change their wording. The App's as-of date is today's date in UTC.

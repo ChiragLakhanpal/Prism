@@ -2,18 +2,35 @@
 // two short sentences that say what it is for, and an empty-state card that says, in the first
 // person, what the page can't show yet and what will appear there. The not-found pages have no card: their purpose
 // already says what to do, and their one link follows it.
+//
+// All projects, a project's page and Check a plan (ticket 10) and the Data tab's three pages
+// (ticket 16) are built, so they render their own pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
+import { CheckPlanPage } from "./pages/CheckPlanPage";
 import { DataPage } from "./pages/data/DataPage";
+import { ProjectPage } from "./pages/ProjectPage";
+import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
 
-// The pages whose tickets have filled them. Every other route shows its title, purpose and empty state.
-const FILLED = new Set(["data", "dataSources", "dataHow"]);
-
 export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
-  if (FILLED.has(match.key)) return <DataPage match={match} search={search} />;
+  const { pid, agencyId, version } = match.values;
+  if (match.key === "projects") return <ProjectsPage />;
+  if (match.key === "project") return <ProjectPage pid={pid} />;
+  if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
+  if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
+  return (
+    <div className="layout-grid">
+      <div className="col-span-12 md:col-span-8">
+        <PlaceholderPage match={match} />
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderPage({ match }: { match: Match }) {
   const words: { title: string; purpose: string; emptyTitle?: string; emptyBody?: string; link?: string } = copy.pages[match.key];
   const link = words.link && match.linkHref ? { href: match.linkHref, text: <WithIds template={words.link} values={match.values} /> } : undefined;
   return (
@@ -22,7 +39,7 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
       {words.emptyTitle && words.emptyBody ? (
         <EmptyState
           className="mt-6 lg:mt-8"
-          title={<WithIds template={words.emptyTitle} values={match.values} />}
+          title={<WithIds whole template={words.emptyTitle} values={match.values} />}
           body={words.emptyBody}
           link={link}
         />

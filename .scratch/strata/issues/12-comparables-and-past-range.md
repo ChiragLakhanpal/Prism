@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart, Coverage 
 
 **Blocked by:** 07 (Kenya's procurement records, bronze to gold); 10 (Check a plan, on screen, for the NWWDA plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P1
 **Design review:** yes
@@ -23,3 +23,4 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart, Coverage 
 ## Comments
 
 - October 23, 2026, orchestrator: from ticket 05's review. Read a comparable's signing date from the awards dataset or, when it has no row, from its Contract Award notice (KE-GAWASCO-54771-CW-RFB and KE-GAWASCO-111742-CW-RFB are signed only in notices OP00175878 and OP00191645). Read notices and awards from every project, because four still-open comparables come from P176758 and P170941. Decide whether the 3 canceled packages count as still open (4 or 7 hollow points) and keep the choice in one config line.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/12-comparables-and-past-range, as soon as ticket 10 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

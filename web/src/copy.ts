@@ -56,19 +56,19 @@ export const copy = {
       emptyBody: "A package appears here after you plan it or check the plan it belongs to.",
       link: "Go to Packages",
     },
+    // All projects, the project page and Check a plan have their own words below (the 10 brief):
+    // these titles name the browser tab, and the purposes are the pages' own.
     projects: {
       title: "Projects",
-      purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
-      emptyTitle: "I can't list projects on this page yet.",
-      emptyBody: "When I can, every project I hold appears here, and the projects you follow come first.",
-      link: "Go to Data",
+      purpose: "These are the projects I have records for. Open a project ID to see its Procurement Plans.",
     },
     project: {
       title: "Project {pid}",
-      purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
-      emptyTitle: "I can't show project {pid} on this page yet.",
-      emptyBody: "When I can, this page shows the project's procurement, its reports in date order and its documents.",
-      link: "Go to Projects",
+      purpose: "This page shows what I hold about one project. Each tab shows one part of it.",
+    },
+    checkPlan: {
+      title: "Plan check, {pid}",
+      purpose: "I check every activity in one implementing agency's Procurement Plan.",
     },
     activity: {
       title: "Activity {stepRef}",
@@ -334,6 +334,236 @@ export const copy = {
   table: {
     showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
+    showingOne: (noun: string) => `Showing 1 ${noun}`,
+  },
+
+  // A list in a sentence: "A", "A and B", or "A, B and C", with no serial comma.
+  list: {
+    comma: ", ",
+    and: " and ",
+  },
+  // External links end their accessible name with this (DESIGN.md section 10).
+  newTab: "(opens in a new tab)",
+
+  // A blank STEP value. Never an em dash or an en dash.
+  notInPlan: "Not in the plan",
+  // A blank in a projects API record.
+  notInRecord: "Not in the record",
+
+  // The trail above a project's pages (the 10 brief, sections 2 and 3).
+  breadcrumb: {
+    label: "Breadcrumb",
+    projects: "Projects",
+    project: "{name} ({pid})",
+    // While the project's name loads, or when it could not load.
+    projectId: "Project {pid}",
+    procurement: "Procurement",
+    plan: (date: string) => `Plan of ${date}`,
+  },
+
+  // A request every page can meet: the data service did not answer, or the viewer can't read.
+  service: {
+    reference: "If it fails again, send the data team this reference: {reference}.",
+    permissionBody: "Ask your workspace admin for read access to the strata catalog.",
+  },
+
+  // All projects (the 10 brief, section 4).
+  projectsPage: {
+    tableTitle: "All projects",
+    noun: "projects",
+    loading: "Loading projects.",
+    columns: { project: "Project", country: "Country", status: "Status" },
+    // The page size, from PAGE_SIZE in web/src/pages/ProjectsPage.tsx.
+    more: (count: string) => `Show ${count} more`,
+    source: "World Bank projects API, records through {date}.",
+    sourceUndated: "World Bank projects API.",
+    emptyTitle: "I don't have any project records yet.",
+    emptyBody:
+      "Projects appear here after the next data run reads them from the World Bank's projects API. Data readiness " +
+      "shows when each source last ran.",
+    emptyLink: "Data readiness",
+    error: "I couldn't load the list of projects because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't list the projects.",
+  },
+
+  // A project's page and its Procurement tab (the 10 brief, section 3).
+  projectPage: {
+    label: { id: "Project ID", country: "Country", status: "Status", agency: "Implementing agency", agencies: "Implementing agencies" },
+    // Two agency names hold commas, so the agencies are set apart with semicolons.
+    agencyJoin: "; ",
+    // The agencies keep to two lines; these open and close the rest.
+    allAgencies: "Show all agencies",
+    fewerAgencies: "Show fewer agencies",
+    sections: "Project sections",
+    tab: { procurement: "Procurement" },
+    loading: "Loading this project.",
+    error: "I couldn't load this project's Procurement Plans because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this project.",
+    notFoundTitle: "I don't have a project with the ID {pid}.",
+    notFoundBody: "Check the ID, or find the project in All projects.",
+    notFoundLink: "All projects",
+  },
+  procurement: {
+    title: "Procurement Plans",
+    purpose:
+      "Each implementing agency keeps its own Procurement Plan and updates it. When you open a version, I check every " +
+      "activity in it.",
+    noun: "versions",
+    nounOne: "version",
+    columns: { version: "Version", disclosed: "Disclosed", activities: "Activities" },
+    versionLink: (date: string) => `Plan of ${date}`,
+    latest: "Latest",
+    notRead: "Not read",
+    unreadNote:
+      "I read the latest version, the one before it and the earliest version that lists each activity. I list the " +
+      "other versions but haven't read them.",
+    source: "World Bank documents and reports API, Procurement Plans for {pid}, through {date}.",
+    sourceUndated: "World Bank documents and reports API, Procurement Plans for {pid}.",
+    agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
+    // Two or more agencies with no plan share one block after the agencies with plans.
+    otherAgencies: "Other implementing agencies",
+    othersEmpty: "I don't have a Procurement Plan from these agencies yet:",
+    projectEmptyTitle: "I don't have a Procurement Plan for this project yet.",
+    projectEmptyBody:
+      "I can check a plan only after the World Bank discloses it and I have read it. Data readiness shows how much of " +
+      "each source I have read.",
+    projectEmptyLink: "Data readiness",
+  },
+
+  // Check a plan (the 10 brief, section 2). Counts are the tool's; the screen counts nothing.
+  checkPlan: {
+    // The plan's date, under the agency's name. {date} stays on one line.
+    subtitle: "Procurement Plan of {date}",
+    // The h1 when the agency's name is not known.
+    agencyUnknown: "Procurement Plan",
+    pill: (total: number, totalText: string) => (total === 1 ? "1 activity checked" : `${totalText} activities checked`),
+    pillPartial: (checked: string, total: string) => `${checked} of ${total} activities fully checked`,
+    // The finding: the first part, then the notes part, then the full stop. {look}, {watch} and
+    // {notes} are the tool's counts, in words.
+    finding: {
+      lookAndWatch: (look: number, watch: number) =>
+        `{look} ${look === 1 ? "needs" : "need"} a look and {watch} ${watch === 1 ? "is" : "are"} worth watching`,
+      lookOnly: (look: number) => `{look} ${look === 1 ? "needs" : "need"} a look`,
+      watchOnly: (watch: number) => `No activity needs a look, but {watch} ${watch === 1 ? "is" : "are"} worth watching`,
+      none: "No activity needs a look or is worth watching",
+      notes: (notes: number) => (notes === 1 ? "; {notes} has a data note" : "; {notes} have data notes"),
+      end: ".",
+    },
+    method:
+      "I checked every activity against {checks}. I measure delay from the first published planned date, because " +
+      "each plan update can move the planned dates.",
+    checks: {
+      own_dates: "its own dates",
+      estimate: "its estimate",
+      closing_date: "the project's closing date",
+    },
+    partial: (count: number) =>
+      count === 1
+        ? "I couldn't fully check {count} activity; its row says why."
+        : "I couldn't fully check {count} activities; their rows say why.",
+    noClosingDate: "I didn't check any activity against the project's closing date, because the project record has none.",
+    countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities`,
+    noun: "activities",
+    caption: (agency: string, date: string) => `Activities in the ${agency} plan of ${date}, marked activities first`,
+    columns: {
+      activity: "Activity",
+      method: "Method · market approach",
+      review: "Review",
+      estimated: "Estimated (US$)",
+      status: "Process status",
+      found: "What Strata found",
+    },
+    // "Request for Bids · Open - National", as STEP gives the two values. The dot is tied to the
+    // Method with a no-break space, so a line never starts with it.
+    methodDot: "\u00a0·",
+    noSignals: "No signals.",
+    foundDefinition:
+      "Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, " +
+      "never a finding. {lookRule} {watchRule} A data note means the record is missing a value or contradicts itself.",
+    // {amount} is the threshold in rule 11's text form ("1 million"), since no one looks it up in STEP.
+    lookRule:
+      "An activity needs a look when its planned completion passed with no signed contract. I mark it only when its " +
+      "estimate is US${amount} or more, or when the plan gives no estimate.",
+    watchRule:
+      "An activity is worth watching when it is still pending {days} days or fewer before the project closes, or " +
+      "after the project closed. It is also worth watching when it was signed at {ratio} times its estimate or more.",
+    // The fold under the marked rows. Up to fold.listUpTo references are named in the sentence.
+    fold: {
+      listUpTo: 3,
+      listed: (count: number) =>
+        count === 1 ? "{count} more activity has no signals: {refs}." : "{count} more activities have no signals: {refs}.",
+      counted: "{count} more activities have no signals.",
+      show: (count: number) => (count === 1 ? "Show it" : "Show them"),
+      hide: (count: number) => (count === 1 ? "Hide it" : "Hide them"),
+    },
+    notVisible:
+      "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
+      "Those stay in STEP.",
+    source: {
+      plan: "Procurement Plan, {agency}, {pid}, version of {date}, disclosed {disclosed}.",
+      closing: "Project closing date from the World Bank's projects API, record of {date}.",
+      // {date} is the date the page reads the records as of, not a date the checks ran.
+      marks: "Marks from Strata's fixed checks, as of {date}.",
+      open: "The plan on the World Bank's documents site",
+    },
+    // The visually hidden status that announces steps, not rows.
+    status: {
+      checking: "Checking this plan.",
+      checked: (count: string) => `Checked ${count} activities.`,
+      checkedOne: "Checked 1 activity.",
+    },
+    stillChecking: "Still checking this plan.",
+    // What each number in a reason or the finding is, in its tooltip.
+    explain: {
+      firstPlannedSigning: "Planned signing date, as first published",
+      inPlanOf: "{date}, in the plan of {plan}",
+      signed: "Contract signed",
+      daysBetween: "Days between them",
+      actual: "Actual Amount (US$)",
+      estimated: "Estimated Amount (US$)",
+      divided: "Actual divided by estimated",
+      closing: "Project closing date",
+      closingRecord: "{date}, from the projects API record of {record}",
+      asOf: "Checked as of",
+      counted: "The activities I counted:",
+    },
+    // One sentence per reason code check_plan returns (config/tools.toml, [tools.check_plan.result]).
+    reason: {
+      completion_passed_no_contract: "Planned completion {date} passed with no signed contract.",
+      projectCloses: "The project closes {date}.",
+      projectClosed: "The project closed {date}.",
+      pending_near_closing: (days: number) =>
+        days === 1 ? "Still pending, {days} day before the project closes." : "Still pending, {days} days before the project closes.",
+      pending_on_closing_day: "Still pending on the day the project closes.",
+      pending_after_closing: "Still pending after the project closed on {date}.",
+      signed_late_over_estimate: (days: number) =>
+        (days === 1 ? "Signed {date}, {days} day after its planned date, " : "Signed {date}, {days} days after its planned date, ") +
+        "at US${actual}, about {ratio} times its estimate.",
+      signed_over_estimate: "Signed {date} at US${actual}, about {ratio} times its estimate.",
+      method_differs_from_reference:
+        "The reference ends in {code} ({referenceMethod}), but the Method column says {method}. I use the Method column.",
+      actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
+      no_planned_date: "The plan gives no planned date for {step}, so I couldn't check its timing.",
+      no_estimate: "The plan gives no Estimated Amount, so I couldn't compare the signed amount with it.",
+    },
+    // The states a plan check can end in, other than its rows (the 10 brief, section 6).
+    noPlanTitle: (agency: string) => `I don't have a Procurement Plan from ${agency} yet.`,
+    noPlanTitleUnnamed: "I don't have a Procurement Plan from this agency yet.",
+    noPlanBody: "I can check a plan only after the World Bank discloses it and I have read it.",
+    allPlans: "All Procurement Plans for this project",
+    noActivitiesTitle: "I found no activities in this plan.",
+    noActivitiesBody:
+      "The plan may have no activity table, or I may have misread its pages. Data readiness shows how well I read the " +
+      "documents from each source.",
+    dataReadiness: "Data readiness",
+    notFoundTitle: (date: string) => `I don't have a plan from this agency dated ${date}.`,
+    notFoundBody: (date: string) => `The latest plan I have from this agency is dated ${date}.`,
+    notPublicTitle: (date: string) => `I can't show this plan as of ${date}.`,
+    notPublicBody: (date: string) => `The World Bank disclosed it on ${date}, after that date.`,
+    noPlanAsOfTitle: (date: string) => `I have no plan from this agency that was public on ${date}.`,
+    latestLink: (date: string) => `Plan of ${date}`,
+    error: "I couldn't load this plan's check because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this plan.",
   },
 
   // The Data readiness page (the 16 design brief). Every number on it comes from the
@@ -747,5 +977,8 @@ export const copy = {
     overNinetyNinePercent: "more than 99 percent",
     overNinetyNinePercentShort: ">99%",
     countWithFrequency: (count: string, frequency: string) => `${count}, ${frequency}`,
+    // An amount in a sentence (rule 11): "12.5 million", "2 billion".
+    million: (n: string) => `${n} million`,
+    billion: (n: string) => `${n} billion`,
   },
 } as const;

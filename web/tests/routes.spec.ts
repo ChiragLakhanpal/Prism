@@ -1,5 +1,5 @@
-// Every route of docs/PLAN.md section 8 except the deck and the Data tab, whose pages ticket 16
-// filled (tests/data.spec.ts) (seam 4, ticket 06): each states its title
+// Every route of docs/PLAN.md section 8 except the deck, the pages ticket 10 built and the Data
+// tab, whose pages ticket 16 filled (tests/data.spec.ts) (seam 4, ticket 06): each states its title
 // and its purpose, shows the empty state that says what will appear there, and sits in the frame
 // with the footer. Unknown addresses show a not-found page in the same frame. The words are the
 // 06 design brief's, copied here so the test checks the copy file against an independent source.
@@ -54,28 +54,7 @@ export const ROUTES: Route[] = [
       link: ["Go to Packages", "/packages"],
     },
   },
-  {
-    path: "/projects",
-    h1: "Projects",
-    tab: "Projects",
-    purpose: "Find a World Bank-financed project by its name, project ID or loan number, and follow the projects you work on.",
-    empty: {
-      title: "I can't list projects on this page yet.",
-      body: "When I can, every project I hold appears here, and the projects you follow come first.",
-      link: DATA_LINK,
-    },
-  },
-  {
-    path: "/projects/P130164",
-    h1: "Project P130164",
-    tab: "Projects",
-    purpose: "This page shows what I hold about one project: its summary, procurement, timeline, documents and connections.",
-    empty: {
-      title: "I can't show project P130164 on this page yet.",
-      body: "When I can, this page shows the project's procurement, its reports in date order and its documents.",
-      link: ["Go to Projects", "/projects"],
-    },
-  },
+  // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
   {
     path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
     h1: "Activity IN-RRSMP-7431-CW-RFB",
@@ -195,11 +174,19 @@ test("IDs from the address render in Roboto Mono", async ({ page }) => {
   ]);
 });
 
-test("a lowercase p in a project ID is read as P, and the address is rewritten in place", async ({ page }) => {
-  await open(page, "/projects/p130164");
+test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
+  for (const width of [390, 768, 1024, 1279]) {
+    await open(page, "/packages/KE-NWWDA-541055-CW-RFB", width);
+    const id = page.locator("[data-empty-state] h2").getByText("KE-NWWDA-541055-CW-RFB");
+    expect(await id.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(1);
+  }
+});
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Project P130164");
-  expect(new URL(page.url()).pathname).toBe("/projects/P130164");
+test("a lowercase p in a project ID is read as P, and the address is rewritten in place", async ({ page }) => {
+  await open(page, "/projects/p130164/packages/IN-RRSMP-7431-CW-RFB");
+
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Activity IN-RRSMP-7431-CW-RFB");
+  expect(new URL(page.url()).pathname).toBe("/projects/P130164/packages/IN-RRSMP-7431-CW-RFB");
 });
 
 test("a tab opens its page without reloading, moves focus to the new title and updates the page title", async ({ page }) => {

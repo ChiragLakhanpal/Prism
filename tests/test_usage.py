@@ -237,3 +237,20 @@ def test_a_request_that_breaks_in_a_way_the_server_did_not_expect_still_writes_i
     assert span.attributes["http.response.status_code"] == 500
     assert [row[:2] + row[4:5] for row in events(ops)] == [
         ("4021@1984", "/api/projects/P156634/procurement/AGENCY-1", reference)]
+
+
+def test_an_address_no_file_can_have_still_gets_the_frame_or_a_404_and_writes_one_usage_event(ops, tmp_path):
+    # A NUL byte, or a name over 255 bytes in a first segment or under assets/, cannot name a file,
+    # so the server answers as it does for any other address that is not one of the app's files.
+    web = tmp_path / "web"
+    (web / "assets").mkdir(parents=True)
+    (web / "index.html").write_text("index")
+    usage = UsageLog(lambda: DuckDBEngine.open(ops), flush_seconds=None)
+    long = "a" * 256
+    pages = ["/projects/P1%00x", f"/{long}", f"/assets/{long}"]
+
+    responses = serve(create_app(usage=usage, web_dist=web), [(path, ANA) for path in [*pages, "/api/me%00"]])
+
+    assert [(response.status_code, response.text) for response in responses[:3]] == [(200, "index")] * 3
+    assert (responses[3].status_code, responses[3].json()) == (404, {"detail": "Not Found"})
+    assert len(events(ops)) == 4

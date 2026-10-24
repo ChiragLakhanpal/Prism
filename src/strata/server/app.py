@@ -16,6 +16,10 @@
   answer the runner hands over, so no runner can send a sentence the checks did not see. A run that
   breaks ends with an error event whose details stay in the server log. Each run is written to
   strata.ops.agent_runs (src/strata/agent/runs.py).
+- GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
+  gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
+  projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
+  unknown_project.
 - GET /api/data/readiness runs the tool registry's data_readiness_for as the viewer, for every
   source or for ?sources= (registry keys, separated by commas) from the coverage line of ?from=, as
   of ?asof=. It answers like the stamp when it cannot: 401, 403 with the code permission, 504 with
@@ -62,7 +66,7 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
-from strata.server import engines, tracing
+from strata.server import engines, projects, tracing
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
@@ -131,8 +135,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         """The built web app's file at this address, if there is one inside it."""
         if web is None:
             return None
-        candidate = (web / path.lstrip("/")).resolve()
-        return candidate if candidate.is_file() and web in candidate.parents else None
+        try:
+            candidate = (web / path.lstrip("/")).resolve()
+            return candidate if candidate.is_file() and web in candidate.parents else None
+        except (OSError, ValueError):  # an address no file can have: a NUL byte, or a name over 255 bytes
+            return None
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -202,27 +209,49 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return refused(502, "unreadable")
         return JSONResponse(answer(value), headers={"Cache-Control": "no-store"})
 
-    def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
-        """One tool call as the viewer, or the error a page can show: a bad request, permission, a tool
-        that broke its contract, or the data service. The last two keep their details in the server log
-        and give the page a reference to it."""
+    def read_for(what: str, viewer: Viewer, read: Callable[[Engine], object]):
+        """One read as the viewer, or the error a page can show: permission, or the data service,
+        which keeps its details in the server log and gives the page a reference to it."""
         if engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         try:
             with engine_for(viewer) as engine:
-                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of))
-        except registry.ToolError as error:  # a view or an argument the tool does not take
-            return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
+                return read(engine)
         except PermissionDenied:
             return JSONResponse({"code": "permission"}, status_code=403)
-        except registry.ToolContractError:
-            reference = request_reference()
-            log.exception("The tool %s broke its contract, reference %s.", name, reference)
-            return JSONResponse({"code": "tool_contract", "trace_id": reference}, status_code=500)
         except EngineError:
             reference = request_reference()
-            log.exception("The data service failed on %s, reference %s.", name, reference)
+            log.exception("The data service failed on %s, reference %s.", what, reference)
             return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+
+    def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
+        """One tool call as the viewer, or the error a page can show: a bad request, permission, a tool
+        that broke its contract, or the data service. The last two keep their details in the server log
+        and give the page a reference to it."""
+        def call(engine: Engine):
+            try:
+                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of))
+            except registry.ToolError as error:  # a view or an argument the tool does not take
+                return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
+            except registry.ToolContractError:
+                reference = request_reference()
+                log.exception("The tool %s broke its contract, reference %s.", name, reference)
+                return JSONResponse({"code": "tool_contract", "trace_id": reference}, status_code=500)
+        return read_for(name, viewer, call)
+
+    @app.get("/api/projects")
+    def list_projects(asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        as_of = asof or registry.today()
+        return read_for("all projects", viewer, lambda engine: projects.all_projects(engine, as_of))
+
+    @app.get("/api/projects/{project_id}")
+    def open_project(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        as_of = asof or registry.today()
+
+        def read(engine: Engine):
+            found = projects.project_page(engine, project_id, as_of)
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"project {project_id}", viewer, read)
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
     def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",

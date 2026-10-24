@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 5 (Citation marker, Evidence card, Evidence drawe
 
 **Blocked by:** 10 (Check a plan, on screen, for the NWWDA plan); 13 (One cited answer through the Foundry agent and the verifier)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P1
 **Design review:** yes
@@ -22,3 +22,4 @@ Read first: DESIGN.md sections 5 (Citation marker, Evidence card, Evidence drawe
 ## Comments
 
 - October 23, 2026, orchestrator: ticket 13 landed in build/strata (merge commit c42d9ce) with items that touch your screen. First, fix its verify finding F1 before the check line shows on screen: in `src/strata/agent/verifier.py`, `check()` counts a quote as found when its passage did not come back this turn, so the check line can read "2 of 2 quotes are on their pages" while sources read 0 of 2 returned; the fix is `quote_found=quoted and not quote_reasons and (quote is None or span is not None)`, with a test that the showcase case as of 2019-10-15 gives quotes found 0 of 2 (`.notes/13-verify-r5.md`). Second, the App's deploy (`ops/app/app.yaml` and `ops/app/deploy_app.py`) does not pass the four FOUNDRY keys to the App, so the deployed `/api/ask` says there is no agent, and two of those keys are missing from the example environment file; add them with the deploy change, and park the live check as a workspace step. Third, 13's stream is recorded in `tests/fixtures/api/ask-p130164-rebidding.sse` byte for byte; the panel must play that recording in its tests, and the check line's counts (sentences kept, numbers, dates, quotes, sources) come from the stream, never from the browser. Ticket 13's done comment lists six parked decisions about what counts as a number or a quote; keep them as built.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/14-one-box-answer-panel-and-drawer, as soon as ticket 10 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

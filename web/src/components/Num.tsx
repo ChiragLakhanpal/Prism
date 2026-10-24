@@ -20,7 +20,7 @@ import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 
 export type NumValue =
   | { value: number; options?: NumberOptions }
-  | { count: number }
+  | { count: number; capital?: boolean }
   | { year: number }
   // today, an ISO date, decides whether a short date needs its year; the browser's date when unset.
   | { date: string; style?: DateStyle; today?: string }
@@ -39,7 +39,7 @@ export type NumCheck = {
 
 export function numText(num: NumValue): string {
   if ("value" in num) return formatNumber(num.value, num.options);
-  if ("count" in num) return formatCount(num.count);
+  if ("count" in num) return formatCount(num.count, { capital: num.capital });
   if ("year" in num) return formatYear(num.year);
   if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
   if ("share" in num) return formatToolShare(num.share, { style: num.style }).text;
@@ -65,12 +65,15 @@ function written(num: NumValue, text: string): ReactNode {
   );
 }
 
+// A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
+const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence") === "sentence";
+
 export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
   const text = numText(num as NumValue);
   const body = written(num as NumValue, text);
   if (!check) {
     return (
-      <span data-num className={cx("tabular-nums", className)}>
+      <span data-num className={cx("tabular-nums", sentenceDate(num as NumValue) && "whitespace-nowrap", className)}>
         {body}
       </span>
     );

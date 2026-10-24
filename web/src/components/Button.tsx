@@ -13,7 +13,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "active:border-primary-pressed active:bg-primary-pressed",
   secondary:
     "border-primary bg-surface text-primary hover:bg-tint active:border-primary-pressed active:bg-tint active:text-primary-pressed",
-  ghost: "border-transparent bg-transparent text-primary hover:bg-tint-hover active:bg-tint active:text-primary-pressed",
+  // Its hover fill is added below: tint-hover on a surface, tint on the page background.
+  ghost: "border-transparent bg-transparent text-primary active:bg-tint active:text-primary-pressed",
 };
 
 // Disabled: ink-muted text, which is 5.67:1 on surface-2 and 6.69:1 on surface. Primary and
@@ -48,6 +49,9 @@ export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   // 12 px, inside the 16 px padding of the smallest card. A flush button carries an icon, so
   // its spinner takes the icon's place and loading does not change its width.
   flush?: boolean;
+  // A ghost button on the page background, such as "Show them" in the plan check's fold row:
+  // tint-hover barely shows on page, so it hovers to tint.
+  onPage?: boolean;
 };
 
 export function Button({
@@ -57,6 +61,7 @@ export function Button({
   loading = false,
   iconOnly = false,
   flush = false,
+  onPage = false,
   className,
   children,
   onClick,
@@ -78,6 +83,7 @@ export function Button({
         "transition-paint duration-150 select-none",
         iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2" : loading && !Icon ? "px-3" : "px-6",
         VARIANTS[variant],
+        variant === "ghost" && (onPage ? "hover:bg-tint" : "hover:bg-tint-hover"),
         DISABLED[variant],
         loading && "cursor-progress",
         className,

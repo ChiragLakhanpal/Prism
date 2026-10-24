@@ -19,12 +19,14 @@ for (const shot of SHOTS) {
         responses[path] = { status: answer.status, body: answer.recorded ? await recorded(answer.recorded) : (answer.body ?? "") };
       }
       await mockApi(page, responses);
+      // A path the shot holds never answers, so its page stays in its loading state.
+      for (const path of shot.pending ?? []) await page.route(`**${path}`, () => undefined);
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`${base}${shot.path}`);
       await page.locator("main").waitFor();
       await page.evaluate(() => document.fonts.ready);
       if (shot.act) await shot.act(page);
-      await page.screenshot({ path: `${OUT}/${shot.name}--${width}.png`, fullPage: !shot.act, animations: "disabled" });
+      await page.screenshot({ path: `${OUT}/${shot.name}--${width}.png`, fullPage: shot.full ?? !shot.act, animations: "disabled" });
     });
   }
 }

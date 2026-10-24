@@ -11,6 +11,7 @@ ticket. They are never computed the way the tool computes them.
 """
 
 import datetime as dt
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -297,8 +298,9 @@ def test_check_plan_marks_each_activity_of_the_october_9_plan_as_the_wireframe_d
     # The plan lists a ninth activity the wireframe leaves out. The tool checks every activity.
     expected |= {reference: [] for reference in TRUTH["plan"]["also_lists"]}
     assert marks(result) == expected
-    assert result["counts"] == {"activities": 9, "checked": 9, "needs_a_look": 1, "watch": 2, "data_note": 3,
-                                "unmarked": 3}
+    # The screen shows the marked rows and folds the rest, so the counts say how many of each there are.
+    assert result["counts"] == {"activities": 9, "checked": 9, "not_fully_checked": 0, "needs_a_look": 1, "watch": 2,
+                                "data_note": 3, "marked": 6, "unmarked": 3}
     assert result["plan"]["plan_date"] == "2026-10-09"
     assert result["abstention"] is None
 
@@ -441,6 +443,16 @@ def test_an_agency_with_no_plan_gets_an_abstention_that_lists_the_agencies_with_
                                "latest_plan_date": "2026-10-09"}
 
 
+def test_an_agency_with_no_plan_named_by_its_id_is_named_in_full_when_the_project_record_names_it(engine):
+    # The screen's empty state names the agency ("I don't have a Procurement Plan from ... yet."),
+    # and the projects API's record for P156634 lists Wajir Water and Sewerage Company.
+    result = check_plan(engine, implementing_agency="wajir-water-and-sewerage-company", as_of="2026-10-22")
+    unknown = check_plan(engine, implementing_agency="no-such-agency", as_of="2026-10-22")
+
+    assert result["abstention"]["agency_name"] == "Wajir Water and Sewerage Company"
+    assert unknown["abstention"]["agency_name"] is None
+
+
 def test_an_agency_can_be_named_by_its_id_from_an_earlier_result(engine):
     result = check_plan(engine, implementing_agency="northern-water-works-development-agency", as_of="2026-10-22")
 
@@ -492,7 +504,7 @@ def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked
     assert marks(result) == {"XX-MADE-1-CW-RFB": ["data_note"], "XX-MADE-2-GO-RFQ": ["data_note"]}
     assert set(reasons(result, "XX-MADE-1-CW-RFB")) == {"no_planned_date"}
     assert set(reasons(result, "XX-MADE-2-GO-RFQ")) == {"no_estimate"}
-    assert result["counts"]["checked"] == 0
+    assert (result["counts"]["checked"], result["counts"]["not_fully_checked"]) == (0, 2)
     assert (result["coverage"]["matched"], result["coverage"]["used"]) == (2, 0)
     assert {(item["reason"], item["count"]) for item in result["coverage"]["not_used"]} == {
         ("no_planned_date", 1), ("no_estimate", 1)}
@@ -641,3 +653,16 @@ def test_before_the_project_record_was_last_updated_its_closing_date_is_not_used
     assert "closing_date" not in result["checks_run"]
     assert not any(reason.get("closing_date") for row in result["rows"] for mark in row["marks"]
                    for reason in mark["reasons"])
+
+
+def test_every_reason_code_check_plan_may_return_has_a_sentence_in_the_screen_s_copy_file():
+    """A code added to the registry without a copy sentence would show a badge with no reason."""
+    copy = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_text()
+    check_plan = copy[copy.index("\n  checkPlan: {"):]  # the screen's words, not pages.checkPlan's title
+    reasons = check_plan[check_plan.index("\n    reason: {"):]
+    reasons = reasons[:reasons.index("\n    },")]
+    sentences = set(re.findall(r"^ {6}(\w+):", reasons, flags=re.MULTILINE))
+
+    codes = config.load_tools()["check_plan"].result.reasons
+    assert codes
+    assert set(codes) - sentences == set()

@@ -1,0 +1,36 @@
+{
+  "tool": "check_plan",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "plan": null,
+  "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "status": "Active",
+    "closing_date": "2026-10-31",
+    "record_date": "2024-04-24",
+    "days_to_close": 9
+  },
+  "checks_run": [],
+  "thresholds": {
+    "completion_passed_min_estimated_usd": "1000000.00",
+    "days_before_closing": 90,
+    "actual_to_estimate_ratio": "2.0"
+  },
+  "counts": null,
+  "abstention": {
+    "reason": "version_not_found",
+    "plan_date": "2026-10-10",
+    "implementing_agency": "Northern Water Works Development Agency",
+    "agency_id": "northern-water-works-development-agency",
+    "latest_plan_date": "2026-10-09"
+  }
+}
