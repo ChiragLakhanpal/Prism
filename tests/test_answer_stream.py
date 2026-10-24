@@ -165,6 +165,18 @@ def test_a_quote_that_is_not_word_for_word_on_its_page_is_removed(ask_case):
     assert checks["numbers"] == {"total": 4, "matched": 2}
 
 
+def test_a_quote_whose_passage_did_not_come_back_is_never_counted_as_on_its_page(ask_case):
+    """As of October 15, 2019 the ICR of October 10, 2019 was not yet public (from November 2, 2019), so
+    no tool returned paragraphs 54 or 55. Neither quote was compared with any page, so the check line
+    may not say they are on their pages."""
+    parsed, _ = ask_case("p130164-rebidding", asof=dt.date(2019, 10, 15))
+
+    checks = of(parsed, "checks")[0]
+    assert checks["sources"] == {"total": 2, "returned": 0}
+    assert checks["quotes"] == {"total": 2, "found": 0}
+    assert checks["sentences"] == {"written": 3, "kept": 0, "removed": 3}
+
+
 def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_page(ask_case):
     """Check 3 reads the quote the person reads: the words in the sentence's quote marks must be in its
     quote, and its quote on the page. A number gets its support from the quote only from inside them."""

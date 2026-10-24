@@ -517,8 +517,11 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
         if found is None and not (inside is None and explained):
             reasons.append(Reason(1, NUMBER if mention.kind == "number" else DATE, mention.text))
     quoted = bool(spans) or quote is not None
+    # A quote counts as on its page only when its page was checked: a quote whose passage did not come
+    # back this turn was compared with nothing, so the check line may not count it.
+    on_page = quoted and not quote_reasons and (quote is None or span is not None)
     return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
-                   quoted=quoted, quote_found=quoted and not quote_reasons)
+                   quoted=quoted, quote_found=on_page)
 
 
 def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
