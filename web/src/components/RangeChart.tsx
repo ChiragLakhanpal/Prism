@@ -124,19 +124,29 @@ const sameBreaks = (a: Break[] | undefined, b: Break[]) =>
   a !== undefined && a.length === b.length && a.every((one, i) => one.at === b[i].at && Math.abs(one.before - b[i].before) < 0.5);
 
 // The widths of the svg text a label needs to stay inside the plot, each label's box for the knockout
-// drawn under it, and, for the labels that may take two lines, where each could break, read after each
-// render. A reader's text spacing (WCAG 1.4.12) is in all of them.
+// drawn under it, and, for the labels that may take two lines, where each could break. They are read
+// after each render, when the fonts arrive, and again when a label's size changes without a render, as
+// when a reader switches on text spacing (WCAG 1.4.12) after the chart is drawn.
 function useTextWidths(keys: string[], breakable: string[]) {
   const refs = useRef<Record<string, SVGTextContentElement | null>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [breaks, setBreaks] = useState<Record<string, Break[]>>({});
-  const [fontsReady, setFontsReady] = useState(0);
+  // Bumped to read the labels again when nothing else renders the chart.
+  const [measure, setMeasure] = useState(0);
+  const observer = useRef<ResizeObserver | null>(null);
   useEffect(() => {
     let live = true;
-    document.fonts?.ready.then(() => live && setFontsReady((n) => n + 1));
+    document.fonts?.ready.then(() => live && setMeasure((n) => n + 1));
+    // The labels attached before this ran, or again after React's StrictMode ran it twice.
+    if (typeof ResizeObserver !== "undefined") {
+      const watch = (observer.current ??= new ResizeObserver(() => setMeasure((n) => n + 1)));
+      for (const element of Object.values(refs.current)) if (element) watch.observe(element);
+    }
     return () => {
       live = false;
+      observer.current?.disconnect();
+      observer.current = null;
     };
   }, []);
   useLayoutEffect(() => {
@@ -162,10 +172,22 @@ function useTextWidths(keys: string[], breakable: string[]) {
     setBoxes((now) => (keys.every((key) => sameBox(now[key], nextBoxes[key])) ? now : nextBoxes));
     setBreaks((now) => (breakable.every((key) => sameBreaks(now[key], nextBreaks[key])) ? now : nextBreaks));
   });
-  void fontsReady;
-  const ref = useCallback((key: string) => (element: SVGTextContentElement | null) => {
-    refs.current[key] = element;
-  }, []);
+  void measure;
+  // One callback per label, kept across renders, so React attaches it only when its element changes,
+  // and each element is observed once.
+  const callbacks = useRef<Record<string, (element: SVGTextContentElement | null) => void>>({});
+  const ref = useCallback(
+    (key: string) =>
+      (callbacks.current[key] ??= (element: SVGTextContentElement | null) => {
+        const old = refs.current[key];
+        refs.current[key] = element;
+        if (old === element || typeof ResizeObserver === "undefined") return;
+        observer.current ??= new ResizeObserver(() => setMeasure((n) => n + 1));
+        if (old) observer.current.unobserve(old);
+        if (element) observer.current.observe(element);
+      }),
+    [],
+  );
   return { widths, boxes, breaks, ref };
 }
 
