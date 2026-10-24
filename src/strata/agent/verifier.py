@@ -6,7 +6,7 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
    rounding, or appears inside the sentence's quote from a cited passage that is not a table summary.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
-   still checked. A passage backs only its dates, such as its report's date: its text is never a
+   still checked, and so is a number written as a word ("six", or "one" as a count). A passage backs only its dates, such as its report's date: its text is never a
    value, and its page, paragraph and version numbers say where it is, not what the report counted,
    so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
@@ -88,6 +88,10 @@ STANDALONE_NUMBER = re.compile(r"(?<![\w.,:/-])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d
 # A World Bank fiscal year, FY2019 or FY19: a number a row must hold, such as a fiscal_year column.
 FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
+# DESIGN.md section 7 writes one to nine in words. "One" is also a pronoun ("one lesson", "no one"), so it
+# is a number only as a count: "one of 37", "one in 10".
+WORDS = ("two", "three", "four", "five", "six", "seven", "eight", "nine")
+NUMBER_WORD = re.compile(r"\b(" + "|".join(WORDS) + r")\b|\b(one)(?= (?:of|in) (?:the )?\d)", re.I)
 
 
 def mentions(text: str) -> list[Mention]:
@@ -112,6 +116,12 @@ def mentions(text: str) -> list[Mention]:
         if free(*match.span()):
             year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
             found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
+    for match in NUMBER_WORD.finditer(text):
+        if not free(*match.span()):
+            continue
+        word = match.group(0)
+        found.append(Mention("number", word, Decimal(1 if word.lower() == "one" else WORDS.index(word.lower()) + 2),
+                             *match.span()))
     for match in STANDALONE_NUMBER.finditer(text):
         if not free(*match.span()):
             continue

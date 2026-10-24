@@ -310,6 +310,22 @@ def test_a_fiscal_year_is_a_number_a_record_must_hold():
         ("number_not_in_records", "FY2019")]
 
 
+def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
+    """DESIGN.md section 7 writes one to nine in words, so "six" is checked like 6. "One" is checked only
+    as a count ("one of 37"), because it is also a pronoun ("one lesson")."""
+    def claim(sentence):
+        return {"sentence": sentence, "kind": "summary", "evidence_ids": [], "numbers": [], "dates": [], "quote": None}
+
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
+        claim("Six works contracts were bid again."), claim("It was one of 37 packages."),
+        claim("One lesson was about estimates."), claim("No one said why.")), no_engine))))
+
+    assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
+        [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        "One lesson was about estimates.", "No one said why."]
+
+
 def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
     parsed, _ = ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(tmp_path / "no-tables.duckdb")))
 
