@@ -1,7 +1,7 @@
 -- The evidence each passing proposal rests on (ticket 29; docs/PLAN.md section 5): its own quote, and
 -- each restatement an ICR Review or PPAR made of the ICR paragraph it came from, once for each report
 -- number, from the newest version that restated it. A decided lesson rests on the evidence of every
--- proposal a lead added to it (strata.ops.lesson_evidence), so a restatement that arrives after the
+-- proposal a lead added to it (strata.ops.lesson_sources), so a restatement that arrives after the
 -- decision still reaches it. Rebuilt for each project with strata.silver.lesson_proposals.
 --
 -- proposal_id      the proposal (strata.silver.lesson_proposals)

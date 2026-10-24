@@ -10,8 +10,9 @@ reads only the environment it is given:
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
   service principal: usage events are written to strata.ops.usage_events, each answer stream's run
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
-  strata.ops.evidence_opened, and each decision or label a person gives a candidate pair of supplier
-  name matching to strata.ops.supplier_review_decisions or supplier_pair_labels, with its token.
+  strata.ops.evidence_opened, each decision or label a person gives a candidate pair of supplier
+  name matching to strata.ops.supplier_review_decisions or supplier_pair_labels, with its token. A
+  lesson reviewer's acts are written with the reviewer's own token instead (ticket 29).
   Without them, the server keeps no usage events, records no opened sources, decisions or labels, and
   runs go to the server log only.
 - FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET (the app's
@@ -41,7 +42,8 @@ from fastapi import FastAPI
 
 from strata.agent import runner as agent_runner
 from strata.agent.runs import RunLog
-from strata.config import load_thresholds
+from strata.config import load_roles, load_thresholds
+from strata.knowledge.lessons.review import LessonReview
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.server import engines, tracing
 from strata.server.app import create_app
@@ -109,5 +111,6 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       runs=RunLog(the_app) if the_app else None,
                       opened=OpenedLog(the_app) if the_app else None,
                       supplier_log=SupplierLog(the_app) if the_app else None,
+                      lessons=LessonReview(load_roles()),
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

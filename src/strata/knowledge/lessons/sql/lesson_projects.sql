@@ -1,0 +1,15 @@
+-- The projects lessons come from: name, country, region and sector, and the newest ICR Review or PPAR
+-- Strata holds for each, which says whether IEG has reviewed the project yet. :types holds the types IEG
+-- writes, joined by commas.
+SELECT
+  pr.project_id,
+  pr.project_name,
+  c.country_name,
+  pr.region,
+  pr.sector_name,
+  (SELECT max(d.document_date)
+   FROM strata.silver.documents AS d
+   WHERE d.project_id = pr.project_id AND array_contains(split(:types, ','), d.document_type)) AS ieg_reviewed_on
+FROM strata.gold.project AS pr
+LEFT JOIN strata.gold.country AS c ON c.country_code = pr.country_code
+WHERE pr.project_id IN (SELECT l.project_id FROM strata.silver.lesson_proposals AS l)
