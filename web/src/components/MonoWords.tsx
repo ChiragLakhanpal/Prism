@@ -3,8 +3,9 @@
 // line whole when it fits there, and breaks after a hyphen only when it is wider than the line, so
 // the page never scrolls sideways. A reference with a county's name, such as KE-THARAKA NITHI
 // COUNTY-428127-GO-RFQ, breaks at its spaces first. The text after it, such as a full stop, stays in
-// the last part's box, so it never starts a line. The scope chip and the package workspace's
-// not-found sentence both use it, so they wrap a reference the same way.
+// the last part's box, so it never starts a line. The scope chip, the package workspace's not-found
+// sentence, the past range's table and a dot's details on its chart all use it, so they wrap a
+// reference the same way.
 import { Fragment } from "react";
 import { cx } from "../lib/cx";
 

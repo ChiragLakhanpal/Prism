@@ -27,6 +27,7 @@ import { Button } from "./Button";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
 import { LoadError } from "./LoadError";
+import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { axisFor, chartType, RangeChart, type PlanMove, type RangeMark } from "./RangeChart";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
@@ -822,11 +823,13 @@ function ComparablesTable({
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
     cells: {
-      // A reference with no spaces keeps to one line from a page area of 1024 px; one with a county's name wraps at its spaces.
+      // A reference with a county's name breaks at its spaces first (MonoWords); one with no spaces
+      // keeps to one line in the table, which shows from a page area of 1024 px.
       package: (
-        <span className={cx("font-mono wrap-anywhere", !row.step_reference.includes(" ") && "@lg/page:whitespace-nowrap @lg/page:wrap-normal")}>
-          {row.step_reference}
-        </span>
+        <MonoWords
+          text={row.step_reference}
+          className={cx(!row.step_reference.includes(" ") && "@lg/page:whitespace-nowrap @lg/page:wrap-normal")}
+        />
       ),
       country: row.country_name ?? copy.notInRecord,
       notice: <span className="@lg/page:whitespace-nowrap">{tableDate(row.notice_date)}</span>,

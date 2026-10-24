@@ -1091,6 +1091,60 @@ test("from a page area of 1024 px the past range's table shows its rows, with ea
   expect(spaceless.filter(([, lines]) => lines !== 1)).toEqual([]);
 });
 
+// DESIGN.md section 5, Reference words: a reference with a county's name breaks at its spaces first,
+// as the scope chip and the not-found sentence break it. Each Roboto Mono part keeps to one line.
+async function countyParts(page: Page, selector: string) {
+  return page.locator(selector).evaluateAll((elements) =>
+    elements
+      .filter((element) => element.textContent!.includes("COUNTY"))
+      .map((element) => {
+        const mono = element.matches(".font-mono") ? [element] : [...element.querySelectorAll(".font-mono")];
+        const parts = mono.map((part) => {
+          const range = document.createRange();
+          range.selectNodeContents(part);
+          const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
+          return [part.textContent!, new Set(tops).size] as const;
+        });
+        return { reference: element.textContent!.trim(), parts };
+      }),
+  );
+}
+
+test("a reference with a county's name breaks only at its spaces, in a dot's details, the table and the cards", async ({ page }) => {
+  const whole = (found: Awaited<ReturnType<typeof countyParts>>, where: string) => {
+    expect(found.length, where).toBeGreaterThan(0);
+    for (const { reference, parts } of found) {
+      expect(parts.map(([part]) => part).join(" "), where).toBe(reference);
+      expect(parts.filter(([, lines]) => lines !== 1), `${where}: ${reference}`).toEqual([]);
+    }
+  };
+
+  // The shortest comparable, the first dot, is KE-MIGORI COUNTY-532367-CW-RFB.
+  await openPackage(page);
+  await ready(page);
+  await page.getByRole("slider").focus();
+  await page.keyboard.press("Tab");
+  await expect(page.locator("[data-dot-tooltip]")).toContainText("KE-MIGORI COUNTY-532367-CW-RFB");
+  whole(await countyParts(page, "[data-dot-tooltip] p:first-child"), "the dot's details");
+
+  for (const [width, view, selector] of [
+    [1024, "table", "tbody th"],
+    [320, "cards", "li > :first-child"],
+  ] as const) {
+    await openPackage(page, { width });
+    await ready(page);
+    await section(page).getByRole("button", { name: "Show the table" }).click();
+    await expect(section(page).locator(`[data-table-view=${view}]`)).toBeVisible();
+    const found = await countyParts(page, `[data-past-range] [data-table-view=${view}] ${selector}`);
+    expect(found.map(({ reference }) => reference), `${width} px`).toEqual([
+      "KE-MIGORI COUNTY-532367-CW-RFB",
+      "KE-UASIN GISHU COUNTY-571338-CW-RFB",
+      "KE-KAJIADO COUNTY-567787-CW-RFB",
+    ]);
+    whole(found, `${width} px, the ${view}`);
+  }
+});
+
 test("a plan row with no planned dates has no plan line until you type months", async ({ page }) => {
   await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);

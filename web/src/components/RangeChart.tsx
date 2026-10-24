@@ -23,6 +23,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
+import { MonoWords } from "./MonoWords";
 
 export type RangeMark = {
   key: string;
@@ -855,7 +856,8 @@ export function RangeChart({
           className="absolute z-10 w-max max-w-[240px] animate-fade-in cursor-text select-text rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{ left: tipLeft, top: tipTop, fontSize: type.s }}
         >
-          <p className={cx("font-semibold text-chart-text", tipFor.tip.mono && "font-mono wrap-anywhere")}>{tipFor.tip.header}</p>
+          {/* A STEP reference breaks at its spaces first, as everywhere on the page (MonoWords). */}
+          <p className="font-semibold text-chart-text">{tipFor.tip.mono ? <MonoWords text={tipFor.tip.header} /> : tipFor.tip.header}</p>
           <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
             {tipFor.tip.number}
           </p>
