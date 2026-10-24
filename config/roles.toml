@@ -1,0 +1,46 @@
+# The roles file: which workspace groups hold which roles in Strata, and the people in them.
+#
+# This is the one place a role is defined (CLAUDE.md rule 9; the spec's "Ten single places" puts the
+# roles file beside them). strata.config.load_roles() reads it, and the server decides from it, per
+# request, what the viewer may open and do: the viewer is the email the Databricks App forwards
+# (src/strata/dbx.py), never a value the page sends. Later tickets add to it: query judges and
+# passage reviewers (ticket 32), implementing agency teams (ticket 38), a [views] section (ticket 40),
+# the reviewing panel's group (ticket 41), each team's working language (ticket 42) and an operators
+# group (ticket 45).
+#
+# [groups.<key>], one per workspace group:
+#   workspace_group  the group's name in the Databricks workspace, which the deploy grants write
+#                    access to. The names below wait for the workspace (docs/workspace-catchup.md).
+#   role             what its members are called on reviewer pages, such as "lead procurement specialist"
+#   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review
+#   acts             what its members may do there: recommend, decide or cross_check a lesson
+#
+# [[people]], one per person in any group:
+#   email     the email the Databricks App forwards for them
+#   name      their name, shown only on reviewer-only pages (the 29 design brief, section 4.1)
+#   groups    the keys of the groups they belong to
+#   regions   the regions whose lessons they review, written word for word as strata.gold.project.region
+#             writes them, such as "South Asia" or "Eastern and Southern Africa"
+#   projects  the projects they work on, by project ID. They never recommend or decide on a lesson
+#             from one of these (recusal, docs/PLAN.md section 11).
+#
+# Lesson governance (docs/PLAN.md section 11): an accredited procurement specialist recommends, and a
+# lead procurement specialist decides, by delegation from the region's accredited practice manager.
+# A lead may also recommend, and then a different lead decides. Either may cross-check another
+# region's decisions when the quarterly job assigns them.
+#
+# The people are left out until the owner names them (a parked decision), so until then no one is a
+# lesson reviewer and the review queue stays hidden. tests/fixtures/roles.toml lists the made-up
+# reviewers the offline tests use.
+
+[groups.accredited_procurement_specialist]
+workspace_group = "strata-accredited-procurement-specialists"
+role = "accredited procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "cross_check"]
+
+[groups.lead_procurement_specialist]
+workspace_group = "strata-lead-procurement-specialists"
+role = "lead procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "decide", "cross_check"]

@@ -9,9 +9,11 @@
 // finds any. Tests pass --copy, --component, --glossary, --registry and --design to point it at
 // other files; Term's words are always looked up in the repo's GLOSSARY.md.
 //
-// Two more files hold words people read. The source registry, config/sources.toml, holds each
+// More files hold words people read. The source registry, config/sources.toml, holds each
 // source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
-// sentences), and every one is checked like the copy. src/strata/tools/data_readiness_copy.json is
+// sentences), and every one is checked like the copy. So are the lesson lists' labels
+// (config/lessons.toml), the editions' names (config/editions.toml) and the roles' names
+// (config/roles.toml), which the Lessons pages show (ticket 29). src/strata/tools/data_readiness_copy.json is
 // the server's copy of copy.dataReadiness.server, and the lint fails when it is out of date
 // (web/lint/server-copy.ts writes it again).
 import { readFileSync, readdirSync } from "node:fs";
@@ -42,7 +44,9 @@ function options(argv: string[]) {
     copy: given.copy ?? (custom ? [] : COPY_FILES),
     components: given.component ?? (custom ? [] : sourceFiles(join(WEB, "src")).filter((file) => !COPY_FILES.includes(file))),
     glossary: given.glossary ?? (custom ? [] : [join(REPO, "GLOSSARY.md")]),
-    registry: given.registry ?? (custom ? [] : [join(REPO, "config", "sources.toml")]),
+    registry:
+      given.registry ??
+      (custom ? [] : ["sources.toml", "lessons.toml", "editions.toml", "roles.toml"].map((name) => join(REPO, "config", name))),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
     custom,
   };
