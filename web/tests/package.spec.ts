@@ -244,25 +244,36 @@ test("the plan line never runs through a statistic's label: the label moves off 
   }
 });
 
-test("below 768 px the helper sits right under the input, and the reset button's held row comes after it", async ({ page }) => {
+test("below 768 px the reset button takes the helper's place while the line is off the plan, so the chart sits about 16 px under the control", async ({ page }) => {
   for (const width of [390, 320]) {
     await openPackage(page, { width });
     await ready(page);
-    const input = (await page.getByRole("textbox", { name: "Planned months" }).boundingBox())!;
-    const helper = (await page.getByText(/^The plan row puts the notice on/).boundingBox())!;
+    const input = page.getByRole("textbox", { name: "Planned months" });
+    const helper = page.getByText(/^The plan row puts the notice on/);
+    const chartTop = () => page.locator("[data-range-chart]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const pageBox = (locator: typeof helper) => locator.evaluate((el) => {
+      const box = el.getBoundingClientRect();
+      return { top: box.top + window.scrollY, bottom: box.bottom + window.scrollY };
+    });
+    const inputBox = await pageBox(input);
+    const helperBox = await pageBox(helper);
+    const before = await chartTop();
 
-    expect(helper.y - (input.y + input.height), `${width} px`).toBeLessThanOrEqual(28);
+    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(28);
+    // The chart follows the helper with no empty row between: 16 px, or a few more where the held
+    // button is taller than the helper's lines.
+    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(24);
+
     await page.getByRole("slider").focus();
     await page.keyboard.press("ArrowRight");
     const reset = page.getByRole("button", { name: "Use the plan's 1.5 months" });
     await expect(reset).toBeVisible();
-    // Read both after the key press, since focusing the slider may scroll the page.
-    const below = await page.evaluate(() => {
-      const helperBox = [...document.querySelectorAll("[data-plan-control] p")].find((p) => p.textContent?.startsWith("The plan row puts"))!;
-      const button = [...document.querySelectorAll("[data-plan-reset]")].find((span) => getComputedStyle(span).display !== "none")!;
-      return button.getBoundingClientRect().top - helperBox.getBoundingClientRect().bottom;
-    });
-    expect(below, `${width} px`).toBeGreaterThanOrEqual(0);
+    await expect(helper).toBeHidden();
+    const resetBox = await pageBox(reset);
+    expect(Math.abs(resetBox.top - helperBox.top), `${width} px`).toBeLessThanOrEqual(1);
+    expect(await chartTop(), `${width} px`).toBe(before);
+    // Hidden, the helper still describes the input.
+    await expect(input).toHaveAccessibleDescription(/The plan row puts the notice on/);
   }
 });
 
@@ -290,6 +301,7 @@ test("from 768 px the reset button sits on the input's row with its focus ring 8
     });
     expect(gap - ring, `${width} px`).toBeGreaterThanOrEqual(8);
     expect(sameRow, `${width} px`).toBe(true);
+    await expect(page.getByText(/^The plan row puts the notice on/), `${width} px`).toBeVisible();
   }
 });
 

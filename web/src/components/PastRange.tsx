@@ -696,11 +696,12 @@ function PlanControl({
   const w = words.control;
   const moved = planRowMonths !== null && plan !== null && plan !== planRowMonths;
   // The reset button keeps its place while hidden, so showing it moves nothing: at the row's end from
-  // 768 px, and below that on a row of its own after the helper, so the helper stays with its input.
-  // Only one of the two is ever displayed. visibility: hidden also takes it out of the tab order and the
-  // accessibility tree.
-  // On a row of its own it sits flush, so its label starts on the label's edge above; in the input's row
-  // it keeps its padding, so its focus ring stays 8 px clear of "months" (DESIGN.md section 5, Buttons).
+  // 768 px, and below that in the helper's place, which holds the taller of the two, so no empty row
+  // sits between the control and the chart. Only one of the two buttons is ever displayed.
+  // visibility: hidden also takes it out of the tab order and the accessibility tree; the hidden helper
+  // still describes the input, since aria-describedby reads hidden text.
+  // In the helper's place it sits flush, so its label starts on the label's edge above; in the input's
+  // row it keeps its padding, so its focus ring stays 8 px clear of "months" (DESIGN.md section 5, Buttons).
   const resetButton = (className: string, flush: boolean) =>
     planRowMonths !== null && (
       <span className={cx(className, !moved && "invisible")} data-plan-reset>
@@ -739,7 +740,8 @@ function PlanControl({
       <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
         {invalid && w.invalid(whole(maxMonths))}
       </p>
-      <p id={ids.helper} className="text-caption text-ink-muted">
+      <div className="grid md:block">
+      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible md:visible")}>
         {notice && signing ? (
           // Plain plan values, so they carry no popover (ticket 10's rule); the months worked out from them do.
           <Fill template={w.helper} slots={{ notice: <Num date={notice} />, signing: <Num date={signing} /> }} />
@@ -749,7 +751,8 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
-      {resetButton("mt-2 block md:hidden", true)}
+      {resetButton("col-start-1 row-start-1 self-start md:hidden", true)}
+      </div>
     </div>
   );
 }
@@ -844,7 +847,7 @@ function ComparablesTable({
 // ── Loading ──────────────────────────────────────────────────────────────
 
 // Sized like the populated section at each width, in its order: below 768 px the summary comes right
-// after the title, and the reset button's row is held after the helper; from 768 px the summary follows
+// after the title, and the helper's place is at least the reset button's height; from 768 px the summary follows
 // the chart. Its type sizes are the chart's own (chartType), read from the section's width, as the
 // populated section reads them.
 function PastRangeSkeleton() {
@@ -864,10 +867,9 @@ function PastRangeSkeleton() {
         <Skeleton className="h-11 w-[88px] rounded-md" />
       </div>
       <span className="mt-1 block min-h-[1.5em] text-caption" />
-      <SkeletonText className="text-caption md:hidden" widths={lines(2)} />
+      {/* Below 768 px the helper's place holds the reset button too, so it is at least 44 px tall. */}
+      <SkeletonText className="min-h-11 text-caption md:hidden" widths={lines(2)} />
       <SkeletonLine className="hidden text-caption md:flex" width="w-3/5" />
-      {/* The reset button's row, held after the helper below 768 px. */}
-      <span className="mt-2 block h-11 md:hidden" />
       <div className="mt-4" style={{ height: CHART_HEIGHT }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
