@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 5 and 6; the blueprint's Package workspace wir
 - [ ] A source click opens the drawer at its passage with the switcher listing the claim's other sources and, for ¶54, the badge "IEG's review restates this lesson", as in the Evidence drawer wireframe.
 - [ ] Row selections persist when the package is reopened.
 - [ ] The section carries the eyebrow "Planning · PPSD section 3" and follows the Package workspace wireframe and DESIGN.md section 5 (tables, citation markers, info badge); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 24, 2026, merger: ticket 29 landed on build/strata as merge commit 65293cd. This ticket still waits on ticket 15. A note from ticket 29's builder for when you link to Data readiness: `from=get_lessons` already belongs to the Lessons queue's quote-check link (`/data?sources=...&from=get_lessons`), and `web/src/copy.ts`' `dataReadiness.fromNouns.get_lessons` reads "the quote check on proposed lessons". If the risks table's coverage line links there with the same key, the page will name the quote check, not the risks table. Give the risks table its own `from` key and its own words in `fromNouns`, or reword the existing entry so it is true for both.

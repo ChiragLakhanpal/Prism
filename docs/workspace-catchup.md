@@ -93,7 +93,7 @@ It worked if both runs exit 0. The first run lists the catalog, the four schemas
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
-**Two runs on October 24, 2026 (orchestrator), both failed.** Run 282381151628775 failed on every task before any work: splink 5.0.0 pulls in a pyarrow that serverless environment version 2 (numpy 1.23) cannot import, so `bundle/nightly.yml` now uses version 4. Run 344940414051390 then failed in `fetch_by_watermark` after 20 minutes, twice over: the notices search API answers 400 to an offset above 100,000 ("Value must be between 0 and 100000. Parameter name: $skip") and reports 424,135 notices. Bronze kept awards (296 pages), awards_fy2001_2016 (147), ieg_ratings (13), ida_credits (12), ibrd_loans (10), ida_credit_history (178), ibrd_loan_history (39) and notices (237). The source now names `max_offset = 100000` in `config/sources.toml`, where the fetch stops, with a limitation line for the readiness page. The third run is recorded below when it finishes.
+**Two runs on October 24, 2026 (orchestrator), both failed.** Run 282381151628775 failed on every task before any work: splink 5.0.0 pulls in a pyarrow that serverless environment version 2 (numpy 1.23) cannot import, so `bundle/nightly.yml` now uses version 4. Run 344940414051390 then failed in `fetch_by_watermark` after 20 minutes, twice over: the notices search API answers 400 to an offset above 100,000 ("Value must be between 0 and 100000. Parameter name: $skip") and reports 424,135 notices. Bronze kept awards (296 pages), awards_fy2001_2016 (147), ieg_ratings (13), ida_credits (12), ibrd_loans (10), ida_credit_history (178), ibrd_loan_history (39) and notices (237). The source now names `max_offset = 100000` in `config/sources.toml`, where the fetch stops, with a limitation line for the readiness page. **Third run 556837544068999 (12:01 to 14:05):** `fetch_by_watermark` succeeded in 26 minutes, `bronze_to_gold` in 87, and the seven empty tasks passed, but `measure_data_readiness` failed twice: `storage.measure` reads `databricks.yml` and `bundle/*.yml` through `strata.lakehouse.bundle.load`, and the bundle synced only `src` and `config`. The sync paths now include `bundle` and `databricks.yml`. **Fourth run 855462503837945 (14:12 to 14:19):** the fetch succeeded in 8 minutes, then `bronze_to_gold` failed on the gold MERGE for notices (DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE): three country names carry two codes in `strata.gold.country` (Caribbean 6R and CB, Serbia RS and YF, World 1W and 99), and the notice and contract queries looked a country up by name, so 943 notices had two rows, which the third run had inserted into the empty table without complaint. The notice now takes its project's code first and a name gives one code at most; `gold.sync` refuses a source whose keys repeat. The 1,886 doubled rows were deleted from `strata.gold.notice` by hand (99,557 distinct notices stayed). The fifth run is recorded below when it finishes.
 
 The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 1, because the deploy makes the job and `strata.ops.pipeline_runs`.
 
@@ -838,3 +838,78 @@ Run this from the main checkout:
     .githooks/pre-commit
 
 If the first command prints a batch id because the batch was still running after an hour, run it again with `--batch <id>` to wait for the same batch instead of asking again. It worked if the first command exits 0 and ends "I wrote N answers to tests/fixtures/azure/batch_assertions.json. Run the gate next.", and the gate then passes on the live recording, which now also asks about the P130164 PAD. The recording keeps the planted assertion, so the gate still proves the rejection. A live answer that reads more than the hand-written one (such as item 8.b of the ICR Reviews) can move a value the tests expect, and the failing test names it. Do not edit the test to match; tell the orchestrator. The new recording is a tracked file, so the orchestrator commits it once the gate passes.
+
+## Ticket 29, step 1 of 5: deploy the lesson tables and the quarterly cross-check job
+
+The merger parked this step on October 24, 2026, after merge commit 65293cd. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from 65293cd or later also serves ticket 20's step 1, which needs a deploy from da1ab20 or later.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if both runs exit 0. The first run lists these ten tables as new and changes no existing table: `strata.bronze.lesson_batches`; `strata.silver.lesson_proposals`, `strata.silver.lesson_evidence` and `strata.silver.lesson_restatements`; `strata.ops.lesson_versions`, `strata.ops.lesson_review_items`, `strata.ops.lesson_review_acts`, `strata.ops.lesson_sources`, `strata.ops.lesson_review_notes` and `strata.ops.lesson_uses`. It also lists the new job "strata lesson cross-check" (`bundle/lessons.yml`, at 06:00 New York time on the second day of January, April, July and October). The second run prints "No changes."
+
+## Ticket 29, step 2 of 5: the Foundry lesson review writer matches the repo
+
+The merger parked this step on October 24, 2026, after merge commit 65293cd. It needs the four Foundry keys that ticket 14's step 1 names.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent lesson_review_writer
+
+It worked if the first run creates or updates the Foundry agent `lesson_review_writer` from `config/agents.toml` and `lesson_review_writer.md`, and the second run reports no difference.
+
+## Ticket 29, step 3 of 5: redeploy the App, which writes the lesson review record as itself
+
+The merger parked this step on October 24, 2026, after merge commit 65293cd. It needs the Databricks keys in `.env`, and the four Foundry keys. Run it after step 1, because this deploy grants the App's own service principal SELECT and MODIFY on five tables that step 1 makes. Ticket 06's step 1 runs the same command. Run it again here if that deploy came from a commit before 65293cd.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Step 6 runs the grants without printing each one, and its line still names only usage events, agent runs, opened sources and drafts. So check the grants on the SQL warehouse after the deploy:
+
+    SHOW GRANTS ON TABLE strata.ops.lesson_review_acts
+
+and the same for `strata.ops.lesson_review_items`, `strata.ops.lesson_versions`, `strata.ops.lesson_sources` and `strata.ops.lesson_review_notes`.
+
+It worked if the deploy exits 0 and prints "Strata is running at <url>", and each of the five tables shows SELECT and MODIFY for the App's own service principal and no grant to `strata-accredited-procurement-specialists` or `strata-lead-procurement-specialists` (criteria 3 and 4, workspace half). On the deployed App, a person in neither group who opens `<App url>/api/lessons/review` gets 403 `not_a_reviewer`.
+
+## Ticket 29, step 4 of 5: propose lessons with the live batch model, until no batch is still running
+
+The merger parked this step on October 24, 2026, after merge commit 65293cd. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`, and the four Foundry keys for the review notes. Run it after steps 1 and 2, and after ticket 18's step 2 has read the slice's ICRs, ICR Reviews and PPARs into `strata.silver.passages`.
+
+The batch role's deployment is gpt-5.4-nano (`config/models.toml`, `[roles.batch]`). Day-one test 8 found it deployed as GlobalStandard, and Azure's Batch API takes only a Global Batch (or Data Zone Batch) deployment. Until decision 2 in `docs/STATUS.md` is answered, expect this step to stop with exit 2 and the error Azure gives. Do not change `config/models.toml` to get past it; tell the orchestrator.
+
+Run this from the main checkout:
+
+    uv run --script ops/lessons/run_live.py --env-file .env
+
+A batch can take up to a day. The first run sends the documents, and a later run collects the answers. Run the same command again until this query shows no request whose newest row is `submitted`:
+
+    SELECT status, count(*) FROM (SELECT custom_id, status, row_number() OVER (PARTITION BY custom_id ORDER BY recorded_at DESC) AS n FROM strata.bronze.lesson_batches) WHERE n = 1 GROUP BY status
+
+It worked if each run exits 0 and prints "Run <run id> changed N rows and wrote N lesson review notes.", and then:
+
+- `strata.bronze.lesson_batches` holds every request as `completed` (a `failed` request goes again on the next run);
+- `strata.silver.lesson_proposals` holds the proposal from passage `31525018/v1/54` with `quote_check = 'passed'`, and `strata.silver.lesson_evidence` holds its restatement from `34056616/v2/10.b` with `restated_by_ieg = true` (criterion 1, live half);
+- `SELECT source, subject, count, denominator FROM strata.ops.data_readiness WHERE measure = 'lessons_verified'` returns the row for get_lessons with a denominator, and any proposal whose quote is not on its page is counted out of it. On the fixture the row was 3 of 4 for P130164;
+- `strata.ops.lesson_review_notes` holds live notes, and any sentence the verifier removed is listed with its reason.
+
+If the run prints "The env file names no Foundry project, so the review notes wait.", run step 2 first, then this step again. The warehouse's counts may differ from the fixture's if the World Bank's hosts list newer documents.
+
+## Ticket 29, step 5 of 5: two reviewers act on the deployed App, and the quarterly job draws its sample
+
+The merger parked this step on October 24, 2026, after merge commit 65293cd. Run it after step 4, and after the owner fills `config/roles.toml` with the workspace group names and the reviewers (each `[[people]]` entry's email, name, groups, regions and projects) and the App is deployed again with them.
+
+1. Open `<App url>/lessons/review` as a named reviewer, open a lesson in "Waiting for review", and recommend it with a reason. Then open the same lesson as a different person who is a lead procurement specialist for that region, and decide it with a reason.
+2. On the SQL warehouse, as a person in one of the reviewer groups (check with `SELECT current_user()`), try an `INSERT INTO strata.ops.lesson_review_acts`.
+3. Ask the benchmark question `get-lessons-cost-estimates` through `WarehouseEngine` once the library holds the decided lesson.
+4. After the job "strata lesson cross-check" first runs on January 2, 2027 (or start it by hand with "Run now" on the workspace's Jobs page), read `strata.ops.lesson_review_items` where `kind = 'cross_check'`. Start it by hand once more in the same quarter.
+
+It worked if:
+
+- `strata.ops.lesson_review_acts` holds both acts, each naming its own person as the actor, and `strata.ops.lesson_versions` holds version 1 with both names, both reasons and `days_from_publication` (criteria 4 and 5, workspace half);
+- the reviewer's `INSERT` is refused for lack of permission;
+- get_lessons returns the decided lesson with its evidence ids, `restated` and the edition `guidelines_2011`;
+- the January run writes `cross_check` items assigned to another region (one tenth of the quarter's decisions, rounded up, at least one), and the second run in the same quarter writes none (criterion 7, workspace half). A quarter with no decisions writes nothing.
