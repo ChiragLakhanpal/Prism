@@ -11,10 +11,14 @@ made, its public date, its source document and passage, and its evidence tier. T
 - the records of a package's signing: the awards datasets' contracts, Contract Award notices and each
   version of a Procurement Plan, each giving the signing date and, where it gives one, the signed amount
   in US dollars. The subject is the package, by its STEP reference.
+- the IEG ratings dataset, which repeats IEG's ratings of a closed project, each for the whole project.
+- the ICRs, ICR Reviews, PPARs and PADs, read by the batch model (strata.knowledge.batch). An assertion
+  read from text is kept only when its quote is word for word in the passage it cites, on the page it
+  cites; the rest go to strata.ops.assertion_rejections with their reason.
 
-The nightly job's detect_disagreements task runs run() for every project the run read, and the fixture
-build runs it after the passage reader (gates/build_fixture.py). Every table it writes is rebuilt for
-each project of the run.
+The nightly job's detect_disagreements task runs run() for every project Strata holds documents or records
+for, and the fixture build runs it after the passage reader (gates/build_fixture.py). Every table it writes
+is rebuilt for each project of the run.
 """
 
 from __future__ import annotations
@@ -199,6 +203,37 @@ def record_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[A
                 "record", row["form"], row["source_key"], str(row["document_id"]), row["document_type"], None, None,
                 None, key, evidence, _int(row["pdf_page"]), None, RECORD_TABLES[row["form"]],
                 _date(row["public_from"])))
+    return made
+
+
+# ── The IEG ratings dataset ──────────────────────────────────────────────
+
+IEG_READER = "strata.gold.ieg_rating"
+IEG_COLUMNS = ("outcome", "bank_performance", "quality_at_entry", "quality_of_supervision", "me_quality")
+
+
+def ieg_assertions(engine: Engine, project_id: str, ladder: Ladder, dates: Periods) -> list[Assertion]:
+    """Each rating the IEG ratings dataset gives the project, for the whole project, under each attribute the
+    ladder names by the dataset's field name. The dataset repeats IEG's own evaluations, so its rows are in
+    the ieg tier, and each is made on the day it became public, as the dataset gives no date."""
+    if dates.whole_project is None:
+        return []
+    start, end = dates.whole_project
+    made = []
+    for row in _rows(engine, _sql("ieg_ratings.sql"), project_id=project_id):
+        key = f"{project_id}/{row['evaluation_type']}/{row['evaluation_fy']}"
+        evidence = f"{IEG_READER}:{key}"
+        public = _date(row["public_from"])
+        for column in IEG_COLUMNS:
+            attribute = ladder.attribute_named(column)
+            rating = ladder.rating(attribute.key, row[column]) if attribute and attribute.kind == "rating" else None
+            if rating is None:
+                continue  # an attribute the ladder does not know, or no rating
+            made.append(Assertion(
+                assertion_id(evidence, project_id, attribute.key), "project", project_id, project_id, attribute.key,
+                attribute.kind, column, rating, "rating", ladder.side(attribute.key, rating), WHOLE_PROJECT, start,
+                end, public, None, "ieg", "rating_field", "ieg_ratings", key, row["evaluation_type"], None, None, None,
+                key, evidence, None, None, IEG_READER, public))
     return made
 
 
@@ -414,7 +449,7 @@ def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, 
 
 
 def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel | None, run_id: str,
-                    clock: Callable[[], dt.datetime]) -> tuple[list[Assertion], list[Rejection]]:
+                    clock: Callable[[], dt.datetime], dates: Periods) -> tuple[list[Assertion], list[Rejection]]:
     """The assertions the batch model read from the project's reports, each kept only when its quote is word
     for word in the passage it cites, on the page it cites, and the ones rejected. With no model, none."""
     if model is None:
@@ -424,7 +459,7 @@ def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: Batc
         return [], []
     asked = [(report, request(report, ladder)) for report in found]
     answers = ask(engine, model, asked, clock)
-    dates, when = periods(engine, project_id), clock()
+    when = clock()
     kept, rejected = [], []
     for report, question in asked:
         answer = answers.get(question.custom_id)
@@ -582,8 +617,10 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder
     ladder = ladder or load_ladder()
     made, rejected = [], []
     for project_id in projects:
+        dates = periods(engine, project_id)
         made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder)
-        more, less = text_assertions(engine, project_id, ladder, model, run_id, clock)
+        made += ieg_assertions(engine, project_id, ladder, dates)
+        more, less = text_assertions(engine, project_id, ladder, model, run_id, clock, dates)
         made += more
         rejected += less
     found = detect(made, ladder)
@@ -622,12 +659,10 @@ def from_row(row: dict) -> Assertion:
     return Assertion(**{column: typed(column, row[column]) for column in ASSERTION_COLUMNS})
 
 
-PROJECTS = "SELECT DISTINCT project_id FROM strata.silver.documents ORDER BY project_id"
-
-
 def default_projects(engine: Engine) -> list[str]:
-    """The projects whose documents the passage reader read."""
-    return [row["project_id"] for row in _rows(engine, PROJECTS)]
+    """The projects whose documents the passage reader read, and those with records: a contract, a notice, a
+    Procurement Plan or an IEG rating."""
+    return [row["project_id"] for row in _rows(engine, _sql("projects.sql")) if row["project_id"]]
 
 
 def run_on_fixture(engine: Engine, run_id: str = "fixture", clock: Callable[[], dt.datetime] = _now) -> RunReport:

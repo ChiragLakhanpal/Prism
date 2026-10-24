@@ -116,6 +116,42 @@ def test_each_version_of_the_icr_review_keeps_its_ratings_and_the_reissue_replac
     assert {row["made_at"] for row in reissue.values()} == {value("icr-review-reissue-date")}
 
 
+def test_the_ieg_ratings_dataset_gives_iegs_ratings_of_the_whole_project_and_agrees_with_the_icr_review(engine):
+    """The IEG ratings dataset repeats IEG's ratings, so its row is in the ieg tier, a rating in its own field
+    with the dataset's field name. It gives no date, so it is public from June 30 of its evaluation year
+    (ticket 17). Its ratings match the ICR Review's, so it is in no disagreement."""
+    found = {row["attribute"]: row for row in rows(
+        engine, "SELECT * FROM strata.gold.assertion WHERE source_key = :source AND subject_id = :subject",
+        source="ieg_ratings", subject="P130164")}
+
+    assert {key: row["value"] for key, row in found.items()} == {
+        "outcome": value("ieg-outcome-p130164"), "bank_performance": value("ieg-bank-performance-p130164"),
+        "me_quality": value("ieg-me-quality-p130164")}
+    outcome = found["outcome"]
+    assert (outcome["field_name"], outcome["evidence_tier"], outcome["form"]) == ("outcome", "ieg", "rating_field")
+    assert outcome["evidence_id"] == "strata.gold.ieg_rating:P130164/ICRR/2020"
+    assert outcome["made_at"] == outcome["public_from"] == dt.date(value("ieg-evaluation-fy-p130164"), 6, 30)
+    assert outcome["period_event"] == "whole_project"
+    icr = by_document(engine, "31525018")["outcome"]
+    assert (outcome["period_start"], outcome["period_end"]) == (icr["period_start"], icr["period_end"])
+    sides = rows(engine, "SELECT a.assertion_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a "
+                         "ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE a.source_key = :source",
+                 source="ieg_ratings")
+    assert sides == []
+
+
+def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine):
+    """A project's records are read whether or not Strata has read its documents."""
+    with_records = {row["project_id"] for row in rows(
+        engine, "SELECT DISTINCT project_id FROM strata.gold.contract WHERE step_reference IS NOT NULL "
+                "AND contract_signing_date IS NOT NULL AND source <> :notices", notices="notices")}
+    asserted = {row["project_id"] for row in rows(
+        engine, "SELECT DISTINCT project_id FROM strata.gold.assertion WHERE form = :form", form="contract_record")}
+
+    assert len(with_records) > 1
+    assert with_records <= asserted
+
+
 # ── Disagreements ────────────────────────────────────────────────────────
 
 ISR_7 = "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress"

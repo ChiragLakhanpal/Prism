@@ -594,6 +594,30 @@ quote = "Moderately Unsatisfactory"
 record = "api/ieg/P156634-P130164.json"
 at = "data[project_id=P130164].outcome"
 
+[[value]]
+id = "ieg-bank-performance-p130164"
+says = "IEG rated the World Bank's performance on P130164 Moderately Unsatisfactory."
+value = "Moderately Unsatisfactory"
+quote = "Moderately Unsatisfactory"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].bank_performance"
+
+[[value]]
+id = "ieg-me-quality-p130164"
+says = "IEG rated the quality of P130164's monitoring and evaluation Modest."
+value = "Modest"
+quote = "Modest"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].me_quality"
+
+[[value]]
+id = "ieg-evaluation-fy-p130164"
+says = "IEG evaluated P130164 in fiscal year 2020; the dataset gives no date."
+value = 2020
+quote = "2020"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].evaluation_fy"
+
 # The demo plan: the Northern Water Works Development Agency's Procurement Plan of
 # October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634)
 
