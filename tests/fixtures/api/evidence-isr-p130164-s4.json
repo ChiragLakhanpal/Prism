@@ -20,7 +20,10 @@
       "paragraph_numbered": false,
       "pdf_page": 2,
       "pdf_pages": 4,
-      "pdf_url": "http://documents.worldbank.org/curated/en/934351468251717700/pdf/ISR-Disclosable-P130164-02-22-2014-1393116744882.pdf"
+      "pdf_url": "http://documents.worldbank.org/curated/en/934351468251717700/pdf/ISR-Disclosable-P130164-02-22-2014-1393116744882.pdf",
+      "doc_key": "isr-2014-02-22",
+      "notice_id": null,
+      "notice_url": null
     },
     "passage_id": "19095337/v1/s4",
     "document_id": "19095337",
@@ -37,6 +40,13 @@
     "printed_page": "2 of 4",
     "language": "en",
     "parse_route": "A",
+    "kind": "paragraph",
+    "route": "published_text",
+    "scanned": false,
+    "table_title": null,
+    "table_row": null,
+    "cells": null,
+    "notice_id": null,
     "header": "ISR, P130164, India, roads, Project Development Objective Indicators, p.2",
     "text": "Indicator Name Core Unit of Measure Baseline Current End Target Share of rural population with access to an all- Percentage Value 67.00 67.00 80.00 season road Date 01-Sep-2013 31-Dec-2015 Comments The baseline value refers to This report is yet to be the Population category: submitted by PWD at the end 250-500 of the fiscal year Number of rural people with access to an all- Number Value 34.00 34.00 34.30 season road Sub Type Supplemental Roads in good and fair condition as a share of Percentage Value 50.00 0.00 60.00 total classified roads Date 31-Mar-2014 30-Jun-2018 Comments Value is arbitrary until it will To be entered after condition Value is arbitrary until it will be established after condition survey in March 2014 be established after condition survey in March 2014 survey in March 2014 Size of the total classified network Kilometers Value 133435.00 133435.00 135935.00 Sub Type Supplemental A reduction in annual average fatality count of Text Value To be established when To be entered when corridors To be established when road users on model road safety corridors corridors are slected are slected corridors are slected Date 31-Mar-2014 30-Jun-2018 Comments"
   },

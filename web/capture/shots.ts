@@ -259,6 +259,20 @@ const ANSWER_SHOTS: Shot[] = [
   answerShot("answer--drawer-section", ANSWER, { full: false, widths: [...WIDTHS, 320], api: { "/api/evidence": { recorded: "evidence-isr-p130164-s4.json" } } }, `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`),
   // An answer whose fourth sentence quotes the table in an ISR section and also cites the ICR's Annex 1.A.
   answerShot("answer--isr-card", "ask-p130164-isr-section.sse", { full: false, widths: WIDE, act: then(askInBox(), hover("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
+  // Ticket 18's kinds of passage in the drawer, opened from a link, and the removed box's table-summary reason.
+  ...([
+    ["scanned", "strata.gold.passage:18381488/v1/23", "evidence-pad-p130164-scanned.json"],
+    ["table-row", "strata.gold.passage:18381488/v1/table65.2", "evidence-pad-p130164-risk-row.json"],
+    ["table-summary", "strata.gold.passage:18381488/v1/table65", "evidence-pad-p130164-risk-summary.json"],
+    ["notice", "strata.gold.passage:OP00118817/v1/s5", "evidence-notice-op00118817-qualifications.json"],
+    ["notice-contacts", "strata.gold.passage:OP00118817/v1/s8", "evidence-notice-op00118817.json"],
+    ["french", "strata.gold.passage:33407968/v1/1", "evidence-icr-p127203-fr.json"],
+  ] as const).map(([kind, id, file]) =>
+    answerShot(`answer--drawer-${kind}`, ANSWER, { full: false, widths: [1440, 390], api: { "/api/evidence": { recorded: file } } }, `/projects/P130164?evidence=${encodeURIComponent(id)}`),
+  ),
+  answerShot("answer--removed-table-summary", "ask-p130164-table-summary.sse", { full: false, act: askInBox() }),
+  // A sentence quoting a table row's rating: the drawer highlights the rating's cell (design review r2 P1).
+  answerShot("answer--drawer-table-row-quoted", "ask-p130164-table-row.sse", { full: false, widths: [1440, 390], act: then(askInBox(), click("[data-answer-panel] [data-sentence-text='3'] [data-citation]")) }),
   answerShot("answer--isr-drawer", "ask-p130164-isr-section.sse", { full: false, widths: [...WIDTHS, 320], act: then(askInBox(), click("[data-answer-panel] [data-sentence-text='3'] [data-citation='3']")) }),
   answerShot("answer--error", "ask-agent-unavailable.sse", { act: askInBox() }),
   answerShot("answer--no-agent", "ask-no-agent.sse", { act: askInBox() }),
@@ -316,6 +330,8 @@ export const SHOTS: Shot[] = [
   { name: "buttons--focus-disabled", path: "/gallery/buttons", act: focus("[data-state-section=disabled] button") },
   { name: "links--hover-link", path: "/gallery/links", act: hover("[data-state-section=text-link] a") },
   { name: "links--focus-link", path: "/gallery/links", act: focus("[data-state-section=text-link] a") },
+  { name: "links--hover-external-link", path: "/gallery/links", act: hover("[data-state-section=external-link] a") },
+  { name: "links--focus-external-link", path: "/gallery/links", act: focus("[data-state-section=external-link] a") },
   { name: "links--hover-tab", path: "/gallery/links", act: hover("[data-state-section=tabs] a:not([aria-current])") },
   { name: "links--focus-tab", path: "/gallery/links", act: focus("[data-state-section=tabs] a[aria-current]") },
   { name: "cards--focus-link", path: "/gallery/cards", act: focus("[data-empty-state] a") },
@@ -396,6 +412,21 @@ export const SHOTS: Shot[] = [
   data("fix-projects-window", "/data", undefined, { widths: WIDE, act: click("[data-fixes] li >> nth=0 >> p.text-small [data-num]") }),
   data("hover-link", "/data", { recorded: "data-readiness-empty.json" }, { act: hover("[data-readiness=empty] a") }),
   data("cards-320", "/data", undefined, { widths: [320] }),
+  // Ticket 18: the hardest documents I read, after Sources. The states the fixture does not reach are
+  // the server's answers on the fixture with its shelf outcomes changed (tests/record_api.py).
+  data("shelf-gap", "/data", { recorded: "data-readiness-shelf-gap.json" }),
+  data("shelf-two-gaps", "/data", { recorded: "data-readiness-shelf-two-gaps.json" }),
+  data("shelf-abstentions", "/data", { recorded: "data-readiness-shelf-abstentions.json" }),
+  data("shelf-empty", "/data", { recorded: "data-readiness-shelf-empty.json" }),
+  data("shelf-loading", "/data", undefined, { pending: ["/api/data/readiness"] }),
+  data("shelf-focus-link", "/data", undefined, { act: focus("[data-readiness-table=shelf] a:visible") }),
+  data("shelf-hover-link", "/data", undefined, { widths: WIDE, act: hover("[data-readiness-table=shelf] [data-table-view=table] a") }),
+  data("shelf-term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=shelf] thead [data-term] >> nth=0") }),
+  data("shelf-focus-num", "/data", undefined, { act: focus("[data-readiness-table=shelf] [data-num]:visible") }),
+  data("shelf-num-window", "/data", undefined, { act: click(":is([data-cell='p130164_pad:outcome'], [data-card='p130164_pad']) [data-num]:visible >> nth=-1") }),
+  data("shelf-holds-link", "/data", { recorded: "data-readiness-shelf-gap.json" }, { act: click("[data-readiness-table=kinds] a[href='#hardest-documents']:visible") }),
+  data("read-well-window", "/data", undefined, { widths: WIDE, act: click("[data-cell='reports:read_well'] [data-num]") }),
+  data("shelf-cards-320", "/data", { recorded: "data-readiness-shelf-gap.json" }, { widths: [320] }),
 
   // Ticket 10: Check a plan, a project's page and All projects, in every state the 10 brief
   // lists (section 10), with /api answered from the recordings.

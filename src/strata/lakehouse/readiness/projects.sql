@@ -71,6 +71,7 @@ reported AS (
 fresh AS (
   SELECT country_code, CAST(max(fetched_at) AS DATE) AS fetched_on, max(newest_record_on) AS newest
   FROM pages
+  WHERE fetched_at <= :measured_at  -- a measure sees only the fetches made before it
   GROUP BY country_code
 )
 SELECT

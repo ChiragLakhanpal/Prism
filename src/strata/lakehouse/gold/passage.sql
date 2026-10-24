@@ -1,5 +1,5 @@
--- strata.gold.passage: each passage that has a vector, with its document, its project and what Prompt
--- Shields found, taking each text's newest vector and newest scan. The passage reader syncs it after
+-- strata.gold.passage: each passage that has a vector, with its document (or, for a notice's text, its
+-- notice), its project and what Prompt Shields found, taking each text's newest vector and newest scan. The passage reader syncs it after
 -- embedding (src/strata/lakehouse/passages.py), so it is not in ORDER, which the nightly job's
 -- bronze_to_gold task builds before any passage is embedded.
 -- key: passage_id
@@ -12,6 +12,12 @@ scan AS (
   SELECT text_hash, shield, attack_detected
   FROM strata.silver.passage_shields
   QUALIFY row_number() OVER (PARTITION BY text_hash ORDER BY scanned_at DESC, shield) = 1
+),
+notice AS (
+  SELECT n.notice_id, n.notice_date
+  FROM strata.silver.notices AS n
+  WHERE n.notice_id IN (SELECT document_id FROM strata.silver.passages WHERE kind = 'notice_text')
+  QUALIFY row_number() OVER (PARTITION BY n.notice_id ORDER BY n.fetched_at DESC) = 1
 )
 SELECT
   p.passage_id,
@@ -22,7 +28,7 @@ SELECT
   c.country_name,
   p.sector,
   p.document_type,
-  d.document_date,
+  coalesce(d.document_date, n.notice_date) AS document_date,
   d.report_number,
   p.version,
   p.section_path,
@@ -36,10 +42,16 @@ SELECT
   p.printed_page,
   p.language,
   p.parse_route,
+  p.kind,
+  p.scanned,
+  p.table_title,
+  p.table_row,
+  p.cells,
   p.header,
   p.text,
   p.tokens,
   d.pdf_url,
+  d.doc_key,
   v.embedding,
   v.model AS embedding_model,
   s.shield,
@@ -49,7 +61,8 @@ SELECT
   coalesce(year(d.replaced_on) * 10000 + month(d.replaced_on) * 100 + day(d.replaced_on), 99991231) AS replaced_day,
   p.public_from
 FROM strata.silver.passages AS p
-JOIN strata.silver.documents AS d ON d.document_id = p.document_id
+LEFT JOIN strata.silver.documents AS d ON d.document_id = p.document_id
+LEFT JOIN notice AS n ON n.notice_id = p.document_id AND p.kind = 'notice_text'
 JOIN vector AS v ON v.text_hash = p.text_hash
 LEFT JOIN scan AS s ON s.text_hash = p.text_hash
 LEFT JOIN strata.gold.project AS pr ON pr.project_id = p.project_id

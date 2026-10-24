@@ -4,10 +4,12 @@ A passage's header names the sector in a word ("ICR, P130164, India, roads, III.
 passage's sector, which search_passages filters on, is its project's one sector in Strata's
 taxonomy (strata.gold.project.sector, from config/sectors.toml), so this table only picks the word.
 
-Each code is the projects API's sector code (sectorcode) with its name in the 2016 taxonomy (the
-FY17 names in mjsector) and the key in config/sectors.toml of the sector it belongs to. The word
-comes from the project's first code in its one sector that is not a public-administration code,
-since those name who governs a sector rather than the work, or else from its first such code.
+Each code is the projects API's sector code (sectorcode) with its name in the 2016 taxonomy, as the
+projects API gives it with the code in major_sectors (the FY17 names, read for the slice's countries on
+October 23, 2026, with ticket 17's verification), and the key in config/sectors.toml of the sector it
+belongs to. The word comes from the project's first code in its one sector that is not a
+public-administration code, since those name who governs a sector rather than the work, or else from
+its first such code.
 """
 
 from __future__ import annotations
@@ -24,18 +26,20 @@ class Sector:
 
 
 SECTORS: dict[str, Sector] = {
-    "TA": Sector("Aviation", "transport", "aviation"),
+    "TA": Sector("Roads and highways", "transport", "roads"),
+    "TC": Sector("Urban Transport", "transport", "urban transport"),
     "TF": Sector("Public Administration - Transportation", "transport", "transport", administration=True),
     "TI": Sector("Rural and Inter-Urban Roads", "transport", "roads"),
     "TP": Sector("Ports/Waterways", "transport", "ports"),
-    "TV": Sector("Urban Transport", "transport", "urban transport"),
+    "TV": Sector("Aviation", "transport", "aviation"),
     "TW": Sector("Railways", "transport", "railways"),
     "TZ": Sector("Other Transportation", "transport", "transport"),
-    "WA": Sector("Public Administration - Water, Sanitation and Waste Management", "water", "water",
-                 administration=True),
-    "WC": Sector("Sanitation", "water", "water"),
+    "WA": Sector("Sanitation", "water", "sanitation"),
+    "WB": Sector("Waste Management", "water", "waste"),
+    "WC": Sector("Water Supply", "water", "water"),
     "WD": Sector("Waste Management", "water", "waste"),
-    "WF": Sector("Water Supply", "water", "water"),
+    "WF": Sector("Public Administration - Water, Sanitation and Waste Management", "water", "water",
+                 administration=True),
     "WZ": Sector("Other Water Supply, Sanitation and Waste Management", "water", "water"),
 }
 

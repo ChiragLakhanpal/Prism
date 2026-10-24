@@ -52,7 +52,63 @@ def test_the_slice_file_names_the_showcase_project_and_the_demo_plan():
     assert pilot.demo_plan.implementing_agency == "Northern Water Works Development Agency"
     assert pilot.demo_plan.agency_short_name == "NWWDA"
     assert pilot.demo_plan.plan_date == dt.date(2026, 10, 9)
-    assert ("P130164", "PAD") in [(item.project_id, item.document_type) for item in pilot.stress_shelf]
+    assert pilot.planned_projects == 128  # docs/PLAN.md section 3
+
+
+# The stress shelf (docs/PLAN.md section 3, and the 18 design brief, section 4.1): the P130164 PAD with its
+# two-column risk annex, the longest PAD, a long Procurement Plan, a completion report in French and a
+# document over the layout parser's limit, in that order. The hand count of the annex's risks is
+# tests/ground_truth/values.toml's.
+SHELF_TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]
+
+
+def test_the_stress_shelf_names_five_entries_each_with_a_kind_and_a_document_or_a_rule():
+    shelf = config.load_slice().stress_shelf
+
+    assert [item.kind for item in shelf] == ["scan_annex", "longest_pad", "large_plan", "other_language",
+                                             "over_parser_limit"]
+    assert len({item.key for item in shelf}) == 5
+    annex = SHELF_TRUTH["pad_risk_annex"]
+    pad = shelf[0]
+    assert (pad.project_id, pad.document_id, pad.part) == ("P130164", annex["document_id"], "risk_annex")
+    assert (pad.first_page, pad.last_page) == (annex["first_pdf_page"], annex["last_pdf_page"])
+    # No person has counted the annex's risks from the PDF's page images yet, so the entry has no hand
+    # count and the page says it has nothing to check against (the 18 brief, decision 12).
+    assert (pad.expected_rows, pad.counted_on) == (None, None)
+    assert (shelf[1].rule, shelf[1].document_type, shelf[1].document_id) == (
+        "longest", "Project Appraisal Document", None)
+    assert (shelf[2].project_id, shelf[2].document_id) == ("P161305", SHELF_TRUTH["long_plan"]["document_id"])
+    assert (shelf[3].document_id, shelf[3].language) == (SHELF_TRUTH["french_report"]["document_id"], "fr")
+    assert (shelf[4].rule, shelf[4].document_id) == ("over_parser_limit", None)
+
+
+@pytest.mark.parametrize(("old", "new", "says"), [
+    ('kind = "scan_annex"', 'kind = "a_hard_one"', r"stress_shelf\[1\]\.kind must be one of"),
+    ('rule = "longest"', 'rule = "longest"\ndocument_id = "18381488"\nproject_id = "P130164"',
+     r"stress_shelf\[2\] names a document_id and a rule"),
+    ('last_page = 70\n', 'last_page = 70\nnot_expected_rows = 8\n', r"stress_shelf\[1\] has keys I do not know: not_expected_rows"),
+    ('part = "risk_annex"\n', '', r"stress_shelf\[1\]\.part is missing"),
+    ('language = "fr"', 'language = "French"', r"stress_shelf\[4\]\.language must be a two-letter"),
+])
+def test_a_stress_shelf_entry_of_the_wrong_shape_is_refused_with_a_sentence(tmp_path, old, new, says):
+    path = copy("slice.toml", tmp_path, old=old, new=new)
+
+    with pytest.raises(ConfigError, match=says):
+        config.load_slice(path)
+
+
+def test_a_hand_count_needs_the_day_it_was_counted(tmp_path):
+    path = copy("slice.toml", tmp_path, old="last_page = 70\n", new="last_page = 70\nexpected_rows = 8\n")
+
+    with pytest.raises(ConfigError, match=r"stress_shelf\[1\]\.counted_on.*the day a person counted"):
+        config.load_slice(path)
+
+
+def test_a_hand_count_with_its_day_is_read(tmp_path):
+    path = copy("slice.toml", tmp_path, old="last_page = 70\n", new="last_page = 70\nexpected_rows = 8\ncounted_on = 2026-11-02\n")
+
+    pad = config.load_slice(path).stress_shelf[0]
+    assert (pad.expected_rows, pad.counted_on) == (8, dt.date(2026, 11, 2))
 
 
 def test_adding_a_country_to_the_slice_is_one_entry(tmp_path):
@@ -199,7 +255,8 @@ def test_a_source_is_one_entry_in_the_registry(tmp_path):
 
 def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_as_plans_and_reports():
     """The 16 brief, section 5.1: one row per source, in the registry's order, What before How
-    before Why. The documents source holds two readers' measures, so it shows as two rows."""
+    before Why. The documents source holds two readers' measures, so it shows as two rows, and a third
+    for the notices' text the passage reader reads (ticket 18), which arrives as text."""
     sources = config.load_sources()
 
     assert all(source.readiness for source in sources.values())
@@ -207,7 +264,9 @@ def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_a
     assert (awards.label, awards.linked.measure, awards.fresh.measure) == (
         "Contract awards", "linked_step_reference", "fresh_fetched")
     assert awards.read_well is None  # STEP publishes awards as a table, so nothing needs reading
-    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [("plans", "How"), ("reports", "Why")]
+    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [
+        ("plans", "How"), ("reports", "Why"), ("notice_text", "What")]
+    assert sources["documents"].readiness[2].published_as == "text"
     ids = [row.id for source in sources.values() for row in source.readiness]
     assert len(ids) == len(set(ids))
 

@@ -7,7 +7,7 @@
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { excerpt, highlightsFor, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
-import { highlighted } from "./Document";
+import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { DocumentSource, Source } from "./Source";
@@ -33,6 +33,20 @@ export function sourceTitle(evidence: EvidenceEvent) {
   }
   const fields = passageFields(evidence);
   const place = placeOf(fields);
+  // Ticket 18's passages: a table row or its summary names its table, and a notice its ID, in mono.
+  if (fields.kind === "notice_text" && fields.noticeId) {
+    return <Fill template={copy.evidence.noticeTitle} slots={{ id: <span className="font-mono">{fields.noticeId}</span> }} />;
+  }
+  if (fields.kind === "table_row" || fields.kind === "table_summary") {
+    const project = <span lang={fields.lang ?? undefined}>{fields.project}</span>;
+    if (!fields.tableTitle) return <Fill template={copy.evidence.tableTitleUntitled} slots={{ project, page: String(fields.page ?? "") }} />;
+    return (
+      <Fill
+        template={fields.kind === "table_summary" ? copy.evidence.summaryTitle : copy.evidence.tableTitle}
+        slots={{ project, table: fields.tableTitle }}
+      />
+    );
+  }
   return place.kind === "paragraph" ? (
     <Fill template={copy.evidence.title} slots={{ project: fields.project, para: place.text }} />
   ) : (
@@ -60,6 +74,8 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
 }
 
 export function eyebrow(evidence: EvidenceEvent): string {
+  // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
+  if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
   const stratum = evidence.kind === "record" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }
@@ -74,7 +90,16 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
         <SourceNumber n={n} />
       </div>
       <p className="mt-1 text-title text-ink-heading">{sourceTitle(evidence)}</p>
-      {fields && shown && (
+      {fields && shown && fields.kind === "notice_text" && (
+        <p data-excerpt lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
+          {copy.evidence.quoteOpen}
+          {shown.cutBefore && copy.evidence.cut}
+          {withoutMarkers(highlighted(shown.text, shown.range ? [shown.range] : []))}
+          {shown.cutAfter && copy.evidence.cut}
+          {copy.evidence.quoteClose}
+        </p>
+      )}
+      {fields && shown && fields.kind !== "notice_text" && (
         <>
           <p data-excerpt lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
             {copy.evidence.quoteOpen}

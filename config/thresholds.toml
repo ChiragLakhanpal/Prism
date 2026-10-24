@@ -12,12 +12,29 @@
 # ingestion holds Azure and workspace spend). 500 is a starting value for the owner to confirm;
 # ticket 18 sets it for the whole document slice.
 [ingestion]
+# The most pages the layout parser (Route B) may try in one day, in UTC, across every project and both
+# readers, the plan reader and the passage reader (src/strata/lakehouse/plans.py, parse_pages). A page
+# it tried counts whether it read it or not. Source: docs/PLAN.md section 5. Ticket 18 keeps 500 for
+# the whole document slice, a value for the owner to confirm: at 500 a day, the slice's Route B pages
+# take days to read the first time, and later runs parse only changed pages.
 daily_page_cap = 500
+# The most pages the layout parser reads of one document in one part. A longer document is read in
+# parts of this many pages, every page keeping its number in the whole PDF. The live parser gets each
+# page as a PDF of its own, so a part's pages go one at a time. Source: ticket 18 ("a document over
+# 500 pages ... divided past the parser's limit"); a value for the owner to confirm.
+parser_part_pages = 500
+# The share of their words that the words read for a page, by the layout parser or from the published
+# text, and the words of the PDF page with that number must share for the stress shelf to call its
+# page number right (src/strata/lakehouse/stress_shelf.py, over_parser_limit). Half allows for the
+# parser's reading order and for running heads. A value for the owner to confirm.
+page_match_shared_words = 0.5
 # The passage reader (src/strata/lakehouse/passages.py) reads at most this many documents whose
-# published text Route A can read: the showcase project's first, then the demo plan project's, each
-# project's ICR Reviews, ICRs, PADs and ISRs in that order, newest first. Source: ticket 11, "the
-# first 20 documents". Ticket 18 raises it to the whole document slice.
-passage_documents = 20
+# published text Route A can read: the slice file's named projects first (the showcase, the demo plan
+# and the stress shelf's), then the projects the slice criteria select, each project's ICR Reviews,
+# ICRs, PADs and ISRs in that order, newest first. Ticket 11 read the first 20; ticket 18 raises it to
+# cover the whole document slice: docs/PLAN.md section 3 plans 128 projects, and a project rarely has
+# more than 40 such reports. A value for the owner to confirm.
+passage_documents = 5000
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
 # table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records

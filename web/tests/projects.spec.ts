@@ -41,14 +41,14 @@ test("All projects lists 50 projects whose IDs link to their pages, and Show 50 
   await expect(main.getByRole("heading", { level: 2, name: "All projects" })).toBeVisible();
   const table = main.locator("[data-table-view=table] tbody tr");
   await expect(table).toHaveCount(50);
-  await expect(main.getByText("Showing 1–50 of 92 projects")).toBeVisible();
+  await expect(main.getByText("Showing 1–50 of 93 projects")).toBeVisible();
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P156634" })).toHaveAttribute("href", "/projects/P156634");
   await expect(main.getByText("Source: World Bank projects API, records through October 23, 2026.")).toBeVisible();
 
   await main.getByRole("button", { name: "Show 50 more" }).click();
 
-  await expect(table).toHaveCount(92);
-  await expect(main.getByText("Showing all 92 projects")).toBeVisible();
+  await expect(table).toHaveCount(93);
+  await expect(main.getByText("Showing all 93 projects")).toBeVisible();
   await expect(main.locator("[data-table-view=table] [data-row='50']")).toBeFocused();
   await expect(main.getByRole("button", { name: "Show 50 more" })).toHaveCount(0);
   expect(unrecorded).toEqual([]);

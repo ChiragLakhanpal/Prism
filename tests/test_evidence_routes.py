@@ -165,3 +165,42 @@ def test_a_write_that_fails_says_so_and_leaves_the_viewer_s_page_alone(tmp_path)
     response = call(app, "POST", "/api/evidence/opened", ANA, json={"evidence_id": ICR_54})
 
     assert (response.status_code, response.json()) == (200, {"recorded": False})
+
+
+# Ticket 18's kinds of passage, which the drawer opens from a link: a paragraph the layout parser read from
+# a scanned page, a row of a table and its summary, a section of a notice's text, and a paragraph in
+# French. tests/record_api.py writes each answer, and the screen tests serve the same files.
+NEW_KINDS = [
+    ("evidence-pad-p130164-scanned.json", "strata.gold.passage:18381488/v1/23", "paragraph", "layout_parser", True),
+    ("evidence-pad-p130164-risk-row.json", "strata.gold.passage:18381488/v1/table65.2", "table_row", "layout_parser", True),
+    ("evidence-pad-p130164-risk-summary.json", "strata.gold.passage:18381488/v1/table65", "table_summary",
+     "layout_parser", True),
+    ("evidence-notice-op00118817.json", "strata.gold.passage:OP00118817/v1/s8", "notice_text", "published_text", False),
+    ("evidence-notice-op00118817-qualifications.json", "strata.gold.passage:OP00118817/v1/s5", "notice_text",
+     "published_text", False),
+    ("evidence-icr-p127203-fr.json", "strata.gold.passage:33407968/v1/1", "paragraph", "published_text", False),
+]
+
+
+@pytest.mark.parametrize("recorded, evidence_id, kind, route, scanned", NEW_KINDS, ids=[case[0] for case in NEW_KINDS])
+def test_each_kind_of_passage_opens_by_its_evidence_id_with_its_kind_route_and_scan(reading, recorded, evidence_id,
+                                                                                    kind, route, scanned):
+    response = call(create_app(engine_for=reading), "GET", "/api/evidence", ANA, params={"id": evidence_id})
+
+    assert response.status_code == 200
+    row = response.json()["row"]
+    assert (row["kind"], row["route"], row["scanned"]) == (kind, route, scanned)
+    assert response.json() == json.loads((RECORDED / recorded).read_text())
+
+
+def test_a_table_row_carries_its_table_its_row_and_its_cells_and_a_notice_its_id_and_page(reading):
+    app = create_app(engine_for=reading)
+
+    row = call(app, "GET", "/api/evidence", ANA, params={"id": "strata.gold.passage:18381488/v1/table65.2"}).json()["row"]
+    notice = call(app, "GET", "/api/evidence", ANA, params={"id": "strata.gold.passage:OP00118817/v1/s8"}).json()
+
+    assert (row["table_title"], row["table_row"], row["pdf_page"]) == (
+        "Annex 4 - Operational Risk Assessment Framework (ORAF)", 2, 65)
+    assert row["cells"][:2] == [["Risk", "Capacity"], ["Rating", "Low"]]
+    assert (notice["stratum"], notice["short_name"], notice["row"]["notice_id"]) == ("What", "Notice", "OP00118817")
+    assert "[contact removed]" in notice["row"]["text"]

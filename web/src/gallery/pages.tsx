@@ -26,7 +26,29 @@ import { POPOVER } from "../components/Popover";
 import type { Run } from "../lib/answer";
 import type { Lookup } from "../lib/intents";
 import { cx } from "../lib/cx";
-import { FAILED, ICR_54, ICR_54_ID, ISR_S4, ISR_S4_SENT, LOOKUPS, PENDING, PLAN_RECORD, RUNS, SECTION_SWITCHER_RUN, STEP_REF, SWITCHER_RUN } from "./answers";
+import {
+  FAILED,
+  FRENCH,
+  ICR_54,
+  ICR_54_ID,
+  ISR_S4,
+  ISR_S4_SENT,
+  LOOKUPS,
+  NOTICE,
+  NOTICE_CONTACTS,
+  PENDING,
+  PLAN_RECORD,
+  RISK_ROW,
+  RISK_SUMMARY,
+  RUNS,
+  SCANNED,
+  SECTION_SWITCHER_RUN,
+  STEP_REF,
+  SWITCHER_RUN,
+  TABLE_ROW_RUN,
+  TABLE_SUMMARY_RUN,
+} from "./answers";
+import { ExternalLink } from "../components/ExternalLink";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
@@ -50,9 +72,10 @@ import { DefinitionWindow, Term } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import type { Section } from "../components/TopNav";
 import { copy } from "../copy";
-import type { Readiness, ReadinessState, RegistryState } from "../lib/dataPages";
+import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
+import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 
 const s = galleryCopy.states;
@@ -549,6 +572,17 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       {
+        id: "external-link",
+        title: t.externalLink,
+        body: (
+          <p className="text-body">
+            <ExternalLink href={sample.externalLinkHref} name={sample.externalLinkMore}>
+              {sample.externalLink}
+            </ExternalLink>
+          </p>
+        ),
+      },
+      {
         id: "tabs",
         title: t.tabs,
         body: (
@@ -971,6 +1005,15 @@ export const PAGES: GalleryPage[] = [
       { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },
       { id: "unknown-as-of", title: s.unknownAsOf, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} asOf="2016-08-26" /> },
       { id: "preview", title: s.drawerPreview, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} preview /> },
+      // Ticket 18's kinds of passage (the 18 brief, section 7), each as the server gave it on the fixture.
+      { id: "scanned", title: s.scanned, body: <DrawerSample id={SCANNED.id} data={{ status: "ready", evidence: SCANNED }} /> },
+      { id: "table-row", title: s.tableRow, body: <DrawerSample id={RISK_ROW.id} data={{ status: "ready", evidence: RISK_ROW }} /> },
+      { id: "table-row-quoted", title: s.tableRowQuoted, body: <DrawerSample id={RISK_ROW.id} run={TABLE_ROW_RUN} sentence={3} /> },
+      { id: "table-summary", title: s.tableSummary, body: <DrawerSample id={RISK_SUMMARY.id} data={{ status: "ready", evidence: RISK_SUMMARY }} /> },
+      { id: "notice", title: s.notice, body: <DrawerSample id={NOTICE.id} data={{ status: "ready", evidence: NOTICE }} /> },
+      { id: "notice-contacts", title: s.noticeContacts, body: <DrawerSample id={NOTICE_CONTACTS.id} data={{ status: "ready", evidence: NOTICE_CONTACTS }} /> },
+      { id: "french", title: s.frenchParagraph, body: <DrawerSample id={FRENCH.id} data={{ status: "ready", evidence: FRENCH }} /> },
+      { id: "removed-summary", title: s.removedSummary, body: <PanelSample run={TABLE_SUMMARY_RUN} /> },
     ],
   },
   {
@@ -1115,7 +1158,7 @@ function readinessSections(): GalleryPage["sections"] {
   const words = galleryCopy.readiness;
   const result = words.result as unknown as Readiness;
   const ready = (changes: Partial<Readiness>): ReadinessState => ({ status: "ready", result: { ...result, ...changes } });
-  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes } };
+  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes, shelf: words.shelf.entries.length } };
   const states: [string, string, ReadinessState, boolean?][] = [
     ["ready", words.sections.ready, ready({})],
     [
@@ -1126,6 +1169,8 @@ function readinessSections(): GalleryPage["sections"] {
         sources: result.sources.slice(0, 3),
         kinds: [],
         fixes: result.fixes.slice(0, 1),
+        // None of the hardest documents is on these sources, so the section is left out.
+        stress_shelf: [],
         headline: { text: words.filteredHeadline, segments: [{ text: words.filteredHeadline }] },
       }),
     ],
@@ -1155,9 +1200,48 @@ function readinessSections(): GalleryPage["sections"] {
     ["permission", words.sections.permission, { status: "error", reason: "permission" }],
     ["error", words.sections.error, { status: "error", reason: "other" }],
   ];
-  return states.map(([id, title, state, slow]) => ({
-    id,
-    title,
-    body: <ReadinessView state={state} known={known} slow={slow} />,
-  }));
+  // The hardest documents' own states (the 18 brief, section 5): the section alone, from the sample
+  // with one change each, and the two views that need the rest of the page.
+  const shelf = words.shelf;
+  const entries = result.stress_shelf;
+  const changed = (changes: Record<number, Partial<ShelfEntry>>): ShelfEntry[] =>
+    entries.map((entry, index) => ({ ...entry, ...(changes[index] ?? {}) }));
+  const shelfOnly: [string, string, ShelfEntry[]][] = [
+    ["shelf-over-limit", shelf.sections.overLimit, changed({ 4: shelf.overLimit as unknown as ShelfEntry })],
+    [
+      "shelf-abstentions",
+      shelf.sections.abstentions,
+      changed({
+        0: shelf.noHandCount as Partial<ShelfEntry>,
+        1: shelf.noDocument as Partial<ShelfEntry>,
+        2: shelf.stopped as Partial<ShelfEntry>,
+        3: { state: "not_read", document: null, parser_row: null, outcome_row: null, status: null },
+      }),
+    ],
+    [
+      "shelf-empty",
+      shelf.sections.empty,
+      entries.map((entry) => ({ ...entry, state: "not_read", document: null, parser_row: null, outcome_row: null, longest_row: null, status: null, measured_on: null })),
+    ],
+  ];
+  const twoGaps = ready({
+    kinds: result.kinds.map((kind) => (kind.kind === "document_search" ? { ...kind, holds_back: [shelf.twoGaps as unknown as Segment[]] } : kind)),
+    stress_shelf: changed({ 1: { status: "gap", unreadable: true } }),
+  });
+  const filtered = ready({
+    filter: { sources: ["papers"], unknown: 0, from: "check_plan", shown: 1, total: 4 },
+    sources: result.sources.slice(3, 4),
+    kinds: result.kinds.slice(0, 1),
+    stress_shelf: entries.slice(2, 3),
+  });
+  return [
+    ...states.map(([id, title, state, slow]) => ({
+      id,
+      title,
+      body: <ReadinessView state={state} known={known} slow={slow} />,
+    })),
+    ...shelfOnly.map(([id, title, stress_shelf]) => ({ id, title, body: <HardestDocuments result={{ ...result, stress_shelf }} /> })),
+    { id: "shelf-two-gaps", title: shelf.sections.twoGaps, body: <ReadinessView state={twoGaps} known={known} /> },
+    { id: "shelf-filtered", title: shelf.sections.filtered, body: <ReadinessView state={filtered} known={known} /> },
+  ];
 }

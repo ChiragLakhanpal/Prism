@@ -5,7 +5,7 @@
 // Every tooltip names what the number counts ("528 of 603 contracts. Measured Oct 23, 2026."), and
 // every window shows the number that opened it: a number that is neither the measure's count nor
 // its denominator, such as a shortfall, gets its own first row.
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type MouseEvent, type ReactNode } from "react";
 import { MeasureNum, type Measure } from "../../components/MeasureNum";
 import { Num, numText, type NumValue } from "../../components/Num";
 import { copy } from "../../copy";
@@ -42,7 +42,18 @@ function TableName({ name }: { name: string }) {
   );
 }
 
-function measureWindow(row: MeasureRow, column: Column | null, asOf: string, clicked: { role: Role; value: number } | null): Measure {
+// A window's own words and more rows, for a number that no registry entry names, such as the stress
+// shelf's (ticket 18): its title, its definition and rows after the measure's own numbers.
+export type WindowWords = { title: string; definition: ReactNode; rows?: { label: string; value: ReactNode }[] };
+
+function measureWindow(
+  row: MeasureRow,
+  column: Column | null,
+  asOf: string,
+  clicked: { role: Role; value: number } | null,
+  extra: { label: string; value: ReactNode }[] = [],
+  own?: WindowWords,
+): Measure {
   const day = (iso: string) => numText({ date: iso, style: "table", today: asOf });
   const rows = [
     ...(clicked ? [{ label: ROLE_LABEL[clicked.role], value: <Num value={clicked.value} options={{ compact: false }} /> }] : []),
@@ -51,14 +62,17 @@ function measureWindow(row: MeasureRow, column: Column | null, asOf: string, cli
       ? [{ label: words.number.denominator, value: <Num value={row.denominator} options={{ compact: false }} /> }]
       : []),
     ...(row.as_of ? [{ label: words.number.latest, value: day(row.as_of) }] : []),
+    ...extra,
+    ...(own?.rows ?? []),
     { label: words.number.measured, value: day(row.measured_on) },
     ...(row.source.counted_in ? [{ label: words.number.countedIn, value: <TableName name={row.source.counted_in} /> }] : []),
   ];
+  const counted = { source: row.source_key, measure: row.measure };
+  if (own) return { title: own.title, definition: own.definition, rows, counted };
   // A measure that fills no column, such as a check or a fix's own measure, has its own words, so
   // its window never borrows a column's name and definition (design review r5 B1).
-  const counted = { source: row.source_key, measure: row.measure };
-  const own = words.measureWindows[row.measure];
-  if (own) return { title: own.title, definition: own.definition, rows, counted };
+  const words_ = words.measureWindows[row.measure];
+  if (words_) return { title: words_.title, definition: words_.definition, rows, counted };
   if (column === null) return { title: words.fixes.title, definition: words.fixes.caption, rows, counted };
   return { title: words.sources.columns[column].label, definition: words.sources.definitions[column], rows, counted };
 }
@@ -105,6 +119,8 @@ export function MeasureValue({
   role,
   lack,
   className,
+  extraRows,
+  window: own,
 }: {
   measures: Measures;
   index: number;
@@ -115,6 +131,10 @@ export function MeasureValue({
   role?: Role | null;
   lack?: string | null;
   className?: string;
+  // More rows for the window, after the measure's own numbers, such as a share's split by route.
+  extraRows?: { label: string; value: ReactNode }[];
+  // The window's own words, for a number no registry entry names.
+  window?: WindowWords;
 }) {
   const row = measures.rows[index];
   const owner = windowColumn === undefined ? (KIND_COLUMN[row.kind] ?? null) : windowColumn;
@@ -124,7 +144,7 @@ export function MeasureValue({
       value={value}
       className={className}
       tooltip={tooltip(row, noun, measures.asOf, role === "missing" && (lack || row.kind === "read_well") ? "missing" : tooltipKind, count, lack)}
-      measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null)}
+      measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null, extraRows, own)}
     />
   );
 }
@@ -137,6 +157,14 @@ export function Sentence({ segments, measures, about }: { segments: Segment[]; m
     <>
       {segments.map((segment, index): ReactNode => {
         if ("text" in segment) return <Fragment key={index}>{segment.text}</Fragment>;
+        if ("mono" in segment) {
+          return (
+            <span key={index} className="font-mono">
+              {segment.mono}
+            </span>
+          );
+        }
+        if ("link" in segment) return <InPageLink key={index} href={segment.href} text={segment.link} />;
         if (segment.row === null) {
           return <MeasureNum key={index} value={{ count: segment.number }} tooltip={about ?? words.number.kinds} />;
         }
@@ -153,5 +181,28 @@ export function Sentence({ segments, measures, about }: { segments: Segment[]; m
         );
       })}
     </>
+  );
+}
+
+// A link to a section of this page, such as "the hardest documents I read" (the 18 brief, section 6.2):
+// it moves focus to the section's heading, which takes tabindex -1, and the address gains the
+// section's id, so Back returns to the link.
+export function InPageLink({ href, text }: { href: string; text: string }) {
+  const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    const target = document.getElementById(href.slice(1));
+    if (!target) return;
+    event.preventDefault();
+    window.history.pushState(window.history.state, "", href);
+    target.focus();
+    target.scrollIntoView({ block: "start" });
+  };
+  return (
+    <a
+      href={href}
+      onClick={onClick}
+      className="py-1 text-primary underline decoration-1 underline-offset-3 transition-paint duration-150 hover:text-link-hover"
+    >
+      {text}
+    </a>
   );
 }

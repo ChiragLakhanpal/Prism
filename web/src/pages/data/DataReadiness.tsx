@@ -36,6 +36,7 @@ import {
 } from "../../lib/dataPages";
 import { useStore } from "../../lib/store";
 import { DATA_HREF } from "../../routes";
+import { HardestDocuments, HardestDocumentsLoading } from "./HardestDocuments";
 import { MeasureValue, Sentence, type Measures, type Noun } from "./measures";
 
 const words = copy.dataReadiness;
@@ -69,7 +70,30 @@ const muted = (text: string) => <span className="text-ink-muted">{text}</span>;
 const YEARS: Noun = { many: words.sources.yearsNoun, one: words.sources.yearsNounOne };
 const DAYS: Noun = { many: words.server.daysLate, one: words.server.dayLate };
 
+const DOCUMENT_PROJECTS: Noun = { many: words.sources.projectsNoun, one: words.sources.projectsNounOne };
+const PILOT_PROJECTS: Noun = { many: words.sources.pilotNoun, one: words.sources.pilotNounOne };
+
+// A document collection's Read well window splits its share by route (the 18 brief, section 6.1):
+// "Published text: 511 of 511 pages read well. Layout parser: 97 of 121 pages read well."
+function routeRows(cell: Cell, measures: Measures): { label: string; value: ReactNode }[] {
+  const rows = (cell.routes ?? []).flatMap(({ route, row }) => {
+    const found = row !== null ? measures.rows[row] : null;
+    if (!found || found.count === null || found.denominator === null) return [];
+    const n = (value: number) => numText({ value, options: { compact: false } });
+    return [{ label: words.sources.routes[route], value: words.sources.routeRead(n(found.count), n(found.denominator)) }];
+  });
+  return rows.length ? [...rows, { label: words.sources.routeCounts, value: words.sources.routeCountsNote }] : [];
+}
+
+// "{documents} documents for {projects} projects", in the singular where a count is one.
+function documentsFor(oneDocument: boolean, oneProject: boolean): string {
+  const sources = words.sources;
+  if (oneProject) return oneDocument ? sources.documentForOneProject : sources.documentsForOneProject;
+  return sources.documentsFor;
+}
+
 function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode {
+  if (cell.published_as_text) return muted(words.sources.publishedAsText);
   if (cell.published_as_table) return muted(words.sources.publishedAsTable);
   // The registry gives this column no measure, so no run will measure it: say what it is instead.
   if (cell.measure === null) return muted(cell.schedule ? words.sources.asPublished : words.sources.noMeasure);
@@ -119,6 +143,7 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
   const plain = row.denominator === null || (column === "coverage" && row.denominator === row.count);
   const one = plain ? row.count === 1 : row.denominator === 1;
   const years = cell.years_row !== null && cell.years_row !== undefined ? measures.rows[cell.years_row] : null;
+  const pilot = cell.slice_row !== null && cell.slice_row !== undefined ? measures.rows[cell.slice_row] : null;
   return (
     <Stack>
       <span className="font-semibold">
@@ -132,10 +157,53 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
             noun={noun}
             tooltipKind="ratio"
             windowColumn={column}
+            extraRows={column === "read_well" ? routeRows(cell, measures) : undefined}
           />
         )}
       </span>
-      <Qualifier>{one && cell.counts_one ? cell.counts_one : cell.counts}</Qualifier>
+      {cell.projects_row !== null && cell.projects_row !== undefined && measures.rows[cell.projects_row].count !== null ? (
+        // A document collection: its documents, for the projects they belong to, so both numbers count
+        // the same documents (design review r2 B1).
+        <Qualifier>
+          <Template
+            text={documentsFor(one, measures.rows[cell.projects_row].count === 1)}
+            values={{
+              projects: (
+                <MeasureValue
+                  measures={measures}
+                  index={cell.projects_row}
+                  value={{ count: measures.rows[cell.projects_row].count ?? 0 }}
+                  noun={DOCUMENT_PROJECTS}
+                  windowColumn={null}
+                />
+              ),
+            }}
+          />
+        </Qualifier>
+      ) : (
+        <Qualifier>{one && cell.counts_one ? cell.counts_one : cell.counts}</Qualifier>
+      )}
+      {pilot && cell.slice_row !== null && cell.slice_row !== undefined && pilot.count !== null && pilot.denominator !== null && (
+        // The pilot projects whose documents I read, out of every pilot project, as one number.
+        <Qualifier>
+          <Template
+            text={pilot.denominator === 1 ? words.sources.pilotOne : words.sources.pilot}
+            values={{
+              read: (
+                <MeasureValue
+                  measures={measures}
+                  index={cell.slice_row}
+                  value={{ share: { ...pilot, count: pilot.count, denominator: pilot.denominator, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null }, style: "table" }}
+                  noun={PILOT_PROJECTS}
+                  tooltipKind="ratio"
+                  windowColumn={null}
+                  className="whitespace-nowrap"
+                />
+              ),
+            }}
+          />
+        </Qualifier>
+      )}
       {/* A limit the source declares sits on its own line, so the number keeps its unit. */}
       {cell.note && <Qualifier>{cell.note}</Qualifier>}
       {years && years.count !== null && years.denominator !== null && cell.years_row !== null && cell.years_row !== undefined && (
@@ -154,8 +222,37 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
   );
 }
 
+const listed = (names: string[]) =>
+  names.length > 1 ? names.slice(0, -1).join(words.sources.scope.join) + words.sources.scope.lastJoin + names.at(-1) : (names[0] ?? "");
+
 function scopeText(row: Extract<SourceRow, { type: "measured" | "unmeasured" }>): ReactNode {
   const scope = row.scope;
+  if (scope.kind === "slice") {
+    const sectors = listed(scope.sectors);
+    const where = words.sources.scope.slice(
+      sectors.charAt(0).toUpperCase() + sectors.slice(1),
+      listed(scope.countries),
+      String(scope.first_fiscal_year),
+      String(scope.last_fiscal_year),
+    );
+    return (
+      <>
+        {where}
+        {scope.shelf && (
+          <>
+            {words.sources.scope.join}
+            {words.sources.scope.sliceShelf}
+          </>
+        )}
+        {row.covers && (
+          <>
+            {words.sources.scope.join}
+            {row.covers}
+          </>
+        )}
+      </>
+    );
+  }
   const where =
     scope.kind === "every_country" ? (
       words.sources.scope.every_country
@@ -472,6 +569,7 @@ function Tables({ result }: { result: Readiness }) {
           spanName={COLUMNS.map((column) => words.sources.columns[column].label).join(words.sources.scope.join)}
         />
       </div>
+      <HardestDocuments result={result} />
       <Failures result={result} />
       <div className="mt-12">
         <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} shown={result.filter.shown} />
@@ -630,6 +728,9 @@ function render(
               state={{ status: "loading", rows }}
             />
           </div>
+          {/* The hardest documents, one skeleton row for each entry the slice file names, when no link
+              filters the page (a filtered view shows only the entries on its sources). */}
+          {!new URLSearchParams(search).has("sources") && known.status === "ready" && <HardestDocumentsLoading rows={known.registry.shelf} />}
           {/* Every row is in view when no link filters the page, the plans' row with them. */}
           {!new URLSearchParams(search).has("sources") && (
             <section aria-labelledby="data-failures-loading" className="mt-12">

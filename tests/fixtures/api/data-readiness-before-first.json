@@ -4,7 +4,7 @@
   "view": "staff",
   "rows": [],
   "coverage": {
-    "matched": 13,
+    "matched": 14,
     "used": 0,
     "not_used": []
   },
@@ -16,8 +16,8 @@
     "sources": null,
     "unknown": 0,
     "from": null,
-    "shown": 13,
-    "total": 13
+    "shown": 14,
+    "total": 14
   },
   "sources": [],
   "kinds": [],
@@ -27,5 +27,6 @@
   "headline": null,
   "headline_abstention": null,
   "parse_failures": null,
-  "measured": null
+  "measured": null,
+  "stress_shelf": []
 }

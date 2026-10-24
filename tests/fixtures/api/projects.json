@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-23",
-  "total": 92,
+  "total": 93,
   "rows": [
     {
       "project_id": "P176704",
@@ -516,6 +516,12 @@
       "project_id": "P130164",
       "project_name": "Rajasthan Road Sector Modernization Project",
       "country": "India",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P127203",
+      "project_name": "Rebuilding Energy Infrastructure and Access",
+      "country": "Haiti",
       "status": "Closed"
     },
     {

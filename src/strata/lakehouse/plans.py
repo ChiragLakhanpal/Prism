@@ -52,11 +52,17 @@ from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once 
 from strata.lakehouse.engine import Engine, WarehouseEngine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
-from strata.reader.layout import LayoutParser, Page, ParseFailed, tables_from_json, tables_to_json
+from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, tables_from_json, tables_to_json
 
 SOURCE = "documents"  # the source registry's key for the documents API
 PLAN = "Procurement Plan"
 TABLE_PAGE = step.squash("Activity Reference No.")  # a page that holds a STEP table goes to Route B
+
+
+def holds_table(text: str) -> bool:
+    """Whether a plan page holds a STEP table: its header, or a row continued from the page before,
+    which starts with an Activity Reference No. and no header above it."""
+    return TABLE_PAGE in step.squash(text) or bool(step.references_in(text))
 
 
 def _now() -> dt.datetime:
@@ -257,7 +263,7 @@ def read_versions(engine: Engine, project_id: str, listing: Listing) -> list[Ver
         page_texts = pages[entry.document_id]
         agency = step.executing_agency("\n".join(t for _, _, t in page_texts)) or step.executing_agency(text)
         versions.append(Version(entry, public, agency, step.references_in(text),
-                                [PdfPage(n, d, TABLE_PAGE in step.squash(t), bool(t.strip()))
+                                [PdfPage(n, d, holds_table(t), bool(t.strip()))
                                  for n, d, t in page_texts]))
 
     series: dict[str | None, list[Version]] = defaultdict(list)
@@ -338,47 +344,87 @@ SELECT (SELECT count(*) FROM strata.bronze.layout_pages WHERE CAST(parsed_at AS 
 """
 
 
+@dataclass(frozen=True)
+class WaitingPage:
+    """A page the page router sent to Route B: its document, project, PDF, number in the PDF, the hash
+    of its text (the parse-once key with the document and the number) and its public date."""
+
+    document_id: str
+    project_id: str
+    pdf_url: str
+    pdf_page: int
+    page_hash: str
+    public_from: dt.date
+
+
 def parse_chosen(engine: Engine, layout: LayoutParser, project_id: str, versions: list[Version], cap: int,
                  clock: Callable[[], dt.datetime], run_id: str) -> Parsing:
-    """Each chosen version's table pages that have not been parsed, newest version first, up to the cap.
+    """Each chosen version's table pages that have not been parsed, newest version first, up to the cap."""
+    chosen = sorted((v for v in versions if v.reasons), key=lambda v: (v.entry.plan_date, v.document_id), reverse=True)
+    return parse_pages(engine, layout, project_id, [
+        WaitingPage(version.document_id, project_id, version.entry.pdf_url, number, digest, version.public_from)
+        for version in chosen for number, digest in version.table_pages], cap, clock, run_id)
 
-    The cap counts every page the parser tried that day, in UTC, across every project, whether it
-    read the page or not, because each attempt costs a parse. A page that failed that day waits
-    until the next."""
+
+def parse_pages(engine: Engine, layout: LayoutParser, project_id: str, pages: list[WaitingPage], cap: int,
+                clock: Callable[[], dt.datetime], run_id: str) -> Parsing:
+    """One project's Route B pages that have not been parsed, in the order given, up to the cap. The
+    plan reader and the document reader (src/strata/lakehouse/passages.py) both parse through here.
+
+    Each page is parsed once: a page whose document, PDF page and text hash bronze.layout_pages holds
+    is not parsed again. The cap counts every page the parser tried that day, in UTC, across every
+    project and both readers, whether it read the page or not, because each attempt costs a parse. A
+    page that failed that day waits until the next."""
     today = clock().date()
     done = parsed_pages(engine, project_id)
     failed_today = {(str(d), int(n), str(h)) for d, n, h in engine.run(
         "SELECT document_id, pdf_page, page_hash FROM strata.ops.parse_failures "
         "WHERE project_id = :project_id AND CAST(failed_at AS DATE) = :today",
         {"project_id": project_id, "today": today}).rows}
-    chosen = sorted((v for v in versions if v.reasons), key=lambda v: (v.entry.plan_date, v.document_id), reverse=True)
-    waiting = [(version, number, digest) for version in chosen for number, digest in version.table_pages
-               if (version.document_id, number, digest) not in done | failed_today]
+    waiting = [page for page in pages if (page.document_id, page.pdf_page, page.page_hash) not in done | failed_today]
     earlier = int(engine.run(TRIED_TODAY, {"today": today}).rows[0][0])
     budget, tried, parsed, stopped, failed = max(cap - earlier, 0), 0, 0, None, []
-    for version, number, digest in waiting:
+    for page in waiting:
         if tried >= budget:
-            stopped = (version.document_id, number)
+            stopped = (page.document_id, page.pdf_page)
             break
         tried += 1
         try:
-            tables = layout.parse(Page(version.document_id, version.entry.pdf_url, number))
+            found = layout.parse(Page(page.document_id, page.pdf_url, page.pdf_page))
         except ParseFailed as error:
             when = clock()
             insert(engine, "strata.ops.parse_failures",
                    ("run_id", "project_id", "document_id", "pdf_page", "page_hash", "parser", "error", "failed_at",
                     "public_from"),
-                   [(run_id, project_id, version.document_id, number, digest, layout.name, str(error), when,
-                     when.date())])
-            failed.append((version.document_id, number))
+                   [(run_id, project_id, page.document_id, page.pdf_page, page.page_hash, layout.name, str(error),
+                     when, when.date())])
+            failed.append((page.document_id, page.pdf_page))
             continue
+        # The parser reads the PDF itself, so its words lose their emails and labelled phone numbers here,
+        # before bronze keeps them, as the published text does when it is fetched.
+        tables = [Table(table.title, table.header_rows,
+                        tuple(tuple(contacts.strip_text(cell)[0] for cell in row) for row in table.rows))
+                  for table in found.tables]
         insert(engine, "strata.bronze.layout_pages",
-               ("document_id", "project_id", "pdf_page", "page_hash", "parser", "tables", "parsed_at", "run_id",
-                "public_from"),
-               [(version.document_id, project_id, number, digest, layout.name, tables_to_json(tables), clock(), run_id,
-                 version.public_from)])
+               ("document_id", "project_id", "pdf_page", "page_hash", "parser", "tables", "text", "figures",
+                "parsed_at", "run_id", "public_from"),
+               [(page.document_id, project_id, page.pdf_page, page.page_hash, layout.name, tables_to_json(tables),
+                 contacts.strip_text(found.text)[0], found.figures, clock(), run_id, page.public_from)])
         parsed += 1
     return Parsing(layout.name, cap, earlier, len(waiting), parsed, stopped, tuple(failed))
+
+
+def record_parse_run(engine: Engine, run_id: str, project_id: str, parsing: Parsing, started: dt.datetime,
+                     finished: dt.datetime) -> None:
+    """One row of strata.ops.parse_runs: what one run's Route B did for one project."""
+    insert(engine, "strata.ops.parse_runs",
+           ("run_id", "project_id", "parser", "daily_page_cap", "parsed_earlier_today", "pages_waiting",
+            "pages_parsed", "pages_failed", "first_failed_document_id", "first_failed_pdf_page", "stopped_at_cap",
+            "stopped_at_document_id", "stopped_at_pdf_page", "started_at", "finished_at", "public_from"),
+           [(run_id, project_id, parsing.parser, parsing.cap, parsing.parsed_earlier_today, parsing.waiting,
+             parsing.parsed, len(parsing.failed), *(parsing.failed[0] if parsing.failed else (None, None)),
+             parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started, finished,
+             finished.date())])
 
 
 # ── 5. Silver rows, steps, delays and data notes ─────────────────────────
@@ -510,14 +556,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
     read = write_rows(engine, project_id, versions)
     finished = clock()
-    insert(engine, "strata.ops.parse_runs",
-           ("run_id", "project_id", "parser", "daily_page_cap", "parsed_earlier_today", "pages_waiting",
-            "pages_parsed", "pages_failed", "first_failed_document_id", "first_failed_pdf_page", "stopped_at_cap",
-            "stopped_at_document_id", "stopped_at_pdf_page", "started_at", "finished_at", "public_from"),
-           [(run_id, project_id, parsing.parser, parsing.cap, parsing.parsed_earlier_today, parsing.waiting,
-             parsing.parsed, len(parsing.failed), *(parsing.failed[0] if parsing.failed else (None, None)),
-             parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started, finished,
-             finished.date())])
+    record_parse_run(engine, run_id, project_id, parsing, started, finished)
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
                        finished)
     return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns)

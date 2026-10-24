@@ -10,8 +10,11 @@ its PDF has, and the document type's template (src/strata/reader/templates.py), 
 2. It reads each page's printed page number ("Page 19 of 62", or a bare 19 or ii at its foot), and
    drops the lines that repeat at the top or foot of most pages, such as the report's running title.
 3. It routes each page. The pages before the body (the cover, the abbreviations and the contents)
-   are read and give no passages. A data sheet's pages hold tables, so they go to Route B, as does a
-   page with no text left, such as a figure. Every other page is Route A's.
+   are read and give no passages. A data sheet's pages hold tables, so they go to Route B, as do a
+   PAD's risk table, from the page that names its risk framework to the next annex, and a page with
+   no text left, such as a figure. Every other page is Route A's. A scan's published text does not
+   divide into its pages, so every page of a scan goes to Route B: its risk table as a table, the
+   rest as scanned pages (route_scan).
 4. It finds the headings from the template, which give each passage its section path (III.B), and
    separates the numbered paragraphs (54. Another lesson ...). The text between a numbered
    paragraph and the next belongs to it, across a page break too, until a heading or a short line
@@ -34,7 +37,8 @@ from dataclasses import dataclass, field
 from strata.reader.templates import Template
 
 PAGE_BREAK = "\f"
-PRINTED = re.compile(r"\bPage\s+(\d+\s+of\s+\d+)\b")
+# "Page 19 of 62", or in a report in French "Page 6 sur 80", kept as the page prints it.
+PRINTED = re.compile(r"\bPage\s+(\d+\s+(?:of|sur)\s+\d+)\b")
 FOOT_NUMBER = re.compile(r"^\s*(\d{1,3}|[ivxlc]{1,7})\s*$")
 TABLE_GAP = re.compile(r"\S\s{3,}\S")  # columns of a table, which no line of a paragraph has
 BULLET = re.compile(r"^\s*(?:[•●▪o\-–]|\(\w{1,4}\)|\w\)|\d{1,2}\))\s")
@@ -45,11 +49,14 @@ SENTENCE_END = re.compile(r"[.!?][\"'”’)]*(\s+)(?=[\"'“‘(]?[A-Z0-9])")
 
 # Routes and the reasons a page takes one, as silver.document_page_routes records them.
 ROUTE_A, ROUTE_B = "A", "B"
-# The parse_route of a table's one summary passage, which never backs a number (spec, "Reading
-# documents"). Route B's table reader (ticket 18) writes it; the verifier reads it.
-TABLE_SUMMARY = "B-table-summary"
 BODY, FRONT_MATTER = "body", "front_matter"
 DATA_SHEET, NO_TEXT, NOT_PAGED = "data_sheet", "no_text", "text_not_paged"
+SCANNED, RISK_TABLE = "scanned", "risk_table"  # a scan's page, and a page of a PAD's risk table
+TABLE_REASONS = (DATA_SHEET, RISK_TABLE)  # the pages whose tables Route B reads into rows
+# The kinds of passage, as silver.passages records them: a numbered paragraph (or a section, or a part
+# of one), one row of a table, the one summary of a table that Strata writes and that never backs a
+# number (spec, "Reading documents"; the verifier reads it), and a section of a notice's text.
+PARAGRAPH, TABLE_ROW, TABLE_SUMMARY, NOTICE_TEXT = "paragraph", "table_row", "table_summary", "notice_text"
 
 
 def tokens(text: str) -> int:
@@ -162,6 +169,7 @@ class _State:
     annex: str | None = None
     section: str | None = None  # an unnumbered report's heading, or an ICR Review's section number
     last: int = 0  # the last paragraph number in this numbering
+    chapter: int = 0  # its chapter, for a report that numbers its paragraphs within chapters (2.10)
     item: str | None = None  # the last item letter in an ICR Review's section
     current: _Paragraph | None = None
     unnumbered: int = 0
@@ -196,19 +204,28 @@ class _State:
             self.current.lines.append((page, line))
 
 
-def _follows(state: _State, number: int) -> bool:
+def _ordinal(number: str) -> tuple[int, int]:
+    """A paragraph number as its chapter and its place: 54 is (0, 54), and a PPAR's 2.10 is (2, 10)."""
+    chapter, _, place = number.rpartition(".")
+    return (int(chapter) if chapter else 0, int(place))
+
+
+def _follows(state: _State, number: tuple[int, int]) -> bool:
     """A paragraph number continues the report's numbering: the next one, allowing for a start
-    the text lost, or 1 when an annex starts its own numbering."""
-    if state.annex and state.last == 0:
-        return number == 1
-    return state.last < number <= state.last + 3
+    the text lost, or 1 when an annex, or a report's next chapter, starts its own numbering."""
+    chapter, place = number
+    if state.annex and state.last == 0 and state.chapter == 0:
+        return place == 1
+    if chapter == state.chapter:
+        return state.last < place <= state.last + 3
+    return state.chapter < chapter <= state.chapter + 2 and place == 1
 
 
 def _numbered_start(state: _State, line: str) -> str | None:
     template = state.template
     if template.items:
         found = template.paragraph.match(line)
-        if found and _follows(state, int(found.group(1))):
+        if found and _follows(state, _ordinal(found.group(1))):
             state.last, state.section, state.item = int(found.group(1)), found.group(1), None
             return found.group(1)
         found = template.items.match(line)
@@ -220,10 +237,10 @@ def _numbered_start(state: _State, line: str) -> str | None:
     found = template.paragraph.match(line)
     if not found or TABLE_GAP.search(found.group(2)):
         return None
-    number = int(found.group(1))
+    number = _ordinal(found.group(1))
     if not _follows(state, number):
         return None
-    state.last = number
+    state.chapter, state.last = number
     return found.group(1)
 
 
@@ -242,7 +259,7 @@ def _heading(state: _State, line: str) -> bool:
         state.close()
         state.annex = template.annex.match(line).group(1)
         state.levels = [None] * len(template.levels)
-        state.last = 0
+        state.last, state.chapter = 0, 0
         return True
     for depth, pattern in enumerate(template.levels):
         found = pattern.match(line)
@@ -264,7 +281,8 @@ def _minor_heading(block: list[str]) -> bool:
             and not line[0].isdigit())
 
 
-LEAD = re.compile(r"^\s*(?:\d{1,3}\.|[•●▪o\-–]|\(\w{1,4}\))\s+")  # a paragraph's number or a bullet, then its gap
+# A paragraph's number (54. or a PPAR's 2.10) or a bullet, then its gap.
+LEAD = re.compile(r"^\s*(?:\d{1,3}\.(?:\d{1,2}\.?)?|[•●▪o\-–]|\(\w{1,4}\))\s+")
 
 
 def _table(block: list[str]) -> bool:
@@ -358,11 +376,44 @@ def _passages(paragraph: _Paragraph, max_tokens: int, template: Template, printe
 
 # ── The document ─────────────────────────────────────────────────────────
 
-def read(text: str, pdf_pages: int, template: Template, max_tokens: int) -> Reading:
-    """A document's published text read into pages, each with its route, and passages."""
+def risk_pages(page_texts: list[str], template: Template) -> set[int]:
+    """The PDF pages of a document's risk table, from the page that names its risk framework to the
+    page before the next annex, read from each page's text."""
+    found, inside = set(), False
+    if template.risk_table is None:
+        return found
+    ends = [pattern for pattern in (template.annex, ANY_ANNEX, template.body_start, *template.levels[:1]) if pattern]
+    for number, text in enumerate(page_texts, 1):
+        lines = [line for line in text.splitlines() if line.strip()]
+        if any(template.risk_table.match(line) for line in lines):
+            inside = True
+        elif inside and any(pattern.match(line) for pattern in ends for line in lines[:12]):
+            inside = False
+        if inside:
+            found.add(number)
+    return found
+
+
+ANY_ANNEX = re.compile(r"^\s*Annex\s+\d+\s*[:.\-]", re.I)  # an annex's heading, however it is punctuated
+
+
+def route_scan(pdf_pages: int, template: Template, page_texts: list[str] | None = None) -> tuple[PageRoute, ...]:
+    """Every page of a scan, whose published text does not divide into its pages, on Route B: the pages
+    of its risk table as a table, read from the text layer of each PDF page when it is given, and the
+    rest as scanned pages."""
+    risks = risk_pages(page_texts, template) if page_texts and len(page_texts) == pdf_pages else set()
+    return tuple(PageRoute(n, ROUTE_B, RISK_TABLE if n in risks else SCANNED if page_texts else NOT_PAGED, None,
+                           False, 0) for n in range(1, pdf_pages + 1))
+
+
+def read(text: str, pdf_pages: int, template: Template, max_tokens: int,
+         page_texts: list[str] | None = None) -> Reading:
+    """A document's published text read into pages, each with its route, and passages. A scan's text
+    does not divide into its pages, so it gives no passages, and every page goes to Route B, routed
+    by the text of each PDF page when page_texts gives it."""
     pages = split_pages(text, pdf_pages)
     if pages is None:
-        return Reading(tuple(PageRoute(n, ROUTE_B, NOT_PAGED, None, False, 0) for n in range(1, pdf_pages + 1)), ())
+        return Reading(route_scan(pdf_pages, template, page_texts), ())
 
     raw = [page.splitlines() for page in pages]
     running = _running(raw)
@@ -370,8 +421,13 @@ def read(text: str, pdf_pages: int, template: Template, max_tokens: int) -> Read
     state = _State(template, [None] * len(template.levels))
     reasons: dict[int, str] = {}
     in_body, in_data_sheet = False, False
+    risks = risk_pages(pages, template)
     for number, lines in enumerate(raw, 1):
         kept = _page_lines(lines, running, printed[number])
+        if in_body and number in risks:
+            state.close()
+            reasons[number] = RISK_TABLE  # its rows come from Route B's table, not from the text
+            continue
         if not in_body:
             start = next((i for i, line in enumerate(kept) if template.body_start.match(line)), None)
             if start is None:
@@ -413,7 +469,7 @@ def read(text: str, pdf_pages: int, template: Template, max_tokens: int) -> Read
     routes = []
     for number in range(1, len(raw) + 1):
         reason = reasons[number]
-        route = ROUTE_B if reason in (DATA_SHEET, NO_TEXT) else ROUTE_A
+        route = ROUTE_B if reason in (DATA_SHEET, NO_TEXT, RISK_TABLE) else ROUTE_A
         routes.append(PageRoute(number, route, reason, printed[number], number in numbered_on,
                                 starting.get(number, 0)))
     return Reading(tuple(routes), tuple(passages))

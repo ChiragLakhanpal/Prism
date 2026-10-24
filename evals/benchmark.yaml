@@ -55,6 +55,23 @@ questions:
       cases had to go through rebidding" (tests/ground_truth/values.toml, icr-para-54). No passage
       the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out.
 
+  - id: search-passages-similar-experience
+    kind: documents
+    tool: search_passages
+    question: >-
+      Which procurement notices ask consultants for experience on similar work?
+    arguments:
+      query: similar experience
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:OP00118817/v1/s5, strata.gold.passage:OP00128730/v1/s6]
+      left_out: []
+    source: >-
+      Ticket 18 indexed notices' scope and qualification text as passages. The two Requests for
+      Expression of Interest in tests/ground_truth/values.toml ([stress_shelf.similar_experience]) ask
+      for "experience on similar projects" and "experience with similar successful assignments", each
+      in one section of its notice.
+
   - id: data-readiness-kenya-awards
     kind: sql
     tool: data_readiness_for
@@ -73,3 +90,19 @@ questions:
       award files apart from Strata's code (tests/ground_truth/values.toml, counts.kenya). The fixture
       records awards for Kenya only, so the awards source's row for every country holds Kenya's. The
       gap is PLAN.md section 3's: neither awards dataset covers fiscal 2017 to 2019.
+
+  - id: data-readiness-stress-shelf
+    kind: sql
+    tool: data_readiness_for
+    question: >-
+      As of October 23, 2026, how many rated risks did Strata recover from the risk annex of the
+      P130164 Project Appraisal Document, and what did it count them against?
+    arguments:
+      as_of: "2026-10-23"
+    expected:
+      rated_risks_recovered: [8, null]
+    source: >-
+      Ticket 18's stress shelf (config/tools.toml, data_readiness_for's stress_shelf field). The annex's
+      eight rated risks are quoted page by page in tests/ground_truth/values.toml
+      ([stress_shelf.pad_risk_annex]), counted from the scan's text layer. config/slice.toml gives no
+      hand count yet, so the outcome has no denominator to check against.
