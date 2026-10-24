@@ -168,3 +168,39 @@ questions:
       eight rated risks are quoted page by page in tests/ground_truth/values.toml
       ([stress_shelf.pad_risk_annex]), counted from the scan's text layer. config/slice.toml gives no
       hand count yet, so the outcome has no denominator to check against.
+
+  - id: get-disagreements-p130164
+    kind: documents
+    tool: get_disagreements
+    question: >-
+      For P130164, did the reports disagree about how the project was progressing towards its
+      development objective, and which one does Strata lean on?
+    arguments:
+      subject_id: P130164
+      attribute: pdo_progress
+      as_of: "2026-10-23"
+    expected:
+      disagreements:
+        - [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
+      leans_on: [strata.gold.passage:31525018/v1/78]
+      rules: [outcome]
+      # Each side is a record of its own, and a side that rests on a passage carries its words, so a claim
+      # can quote paragraph 78 from it.
+      quotable_sides: [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
+      # The trajectory and the count of left-out assertions come back in the result's summary record,
+      # which an answer cites by this evidence id.
+      cited_as: ["strata.tools.get_disagreements:P130164@2026-10-23?attribute=pdo_progress"]
+      trajectory_runs:
+        - [Satisfactory, 1, 9]
+        - [Moderately Satisfactory, 10, 11]
+        - [Moderately Unsatisfactory, 12, 13]
+      rejected: [1]
+    ground_truth: tests/ground_truth/p130164_isr_7_against_icr_paragraph_78.sql
+    source: >-
+      The blueprint's "When reports disagree, both stay on screen" and the ticket: ISR 7 (August 26,
+      2016) rated progress towards the PDO Satisfactory, three months after the mid-term review of May
+      16, 2016, and the ICR's paragraph 78 (October 10, 2019, PDF page 27) says the review found part of
+      the PDO compromised. Progress towards the PDO is an outcome judgment, so the evidence ladder leans
+      on the ICR. The ISRs' ratings are a trajectory (tests/ground_truth/values.toml, isr-1-rating to
+      isr-13-rating). The recording plants one rating whose quote is not on paragraph 45's page, which
+      the run left out and counts.

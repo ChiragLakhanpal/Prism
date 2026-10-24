@@ -8,8 +8,9 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    so the agent never sees or states an event that has not happened.
 2. The agent answers through the Responses API with tool calls or with its claims. Each tool call runs
    through the tool registry with the viewer's own engine, and every row it returns, with its summary
-   of derived figures when it has one, is kept in the turn's Facts, so the verifier can check the
-   answer against it. The results go back to the agent.
+   of derived figures when it has one and the records inside its rows that the registry names
+   (nested_rows, such as each side of a disagreement), is kept in the turn's Facts, so the verifier
+   can check the answer against it. The results go back to the agent.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
 4. The agent's claims go to the stream, which runs the verifier on them before anything is shown.
@@ -29,7 +30,8 @@ from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any, Protocol
 
 from strata.agent.claims import ClaimsError, parse_claims
-from strata.config import Thresholds, Tool, load_thresholds
+from strata.config import Thresholds, Tool, load_thresholds, load_tools
+from strata.harness.facts import Facts
 from strata.harness.turn import Event, RunError, Runner, Turn
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.server.engines import EngineFor
@@ -95,6 +97,19 @@ def _later(value: Any, as_of: dt.date) -> bool:
     return False
 
 
+def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
+    """Keep a record a row holds, such as one side of a disagreement, under its own evidence id. Two records
+    under one id come from one source, such as two ratings in one passage, or a passage search_passages also
+    returned: the record kept first keeps its fields, and the later ones are kept beside it under also, so
+    every value that came back under that id backs a claim that cites it."""
+    held = facts.get(record["evidence_id"])
+    if held is None:
+        facts.record(record["evidence_id"], record, tool=tool)
+    elif held != record and record not in held.get("also", ()):
+        facts.record(record["evidence_id"], {**record, **held, "also": [*held.get("also", ()), record]},
+                     tool=facts.tool(record["evidence_id"]))
+
+
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
                   today: Callable[[], dt.date] = registry.today) -> Runner:
@@ -102,6 +117,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
     viewer's engine for each tool call."""
     limits = thresholds or load_thresholds()
     rounds = int(limits.value("agent.tool_rounds"))
+    tools_held = tools if tools is not None else load_tools()
 
     def run_tool(turn: Turn, as_of: dt.date, call: Mapping) -> tuple[dict, dict]:
         """One tool call as the viewer: what goes back to the agent, and its line in the run's notes."""
@@ -117,7 +133,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         try:
             with engine_for(turn.viewer) as engine:
                 result = registry.call(name, arguments, registry.Context(
-                    engine, turn.viewer, turn.scope.view, as_of, limits), tools)
+                    engine, turn.viewer, turn.scope.view, as_of, limits), tools_held)
         except registry.ToolError as error:
             note["error"] = "bad_arguments"
             return {"error": "bad_arguments", "detail": str(error)}, note
@@ -126,8 +142,11 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             return {"error": "permission"}, note
         except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
             raise AgentError("data_service", str(error)) from error
+        nested = tools_held[name].result.nested_rows if name in tools_held else ()
         for row in result["rows"]:
             turn.facts.record(row["evidence_id"], row, tool=name)
+            for record in (inner for field in nested for inner in row.get(field) or ()):
+                keep_nested(turn.facts, record, name)
         if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
             turn.facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))

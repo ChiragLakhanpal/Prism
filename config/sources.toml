@@ -21,6 +21,9 @@
 #                     or, for a source its own reader fetches, the SQL file of its first transform
 #   stratum           optional: What, How or Why (GLOSSARY.md)
 #   limitations       optional: what a person should know about the source, in full sentences
+#   assertion_form    optional: the form of assertion each of its rows gives the evidence ladder
+#                     (ticket 20). contract_record marks a dataset of signed contracts, whose signing
+#                     dates and amounts become assertions about each package.
 #
 # What the Data readiness page and the Sources and licenses page show (ticket 16). Their words are
 # read by people, so the gate's copy lint checks every text value in this file (web/lint/run.ts).
@@ -119,6 +122,7 @@ page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
 fixture_dataset = "awards"
+assertion_form = "contract_record"
 cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "awards"
@@ -174,6 +178,7 @@ page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
 fixture_dataset = "awards_fy2001_2016"
+assertion_form = "contract_record"
 cadence = "frozen"
 license = "CC BY 4.0"
 silver_transform = "awards_fy2001_2016"
@@ -357,6 +362,10 @@ api = "search"
 records = "procnotices"
 scope = "every country"
 page_size = 500
+# The search API refuses an offset above 100,000 ("Value must be between 0 and 100000. Parameter
+# name: $skip"), and on October 24, 2026 it reported 424,135 notices. One fetch reaches the newest
+# 100,000; the nightly watermark then adds what is newer each night.
+max_offset = 100000
 watermark_field = "submission_date"
 fixture_dataset = "notices"
 cadence = "daily"
@@ -366,7 +375,7 @@ stratum = "What"
 # Each notice's own page on the World Bank's site, which the evidence drawer's "Open this notice on the
 # World Bank's site" opens (ticket 18). {id} is the notice's id, such as OP00118817.
 record_url = "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
-limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total."]
+limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total.", "The search API pages through at most the newest 100,000 notices, so older notices are out of reach until a later fetch reaches them."]
 
 data_source = "Systematic Tracking of Exchanges in Procurement (STEP)"
 catalog_url = "https://projects.worldbank.org/en/projects-operations/procurement"

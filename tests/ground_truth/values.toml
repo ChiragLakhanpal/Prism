@@ -172,6 +172,275 @@ project = "P130164"
 date = 2018-04-10
 pdf_page = 1
 
+# The rest of the ISR series (ticket 20): each ISR's archive date and its current rating of progress
+# towards the PDO, read from page 1 of each ISR on October 24, 2026. An ISR prints the previous rating,
+# then the current one; ISR 1 prints only the current one. ISRs 1 to 9 rated it Satisfactory, ISRs 10
+# and 11 Moderately Satisfactory, and ISRs 12 and 13 Moderately Unsatisfactory: a trajectory.
+[[value]]
+id = "isr-1-date"
+says = "ISR 1 was archived on February 22, 2014."
+value = 2014-02-22
+quote = "Seq.No: 1 Status: ARCHIVED Archive Date: 22-Feb-2014"
+document = "documents/P130164/isr-01-2014-02-22"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2014-02-22
+pdf_page = 1
+
+[[value]]
+id = "isr-1-rating"
+says = "ISR 1 rated progress towards the PDO Satisfactory. The first ISR prints only its current rating."
+value = "Satisfactory"
+quote = "Progress towards achievement of PDO Satisfactory"
+document = "documents/P130164/isr-01-2014-02-22"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2014-02-22
+pdf_page = 1
+
+[[value]]
+id = "isr-2-date"
+says = "ISR 2 was archived on July 30, 2014. It has no report number."
+value = 2014-07-30
+quote = "Seq.No: 2 Status: ARCHIVED Archive Date: 30-Jul-2014"
+document = "documents/P130164/isr-02-2014-07-30"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2014-07-30
+pdf_page = 1
+
+[[value]]
+id = "isr-2-rating"
+says = "ISR 2 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Progress towards achievement of PDO Satisfactory Satisfactory"
+document = "documents/P130164/isr-02-2014-07-30"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2014-07-30
+pdf_page = 1
+
+[[value]]
+id = "isr-3-date"
+says = "ISR 3 was archived on January 23, 2015."
+value = 2015-01-23
+quote = "Seq No: 3 | ARCHIVED on 23-Jan-2015 | ISR17299"
+document = "documents/P130164/isr-03-2015-01-23"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-01-23
+pdf_page = 1
+
+[[value]]
+id = "isr-3-rating"
+says = "ISR 3 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-03-2015-01-23"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-01-23
+pdf_page = 1
+
+[[value]]
+id = "isr-4-date"
+says = "ISR 4 was archived on June 4, 2015."
+value = 2015-06-04
+quote = "Seq No: 4 | ARCHIVED on 04-Jun-2015 | ISR18299"
+document = "documents/P130164/isr-04-2015-06-04"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-06-04
+pdf_page = 1
+
+[[value]]
+id = "isr-4-rating"
+says = "ISR 4 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-04-2015-06-04"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-06-04
+pdf_page = 1
+
+[[value]]
+id = "isr-5-date"
+says = "ISR 5 was archived on November 20, 2015."
+value = 2015-11-20
+quote = "Seq No: 5 | ARCHIVED on 20-Nov-2015 | ISR21540"
+document = "documents/P130164/isr-05-2015-11-20"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-11-20
+pdf_page = 1
+
+[[value]]
+id = "isr-5-rating"
+says = "ISR 5 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-05-2015-11-20"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2015-11-20
+pdf_page = 1
+
+[[value]]
+id = "isr-6-date"
+says = "ISR 6 was archived on January 21, 2016, before the mid-term review."
+value = 2016-01-21
+quote = "Seq No: 6 | ARCHIVED on 21-Jan-2016 | ISR21836"
+document = "documents/P130164/isr-06-2016-01-21"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2016-01-21
+pdf_page = 1
+
+[[value]]
+id = "isr-6-rating"
+says = "ISR 6 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-06-2016-01-21"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2016-01-21
+pdf_page = 1
+
+[[value]]
+id = "isr-7-mid-term-review"
+says = "ISR 7, the first ISR after the mid-term review, gives its date: May 16, 2016."
+value = 2016-05-16
+quote = "Actual Mid-Term Review Date:16-May-2016"
+document = "documents/P130164/isr-07-2016-08-26"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2016-08-26
+pdf_page = 1
+
+[[value]]
+id = "isr-8-date"
+says = "ISR 8 was archived on March 5, 2017."
+value = 2017-03-05
+quote = "Seq No: 8 | ARCHIVED on 05-Mar-2017 | ISR25432"
+document = "documents/P130164/isr-08-2017-03-05"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-03-05
+pdf_page = 1
+
+[[value]]
+id = "isr-8-rating"
+says = "ISR 8 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-08-2017-03-05"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-03-05
+pdf_page = 1
+
+[[value]]
+id = "isr-9-date"
+says = "ISR 9 was archived on May 23, 2017."
+value = 2017-05-23
+quote = "Seq No: 9 | ARCHIVED on 23-May-2017 | ISR27743"
+document = "documents/P130164/isr-09-2017-05-23"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-05-23
+pdf_page = 1
+
+[[value]]
+id = "isr-9-rating"
+says = "ISR 9 rated progress towards the PDO Satisfactory (the current rating, the second value)."
+value = "Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Satisfactory"
+document = "documents/P130164/isr-09-2017-05-23"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-05-23
+pdf_page = 1
+
+[[value]]
+id = "isr-10-date"
+says = "ISR 10 was archived on July 26, 2017."
+value = 2017-07-26
+quote = "Seq No: 10 | ARCHIVED on 26-Jul-2017 | ISR28734"
+document = "documents/P130164/isr-10-2017-07-26"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-07-26
+pdf_page = 1
+
+[[value]]
+id = "isr-10-rating"
+says = "ISR 10 rated progress towards the PDO Moderately Satisfactory (the current rating, the second value; the first is ISR 9's Satisfactory)."
+value = "Moderately Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Satisfactory  Moderately Satisfactory"
+document = "documents/P130164/isr-10-2017-07-26"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-07-26
+pdf_page = 1
+
+[[value]]
+id = "isr-11-date"
+says = "ISR 11 was archived on December 18, 2017."
+value = 2017-12-18
+quote = "Seq No: 11 | ARCHIVED on 18-Dec-2017 | ISR30732"
+document = "documents/P130164/isr-11-2017-12-18"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-12-18
+pdf_page = 1
+
+[[value]]
+id = "isr-11-rating"
+says = "ISR 11 rated progress towards the PDO Moderately Satisfactory (the current rating, the second value)."
+value = "Moderately Satisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO  Moderately Satisfactory  Moderately Satisfactory"
+document = "documents/P130164/isr-11-2017-12-18"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2017-12-18
+pdf_page = 1
+
+[[value]]
+id = "isr-13-date"
+says = "ISR 13, the last, was archived on December 28, 2018."
+value = 2018-12-28
+quote = "Seq No: 13 | ARCHIVED on 28-Dec-2018 | ISR33718"
+document = "documents/P130164/isr-13-2018-12-28"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2018-12-28
+pdf_page = 1
+
+[[value]]
+id = "isr-13-rating"
+says = "ISR 13 rated progress towards the PDO Moderately Unsatisfactory (the current rating, the second value)."
+value = "Moderately Unsatisfactory"
+quote = "Name Previous Rating Current Rating\nProgress towards achievement of PDO Moderately Unsatisfactory Moderately Unsatisfactory"
+document = "documents/P130164/isr-13-2018-12-28"
+document_type = "Implementation Status and Results Report"
+project = "P130164"
+date = 2018-12-28
+pdf_page = 1
+
+[[value]]
+id = "pad-overall-risk"
+says = "At appraisal, the P130164 PAD rated the project's overall risk Substantial (paragraph 49). The recorded batch answer reads it as the PAD's assertion about the appraisal, in the pad evidence tier."
+value = "the overall risk is rated as substantial"
+quote = "implementing new cost-effective technologies, the overall risk is rated as substantial."
+document = "documents/P130164/pad-2013-10-01"
+document_type = "Project Appraisal Document"
+project = "P130164"
+date = 2013-10-01
+paragraph = 49
+pdf_page = 26
+
 [[value]]
 id = "isr-1-pdo-indicators"
 says = "ISR 1 has a section on the PDO indicators on PDF page 2 of 4. An ISR numbers no paragraphs, so a passage from it is cited by its section's name (tests/fixtures/api/evidence-isr-p130164-s4.json)."
@@ -336,6 +605,30 @@ value = "Moderately Unsatisfactory"
 quote = "Moderately Unsatisfactory"
 record = "api/ieg/P156634-P130164.json"
 at = "data[project_id=P130164].outcome"
+
+[[value]]
+id = "ieg-bank-performance-p130164"
+says = "IEG rated the World Bank's performance on P130164 Moderately Unsatisfactory."
+value = "Moderately Unsatisfactory"
+quote = "Moderately Unsatisfactory"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].bank_performance"
+
+[[value]]
+id = "ieg-me-quality-p130164"
+says = "IEG rated the quality of P130164's monitoring and evaluation Modest."
+value = "Modest"
+quote = "Modest"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].me_quality"
+
+[[value]]
+id = "ieg-evaluation-fy-p130164"
+says = "IEG evaluated P130164 in fiscal year 2020; the dataset gives no date."
+value = 2020
+quote = "2020"
+record = "api/ieg/P156634-P130164.json"
+at = "data[project_id=P130164].evaluation_fy"
 
 # The demo plan: the Northern Water Works Development Agency's Procurement Plan of
 # October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634)
@@ -503,6 +796,63 @@ value = 2022-01-03
 quote = "03-Jan-2022"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1686165].contract_signing_date"
+
+# The evidence ladder's two record ties (ticket 20). Each package has one contract in the awards dataset
+# and one Contract Award notice that gives a signature date, so the sources are about one signing.
+# KE-NWWDA-199461-GO-RFB: the October 9, 2026 plan dates its signing ten days after the awards dataset and
+# its award notice do. In the goods table on page 3, the Signed Contract heads sit at x 678 (Planned) and
+# x 701 (Actual); the plan's 2021-07-19 starts at x 698, under Actual.
+[[value]]
+id = "plan-199461-signed"
+says = "The October 9, 2026 plan says KE-NWWDA-199461-GO-RFB's contract was signed on July 19, 2021 (Signed Contract Actual, x 698)."
+value = 2021-07-19
+quote = "2021-02-06 2021-07-19 2021-05-07 2022-01-30"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "award-199461-signed"
+says = "The contract awards dataset says KE-NWWDA-199461-GO-RFB (contract 1671570) was signed on July 9, 2021."
+value = 2021-07-09
+quote = "09-Jul-2021"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1671570].contract_signing_date"
+
+[[value]]
+id = "notice-199461-signed"
+says = "Its award notice, OP00147052, gives the same Contract Signature Date, July 9, 2021."
+value = 2021-07-09
+quote = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>2021/07/09"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00147052].notice_text"
+
+# KE-MOWASCO-307378-GO-RFB: the award notice and the awards dataset give different signing dates.
+[[value]]
+id = "notice-307378-signed"
+says = "Award notice OP00216847 gives KE-MOWASCO-307378-GO-RFB's Contract Signature Date as November 22, 2022."
+value = 2022-11-22
+quote = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>2022/11/22"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00216847].notice_text"
+
+[[value]]
+id = "notice-307378-date"
+says = "Award notice OP00216847 was published on March 3, 2023."
+value = 2023-03-03
+quote = "03-Mar-2023"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00216847].noticedate"
+
+[[value]]
+id = "award-307378-signed"
+says = "The contract awards dataset says KE-MOWASCO-307378-GO-RFB (contract 1729599) was signed on December 1, 2022."
+value = 2022-12-01
+quote = "01-Dec-2022"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1729599].contract_signing_date"
 
 [[value]]
 id = "plan-199461-reference-method"

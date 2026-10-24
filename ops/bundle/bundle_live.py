@@ -25,7 +25,9 @@ from live import workspace as workspace_client  # noqa: E402  (ticket 03's clien
 from strata.lakehouse.engine import WarehouseEngine  # noqa: E402
 
 TARGET = "shared"
-RUN_MINUTES = 60  # how long job-run waits; the job itself stops after 150 minutes
+# How long job-run waits: the job stops after 150 minutes (bundle/nightly.yml), and the first live run
+# on October 24, 2026 was still in bronze_to_gold after 60.
+RUN_MINUTES = 160
 
 
 def _text(value) -> str:
@@ -142,7 +144,12 @@ class LiveWorkspace:
         except Exception:  # a failed run still has a state and a page, which are read next
             pass
         run = self.w.jobs.get_run(waiter.run_id)
-        state = _text(run.state.result_state) if run.state and run.state.result_state else "UNKNOWN"
+        if run.state and run.state.result_state:
+            state = _text(run.state.result_state)
+        elif run.state and _text(run.state.life_cycle_state) in ("RUNNING", "PENDING", "QUEUED"):
+            state = f"still {_text(run.state.life_cycle_state).lower()} after {RUN_MINUTES} minutes"
+        else:
+            state = "UNKNOWN"
         return str(waiter.run_id), state, run.run_page_url or ""
 
     # ── The bundle ──

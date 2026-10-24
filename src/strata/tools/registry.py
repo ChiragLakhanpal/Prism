@@ -13,6 +13,8 @@ strata.config.load_tools() reads it. This module does three things with those de
   with an evidence id that names the tool, its arguments and the as-of date. The derived figures in
   them, such as a past range or a count, can then be cited and checked like a row's values
   (CLAUDE.md rule 1; spec, "a derived figure the agent needs is returned as a column").
+- A tool that declares nested_rows returns records inside its rows, such as each side of a
+  disagreement, and each of them is cited and dated like a row, so the answer loop can keep it.
 - It then checks the result against seam 2's contract and the tool's declared shape: every row
   has an evidence id, a public date on or before the as-of date and a source line, and every
   reason code and abstention reason is one the file lists. A tool that breaks the contract raises
@@ -245,6 +247,14 @@ def check_contract(tool: Tool, result: dict) -> None:
             broken(f"the row {row['evidence_id']!r} has no evidence id naming its table and key")
         if not row["public_from"] or row["public_from"] > result["as_of"]:
             broken(f"{row['evidence_id']} is public from {row['public_from']}, after the as-of date {result['as_of']}")
+        for field_name in tool.result.nested_rows:
+            for record in row[field_name] or ():
+                cited = record.get("evidence_id") if isinstance(record, dict) else None
+                if not isinstance(cited, str) or ":" not in cited:
+                    broken(f"an item of {row['evidence_id']}'s {field_name} has no evidence id naming its table and key")
+                if not record.get("public_from") or record["public_from"] > result["as_of"]:
+                    broken(f"{cited} in {row['evidence_id']}'s {field_name} is public from {record.get('public_from')}, "
+                           f"after the as-of date {result['as_of']}")
         if not isinstance(row["source"], dict) or set(row["source"]) != set(tool.result.source_fields):
             broken(f"{row['evidence_id']} has no source line with {', '.join(tool.result.source_fields)}")
         for mark in row.get("marks") or []:
