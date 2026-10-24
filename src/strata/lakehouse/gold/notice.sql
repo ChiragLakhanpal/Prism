@@ -18,6 +18,14 @@ resolved AS (
     AND l.project_id = n.project_id
     AND regexp_extract(l.loan_number, '([0-9]+)', 1) IN (n.loan_digits, n.loan_digits || '0')
   QUALIFY row_number() OVER (PARTITION BY n.notice_id ORDER BY l.loan_number) = 1
+),
+-- A notice names its country, not its code, and three names carry two codes in strata.gold.country
+-- (Caribbean: 6R and CB; Serbia: RS and YF; World: 1W and 99), which gave such a notice two rows on
+-- October 24, 2026. The notice's own project gives the code first; the name gives one code at most.
+by_name AS (
+  SELECT country_name, min(country_code) AS country_code
+  FROM strata.gold.country
+  GROUP BY country_name
 )
 SELECT
   n.notice_id,
@@ -25,7 +33,7 @@ SELECT
   n.notice_date,
   n.notice_status,
   n.project_id,
-  c.country_code,
+  coalesce(p.country_code, c.country_code) AS country_code,
   n.step_reference,
   n.reference_method_code,
   n.bid_reference_no,
@@ -44,4 +52,5 @@ SELECT
   n.public_from
 FROM latest AS n
 JOIN resolved AS r ON r.notice_id = n.notice_id
-LEFT JOIN strata.gold.country AS c ON c.country_name = n.project_country
+LEFT JOIN strata.gold.project AS p ON p.project_id = n.project_id
+LEFT JOIN by_name AS c ON c.country_name = n.project_country

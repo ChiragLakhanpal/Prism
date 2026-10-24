@@ -126,7 +126,10 @@ fy2001_2016 AS (
   JOIN old_contracts AS c ON c.contract_number = f.contract_number
   LEFT JOIN resolved AS r ON r.source = 'awards_fy2001_2016' AND r.contract_id = f.contract_number
   LEFT JOIN strata.gold.project AS p ON p.project_id = f.project_id
-  LEFT JOIN strata.gold.country AS n ON n.country_name = f.borrower_country
+  -- One code per name: three names carry two codes (see gold/notice.sql).
+  LEFT JOIN (
+    SELECT country_name, min(country_code) AS country_code FROM strata.gold.country GROUP BY country_name
+  ) AS n ON n.country_name = f.borrower_country
 ),
 award_notices AS (
   SELECT

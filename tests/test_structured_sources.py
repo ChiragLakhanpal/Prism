@@ -755,3 +755,40 @@ def test_the_workspace_checks_name_every_paged_source_and_the_thresholds_file_s_
 
     assert [source for source, _ in complete.expected[1:]] == sorted(PAGED)
     assert int(limit.params["limit_bytes"]) == config.load_thresholds().value("ingestion.structured_data_limit_bytes")
+
+
+def test_a_gold_query_that_gives_a_key_two_rows_is_counted():
+    from strata.lakehouse import gold
+    from strata.lakehouse.engine import DuckDBEngine
+
+    with DuckDBEngine.open() as engine:
+        twice = gold.duplicate_keys(engine, "SELECT 1 AS k, 'a' AS v UNION ALL SELECT 1, 'b' UNION ALL SELECT 2, 'c'",
+                                    ("k",))
+        none = gold.duplicate_keys(engine, "SELECT 1 AS k UNION ALL SELECT 2", ("k",))
+
+    assert (twice, none) == (1, 0)
+
+
+def test_a_notice_whose_country_name_has_two_codes_gets_one_row_with_its_projects_code():
+    # Serbia is RS and YF in strata.gold.country, and the notice's own project is RS (October 24, 2026).
+    from strata.lakehouse import catalog, gold
+    from strata.lakehouse.engine import DuckDBEngine
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        engine.run("INSERT INTO strata.silver.projects (project_id, country_code, country_name, region, page_hash, "
+                   "fetched_at, public_from) VALUES "
+                   "('P900001', 'RS', 'Serbia', 'Europe and Central Asia', 'h1', TIMESTAMP '2026-10-24 00:00:00', "
+                   "DATE '2019-07-01'), "
+                   "('P900002', 'YF', 'Serbia', 'Europe and Central Asia', 'h2', TIMESTAMP '2026-10-24 00:00:00', "
+                   "DATE '2019-07-01')")
+        engine.run("INSERT INTO strata.silver.notices (notice_id, project_id, project_country, contact_details_removed, "
+                   "page_hash, fetched_at, public_from) VALUES ('OP00900001', 'P900001', 'Serbia', false, 'h1', "
+                   "TIMESTAMP '2026-10-24 00:00:00', DATE '2026-10-24')")
+        for table in ("country", "project", "project_loan", "notice"):
+            gold.sync(engine, table)
+        serbia = engine.run("SELECT count(*) FROM strata.gold.country WHERE country_name = 'Serbia'").rows[0][0]
+        rows = engine.run("SELECT notice_id, country_code FROM strata.gold.notice").rows
+
+    assert serbia == 2
+    assert rows == (("OP00900001", "RS"),)
