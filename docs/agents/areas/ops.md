@@ -11,4 +11,5 @@ Read: `docs/PLAN.md` sections 2, 10, 11, 12, 13, 14, 16 and 18, and "The shared 
 - Everything deploys from code: the bundle, the app, the jobs, the Genie space, the AI Search index and the Foundry agent. One command takes a fresh workspace to the demo state.
 - Work on the shared workspace runs one at a time and leaves fairshare's catalog, app and job untouched.
 - Human-only steps (tokens, the Azure sign-in, model deployments, the pay-as-you-go switch, budgets, inviting an outside reviewer) go into a wizard the user runs in their own terminal: call the Skill tool with `mattpocock-skills:wizard`.
+- The wizard and the day-one probes write their results in `docs/day-one-results.md` in the main checkout, and those results are committed on build/strata like any other change. The gate checks that each marked block in that file is either the template's text or a recorded result, so a test of the wizard or a probe starts from a fresh rendering (`dayone.ensure_document`), never from a copy of the committed file.
 - Caps are configuration: tokens per minute on each deployment, the daily page cap in ingestion, at most two replicas for anything hosted.

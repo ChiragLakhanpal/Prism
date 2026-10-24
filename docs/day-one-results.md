@@ -25,8 +25,8 @@ Each probe also runs alone, with the command under its test. Every probe writes 
 | 4 | An AI Search endpoint and a hybrid index | not run | Default |
 | 5 | The Genie conversation API as the token's user | not run | Default |
 | 6 | An outside email joins the workspace and opens the app | not run | Default |
-| 7 | A personal access token or a service principal | not run | Default |
-| 8 | The four models within the subscription's quota | not run | Default |
+| 7 | A personal access token or a service principal | failed | Undecided |
+| 8 | The four models within the subscription's quota | passed | Default |
 | 9 | Foundry evaluations after an Entra sign-in | not run | Default |
 | 10 | Traces from the app in Application Insights | not run | Default |
 <!-- /dayone:summary -->
@@ -178,12 +178,12 @@ A personal access token or a service principal can be created.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-7 -->
-- Status: not run
-- Result: Not run yet, because it needs the wizard first.
+- Status: failed
+- Result: Neither a personal access token nor a service principal reached Databricks.
 - Evidence:
-  - None yet. The command above fills it.
-- Chosen path: Default, until a result says otherwise. Scripts and probes reach Databricks with a personal access token.
-- Last run: never
+  - Databricks refused the token and the service principal's client ID and secret.
+- Chosen path: Undecided. PLAN.md section 14 names no gap fill for this test, so the user decides.
+- Last run: October 24, 2026
 <!-- /dayone:test-7 -->
 
 ### Test 8. The four models within the subscription's quota
@@ -196,12 +196,12 @@ The four models deploy within the subscription's quota.
 Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
 
 <!-- dayone:test-8 -->
-- Status: not run
-- Result: Not run yet, because it needs the wizard first.
+- Status: passed
+- Result: All four models deployed within the subscription's quota.
 - Evidence:
-  - None yet. The command above fills it.
-- Chosen path: Default, until a result says otherwise. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
-- Last run: never
+  - az cognitiveservices account deployment list returned gpt-5.4-mini (GlobalStandard), gpt-5.4 (GlobalStandard), gpt-5.4-nano (GlobalStandard), text-embedding-3-large (GlobalStandard).
+- Chosen path: Default. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
+- Last run: October 24, 2026
 <!-- /dayone:test-8 -->
 
 ### Test 9. Foundry evaluations after an Entra sign-in
