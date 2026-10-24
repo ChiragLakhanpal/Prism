@@ -328,17 +328,21 @@ def quoted_spans(sentence: str) -> list[tuple[int, int]]:
 
 def find_quote(quote: str, text: str) -> tuple[int, int] | None:
     """Where the quote is in the text, word for word but for whitespace and line-end hyphenation. It must
-    start and end where the text's words do, so "10" is not in "108 of 328" and "ding" is not in "rebidding"."""
+    start and end where the text's words or numbers do, so "10" is not in "108 of 328", "ding" is not in
+    "rebidding", "US$177" is not in "US$177.6" and "334 km" is not in "2,334 km". A number is read as
+    mentions() reads one, so "45" is in "45-day" and "10" in "10-15"."""
     wanted, _ = _normalized(quote)
     if not wanted:
         return None
     held, where = _normalized(text)
+    numbers = [match.span() for match in DIGITS.finditer(held)]
     start = held.find(wanted)
     while start >= 0:
         end = start + len(wanted)
         cut_at_start = wanted[0].isalnum() and start > 0 and held[start - 1].isalnum()
         cut_at_end = wanted[-1].isalnum() and end < len(held) and held[end].isalnum()
-        if not cut_at_start and not cut_at_end:
+        inside_a_number = any(left < start < right or left < end < right for left, right in numbers)
+        if not (cut_at_start or cut_at_end or inside_a_number):
             return where[start], where[end - 1] + 1
         start = held.find(wanted, start + 1)
     return None

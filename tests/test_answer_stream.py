@@ -202,6 +202,41 @@ def test_a_quote_cut_from_inside_a_number_is_not_on_its_page(ask_case):
     assert checks["numbers"] == {"total": 4, "matched": 2}
 
 
+ICR_REVIEW_COST = "strata.gold.passage:34056616/v2/2.e"
+ICR_REVIEW_ROADS = "strata.gold.passage:34056616/v2/4/1"
+
+
+def test_a_quote_cut_from_inside_a_number_with_a_decimal_point_or_a_comma_is_not_on_its_page(fixture_db):
+    """The May 4, 2023 ICR Review says "The actual project cost was US$177.6 million" (item 2.e) and "The
+    project constructed 2,334 km of roads" (item 4), as values.toml's icr-review-2023-item-2e-cost and
+    icr-review-2023-item-4-roads record. A quote that stops at the decimal point of 177.6, or starts after
+    the comma in 2,334, is not word for word, so it backs no number."""
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "actual project cost US$ million", "project_id": "P130164",
+                              "as_of": "2026-10-23"}),
+         ("search_passages", {"query": "project constructed km of roads", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [
+            claim('The ICR Review said "The actual project cost was US$177".', kind="quote",
+                  evidence_ids=[ICR_REVIEW_COST], numbers=["177"],
+                  quote={"text": "The actual project cost was US$177", "passage_id": ICR_REVIEW_COST}),
+            claim('The ICR Review said the project built "334 km of roads".', kind="quote",
+                  evidence_ids=[ICR_REVIEW_ROADS], numbers=["334"],
+                  quote={"text": "334 km of roads", "passage_id": ICR_REVIEW_ROADS})])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert [(item["sentence"], [(reason["code"], reason["text"]) for reason in item["reasons"]])
+            for item in of(parsed, "removed")] == [
+        ('The ICR Review said "The actual project cost was US$177".', [("quote_not_on_page", ICR_REVIEW_COST)]),
+        ('The ICR Review said the project built "334 km of roads".', [("quote_not_on_page", ICR_REVIEW_ROADS)]),
+    ]
+    checks = of(parsed, "checks")[0]
+    # Both passages came back from the searches, so each sentence is removed for its quote alone.
+    assert checks["sources"] == {"total": 2, "returned": 2}
+    assert checks["numbers"] == {"total": 2, "matched": 0}
+
+
 def test_a_fourth_round_of_tool_calls_gets_no_results_and_the_answer_rests_on_the_first_three(ask_case):
     parsed, agent = ask_case("p130164-fourth-round")
 
