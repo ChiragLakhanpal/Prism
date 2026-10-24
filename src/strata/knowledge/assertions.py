@@ -158,8 +158,9 @@ CONTRACT_SOURCES = ("awards", "awards_fy2001_2016")  # the awards datasets (conf
 AWARD_NOTICE, SIGNED_STEP, PLAN_TYPE = "Contract Award", "Signed Contract", "Procurement Plan"
 CONTRACT_RECORD, AWARD_NOTICE_FORM, PLAN_ROW = "contract_record", "award_notice", "plan_row"
 # Each record's own name for the signing date and the signed amount, word for word: the awards datasets'
-# field, the award notice's label, and the Procurement Plan's step and column. Each is one of its
-# attribute's names in config/evidence_ladder.toml.
+# field, the award notice's label, and the Procurement Plan's step and column. The awards datasets give an
+# amount per supplier, so a contract's amount is gold.contract's column, which adds a joint venture's
+# members' shares. Each is one of its attribute's names in config/evidence_ladder.toml.
 RECORD_FIELDS = {
     CONTRACT_RECORD: {"signed_on": "contract_signing_date", "signed_amount_usd": "contract_amount_usd"},
     AWARD_NOTICE_FORM: {"signed_on": "Contract Signature Date"},

@@ -140,6 +140,19 @@ def test_the_ieg_ratings_dataset_gives_iegs_ratings_of_the_whole_project_and_agr
     assert sides == []
 
 
+def test_every_assertion_from_a_field_keeps_a_field_name_the_evidence_ladder_lists_for_its_attribute(engine):
+    """The ladder is the one place that says which field means which attribute. An account told in running
+    text keeps the report's own words instead, such as "achievement of part of the PDO"."""
+    from strata import config
+
+    ladder = config.load_ladder()
+    found = rows(engine, "SELECT DISTINCT attribute, field_name, form FROM strata.gold.assertion WHERE form <> :text",
+                 text="narrative")
+
+    assert {row["form"] for row in found} == {"rating_field", "contract_record", "award_notice", "plan_row"}
+    assert [row for row in found if row["field_name"] not in ladder.attribute(row["attribute"]).names] == []
+
+
 def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine):
     """A project's records are read whether or not Strata has read its documents."""
     with_records = {row["project_id"] for row in rows(

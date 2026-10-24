@@ -242,9 +242,9 @@ abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
 
 [tools.get_disagreements]
 description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \
-An assertion is a dated claim a source made: a rating in an ISR, an ICR, an ICR Review, a PPAR or a PAD, an \
-account in a report of how the project was going at a named moment, or a contract's signing date or amount in \
-the awards, an award notice or a Procurement Plan. A disagreement is two assertions about the same thing, for \
+An assertion is a dated claim a source made: a rating in an ISR, an ICR, an ICR Review, a PPAR, a PAD or the IEG \
+ratings dataset, an account in a report of how the project was going at a named moment, or a contract's signing \
+date or amount in the awards, an award notice or a Procurement Plan. A disagreement is two assertions about the same thing, for \
 the same or an overlapping period, that cannot both be true. Each row gives both sides in the order they were \
 written, each with its value or quote, its date, its evidence tier and its evidence id; the side Strata leans \
 on and the id of the evidence ladder's rule that decided; and what you would \
