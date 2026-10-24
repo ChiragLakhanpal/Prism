@@ -40,11 +40,25 @@ def sync(engine: Engine, table: str) -> int:
     if int(found) == 0 and int(held) > 0:
         raise EngineError(f"The query for {target} returned no rows, but the table holds {held}. I stopped "
                           "rather than empty it. Check that bronze and silver hold this source's pages.")
+    twice = duplicate_keys(engine, query, keys)
+    if twice:
+        raise EngineError(f"The query for {target} gives {twice} keys ({', '.join(keys)}) more than one row. A MERGE "
+                          "with such a source puts two rows in the table or fails, so I stopped. Make the query "
+                          "give each key one row.")
     match = " AND ".join(f"target.{key} = source.{key}" for key in keys)
     result = engine.run(  # sql-lint: names only
         f"MERGE INTO {target} AS target USING ({query}) AS source ON {match} "
         "WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT * WHEN NOT MATCHED BY SOURCE THEN DELETE")
     return int(result.rows[0][0]) if result.rows else 0
+
+
+def duplicate_keys(engine: Engine, query: str, keys: tuple[str, ...]) -> int:
+    """How many keys the query gives more than one row. On October 24, 2026 the notice query gave 943
+    notices two rows each, and the first MERGE put both in the table because nothing matched yet."""
+    columns = ", ".join(keys)
+    result = engine.run(f"SELECT count(*) AS n FROM (SELECT {columns} FROM ({query}) AS q "  # sql-lint: names only
+                        f"GROUP BY {columns} HAVING count(*) > 1) AS d")
+    return int(result.rows[0][0])
 
 
 def build(engine: Engine) -> int:
