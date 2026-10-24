@@ -1575,6 +1575,8 @@ export const copy = {
       emptied: (field: string, cause: string) => `${field} is now empty, because the thresholds give no value for the new ${cause}.`,
       assumed: (rating: string) => `I assumed the implementing agency's procurement risk is ${rating}, because I don't know it yet.`,
       youSet: (field: string, value: string, computed: string) => `You set ${field} to ${value}. The thresholds give ${computed}.`,
+      // The value you set is the one the thresholds give, so the note names it once.
+      youSetSame: (field: string, value: string) => `You set ${field} to ${value}, the same as the thresholds give.`,
       source: "{source}, as of {date}.",
       // A source the owner has not yet checked against a dated table.
       sourceUndated: "{source}.",

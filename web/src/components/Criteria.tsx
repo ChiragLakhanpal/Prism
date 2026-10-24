@@ -265,7 +265,9 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
       {review?.risk_rating && <p>{n.assumed(review.risk_rating)}</p>}
       {yours.map((value) => (
         <p key={value.key} data-set-by-you>
-          {n.youSet(lower(field(value.key)?.label ?? value.key), text(value.key, value.value), text(value.key, value.computed))}
+          {value.value === value.computed
+            ? n.youSetSame(lower(field(value.key)?.label ?? value.key), text(value.key, value.value))
+            : n.youSet(lower(field(value.key)?.label ?? value.key), text(value.key, value.value), text(value.key, value.computed))}
         </p>
       ))}
       {sources.length > 0 && (

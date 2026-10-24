@@ -345,8 +345,22 @@ test("typing ICB into the method chip stores Request for Bids with an open inter
   await expect.poll(() => sent).toEqual([{ field: "method", action: "set", value: "ICB" }]);
   await expect(chip(page, "method")).toHaveText("Request for Bids (RFB)");
   await expect(chip(page, "market_approach")).toHaveText("Open international");
+  // The value set matches what the thresholds give, so the note says so once rather than naming it twice.
+  await expect(page.locator("[data-set-by-you]")).toHaveText("You set market approach to Open international, the same as the thresholds give.");
   await expect(chip(page, "method")).toBeFocused();
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+});
+
+test("an old method name typed as a description stays the words typed, and leaves the market approach alone", async ({ page }) => {
+  await openPackage(page);
+  await changes(page, 600);
+
+  await chip(page, "description").click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("ICB");
+  await page.keyboard.press("Enter");
+
+  await expect(chip(page, "description")).toHaveText("ICB");
+  await expect(chip(page, "market_approach")).toHaveText("Open international · computed");
 });
 
 test("an old method name never reaches the copy file: the option's caption echoes what was typed", async ({ page }) => {
@@ -414,6 +428,22 @@ test("a change made while the last one is still saving waits for it, so the serv
   expect(sent.map((body) => body.field)).toEqual(["description"]);
   await expect.poll(() => sent.map((body) => body.field)).toEqual(["description", "lots"]);
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+});
+
+test("below 768 px a save that answers while a bottom sheet is open leaves focus where the person put it", async ({ page }) => {
+  await openPackage(page, { width: 390, height: 844 });
+  await changes(page, 600);
+
+  await chip(page, "description").click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("Rural feeder roads");
+  await page.keyboard.press("Enter");
+  await chip(page, "lots").click();
+  const keep = page.getByRole("dialog", { name: "Number of lots" }).getByRole("button", { name: "Keep 2 lots" });
+  await keep.focus();
+
+  // The page renders when the description's save answers; the sheet does not pull focus back to its first control.
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+  await expect(keep).toBeFocused();
 });
 
 test("with no plan yet, section 1 names its comparables and asks for the plan before it shows the range", async ({ page }) => {
