@@ -75,9 +75,11 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
       <p className="mt-1 text-title text-ink-heading">{sourceTitle(evidence)}</p>
       {fields && shown && (
         <>
-          <p lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
+          <p data-excerpt lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
             {copy.evidence.quoteOpen}
+            {shown.cutBefore && copy.evidence.cut}
             {highlighted(shown.text, shown.range ? [shown.range] : [])}
+            {shown.cutAfter && copy.evidence.cut}
             {copy.evidence.quoteClose}
           </p>
           <DocumentSource

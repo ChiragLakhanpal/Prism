@@ -386,6 +386,12 @@ test("a sentence that cites an ISR section names the section, never a paragraph,
   await expect(card.locator("[data-source]")).toHaveText(
     "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
   );
+  // The section is table text with no sentence ends, so the card quotes about 280 characters of it, cut
+  // between words, and never cuts a number such as 80.00 at its decimal point.
+  const quote = (await card.locator("[data-excerpt]").textContent())!;
+  expect(quote).toContain("Percentage Value 67.00 67.00 80.00 season road");
+  expect(quote.length).toBeLessThanOrEqual(290);
+  expect(quote).toMatch(/ \S+…"$/);
   const cardText = await card.textContent();
   await page.mouse.move(5, 880);
   await expect(card).toBeHidden();

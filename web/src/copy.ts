@@ -466,6 +466,8 @@ export const copy = {
     // The excerpt sits in straight quotes, as the paragraph's own words.
     quoteOpen: '"',
     quoteClose: '"',
+    // Where an excerpt longer than the card's limit was cut, between words.
+    cut: "…",
     close: "Close the source",
     fromAnswer: "From the answer",
     switcher: "Sources for this sentence",

@@ -87,22 +87,48 @@ export function highlightsFor(evidence: EvidenceEvent, sentence: number | null):
   return evidence.highlights.filter((highlight) => highlight.sentence === sentence).map((highlight) => [highlight.start, highlight.end]);
 }
 
+// The longest excerpt the evidence card quotes, in characters. A section of an ISR is table text with
+// no sentence ends, so without a limit the card would quote all of it.
+const EXCERPT_MAX = 280;
+
+export type Excerpt = { text: string; range: [number, number] | null; cutBefore: boolean; cutAfter: boolean };
+
 // Two or three whole sentences around the first match, for the evidence card, with the match's place
-// in the excerpt. A paragraph's own number ("54. ") is left out.
-export function excerpt(text: string, range: [number, number] | null): { text: string; range: [number, number] | null } {
+// in the excerpt. A paragraph's own number ("54. ") is left out. A sentence ends at a stop followed by
+// a space or the end, so "80.00" or "US$1.5 million" is never cut at its decimal point. Longer than
+// EXCERPT_MAX, the excerpt is cut between words around the match, and says where it was cut.
+export function excerpt(text: string, range: [number, number] | null): Excerpt {
   const lead = /^\s*\d+(?:\.\d+)*\.\s+/.exec(text)?.[0].length ?? 0;
   const spans: [number, number][] = [];
-  const sentence = /[^.!?]+(?:[.!?]+["')\]]*|$)\s*/g;
+  const sentence = /(?:[^.!?]|[.!?]+(?!["')\]]*(?:\s|$)))+(?:[.!?]+["')\]]*|$)\s*/g;
   sentence.lastIndex = lead;
   for (let match = sentence.exec(text); match && match[0]; match = sentence.exec(text)) {
     spans.push([match.index, match.index + match[0].length]);
   }
-  if (spans.length === 0) return { text: text.slice(lead).trim(), range: null };
+  if (spans.length === 0) return { text: text.slice(lead).trim(), range: null, cutBefore: false, cutAfter: false };
   const at = range ? Math.max(0, spans.findIndex(([start, end]) => range[0] >= start && range[0] < end)) : 0;
   const first = Math.max(0, at - 1);
   const last = Math.min(spans.length - 1, first + 2);
-  const start = spans[first][0];
-  const shown = text.slice(start, spans[last][1]).trimEnd();
-  const inside = range && range[0] >= start && range[1] <= start + shown.length ? ([range[0] - start, range[1] - start] as [number, number]) : null;
-  return { text: shown, range: inside };
+  let start = spans[first][0];
+  let end = start + text.slice(start, spans[last][1]).trimEnd().length;
+  let cutBefore = false;
+  let cutAfter = false;
+  if (end - start > EXCERPT_MAX) {
+    // A third of the room before the match, the rest after it, each end moved back to a space.
+    const anchor = range && range[0] >= start && range[0] < end ? range[0] : start;
+    const from = Math.max(start, Math.min(anchor - Math.floor(EXCERPT_MAX / 3), end - EXCERPT_MAX));
+    if (from > start) {
+      start = text.indexOf(" ", from) + 1;
+      cutBefore = true;
+    }
+    const to = Math.min(end, start + EXCERPT_MAX);
+    if (to < end) {
+      end = text.lastIndexOf(" ", to);
+      while (end > start && /[\s,;:·-]/.test(text[end - 1])) end -= 1;
+      cutAfter = true;
+    }
+  }
+  const shown = text.slice(start, end);
+  const inside = range && range[0] >= start && range[1] <= end ? ([range[0] - start, range[1] - start] as [number, number]) : null;
+  return { text: shown, range: inside, cutBefore, cutAfter };
 }
