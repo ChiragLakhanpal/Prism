@@ -322,7 +322,10 @@ def test_the_live_judge_asks_the_judge_roles_deployment_for_one_json_judgement_p
 
     [judged] = judge.decide([question])
 
-    assert (judged.decision, judged.confidence) == ("merge", 0.93)
+    # The recording is gpt-5.4's answer to the first pair judge_live.py sent on October 24, 2026
+    # (M/S INTERCONTINENTAL CONSULTANTS & TEC against INTERCONTINENTAL CONSULTANTS AND TECH). This
+    # test checks the adapter's wire format, so the canned answer is replayed for any question.
+    assert (judged.decision, judged.confidence) == ("merge", 0.97)
     [(url, headers, body)] = post.requests
     assert url == "https://wb-strata.openai.azure.com/openai/v1/chat/completions"
     assert headers == {"api-key": "not-a-real-key"}

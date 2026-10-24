@@ -6,7 +6,7 @@ Read first: `ops/dayone/tests/test_results_document.py`; `ops/dayone/dayone.py` 
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** ops
 **Phase:** P1
 **Design review:** no
@@ -19,3 +19,13 @@ Read first: `ops/dayone/tests/test_results_document.py`; `ops/dayone/dayone.py` 
 ## Comments
 
 - October 24, 2026, orchestrator: opened while the wizard was running. Until this lands, mergers set the wizard's edit aside before a merge and put it back after, as the note at the top of `docs/workspace-catchup.md` says. Dispatched to an implementer in its own worktree on branch strata/53-day-one-results-committable; a side run builds, reviews and verifies it, and the next restart of the wave merges it first.
+- October 24, 2026, merger: merged into build/strata as merge commit 1a7045a (parents 76b9386 and 2a13ec5, so the branch's history is kept). The history scan found no keys. The gate passed on the merge commit in 66.0 seconds, and again by hand on build/strata after the results commit, in 96.2 seconds at 10:29 PDT with the load average near 20 (ops lane 54.1 seconds). The worktree that built it was `.claude/worktrees/wf_9e7b9f97-349-1`; I removed it after this commit, and the branch stays.
+  - **Evidence, from `.notes/53-verify.md`.** All four criteria passed and none was parked. C1: the committed document (test 7 failed, test 8 passed) and a fresh template each gave 17 passed; build/strata's old test file failed exactly the two named tests on the committed document; a recorded block with no Evidence line, or with "never" as its Last run, failed. C2: changing a test's question in a copy of `dayone.toml`, or `Command:` in the renderer, failed three tests. C3: the gate passed by hand on the branch in 68.0 and 91.9 seconds, with the ops lane at 45.7 and 45.5 seconds; one earlier run failed a Playwright layout check under load, in a file this ticket does not touch. C4: `docs/agents/areas/ops.md` and the catch-up note say the results are committed like any other change. The reviewer and the verifier both checked the builder's departure (the wizard and probe tests start from a fresh rendering through `dayone.ensure_document`) and found it needed.
+  - **The wizard's results.** The wizard was running during the merge. I set its file aside as the old note said, merged, checked that nothing had written the file in the meantime, and put it back. It held more than the branch: test 6 waiting, test 9 passed, pay-as-you-go recorded, the caps not capped, and test 8 rewritten by the caps probe (md5 436ec0ee). `ops/dayone/tests/test_results_document.py` passed on it (17 passed), and I committed it on its own as 1cf40ee.
+  - **Workspace results.** The builder's one step ran in the main checkout and needed no keys. After commit 1cf40ee, `git status --short docs/day-one-results.md` printed nothing, and `.githooks/pre-commit` passed. Nothing was parked. The wizard note at the top of `docs/workspace-catchup.md` now says the results are committed, and it tells the next merger to run the results test before a commit of Markdown alone (review finding 3).
+  - **Parked decisions.** None reached me from the builder, and the review and the verification park none. One thing for the user to know: the committed document records day-one test 7 as failed, with the chosen path "Undecided". PLAN.md section 14 names no gap fill for that test, so the user decides how scripts and probes reach Databricks. `DATABRICKS_TOKEN` is still missing.
+  - **Follow-ups, not blocking.**
+    1. Review findings 1 to 7 and the verifier's polish item 1 are still open. A blank Chosen path raises AttributeError, and a difference made only of blank lines raises StopIteration, where each should give a sentence. A hand note inside a block passes. Test 3's question and the caps statuses are copied into the test. The second sentence of the new `ops.md` bullet gives the wrong reason. Two probe test files have three blank lines in a row.
+    2. `docs/workspace-catchup.md`, ticket 03 step 4 of 4, tells the user to edit the last bullet of `docs/day-one-results.md` by hand. The check refuses that edit (the old test did too). The lasting fix is in `left_in_workspace` in `ops/dayone/dayone.py`.
+    3. `docs/STATUS.md` lines 178 and 210, and ticket 18's comment at line 56, still say the results cannot be committed.
+  - **What this unblocks.** Nothing.

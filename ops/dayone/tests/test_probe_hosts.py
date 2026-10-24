@@ -4,7 +4,6 @@ A host counts as reached from a place when that place gets an HTTP answer; a 403
 this computer gets something else counts as blocked.
 """
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -17,7 +16,6 @@ import dayone  # noqa: E402
 import probe_hosts  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 HOSTS = ["search.worldbank.org", "documents1.worldbank.org", "datacatalogapi.worldbank.org", "api.worldbank.org"]
 HERE = {"search.worldbank.org": 200, "documents1.worldbank.org": 200, "datacatalogapi.worldbank.org": 429,
         "api.worldbank.org": 200}
@@ -57,7 +55,8 @@ def blocked(*hosts):
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text("DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\n"
                                         "DATABRICKS_TOKEN='dapi-x'\nDATABRICKS_WAREHOUSE_ID='wh1'\n")
     return tmp_path
