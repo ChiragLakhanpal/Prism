@@ -13,6 +13,9 @@ request lands in one file (CLAUDE.md rule 9). This module reads six of them:
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 - load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
                      (strata.agent.definition builds the agent's definition from it)
+- load_ladder()      config/evidence_ladder.toml, the evidence ladder: the rules that choose the
+                     assertion Strata leans on when two disagree, the evidence tiers, the attributes
+                     an assertion can be about and their rating scales
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -1019,3 +1022,186 @@ def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
                      Guardrail(rail_key, rail.text("name"), rail.text("base_policy"), rail.text("severity"),
                                rail.boolean("prompt_shields")),
                      foundry.text("api_version"), foundry.text("rai_policy_api_version"))
+
+
+# ── The evidence ladder ──────────────────────────────────────────────────
+
+CLASSES = ("judgment", "moment")  # an outcome judgment, or a fact about a moment
+KINDS = ("rating", "date", "amount")
+TIES = ("tieSpecific", "tieRecent")  # the more specific source, then the more recent one
+# The forms an assertion takes, as the readers in strata.knowledge.assertions write them: a rating in its
+# own field, a rating or account told in running text, a record of the signed contract in an awards
+# dataset, a Contract Award notice, and a package's row in a Procurement Plan.
+FORMS = ("rating_field", "narrative", "contract_record", "award_notice", "plan_row")
+SIDES = ("satisfactory", "unsatisfactory")
+
+
+@dataclass(frozen=True)
+class LadderRule:
+    """One rule of the ladder. A tier rule ranks the sides by their evidence tier, in the order of tiers.
+    A moment rule leans on the side made at the moment it describes: a side of a tier in at_the_moment,
+    or one made within its own period."""
+
+    id: str
+    applies_to: str
+    tiers: tuple[str, ...] = ()
+    at_the_moment: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class Tier:
+    key: str
+    written: str  # when a source of the tier was written, as brief 23's "written when" label says it
+    document_types: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Attribute:
+    key: str
+    kind: str  # rating, date or amount
+    class_: str  # judgment or moment
+    scale: str | None
+    names: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Scale:
+    key: str
+    satisfactory: tuple[str, ...] = ()
+    unsatisfactory: tuple[str, ...] = ()
+    values: tuple[str, ...] = ()  # a scale with no sides, such as risk
+
+    @property
+    def ratings(self) -> tuple[str, ...]:
+        return self.satisfactory + self.unsatisfactory + self.values
+
+
+@dataclass(frozen=True)
+class Ladder:
+    path: Path
+    rules: tuple[LadderRule, ...]
+    ties: tuple[str, ...]
+    specificity: tuple[tuple[str, ...], ...]  # forms, most specific group first
+    tiers: dict[str, Tier]
+    attributes: dict[str, Attribute]
+    scales: dict[str, Scale]
+    no_rating: tuple[str, ...]
+
+    def tier_of(self, document_type: str | None) -> str | None:
+        """The evidence tier of a report by its document type, or None for a type the ladder does not rank."""
+        return next((tier.key for tier in self.tiers.values() if document_type in tier.document_types), None)
+
+    def attribute(self, key: str) -> Attribute:
+        if key not in self.attributes:
+            raise ConfigError(f"The evidence ladder has no attribute {key}. Add it to config/evidence_ladder.toml.")
+        return self.attributes[key]
+
+    def attribute_named(self, name: str) -> Attribute | None:
+        """The attribute a report's or a record's field name means, word for word, or None."""
+        return next((attribute for attribute in self.attributes.values() if name in attribute.names), None)
+
+    def rule_for(self, attribute: str) -> LadderRule | None:
+        """The first rule that applies to the attribute's class."""
+        return next((rule for rule in self.rules if rule.applies_to == self.attribute(attribute).class_), None)
+
+    def rating(self, attribute: str, value: str | None) -> str | None:
+        """The value as its scale writes it (case aside), or None when it is no rating or not on the scale."""
+        scale = self.scales.get(self.attribute(attribute).scale or "")
+        text = (value or "").strip()
+        if scale is None or not text or text in self.no_rating:
+            return None
+        return next((rating for rating in scale.ratings if rating.lower() == text.lower()), None)
+
+    def side(self, attribute: str, rating: str | None) -> str | None:
+        """Which side of the line a rating falls on: satisfactory, unsatisfactory, or None for a scale with no sides."""
+        scale = self.scales.get(self.attribute(attribute).scale or "")
+        if scale is None or rating is None:
+            return None
+        return "satisfactory" if rating in scale.satisfactory else "unsatisfactory" if rating in scale.unsatisfactory \
+            else None
+
+    def specificity_of(self, form: str) -> int:
+        """The place of a form's group in the specificity order: 0 is the most specific."""
+        return next(at for at, group in enumerate(self.specificity) if form in group)
+
+
+def _ladder_rule(path: Path, entry: _Entry, tiers: dict) -> LadderRule:
+    entry.only({"id", "applies_to", "tiers", "at_the_moment"})
+    applies_to = entry.text("applies_to")
+    if applies_to not in CLASSES:
+        entry._fail("applies_to", f"must be {' or '.join(CLASSES)}")
+    ranked, at_the_moment = entry.texts("tiers"), entry.texts("at_the_moment")
+    if bool(ranked) == bool(at_the_moment):
+        raise ConfigError(f"In {path.name}, {entry.where} needs either tiers (an order of evidence tiers) or "
+                          f"at_the_moment (the tiers whose sources are records made at the moment), not both.")
+    for key in ("tiers", "at_the_moment"):
+        named = entry.texts(key)
+        unknown = [tier for tier in named if tier not in tiers]
+        if unknown:
+            entry._fail(key, f"names {', '.join(unknown)}, which [tiers] does not define")
+        if len(set(named)) != len(named):
+            entry._fail(key, "names a tier twice")
+    return LadderRule(entry.text("id"), applies_to, ranked, at_the_moment)
+
+
+def load_ladder(path: Path = CONFIG_DIR / "evidence_ladder.toml") -> Ladder:
+    """The evidence ladder: its rules in order, its ties, the evidence tiers, the attributes an assertion can
+    be about and their rating scales."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"rules", "ties", "tiers", "attributes", "scales"})
+    tiers = {}
+    for key, table in (data.get("tiers") or {}).items():
+        entry = _Entry(path, f"tiers.{key}", table)
+        entry.only({"written", "document_types"})
+        tiers[key] = Tier(key, entry.text("written"), entry.texts("document_types"))
+    if not tiers:
+        raise ConfigError(f"{path.name} names no evidence tier. Add a [tiers.<name>] table for each one.")
+    rules = tuple(_ladder_rule(path, entry, tiers) for entry in _tables(path, data, "rules"))
+    if not rules:
+        raise ConfigError(f"{path.name} has no rule. Add a [[rules]] table for outcome judgments and one for moments.")
+    if len({rule.id for rule in rules}) != len(rules):
+        raise ConfigError(f"In {path.name}, two rules share an id. Each rule's id names its sentence in the copy.")
+    ties = _Entry(path, "ties", data.get("ties"))
+    ties.only({"order", "specificity"})
+    order = ties.texts("order")
+    if not set(order) <= set(TIES) or len(set(order)) != len(order):
+        ties._fail("order", f"can use only {' and '.join(TIES)}, each once")
+    groups = ties.table.get("specificity")
+    if not isinstance(groups, list) or not all(isinstance(group, list) for group in groups):
+        ties._fail("specificity", "must be a list of groups of forms, such as [[\"rating_field\"], [\"narrative\"]]")
+    listed = [form for group in groups for form in group]
+    if sorted(listed) != sorted(FORMS):
+        ties._fail("specificity", f"must list each of these forms once: {', '.join(FORMS)}")
+    scales_table = data.get("scales") or {}
+    scales_entry = _Entry(path, "scales", scales_table)
+    scales = {}
+    for key, table in scales_table.items():
+        if key == "no_rating":
+            continue
+        entry = _Entry(path, f"scales.{key}", table)
+        entry.only({"satisfactory", "unsatisfactory", "values"})
+        scale = Scale(key, entry.texts("satisfactory"), entry.texts("unsatisfactory"), entry.texts("values"))
+        if not scale.ratings:
+            entry._fail("values", "is missing. A scale needs its ratings, with satisfactory and unsatisfactory "
+                                  "sides or as plain values")
+        scales[key] = scale
+    attributes = {}
+    for key, table in (data.get("attributes") or {}).items():
+        entry = _Entry(path, f"attributes.{key}", table)
+        entry.only({"kind", "class", "scale", "names"})
+        kind, class_ = entry.text("kind"), entry.text("class")
+        if kind not in KINDS:
+            entry._fail("kind", f"must be one of {', '.join(KINDS)}")
+        if class_ not in CLASSES:
+            entry._fail("class", f"must be {' or '.join(CLASSES)}")
+        scale = entry.text("scale", required=(kind == "rating"))
+        if scale is not None and scale not in scales:
+            entry._fail("scale", f"names {scale}, which [scales] does not define")
+        if not entry.texts("names"):
+            entry._fail("names", "must list the field names that mean this attribute")
+        attributes[key] = Attribute(key, kind, class_, scale, entry.texts("names"))
+    names = [name for attribute in attributes.values() for name in attribute.names]
+    if len(set(names)) != len(names):
+        raise ConfigError(f"In {path.name}, a field name means two attributes. Each name must mean one.")
+    return Ladder(path, rules, order, tuple(tuple(group) for group in groups), tiers, attributes, scales,
+                  scales_entry.texts("no_rating"))

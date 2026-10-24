@@ -523,3 +523,46 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
     path = copy("thresholds.toml", tmp_path, old="[signals]", new="[signals]\nexample_threshold = 30")
 
     assert config.load_thresholds(path).value("signals.example_threshold") == 30
+
+
+# ── The evidence ladder ──────────────────────────────────────────────────
+
+def test_the_evidence_ladder_orders_outcome_judgments_then_moments_then_the_two_ties():
+    """docs/PLAN.md section 5 and the spec's knowledge model: outcome judgments lean on the ICR Review or
+    PPAR, then the ICR, then the last ISR, then the PAD; assertions about a moment lean on the record
+    made at that moment; ties go to the more specific source, then the more recent."""
+    ladder = config.load_ladder()
+
+    assert [(rule.id, rule.applies_to) for rule in ladder.rules] == [("outcome", "judgment"), ("moment", "moment")]
+    assert ladder.rules[0].tiers == ("ieg", "icr", "isr", "pad")
+    assert ladder.rules[1].at_the_moment == ("record",)
+    assert ladder.ties == ("tieSpecific", "tieRecent")
+    # Brief 23's five "written when" labels, one tier each.
+    assert set(ladder.tiers) == {"pad", "isr", "icr", "ieg", "record"}
+    assert ladder.tier_of("Implementation Completion Report Review") == "ieg"
+    assert ladder.tier_of("Project Performance Assessment Report") == "ieg"
+    assert ladder.attribute("pdo_progress").names == ("Progress towards achievement of PDO",)
+    assert ladder.attribute("pdo_progress").class_ == "judgment"
+    assert ladder.attribute("signed_on").class_ == "moment"
+
+
+@pytest.mark.parametrize("old, new, says", [
+    ('tiers = ["ieg", "icr", "isr", "pad"]', 'tiers = ["ieg", "icr", "isr", "appraisal"]',
+     r"rules\[1\]\.tiers names appraisal, which \[tiers\] does not define"),
+    ('order = ["tieSpecific", "tieRecent"]', 'order = ["tieSpecific", "tieOldest"]',
+     r"ties\.order can use only tieSpecific and tieRecent"),
+    ('applies_to = "judgment"', 'applies_to = "opinion"', r"rules\[1\]\.applies_to must be judgment or moment"),
+    ('class = "judgment"', 'class = "judgment"\nclass = "moment"', r"evidence_ladder\.toml is not valid TOML"),
+], ids=["unknown-tier", "unknown-tie", "unknown-class", "broken-toml"])
+def test_an_evidence_ladder_of_the_wrong_shape_is_refused_with_a_sentence(tmp_path, old, new, says):
+    path = copy("evidence_ladder.toml", tmp_path, old, new)
+
+    with pytest.raises(ConfigError, match=says):
+        config.load_ladder(path)
+
+
+def test_reordering_the_outcome_tiers_in_a_copy_of_the_ladder_is_read_from_its_path(tmp_path):
+    path = copy("evidence_ladder.toml", tmp_path, 'tiers = ["ieg", "icr", "isr", "pad"]',
+                'tiers = ["ieg", "isr", "icr", "pad"]')
+
+    assert config.load_ladder(path).rules[0].tiers == ("ieg", "isr", "icr", "pad")
