@@ -5,7 +5,9 @@
 // numbers (the alt text). The controls sit over it as siblings, because children of role="img" are
 // hidden from assistive technology: the plan line is a role="slider" you drag, move with the arrow
 // keys or set by clicking the axis row, and the dots are one group with one tab stop and arrow keys
-// between them. A dot shows its package on hover or focus, and Escape hides that.
+// between them. A dot shows its package on hover or focus, and Escape hides that. While the pointer
+// crosses from its dot to the tooltip, inside the band between them, the tooltip keeps its dot even over
+// other dots, and moves to another dot only after the pointer rests on it for 100 ms.
 //
 // The chart is 240 px tall in every state, in five rows: the lane label and its key (A), the plan's
 // readout (B), the lane with the middle half, the middle, the 8-in-10 line and the dots, the
@@ -262,6 +264,7 @@ export function RangeChart({
   const [active, setActive] = useState(0);
   const [dismissed, setDismissed] = useState<number | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const restTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tipRef = useRef<HTMLDivElement>(null);
   const shown = focused ?? hover;
@@ -278,9 +281,16 @@ export function RangeChart({
     const next = { w: element.offsetWidth, h: element.offsetHeight, room };
     setTipBox((now) => (now.w === next.w && now.h === next.h && Math.abs(now.room - next.room) < 1 ? now : next));
   });
-  useEffect(() => () => clearTimeout(hideTimer.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(hideTimer.current);
+      clearTimeout(restTimer.current);
+    },
+    [],
+  );
   // The tooltip hides 100 ms after the pointer leaves both the dot and the tooltip.
   const hideLater = () => {
+    clearTimeout(restTimer.current);
     clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setHover(null), 100);
   };
@@ -351,16 +361,10 @@ export function RangeChart({
     if (event.pointerType !== "mouse") return;
     if (onTip(event)) {
       clearTimeout(hideTimer.current);
+      clearTimeout(restTimer.current);
       return;
     }
-    const found = nearest(px, py);
-    if (found !== null) {
-      clearTimeout(hideTimer.current);
-      if (found !== hover) setDismissed(null);
-      setHover(found);
-    } else if (hover !== null) {
-      hideLater();
-    }
+    track(px, py);
   };
 
   const endDrag = (event: PointerEvent<HTMLDivElement>) => {
@@ -470,7 +474,7 @@ export function RangeChart({
     else if (!onRight && !fitsLeft) onRight = fitsRight ? true : width - planX >= planX;
   }
   const readoutX = planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth) : clamp(planX - GAP, readoutWidth, width);
-  // Its last line's descenders stay clear of the lane, where the middle tick starts 4 px down.
+  // Its last line's descenders stay clear of the middle tick, which starts 4 px into the lane.
   const readoutLine1 = rowA + type.s;
   const readoutStep = type.s + 3;
   const firstLine = showPlanWord ? readoutLine1 + readoutStep : readoutLine1;
@@ -513,6 +517,42 @@ export function RangeChart({
   const underTip = tipFor ? dots.filter((dot) => dot.cx + HIT >= tipLeft && dot.cx - HIT <= tipLeft + tipBox.w).map((dot) => dot.cy) : [];
   const above = tipFor ? Math.min(tipFor.cy, ...underTip) - layout.r - TIP_GAP - tipBox.h : 0;
   const tipTop = tipFor ? (above >= -tipBox.room ? above : Math.max(tipFor.cy, ...underTip) + layout.r + TIP_GAP) : 0;
+  // The band between a hovered dot and its tooltip (the safe-zone pattern menus use): from the dot's
+  // hit width at its centre to the tooltip's near edge. Inside it the pointer is on its way to the
+  // tooltip, so the dots it crosses don't take the tooltip unless it rests on one.
+  const tipAbove = tipFor !== null && tipTop < tipFor.cy;
+  const inBand = (px: number, py: number) => {
+    if (!tipFor || hover === null || focused !== null || tipFor.key !== dots[hover]?.key || tipBox.w === 0) return false;
+    const nearY = tipAbove ? tipTop + tipBox.h : tipTop;
+    const span = nearY - tipFor.cy;
+    const t = (py - tipFor.cy) / span;
+    if (!(span !== 0 && t >= 0 && t <= 1)) return false;
+    const left = tipFor.cx - HIT + t * (tipLeft - (tipFor.cx - HIT));
+    const right = tipFor.cx + HIT + t * (tipLeft + tipBox.w - (tipFor.cx + HIT));
+    return px >= left && px <= right;
+  };
+  // Where the mouse is now decides which dot's tooltip shows.
+  function track(px: number, py: number) {
+    const found = nearest(px, py);
+    clearTimeout(restTimer.current);
+    if (inBand(px, py)) {
+      clearTimeout(hideTimer.current);
+      if (found !== null && found !== hover) {
+        restTimer.current = setTimeout(() => {
+          setDismissed(null);
+          setHover(found);
+        }, 100);
+      }
+      return;
+    }
+    if (found !== null) {
+      clearTimeout(hideTimer.current);
+      if (found !== hover) setDismissed(null);
+      setHover(found);
+    } else if (hover !== null) {
+      hideLater();
+    }
+  }
   const knobLeft = planX ?? 0;
   const chevronX = plotRight - 2 + 3;
 
@@ -602,7 +642,7 @@ export function RangeChart({
         )}
 
         {/* The dots, each with a surface ring so touching dots stay apart. */}
-        {dots.map((dot, index) => (
+        {dots.map((dot) => (
           <g key={dot.key} data-dot={dot.hollow ? "hollow" : "filled"}>
             <circle cx={dot.cx} cy={dot.cy} r={layout.r + 2} className="fill-surface" />
             {dot.hollow ? (
@@ -619,11 +659,12 @@ export function RangeChart({
                 className="stroke-chart-cat1-text"
               />
             )}
-            {hover === index && focused === null && (
-              <circle cx={dot.cx} cy={dot.cy} r={layout.r + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
-            )}
           </g>
         ))}
+        {/* The hovered dot's ring, drawn after every dot so the dots stacked around it never hide part of it. */}
+        {hover !== null && focused === null && dots[hover] && (
+          <circle data-hover-ring cx={dots[hover].cx} cy={dots[hover].cy} r={layout.r + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
+        )}
 
         {/* The axis. */}
         <line x1={PAD} x2={plotRight} y1={axisY} y2={axisY} strokeWidth={1} className="stroke-line-strong" />
@@ -786,17 +827,10 @@ export function RangeChart({
           onPointerEnter={() => clearTimeout(hideTimer.current)}
           onPointerLeave={(event) => {
             if (event.pointerType === "touch") return;
-            // The tooltip may move away from under a pointer that rests on the dot it covered: that dot
-            // takes the tooltip, and nothing hides (WCAG 1.4.13, persistent).
+            // Back in the band toward its dot, the tooltip keeps its dot; on another dot outside it, that
+            // dot takes the tooltip; elsewhere it hides after 100 ms (WCAG 1.4.13).
             const { px, py } = local(event);
-            const found = nearest(px, py);
-            if (found !== null) {
-              clearTimeout(hideTimer.current);
-              if (found !== hover) setDismissed(null);
-              setHover(found);
-              return;
-            }
-            hideLater();
+            track(px, py);
           }}
           // Its width is its content's, up to 240 px, so it never shrinks to the room left of the chart's edge.
           className="absolute z-10 w-max max-w-[240px] animate-fade-in cursor-text select-text rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"

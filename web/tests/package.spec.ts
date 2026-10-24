@@ -460,6 +460,59 @@ test("a dot's tooltip stays while the pointer moves onto it, so you can select i
   }
 });
 
+// The dots of the tallest column at this width, top first: the column where a dot's tooltip sits
+// furthest above it, past every dot stacked over it.
+async function tallestColumn(page: Page): Promise<number[]> {
+  return page.evaluate(() => {
+    const columns = new Map<number, { index: number; y: number }[]>();
+    document.querySelectorAll<HTMLElement>("[data-dot-target]").forEach((dot) => {
+      const box = dot.getBoundingClientRect();
+      const x = Math.round(box.x + box.width / 2);
+      columns.set(x, [...(columns.get(x) ?? []), { index: Number(dot.dataset.dotTarget), y: box.y }]);
+    });
+    const tallest = [...columns.values()].sort((a, b) => b.length - a.length)[0];
+    return tallest.sort((a, b) => a.y - b.y).map((dot) => dot.index);
+  });
+}
+
+test("the pointer can cross the dots above a dot to reach its tooltip, and a dot it rests on takes the tooltip", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    const column = await tallestColumn(page);
+    expect(column.length, `${width} px`).toBeGreaterThanOrEqual(3);
+    const bottom = column[column.length - 1];
+    const name = async (index: number) =>
+      (await page.locator(`[data-dot-target='${index}']`).getAttribute("aria-label"))!.split(",")[0];
+    const tip = page.locator("[data-dot-tooltip]");
+
+    // From the bottom dot straight to the nearest point of its tooltip, 2 px every 16 ms.
+    const from = await centre(page, `[data-dot-target='${bottom}']`);
+    await page.mouse.move(from.x, from.y);
+    await expect(tip).toContainText(await name(bottom));
+    const box = (await tip.boundingBox())!;
+    const to = { x: Math.min(Math.max(from.x, box.x + 4), box.x + box.width - 4), y: box.y + box.height - 2 };
+    const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
+    for (let step = 1; step <= steps; step++) {
+      await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(400);
+    await expect(tip, `${width} px, on arrival`).toContainText(await name(bottom));
+
+    // From the same dot onto the dot above it, resting there: that dot takes the tooltip.
+    await page.mouse.move(2, from.y, { steps: 4 });
+    await expect(tip).toHaveCount(0);
+    await page.mouse.move(from.x, from.y);
+    await expect(tip).toContainText(await name(bottom));
+    const above = await centre(page, `[data-dot-target='${column[column.length - 2]}']`);
+    await page.mouse.move(above.x, above.y, { steps: 4 });
+    await page.waitForTimeout(150);
+    await expect(tip, `${width} px, resting on the dot above`).toContainText(await name(column[column.length - 2]));
+  }
+});
+
 test.describe("on a touch screen", () => {
   test.use({ hasTouch: true });
 
