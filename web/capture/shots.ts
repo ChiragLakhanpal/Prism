@@ -211,6 +211,8 @@ const then = (...acts: ((page: Page) => Promise<void>)[]) => async (page: Page) 
 const BOX_API: Shot["api"] = {
   "/api/projects/P130164": { recorded: "project-p130164.json" },
   "/api/projects/P156634": { recorded: "project-p156634.json" },
+  "/api/projects/P130164/summary": { recorded: "summary-p130164.json" },
+  "/api/projects/P156634/summary": { recorded: "summary-p156634.json" },
   "/api/lookup/loan": { recorded: "lookup-loan-ida-60290.json" },
   "/api/lookup/activity": { recorded: "lookup-activity-ke-nwwda-541055-cw-rfb.json" },
   "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },

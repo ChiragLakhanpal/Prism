@@ -30,7 +30,12 @@ async function axe(page: Page) {
 }
 
 const projects = async () => ({ "/api/projects": { body: await recorded("projects.json") } });
-const p156634 = async () => ({ "/api/projects/P156634": { body: await recorded("project-p156634.json") } });
+// Ticket 21: a project's address opens its Summary, and the Procurement tab lists its Packages too.
+const p156634 = async () => ({
+  "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+  "/api/projects/P156634/summary": { body: await recorded("summary-p156634.json") },
+  "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
+});
 
 test("All projects shows 20 projects a page with the range it shows, sets project IDs in Roboto Mono as links, and pages by address", async ({ page }) => {
   const unrecorded = await open(page, "/projects", {
@@ -166,20 +171,18 @@ test("All projects says when it holds no records, and when the data service didn
   expect(await axe(page), "error at 390 px").toEqual([]);
 });
 
-test("a project's page shows its header, one Procurement tab, and each agency's plan versions newest first", async ({ page }) => {
-  await open(page, "/projects/P156634", await p156634());
+test("a project's Procurement tab shows each agency's plan versions newest first, under the header's one line", async ({ page }) => {
+  await open(page, "/projects/P156634/procurement", await p156634());
   const main = page.getByRole("main");
 
-  await expect(main.getByRole("heading", { level: 1 })).toHaveText("Water and Sanitation Development Project");
-  const header = main.locator("dl").first();
-  await expect(header).toContainText("Project IDP156634");
-  await expect(header).toContainText("CountryKenya");
-  await expect(header).toContainText("StatusActive");
-  await expect(header).toContainText("Implementing agencies");
-  await expect(header).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
+  // Ticket 21: the header is the wireframe's one line, then the implementing agency line.
+  await expect(main.getByRole("heading", { level: 1 })).toHaveText("Water and Sanitation Development · P156634 · Kenya · active");
+  const agencies = main.locator("[data-agency-line]");
+  await expect(agencies).toContainText("Implementing agencies: ");
+  await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
   const tabs = main.getByRole("navigation", { name: "Project sections" }).getByRole("link");
-  await expect(tabs).toHaveText(["Procurement"]);
-  await expect(tabs.first()).toHaveAttribute("aria-current", "page");
+  await expect(tabs).toHaveText(["Summary", "Procurement", "Documents"]);
+  await expect(tabs.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Projects");
 
   const nwwda = main.locator("[data-agency=northern-water-works-development-agency]");
@@ -200,7 +203,7 @@ test("a project's page shows its header, one Procurement tab, and each agency's 
   await expect(others).toContainText("I don't have a Procurement Plan from these agencies yet:");
   await expect(others.getByRole("listitem")).toHaveCount(10);
   await expect(others.getByRole("listitem").filter({ hasText: "Water Sector Trust Fund" })).toHaveCount(1);
-  await expect(main.getByRole("heading", { level: 3 })).toHaveCount(5);
+  await expect(main.locator("[data-procurement-tab]").getByRole("heading", { level: 3 })).toHaveCount(5);
 
   await nwwda.locator("[data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   await expect(page).toHaveURL(/\/projects\/P156634\/procurement\/northern-water-works-development-agency\/2026-10-09$/);
@@ -293,7 +296,7 @@ test("a long list of implementing agencies keeps to two lines until you show the
 test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
   const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
   await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), 1100);
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project's Procurement Plans because the data service didn't answer.");
+  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // From 1024 px the alert holds columns 1 to 8, as on every other page: at 1100 px, 8 columns of
   // 50.33 px and 7 gutters of 32 px.
@@ -312,14 +315,17 @@ test("a project's page says when the data service didn't answer, and when your a
 test("an agency's count line states the route's count of its versions", async ({ page }) => {
   const body = JSON.parse(await recorded("project-p156634.json"));
   body.agencies[0].version_count = 7;
-  await open(page, "/projects/P156634", { "/api/projects/P156634": { body: JSON.stringify(body) } });
+  body.agencies[0].shown_count = 7;
+  await open(page, "/projects/P156634/procurement", { ...(await p156634()), "/api/projects/P156634": { body: JSON.stringify(body) } });
 
   await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing all 7 versions")).toBeVisible();
 });
 
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {
   await open(page, "/projects/P130164/procurement", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization Project");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization · P130164 · India · closed");
+  // With no plans there are no packages to list, so Packages says so in one sentence.
+  await expect(page.locator("[data-packages=none]")).toContainText("I haven't read a Procurement Plan for this project yet, so I can't list its packages.");
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have a Procurement Plan for this project yet.");
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "no plans at 390 px").toEqual([]);
@@ -346,7 +352,7 @@ const scrollingTables = (page: Page) =>
 test("from 1024 to 1200 px every table fits its frame, so no column hides behind a sideways scroll", async ({ page }) => {
   const cases: [string, Record<string, Answer>][] = [
     ["/projects", await projects()],
-    ["/projects/P156634", await p156634()],
+    ["/projects/P156634/procurement", await p156634()],
     ["/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09", {
       "/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09": { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
     }],
@@ -369,7 +375,7 @@ test("below 768 px a card's short values sit side by side: a version's Disclosed
     await expect(card).toBeVisible();
     return card.locator("dl > div").evaluateAll((fields) => fields.map((field) => Math.round(field.getBoundingClientRect().top)));
   };
-  await open(page, "/projects/P156634", await p156634(), 390);
+  await open(page, "/projects/P156634/procurement", await p156634(), 390);
   await expect(page.locator("[data-project-page=ready]")).toBeVisible();
   const disclosedAndActivities = await fieldTops("[data-agency=northern-water-works-development-agency] [data-table-view=cards] > li");
   expect(disclosedAndActivities).toHaveLength(2);
@@ -388,7 +394,7 @@ test("axe finds no WCAG 2.2 AA violations on All projects and a project's page a
   // each other state: loading, empty, no plans, not found, the service error and the permission error.
   const cases: [string, Record<string, Answer>][] = [
     ["/projects", await projects()],
-    ["/projects/P156634", await p156634()],
+    ["/projects/P156634/procurement", await p156634()],
   ];
   // Each page loads once and is resized through the widths, which keeps the axe runs quick.
   for (const [path, api] of cases) {

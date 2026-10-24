@@ -68,14 +68,14 @@ for (const width of [1440, 1024, 390]) {
           ? outcome.count.toLocaleString("en-US")
           : `${outcome.count.toLocaleString("en-US")} of ${outcome.denominator.toLocaleString("en-US")}`,
       ]);
-      // The link opens the World Bank's PDF at the hard part's page, in a new tab, named for its document.
-      const link = cells.getByRole("link");
-      await expect(link).toHaveAttribute("href", `${entry.document.pdf_url.replace("http://", "https://")}#page=${entry.hard_page}`);
-      await expect(link).toHaveAttribute("target", "_blank");
-      await expect(link).toHaveAttribute("rel", /noopener/);
+      // The link opens the in-app source view at the hard part's page, in the same tab (ticket 21), named
+      // for its document. The source view links the World Bank's PDF at the same page.
+      const link = cells.getByRole("link", { name: /^Open at page/ });
+      await expect(link).toHaveAttribute("href", `/projects/${entry.document.project_id}/documents/${entry.document.document_id}?page=${entry.hard_page}`);
+      await expect(link).not.toHaveAttribute("target");
       // The name starts with the words on screen (WCAG 2.2 SC 2.5.3) and names the document.
       await expect(link).toHaveAccessibleName(
-        `Open at page ${entry.hard_page} of the ${entry.document.document_type} for ${entry.document.project_id} in the World Bank's PDF, opens in a new tab`,
+        `Open at page ${entry.hard_page} of the ${entry.document.document_type} for ${entry.document.project_id}`,
       );
     }
     // The fixture's outcomes all reach the read-well threshold, so no row has a badge.
@@ -350,7 +350,7 @@ const KINDS = [
     file: "evidence-pad-p130164-scanned.json",
     heading: "Rajasthan Road Sector Modernization, paragraph 23",
     note: "The whole paragraph, as the layout parser read it from a scanned page. The PDF page has the exact words.",
-    link: /^Open at page 20 in the World Bank's PDF/,
+    link: /^Open at page 20$/,
   },
   {
     name: "a row of a table",
@@ -358,7 +358,7 @@ const KINDS = [
     file: "evidence-pad-p130164-risk-row.json",
     heading: "Rajasthan Road Sector Modernization, Annex 4 - Operational Risk Assessment Framework (ORAF)",
     note: "This row as the layout parser read it from the table. The PDF page has the original.",
-    link: /^Open at page 65 in the World Bank's PDF/,
+    link: /^Open at page 65$/,
   },
   {
     name: "a table's summary",
@@ -366,7 +366,7 @@ const KINDS = [
     file: "evidence-pad-p130164-risk-summary.json",
     heading: "Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
     note: "I wrote this summary of the table on PDF pages 65 to 70. It is not the document's own words, and I never use it to back a number.",
-    link: /^Open at page 65 in the World Bank's PDF/,
+    link: /^Open at page 65$/,
   },
   {
     name: "a section of a notice's text",
@@ -385,7 +385,7 @@ for (const kind of KINDS) {
 
       await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(kind.heading);
       await expect(drawer(page)).toContainText(kind.note);
-      await expect(drawer(page).getByRole("link")).toHaveAccessibleName(kind.link);
+      await expect(drawer(page).getByRole("link", { name: kind.link })).toHaveCount(1);
       expect(await violations(page)).toEqual([]);
     });
   }
@@ -435,7 +435,7 @@ test("a notice's text shows where contact details were removed and never the raw
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     /^Request for Expression of Interest\s·\sWater and Sanitation Development\s\(P156634\)\s·\sFebruary 26, 2021\s·\sAddress referred above$/,
   );
-  await expect(drawer(page).getByRole("link")).toHaveAttribute("href", "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00118817");
+  await expect(drawer(page).getByRole("link", { name: /^Open this notice/ })).toHaveAttribute("href", "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00118817");
 });
 
 test("a passage in French carries its language, and its meta line says so", async ({ page }) => {

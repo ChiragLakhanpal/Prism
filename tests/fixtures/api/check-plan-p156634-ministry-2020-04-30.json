@@ -1,0 +1,336 @@
+{
+  "tool": "check_plan",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/MWSI-WSDP-04-2019-2020",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "MWSI-WSDP-04-2019-2020",
+      "section": "GOODS",
+      "description": "Procurement of 2No. Four wheel drive vehicles for project monitoring and management",
+      "review_type": "Post",
+      "method": "Request for Bids",
+      "market_approach": "Open",
+      "estimated_amount_usd": "160000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Pending Implementation",
+      "signed_on": null,
+      "planned_signing_on": "2020-07-25",
+      "planned_signing_plan_date": "2020-04-30",
+      "days_late": null,
+      "planned_completion_on": "2020-08-06",
+      "planned_completion_plan_date": "2020-04-30",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "watch",
+          "reasons": [
+            {
+              "code": "pending_near_closing",
+              "mark": "watch",
+              "closing_date": "2026-10-31",
+              "days_to_close": 8,
+              "evidence_ids": [
+                "strata.silver.plan_rows:31998332/MWSI-WSDP-04-2019-2020",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/MOWS-WSDP-01-2017-2018",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "MOWS-WSDP-01-2017-2018",
+      "section": "CONSULTING FIRMS",
+      "description": "Financial Management, Procurement, Monitoring and Evaluation, Safeguards and Engineering Support Consultancy Services",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "900000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Under Review",
+      "signed_on": null,
+      "planned_signing_on": "2018-11-30",
+      "planned_signing_plan_date": "2019-08-26",
+      "days_late": null,
+      "planned_completion_on": "2019-11-30",
+      "planned_completion_plan_date": "2019-08-26",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "watch",
+          "reasons": [
+            {
+              "code": "pending_near_closing",
+              "mark": "watch",
+              "closing_date": "2026-10-31",
+              "days_to_close": 8,
+              "evidence_ids": [
+                "strata.silver.plan_rows:31998332/MOWS-WSDP-01-2017-2018",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/MWI-WSDP-001",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "MWI-WSDP-001",
+      "section": "CONSULTING FIRMS",
+      "description": "Monitoring and Evaluation and Safeguards Consultancy Services",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "400000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Canceled",
+      "signed_on": null,
+      "planned_signing_on": "2017-07-24",
+      "planned_signing_plan_date": "2019-08-26",
+      "days_late": null,
+      "planned_completion_on": "2017-07-24",
+      "planned_completion_plan_date": "2019-08-26",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": []
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/MWI-WSDP-002",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "MWI-WSDP-002",
+      "section": "CONSULTING FIRMS",
+      "description": "Financial Management and Procurement Consultancy Services",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "500000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Canceled",
+      "signed_on": null,
+      "planned_signing_on": "2017-07-24",
+      "planned_signing_plan_date": "2019-08-26",
+      "days_late": null,
+      "planned_completion_on": "2017-07-24",
+      "planned_completion_plan_date": "2019-08-26",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": []
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/KE-MOWI-96348-CS-QCBS",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 4
+      },
+      "activity_reference_no": "KE-MOWI-96348-CS-QCBS",
+      "section": "CONSULTING FIRMS",
+      "description": "Consultancy for Water Utility Performance Improvement Program - Institutional Strengthening and capacity building",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "1500000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Canceled",
+      "signed_on": null,
+      "planned_signing_on": "2019-08-06",
+      "planned_signing_plan_date": "2019-08-26",
+      "days_late": null,
+      "planned_completion_on": "2020-08-05",
+      "planned_completion_plan_date": "2019-08-26",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": []
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/MOWS-WSDP-02-2019-2020",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 4
+      },
+      "activity_reference_no": "MOWS-WSDP-02-2019-2020",
+      "section": "CONSULTING FIRMS",
+      "description": "Consultancy for Water Utility Performance Improvement Program - Institutional Strengthening and capacity building",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "5000000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Under Review",
+      "signed_on": null,
+      "planned_signing_on": "2020-01-31",
+      "planned_signing_plan_date": "2019-08-26",
+      "days_late": null,
+      "planned_completion_on": "2021-01-30",
+      "planned_completion_plan_date": "2019-08-26",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "needs_a_look",
+          "reasons": [
+            {
+              "code": "completion_passed_no_contract",
+              "mark": "needs_a_look",
+              "planned_completion_on": "2021-01-30",
+              "planned_completion_plan_date": "2019-08-26",
+              "closing_date": "2026-10-31",
+              "days_to_close": 8,
+              "evidence_ids": [
+                "strata.silver.plan_rows:31998332/MOWS-WSDP-02-2019-2020",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:31998332/NWWDA-WSDP-03-2019-2020",
+      "public_from": "2020-04-30",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "plan_date": "2020-04-30",
+        "document_id": "31998332",
+        "pdf_page": 4
+      },
+      "activity_reference_no": "NWWDA-WSDP-03-2019-2020",
+      "section": "CONSULTING FIRMS",
+      "description": "Consultancy Services for Comparison of Water Supply Options, Preparation of Detailed Designs, Tender Documents, Safeguards Documents and Construction Supervision of Wajir Water Supply",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "2000000.00",
+      "actual_amount_usd": "0.00",
+      "process_status": "Under Implementation",
+      "signed_on": null,
+      "planned_signing_on": "2020-05-16",
+      "planned_signing_plan_date": "2019-11-08",
+      "days_late": null,
+      "planned_completion_on": "2021-05-16",
+      "planned_completion_plan_date": "2019-11-08",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "needs_a_look",
+          "reasons": [
+            {
+              "code": "completion_passed_no_contract",
+              "mark": "needs_a_look",
+              "planned_completion_on": "2021-05-16",
+              "planned_completion_plan_date": "2019-11-08",
+              "closing_date": "2026-10-31",
+              "days_to_close": 8,
+              "evidence_ids": [
+                "strata.silver.plan_rows:31998332/NWWDA-WSDP-03-2019-2020",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+  },
+  "abstention": null,
+  "plan": {
+    "evidence_id": "strata.silver.plan_versions:31998332",
+    "public_from": "2020-04-30",
+    "document_id": "31998332",
+    "project_id": "P156634",
+    "implementing_agency": "Ministry of Water and Irrigation",
+    "agency_id": "ministry-of-water-and-irrigation",
+    "plan_date": "2020-04-30",
+    "disclosed_on": "2020-04-30",
+    "is_latest": true,
+    "pdf_url": "http://documents.worldbank.org/curated/en/768091588250052402/pdf/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.pdf",
+    "text_url": "http://documents.worldbank.org/curated/en/768091588250052402/text/Kenya-AFRICA-P156634-Water-and-Sanitation-Development-Project-Procurement-Plan.txt"
+  },
+  "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "status": "Active",
+    "closing_date": "2026-10-31",
+    "record_date": "2024-04-24",
+    "days_to_close": 8
+  },
+  "checks_run": [
+    "own_dates",
+    "estimate",
+    "closing_date"
+  ],
+  "thresholds": {
+    "completion_passed_min_estimated_usd": "1000000.00",
+    "days_before_closing": 90,
+    "actual_to_estimate_ratio": "2.0"
+  },
+  "baseline": null,
+  "counts": {
+    "activities": 7,
+    "checked": 7,
+    "not_fully_checked": 0,
+    "needs_a_look": 2,
+    "watch": 2,
+    "data_note": 0,
+    "signal": 4,
+    "marked": 4,
+    "unmarked": 3
+  }
+}

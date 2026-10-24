@@ -506,6 +506,7 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
   });
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -513,7 +514,7 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
     await held;
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
   });
-  await page.goto("/projects/P156634");
+  await page.goto("/projects/P156634/procurement");
   await page.locator("[data-agency=northern-water-works-development-agency] [data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   const h1 = page.getByRole("main").getByRole("heading", { level: 1 });
   await expect(h1).toBeFocused();

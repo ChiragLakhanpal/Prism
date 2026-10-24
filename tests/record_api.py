@@ -68,6 +68,7 @@ FROM_THE_FIXTURE = {
 # and Documents, the source view in each of its states, and what changed in a plan.
 SOURCE = "/api/projects/P130164/documents"
 NWWDA = "/api/projects/P156634/procurement/northern-water-works-development-agency"
+MINISTRY = "/api/projects/P156634/procurement/ministry-of-water-and-irrigation"
 HUB = {
     "projects.json": f"/api/projects?{DAY}",
     "projects-page-2.json": f"/api/projects?{DAY}&page=2",
@@ -98,8 +99,13 @@ HUB = {
     "source-icr-review-p130164-reissue.json": f"{SOURCE}/icr-review-2023-05-04?page=1&{DAY}",
     "changes-nwwda-2026-10-09.json": f"{NWWDA}/2026-10-09/changes?{DAY}",
     "changes-nwwda-2020-12-07.json": f"{NWWDA}/2020-12-07/changes?{DAY}",
+    # The Ministry's plan of April 30, 2020 added one activity and re-dated another since November 8, 2019.
+    "changes-ministry-2020-04-30.json": f"{MINISTRY}/2020-04-30/changes?{DAY}",
+    "check-plan-p156634-ministry-2020-04-30.json": f"{MINISTRY}/2020-04-30?{DAY}",
     # Check a plan (ticket 10), which ticket 21's baseline adds a field to.
     "check-plan-p156634-nwwda-2026-10-09.json": f"{NWWDA}/2026-10-09?asof=2026-10-22",
+    # The plan of July 21, 2025 before anyone saved a baseline, which the baseline's screen test saves.
+    "check-plan-p156634-nwwda-2025-07-21.json": f"{NWWDA}/2025-07-21?{DAY}",
     "check-plan-p156634-nwwda-2026-10-10-not-found.json": f"{NWWDA}/2026-10-10?asof=2026-10-22",
     "check-plan-p156634-wajir-no-plan.json": "/api/projects/P156634/procurement/wajir-water-and-sewerage-company?asof=2026-10-22",
 }

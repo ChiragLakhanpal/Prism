@@ -17,15 +17,20 @@ import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
+import { BaselinePanel } from "../components/BaselinePanel";
+import { ChangeTables, changedRows } from "../components/ChangeTables";
+import { Num } from "../components/Num";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
-import { getJson, type CheckPlanResult } from "../lib/api";
+import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
+import { changed, changeList } from "../lib/changes";
 import { draftHref, newKey, startWriting, stopped, writingHref, type Existing, type ExistingDraft } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { viewOf } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.checkPlan;
@@ -71,26 +76,100 @@ function useExistingDraft(pid: string, agencyId: string, version: string | undef
   return { settled: key === null || answered || late, draft };
 }
 
+// What changed in the version the check shows, since the agency's version before it (ticket 21). It is read
+// once the check is ready, since the latest-plan route learns the version's date from the check. A route
+// that has no such comparison answers 404, and the page then shows neither the change line nor the list.
+function usePlanChanges(pid: string, agencyId: string, planDate: string | null) {
+  const [answer, setAnswer] = useState<{ key: string; changes: PlanChanges | null; failed: boolean } | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const key = planDate ? `${pid}/${agencyId}/${planDate}` : null;
+  useEffect(() => {
+    if (!key) return;
+    const controller = new AbortController();
+    getJson<PlanChanges>(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}/${planDate}/changes`, { signal: controller.signal }).then(
+      (changes) => setAnswer({ key, changes, failed: false }),
+      (error: unknown) => {
+        if (controller.signal.aborted) return;
+        setAnswer({ key, changes: null, failed: !(error instanceof ApiError && error.status === 404) });
+      },
+    );
+    return () => controller.abort();
+  }, [key, attempt]);
+  const found = answer && answer.key === key ? answer : null;
+  return { changes: found?.changes ?? null, failed: found?.failed ?? false, settled: found !== null, retry: () => setAttempt((n) => n + 1) };
+}
+
+// The change line under the method sentence, with its link to the change list below (#changes).
+function ChangeLine({ changes }: { changes: PlanChanges }) {
+  const line = words.changes;
+  const prev = changes.previous ? <Num date={changes.previous.plan_date} /> : null;
+  let text: ReactNode;
+  let link = false;
+  if (changes.state === "earliest") text = line.earliest;
+  else if (changes.state === "previous_not_read") text = <Fill template={line.prevUnread} slots={{ prev_date: prev }} />;
+  else if (!changed(changes.counts)) text = <Fill template={line.same} slots={{ prev_date: prev }} />;
+  else {
+    text = <Fill template={line.line} slots={{ prev_date: prev, change_list: changeList(changes.counts!) }} />;
+    link = true;
+  }
+  return (
+    <p className="mt-2 text-body text-ink" data-change-line>
+      {text}
+      {link && (
+        <>
+          {" "}
+          <TextLink href="#changes" className="whitespace-nowrap">
+            {line.link}
+          </TextLink>
+        </>
+      )}
+    </p>
+  );
+}
+
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
-  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`;
+  const viewParams = new URLSearchParams(useStore(address).search);
+  const viewAsked = viewParams.get("view");
+  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}${viewAsked === "piu" || viewAsked === "public" ? `?view=${viewAsked}` : ""}`;
   const [load, retry] = useLoad<CheckPlanResult>(path);
+  // The check read again after a baseline was saved or removed, shown in place of the first one.
+  const [fresh, setFresh] = useState<{ path: string; result: CheckPlanResult } | null>(null);
+  const changesHeading = useRef<HTMLHeadingElement>(null);
   const header = useRef<HTMLDivElement>(null);
   const finding = useRef<HTMLHeadingElement>(null);
   const slotId = useId();
-  const params = new URLSearchParams(useStore(address).search);
+  const search = useStore(address).search;
+  const params = new URLSearchParams(search);
   const preview = params.get("view") === "piu" || params.get("view") === "public";
   const asOf = params.get("asof");
   // The draft action's slot holds a button on today's check outside a preview.
   const slotShown = !preview && asOf === null;
 
-  const result = load.status === "ready" ? load.data : null;
+  const result = load.status === "ready" ? (fresh && fresh.path === path ? fresh.result : load.data) : null;
   const ready = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
   // The populated page waits, at most LOOKUP_WAIT_MS after the check is ready, for the notice that names an
   // open draft.
   const lookup = useExistingDraft(pid, agencyId, version, !preview, ready?.plan.plan_date ?? null);
-  const waiting = ready !== null && !lookup.settled;
+  // What changed in this version is read from the start when the address names the version, and once the
+  // check names it otherwise. The populated page waits for it, so the change line arrives with the check.
+  const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null);
+  const waiting = ready !== null && (!lookup.settled || !planChanges.settled);
   const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked), { gap: 8 });
+  const { changes } = planChanges;
+  const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
+
+  // "#changes" in the address, from "See what changed": the change list's heading takes focus once it is drawn.
+  useEffect(() => {
+    const follow = () => {
+      if (window.location.hash !== "#changes" || !changesHeading.current) return;
+      changesHeading.current.scrollIntoView({ block: "start" });
+      changesHeading.current.focus({ preventScroll: true });
+    };
+    follow();
+    window.addEventListener("hashchange", follow);
+    return () => window.removeEventListener("hashchange", follow);
+  }, [listed]);
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
@@ -178,7 +257,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
+        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={viewOf(search)} />
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
     );
@@ -212,7 +291,51 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           action={slot.action}
           feedforward={slot.feedforward}
         />
-        <PlanCheck result={checked} findingRef={finding} />
+        <PlanCheck
+          result={checked}
+          findingRef={finding}
+          changed={changedRows(changes)}
+          afterMethod={
+            <>
+              {changes && <ChangeLine changes={changes} />}
+              <div className="mt-4">
+                <BaselinePanel
+                  pid={pid}
+                  agencyId={checked.plan.agency_id}
+                  agency={checked.plan.implementing_agency}
+                  planDate={checked.plan.plan_date}
+                  baseline={checked.baseline ?? null}
+                  view={viewOf(search)}
+                  readOnly={asOf !== null}
+                  refresh={async () => {
+                    const next = await getJson<CheckPlanResult>(path);
+                    setFresh({ path, result: next });
+                    return next;
+                  }}
+                />
+              </div>
+            </>
+          }
+          after={
+            listed ? (
+              <ChangeTables ref={changesHeading} changes={changes!} agency={checked.plan.implementing_agency} />
+            ) : planChanges.failed ? (
+              <EightColumns prose>
+                <Alert
+                  state="error"
+                  live="alert"
+                  action={
+                    <Button variant="secondary" onClick={planChanges.retry}>
+                      {copy.answer.tryAgain}
+                    </Button>
+                  }
+                >
+                  {copy.changes.error}
+                </Alert>
+              </EightColumns>
+            ) : undefined
+          }
+        />
       </>
     );
   } else {

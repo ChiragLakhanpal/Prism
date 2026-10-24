@@ -51,7 +51,7 @@ function scopeOf(match: Match, draftProject: string | null): { scope: string | n
   if (match.key === "draft" || match.key === "draftNew") return { scope: draftProject, kind: "project" };
   if (match.key === "package") return { scope: match.values.id ?? null, kind: "package" };
   if (match.key === "activity") return { scope: match.values.stepRef ?? null, kind: "package" };
-  if (match.key === "project" || match.key === "checkPlan") return { scope: match.values.pid ?? null, kind: "project" };
+  if (match.key === "project" || match.key === "checkPlan" || match.key === "document") return { scope: match.values.pid ?? null, kind: "project" };
   return { scope: null, kind: "project" };
 }
 
@@ -245,7 +245,8 @@ export function App() {
         {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a
             table that needs the width, such as the plan check or the Data tab, spans all 12. */}
         <div className="col-span-12">
-          <RoutePage key={here.pathname} match={match} search={here.search} />
+          {/* A project's tabs share one page, so its header and tab row stay in place between them. */}
+          <RoutePage key={match.frame ?? here.pathname} match={match} search={here.search} />
         </div>
       </div>
     </Frame>

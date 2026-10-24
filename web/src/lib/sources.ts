@@ -31,6 +31,9 @@ export type PassageFields = {
   cells: [string, string][];
   noticeId: string | null;
   noticeUrl: string | null;
+  // Ticket 21: the document's key in its project and the passage's id, for the source view's address.
+  docKey: string | null;
+  passageId: string | null;
 };
 
 // Where in its document a passage sits: a numbered paragraph ("54", or an item such as 10.b), or else
@@ -83,6 +86,8 @@ export function passageFields(evidence: EvidenceEvent): PassageFields {
     cells: (row.cells ?? []) as [string, string][],
     noticeId: (row.notice_id ?? source.notice_id ?? null) as string | null,
     noticeUrl: (source.notice_url ?? null) as string | null,
+    docKey: (source.doc_key ?? row.doc_key ?? null) as string | null,
+    passageId: (row.passage_id ?? null) as string | null,
   };
 }
 
@@ -96,7 +101,13 @@ export function recordReference(evidence: EvidenceEvent): string {
 // in its evidence id, so a contract a later tool cites is never called an activity.
 export function recordKind(evidence: EvidenceEvent): string {
   const table = evidence.id.split(":")[0];
-  return copy.evidence.recordKinds[table] ?? copy.evidence.recordKindOther;
+  return copy.evidence.recordKinds[table] ?? copy.evidence.summaryRecordKinds[table] ?? copy.evidence.recordKindOther;
+}
+
+// The source_key a project's Summary gives each record it cites (ticket 21), such as projects_api.
+export function summarySourceKey(evidence: EvidenceEvent): string | null {
+  const source = (evidence.row.source ?? {}) as Record<string, any>;
+  return typeof source.source_key === "string" ? source.source_key : null;
 }
 
 export type RecordSource = { docType: string; agency: string | null; pcode: string; date: string | null; page: number | null };

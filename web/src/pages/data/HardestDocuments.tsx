@@ -8,7 +8,8 @@
 // against, the parser that read it and the table it counted. The page computes nothing (CLAUDE.md rule 1).
 // A row with no document to show spans one note across its last three cells, with no badge and no link.
 import type { ReactNode } from "react";
-import { ExternalLink, pdfPageHref } from "../../components/ExternalLink";
+import { TextLink } from "../../components/TextLink";
+import { sourcePageHref } from "../../lib/documents";
 import { Num } from "../../components/Num";
 import { MeasureNum } from "../../components/MeasureNum";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
@@ -206,13 +207,17 @@ function outcomeCell(entry: ShelfEntry, measures: Measures, asOf: string): React
 
 function pageCell(entry: ShelfEntry): ReactNode {
   const document = entry.document;
-  if (!document?.pdf_url || entry.hard_page === null) return null;
+  if (!document || entry.hard_page === null) return null;
   const page = String(entry.hard_page);
   return (
     <Stack>
-      <ExternalLink href={pdfPageHref(document.pdf_url, entry.hard_page)} name={words.pageLinkMore(document.document_type, document.project_id)}>
+      <TextLink
+        href={sourcePageHref(document.project_id, document.document_id, entry.hard_page)}
+        aria-label={words.pageLinkName(page, document.document_type, document.project_id)}
+        className="text-small"
+      >
         <Template text={words.pageLink} values={{ page: <span className="tabular-nums">{page}</span> }} />
-      </ExternalLink>
+      </TextLink>
       <Qualifier>{fill(words.pageLines[entry.kind], entry)}</Qualifier>
     </Stack>
   );

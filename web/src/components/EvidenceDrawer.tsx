@@ -30,7 +30,10 @@ import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { highlighted, withoutMarkers } from "./Document";
+import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
+import { linkProjectIds, ProjectId } from "./ProjectId";
+import { TextLink } from "./TextLink";
 import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
@@ -91,7 +94,7 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
       text: (
         <>
           {words.project.split(/\{(\w+)\}/).map((part, index) =>
-            index % 2 === 0 ? part : part === "pcode" ? <span key={index} className="font-mono">{fields.pcode}</span> : <span key={index}>{fields.project}</span>,
+            index % 2 === 0 ? part : part === "pcode" ? <ProjectId key={index} pid={fields.pcode} /> : <span key={index}>{fields.project}</span>,
           )}
         </>
       ),
@@ -190,9 +193,15 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
 
 function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean }) {
   const fields = passageFields(evidence);
-  const section = placeOf(fields).kind === "section";
+  const place = placeOf(fields);
+  const section = place.kind === "section";
   const ranges = highlightsFor(evidence, sentence);
   const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
+  // Ticket 21: "Open at page N" opens the in-app source view at the page, in the same tab, with the
+  // paragraph highlighted, or the passage when it has no paragraph number. The PDF link lives there.
+  const here = fields.docKey && fields.pcode && fields.page
+    ? sourcePageHref(fields.pcode, fields.docKey, fields.page, place.kind === "paragraph" ? { para: fields.para } : { passage: fields.passageId })
+    : null;
   const notice = fields.kind === "notice_text";
   const row = fields.kind === "table_row";
   const summary = fields.kind === "table_summary";
@@ -234,6 +243,12 @@ function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEve
         <p>
           <ExternalLink href={fields.noticeUrl}>{copy.evidence.openNotice}</ExternalLink>
         </p>
+      ) : here !== null ? (
+        <p>
+          <TextLink href={here} className="text-small" data-open-at-page>
+            {copy.document.openAtPageHere(String(fields.page))}
+          </TextLink>
+        </p>
       ) : (
         pdf !== null && (
           <p>
@@ -254,6 +269,14 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const columns = copy.checkPlan.columns;
   const given = (value: unknown) => value !== null && value !== undefined && value !== "";
   const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean }[] = [];
+  // A record a project's Summary cites (ticket 21) lists its fields by key: dates as dates, amounts in
+  // their source's form with cents, and text as the record gives it.
+  for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string }[]) {
+    const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
+    if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
+    else if (field.kind === "usd") fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true });
+    else fields.push({ label, value: linkProjectIds(String(field.value)), wide: String(field.value).length > 24 });
+  }
   if (given(row.description)) fields.push({ label: copy.evidence.recordDescription, value: String(row.description), wide: true });
   if (given(row.method)) fields.push({ label: columns.method, value: <MethodText method={String(row.method)} approach={row.market_approach} />, wide: true });
   if (given(row.review_type)) fields.push({ label: columns.review, value: String(row.review_type) });

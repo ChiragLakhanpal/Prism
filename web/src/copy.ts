@@ -706,7 +706,7 @@ export const copy = {
   projectPage: {
     label: { id: "Project ID", country: "Country", status: "Status", agency: "Implementing agency", agencies: "Implementing agencies" },
     // The h1's line: "{name} · {pid} · {country} · {status}". The dot and the item after it never part.
-    dot: "\u00a0· ",
+    dot: "· ",
     // The status inside the header's line, by the projects API's value. Tables keep the API's own word.
     statusInline: { Active: "active", Closed: "closed", Pipeline: "in the pipeline", Dropped: "dropped" } as Record<string, string>,
     agencyLine: "Implementing agency: {agencies}",
@@ -980,6 +980,8 @@ export const copy = {
       "These are the documents the World Bank published for this project, grouped by type. Open one to read it page by " +
       "page, with its paragraphs numbered as the document numbers them.",
     noun: "documents",
+    // The count line: the rows the list shows, of every document listed. Both counts are the route's.
+    showing: (shown: string, total: string) => `Showing ${shown} of ${total} documents`,
     caption: (name: string) => `Documents for ${name}, by type`,
     col: { document: "Document", dated: "Dated", disclosed: "Disclosed", pages: "Pages read", pdf: "PDF" },
     def: {
@@ -1018,7 +1020,6 @@ export const copy = {
     reissueLink: "Open the version of {date}",
     reissueDated: "Re-issued {date}",
     notRead: "Not read",
-    partial: "Partial",
     pagesOf: "{read} of {pages}",
     notReadNote: "\"Not read\" means I list the document but haven't read its pages. {link} shows which documents I read.",
     notReadLink: "Data readiness",
@@ -2111,9 +2112,10 @@ export const copy = {
       notRead: "Not read yet. The next document run reads it.",
       // The Page cell: the link, then where it lands.
       pageLink: "Open at page {page}",
-      // The rest of the link's name, after its words on screen, so five "Open at page" links are told
-      // apart: "Open at page 65 of the Project Appraisal Document for P130164 in the World Bank's PDF".
-      pageLinkMore: (docType: string, pid: string) => ` of the ${docType} for ${pid} in the World Bank's PDF`,
+      // The link's whole name, starting with its words on screen, so five "Open at page" links are told
+      // apart: "Open at page 65 of the Project Appraisal Document for P130164". Ticket 21 points it at the
+      // in-app source view, in the same tab, where the World Bank's PDF is linked at the same page.
+      pageLinkName: (page: string, docType: string, pid: string) => `Open at page ${page} of the ${docType} for ${pid}`,
       pageLines: {
         scan_annex: "where the {part} starts",
         longest_pad: "the first page I sent to the parser",

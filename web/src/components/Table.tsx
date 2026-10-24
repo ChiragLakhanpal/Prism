@@ -61,7 +61,9 @@ export type TableState =
 // What the count line counts: "Showing all 4 activities", or "Showing 1–20 of 99 sources"
 // when the rows are one page of more.
 // one is the noun for a single row ("version"), so one row reads "Showing 1 version".
-export type Count = { noun: string; one?: string; total: number; from?: number; to?: number };
+// text: the count line in words of the screen's own, such as "Showing 6 of 61 versions" for rows that are
+// not one range (the five newest versions and the baseline, ticket 21).
+export type Count = { noun: string; one?: string; total: number; from?: number; to?: number; text?: string };
 
 type Level = 2 | 3 | 4 | 5;
 
@@ -93,7 +95,8 @@ export const CARD_FIELD = "flex min-w-0 flex-col justify-end";
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
-export function countText({ noun, one, total, from, to }: Count): string {
+export function countText({ noun, one, total, from, to, text }: Count): string {
+  if (text) return text;
   if (total === 1 && one) return copy.table.showingOne(one);
   return from !== undefined && to !== undefined && (from > 1 || to < total)
     ? copy.table.showing(n(from), n(to), n(total), noun)

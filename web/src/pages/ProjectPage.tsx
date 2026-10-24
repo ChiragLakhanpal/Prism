@@ -1,68 +1,63 @@
-// A project's page (the 10 brief, section 3), at /projects/:pid and /projects/:pid/procurement: the
-// header (the project's name, its ID in Roboto Mono, country, status and implementing agencies, as
-// labelled pairs), a row of section tabs showing only the tabs that are built (Procurement, until
-// ticket 21 adds Summary), and the Procurement tab: each implementing agency's Procurement Plan
-// versions, newest first, in the order the route gives. A version Strata read links to its plan
-// check; a version it did not read is plain text marked "Not read".
+// A project's page, the hub (the 10 and 21 briefs), at /projects/:pid and its tabs. The header is the
+// wireframe's one line in the h1, "Rajasthan Road Sector Modernization · P130164 · India · closed", with
+// the project ID as a ProjectId link and the status lowercased from the copy file, then the implementing
+// agency line. Under it the tab row shows the built tabs in the copy file's order: Summary, Procurement and
+// Documents (Timeline and Connections join when tickets 23 and 22 land).
 //
-// States: loading, populated, an agency with no plan, a project with no plans, a project Strata has
-// no record of, a service that didn't answer, and an account that can't read Strata's tables.
+// The app keeps this page in place while you move between its tabs (Match.frame), so the header and the
+// tab row never redraw; a tab opened from the row keeps focus on its link and says "Showing Procurement."
+// through a polite status (the 21 brief, section 11.2). The header is not sticky: it holds no action until
+// ticket 37 adds Follow.
+//
+// States: loading (the h1 names the project for a screen reader, and bars stand in for the line and the
+// agency line, while the tab row is real), populated, a project Strata has no record of, a service that
+// didn't answer, and an account that can't read Strata's tables. Each tab draws its own states.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
-import { EmptyState } from "../components/Card";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
-import { Num } from "../components/Num";
+import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
-import { Table, type Column, type Row } from "../components/Table";
 import { Tabs } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import type { Agency, ProjectPage as Page } from "../lib/api";
-import { formatDate } from "../lib/format";
+import type { ProjectPage as Page } from "../lib/api";
 import { useLoad } from "../lib/load";
+import { address, navigate } from "../lib/router";
+import { useStore } from "../lib/store";
+import { setPageTitle } from "../lib/title";
+import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
+import { DocumentsTab } from "./project/DocumentsTab";
+import { ProcurementTab } from "./project/ProcurementTab";
+import { SummaryTab } from "./project/SummaryTab";
 
 const words = copy.projectPage;
-const plans = copy.procurement;
 
-const columns: Column[] = [
-  { key: "version", header: plans.columns.version, width: "w-1/2" },
-  { key: "disclosed", header: plans.columns.disclosed, short: true },
-  { key: "activities", header: plans.columns.activities, numeric: true },
-];
-
-const mono = (text: ReactNode) => <span className="font-mono font-medium">{text}</span>;
-
-// The header's labelled pairs. The short ones share a row; a wide one (the agencies) takes a row of
-// its own, so the header has the same shape however many agencies a project names.
-type Pair = { label: ReactNode; value: ReactNode; wide?: boolean };
-
-function Pairs({ pairs, hidden }: { pairs: Pair[]; hidden?: boolean }) {
-  return (
-    <dl aria-hidden={hidden || undefined} className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 @md/page:flex @md/page:flex-wrap">
-      {pairs.map((pair, index) => (
-        <div key={index} className={pair.wide ? "col-span-2 min-w-0 @md/page:basis-full" : undefined}>
-          <dt className="text-caption text-ink-muted">{pair.label}</dt>
-          {pair.value}
-        </div>
-      ))}
-    </dl>
-  );
+// The view and as-of date the address asks for, passed on to the project's reads, since the baseline is
+// hidden in the public view and shown without its saver in the implementing agency view.
+export function readParams(search: string, keys: string[] = ["view"]): string {
+  const params = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of keys) {
+    const value = params.get(key);
+    if (value) kept.set(key, value);
+  }
+  const rest = kept.toString();
+  return rest ? `?${rest}` : "";
 }
 
-const value = (text: ReactNode) => <dd className="text-small text-ink">{text}</dd>;
-
-// The agencies keep to two lines. When the names need more, "Show all agencies" follows them; it
-// shows only while the two lines hide a name, measured again whenever the list's width changes.
-function Agencies({ names }: { names: string[] }) {
+// The agencies keep to two lines. When the names need more, "Show all agencies" follows them; it shows
+// only while the two lines hide a name, measured again whenever the line's width changes. Two agency
+// names hold commas, so the names are set apart with semicolons.
+function AgencyLine({ names }: { names: string[] }) {
   const id = useId();
-  const list = useRef<HTMLElement>(null);
+  const line = useRef<HTMLParagraphElement>(null);
   const [open, setOpen] = useState(false);
   const [hides, setHides] = useState(false);
   useLayoutEffect(() => {
-    const element = list.current;
+    const element = line.current;
     if (!element || open) return;
     const measure = () => setHides(element.scrollHeight > element.clientHeight + 1);
     measure();
@@ -70,149 +65,72 @@ function Agencies({ names }: { names: string[] }) {
     observer.observe(element);
     return () => observer.disconnect();
   }, [open]);
+  if (names.length === 0) return <p className="mt-2 max-w-prose text-body text-ink-muted">{words.noAgency}</p>;
   return (
-    <>
-      <dd ref={list} id={id} className={open ? "text-small text-ink" : "line-clamp-2 text-small text-ink"}>
-        {names.join(words.agencyJoin)}
-      </dd>
+    <div className="mt-2" data-agency-line>
+      <p ref={line} id={id} className={open ? "max-w-prose text-body text-ink-muted" : "line-clamp-2 max-w-prose text-body text-ink-muted"}>
+        <Fill template={names.length > 1 ? words.agenciesLine : words.agencyLine} slots={{ agencies: names.join(words.agencyJoin) }} />
+      </p>
       {(hides || open) && (
         // 4 px above the button keep its focus ring off the agencies' second line.
-        <dd className="mt-1">
+        <div className="mt-1">
           <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             {open ? words.fewerAgencies : words.allAgencies}
           </Button>
-        </dd>
+        </div>
       )}
+    </div>
+  );
+}
+
+// The h1's one line. Each " · item" keeps together, so a dot never ends a line and an item never splits:
+// the line breaks only at the space before a dot, or inside the project's name.
+function HeaderLine({ project }: { project: Page["project"] }) {
+  const status = project.status ? (words.statusInline[project.status] ?? project.status) : null;
+  const item = (content: ReactNode) => (
+    <>
+      {" "}
+      <span className="whitespace-nowrap text-ink-muted">
+        {words.dot}
+        {content}
+      </span>
+    </>
+  );
+  return (
+    <>
+      <span className="text-ink-heading">{project.display_name ?? project.project_name}</span>
+      {item(<ProjectId pid={project.project_id} />)}
+      {project.country && item(project.country)}
+      {status && item(status)}
     </>
   );
 }
 
-// While the project loads: the same pairs as bars, with the agencies' two lines and the place of
-// "Show all agencies", so the tabs below do not move when the project arrives.
-const LOADING_PAIRS: Pair[] = [
-  ...["w-16", "w-12", "w-10"].map((label) => ({
-    label: <SkeletonLine width={label} />,
-    value: <SkeletonLine className="text-small" width="w-20" />,
-  })),
-  {
-    label: <SkeletonLine width="w-32" />,
-    value: (
-      <>
-        <SkeletonText className="text-small" widths={["w-full", "w-3/5"]} />
-        <span className="mt-1 flex h-11 items-center text-small">
-          <Skeleton className="h-[1em] w-32" />
-        </span>
-      </>
-    ),
-    wide: true,
-  },
-];
-
-function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; through: string | null }) {
-  if (agency.version_count === 0) {
-    return (
-      <section data-agency={agency.agency_id}>
-        <h3 className="text-title text-ink-heading">{agency.implementing_agency}</h3>
-        <p className="mt-2 text-small text-ink-muted">{plans.agencyEmpty}</p>
-      </section>
-    );
-  }
-  const rows: Row[] = agency.versions.map((version) => {
-    const label = plans.versionLink(formatDate(version.plan_date, { style: "table" }));
-    return {
-      id: version.document_id,
-      cells: {
-        version: (
-          <>
-            {version.read ? (
-              <TextLink href={`/projects/${pid}/procurement/${agency.agency_id}/${version.plan_date}`}>{label}</TextLink>
-            ) : (
-              label
-            )}
-            {version.is_latest && (
-              <>
-                {" "}
-                <span className="ml-2 text-caption text-ink-muted">{plans.latest}</span>
-              </>
-            )}
-          </>
-        ),
-        disclosed: version.disclosed_on ? <Num date={version.disclosed_on} style="table" /> : copy.notInRecord,
-        activities:
-          version.read && version.activities !== null ? (
-            <Num value={version.activities} options={{ compact: false }} />
-          ) : (
-            <span className="text-ink-muted">{plans.notRead}</span>
-          ),
-      },
-    };
-  });
-  return (
-    <section data-agency={agency.agency_id}>
-      <Table
-        title={agency.implementing_agency}
-        level={3}
-        count={{ noun: plans.noun, one: plans.nounOne, total: agency.version_count }}
-        columns={columns}
-        rowHeader="version"
-        state={{ status: "ready", rows }}
-        source={
-          through ? (
-            <Fill template={plans.source} slots={{ pid: mono(pid), date: formatDate(through) }} />
-          ) : (
-            <Fill template={plans.sourceUndated} slots={{ pid: mono(pid) }} />
-          )
-        }
-      />
-      {agency.versions.some((version) => !version.read) && <p className="mt-2 max-w-prose text-caption text-ink-muted">{plans.unreadNote}</p>}
-    </section>
-  );
-}
-
-// The agencies the project record names that have published no plan, together after the ones
-// with plans, so the exceptions stand out and the rest fold into one block.
-function OtherAgencies({ agencies }: { agencies: Agency[] }) {
-  return (
-    <section data-other-agencies>
-      <h3 className="text-title text-ink-heading">{plans.otherAgencies}</h3>
-      <p className="mt-2 text-small text-ink-muted">{plans.othersEmpty}</p>
-      <ul className="mt-2 list-disc pl-6 text-small text-ink">
-        {agencies.map((agency) => (
-          <li key={agency.agency_id} data-agency={agency.agency_id}>
-            {agency.implementing_agency}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-export function ProjectPage({ pid }: { pid: string }) {
-  const [load, retry] = useLoad<Page>(`/api/projects/${encodeURIComponent(pid)}`);
+export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
+  const here = useStore(address);
+  const [load, retry] = useLoad<Page>(`/api/projects/${encodeURIComponent(pid)}${readParams(here.search)}`);
   const title = useRef<HTMLHeadingElement>(null);
-  const idText = mono(pid);
+  const tabRow = useRef<HTMLDivElement>(null);
+  const [showing, setShowing] = useState("");
+  const idText = <span className="font-mono font-medium">{pid}</span>;
 
   useEffect(() => {
     if (load.status === "ready" && load.afterRetry) title.current?.focus();
   }, [load]);
 
+  const data = load.status === "ready" ? load.data : null;
+  const tabLabel = words.tab[tab];
+  // The browser tab names the project and the tab: "Rajasthan Road Sector Modernization (P130164), Summary".
+  useEffect(() => {
+    if (data) setPageTitle(words.documentTitle(data.project.display_name ?? data.project.project_name, pid, tabLabel));
+  }, [data, tab]);
+
   // The server's 404 for a project it has no record of; any other 404 is a service that didn't answer.
   const notFound = load.status === "error" && load.error?.status === 404 && load.error.body.code === "unknown_project";
-  const data = load.status === "ready" ? load.data : null;
   const projectsCrumb = { text: copy.breadcrumb.projects, href: "/projects" };
-  const current = data ? (
-    <Fill template={copy.breadcrumb.project} slots={{ name: data.project.project_name, pid: idText }} />
-  ) : load.status === "loading" ? (
-    // The bar stands in for the name; a screen reader hears the project's ID.
-    <>
-      <span className="sr-only">
-        <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />
-      </span>
-      <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
-    </>
-  ) : (
-    <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />
-  );
+  const named = data ? (
+    <Fill template={copy.breadcrumb.project} slots={{ name: data.project.project_name, pid: <ProjectId pid={pid} /> }} />
+  ) : null;
 
   if (notFound) {
     return (
@@ -231,104 +149,90 @@ export function ProjectPage({ pid }: { pid: string }) {
     );
   }
 
-  const project = data?.project;
-  const agencies: Pair[] = project
-    ? [{
-        label: project.implementing_agencies.length > 1 ? words.label.agencies : words.label.agency,
-        value: <Agencies names={project.implementing_agencies} />,
-        wide: true,
-      }]
-    : [];
-  const header =
-    load.status === "loading" ? (
-      <Pairs pairs={LOADING_PAIRS} hidden />
-    ) : project ? (
-      <Pairs
-        pairs={[
-          { label: words.label.id, value: value(mono(project.project_id)) },
-          { label: words.label.country, value: value(project.country ?? copy.notInRecord) },
-          { label: words.label.status, value: value(project.status ?? copy.notInRecord) },
-          ...(project.implementing_agencies.length > 0 ? agencies : []),
-        ]}
-      />
-    ) : null;
-
-  // Three columns read best at the prose width, so the version tables keep to columns 1 to 8 from
-  // 1200 px (EightColumns breakpoint="xl"); the alert and the empty state do from 1024 px.
-  let tab: ReactNode;
-  if (load.status === "loading") {
-    tab = (
-      <EightColumns breakpoint="xl">
-        <Table title="" level={3} count={{ noun: plans.noun, total: 0 }} columns={columns} rowHeader="version" state={{ status: "loading", rows: 3 }} />
-        <p role="status" className="sr-only">
-          {words.loading}
-        </p>
-      </EightColumns>
-    );
-  } else if (load.status === "error") {
-    tab = (
-      <EightColumns>
-        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-      </EightColumns>
-    );
-  } else if (load.data.agencies.every((agency) => agency.version_count === 0)) {
-    tab = (
-      <EightColumns>
-        <EmptyState
-          level={3}
-          title={plans.projectEmptyTitle}
-          body={plans.projectEmptyBody}
-          link={{ href: "/data", text: plans.projectEmptyLink }}
-        />
-      </EightColumns>
-    );
-  } else {
-    const withPlans = load.data.agencies.filter((agency) => agency.version_count > 0);
-    const without = load.data.agencies.filter((agency) => agency.version_count === 0);
-    tab = (
-      <EightColumns breakpoint="xl">
-        <div className="flex flex-col gap-10">
-          {(without.length > 1 ? withPlans : load.data.agencies).map((agency) => (
-            <AgencyPlans key={agency.agency_id} agency={agency} pid={pid} through={load.data.documents_through} />
-          ))}
-          {without.length > 1 && <OtherAgencies agencies={without} />}
+  if (load.status === "error") {
+    return (
+      <div className="layout-grid" data-project-page="error">
+        <div className="col-span-12">
+          <Breadcrumb trail={[projectsCrumb, { text: <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} /> }]} />
+          <h1 ref={title} tabIndex={-1} className="sr-only">
+            <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
+          </h1>
         </div>
-      </EightColumns>
+        <EightColumns className="col-span-12 mt-4">
+          <LoadError error={load.error} message={words.headerError} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        </EightColumns>
+      </div>
     );
   }
 
+  const current = named ?? (
+    // The bar stands in for the name; a screen reader hears the project's ID.
+    <>
+      <span className="sr-only">
+        <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />
+      </span>
+      <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
+    </>
+  );
+
+  const base = `/projects/${pid}`;
+  const keep = readParams(here.search, ["view", "asof", "lang"]);
+  const tabs = BUILT_TABS.map((key) => ({ key, label: words.tab[key], href: `${base}${TAB_PATH[key]}${keep}`, current: key === tab }));
+  // A tab opened from the row: the address changes in place and focus stays on the tab. The page scrolls
+  // only when the tab row was above the window, and then brings it to the top.
+  const openTab = (href: string) => {
+    navigate(href, { quiet: true });
+    const next = tabs.find((candidate) => candidate.href === href);
+    if (next) setShowing(words.showing(String(next.label)));
+    const row = tabRow.current;
+    if (row && row.getBoundingClientRect().top < 0) row.scrollIntoView({ block: "start" });
+  };
+
   return (
     <div className="layout-grid" data-project-page={load.status}>
-      <div className="col-span-12 @md/page:col-span-8">
+      <div className="col-span-12">
         <Breadcrumb trail={[projectsCrumb, { text: current }]} />
-        <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
-          {project ? (
-            project.project_name
-          ) : load.status === "loading" ? (
-            // A route change focuses this h1, so it names the project while the bars stand in for
-            // its name. Most names take two lines below 1200 px and one from it.
+        <h1 ref={title} tabIndex={-1} data-project-header className="mt-4 text-h1 text-ink-heading focus:outline-none">
+          {data ? (
+            <HeaderLine project={data.project} />
+          ) : (
+            // A route change focuses this h1, so it names the project while a bar stands in for its line.
             <>
               <span className="sr-only">
                 <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
               </span>
-              <SkeletonText className="@xl/page:hidden" widths={["w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden @xl/page:flex" width="w-3/5" />
+              {/* The line takes three lines below 768 px, two up to 1024 px and one from there, for a name
+                  of about 35 characters, such as P156634's. */}
+              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-4/5", "w-2/5"]} />
+              <SkeletonText className="hidden @md/page:flex @lg/page:hidden" widths={["w-full max-w-[560px]", "w-2/5"]} />
+              <SkeletonLine className="hidden @lg/page:flex" width="w-3/5 max-w-[560px]" />
             </>
-          ) : (
-            <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
           )}
         </h1>
-        <p className="mt-2 max-w-prose text-body text-ink-muted">{copy.pages.project.purpose}</p>
-        {header}
+        {data ? (
+          <AgencyLine names={data.project.implementing_agencies} />
+        ) : (
+          // The agency line's two lines and the place of "Show all agencies", as a project with many agencies
+          // has them, so the tabs below never move down when the project arrives; with fewer they move up.
+          <div aria-hidden="true" className="mt-2 max-w-prose">
+            <SkeletonText className="text-body" widths={["w-full", "w-3/5"]} />
+            <span className="mt-1 flex h-11 items-center text-body">
+              <Skeleton className="h-[1em] w-32" />
+            </span>
+          </div>
+        )}
       </div>
-      <div className="col-span-12 mt-6">
-        <Tabs label={words.sections} tabs={[{ key: "procurement", label: words.tab.procurement, href: `/projects/${pid}/procurement`, current: true }]} />
+      <div ref={tabRow} className="col-span-12 mt-6 scroll-mt-2">
+        <Tabs label={words.sections} tabs={tabs} onNavigate={openTab} />
       </div>
-      <div className="col-span-12 mt-6 @md/page:col-span-8">
-        <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
-        <p className="mt-2 max-w-prose text-body text-ink">{plans.purpose}</p>
+      <div className="col-span-12 mt-8">
+        {tab === "summary" && <SummaryTab pid={pid} />}
+        {tab === "procurement" && <ProcurementTab pid={pid} load={load} retry={retry} />}
+        {tab === "documents" && <DocumentsTab pid={pid} />}
       </div>
-      <div className="col-span-12 mt-6">{tab}</div>
+      <p role="status" className="sr-only">
+        {showing}
+      </p>
     </div>
   );
 }
