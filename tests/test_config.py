@@ -255,6 +255,32 @@ def test_a_fix_on_a_measure_no_column_shows_must_say_what_it_counts(tmp_path):
         config.load_sources(path)
 
 
+def _texts(value):
+    """Every string in a loaded TOML value."""
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _texts(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _texts(item)
+
+
+def _split_field_names(path):
+    """The registry's words that write STEP's "Reference No." with a space a narrow cell may break."""
+    return [text for text in _texts(tomllib.loads(path.read_text())) if "Reference No." in text]
+
+
+def test_a_step_field_name_in_the_registry_keeps_its_no_break_space(tmp_path):
+    """Review r5 P3: "Activity Reference No." keeps a no-break space, so the Sources table at 1024 px
+    never leaves "No." alone on a line, as the registry's comment says."""
+    assert _split_field_names(ROOT / "config" / "sources.toml") == []
+
+    typed = copy("sources.toml", tmp_path, 'lack = "an Activity Reference\\u00A0No."', 'lack = "an Activity Reference No."')
+    assert _split_field_names(typed), "the check finds a plain space"
+
+
 def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):
     slice_file = copy("slice.toml", tmp_path)
     slice_file.write_text(slice_file.read_text() + '\n[[countries]]\nname = "Nepal"\niso2 = "NP"\niso3 = "NPL"\n')

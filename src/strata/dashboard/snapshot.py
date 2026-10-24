@@ -71,8 +71,10 @@ def rows(result: dict, run_id: str, measured_on: dt.date, written_at: dt.datetim
             add("gap", position, label=label("gapLabel", label=row["label"], fromYear=row["first_fiscal_year"],
                                              toYear=str(row["last_fiscal_year"])[2:]), text=row["note"], status="gap")
             continue
-        # An awards dataset keeps the name tiles 4 and 5 give it, so no row has two names on one page.
-        name = (say["years"][row["id"]] if row["id"] in AWARD_ROWS
+        # An awards dataset keeps the name tiles 4 and 5 give it, in tile 6's bars as in tile 8's rows,
+        # so no row has two names on one page.
+        short = say["years"][row["id"]] if row["id"] in AWARD_ROWS else row["label"]
+        name = (short if row["id"] in AWARD_ROWS
                 else label("sourceLabel", label=row["label"], covers=row["covers"]) if row.get("covers")
                 else row["label"])
         cells = row["cells"]
@@ -89,7 +91,7 @@ def rows(result: dict, run_id: str, measured_on: dt.date, written_at: dt.datetim
             share=linked_row["share_percent"] if linked_row else None)
         if linked_row:
             links += 1
-            add("link", links, label=label("linkLabel", label=row["label"], counts=linked["counts"]),
+            add("link", links, label=label("linkLabel", label=short, counts=linked["counts"]),
                 count=linked_row["count"], denominator=linked_row["denominator"], share=linked_row["share_percent"])
     for fix in result["fixes"]:
         add("fix", fix["rank"], text=readiness.text_of(fix["sentence"]), projects=fix["projects"])

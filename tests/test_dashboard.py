@@ -208,7 +208,8 @@ def test_the_dashboard_s_headline_fixes_and_link_shares_are_the_app_s_for_the_sa
         (fix["rank"], text_of(fix["sentence"]), fix["projects"]) for fix in page["fixes"]]
 
     shares = {row["link"]: row["share_percent"] for row in dataset_rows(engine, "readiness_links")}
-    assert shares["Contract awards: contracts carry a STEP reference"] == 88  # 528 of 603, as the app shows
+    since_2020 = dashboard.year_labels()["awards"]
+    assert shares[f"{since_2020}: contracts carry a STEP reference"] == 88  # 528 of 603, as the app shows
 
 
 def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_award_rows(engine):
@@ -265,11 +266,15 @@ def test_the_table_of_freshness_and_links_keeps_the_pages_each_route_read_well(e
 
 
 def test_the_table_of_freshness_and_links_names_each_awards_dataset_as_the_charts_do(engine):
-    """Design r4 P7: tile 8 names the two awards datasets with tiles 4 and 5's labels, and writes the
-    fiscal 2017 to 2019 Gap's years as tables write years, so no row has two names on one page."""
+    """Design r4 P7: tiles 6 and 8 name the two awards datasets with tiles 4 and 5's labels, and tile 8
+    writes the fiscal 2017 to 2019 Gap's years as tables write years, so no row has two names on one page."""
     names = [row["source"] for row in dataset_rows(engine, "readiness_sources")]
     labels = dashboard.year_labels()
 
     assert labels["awards"] in names and labels["awards_fy2001_2016"] in names
     assert "Contract awards, FY2017–19" in names
     assert not [name for name in names if "fiscal" in name]
+    # Review r5 P1: tile 6's bars name the two datasets the same way.
+    links = [row["link"] for row in dataset_rows(engine, "readiness_links")]
+    for key in ("awards", "awards_fy2001_2016"):
+        assert [link for link in links if link.startswith(f"{labels[key]}: ")], (key, links)
