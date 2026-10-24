@@ -667,7 +667,12 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   const reference = page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono");
 
   await expect(reference).toHaveText(REF);
-  const lines = await reference.evaluate((el) => el.getClientRects().length);
+  // The lines its text sits on: one.
+  const lines = await reference.evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+  });
   expect(lines).toBe(1);
 });
 
@@ -675,9 +680,22 @@ test("a reference too long for the line wraps inside its box, so the not-found p
   const long = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
   expect(long).toHaveLength(40);
   await openPackage(page, { width: 320, ref: long, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono")).toHaveText(long);
+  const sentence = page.locator("main p", { hasText: "No package in Strata has the reference" });
+  await expect(sentence.locator(".font-mono").first()).toHaveText(long);
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  // The full stop after it stays on its last line, and a copy of the sentence holds the reference as written.
+  const stop = await sentence.evaluate((p) => {
+    const mono = p.querySelector(".font-mono")!;
+    const after = mono.nextSibling!;
+    const range = document.createRange();
+    range.setStart(after, 0);
+    range.setEnd(after, 1);
+    const tops = [...mono.getClientRects()].map((r) => r.top);
+    return { char: range.toString(), sameLine: Math.abs(range.getBoundingClientRect().top - Math.max(...tops)) < 2 };
+  });
+  expect(stop).toEqual({ char: ".", sameLine: true });
+  await expect(sentence).toContainText(`reference ${long}. Check`);
 });
 
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.

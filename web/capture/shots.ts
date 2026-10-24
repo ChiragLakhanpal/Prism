@@ -204,6 +204,37 @@ const hoverDot = (index: number) => async (page: Page) => {
   await page.waitForTimeout(250);
 };
 
+// The bottom dot of the tallest column at this width, hovered, then the pointer moved straight up onto
+// its tooltip, 2 px every 16 ms, over the dots stacked above it.
+const crossToTip = async (page: Page) => {
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  const from = await page.evaluate(() => {
+    const columns = new Map<number, DOMRect[]>();
+    document.querySelectorAll<HTMLElement>("[data-dot-target]").forEach((dot) => {
+      const box = dot.getBoundingClientRect();
+      const x = Math.round(box.x + box.width / 2);
+      columns.set(x, [...(columns.get(x) ?? []), box]);
+    });
+    const bottom = [...columns.values()].sort((a, b) => b.length - a.length)[0].sort((a, b) => b.y - a.y)[0];
+    return { x: bottom.x + bottom.width / 2, y: bottom.y + bottom.height / 2 };
+  });
+  await page.mouse.move(from.x, from.y);
+  await page.waitForTimeout(100);
+  const box = (await page.locator("[data-dot-tooltip]").boundingBox())!;
+  const to = { x: Math.min(Math.max(from.x, box.x + 4), box.x + box.width - 4), y: box.y + box.height - 2 };
+  const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
+  for (let step = 1; step <= steps; step += 1) {
+    await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+    await page.waitForTimeout(16);
+  }
+  await page.waitForTimeout(400);
+};
+const focusReset = async (page: Page) => {
+  await page.locator("[data-plan-control] input").fill("6");
+  await page.locator("[data-plan-reset] button:visible").focus();
+  await page.waitForTimeout(250);
+};
+
 const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
@@ -240,6 +271,11 @@ const PACKAGE_SHOTS: Shot[] = [
   // and a bad number at 320 px, whose one-line error moves nothing.
   packageShot("package--plan-10", comparables(COMPARABLES), { widths: [1440, 390, 320], act: type("[data-plan-control] input", "10") }),
   packageShot("package--invalid-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "abc") }),
+  // Round 3's fixes: the pointer on a buried dot's tooltip after crossing the dots above it, the reset
+  // button's focus ring clear of "months" in the input's row, and a long reference on the not-found page.
+  packageShot("package--crossed-to-tip", comparables(COMPARABLES), { widths: [1440, 1024, 390, 320], act: crossToTip }),
+  packageShot("package--focus-reset", comparables(COMPARABLES), { widths: [1440, 1024, 390], act: focusReset }),
+  packageShot("package--not-found-long", null, { widths: [320] }, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC"),
 ];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));

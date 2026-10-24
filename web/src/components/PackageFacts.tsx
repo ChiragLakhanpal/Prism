@@ -16,12 +16,24 @@ import { TextLink } from "./TextLink";
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
-// A reference inside a sentence: with no spaces it is one box, so it moves to the next line whole when it
-// fits there (DESIGN.md section 3, an ID stays readable as one ID), and wraps inside only when it is
-// wider than the line, so the page never scrolls sideways; one with a county's name wraps at its spaces.
-export const inlineMono = (text: string) => (
-  <span className={cx("font-mono font-medium", !text.includes(" ") && "inline-block max-w-full wrap-anywhere")}>{text}</span>
-);
+// A reference inside a sentence. With no spaces it reads as one word: each hyphen or slash sits in a
+// nowrap span with the character after it, so the line never breaks there. It then moves to the next
+// line whole when it fits there, with the full stop after it (DESIGN.md section 3, an ID stays readable
+// as one ID), and breaks inside only when it is wider than the line, so the page never scrolls
+// sideways. One with a county's name wraps at its spaces.
+export function inlineMono(text: string) {
+  if (text.includes(" ")) return <span className="font-mono font-medium">{text}</span>;
+  const parts: ReactNode[] = [];
+  let start = 0;
+  for (const joint of text.matchAll(/[-/](?=.)/g)) {
+    const at = joint.index;
+    if (at < start) continue;
+    parts.push(text.slice(start, at), <span key={at} className="whitespace-nowrap">{text.slice(at, at + 2)}</span>);
+    start = at + 2;
+  }
+  parts.push(text.slice(start));
+  return <span className="font-mono font-medium wrap-anywhere">{parts}</span>;
+}
 
 export function PackageHeader({
   title,
