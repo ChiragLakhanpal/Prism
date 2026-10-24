@@ -227,7 +227,9 @@ test("the page says what Strata cannot see, as the wireframe does", async ({ pag
   await openPlan(page);
 
   await expect(page.locator("[data-not-visible]")).toHaveText(
-    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP.",
+    // The first time the page names STEP, so it is spelled out here (DESIGN.md section 7 rule 10).
+    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
+      "Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
   );
 });
 

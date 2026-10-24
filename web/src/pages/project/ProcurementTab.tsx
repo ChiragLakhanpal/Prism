@@ -43,15 +43,17 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
   const words = plans.changes;
   let sentence: ReactNode;
   let link: string | null = null;
-  if (found.state === "earliest") sentence = <Fill template={words.earliest} slots={{ plan_date: short(latest.plan_date) }} />;
-  else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: short(found.previous_plan_date ?? "") }} />;
+  // Dates in a sentence are long (DESIGN.md section 7 rule 13); the version table keeps "Plan of Oct 9, 2026".
+  const long = (iso: string | null | undefined) => (iso ? formatDate(iso) : "");
+  if (found.state === "earliest") sentence = <Fill template={words.earliest} slots={{ plan_date: long(latest.plan_date) }} />;
+  else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: long(found.previous_plan_date) }} />;
   else if (!changed(found.counts)) {
-    sentence = <Fill template={words.same} slots={{ plan_date: short(latest.plan_date), prev_date: short(found.previous_plan_date ?? "") }} />;
+    sentence = <Fill template={words.same} slots={{ plan_date: long(latest.plan_date), prev_date: long(found.previous_plan_date) }} />;
   } else {
     sentence = (
       <Fill
         template={words.lead}
-        slots={{ prev_date: short(found.previous_plan_date ?? ""), plan_date: short(latest.plan_date), change_list: changeList(found.counts!) }}
+        slots={{ prev_date: long(found.previous_plan_date), plan_date: long(latest.plan_date), change_list: changeList(found.counts!) }}
       />
     );
     link = `/projects/${pid}/procurement/${agency.agency_id}/${latest.plan_date}#changes`;

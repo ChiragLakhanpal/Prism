@@ -98,7 +98,7 @@ def _share(percent) -> str:
 
 # ── The records a Summary cites, as the evidence drawer shows them ─────────
 
-def _record(evidence_id: str, public_from, source_key: str, project_id: str, date, reference: str,
+def record_event(evidence_id: str, public_from, source_key: str, project_id: str, date, reference: str,
             fields: list[tuple[str, object, str]]) -> dict:
     """A record's evidence event: its fields by key, with the kind each is written as, and its source."""
     return {
@@ -135,11 +135,11 @@ def _project_record(row: dict, as_of: dt.date, environment: list[dict], sectors:
         values += [("sector_share", share, "text") for share in _sector_shares(sectors)]
         values += [("total_commitment_usd", _cents(_money(row["total_commitment_usd"])), "usd")]
     when = record_date(row) if current else _day(row["public_from"])
-    return _record(f"{PROJECT_RECORD}:{pid}", when, "projects_api", pid, when, pid, values)
+    return record_event(f"{PROJECT_RECORD}:{pid}", when, "projects_api", pid, when, pid, values)
 
 
 def _loan_record(project_id: str, row: dict) -> dict:
-    return _record(f"{LOAN_RECORD}:{project_id}/{row['loan_number']}", row["public_from"], "loans", project_id, row["as_of"],
+    return record_event(f"{LOAN_RECORD}:{project_id}/{row['loan_number']}", row["public_from"], "loans", project_id, row["as_of"],
                    row["loan_number"],
                    [("original_principal_usd", _cents(_money(row["original_principal_usd"])), "usd"),
                     ("disbursed_usd", _cents(_money(row["disbursed_usd"])), "usd"),
@@ -149,7 +149,7 @@ def _loan_record(project_id: str, row: dict) -> dict:
 
 def _history_record(project_id: str, row: dict) -> dict:
     reported = _iso(row["reported_on"])
-    return _record(f"{HISTORY_RECORD}:{project_id}/{reported}", row["public_from"], "loan_history", project_id, reported,
+    return record_event(f"{HISTORY_RECORD}:{project_id}/{reported}", row["public_from"], "loan_history", project_id, reported,
                    project_id, [("closing_date", _iso(row["closing_date"]), "date"),
                                 ("previous_closing_date", _iso(row["previous_closing_date"]), "date"),
                                 ("reported_on", reported, "date")])
@@ -157,14 +157,14 @@ def _history_record(project_id: str, row: dict) -> dict:
 
 def _ieg_record(project_id: str, row: dict) -> dict:
     key = f"{project_id}/{row['evaluation_type']}/{row['evaluation_fy']}"
-    return _record(f"{IEG_RECORD}:{key}", row["public_from"], "ieg_ratings", project_id, row["public_from"], project_id,
+    return record_event(f"{IEG_RECORD}:{key}", row["public_from"], "ieg_ratings", project_id, row["public_from"], project_id,
                    [("evaluation_type", row["evaluation_type"], "text"),
                     ("evaluation_fy", str(row["evaluation_fy"]), "text"),
                     ("outcome", row["outcome"], "text"), ("bank_performance", row["bank_performance"], "text")])
 
 
 def _api_rating_record(project_id: str, row: dict) -> dict:
-    return _record(f"{API_RATING_RECORD}:{project_id}/{row['rating_code']}", row["public_from"], "projects_api_ratings",
+    return record_event(f"{API_RATING_RECORD}:{project_id}/{row['rating_code']}", row["public_from"], "projects_api_ratings",
                    project_id, row["isr_date"], project_id,
                    [("rating_name", row["rating_name"], "text"), ("value", row["value"], "text"),
                     ("isr_date", _iso(row["isr_date"]), "date")])

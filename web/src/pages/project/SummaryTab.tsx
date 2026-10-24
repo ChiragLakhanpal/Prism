@@ -30,6 +30,9 @@ import type { Fact, FactSource, Summary } from "../../lib/api";
 import { evidenceHref, openEvidence, remember } from "../../lib/evidence";
 import { formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
+import { address } from "../../lib/router";
+import { useStore } from "../../lib/store";
+import { withReadParams } from "../../lib/view";
 import { fill } from "../../routes";
 
 const words = copy.summary;
@@ -363,7 +366,8 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
 }
 
 export function SummaryTab({ pid }: { pid: string }) {
-  const [load, retry] = useLoad<Summary>(`/api/projects/${encodeURIComponent(pid)}/summary`);
+  const search = useStore(address).search;
+  const [load, retry] = useLoad<Summary>(withReadParams(`/api/projects/${encodeURIComponent(pid)}/summary`, search));
   const data = load.status === "ready" ? load.data : null;
 
   // Each source the summary cites is known to the evidence drawer at once, so a marker opens it with no request.

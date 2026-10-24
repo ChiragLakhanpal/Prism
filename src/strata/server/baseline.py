@@ -22,9 +22,11 @@ from pathlib import Path
 
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
+from strata.server.summary import record_event
 from strata.tools.check_plan import agency_id, read_baseline
 
 SQL = Path(__file__).resolve().parent / "sql" / "baseline"
+TABLE = "strata.ops.plan_baselines"  # before the colon in a baseline's evidence id
 
 
 @cache
@@ -66,3 +68,20 @@ def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewe
 def remove(engine: Engine, project_id: str, agency: str) -> None:
     """Remove the agency's baseline for this project, if there is one."""
     _remove(engine, project_id, agency)
+
+
+def read_record(engine: Engine, key: str, as_of: dt.date) -> dict | None:
+    """The evidence drawer's reader for a baseline's evidence id ("P156634/{agency_id}"): the baseline as a
+    record, once it was saved by the as-of date, or None. It never names who saved it, since the drawer is
+    not told the view and the implementing agency view leaves the name out."""
+    project_id, _, agency = key.partition("/")
+    found = _rows(engine, "record", project_id=project_id, agency_id=agency, as_of=as_of) if agency else []
+    if not found:
+        return None
+    row = found[0]
+    event = record_event(f"{TABLE}:{key}", row["public_from"], "plan_baseline", project_id, row["public_from"],
+                         row["implementing_agency"],
+                         [("implementing_agency", row["implementing_agency"], "text"),
+                          ("plan_date", row["plan_date"].isoformat(), "date"),
+                          ("saved_on", row["public_from"].isoformat(), "date")])
+    return {"kind": "record", "row": event["row"]}

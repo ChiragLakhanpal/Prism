@@ -124,7 +124,8 @@ function ActivityTable({ kind, rows, caption }: { kind: "added" | "dropped"; row
 
 // "{n} later": the route's count of days between the two planned dates, which explains itself.
 function Moved({ step, changes }: { step: PlanChanges["redated"][number]["steps"][number]; changes: PlanChanges }) {
-  if (step.days === null || step.direction === null) return <span className="text-ink-muted">{words.noDate}</span>;
+  // With a date missing there is nothing to measure: the cell stays empty and says so to a screen reader.
+  if (step.days === null || step.direction === null) return <span className="sr-only">{words.notMeasured}</span>;
   const days = (
     <Num
       value={step.days}
@@ -196,10 +197,11 @@ function RedatedTable({ changes, caption }: { changes: PlanChanges; caption: str
                 <div key={step.step} className="contents">
                   <dt className="font-semibold text-ink">{step.step}</dt>
                   <dd className="text-ink">
-                    <Fill
-                      template={words.wasNow}
-                      slots={{ was: <Num date={step.was} style="table" />, now: step.now ? <Num date={step.now} style="table" /> : words.noDate }}
-                    />
+                    {step.now ? (
+                      <Fill template={words.wasNow} slots={{ was: <Num date={step.was} style="table" />, now: <Num date={step.now} style="table" /> }} />
+                    ) : (
+                      <Fill template={words.wasNoDate} slots={{ was: <Num date={step.was} style="table" /> }} />
+                    )}
                   </dd>
                   <dd className="text-ink xs:text-right">
                     <Moved step={step} changes={changes} />

@@ -30,7 +30,7 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
-import { viewOf } from "../lib/view";
+import { viewOf, withReadParams } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.checkPlan;
@@ -79,14 +79,14 @@ function useExistingDraft(pid: string, agencyId: string, version: string | undef
 // What changed in the version the check shows, since the agency's version before it (ticket 21). It is read
 // once the check is ready, since the latest-plan route learns the version's date from the check. A route
 // that has no such comparison answers 404, and the page then shows neither the change line nor the list.
-function usePlanChanges(pid: string, agencyId: string, planDate: string | null) {
+function usePlanChanges(pid: string, agencyId: string, planDate: string | null, search: string) {
   const [answer, setAnswer] = useState<{ key: string; changes: PlanChanges | null; failed: boolean } | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const key = planDate ? `${pid}/${agencyId}/${planDate}` : null;
+  const key = planDate ? withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}/${planDate}/changes`, search) : null;
   useEffect(() => {
     if (!key) return;
     const controller = new AbortController();
-    getJson<PlanChanges>(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}/${planDate}/changes`, { signal: controller.signal }).then(
+    getJson<PlanChanges>(key, { signal: controller.signal }).then(
       (changes) => setAnswer({ key, changes, failed: false }),
       (error: unknown) => {
         if (controller.signal.aborted) return;
@@ -96,7 +96,21 @@ function usePlanChanges(pid: string, agencyId: string, planDate: string | null) 
     return () => controller.abort();
   }, [key, attempt]);
   const found = answer && answer.key === key ? answer : null;
-  return { changes: found?.changes ?? null, failed: found?.failed ?? false, settled: found !== null, retry: () => setAttempt((n) => n + 1) };
+  return { changes: found?.changes ?? null, failed: found?.failed ?? false, settled: found !== null, attempt, retry: () => setAttempt((n) => n + 1) };
+}
+
+// The change line when only the comparison failed: it says so and links the section below, which holds
+// the alert and Try again.
+function ChangeLineError() {
+  const line = words.changes;
+  return (
+    <p className="mt-2 text-body text-ink" data-change-line>
+      {line.error}{" "}
+      <TextLink href="#changes" className="whitespace-nowrap">
+        {line.errorLink}
+      </TextLink>
+    </p>
+  );
 }
 
 // The change line under the method sentence, with its link to the change list below (#changes).
@@ -130,7 +144,12 @@ function ChangeLine({ changes }: { changes: PlanChanges }) {
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
   const viewParams = new URLSearchParams(useStore(address).search);
   const viewAsked = viewParams.get("view");
-  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}${viewAsked === "piu" || viewAsked === "public" ? `?view=${viewAsked}` : ""}`;
+  const asOfAsked = viewParams.get("asof");
+  const pathParams = new URLSearchParams();
+  if (asOfAsked) pathParams.set("asof", asOfAsked);
+  if (viewAsked === "piu" || viewAsked === "public") pathParams.set("view", viewAsked);
+  const query = pathParams.toString();
+  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}${query ? `?${query}` : ""}`;
   const [load, retry] = useLoad<CheckPlanResult>(path);
   // The check read again after a baseline was saved or removed, shown in place of the first one.
   const [fresh, setFresh] = useState<{ path: string; result: CheckPlanResult } | null>(null);
@@ -152,7 +171,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const lookup = useExistingDraft(pid, agencyId, version, !preview, ready?.plan.plan_date ?? null);
   // What changed in this version is read from the start when the address names the version, and once the
   // check names it otherwise. The populated page waits for it, so the change line arrives with the check.
-  const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null);
+  const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null, search);
   const waiting = ready !== null && (!lookup.settled || !planChanges.settled);
   const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked), { gap: 8 });
@@ -297,7 +316,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           changed={changedRows(changes)}
           afterMethod={
             <>
-              {changes && <ChangeLine changes={changes} />}
+              {changes ? <ChangeLine changes={changes} /> : planChanges.failed && <ChangeLineError />}
               <div className="mt-4">
                 <BaselinePanel
                   pid={pid}
@@ -320,19 +339,17 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             listed ? (
               <ChangeTables ref={changesHeading} changes={changes!} agency={checked.plan.implementing_agency} />
             ) : planChanges.failed ? (
-              <EightColumns prose>
-                <Alert
-                  state="error"
-                  live="alert"
-                  action={
-                    <Button variant="secondary" onClick={planChanges.retry}>
-                      {copy.answer.tryAgain}
-                    </Button>
-                  }
-                >
-                  {copy.changes.error}
-                </Alert>
-              </EightColumns>
+              // The error takes the section body's place under its heading (the 21 brief, section 5.4).
+              <section aria-labelledby="changes" data-changes="error">
+                <EightColumns prose>
+                  <h2 ref={changesHeading} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
+                    {copy.changes.titleUnknown}
+                  </h2>
+                  <div className="mt-2">
+                    <LoadError error={null} message={copy.changes.error} permission={copy.changes.error} onRetry={planChanges.retry} retrying={false} attempt={planChanges.attempt} />
+                  </div>
+                </EightColumns>
+              </section>
             ) : undefined
           }
         />

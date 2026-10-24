@@ -36,7 +36,7 @@ const words = copy.projectPage;
 
 // The view and as-of date the address asks for, passed on to the project's reads, since the baseline is
 // hidden in the public view and shown without its saver in the implementing agency view.
-export function readParams(search: string, keys: string[] = ["view"]): string {
+export function readParams(search: string, keys: string[] = ["view", "asof"]): string {
   const params = new URLSearchParams(search);
   const kept = new URLSearchParams();
   for (const key of keys) {

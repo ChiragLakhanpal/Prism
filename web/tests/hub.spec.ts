@@ -87,6 +87,32 @@ test("switching tabs keeps the header in place and focus on the tab, says which 
   await expect(page).toHaveURL(/\/projects\/P130164$/);
 });
 
+test("a project page viewed as of a date, or in a preview, passes ?asof= and ?view= on to every read it makes", async ({ page }) => {
+  // The 21 review, round 2, item 10: each read answers with only what was public by the page's date.
+  const asked: URL[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.startsWith("/api/projects/")) asked.push(url);
+  });
+  const params = "asof=2024-01-01&view=piu";
+  await open(page, `/projects/P156634?${params}`, 1440, await p156634());
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  await page.goto(`/projects/P156634/procurement?${params}`);
+  await expect(page.locator("[data-packages=ready]")).toBeVisible();
+  await page.goto(`/projects/P156634/documents?${params}`);
+  await expect(page.locator("main h1")).toBeVisible();
+  await page.goto(`${NWWDA}/2026-10-09?${params}`);
+  await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+  await expect.poll(() => asked.some((url) => url.pathname.endsWith("/changes"))).toBe(true);
+
+  const paths = ["/api/projects/P156634", "/summary", "/packages", "/documents", "/2026-10-09", "/changes"];
+  for (const end of paths) {
+    const reads = asked.filter((url) => url.pathname.endsWith(end));
+    expect(reads.length, end).toBeGreaterThan(0);
+    for (const url of reads) expect([url.searchParams.get("asof"), url.searchParams.get("view")], url.pathname).toEqual(["2024-01-01", "piu"]);
+  }
+});
+
 test("arriving at a project page from All projects focuses its h1, as any route change does", async ({ page }) => {
   await open(page, "/projects?q=india", 1440, { "/api/projects?q=india": { body: await recorded("projects-india.json") } });
   await main(page).locator("[data-table-view=table]").getByRole("link", { name: "P130164" }).click();
@@ -447,6 +473,9 @@ test("the source view corrects a short address, a paragraph on another page, a m
   await page.goto("/projects/P130164/documents/icr-2019-10-10?page=80");
   await expect(page.getByRole("status").filter({ hasText: "This document has 66 pages, so I opened page 66." })).toBeVisible();
   await expect(page).toHaveURL(/page=66$/);
+  // A section that names itself an annex is captioned by its own name, never "Section Annex 8".
+  await expect(page.locator("[data-source-page=read]").getByText("Annex 8", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-source-page=read]")).not.toContainText("Section Annex");
 });
 
 test("the source view says when a page or a document is not read, a link names no document, or names more than one", async ({ page }) => {
@@ -516,16 +545,16 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   await open(page, "/projects/P156634/procurement", 1440, await p156634());
   const nwwda = page.locator("[data-agency=northern-water-works-development-agency]");
   const sentence = nwwda.locator("[data-changes-sentence]");
-  await expect(sentence).toHaveText("Compared with the plan of Mar 5, 2026, the latest plan, of Oct 9, 2026, re-estimated two activities. See what changed");
+  await expect(sentence).toHaveText("The latest plan is the plan of October 9, 2026. Compared with the plan of March 5, 2026, it re-estimated two activities. See what changed");
   await expect(sentence.getByRole("link", { name: "See what changed" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#changes`);
   // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId).
   await expect(nwwda.locator("[data-source]")).toHaveText(/^Source: World Bank documents and reports API, Procurement Plans listed for this project, through [A-Z][a-z]+ \d{1,2}, \d{4}\.$/);
   await expect(page.locator("[data-agency=ministry-of-water-and-irrigation] [data-changes-sentence]")).toHaveText(
-    "Compared with the plan of Nov 8, 2019, the latest plan, of Apr 30, 2020, added one activity and re-dated one. See what changed",
+    "The latest plan is the plan of April 30, 2020. Compared with the plan of November 8, 2019, it added one activity and re-dated one. See what changed",
   );
   // An agency with one plan says it has nothing to compare it with, and links nowhere.
   const kilifi = page.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd] [data-changes-sentence]");
-  await expect(kilifi).toHaveText("The only plan I have from this agency is the plan of Mar 19, 2025, so I can't compare it with an earlier version.");
+  await expect(kilifi).toHaveText("The only plan I have from this agency is the plan of March 19, 2025, so I can't compare it with an earlier version.");
   await expect(kilifi.getByRole("link")).toHaveCount(0);
 
   await sentence.getByRole("link", { name: "See what changed" }).click();
@@ -618,7 +647,28 @@ test("a version that added and re-dated activities lists each in its own table, 
   await expect(changes.locator("[data-change-kind=added] [data-view=table] tbody tr")).toContainText("MWSI-WSDP-04-2019-2020");
   const redated = changes.locator("[data-change-kind=redated] [data-view=table] tbody");
   await expect(redated.locator("th[scope=rowgroup]")).toContainText("MOWS-WSDP-01-2017-2018");
-  await expect(redated.locator("td")).toHaveText(["Expression of Interest Notice", "Jun 11, 2018", "No date", "No date"]);
+  // With no new date there is nothing to measure, so Moved shows nothing and tells a screen reader why.
+  await expect(redated.locator("td")).toHaveText(["Expression of Interest Notice", "Jun 11, 2018", "No date", "Not measured"]);
+  await expect(redated.locator("td").last().locator(".sr-only")).toHaveText("Not measured");
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(changes.locator("[data-change-kind=redated] li dd").first()).toHaveText("Was Jun 11, 2018. Now no date.");
+});
+
+test("when only the comparison fails, the change line says so and links the section, which keeps its heading over the alert", async ({ page }) => {
+  await open(page, `${NWWDA}/2026-10-09`, 1440, {
+    ...(await p156634()),
+    [`/api${NWWDA}/2026-10-09/changes`]: { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' },
+  });
+  await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+  const line = page.locator("[data-change-line]");
+  await expect(line).toHaveText("I couldn't load what changed in this plan. Go to that section");
+  await expect(line.getByRole("link", { name: "Go to that section" })).toHaveAttribute("href", "#changes");
+  const section = page.locator("[data-changes=error]");
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("What changed in this plan");
+  await expect(section.getByRole("alert")).toHaveText("I couldn't load what changed in this plan because the data service didn't answer.");
+  // Try again sits 16 px under the alert, as on every other load error.
+  const [alert, retry] = await Promise.all([section.getByRole("alert").boundingBox(), section.getByRole("button", { name: "Try again" }).boundingBox()]);
+  expect(Math.round(retry!.y - (alert!.y + alert!.height))).toBe(16);
 });
 
 test("the earliest version has no change list, and its change line says why", async ({ page }) => {
@@ -695,6 +745,12 @@ test("a later plan's check names the saved baseline and who saved it, gives both
   await expect(confirm).toHaveText("This replaces the plan of July 21, 2025 as the baseline for everyone who checks Northern Water Works Development Agency's plans.");
   await expect(confirm).toBeFocused();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  // Stacked at 390 px, the ghost "Keep" button sits flush, its label on the sentence's left edge.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const keep = panel.getByRole("button", { name: "Keep the plan of Jul 21, 2025" });
+  const left = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => Math.round(element.getBoundingClientRect().left));
+  expect(Math.abs((await left(keep.locator("span").first())) - (await left(confirm)))).toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.keyboard.press("Escape");
   await expect(panel.getByRole("button", { name: "Make this plan the baseline" })).toBeFocused();
 });

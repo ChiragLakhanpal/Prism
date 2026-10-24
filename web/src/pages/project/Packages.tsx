@@ -24,6 +24,9 @@ import { copy } from "../../copy";
 import type { PackageList } from "../../lib/api";
 import { formatDate, formatNumber } from "../../lib/format";
 import { pageHref, usePagedList } from "../../lib/paged";
+import { address } from "../../lib/router";
+import { useStore } from "../../lib/store";
+import { readParams } from "../../lib/view";
 
 const words = copy.packages;
 const NAMES = { query: "packages_q", page: "packages_page" };
@@ -52,7 +55,7 @@ const ACTIVITY_SKELETON = (
 
 export function Packages({ pid, none }: { pid: string; none: boolean }) {
   const headingId = useId();
-  const list = usePagedList<PackageList>(`/api/projects/${encodeURIComponent(pid)}/packages`, NAMES);
+  const list = usePagedList<PackageList>(`/api/projects/${encodeURIComponent(pid)}/packages`, NAMES, readParams(useStore(address).search));
   const { load, shown } = list;
 
   let body;

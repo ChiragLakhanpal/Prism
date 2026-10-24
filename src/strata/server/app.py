@@ -91,6 +91,7 @@ from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from starlette.middleware.gzip import GZipMiddleware
 from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
 
@@ -273,6 +274,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 await asyncio.to_thread(usage.stop)
 
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    # The built app and the larger answers go compressed, so the Summary keeps its cold 3G budget (the 21
+    # brief, section 3.5). Starlette leaves text/event-stream alone, so /api/ask still streams.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     thresholds = load_thresholds()
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
     labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))

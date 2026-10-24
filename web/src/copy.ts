@@ -525,6 +525,7 @@ export const copy = {
       "strata.gold.project_closing_date": "Loan history of",
       "strata.gold.ieg_rating": "IEG ratings of",
       "strata.gold.project_isr_rating": "ISR rating of",
+      "strata.ops.plan_baselines": "Baseline for",
     } as Record<string, string>,
     // Each Summary record's source line, by its source_key. {date} is the record's date.
     summaryRecordSources: {
@@ -533,6 +534,7 @@ export const copy = {
       loan_history: "World Bank monthly loan history, reported {date}.",
       ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
+      plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
     } as Record<string, string>,
     // The fields of a Summary record, by their key, as the projects API and the loans data name them.
     summaryRecordFields: {
@@ -561,6 +563,8 @@ export const copy = {
       sector_name: "Sector, in Strata's taxonomy",
       sector_share: "Sector and share",
       total_commitment_usd: "Total commitment (US$)",
+      plan_date: "Plan date",
+      saved_on: "Saved on",
     } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
@@ -836,8 +840,9 @@ export const copy = {
     projectEmptyLink: "Data readiness",
     // Ticket 21: what changed in each agency's latest plan, the Baseline mark and the fold.
     changes: {
-      lead: "Compared with the plan of {prev_date}, the latest plan, of {plan_date}, {change_list}.",
-      same: "The latest plan, of {plan_date}, lists the same activities, dates and estimates as the plan of {prev_date}.",
+      // Two sentences with long dates, so neither is dense (DESIGN.md section 7 rule 13; unslop rule 28).
+      lead: "The latest plan is the plan of {plan_date}. Compared with the plan of {prev_date}, it {change_list}.",
+      same: "The latest plan is the plan of {plan_date}. It lists the same activities, dates and estimates as the plan of {prev_date}.",
       link: "See what changed",
       earliest: "The only plan I have from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before the latest, so I can't say what changed.",
@@ -899,11 +904,11 @@ export const copy = {
       return `No activity was ${joined}.`;
     },
     title: "What changed since the plan of {prev_date}",
+    // The section's heading when the comparison failed, so the version before is not known.
+    titleUnknown: "What changed in this plan",
     lead: "This version {change_list}.",
-    matchNote:
-      "I match activities on their " +
-      STEP_SPELLED +
-      " reference. If an activity's reference changed, it shows here as dropped and added.",
+    // The page spells STEP out once, in "Not visible to Strata", above this note.
+    matchNote: "I match activities on their STEP reference. If an activity's reference changed, it shows here as dropped and added.",
     overlapNote: "An activity can appear in more than one table.",
     tableTitle: {
       added: (count: number, text: string) => (count === 1 ? "One activity was added." : `${text} activities were added.`),
@@ -932,8 +937,12 @@ export const copy = {
     more: "{amount} more",
     less: "{amount} less",
     noDate: "No date",
-    // A card's moved step below 1024 px: "Was Mar 9, 2026, now Apr 9, 2026".
+    // A card's moved step below 1024 px: "Was Mar 9, 2026, now Apr 9, 2026", or two sentences when the new
+    // version gives no date.
     wasNow: "Was {was}, now {now}",
+    wasNoDate: "Was {was}. Now no date.",
+    // A Moved cell when either date is missing: empty on screen, and this for a screen reader.
+    notMeasured: "Not measured",
     movedDays: (days: string, later: boolean) => `${days} days ${later ? "later" : "earlier"}`,
     explainMoved: "Was {was} in the plan of {prev}. Now {now} in the plan of {plan}. Days between them: {days}.",
     explainAmount: "Was US${was} in the plan of {prev}. Now US${now} in the plan of {plan}.",
@@ -1237,7 +1246,8 @@ export const copy = {
     replacing: "Replacing the baseline",
     keep: "Keep the plan of {date}",
     justReplaced: "I made the plan of {plan_date} the baseline in place of the plan of {old_date}.",
-    undone: "I undid that change. The baseline is the plan of {date}.",
+    // Undo saves that plan again, so the saver is now the person who pressed Undo (the 21 review, round 2).
+    undone: "I undid that change. The baseline is the plan of {date}, now saved by you.",
     undoneNone: "I undid that change. No plan from this agency is saved as the baseline.",
     failed: "I couldn't save the baseline because the data service didn't answer. Nothing changed.",
     tryAgain: "Try again",
@@ -1288,6 +1298,9 @@ export const copy = {
     changes: {
       line: "Compared with the plan of {prev_date}, this version {change_list}.",
       link: "See what changed",
+      // When only the comparison failed: the line says so and links the section, whose alert has Try again.
+      error: "I couldn't load what changed in this plan.",
+      errorLink: "Go to that section",
       same: "This version lists the same activities, dates and estimates as the plan of {prev_date}.",
       earliest: "This is the earliest plan I have from this agency, so I have no earlier version to compare it with.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before this one, so I can't say what changed.",
@@ -1328,7 +1341,9 @@ export const copy = {
     },
     notVisible:
       "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
-      "Those stay in STEP.",
+      "Those stay in " +
+      STEP_SPELLED +
+      ".",
     source: {
       plan: "Procurement Plan, {agency}, {pid}, version of {date}, disclosed {disclosed}.",
       closing: "Project closing date from the World Bank's projects API, record of {date}.",

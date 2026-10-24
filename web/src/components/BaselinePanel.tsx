@@ -219,7 +219,9 @@ export function BaselinePanel({
           <p ref={confirmText} tabIndex={-1} className="text-body font-semibold text-ink focus:outline-none" data-baseline-confirm>
             <Fill template={words.confirm} slots={{ baseline_date: date(baseline.plan_date), agency }} />
           </p>
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Below 768 px the two buttons stack and the ghost one sits flush, its label on the text's edge
+              (DESIGN.md section 5, Buttons); side by side from 768 px it keeps its padding. */}
+          <div className="flex flex-col items-start gap-3 @md/page:flex-row @md/page:flex-wrap @md/page:items-center">
             <Button
               variant="secondary"
               onClick={() => {
@@ -235,6 +237,8 @@ export function BaselinePanel({
             </Button>
             <Button
               variant="ghost"
+              flush
+              className="@md/page:ml-0 @md/page:border-x @md/page:px-6"
               onClick={() => {
                 focusAfter.current = "make";
                 setMode({ kind: "idle" });

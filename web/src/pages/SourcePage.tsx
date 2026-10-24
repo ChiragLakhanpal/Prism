@@ -165,6 +165,13 @@ export function PageBar({
   );
 }
 
+// A section's caption: "Section III.B", or the section's own name when it already says what it is, such as
+// "Annex 8", never "Section Annex 8".
+const NAMED_PART = /^(annex|appendix|attachment)\b/i;
+function sectionCaption(section: string): string {
+  return NAMED_PART.test(section) ? section : fill(words.section, { section });
+}
+
 // The highlighted passage: the highlight fill, a 4 px primary bar on its left edge, and the caption above
 // it that says why it is marked. Screen readers hear where the highlight starts and ends.
 function Highlighted({ caption, children, blockRef }: { caption: ReactNode; children: ReactNode; blockRef: React.Ref<HTMLDivElement> }) {
@@ -207,7 +214,7 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
         const marked = highlight?.passage_id === passage.passage_id;
         return (
           <div key={passage.passage_id} className="flex flex-col gap-1">
-            {newSection && <p className="text-caption text-ink-muted">{fill(words.section, { section: newSection })}</p>}
+            {newSection && <p className="text-caption text-ink-muted">{sectionCaption(newSection)}</p>}
             {marked ? (
               <Highlighted
                 blockRef={blockRef}

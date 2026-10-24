@@ -31,6 +31,9 @@ import type { DocumentList, ListedDocument } from "../../lib/api";
 import { cx } from "../../lib/cx";
 import { formatDate, formatNumber } from "../../lib/format";
 import { useLoad } from "../../lib/load";
+import { address } from "../../lib/router";
+import { useStore } from "../../lib/store";
+import { withReadParams } from "../../lib/view";
 import { fill } from "../../routes";
 
 const words = copy.documents;
@@ -355,7 +358,8 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
 }
 
 export function DocumentsTab({ pid }: { pid: string }) {
-  const [load, retry] = useLoad<DocumentList>(`/api/projects/${encodeURIComponent(pid)}/documents`);
+  const search = useStore(address).search;
+  const [load, retry] = useLoad<DocumentList>(withReadParams(`/api/projects/${encodeURIComponent(pid)}/documents`, search));
   let body: ReactNode;
   if (load.status === "loading") {
     body = (

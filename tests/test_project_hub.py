@@ -316,6 +316,25 @@ def test_the_lead_says_whether_any_amount_was_canceled_however_large(fixture_db,
     assert get(app_on(fixture_db), "/api/projects/P156634/summary?asof=2026-10-23").json()["lead"]["any_canceled"] is True
 
 
+def test_the_server_sends_the_built_app_compressed_so_the_summary_keeps_its_cold_3g_budget(tmp_path):
+    # The 21 design review, round 2, F1: sent whole, the 788 KB script took the cold Summary to 6.9 s on
+    # Fast 3G against its 5 s budget; vite preview, which the screen test uses, compresses it.
+    web = tmp_path / "web"
+    (web / "assets").mkdir(parents=True)
+    (web / "index.html").write_text("<!doctype html><title>Strata</title>")
+    (web / "assets" / "index.js").write_text("export const strata = 1;\n" * 400)
+    app = create_app(web_dist=web)
+
+    async def go():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            return await client.get("/assets/index.js", headers={**ANA, "Accept-Encoding": "gzip"})
+    response = asyncio.run(go())
+
+    assert response.headers["content-encoding"] == "gzip"
+    assert response.text == "export const strata = 1;\n" * 400
+
+
 # ── Packages ─────────────────────────────────────────────────────────────
 
 def test_packages_list_every_activity_in_each_agency_s_latest_plan_a_page_at_a_time(hub):
@@ -630,6 +649,26 @@ def test_the_baseline_shows_without_its_saver_to_an_agency_and_not_to_the_public
     assert public["baseline"] is None and all("baseline" not in reason for reason in reasons(public).values())
     before = get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-22").json()
     assert before["baseline"] is None
+
+
+def test_the_baseline_s_evidence_id_opens_the_baseline_as_a_record_in_the_drawer(writable):
+    # The 21 review, round 2, item 7: each baseline reason cites the baseline, so a drawer opened from that
+    # citation reads it. The drawer is not told the view, so the record never names who saved it.
+    evidence_id = "strata.ops.plan_baselines:P156634/northern-water-works-development-agency"
+    assert get(writable, f"/api/evidence?id={evidence_id}&asof=2026-10-23").status_code == 404
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
+
+    response = get(writable, f"/api/evidence?id={evidence_id}&asof=2026-10-23")
+
+    assert response.status_code == 200
+    row = response.json()["row"]
+    assert {field["key"]: field["value"] for field in row["fields"]} == {
+        "implementing_agency": "Northern Water Works Development Agency", "plan_date": "2025-07-21",
+        "saved_on": "2026-10-23"}
+    assert row["source"]["source_key"] == "plan_baseline"
+    assert "Ana Example" not in response.text
+    # Saved on October 23, 2026, so it was not there the day before.
+    assert get(writable, f"/api/evidence?id={evidence_id}&asof=2026-10-22").status_code == 404
 
 
 def test_removing_the_baseline_leaves_delay_from_the_first_published_date_alone(writable):
