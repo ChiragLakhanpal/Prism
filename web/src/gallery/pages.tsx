@@ -396,6 +396,16 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       {
+        // DESIGN.md section 5: on the page background a ghost button hovers to tint.
+        id: "on-page",
+        title: t.onPage,
+        body: (
+          <Button variant="ghost" flush onPage icon={ChevronDown}>
+            {sample.ghost}
+          </Button>
+        ),
+      },
+      {
         id: "with-icon",
         title: s.withIcon,
         body: (

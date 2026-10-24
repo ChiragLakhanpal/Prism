@@ -291,11 +291,10 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    // On the fold's page background the ghost hover (tint-hover) barely shows, so it hovers to tint.
     <Button
       variant="ghost"
       flush
-      className="hover:bg-tint!"
+      onPage
       aria-expanded={open}
       aria-controls={controls}
       aria-describedby={describedBy}

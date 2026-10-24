@@ -125,6 +125,7 @@ export const galleryCopy = {
     stamp: "Data-freshness stamp",
     variants: "Primary, secondary and ghost",
     flush: "A ghost button under text",
+    onPage: "A ghost button on the page background",
     textLink: "Text link",
     tabs: "Tabs on a light surface",
     tabsLater: "Tabs with a later one selected",

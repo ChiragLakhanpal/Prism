@@ -78,7 +78,7 @@ function Agencies({ names }: { names: string[] }) {
       {(hides || open) && (
         // 4 px above the button keep its focus ring off the agencies' second line.
         <dd className="mt-1">
-          <Button variant="ghost" flush aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+          <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             {open ? words.fewerAgencies : words.allAgencies}
           </Button>
         </dd>

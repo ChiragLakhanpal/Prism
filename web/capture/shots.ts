@@ -208,6 +208,7 @@ export const SHOTS: Shot[] = [
   { name: "buttons--focus-primary", path: "/gallery/buttons", act: focus("[data-button=primary]") },
   { name: "buttons--hover-flush", path: "/gallery/buttons", act: hover("[data-state-section=flush] button") },
   { name: "buttons--focus-flush", path: "/gallery/buttons", act: focus("[data-state-section=flush] button") },
+  { name: "buttons--hover-on-page", path: "/gallery/buttons", act: hover("[data-state-section=on-page] button") },
   { name: "buttons--focus-disabled", path: "/gallery/buttons", act: focus("[data-state-section=disabled] button") },
   { name: "links--hover-link", path: "/gallery/links", act: hover("[data-state-section=text-link] a") },
   { name: "links--focus-link", path: "/gallery/links", act: focus("[data-state-section=text-link] a") },

@@ -193,6 +193,9 @@ test("a long list of implementing agencies keeps to two lines until you show the
   await open(page, "/projects/P156634", await p156634());
   const show = page.getByRole("button", { name: "Show all agencies" });
   await expect(show).toHaveAttribute("aria-expanded", "false");
+  // On the page background a ghost button hovers to tint, as "Show them" does, so it answers the pointer.
+  await show.hover();
+  await expect.poll(() => show.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(233, 247, 253)");
   const agencies = page.locator(`[id="${await show.getAttribute("aria-controls")}"]`);
   await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
   const lineHeight = await agencies.evaluate((element) => parseFloat(getComputedStyle(element).lineHeight));
