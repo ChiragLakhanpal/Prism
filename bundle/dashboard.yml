@@ -8,7 +8,7 @@
 
 resources:
   dashboards:
-    strata:
+    strata_dashboard:
       display_name: Strata
       file_path: dashboards/strata.lvdash.json
       warehouse_id: ${var.warehouse_id}

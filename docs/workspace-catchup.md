@@ -8,7 +8,7 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
-**While the wizard runs.** The user started `bash ops/wizard/strata-setup.sh` on October 24, 2026. It writes `.env` and `docs/day-one-results.md` in the main checkout while tickets merge there. Never read or print `.env`; check which keys are set with `python3 .claude/hooks/guard.py --env-keys`, and while any key a step needs is missing, park the step here as before. Ticket 53 landed on October 24, 2026 (merge 1a7045a), and the wizard's results so far are committed on build/strata (1cf40ee). From now on its results are committed like any other change, and the gate accepts a `docs/day-one-results.md` that holds them. The gate still refuses a code commit while a tracked file has changes that are not staged. So, when that file has changed at the start of a merge, commit it on its own on build/strata first, then merge as usual. A commit of Markdown alone runs only the secret scan, so first run `uv run --frozen pytest ops/dayone/tests/test_results_document.py`. If it fails, do not commit the file, and write what the test said in `docs/STATUS.md` for the user. Do not set the file aside and do not use `git stash`.
+**While the user works through the wizard and the catch-up steps.** All ten keys were set by 10:58 PDT on October 24, 2026, and day-one test 7 passes. The user is running the wizard and the catch-up steps by hand in the main checkout, which means two things for a merger. First, do not run any workspace step during a merge, even though the keys are there: work on the shared workspace runs one at a time, and the user holds that turn today. Park your ticket's steps here as before, in order, and the orchestrator runs the backlog after the user's run. Second, if the main checkout holds staged or unstaged changes you did not make, do not commit, revert, unstage or set them aside; stop before `git merge`, and return merged false with the summary "blocked by uncommitted changes in the main checkout", naming the files. The orchestrator commits the user's work and the merge runs again. Never read or print `.env`.
 
 ## Ticket 03, before every other step: the wizard, the day-one probes and the pay-as-you-go check
 
@@ -34,6 +34,8 @@ Then, before the free credit ends on November 10, 2026, run the wizard's pay-as-
 
 ## Ticket 03, step 1 of 4: the unit of a Global Batch capacity
 
+**Ran on October 24, 2026 (orchestrator).** The user deployed gpt-5.4-nano as Global Standard, not Global Batch, so Azure reports a tokens-per-minute capacity for it and no enqueued-token limit. Nothing in the code calls the batch role yet. I set its capacity to 2,000, which the caps probe reads as 2,000,000 and counts as within the cap. `capacity_unit` stays 1000. Whether to recreate it as Global Batch is decision 19 in docs/STATUS.md.
+
 The merger parked this step on October 23, 2026, after squash commit 43ed569. It needs the Azure sign-in.
 
 Run this from the main checkout:
@@ -43,6 +45,8 @@ Run this from the main checkout:
 It worked if the capacity in the output, times 1,000, equals the enqueued-token limit that the Azure portal shows for gpt-5.4-nano. If the two differ, change `capacity_unit` in `ops/dayone/dayone.toml` to the portal's limit divided by the capacity.
 
 ## Ticket 03, step 2 of 4: bound names and paths on the warehouse
+
+**Ran on October 24, 2026 (orchestrator).** Test 3 passed (131 pages, statement 01f1cfd1-01d1-1d44-8cf5-2488192d3f30, 129 seconds) and test 4 passed (endpoint strata-search online; index workspace.strata_dayone.passages_index ready with three rows; the hybrid query returned p1, p2, p3). No evidence line says the warehouse refused a bound name or path.
 
 The merger parked this step on October 23, 2026, after squash commit 43ed569. It needs the keys that the wizard writes to `.env`.
 
@@ -54,6 +58,8 @@ Run these two commands from the main checkout, one after the other:
 It worked if tests 3 and 4 in `docs/day-one-results.md` show a status other than "not run", and no evidence line says the warehouse refused `IDENTIFIER(:table)` or `READ_FILES(:path, ...)`. The wizard now always gives `AI_SEARCH_ENDPOINT` a value, so the test 4 probe has an endpoint name to use.
 
 ## Ticket 03, step 3 of 4: the probes' own schema
+
+**Ran on October 24, 2026 (orchestrator).** `databricks schemas get workspace.strata_dayone` returned the schema, owned by chiraglakhanpal@gwu.edu.
 
 The merger parked this step on October 23, 2026, after squash commit 43ed569. Run it after step 2, because the two probes in step 2 make the schema `workspace.strata_dayone`.
 
@@ -74,6 +80,8 @@ Run this from the main checkout:
 It worked if the app's service principal has READ on the scope `strata`. If it is not listed, Databricks granted the app only the one key. In that case, change the last bullet of `docs/day-one-results.md`, under "What the probes leave in the workspace", back to naming only `APPLICATIONINSIGHTS_CONNECTION_STRING`. As in step 3, add `-p strata` if the default profile points at a different workspace.
 
 ## Ticket 04, step 1 of 4: deploy the bundle twice
+
+**Ran on October 24, 2026 (orchestrator).** Two things stood in the way first. The Databricks CLI (v1.22.1) refused every command from the repo root because `bundle/dashboard.yml` and `bundle/catalog.yml` both used the resource key `strata`; the dashboard's key is now `strata_dashboard`. Then the bundle could not create the catalog: the Free Edition metastore has no storage root and uses Default Storage (400 INVALID_STATE). `CREATE CATALOG IF NOT EXISTS strata` on the SQL warehouse made it, `databricks bundle deployment bind strata strata` bound it, and the deploy then made the four schemas, the volume, the grants, the job `strata nightly` (730097284330653), the dashboard and every table and view. fairshare has no catalog of its own: its data is in `workspace`, so the second run used `--fairshare-catalog workspace`. It printed "No changes." and "workspace's catalog lists the same before and after the deploy: two schemas, two tables and one volume."
 
 The merger parked this step on October 23, 2026, after merge commit 01a7286. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. If a catalog named `strata` already exists, run `databricks bundle deployment bind strata strata` first.
 
@@ -328,6 +336,8 @@ Also check where a failed request's details go. The verifier found that once Azu
 
 ## Ticket 06, step 6 of 6: the Lakebase probe chooses where app state lives
 
+**Ran on October 24, 2026 (orchestrator).** `docs/app-state.md` reads `Status: run` and chooses Lakebase: strata.ops took 2,293 ms in the middle over the 1,000 ms budget, Lakebase 145 ms. The probe wrote `docs/adr/0005-app-state-lives-in-lakebase.md`. Both files are committed on `build/strata`.
+
 The merger parked this step on October 23, 2026, after merge commit a976b81. Run it after the wizard and before ticket 15 starts, because ticket 15 writes the first app state. It needs the Databricks keys in `.env`.
 
 Run this from the main checkout:
@@ -387,6 +397,8 @@ It worked if both rows show `count` equal to `denominator`. On the fixture they 
 
 ## Ticket 13, step 1 of 4: the Foundry agent and its guardrail match the repo
 
+**Ran on October 24, 2026 (orchestrator).** The first run printed the diff of the instructions and ended "I made version 1 of strata-orchestrator, which matches the repo." The `--check` run exited 0: "Foundry's agent strata-orchestrator, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
+
 The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after ticket 03's wizard. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`.
 
 Run this from the main checkout, and then run it again with `--check`:
@@ -397,6 +409,8 @@ Run this from the main checkout, and then run it again with `--check`:
 It worked if the first run prints what differed, with a diff of the instructions, and ends "I made version N of strata-orchestrator, which matches the repo." The first run also makes the guardrail `strata-guardrail`: content filters, and Prompt Shields on the question and on tool results. The second run must exit 0 and print "Foundry's agent strata-orchestrator, version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." (criterion 5, live half). Exit 1 means `--check` found a difference, and exit 2 means it could not run. Run the pair again after any change to `src/strata/agent/instructions/orchestrator.md`, `config/agents.toml`, `config/models.toml` or a tool in `config/tools.toml`.
 
 ## Ticket 13, step 2 of 4: five passages with rule-like sentences reach the agent with no refusal
+
+**Ran on October 24, 2026 (orchestrator).** Exit 0. All five passages printed "passed" (31525018/v1/71, 31525018/v1/86, 27348420/v1/annex3.51, annex3.52 and annex2.46), and the run ended "All 5 passages reached the agent as tool results with no refusal."
 
 The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after step 1 and after a gate run, because it reads the passages from the fixture database that the gate builds (`data/out/fixture.duckdb`). It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and `az` signed in.
 
