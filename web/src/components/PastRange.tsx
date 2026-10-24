@@ -557,6 +557,10 @@ function Populated({ result }: { result: ComparablesResult }) {
   const readout = plan === null || within === null ? null : c.readout(whole(within), whole(total), months1(plan));
   const readoutLines: [string, string] | null =
     plan === null || within === null ? null : [c.readoutCount(whole(within), whole(total)), c.readoutWithin(months1(plan))];
+  // The widest readout the line can reach on this axis: every package signed, by the axis's last month.
+  // The chart chooses the readout's lines from it, so they stay the same while the line moves.
+  const readoutWidest = c.readout(whole(total), whole(total), months1(axis.max));
+  const readoutWidestLines: [string, string] = [c.readoutCount(whole(total), whole(total)), c.readoutWithin(months1(axis.max))];
   const valueText =
     plan === null || within === null
       ? null
@@ -607,6 +611,8 @@ function Populated({ result }: { result: ComparablesResult }) {
             ownPlan={planRowMonths}
             readout={readout}
             readoutLines={readoutLines}
+            readoutWidest={readoutWidest}
+            readoutWidestLines={readoutWidestLines}
             keySigned={quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed))}
             keyHollow={open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null}
             keyLead={Boolean(quantile)}

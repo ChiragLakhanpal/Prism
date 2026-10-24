@@ -20,7 +20,7 @@
 //
 // Every number arrives from the tool, written by the caller with web/src/lib/format.ts; the chart only
 // places it. Text over marks has a surface halo. There is no animation.
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
 import { MonoWords } from "./MonoWords";
@@ -51,6 +51,8 @@ const HIT = 12; // a dot answers the pointer within 12 px of its centre
 const BAND = 8; // the band's half-width where it starts, at the pointer's last point on its dot
 const NEAR_LINE = 8; // a fine pointer can grab the plan line within 8 px of it
 const TIP_GAP = 8;
+// The readout's lines, as useTextWidths measures them: two from the copy, or more where its words wrap.
+const READOUT_LINES = ["readout0", "readout1", "readout2", "readout3", "readout4", "readout5"];
 
 // DESIGN.md section 6: type sizes by chart width (s, m, l).
 export function chartType(width: number): { s: number; m: number; l: number } {
@@ -173,6 +175,39 @@ function breakFor(breaks: Break[] | undefined, whole: number, room: number): Bre
 }
 const lineWidth = (one: Break | null, whole: number) => (one ? Math.max(one.before, one.after) : whole);
 
+// A text filled into lines no wider than the room: each line takes words while they fit, and the next
+// starts after the last space that fits. It returns the spaces where lines end, counted from the first
+// space, so a text with the same words and other digits can break at the same ones.
+function wrapAt(breaks: Break[] | undefined, whole: number, room: number): number[] {
+  if (!breaks?.length) return [];
+  const ends: number[] = [];
+  // The width of the text up to and including space i, or 0 before the first word.
+  const upTo = (i: number) => (i < 0 ? 0 : whole - breaks[i].after);
+  let from = -1;
+  while (whole - upTo(from) > room && from < breaks.length - 1) {
+    let end = from + 1;
+    for (let i = from + 1; i < breaks.length; i++) if (breaks[i].before - upTo(from) <= room) end = i;
+    ends.push(end);
+    from = end;
+  }
+  return ends;
+}
+
+// A text cut into lines at the spaces wrapAt chose.
+function splitAt(text: string, ends: number[]): string[] {
+  const spaces = [...text.matchAll(/ /g)].map((match) => match.index);
+  const lines: string[] = [];
+  let from = 0;
+  for (const end of ends) {
+    const at = spaces[end];
+    if (at === undefined) break;
+    lines.push(text.slice(from, at));
+    from = at + 1;
+  }
+  lines.push(text.slice(from));
+  return lines;
+}
+
 // A label's text on one line, or on two from its break, each line starting at x.
 function Lines({ text, at, x, step }: { text: string; at: number | null; x: number; step: number }) {
   if (at === null) return text;
@@ -212,6 +247,8 @@ export function RangeChart({
   ownPlan,
   readout,
   readoutLines,
+  readoutWidest,
+  readoutWidestLines,
   keySigned,
   keyHollow,
   keyLead = false,
@@ -238,10 +275,14 @@ export function RangeChart({
   // The plan line's months now, and the plan row's own months, or null when there is none.
   plan: number | null;
   ownPlan: number | null;
-  // The readout's count line, "2 of 49 signed within 1.5 months", and the same as two lines for a
-  // chart under 400 px wide, "2 of 49 signed" over "within 1.5 months".
+  // The readout's count line, "2 of 49 signed within 1.5 months", and the same as two lines, "2 of 49
+  // signed" over "within 1.5 months", for a chart where one line does not fit beside the line.
   readout: string | null;
   readoutLines: [string, string] | null;
+  // The widest readout the line can reach, every package signed by the axis's last month, as one line
+  // and as two. The readout's lines are chosen from it, so they stay the same while the line moves.
+  readoutWidest: string;
+  readoutWidestLines: [string, string];
   // The key: the signed count beside a filled dot and the open count beside a hollow one. With
   // keyLead, the key is words alone, with no glyphs: a lead, "Each dot is 1 in 20 of the 103 packages.",
   // then the open count, because quantile dots do not draw open packages one by one.
@@ -264,7 +305,6 @@ export function RangeChart({
   const helpId = useId();
   const narrow = width < 400;
   const type = chartType(width);
-  const rowB = narrow ? 48 : 32;
   const baseLane = narrow ? 96 : 112;
   const plotRight = width - PAD;
   const x = useCallback((months: number) => PAD + (Math.min(months, axisMax) / axisMax) * (width - 2 * PAD), [axisMax, width]);
@@ -274,8 +314,8 @@ export function RangeChart({
   const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
   const { widths, boxes, breaks, ref } = useTextWidths(
-    ["lane", "keySigned", "keyHollow", "plan", "readout", "readout0", "readout1", "middle", "in10", "tickLast", "tickPrev"],
-    ["keySigned", "middle"],
+    ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, "widest", "widest0", "widest1", "middle", "in10", "tickLast", "tickPrev"],
+    ["keySigned", "middle", "widest"],
   );
   // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
   // chart, its hollow half takes a line of its own, and row A grows by that line before the first paint.
@@ -301,6 +341,27 @@ export function RangeChart({
   const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + keyGap : keyStart;
   const textBaseline = ROW_A / 2 + type.s * 0.35;
   const hollowY = keyWraps ? signedLines * lineGap : 0;
+
+  // Row B: the readout, beside the plan line and never across it. Its lines are chosen once for the
+  // chart's width, from the widest readout the line can reach, so they fit on the roomier side of the
+  // line wherever it sits, and row B never changes while the line moves. That side always has half the
+  // chart, less the gap to the knob's focus ring and the halo's margin (room). The readout is one line
+  // where one line fits there, from 400 px wide; otherwise it is the copy's two lines; and where a copy
+  // line is still too wide, as with WCAG 1.4.12's text spacing at 320 px, its words fill as many lines
+  // as they need. "Plan" sits on a line above them at the plan row's own months. Row B holds it with up
+  // to two lines of the readout, and grows by a line for each line past that.
+  //
+  // The knob is 12 px wide and its focus ring sits 2 px out and is 2 px thick, so it ends 10 px from the
+  // line; the readout starts 4 px past that (GAP). Its halo's box reaches 3 px past its letters, so the
+  // letters stay that far inside the plot (EDGE).
+  const GAP = 14;
+  const EDGE = 3;
+  const readoutStep = type.s + 3;
+  const room = width / 2 - GAP - EDGE;
+  const copyFits = (widths.widest0 ?? 0) <= room && (widths.widest1 ?? 0) <= room;
+  const readoutEnds = !narrow && (widths.widest ?? 0) <= room ? null : copyFits ? "copy" : wrapAt(breaks.widest, widths.widest ?? 0, room);
+  const readoutRows = readoutEnds === null ? 1 : readoutEnds === "copy" ? 2 : readoutEnds.length + 1;
+  const rowB = (readoutRows >= 2 ? 48 : 32) + Math.max(0, readoutRows + (ownPlan !== null ? 1 : 0) - 3) * readoutStep;
   const laneTop = rowA + rowB;
   const laneBottom = laneTop + layout.lane;
   // Row C grows by a line when the middle's label takes two (breakFor).
@@ -520,19 +581,22 @@ export function RangeChart({
   };
 
   // ── Labels ───────────────────────────────────────────────────────────
-  // Row B: the readout, one line, or two under 400 px wide, beside the line and never across it. It
-  // sits right of the line in the left 55 percent of the plot and left of it otherwise; when it does
-  // not fit there, on the other side; when it fits on neither, on the side with more room.
+  // Row B's readout sits right of the line in the left 55 percent of the plot and left of it otherwise,
+  // and on the other side when it does not fit there. Its lines always fit on the roomier side (row B,
+  // above), and the current readout has the widest one's words with the same or fewer digits, so it
+  // breaks at the same spaces. Should it ever fit on neither side, it takes the side with more room, and
+  // the halo's margin goes before the gap to the ring: a surface halo on the surface cannot be seen past
+  // the edge anyway.
   const showPlanWord = plan !== null && ownPlan !== null && plan === ownPlan;
-  const lines = readout === null ? [] : narrow && readoutLines ? readoutLines : [readout];
-  const lineWidths = lines.length === 2 ? [widths.readout0 ?? 0, widths.readout1 ?? 0] : [widths.readout ?? 0];
-  const readoutWidth = Math.max(...lineWidths, showPlanWord ? (widths.plan ?? 0) : 0);
-  // The knob is 12 px wide and its focus ring sits 2 px out and is 2 px thick, so it ends 10 px from the
-  // line; the readout starts 4 px past that. Its halo's box reaches 3 px past its letters, so the
-  // letters stay that far inside the plot (EDGE). Where it fits on neither side, the halo's margin goes
-  // before the gap to the ring: a surface halo on the surface cannot be seen past the edge anyway.
-  const GAP = 14;
-  const EDGE = 3;
+  const lines =
+    readout === null
+      ? []
+      : readoutEnds === null
+        ? [readout]
+        : readoutEnds === "copy"
+          ? (readoutLines ?? [readout])
+          : splitAt(readout, readoutEnds);
+  const readoutWidth = Math.max(0, ...lines.map((_, index) => widths[READOUT_LINES[index]] ?? 0), showPlanWord ? (widths.plan ?? 0) : 0);
   let edge = EDGE;
   let onRight = planX !== null && planX <= PAD + 0.55 * (width - 2 * PAD);
   if (planX !== null) {
@@ -546,7 +610,6 @@ export function RangeChart({
     planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth - edge) : clamp(planX - GAP, readoutWidth + edge, width);
   // Its last line's descenders stay clear of the middle tick, which starts 4 px into the lane.
   const readoutLine1 = rowA + type.s;
-  const readoutStep = type.s + 3;
   const firstLine = showPlanWord ? readoutLine1 + readoutStep : readoutLine1;
 
   // Row C: the middle's label centred on its tick, and the 8-in-10 label beside its line, right of it
@@ -785,29 +848,28 @@ export function RangeChart({
                 {planLabel}
               </text>
             )}
+            {/* Each line is its own text, anchored on its own, so a line left of the plan line ends
+                exactly at the readout's edge. The spaces between them are not drawn: they keep the
+                group's text the readout's words. */}
             {lines.length > 0 && (
-              <text
-                ref={ref("readout")}
-                data-readout
-                y={firstLine}
-                textAnchor={onRight ? "start" : "end"}
-                fontSize={type.s}
-                className="fill-chart-text tabular-nums"
-                style={HALO}
-              >
-                {lines.length === 2 ? (
-                  <>
-                    <tspan ref={ref("readout0")} x={readoutX}>
-                      {lines[0]}
-                    </tspan>{" "}
-                    <tspan ref={ref("readout1")} x={readoutX} dy={readoutStep}>
-                      {lines[1]}
-                    </tspan>
-                  </>
-                ) : (
-                  <tspan x={readoutX}>{lines[0]}</tspan>
-                )}
-              </text>
+              <g data-readout>
+                {lines.map((line, index) => (
+                  <Fragment key={index}>
+                    {index > 0 && " "}
+                    <text
+                      ref={ref(READOUT_LINES[index])}
+                      x={readoutX}
+                      y={firstLine + index * readoutStep}
+                      textAnchor={onRight ? "start" : "end"}
+                      fontSize={type.s}
+                      className="fill-chart-text tabular-nums"
+                      style={HALO}
+                    >
+                      {line}
+                    </text>
+                  </Fragment>
+                ))}
+              </g>
             )}
           </g>
         )}
@@ -834,6 +896,15 @@ export function RangeChart({
           </text>
         )}
 
+      </svg>
+
+      {/* The widest readout, drawn hidden in the readout's type so its lines can be chosen from it. */}
+      <svg aria-hidden="true" width={0} height={0} className="pointer-events-none absolute top-0 left-0 overflow-hidden" style={{ visibility: "hidden" }}>
+        {([["widest", readoutWidest], ["widest0", readoutWidestLines[0]], ["widest1", readoutWidestLines[1]]] as const).map(([key, text]) => (
+          <text key={key} ref={ref(key)} fontSize={type.s} className="tabular-nums">
+            {text}
+          </text>
+        ))}
       </svg>
 
       {/* The plan line as a slider: dragged by its knob or within 8 px of the line, moved by the arrow

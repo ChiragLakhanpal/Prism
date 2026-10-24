@@ -221,10 +221,12 @@ test("a drag gives the slider focus, so the arrow keys nudge the line you just m
   await expect(slider).toHaveAttribute("aria-valuenow", "6.5");
 });
 
-test("at phone widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
+// At 496 and 512 px the chart is just over 400 px wide, so the readout is one line only where one line
+// fits beside a line in the middle of the plot.
+test("at narrow widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
   const overlap = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
     a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-  for (const width of [390, 320]) {
+  for (const width of [512, 496, 390, 320]) {
     await openPackage(page, { width });
     await ready(page);
     const input = page.getByRole("textbox", { name: "Planned months" });
