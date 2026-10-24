@@ -7,13 +7,14 @@
 //
 // States: loading, populated, an agency with no plan, a project with no plans, a project Strata has
 // no record of, a service that didn't answer, and an account that can't read Strata's tables.
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
+import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
-import { Skeleton, SkeletonLine } from "../components/Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Table, type Column, type Row } from "../components/Table";
 import { Tabs } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
@@ -31,20 +32,79 @@ const columns: Column[] = [
   { key: "activities", header: plans.columns.activities, numeric: true },
 ];
 
-const mono = (text: ReactNode) => <span className="font-mono">{text}</span>;
+const mono = (text: ReactNode) => <span className="font-mono font-medium">{text}</span>;
 
-function Pairs({ pairs }: { pairs: { label: ReactNode; value: ReactNode; wide?: boolean }[] }) {
+// The header's labelled pairs. The short ones share a row; a wide one (the agencies) takes a row of
+// its own, so the header has the same shape however many agencies a project names.
+type Pair = { label: ReactNode; value: ReactNode; wide?: boolean };
+
+function Pairs({ pairs, hidden }: { pairs: Pair[]; hidden?: boolean }) {
   return (
-    <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 md:flex md:flex-wrap">
+    <dl aria-hidden={hidden || undefined} className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 md:flex md:flex-wrap">
       {pairs.map((pair, index) => (
-        <div key={index} className={pair.wide ? "col-span-2" : undefined}>
+        <div key={index} className={pair.wide ? "col-span-2 min-w-0 md:basis-full" : undefined}>
           <dt className="text-caption text-ink-muted">{pair.label}</dt>
-          <dd className="text-small text-ink">{pair.value}</dd>
+          {pair.value}
         </div>
       ))}
     </dl>
   );
 }
+
+const value = (text: ReactNode) => <dd className="text-small text-ink">{text}</dd>;
+
+// The agencies keep to two lines. When the names need more, "Show all agencies" follows them; it
+// shows only while the two lines hide a name, measured again whenever the list's width changes.
+function Agencies({ names }: { names: string[] }) {
+  const id = useId();
+  const list = useRef<HTMLElement>(null);
+  const [open, setOpen] = useState(false);
+  const [hides, setHides] = useState(false);
+  useLayoutEffect(() => {
+    const element = list.current;
+    if (!element || open) return;
+    const measure = () => setHides(element.scrollHeight > element.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [open]);
+  return (
+    <>
+      <dd ref={list} id={id} className={open ? "text-small text-ink" : "line-clamp-2 text-small text-ink"}>
+        {names.join(words.agencyJoin)}
+      </dd>
+      {(hides || open) && (
+        <dd>
+          <Button variant="ghost" flush aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+            {open ? words.fewerAgencies : words.allAgencies}
+          </Button>
+        </dd>
+      )}
+    </>
+  );
+}
+
+// While the project loads: the same pairs as bars, with the agencies' two lines and the place of
+// "Show all agencies", so the tabs below do not move when the project arrives.
+const LOADING_PAIRS: Pair[] = [
+  ...["w-16", "w-12", "w-10"].map((label) => ({
+    label: <SkeletonLine width={label} />,
+    value: <SkeletonLine className="text-small" width="w-20" />,
+  })),
+  {
+    label: <SkeletonLine width="w-32" />,
+    value: (
+      <>
+        <SkeletonText className="text-small" widths={["w-full", "w-3/5"]} />
+        <span className="flex h-11 items-center text-small">
+          <Skeleton className="h-[1em] w-32" />
+        </span>
+      </>
+    ),
+    wide: true,
+  },
+];
 
 function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; through: string | null }) {
   if (agency.version_count === 0) {
@@ -146,25 +206,22 @@ export function ProjectPage({ pid }: { pid: string }) {
   }
 
   const project = data?.project;
-  const agencies = project
-    ? [{ label: project.implementing_agencies.length > 1 ? words.label.agencies : words.label.agency, value: project.implementing_agencies.join(words.agencyJoin), wide: true }]
+  const agencies: Pair[] = project
+    ? [{
+        label: project.implementing_agencies.length > 1 ? words.label.agencies : words.label.agency,
+        value: <Agencies names={project.implementing_agencies} />,
+        wide: true,
+      }]
     : [];
   const header =
     load.status === "loading" ? (
-      <div aria-hidden="true" className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 md:flex md:flex-wrap">
-        {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="w-32">
-            <SkeletonLine className="text-caption" width="w-3/5" />
-            <SkeletonLine className="text-small" width="w-full" />
-          </div>
-        ))}
-      </div>
+      <Pairs pairs={LOADING_PAIRS} hidden />
     ) : project ? (
       <Pairs
         pairs={[
-          { label: words.label.id, value: <span className="font-mono font-medium">{project.project_id}</span> },
-          { label: words.label.country, value: project.country ?? copy.notInRecord },
-          { label: words.label.status, value: project.status ?? copy.notInRecord },
+          { label: words.label.id, value: value(mono(project.project_id)) },
+          { label: words.label.country, value: value(project.country ?? copy.notInRecord) },
+          { label: words.label.status, value: value(project.status ?? copy.notInRecord) },
           ...(project.implementing_agencies.length > 0 ? agencies : []),
         ]}
       />
@@ -208,7 +265,17 @@ export function ProjectPage({ pid }: { pid: string }) {
       <div className="col-span-12 md:col-span-8">
         <Breadcrumb trail={[projectsCrumb, { text: current }]} />
         <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
-          {project ? project.project_name : load.status === "loading" ? <Skeleton className="h-[1.2em] w-3/5" /> : <Fill template={copy.pages.project.title} slots={{ pid: idText }} />}
+          {project ? (
+            project.project_name
+          ) : load.status === "loading" ? (
+            // A project's name takes one line from 768 px and two below it, as most names do.
+            <>
+              <SkeletonText className="md:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden md:flex" width="w-3/5" />
+            </>
+          ) : (
+            <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
+          )}
         </h1>
         <p className="mt-2 max-w-prose text-body text-ink-muted">{copy.pages.project.purpose}</p>
         {header}

@@ -345,6 +345,9 @@ export const copy = {
     label: { id: "Project ID", country: "Country", status: "Status", agency: "Implementing agency", agencies: "Implementing agencies" },
     // Two agency names hold commas, so the agencies are set apart with semicolons.
     agencyJoin: "; ",
+    // The agencies keep to two lines; these open and close the rest.
+    allAgencies: "Show all agencies",
+    fewerAgencies: "Show fewer agencies",
     sections: "Project sections",
     tab: { procurement: "Procurement" },
     loading: "Loading this project.",

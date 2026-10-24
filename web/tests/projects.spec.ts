@@ -94,6 +94,54 @@ test("a project's page shows its header, one Procurement tab, and each agency's 
   await expect(page).toHaveURL(/\/projects\/P156634\/procurement\/northern-water-works-development-agency\/2026-10-09$/);
 });
 
+test("the project page's section tabs stay where they are when the project arrives, at 1440 and 390 px", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/projects/P156634", async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("project-p156634.json") });
+  });
+  await page.goto("/projects/P156634");
+  await expect(page.locator("[data-project-page=loading]")).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const tabs = page.getByRole("navigation", { name: "Project sections" });
+  const top = () => tabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  const loading = { 1440: await top(), 390: 0 };
+  await page.setViewportSize({ width: 390, height: 900 });
+  loading[390] = await top();
+
+  release();
+  await expect(page.locator("[data-project-page=ready]")).toBeVisible();
+
+  expect(Math.abs((await top()) - loading[390]), "390 px").toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  expect(Math.abs((await top()) - loading[1440]), "1440 px").toBeLessThanOrEqual(1);
+});
+
+test("a long list of implementing agencies keeps to two lines until you show them all", async ({ page }) => {
+  await open(page, "/projects/P156634", await p156634());
+  const show = page.getByRole("button", { name: "Show all agencies" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  const agencies = page.locator(`[id="${await show.getAttribute("aria-controls")}"]`);
+  await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
+  const lineHeight = await agencies.evaluate((element) => parseFloat(getComputedStyle(element).lineHeight));
+  expect(await agencies.evaluate((element) => element.clientHeight)).toBeLessThanOrEqual(2 * lineHeight + 1);
+
+  await show.click();
+
+  const fewer = page.getByRole("button", { name: "Show fewer agencies" });
+  await expect(fewer).toHaveAttribute("aria-expanded", "true");
+  await expect(fewer).toBeFocused();
+  expect(await agencies.evaluate((element) => element.clientHeight)).toBeGreaterThan(2 * lineHeight + 1);
+
+  // One agency fits on a line, so there is nothing to show.
+  await open(page, "/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
+  await expect(page.locator("[data-project-page=ready]")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Show all agencies" })).toHaveCount(0);
+});
+
 test("an agency's count line states the route's count of its versions", async ({ page }) => {
   const body = JSON.parse(await recorded("project-p156634.json"));
   body.agencies[0].version_count = 7;

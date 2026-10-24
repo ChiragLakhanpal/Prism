@@ -160,6 +160,7 @@ const PLAN_SHOTS: Shot[] = [
 const PROJECT_SHOTS: Shot[] = [
   planShot("project", { recorded: "project-p156634.json" }, {}, "/projects/P156634"),
   planShot("project--loading", { recorded: "project-p156634.json" }, { pending: ["/api/projects/P156634"] }, "/projects/P156634"),
+  planShot("project--agencies-open", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: click("main dl button") }, "/projects/P156634"),
   planShot("project--no-plans", { recorded: "project-p130164.json" }, {}, "/projects/P130164/procurement", "/api/projects/P130164"),
   planShot("project--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects/P156634"),
   planShot("project--not-found", { status: 404, body: '{"code":"unknown_project"}' }, {}, "/projects/P999999"),
