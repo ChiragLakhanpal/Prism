@@ -20,6 +20,10 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
 - Data note: each note the plan reader wrote, and a check the tool could not run because the plan
   gives no planned completion date or no estimate (the activity then counts as not fully checked).
 
+The counts give every number the Check a plan screen states about the whole plan: the activities,
+how many were checked fully and how many not, how many carry each mark, and how many carry any
+mark or none, so the screen never counts rows itself.
+
 Every number a reason states is a value here, at its rounding: days are whole numbers, amounts
 are text with two decimals, and the ratio is given exactly to two decimals and as the whole
 number "about" rounds it to. The screen and the agent never compute them. Each reason's code and
@@ -337,6 +341,8 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
         "checks_run": [check for check in CHECKS if check != "closing_date" or project["closing_date"]],
         "thresholds": limits.as_values(),
         "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
+                   "not_fully_checked": len(partly),
                    "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
+                   "marked": sum(1 for row in activities if row["marks"]),
                    "unmarked": sum(1 for row in activities if not row["marks"])},
     }

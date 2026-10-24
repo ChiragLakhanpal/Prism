@@ -273,8 +273,9 @@ def test_check_plan_marks_each_activity_of_the_october_9_plan_as_the_wireframe_d
     # The plan lists a ninth activity the wireframe leaves out. The tool checks every activity.
     expected |= {reference: [] for reference in TRUTH["plan"]["also_lists"]}
     assert marks(result) == expected
-    assert result["counts"] == {"activities": 9, "checked": 9, "needs_a_look": 1, "watch": 2, "data_note": 3,
-                                "unmarked": 3}
+    # The screen shows the marked rows and folds the rest, so the counts say how many of each there are.
+    assert result["counts"] == {"activities": 9, "checked": 9, "not_fully_checked": 0, "needs_a_look": 1, "watch": 2,
+                                "data_note": 3, "marked": 6, "unmarked": 3}
     assert result["plan"]["plan_date"] == "2026-10-09"
     assert result["abstention"] is None
 
@@ -468,7 +469,7 @@ def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked
     assert marks(result) == {"XX-MADE-1-CW-RFB": ["data_note"], "XX-MADE-2-GO-RFQ": ["data_note"]}
     assert set(reasons(result, "XX-MADE-1-CW-RFB")) == {"no_planned_date"}
     assert set(reasons(result, "XX-MADE-2-GO-RFQ")) == {"no_estimate"}
-    assert result["counts"]["checked"] == 0
+    assert (result["counts"]["checked"], result["counts"]["not_fully_checked"]) == (0, 2)
     assert (result["coverage"]["matched"], result["coverage"]["used"]) == (2, 0)
     assert {(item["reason"], item["count"]) for item in result["coverage"]["not_used"]} == {
         ("no_planned_date", 1), ("no_estimate", 1)}
