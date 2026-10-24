@@ -293,6 +293,17 @@ def test_the_notices_fetch_stops_at_the_first_page_older_than_what_bronze_holds(
     assert "project_ctry_name" not in api.asked[0] and "srt=submission_date&order=desc" in api.asked[0]
 
 
+def test_the_notices_fetch_stops_at_the_offset_the_search_api_refuses_to_page_past():
+    rows = recorded("api/notices/P156634.json")["procnotices"]  # 399 notices, more than a max_offset of 200
+    api = FakeAPI("procnotices", rows, "total")
+
+    fetched = list(pages.live_pages(source("notices", page_size=100, max_offset=200), api))
+
+    assert [len(page.body["procnotices"]) for page in fetched] == [100, 100]
+    assert [parse_qs(urlparse(url).query)["os"] for url in api.asked] == [["0"], ["100"]]
+    assert config.load_sources()["notices"].max_offset == 100_000
+
+
 class FakeIndicators:
     """Serves a recorded Indicators API response a page at a time, as [about the page, records]."""
 
