@@ -102,9 +102,9 @@ test("a STEP reference opens its plan's check with that activity in view and foc
 });
 
 // The critique of ticket 14, round 2: a landing that cuts the title or the box at the top edge reads as
-// a scroll gone wrong. The row is in view, and the band and the title are each wholly in view or wholly
-// scrolled away.
-for (const width of [1440, 390]) {
+// a scroll gone wrong. The whole row or card is in view, its badges included, and the band and the title
+// are each wholly in view or wholly scrolled away.
+for (const width of [1440, 390, 320]) {
   test(`at ${width} px landing on a STEP reference cuts neither the band nor the title at the top edge`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page);
@@ -115,7 +115,7 @@ for (const width of [1440, 390]) {
     const view = width >= 1024 ? "table" : "cards";
     const row = page.locator(`[data-view=${view}] [data-activity='KE-NWWDA-541055-CW-RFB']`);
     await expect(row).toBeFocused();
-    await expect(row).toBeInViewport({ ratio: 1 });
+    await expect(row.locator("xpath=ancestor-or-self::*[self::tr or self::li][1]")).toBeInViewport({ ratio: 1 });
     await page.waitForTimeout(100);
     for (const part of ["[data-box-band]", "main h1"]) {
       const box = (await page.locator(part).boundingBox())!;

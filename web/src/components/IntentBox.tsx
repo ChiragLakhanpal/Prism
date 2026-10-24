@@ -231,8 +231,12 @@ export function IntentBox({
         onRemoveScope={removeChip}
         onChoose={(index) => void choose(index)}
         onKeyDown={onKeyDown}
+        onPointerDown={() => {
+          input.current?.removeAttribute(RETURNING);
+          setOpen(value.trim().length > 0);
+        }}
         onFocusChange={(focused) => {
-          // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key.
+          // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key or a click.
           const given = input.current?.hasAttribute(RETURNING) ?? false;
           if (!focused) input.current?.removeAttribute(RETURNING);
           setOpen(focused && !given && value.trim().length > 0);

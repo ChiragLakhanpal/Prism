@@ -425,14 +425,15 @@ const LANDING_GAP = 16;
 
 // Brings a named activity into view without cutting the box band or the page's title at the top
 // edge: the page from its top when the activity fits on the first screen, or else the activity just
-// under the sticky header. The band and the title are each shown whole when the activity still fits
-// under them, and otherwise scrolled away whole.
+// under the sticky header. The activity is its whole row or card, badges included, not only the
+// reference that takes focus. The band and the title are each shown whole when the activity still
+// fits under them, and otherwise scrolled away whole.
 function bringIntoView(target: HTMLElement) {
   const place = (element: Element) => {
     const rect = element.getBoundingClientRect();
     return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
   };
-  const row = place(target);
+  const row = place(target.closest("tr, li") ?? target);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
   const stuck = header && getComputedStyle(header).position === "sticky" ? header.offsetHeight : 0;
   const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;

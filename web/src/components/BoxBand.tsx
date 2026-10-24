@@ -68,6 +68,7 @@ export function OneBox({
   onChoose,
   onKeyDown,
   onFocusChange,
+  onPointerDown,
   inputRef,
   shortcut = true,
   focusedHint,
@@ -88,6 +89,8 @@ export function OneBox({
   onChoose?: (index: number) => void;
   onKeyDown?: (event: ReactKeyboardEvent<HTMLInputElement>) => void;
   onFocusChange?: (focused: boolean) => void;
+  // A click or a tap in the box, which asks for its list as clearly as Down does.
+  onPointerDown?: () => void;
   inputRef?: RefObject<HTMLInputElement | null>;
   // Only the band's box answers "/"; a second box, such as a gallery sample, sets false.
   shortcut?: boolean;
@@ -180,6 +183,7 @@ export function OneBox({
               onFocusChange?.(false);
             }}
             onKeyDown={onKeyDown}
+            onPointerDown={onPointerDown}
             className="peer h-10 w-full bg-transparent text-body text-ink focus-visible:outline-none"
           />
           <span
