@@ -75,11 +75,12 @@ const n = (value: number) => formatNumber(value, { compact: false });
 // A card's fields: a grid of 120 px columns that numbers and short values share, with longer
 // text, or a number with nothing beside it, across the full row. Each field sits at the foot of
 // its grid row, as the table's heads sit at the foot of the header, so a head that wraps to two
-// lines keeps its value level with its neighbor's.
-const CARD_FIELDS = "mt-2 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2";
+// lines keeps its value level with its neighbor's. The plan check's activity cards
+// (web/src/components/PlanCheck.tsx) use the same grid and fields.
+export const CARD_FIELDS = "grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2";
+export const CARD_FIELD = "flex min-w-0 flex-col justify-end";
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
-const cardField = (column: Column, shared: boolean) =>
-  cx("flex min-w-0 flex-col justify-end", !(sharesGrid(column) && shared) && "col-span-full");
+const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
 function countText({ noun, one, total, from, to }: Count): string {
   if (total === 1 && one) return copy.table.showingOne(one);
@@ -258,7 +259,7 @@ export function Table({
         {skeletonRows.map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
             {skeletonHeader ? <div className="text-small">{skeletonHeader}</div> : <SkeletonLine className="text-small" width="w-3/5" />}
-            <dl className={CARD_FIELDS}>
+            <dl className={cx("mt-2", CARD_FIELDS)}>
               {fields.map((column) => (
                 <div key={column.key} className={cardField(column, shared)}>
                   <dt className="text-caption text-ink-muted">{column.header}</dt>
@@ -273,7 +274,7 @@ export function Table({
         {rows.map((row) => (
           <li key={row.id} className="rounded-md border border-line bg-surface p-4">
             {createElement(cardHeading, { className: "text-small font-semibold wrap-break-word text-ink-heading" }, row.cells[rowHeader])}
-            <dl className={CARD_FIELDS} data-numbers>
+            <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>
               {fields.map((column) => (
                 <div key={column.key} data-card-field={column.numeric ? "number" : "text"} className={cardField(column, shared)}>
                   <dt className="text-caption text-ink-muted">{column.header}</dt>

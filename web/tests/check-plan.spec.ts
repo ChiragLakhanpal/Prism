@@ -50,6 +50,13 @@ const refsIn = (page: Page, name: "table" | "cards") =>
       .map((element) => (element.firstElementChild ?? element).textContent?.trim()),
   );
 
+// How many lines an element's text takes: the distinct tops of its text's line boxes.
+const textLines = (element: Element) => {
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+};
+
 async function axe(page: Page) {
   // Let the fold's fade-in finish, so contrast is measured on what stays on screen.
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
@@ -294,13 +301,8 @@ test("below 1024 px the count line's row opens the What Strata found definition,
   // At 320 px the two don't fit side by side, so the definition takes a line of its own and
   // neither breaks.
   await page.setViewportSize({ width: 320, height: 900 });
-  const lines = (element: Element) => {
-    const range = document.createRange();
-    range.selectNodeContents(element);
-    return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
-  };
-  expect(await page.locator("[data-count-line]").evaluate(lines)).toBe(1);
-  expect(await term.evaluate(lines)).toBe(1);
+  expect(await page.locator("[data-count-line]").evaluate(textLines)).toBe(1);
+  expect(await term.evaluate(textLines)).toBe(1);
 });
 
 test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
@@ -315,6 +317,17 @@ test("below 1024 px the activities are cards, each headed by its marks and its r
   expect(await refsIn(page, "cards")).toEqual([...MARKED, ...FOLDED]);
   // Below 768 px the breadcrumb shows only its parent.
   await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link")).toHaveText("Procurement");
+});
+
+test("below 1024 px a card's Process status takes its full width, as Method does, so STEP's Pending Implementation keeps to one line", async ({ page }) => {
+  await openPlan(page, 768);
+  const card = view(page, "cards").locator("li").filter({ has: page.locator("[data-activity=KE-NWWDA-541055-CW-RFB]") });
+  const status = card.locator("dl > div").filter({ has: page.getByText("Process status", { exact: true }) }).locator("dd");
+  for (const width of [768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(status).toHaveText("Pending Implementation");
+    expect(await status.evaluate(textLines), `${width} px`).toBe(1);
+  }
 });
 
 test("from 1024 px the header sticks and focused rows stay 8 px clear of it; below 1024 px it scrolls away", async ({ page }) => {
@@ -506,8 +519,19 @@ test("below 1024 px the skeleton cards are as tall as the activity cards they st
   });
   await page.goto(PLAN);
   await page.evaluate(() => document.fonts.ready);
-  const heights = (selector: string) =>
-    page.locator(selector).evaluateAll((cards) => cards.filter((card) => card.getClientRects().length > 0).map((card) => card.getBoundingClientRect().height));
+  // The cards' heights at 390 px, where the four STEP fields take three rows, and at 768 px, where
+  // Review and the amount share a row with room to spare.
+  const widths = [390, 768];
+  const heights = async (selector: string) => {
+    const sizes: Record<number, number[]> = {};
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      sizes[width] = await page
+        .locator(selector)
+        .evaluateAll((cards) => cards.filter((card) => card.getClientRects().length > 0).map((card) => card.getBoundingClientRect().height));
+    }
+    return sizes;
+  };
   await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
   const skeleton = await heights("[data-plan-skeleton] li");
 
@@ -515,9 +539,11 @@ test("below 1024 px the skeleton cards are as tall as the activity cards they st
   await expect(page.locator("[data-plan-check]")).toBeVisible();
 
   const real = await heights("[data-view=cards] ul:first-child > li:not([data-fold])");
-  for (const card of skeleton) {
-    expect(card).toBeGreaterThanOrEqual(Math.min(...real) - 1);
-    expect(card).toBeLessThanOrEqual(Math.max(...real) + 1);
+  for (const width of widths) {
+    for (const card of skeleton[width]) {
+      expect(card, `${width} px`).toBeGreaterThanOrEqual(Math.min(...real[width]) - 1);
+      expect(card, `${width} px`).toBeLessThanOrEqual(Math.max(...real[width]) + 1);
+    }
   }
 });
 

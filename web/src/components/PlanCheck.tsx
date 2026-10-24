@@ -26,7 +26,7 @@ import { Num } from "./Num";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
-import { CARD_BREAKPOINTS } from "./Table";
+import { CARD_BREAKPOINTS, CARD_FIELD, CARD_FIELDS } from "./Table";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
@@ -355,11 +355,13 @@ function TableRow({ row, result, fresh, named }: { row: Activity; result: Checke
 
 // An activity card below 1024 px: the badges and the reference as its heading, so a screen reader's
 // list of headings says "Needs a look KE-NWWDA-541055-CW-RFB"; then the Description, the reasons, a
-// hairline and the four STEP fields.
+// hairline and the four STEP fields. Method and Process status take the card's full width, since
+// STEP's values, such as "Pending Implementation", are wider than a 120 px column; Review and the
+// amount share a row.
 function ActivityCard({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
   const ref = row.activity_reference_no;
   const field = (label: ReactNode, value: ReactNode, wide?: boolean) => (
-    <div className={cx("flex min-w-0 flex-col justify-end", wide && "col-span-full")}>
+    <div className={cx(CARD_FIELD, wide && "col-span-full")}>
       <dt className="text-caption text-ink-muted">{label}</dt>
       <dd className="text-small wrap-break-word text-ink">{value}</dd>
     </div>
@@ -383,11 +385,11 @@ function ActivityCard({ row, result, fresh, named }: { row: Activity; result: Ch
             <p className="text-small text-ink-muted">{words.noSignals}</p>
           )}
         </div>
-        <dl className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2 border-t border-line pt-3" data-numbers>
+        <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)} data-numbers>
           {field(words.columns.method, methodText(row), true)}
           {field(words.columns.review, row.review_type ?? blank)}
           {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
-          {field(words.columns.status, row.process_status ?? blank)}
+          {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
       </article>
     </li>
@@ -697,9 +699,9 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
             </div>
             <SkeletonText className="mt-1 text-small" widths={["w-full", "w-3/5"]} />
             <SkeletonText className="mt-2 text-small" widths={["w-full", "w-4/5"]} />
-            <dl className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2 border-t border-line pt-3">
+            <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)}>
               {[words.columns.method, words.columns.review, words.columns.estimated, words.columns.status].map((label, field) => (
-                <div key={field} className={cx("flex min-w-0 flex-col justify-end", field === 0 && "col-span-full")}>
+                <div key={field} className={cx(CARD_FIELD, (field === 0 || field === 3) && "col-span-full")}>
                   <dt className="text-caption text-ink-muted">{label}</dt>
                   <dd>
                     <SkeletonLine className="text-small" width={field === 0 ? "w-4/5" : "w-3/5"} />
