@@ -165,13 +165,16 @@ function MarkReasons({ mark, result }: { mark: Activity["marks"][number]; result
 
 const blank = <span className="text-ink-muted">{copy.notInPlan}</span>;
 
+// "Request for Bids ·" then "Open - National": the dot is tied to the Method with a no-break space,
+// and the Market Approach moves to the next line whole when it fits there, so no line starts with
+// the dot or with STEP's own dash.
 function methodText(row: Activity): ReactNode {
   if (!row.method) return blank;
   return row.market_approach ? (
     <>
       {row.method}
-      {words.methodJoin}
-      {row.market_approach}
+      {words.methodDot}{" "}
+      <span className="inline-block max-w-full">{row.market_approach}</span>
     </>
   ) : (
     row.method
@@ -282,30 +285,35 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
   );
 }
 
-// The table from 1024 px. Column widths follow the 10 brief: the reason column is the widest, and
-// a 22-character reference never wraps inside the Activity column.
+// The table from 1024 px (the 10 brief, section 2.1, with round 2's design review). At 1024 px a
+// 24-character reference (202 px) fits the Activity column, "Limited - National" (116 px) the
+// Method column, "Review" and "Prior" the Review column, "2,000,000.00" the Estimated column and
+// "Implementation" the Process status column; from 1200 px "Open - International" (132 px) fits
+// too. What Strata found keeps the rest and stays the widest column. Cells are padded 8 px at the
+// sides from 1024 px and 12 px from 1200 px (CELL).
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean }[] = [
-  { key: "activity", header: words.columns.activity, width: "w-[24%] xl:w-[20%]" },
-  { key: "method", header: words.columns.method, width: "w-[15%] xl:w-[14%]" },
-  { key: "review", header: words.columns.review, width: "w-[6%]" },
-  { key: "estimated", header: words.columns.estimated, width: "w-[12%] xl:w-[11%]", numeric: true },
-  { key: "status", header: words.columns.status, width: "w-[13%] xl:w-[11%]" },
-  { key: "found", header: null, width: "w-[30%] xl:w-[38%]" },
+  { key: "activity", header: words.columns.activity, width: "w-[25%] xl:w-[21.5%]" },
+  { key: "method", header: words.columns.method, width: "w-[16%] xl:w-[15%]" },
+  { key: "review", header: words.columns.review, width: "w-[7.5%]" },
+  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] xl:w-[11%]", numeric: true },
+  { key: "status", header: words.columns.status, width: "w-[14%] xl:w-[12.5%]" },
+  { key: "found", header: null, width: "w-[26%] xl:w-[32.5%]" },
 ];
+const CELL = "px-2 py-3 xl:px-3";
 
 function TableRow({ row, result, fresh }: { row: Activity; result: CheckedPlan; fresh?: boolean }) {
   const ref = row.activity_reference_no;
   return (
     <tr id={ref} className={cx("border-t border-line align-top", fresh && "animate-fade-in")}>
-      <th scope="row" tabIndex={-1} data-activity={ref} className="p-3 text-left font-normal focus-visible:outline-offset-[-2px]">
+      <th scope="row" tabIndex={-1} data-activity={ref} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
       </th>
-      <td className="p-3">{methodText(row)}</td>
-      <td className="p-3">{row.review_type ?? blank}</td>
-      <td className="p-3 text-right tabular-nums">{row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank}</td>
-      <td className="p-3">{row.process_status ?? blank}</td>
-      <td className="p-3">
+      <td className={CELL}>{methodText(row)}</td>
+      <td className={CELL}>{row.review_type ?? blank}</td>
+      <td className={cx(CELL, "text-right tabular-nums")}>{row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank}</td>
+      <td className={CELL}>{row.process_status ?? blank}</td>
+      <td className={CELL}>
         {row.marks.length > 0 ? (
           <div className="flex flex-col gap-3">
             {row.marks.map((mark) => (
@@ -495,7 +503,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
                 <th
                   key={column.key}
                   scope="col"
-                  className={cx("p-3 align-bottom font-bold text-ink-heading", column.numeric ? "text-right" : "text-left", column.width)}
+                  className={cx(CELL, "align-bottom font-semibold text-ink-heading", column.numeric ? "text-right" : "text-left", column.width)}
                 >
                   {column.key === "found" ? <Definition result={result} /> : column.header}
                 </th>
@@ -508,7 +516,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
-                <td colSpan={COLUMNS.length} className="px-3 py-2">
+                <td colSpan={COLUMNS.length} className="px-2 py-2 xl:px-3">
                   <div className="flex flex-wrap items-center gap-x-4">
                     <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} />
                     <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
@@ -611,7 +619,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
           <thead className="bg-surface-2">
             <tr>
               {COLUMNS.map((column) => (
-                <th key={column.key} scope="col" className={cx("p-3 text-left font-bold text-ink-heading", column.numeric && "text-right", column.width)}>
+                <th key={column.key} scope="col" className={cx(CELL, "text-left font-semibold text-ink-heading", column.numeric && "text-right", column.width)}>
                   {column.key === "found" ? words.columns.found : column.header}
                 </th>
               ))}
@@ -620,22 +628,22 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
           <tbody>
             {rows.map((index) => (
               <tr key={index} className="h-28 border-t border-line align-top">
-                <td className="p-3">
+                <td className={CELL}>
                   <SkeletonText widths={["w-4/5", "w-3/5"]} />
                 </td>
-                <td className="p-3">
+                <td className={CELL}>
                   <SkeletonLine width="w-4/5" />
                 </td>
-                <td className="p-3">
+                <td className={CELL}>
                   <SkeletonLine width="w-3/5" />
                 </td>
-                <td className="p-3">
+                <td className={CELL}>
                   <SkeletonLine width="ml-auto w-4/5" />
                 </td>
-                <td className="p-3">
+                <td className={CELL}>
                   <SkeletonLine width="w-4/5" />
                 </td>
-                <td className="p-3">
+                <td className={CELL}>
                   <Skeleton className="h-7 w-28 rounded-pill" />
                   <SkeletonText className="mt-1" widths={["w-full", "w-3/5"]} />
                 </td>

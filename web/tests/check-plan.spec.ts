@@ -280,6 +280,69 @@ test("from 1024 px the header sticks and focused rows stay 8 px clear of it; bel
   await expect.poll(() => page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe("");
 });
 
+// What the table's cells look like at one width: each line of a Method cell, whether each
+// reference and each Market Approach sits on one line, and any cell whose text runs past its
+// content box.
+function measureTable() {
+  const linesOf = (cell: Element) => {
+    const lines: { top: number; text: string }[] = [];
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      for (let i = 0; i < node.length; i++) {
+        const range = document.createRange();
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const rect = range.getClientRects()[0];
+        if (!rect) continue;
+        const last = lines[lines.length - 1];
+        if (last && Math.abs(last.top - rect.top) < 4) last.text += node.data[i];
+        else lines.push({ top: rect.top, text: node.data[i] });
+      }
+    }
+    return lines.map((line) => line.text.trim()).filter(Boolean);
+  };
+  const rows = Array.from(document.querySelectorAll("[data-view=table] tbody tr[id]"));
+  const splitRefs: string[] = [];
+  const splitApproaches: string[] = [];
+  const lineStarts: string[] = [];
+  const overflow: string[] = [];
+  for (const row of rows) {
+    const ref = row.querySelector("th span")!;
+    if (linesOf(ref).length !== 1) splitRefs.push(row.id);
+    const approach = row.children[1].querySelector("span");
+    if (approach && linesOf(approach).length !== 1) splitApproaches.push(approach.textContent!);
+    for (const line of linesOf(row.children[1])) if (/^[·-]/.test(line)) lineStarts.push(`${row.id}: ${line}`);
+  }
+  for (const cell of document.querySelectorAll("[data-view=table] thead th, [data-view=table] tbody tr[id] > *")) {
+    const box = cell.getBoundingClientRect();
+    const style = getComputedStyle(cell);
+    const right = box.right - parseFloat(style.paddingRight) + 0.5;
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const rect of range.getClientRects()) {
+        if (rect.right > right) overflow.push(`${(cell.closest("tr") as HTMLElement).id || "head"}: ${node.textContent}`);
+      }
+    }
+  }
+  return { splitRefs, splitApproaches, lineStarts, overflow };
+}
+
+test("from 1024 to 1440 px each column fits its values: references and Market Approaches stay whole, and no Method line starts with a dot or a dash", async ({ page }) => {
+  await openPlan(page, 1440);
+  await view(page, "table").getByRole("button", { name: "Show them" }).click();
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [1024, 1100, 1200, 1280, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(view(page, "table")).toBeVisible();
+    const { splitApproaches, ...rest } = await page.evaluate(measureTable);
+    expect(rest, `${width} px`).toEqual({ splitRefs: [], lineStarts: [], overflow: [] });
+    // Only below 1100 px may the longest Market Approach in the plan take two lines.
+    expect(splitApproaches.filter((text) => width >= 1100 || text !== "Open - International"), `${width} px`).toEqual([]);
+  }
+});
+
 test("at 1024 px the plan check is a table", async ({ page }) => {
   await openPlan(page, 1024);
 

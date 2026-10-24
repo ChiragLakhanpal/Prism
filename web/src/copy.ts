@@ -420,8 +420,9 @@ export const copy = {
       status: "Process status",
       found: "What Strata found",
     },
-    // "Request for Bids · Open - National", as STEP gives the two values.
-    methodJoin: " · ",
+    // "Request for Bids · Open - National", as STEP gives the two values. The dot is tied to the
+    // Method with a no-break space, so a line never starts with it.
+    methodDot: "\u00a0·",
     noSignals: "No signals.",
     foundDefinition:
       "Needs a look and Watch are signals. A signal is a fixed check on public records that gives a reason to look, " +
