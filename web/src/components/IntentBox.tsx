@@ -14,7 +14,7 @@ import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
 import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type Lookup } from "../lib/intents";
 import { boxMode, startPlanning } from "../lib/packages";
-import { navigate } from "../lib/router";
+import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { OneBox, type BoxOption } from "./BoxBand";
 import { Fill } from "./Fill";
@@ -41,14 +41,20 @@ function foundLine(found: Found): ReactNode {
   return <Fill template={words.activityLine(found.agency, formatDate(found.planDate))} slots={{ pcode: mono(found.pcode) }} />;
 }
 
-export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent } | { kind: "plan" } | { kind: "go"; href: string };
+export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent } | { kind: "plan"; held?: boolean } | { kind: "go"; href: string };
 
 // What the box lists for this input, scope chip and lookups so far: the options, best first, what
 // choosing each does, and the lines under the list for an ID no record holds or a lookup that failed.
 // Free text also offers "Plan a package from this sentence" (ticket 15), never first unless the Packages
 // tab's "Plan a package" put the box in plan mode. In check mode, a project ID lists each implementing
 // agency's latest plan to check, then the project itself.
-export function boxList(value: string, chip: string | null, lookups: Record<string, Lookup>, mode: "plan" | "check" | null = null) {
+export function boxList(
+  value: string,
+  chip: string | null,
+  lookups: Record<string, Lookup>,
+  mode: "plan" | "check" | null = null,
+  view: "staff" | "piu" | "public" = "staff",
+) {
   const listed = boxListOf(value, chip, lookups);
   const text = value.trim();
   if (mode === "check") {
@@ -68,12 +74,22 @@ export function boxList(value: string, chip: string | null, lookups: Record<stri
     }
     return listed;
   }
-  if (!text || !listed.askFirst) return listed;
-  const planOption: BoxOption = { key: "plan", icon: PackagePlus, label: copy.box.option.plan, line: copy.box.option.planLine };
-  if (mode === "plan") {
-    return { ...listed, options: [planOption, ...listed.options], choices: [{ kind: "plan" } as Choice, ...listed.choices] };
+  // The public view has no packages, so it never offers to plan one; an implementing agency preview lists the
+  // option held, with its reason, so it stays discoverable (the 15 brief, section 7.1).
+  if (!text || !listed.askFirst || view === "public") return listed;
+  const held = view === "piu";
+  const planOption: BoxOption = {
+    key: "plan",
+    icon: PackagePlus,
+    label: copy.box.option.plan,
+    line: held ? copy.box.option.planPreviewOff : copy.box.option.planLine,
+    disabled: held,
+  };
+  const planChoice: Choice = { kind: "plan", held };
+  if (mode === "plan" && !held) {
+    return { ...listed, options: [planOption, ...listed.options], choices: [planChoice, ...listed.choices] };
   }
-  return { ...listed, options: [...listed.options, planOption], choices: [...listed.choices, { kind: "plan" } as Choice] };
+  return { ...listed, options: [...listed.options, planOption], choices: [...listed.choices, planChoice] };
 }
 
 function boxListOf(value: string, chip: string | null, lookups: Record<string, Lookup>) {
@@ -163,7 +179,9 @@ export function IntentBox({
     setOpen(Boolean(asked_mode.text));
   }, [asked_mode?.at]);
 
-  const { ids, options, choices, notes } = boxList(value, chip, lookups, mode);
+  const viewParam = new URLSearchParams(useStore(address).search).get("view");
+  const view = viewParam === "piu" || viewParam === "public" ? viewParam : "staff";
+  const { ids, options, choices, notes } = boxList(value, chip, lookups, mode, view);
 
   const lookupOf = (intent: Intent) => {
     const key = intentKey(intent);
@@ -212,6 +230,7 @@ export function IntentBox({
     // The only way the box makes a package (the 15 brief, section 6): the workflow starts, and the reading
     // page shows it at once.
     if (choice.kind === "plan") {
+      if (choice.held) return;
       startPlanning(value.trim());
       setValue("");
       setOpen(false);

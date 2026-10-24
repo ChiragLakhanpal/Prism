@@ -81,6 +81,7 @@ import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+import { packagesPage } from "./packages";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
 // Made-up comparables in find_comparables' shape, built from the gallery copy's months so that every
@@ -1344,6 +1345,7 @@ export const PAGES: GalleryPage[] = [
       },
     ],
   },
+  packagesPage(),
   {
     slug: "icons",
     sections: [

@@ -122,6 +122,9 @@ export function EditorBody({
   };
 
   const options = choosing ? optionsFor(field, form, text) : [];
+  // An arrow key moves between the options, which a radio group would also check; only a press, Space or Enter
+  // chooses, so arrowing past an option never commits it.
+  const arrowed = useRef(false);
   const onTypeKey = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Enter") return;
     event.preventDefault();
@@ -161,14 +164,28 @@ export function EditorBody({
             />
           )}
           {!computedHidden && choosing && (
-            <div role="radiogroup" aria-labelledby={headingId} aria-describedby={error ? errorId : undefined} className="flex max-h-72 flex-col overflow-y-auto" data-options>
+            <div
+              role="radiogroup"
+              aria-labelledby={headingId}
+              aria-describedby={error ? errorId : undefined}
+              className="flex max-h-72 flex-col overflow-y-auto"
+              data-options
+              onKeyDown={(event) => {
+                arrowed.current = event.key.startsWith("Arrow");
+              }}
+            >
               {options.map((option) => {
                 const checked = option.value === value.value && !option.caption;
                 return (
+                  // The whole 40 px row is the target. The radio itself is hidden from sight but not from the
+                  // keyboard or a screen reader; the row draws its circle and its focus ring.
                   <label
                     key={`${option.value}-${option.send}`}
+                    data-focus-ring
                     className={cx(
                       "flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 text-small text-ink hover:bg-tint-hover",
+                      "has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2",
+                      "has-[input:focus-visible]:outline-focus has-[input:focus-visible]:outline-solid",
                       checked && "bg-tint",
                     )}
                   >
@@ -176,10 +193,31 @@ export function EditorBody({
                       type="radio"
                       name={listName}
                       checked={checked}
-                      onChange={() => onCommit({ field: field.key, action: "set", value: option.send })}
-                      onClick={() => checked && onCommit({ field: field.key, action: "set", value: option.send })}
-                      className="size-4 shrink-0 accent-primary"
+                      onChange={() => {
+                        if (arrowed.current) arrowed.current = false;
+                        else onCommit({ field: field.key, action: "set", value: option.send });
+                      }}
+                      onClick={(event) => {
+                        // A press on the option already chosen chooses it again, such as a computed value you now
+                        // set yourself; Enter does the same from the keyboard.
+                        if (checked && event.detail !== 0) onCommit({ field: field.key, action: "set", value: option.send });
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        event.preventDefault();
+                        onCommit({ field: field.key, action: "set", value: option.send });
+                      }}
+                      className="peer sr-only"
                     />
+                    <span
+                      aria-hidden="true"
+                      className={cx(
+                        "flex size-4 shrink-0 items-center justify-center rounded-full border-2",
+                        checked ? "border-primary" : "border-line-strong",
+                      )}
+                    >
+                      {checked && <span className="size-2 rounded-full bg-primary" />}
+                    </span>
                     <span className="min-w-0">
                       <span className="block">{option.label}</span>
                       {option.caption && <span className="block text-caption text-ink-muted">{option.caption}</span>}

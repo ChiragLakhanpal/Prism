@@ -109,7 +109,7 @@ function PublicView() {
 
 // ── The header and its saved stamp ───────────────────────────────────────
 
-type Saving = { status: "saved"; at: string } | { status: "saving" } | { status: "failed" } | { status: "unsaved" };
+export type Saving = { status: "saved"; at: string } | { status: "saving" } | { status: "failed" } | { status: "unsaved" };
 
 // "Saved at 9:14 a.m.", in World Bank style.
 function clockTime(iso: string): string {
@@ -136,7 +136,7 @@ function stampText(saving: Saving, now: number, preview: boolean): string {
 
 // The saved stamp: caption text, not a live region, refreshed once a minute in silence. A failed save shows
 // "Not saved" with a "Try again" button.
-function SavedStamp({ saving, preview, onRetry }: { saving: Saving; preview: boolean; onRetry?: () => void }) {
+export function SavedStamp({ saving, preview, onRetry }: { saving: Saving; preview: boolean; onRetry?: () => void }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 60_000);

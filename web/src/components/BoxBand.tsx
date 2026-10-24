@@ -34,6 +34,9 @@ export type BoxOption = {
   icon: LucideIcon;
   label: ReactNode;
   line?: ReactNode;
+  // An option the view holds, listed so it stays discoverable, with its reason as its line (ticket 15's plan
+  // option in a preview). Choosing it does nothing.
+  disabled?: boolean;
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
@@ -284,11 +287,13 @@ export function OneBox({
                     id={optionId(index)}
                     role="option"
                     aria-selected={selected}
+                    aria-disabled={option.disabled || undefined}
                     data-box-option={option.key}
-                    onClick={() => onChoose?.(index)}
+                    onClick={() => !option.disabled && onChoose?.(index)}
                     className={cx(
-                      "flex min-h-11 cursor-pointer items-center gap-3 px-4 py-2 text-body text-ink",
-                      selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : "hover:bg-tint-hover",
+                      "flex min-h-11 items-center gap-3 px-4 py-2 text-body",
+                      option.disabled ? "cursor-default text-ink-muted" : "cursor-pointer text-ink",
+                      selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : !option.disabled && "hover:bg-tint-hover",
                     )}
                   >
                     <option.icon aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
@@ -296,7 +301,7 @@ export function OneBox({
                       <span className="block wrap-anywhere">{option.label}</span>
                       {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
                     </span>
-                    {selected && (
+                    {selected && !option.disabled && (
                       <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
                         {copy.box.enter}
                       </kbd>

@@ -11,7 +11,7 @@ import { Table, type Column, type Row } from "../components/Table";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { formatCount, formatDate } from "../lib/format";
-import { useLoad } from "../lib/load";
+import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
 
 const words = copy.packagesTab;
@@ -61,11 +61,9 @@ function rowOf(row: PlannedRow): Row {
   };
 }
 
-export function PackagesPage({ search }: { search: string }) {
-  const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
+// The list of packages and checked plans, in each of its states: loading, failed, empty and ready.
+export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRetry: () => void }) {
   const [page, setPage] = useState(0);
-  const view = new URLSearchParams(search).get("view");
-  const preview = view === "piu" || view === "public";
   const columns: Column[] = [
     { key: "name", header: words.columns.name, width: "w-2/5" },
     { key: "type", header: words.columns.type, short: true, width: "w-[7rem]" },
@@ -87,7 +85,7 @@ export function PackagesPage({ search }: { search: string }) {
   let table;
   if (load.status === "loading") table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "loading", rows: 5 }} />;
   else if (load.status === "error")
-    table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "error", message: words.error, onRetry: retry }} />;
+    table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "error", message: words.error, onRetry }} />;
   else if (load.data.rows.length === 0)
     table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "empty", title: words.emptyTitle, body: words.emptyBody }} />;
   else {
@@ -119,6 +117,13 @@ export function PackagesPage({ search }: { search: string }) {
     );
   }
 
+  return table;
+}
+
+export function PackagesPage({ search }: { search: string }) {
+  const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
+  const view = new URLSearchParams(search).get("view");
+  const preview = view === "piu" || view === "public";
   return (
     <div className="layout-grid" data-packages-page={load.status}>
       <div className="col-span-12">
@@ -132,7 +137,9 @@ export function PackagesPage({ search }: { search: string }) {
           </Button>
           {preview && <p className="text-caption text-ink-muted">{words.previewOff}</p>}
         </div>
-        <div className="mt-6 @lg/page:mt-8">{table}</div>
+        <div className="mt-6 @lg/page:mt-8">
+          <PackagesList load={load} onRetry={retry} />
+        </div>
         {load.status === "loading" && (
           <p role="status" className="sr-only">
             {words.loading}

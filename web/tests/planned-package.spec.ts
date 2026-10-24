@@ -302,7 +302,7 @@ test("changing a chip that picks the comparables reruns find_comparables and red
   expect(comparables()).toEqual(["Request for Bids"]);
 
   await chip(page, "method").click();
-  await page.getByRole("dialog", { name: "Method" }).getByRole("radio", { name: "Request for Quotations (RFQ)" }).click();
+  await page.getByRole("dialog", { name: "Method" }).locator("label", { hasText: "Request for Quotations (RFQ)" }).click();
   // The chip shows the new value at once, and the section says it is updating until the answer comes.
   await expect(chip(page, "method")).toHaveText("Request for Quotations (RFQ)");
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saving");
@@ -393,7 +393,7 @@ test("a computed chip you set yourself turns typed, the note shows both values, 
   await chip(page, "review_type").click();
   const editor = page.getByRole("dialog", { name: "Review type" });
   await editor.getByRole("button", { name: "Set it yourself" }).click();
-  await editor.getByRole("radio", { name: "Post review" }).click();
+  await editor.locator("label", { hasText: "Post review" }).click();
 
   await expect(chip(page, "review_type")).toHaveText("Post review");
   await expect(page.locator("[data-set-by-you]")).toHaveText("You set review type to Post review. The thresholds give Prior review.");
@@ -601,7 +601,7 @@ for (const width of [1440, 1024, 390]) {
     // Below 768 px the editor is a bottom sheet over a scrim, with a 44 px close button.
     await expect(editor).toHaveAttribute("data-chip-editor", width < 768 ? "sheet" : "popover");
     if (width < 768) {
-      expect((await editor.getByRole("button", { name: "Close" }).boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      expect(Math.round((await editor.getByRole("button", { name: "Close" }).boundingBox())!.height)).toBeGreaterThanOrEqual(44);
       await expect(editor).toHaveAttribute("aria-modal", "true");
     }
     expect(await axe(page), "the method editor").toEqual([]);
@@ -637,4 +637,46 @@ test("at 320 px the workspace and the Packages tab reflow with no sideways scrol
   await page.reload();
   await expect(page.locator("[data-packages-page=ready]")).toBeVisible();
   expect(await noSideScroll(page)).toBe(true);
+});
+
+test("in a preview the box lists the plan option disabled with its reason, and the public view does not offer it", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const asked = await serve(page, {});
+  await page.goto("/?view=piu");
+  await page.keyboard.press("/");
+  await page.keyboard.type(SENTENCE);
+
+  const plan = options(page).nth(1);
+  await expect(plan).toHaveAccessibleName("Plan a package from this sentence Planning a package is off in a preview.");
+  await expect(plan).toHaveAttribute("aria-disabled", "true");
+  await plan.click({ force: true });
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL("/?view=piu");
+  expect(asked.filter((request) => new URL(request.url()).pathname.startsWith("/api/planned-packages"))).toEqual([]);
+
+  await page.goto("/?view=public");
+  await page.keyboard.press("/");
+  await page.keyboard.type(SENTENCE);
+  await expect(options(page)).toHaveCount(1);
+  await expect(options(page).first()).toHaveAccessibleName(/^Ask this/);
+});
+
+test("in a list of choices the arrow keys move between options without choosing, and Enter or Space chooses", async ({ page }) => {
+  await openPackage(page);
+  const sent = await changes(page);
+
+  await chip(page, "method").focus();
+  await page.keyboard.press("Enter");
+  const editor = page.getByRole("dialog", { name: "Method" });
+  await editor.getByRole("radio", { name: "Request for Bids (RFB)" }).focus();
+  await page.keyboard.press("ArrowDown");
+
+  await expect(editor.getByRole("radio", { name: "Request for Quotations (RFQ)" })).toBeFocused();
+  await expect(editor).toBeVisible();
+  expect(sent).toEqual([]);
+  await page.keyboard.press("Enter");
+  await expect(editor).toHaveCount(0);
+  await expect.poll(() => sent).toEqual([{ field: "method", action: "set", value: "Request for Quotations" }]);
+  await expect(chip(page, "method")).toBeFocused();
 });

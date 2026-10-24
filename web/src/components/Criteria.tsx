@@ -194,7 +194,7 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
     return found ? valueText(found, value, form) : value;
   };
   const threshold = (amount: number, entry: string, source: string) => (
-    <Num written={formatAmountText(amount)} check={{ tooltip: n.thresholdTip(entry, source) }} />
+    <Num written={formatAmountText(amount)} check={{ tooltip: n.thresholdTip(entry, source) }} inCaption />
   );
   const yours = pkg.fields.filter((value) => field(value.key)?.source === "computed" && value.provenance === "you" && value.computed !== null);
   const sources = [review, market].filter((rule): rule is NonNullable<typeof rule> => Boolean(rule));
