@@ -225,6 +225,51 @@ test("the Summary's record marker shows the value it cites, and the lead says ho
   // Stacked below 768 px, the column heads are hidden, so a money value's units follow its label.
   await page.setViewportSize({ width: 390, height: 900 });
   await expect(summary.locator("[data-fact=commitment]").getByRole("rowheader")).toHaveText("Commitment (US$, millions)");
+
+  // A loan's record lists its amounts one a line, each label on the left and its amount on the right
+  // edge, then "As of" on its own line at the left (the 21 design review, round 2, F19).
+  await summary.locator("[data-fact=commitment] [data-citation]").click();
+  const loan = page.getByRole("dialog").locator("[data-record]");
+  const box = (await loan.boundingBox())!;
+  const amounts = await loan.locator("dd.tabular-nums").all();
+  expect(amounts).toHaveLength(3);
+  for (const amount of amounts) {
+    const edge = (await amount.boundingBox())!;
+    expect(Math.round(box.x + box.width - (edge.x + edge.width))).toBe(0);
+  }
+  const asOf = loan.locator("div").filter({ has: page.getByText("As of", { exact: true }) });
+  expect(Math.round((await asOf.boundingBox())!.x - box.x)).toBe(0);
+  const labels = await loan.locator("dt").evaluateAll((terms) => terms.map((term) => Math.round(term.getBoundingClientRect().left)));
+  expect(new Set(labels).size).toBe(1);
+});
+
+test("a short answer, such as an error, never pulls the footer up into view, on a project's tab or the source view", async ({ page }) => {
+  // The 21 design review, round 2, F10: the tab body and the source view hold a screen's height, so the
+  // footer sits below the fold while a page loads and stays there when a short answer lands.
+  const cases: [string, string, number][] = [
+    ["/projects/P130164", "/api/projects/P130164/summary", 1440],
+    ["/projects/P130164/documents/icr-2019-10-10?page=23&para=54", "/api/projects/P130164/documents/icr-2019-10-10", 390],
+  ];
+  for (const [path, api, width] of cases) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await page.setViewportSize({ width, height: 900 });
+    await mockApi(page, await hubApi());
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route((url) => url.pathname === api, async (route) => {
+      await held;
+      await route.fulfill({ status: 503, contentType: "application/json", body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' });
+    });
+    await page.goto(path);
+    const footer = page.getByRole("contentinfo");
+    await expect(page.locator("main h1")).toBeVisible();
+    expect((await footer.boundingBox())!.y, `${path} loading`).toBeGreaterThanOrEqual(900);
+
+    release();
+
+    await expect(main(page).getByRole("alert")).toBeVisible();
+    expect((await footer.boundingBox())!.y, `${path} after its error`).toBeGreaterThanOrEqual(900);
+  }
 });
 
 test("the Summary's skeleton has as many rows in each table as P130164's populated Summary", async ({ page }) => {
@@ -650,6 +695,17 @@ test("a version that added and re-dated activities lists each in its own table, 
   // With no new date there is nothing to measure, so Moved shows nothing and tells a screen reader why.
   await expect(redated.locator("td")).toHaveText(["Expression of Interest Notice", "Jun 11, 2018", "No date", "Not measured"]);
   await expect(redated.locator("td").last().locator(".sr-only")).toHaveText("Not measured");
+  // A line never breaks at the hyphen of "re-dated" or "re-estimated" (the 21 design review, round 2, F5).
+  const broken = await page.locator("main").evaluate((root) => {
+    const found: string[] = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const parent = node.parentElement!;
+      if (/re-(dated|estimated)/i.test(node.textContent ?? "") && getComputedStyle(parent).whiteSpace !== "nowrap") found.push(node.textContent!);
+    }
+    return found;
+  });
+  expect(broken).toEqual([]);
   await page.setViewportSize({ width: 390, height: 900 });
   await expect(changes.locator("[data-change-kind=redated] li dd").first()).toHaveText("Was Jun 11, 2018. Now no date.");
 });

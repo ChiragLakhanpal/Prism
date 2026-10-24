@@ -22,7 +22,7 @@ import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
-import { Fill, Joined } from "./Fill";
+import { Fill, Joined, Unbroken } from "./Fill";
 import type { View } from "../lib/view";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
@@ -421,7 +421,7 @@ function ChangedLine({ change }: { change?: keyof typeof copy.changes.cell }) {
   if (!change) return null;
   return (
     <span className="mt-1 block text-caption text-ink-muted" data-changed={change}>
-      {copy.changes.cell[change]}
+      <Unbroken text={copy.changes.cell[change]} />
     </span>
   );
 }

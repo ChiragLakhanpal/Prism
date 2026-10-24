@@ -600,7 +600,8 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
 
   return (
     <div className="layout-grid" data-source-page={load.status === "ready" ? (answer!.state === "page" ? answer!.page_state : answer!.state) : load.status}>
-      <div className="col-span-12 @xl/page:col-span-7">
+      {/* A screen's height, as a project's tab body holds, so a short answer never pulls the footer up. */}
+      <div className="col-span-12 min-h-svh @xl/page:col-span-7">
         <Breadcrumb trail={[projectsCrumb, projectCrumb, documentsCrumb, { text: last }]} />
         {body}
       </div>

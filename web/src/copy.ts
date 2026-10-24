@@ -525,6 +525,7 @@ export const copy = {
       "strata.gold.project_closing_date": "Loan history of",
       "strata.gold.ieg_rating": "IEG ratings of",
       "strata.gold.project_isr_rating": "ISR rating of",
+      "strata.silver.isr_ratings": "ISR rating of",
       "strata.ops.plan_baselines": "Baseline for",
     } as Record<string, string>,
     // Each Summary record's source line, by its source_key. {date} is the record's date.
@@ -534,6 +535,7 @@ export const copy = {
       loan_history: "World Bank monthly loan history, reported {date}.",
       ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
+      isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
       plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
     } as Record<string, string>,
     // The fields of a Summary record, by their key, as the projects API and the loans data name them.
@@ -557,6 +559,10 @@ export const copy = {
       bank_performance: "Bank performance",
       rating_name: "Rating",
       value: "Value",
+      current_rating: "Rating in this ISR",
+      previous_rating: "Rating in the ISR before",
+      sequence: "ISR number",
+      pdf_page: "PDF page",
       isr_date: "ISR date",
       esf_risk: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
@@ -2225,6 +2231,11 @@ export const copy = {
       // apart: "Open at page 65 of the Project Appraisal Document for P130164". Ticket 21 points it at the
       // in-app source view, in the same tab, where the World Bank's PDF is linked at the same page.
       pageLinkName: (page: string, docType: string, pid: string) => `Open at page ${page} of the ${docType} for ${pid}`,
+      // Under it, the World Bank's PDF at the same page, since the source view shows the page's passages and
+      // tables but not its picture (the 21 design review, round 2, F16). The name goes on with
+      // pdfLinkName, then ", opens in a new tab".
+      pdfLink: "Open page {page} in the World Bank's PDF",
+      pdfLinkName: (docType: string, pid: string) => ` of the ${docType} for ${pid}`,
       pageLines: {
         scan_annex: "where the {part} starts",
         longest_pad: "the first page I sent to the parser",

@@ -8,6 +8,7 @@
 // against, the parser that read it and the table it counted. The page computes nothing (CLAUDE.md rule 1).
 // A row with no document to show spans one note across its last three cells, with no badge and no link.
 import type { ReactNode } from "react";
+import { ExternalLink, pdfPageHref } from "../../components/ExternalLink";
 import { ProjectId } from "../../components/ProjectId";
 import { TextLink } from "../../components/TextLink";
 import { sourcePageHref } from "../../lib/documents";
@@ -220,6 +221,13 @@ function pageCell(entry: ShelfEntry): ReactNode {
         <Template text={words.pageLink} values={{ page: <span className="tabular-nums">{page}</span> }} />
       </TextLink>
       <Qualifier>{fill(words.pageLines[entry.kind], entry)}</Qualifier>
+      {/* The page's picture is in the World Bank's PDF, which the source view does not show (the 21 design
+          review, round 2, F16); the line above sits between the two links, so their targets keep apart. */}
+      {document.pdf_url && (
+        <ExternalLink href={pdfPageHref(document.pdf_url, entry.hard_page)} name={words.pdfLinkName(document.document_type, document.project_id)}>
+          <Template text={words.pdfLink} values={{ page: <span className="tabular-nums">{page}</span> }} />
+        </ExternalLink>
+      )}
     </Stack>
   );
 }

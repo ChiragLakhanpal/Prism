@@ -77,6 +77,14 @@ for (const width of [1440, 1024, 390]) {
       await expect(link).toHaveAccessibleName(
         `Open at page ${entry.hard_page} of the ${entry.document.document_type} for ${entry.document.project_id}`,
       );
+      // The source view shows passages and tables, not the page's picture, so the World Bank's PDF at the
+      // same page sits under it, in a new tab (the 21 design review, round 2, F16).
+      const pdf = cells.getByRole("link", { name: /^Open page \d+ in the World Bank's PDF/ });
+      await expect(pdf).toHaveAttribute("href", `${entry.document.pdf_url.replace(/^http:/, "https:")}#page=${entry.hard_page}`);
+      await expect(pdf).toHaveAttribute("target", "_blank");
+      await expect(pdf).toHaveAccessibleName(
+        `Open page ${entry.hard_page} in the World Bank's PDF of the ${entry.document.document_type} for ${entry.document.project_id}, opens in a new tab`,
+      );
     }
     // The fixture's outcomes all reach the read-well threshold, so no row has a badge.
     await expect(visible(page, width).getByText(/^(Partial|Gap)$/)).toHaveCount(0);

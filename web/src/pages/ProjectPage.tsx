@@ -170,7 +170,9 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
       <div ref={tabRow} className="col-span-12 mt-6 scroll-mt-2">
         <Tabs label={words.sections} tabs={tabs} onNavigate={openTab} />
       </div>
-      <div className="col-span-12 mt-8">
+      {/* A screen's height, so the footer sits below the fold while a tab loads and stays there when a short
+          answer, such as an error, lands: it never jumps up into view (the 21 design review, round 2, F10). */}
+      <div className="col-span-12 mt-8 min-h-svh">
         {tab === "summary" && <SummaryTab pid={pid} />}
         {tab === "procurement" && <ProcurementTab pid={pid} load={load} retry={retry} />}
         {tab === "documents" && <DocumentsTab pid={pid} />}

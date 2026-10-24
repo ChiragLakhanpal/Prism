@@ -15,7 +15,7 @@ import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { CHANGE_KINDS as KINDS, changeList } from "../lib/changes";
 import { EightColumns } from "./EightColumns";
-import { Fill } from "./Fill";
+import { Fill, Unbroken } from "./Fill";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { Source } from "./Source";
@@ -310,7 +310,8 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
           <Fill template={words.title} slots={{ prev_date: <Num date={previous.plan_date} /> }} />
         </h2>
         <p className="mt-2 text-body text-ink">
-          <Fill template={words.lead} slots={{ change_list: changeList(counts) }} /> {unchanged.length > 0 && words.unchanged(unchanged)}
+          <Fill template={words.lead} slots={{ change_list: <Unbroken text={changeList(counts)} /> }} />{" "}
+          {unchanged.length > 0 && <Unbroken text={words.unchanged(unchanged)} />}
         </p>
         <p className="mt-2 text-caption text-ink-muted">
           {words.matchNote}
@@ -325,7 +326,9 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
       <div className="mt-6 flex flex-col gap-8">
         {shown.map((kind) => (
           <div key={kind} data-change-kind={kind}>
-            <h3 className="text-title text-ink-heading">{title(kind)}</h3>
+            <h3 className="text-title text-ink-heading">
+              <Unbroken text={title(kind)} />
+            </h3>
             {kind === "added" && <ActivityTable kind="added" rows={changes.added} caption={words.caption.added(plan)} />}
             {kind === "dropped" && <ActivityTable kind="dropped" rows={changes.dropped} caption={words.caption.dropped(prev)} />}
             {kind === "redated" && <RedatedTable changes={changes} caption={words.caption.redated(prev)} />}

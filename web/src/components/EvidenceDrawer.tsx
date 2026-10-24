@@ -269,13 +269,17 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
   const columns = copy.checkPlan.columns;
   const given = (value: unknown) => value !== null && value !== undefined && value !== "";
-  const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean }[] = [];
+  const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean; ledger?: boolean }[] = [];
   // A record a project's Summary cites (ticket 21) lists its fields by key: dates as dates, amounts in
-  // their source's form with cents, and text as the record gives it.
+  // their source's form with cents, and text as the record gives it. Each amount takes a whole line, its
+  // label on the left and the amount on the list's right edge, so a loan's three amounts line up and the
+  // date after them starts its own line at the left (the 21 design review, round 2, F19).
   for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string }[]) {
     const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
     if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
-    else if (field.kind === "usd") fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true });
+    else if (field.kind === "usd") {
+      fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true, ledger: true });
+    }
     else fields.push({ label, value: linkProjectIds(String(field.value)), wide: String(field.value).length > 24 });
   }
   if (given(row.description)) fields.push({ label: copy.evidence.recordDescription, value: String(row.description), wide: true });
@@ -289,12 +293,19 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
     <div className="flex flex-col gap-4 rounded-md border border-line p-4">
       {/* A lesson has no STEP fields: its statement is the drawer's title, so only its source line shows. */}
       {fields.length > 0 && <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
-        {fields.map((field, index) => (
-          <div key={index} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
-            <dt className="text-caption text-ink-muted">{field.label}</dt>
-            <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
-          </div>
-        ))}
+        {fields.map((field, index) =>
+          field.ledger ? (
+            <div key={index} className="col-span-full flex min-w-0 items-baseline justify-between gap-4">
+              <dt className="text-caption text-ink-muted">{field.label}</dt>
+              <dd className="text-right text-small whitespace-nowrap text-ink tabular-nums">{field.value}</dd>
+            </div>
+          ) : (
+            <div key={index} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
+              <dt className="text-caption text-ink-muted">{field.label}</dt>
+              <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
+            </div>
+          ),
+        )}
       </dl>}
       <RecordSourceLine evidence={evidence} />
     </div>

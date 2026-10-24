@@ -302,6 +302,32 @@ def test_p156634_s_summary_cites_its_newest_isr_s_ratings_to_the_passage_that_pr
         assert row["source"]["evidence_id"] in held, key
 
 
+def test_an_isr_rating_with_no_passage_that_prints_it_cites_the_rating_s_own_record(fixture_db, tmp_path):
+    # The 21 design review, round 2, F2: a rating read from an ISR whose passages neither name nor print
+    # it still gets a marker, which opens the rating as the passage reader read it.
+    database = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, database)
+    with DuckDBEngine.open(database) as engine:
+        engine.run("UPDATE strata.gold.passage SET section_path = :none, text = :none WHERE document_id = :isr",
+                   {"none": "-", "isr": "40114539"})
+    app = app_on(database)
+
+    summary = get(app, "/api/projects/P156634/summary?asof=2026-10-23").json()
+    found = facts(summary)
+    evidence_id = found["pdo"]["source"]["evidence_id"]
+
+    assert evidence_id == "strata.silver.isr_ratings:P156634/40114539/pdo"
+    event = next(event for event in summary["sources"] if event["id"] == evidence_id)
+    fields = {field["key"]: field["value"] for field in event["row"]["fields"]}
+    assert fields["current_rating"] == found["pdo"]["value"]
+    assert (fields["isr_date"], fields["sequence"]) == ("2026-06-30", "19")
+    assert found["implementation"]["source"]["evidence_id"] == "strata.silver.isr_ratings:P156634/40114539/implementation"
+    opened = get(app, f"/api/evidence?id={evidence_id}&asof=2026-10-23")
+    assert opened.status_code == 200
+    assert opened.json()["row"]["fields"] == event["row"]["fields"]
+    assert get(app, f"/api/evidence?id={evidence_id}&asof=2026-06-29").status_code == 404
+
+
 def test_the_lead_says_whether_any_amount_was_canceled_however_large(fixture_db, tmp_path):
     # The 21 review, round 2, item 2: US$1,234.5 million is written with a thousands separator, which the
     # browser cannot read as a number, so the route says whether any was canceled.

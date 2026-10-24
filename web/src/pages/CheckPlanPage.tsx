@@ -15,7 +15,7 @@ import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
-import { Fill } from "../components/Fill";
+import { Fill, Unbroken } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { BaselinePanel } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
@@ -123,7 +123,7 @@ function ChangeLine({ changes }: { changes: PlanChanges }) {
   else if (changes.state === "previous_not_read") text = <Fill template={line.prevUnread} slots={{ prev_date: prev }} />;
   else if (!changed(changes.counts)) text = <Fill template={line.same} slots={{ prev_date: prev }} />;
   else {
-    text = <Fill template={line.line} slots={{ prev_date: prev, change_list: changeList(changes.counts!) }} />;
+    text = <Fill template={line.line} slots={{ prev_date: prev, change_list: <Unbroken text={changeList(changes.counts!)} /> }} />;
     link = true;
   }
   return (

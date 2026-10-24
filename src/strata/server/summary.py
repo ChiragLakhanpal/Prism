@@ -11,7 +11,7 @@ evidence drawer shows it, so a citation marker opens at once:
 - money: the commitment, disbursed and canceled amounts summed over the project's loans and credits
   (gold.loan), in US$ millions to one decimal, each a column the route works out;
 - ratings: the latest ISR's ratings as its own overall ratings table prints them (silver.isr_ratings,
-  cited to that table's passage), the projects API's latest Procurement rating, the outcome rating in the
+  cited to that table's passage, or to the rating's own row when no passage prints it), the projects API's latest Procurement rating, the outcome rating in the
   ICR, as the nightly job read it from the ICR's text with its quote on the page (gold.assertion, cited to
   that passage), IEG's outcome and World Bank performance ratings (gold.ieg_rating), and the overall risk
   rating under the Environmental and Social Framework, or the Environmental Assessment Category of a
@@ -54,9 +54,9 @@ ICR_OUTCOME = {"subject_kind": "project", "attribute": "outcome", "evidence_tier
 LEADS = {"Pipeline": "pipeline", "Dropped": "dropped"}
 SECTOR_YEAR = re.compile(r"^FY\d{2} - ")  # the projects API's taxonomy year before each sector's name
 
-PROJECT_RECORD, LOAN_RECORD, HISTORY_RECORD, IEG_RECORD, API_RATING_RECORD = (
+PROJECT_RECORD, LOAN_RECORD, HISTORY_RECORD, IEG_RECORD, API_RATING_RECORD, ISR_RATING_RECORD = (
     "strata.gold.project", "strata.gold.loan", "strata.gold.project_closing_date", "strata.gold.ieg_rating",
-    "strata.gold.project_isr_rating")
+    "strata.gold.project_isr_rating", "strata.silver.isr_ratings")
 
 
 @cache
@@ -174,6 +174,18 @@ def _api_rating_record(project_id: str, row: dict) -> dict:
                     ("isr_date", _iso(row["isr_date"]), "date")])
 
 
+def _isr_rating_record(project_id: str, row: dict) -> dict:
+    """A rating as the passage reader read it from an ISR's overall ratings table, keyed by the ISR and the
+    Summary's name for the rating (the 21 design review, round 2, F2)."""
+    key = f"{project_id}/{row['document_id']}/{ISR_RATINGS[row['rating_name']]}"
+    return record_event(f"{ISR_RATING_RECORD}:{key}", row["public_from"], "isr_ratings", project_id, row["isr_date"],
+                   project_id,
+                   [("rating_name", row["rating_name"], "text"), ("current_rating", row["current_rating"], "text"),
+                    ("previous_rating", row["previous_rating"], "text"), ("isr_date", _iso(row["isr_date"]), "date"),
+                    ("sequence", None if row["sequence"] is None else str(row["sequence"]), "text"),
+                    ("pdf_page", str(row["pdf_page"]), "text")])
+
+
 def _read(build: Callable[[str, dict], dict], query: str, pick: Callable[[dict, list[str]], bool]):
     """A reader for the evidence drawer: the record a key names, as of the date, or None."""
     def reader(engine: Engine, key: str, as_of: dt.date) -> dict | None:
@@ -199,6 +211,8 @@ RECORD_READERS = {
     IEG_RECORD: _read(_ieg_record, "ieg", lambda row, parts: len(parts) == 3 and (row["evaluation_type"], str(row["evaluation_fy"]))
                == (parts[1], parts[2])),
     API_RATING_RECORD: _read(_api_rating_record, "api_ratings", lambda row, parts: len(parts) == 2 and row["rating_code"] == parts[1]),
+    ISR_RATING_RECORD: _read(_isr_rating_record, "isr_ratings", lambda row, parts: len(parts) == 3 and row["document_id"] == parts[1]
+                             and ISR_RATINGS.get(row["rating_name"]) == parts[2]),
 }
 
 
@@ -295,7 +309,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         if not key:
             continue
         event = (evidence_routes.read(engine, f"strata.gold.passage:{row['passage_id']}", as_of)
-                 if row["passage_id"] else None)
+                 if row["passage_id"] else _isr_rating_record(project_id, row))
         ratings.append(_fact(key, row["current_rating"], sources.cite(
             event, kind="isr", date=_iso(row["isr_date"]), sequence=row["sequence"])))
     ratings.sort(key=lambda fact: list(ISR_RATINGS.values()).index(fact["key"]))

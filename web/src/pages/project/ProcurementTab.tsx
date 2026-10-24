@@ -11,7 +11,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
 import { EightColumns } from "../../components/EightColumns";
-import { Fill } from "../../components/Fill";
+import { Fill, Unbroken } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
 import { Num } from "../../components/Num";
 import { SkeletonLine } from "../../components/Skeleton";
@@ -53,7 +53,7 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
     sentence = (
       <Fill
         template={words.lead}
-        slots={{ prev_date: long(found.previous_plan_date), plan_date: long(latest.plan_date), change_list: changeList(found.counts!) }}
+        slots={{ prev_date: long(found.previous_plan_date), plan_date: long(latest.plan_date), change_list: <Unbroken text={changeList(found.counts!)} /> }}
       />
     );
     link = `/projects/${pid}/procurement/${agency.agency_id}/${latest.plan_date}#changes`;
