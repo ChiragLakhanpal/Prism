@@ -8,7 +8,9 @@
 // loses them in some browsers. While it loads, the real title and header stand over skeleton rows 48 px
 // tall, as many as the populated table has, so nothing moves when the facts arrive.
 import { createElement, type ReactNode } from "react";
+import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { Fill } from "./Fill";
 import { LoadingLabel, SkeletonLine } from "./Skeleton";
 
 export type FactRow = {
@@ -91,14 +93,21 @@ export function FactTable({
                 ))
               : rows.map((row, index) => (
                   <tr key={row.key} role="row" data-fact={row.key} className={cx(STACK, "border-line pt-3 @md/page:pt-0", index > 0 && "border-t")}>
-                    <th role="rowheader" scope="row" className={cx(CELL, "text-left text-caption font-normal text-ink-muted @md/page:text-small @md/page:text-ink")}>
+                    {/* Each cell's first line is 24 px, the value's, so the three columns share a baseline. */}
+                    <th role="rowheader" scope="row" className={cx(CELL, "text-left text-caption font-normal text-ink-muted @md/page:text-small @md/page:leading-6 @md/page:text-ink")}>
                       {row.label}
+                      {/* Stacked, the column heads are hidden, so a number's units follow its label. */}
+                      {numeric && (
+                        <span aria-hidden="true" className="@md/page:hidden">
+                          <Fill template={copy.table.stackedUnit} slots={{ unit: valueHeader }} />
+                        </span>
+                      )}
                     </th>
                     <td role="cell" className={value}>
                       {row.value}
                       {row.note && <span className="mt-1 block text-caption text-ink-muted">{row.note}</span>}
                     </td>
-                    <td role="cell" className={cx(CELL, "pb-3 text-caption text-ink-muted tabular-nums")} data-fact-source>
+                    <td role="cell" className={cx(CELL, "pb-3 text-caption text-ink-muted tabular-nums @md/page:leading-6")} data-fact-source>
                       {row.source}
                     </td>
                   </tr>

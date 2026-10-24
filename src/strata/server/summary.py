@@ -111,7 +111,16 @@ def _record(evidence_id: str, public_from, source_key: str, project_id: str, dat
     }
 
 
-def _project_record(row: dict, as_of: dt.date) -> dict:
+def _sector_shares(sectors: list[dict]) -> list[str]:
+    """The projects API's sectors with their shares, as the Summary and its record write them."""
+    return [f"{SECTOR_YEAR.sub('', row['sector_name'] or row['sector_code'])}: {_share(row['share_percent'])}"
+            for row in sectors if row["share_percent"] is not None]
+
+
+def _project_record(row: dict, as_of: dt.date, environment: list[dict], sectors: list[dict]) -> dict:
+    """The projects API's record as the drawer shows it, with every value the Summary cites it for: its
+    dates, region and agencies, the ESF risk rating or Environmental Assessment Category, the sector in
+    Strata's taxonomy with the API's sector shares, and the commitment when no loan record gives it."""
     current = record_is_current(row, as_of)
     pid = row["project_id"]
     values = [("project_name", row["project_name"], "text"), ("country", row["country"], "text")]
@@ -119,6 +128,12 @@ def _project_record(row: dict, as_of: dt.date) -> dict:
         values += [("status", row["status"], "text"), ("approval_date", _iso(row["approval_date"]), "date"),
                    ("closing_date", _iso(row["closing_date"]), "date"), ("region", row["region"], "text"),
                    ("implementing_agency", row["implementing_agency"], "text")]
+        if environment:
+            values += [("esf_risk", environment[0]["esf_risk"], "text"),
+                       ("ea_category", environment[0]["ea_category"], "text")]
+        values += [("sector_name", row["sector_name"], "text")]
+        values += [("sector_share", share, "text") for share in _sector_shares(sectors)]
+        values += [("total_commitment_usd", _cents(_money(row["total_commitment_usd"])), "usd")]
     when = record_date(row) if current else _day(row["public_from"])
     return _record(f"{PROJECT_RECORD}:{pid}", when, "projects_api", pid, when, pid, values)
 
@@ -166,7 +181,11 @@ def _read(build: Callable[[str, dict], dict], query: str, pick: Callable[[dict, 
 
 def _project_reader(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     found = _rows(engine, "project", project_id=key, as_of=as_of)
-    return None if not found else {"kind": "record", "row": _project_record(found[0], as_of)["row"]}
+    if not found:
+        return None
+    environment = _rows(engine, "environment", project_id=key, as_of=as_of)
+    sectors = _rows(engine, "sectors", project_id=key, as_of=as_of)
+    return {"kind": "record", "row": _project_record(found[0], as_of, environment, sectors)["row"]}
 
 
 RECORD_READERS = {
@@ -217,7 +236,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     icr = _rows(engine, "icr_rating", project_id=project_id, as_of=as_of, **ICR_OUTCOME)
 
     sources = _Sources()
-    project_event = _project_record(record, as_of)
+    project_event = _project_record(record, as_of, environment, sectors)
     when = project_event["row"]["source"]["document_date"]
     record_source = sources.cite(project_event, kind="projects_api", date=when)
 
@@ -298,13 +317,15 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     # Region, sectors and implementing agencies.
     who = [_fact("region", record["region"] if current else None, record_source),
            _fact("sectors", record["sector_name"] if current else None, record_source,
-                 values=[f"{SECTOR_YEAR.sub('', row['sector_name'] or row['sector_code'])}: {_share(row['share_percent'])}"
-                         for row in sectors if row["share_percent"] is not None] if current else []),
+                 values=_sector_shares(sectors) if current else []),
            _fact("agencies", None, record_source,
                  values=implementing_agencies(record["implementing_agency"]) if current else [])]
 
     status = record["status"] if current else None
     totals = {fact["key"]: fact["value"] for fact in money}
+    # Whether any was canceled, decided here from the amounts, since "1,234.5" is not a number the browser
+    # can read (the 21 review, round 2, item 2).
+    canceled = sum((_money(row["cancelled_usd"]) or Decimal(0) for row in loans), Decimal(0))
     return {
         "as_of": as_of.isoformat(),
         "project": {"project_id": project_id, "project_name": record["project_name"],
@@ -312,7 +333,8 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         "lead": {"kind": LEADS.get(status) or ("closed" if closing and closing <= as_of else "active"),
                  "closing_date": _iso(closing), "moves": len(history_rows) if history else None,
                  "commitment": totals.get("commitment"), "disbursed": totals.get("disbursed"),
-                 "canceled": totals.get("canceled"), "disbursed_as_of": disbursed_as_of},
+                 "canceled": totals.get("canceled"), "any_canceled": canceled > 0,
+                 "disbursed_as_of": disbursed_as_of},
         "dates": dates,
         "history": {"known": bool(history), "rows": history_rows, "source": history_source},
         "money": money,

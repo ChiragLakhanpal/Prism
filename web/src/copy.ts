@@ -556,6 +556,11 @@ export const copy = {
       rating_name: "Rating",
       value: "Value",
       isr_date: "ISR date",
+      esf_risk: "Environmental and social risk",
+      ea_category: "Environmental Assessment Category",
+      sector_name: "Sector, in Strata's taxonomy",
+      sector_share: "Sector and share",
+      total_commitment_usd: "Total commitment (US$)",
     } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
@@ -690,6 +695,9 @@ export const copy = {
   // The title, count and source lines show only with the rows. While the rows load, skeleton
   // lines hold their places; an empty or failed table shows only its own card or alert.
   table: {
+    // A fact table's units after a stacked row's label below 768 px, where the column heads are hidden:
+    // "Commitment (US$, millions)".
+    stackedUnit: " ({unit})",
     showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
     showingOne: (noun: string) => `Showing 1 ${noun}`,
@@ -814,8 +822,9 @@ export const copy = {
     unreadNote:
       "I read the latest version, the one before it and the earliest version that lists each activity. I list the " +
       "other versions but haven't read them.",
-    source: "World Bank documents and reports API, Procurement Plans for {pid}, through {date}.",
-    sourceUndated: "World Bank documents and reports API, Procurement Plans for {pid}.",
+    // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId).
+    source: "World Bank documents and reports API, Procurement Plans listed for this project, through {date}.",
+    sourceUndated: "World Bank documents and reports API, Procurement Plans listed for this project.",
     agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
     // Two or more agencies with no plan share one block after the agencies with plans.
     otherAgencies: "Other implementing agencies",
@@ -991,7 +1000,7 @@ export const copy = {
       esf_rating: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
       region: "Region",
-      sector: "Sector",
+      sector: "Sector, in Strata's taxonomy",
       sectors: "Sectors in the project record",
       agency: "Implementing agency",
       agencies: "Implementing agencies",
@@ -1034,7 +1043,9 @@ export const copy = {
     eaNote:
       "The project record has no risk rating under the Environmental and Social Framework (ESF), so I show its " +
       "Environmental Assessment Category.",
-    noRatings: "I haven't read an ISR, an ICR or an ICR Review for this project, so I have no ratings to show.",
+    noRatings:
+      "I haven't read an ISR, an Implementation Completion and Results Report (ICR) or an ICR Review for this project, " +
+      "so I have no ratings to show.",
     loading: "Loading this summary.",
     error: "I couldn't load this summary because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't show this summary.",
@@ -1080,6 +1091,9 @@ export const copy = {
       isrUndated: "ISR of {date}",
       procurement_plan: "{agency}, plan of {date}",
       procurementPlanUnnamed: "Procurement Plan of {date}",
+      // A listed document whose type the documents API leaves blank.
+      untyped: "Document of {date}",
+      untypedUndated: "Document with no type or date",
       icr: "Implementation Completion and Results Report",
       icr_review: "ICR Review",
       ppar: "Project Performance Assessment Report",

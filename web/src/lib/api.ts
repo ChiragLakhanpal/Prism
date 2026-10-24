@@ -184,6 +184,8 @@ export type Summary = {
     commitment: string | null;
     disbursed: string | null;
     canceled: string | null;
+    // Whether any amount was canceled, which the route decides, since "1,234.5" does not read as a number.
+    any_canceled: boolean;
     disbursed_as_of: string | null;
   };
   dates: Fact[];

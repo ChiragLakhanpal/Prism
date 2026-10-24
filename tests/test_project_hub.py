@@ -210,7 +210,8 @@ def test_p130164_s_summary_gives_every_value_with_its_source_in_one_small_answer
     # 121,630,912.89 and 30,696,577.26.
     assert [found[key]["value"] for key in ("commitment", "disbursed", "canceled")] == ["160.0", "121.6", "30.7"]
     assert summary["lead"] == {"kind": "closed", "closing_date": "2018-12-31", "moves": 0, "commitment": "160.0",
-                               "disbursed": "121.6", "canceled": "30.7", "disbursed_as_of": "2026-09-30"}
+                               "disbursed": "121.6", "canceled": "30.7", "any_canceled": True,
+                               "disbursed_as_of": "2026-09-30"}
     assert found["pdo"]["value"] == ground_truth("isr-13-rating")
     assert found["pdo"]["source"]["evidence_id"] == "strata.gold.passage:30730274/v1/s3"
     # The ICR's own outcome rating, from its paragraph 45, sits before IEG's, in the order they were written.
@@ -269,6 +270,50 @@ def test_a_project_with_a_risk_rating_under_the_esf_shows_it_in_place_of_its_env
     assert "ea_category" not in found
     # It is a value of the projects API's record, cited as that record, like the region.
     assert found["esf_rating"]["source"] == found["region"]["source"]
+
+
+def test_every_value_cited_to_a_record_is_one_of_that_record_s_fields(hub):
+    # The 21 review, round 2, item 1: a reader who opens the marker beside "B" or "97%" finds that value in
+    # the record the drawer shows. A money fact cites the loans it sums, which carry their own amounts.
+    for pid in ("P130164", "P156634"):
+        summary = get(hub, f"/api/projects/{pid}/summary?asof=2026-10-23").json()
+        events = {event["id"]: event for event in summary["sources"]}
+        for key, fact in facts(summary).items():
+            event = events[fact["source"]["evidence_id"]]
+            if event["kind"] != "record" or key in ("commitment", "disbursed", "canceled") and fact.get("loans"):
+                continue
+            fields = [field["value"] for field in event["row"]["fields"]]
+            shown = [fact["value"]] if fact["value"] is not None else []
+            for value in shown + fact.get("values", []):
+                assert any(value == field or value in field for field in fields), (pid, key, value)
+
+
+def test_p156634_s_summary_cites_its_newest_isr_s_ratings_to_the_passage_that_prints_them(hub):
+    # ISR 19's overall ratings table sits in a section the ISR numbers 3, not "Overall Ratings", and its
+    # passage prints both ratings (data/fixture/recorded/documents/P156634, the ISR of June 30, 2026).
+    summary = get(hub, "/api/projects/P156634/summary?asof=2026-10-23").json()
+    found = facts(summary)
+
+    for key in ("pdo", "implementation"):
+        assert found[key]["source"]["evidence_id"] == "strata.gold.passage:40114539/v1/s3", key
+    held = {event["id"] for event in summary["sources"]}
+    for key, row in found.items():
+        assert row["source"]["evidence_id"] in held, key
+
+
+def test_the_lead_says_whether_any_amount_was_canceled_however_large(fixture_db, tmp_path):
+    # The 21 review, round 2, item 2: US$1,234.5 million is written with a thousands separator, which the
+    # browser cannot read as a number, so the route says whether any was canceled.
+    database = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, database)
+    with DuckDBEngine.open(database) as engine:
+        engine.run("UPDATE strata.gold.loan SET cancelled_usd = :usd WHERE project_id = :pid",
+                   {"usd": "1234500000.00", "pid": "P130164"})
+
+    lead = get(app_on(database), "/api/projects/P130164/summary?asof=2026-10-23").json()["lead"]
+
+    assert (lead["canceled"], lead["any_canceled"]) == ("1,234.5", True)
+    assert get(app_on(fixture_db), "/api/projects/P156634/summary?asof=2026-10-23").json()["lead"]["any_canceled"] is True
 
 
 # ── Packages ─────────────────────────────────────────────────────────────

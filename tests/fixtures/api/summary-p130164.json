@@ -13,6 +13,7 @@
     "commitment": "160.0",
     "disbursed": "121.6",
     "canceled": "30.7",
+    "any_canceled": true,
     "disbursed_as_of": "2026-09-30"
   },
   "dates": [
@@ -259,6 +260,31 @@
             "key": "implementing_agency",
             "value": "Rajasthan State Public Works Department",
             "kind": "text"
+          },
+          {
+            "key": "ea_category",
+            "value": "B",
+            "kind": "text"
+          },
+          {
+            "key": "sector_name",
+            "value": "Transportation",
+            "kind": "text"
+          },
+          {
+            "key": "sector_share",
+            "value": "Rural and Inter-Urban Roads: 97%",
+            "kind": "text"
+          },
+          {
+            "key": "sector_share",
+            "value": "Public Administration - Transportation: 3%",
+            "kind": "text"
+          },
+          {
+            "key": "total_commitment_usd",
+            "value": "160000000.00",
+            "kind": "usd"
           }
         ]
       },

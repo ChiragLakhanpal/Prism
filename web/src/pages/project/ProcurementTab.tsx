@@ -14,7 +14,6 @@ import { EightColumns } from "../../components/EightColumns";
 import { Fill } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
 import { Num } from "../../components/Num";
-import { ProjectId } from "../../components/ProjectId";
 import { SkeletonLine } from "../../components/Skeleton";
 import { Table, type Column, type Row } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
@@ -134,9 +133,9 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
           state={{ status: "ready", rows }}
           source={
             through ? (
-              <Fill template={plans.source} slots={{ pid: <ProjectId pid={pid} />, date: formatDate(through) }} />
+              <Fill template={plans.source} slots={{ date: formatDate(through) }} />
             ) : (
-              <Fill template={plans.sourceUndated} slots={{ pid: <ProjectId pid={pid} /> }} />
+              plans.sourceUndated
             )
           }
         />

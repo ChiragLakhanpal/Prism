@@ -18,7 +18,6 @@ import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";
-import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Tabs } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
@@ -70,8 +69,12 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   // The server's 404 for a project it has no record of; any other 404 is a service that didn't answer.
   const notFound = load.status === "error" && load.error?.status === 404 && load.error.body.code === "unknown_project";
   const projectsCrumb = { text: copy.breadcrumb.projects, href: "/projects" };
+  // The current crumb names the project as the h1 does, by the server's display name, with its ID in plain
+  // mono: the h1's ProjectId just below it is the link to this page, so the crumb adds no second tab stop.
   const named = data ? (
-    <Fill template={copy.breadcrumb.project} slots={{ name: data.project.project_name, pid: <ProjectId pid={pid} /> }} />
+    <span data-project-crumb>
+      <Fill template={copy.breadcrumb.project} slots={{ name: data.project.display_name ?? data.project.project_name, pid: idText }} />
+    </span>
   ) : null;
 
   if (notFound) {

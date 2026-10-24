@@ -289,8 +289,8 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
     <div className="flex flex-col gap-4 rounded-md border border-line p-4">
       {/* A lesson has no STEP fields: its statement is the drawer's title, so only its source line shows. */}
       {fields.length > 0 && <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
-        {fields.map((field) => (
-          <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
+        {fields.map((field, index) => (
+          <div key={index} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
             <dt className="text-caption text-ink-muted">{field.label}</dt>
             <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
           </div>

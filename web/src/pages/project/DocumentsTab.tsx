@@ -38,6 +38,24 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 const table = (iso: string) => formatDate(iso, { style: "table" });
 const CELL = "px-3 py-3 align-top";
 
+// A date in a cell or a link, kept on one line so it reads as one unit (DESIGN.md section 3).
+function Day({ iso }: { iso: string }) {
+  return (
+    <span data-day className="whitespace-nowrap">
+      <Num date={iso} style="table" />
+    </span>
+  );
+}
+
+// A group's count, kept on one line with its noun: "1 document".
+function GroupCount({ count }: { count: number }) {
+  return (
+    <span data-group-count className="ml-2 whitespace-nowrap text-caption font-normal text-ink-muted">
+      {words.groupCount(count, whole(count))}
+    </span>
+  );
+}
+
 // A document's name in the list, from the copy file by its type, never the API's long title.
 export function documentName(document: Pick<ListedDocument, "type" | "document_type" | "document_date" | "sequence" | "agency">): string {
   const date = document.document_date ? table(document.document_date) : "";
@@ -48,7 +66,8 @@ export function documentName(document: Pick<ListedDocument, "type" | "document_t
     case "procurement_plan":
       return document.agency ? fill(name.procurement_plan, { agency: document.agency, date }) : fill(name.procurementPlanUnnamed, { date });
     case "other":
-      return document.document_type;
+      if (document.document_type) return document.document_type;
+      return date ? fill(name.untyped, { date }) : name.untypedUndated;
     default:
       return fill(name[document.type], { date });
   }
@@ -85,7 +104,7 @@ function NameCell({ document, pid }: { document: ListedDocument; pid: string }) 
           <Fill template={words.reissueNote} slots={{ date: <Num date={reissue.document_date} /> }} />{" "}
           {reissue.doc_key && (
             <TextLink href={`/projects/${pid}/documents/${reissue.doc_key}`}>
-              <Fill template={words.reissueLink} slots={{ date: table(reissue.document_date) }} />
+              <Fill template={words.reissueLink} slots={{ date: <span data-day className="whitespace-nowrap">{table(reissue.document_date)}</span> }} />
             </TextLink>
           )}
         </span>
@@ -100,19 +119,19 @@ function DatedCell({ document }: { document: ListedDocument }) {
   if (reissue?.document_date && document.document_date) {
     return (
       <>
-        <Num date={reissue.document_date} style="table" />
+        <Day iso={reissue.document_date} />
         <span className="block">
-          <Fill template={words.reissueDated} slots={{ date: <Num date={document.document_date} style="table" /> }} />
+          <Fill template={words.reissueDated} slots={{ date: <Day iso={document.document_date} /> }} />
         </span>
       </>
     );
   }
-  return document.document_date ? <Num date={document.document_date} style="table" /> : <span className="text-ink-muted">{copy.notInRecord}</span>;
+  return document.document_date ? <Day iso={document.document_date} /> : <span className="text-ink-muted">{copy.notInRecord}</span>;
 }
 
 function DisclosedCell({ document }: { document: ListedDocument }) {
   const reissue = document.reissue;
-  const one = (iso: string | null) => (iso ? <Num date={iso} style="table" /> : <span className="text-ink-muted">{copy.notInRecord}</span>);
+  const one = (iso: string | null) => (iso ? <Day iso={iso} /> : <span className="text-ink-muted">{copy.notInRecord}</span>);
   if (reissue) {
     return (
       <>
@@ -124,13 +143,15 @@ function DisclosedCell({ document }: { document: ListedDocument }) {
   return one(document.disclosed_on);
 }
 
-function PagesCell({ document }: { document: ListedDocument }) {
+// Pages read: right-aligned in the table, and at the card's left edge below 768 px, where every value
+// starts at one edge (DESIGN.md section 5, Tables).
+function PagesCell({ document, align = "end" }: { document: ListedDocument; align?: "end" | "start" }) {
   if (!document.read || document.pages_read === null || document.pdf_pages === null) {
     return <span className="text-ink-muted">{words.notRead}</span>;
   }
   return (
-    <span className="inline-flex flex-col items-end gap-1">
-      <span className="tabular-nums">
+    <span className={cx("inline-flex flex-col gap-1", align === "end" ? "items-end" : "items-start")}>
+      <span data-pages-read className="whitespace-nowrap tabular-nums">
         <Fill template={words.pagesOf} slots={{ read: whole(document.pages_read), pages: whole(document.pdf_pages) }} />
       </span>
       {document.partial && <StatusBadge kind="partial" />}
@@ -158,7 +179,7 @@ function GroupRows({ group, pid, open, onToggle, bodyId }: { group: Group; pid: 
       <tr className="border-t border-line bg-surface">
         <th colSpan={COLUMNS.length} scope="rowgroup" className="px-3 pt-6 pb-2 text-left font-normal">
           <span className="text-title text-ink-heading">{words.group[group.type]}</span>
-          <span className="ml-2 text-caption text-ink-muted">{words.groupCount(group.count, whole(group.count))}</span>
+          <GroupCount count={group.count} />
         </th>
       </tr>
       {shown.map((document) => (
@@ -207,7 +228,7 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
     <section data-group={group.type}>
       <h3 className="text-title text-ink-heading">
         {words.group[group.type]}
-        <span className="ml-2 text-caption font-normal text-ink-muted">{words.groupCount(group.count, whole(group.count))}</span>
+        <GroupCount count={group.count} />
       </h3>
       <ul id={listId} className="mt-2 flex flex-col gap-3">
         {shown.map((document) => (
@@ -216,7 +237,7 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
             <dl className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-x-4 gap-y-2">
               {field(words.col.dated, <DatedCell document={document} />)}
               {field(words.col.disclosed, <DisclosedCell document={document} />)}
-              {field(words.col.pages, <PagesCell document={document} />)}
+              {field(words.col.pages, <PagesCell document={document} align="start" />)}
             </dl>
             <div className="mt-2">
               <PdfCell document={document} />

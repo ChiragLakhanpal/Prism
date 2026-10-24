@@ -13,6 +13,7 @@
     "commitment": "300.0",
     "disbursed": "293.5",
     "canceled": "19.4",
+    "any_canceled": true,
     "disbursed_as_of": "2026-09-30"
   },
   "dates": [
@@ -163,7 +164,7 @@
       "key": "pdo",
       "value": "Moderately Satisfactory",
       "source": {
-        "evidence_id": null,
+        "evidence_id": "strata.gold.passage:40114539/v1/s3",
         "kind": "isr",
         "date": "2026-06-30",
         "sequence": 19
@@ -173,7 +174,7 @@
       "key": "implementation",
       "value": "Moderately Satisfactory",
       "source": {
-        "evidence_id": null,
+        "evidence_id": "strata.gold.passage:40114539/v1/s3",
         "kind": "isr",
         "date": "2026-06-30",
         "sequence": 19
@@ -297,6 +298,36 @@
             "key": "implementing_agency",
             "value": "Coast Water Works Development Agency,Garissa Water and Saniation Company,Kilifi - Mariakani Water and Sewerage Company Ltd,Kwale Water and Sewerage Company Ltd.,Malindi Water and Sewerage Company Ltd,Ministry of Water, Sanitation and Irrigation,Mombasa Water and Sanitation Services Company,Northern Water Works Development Agency,Tavevo Water and Sewerage Company Ltd,Wajir Water and Sewerage Company,Water Sector Trust Fund,Water Services Regulatory Board",
             "kind": "text"
+          },
+          {
+            "key": "ea_category",
+            "value": "B",
+            "kind": "text"
+          },
+          {
+            "key": "sector_name",
+            "value": "Water, Sanitation and Waste Management",
+            "kind": "text"
+          },
+          {
+            "key": "sector_share",
+            "value": "Water Supply: 37%",
+            "kind": "text"
+          },
+          {
+            "key": "sector_share",
+            "value": "Public Administration - Water, Sanitation and Waste Management: 33%",
+            "kind": "text"
+          },
+          {
+            "key": "sector_share",
+            "value": "Sanitation: 30%",
+            "kind": "text"
+          },
+          {
+            "key": "total_commitment_usd",
+            "value": "300000000.00",
+            "kind": "usd"
           }
         ]
       },
@@ -514,6 +545,60 @@
             "kind": "date"
           }
         ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.passage:40114539/v1/s3",
+      "kind": "passage",
+      "tool": null,
+      "stratum": "How",
+      "short_name": "ISR",
+      "row": {
+        "evidence_id": "strata.gold.passage:40114539/v1/s3",
+        "public_from": "2026-06-30",
+        "source": {
+          "document_type": "Implementation Status and Results Report",
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "document_id": "40114539",
+          "document_date": "2026-06-30",
+          "report_number": "ISR07733",
+          "version": 1,
+          "section_path": "3",
+          "paragraph": "s3",
+          "paragraph_numbered": false,
+          "pdf_page": 2,
+          "pdf_pages": 10,
+          "pdf_url": "https://documents.worldbank.org/curated/en/099063026170036715/pdf/P156634-a6497888-50b9-45b4-88d2-1303b0327745.pdf",
+          "doc_key": "isr-2026-06-30",
+          "notice_id": null,
+          "notice_url": null
+        },
+        "passage_id": "40114539/v1/s3",
+        "document_id": "40114539",
+        "document_type": "Implementation Status and Results Report",
+        "project_id": "P156634",
+        "version": 1,
+        "section_path": "3",
+        "paragraph": "s3",
+        "paragraph_numbered": false,
+        "part": 1,
+        "parts": 1,
+        "pdf_page": 2,
+        "last_pdf_page": 2,
+        "printed_page": "2 of 10",
+        "language": "en",
+        "parse_route": "A",
+        "kind": "paragraph",
+        "route": "published_text",
+        "scanned": false,
+        "table_title": null,
+        "table_row": null,
+        "cells": null,
+        "notice_id": null,
+        "header": "ISR, P156634, Kenya, sanitation, 3, p.2",
+        "text": "Name Previous Current Progress towards achievement of PDO Moderately Satisfactory Moderately Satisfactory Overall Implementation Progress (IP) Moderately Satisfactory Moderately Satisfactory Overall Risk Rating Moderate Moderate"
       },
       "highlights": []
     },

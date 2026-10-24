@@ -140,7 +140,7 @@ function Lead({ summary }: { summary: Summary }) {
     disbursed_as_of: lead.disbursed_as_of ? <Num date={lead.disbursed_as_of} /> : "",
   };
   const money = lead.commitment !== null && lead.disbursed !== null;
-  const canceled = lead.canceled !== null && Number(lead.canceled) > 0;
+  const canceled = lead.any_canceled;
   let text: ReactNode;
   if (lead.kind === "pipeline") text = words.lead.pipeline;
   else if (lead.kind === "dropped") text = words.lead.dropped;
@@ -178,11 +178,12 @@ function factRows(facts: Fact[], numbers: Map<string, number>, events: Record<st
   }));
 }
 
-// A list of values, one per line, such as the sectors with their shares.
+// A list of values, one per line with 4 px between them, such as the sectors with their shares, so a name
+// that wraps stays apart from the next.
 function Lines({ values }: { values: string[] }) {
   if (values.length === 0) return missing;
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col gap-1">
       {values.map((line) => (
         <li key={line}>{line}</li>
       ))}
@@ -236,8 +237,9 @@ function History({ summary, numbers, events }: { summary: Summary; numbers: Map<
   );
 }
 
-// The skeleton's rows: as many as a populated P130164 summary has in each table.
-const LOADING_ROWS = { dates: 3, money: 3, ratings: 4, who: 3 };
+// The skeleton's rows: as many as a populated P130164 summary has in each table (approval and closing dates;
+// commitment, disbursed and canceled; seven ratings; region, sector, sectors and agency).
+const LOADING_ROWS = { dates: 2, money: 3, ratings: 7, who: 4 };
 
 const head = (key: keyof typeof words.col) => words.col[key];
 
@@ -267,7 +269,15 @@ export function SummarySkeleton() {
         {words.loading}
       </p>
       <div className="mt-8 flex flex-col gap-12">
-        {group("dates", "date")}
+        <div>
+          {group("dates", "date")}
+          {/* The closing date history's title and its one sentence with its source, as P130164 has. */}
+          <div className="mt-4" aria-hidden="true">
+            <h4 className="text-small font-bold text-ink-heading">{words.history.title}</h4>
+            <SkeletonLine className="mt-1 text-body" width="w-3/5" />
+            <SkeletonLine className="mt-1 text-caption" width="w-2/5" />
+          </div>
+        </div>
         {group("money", "money", true)}
         {group("ratings", "rating")}
         {group("who", "detail")}

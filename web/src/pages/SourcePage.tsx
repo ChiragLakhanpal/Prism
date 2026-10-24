@@ -422,8 +422,10 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
   }, [answer]);
 
   const projectsCrumb = { text: copy.breadcrumb.projects, href: "/projects" };
+  const idText = <span className="font-mono font-medium">{pid}</span>;
   const projectCrumb = {
-    text: answer?.project.display_name ? <Fill template={copy.breadcrumb.project} slots={{ name: answer.project.display_name, pid: <ProjectId pid={pid} /> }} /> : <Fill template={copy.breadcrumb.projectId} slots={{ pid: <ProjectId pid={pid} /> }} />,
+    // The crumb is the link to the project, so its ID is plain mono inside it, never a link inside a link.
+    text: answer?.project.display_name ? <Fill template={copy.breadcrumb.project} slots={{ name: answer.project.display_name, pid: idText }} /> : <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />,
     href: `/projects/${pid}`,
   };
   const documentsHref = `/projects/${pid}/documents`;

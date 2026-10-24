@@ -54,6 +54,11 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Documents"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Strata");
+  // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
+  // below it is the one link to this page, so Tab reaches it once.
+  const crumb = page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]");
+  await expect(crumb).toHaveText("Rajasthan Road Sector Modernization (P130164)");
+  await expect(crumb.getByRole("link")).toHaveCount(0);
   expect(unrecorded).toEqual([]);
 });
 
@@ -157,6 +162,66 @@ test("P130164's Summary renders from records with no request to a route that cal
   await expect(drawer).toContainText("Source: World Bank loans and credits data, as of September 30, 2026.");
 });
 
+test("P156634's Summary gives every value a marker and lists its agencies and sectors one per line, 4 px apart", async ({ page }) => {
+  await open(page, "/projects/P156634", 1440, await p156634());
+  const summary = page.locator("[data-summary=ready]");
+  await expect(summary).toBeVisible();
+  // ISR 19's ratings sit in a numbered section, and still cite the passage that prints them.
+  for (const fact of await summary.locator("[data-fact]").all()) {
+    await expect(fact.locator("[data-fact-source] [data-citation]")).toHaveCount(1);
+  }
+  await expect(summary.locator("[data-fact=pdo] [data-fact-source]")).toHaveText(/^ISR 19, Jun 30, 2026\u2060\[\d+\]$/);
+  for (const key of ["agencies", "sectors"]) {
+    const gaps = await summary.locator(`[data-fact=${key}] li`).evaluateAll((items) =>
+      items.slice(1).map((item, index) => Math.round(item.getBoundingClientRect().top - items[index].getBoundingClientRect().bottom)),
+    );
+    expect(gaps.length, key).toBeGreaterThan(1);
+    for (const gap of gaps) expect(gap, key).toBe(4);
+  }
+});
+
+test("the Summary's record marker shows the value it cites, and the lead says how much was canceled however large", async ({ page }) => {
+  // The route decides whether any was canceled (tests/test_project_hub.py), since "1,234.5" is not a number.
+  const body = JSON.parse(await recorded("summary-p130164.json"));
+  body.lead = { ...body.lead, canceled: "1,234.5", any_canceled: true };
+  await open(page, "/projects/P130164", 1440, { "/api/projects/P130164/summary": { body: JSON.stringify(body) } });
+  const summary = page.locator("[data-summary=ready]");
+  await expect(summary.locator("[data-summary-lead]")).toContainText("US$1,234.5 million was canceled.");
+
+  // The marker beside "B" opens the projects API's record, which holds that value and the sector shares.
+  await summary.locator("[data-fact=ea_category] [data-citation]").click();
+  const record = page.getByRole("dialog").locator("[data-record]");
+  await expect(record).toContainText("Environmental Assessment CategoryB");
+  await expect(record).toContainText("Sector, in Strata's taxonomyTransportation");
+  await expect(record).toContainText("Sector and shareRural and Inter-Urban Roads: 97%");
+  await page.keyboard.press("Escape");
+
+  // Stacked below 768 px, the column heads are hidden, so a money value's units follow its label.
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(summary.locator("[data-fact=commitment]").getByRole("rowheader")).toHaveText("Commitment (US$, millions)");
+});
+
+test("the Summary's skeleton has as many rows in each table as P130164's populated Summary", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, await hubApi());
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/projects/P130164/summary", async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("summary-p130164.json") });
+  });
+  await page.goto("/projects/P130164");
+  const rows = () => page.locator("[data-fact-table]").evaluateAll((tables) => tables.map((table) => table.querySelectorAll("tbody tr").length));
+  await expect(page.locator("[data-summary=loading]")).toBeVisible();
+  const loading = await rows();
+
+  release();
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+
+  expect(loading).toEqual(await rows());
+  await expect(page.locator("[data-summary=loading] h4, [data-summary=ready] h4").first()).toHaveText("Closing date history");
+});
+
 test("a project with a risk rating under the ESF shows it in the Ratings table, in place of its Environmental Assessment Category", async ({ page }) => {
   // No recorded project has an ESF rating, so P130164's recorded Summary gets one by hand, as the server
   // gives it (tests/test_project_hub.py: esf_rating in place of ea_category, cited to the project record).
@@ -221,6 +286,36 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents");
 });
 
+test("Documents keeps each date and count on one line, starts Pages read at a card's left edge, and names a document with no type", async ({ page }) => {
+  // P156634 lists a document whose type the documents API leaves blank (document 40098345); P130164's
+  // first other document gets that blank by hand.
+  const body = JSON.parse(await recorded("documents-p130164.json"));
+  const other = body.groups.find((group: { type: string }) => group.type === "other");
+  other.documents[0].document_type = "";
+  await open(page, "/projects/P130164/documents", 1440, { "/api/projects/P130164/documents": { body: JSON.stringify(body) } });
+  const list = page.locator("[data-documents=ready] [data-view=table]");
+  await expect(list.locator("[data-document='32604339'] th")).toHaveText("Document of Nov 1, 2020");
+  await expect(list.locator("[data-document='32604339']").getByRole("link", { name: /^Open the PDF of Document of Nov 1, 2020, November 1, 2020,/ })).toHaveCount(1);
+
+  // One line box each, however narrow the column: an inline element has one client rect per line.
+  const lines = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => element.getClientRects().length);
+  const review = list.locator("[data-document=icr-review-2023-05-04]");
+  for (const width of [1440, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(review.locator("td").first().locator("[data-day]")).toHaveCount(2);
+    for (const day of await review.locator("[data-day]").all()) expect(await lines(day), `a date at ${width} px`).toBe(1);
+    expect(await lines(review.getByRole("link", { name: "Open the version of Mar 27, 2020" }).locator("[data-day]")), `the link's date at ${width} px`).toBe(1);
+  }
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  const cards = page.locator("[data-documents=ready] [data-view=cards]");
+  const pad = cards.locator("[data-group=pad]");
+  expect(await lines(pad.locator("h3 [data-group-count]"))).toBe(1);
+  const pages = pad.locator("li dl > div").nth(2);
+  const [label, value] = await Promise.all([pages.locator("dt"), pages.locator("dd [data-pages-read]")].map((part) => part.evaluate((element) => Math.round(element.getBoundingClientRect().left))));
+  expect(value).toBe(label);
+});
+
 test("Documents says when a project's documents are still to come, and when the project is outside the set I fetch documents for", async ({ page }) => {
   const file = async (name: string) => ({ body: await recorded(name) });
   // P117635 is a Kenya water project the slice selects, with no list of its documents yet; P120014 is an
@@ -266,6 +361,9 @@ test("the source view opens the ICR at page 23 with paragraph 54 highlighted and
     "https://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf#page=23",
   );
   await expect(page).toHaveTitle("ICR of Oct 10, 2019, page 23 | Strata");
+  // The project crumb is a link, so its P-code is plain mono inside it, never a link inside a link.
+  await expect(page.locator("a a")).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Rajasthan Road Sector Modernization (P130164)" })).toHaveAttribute("href", "/projects/P130164");
 });
 
 test("while a page of the source view loads, its page bar gives the page from the address and no total, and keeps Next page's place", async ({ page }) => {
@@ -420,6 +518,8 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   const sentence = nwwda.locator("[data-changes-sentence]");
   await expect(sentence).toHaveText("Compared with the plan of Mar 5, 2026, the latest plan, of Oct 9, 2026, re-estimated two activities. See what changed");
   await expect(sentence.getByRole("link", { name: "See what changed" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#changes`);
+  // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId).
+  await expect(nwwda.locator("[data-source]")).toHaveText(/^Source: World Bank documents and reports API, Procurement Plans listed for this project, through [A-Z][a-z]+ \d{1,2}, \d{4}\.$/);
   await expect(page.locator("[data-agency=ministry-of-water-and-irrigation] [data-changes-sentence]")).toHaveText(
     "Compared with the plan of Nov 8, 2019, the latest plan, of Apr 30, 2020, added one activity and re-dated one. See what changed",
   );
