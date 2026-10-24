@@ -14,8 +14,11 @@ row changes or leaves: a change of mind is a re-check. A lesson's states follow 
 its newest version, being re-checked while a re-check is open, retired when its newest version says so; a
 proposal is rejected, or merged as evidence, by the decision on its item.
 
-LessonReview reads and writes as the viewer, through the engine a route opens with the viewer's own token
-(ADR 0003), and keeps nothing about a viewer between calls (CLAUDE.md rule 7).
+LessonReview reads as the viewer, through the engine a route opens with the viewer's own token (ADR 0003). It
+writes every act through the writer engine the route passes, which is the app's own service principal, and
+records as the actor the viewer the Databricks App forwarded. No reviewer has write access to the review
+tables outside the app, so the two-person rule and recusal hold for every row. It keeps nothing about a viewer
+between calls (CLAUDE.md rule 7).
 """
 
 from __future__ import annotations
@@ -160,6 +163,7 @@ def ieg_status(evidence: list[dict], reviewed_on) -> dict:
 # ── The excerpt an evidence card shows ───────────────────────────────────
 
 SENTENCE_END = re.compile(r"(?<=[.;:?])\s+(?=[A-Z(\"“‘])")
+OWN_NUMBER = re.compile(r"\d+(\.\d+)*\.\s+")  # a paragraph's own number, "54. ", which its title already gives
 
 
 def excerpt(text: str, span) -> dict | None:
@@ -172,8 +176,11 @@ def excerpt(text: str, span) -> dict | None:
     last = max((index for index, start in enumerate(starts) if start < span[1]), default=first)
     begin = starts[max(first - 1, 0)]
     end = starts[last + 2] if last + 2 < len(starts) else len(text)
+    starts_inside = begin > 0
+    if not starts_inside and (number := OWN_NUMBER.match(text)) and number.end() <= span[0]:
+        begin = number.end()  # the quote never holds the number, so its highlight only moves
     shown = text[begin:end].rstrip()
-    return {"text": shown, "highlight": [span[0] - begin, span[1] - begin], "starts_inside": begin > 0,
+    return {"text": shown, "highlight": [span[0] - begin, span[1] - begin], "starts_inside": starts_inside,
             "ends_inside": end < len(text)}
 
 
@@ -364,11 +371,12 @@ class LessonReview:
             "locator": {"kind": "section" if short == "ICR Review" else "paragraph", "text": row["paragraph"]},
             "page": _int(row["cited_page"]), "quote": row["quote"], "restated_by_ieg": _bool(row["restated_by_ieg"]),
         }
+        text = row.get("passage_text") or ""
+        span = find_quote(row["quote"], text) if text else None
+        # The quote's place in its passage's words, so the evidence drawer opens with it highlighted.
+        found["highlight"] = list(span) if span else None
         if detail:
-            text = row.get("passage_text") or ""
-            span = find_quote(row["quote"], text) if text else None
-            found |= {"text": text, "highlight": list(span) if span else None, "language": row.get("language"),
-                      "excerpt": excerpt(text, span)}
+            found |= {"text": text, "language": row.get("language"), "excerpt": excerpt(text, span)}
         return found
 
     def ieg(self, store: Store, evidence: list[dict], project_id: str) -> dict:
@@ -389,7 +397,7 @@ class LessonReview:
 
     def _edition(self, key: str | None) -> dict | None:
         found = self.editions.get(key)
-        return {"key": found.key, "name": found.name} if found else None
+        return {"key": found.key, "name": found.name, "short": found.short} if found else None
 
     def _proposal_evidence(self, store: Store, proposal_ids: Iterable[str]) -> list[dict]:
         rows = [row for proposal_id in proposal_ids for row in store.evidence.get(proposal_id, [])]
@@ -481,10 +489,12 @@ class LessonReview:
         person = self.reviewer(viewer)
         if person is None:
             return {"signed_in": viewer.signed_in, "tabs": ["library"], "acts": [], "regions": [], "role": None,
-                    "waiting": None}
+                    "waiting": None, "limit_days": None}
         store = self._load(engine)
+        # The queue's purpose names the regions and the day limit, so it shows while the queue itself loads.
         return {"signed_in": True, "tabs": ["library", "review"], "acts": list(person.acts(self.roles)),
-                "regions": list(person.regions), "role": person.role(self.roles), "waiting": self._waiting(store, person)}
+                "regions": list(person.regions), "role": person.role(self.roles), "waiting": self._waiting(store, person),
+                "limit_days": int(self.value("business_days"))}
 
     def queue(self, engine: Engine, viewer: Viewer, page: int = 1) -> dict:
         person = self._require(viewer)
@@ -575,7 +585,8 @@ class LessonReview:
                     "project_name"), "outcome": DECIDED_OUTCOME[decision["outcome"]],
                 "version": _int(version["version"]) if version else subject["version"], "decided_on": on.isoformat(),
                 "decided_at": decision["acted_at"],
-                "days_from_publication": (on - published).days if item["kind"] == "new" and published else None})
+                "days_from_publication": (on - published).days if item["kind"] == "new" and published else None,
+                "published_on": _iso(published) if item["kind"] == "new" else None})
         found.sort(key=lambda row: (row["decided_at"], row["item_id"]), reverse=True)
         return [{key: value for key, value in row.items() if key != "decided_at"} for row in found]
 
@@ -601,7 +612,8 @@ class LessonReview:
                         {"kind": "alone", "review_date": ieg["review_date"]} if ieg["ieg_status"] == "not_restated"
                         else None,
             "tags": {**tags, "sector": project.get("sector_name")},
-            "lesson": {"lesson_id": subject["lesson_id"], "version": subject["version"]},
+            "lesson": {"lesson_id": subject["lesson_id"], "version": subject["version"],
+                       "next_version": self._next_version(store, item["lesson_id"]) if item["kind"] == "recheck" else None},
             "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item),
             "history": self.history(store, item),
             "outcome": self.outcome(store, item), "lists": self.lists.as_dict(),
@@ -628,8 +640,15 @@ class LessonReview:
         sentences about it. New lessons only (the 29 brief, section 5.8)."""
         if item["kind"] != "new":
             return []
-        return [{**self.card(store, repeat["lesson_id"]), "sentences": repeat["sentences"]}
+        return [{**self.card(store, repeat["lesson_id"]), "sentences": repeat["sentences"],
+                 "next_version": self._next_version(store, repeat["lesson_id"])}
                 for repeat in store.repeats(item)]
+
+    @staticmethod
+    def _next_version(store: Store, lesson_id: str | None) -> int | None:
+        """The version a decision that changes the lesson now would write: its newest plus one."""
+        latest = store.latest(lesson_id) if lesson_id else None
+        return _int(latest["version"]) + 1 if latest else None
 
     def history(self, store: Store, item: dict) -> list[dict]:
         """What happened to the item, in order, each event in the past tense."""
@@ -664,7 +683,8 @@ class LessonReview:
                 lesson_id = act["repeat_of"] or store.lesson_of(item)
                 version = next((row for row in store.versions.get(lesson_id or "", [])
                                 if row["item_id"] == item["item_id"]), None)
-                entry["version"] = _int(version["version"]) if version else None
+                # A kept lesson writes no version, so its record names the version it stays at.
+                entry["version"] = _int(version["version"]) if version else _int(item["version"])
                 target = store.latest(act["repeat_of"]) if act["repeat_of"] else None
                 entry["target"] = target["statement"] if target else None
             events.append(entry)
@@ -679,7 +699,9 @@ class LessonReview:
             if version is None or not version["was"]:
                 return []
             was, now = _json(version["was"], {}), _json(version["now"], {})
-            return [{"field": key, "was": was.get(key), "now": now.get(key)} for key in now if was.get(key) != now.get(key)]
+            # A retirement's state is in the decided sentence already ("retired it because ..."), so no Was and Now.
+            return [{"field": key, "was": was.get(key), "now": now.get(key)} for key in now
+                    if key != "state" and was.get(key) != now.get(key)]
         change = _json(act["change"], None)
         if not change:
             return []
@@ -703,8 +725,11 @@ class LessonReview:
         target = store.latest(decision["repeat_of"]) if decision["repeat_of"] else None
         published = _date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
         on = _date(decision["acted_at"])
+        written = _int(version["version"]) if version else None
         return {"outcome": DECIDED_OUTCOME[decision["outcome"]], "on": on.isoformat(), "lesson_id": lesson_id,
-                "version": _int(version["version"]) if version else _int(item["version"]),
+                "version": written if written else _int(item["version"]),
+                # The version a change or a retirement leaves on record: the one before the version it wrote.
+                "previous_version": written - 1 if written and written > 1 else None,
                 "target": target["statement"] if target else None,
                 "days_from_publication": (on - published).days if item["kind"] == "new" and published else None,
                 "published_on": _iso(published)}
@@ -746,14 +771,14 @@ class LessonReview:
         return {"as_of": self.today().isoformat(), "page": page, "pages": pages, "page_size": size,
                 "total": len(current), "from": (page - 1) * size + 1 if shown else 0,
                 "to": (page - 1) * size + len(shown), "can_recheck": person is not None,
+                "limits": {"reason_max_chars": int(self.value("reason_max_chars"))},
                 "waiting": self._waiting(store, person) if person else None,
                 "lessons": [self.card(store, row["lesson_id"]) for row in shown]}
 
     # ── Writes ───────────────────────────────────────────────────────────
     #
-    # A reviewer's act is written with their own token (ADR 0003), so the warehouse holds the same line the
-    # roles file draws: only the reviewer groups' members may write the review tables (ops/lessons/
-    # grant_reviewers.py grants them), and the server checks the roles file first in any case.
+    # Every write goes through `writer`, the app's own service principal (ops/app/deploy_app.py grants it the
+    # five review tables). The server checks the roles file before it writes, and the row names the viewer.
 
     def _change(self, given, base: dict) -> dict:
         """A lesson editor's change, checked against the closed lists, with every field filled from base."""
@@ -770,8 +795,9 @@ class LessonReview:
             raise Refused(422, "bad_change", {"field": "stage" if self.lists.stage(stage) is None else "kind"})
         return {"statement": statement, "risk_factors": factors, "stage": stage, "kind": kind}
 
-    def act(self, engine: Engine, viewer: Viewer, wanted: str, verb: str, body: dict) -> dict:
-        """One recommendation, decision or cross-check, as the viewer, or the reason it is refused."""
+    def act(self, engine: Engine, viewer: Viewer, wanted: str, verb: str, body: dict, writer: Engine) -> dict:
+        """One recommendation, decision or cross-check by the viewer, or the reason it is refused. It reads as
+        the viewer and writes through writer."""
         person = self._require(viewer)
         store = self._load(engine)
         item = store.items.get(wanted)
@@ -803,11 +829,16 @@ class LessonReview:
                "actor_role": person.role(self.roles),
                "actor_region": item["region"] if item["region"] in person.regions else person.regions[0],
                "acted_at": now, "public_from": now.date()}
-        engine.insert_rows("strata.ops.lesson_review_acts", ACT_COLUMNS, [tuple(act[c] for c in ACT_COLUMNS)])
+        writer.run(_sql("insert_act"), {column: act[column] for column in ACT_COLUMNS})
+        taken = [row["act_id"] for row in _rows(writer, "act_taken", item_id=item["item_id"], act=verb)]
+        if taken[:1] != [act["act_id"]]:
+            # Someone else acted on this stage in the same moment, and their act was written first.
+            store = self._load(engine)
+            raise Refused(409, "stale", item=self.detail(store, store.items[item["item_id"]], person))
         if verb == "decide":
-            self._decided_effects(engine, store, item, act, subject, change, now)
+            self._decided_effects(writer, store, item, act, subject, change, now)
         elif verb == "cross_check" and outcome == "disagree":
-            self._disagreed(engine, store, item, person, reason, now)
+            self._disagreed(writer, store, item, person, reason, now)
         store = self._load(engine)
         return {"item": self.detail(store, store.items[item["item_id"]], person), "waiting": self._waiting(store, person),
                 "next_item_id": self.next_for(store, person, item["item_id"])}
@@ -878,8 +909,8 @@ class LessonReview:
                     was=json.dumps(was), now=json.dumps(change), **who)])
             else:
                 engine.insert_rows("strata.ops.lesson_versions", VERSION_COLUMNS, [self._version_row(
-                    target, version=version, state=RETIRED[outcome], change_kind="retired", was=None, now=None,
-                    **who)])
+                    target, version=version, state=RETIRED[outcome], change_kind="retired",
+                    was=json.dumps({"state": target["state"]}), now=json.dumps({"state": RETIRED[outcome]}), **who)])
 
     def _disagreed(self, engine: Engine, store: Store, item: dict, person: Person, reason: str,
                    now: dt.datetime) -> None:
@@ -901,10 +932,10 @@ class LessonReview:
                "public_from": now.date()}
         engine.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
 
-    def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent) -> dict:
-        """The review page's "Try again": the lesson review writer writes its note on one open item again, as
-        the viewer, and the page gets the item with the new note. Any lesson reviewer may ask."""
-        from strata.knowledge.lessons import writer
+    def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent, writer: Engine) -> dict:
+        """The review page's "Try again": the lesson review writer writes its note on one open item again,
+        stored through writer, and the page gets the item with the new note. Any lesson reviewer may ask."""
+        from strata.knowledge.lessons import writer as notes
 
         person = self._require(viewer)
         store = self._load(engine)
@@ -913,13 +944,14 @@ class LessonReview:
             raise Refused(404, "unknown_item", {"item_id": wanted})
         if agent is None:
             raise Refused(503, "no_agent")
-        writer.write_one(engine, store, item, self.subject(store, item), agent, self.now(),
-                         int(self.value("likely_repeats_max")))
+        notes.write_one(writer, store, item, self.subject(store, item), agent, self.now(),
+                        int(self.value("likely_repeats_max")))
         store = self._load(engine)
         return {"item": self.detail(store, store.items[item["item_id"]], person)}
 
-    def recheck(self, engine: Engine, viewer: Viewer, lesson_id: str, reason: str) -> dict:
-        """Ask for a re-check of a current lesson, as any lesson reviewer, once while none is open."""
+    def recheck(self, engine: Engine, viewer: Viewer, lesson_id: str, reason: str, writer: Engine) -> dict:
+        """Ask for a re-check of a current lesson, as any lesson reviewer, once while none is open. It reads as
+        the viewer and writes the queue item through writer."""
         person = self._require(viewer)
         reason = (reason or "").strip()
         if not reason or len(reason) > int(self.value("reason_max_chars")):
@@ -939,7 +971,7 @@ class LessonReview:
                "decided_region": None, "origin": "asked", "origin_by": person.email, "origin_by_name": person.name,
                "origin_reason": reason, "origin_item_id": None, "entered_on": now.date(), "due_on": None,
                "created_at": now, "public_from": now.date()}
-        engine.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
+        writer.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
         return {"item_id": row["item_id"], "region": region, "on": now.date().isoformat()}
 
 

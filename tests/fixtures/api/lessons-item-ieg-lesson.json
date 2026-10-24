@@ -20,7 +20,11 @@
     },
     "page": 14,
     "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
-    "restated_by_ieg": true
+    "restated_by_ieg": true,
+    "highlight": [
+      1555,
+      1645
+    ]
   },
   "region": "South Asia",
   "project": {
@@ -67,11 +71,11 @@
       "page": 14,
       "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
       "restated_by_ieg": true,
-      "text": "12. Lessons The ICR provided the following lessons (presented here with some minor modifications):  Lack of full endorsement of programs by the key decision makers at preparation can negatively affect project outcomes. The introduction of new systems required endorsement from relevant stakeholders early on during implementation process to ensure ownership. For example, full operationalization of the Road Asset Management System (RAMS) did not occur by project closure because of the lack of buy-in from the Finance Department and the Public Works Department.  The implementation of efficient business processes is likely to benefit from additional preliminary studies. Sound preparation before project approval with studies carried out to showcase the relevance of proposed activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management System), is best practice. In-depth upstream discussions/workshops with the client – in particular the finance and technical departments, should also be considered for most projects.  The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) for the donated land is difficult, so clear guidelines need to be developed. Some commendable work was done in the project to make sure that the land ownership was legally transferred. This knowledge can be replicated in future projects in Rajasthan or possibly other states in India. IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
       "highlight": [
         1555,
         1645
       ],
+      "text": "12. Lessons The ICR provided the following lessons (presented here with some minor modifications):  Lack of full endorsement of programs by the key decision makers at preparation can negatively affect project outcomes. The introduction of new systems required endorsement from relevant stakeholders early on during implementation process to ensure ownership. For example, full operationalization of the Road Asset Management System (RAMS) did not occur by project closure because of the lack of buy-in from the Finance Department and the Public Works Department.  The implementation of efficient business processes is likely to benefit from additional preliminary studies. Sound preparation before project approval with studies carried out to showcase the relevance of proposed activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management System), is best practice. In-depth upstream discussions/workshops with the client – in particular the finance and technical departments, should also be considered for most projects.  The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) for the donated land is difficult, so clear guidelines need to be developed. Some commendable work was done in the project to make sure that the land ownership was legally transferred. This knowledge can be replicated in future projects in Rajasthan or possibly other states in India. IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
       "language": "en",
       "excerpt": {
         "text": "IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
@@ -102,13 +106,15 @@
     },
     "edition": {
       "key": "guidelines_2011",
-      "name": "the World Bank's Procurement Guidelines of January 2011"
+      "name": "the World Bank's Procurement Guidelines of January 2011",
+      "short": "Procurement Guidelines, January 2011"
     },
     "sector": "Transportation"
   },
   "lesson": {
     "lesson_id": null,
-    "version": null
+    "version": null,
+    "next_version": null
   },
   "summary": {
     "status": "ready",

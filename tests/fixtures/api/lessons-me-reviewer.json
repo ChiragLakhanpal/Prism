@@ -12,5 +12,6 @@
     "South Asia"
   ],
   "role": "accredited procurement specialist",
-  "waiting": 3
+  "waiting": 3,
+  "limit_days": 10
 }

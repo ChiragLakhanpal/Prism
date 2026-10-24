@@ -104,7 +104,11 @@
           },
           "page": 23,
           "quote": "108 of 328 cases had to go through rebidding.",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            149,
+            194
+          ]
         },
         "region": "South Asia",
         "project": {
@@ -174,7 +178,8 @@
         "outcome": "merged",
         "version": 2,
         "decided_on": "2026-10-27",
-        "days_from_publication": 2551
+        "days_from_publication": 2551,
+        "published_on": "2019-11-02"
       },
       {
         "item_id": "new-cfdf000a46",
@@ -185,7 +190,8 @@
         "outcome": "added",
         "version": 1,
         "decided_on": "2026-10-27",
-        "days_from_publication": 1272
+        "days_from_publication": 1272,
+        "published_on": "2023-05-04"
       },
       {
         "item_id": "new-e903b07ad1",
@@ -196,7 +202,8 @@
         "outcome": "added",
         "version": 1,
         "decided_on": "2026-10-27",
-        "days_from_publication": 2551
+        "days_from_publication": 2551,
+        "published_on": "2019-11-02"
       }
     ]
   }

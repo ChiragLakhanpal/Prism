@@ -7,6 +7,9 @@
   "from": 0,
   "to": 0,
   "can_recheck": false,
+  "limits": {
+    "reason_max_chars": 500
+  },
   "waiting": null,
   "lessons": []
 }

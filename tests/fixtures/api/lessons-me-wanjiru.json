@@ -1,0 +1,18 @@
+{
+  "signed_in": true,
+  "tabs": [
+    "library",
+    "review"
+  ],
+  "acts": [
+    "recommend",
+    "decide",
+    "cross_check"
+  ],
+  "regions": [
+    "Eastern and Southern Africa"
+  ],
+  "role": "lead procurement specialist",
+  "waiting": 1,
+  "limit_days": 10
+}

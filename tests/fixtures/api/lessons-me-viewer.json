@@ -6,5 +6,6 @@
   "acts": [],
   "regions": [],
   "role": null,
-  "waiting": null
+  "waiting": null,
+  "limit_days": null
 }

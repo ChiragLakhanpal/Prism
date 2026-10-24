@@ -7,6 +7,9 @@
   "from": 1,
   "to": 2,
   "can_recheck": false,
+  "limits": {
+    "reason_max_chars": 500
+  },
   "waiting": null,
   "lessons": [
     {
@@ -29,7 +32,8 @@
       },
       "edition": {
         "key": "guidelines_2011",
-        "name": "the World Bank's Procurement Guidelines of January 2011"
+        "name": "the World Bank's Procurement Guidelines of January 2011",
+        "short": "Procurement Guidelines, January 2011"
       },
       "sector": "Transportation",
       "pid": "P130164",
@@ -57,7 +61,11 @@
           },
           "page": 14,
           "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
-          "restated_by_ieg": true
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
         },
         {
           "evidence_id": "strata.gold.passage:31525018/v1/55",
@@ -75,7 +83,11 @@
           },
           "page": 23,
           "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            72,
+            168
+          ]
         }
       ]
     },
@@ -99,7 +111,8 @@
       },
       "edition": {
         "key": "guidelines_2011",
-        "name": "the World Bank's Procurement Guidelines of January 2011"
+        "name": "the World Bank's Procurement Guidelines of January 2011",
+        "short": "Procurement Guidelines, January 2011"
       },
       "sector": "Transportation",
       "pid": "P130164",
@@ -127,7 +140,11 @@
           },
           "page": 23,
           "quote": "108 of 328 cases had to go through rebidding.",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            149,
+            194
+          ]
         },
         {
           "evidence_id": "strata.gold.passage:34056616/v2/10.b",
@@ -145,7 +162,11 @@
           },
           "page": 13,
           "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
-          "restated_by_ieg": true
+          "restated_by_ieg": true,
+          "highlight": [
+            812,
+            960
+          ]
         }
       ]
     }

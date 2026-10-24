@@ -243,12 +243,14 @@ def rebuild(engine: Engine, project_id: str, answered: list[dict], lists: Lesson
             passage_id = str(lesson.get("passage_id") or "")
             seen[passage_id] = seen.get(passage_id, 0) + 1
             passage = passages.get(passage_id)
+            # A passage id is unique across documents; a missing or unknown one is not, so it keeps its document.
+            key = passage_id if passage else f"{custom_id(document_id, version)}/unknown"
             check = check_quote(pages, passage, lesson.get("page"), lesson.get("quote"))
             if check == PASSED and not _on_lists(lesson, lists):
                 check = "not_in_lists"
             factors = lesson.get("risk_factors") if isinstance(lesson.get("risk_factors"), list) else []
             proposals.append({
-                "proposal_id": f"{passage_id}#{seen[passage_id]}", "document_id": document_id, "version": version,
+                "proposal_id": f"{key}#{seen[passage_id]}", "document_id": document_id, "version": version,
                 "project_id": project_id, "document_type": document["document_type"],
                 "report_number": document["report_number"], "passage_id": passage_id,
                 "paragraph": passage["paragraph"] if passage else None, "cited_page": _int(lesson.get("page")),

@@ -65,7 +65,7 @@ def test_a_likely_repeat_names_only_a_lesson_in_the_library(database):
     [repeat] = after["repeats"]
     assert repeat["statement"] == "Put forest and other permits in place before awarding contracts"
     assert [sentence["text"] for sentence in repeat["sentences"]] == [
-        "IEG's own lesson in its ICR Review says the same about permits before contracts are awarded."]
+        "IEG's own lesson in its ICR Review said the same about permits before contracts are awarded."]
 
 
 def test_a_lead_merges_a_proposal_only_into_a_likely_repeat_and_the_lesson_gains_a_version(database):
@@ -79,7 +79,7 @@ def test_a_lead_merges_a_proposal_only_into_a_likely_repeat_and_the_lesson_gains
     with DuckDBEngine.open(database) as engine:  # the recommendation above stands, so the lead decides again
         decided = scenario.review_on(DAY + dt.timedelta(days=1), 16).act(
             engine, scenario.OMAR, scenario.item_of(engine, scenario.PERMITS), "decide",
-            {"expected_stage": "decision", "outcome": "repeat", "repeat_of": target, "reason": "The same advice."})
+            {"expected_stage": "decision", "outcome": "repeat", "repeat_of": target, "reason": "The same advice."}, engine)
 
     assert decided["item"]["outcome"]["outcome"] == "merged"
     with DuckDBEngine.open(database, read_only=True) as engine:
@@ -98,10 +98,10 @@ def test_a_writer_that_gives_no_answer_leaves_a_failed_note_and_try_again_writes
 
     with DuckDBEngine.open(database) as engine:
         item = scenario.item_of(engine, scenario.REBIDDING)
-        failed = scenario.review_on(DAY).rewrite(engine, scenario.ASHA, item, NoAnswer())
+        failed = scenario.review_on(DAY).rewrite(engine, scenario.ASHA, item, NoAnswer(), engine)
         again = scenario.review_on(DAY).rewrite(engine, scenario.ASHA, item,
                                                 writer.recorded_agent_for()({}, {"evidence": [
-                                                    {"role": "source", "passage_id": scenario.REBIDDING}]}))
+                                                    {"role": "source", "passage_id": scenario.REBIDDING}]}), engine)
 
     assert failed["item"]["summary"] == {"status": "failed"} | {key: failed["item"]["summary"][key]
                                                                 for key in ("sentences", "evidence", "checks", "removed")}
@@ -113,7 +113,8 @@ def test_an_item_with_no_note_yet_says_the_summary_is_still_being_written(databa
     scenario.decide(database, scenario.REBIDDING, DAY)
     with DuckDBEngine.open(database) as engine:
         lesson = scenario.review_on(DAY).library(engine, scenario.ASHA)["lessons"][0]["lesson_id"]
-        scenario.review_on(DAY).recheck(engine, scenario.WANJIRU, lesson, "The 2025 rules changed how estimates are made.")
+        scenario.review_on(DAY).recheck(engine, scenario.WANJIRU, lesson, "The 2025 rules changed how estimates are made.",
+                                  engine)
         result = engine.run("SELECT item_id FROM strata.ops.lesson_review_items WHERE kind = 'recheck'", {})
         recheck = scenario.review_on(DAY).item(engine, scenario.ASHA, result.rows[0][0])
 

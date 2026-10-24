@@ -123,6 +123,8 @@ def test_the_editions_file_names_the_2011_guidelines_the_showcase_project_follow
     found = editions.named_in('in Section I of the "Guidelines: Procurement under IBRD Loans and IDA Credits" '
                               "(dated January 2011).")
     assert found is not None and "January 2011" in found.name
+    # The review page's "Rules followed" shows the label form, which starts with a capital.
+    assert found.short == "Procurement Guidelines, January 2011"
     assert editions.named_in("This paragraph names no rules.") is None
 
 
@@ -139,18 +141,3 @@ def test_the_lesson_review_thresholds_hold_the_clock_the_sample_and_the_windows(
     holidays = value("lesson_review.holidays")
     assert isinstance(holidays, list) and all(isinstance(day, dt.date) for day in holidays)
 
-
-# ── What the reviewer groups may write ───────────────────────────────────
-
-def test_each_lesson_reviewer_group_may_write_only_the_lesson_review_tables():
-    """A reviewer's act is written with their own token, so the warehouse lets only the roles file's reviewer
-    groups write the review tables (ops/lessons/grant_reviewers.py runs these)."""
-    from strata.knowledge.lessons.grants import reviewer_grants
-
-    statements = reviewer_grants(config.load_roles())
-
-    groups = {statement.rsplit(" TO ", 1)[1] for statement in statements}
-    assert groups == {"`strata-accredited-procurement-specialists`", "`strata-lead-procurement-specialists`"}
-    written = sorted({statement.split(" ON TABLE ")[1].split(" TO ")[0] for statement in statements if "MODIFY" in statement})
-    assert written == ["strata.ops.lesson_review_acts", "strata.ops.lesson_review_items", "strata.ops.lesson_review_notes",
-                       "strata.ops.lesson_sources", "strata.ops.lesson_versions"]

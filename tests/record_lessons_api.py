@@ -20,7 +20,8 @@ award) and IEG's own lesson in section 12 of the ICR Review.
 - Wednesday, October 28: Wanjiru (a lead in Eastern and Southern Africa) asks for a re-check of the
   rebidding lesson, and Asha's second request is refused while it is open. Asha recommends a change.
 - Monday, January 4, 2027: the re-check has passed its ten business days, and the quarterly job assigns one
-  of South Asia's decisions to Wanjiru's region.
+  of South Asia's decisions to Wanjiru's region. Omar then keeps the rebidding lesson as it is, so the re-check
+  ends with the lesson still at version 1.
 """
 
 import asyncio
@@ -28,7 +29,6 @@ import datetime as dt
 import json
 import shutil
 import sys
-from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
@@ -41,6 +41,9 @@ from strata.knowledge.lessons import cross_check, writer  # noqa: E402
 from strata.knowledge.lessons.review import LessonReview  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
+
+sys.path.insert(0, str(ROOT / "tests"))
+import lesson_scenario  # noqa: E402
 
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 OUT = ROOT / "tests" / "fixtures" / "api"
@@ -66,13 +69,10 @@ def answers(folder: Path) -> dict[str, str]:
     shutil.copy(FIXTURE_DB, database)
     at = [dt.datetime(2026, 10, 27, 9, 0, tzinfo=dt.UTC)]
 
-    @contextmanager
-    def engine_for(_viewer):
-        with DuckDBEngine.open(database) as engine:
-            yield engine
-
+    # Each request reads as the viewer and writes as the app's own engine (tests/lesson_scenario.py).
+    connection = lesson_scenario.OneConnection(database)
     review = LessonReview(ROLES, today=lambda: at[0].date(), now=lambda: at[0])
-    app = create_app(engine_for=engine_for, lessons=review)
+    app = create_app(engine_for=connection.engine_for, lessons=review, lesson_record=connection.the_app)
 
     def item_of(passage_id: str, kind: str = "new") -> str:
         with DuckDBEngine.open(database, read_only=True) as engine:
@@ -189,9 +189,15 @@ def answers(folder: Path) -> dict[str, str]:
                 cross_check.run(engine, at[0].date(), now=lambda: at[0], roles=ROLES)
                 crossing = engine.run("SELECT item_id FROM strata.ops.lesson_review_items WHERE kind = 'cross_check'",
                                       {}).rows[0][0]
+            found["lessons-me-wanjiru.json"] = await get("/api/lessons/me", WANJIRU)
             found["lessons-queue-cross-check.json"] = await get("/api/lessons/review", WANJIRU)
             found["lessons-item-cross-check.json"] = await get(f"/api/lessons/review/{crossing}", WANJIRU)
             found["lessons-item-same-region.json"] = await get(f"/api/lessons/review/{crossing}", ASHA)
+            # Omar keeps the rebidding lesson as it is, against Asha's recommended change.
+            later(30)
+            await act(recheck, "decide", OMAR, expected_stage="decision", outcome="keep",
+                      reason="The lesson already says market rates, and the new rules ask for the same.")
+            found["lessons-item-decided-kept.json"] = await get(f"/api/lessons/review/{recheck}", ASHA)
         return found
 
     return asyncio.run(story())

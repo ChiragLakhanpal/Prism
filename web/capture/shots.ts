@@ -422,7 +422,7 @@ const QUEUE = (file: string) => ({ "/api/lessons/review": { recorded: file } });
 const REB = "new-e903b07ad1";
 const PERM = "new-64ec0401e3";
 const IEG = "new-cfdf000a46";
-const RECHECK_ITEM = "recheck-7f57783926";
+const RECHECK_ITEM = "recheck-09bf32ecc3";
 const CROSS_ITEM = "cross-e0d9a6a06a";
 const itemPath = (id: string) => `/lessons/review/${id}`;
 const itemApi = (id: string) => `/api/lessons/review/${id}`;
@@ -448,7 +448,8 @@ const manySources = (body: Record<string, any>) => {
 };
 const pageTwo = (body: Record<string, any>) => Object.assign(body, { page: 2, pages: 3, total: 18, from: 9, to: 10 });
 const decidedAs = (outcome: string, version: number | null) => (body: Record<string, any>) => {
-  body.outcome = { ...body.outcome, outcome, version };
+  // A change or a retirement leaves the version before it on record, as the server's outcome says.
+  body.outcome = { ...body.outcome, outcome, version, previous_version: version && version > 1 ? version - 1 : null };
   const decided = body.history.findLast((event: { event: string }) => event.event === "decided");
   if (decided) decided.outcome = { added: "add", merged: "repeat", rejected: "reject", changed: "change", retired_wrong: "retire_wrong", retired_outdated: "retire_outdated" }[outcome];
 };
@@ -466,7 +467,7 @@ const LESSON_SHOTS: Shot[] = [
   // The frame and the library.
   lessonShot("library", "/lessons", LIBRARY),
   lessonShot("library-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library.json" } }, {}, NOT_A_REVIEWER),
-  lessonShot("library-loading", "/lessons", LIBRARY, { pending: ["/api/lessons"] }),
+  lessonShot("library-loading", "/lessons", LIBRARY, { pending: ["/api/lessons?page=1"] }),
   lessonShot("library-empty-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }, {}, NOT_A_REVIEWER),
   lessonShot("library-empty-reviewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }),
   lessonShot("library-page-2", "/lessons?page=2", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", pageTwo) }),
@@ -508,9 +509,9 @@ const LESSON_SHOTS: Shot[] = [
   lessonShot("queue-same-person", "/lessons/review", QUEUE("lessons-queue-same-person.json")),
   lessonShot("queue-recheck", "/lessons/review", QUEUE("lessons-queue-recheck.json")),
   lessonShot("queue-overdue", "/lessons/review", QUEUE("lessons-queue-overdue.json")),
-  lessonShot("queue-cross-check", "/lessons/review", QUEUE("lessons-queue-cross-check.json")),
+  lessonShot("queue-cross-check", "/lessons/review", QUEUE("lessons-queue-cross-check.json"), {}, { recorded: "lessons-me-wanjiru.json" }),
   lessonShot("queue-empty-with-decisions", "/lessons/review", QUEUE("lessons-queue-decided.json")),
-  lessonShot("queue-loading", "/lessons/review", QUEUE("lessons-queue.json"), { pending: ["/api/lessons/review"] }),
+  lessonShot("queue-loading", "/lessons/review", QUEUE("lessons-queue.json"), { pending: ["/api/lessons/review?page=1"] }),
   lessonShot("queue-error", "/lessons/review", { "/api/lessons/review": { status: 503, body: SERVICE_DOWN } }),
   lessonShot("queue-no-access", "/lessons/review", { "/api/lessons/review": refusal("lessons-queue-no-access.json") }, {}, NOT_A_REVIEWER),
   lessonShot("queue-decided-drawer-1024", "/lessons/review", QUEUE("lessons-queue-decided.json"), { widths: [1024], act: async (page) => {
@@ -585,6 +586,8 @@ const LESSON_SHOTS: Shot[] = [
   // Decided records.
   review("decided-added", REB, "lessons-item-decided-added.json"),
   review("decided-merged", PERM, "lessons-item-decided-merged.json"),
+  // A re-check that kept the lesson as it was: its record names the version it stayed at.
+  review("decided-kept", RECHECK_ITEM, "lessons-item-decided-kept.json"),
   reviewWith("decided-rejected", REB, "lessons-item-decided-added.json", decidedAs("rejected", null)),
   reviewWith("decided-changed", REB, "lessons-item-decided-added.json", decidedAs("changed", 2)),
   reviewWith("decided-retired", REB, "lessons-item-decided-added.json", decidedAs("retired_wrong", 2)),
@@ -595,6 +598,8 @@ const LESSON_SHOTS: Shot[] = [
   item(REB, refusal("lessons-item-no-access.json"), {}, {}, NOT_A_REVIEWER, "review--no-access"),
   // The drawer from an evidence card's marker, and focus.
   review("drawer", REB, "lessons-item-recommend.json", { act: click("[data-lesson-evidence] [data-citation] >> nth=0") }),
+  // The writer's sentence under a likely repeat cites the library lesson: the drawer names it by its statement.
+  review("repeats-lesson-drawer", PERM, "lessons-item-recommend-repeats.json", { act: click("[data-repeats] [data-citation] >> nth=0") }),
   review("focus-marker", REB, "lessons-item-recommend.json", { act: focus("[data-lesson-evidence] [data-citation]") }),
   review("focus-radio", PERM, "lessons-item-recommend-repeats.json", { act: focus("[data-decision-form] input[type=radio]") }),
   review("hover-primary", REB, "lessons-item-recommend.json", { widths: WIDE, act: hover("[data-decision-form] [data-button=primary]") }),

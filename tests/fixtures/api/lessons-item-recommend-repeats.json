@@ -20,7 +20,11 @@
     },
     "page": 23,
     "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
-    "restated_by_ieg": false
+    "restated_by_ieg": false,
+    "highlight": [
+      72,
+      168
+    ]
   },
   "region": "South Asia",
   "project": {
@@ -67,17 +71,17 @@
       "page": 23,
       "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
       "restated_by_ieg": false,
-      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
       "highlight": [
         72,
         168
       ],
+      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
       "language": "en",
       "excerpt": {
-        "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+        "text": "To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
         "highlight": [
-          72,
-          168
+          68,
+          164
         ],
         "starts_inside": false,
         "ends_inside": false
@@ -105,13 +109,15 @@
     },
     "edition": {
       "key": "guidelines_2011",
-      "name": "the World Bank's Procurement Guidelines of January 2011"
+      "name": "the World Bank's Procurement Guidelines of January 2011",
+      "short": "Procurement Guidelines, January 2011"
     },
     "sector": "Transportation"
   },
   "lesson": {
     "lesson_id": null,
-    "version": null
+    "version": null,
+    "next_version": null
   },
   "summary": {
     "status": "ready",
@@ -174,7 +180,8 @@
         "row": {
           "lesson_id": "lesson-cfdf000a46",
           "version": 1,
-          "statement": "Put forest and other permits in place before awarding contracts"
+          "statement": "Put forest and other permits in place before awarding contracts",
+          "decided_on": "2026-10-27"
         },
         "highlights": []
       },
@@ -260,7 +267,8 @@
       },
       "edition": {
         "key": "guidelines_2011",
-        "name": "the World Bank's Procurement Guidelines of January 2011"
+        "name": "the World Bank's Procurement Guidelines of January 2011",
+        "short": "Procurement Guidelines, January 2011"
       },
       "sector": "Transportation",
       "pid": "P130164",
@@ -288,13 +296,17 @@
           },
           "page": 14,
           "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
-          "restated_by_ieg": true
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
         }
       ],
       "sentences": [
         {
           "index": 1,
-          "text": "IEG's own lesson in its ICR Review says the same about permits before contracts are awarded.",
+          "text": "IEG's own lesson in its ICR Review said the same about permits before contracts are awarded.",
           "kind": "summary",
           "evidence_ids": [
             "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
@@ -304,7 +316,8 @@
           "dates": [],
           "quote": null
         }
-      ]
+      ],
+      "next_version": 2
     }
   ],
   "history": [

@@ -26,12 +26,13 @@ import { EvidenceBadge, fillText, ProjectIdLink, Tag } from "../components/Lesso
 import { ClockLine, HistoryList, OutcomePanel, statusOf } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
-import { Skeleton } from "../components/Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StatusBadge } from "../components/StatusBadge";
 import { DRAWER_ID } from "../components/AnswerPanel";
 import type { State } from "../components/state";
 import { copy } from "../copy";
 import { getJson, postJson } from "../lib/api";
+import { formatDate } from "../lib/format";
 import { evidenceHref, evidenceIn, openEvidence, remember, visited as visitedStore } from "../lib/evidence";
 import { useLoad } from "../lib/load";
 import { address } from "../lib/router";
@@ -53,15 +54,13 @@ function cardTitle(evidence: LessonEvidence): string {
   return fillText(r.titleIcr, slots);
 }
 
+// The marker's name in brief 14's shape, the same as the summary's markers to the same source: "Source 1:
+// Implementation Completion and Results Report, October 10, 2019, paragraph 54".
 function markerName(evidence: LessonEvidence): string {
-  return fillText(evidence.locator.kind === "section" ? words.card.sourceSection : words.card.sourceParagraph, {
-    doc: evidence.doc_type,
-    pid: evidence.pid,
-    date: evidence.date ?? "",
-    para: evidence.locator.text,
-    section: evidence.locator.text,
-    page: evidence.page,
-  });
+  const date = evidence.date ? formatDate(evidence.date) : "";
+  return evidence.locator.kind === "section"
+    ? copy.evidence.markerSourceSection(evidence.doc_type, date, evidence.locator.text)
+    : copy.evidence.markerSource(evidence.doc_type, date, evidence.locator.text);
 }
 
 export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: LessonEvidence; n: number; open: boolean; visited: boolean }) {
@@ -79,7 +78,7 @@ export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: Les
           drawerId={DRAWER_ID}
           active={open}
           opened={visited}
-          onOpen={(marker) => openEvidence(evidence.evidence_id, { serial: null, sentence: null, marker, runId: null })}
+          onOpen={(marker) => openEvidence(evidence.evidence_id, { serial: null, sentence: null, marker, runId: null, highlight: evidence.highlight ?? null })}
         />
       </div>
       <h3 id={titleId} className="-mt-1 text-title text-ink-heading wrap-anywhere">
@@ -111,7 +110,7 @@ function Tags({ item }: { item: ReviewItem }) {
     [t.risk_factors, <span key="f" className="flex flex-wrap gap-2">{(item.tags.risk_factors ?? []).map((factor) => <Tag key={factor.key}>{factor.label}</Tag>)}</span>],
     [t.stage, item.tags.stage?.label ?? ""],
     [t.kind, item.tags.kind?.label ?? ""],
-    [t.rules, item.tags.edition ? item.tags.edition.name : words.card.rulesUnknown],
+    [t.rules, item.tags.edition ? item.tags.edition.short : words.card.rulesUnknown],
     [t.project, <Fill key="p" template={words.queue.project} slots={{ name: item.project.name ?? "", pid: <ProjectIdLink pid={item.project.pid} /> }} />],
     [t.sector, item.tags.sector ?? ""],
   ];
@@ -229,7 +228,7 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
       <div className="flex flex-col gap-4">
         {sentences.length > 0 && (
           <div ref={first} tabIndex={-1} className="outline-none">
-            <NoteSentences sentences={sentences} evidence={shown.evidence ?? {}} numbers={numbers} opened={seen} open={open} />
+            <NoteSentences sentences={sentences} evidence={shown.evidence ?? {}} numbers={numbers} opened={seen} open={open} textSize="body" />
           </div>
         )}
         {shown.status === "nothing_survived" && <p className="text-body text-ink">{r.summaryNoneSurvived}</p>}
@@ -273,7 +272,7 @@ function Repeats({ item, numbers }: { item: ReviewItem; numbers: Map<string, num
         {item.repeats.map((repeat) => (
           <div key={repeat.lesson_id} className="flex flex-col gap-4">
             <div className="max-w-prose">
-              <NoteSentences sentences={repeat.sentences} evidence={item.summary.evidence ?? {}} numbers={numbers} opened={seen} open={open} />
+              <NoteSentences sentences={repeat.sentences} evidence={item.summary.evidence ?? {}} numbers={numbers} opened={seen} open={open} textSize="body" />
             </div>
             <LessonCard card={repeat} level={3} compact open={open.id} visited={seen} />
           </div>
@@ -316,7 +315,7 @@ function afterSave(done: Done): Panel {
   }
   const key = (outcome?.outcome ?? "added") as keyof typeof o;
   const state: State = key === "rejected" || key === "retired_wrong" || key === "retired_outdated" ? "neutral" : "success";
-  const previous = outcome?.version ? <Num value={outcome.version - 1} /> : "";
+  const previous = outcome?.previous_version ? <Num value={outcome.previous_version} /> : "";
   const library = key === "added" || key === "merged" || key === "changed" ? lessonHref(outcome?.lesson_id ?? "") : null;
   const words_ = o[key] as { lead: string; body: string };
   return { state, ...fill(words_, { target, version: version ?? "", previous }), links: nextLinks(done.saved, library) };
@@ -429,7 +428,7 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
     action = (
       <div ref={alertRef} tabIndex={-1} className="flex flex-col gap-4 outline-none" data-gave-way="refused">
         <Alert state="error" live="alert">
-          <Fill template={r.cannot[gaveWay.code] ?? ""} slots={{ name: gaveWay.values.project_name ?? item.project.name ?? "", pid: <ProjectIdLink pid={gaveWay.values.pid ?? item.project.pid} />, region: gaveWay.values.region ?? gaveWay.values.decided_region ?? item.region }} />
+          {fillText(words.form.refused, { act: words.form.acts[gaveWay.verb] ?? words.form.acts.decide })}
         </Alert>
         <CannotAct code={gaveWay.code} values={gaveWay.values} item={item} />
       </div>
@@ -545,26 +544,61 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
   );
 }
 
-function ReviewSkeleton() {
+// A line of skeleton that shows only below a page area of 768 px, where the words it stands for wrap once more.
+const NARROW_ONLY = "@md/page:hidden";
+
+// One evidence card's frame, block for block, as tall as an ICR card at each width: the eyebrow and marker,
+// the title, the quote, the source line and the check line.
+function EvidenceFrame() {
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-skeleton-card>
+      <div className="flex items-start justify-between gap-3">
+        <SkeletonLine className="text-label" width="w-1/4" />
+        <Skeleton className="size-5" radius="rounded-pill" />
+      </div>
+      <span className="-mt-1 flex flex-col text-title">
+        <SkeletonLine width="w-3/4" />
+        <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
+      </span>
+      <span className="flex max-w-prose flex-col text-body">
+        <SkeletonLine width="w-full" />
+        <SkeletonLine width="w-full" />
+        <SkeletonLine width="w-1/2" />
+        <SkeletonLine width="w-full" className={NARROW_ONLY} />
+        <SkeletonLine width="w-full" className={NARROW_ONLY} />
+        <SkeletonLine width="w-3/5" className={NARROW_ONLY} />
+      </span>
+      <SkeletonText className="text-caption" widths={["w-full", "w-1/4"]} />
+      <Skeleton className="h-14 w-full @md/page:h-10" radius="rounded-sm" />
+    </div>
+  );
+}
+
+export function ReviewSkeleton() {
   return (
     <div aria-busy="true" data-review-page="loading" className="flex flex-col">
       <p role="status" className="clip-visually">
         {r.loading}
       </p>
-      <Skeleton className="mt-4 h-[14px] w-[30%]" />
-      <Skeleton className="mt-2 h-7 w-full" />
-      <Skeleton className="mt-2 h-7 w-3/5" />
-      <Skeleton className="mt-2 h-4 w-1/2" />
-      <Skeleton className="mt-3 h-6 w-36" radius="rounded-pill" />
+      <SkeletonLine className="mt-4 text-small" width="w-[30%]" />
+      <span className="mt-2 flex flex-col text-h1">
+        <SkeletonLine width="w-full" />
+        <SkeletonLine width="w-3/5" />
+        <SkeletonLine width="w-2/5" className={NARROW_ONLY} />
+      </span>
+      <span className="mt-2 flex flex-col text-body">
+        <SkeletonLine width="w-1/2" />
+        <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
+      </span>
+      <Skeleton className="mt-3 h-[30px] w-40" radius="rounded-pill" />
       <h2 className="mt-8 text-title text-ink-heading @md/page:mt-12">{r.evidenceTitle}</h2>
-      {[0, 1].map((index) => (
-        <div key={index} className="mt-4 flex h-64 flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6">
-          <Skeleton className="h-3 w-1/4" />
-          <Skeleton className="h-[18px] w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-4/5" />
-        </div>
-      ))}
+      {/* Static copy, so "The evidence" and the cards never move when the item arrives. */}
+      <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.sourcesNote}</p>
+      <div className="mt-4 flex flex-col gap-4">
+        {[0, 1].map((index) => (
+          <EvidenceFrame key={index} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -588,7 +622,12 @@ export function ReviewPage({ itemId }: { itemId: string }) {
         <>
           {trail}
           <h1 tabIndex={-1} className="clip-visually">{r.breadcrumbBack}</h1>
-          <EmptyState className="mt-6" title={fillText(r.notFoundTitle, { id: itemId })} body={r.notFoundBody} link={{ href: QUEUE_HREF, text: r.notFoundLink }} />
+          <EmptyState
+            className="mt-6"
+            title={<Fill template={r.notFoundTitle} slots={{ id: <span className="font-mono font-medium wrap-anywhere">{itemId}</span> }} />}
+            body={r.notFoundBody}
+            link={{ href: QUEUE_HREF, text: r.notFoundLink }}
+          />
         </>
       );
     } else if (load.error?.status === 403 && code === "not_a_reviewer") {

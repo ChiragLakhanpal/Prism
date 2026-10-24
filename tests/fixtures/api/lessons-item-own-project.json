@@ -20,7 +20,11 @@
     },
     "page": 23,
     "quote": "108 of 328 cases had to go through rebidding.",
-    "restated_by_ieg": false
+    "restated_by_ieg": false,
+    "highlight": [
+      149,
+      194
+    ]
   },
   "region": "South Asia",
   "project": {
@@ -70,17 +74,17 @@
       "page": 23,
       "quote": "108 of 328 cases had to go through rebidding.",
       "restated_by_ieg": false,
-      "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
       "highlight": [
         149,
         194
       ],
+      "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
       "language": "en",
       "excerpt": {
-        "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+        "text": "Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
         "highlight": [
-          149,
-          194
+          145,
+          190
         ],
         "starts_inside": false,
         "ends_inside": false
@@ -103,11 +107,11 @@
       "page": 13,
       "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
       "restated_by_ieg": true,
-      "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
       "highlight": [
         812,
         960
       ],
+      "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
       "language": "en",
       "excerpt": {
         "text": "Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
@@ -138,13 +142,15 @@
     },
     "edition": {
       "key": "guidelines_2011",
-      "name": "the World Bank's Procurement Guidelines of January 2011"
+      "name": "the World Bank's Procurement Guidelines of January 2011",
+      "short": "Procurement Guidelines, January 2011"
     },
     "sector": "Transportation"
   },
   "lesson": {
     "lesson_id": null,
-    "version": null
+    "version": null,
+    "next_version": null
   },
   "summary": {
     "status": "ready",

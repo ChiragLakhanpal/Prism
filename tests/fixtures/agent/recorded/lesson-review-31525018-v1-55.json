@@ -25,7 +25,7 @@
       {
        "type": "output_text",
        "annotations": [],
-       "text": "{\"summary\": [{\"sentence\": \"The ICR said that \\\"Some of the road works were dropped\\\" because the permits were not in place.\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/55\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"Some of the road works were dropped\", \"passage_id\": \"31525018/v1/55\"}}], \"repeats\": [{\"lesson_id\": \"lesson-cfdf000a46\", \"claims\": [{\"sentence\": \"IEG's own lesson in its ICR Review says the same about permits before contracts are awarded.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.ops.lesson_versions:lesson-cfdf000a46/v1\", \"strata.gold.passage:34056616/v2/12\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}]}"
+       "text": "{\"summary\": [{\"sentence\": \"The ICR said that \\\"Some of the road works were dropped\\\" because the permits were not in place.\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/55\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"Some of the road works were dropped\", \"passage_id\": \"31525018/v1/55\"}}], \"repeats\": [{\"lesson_id\": \"lesson-cfdf000a46\", \"claims\": [{\"sentence\": \"IEG's own lesson in its ICR Review said the same about permits before contracts are awarded.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.ops.lesson_versions:lesson-cfdf000a46/v1\", \"strata.gold.passage:34056616/v2/12\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}]}"
       }
      ]
     }

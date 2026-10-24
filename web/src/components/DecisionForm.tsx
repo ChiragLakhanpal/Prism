@@ -108,8 +108,10 @@ export function ReasonField({
 
 // ── Radio and checkbox rows ──────────────────────────────────────────────
 
-// A radio or checkbox row, 44 px tall with the whole label as its target; the control itself is 24 px, the
-// smallest target WCAG 2.5.8 allows.
+// A radio or checkbox row, at least 44 px tall with the whole label as its target; the control itself is 24 px,
+// the smallest target WCAG 2.5.8 allows. The control sits on the first line of its label, so a label that wraps
+// to three lines still reads as its own, rows sit at least 16 px apart, and the control's left edge meets the
+// legend's (the row's hover fill reaches 8 px past it).
 function Choice({ type, groupId, checked, onChange, children, disabled }: {
   type: "radio" | "checkbox";
   // The input group's name, which ties each group's radios together.
@@ -120,8 +122,8 @@ function Choice({ type, groupId, checked, onChange, children, disabled }: {
   disabled?: boolean;
 }) {
   return (
-    <label className={cx("flex min-h-11 cursor-pointer items-center gap-3 rounded-sm px-2 hover:bg-tint-hover", disabled && "cursor-not-allowed")}>
-      <input type={type} name={groupId} checked={checked} onChange={onChange} disabled={disabled} className="size-6 shrink-0 accent-primary" />
+    <label className={cx("-mx-2 flex min-h-11 cursor-pointer items-start gap-3 rounded-sm px-2 py-2 hover:bg-tint-hover", disabled && "cursor-not-allowed")}>
+      <input type={type} name={groupId} checked={checked} onChange={onChange} disabled={disabled} className="mt-0.5 size-6 shrink-0 accent-primary" />
       <span className="text-body text-ink">{children}</span>
     </label>
   );
@@ -216,7 +218,7 @@ export type Verb = "recommend" | "decide" | "cross_check";
 // What happened after a save: the act, the outcome chosen, and the server's answer.
 export type Done = { verb: Verb; choice: string; saved: Saved };
 // Why the form gave way: a refusal by reason code, or the item moved on while it was open.
-export type GaveWay = { kind: "refused"; code: string; values: Record<string, string> } | { kind: "stale"; reason: string; item: ReviewItem } | { kind: "lost" };
+export type GaveWay = { kind: "refused"; code: string; values: Record<string, string>; verb: Verb } | { kind: "stale"; reason: string; item: ReviewItem } | { kind: "lost" };
 
 type Failure = null | "failed";
 
@@ -315,7 +317,7 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
       const refusal = error instanceof ApiError ? (error.body as unknown as Refusal) : null;
       if (refusal?.code === "stale" && refusal.item) onGaveWay({ kind: "stale", reason, item: refusal.item });
       else if (refusal?.code === "not_a_reviewer") onGaveWay({ kind: "lost" });
-      else if (refusal?.code && refusal.code in copy.lessons.review.cannot) onGaveWay({ kind: "refused", code: refusal.code, values: refusal.values ?? {} });
+      else if (refusal?.code && refusal.code in copy.lessons.review.cannot) onGaveWay({ kind: "refused", code: refusal.code, values: refusal.values ?? {}, verb });
       else setFailure("failed");
     }
   }
@@ -349,14 +351,14 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
         : choice === "keep"
           ? <Fill template={words.feedforwardKeep} slots={{ version: <Num value={version} /> }} />
           : choice === "change"
-            ? <Fill template={words.feedforwardChange} slots={{ next: <Num value={version + 1} />, version: <Num value={version} /> }} />
+            ? <Fill template={words.feedforwardChange} slots={{ next: item.lesson.next_version ? <Num value={item.lesson.next_version} /> : "", version: <Num value={version} /> }} />
             : choice.startsWith("retire")
               ? words.feedforwardRetire
               : null
       : verb === "recommend"
         ? words.feedforwardRecommend
         : repeat
-          ? <Fill template={words.feedforwardRepeat} slots={{ statement: repeat.statement, version: <Num value={repeat.version + 1} /> }} />
+          ? <Fill template={words.feedforwardRepeat} slots={{ statement: repeat.statement, version: repeat.next_version ? <Num value={repeat.next_version} /> : "" }} />
           : words.feedforwardAdd;
   const title = crossCheck ? words.crossCheckTitle : verb === "recommend" ? words.recommendTitle : words.decideTitle;
   const legend = crossCheck ? words.agreeLegend : recheck ? words.whatShouldHappen : words.isNew;
@@ -376,7 +378,8 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
           ];
 
   return (
-    <section aria-labelledby={headingId} data-decision-form={`${item.kind}-${verb}`} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
+    // A div, so the form named by the h2 is the one landmark it gives a screen reader.
+    <div data-decision-form={`${item.kind}-${verb}`} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <form
         ref={form}
         noValidate
@@ -467,6 +470,6 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
         </div>
         {feedforward && <p className="max-w-prose text-caption text-ink-muted">{feedforward}</p>}
       </form>
-    </section>
+    </div>
   );
 }

@@ -18,8 +18,10 @@
 # in the workspace, and it never hides anyone's own drafts from them.
 #
 # [groups.<key>], one reviewer group (ticket 29):
-#   workspace_group  the group's name in the Databricks workspace, which the deploy grants write
-#                    access to. The names below wait for the workspace (docs/workspace-catchup.md).
+#   workspace_group  the group's name in the Databricks workspace. Its members get no write access to
+#                    the review tables: the app writes every act as its own service principal and
+#                    names the person in the row. The names below wait for the workspace
+#                    (docs/workspace-catchup.md).
 #   role             what its members are called on reviewer pages, such as "lead procurement specialist"
 #   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review
 #   acts             what its members may do there: recommend, decide or cross_check a lesson

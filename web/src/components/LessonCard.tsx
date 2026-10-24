@@ -49,9 +49,9 @@ function Chips({ evidence, open, visited }: { evidence: LessonEvidence[]; open: 
 }
 
 // "Source: ICR, P130164, October 10, 2019, paragraph 54, page 23; ICR Review, ..."
-export function LessonSources({ evidence }: { evidence: LessonEvidence[] }) {
+export function LessonSources({ evidence, className }: { evidence: LessonEvidence[]; className?: string }) {
   return (
-    <Source>
+    <Source className={className}>
       {evidence.map((source, index) => (
         <Fragment key={source.evidence_id}>
           {index > 0 && words.card.sourceJoin}
@@ -135,7 +135,8 @@ function RecheckForm({ card, max, onSaved }: { card: Card; max: number; onSaved:
   return (
     <div data-recheck={recheck.state}>
       {!open && (
-        <Button ref={button} variant="ghost" aria-expanded={false} aria-controls={formId} onClick={() => setRecheck({ state: "open", error: null })}>
+        // Flush, so its label starts on the card's text edge like every other block (DESIGN.md section 5, Buttons).
+        <Button ref={button} variant="ghost" flush aria-expanded={false} aria-controls={formId} onClick={() => setRecheck({ state: "open", error: null })}>
           {words.recheck.button}
         </Button>
       )}
@@ -190,7 +191,8 @@ export function LessonCard({
   level = 2,
   compact = false,
   canRecheck = false,
-  reasonMax = 500,
+  reasonMax,
+  onRecheckSaved,
   open = null,
   visited = new Set(),
   children,
@@ -199,7 +201,10 @@ export function LessonCard({
   level?: 2 | 3;
   compact?: boolean;
   canRecheck?: boolean;
+  // The re-check reason's limit, which the library's answer gives from config/thresholds.toml.
   reasonMax?: number;
+  // Called after a re-check is saved, so the sub-tab's count is asked for again.
+  onRecheckSaved?: () => void;
   // The source the evidence drawer shows now, and the sources this viewer opened.
   open?: string | null;
   visited?: ReadonlySet<string>;
@@ -238,7 +243,7 @@ export function LessonCard({
           )}
         </ul>
       )}
-      <div className="flex flex-col gap-1 text-caption text-ink-muted">
+      <div className="flex max-w-prose flex-col gap-1 text-caption text-ink-muted">
         {compact ? (
           <p>
             <Fill template={words.card.compactDecided} slots={{ version: <Num value={card.version} />, date: <Num date={card.decided_on} /> }} />
@@ -257,9 +262,16 @@ export function LessonCard({
           </>
         )}
       </div>
-      {!compact && <LessonSources evidence={card.evidence} />}
-      {!compact && canRecheck && !card.rechecking_since && (
-        <RecheckForm card={card} max={reasonMax} onSaved={(on) => setRechecking(on)} />
+      {!compact && <LessonSources evidence={card.evidence} className="max-w-prose" />}
+      {!compact && canRecheck && reasonMax !== undefined && !card.rechecking_since && (
+        <RecheckForm
+          card={card}
+          max={reasonMax}
+          onSaved={(on) => {
+            setRechecking(on);
+            onRecheckSaved?.();
+          }}
+        />
       )}
     </article>
   );

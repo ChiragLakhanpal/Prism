@@ -264,6 +264,8 @@ export const galleryCopy = {
     outcomes: "Outcome panel",
     history: "History list",
     pagination: "Pagination",
+    skeletons: "Loading: each page's skeleton, sized to what it holds",
+    lessonSource: "A library lesson in the evidence drawer, as a likely repeat or an answer cites it",
   },
   lessonStates: {
     chipDefault: "A source chip",
@@ -299,6 +301,14 @@ export const galleryCopy = {
     outcomeInfo: "Info: you recommended it",
     outcomeNeutral: "Neutral: you rejected it",
     history: "A merge, decided, with was and now",
+    historyKept: "A re-check, kept at its version",
+    paginationMiddle: "Page 2 of 3, both links",
+    paginationFirst: "Page 1 of 3, no previous page",
+    skeletonLibrary: "The library",
+    skeletonQueue: "Waiting for review, with its purpose already in place",
+    skeletonReview: "The review page",
+    lessonDrawer: "The drawer, opened from the writer's sentence under a likely repeat",
+    lessonCard: "The evidence card, on hover or focus of its marker",
   },
   // The Drafts page's state labels (ticket 35).
   draftStates: {

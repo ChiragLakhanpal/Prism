@@ -4,7 +4,9 @@ governance").
 Strata proposes; an accredited procurement specialist recommends; a different lead procurement specialist
 decides, each with a reason; nobody recommends or decides on a lesson from their own project. The roles
 come from tests/fixtures/roles.toml, the viewer from the headers the Databricks App forwards, and the
-reviewers' acts go to a copy of the fixture database, as the viewer.
+reviewers' acts go to a copy of the fixture database. Every read is the viewer's, and every act is written by
+the app's own engine with the viewer recorded as the actor: the viewer's engine here refuses writes, as the
+warehouse refuses a reviewer with no MODIFY grant (tests/lesson_scenario.py).
 
 Expected values come from tests/ground_truth/values.toml and the 29 design brief's section 13.
 """
@@ -13,10 +15,10 @@ import asyncio
 import datetime as dt
 import shutil
 import tomllib
-from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
+import lesson_scenario as scenario
 import pytest
 
 from strata.config import load_roles
@@ -48,16 +50,14 @@ def database(fixture_db, tmp_path):
     return target
 
 
+def review_today() -> LessonReview:
+    return LessonReview(ROLES, today=lambda: TODAY, now=lambda: dt.datetime.combine(TODAY, dt.time(14, 0), tzinfo=dt.UTC))
+
+
 @pytest.fixture
 def app(database):
-    @contextmanager
-    def engine_for(_viewer):
-        with DuckDBEngine.open(database) as engine:
-            yield engine
-
-    review = LessonReview(ROLES, today=lambda: TODAY,
-                          now=lambda: dt.datetime.combine(TODAY, dt.time(14, 0), tzinfo=dt.UTC))
-    return create_app(engine_for=engine_for, lessons=review)
+    connection = scenario.OneConnection(database)
+    return create_app(engine_for=connection.engine_for, lessons=review_today(), lesson_record=connection.the_app)
 
 
 def call(app, method, path, headers=None, **options):
@@ -113,6 +113,32 @@ def test_a_lesson_reviewer_sees_the_queue_tab_with_the_items_waiting_in_their_re
     assert call(app, "GET", "/api/lessons/me", WANJIRU).json()["waiting"] == 0
 
 
+# ── Who writes the review record ─────────────────────────────────────────
+
+def test_without_the_app_s_own_identity_no_act_is_recorded_and_the_reviewer_is_told(database):
+    connection = scenario.OneConnection(database)
+    app = create_app(engine_for=connection.engine_for, lessons=review_today())  # no service principal
+    item = item_for(app, ASHA, REBIDDING)
+
+    refused = act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    asked = call(app, "POST", "/api/lessons/lesson-0000000000/recheck", ASHA, json={"reason": "Yes."})
+
+    assert (refused.status_code, refused.json()["code"]) == (503, "not_recorded")
+    assert (asked.status_code, asked.json()["code"]) == (503, "not_recorded")
+    assert query(database, "SELECT * FROM strata.ops.lesson_review_acts") == []
+
+
+def test_an_evidence_card_s_excerpt_leaves_out_the_paragraph_s_own_number_and_still_highlights_the_quote(app):
+    item = item_for(app, ASHA, REBIDDING)
+    page = call(app, "GET", f"/api/lessons/review/{item['item_id']}", ASHA).json()
+
+    first = page["evidence"][0]
+    shown = first["excerpt"]
+    assert not shown["text"].startswith("54.")  # the card's title already says paragraph 54
+    start, end = shown["highlight"]
+    assert " ".join(shown["text"][start:end].split()) == " ".join(first["quote"].split())
+
+
 # ── Two people, and recusal ──────────────────────────────────────────────
 
 def test_the_same_person_cannot_both_recommend_and_decide(app):
@@ -149,6 +175,42 @@ def test_an_act_on_a_stage_the_item_has_left_is_refused_as_stale_with_the_new_st
 
     assert (stale.status_code, stale.json()["code"]) == (409, "stale")
     assert stale.json()["item"]["stage"] == "decision"
+
+
+def test_when_two_leads_decide_in_the_same_moment_only_the_first_decision_is_written(database):
+    class RivalFirst:
+        """The app's own engine while another lead's decision lands an instant before this one."""
+
+        def __init__(self, engine):
+            self.engine, self.rival = engine, True
+
+        def __getattr__(self, name):
+            return getattr(self.engine, name)
+
+        def run(self, sql, params=None):
+            if self.rival and "INSERT INTO strata.ops.lesson_review_acts" in sql:
+                self.rival = False
+                self.engine.run(sql, {**params, "act_id": "rival", "actor": "priya.nair@worldbank.example",
+                                      "acted_at": params["acted_at"] - dt.timedelta(seconds=1)})
+            return self.engine.run(sql, params)
+
+        def close(self):
+            pass
+
+    connection = scenario.OneConnection(database)
+    rival = {"on": False}
+    app = create_app(engine_for=connection.engine_for, lessons=review_today(),
+                     lesson_record=lambda: RivalFirst(connection.open) if rival["on"] else connection.the_app())
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+
+    rival["on"] = True
+    late = act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+
+    assert (late.status_code, late.json()["code"]) == (409, "stale")
+    decisions = query(database, "SELECT act_id FROM strata.ops.lesson_review_acts WHERE act = 'decide'")
+    assert decisions == [{"act_id": "rival"}]
+    assert query(database, "SELECT * FROM strata.ops.lesson_versions") == []
 
 
 # ── Decisions ────────────────────────────────────────────────────────────
@@ -220,6 +282,52 @@ def test_any_lesson_reviewer_can_ask_for_a_re_check_once_while_one_is_open(app):
     assert (refused.status_code, refused.json()["code"]) == (403, "not_a_reviewer")
     [card] = call(app, "GET", "/api/lessons", ANA).json()["lessons"]
     assert card["rechecking_since"] == TODAY.isoformat()
+
+
+def recheck_of_rebidding(app) -> tuple[str, str]:
+    """The rebidding lesson added at version 1, then a re-check of it asked for: its lesson id and item id."""
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+    [lesson] = call(app, "GET", "/api/lessons", ASHA).json()["lessons"]
+    asked = call(app, "POST", f"/api/lessons/{lesson['lesson_id']}/recheck", WANJIRU,
+                 json={"reason": "The 2025 Regulations changed how estimates are made."}).json()
+    return lesson["lesson_id"], asked["item_id"]
+
+
+def test_a_kept_lesson_s_record_names_the_version_it_stays_at(app):
+    _, recheck = recheck_of_rebidding(app)
+    act(app, ASHA, recheck, "recommend", expected_stage="recommendation", outcome="keep", reason="It still holds.")
+    act(app, OMAR, recheck, "decide", expected_stage="decision", outcome="keep", reason="Agree.")
+
+    history = call(app, "GET", f"/api/lessons/review/{recheck}", ASHA).json()["history"]
+    [decided] = [event for event in history if event["event"] == "decided"]
+    assert (decided["outcome"], decided["version"]) == ("keep", 1)
+
+
+def test_the_server_names_the_version_a_decision_will_write_and_the_one_a_change_leaves_on_record(app):
+    _, recheck = recheck_of_rebidding(app)
+    page = call(app, "GET", f"/api/lessons/review/{recheck}", OMAR).json()
+    assert (page["lesson"]["version"], page["lesson"]["next_version"]) == (1, 2)
+
+    act(app, ASHA, recheck, "recommend", expected_stage="recommendation", outcome="change", reason="Say rates.",
+        change={"statement": "Base works estimates on current market rates to avoid rebidding"})
+    changed = act(app, OMAR, recheck, "decide", expected_stage="decision", outcome="change", reason="Clearer.",
+                  change={"statement": "Base works estimates on current market rates to avoid rebidding"}).json()
+    assert (changed["item"]["outcome"]["version"], changed["item"]["outcome"]["previous_version"]) == (2, 1)
+
+
+def test_a_retirement_writes_a_new_version_that_records_was_now_and_the_reason(app, database):
+    lesson_id, recheck = recheck_of_rebidding(app)
+    act(app, ASHA, recheck, "recommend", expected_stage="recommendation", outcome="retire_outdated",
+        reason="The 2016 Regulations replaced this.")
+    act(app, OMAR, recheck, "decide", expected_stage="decision", outcome="retire_outdated", reason="It no longer applies.")
+
+    [retired] = query(database, "SELECT state, was, now, reason FROM strata.ops.lesson_versions "
+                                "WHERE lesson_id = :lesson_id AND version = 2", lesson_id=lesson_id)
+    assert retired == {"state": "retired_outdated", "was": '{"state": "current"}', "now": '{"state": "retired_outdated"}',
+                       "reason": "It no longer applies."}
+    assert call(app, "GET", "/api/lessons", ASHA).json()["lessons"] == []
 
 
 # ── The screens' recorded answers ────────────────────────────────────────

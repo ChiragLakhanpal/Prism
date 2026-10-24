@@ -1313,6 +1313,7 @@ class Edition:
     key: str
     name: str  # as a sentence names it: "Its projects followed {name}."
     phrases: tuple[str, ...]
+    short: str = ""  # as a label names it, with a capital: "Procurement Guidelines, January 2011"
 
 
 _STRAIGHT = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
@@ -1343,8 +1344,8 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
     _Entry(path, "the file", data).only({"editions"})
     editions: list[Edition] = []
     for entry in _tables(path, data, "editions"):
-        entry.only({"key", "name", "phrases"})
-        edition = Edition(entry.text("key"), entry.text("name"), entry.texts("phrases"))
+        entry.only({"key", "name", "short", "phrases"})
+        edition = Edition(entry.text("key"), entry.text("name"), entry.texts("phrases"), entry.text("short"))
         if not edition.phrases:
             entry._fail("phrases", "must list at least one phrase a PAD uses for the edition")
         if edition.key in {seen.key for seen in editions}:

@@ -15,15 +15,21 @@ import recheckRecommend from "../../../tests/fixtures/api/lessons-item-recheck-r
 import recheckDecide from "../../../tests/fixtures/api/lessons-item-recheck-decide.json";
 import crossCheck from "../../../tests/fixtures/api/lessons-item-cross-check.json";
 import decidedMerged from "../../../tests/fixtures/api/lessons-item-decided-merged.json";
-import type { ReactNode } from "react";
+import decidedKept from "../../../tests/fixtures/api/lessons-item-decided-kept.json";
+import meReviewer from "../../../tests/fixtures/api/lessons-me-reviewer.json";
+import { useId, type ReactNode } from "react";
 import { DecisionForm, LessonEditor, ReasonField, currentChange, validChange } from "../components/DecisionForm";
+import { EvidenceCard } from "../components/EvidenceCard";
+import { EvidenceDrawerView } from "../components/EvidenceDrawer";
 import { LessonCard } from "../components/LessonCard";
 import { EvidenceBadge, Pagination, SourceChip, Tag } from "../components/LessonParts";
 import { HistoryList, OutcomePanel, QueueRow } from "../components/LessonReview";
 import { StatusBadge } from "../components/StatusBadge";
 import { copy } from "../copy";
-import type { Library, Queue, ReviewItem } from "../lib/lessons";
-import { EvidenceCardFull } from "../pages/ReviewPage";
+import type { EvidenceEvent } from "../lib/answer";
+import type { Library, Me, Queue, ReviewItem } from "../lib/lessons";
+import { LibrarySkeleton, QueueSkeleton } from "../pages/LessonsPages";
+import { EvidenceCardFull, ReviewSkeleton } from "../pages/ReviewPage";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
 
@@ -45,6 +51,30 @@ const manySources = {
 };
 const nothing = () => undefined;
 const lists = DECIDE.lists;
+// The library lesson the lesson review writer cites under "This may repeat a lesson in the library".
+const REPEATS = item(recommendRepeats);
+const LESSON_SOURCE = Object.values(REPEATS.summary.evidence ?? {}).find((evidence: EvidenceEvent) => evidence.kind === "record") as EvidenceEvent;
+
+// The evidence drawer as it opens beside the page, from a sample's frame.
+function DrawerSample({ evidence }: { evidence: EvidenceEvent }) {
+  const dialogId = useId();
+  return (
+    <div className="max-w-[37.5rem] overflow-hidden rounded-md border border-line">
+      <EvidenceDrawerView
+        id={evidence.id}
+        data={{ status: "ready", evidence }}
+        run={null}
+        from={null}
+        narrow={false}
+        preview={false}
+        dialogId={dialogId}
+        sample
+        onClose={nothing}
+        onChoose={nothing}
+      />
+    </div>
+  );
+}
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -125,10 +155,10 @@ export function lessonsPage(): GalleryPage {
         body: (
           <Column>
             <Labeled label={ls.card}>
-              <LessonCard card={card} canRecheck />
+              <LessonCard card={card} canRecheck reasonMax={LIBRARY.limits.reason_max_chars} />
             </Labeled>
             <Labeled label={ls.rechecking}>
-              <LessonCard card={RECHECKING.lessons[1]} canRecheck />
+              <LessonCard card={RECHECKING.lessons[1]} canRecheck reasonMax={RECHECKING.limits.reason_max_chars} />
             </Labeled>
             <Labeled label={ls.manySources}>
               <LessonCard card={manySources} />
@@ -282,6 +312,9 @@ export function lessonsPage(): GalleryPage {
             <Labeled label={ls.history}>
               <HistoryList events={item(decidedMerged).history} lists={lists} headingId="gallery-history" />
             </Labeled>
+            <Labeled label={ls.historyKept}>
+              <HistoryList events={item(decidedKept).history} lists={lists} headingId="gallery-history-kept" />
+            </Labeled>
           </Column>
         ),
       },
@@ -290,7 +323,45 @@ export function lessonsPage(): GalleryPage {
         title: t.pagination,
         body: (
           <Column>
-            <Pagination page={2} pages={3} href={(n) => `/lessons?page=${n}`} />
+            <Labeled label={ls.paginationMiddle}>
+              <Pagination page={2} pages={3} href={(n) => `/lessons?page=${n}`} />
+            </Labeled>
+            <Labeled label={ls.paginationFirst}>
+              <Pagination page={1} pages={3} href={(n) => `/lessons?page=${n}`} />
+            </Labeled>
+          </Column>
+        ),
+      },
+      {
+        id: "lesson-source",
+        title: t.lessonSource,
+        body: (
+          <Column>
+            <Labeled label={ls.lessonCard}>
+              <div className="max-w-[22rem] rounded-md border border-line bg-surface p-3">
+                <EvidenceCard evidence={LESSON_SOURCE} n={2} sentence={null} />
+              </div>
+            </Labeled>
+            <Labeled label={ls.lessonDrawer}>
+              <DrawerSample evidence={LESSON_SOURCE} />
+            </Labeled>
+          </Column>
+        ),
+      },
+      {
+        id: "skeletons",
+        title: t.skeletons,
+        body: (
+          <Column>
+            <Labeled label={ls.skeletonLibrary}>
+              <LibrarySkeleton />
+            </Labeled>
+            <Labeled label={ls.skeletonQueue}>
+              <QueueSkeleton me={meReviewer as unknown as Me} />
+            </Labeled>
+            <Labeled label={ls.skeletonReview}>
+              <ReviewSkeleton />
+            </Labeled>
           </Column>
         ),
       },

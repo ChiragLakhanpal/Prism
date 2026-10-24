@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-from strata.agent.foundry import FOUNDRY_SCOPE, FoundryAgent, entra_token
+from strata.agent.foundry import FOUNDRY_SCOPE, FoundryAgent, Token, entra_token
 from strata.agent.loop import answer_runner
 from strata.config import load_agent, load_draft_kinds
 from strata.harness.turn import Runner
@@ -26,38 +26,46 @@ from strata.server.engines import EngineFor
 NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "FOUNDRY_TENANT_ID", "FOUNDRY_CLIENT_ID", "FOUNDRY_CLIENT_SECRET")
 
 
+def _foundry(environ: Mapping[str, str]) -> tuple[str, Token] | None:
+    """The Foundry project's endpoint and the app principal's token, or None when the environment lacks any of
+    the four values."""
+    values = {key: environ.get(key, "").strip() for key in NEEDS}
+    if not all(values.values()):
+        return None
+    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
+                        FOUNDRY_SCOPE)
+    return values["FOUNDRY_PROJECT_ENDPOINT"], token
+
+
 def writers_from_environment(environ: Mapping[str, str]) -> Callable[[str], FoundryAgent | None]:
     """Each draft kind's writer: the Foundry agent its entry in config/drafts.toml names, as the app's own
     principal, or None for every kind when the environment names no Foundry project."""
-    values = {key: environ.get(key, "").strip() for key in NEEDS}
-    if not all(values.values()):
+    foundry = _foundry(environ)
+    if foundry is None:
         return lambda kind: None
+    endpoint, token = foundry
     kinds = load_draft_kinds()
-    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
-                        FOUNDRY_SCOPE)
 
     def writer(kind: str) -> FoundryAgent | None:
         entry = kinds.kinds.get(kind)
-        return FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], load_agent(entry.agent), token) if entry else None
+        return FoundryAgent(endpoint, load_agent(entry.agent), token) if entry else None
     return writer
 
 
 def lesson_writer_from_environment(environ: Mapping[str, str]) -> Callable[[], FoundryAgent | None]:
     """The lesson review writer (config/agents.toml, lesson_review_writer), as the app's own principal, or
     None when the environment names no Foundry project (ticket 29)."""
-    values = {key: environ.get(key, "").strip() for key in NEEDS}
-    if not all(values.values()):
+    foundry = _foundry(environ)
+    if foundry is None:
         return lambda: None
-    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
-                        FOUNDRY_SCOPE)
-    return lambda: FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], load_agent("lesson_review_writer"), token)
+    endpoint, token = foundry
+    return lambda: FoundryAgent(endpoint, load_agent("lesson_review_writer"), token)
 
 
 def from_environment(environ: Mapping[str, str], engine_for: EngineFor | None) -> Runner | None:
-    values = {key: environ.get(key, "").strip() for key in NEEDS}
-    if engine_for is None or not all(values.values()):
+    foundry = _foundry(environ)
+    if engine_for is None or foundry is None:
         return None
+    endpoint, token = foundry
     spec = load_agent("orchestrator")
-    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
-                        FOUNDRY_SCOPE)
-    return answer_runner(lambda turn: FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], spec, token), engine_for)
+    return answer_runner(lambda turn: FoundryAgent(endpoint, spec, token), engine_for)

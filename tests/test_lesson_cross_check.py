@@ -89,7 +89,7 @@ def test_only_the_assigned_region_cross_checks_and_a_disagreement_starts_a_re_ch
         wanjiru = review.queue(engine, scenario.WANJIRU)["groups"]["you"]
         saved = review.act(engine, scenario.WANJIRU, item["item_id"], "cross_check",
                            {"expected_stage": "cross_check", "agree": False,
-                            "reason": "The quote supports the lesson only for works contracts."})
+                            "reason": "The quote supports the lesson only for works contracts."}, engine)
 
     # South Asia's queue leaves it out, and its page opens read-only for South Asia's reviewers.
     assert item["item_id"] not in in_asha_s_queue
@@ -97,8 +97,10 @@ def test_only_the_assigned_region_cross_checks_and_a_disagreement_starts_a_re_ch
     assert [row["item_id"] for row in wanjiru] == [item["item_id"]]
     assert saved["item"]["outcome"]["outcome"] == "disagree"
     with DuckDBEngine.open(decided, read_only=True) as engine:
-        result = engine.run("SELECT kind, region, origin, origin_reason FROM strata.ops.lesson_review_items "
-                            "WHERE origin = 'cross_check'")
-    [(kind, region, origin, reason)] = result.rows
+        result = engine.run("SELECT kind, lesson_id, proposal_id, region, origin, origin_reason "
+                            "FROM strata.ops.lesson_review_items WHERE origin = 'cross_check'")
+    [(kind, lesson_id, proposal_id, region, origin, reason)] = result.rows
     assert (region, origin, reason) == ("South Asia", "cross_check", "The quote supports the lesson only for works contracts.")
-    assert kind in ("recheck", "new")
+    # The quarter's fixed draw is IEG's own lesson (lesson-cfdf000a46 in the recorded answers), which was added, so
+    # the disagreement re-checks that lesson rather than queueing a proposal again.
+    assert (kind, lesson_id, proposal_id) == ("recheck", "lesson-cfdf000a46", None)

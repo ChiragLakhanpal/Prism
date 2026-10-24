@@ -12,6 +12,11 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
+// The Lessons tab's purpose, which the library and Waiting for review share under the same h1.
+const LESSONS_PURPOSE =
+  "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
+  "procurement specialist decides which lessons enter the library.";
+
 export const copy = {
   appName: "Strata",
   skipLink: "Skip to main content",
@@ -85,9 +90,7 @@ export const copy = {
     },
     lessons: {
       title: "Lessons",
-      purpose:
-        "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
-        "procurement specialist decides which lessons enter the library.",
+      purpose: LESSONS_PURPOSE,
       emptyTitle: "There are no lessons in the library yet.",
       emptyBody:
         "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
@@ -97,9 +100,7 @@ export const copy = {
     lessonsQueue: {
       title: "Lessons",
       documentTitle: "Waiting for review, Lessons",
-      purpose:
-        "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
-        "procurement specialist decides which lessons enter the library.",
+      purpose: LESSONS_PURPOSE,
     },
     lessonReview: {
       title: "Waiting for review",
@@ -505,6 +506,14 @@ export const copy = {
       "strata.ops.lesson_versions": "Lesson",
     } as Record<string, string>,
     recordKindOther: "Record",
+    // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
+    // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
+    // other permits in place before awarding contracts").
+    lessonEyebrow: "What · lesson",
+    lessonSource: "Strata's lesson library, version {version}, decided on {date}.",
+    lessonSourceUndated: "Strata's lesson library, version {version}.",
+    markerLesson: (version: string, statement: string) => `Lesson, version ${version}, ${statement}`,
+    switcherLesson: (version: string) => `Lesson, version ${version}`,
     // The record view's fields keep STEP's own names; the description's is STEP's "Description".
     recordDescription: "Description",
     // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
@@ -2071,9 +2080,11 @@ export const copy = {
     // The library (section 5.2).
     library: {
       loading: "Loading the library.",
-      countAll: "Showing all {total} lessons in the library, newest first.",
-      countOne: "Showing the one lesson in the library.",
-      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first.",
+      // The count line in a table's form (copy.table): numerals and no closing period.
+      countAll: "Showing all {total} lessons in the library, newest first",
+      countBoth: "Showing both lessons in the library, newest first",
+      countOne: "Showing 1 lesson in the library",
+      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first",
       reviewerLink: "Go to Waiting for review",
       outOfRangeTitle: "There is no page {page} in the library.",
       outOfRangeBody: "The library has {pages} pages.",
@@ -2161,6 +2172,8 @@ export const copy = {
       decidedSource: "Strata's lesson review records.",
       columns: { lesson: "Lesson", outcome: "Outcome", decided: "Decided", days: "Days from publication" },
       daysDefinition: "report public to decision",
+      // Cards have no column heads, so the days' definition ends the count line's row once.
+      daysCards: "Days from publication run from the day the report became public to the decision.",
       recheckDays: "Re-check",
       project: "{name} ({pid})",
       outcomes: {
@@ -2384,11 +2397,13 @@ export const copy = {
         kind: "Choose a kind.",
       },
       failed: "I couldn't save your {act} just now. Your reason is still here.",
+      // A refusal says what failed here; the note under it says why.
+      refused: "I couldn't save your {act}.",
       acts: { recommend: "recommendation", decide: "decision", cross_check: "cross-check" } as Record<string, string>,
       tryAgain: "Try again",
-      staleLead: "{name} {act} this lesson on {date}, while you had it open.",
-      staleActs: { recommend: "recommended", decide: "decided on", cross_check: "cross-checked" } as Record<string, string>,
-      staleBody: "Your reason was not sent. You can copy it from the box below.",
+      staleLead: "While you had this lesson open, {name} {act} on {date}.",
+      staleActs: { recommend: "recommended it", decide: "made a decision", cross_check: "cross-checked it" } as Record<string, string>,
+      staleBody: "I didn't send your reason. You can copy it from the box below.",
       staleReason: "Your reason, not sent",
       lostRole: "Your account is no longer on the list of lesson reviewers, so I couldn't save this.",
       nextItem: "Open the next lesson waiting for you",

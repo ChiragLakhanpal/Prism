@@ -24,11 +24,14 @@ It needs npm, which builds the web app. It does these things, in order:
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it.
 6. It grants the app's own service principal what the server needs to write usage events, agent
-   runs, opened sources, drafts, and decisions and labels on supplier pairs, and nothing more: USE
-   CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on strata.ops.usage_events,
-   agent_runs, evidence_opened, drafts, draft_states, draft_exports and draft_files, SELECT on
-   strata.ops.supplier_pairs, and SELECT and MODIFY on strata.ops.supplier_review_decisions and
-   strata.ops.supplier_pair_labels. Viewers read as themselves, through the bundle's grants.
+   runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
+   and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
+   strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports and
+   draft_files, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
+   strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
+   ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
+   lesson_review_notes. Viewers read as themselves, through the bundle's grants, and no reviewer group
+   may write the lesson review record outside the app.
 7. It prints the app's address.
 
 Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
@@ -120,9 +123,15 @@ def resources(env: dict, scope: str) -> list[dict]:
     return found
 
 
+# Ticket 29's lesson review record, which the app writes as itself with the reviewer named in each row.
+LESSON_REVIEW_TABLES = ("lesson_review_acts", "lesson_review_items", "lesson_versions", "lesson_sources",
+                        "lesson_review_notes")
+
+
 def grants(principal: str) -> list[str]:
     """What the app's own service principal needs to write usage events, agent runs, opened sources, drafts
-    with their states, exports and files (ticket 35), and decisions and labels on supplier pairs."""
+    with their states, exports and files (ticket 35), decisions and labels on supplier pairs, and the
+    lesson review record (ticket 29), which it writes for every reviewer."""
     if not PRINCIPAL.fullmatch(principal):
         raise ValueError(f"{principal!r} is not a service principal's application id.")
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
@@ -132,7 +141,8 @@ def grants(principal: str) -> list[str]:
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",
-            f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`"]
+            f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`",
+            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in LESSON_REVIEW_TABLES]]
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:

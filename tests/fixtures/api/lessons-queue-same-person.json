@@ -109,7 +109,11 @@
           },
           "page": 23,
           "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            72,
+            168
+          ]
         },
         "region": "South Asia",
         "project": {
@@ -166,7 +170,8 @@
         "outcome": "added",
         "version": 1,
         "decided_on": "2026-10-27",
-        "days_from_publication": 1272
+        "days_from_publication": 1272,
+        "published_on": "2023-05-04"
       },
       {
         "item_id": "new-e903b07ad1",
@@ -177,7 +182,8 @@
         "outcome": "added",
         "version": 1,
         "decided_on": "2026-10-27",
-        "days_from_publication": 2551
+        "days_from_publication": 2551,
+        "published_on": "2019-11-02"
       }
     ]
   }

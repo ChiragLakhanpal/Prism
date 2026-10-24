@@ -13,6 +13,8 @@
 # [[editions]]
 #   key      never changes once a lesson holds it
 #   name     the edition as a sentence names it: "Its projects followed {name}." The copy lint checks it.
+#   short    the edition as a label names it, starting with a capital: "Rules followed: {short}". The
+#            copy lint checks it too.
 #   phrases  the words a PAD uses for it, each found word for word
 #
 # Only editions a recorded document names are listed: the source for each is the PAD that names it.
@@ -22,6 +24,7 @@
 [[editions]]
 key = "guidelines_2011_revised_2014"
 name = "the World Bank's Procurement Guidelines of January 2011, revised July 2014"
+short = "Procurement Guidelines, January 2011, revised July 2014"
 # P156634's PAD, paragraph 79: "'Guidelines: Procurement of Goods, Works, and Non-Consulting Services
 # under IBRD Loans and IDA Credits and Grants by World Bank Borrowers' dated January 2011, revised July 2014".
 phrases = ["Guidelines: Procurement of Goods, Works, and Non-Consulting Services", "January 2011", "revised July 2014"]
@@ -29,6 +32,7 @@ phrases = ["Guidelines: Procurement of Goods, Works, and Non-Consulting Services
 [[editions]]
 key = "guidelines_2011"
 name = "the World Bank's Procurement Guidelines of January 2011"
+short = "Procurement Guidelines, January 2011"
 # P130164's PAD, PDF page 49, paragraph 21: "the \"Guidelines: Procurement under IBRD Loans and IDA
 # Credits\" (dated January 2011)" (tests/ground_truth/values.toml, pad-procurement-guidelines).
 phrases = ["Guidelines: Procurement under IBRD Loans and IDA Credits", "January 2011"]

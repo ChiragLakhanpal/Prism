@@ -2,7 +2,7 @@
 -- a version, and each version records was, now and the reason). A lead procurement specialist's decision
 -- writes a new row: version 1 when a proposed lesson is added, then one more for each merge, change or
 -- retirement. A row never changes and never leaves, so a draft that cites a version can always open it.
--- strata.gold.lesson shows each lesson at its newest version.
+-- strata.knowledge.lessons.review and get_lessons read the newest version of each lesson.
 --
 -- lesson_id            the lesson's id, the same at every version: lesson-3f2a9c1d0b
 -- version              1, 2, 3 ...

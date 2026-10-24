@@ -14,6 +14,10 @@ export type Kind = "new" | "recheck" | "cross_check";
 // A sentence the server built, each number marked for Num (ticket 16's segments).
 export type Segment = { text: string } | { number: number; capital?: boolean };
 
+// An edition of the procurement rules (config/editions.toml): name for a sentence ("Its projects followed
+// {name}."), short for a label ("Rules followed").
+export type Edition = { key: string; name: string; short: string };
+
 export type Me = {
   signed_in: boolean;
   tabs: ("library" | "review")[];
@@ -21,6 +25,8 @@ export type Me = {
   regions: string[];
   role: string | null;
   waiting: number | null;
+  // The business days a lesson has, so the queue's purpose shows while the queue itself loads.
+  limit_days: number | null;
 };
 
 // One quote a lesson rests on, with what its source line and chip need.
@@ -38,9 +44,10 @@ export type LessonEvidence = {
   page: number;
   quote: string;
   restated_by_ieg: boolean;
-  // On the review page: the passage's words, the quote's place in them, and the excerpt a card shows.
-  text?: string;
+  // The quote's place in its passage's words, so a chip or a card opens the drawer with it highlighted.
   highlight?: [number, number] | null;
+  // On the review page: the passage's words and the excerpt a card shows.
+  text?: string;
   language?: string | null;
   excerpt?: { text: string; highlight: [number, number]; starts_inside: boolean; ends_inside: boolean } | null;
 };
@@ -52,7 +59,7 @@ export type LessonCard = {
   risk_factors: Item[];
   stage: Item | null;
   kind: Item | null;
-  edition: { key: string; name: string } | null;
+  edition: Edition | null;
   sector: string | null;
   pid: string;
   ieg_status: IegStatus;
@@ -74,6 +81,8 @@ export type Library = {
   from: number;
   to: number;
   can_recheck: boolean;
+  // The re-check reason's limit, from config/thresholds.toml's [lesson_review].
+  limits: { reason_max_chars: number };
   waiting: number | null;
   lessons: LessonCard[];
 };
@@ -111,6 +120,8 @@ export type DecidedRow = {
   version: number | null;
   decided_on: string;
   days_from_publication: number | null;
+  // The day the report became public, which the days count from (null for a re-check).
+  published_on: string | null;
 };
 
 export type Queue = {
@@ -155,6 +166,8 @@ export type Outcome = {
   on: string;
   lesson_id?: string | null;
   version?: number | null;
+  // The version a change or a retirement left on record, which the server counts.
+  previous_version?: number | null;
   target?: string | null;
   days_from_publication?: number | null;
   published_on?: string | null;
@@ -165,10 +178,12 @@ export type ReviewItem = QueueRow & {
   read_only: boolean;
   evidence: LessonEvidence[];
   ieg_note: { kind: "awaiting" } | { kind: "alone"; review_date: string } | null;
-  tags: { risk_factors?: Item[]; stage?: Item | null; kind?: Item | null; edition?: { key: string; name: string } | null; sector: string | null };
-  lesson: { lesson_id: string | null; version: number | null };
+  tags: { risk_factors?: Item[]; stage?: Item | null; kind?: Item | null; edition?: Edition | null; sector: string | null };
+  // next_version: the version a re-check's change would write now, which the server counts.
+  lesson: { lesson_id: string | null; version: number | null; next_version: number | null };
   summary: Summary;
-  repeats: (LessonCard & { sentences: SentenceEvent[] })[];
+  // next_version: the version merging into this lesson would write now.
+  repeats: (LessonCard & { sentences: SentenceEvent[]; next_version: number | null })[];
   history: HistoryEvent[];
   outcome: Outcome | null;
   lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] };

@@ -2,7 +2,7 @@
 the current lessons it may repeat, checked by the verifier before anyone reads it (ticket 29; spec,
 "Workflows and drafts"; the 29 design brief, sections 4.6, 5.7 and 5.8).
 
-For each new lesson waiting in the queue, the workflow:
+For each open item (a new lesson, a re-check or a cross-check) waiting in the queue, the workflow:
 
 1. reads the item's evidence (the quotes and the whole passages they are in) and the library's current
    lessons, the only lessons a lead may merge it into;
@@ -35,7 +35,7 @@ from strata.agent.claims import ClaimsError, claims_from
 from strata.agent.loop import AgentError, output_text
 from strata.agent.verifier import Verdict, answer_events, check
 from strata.harness.facts import Facts
-from strata.knowledge.lessons.review import Store, _int, _json
+from strata.knowledge.lessons.review import Store, _int, _iso, _json
 from strata.lakehouse.engine import Engine
 
 log = logging.getLogger("strata.lessons")
@@ -102,7 +102,9 @@ def facts_for(store: Store, item: dict, subject: dict) -> tuple[Facts, list[dict
         if latest["state"] != "current" or lesson_id == own:
             continue
         evidence_id = lesson_evidence_id(lesson_id, latest["version"])
-        lesson = {"lesson_id": lesson_id, "version": _int(latest["version"]), "statement": latest["statement"]}
+        # The lesson in get_lessons' row shape, so the evidence drawer names it by its statement, version and date.
+        lesson = {"lesson_id": lesson_id, "version": _int(latest["version"]), "statement": latest["statement"],
+                  "decided_on": _iso(latest["decided_on"])}
         facts.record(evidence_id, lesson, tool="get_lessons")
         # A library lesson's own passages, so a sentence about what the two lessons share can quote and cite them.
         rows = [row for proposal in store.lesson_proposals(lesson_id) for row in store.evidence.get(proposal, [])]
@@ -200,7 +202,8 @@ def needs_a_note(store: Store, item: dict, note: dict | None) -> bool:
 
 def run(engine: Engine, agent_for: Callable[[dict, dict], object | None], clock: Callable[[], dt.datetime],
         most: int, review=None) -> int:
-    """A note for every new item that needs one. Returns the notes written. agent_for gives the writer for an
+    """A note for each open item (a new lesson, a re-check or a cross-check) that needs one. Returns the notes
+    written. agent_for gives the writer for an
     item and its subject, or None when there is none, and the item keeps waiting for its note."""
     from strata.knowledge.lessons.review import LessonReview
 

@@ -131,7 +131,7 @@ def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = 
                        "decided_on": _iso(version["decided_on"]), "project_id": version["project_id"],
                        "project_name": project.get("project_name")},
             "lesson_id": lesson_id, "version": _int(version["version"]), "statement": version["statement"], **tags,
-            "edition": {"key": edition.key, "name": edition.name} if edition else None, **ieg,
+            "edition": {"key": edition.key, "name": edition.name, "short": edition.short} if edition else None, **ieg,
             "evidence": [evidence_row(row) for row in rows],
             "project": {"project_id": version["project_id"], "project_name": project.get("project_name"),
                         "country": project.get("country_name"), "region": project.get("region"),

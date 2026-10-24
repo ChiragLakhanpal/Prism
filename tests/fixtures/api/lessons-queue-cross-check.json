@@ -72,7 +72,11 @@
           },
           "page": 14,
           "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
-          "restated_by_ieg": true
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
         },
         "region": "Eastern and Southern Africa",
         "project": {

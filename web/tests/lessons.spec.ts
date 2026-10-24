@@ -9,7 +9,7 @@ import { expect, recorded, test } from "./mocked";
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const REBIDDING = "new-e903b07ad1";
 const PERMITS = "new-64ec0401e3";
-const RECHECK = "recheck-7f57783926";
+const RECHECK = "recheck-09bf32ecc3";
 const CROSS_CHECK = "cross-e0d9a6a06a";
 // DESIGN.md section 7, rule 19: words that read as a World Bank review decision, which no Lessons button uses.
 const RULE_19 = /\b(approv\w*|clear(ance)?s?|no-objection|concur\w*|endorse\w*|validat\w*)\b/i;
@@ -113,6 +113,30 @@ test("a lesson reviewer sees the Lessons sub-tabs with the count waiting in thei
   await expect(row).toContainText("From the ICR for Rajasthan Road Sector Modernization Project (P130164), paragraph 54, page 23. South Asia.");
   await expect(row.locator("[data-badge=restated]")).toHaveText("Restated by IEG");
   await expect(row).toContainText("Day 3 of 10 business days, due November 5, 2026.");
+});
+
+test("while the queue loads, its purpose is already in place and names every one of the reviewer's regions", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const me = JSON.parse(await recorded("lessons-me-reviewer.json"));
+  await serve(page, { "/api/lessons/me": { body: JSON.stringify({ ...me, regions: ["South Asia", "East Asia and Pacific", "Eastern and Southern Africa"] }) } });
+  await page.route("**/api/lessons/review?page=1", () => undefined); // the queue never answers
+  await page.goto("/lessons/review");
+  const purpose = page.locator("[data-queue=loading] [data-queue-purpose]");
+  await expect(purpose).toContainText("within 10 business days.");
+  await expect(purpose).toContainText("This page lists lessons for South Asia, East Asia and Pacific and Eastern and Southern Africa,");
+});
+
+test("the decided table keeps each date on one line, and each day count says what it counts from", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await reviewer(page, { "/api/lessons/review": await file("lessons-queue-decided.json") });
+  await page.goto("/lessons/review");
+  const table = page.locator("[data-queue-decided=table]");
+  const date = table.locator("tbody tr").first().locator("td").nth(1);
+  await expect(date).toHaveText("Oct 27, 2026");
+  const lines = await date.evaluate((cell) => Math.round(cell.querySelector("span")!.getBoundingClientRect().height / parseFloat(getComputedStyle(cell).lineHeight)));
+  expect(lines).toBe(1);
+  await table.locator("tbody button[data-num]").first().focus();
+  await expect(page.getByRole("tooltip")).toHaveText("Days from November 2, 2019, when the report became public, to the decision on October 27, 2026.");
 });
 
 // ── Reviewers' verbs ─────────────────────────────────────────────────────
@@ -219,7 +243,9 @@ test("a refused decision says why at the top, then the note takes the form's pla
   await form.getByRole("button", { name: "Add to the library" }).click();
   const refused = page.locator("[data-gave-way=refused]");
   await expect(refused).toBeFocused();
-  await expect(refused.locator("[data-alert=error]")).toContainText("so you can't recommend or decide on this lesson.");
+  // The error says what failed, and the note under it says why, so no sentence shows twice.
+  await expect(refused.locator("[data-alert=error]")).toHaveText("I couldn't save your decision.");
+  await expect(refused.locator("[data-alert=neutral]")).toContainText("so you can't recommend or decide on this lesson.");
 });
 
 test("an act on an item that moved on keeps the reviewer's unsent reason", async ({ page }) => {
@@ -234,7 +260,8 @@ test("an act on an item that moved on keeps the reviewer's unsent reason", async
   await form.getByRole("button", { name: "Recommend rejecting it" }).click();
   const stale = page.locator("[data-gave-way=stale]");
   await expect(stale).toBeFocused();
-  await expect(stale).toContainText("Asha Raman recommended this lesson on October 27, 2026, while you had it open.");
+  await expect(stale).toContainText("While you had this lesson open, Asha Raman recommended it on October 27, 2026.");
+  await expect(stale).toContainText("I didn't send your reason. You can copy it from the box below.");
   await expect(stale.getByRole("textbox")).toHaveValue("Too general to act on.");
 });
 
@@ -259,7 +286,7 @@ test("the library lists lesson cards newest first, naming roles and never people
   await page.goto("/lessons");
   const cards = page.locator("[data-lesson-card=full]");
   await expect(cards).toHaveCount(2);
-  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing all two lessons in the library, newest first.");
+  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing both lessons in the library, newest first");
   const first = cards.first();
   await expect(first).toContainText("A lead procurement specialist decided version 2 on October 27, 2026, after an accredited procurement specialist recommended it.");
   await expect(first).toContainText("Its projects followed the World Bank's Procurement Guidelines of January 2011.");
@@ -273,7 +300,7 @@ test("the library lists lesson cards newest first, naming roles and never people
 test("a lesson reviewer can ask for a re-check from a card, with a reason", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const lesson = JSON.parse(await recorded("lessons-library-reviewer.json")).lessons[1].lesson_id;
-  await reviewer(page, {
+  const asked = await reviewer(page, {
     "/api/lessons": await file("lessons-library-reviewer.json"),
     [`POST /api/lessons/${lesson}/recheck`]: await file("lessons-act-recheck.json"),
   });
@@ -288,6 +315,8 @@ test("a lesson reviewer can ask for a re-check from a card, with a reason", asyn
   await card.getByRole("button", { name: "Ask for a re-check" }).click();
   await expect(card.locator("[data-recheck=saved]")).toBeFocused();
   await expect(card.locator("[data-badge=rechecking]")).toHaveText("Being re-checked");
+  // The sub-tab's count is asked for again after the save.
+  await expect.poll(() => asked.filter((call) => call.path === "/api/lessons/me").length).toBe(2);
 });
 
 // ── The evidence drawer ──────────────────────────────────────────────────
@@ -302,11 +331,30 @@ test("an evidence card's marker opens the drawer at its source, and focus comes 
   const drawer = page.getByRole("dialog");
   await expect(drawer).toBeVisible();
   await expect(page).toHaveURL(/evidence=strata\.gold\.passage%3A31525018%2Fv1%2F54|evidence=strata.gold.passage:31525018\/v1\/54/);
+  // The quote the card showed is highlighted in the whole paragraph.
+  await expect(drawer.locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding. Highlight ends.");
   // The column keeps its place and width while the drawer is open.
   expect(await page.locator("[data-document-column]").boundingBox()).toEqual(column);
   await page.keyboard.press("Escape");
   await expect(drawer).toHaveCount(0);
   await expect(marker).toBeFocused();
+});
+
+test("a likely repeat's citation of a library lesson opens the drawer at the lesson, named by its statement", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await reviewer(page, { [`/api/lessons/review/${PERMITS}`]: await file("lessons-item-recommend-repeats.json") });
+  await page.goto(`/lessons/review/${PERMITS}`);
+  const statement = "Put forest and other permits in place before awarding contracts";
+  const marker = page.locator("[data-repeats] [data-citation]").first();
+  await expect(marker).toHaveAccessibleName(`Source 2: Lesson, version 1, ${statement}`);
+  await marker.click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("heading", { level: 2 })).toHaveText(statement);
+  await expect(drawer).toContainText("What · lesson");
+  const source = drawer.locator("[data-source]");
+  await expect(source).toHaveText("Source: Strata's lesson library, version 1, decided on October 27, 2026.");
+  await expect(source).not.toContainText(", ,");
+  await expect(source).not.toContainText("lesson-");
 });
 
 // ── Accessibility at three widths ────────────────────────────────────────

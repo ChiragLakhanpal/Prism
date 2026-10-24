@@ -109,7 +109,11 @@
           },
           "page": 23,
           "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            72,
+            168
+          ]
         },
         "region": "South Asia",
         "project": {
@@ -163,7 +167,11 @@
           },
           "page": 14,
           "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
-          "restated_by_ieg": true
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
         },
         "region": "South Asia",
         "project": {
@@ -217,7 +225,11 @@
           },
           "page": 23,
           "quote": "108 of 328 cases had to go through rebidding.",
-          "restated_by_ieg": false
+          "restated_by_ieg": false,
+          "highlight": [
+            149,
+            194
+          ]
         },
         "region": "South Asia",
         "project": {
