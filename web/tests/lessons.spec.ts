@@ -247,7 +247,8 @@ test("a decided record shows the outcome where the form was, with days from publ
   await expect(page.locator("[data-outcome-panel]")).toContainText(
     'Added as evidence to "Put forest and other permits in place before awarding contracts" on October 27, 2026.',
   );
-  await expect(page.locator("[data-history]")).toContainText("Was: Rested on one quotes from one reports.");
+  await expect(page.locator("[data-history]")).toContainText("Was: Rested on one quote from one report.");
+  await expect(page.locator("[data-history]")).toContainText("Now: Rests on two quotes from two reports.");
 });
 
 // ── The library ──────────────────────────────────────────────────────────

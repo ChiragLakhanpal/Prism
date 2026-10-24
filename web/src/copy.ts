@@ -2063,8 +2063,10 @@ export const copy = {
         was: "Was: {value}",
         now: "Now: {value}",
         wordingChanged: "{name} changed the wording before adding it.",
-        merged: "Rested on {quotes} quotes from {reports} reports.",
-        mergedNow: "Rests on {quotes} quotes from {reports} reports.",
+        merged: "Rested on {quotes} from {reports}.",
+        mergedNow: "Rests on {quotes} from {reports}.",
+        quotes: { one: "{count} quote", many: "{count} quotes" },
+        reports: { one: "{count} report", many: "{count} reports" },
         decisions: {
           add: "added it to the library as version 1",
           repeat: 'added its quote as evidence to "{target}", which became version {version}',

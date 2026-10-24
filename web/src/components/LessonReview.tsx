@@ -163,13 +163,18 @@ function Changes({ event, lists }: { event: HistoryEvent; lists: { risk_factors:
   const merge = changes.every((change) => change.field === "quotes" || change.field === "reports");
   if (merge) {
     const get = (key: "was" | "now", field: string) => Number(changes.find((change) => change.field === field)?.[key] ?? 0);
+    // "one quote from one report", "two quotes from two reports": each count with its own noun's form.
+    const counted = (key: "was" | "now") => ({
+      quotes: <Fill template={get(key, "quotes") === 1 ? h.quotes.one : h.quotes.many} slots={{ count: <Num count={get(key, "quotes")} /> }} />,
+      reports: <Fill template={get(key, "reports") === 1 ? h.reports.one : h.reports.many} slots={{ count: <Num count={get(key, "reports")} /> }} />,
+    });
     return (
       <>
         <p className="text-caption text-ink-muted">
-          <Fill template={h.was} slots={{ value: <Fill template={h.merged} slots={{ quotes: <Num count={get("was", "quotes")} />, reports: <Num count={get("was", "reports")} /> }} /> }} />
+          <Fill template={h.was} slots={{ value: <Fill template={h.merged} slots={counted("was")} /> }} />
         </p>
         <p className="text-caption text-ink-muted">
-          <Fill template={h.now} slots={{ value: <Fill template={h.mergedNow} slots={{ quotes: <Num count={get("now", "quotes")} />, reports: <Num count={get("now", "reports")} /> }} /> }} />
+          <Fill template={h.now} slots={{ value: <Fill template={h.mergedNow} slots={counted("now")} /> }} />
         </p>
       </>
     );

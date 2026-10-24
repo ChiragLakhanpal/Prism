@@ -380,7 +380,13 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
   const evidenceId = useId();
   const open = evidenceIn(here.search);
 
+  const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => setItem(loaded), [loaded]);
+  // Arriving, the h1 has focus (brief 06). The statement arrives after the skeleton, which has no h1, so a
+  // page that loaded with nothing focused gives the statement focus without scrolling.
+  useEffect(() => {
+    if (document.activeElement === document.body || document.activeElement === null) heading.current?.focus({ preventScroll: true });
+  }, []);
   useEffect(() => {
     setPageTitle(fillText(r.pageTitle, { statement: loaded.statement }));
   }, [loaded.statement]);
@@ -486,7 +492,7 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
       <p className="mt-4 text-small font-semibold text-ink-heading" data-status>
         {status}
       </p>
-      <h1 tabIndex={-1} className="mt-2 text-h1 text-balance wrap-anywhere text-ink-heading focus:outline-none">
+      <h1 ref={heading} tabIndex={-1} className="mt-2 text-h1 text-balance wrap-anywhere text-ink-heading focus:outline-none">
         {item.statement}
       </h1>
       {clockLine && <p className="mt-2 text-body text-ink-muted">{clockLine}</p>}
@@ -565,6 +571,11 @@ function ReviewSkeleton() {
 
 export function ReviewPage({ itemId }: { itemId: string }) {
   const [load, retry] = useLoad<ReviewItem>(`/api/lessons/review/${encodeURIComponent(itemId)}`);
+  // Someone who is not a lesson reviewer reads the page as the library's: "Lessons | Strata".
+  const denied = load.status === "error" && load.error?.status === 403;
+  useEffect(() => {
+    if (denied) setPageTitle(copy.pages.lessons.title);
+  }, [denied]);
   const trail = (
     <Breadcrumb held trail={[{ text: words.tabs.library, href: LESSONS_HREF }, { text: words.queueTitle, href: QUEUE_HREF }]} back={{ text: r.breadcrumbBack, href: QUEUE_HREF }} />
   );
@@ -581,7 +592,6 @@ export function ReviewPage({ itemId }: { itemId: string }) {
         </>
       );
     } else if (load.error?.status === 403 && code === "not_a_reviewer") {
-      setPageTitle(copy.pages.lessons.title);
       body = (
         <>
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>

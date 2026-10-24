@@ -102,3 +102,40 @@ def test_each_passing_proposal_waits_in_the_review_queue_for_its_project_s_regio
 def test_each_proposal_carries_the_edition_of_the_rules_its_project_s_pad_names(engine):
     """P130164's PAD names the January 2011 Guidelines (values.toml, pad-procurement-guidelines)."""
     assert proposal(engine, ICR_54)["edition_key"] == "guidelines_2011"
+
+
+def test_the_live_batch_adapter_sends_json_lines_and_reads_each_answer_back_by_its_custom_id():
+    """Azure OpenAI's Batch API behind its adapter, with a stand-in for the service: the requests go up as one
+    JSON Lines file, a running batch gives no answers yet, and a finished one gives each request's text or why
+    it failed."""
+    import json
+
+    from strata.knowledge.lessons.batch import AzureGlobalBatch
+
+    class StandIn(AzureGlobalBatch):
+        def __init__(self, status):
+            super().__init__("https://example.openai.azure.com/openai/v1", "not-a-real-key", "gpt-5.4-nano")
+            self.status, self.sent = status, []
+
+        def _call(self, method, path, body=None, content_type=None):
+            self.sent.append((method, path, body))
+            if path == "/files":
+                return b'{"id": "file-in"}'
+            if path == "/batches":
+                return b'{"id": "batch-1"}'
+            if path == "/batches/batch-1":
+                return json.dumps({"status": self.status, "output_file_id": "file-out"}).encode()
+            ok = {"custom_id": "31525018/v1", "response": {"status_code": 200, "body": {
+                "choices": [{"message": {"content": "{\"lessons\": []}"}}]}}}
+            refused = {"custom_id": "34056616/v2", "response": {"status_code": 429}, "error": {"code": "rate_limit"}}
+            return (json.dumps(ok) + "\n" + json.dumps(refused) + "\n").encode()
+
+    running, done = StandIn("in_progress"), StandIn("completed")
+    batch_id = done.submit([{"custom_id": "31525018/v1"}, {"custom_id": "34056616/v2"}])
+
+    assert batch_id == "batch-1"
+    assert b'{"custom_id": "31525018/v1"}\n{"custom_id": "34056616/v2"}\n' in done.sent[0][2]
+    assert running.results("batch-1", ["31525018/v1"]) is None
+    first, second = done.results("batch-1", ["31525018/v1", "34056616/v2"])
+    assert (first.text, first.error) == ('{"lessons": []}', None)
+    assert second.text is None and "rate_limit" in second.error
