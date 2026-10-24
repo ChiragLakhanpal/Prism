@@ -115,9 +115,13 @@ def test_the_narrower_criteria_give_no_range_and_no_share_and_return_every_compa
     # A count of real cases is allowed below 20: none of the seven took 1.5 months or less.
     assert result["plan"]["within"] == 0
     # A package with no review type in any record is counted as not usable, never dropped unseen: the
-    # two signed only in award notices, the four still open and the three canceled.
-    no_review = sorted(package_id(c["reference"]) for c in COMPARABLES if "review_type" not in c)
+    # two signed only in award notices and the four still open, which no plan Strata holds lists.
+    no_review = sorted(package_id(c["reference"]) for c in COMPARABLES if "review_type" not in c and "canceled_in" not in c)
     assert left_out(result, "no_review_type") == no_review
+    # The three canceled packages have no contract, but their plan rows state Post, so none matches Prior.
+    canceled = {package_id(c["reference"]) for c in COMPARABLES if "canceled_in" in c}
+    assert canceled.isdisjoint(evidence for entry in result["coverage"]["not_used"] for evidence in entry["evidence_ids"])
+    assert (result["coverage"]["matched"], result["coverage"]["used"]) == (13, 7)
 
 
 def test_the_coverage_line_states_the_counts_a_direct_count_over_the_fixture_gives(engine):
@@ -133,6 +137,40 @@ def test_the_coverage_line_states_the_counts_a_direct_count_over_the_fixture_giv
     assert (str(coverage["matched"]), str(coverage["used"])) == (counted["matched"], counted["used"])
     assert by_reason == {"canceled": counted["canceled"], "no_notice": counted["no notice"],
                          "no_step_reference": counted["no STEP reference"]}
+
+
+def test_adding_a_criterion_never_lets_more_packages_match(engine):
+    """A package with no value for one criterion still has to meet every criterion it does have a value for."""
+    size = find(engine, size_to_usd=1)
+    both = find(engine, size_to_usd=1, market_approach="Open - National")
+
+    assert both["coverage"]["matched"] <= size["coverage"]["matched"]
+    # A contract with no STEP reference is held to every criterion too: each signed for more than US$1.
+    assert left_out(both, "no_step_reference") == left_out(size, "no_step_reference") == []
+
+
+def test_a_canceled_package_is_named_as_canceled_and_counted_only_where_the_coverage_line_names_it(engine):
+    canceled = sorted(package_id(c["reference"]) for c in COMPARABLES if "canceled_in" in c)
+    # A canceled package was never signed, so it has no signed amount either; canceled is the reason given.
+    size = find(engine, size_to_usd=1)
+    assert left_out(size, "canceled") == canceled
+    for result in (find(engine), size, find(engine, review_type="Prior")):
+        assert result["counts"]["canceled"] == len(left_out(result, "canceled"))
+
+
+@pytest.mark.parametrize("criterion, criteria", [
+    ("Open - National", {"market_approach": "Open - National"}),
+    ("1M to 2M US$", {"size_from_usd": 1_000_000, "size_to_usd": 2_000_000}),
+], ids=["market approach", "size band"])
+def test_a_market_approach_or_a_size_band_returns_the_packages_a_direct_count_finds(engine, criterion, criteria):
+    from strata.lakehouse import ground_truth
+
+    case = ground_truth.read(ROOT / "tests" / "ground_truth" / "past_range_criteria_ke_works_rfb.sql")
+    expected = sorted(reference for name, reference in case.expected[1:] if name == criterion)
+
+    result = find(engine, **criteria)
+
+    assert sorted(row["step_reference"] for row in result["rows"]) == expected
 
 
 def test_with_an_as_of_date_a_package_signed_after_it_comes_back_as_still_open(engine):
@@ -177,6 +215,25 @@ def test_only_an_abstention_the_registry_lists_as_keeping_its_rows_may_come_with
     path.write_text((ROOT / "config" / "tools.toml").read_text().replace(
         'abstentions_with_rows = ["too_few_comparables"]', 'abstentions_with_rows = ["too_few_packages"]'))
     with pytest.raises(config.ConfigError, match="too_few_packages, which abstentions does not list"):
+        config.load_tools(path)
+
+
+def test_the_derived_figures_come_back_as_one_citable_summary_record(engine, tmp_path):
+    result = find(engine, review_type="Prior")
+
+    summary = result["summary"]
+    assert summary["evidence_id"] == f"strata.tools.find_comparables:{PACKAGE}@{AS_OF.isoformat()}?review_type=Prior"
+    assert (summary["public_from"], summary["source"]["tool"]) == (AS_OF.isoformat(), "find_comparables")
+    assert (summary["plan"], summary["counts"], summary["coverage"]) == (result["plan"], result["counts"],
+                                                                        result["coverage"])
+    with pytest.raises(registry.ToolContractError, match="summary is public from"):
+        registry.check_contract(config.load_tools()["find_comparables"],
+                                {**result, "summary": {**summary, "public_from": "2026-10-23"}})
+
+    path = tmp_path / "tools.toml"
+    path.write_text((ROOT / "config" / "tools.toml").read_text().replace(
+        'summary_fields = ["past_range", "plan", "counts", "coverage"]', 'summary_fields = ["past_range", "ranges"]'))
+    with pytest.raises(config.ConfigError, match="ranges, which fields does not list"):
         config.load_tools(path)
 
 

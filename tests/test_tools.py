@@ -190,11 +190,13 @@ def in_top_three(result, question) -> dict[str, list[str]]:
 
 
 def past_range(result, question) -> dict[str, list]:
-    """find_comparables' answer: the quartiles and 8-in-10 point in months, the packages still open,
-    the canceled ones it left out, and the packages signed within the plan's months."""
+    """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
+    the agent cites them by, the packages still open, the canceled ones it left out, and the packages
+    signed within the plan's months."""
     plan_months = result["plan"]["months"]
     return {
-        "past_range_months": [result["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
+        "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
+        "cited_as": [result["summary"]["evidence_id"]],
         "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
         "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
                                     if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),

@@ -87,5 +87,26 @@
     "reason": "no_public_notice",
     "field": "Market Approach",
     "value": "Limited - National"
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541062-CW-RFQ@2026-10-22",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "counts": null,
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    }
   }
 }

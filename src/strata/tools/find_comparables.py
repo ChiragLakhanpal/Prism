@@ -84,7 +84,7 @@ def _iso(value: dt.date | None) -> str | None:
     return value.isoformat() if value else None
 
 
-def _number(value: Decimal) -> float:
+def _as_float(value: Decimal) -> float:
     return float(value)
 
 
@@ -161,7 +161,10 @@ def _criteria(package: dict, limits: Limits, asked: dict) -> dict:
         given = asked.get(name)
         if given is None and name in defaults:
             criteria[name] = defaults[name]
-            from_package.append(name)
+            # A default the package does not give, such as a plan table with no category, leaves the
+            # criterion open, and the package is not named as where it came from.
+            if defaults[name] is not None:
+                from_package.append(name)
         else:
             criteria[name] = _open(given)
     for name in ("notice_from", "notice_to"):
@@ -186,30 +189,36 @@ def _no_notice(package: dict, limits: Limits) -> dict | None:
 
 # ── The comparables ──────────────────────────────────────────────────────
 
-def _matches(candidate: dict, criteria: dict) -> tuple[bool, str | None]:
-    """Whether a candidate meets the criteria the SQL could not apply, and the reason it cannot be
-    used when it has no value for one of them. A known value that differs leaves it out of the match."""
+def _known(candidate: dict, criteria: dict) -> dict[str, bool | None]:
+    """For each criterion the SQL could not apply and the call set, whether the candidate meets it:
+    True or False when its records give a value, None when they give none. Each is keyed by the reason
+    the coverage line gives when the value is missing."""
+    found = {}
     if criteria["review_type"] is not None:
-        if candidate["review_type"] is None:
-            return True, "no_review_type"
-        if candidate["review_type"] != criteria["review_type"]:
-            return False, None
+        # The contract's review type first, because it is what happened; then the plan row's.
+        review_type = candidate.get("review_type") or candidate.get("plan_review_type")
+        found["no_review_type"] = None if review_type is None else review_type == criteria["review_type"]
     if criteria["market_approach"] is not None:
         approach = (candidate.get("plan_market_approach") or candidate.get("contract_market_approach")
                     or candidate.get("notice_market_approach") or candidate.get("market_approach"))
-        if approach is None:
-            return True, "no_market_approach"
-        if approach != criteria["market_approach"]:
-            return False, None
+        found["no_market_approach"] = None if approach is None else approach == criteria["market_approach"]
     if criteria["size_from_usd"] is not None or criteria["size_to_usd"] is not None:
         amount = _money(candidate["amount_usd"])
-        if amount is None:
-            return True, "no_amount"
-        if criteria["size_from_usd"] is not None and amount < Decimal(str(criteria["size_from_usd"])):
-            return False, None
-        if criteria["size_to_usd"] is not None and amount > Decimal(str(criteria["size_to_usd"])):
-            return False, None
-    return True, None
+        low, high = criteria["size_from_usd"], criteria["size_to_usd"]
+        found["no_amount"] = None if amount is None else (
+            (low is None or amount >= Decimal(str(low))) and (high is None or amount <= Decimal(str(high))))
+    return found
+
+
+def _matches(candidate: dict, criteria: dict) -> tuple[bool, str | None]:
+    """Whether a candidate meets the criteria the SQL could not apply, and the reason it cannot be used
+    when it has no value for one of them. It is checked against every criterion first: a known value
+    that differs leaves it out of the match, even when another criterion has no value. Of the criteria
+    with no value, the reason given is the first in the coverage line's order."""
+    found = _known(candidate, criteria)
+    if any(meets is False for meets in found.values()):
+        return False, None
+    return True, next((reason for reason in REASONS if reason in found and found[reason] is None), None)
 
 
 def _comparable(candidate: dict, as_of: dt.date) -> dict:
@@ -237,7 +246,7 @@ def _comparable(candidate: dict, as_of: dt.date) -> dict:
         "signed_on": _iso(signed_on),
         "still_open": signed_on is None,
         "days": days,
-        "months": _number(months(days)),
+        "months": _as_float(months(days)),
         "rank": None,
     }
 
@@ -252,24 +261,26 @@ def _select(candidates: list[dict], unlinked: list[dict], criteria: dict, limits
             left_out["no_step_reference"].append(f"strata.gold.contract:{contract['contract_id']}")
     for candidate in candidates:
         matched, unknown = _matches(candidate, criteria)
-        evidence_id = f"strata.gold.package:{candidate['step_reference']}"
         if not matched:
             continue
+        evidence_id = f"strata.gold.package:{candidate['step_reference']}"
         signed = candidate["signed_on"] is not None or candidate["award_signed_on"] is not None
         is_canceled = not signed and candidate["process_status"] == "Canceled"
-        canceled += is_canceled
-        if unknown:
-            left_out[unknown].append(evidence_id)
-        elif candidate["notice_date"] is None:
-            left_out["no_notice"].append(evidence_id)
+        # The reasons in the coverage line's order: a canceled package was never signed, so it has no
+        # signed amount either, and canceled is the reason that says why.
+        row = None
+        if candidate["notice_date"] is None:
+            reason = "no_notice"
         elif is_canceled and not limits.canceled_as_still_open:
-            left_out["canceled"].append(evidence_id)
+            reason = "canceled"
         else:
             row = _comparable(candidate, as_of)
-            if row["days"] < 0:
-                left_out["signed_before_notice"].append(evidence_id)
-            else:
-                rows.append(row)
+            reason = "signed_before_notice" if row["days"] < 0 else unknown
+        if reason:
+            left_out[reason].append(evidence_id)
+        else:
+            rows.append(row)
+        canceled += is_canceled and (reason == "canceled" or not reason)
     rows.sort(key=lambda row: (row["months"], row["step_reference"]))
     for rank, row in enumerate(rows, 1):
         row["rank"] = rank
@@ -291,7 +302,7 @@ def _plan(package: dict, rows: list[dict], ranged: bool) -> dict | None:
     planned = months(days)
     within = sum(1 for row in rows if not row["still_open"] and Decimal(str(row["months"])) <= planned)
     in10 = (Decimal(within * 10) / len(rows)).quantize(Decimal(1), ROUND_HALF_UP) if ranged and rows else None
-    return {"days": days, "months": _number(planned), "planned_notice_on": _iso(notice_on),
+    return {"days": days, "months": _as_float(planned), "planned_notice_on": _iso(notice_on),
             "planned_signing_on": _iso(signing_on), "plan_date": package["plan"]["plan_date"],
             "within": within, "in10": int(in10) if in10 is not None else None}
 
@@ -299,14 +310,14 @@ def _plan(package: dict, rows: list[dict], ranged: bool) -> dict | None:
 def _past_range(rows: list[dict]) -> dict:
     observations = [Observation(row["days"], not row["still_open"]) for row in rows]
     days = quartiles(observations)
-    return {**{name: _number(months(value)) if value is not None else None for name, value in days.items()},
+    return {**{name: _as_float(months(value)) if value is not None else None for name, value in days.items()},
             "days": days}
 
 
 def _quantile_dots(rows: list[dict], count: int) -> list[dict]:
     observations = [Observation(row["days"], not row["still_open"]) for row in rows]
     last = max(row["days"] for row in rows)  # a dot the curve never reaches sits at the last follow-up
-    return [{"k": k, "days": day if day is not None else last, "months": _number(months(day if day is not None else last)),
+    return [{"k": k, "days": day if day is not None else last, "months": _as_float(months(day if day is not None else last)),
              "reached": day is not None} for k, day in quantile_dots(observations, count)]
 
 

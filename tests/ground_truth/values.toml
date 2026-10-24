@@ -710,7 +710,7 @@ signed = 45
 signed_only_in_award_notice = 2
 canceled = 3
 still_open = 4
-narrower = "Add review type Prior. Review type comes from the award row, so a package with no award row has none and drops out: the three canceled, the four still open and the two signed only in their award notices."
+narrower = "Add review type Prior. Review type comes from the award row, or from the newest plan row when there is no award row. The three canceled have Post in their plan rows, so they do not match. The four still open and the two signed only in their award notices have no review type in any record, so they cannot be used and the coverage line names them."
 narrower_review_type = "Prior"
 narrower_count = 7
 [[comparable]]

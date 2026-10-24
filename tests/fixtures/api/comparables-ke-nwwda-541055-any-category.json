@@ -2567,5 +2567,123 @@
     }
   ],
   "records_through": "2026-10-13",
-  "abstention": null
+  "abstention": null,
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?category=any",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": {
+      "q25": 2.8,
+      "q50": 3.6,
+      "q75": 6.8,
+      "q80": 7.2,
+      "days": {
+        "q25": 86,
+        "q50": 110,
+        "q75": 206,
+        "q80": 218
+      }
+    },
+    "plan": {
+      "days": 45,
+      "months": 1.5,
+      "planned_notice_on": "2026-03-10",
+      "planned_signing_on": "2026-04-24",
+      "plan_date": "2026-10-09",
+      "within": 5,
+      "in10": 0
+    },
+    "counts": {
+      "comparables": 103,
+      "signed": 95,
+      "still_open": 8,
+      "canceled": 3,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 156,
+      "used": 103,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 15,
+          "evidence_ids": [
+            "strata.gold.contract:1656496",
+            "strata.gold.contract:1670533",
+            "strata.gold.contract:1680198",
+            "strata.gold.contract:1727919",
+            "strata.gold.contract:1810568",
+            "strata.gold.contract:1814061",
+            "strata.gold.contract:1826065",
+            "strata.gold.contract:1826114",
+            "strata.gold.contract:1826115",
+            "strata.gold.contract:1840295",
+            "strata.gold.contract:1871247",
+            "strata.gold.contract:1871389",
+            "strata.gold.contract:1878691",
+            "strata.gold.contract:1903099",
+            "strata.gold.contract:1903578"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 35,
+          "evidence_ids": [
+            "strata.gold.package:KE-BUSIA COUNTY-561519-CW-RFB",
+            "strata.gold.package:KE-EMBU COUNTY-493078-CW-RFB",
+            "strata.gold.package:KE-EMBU COUNTY-493099-CW-RFB",
+            "strata.gold.package:KE-ICTA-395947-GO-RFB",
+            "strata.gold.package:KE-ICTA-414831-NC-RFB",
+            "strata.gold.package:KE-ICTA-441843-GO-RFB",
+            "strata.gold.package:KE-ICTA-441844-GO-RFB",
+            "strata.gold.package:KE-ICTA-441845-GO-RFB",
+            "strata.gold.package:KE-ICTA-441867-GO-RFB",
+            "strata.gold.package:KE-ICTA-441890-GO-RFB",
+            "strata.gold.package:KE-ICTA-443118-NC-RFB",
+            "strata.gold.package:KE-ICTA-458650-NC-RFB",
+            "strata.gold.package:KE-ICTA-459492-CW-RFB",
+            "strata.gold.package:KE-ICTA-459496-GO-RFB",
+            "strata.gold.package:KE-ICTA-466781-GO-RFB",
+            "strata.gold.package:KE-ICTA-466782-GO-RFB",
+            "strata.gold.package:KE-ICTA-476102-GO-RFB",
+            "strata.gold.package:KE-ICTA-486639-GO-RFB",
+            "strata.gold.package:KE-ICTA-555502-GO-RFB",
+            "strata.gold.package:KE-KIAMBU COUNTY-492369-CW-RFB",
+            "strata.gold.package:KE-KIAMBU COUNTY-494940-GO-RFB",
+            "strata.gold.package:KE-KIAMBU COUNTY-510866-CW-RFB",
+            "strata.gold.package:KE-KWAWASCO-74600-GO-RFQ-LOT2",
+            "strata.gold.package:KE-MACHAKOS COUNTY-489611-GO-RFB",
+            "strata.gold.package:KE-MOALF-402063-GO-RFB",
+            "strata.gold.package:KE-MOALF-410742-GO-RFB",
+            "strata.gold.package:KE-MOALF-478015-NC-RFB",
+            "strata.gold.package:KE-MOALF-529705-GO-RFB",
+            "strata.gold.package:KE-MOWASCO-318293-GO-RFB",
+            "strata.gold.package:KE-SIAYA COUNTY-519173-CW-RFB",
+            "strata.gold.package:KE-SIAYA COUNTY-554186-CW-RFB",
+            "strata.gold.package:KE-TAVEVO-172331-GO-RFB-LOT I",
+            "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
+            "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB",
+            "strata.gold.package:KE-WAJWASCO-22242-GO-RF"
+          ]
+        },
+        {
+          "reason": "canceled",
+          "count": 3,
+          "evidence_ids": [
+            "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
+            "strata.gold.package:KE-KIMAWASCO-157517-CW-RFB",
+            "strata.gold.package:KE-KIMAWASCO-377450-CW-RFB"
+          ]
+        }
+      ]
+    }
+  }
 }

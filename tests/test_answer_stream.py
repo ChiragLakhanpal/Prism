@@ -600,6 +600,35 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
         [("quote_not_on_page", None)]]
 
 
+def test_a_past_range_the_agent_states_is_backed_by_find_comparables_summary_record(fixture_db):
+    """The past range, the plan's count and the comparables' count are derived figures, so find_comparables
+    returns them as one citable record beside its rows (CLAUDE.md rule 1). A sentence citing it keeps the
+    numbers it holds, and loses one it does not. The values are tests/ground_truth/values.toml's past_range."""
+    import tomllib
+
+    truth = tomllib.loads((Path(__file__).parent / "ground_truth" / "values.toml").read_text())["past_range"]
+    within = len(truth["signed_within_plan"])
+
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        return [claim(f"Comparable packages took {low} to {truth['q75_months']} months from notice to signature, "
+                      f"and {within} of {truth['comparables']} were signed within the plan's {truth['plan_months']} "
+                      f"months.", kind="record", evidence_ids=[summary])
+                for low in (truth["q25_months"], 3.4)]
+
+    agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    [kept] = of(parsed, "sentence")
+    assert kept["text"].startswith(f"Comparable packages took {truth['q25_months']} to")
+    assert removed_reasons(parsed) == [[("number_not_in_records", "3.4")]]
+    [evidence] = of(parsed, "evidence")
+    assert evidence["id"] == "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"
+    assert (evidence["tool"], evidence["row"]["public_from"]) == ("find_comparables", "2026-10-22")
+
+
 def logged_runs(ops_db):
     with DuckDBEngine.open(ops_db, read_only=True) as engine:
         result = engine.run("SELECT * FROM strata.ops.agent_runs")

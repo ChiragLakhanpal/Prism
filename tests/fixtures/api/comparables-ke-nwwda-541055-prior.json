@@ -159,20 +159,17 @@
     }
   ],
   "coverage": {
-    "matched": 16,
+    "matched": 13,
     "used": 7,
     "not_used": [
       {
         "reason": "no_review_type",
-        "count": 9,
+        "count": 6,
         "evidence_ids": [
           "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
           "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
           "strata.gold.package:KE-ICTA-571738-CW-RFB",
           "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
-          "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
-          "strata.gold.package:KE-KIMAWASCO-157517-CW-RFB",
-          "strata.gold.package:KE-KIMAWASCO-377450-CW-RFB",
           "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
           "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
         ]
@@ -228,7 +225,7 @@
     "comparables": 7,
     "signed": 7,
     "still_open": 0,
-    "canceled": 3,
+    "canceled": 0,
     "canceled_as_still_open": false
   },
   "past_range": null,
@@ -272,5 +269,53 @@
     "reason": "too_few_comparables",
     "count": 7,
     "min_comparables": 20
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?review_type=Prior",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": {
+      "days": 45,
+      "months": 1.5,
+      "planned_notice_on": "2026-03-10",
+      "planned_signing_on": "2026-04-24",
+      "plan_date": "2026-10-09",
+      "within": 0,
+      "in10": null
+    },
+    "counts": {
+      "comparables": 7,
+      "signed": 7,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 13,
+      "used": 7,
+      "not_used": [
+        {
+          "reason": "no_review_type",
+          "count": 6,
+          "evidence_ids": [
+            "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
+            "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+            "strata.gold.package:KE-ICTA-571738-CW-RFB",
+            "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
+            "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
+            "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
+          ]
+        }
+      ]
+    }
   }
 }

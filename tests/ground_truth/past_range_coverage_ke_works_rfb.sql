@@ -17,6 +17,7 @@
 -- param: as_of = 2026-10-22
 -- param: notice_from = 2019-07-01
 -- param: notice_to = 2026-10-09
+-- engines: duckdb, databricks
 -- expect: measure,packages
 -- expect: canceled,3
 -- expect: matched,65

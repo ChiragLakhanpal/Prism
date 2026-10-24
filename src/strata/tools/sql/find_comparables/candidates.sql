@@ -10,12 +10,13 @@
 -- notice's date, or, when Strata holds no notice for it, by its signing date, so the coverage line
 -- can count it as matching but not measurable.
 --
--- Process Status and Market Approach come from the newest plan version public on the as-of date
--- that lists the package. Market Approach falls back to what the contract or the notice says, which
--- only an old method name such as ICB gives. Review type and the signed amount in US dollars come
--- from its contracts. A criterion left open is a null parameter.
+-- Process Status, Market Approach and Review Type come from the newest plan version public on the
+-- as-of date that lists the package. Market Approach falls back to what the contract or the notice
+-- says, which only an old method name such as ICB gives. Review type comes from its contracts first,
+-- because that is what happened, and the signed amount in US dollars from its contracts only. A
+-- criterion left open is a null parameter.
 WITH listed AS (
-  SELECT r.activity_reference_no AS step_reference, r.process_status, r.market_approach
+  SELECT r.activity_reference_no AS step_reference, r.process_status, r.market_approach, r.review_type
   FROM strata.silver.plan_rows AS r
   JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
   WHERE v.public_from <= :as_of
@@ -73,7 +74,8 @@ packages AS (
     a.contract_signature_date AS award_signed_on,
     a.public_from AS award_notice_on,
     l.process_status,
-    l.market_approach AS plan_market_approach
+    l.market_approach AS plan_market_approach,
+    l.review_type AS plan_review_type
   FROM strata.gold.package AS p
   LEFT JOIN strata.gold.notice AS f ON f.notice_id = p.first_notice_id
   LEFT JOIN signed AS s ON s.step_reference = p.step_reference

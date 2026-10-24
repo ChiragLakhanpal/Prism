@@ -110,5 +110,51 @@
   "abstention": {
     "reason": "none_measurable",
     "matched": 6
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?category=Non-consulting%20Services",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "counts": {
+      "comparables": 0,
+      "signed": 0,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 6,
+      "used": 0,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 2,
+          "evidence_ids": [
+            "strata.gold.contract:1810568",
+            "strata.gold.contract:1814061"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 4,
+          "evidence_ids": [
+            "strata.gold.package:KE-ICTA-414831-NC-RFB",
+            "strata.gold.package:KE-ICTA-443118-NC-RFB",
+            "strata.gold.package:KE-ICTA-458650-NC-RFB",
+            "strata.gold.package:KE-MOALF-478015-NC-RFB"
+          ]
+        }
+      ]
+    }
   }
 }
