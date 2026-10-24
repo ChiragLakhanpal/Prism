@@ -6,9 +6,14 @@ import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
+import { DataPage } from "./pages/data/DataPage";
 import type { Match } from "./routes";
 
-export function RoutePage({ match }: { match: Match }) {
+// The pages whose tickets have filled them. Every other route shows its title, purpose and empty state.
+const FILLED = new Set(["data", "dataSources", "dataHow"]);
+
+export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
+  if (FILLED.has(match.key)) return <DataPage match={match} search={search} />;
   const words: { title: string; purpose: string; emptyTitle?: string; emptyBody?: string; link?: string } = copy.pages[match.key];
   const link = words.link && match.linkHref ? { href: match.linkHref, text: <WithIds template={words.link} values={match.values} /> } : undefined;
   return (

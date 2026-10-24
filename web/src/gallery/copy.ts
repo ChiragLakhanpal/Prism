@@ -74,6 +74,11 @@ export const galleryCopy = {
       purpose:
         "Skeletons are static blocks sized to the content they stand in for. Each line is as tall as the line of text it holds a place for, so nothing moves when the content arrives.",
     },
+    readiness: {
+      title: "Data readiness",
+      purpose:
+        "The Data readiness page in each of its states: the headline, what you can ask, one row per source with a badge only for Partial or Gap, and the fixes. Below 768 px each table becomes cards.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -354,5 +359,99 @@ export const galleryCopy = {
       "loader-circle",
       "file-down",
     ],
+  },
+  // The Data readiness page's samples (web/src/pages/data/DataReadiness.tsx). Every count and name
+  // is made up for the gallery; the page's real numbers come from data_readiness_for.
+  readiness: {
+    sections: {
+      ready: "Every source",
+      filtered: "Opened from a coverage line",
+      loading: "Loading",
+      slow: "Loading, after three seconds",
+      empty: "No measures yet",
+      unmeasured: "A source with no measures",
+      beforeFirst: "A date before the first measure",
+      timeout: "The database did not answer",
+      permission: "No access",
+      error: "A server error",
+    },
+    rows: 4,
+    kinds: 2,
+    filteredHeadline: "Two sources are behind the past range. The biggest gap is the 180 of 1,200 sample contracts that lack a STEP reference.",
+    result: {
+      tool: "data_readiness_for",
+      as_of: "2026-10-21",
+      view: "staff",
+      abstention: null,
+      measured: { first: "2026-10-21", last: "2026-10-21" },
+      parse_failures: [],
+      headline_abstention: null,
+      filter: { sources: null, unknown: 0, from: null, total: 4 },
+      headline: {
+        text: "Of the two kinds of question below, I can answer one in full and one in part. The biggest gaps are the 180 of 1,200 sample contracts that lack a STEP reference and the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes.",
+        segments: [
+          { text: "Of the " },
+          { number: 2, row: null, noun: null },
+          { text: " kinds of question below, I can answer " },
+          { number: 1, row: null, noun: null },
+          { text: " in full and " },
+          { number: 1, row: null, noun: null },
+          { text: " in part. The biggest gaps are the " },
+          { number: 180, row: 2, noun: "sample contracts" },
+          { text: " of " },
+          { number: 1200, row: 2, noun: "sample contracts" },
+          { text: " sample contracts that lack a STEP reference and the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes." },
+        ],
+      },
+      rows: [
+        { evidence_id: "strata.ops.data_readiness:sample/all/coverage_rows", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "coverage_rows", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.awards" }, source_key: "sample", measure: "coverage_rows", kind: "coverage", subjects: ["all"], count: 1240, denominator: 1240, share_percent: 100, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/coverage_years", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "coverage_years", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.awards" }, source_key: "sample", measure: "coverage_years", kind: "coverage", subjects: ["all"], count: 7, denominator: 7, share_percent: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/linked_step_reference", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "linked_step_reference", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.gold.contract" }, source_key: "sample", measure: "linked_step_reference", kind: "linked", subjects: ["all"], count: 1020, denominator: 1200, share_percent: 85, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/fresh_fetched", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "fresh_fetched", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.bronze.api_pages" }, source_key: "sample", measure: "fresh_fetched", kind: "fresh", subjects: ["all"], count: null, denominator: null, share_percent: null, as_of: "2026-10-18", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:sample/all/projects_lacking", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "sample", measure: "projects_lacking", subjects: ["all"], measured_on: "2026-10-21", counted_in: null }, source_key: "sample", measure: "projects_lacking", kind: "fix", subjects: ["all"], count: 12, denominator: 40, share_percent: 30, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/coverage_rows", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "coverage_rows", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.notices" }, source_key: "notes", measure: "coverage_rows", kind: "coverage", subjects: ["all"], count: 800, denominator: 800, share_percent: 100, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/coverage_years", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "coverage_years", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.silver.notices" }, source_key: "notes", measure: "coverage_years", kind: "coverage", subjects: ["all"], count: 9, denominator: 10, share_percent: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/linked_project", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "linked_project", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.gold.notice" }, source_key: "notes", measure: "linked_project", kind: "linked", subjects: ["all"], count: 792, denominator: 800, share_percent: 99, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:notes/all/fresh_fetched", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "notes", measure: "fresh_fetched", subjects: ["all"], measured_on: "2026-10-21", counted_in: "strata.bronze.api_pages" }, source_key: "notes", measure: "fresh_fetched", kind: "fresh", subjects: ["all"], count: null, denominator: null, share_percent: null, as_of: "2026-10-21", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/read", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "read", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.silver.passages" }, source_key: "papers", measure: "read", kind: "read_well", subjects: ["P000000"], count: 140, denominator: 160, share_percent: 88, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/fresh", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "fresh", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.bronze.document_texts" }, source_key: "papers", measure: "fresh", kind: "fresh", subjects: ["P000000"], count: null, denominator: null, share_percent: null, as_of: "2026-06-30", measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.data_readiness:papers/P000000/passages", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "passages", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.gold.passage" }, source_key: "papers", measure: "passages", kind: "coverage", subjects: ["P000000"], count: 600, denominator: 600, share_percent: 100, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+      ],
+      sources: [
+        { type: "measured", id: "sample", source_key: "sample", label: "Sample awards", stratum: "What", scope: { kind: "every_country" }, covers: "since fiscal 2020", cells: {
+          coverage: { measure: "coverage_rows", row: 0, counts: "award rows held", noun: "award rows", status: null, note: null, years_row: 1 },
+          linked: { measure: "linked_step_reference", row: 2, counts: "carry a STEP reference", noun: "sample contracts", status: "partial", note: null },
+          read_well: { published_as_table: true },
+          fresh: { measure: "fresh_fetched", row: 3, counts: "last fetched", noun: "fetches", status: "partial", note: null, schedule: "daily", late_days: 2 },
+        } },
+        { type: "gap", id: "sample_gap", source_key: "sample", label: "Sample awards", first_fiscal_year: 2017, last_fiscal_year: 2019, note: "No sample dataset publishes awards for these years. Sample notices cover most of them." },
+        { type: "measured", id: "notes", source_key: "notes", label: "Sample notices", stratum: "What", scope: { kind: "every_country" }, covers: null, cells: {
+          coverage: { measure: "coverage_rows", row: 5, counts: "notices held", noun: "notices", status: null, note: null, years_row: 6 },
+          linked: { measure: "linked_project", row: 7, counts: "have their project record", noun: "notices", status: null, note: null },
+          read_well: { published_as_table: true },
+          fresh: { measure: "fresh_fetched", row: 8, counts: "last fetched", noun: "fetches", status: null, note: null, schedule: "daily", late_days: null },
+        } },
+        { type: "measured", id: "papers", source_key: "papers", label: "Sample reports", stratum: "Why", scope: { kind: "projects", count: 1 }, covers: null, cells: {
+          coverage: { measure: "passages", row: 11, counts: "passages read", noun: "passages", status: null, note: null },
+          linked: { measure: null, row: null },
+          read_well: { measure: "read", row: 9, counts: "body pages with their paragraph numbers found", noun: "body pages", status: "partial", note: null },
+          fresh: { measure: "fresh", row: 10, counts: "newest report", noun: "reports", status: null, note: null, schedule: "as published", late_days: null },
+        } },
+        { type: "unmeasured", id: "scores", source_key: "scores", label: "Sample scores", stratum: "What", scope: { kind: "countries", names: ["Kenya", "Bangladesh"] }, covers: null, cells: {
+          coverage: { measure: "coverage_rows", row: null }, linked: { measure: "linked_country", row: null }, read_well: { published_as_table: true }, fresh: { measure: "fresh_fetched", row: null },
+        } },
+      ],
+      kinds: [
+        { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, holds_back: [
+          [{ text: "The " }, { number: 180, row: 2, noun: "sample contracts" }, { text: " of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts that lack a STEP reference." }],
+          [{ text: "I list one more gap under Sources." }],
+        ] },
+        { kind: "document_search", tool: "search_passages", status: "ready", ready_for: 11, holds_back: [[{ text: "Nothing I measured holds it back." }]] },
+      ],
+      fixes: [
+        { rank: 1, gap: "sample/linked", projects: 12, projects_row: 4, projects_from: "measure", sentence: [{ text: "Find a STEP reference for the " }, { number: 180, row: 2, noun: "sample contracts" }, { text: " sample contracts that lack one." }] },
+        { rank: 2, gap: "papers/read_well", projects: 1, projects_row: 9, projects_from: "subjects", sentence: [{ text: "Read the " }, { number: 20, row: 9, noun: "body pages" }, { text: " body pages where I found no paragraph numbers with the layout parser." }] },
+      ],
+    },
   },
 } as const;

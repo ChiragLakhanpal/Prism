@@ -20,7 +20,8 @@ export type NumValue =
   | { value: number; options?: NumberOptions }
   | { count: number }
   | { year: number }
-  | { date: string; style?: DateStyle }
+  // today, an ISO date, decides whether a short date needs its year; the browser's date when unset.
+  | { date: string; style?: DateStyle; today?: string }
   | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" };
 
 export type NumCheck = {
@@ -36,7 +37,7 @@ export function numText(num: NumValue): string {
   if ("value" in num) return formatNumber(num.value, num.options);
   if ("count" in num) return formatCount(num.count);
   if ("year" in num) return formatYear(num.year);
-  if ("date" in num) return formatDate(num.date, { style: num.style });
+  if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
 }

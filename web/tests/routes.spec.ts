@@ -1,4 +1,5 @@
-// Every route of docs/PLAN.md section 8 except the deck (seam 4, ticket 06): each states its title
+// Every route of docs/PLAN.md section 8 except the deck and the Data tab, whose pages ticket 16
+// filled (tests/data.spec.ts) (seam 4, ticket 06): each states its title
 // and its purpose, shows the empty state that says what will appear there, and sits in the frame
 // with the footer. Unknown addresses show a not-found page in the same frame. The words are the
 // 06 design brief's, copied here so the test checks the copy file against an independent source.
@@ -119,17 +120,6 @@ export const ROUTES: Route[] = [
       title: "You have no drafts to check.",
       body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
       link: ["Go to Packages", "/packages"],
-    },
-  },
-  {
-    path: "/data",
-    h1: "Data",
-    tab: "Data",
-    purpose:
-      "This page shows what the data I hold are ready for, where each source comes from and its license. It also explains how I turn records and documents into answers.",
-    empty: {
-      title: "I can't show data readiness on this page yet.",
-      body: "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. The date at the top of every page says how recent the data I hold are.",
     },
   },
 ];

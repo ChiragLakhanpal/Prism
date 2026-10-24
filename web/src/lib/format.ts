@@ -119,10 +119,11 @@ export function formatRatio(part: number, whole: number, options: { style?: "sen
   return { text: frequency ? copy.num.countWithFrequency(count, frequency) : count, count, frequency };
 }
 
-export type DateStyle = "sentence" | "table" | "short";
+export type DateStyle = "sentence" | "table" | "short" | "month";
 
 // Section 7, rule 13: "March 4, 2024" in sentences and "Mar 4, 2024" in tables. "short" is the
-// freshness stamp's form: "Oct 21" in the current year and "Dec 30, 2025" in any other.
+// freshness stamp's form: "Oct 21" in the current year and "Dec 30, 2025" in any other. "month" is
+// a frozen source's on the Data readiness page: "Jun 2016".
 // Dates arrive as ISO dates ("2024-03-04") and are read in UTC, so no time zone moves them.
 export function formatDate(iso: string, options: { style?: DateStyle; today?: string } = {}): string {
   const style = options.style ?? "sentence";
@@ -132,7 +133,7 @@ export function formatDate(iso: string, options: { style?: DateStyle; today?: st
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "UTC",
     month: style === "sentence" ? "long" : "short",
-    day: "numeric",
+    day: style === "month" ? undefined : "numeric",
     year: style === "short" && sameYear ? undefined : "numeric",
   }).format(date);
 }

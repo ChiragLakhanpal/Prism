@@ -107,15 +107,22 @@ export const copy = {
         "to check.",
       link: "Go to Packages",
     },
+    // The Data tab's three pages share one title and purpose, and each names itself in the browser
+    // tab (the 16 design brief, section 2).
     data: {
       title: "Data",
-      purpose:
-        "This page shows what the data I hold are ready for, where each source comes from and its license. It also " +
-        "explains how I turn records and documents into answers.",
-      emptyTitle: "I can't show data readiness on this page yet.",
-      emptyBody:
-        "When I can, this page shows what each source is ready for, how complete and fresh it is, and its license. " +
-        "The date at the top of every page says how recent the data I hold are.",
+      documentTitle: "Data readiness",
+      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+    },
+    dataSources: {
+      title: "Data",
+      documentTitle: "Sources and licenses",
+      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+    },
+    dataHow: {
+      title: "Data",
+      documentTitle: "How Strata works",
+      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
     },
     notFound: {
       title: "Page not found",
@@ -293,6 +300,173 @@ export const copy = {
   // The Data readiness page (the 16 design brief). Every number on it comes from the
   // data_readiness_for tool, and the page computes none.
   dataReadiness: {
+    tabs: {
+      label: "Data pages",
+      readiness: "Data readiness",
+      sources: "Sources and licenses",
+      how: "How Strata works",
+    },
+    // The info alert above the headline when a coverage line opened the page. The noun comes from
+    // server.fromNouns, by the tool the link names, never from the link's own words.
+    // Templates whose {slots} the page fills with Num, so each number keeps its form and its check.
+    filtered: {
+      many: "I'm showing only the {count} sources behind {fromNoun}.",
+      one: "I'm showing only the source behind {fromNoun}.",
+      unknown: "I didn't recognize {count} of the sources in this link.",
+      noneKnown: "I couldn't find the sources this link names. They may have been renamed since the link was made.",
+      showAll: "Show all sources",
+    },
+    provenance: "I built this from the measures below, taken {date}. No model wrote it.",
+    provenanceRange: "I built this from the measures below, taken {from} to {to}. No model wrote it.",
+    // The source line under each table.
+    sourceLine: "Strata's data readiness measures, taken {date}.",
+    kinds: {
+      title: "What you can ask",
+      caption: "Each kind of question, what it can draw on, and what holds it back.",
+      kind: "What you can ask",
+      readyFor: "Ready for",
+      readyForAbout: "records it can draw on",
+      readyForDefinition:
+        "What each kind of question can draw on, counted from the latest measures. A badge says the answers are " +
+        "Partial, or that a Gap leaves nothing to draw on.",
+      holds: "What holds it back",
+      holdsAbout: "gaps that limit answers",
+      holdsDefinition:
+        "The gaps in the sources each kind of question draws on, biggest first: the ones whose fix would add " +
+        "evidence to the most projects.",
+      // Each kind, by the key its tool gives in config/tools.toml, and what its number counts.
+      names: {
+        plan_check: "Checking a plan against its own dates",
+        document_search: "What project documents say",
+      } as Record<string, string>,
+      counts: {
+        plan_check: "activity entries in the latest plan versions with STEP rows",
+        document_search: "passages you can search",
+      } as Record<string, string>,
+    },
+    sources: {
+      title: "Sources",
+      showing: "Showing {shown} of {total} sources.",
+      source: "Source",
+      columns: {
+        coverage: { label: "Coverage", about: "rows and fiscal years" },
+        linked: { label: "Linked", about: "to projects and notices" },
+        read_well: { label: "Read well", about: "read without errors" },
+        fresh: { label: "Fresh", about: "latest data, how often" },
+      },
+      definitions: {
+        coverage:
+          "How many rows or documents I hold for this source, and which fiscal years they span. Fiscal years run " +
+          "from July to June.",
+        linked:
+          "How many of these rows I could join to a project, a notice or a Procurement Plan. A row that doesn't join " +
+          "can't count in answers that need the join.",
+        read_well:
+          "How many pages or rows I read without losing their paragraph numbers or table rows. Records the World " +
+          "Bank publishes as tables need no reading.",
+        fresh:
+          "The date of the latest data I fetched, and how often the source updates. A frozen source no longer changes.",
+      },
+      scope: {
+        every_country: "All countries",
+        projects: "For {count} projects",
+        oneProject: "For one project",
+        join: ", ",
+        lastJoin: " and ",
+      },
+      years: "in {count} fiscal years",
+      yearsOne: "in {count} fiscal year",
+      yearsOf: "in {count} of {total} fiscal years",
+      gapYears: (from: string, to: string) => `fiscal ${from}–${to}`,
+      publishedAsTable: "Published as a table",
+      notMeasured: "Not measured yet",
+      notMeasuredRow: "Not measured yet. The next data run measures it.",
+      nonePublished: "None published",
+      fresh: "{date} · {schedule}",
+      late: "{days} days late",
+      lateOne: "{days} day late",
+    },
+    failures: {
+      title: "Plan pages the layout parser couldn't read",
+      none: "The layout parser read every Procurement Plan page it tried.",
+      page: "page {page}, last tried {date}",
+      document: "Document",
+    },
+    fixes: {
+      title: "Fixes that would unlock the most",
+      caption: "Ranked by how many projects each fix would add evidence to.",
+      projects: "Would add evidence to {count} projects.",
+      oneProject: "Would add evidence to {count} project.",
+      none: "Nothing I measured falls short, so there are no fixes to rank.",
+      noneHere: "None of these sources needs a fix.",
+    },
+    loading: {
+      slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",
+    },
+    empty: {
+      first: "I haven't measured any sources yet. The measures appear here after the first data run.",
+      meanwhile: { before: "Meanwhile, ", link: "Sources and licenses", after: " lists the datasets I'm set up to read." },
+    },
+    abstain: {
+      unmeasured: "I'm not giving a headline: {count} of the {total} sources below have no measures yet. Their rows say so.",
+      beforeFirst: "I have no measures from on or before {asked}. My first measures were taken {first}.",
+      showToday: "Show today's measures",
+    },
+    errors: {
+      timeout: "I couldn't load the measures, because the database didn't answer within {seconds} seconds. Try again in a minute.",
+      permission:
+        "I couldn't load the measures, because your account doesn't have access to them. Ask the person who runs " +
+        "Strata to give your account access.",
+      other:
+        "I couldn't load the measures, because the server returned an error. Try again. If it fails again, tell the " +
+        "person who runs Strata.",
+      tryAgain: "Try again",
+    },
+    // Each number's tooltip and the window a click opens (the 16 brief, section 5.8).
+    number: {
+      ratio: (part: string, whole: string, noun: string, date: string) => `${part} of ${whole} ${noun}. Measured ${date}.`,
+      count: (count: string, noun: string, date: string) => `${count} ${noun}. Measured ${date}.`,
+      day: (day: string, date: string) => `The latest data are from ${day}. Measured ${date}.`,
+      kinds: "Counted from the table of what you can ask, below.",
+      sources: "Counted from the sources this link names.",
+      numerator: "Counted",
+      denominator: "Out of",
+      measured: "Measured",
+      countedIn: "Counted in",
+      latest: "Latest data",
+    },
+    // The Sources and licenses page (the 16 brief, section 7). Dataset names come only from the
+    // source registry; DESIGN.md section 8 gives every fixed sentence here word for word.
+    sourcesPage: {
+      lead: "Here is every dataset and document I use, credited the way the World Bank asks.",
+      datasets: "Datasets",
+      datasetCount: "{count} datasets.",
+      attribution: { before: "The World Bank: ", after: (source: string, license: string) => `: ${source}. License: ${license}.` },
+      documents: "Documents and rules",
+      collection: (name: string, publisher: string, origin: string) => `${name}, published by ${publisher}, from ${origin}.`,
+      authorizes: {
+        before: "The World Bank Group authorizes the use of this material subject to the terms and conditions on its website, ",
+        link: "Legal",
+        after: ".",
+      },
+      terms: { before: "Terms of use: ", link: "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets" },
+      changes: "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+      caveat: "The World Bank does not guarantee the accuracy of the data.",
+      empty: "I haven't been set up to read any datasets yet.",
+      failed: "I couldn't load the list of sources, because the server didn't answer. Try again.",
+    },
+    howPage: {
+      lead:
+        "This page is for the figures that show how I turn World Bank records and documents into cited answers. They " +
+        "are not drawn yet.",
+      next: {
+        before: "Until they are, ",
+        readiness: "Data readiness",
+        middle: " shows what each source covers, and ",
+        sources: "Sources and licenses",
+        after: " lists every dataset I use.",
+      },
+    },
     // The sentences the tool builds on the server: the headline, the gaps and what holds each kind
     // of question back. src/strata/tools/data_readiness_for.py fills each {slot} from the measures
     // and reads these words from src/strata/tools/data_readiness_copy.json, which

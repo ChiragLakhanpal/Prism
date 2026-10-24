@@ -64,7 +64,6 @@ const ROUTES: [string, string][] = [
   ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
-  ["data", "/data"],
   ["not-found", "/nowhere"],
   ["not-a-project", "/projects/130164"],
 ];
@@ -83,6 +82,15 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
     ...rest,
   };
 }
+
+// A Data tab shot (ticket 16): the page with the Data readiness answer it names, recorded from the
+// server on the fixture, and the registry's datasets.
+function data(name: string, path: string, readiness: Answer = { recorded: "data-readiness.json" }, rest: Partial<Shot> = {}, sources: Answer = { recorded: "data-sources.json" }): Shot {
+  const shot = app(`data--${name}`, path, {}, rest);
+  return { ...shot, api: { ...shot.api, "/api/data/readiness": readiness, "/api/data/sources": sources } };
+}
+
+const FILTERED = "/data?sources=awards,notices&from=find_comparables";
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
@@ -175,4 +183,29 @@ export const SHOTS: Shot[] = [
   app("app--focus-empty-link", "/", {}, { act: focus("[data-empty-state] a") }),
   app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
+
+  // The Data tab (ticket 16): every state of Data readiness, Sources and licenses and How Strata
+  // works, and its focus and hover states. The loading states are the gallery's readiness page.
+  data("readiness", "/data"),
+  data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
+  data("filtered-unknown-key", "/data?sources=awards,not-a-source&from=find_comparables", { recorded: "data-readiness-unknown-key.json" }),
+  data("no-known-key", "/data?sources=not-a-source", { recorded: "data-readiness-no-known-key.json" }),
+  data("empty", "/data", { recorded: "data-readiness-empty.json" }),
+  data("unmeasured", "/data", { recorded: "data-readiness-unmeasured.json" }),
+  data("before-first", "/data?asof=2026-10-01", { recorded: "data-readiness-before-first.json" }),
+  data("timeout", "/data", { status: 504, recorded: "data-readiness-timeout.json" }),
+  data("no-access", "/data", { status: 403, recorded: "data-readiness-no-access.json" }),
+  data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
+  data("sources", "/data/sources"),
+  data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"kinds":0}' }),
+  data("how", "/data/how-strata-works"),
+  data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
+  data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
+  data("focus-show-all", FILTERED, { recorded: "data-readiness-filtered.json" }, { act: focus("main [data-alert=info] a") }),
+  data("term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=sources] thead [data-term] >> nth=1") }),
+  data("focus-num", "/data", undefined, { act: focus("[data-headline] [data-num] >> nth=2") }),
+  data("num-window", "/data", undefined, { act: click("[data-headline] [data-num] >> nth=2") }),
+  data("hover-num", "/data", undefined, { widths: WIDE, act: hover("[data-cell='awards:linked'] [data-num]") }),
+  data("hover-link", "/data", { recorded: "data-readiness-empty.json" }, { act: hover("[data-readiness=empty] a") }),
+  data("cards-320", "/data", undefined, { widths: [320] }),
 ];

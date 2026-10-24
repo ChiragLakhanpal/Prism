@@ -94,6 +94,12 @@ export const NON_COPY_PROPS = new Set([
   "cardsBelow",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
+  // The Data readiness page (ticket 16): which tooltip a measure's number gets ("ratio", "count" or
+  // "day"), which column's definition its window shows ("linked"), and how tall a readiness table's
+  // skeleton rows are ("kinds" or "sources").
+  "shown",
+  "column",
+  "skeleton",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,
