@@ -11,7 +11,8 @@
 //   lists each one with its reason, and there is no check line.
 // Empty: nothing in the records or documents answers the question, said in the first person.
 // Refused: a request on the refusal list, answered in plain text with no alert.
-// Error: the steps done so far, an error alert and "Try again".
+// Error: the steps done so far, an error alert, "Try again" when trying again can help, and the
+//   answer's ID when the run has one.
 import { useId, useState, type ClipboardEvent, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { copy } from "../copy";
@@ -40,7 +41,8 @@ export type AnswerState =
   | { status: "unsupported"; steps: Step[]; runId: string; message: ReactNode; removed: Removed[] }
   | { status: "empty"; steps: Step[]; runId: string; message: ReactNode; action?: ReactNode }
   | { status: "refused"; steps: Step[]; runId: string; message: ReactNode; note?: ReactNode }
-  | { status: "error"; steps: Step[]; message: ReactNode; onRetry: () => void };
+  // runId: the run's ID, shown under the alert so it can be shared; onRetry: no button without it.
+  | { status: "error"; steps: Step[]; message: ReactNode; onRetry?: () => void; runId?: string };
 
 // A copied answer reads "...rebidding". [1]", without the word joiners that keep each marker on its
 // sentence's line (CitationMarker.tsx), so a pasted sentence matches the one the verifier checked.
@@ -163,20 +165,27 @@ export function Answer({ state }: { state: AnswerState }) {
     case "error":
       return (
         <div data-answer="error">
-          {state.steps.length > 0 && <Steps steps={state.steps} />}
+          {state.steps.length > 0 && <Steps steps={state.steps} rail={false} />}
           {/* The alert keeps the answer's measure, as the check line and the removed box do. */}
           <Alert
             state="error"
             live="alert"
-            className="mt-4 max-w-prose"
+            className={cx(state.steps.length > 0 && "mt-4", "max-w-prose")}
             action={
-              <Button variant="secondary" onClick={state.onRetry}>
-                {copy.answer.tryAgain}
-              </Button>
+              state.onRetry && (
+                <Button variant="secondary" onClick={state.onRetry}>
+                  {copy.answer.tryAgain}
+                </Button>
+              )
             }
           >
             {state.message}
           </Alert>
+          {state.runId && (
+            <p className="mt-2 text-caption text-ink-muted">
+              {copy.steps.answerId} <span className="font-mono">{state.runId}</span>
+            </p>
+          )}
         </div>
       );
   }

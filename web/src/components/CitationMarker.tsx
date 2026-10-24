@@ -89,7 +89,8 @@ export function CitationMarker({
     <span className="whitespace-nowrap">
       {WORD_JOINER}
       {preview ? (
-        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]">
+        // The marker whose source the drawer shows in full opens no card beside it.
+        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]" quiet={active && Boolean(drawerId)}>
           {preview}
         </Tooltip>
       ) : (

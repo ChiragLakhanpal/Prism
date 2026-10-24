@@ -135,13 +135,17 @@ function numTooltip(evidence: EvidenceEvent | undefined): string | null {
 // the keyboard to the same sources.
 function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
   const found: { start: number; end: number; text: string; id: string }[] = [];
-  let cursor = 0;
-  for (const mention of [...sentence.numbers, ...sentence.dates]) {
-    const id = mention.evidence_id ?? sentence.evidence_ids[0];
-    const start = sentence.text.indexOf(mention.text, cursor);
-    if (!id || start < 0) continue;
-    found.push({ start, end: start + mention.text.length, text: mention.text, id });
-    cursor = start + mention.text.length;
+  // Numbers and dates each come in the order the sentence writes them, but a date may come before
+  // the numbers, so each list keeps its own place in the text.
+  for (const mentions of [sentence.numbers, sentence.dates]) {
+    let cursor = 0;
+    for (const mention of mentions) {
+      const id = mention.evidence_id ?? sentence.evidence_ids[0];
+      const start = sentence.text.indexOf(mention.text, cursor);
+      if (!id || start < 0) continue;
+      found.push({ start, end: start + mention.text.length, text: mention.text, id });
+      cursor = start + mention.text.length;
+    }
   }
   found.sort((a, b) => a.start - b.start);
   const parts: ReactNode[] = [];
@@ -219,9 +223,13 @@ export function AnswerSentences({
 
 // ── The panel ──────────────────────────────────────────────────────────
 
+// A removed sentence's reason: its first reason code that has a sentence in the copy file, or else a
+// line that makes no claim about why.
 function removedItems(run: Run): Removed[] {
+  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
   return run.removed.map((item) => {
-    const reason = copy.removed.reasons[item.reason as keyof typeof copy.removed.reasons] ?? copy.removed.reasons.number_not_in_records;
+    const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
+    const reason = code ? reasons[code] : copy.removed.unknownReason;
     return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };
   });
 }
@@ -252,21 +260,25 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       status: "refused",
       steps: done,
       runId,
-      message: copy.answer.refusedContentFilter,
+      message: copy.answer.errors.content_filter,
       note: <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href="/data">{copy.answer.refusalLink}</TextLink> }} />,
     };
   }
   if (run.phase !== "done" || !run.checks) {
-    const said = run.phase === "dropped" ? copy.answer.dropped : (copy.answer.errors[run.error as keyof typeof copy.answer.errors] ?? copy.answer.errors.internal);
+    const errors = copy.answer.errors as Record<string, string>;
+    const code = run.error && run.error in errors ? run.error : "internal";
+    const said = run.phase === "dropped" ? copy.answer.dropped : code === "internal" && !run.runId ? copy.answer.internalNoId : errors[code];
     return {
       status: "error",
       steps: done,
+      runId: run.runId ?? undefined,
       message: (
         <>
           {said} {copy.answer.stillInBox}
         </>
       ),
-      onRetry: askAgain,
+      // Trying again cannot connect a model that isn't connected.
+      onRetry: run.phase !== "dropped" && code === "no_agent" ? undefined : askAgain,
     };
   }
   const { checks } = run;
@@ -363,8 +375,13 @@ export function AnswerPanel({
   return (
     <section aria-label={copy.answer.panel} aria-busy={run.phase === "streaming"} data-answer-panel className="mb-8">
       <div className="rounded-md border border-line bg-surface p-4 @md/page:p-6 @lg/page:p-8">
+        {/* The Asked line sits a fixed 4 px under the question, whatever its length; the close
+            button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">
-          <h2 className="min-w-0 text-title wrap-break-word text-ink-heading">{run.asked.question}</h2>
+          <div className="min-w-0">
+            <h2 className="text-title wrap-break-word text-ink-heading">{run.asked.question}</h2>
+            <AskedLine run={run} />
+          </div>
           {/* "Close the answer" in words from a page area of 768 px; below it, a 44 px icon with the same name. */}
           <div className="-mt-2 -mr-2 hidden shrink-0 @md/page:block">
             <Button variant="ghost" icon={X} onClick={close}>
@@ -377,7 +394,6 @@ export function AnswerPanel({
             </Button>
           </div>
         </div>
-        <AskedLine run={run} />
         <div className="mt-6">
           <Answer state={stateOf(run, opened, visited, stillWorking)} />
         </div>

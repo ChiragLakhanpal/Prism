@@ -18,11 +18,12 @@ import { BoxBand, FreshnessStamp } from "./components/BoxBand";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
+import { RETURNING } from "./components/Popover";
 import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
 import { answer, ask, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
-import { drawerClosed, evidenceIn, origin, visited } from "./lib/evidence";
+import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
 import { address, navigate, startRouter } from "./lib/router";
@@ -73,7 +74,12 @@ function returnFocus() {
       : from
         ? document.querySelector<HTMLElement>(`[data-citation-id="${CSS.escape(from.id)}"][data-sentence="${from.sentence ?? ""}"]`)
         : null;
-  (marker ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+  // Focus given back to a marker does not open its evidence card over the answer again; the card
+  // opens when a person moves the focus or the pointer there (web/src/components/Popover.tsx).
+  if (marker) {
+    marker.setAttribute(RETURNING, "");
+    marker.focus();
+  } else document.querySelector<HTMLElement>("main h1")?.focus();
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
@@ -134,16 +140,20 @@ export function App() {
   }, [title]);
 
   // A route change, but not the first page: scroll to the top, focus the new title, and try the
-  // stamp again if it failed. A new page brings its scope chip back.
-  const lastPath = useRef(here.pathname);
+  // stamp again if it failed. A new page brings its scope chip back. Opening or closing the evidence
+  // drawer changes only ?evidence=, which is not a route change (routeOf), so it leaves focus where
+  // the drawer put it; a change to any other part of the address, such as ?asof=, is one.
+  const route = routeOf(here);
+  const lastRoute = useRef(route);
   useEffect(() => {
-    if (lastPath.current === here.pathname) return;
-    lastPath.current = here.pathname;
+    const moved = lastRoute.current !== route;
+    lastRoute.current = route;
+    if (!moved || here.moves === 0) return;
     removedScopes.set(new Set());
     window.scrollTo(0, 0);
     document.querySelector<HTMLElement>("main h1")?.focus();
     retryStamp();
-  }, [here.pathname]);
+  }, [route, here.moves]);
 
   const onAsk = (question: string, chip: string | null) =>
     ask({

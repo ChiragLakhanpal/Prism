@@ -129,6 +129,17 @@ def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file
         "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
 
 
+def test_the_deploy_says_it_saved_the_foundry_keys_only_after_saving_them(tmp_path, capsys):
+    class Refusing(FakeWorkspace):
+        def put_secret(self, scope, key, value):
+            raise RuntimeError("the secret scope refused the write")
+
+    with pytest.raises(RuntimeError):
+        deploy(Refusing(), tmp_path, capsys, env=ENV | FOUNDRY)
+
+    assert "I saved the Foundry agent's four keys" not in capsys.readouterr().out
+
+
 def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_path, capsys):
     workspace = FakeWorkspace()
     env = ENV | {key: value for key, value in FOUNDRY.items() if key != "FOUNDRY_CLIENT_SECRET"}

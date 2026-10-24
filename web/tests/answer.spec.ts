@@ -126,11 +126,38 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
 
   await expect(drawer(page)).toHaveCount(0);
   await expect(marker(page, 1)).toBeFocused();
+  // Focus coming back from the drawer does not cover the answer with the card again; focus a
+  // person moves there does.
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
   expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
   // The opened source shows its visited state, and was recorded once for this viewer.
   await expect(marker(page, 1)).toHaveAccessibleName(/, opened$/);
   expect(seen.opened.map((request) => request.postDataJSON().evidence_id)).toEqual([ICR_54]);
   expect(seen.opened[0].postDataJSON()).toMatchObject({ run_id: "run-0001", route: "/projects/P130164" });
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(marker(page, 1)).toBeFocused();
+  await expect(page.getByRole("tooltip")).toBeVisible();
+});
+
+test("closing the drawer gives focus back to its marker without covering the answer with its card, even with the pointer resting there", async ({ page }) => {
+  await open(page);
+  await askFromTheBox(page);
+  await landed(page);
+  // The pointer stays where it clicked, so when the drawer closes the marker comes back under it.
+  await marker(page, 1).click();
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
+
+  await page.keyboard.press("Escape");
+
+  await expect(marker(page, 1)).toBeFocused();
+  // Longer than the card's 150 ms hover delay.
+  await page.waitForTimeout(400);
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  // Moving the pointer off and back opens it, as hover always does.
+  await page.mouse.move(5, 880);
+  await marker(page, 1).hover();
+  await expect(page.getByRole("tooltip")).toBeVisible();
 });
 
 test("at 1024 px the drawer is 40 percent of the window, and the page beside it takes the rest", async ({ page }) => {
@@ -204,9 +231,23 @@ test("an agent that does not respond gets an error alert and Try again, with the
   await askFromTheBox(page);
 
   const alert = panel(page).getByRole("alert");
-  await expect(alert).toContainText("I can't reach the model that writes my answers right now; try again in a few minutes. Your question is still in the box.");
+  await expect(alert).toContainText("I couldn't reach the model that writes my answers. Your question is still in the box.");
+  await expect(alert.getByRole("button", { name: "Try again" })).toBeVisible();
+  // The run's ID, so a person can share it if it happens again.
+  await expect(panel(page).getByText("Answer ID run-0001")).toBeVisible();
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
   await expect(box(page)).toHaveValue(QUESTION);
+});
+
+test("with no model connected, the panel says so and offers no Try again, since trying again cannot help", async ({ page }) => {
+  await open(page, { stream: "ask-no-agent.sse" });
+  await askFromTheBox(page);
+
+  const alert = panel(page).getByRole("alert");
+  await expect(alert).toContainText(
+    "I can't answer questions yet, because the model that writes my answers isn't connected. Your question is still in the box.",
+  );
+  await expect(panel(page).getByRole("button", { name: "Try again" })).toHaveCount(0);
 });
 
 test("a stream that ends before its done event says the connection dropped", async ({ page }) => {
@@ -225,7 +266,7 @@ test("a question a content filter stopped is a refusal, in plain words, with no 
   await askFromTheBox(page);
 
   await expect(panel(page).locator("[data-in-short]")).toHaveText(
-    "I can't answer this as written, because a content filter stopped it. Try asking it in different words.",
+    "I can't answer this as written, because a content filter stopped the question. Try asking it in different words.",
   );
   await expect(panel(page).getByRole("alert")).toHaveCount(0);
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
@@ -255,7 +296,55 @@ test("an answer whose every sentence failed a check says so, and lists each one 
     "I don't have an answer I can support with a source. I wrote three sentences, and each one failed a check.",
   );
   await expect(panel(page).locator("[data-removed-lead]")).toHaveText("I removed all three sentences.");
+  // A quote inside a removed sentence takes single quotes, so the marks do not pile up.
+  await expect(panel(page).locator("[data-removed-box] li").first()).toHaveText(
+    '"The completion report says the works contract estimates should have been based on the market rate, because ' +
+      "'108 of 328 cases had to go through rebidding'.\" It cited a source I did not retrieve for this question.",
+  );
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
+});
+
+// The recorded showcase stream, with one event changed, for shapes no recorded stream has yet.
+async function changed(stream: string, type: string, index: number, change: (data: any) => any) {
+  const blocks = (await recorded(stream)).split("\n\n");
+  let seen = -1;
+  return blocks
+    .map((block) => {
+      if (!block.startsWith(`event: ${type}\n`)) return block;
+      seen += 1;
+      if (seen !== index) return block;
+      const data = JSON.parse(block.split("\ndata: ")[1]);
+      return `event: ${type}\ndata: ${JSON.stringify(change(data))}`;
+    })
+    .join("\n\n");
+}
+
+test("a reason code with no sentence in the copy file makes no claim about the removed sentence", async ({ page }) => {
+  const stream = await changed("ask-p130164-removed-number.sse", "removed", 0, (data) => ({ ...data, reason: "a_new_check", reasons: [{ check: 9, code: "a_new_check", text: null }] }));
+  await open(page);
+  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+  await askFromTheBox(page);
+
+  await expect(panel(page).locator("[data-removed-box]")).toHaveText(
+    "I removed one sentence. It said bids were usually opened within 45 days, and it failed a check.",
+  );
+});
+
+test("a date written before the numbers in a sentence is checkable too", async ({ page }) => {
+  const stream = await changed("ask-p130164-removed-number.sse", "sentence", 2, (data) => ({
+    ...data,
+    text: "On October 10, 2019 the report counted 108 of 328 cases.",
+    numbers: [
+      { text: "108", evidence_id: ICR_54 },
+      { text: "328", evidence_id: ICR_54 },
+    ],
+  }));
+  await open(page);
+  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+  await askFromTheBox(page);
+  await landed(page);
+
+  await expect(panel(page).locator("[data-sentence-text='2'] [data-num]")).toHaveText(["October 10, 2019", "108", "328"]);
 });
 
 test("Close the answer closes the panel and its drawer, and returns focus to the box", async ({ page }) => {

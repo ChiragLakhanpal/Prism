@@ -271,7 +271,10 @@ export const copy = {
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
-    item: (sentence: string, reason: string) => `"${sentence}" ${reason}`,
+    // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
+    item: (sentence: string, reason: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
+    // A reason code with no sentence below: it makes no claim about why.
+    unknownReason: { item: "It failed a check.", joined: "it failed a check" },
     // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
     // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
     // lacks either.
@@ -383,8 +386,8 @@ export const copy = {
     emptyUnscoped: "I found nothing in the records or documents that answers this. {link} shows which sources and years I have read so far.",
     emptyLink: "Data readiness",
     askAcross: "Ask across all projects",
-    // A refusal is an answer, not an error (section 5.8). Ticket 24 adds the refusal list's own lines.
-    refusedContentFilter: "I can't answer this as written, because a content filter stopped it. Try asking it in different words.",
+    // A refusal is an answer, not an error (section 5.8): a content filter's is errors.content_filter
+    // below, shown as plain text. Ticket 24 adds the refusal list's own lines.
     refusalNote: "{link} lists what I don't do, and why.",
     refusalLink: "How Strata works",
     // The stream ended before its done event (section 5.9).
@@ -392,14 +395,18 @@ export const copy = {
     stillInBox: "Your question is still in the box.",
     // Why an answer stopped, keyed by the code its stream's error event carries (ERROR_CODES in
     // src/strata/harness/turn.py). A test fails when a code has no sentence here.
+    // One idea a sentence: the "Try again" button carries the instruction, and stillInBox follows
+    // each. no_agent gets no button, because trying again cannot connect the model.
     errors: {
       no_agent: "I can't answer questions yet, because the model that writes my answers isn't connected.",
-      agent_unavailable: "I can't reach the model that writes my answers right now; try again in a few minutes.",
-      content_filter: "A safety filter stopped this answer, so I can't show it; try asking in other words.",
-      agent_output: "I wrote an answer I couldn't check, so I'm not showing it; try asking again.",
-      data_service: "I can't reach the data right now, so I can't answer; try again in a few minutes.",
-      internal: "Something went wrong on my side, so I can't answer; try again, and if it happens again, share the answer ID.",
+      agent_unavailable: "I couldn't reach the model that writes my answers.",
+      content_filter: "I can't answer this as written, because a content filter stopped the question. Try asking it in different words.",
+      agent_output: "I wrote an answer I couldn't check, so I'm not showing it.",
+      data_service: "I can't reach the data right now, so I can't answer.",
+      internal: "Something went wrong on my side, so I can't answer. If it happens again, share the answer ID below.",
     },
+    // internal, when the stream never opened and so has no answer ID to share.
+    internalNoId: "Something went wrong on my side, so I can't answer.",
   },
 
   // Term and DefinitionWindow.
@@ -421,7 +428,7 @@ export const copy = {
     openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
-    missing: "I have no source with this ID, so the link may be incomplete.",
+    missing: "I have no source with this ID. The link may be incomplete.",
   },
 
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
@@ -470,7 +477,7 @@ export const copy = {
       // never inside "PDF page 23 of 66" or before a dot.
       dot: "\u00a0·",
     },
-    noHighlight: "The sentence sums up this paragraph, so no words are highlighted.",
+    noHighlight: "This sentence does not quote the paragraph, so no words are highlighted.",
     whole: "The whole paragraph, word for word.",
     preview: "The address asks for a preview, so I'm not recording the sources you open.",
     // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,

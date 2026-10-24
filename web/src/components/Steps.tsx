@@ -16,6 +16,7 @@ export function Steps({
   stillWorking = false,
   reserveLines = 0,
   announce = true,
+  rail = true,
 }: {
   steps: Step[];
   // No event has come for 30 seconds.
@@ -25,6 +26,10 @@ export function Steps({
   reserveLines?: number;
   // Announce the step in progress here. The answer panel announces steps in its own live region.
   announce?: boolean;
+  // Hold the icon's width before each line, so a running step's icon and the text line up, and the
+  // folded steps start under the disclosure's label. Off above an error alert, where no icon runs
+  // and the lines start on the alert's edge.
+  rail?: boolean;
 }) {
   const current = steps.find((step) => step.state === "running");
   return (
@@ -42,7 +47,7 @@ export function Steps({
             {step.state === "running" ? (
               <LoaderCircle aria-hidden="true" className="mt-0.5 size-4 shrink-0 animate-spin text-primary" />
             ) : (
-              <span aria-hidden="true" className="size-4 shrink-0" />
+              rail && <span aria-hidden="true" className="size-4 shrink-0" />
             )}
             <span>
               {step.state === "running" ? step.running : step.done}

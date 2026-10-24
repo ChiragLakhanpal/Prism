@@ -35,8 +35,9 @@ import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
-import { CARD_FIELD, CARD_FIELDS } from "./Table";
 import { TextLink } from "./TextLink";
+
+const WORD_JOINER = "\u2060";
 
 export type DrawerData =
   | { status: "loading" }
@@ -118,10 +119,15 @@ function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEve
       <p className="text-caption text-ink-muted">{copy.evidence.whole}</p>
       {pdf !== null && (
         <p className="text-small">
-          <TextLink href={pdf} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1">
+          {/* The icon sits inline after the last word, tied to it by a word joiner, so it wraps with
+              "PDF" instead of staying at the end of the line above. */}
+          <TextLink href={pdf} target="_blank" rel="noreferrer">
             {copy.document.openAtPage(String(fields.page))}
             <span className="sr-only">{copy.document.newTab}</span>
-            <ExternalLink aria-hidden="true" className="size-4 shrink-0" />
+            <span className="whitespace-nowrap">
+              {WORD_JOINER}
+              <ExternalLink aria-hidden="true" className="ml-1 inline-block size-4 align-[-2px]" />
+            </span>
           </TextLink>
         </p>
       )}
@@ -129,10 +135,10 @@ function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEve
   );
 }
 
-// The What stratum's view: the fields of the record a tool returned, under STEP's own names, laid out
-// as the plan check's activity card lays them out (the 14 brief, section 4.5.3): the Description and
-// the Method across, Review and the amount side by side, the amount right-aligned in STEP's form with
-// its cents (DESIGN.md section 6), then the source line.
+// The What stratum's view: the fields of the record a tool returned, under STEP's own names, in a
+// two-column definition list (the 14 brief, section 4.5.3): the Description, the Method and the
+// Process status across, Review and the amount side by side, the amount right-aligned on the list's
+// edge in STEP's form with its cents (DESIGN.md section 6), then the source line.
 function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
   const columns = copy.checkPlan.columns;
@@ -147,9 +153,9 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   if (given(row.process_status)) fields.push({ label: columns.status, value: String(row.process_status), wide: true });
   return (
     <div className="flex flex-col gap-4 rounded-md border border-line p-4">
-      <dl data-record data-numbers className={CARD_FIELDS}>
+      <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
         {fields.map((field) => (
-          <div key={field.label} className={cx(CARD_FIELD, field.wide && "col-span-full", field.numeric && "text-right")}>
+          <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
             <dt className="text-caption text-ink-muted">{field.label}</dt>
             <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
           </div>

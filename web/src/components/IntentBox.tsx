@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { FolderOpen, MessageSquareText, Table2 } from "lucide-react";
 import { copy } from "../copy";
+import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
 import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type Lookup } from "../lib/intents";
@@ -20,7 +21,9 @@ import { Fill } from "./Fill";
 const LOOKUP_DELAY_MS = 150;
 const ICONS = { project: FolderOpen, loan: FolderOpen, activity: Table2 };
 
-const mono = (text: string) => <span className="font-mono">{text}</span>;
+// An ID in mono. A P-code or a loan number (12 characters or fewer) moves to the next line whole; a
+// STEP reference may still break after its hyphens (DESIGN.md section 5, Page header).
+const mono = (text: string) => <span className={cx("font-mono", text.length <= 12 && "whitespace-nowrap")}>{text}</span>;
 
 function idLabel(intent: Intent): ReactNode {
   const words = copy.box.option;

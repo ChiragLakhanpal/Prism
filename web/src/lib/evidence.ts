@@ -53,12 +53,17 @@ export function evidenceHref(id: string, here: { pathname: string; search: strin
   return `${here.pathname}?${params.toString()}`;
 }
 
-function withoutEvidence(): string {
-  const { pathname, search } = address.get();
+// The address without ?evidence=: the route. Opening or closing the drawer is the only change to the
+// address that is not a route change, so it neither scrolls the page nor moves focus to the h1.
+export function routeOf({ pathname, search }: { pathname: string; search: string } = address.get()): string {
   const params = new URLSearchParams(search);
   params.delete(PARAM);
   const rest = params.toString();
   return rest ? `${pathname}?${rest}` : pathname;
+}
+
+function withoutEvidence(): string {
+  return routeOf();
 }
 
 function markVisited(id: string) {

@@ -38,10 +38,10 @@ export type BoxOption = {
 // button. Below 768 px it shows the ID only.
 function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void }) {
   return (
-    <span data-scope-chip className="flex h-8 shrink-0 items-center gap-1 rounded-pill border border-line-strong bg-surface pr-1 pl-3">
+    <span data-scope-chip className="flex h-8 shrink-0 items-center gap-2 rounded-pill border border-line-strong bg-surface pr-1 pl-3">
       <span className="hidden text-small text-ink-muted md:inline">{copy.box.chipWithin}</span>
       <span className="font-mono text-small text-ink">{scope}</span>
-      {/* Its own focus ring, inside the box's. */}
+      {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
       <button
         type="button"
         data-focus-ring

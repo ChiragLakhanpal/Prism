@@ -5,7 +5,8 @@
 //
 // The tooltip follows WCAG 1.4.13 and the ticket 14 brief: hover opens it after 150 ms and
 // focus at once; the pointer can move onto it; it closes 150 ms after the pointer leaves both;
-// Escape closes it and focus stays put; only one is open at a time; a tap never opens it. It
+// Escape closes it and focus stays put; only one is open at a time; a tap never opens it; focus
+// the app gives back after a dialog closes does not open it, so it never covers what you return to. It
 // is built on Radix Popover rather than Radix Tooltip, because Radix Tooltip closes on any
 // scroll, and tabbing to a number lower on the page scrolls it into view.
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -22,17 +23,22 @@ export const DOTTED_UNDERLINE =
   "underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid";
 
 const DELAY = 150;
+export const RETURNING = "data-returning";
+const returning = (element: Element) => element.hasAttribute(RETURNING);
 const open = new Set<() => void>();
 
 export function Tooltip({
   trigger,
   children,
   width = "max-w-[20rem]",
+  quiet = false,
 }: {
   // One element that can take focus, such as a link or a button.
   trigger: ReactNode;
   children: ReactNode;
   width?: string;
+  // Opens on nothing, as a marker whose source the evidence drawer already shows in full.
+  quiet?: boolean;
 }) {
   const [shown, setShown] = useState(false);
   const id = useId();
@@ -60,10 +66,21 @@ export function Tooltip({
       <RadixPopover.Anchor
         asChild
         aria-describedby={shown ? id : undefined}
-        onPointerEnter={(event) => event.pointerType === "mouse" && after(show)}
-        onPointerLeave={(event) => event.pointerType === "mouse" && after(hide)}
-        onFocus={show}
-        onBlur={hide}
+        // Focus the app gives back, as when the evidence drawer closes (data-returning, set by
+        // web/src/App.tsx), returns the reader to the answer without covering it, and so does the
+        // pointer the page moved back under the trigger. The card opens again once the pointer or
+        // the focus leaves and comes back.
+        onPointerEnter={(event) => event.pointerType === "mouse" && !quiet && !returning(event.currentTarget) && after(show)}
+        onPointerLeave={(event) => {
+          if (event.pointerType !== "mouse") return;
+          event.currentTarget.removeAttribute(RETURNING);
+          after(hide);
+        }}
+        onFocus={(event) => (quiet || returning(event.currentTarget) ? hide() : show())}
+        onBlur={(event) => {
+          event.currentTarget.removeAttribute(RETURNING);
+          hide();
+        }}
       >
         {trigger}
       </RadixPopover.Anchor>

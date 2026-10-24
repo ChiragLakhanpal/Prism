@@ -155,9 +155,9 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     print("3. Giving it the SQL warehouse, the Application Insights connection string and each viewer's SQL token.")
     foundry = has_foundry(env)
     if foundry:
-        print("   I saved the Foundry agent's four keys in the secret scope, so /api/ask answers through the agent.")
         for key in FOUNDRY:
             workspace.put_secret(names["secret_scope"], key, env[key].strip())
+        print("   I saved the Foundry agent's four keys in the secret scope, so /api/ask answers through the agent.")
     else:
         missing = ", ".join(key for key in FOUNDRY if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no Foundry agent and /api/ask says there is no agent.")
