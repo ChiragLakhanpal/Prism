@@ -1,19 +1,106 @@
 {
- "about": "An answer of Azure OpenAI's chat completions (the v1 endpoint) from the judge role's deployment, asked whether two supplier rows name the same supplier, with response_format json_object. It is written by hand in the shape the operation documents, because the gate's machine has no key. Replace it with a recorded answer when ops/suppliers/judge_live.py first runs (docs/workspace-catchup.md).",
- "recorded": false,
+ "about": "An answer of Azure OpenAI's chat completions from the judge role's deployment, asked whether two supplier rows name the same supplier, recorded by ops/suppliers/judge_live.py --record.",
+ "recorded": true,
  "response": {
-  "id": "chatcmpl-not-a-real-id",
-  "object": "chat.completion",
-  "model": "gpt-5.4",
   "choices": [
    {
-    "index": 0,
+    "content_filter_results": {
+     "hate": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "protected_material_code": {
+      "detected": false,
+      "filtered": false
+     },
+     "protected_material_text": {
+      "detected": false,
+      "filtered": false
+     },
+     "self_harm": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "sexual": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "violence": {
+      "filtered": false,
+      "severity": "safe"
+     }
+    },
     "finish_reason": "stop",
+    "index": 0,
+    "logprobs": null,
     "message": {
-     "role": "assistant",
-     "content": "{\"decision\": \"merge\", \"confidence\": 0.93, \"reason\": \"The names differ only in punctuation and the legal form, in the same country.\"}"
+     "annotations": [],
+     "content": "{\"decision\":\"merge\",\"confidence\":0.97,\"reason\":\"The names closely match as truncation/spacing variants of the same firm and both are in India on the same project, which strongly indicates the same supplier despite different contract numbers.\"}",
+     "refusal": null,
+     "role": "assistant"
     }
    }
-  ]
+  ],
+  "created": 1792865194,
+  "id": "chatcmpl-EcaQUjQTtYioRqANqCfdJwV3Ypw9m",
+  "model": "gpt-5.4-2026-03-05",
+  "object": "chat.completion",
+  "prompt_filter_results": [
+   {
+    "prompt_index": 0,
+    "content_filter_results": {
+     "hate": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "jailbreak": {
+      "detected": false,
+      "filtered": false
+     },
+     "self_harm": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "sexual": {
+      "filtered": false,
+      "severity": "safe"
+     },
+     "violence": {
+      "filtered": false,
+      "severity": "safe"
+     }
+    }
+   }
+  ],
+  "routing": {
+   "serving_pipereplica": "d20261014000135-92e5f79b-default-r1-dp0-default"
+  },
+  "service_tier": "default",
+  "system_fingerprint": null,
+  "usage": {
+   "completion_tokens": 55,
+   "completion_tokens_details": {
+    "accepted_prediction_tokens": 0,
+    "audio_tokens": 0,
+    "reasoning_tokens": 0,
+    "rejected_prediction_tokens": 0
+   },
+   "latency_checkpoint": {
+    "engine_tbt_ms": 8,
+    "engine_ttft_ms": 52,
+    "engine_ttlt_ms": 495,
+    "pre_inference_ms": 89,
+    "service_tbt_ms": 8,
+    "service_ttft_ms": 486,
+    "service_ttlt_ms": 923,
+    "user_visible_ttft_ms": 396
+   },
+   "prompt_tokens": 274,
+   "prompt_tokens_details": {
+    "audio_tokens": 0,
+    "cached_tokens": 0
+   },
+   "total_tokens": 329
+  }
  }
 }
