@@ -24,6 +24,11 @@
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
   token cannot read strata gets 403 with the code permission and no rows.
+- GET /api/packages/{step_reference} gives the package workspace's header: the package as its newest
+  public Procurement Plan row states it, with that plan and its project, or 404 with the code
+  unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
+  tool registry for the workspace's section 1, with the tool's criteria as query parameters
+  (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer.
 - Every other address outside /api gets the built web app, when create_app is given one.
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
@@ -64,6 +69,7 @@ from strata.server import engines, projects, tracing
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
+from strata.tools.find_comparables import read_package
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
@@ -256,6 +262,36 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                            view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
                                        "plan_date": version}, viewer, view, asof)
+
+    @app.get("/api/packages/{step_reference}")
+    def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        as_of = asof or registry.today()
+
+        def read(engine: Engine):
+            found = read_package(engine, step_reference, as_of)
+            if found is None:
+                return JSONResponse({"code": "unknown_package"}, status_code=404)
+            return {"as_of": as_of.isoformat(), "package": found}
+        return read_for(f"package {step_reference}", viewer, read)
+
+    @app.get("/api/packages/{step_reference}/comparables")
+    def comparables(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
+                    viewer: Viewer = Depends(current_viewer)):
+        # The criteria come from the query as the tool's own parameter names; the registry checks them.
+        criteria = {name: value for name, value in request.query_params.items() if name not in ("asof", "view")}
+        for name in ("size_from_usd", "size_to_usd"):
+            if name in criteria:
+                try:
+                    criteria[name] = float(criteria[name])
+                except ValueError:
+                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a number."}, status_code=422)
+        for name in ("notice_from", "notice_to"):
+            if name in criteria:
+                try:
+                    criteria[name] = dt.date.fromisoformat(criteria[name])
+                except ValueError:
+                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
+        return run_tool("find_comparables", {"step_reference": step_reference, **criteria}, viewer, view, asof)
 
     @app.get("/api/health")
     def health() -> dict:

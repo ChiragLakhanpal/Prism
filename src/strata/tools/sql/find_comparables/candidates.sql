@@ -22,17 +22,29 @@ WITH listed AS (
   QUALIFY row_number() OVER (PARTITION BY r.activity_reference_no
                              ORDER BY v.plan_date DESC, v.public_from DESC, r.document_id DESC, r.pdf_page) = 1
 ),
-signed AS (
-  SELECT
-    step_reference,
-    min(contract_signing_date) AS signed_on,
-    min_by(contract_id, contract_signing_date) AS contract_id,
-    min(review_type) AS review_type,
-    min(market_approach) AS market_approach,
-    sum(contract_amount_usd) AS amount_usd
+contracts AS (
+  SELECT *
   FROM strata.gold.contract
   WHERE step_reference IS NOT NULL AND source <> 'notices' AND public_from <= :as_of
-  GROUP BY step_reference
+),
+-- A package's first contract: the earliest signed, and of contracts signed the same day the lowest
+-- number, so the same package always cites the same contract.
+first_contract AS (
+  SELECT step_reference, contract_id
+  FROM contracts
+  QUALIFY row_number() OVER (PARTITION BY step_reference ORDER BY contract_signing_date, contract_id) = 1
+),
+signed AS (
+  SELECT
+    c.step_reference,
+    min(c.contract_signing_date) AS signed_on,
+    min(f.contract_id) AS contract_id,
+    min(c.review_type) AS review_type,
+    min(c.market_approach) AS market_approach,
+    sum(c.contract_amount_usd) AS amount_usd
+  FROM contracts AS c
+  JOIN first_contract AS f ON f.step_reference = c.step_reference
+  GROUP BY c.step_reference
 ),
 award_notice AS (
   SELECT step_reference, notice_id, contract_signature_date, public_from
