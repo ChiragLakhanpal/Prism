@@ -472,11 +472,11 @@ fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", 
 
 # ── Documents ────────────────────────────────────────────────────────────
 
-# Procurement Plan versions, and later every document of the slice, from the documents API. The
-# plan reader (src/strata/lakehouse/plans.py) lists a project's documents here and fetches each
-# plan's published text and PDF. Ticket 08 added it. The passage reader
-# (src/strata/lakehouse/passages.py, ticket 11) lists the same way and fetches the first PADs, ISRs,
-# ICRs and ICR Reviews with the plan reader's fetcher.
+# Procurement Plan versions and every document of the slice, from the documents API. The plan reader
+# (src/strata/lakehouse/plans.py) lists a project's documents here and fetches each plan's published
+# text and PDF. Ticket 08 added it. The passage reader (src/strata/lakehouse/passages.py, tickets 11
+# and 18) lists the same way and fetches the slice's PADs, ISRs, ICRs and ICR Reviews with the plan
+# reader's fetcher, and both send pages to the layout parser under one daily page cap.
 #
 # The plan reader does not filter the list by disclosure_date yet: it fetches the whole list on each
 # run, keeps it in bronze when it changed, and skips each plan whose document id bronze already
@@ -492,8 +492,9 @@ silver_transform = "src/strata/lakehouse/sql/plans/plan_step_delays.sql"
 stratum = "How"
 limitations = ["The published text scrambles Procurement Plan tables, so only some versions are read through the layout parser."]
 
-# The documents source shows as two rows: the plan reader's Procurement Plans and the passage
-# reader's reports. Each reader writes its own measures for each project (strata.ops.data_readiness).
+# The documents source shows as three rows: the plan reader's Procurement Plans, the passage reader's
+# reports, and the notices' text the passage reader reads (ticket 18). Each reader writes its own
+# measures for each project (strata.ops.data_readiness).
 # The plan measures count an activity once in each latest plan version that lists it, and one
 # activity can sit in two agencies' latest plans, so their words say "activity entries".
 [[sources.documents.readiness]]

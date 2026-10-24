@@ -271,18 +271,15 @@ export function shelfRows(result: Readiness): ReadinessRow[] {
       entry.kind === "over_parser_limit" && entry.state === "no_document" ? (
         words.lookedFor
       ) : (
-        <span lang={entry.kind === "other_language" ? (entry.document?.language ?? entry.language ?? undefined) : undefined}>
-          {fill(words.hard[entry.kind], entry)}
-        </span>
+        fill(words.hard[entry.kind], entry)
       );
     const note = spanningNote(entry, measures);
-    const lang = entry.document?.language && entry.document.language !== "en" ? entry.document.language : undefined;
-    if (note !== null) return { id: entry.key, header, caption, lang, cells: { hard }, span: note, spanFrom: "parser" };
+    // The documents API names every project in English, so no row header needs another language's lang.
+    if (note !== null) return { id: entry.key, header, caption, cells: { hard }, span: note, spanFrom: "parser" };
     return {
       id: entry.key,
       header,
       caption,
-      lang,
       cells: { hard, parser: parserCell(entry, measures), outcome: outcomeCell(entry, measures, result.as_of), page: pageCell(entry) },
     };
   });

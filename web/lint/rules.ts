@@ -26,6 +26,7 @@ export const REGION_CODES = ["AFR", "EAP", "ECA", "LAC", "MNA", "SAR"];
 // because only a person can tell which sense a sentence means. So is PIU, which GLOSSARY.md
 // avoids only in copy shared across countries and uses in its own definition.
 export const GLOSSARY_AVOID: [string, string][] = [
+  ["stress shelf", "the hardest documents I read"],
   ["chunk", "passage"],
   ["snippet", "passage"],
   ["evidence layer", "stratum"],

@@ -26,6 +26,22 @@ _Avoid_: Unstructured data (in user-facing copy)
 A numbered paragraph or table row in a document, and the unit every citation points to, together with its page.
 _Avoid_: Chunk, snippet
 
+**Published text**:
+The text the World Bank publishes with a document, which Strata reads page by page into passages. Strata's code calls it Route A.
+_Avoid_: Route A (in user-facing copy), OCR text
+
+**Layout parser**:
+The reader Strata sends a page to when the published text cannot be trusted with it: a scanned page, a table such as a Procurement Plan's or a PAD's risk table, or a figure. It reads the page's rows, columns and text. Strata's code calls it Route B.
+_Avoid_: Route B (in user-facing copy), OCR
+
+**Table summary**:
+The one passage Strata writes about a table it read, which says what the table is and names its rows. It is Strata's own words, so it never backs a number; the table's rows do.
+_Avoid_: Table description
+
+**Stress shelf**:
+The hardest documents Strata reads, each with a recorded outcome on the Data readiness page, which shows them as "The hardest documents I read".
+_Avoid_: Stress shelf (in user-facing copy), benchmark documents
+
 **Assertion**:
 A dated claim a source makes about a project, package or contract, such as a rating, a date or an amount.
 _Avoid_: Fact, statement
