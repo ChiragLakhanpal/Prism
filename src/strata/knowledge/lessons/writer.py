@@ -77,10 +77,17 @@ def facts_for(store: Store, item: dict, subject: dict) -> tuple[Facts, list[dict
     def passages_of(rows: list[dict]) -> list[dict]:
         found = []
         for row in rows:
+            # The passage in search_passages' row shape, so the evidence drawer opens it from the note with no request.
+            project = store.projects.get(row["project_id"]) or {}
             passage = {"passage_id": row["passage_id"], "text": row.get("passage_text") or "", "kind": "paragraph",
-                       "document_type": row["document_type"], "project_id": row["project_id"],
-                       "paragraph": row["paragraph"], "pdf_page": _int(row["cited_page"]),
-                       "report_number": row["report_number"], "document_date": row["document_date"]}
+                       "language": row.get("language"), "document_type": row["document_type"],
+                       "project_id": row["project_id"], "paragraph": row["paragraph"], "pdf_page": _int(row["cited_page"]),
+                       "source": {"document_type": row["document_type"], "project_id": row["project_id"],
+                                  "project_name": project.get("project_name"),
+                                  "document_date": row["document_date"].isoformat()
+                                  if hasattr(row["document_date"], "isoformat") else row["document_date"],
+                                  "report_number": row["report_number"], "paragraph": row["paragraph"],
+                                  "pdf_page": _int(row["cited_page"])}}
             evidence_id = f"{PASSAGES}:{row['passage_id']}"
             facts.record(evidence_id, passage, tool=TOOL)
             found.append({"evidence_id": evidence_id, "role": row["role"], "document_type": row["document_type"],

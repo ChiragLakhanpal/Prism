@@ -149,7 +149,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
 
 test("an account the warehouse refuses gets one error alert that says how to get access", async ({ page }) => {
   await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
-  await page.goto("/lessons");
+  await page.goto("/packages");
 
   await expect(page.getByRole("alert")).toHaveText(
     "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
@@ -168,7 +168,7 @@ test("while the stamp tries again, the access alert stays where it is, so it is 
     if (reads > 1) await answered;
     await route.fulfill({ status: 403, contentType: "application/json", body: await recorded("freshness-no-access.json") });
   });
-  await page.goto("/lessons");
+  await page.goto("/");
   const alert = page.getByRole("alert");
   await expect(alert).toHaveCount(1);
 
@@ -245,7 +245,7 @@ const ADDRESS_ALERTS: [string, string][] = [
 for (const [query, sentence] of ADDRESS_ALERTS) {
   test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
     await mockShell(page);
-    await page.goto(`/lessons${query}`);
+    await page.goto(`/packages${query}`);
 
     const alert = page.locator("[data-alert=info]");
     await expect(alert).toHaveText(sentence);
@@ -256,9 +256,9 @@ for (const [query, sentence] of ADDRESS_ALERTS) {
 
 test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ page }) => {
   await mockShell(page);
-  await page.goto("/lessons?view=staff&lang=fr&evidence=ev-1");
+  await page.goto("/packages?view=staff&lang=fr&evidence=ev-1");
 
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packages");
   // The page's alert slot stays empty; the evidence drawer beside the page answers ?evidence= itself.
   await expect(page.getByRole("main").locator("[data-alert]")).toHaveCount(0);
 });
@@ -274,7 +274,7 @@ test("error alerts come before the address's info alerts", async ({ page }) => {
 test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge never clips it", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 390, height: 900 });
-  await page.goto("/lessons");
+  await page.goto("/packages");
   await page.getByRole("button", { name: "Menu" }).click();
   await page.keyboard.press("Tab");
 

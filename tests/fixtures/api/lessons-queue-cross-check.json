@@ -57,22 +57,22 @@
         "group": "you",
         "statement": "Put forest and other permits in place before awarding contracts",
         "source": {
-          "evidence_id": "strata.gold.passage:31525018/v1/55",
-          "passage_id": "31525018/v1/55",
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
           "role": "source",
-          "doc_type": "Implementation Completion and Results Report",
-          "doc_short": "ICR",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
           "pid": "P130164",
           "project_name": "Rajasthan Road Sector Modernization Project",
-          "date": "2019-10-10",
-          "report_number": "ICR4803",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
           "locator": {
-            "kind": "paragraph",
-            "text": "55"
+            "kind": "section",
+            "text": "12"
           },
-          "page": 23,
-          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
-          "restated_by_ieg": false
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true
         },
         "region": "Eastern and Southern Africa",
         "project": {

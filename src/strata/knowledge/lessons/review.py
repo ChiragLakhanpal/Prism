@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 import uuid
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -154,6 +155,26 @@ def ieg_status(evidence: list[dict], reviewed_on) -> dict:
     if reviewed_on:
         return {"ieg_status": "not_restated", "review_date": _iso(reviewed_on)}
     return {"ieg_status": "awaiting", "review_date": None}
+
+
+# ── The excerpt an evidence card shows ───────────────────────────────────
+
+SENTENCE_END = re.compile(r"(?<=[.;:?])\s+(?=[A-Z(\"“‘])")
+
+
+def excerpt(text: str, span) -> dict | None:
+    """The quote with at most one whole sentence before it and one after it, from the same passage, and where
+    the quote sits in it (the 29 brief, section 2.5). None when the quote was not found in the passage."""
+    if not text or not span:
+        return None
+    starts = [0] + [match.end() for match in SENTENCE_END.finditer(text)]
+    first = max((index for index, start in enumerate(starts) if start <= span[0]), default=0)
+    last = max((index for index, start in enumerate(starts) if start < span[1]), default=first)
+    begin = starts[max(first - 1, 0)]
+    end = starts[last + 2] if last + 2 < len(starts) else len(text)
+    shown = text[begin:end].rstrip()
+    return {"text": shown, "highlight": [span[0] - begin, span[1] - begin], "starts_inside": begin > 0,
+            "ends_inside": end < len(text)}
 
 
 # ── Refusals ─────────────────────────────────────────────────────────────
@@ -346,7 +367,8 @@ class LessonReview:
         if detail:
             text = row.get("passage_text") or ""
             span = find_quote(row["quote"], text) if text else None
-            found |= {"text": text, "highlight": list(span) if span else None, "language": row.get("language")}
+            found |= {"text": text, "highlight": list(span) if span else None, "language": row.get("language"),
+                      "excerpt": excerpt(text, span)}
         return found
 
     def ieg(self, store: Store, evidence: list[dict], project_id: str) -> dict:
@@ -376,7 +398,9 @@ class LessonReview:
             if row["passage_id"] not in seen:
                 seen.add(row["passage_id"])
                 unique.append(row)
-        return sorted(unique, key=lambda row: (row["role"] != "source", _iso(row["document_date"]) or ""))
+        # In the order the lesson gained them: the first proposal's quote and IEG's restatement of it, then each
+        # merged proposal's, so a lesson's first quote stays its own.
+        return unique
 
     def subject(self, store: Store, item: dict) -> dict:
         """What an item is about: its statement, tags, evidence rows and project, at the version it concerns."""
@@ -710,7 +734,11 @@ class LessonReview:
         are left out. The order is by date, never by use."""
         store = self._load(engine)
         current = [versions[-1] for versions in store.versions.values() if versions[-1]["state"] == "current"]
-        current.sort(key=lambda row: (_iso(row["decided_on"]), row["lesson_id"]), reverse=True)
+
+        def decided_at(row: dict) -> str:
+            act = store.act(store.items.get(row["item_id"]) or {"item_id": row["item_id"]}, "decide")
+            return str(act["acted_at"]) if act else ""
+        current.sort(key=lambda row: (_iso(row["decided_on"]), decided_at(row), row["lesson_id"]), reverse=True)
         size = int(self.value("library_page_size"))
         pages = max(1, -(-len(current) // size))
         shown = current[(page - 1) * size: page * size] if 1 <= page <= pages else []

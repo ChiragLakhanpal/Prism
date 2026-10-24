@@ -89,7 +89,16 @@
             149,
             194
           ],
-          "language": "en"
+          "language": "en",
+          "excerpt": {
+            "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+            "highlight": [
+              149,
+              194
+            ],
+            "starts_inside": false,
+            "ends_inside": false
+          }
         },
         {
           "evidence_id": "strata.gold.passage:34056616/v2/10.b",
@@ -113,7 +122,16 @@
             812,
             960
           ],
-          "language": "en"
+          "language": "en",
+          "excerpt": {
+            "text": "Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+            "highlight": [
+              220,
+              368
+            ],
+            "starts_inside": true,
+            "ends_inside": false
+          }
         }
       ],
       "ieg_note": null,
@@ -194,12 +212,20 @@
               "passage_id": "31525018/v1/54",
               "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
               "kind": "paragraph",
+              "language": "en",
               "document_type": "Implementation Completion and Results Report",
               "project_id": "P130164",
               "paragraph": "54",
               "pdf_page": 23,
-              "report_number": "ICR4803",
-              "document_date": "2019-10-10"
+              "source": {
+                "document_type": "Implementation Completion and Results Report",
+                "project_id": "P130164",
+                "project_name": "Rajasthan Road Sector Modernization Project",
+                "document_date": "2019-10-10",
+                "report_number": "ICR4803",
+                "paragraph": "54",
+                "pdf_page": 23
+              }
             },
             "highlights": [
               {
@@ -219,12 +245,20 @@
               "passage_id": "34056616/v2/10.b",
               "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
               "kind": "paragraph",
+              "language": "en",
               "document_type": "Implementation Completion Report Review",
               "project_id": "P130164",
               "paragraph": "10.b",
               "pdf_page": 13,
-              "report_number": "ICRR0021929",
-              "document_date": "2023-05-04"
+              "source": {
+                "document_type": "Implementation Completion Report Review",
+                "project_id": "P130164",
+                "project_name": "Rajasthan Road Sector Modernization Project",
+                "document_date": "2023-05-04",
+                "report_number": "ICRR0021929",
+                "paragraph": "10.b",
+                "pdf_page": 13
+              }
             },
             "highlights": [
               {

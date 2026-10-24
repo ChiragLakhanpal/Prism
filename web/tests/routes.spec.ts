@@ -90,6 +90,12 @@ export const ROUTES: Route[] = [
       body: "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
       link: DATA_LINK,
     },
+    // Ticket 29: the library, empty, as anyone who is not a lesson reviewer reads it (tests/fixtures/api,
+    // lessons-me-viewer.json and lessons-library-empty.json).
+    api: {
+      "/api/lessons/me": '{"signed_in":true,"tabs":["library"],"acts":[],"regions":[],"role":null,"waiting":null}',
+      "/api/lessons": '{"as_of":"2026-10-27","page":1,"pages":1,"page_size":8,"total":0,"from":0,"to":0,"can_recheck":false,"waiting":null,"lessons":[]}',
+    },
   },
   {
     path: "/drafts",

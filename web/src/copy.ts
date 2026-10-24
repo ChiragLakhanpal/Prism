@@ -506,6 +506,7 @@ export const copy = {
       "strata.silver.plan_rows": "Activity",
       "strata.gold.contract": "Contract",
       "strata.gold.package": "Package",
+      "strata.ops.lesson_versions": "Lesson",
     } as Record<string, string>,
     recordKindOther: "Record",
     // The record view's fields keep STEP's own names; the description's is STEP's "Description".
@@ -619,6 +620,14 @@ export const copy = {
   notInRecord: "Not in the record",
 
   // The trail above a project's pages (the 10 brief, sections 2 and 3).
+  // Pagination (the 21 design brief; built early by ticket 29): links that move a list a page at a time.
+  pagination: {
+    label: "Pages",
+    previous: "Previous page",
+    next: "Next page",
+    page: "Page {page} of {pages}",
+  },
+
   breadcrumb: {
     label: "Breadcrumb",
     projects: "Projects",
@@ -1864,12 +1873,15 @@ export const copy = {
       // A source chip's words: "ICR ¶54", "ICR Review 10.b", and its accessible name.
       chipParagraph: "{doc} ¶{para}",
       chipSection: "{doc} {section}",
-      chipNameParagraph: "Open the source: {doc} for {pid}, paragraph {para}, page {page}",
-      chipNameSection: "Open the source: {doc} for {pid}, section {section}, page {page}",
+      // A chip's accessible name is its own words, then these, so it reads "ICR ¶54, opens the source: ...".
+      chipNameJoin: ", ",
+      chipNameParagraph: "opens the source: {doc} for {pid}, paragraph {para}, page {page}",
+      chipNameSection: "opens the source: {doc} for {pid}, section {section}, page {page}",
       // One source in a source line: "ICR, P130164, October 10, 2019, paragraph 54, page 23".
       sourceParagraph: "{doc}, {pid}, {date}, paragraph {para}, page {page}",
       sourceSection: "{doc}, {pid}, {date}, section {section}, page {page}",
       sourceJoin: "; ",
+      sourceEnd: ".",
       tags: "Tags",
     },
     recheck: {
@@ -1915,9 +1927,9 @@ export const copy = {
       noAccessLink: "Go to Lessons",
       decidedTitle: "Decided in the last {days} days",
       decidedNone: "No lesson was decided in the last {days} days.",
-      decidedCountAll: "Showing all {total} decisions, newest first.",
-      decidedCountOne: "Showing the one decision, newest first.",
-      decidedCountRange: "Showing {from}–{to} of {total} decisions, newest first.",
+      // The count line's noun: "Showing 1–20 of 34 decisions, newest first" (copy.table).
+      decidedNoun: "decisions, newest first",
+      decidedNounOne: "decision, newest first",
       decidedCaption: "Lessons decided in the last {days} days",
       decidedSource: "Strata's lesson review records.",
       columns: { lesson: "Lesson", outcome: "Outcome", decided: "Decided", days: "Days from publication" },
@@ -2007,8 +2019,6 @@ export const copy = {
       notCheckedLesson: "whether the lesson follows from it.",
       awaitingNote: "IEG has not published its review of this ICR yet, so the lesson rests on the ICR alone.",
       aloneNote: "I found no restatement of this lesson in IEG's ICR Review of {date}, so it rests on the ICR alone.",
-      highlightStart: "Highlight starts.",
-      highlightEnd: "Highlight ends.",
       tagsTitle: "How I tagged it",
       tagsCaption: "I chose these from fixed lists when I proposed the lesson.",
       tagsCaptionVersion: "These are the lesson's tags at version {version}.",
@@ -2147,7 +2157,7 @@ export const copy = {
       failed: "I couldn't save your {act} just now. Your reason is still here.",
       acts: { recommend: "recommendation", decide: "decision", cross_check: "cross-check" } as Record<string, string>,
       tryAgain: "Try again",
-      staleLead: "{name} {act} this lesson at {time}, while you had it open.",
+      staleLead: "{name} {act} this lesson on {date}, while you had it open.",
       staleActs: { recommend: "recommended", decide: "decided on", cross_check: "cross-checked" } as Record<string, string>,
       staleBody: "Your reason was not sent. You can copy it from the box below.",
       staleReason: "Your reason, not sent",

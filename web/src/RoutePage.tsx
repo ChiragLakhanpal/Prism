@@ -4,7 +4,8 @@
 // already says what to do, and their one link follows it.
 //
 // All projects, a project's page and Check a plan (ticket 10), the Data tab's three pages (ticket 16)
-// and the Drafts tab's pages (ticket 35) are built, so they render their own pages.
+// the Drafts tab's pages (ticket 35) and the Lessons tab's pages (ticket 29) are built, so they render their
+// own pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
@@ -14,6 +15,8 @@ import { DataPage } from "./pages/data/DataPage";
 import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
 import { DraftsPage } from "./pages/DraftsPage";
+import { LessonsPage, QueuePage } from "./pages/LessonsPages";
+import { ReviewPage } from "./pages/ReviewPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
@@ -27,6 +30,9 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "drafts") return <DraftsPage search={search} />;
   if (match.key === "draftNew") return <DraftNewPage search={search} />;
   if (match.key === "draft") return <DraftPage draftId={match.values.id} search={search} />;
+  if (match.key === "lessons") return <LessonsPage search={search} />;
+  if (match.key === "lessonsQueue") return <QueuePage search={search} />;
+  if (match.key === "lessonReview") return <ReviewPage itemId={match.values.itemId} />;
   return (
     <div className="layout-grid">
       <div className="col-span-12 @md/page:col-span-8">

@@ -1,12 +1,12 @@
 {
-  "item_id": "recheck-7f57783926",
+  "item_id": "recheck-09bf32ecc3",
   "kind": "recheck",
   "stage": "decision",
   "group": "you",
-  "statement": "Put forest and other permits in place before awarding contracts",
+  "statement": "Base works estimates on market rates to avoid rebidding",
   "source": {
-    "evidence_id": "strata.gold.passage:31525018/v1/55",
-    "passage_id": "31525018/v1/55",
+    "evidence_id": "strata.gold.passage:31525018/v1/54",
+    "passage_id": "31525018/v1/54",
     "role": "source",
     "doc_type": "Implementation Completion and Results Report",
     "doc_short": "ICR",
@@ -16,10 +16,10 @@
     "report_number": "ICR4803",
     "locator": {
       "kind": "paragraph",
-      "text": "55"
+      "text": "54"
     },
     "page": 23,
-    "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+    "quote": "108 of 328 cases had to go through rebidding.",
     "restated_by_ieg": false
   },
   "region": "South Asia",
@@ -29,7 +29,7 @@
     "country": "India",
     "sector": "Transportation"
   },
-  "ieg_status": "ieg_lesson",
+  "ieg_status": "restated",
   "review_date": null,
   "may_repeat": false,
   "clock": {
@@ -51,9 +51,9 @@
     "change": {
       "statement": "Base works cost estimates on current market rates to avoid rebidding",
       "risk_factors": [
-        "permits_before_award"
+        "cost_estimates"
       ],
-      "stage": "contract_award",
+      "stage": "procurement_planning",
       "kind": "did_not_work"
     }
   },
@@ -73,8 +73,8 @@
   "read_only": false,
   "evidence": [
     {
-      "evidence_id": "strata.gold.passage:31525018/v1/55",
-      "passage_id": "31525018/v1/55",
+      "evidence_id": "strata.gold.passage:31525018/v1/54",
+      "passage_id": "31525018/v1/54",
       "role": "source",
       "doc_type": "Implementation Completion and Results Report",
       "doc_short": "ICR",
@@ -84,22 +84,31 @@
       "report_number": "ICR4803",
       "locator": {
         "kind": "paragraph",
-        "text": "55"
+        "text": "54"
       },
       "page": 23,
-      "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+      "quote": "108 of 328 cases had to go through rebidding.",
       "restated_by_ieg": false,
-      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+      "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
       "highlight": [
-        72,
-        168
+        149,
+        194
       ],
-      "language": "en"
+      "language": "en",
+      "excerpt": {
+        "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+        "highlight": [
+          149,
+          194
+        ],
+        "starts_inside": false,
+        "ends_inside": false
+      }
     },
     {
-      "evidence_id": "strata.gold.passage:34056616/v2/12",
-      "passage_id": "34056616/v2/12",
-      "role": "source",
+      "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+      "passage_id": "34056616/v2/10.b",
+      "role": "restatement",
       "doc_type": "Implementation Completion Report Review",
       "doc_short": "ICR Review",
       "pid": "P130164",
@@ -108,30 +117,39 @@
       "report_number": "ICRR0021929",
       "locator": {
         "kind": "section",
-        "text": "12"
+        "text": "10.b"
       },
-      "page": 14,
-      "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+      "page": 13,
+      "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
       "restated_by_ieg": true,
-      "text": "12. Lessons The ICR provided the following lessons (presented here with some minor modifications):  Lack of full endorsement of programs by the key decision makers at preparation can negatively affect project outcomes. The introduction of new systems required endorsement from relevant stakeholders early on during implementation process to ensure ownership. For example, full operationalization of the Road Asset Management System (RAMS) did not occur by project closure because of the lack of buy-in from the Finance Department and the Public Works Department.  The implementation of efficient business processes is likely to benefit from additional preliminary studies. Sound preparation before project approval with studies carried out to showcase the relevance of proposed activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management System), is best practice. In-depth upstream discussions/workshops with the client – in particular the finance and technical departments, should also be considered for most projects.  The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) for the donated land is difficult, so clear guidelines need to be developed. Some commendable work was done in the project to make sure that the land ownership was legally transferred. This knowledge can be replicated in future projects in Rajasthan or possibly other states in India. IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
+      "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
       "highlight": [
-        1555,
-        1645
+        812,
+        960
       ],
-      "language": "en"
+      "language": "en",
+      "excerpt": {
+        "text": "Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+        "highlight": [
+          220,
+          368
+        ],
+        "starts_inside": true,
+        "ends_inside": false
+      }
     }
   ],
   "ieg_note": null,
   "tags": {
     "risk_factors": [
       {
-        "key": "permits_before_award",
-        "label": "Land, forest and other permits not in place before award"
+        "key": "cost_estimates",
+        "label": "Cost estimates out of line with market prices"
       }
     ],
     "stage": {
-      "key": "contract_award",
-      "label": "Contract award"
+      "key": "procurement_planning",
+      "label": "Procurement planning"
     },
     "kind": {
       "key": "did_not_work",
@@ -144,8 +162,8 @@
     "sector": "Transportation"
   },
   "lesson": {
-    "lesson_id": "lesson-cfdf000a46",
-    "version": 2
+    "lesson_id": "lesson-e903b07ad1",
+    "version": 1
   },
   "summary": {
     "status": "writing"
@@ -169,7 +187,7 @@
       "changes": [
         {
           "field": "statement",
-          "was": "Put forest and other permits in place before awarding contracts",
+          "was": "Base works estimates on market rates to avoid rebidding",
           "now": "Base works cost estimates on current market rates to avoid rebidding"
         }
       ]

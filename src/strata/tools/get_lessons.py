@@ -116,7 +116,8 @@ def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = 
         if (risk_factor and risk_factor not in factors) or (stage and version["stage"] != stage):
             filtered += 1
             continue
-        rows = sorted(evidence.get(lesson_id, []), key=lambda row: (row["role"] != "source", _iso(row["document_date"]) or ""))
+        rows = sorted(evidence.get(lesson_id, []), key=lambda row: (_int(row["added_at_version"]), row["role"] != "source",
+                                                                    _iso(row["document_date"]) or ""))
         project = projects.get(version["project_id"]) or {}
         ieg = ieg_status(rows, project.get("ieg_reviewed_on"))
         tags = {"risk_factors": [{"key": key, "label": item.label} for key in factors if (item := lists.risk_factor(key))],

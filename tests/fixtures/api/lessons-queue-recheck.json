@@ -84,14 +84,14 @@
   "groups": {
     "you": [
       {
-        "item_id": "recheck-7f57783926",
+        "item_id": "recheck-09bf32ecc3",
         "kind": "recheck",
         "stage": "recommendation",
         "group": "you",
-        "statement": "Put forest and other permits in place before awarding contracts",
+        "statement": "Base works estimates on market rates to avoid rebidding",
         "source": {
-          "evidence_id": "strata.gold.passage:31525018/v1/55",
-          "passage_id": "31525018/v1/55",
+          "evidence_id": "strata.gold.passage:31525018/v1/54",
+          "passage_id": "31525018/v1/54",
           "role": "source",
           "doc_type": "Implementation Completion and Results Report",
           "doc_short": "ICR",
@@ -101,10 +101,10 @@
           "report_number": "ICR4803",
           "locator": {
             "kind": "paragraph",
-            "text": "55"
+            "text": "54"
           },
           "page": 23,
-          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "quote": "108 of 328 cases had to go through rebidding.",
           "restated_by_ieg": false
         },
         "region": "South Asia",
@@ -114,7 +114,7 @@
           "country": "India",
           "sector": "Transportation"
         },
-        "ieg_status": "ieg_lesson",
+        "ieg_status": "restated",
         "review_date": null,
         "may_repeat": false,
         "clock": {

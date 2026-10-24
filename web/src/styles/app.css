@@ -79,6 +79,8 @@
   --ease-out: cubic-bezier(0, 0, 0.2, 1);
   --animate-spin: spin 1s linear infinite;
   --animate-fade-in: fade-in 120ms ease-out;
+  /* A form or a fold that opens in place, such as the lesson editor and the re-check form (the 29 brief). */
+  --animate-open-in: fade-in 150ms ease-out;
   --animate-menu-in: menu-in 150ms ease-out;
   /* The evidence drawer (the 14 brief, section 8): its content fades in over 160 ms, the matching
      words then settle into their highlight over 200 ms, and below 768 px the sheet slides up. */

@@ -78,6 +78,7 @@ import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+import { lessonsPage } from "./lessons";
 
 const s = galleryCopy.states;
 const t = galleryCopy.sections;
@@ -1131,6 +1132,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   draftsPage(planSample),
+  lessonsPage(),
   {
     slug: "icons",
     sections: [

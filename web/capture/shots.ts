@@ -401,6 +401,206 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("drafts-tab--preview-public", { recorded: "drafts-list.json" }, {}, "/drafts?view=public"),
 ];
 
+
+// Ticket 29: the Lessons tab, Waiting for review and the review page, in the states the 29 brief's section 12
+// lists. The answers are the server's own, recorded on the fixture by tests/record_lessons_api.py; a state no
+// recording holds is a recording with one value changed. A refusal is recorded with its status beside its body.
+const REVIEWER: Answer = { recorded: "lessons-me-reviewer.json" };
+const NOT_A_REVIEWER: Answer = { recorded: "lessons-me-viewer.json" };
+function refusal(name: string): Answer {
+  const { status, body } = JSON.parse(readFileSync(new URL(name, RECORDED), "utf8"));
+  return { status, body: JSON.stringify(body) };
+}
+const lessonsWith = (name: string, edit: (body: Record<string, any>) => void): Answer => ({ body: derived(name, edit) });
+const lessonShot = (name: string, path: string, answers: Shot["api"], rest: Partial<Shot> = {}, me: Answer = REVIEWER): Shot =>
+  app(`lessons--${name}`, path, {}, {
+    ...rest,
+    api: { ...app(name, path).api, "/api/lessons/me": me, "/api/evidence": { recorded: "evidence-icr-p130164-54.json" }, "/api/evidence/opened": { body: '{"recorded":true}' }, ...answers },
+  });
+const LIBRARY = { "/api/lessons": { recorded: "lessons-library-reviewer.json" } };
+const QUEUE = (file: string) => ({ "/api/lessons/review": { recorded: file } });
+const REB = "new-e903b07ad1";
+const PERM = "new-64ec0401e3";
+const IEG = "new-cfdf000a46";
+const RECHECK_ITEM = "recheck-7f57783926";
+const CROSS_ITEM = "cross-e0d9a6a06a";
+const itemPath = (id: string) => `/lessons/review/${id}`;
+const itemApi = (id: string) => `/api/lessons/review/${id}`;
+const item = (id: string, answer: Answer, rest: Partial<Shot> = {}, extra: Shot["api"] = {}, me: Answer = REVIEWER, name = "") =>
+  lessonShot(name, itemPath(id), { [itemApi(id)]: answer, ...extra }, rest, me);
+const review = (name: string, id: string, file: string, rest: Partial<Shot> = {}, extra: Shot["api"] = {}) =>
+  item(id, { recorded: file }, rest, extra, REVIEWER, `review--${name}`);
+const reviewWith = (name: string, id: string, file: string, edit: (body: Record<string, any>) => void, rest: Partial<Shot> = {}) =>
+  item(id, lessonsWith(file, edit), rest, {}, REVIEWER, `review--${name}`);
+const fillReason = (text: string, button: string) => async (page: Page) => {
+  await page.locator("[data-decision-form] textarea").last().fill(text);
+  await page.locator(`[data-decision-form] button:has-text("${button}")`).first().click();
+  await page.waitForTimeout(400);
+};
+const choose = (label: string) => async (page: Page) => {
+  await page.getByRole("radio", { name: label }).first().check();
+  await page.waitForTimeout(250);
+};
+const manySources = (body: Record<string, any>) => {
+  const card = body.lessons[0];
+  const more = Array.from({ length: 6 }, (_, n) => ({ ...card.evidence[0], evidence_id: `${card.evidence[0].evidence_id}-${n}`, locator: { kind: "paragraph", text: String(60 + n) } }));
+  card.evidence = [...card.evidence, ...more];
+};
+const pageTwo = (body: Record<string, any>) => Object.assign(body, { page: 2, pages: 3, total: 18, from: 9, to: 10 });
+const decidedAs = (outcome: string, version: number | null) => (body: Record<string, any>) => {
+  body.outcome = { ...body.outcome, outcome, version };
+  const decided = body.history.findLast((event: { event: string }) => event.event === "decided");
+  if (decided) decided.outcome = { added: "add", merged: "repeat", rejected: "reject", changed: "change", retired_wrong: "retire_wrong", retired_outdated: "retire_outdated" }[outcome];
+};
+const summaryAs = (status: string) => (body: Record<string, any>) => {
+  body.summary = status === "nothing_survived"
+    ? { ...body.summary, status, sentences: [], removed: [...body.summary.removed, ...body.summary.sentences.map((s: { index: number; text: string }) => ({ index: s.index, sentence: s.text, reason: "id_not_returned", reasons: [{ check: 2, code: "id_not_returned", text: null }] }))] }
+    : { status };
+};
+const barred = (code: string, values: Record<string, string>) => (body: Record<string, any>) => {
+  body.can = { act: null, reason_code: code, values };
+  body.read_only = true;
+};
+
+const LESSON_SHOTS: Shot[] = [
+  // The frame and the library.
+  lessonShot("library", "/lessons", LIBRARY),
+  lessonShot("library-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library.json" } }, {}, NOT_A_REVIEWER),
+  lessonShot("library-loading", "/lessons", LIBRARY, { pending: ["/api/lessons"] }),
+  lessonShot("library-empty-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }, {}, NOT_A_REVIEWER),
+  lessonShot("library-empty-reviewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }),
+  lessonShot("library-page-2", "/lessons?page=2", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", pageTwo) }),
+  lessonShot("library-out-of-range", "/lessons?page=5", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", (body) => Object.assign(body, { page: 5, pages: 1, lessons: [], from: 0, to: 0 })) }),
+  lessonShot("library-error", "/lessons", { "/api/lessons": { status: 503, body: SERVICE_DOWN } }),
+  lessonShot("library-rechecking", "/lessons", { "/api/lessons": { recorded: "lessons-library-rechecking.json" } }),
+  lessonShot("card-many-sources", "/lessons", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", manySources) }),
+  lessonShot("card-many-sources-open", "/lessons", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", manySources) }, { full: true, act: click("[data-source-chips] button") }),
+  lessonShot("recheck-open", "/lessons", LIBRARY, { full: true, act: click("[data-recheck=closed] button") }),
+  lessonShot("recheck-empty", "/lessons", LIBRARY, { full: true, act: async (page) => {
+    await click("[data-recheck=closed] button")(page);
+    await click("[data-recheck=open] button[type=submit]")(page);
+  } }),
+  lessonShot("recheck-saving", "/lessons", LIBRARY, { full: true, pending: ["/api/lessons/lesson-e903b07ad1/recheck"], act: async (page) => {
+    await click("#lesson-lesson-e903b07ad1 [data-recheck=closed] button")(page);
+    await type("#lesson-lesson-e903b07ad1 textarea", "The 2025 Procurement Regulations changed how cost estimates are prepared.")(page);
+    await click("#lesson-lesson-e903b07ad1 button[type=submit]")(page);
+  } }),
+  lessonShot("recheck-saved", "/lessons", { ...LIBRARY, "/api/lessons/lesson-e903b07ad1/recheck": { recorded: "lessons-act-recheck.json" } }, { full: true, act: async (page) => {
+    await click("#lesson-lesson-e903b07ad1 [data-recheck=closed] button")(page);
+    await type("#lesson-lesson-e903b07ad1 textarea", "The 2025 Procurement Regulations changed how cost estimates are prepared.")(page);
+    await click("#lesson-lesson-e903b07ad1 button[type=submit]")(page);
+  } }),
+  lessonShot("recheck-already", "/lessons", { ...LIBRARY, "/api/lessons/lesson-e903b07ad1/recheck": refusal("lessons-act-recheck-open.json") }, { full: true, act: async (page) => {
+    await click("#lesson-lesson-e903b07ad1 [data-recheck=closed] button")(page);
+    await type("#lesson-lesson-e903b07ad1 textarea", "Check it against the new rules.")(page);
+    await click("#lesson-lesson-e903b07ad1 button[type=submit]")(page);
+  } }),
+  lessonShot("drawer-from-chip", "/lessons", LIBRARY, { widths: WIDE, act: click("#lesson-lesson-e903b07ad1 [data-source-chip] >> nth=0") }),
+  lessonShot("focus-subtab", "/lessons", LIBRARY, { act: focus("[aria-label='Lesson pages'] a[href='/lessons/review']") }),
+  lessonShot("hover-subtab", "/lessons", LIBRARY, { widths: WIDE, act: hover("[aria-label='Lesson pages'] a[href='/lessons/review']") }),
+  lessonShot("focus-chip", "/lessons", LIBRARY, { act: focus("[data-source-chip]") }),
+  lessonShot("library-320", "/lessons", LIBRARY, { widths: [320] }),
+
+  // Waiting for review.
+  lessonShot("queue", "/lessons/review", QUEUE("lessons-queue.json")),
+  lessonShot("queue-lead", "/lessons/review", QUEUE("lessons-queue-lead.json")),
+  lessonShot("queue-own-project", "/lessons/review", QUEUE("lessons-queue-own-project.json")),
+  lessonShot("queue-same-person", "/lessons/review", QUEUE("lessons-queue-same-person.json")),
+  lessonShot("queue-recheck", "/lessons/review", QUEUE("lessons-queue-recheck.json")),
+  lessonShot("queue-overdue", "/lessons/review", QUEUE("lessons-queue-overdue.json")),
+  lessonShot("queue-cross-check", "/lessons/review", QUEUE("lessons-queue-cross-check.json")),
+  lessonShot("queue-empty-with-decisions", "/lessons/review", QUEUE("lessons-queue-decided.json")),
+  lessonShot("queue-loading", "/lessons/review", QUEUE("lessons-queue.json"), { pending: ["/api/lessons/review"] }),
+  lessonShot("queue-error", "/lessons/review", { "/api/lessons/review": { status: 503, body: SERVICE_DOWN } }),
+  lessonShot("queue-no-access", "/lessons/review", { "/api/lessons/review": refusal("lessons-queue-no-access.json") }, {}, NOT_A_REVIEWER),
+  lessonShot("queue-decided-drawer-1024", "/lessons/review", QUEUE("lessons-queue-decided.json"), { widths: [1024], act: async (page) => {
+    await page.goto(`${process.env.STRATA_CAPTURE_APP_URL}/lessons/review?evidence=strata.gold.passage:31525018/v1/54`);
+    await page.waitForTimeout(600);
+  } }),
+  lessonShot("queue-hover-row", "/lessons/review", QUEUE("lessons-queue.json"), { widths: WIDE, act: hover("[data-queue-row] h3 a") }),
+  lessonShot("queue-focus-row", "/lessons/review", QUEUE("lessons-queue.json"), { act: focus("[data-queue-row] h3 a") }),
+  lessonShot("queue-num-tooltip", "/lessons/review", QUEUE("lessons-queue.json"), { act: focus("[data-queue-row] [data-num]") }),
+  lessonShot("queue-320", "/lessons/review", QUEUE("lessons-queue-overdue.json"), { widths: [320] }),
+
+  // The review page, a new lesson.
+  review("recommend", REB, "lessons-item-recommend.json"),
+  review("recommend-repeats", PERM, "lessons-item-recommend-repeats.json"),
+  review("recommend-repeat-chosen", PERM, "lessons-item-recommend-repeats.json", { full: true, act: choose("No, it repeats") }),
+  review("decide", REB, "lessons-item-decide.json"),
+  review("decide-editor", REB, "lessons-item-decide.json", { full: true, act: click("[data-decision-form] button[aria-expanded]") }),
+  review("decide-editor-errors", REB, "lessons-item-decide.json", { full: true, act: async (page) => {
+    await click("[data-decision-form] button[aria-expanded]")(page);
+    await page.locator("[data-lesson-editor] textarea").fill("");
+    await click("[data-decision-form] button:has-text('Add to the library')")(page);
+  } }),
+  review("decide-repeats", PERM, "lessons-item-decide-repeats.json"),
+  review("ieg-lesson", IEG, "lessons-item-ieg-lesson.json"),
+  review("errors", REB, "lessons-item-recommend.json", { full: true, act: click("[data-decision-form] button:has-text('Recommend adding it')") }),
+  review("repeats-no-choice", PERM, "lessons-item-recommend-repeats.json", { full: true, act: fillReason("It gives the same advice.", "Recommend adding it") }),
+  review("saving", REB, "lessons-item-recommend.json", { full: true, pending: [`${itemApi(REB)}/recommend`], act: fillReason("The ICR and IEG's review both say it.", "Recommend adding it") }),
+  review("recommended", REB, "lessons-item-recommend.json", { full: true, act: fillReason("The ICR and IEG's review both say it.", "Recommend adding it") }, { [`${itemApi(REB)}/recommend`]: { recorded: "lessons-act-recommended.json" } }),
+  review("added", REB, "lessons-item-decide.json", { full: true, act: fillReason("Two reports state it.", "Add to the library") }, { [`${itemApi(REB)}/decide`]: { recorded: "lessons-act-added.json" } }),
+  review("merged", PERM, "lessons-item-decide-repeats.json", { full: true, act: async (page) => {
+    await choose("No, it repeats")(page);
+    await fillReason("More evidence for IEG's lesson.", "Add to the library")(page);
+  } }, { [`${itemApi(PERM)}/decide`]: { recorded: "lessons-act-merged.json" } }),
+  review("rejected", REB, "lessons-item-decide.json", { full: true, act: fillReason("Too general to act on.", "Reject, with a reason") }, {
+    [`${itemApi(REB)}/decide`]: { body: derived("lessons-act-added.json", (body) => decidedAs("rejected", null)(body.item)) },
+  }),
+  review("stale", REB, "lessons-item-recommend.json", { full: true, act: fillReason("Too general to act on.", "Recommend rejecting it") }, { [`${itemApi(REB)}/recommend`]: refusal("lessons-act-stale.json") }),
+  review("refused", REB, "lessons-item-decide.json", { full: true, act: fillReason("It reads well.", "Add to the library") }, { [`${itemApi(REB)}/decide`]: refusal("lessons-act-refused-own-project.json") }),
+  review("failed", REB, "lessons-item-recommend.json", { full: true, act: fillReason("The ICR and IEG's review both say it.", "Recommend adding it") }, { [`${itemApi(REB)}/recommend`]: { status: 503, body: SERVICE_DOWN } }),
+  review("lost-role", REB, "lessons-item-recommend.json", { full: true, act: fillReason("The ICR and IEG's review both say it.", "Recommend adding it") }, { [`${itemApi(REB)}/recommend`]: { status: 403, body: '{"code":"not_a_reviewer","values":{}}' } }),
+  // Why you can't act: all six reasons.
+  review("same-person", PERM, "lessons-item-same-person.json"),
+  review("own-project", REB, "lessons-item-own-project.json"),
+  review("same-region", CROSS_ITEM, "lessons-item-same-region.json"),
+  reviewWith("other-region", REB, "lessons-item-own-project.json", barred("other_region", { region: "South Asia" })),
+  reviewWith("not-a-lead", REB, "lessons-item-decide.json", barred("not_a_lead", {})),
+  reviewWith("no-lead-free", REB, "lessons-item-decide.json", barred("no_lead_free", { region: "South Asia", project_name: "Rajasthan Road Sector Modernization Project", pid: "P130164" })),
+  // The evidence badges and the IEG notes.
+  reviewWith("badge-awaiting", REB, "lessons-item-recommend.json", (body) => {
+    body.ieg_status = "awaiting";
+    body.ieg_note = { kind: "awaiting" };
+    body.evidence = body.evidence.slice(0, 1);
+  }),
+  // The summary in each of its states.
+  review("summary-writing", RECHECK_ITEM, "lessons-item-recheck-recommend.json"),
+  reviewWith("summary-nothing", REB, "lessons-item-recommend.json", summaryAs("nothing_to_add")),
+  reviewWith("summary-none-survived", REB, "lessons-item-recommend.json", summaryAs("nothing_survived")),
+  reviewWith("summary-failed", REB, "lessons-item-recommend.json", summaryAs("failed")),
+  reviewWith("summary-rewriting", REB, "lessons-item-recommend.json", summaryAs("failed"), { full: true, pending: [`${itemApi(REB)}/summary`], act: click("[data-summary=failed] button") }),
+  // Re-checks and cross-checks.
+  review("recheck-recommend", RECHECK_ITEM, "lessons-item-recheck-recommend.json"),
+  review("recheck-change", RECHECK_ITEM, "lessons-item-recheck-recommend.json", { full: true, act: choose("Change its wording or tags") }),
+  review("recheck-decide", RECHECK_ITEM, "lessons-item-recheck-decide.json"),
+  review("recheck-decide-keep", RECHECK_ITEM, "lessons-item-recheck-decide.json", { full: true, act: choose("Keep it as it is") }),
+  review("recheck-decide-change", RECHECK_ITEM, "lessons-item-recheck-decide.json", { full: true, act: choose("Change its wording or tags") }),
+  review("recheck-decide-retire", RECHECK_ITEM, "lessons-item-recheck-decide.json", { full: true, act: choose("Retire it, because it was wrong") }),
+  review("cross-check", CROSS_ITEM, "lessons-item-cross-check.json"),
+  review("cross-check-disagree-error", CROSS_ITEM, "lessons-item-cross-check.json", { full: true, act: async (page) => {
+    await choose("No, I disagree")(page);
+    await click("[data-decision-form] button:has-text('Save the cross-check')")(page);
+  } }),
+  // Decided records.
+  review("decided-added", REB, "lessons-item-decided-added.json"),
+  review("decided-merged", PERM, "lessons-item-decided-merged.json"),
+  reviewWith("decided-rejected", REB, "lessons-item-decided-added.json", decidedAs("rejected", null)),
+  reviewWith("decided-changed", REB, "lessons-item-decided-added.json", decidedAs("changed", 2)),
+  reviewWith("decided-retired", REB, "lessons-item-decided-added.json", decidedAs("retired_wrong", 2)),
+  // Loading, not found, errors and no access.
+  review("loading", REB, "lessons-item-recommend.json", { pending: [itemApi(REB)] }),
+  item("new-0000000000", refusal("lessons-item-not-found.json"), {}, {}, REVIEWER, "review--not-found"),
+  item(REB, { status: 503, body: SERVICE_DOWN }, {}, {}, REVIEWER, "review--error"),
+  item(REB, refusal("lessons-item-no-access.json"), {}, {}, NOT_A_REVIEWER, "review--no-access"),
+  // The drawer from an evidence card's marker, and focus.
+  review("drawer", REB, "lessons-item-recommend.json", { act: click("[data-lesson-evidence] [data-citation] >> nth=0") }),
+  review("focus-marker", REB, "lessons-item-recommend.json", { act: focus("[data-lesson-evidence] [data-citation]") }),
+  review("focus-radio", PERM, "lessons-item-recommend-repeats.json", { act: focus("[data-decision-form] input[type=radio]") }),
+  review("hover-primary", REB, "lessons-item-recommend.json", { widths: WIDE, act: hover("[data-decision-form] [data-button=primary]") }),
+  review("320", REB, "lessons-item-decide.json", { widths: [320] }),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -544,4 +744,5 @@ export const SHOTS: Shot[] = [
   ...PROJECT_SHOTS,
   ...ANSWER_SHOTS,
   ...DRAFT_SHOTS,
+  ...LESSON_SHOTS,
 ];

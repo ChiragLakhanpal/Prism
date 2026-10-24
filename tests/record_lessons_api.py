@@ -114,6 +114,8 @@ def answers(folder: Path) -> dict[str, str]:
             found["lessons-queue.json"] = await get("/api/lessons/review", ASHA)
             found["lessons-item-recommend.json"] = await get(f"/api/lessons/review/{rebidding}", ASHA)
             found["lessons-item-own-project.json"] = await get(f"/api/lessons/review/{rebidding}", LEELA)
+            found["lessons-queue-own-project.json"] = await get("/api/lessons/review", LEELA)
+            found["lessons-item-ieg-lesson.json"] = await get(f"/api/lessons/review/{ieg}", ASHA)
             found["lessons-item-not-found.json"] = await get("/api/lessons/review/new-0000000000", ASHA)
             # Asha recommends adding the rebidding lesson, and Omar adds it.
             later(30)
@@ -148,6 +150,7 @@ def answers(folder: Path) -> dict[str, str]:
             await act(permits, "recommend", OMAR, expected_stage="recommendation", outcome="repeat",
                       repeat_of=repeat["lesson_id"], reason="It gives the same advice as IEG's lesson.")
             found["lessons-item-same-person.json"] = await get(f"/api/lessons/review/{permits}", OMAR)
+            found["lessons-queue-same-person.json"] = await get("/api/lessons/review", OMAR)
             found["lessons-act-refused-same-person.json"] = await act(permits, "decide", OMAR, expected_stage="decision",
                                                                       outcome="repeat", repeat_of=repeat["lesson_id"],
                                                                       reason="I recommended it, and I agree.")
