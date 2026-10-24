@@ -155,6 +155,43 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
 
+// Between 768 px, where the Sources table starts, and the widths a tablet holds in portrait, every
+// cell's text keeps 8 px from its neighbour's on the same line: nothing spills into the next cell.
+test("from 768 px no cell's text in the Sources table runs into the next cell's", async ({ page }) => {
+  await mockData(page, FULL);
+  for (const width of [768, 820, 900]) {
+    await open(page, "/data", width);
+    await expect(table(page, "sources")).toBeVisible();
+    const tight = await table(page, "sources").evaluate((view) => {
+      // The boxes of a cell's visible text, one for each line it runs.
+      const boxes = (cell: Element) => {
+        const found: DOMRect[] = [];
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          if (!node.textContent?.trim()) continue;
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          found.push(...Array.from(range.getClientRects()).filter((box) => box.width > 1 && box.height > 1));
+        }
+        return found;
+      };
+      const close: string[] = [];
+      for (const row of Array.from(view.querySelectorAll("tbody tr"))) {
+        const cells = Array.from(row.children);
+        cells.slice(1).forEach((right, index) => {
+          const left = cells[index];
+          for (const a of boxes(left))
+            for (const b of boxes(right))
+              if (a.top < b.bottom && b.top < a.bottom && b.left - a.right < 8)
+                close.push(`${left.getAttribute("data-cell") ?? left.textContent} | ${right.getAttribute("data-cell")}: ${Math.round(b.left - a.right)} px`);
+        });
+      }
+      return close;
+    });
+    expect(tight, `${width} px`).toEqual([]);
+  }
+});
+
 test("each column head holds its definition, and its label opens the full definition", async ({ page }) => {
   await mockData(page, FULL);
   await open(page);

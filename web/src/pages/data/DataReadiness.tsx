@@ -81,16 +81,22 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
     const style = cell.schedule === "frozen" ? "month" : "short";
     return (
       <Stack>
-        <span className="font-semibold whitespace-nowrap">
+        {/* The date and the schedule each keep to one line, and the dot stays with the date, so the
+            cell wraps only after the dot and never spills into the next cell. */}
+        <span className="font-semibold">
           <Template
             text={words.sources.fresh}
             values={{
-              date: row.as_of ? (
-                <MeasureValue measures={measures} index={cell.row} value={{ date: row.as_of, style, today: measures.asOf }} noun={noun} tooltipKind="day" windowColumn="fresh" />
-              ) : (
-                words.sources.notMeasured
+              date: (
+                <span className="whitespace-nowrap">
+                  {row.as_of ? (
+                    <MeasureValue measures={measures} index={cell.row} value={{ date: row.as_of, style, today: measures.asOf }} noun={noun} tooltipKind="day" windowColumn="fresh" />
+                  ) : (
+                    words.sources.notMeasured
+                  )}
+                </span>
               ),
-              schedule,
+              schedule: <span className="whitespace-nowrap">{schedule}</span>,
             }}
           />
         </span>

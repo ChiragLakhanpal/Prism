@@ -672,7 +672,9 @@ export const copy = {
       asPublished: "As published",
       notMeasuredRow: "Not measured yet. The next data run measures it.",
       nonePublished: "None published",
-      fresh: "{date} · {schedule}",
+      // A no-break space keeps the dot with the date, so a narrow cell breaks only after it:
+      // "Jun 30 ·" on one line and "as published" on the next.
+      fresh: "{date}\u00a0· {schedule}",
       late: "{days} days late",
       lateOne: "{days} day late",
     },
