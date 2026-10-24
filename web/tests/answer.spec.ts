@@ -437,10 +437,12 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
 
 // WCAG 2.2 SC 2.4.11, Focus Not Obscured: the drawer scrolls to the ISR's highlight on open, and the tab
 // that Tab then moves to must never sit hidden under the drawer's sticky header (the 14 design review,
-// round 4, B1). These two window sizes hid it.
+// round 4, B1). The first two window sizes hid it before the drawer scrolled only for a highlight out of
+// view; the first and the third still scroll, and hide it without the panel's scroll padding.
 for (const [width, height] of [
   [1024, 600],
   [320, 900],
+  [320, 700],
 ] as const) {
   test(`at ${width} by ${height} px the source tab you Tab to shows below the drawer's sticky header`, async ({ page }) => {
     await open(page, { stream: "ask-p130164-isr-section.sse", width });
@@ -461,6 +463,41 @@ for (const [width, height] of [
       const [tabBox, headerBox] = [await tab.boundingBox(), await header.boundingBox()];
       expect(tabBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height);
       expect(tabBox!.y + tabBox!.height).toBeLessThanOrEqual(height);
+    }).toPass({ timeout: 2000 });
+  });
+}
+
+// The claim beside its source is why the drawer exists, so opening it never slides "From the answer"
+// under the sticky header for a highlight already in view. Only a highlight out of view scrolls, and it
+// then sits in the middle of the space under the header (the 14 critique, round 4). At 1024 by 900 and
+// 390 by 844 the ISR's highlight is in view on open; at 320 by 568 it is below the fold.
+for (const [width, height, scrolls] of [
+  [1024, 900, false],
+  [390, 844, false],
+  [320, 568, true],
+] as const) {
+  test(`at ${width} by ${height} px the drawer opens ${scrolls ? "with the highlight in the middle under its header" : "with the claim, its sources and the highlight all in view"}`, async ({ page }) => {
+    await open(page, { stream: "ask-p130164-isr-section.sse", width });
+    await page.setViewportSize({ width, height });
+    await askFromTheBox(page);
+    await landed(page);
+    await panel(page).locator("[data-sentence-text='3'] [data-citation='3']").click();
+    const mark = drawer(page).locator("[data-passage] mark");
+    await expect(mark).toHaveText(marked(ISR_QUOTE));
+
+    await expect(async () => {
+      const header = (await drawer(page).locator("[data-drawer-header]").boundingBox())!;
+      const under = header.y + header.height;
+      const shown = (await mark.boundingBox())!;
+      expect(shown.y).toBeGreaterThanOrEqual(under);
+      expect(shown.y + shown.height).toBeLessThanOrEqual(height);
+      if (scrolls) {
+        const middle = under + (height - under) / 2;
+        expect(Math.abs(shown.y + shown.height / 2 - middle)).toBeLessThanOrEqual(2);
+      } else {
+        expect((await drawer(page).locator("[data-claim]").boundingBox())!.y).toBeGreaterThanOrEqual(under);
+        expect((await drawer(page).getByRole("tab").first().boundingBox())!.y).toBeGreaterThanOrEqual(under);
+      }
     }).toPass({ timeout: 2000 });
   });
 }

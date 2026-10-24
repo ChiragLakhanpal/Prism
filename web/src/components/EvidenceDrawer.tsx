@@ -445,13 +445,21 @@ export function EvidenceDrawer({
     if (takeFocusRequest() || (narrow && !from)) heading.current?.focus();
   }, [requests, id]);
 
-  // The first highlight sits in the middle of the view.
+  // On open, the drawer scrolls only when the first highlight is out of view, and then puts it in the
+  // middle of the space under the sticky header, so the claim stays beside its source when it can.
   useEffect(() => {
     const container = panel.current;
     const mark = container?.querySelector("mark");
     if (!container || !mark) return;
-    const offset = mark.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
-    container.scrollTop = Math.max(0, offset - container.clientHeight / 2);
+    // Measured from the top of the panel's view, since the sheet slides in as it opens. Beside the page,
+    // the panel may start below the window's top and run past its bottom.
+    const view = container.getBoundingClientRect();
+    const top = container.querySelector<HTMLElement>("[data-drawer-header]")?.offsetHeight ?? 0;
+    const bottom = narrow ? container.clientHeight : Math.min(container.clientHeight, window.innerHeight - view.top);
+    const box = mark.getBoundingClientRect();
+    const start = box.top - view.top;
+    if (start >= top && box.bottom - view.top <= bottom) return;
+    container.scrollTop += start - top - Math.max(0, (bottom - top - box.height) / 2);
   }, [id, data.status]);
 
   // Closed by any route, Back included: say whether focus was inside. A real close has taken
