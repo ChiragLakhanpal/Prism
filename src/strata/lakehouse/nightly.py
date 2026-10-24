@@ -103,11 +103,14 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _measure_data_readiness(run: Run) -> int:
-    """The data readiness measures of every source, the room each table takes, and the Data readiness
-    page built from them for the dashboard (strata.dashboard.snapshot)."""
+    """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
+    pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
+    dashboard (strata.dashboard.snapshot)."""
     from strata.dashboard import snapshot
+    from strata.knowledge.suppliers import quality
 
-    measured = readiness.measure(run.engine, run.run_id, run.clock) + storage.measure(run.engine, run.run_id, run.clock)
+    measured = readiness.measure(run.engine, run.run_id, run.clock) + quality.measure(run.engine, run.run_id, run.clock)
+    measured += storage.measure(run.engine, run.run_id, run.clock)
     return measured + snapshot.write(run.engine, run.run_id, run.clock)
 
 
