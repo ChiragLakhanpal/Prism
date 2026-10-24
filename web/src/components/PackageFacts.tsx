@@ -58,7 +58,20 @@ export function PackageFactsList({ pkg }: { pkg: PackageFacts }) {
     [
       f.inPlan,
       <TextLink href={planHref}>
-        <Fill template={words.inPlan} slots={{ agency: pkg.plan.implementing_agency, date: <Num date={pkg.plan.plan_date} /> }} />
+        <Fill
+          template={words.inPlan}
+          slots={{
+            agency: pkg.plan.implementing_agency,
+            // The date moves to the next line whole, as Num keeps a date in a sentence, and breaks at its
+            // space only when it is wider than the column, as with WCAG 1.4.12's text spacing at 320 px.
+            // An inline block takes no underline from its link, so it inherits the link's own.
+            date: (
+              <span className="inline-block max-w-full [text-decoration:inherit] [&>[data-num]]:whitespace-normal">
+                <Num date={pkg.plan.plan_date} />
+              </span>
+            ),
+          }}
+        />
       </TextLink>,
     ],
   ];

@@ -112,12 +112,19 @@ const NO_BOX: Box = { x: 0, y: 0, width: 0, height: 0 };
 const sameBox = (a: Box | undefined, b: Box) =>
   a !== undefined && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5 && Math.abs(a.width - b.width) < 0.5 && Math.abs(a.height - b.height) < 0.5;
 
-// The widths of the svg text a label needs to stay inside the plot, and each label's box for the
-// knockout drawn under it, read after each render.
-function useTextWidths(keys: string[]) {
+// Where a label could take a second line: at a space, the width of its text before the space and after.
+type Break = { at: number; before: number; after: number };
+const sameBreaks = (a: Break[] | undefined, b: Break[]) =>
+  a !== undefined && a.length === b.length && a.every((one, i) => one.at === b[i].at && Math.abs(one.before - b[i].before) < 0.5);
+
+// The widths of the svg text a label needs to stay inside the plot, each label's box for the knockout
+// drawn under it, and, for the labels that may take two lines, where each could break, read after each
+// render. A reader's text spacing (WCAG 1.4.12) is in all of them.
+function useTextWidths(keys: string[], breakable: string[]) {
   const refs = useRef<Record<string, SVGTextContentElement | null>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
   const [boxes, setBoxes] = useState<Record<string, Box>>({});
+  const [breaks, setBreaks] = useState<Record<string, Break[]>>({});
   const [fontsReady, setFontsReady] = useState(0);
   useEffect(() => {
     let live = true;
@@ -129,20 +136,54 @@ function useTextWidths(keys: string[]) {
   useLayoutEffect(() => {
     const next: Record<string, number> = {};
     const nextBoxes: Record<string, Box> = {};
+    const nextBreaks: Record<string, Break[]> = {};
     for (const key of keys) {
       const element = refs.current[key];
       next[key] = element ? element.getComputedTextLength() : 0;
       const box = element?.getBBox();
       nextBoxes[key] = box ? { x: box.x, y: box.y, width: box.width, height: box.height } : NO_BOX;
     }
+    for (const key of breakable) {
+      const element = refs.current[key];
+      const spaces = element ? [...(element.textContent ?? "").matchAll(/ /g)].map((match) => match.index) : [];
+      nextBreaks[key] = spaces.map((at) => ({
+        at,
+        before: element!.getSubStringLength(0, at),
+        after: next[key] - element!.getSubStringLength(0, at + 1),
+      }));
+    }
     setWidths((now) => (keys.every((key) => Math.abs((now[key] ?? -1) - next[key]) < 0.5) ? now : next));
     setBoxes((now) => (keys.every((key) => sameBox(now[key], nextBoxes[key])) ? now : nextBoxes));
+    setBreaks((now) => (breakable.every((key) => sameBreaks(now[key], nextBreaks[key])) ? now : nextBreaks));
   });
   void fontsReady;
   const ref = useCallback((key: string) => (element: SVGTextContentElement | null) => {
     refs.current[key] = element;
   }, []);
-  return { widths, boxes, ref };
+  return { widths, boxes, breaks, ref };
+}
+
+// A label wider than its room takes a second line, from the last space that lets its first line fit.
+// Only a reader's text spacing makes one that wide: at 320 px, WCAG 1.4.12's spacing makes the middle's
+// label and the quantile key wider than the chart. Null keeps the label on one line.
+function breakFor(breaks: Break[] | undefined, whole: number, room: number): Break | null {
+  if (whole <= room || !breaks?.length) return null;
+  const fit = breaks.filter((one) => one.before <= room);
+  return fit.length ? fit[fit.length - 1] : breaks[0];
+}
+const lineWidth = (one: Break | null, whole: number) => (one ? Math.max(one.before, one.after) : whole);
+
+// A label's text on one line, or on two from its break, each line starting at x.
+function Lines({ text, at, x, step }: { text: string; at: number | null; x: number; step: number }) {
+  if (at === null) return text;
+  return (
+    <>
+      <tspan x={x}>{text.slice(0, at)}</tspan>{" "}
+      <tspan x={x} dy={step}>
+        {text.slice(at + 1)}
+      </tspan>
+    </>
+  );
 }
 
 // A surface rect under a label, its box plus 2 px, drawn after the plan line: where the label cannot
@@ -232,11 +273,13 @@ export function RangeChart({
   const r0 = big ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
   const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
-  const { widths, boxes, ref } = useTextWidths([
-    "lane", "keySigned", "keyHollow", "plan", "readout", "readout0", "readout1", "middle", "in10", "tickLast", "tickPrev",
-  ]);
+  const { widths, boxes, breaks, ref } = useTextWidths(
+    ["lane", "keySigned", "keyHollow", "plan", "readout", "readout0", "readout1", "middle", "in10", "tickLast", "tickPrev"],
+    ["keySigned", "middle"],
+  );
   // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
-  // chart, its hollow half takes a second line, and row A grows by that line before the first paint.
+  // chart, its hollow half takes a line of its own, and row A grows by that line before the first paint.
+  // A signed half wider than the chart takes two lines (breakFor).
   const glyph = narrow ? 4 : 4.5;
   const signedWidth = widths.keySigned ?? 0;
   const hollowWidth = widths.keyHollow ?? 0;
@@ -250,15 +293,20 @@ export function RangeChart({
   // When the lane label and the key don't both fit on row A, the key keeps the row: it is the legend.
   const showLaneLabel = (widths.lane ?? 0) + 12 + keyWidth <= width;
   const keyStart = showLaneLabel ? (widths.lane ?? 0) + 12 : 0;
+  const signedBreak = keySigned ? breakFor(breaks.keySigned, signedWidth, width - glyphPart) : null;
   const keyWraps = Boolean(keySigned && keyHollow) && keyStart + keyWidth > width;
   const lineGap = type.s + 2;
-  const rowA = ROW_A + (keyWraps ? lineGap : 0);
+  const signedLines = signedBreak ? 2 : 1;
+  const rowA = ROW_A + (signedLines - 1 + (keyWraps ? 1 : 0)) * lineGap;
   const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + keyGap : keyStart;
   const textBaseline = ROW_A / 2 + type.s * 0.35;
-  const hollowY = keyWraps ? lineGap : 0;
+  const hollowY = keyWraps ? signedLines * lineGap : 0;
   const laneTop = rowA + rowB;
   const laneBottom = laneTop + layout.lane;
-  const axisY = laneBottom + ROW_C;
+  // Row C grows by a line when the middle's label takes two (breakFor).
+  const rowCStep = type.s + 4;
+  const middleBreak = middleLabel ? breakFor(breaks.middle, widths.middle ?? 0, plotRight - PAD) : null;
+  const axisY = laneBottom + ROW_C + (middleBreak ? rowCStep : 0);
   const height = axisY + AXIS;
   const centre = laneTop + layout.lane / 2;
   const dots = marks.map((mark, index) => ({ ...mark, cx: xs[index], cy: centre + layout.offsets[index] }));
@@ -501,8 +549,8 @@ export function RangeChart({
   // Row C: the middle's label centred on its tick, and the 8-in-10 label beside its line, right of it
   // when it fits. Each moves off the plan line when it would cross it, if it can clear the line by 6 px;
   // where it cannot, its knockout stops the line around it.
-  const middleWidth = widths.middle ?? 0;
-  let middleX = stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
+  const middleWidth = lineWidth(middleBreak, widths.middle ?? 0);
+  let middleX =stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
   if (stats?.q50 != null && planX !== null && middleX - 3 < planX && planX < middleX + middleWidth + 3) {
     const tick = x(stats.q50);
     const options = [planX + 6, planX - 6 - middleWidth].filter((start) => start >= PAD && start + middleWidth <= plotRight);
@@ -510,7 +558,9 @@ export function RangeChart({
   }
   const in10Width = widths.in10 ?? 0;
   const q80x = stats?.q80 != null ? x(stats.q80) : 0;
-  const in10Start = (right: boolean) => (right ? q80x + 4 : q80x - 4 - in10Width);
+  // Where it fits on neither side of its line, as with WCAG 1.4.12's text spacing at 320 px, it starts
+  // at the chart's left edge, over its knockout.
+  const in10Start = (right: boolean) => (right ? q80x + 4 : Math.max(0, q80x - 4 - in10Width));
   let in10Right = q80x + 4 + in10Width <= plotRight;
   if (stats?.q80 != null && planX !== null) {
     const start = in10Start(in10Right);
@@ -520,8 +570,9 @@ export function RangeChart({
     const otherClears = other + in10Width <= planX - 6 || other >= planX + 6;
     if (crossed && otherFits && otherClears) in10Right = !in10Right;
   }
+  const in10Pinned = !in10Right && q80x - 4 - in10Width < 0;
   const rowC1 = laneBottom + type.s + 2;
-  const rowC2 = rowC1 + type.s + 4;
+  const rowC2 = rowC1 + rowCStep * (middleBreak ? 2 : 1);
 
   // The axis: the label before the last one is dropped when it comes within 8 px of the last, whose
   // tick and gridline stay.
@@ -623,7 +674,7 @@ export function RangeChart({
           <>
             {!keyLead && <circle cx={keyStart + glyph} cy={ROW_A / 2} r={glyph} className="fill-chart-cat1-text" />}
             <text ref={ref("keySigned")} x={keyStart + glyphPart} y={textBaseline} fontSize={type.s} className="fill-chart-text">
-              {keySigned}
+              <Lines text={keySigned} at={signedBreak?.at ?? null} x={keyStart + glyphPart} step={lineGap} />
             </text>
           </>
         )}
@@ -762,16 +813,16 @@ export function RangeChart({
         {in10Label && stats?.q80 != null && <Knockout kind="in10" box={boxes.in10} floor={axisY - 0.5} />}
         {middleLabel && stats?.q50 != null && (
           <text ref={ref("middle")} data-row-c="middle" x={middleX} y={rowC1} fontSize={type.s} className="fill-chart-text" style={HALO}>
-            {middleLabel}
+            <Lines text={middleLabel} at={middleBreak?.at ?? null} x={middleX} step={rowCStep} />
           </text>
         )}
         {in10Label && stats?.q80 != null && (
           <text
             ref={ref("in10")}
             data-row-c="in10"
-            x={in10Right ? q80x + 4 : q80x - 4}
+            x={in10Right ? q80x + 4 : in10Pinned ? 0 : q80x - 4}
             y={rowC2}
-            textAnchor={in10Right ? "start" : "end"}
+            textAnchor={in10Right || in10Pinned ? "start" : "end"}
             fontSize={type.s}
             className="fill-chart-text"
             style={HALO}

@@ -1207,6 +1207,56 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
   }
 });
 
+// WCAG 1.4.12 at 320 px, the narrowest width the page lays out for (WCAG 1.4.10). A reader's extension
+// sets the spacing before the page draws, so the chart measures its labels with it. Each fact's text
+// stays inside its column, and each chart label inside the chart, clear of every other label: a label
+// wider than the chart takes a second line (DESIGN.md section 6, the range chart).
+test("with WCAG 1.4.12's text spacing at 320 px, every fact stays in its column and every chart label inside the chart", async ({ page }) => {
+  await page.addInitScript((css) => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = css;
+      document.head.append(style);
+    });
+  }, TEXT_SPACING);
+  for (const [state, comparables] of [
+    ["the populated state", "comparables-ke-nwwda-541055.json"],
+    ["the quantile state", "comparables-ke-nwwda-541055-any-category.json"],
+  ] as const) {
+    await openPackage(page, { width: 320, comparables: { body: await recorded(comparables) } });
+    await ready(page);
+    await page.evaluate(() => document.fonts.ready);
+    const facts = await page.locator("[data-package-facts] dd").evaluateAll((values) =>
+      values.flatMap((value) => {
+        const range = document.createRange();
+        range.selectNodeContents(value);
+        const box = value.getBoundingClientRect();
+        return [...range.getClientRects()].some((r) => r.width > 0 && (r.right > box.right + 0.5 || r.left < box.left - 0.5)) ? [value.textContent] : [];
+      }),
+    );
+    expect(facts, `${state}: facts past their column`).toEqual([]);
+
+    const labels = await page.locator("[data-chart-drawing]").evaluate((svg) => {
+      const chart = svg.getBoundingClientRect();
+      const shown = [...svg.querySelectorAll("text")].filter((text) => text.textContent!.trim() !== "" && getComputedStyle(text).opacity !== "0");
+      const boxes = shown.map((text) => ({ text: text.textContent!, box: text.getBoundingClientRect() }));
+      return {
+        outside: boxes.filter(({ box }) => box.left < chart.left - 0.5 || box.right > chart.right + 0.5).map(({ text }) => text),
+        over: boxes.flatMap((a, i) =>
+          boxes.slice(i + 1).flatMap((b) => {
+            const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
+            const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
+            // A 12 px label's font box is 17 px tall, and the key's lines sit 14 px apart, so stacked lines
+            // share up to 3 px of their boxes. Labels collide when they share more than 4.
+            return w > 0.5 && h > 4 ? [`${a.text} / ${b.text}`] : [];
+          }),
+        ),
+      };
+    });
+    expect(labels, state).toEqual({ outside: [], over: [] });
+  }
+});
+
 // DESIGN.md section 5, Reference words: a reference with a county's name breaks at its spaces first,
 // as the scope chip and the not-found sentence break it. Each Roboto Mono part keeps to one line, and
 // the space between two parts on one line is a Roboto Mono space too, one character wide.
