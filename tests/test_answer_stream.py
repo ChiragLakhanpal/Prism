@@ -203,6 +203,26 @@ def test_the_final_event_names_the_run_and_both_of_its_traces(ask_case):
         "application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}})
 
 
+def test_the_run_s_application_insights_trace_is_the_request_s_own_trace(ask_case, ops_db):
+    """Ticket 06 sends one trace per request to Application Insights; the done event and the run's row
+    name that trace, so a run opens in Application Insights from either."""
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+    from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+    parsed, _ = ask_case("p130164-rebidding", tracer_provider=provider, runs=RunLog(lambda: DuckDBEngine.open(ops_db)))
+
+    [span] = [span for span in exporter.get_finished_spans() if span.name == "POST /api/ask"]
+    trace_id = format(span.context.trace_id, "032x")
+    assert parsed[-1][1]["trace_ids"]["application_insights"] == trace_id
+    with DuckDBEngine.open(ops_db, read_only=True) as engine:
+        assert list(engine.run("SELECT application_insights_trace_id FROM strata.ops.agent_runs").rows) == [(trace_id,)]
+
+
 def test_every_run_is_logged_in_strata_ops_with_its_checks_and_trace(ask_case, ops_db):
     ask_case("p130164-number-with-no-record", trace_ids=lambda: TRACES,
              runs=RunLog(lambda: DuckDBEngine.open(ops_db)))
