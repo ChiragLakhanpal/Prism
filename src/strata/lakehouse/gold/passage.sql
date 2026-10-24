@@ -14,9 +14,10 @@ scan AS (
   QUALIFY row_number() OVER (PARTITION BY text_hash ORDER BY scanned_at DESC, shield) = 1
 ),
 notice AS (
-  SELECT notice_id, notice_date
-  FROM strata.silver.notices
-  QUALIFY row_number() OVER (PARTITION BY notice_id ORDER BY fetched_at DESC) = 1
+  SELECT n.notice_id, n.notice_date
+  FROM strata.silver.notices AS n
+  WHERE n.notice_id IN (SELECT document_id FROM strata.silver.passages WHERE kind = 'notice_text')
+  QUALIFY row_number() OVER (PARTITION BY n.notice_id ORDER BY n.fetched_at DESC) = 1
 )
 SELECT
   p.passage_id,

@@ -24,10 +24,15 @@ from dataclasses import dataclass
 from strata.lakehouse.engine import Engine
 from strata.reader import passages as route_a
 
+# The newest copy of each notice of the run's projects and of the types that carry scope and
+# qualification text. Notices cover every country, so the filters run in the query. :projects and :types
+# are joined by commas, which no project ID or notice type contains.
 NOTICES = """
 SELECT notice_id, notice_type, notice_date, notice_language, project_id, notice_text, public_from
 FROM strata.silver.notices
 WHERE notice_text IS NOT NULL
+  AND array_contains(split(:projects, ','), project_id)
+  AND array_contains(split(:types, ','), notice_type)
 QUALIFY row_number() OVER (PARTITION BY notice_id ORDER BY fetched_at DESC) = 1
 """
 SHORTEST_SECTION = 12  # words: a section with fewer joins the one after it, as "Country: Kenya" does
@@ -56,11 +61,10 @@ class Section:
 
 def notices(engine: Engine, projects: list[str], notice_types: tuple[str, ...]) -> list[Notice]:
     """The newest copy of each notice of the given projects and types, in notice id order."""
-    result = engine.run(NOTICES)
-    wanted = set(projects)
-    found = [Notice(*row) for row in result.rows]
-    return sorted((notice for notice in found if notice.project_id in wanted and notice.notice_type in notice_types),
-                  key=lambda notice: notice.notice_id)
+    if not projects or not notice_types:
+        return []
+    result = engine.run(NOTICES, {"projects": ",".join(projects), "types": ",".join(notice_types)})
+    return sorted((Notice(*row) for row in result.rows), key=lambda notice: notice.notice_id)
 
 
 def _heading(line: str) -> bool:
