@@ -1,7 +1,7 @@
 # Strata's Declarative Automation Bundle (the new name for Databricks Asset Bundles).
 #
-# It declares the strata catalog, its four schemas and the bronze files volume (bundle/catalog.yml)
-# and the nightly job (bundle/nightly.yml). Deploy it with the command in bundle/README.md, which
+# It declares the strata catalog, its four schemas and the bronze files volume (bundle/catalog.yml),
+# the nightly job (bundle/nightly.yml) and the AI/BI dashboard (bundle/dashboard.yml). Deploy it with the command in bundle/README.md, which
 # also creates the tables and reports what changed. The bundle's notes, with both nightly
 # schedules, are in bundle/README.md.
 
@@ -30,6 +30,10 @@ variables:
   nightly_pause_status:
     description: UNPAUSED runs the nightly job on its schedule. PAUSED leaves only manual runs.
     default: UNPAUSED
+  warehouse_id:
+    description: >-
+      The SQL warehouse the dashboard's queries run on. ops/bundle/deploy.py passes the env file's
+      DATABRICKS_WAREHOUSE_ID.
 
 targets:
   # The Free Edition workspace that Strata shares with fairshare. The deploy command passes the

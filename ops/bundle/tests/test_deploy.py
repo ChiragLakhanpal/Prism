@@ -1,6 +1,6 @@
 """The deploy command: one command creates the catalog, its schemas, the volume, the tables, the
-grants and the nightly job, and a second run reports no changes. fairshare's catalog lists the
-same before and after.
+grants, the nightly job and the dashboard, and a second run reports no changes. fairshare's catalog
+lists the same before and after.
 
 The fake workspace stands in for Databricks: its bundle deploy creates what bundle/catalog.yml
 and bundle/nightly.yml declare, and its SQL warehouse is DuckDB, so the real table definitions
@@ -18,7 +18,7 @@ sys.path.insert(0, str(REPO / "ops" / "bundle"))
 import bundle_live  # noqa: E402
 import deploy  # noqa: E402
 
-from strata.lakehouse import catalog, nightly  # noqa: E402
+from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 
 FAIRSHARE = {"catalog": {"name": "fairshare", "comment": ""}, "schemas": {"gold": ""}, "volumes": {},
@@ -72,6 +72,16 @@ class FakeWorkspace:
     def job(self, name):
         return {"name": name, "tasks": [task.key for task in nightly.job_tasks()]} if self.deployed else None
 
+    def dashboard(self, name):
+        """The dashboard the bundle declares, with the pages of the file it deploys."""
+        if not self.deployed:
+            return None
+        import json
+
+        declared = bundle.load().resources("dashboards")["strata"]
+        pages = json.loads((REPO / "bundle" / declared["file_path"]).read_text())["pages"]
+        return {"name": name, "pages": [page["displayName"] for page in pages]}
+
 
 def deploy_into(workspace, capsys):
     code = deploy.deploy(workspace)
@@ -91,7 +101,8 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
                  "The volume strata.bronze.files is new.",
                  "The table strata.ops.pipeline_runs is new.",
                  "The grants on strata are new.",
-                 "The job strata nightly is new."):
+                 "The job strata nightly is new.",
+                 "The dashboard Strata is new."):
         assert line in out
     assert ("fairshare's catalog lists the same before and after the deploy: "
             "one schema, one table and no volumes.") in out

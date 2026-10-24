@@ -94,9 +94,12 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _measure_data_readiness(run: Run) -> int:
-    """The data readiness measures of every source, and the room each table takes."""
-    return (readiness.measure(run.engine, run.run_id, run.clock)
-            + storage.measure(run.engine, run.run_id, run.clock))
+    """The data readiness measures of every source, the room each table takes, and the Data readiness
+    page built from them for the dashboard (strata.dashboard.snapshot)."""
+    from strata.dashboard import snapshot
+
+    measured = readiness.measure(run.engine, run.run_id, run.clock) + storage.measure(run.engine, run.run_id, run.clock)
+    return measured + snapshot.write(run.engine, run.run_id, run.clock)
 
 
 # Each task's work, by the task key the bundle uses. Each returns the number of rows it changed.

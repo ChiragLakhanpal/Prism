@@ -353,6 +353,59 @@ export const copy = {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December",
       ],
+      // The dashboard's words for the two reading routes, beside its chart of pages read well.
+      routes: {
+        pages_read_route_a: "Published text (Route A)",
+        pages_read_route_b: "Layout parser (Route B)",
+      },
+      // The dashboard's Data readiness page (the 16 design brief, section 10), which
+      // src/strata/dashboard builds from code. Each chart's title names what it measures and never
+      // states a number, because a title is fixed when the dashboard is deployed; the day's finding
+      // is the headline in its own tile. DESIGN.md section 6 records why.
+      dashboard: {
+        name: "Strata",
+        page: "Data readiness",
+        introHeading: "Data readiness",
+        intro:
+          "How fit each source is to support answers. These are the same measures as the Data readiness page in " +
+          "Strata. Pick a measure date to compare the two.",
+        measureDate: "Measure date",
+        measureDateAbout: "Every tile shows the newest measures taken on or before this date. It starts at today.",
+        headline: "What the measures say",
+        headlineAbout: "The day's headline, built by the same function as the Data readiness page in Strata.",
+        measuredOn: "Measured on",
+        headlineColumn: "Headline",
+        awardRows: "Contract-award rows per fiscal year, by dataset",
+        awardRowsAbout: "Rows per fiscal year. A missing bar means no rows.",
+        fiscalYear: "Fiscal year",
+        rows: "Rows",
+        dataset: "Dataset",
+        sourceRows: "Rows per fiscal year, by source",
+        sourceRowsAbout: "Every source's rows in each fiscal year, with exact counts. It is the table for the chart of contract-award rows.",
+        source: "Source",
+        links: "Share of rows that link, by link",
+        linksAbout:
+          "Each link with 20 rows or more, as the share of its rows that link. The table of freshness and link " +
+          "counts lists every link with its counts.",
+        link: "Link",
+        share: "Share (%)",
+        routes: "Share of pages read well, by route",
+        routesAbout: "The Procurement Plan pages each reading route read without losing their table rows.",
+        route: "Route",
+        freshness: "Freshness and link counts, by source",
+        freshnessAbout: "Each source's latest data, how often it updates, how late it is, its link counts and its status.",
+        latestData: "Latest data",
+        updates: "Updates",
+        daysLate: "Days late",
+        linked: "Linked",
+        status: "Status",
+        fixes: "Fixes ranked by what they would unlock",
+        fixesAbout: "Ranked by how many projects each fix would add evidence to, as on the Data readiness page.",
+        rank: "Rank",
+        fix: "Fix",
+        projects: "Projects it would add evidence to",
+        notes: "Source: Strata's data readiness measures in strata.ops.",
+      },
     },
   },
 

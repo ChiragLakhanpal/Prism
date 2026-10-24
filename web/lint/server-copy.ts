@@ -12,7 +12,12 @@ import { copy } from "../src/copy.ts";
 export const SERVER_COPY_FILE = fileURLToPath(new URL("../../src/strata/tools/data_readiness_copy.json", import.meta.url));
 
 export function serverCopy(): string {
-  const words = { ...copy.dataReadiness.server, words: copy.num.words };
+  const words = {
+    ...copy.dataReadiness.server,
+    words: copy.num.words,
+    badges: { partial: copy.badge.partial, gap: copy.badge.gap },
+    footer: copy.footer,
+  };
   return `${JSON.stringify(words, null, 2)}\n`;
 }
 

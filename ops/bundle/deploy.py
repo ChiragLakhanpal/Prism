@@ -11,9 +11,12 @@ Run it from the main checkout after the wizard:
 It needs the Databricks CLI 0.287.0 or later on the path. It does these things, in order:
 
 1. It lists what the workspace holds: the strata catalog, its schemas, the volume, the tables, the
-   grants and the nightly job that bundle/nightly.yml names, and also fairshare's catalog.
+   grants, the nightly job that bundle/nightly.yml names and the dashboard, and also fairshare's
+   catalog.
 2. It runs `databricks bundle deploy`, which creates or updates the catalog, the bronze, silver,
-   gold and ops schemas, the bronze files volume, the read grants and the nightly job.
+   gold and ops schemas, the bronze files volume, the read grants, the nightly job and the AI/BI
+   dashboard that src/strata/dashboard defines (bundle/dashboard.yml), with the env file's SQL
+   warehouse for the dashboard's queries.
 3. It creates the tables from src/strata/lakehouse/tables on the SQL warehouse. Each one is
    CREATE TABLE IF NOT EXISTS, so a table that holds rows is never replaced.
 4. It lists the same things again and prints what changed. A second run prints "No changes."
@@ -33,17 +36,22 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
-from strata.lakehouse import catalog, nightly  # noqa: E402
+from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.catalog import CatalogError  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 FAIRSHARE = "fairshare"
 KINDS = {"catalog": "The catalog", "schemas": "The schema", "volumes": "The volume", "tables": "The table",
-         "grants": "The grants on", "jobs": "The job"}
+         "grants": "The grants on", "jobs": "The job", "dashboards": "The dashboard"}
 
 
-def flatten(listing: dict | None, job: dict | None = None) -> dict:
+def dashboard_name() -> str:
+    """The dashboard's name in the workspace, as bundle/dashboard.yml gives it."""
+    return bundle.load().resources("dashboards")["strata"]["display_name"]
+
+
+def flatten(listing: dict | None, job: dict | None = None, dashboard: dict | None = None) -> dict:
     """One entry per thing the deploy can change, keyed by its kind and full name."""
     if not listing:
         found = {}
@@ -55,6 +63,8 @@ def flatten(listing: dict | None, job: dict | None = None) -> dict:
         found |= {("grants", securable): value for securable, value in listing.get("grants", {}).items()}
     if job:
         found[("jobs", job["name"])] = job
+    if dashboard:
+        found[("dashboards", dashboard["name"])] = dashboard
     return found
 
 
@@ -80,11 +90,12 @@ def summary(listing: dict) -> str:
 
 
 def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
-    job = nightly.job_name()
-    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job))
+    job, board = nightly.job_name(), dashboard_name()
+    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))
     neighbour_before = workspace.listing(fairshare)
 
-    print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants and the nightly job.")
+    print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants, the nightly job and the "
+          "dashboard.")
     code, output = workspace.deploy_bundle()
     if code != 0:
         print("The bundle deploy failed, so I created no tables. The Databricks CLI said:")
@@ -100,7 +111,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
     print(f"   Each of these exists now: {', '.join(built)}.")
 
     print("3. What changed:")
-    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job))
+    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))
     for line in changes(before, after) or ["No changes."]:
         print(f"   {line}")
 

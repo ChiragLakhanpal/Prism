@@ -1,0 +1,1050 @@
+{
+  "datasets": [
+    {
+      "name": "readiness_headline",
+      "displayName": "The day's headline",
+      "queryLines": [
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT s.measured_on, s.text AS headline\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part = 'headline'\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "award_rows_by_year",
+      "displayName": "Contract-award rows per fiscal year",
+      "queryLines": [
+        "SELECT\n",
+        "  fiscal_year,\n",
+        "  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,\n",
+        "  CASE source\n",
+        "    WHEN 'awards' THEN 'Awards since FY2020'\n",
+        "    WHEN 'awards_fy2001_2016' THEN 'Awards, FY2001–16'\n",
+        "    ELSE 'Award notices, FY2017–19'\n",
+        "  END AS dataset,\n",
+        "  count(*) AS award_rows\n",
+        "FROM strata.gold.contract\n",
+        "WHERE public_from <= :measure_date AND fiscal_year IS NOT NULL\n",
+        "GROUP BY fiscal_year, source\n",
+        "ORDER BY fiscal_year, dataset\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rows_by_year",
+      "displayName": "Rows per fiscal year, by source",
+      "queryLines": [
+        "WITH counted AS (\n",
+        "  SELECT\n",
+        "    CASE source\n",
+        "      WHEN 'awards' THEN 'Awards since FY2020'\n",
+        "      WHEN 'awards_fy2001_2016' THEN 'Awards, FY2001–16'\n",
+        "      ELSE 'Award notices, FY2017–19'\n",
+        "    END AS source,\n",
+        "    fiscal_year\n",
+        "  FROM strata.gold.contract\n",
+        "  WHERE public_from <= :measure_date\n",
+        "  UNION ALL\n",
+        "  SELECT 'Procurement notices', fiscal_year FROM strata.silver.notices WHERE public_from <= :measure_date\n",
+        "  UNION ALL\n",
+        "  SELECT 'Projects', approval_fiscal_year FROM strata.gold.project WHERE public_from <= :measure_date\n",
+        "  UNION ALL\n",
+        "  SELECT 'IEG ratings', evaluation_fy FROM strata.gold.ieg_rating WHERE public_from <= :measure_date\n",
+        ")\n",
+        "SELECT\n",
+        "  source,\n",
+        "  fiscal_year,\n",
+        "  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,\n",
+        "  count(*) AS source_rows\n",
+        "FROM counted\n",
+        "WHERE fiscal_year IS NOT NULL\n",
+        "GROUP BY source, fiscal_year\n",
+        "ORDER BY source, fiscal_year\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "readiness_links",
+      "displayName": "Shares of rows that link",
+      "queryLines": [
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT s.position, s.label AS link, s.share_percent, s.count, s.denominator\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part = 'link' AND s.share_percent IS NOT NULL\n",
+        "ORDER BY s.position\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "readiness_routes",
+      "displayName": "Shares of pages read well",
+      "queryLines": [
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT s.position, s.label AS route, s.share_percent, s.count, s.denominator\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part = 'route'\n",
+        "ORDER BY s.position\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "readiness_sources",
+      "displayName": "Freshness and link counts",
+      "queryLines": [
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT\n",
+        "  s.position,\n",
+        "  s.label AS source,\n",
+        "  s.latest_data,\n",
+        "  s.updates,\n",
+        "  s.days_late,\n",
+        "  CASE WHEN s.part = 'source' THEN s.text END AS linked,\n",
+        "  s.status\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part IN ('source', 'gap')\n",
+        "ORDER BY s.position\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "readiness_fixes",
+      "displayName": "Fixes",
+      "queryLines": [
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT s.position AS rank, s.text AS fix, s.projects\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part = 'fix'\n",
+        "ORDER BY s.position\n"
+      ],
+      "parameters": [
+        {
+          "displayName": "measure_date",
+          "keyword": "measure_date",
+          "dataType": "DATE",
+          "defaultSelection": {
+            "values": {
+              "dataType": "DATE",
+              "values": [
+                {
+                  "value": "now/d"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "data_readiness",
+      "displayName": "Data readiness",
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layout": [
+        {
+          "widget": {
+            "name": "introduction",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Data readiness\n",
+                "How fit each source is to support answers. These are the same measures as the Data readiness page in Strata. Pick a measure date to compare the two."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "measure_date",
+            "queries": [
+              {
+                "name": "parameter_readiness_headline",
+                "query": {
+                  "datasetName": "readiness_headline",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_award_rows_by_year",
+                "query": {
+                  "datasetName": "award_rows_by_year",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_rows_by_year",
+                "query": {
+                  "datasetName": "rows_by_year",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_readiness_links",
+                "query": {
+                  "datasetName": "readiness_links",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_readiness_routes",
+                "query": {
+                  "datasetName": "readiness_routes",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_readiness_sources",
+                "query": {
+                  "datasetName": "readiness_sources",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_readiness_fixes",
+                "query": {
+                  "datasetName": "readiness_fixes",
+                  "parameters": [
+                    {
+                      "name": "measure_date",
+                      "keyword": "measure_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_readiness_headline"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_award_rows_by_year"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_rows_by_year"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_readiness_links"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_readiness_routes"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_readiness_sources"
+                  },
+                  {
+                    "parameterName": "measure_date",
+                    "queryName": "parameter_readiness_fixes"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Measure date",
+                "showDescription": true,
+                "description": "Every tile shows the newest measures taken on or before this date. It starts at today."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 2,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "headline",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "readiness_headline",
+                  "fields": [
+                    {
+                      "name": "measured_on",
+                      "expression": "`measured_on`"
+                    },
+                    {
+                      "name": "headline",
+                      "expression": "`headline`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "measured_on",
+                    "title": "Measured on",
+                    "type": "date",
+                    "displayAs": "datetime",
+                    "order": 0,
+                    "dateTimeFormat": "MMM D, YYYY"
+                  },
+                  {
+                    "fieldName": "headline",
+                    "title": "Headline",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 1
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "What the measures say",
+                "showDescription": true,
+                "description": "The day's headline, built by the same function as the Data readiness page in Strata."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 6,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "award_rows",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "award_rows_by_year",
+                  "fields": [
+                    {
+                      "name": "fiscal_year_label",
+                      "expression": "`fiscal_year_label`"
+                    },
+                    {
+                      "name": "award_rows",
+                      "expression": "`award_rows`"
+                    },
+                    {
+                      "name": "dataset",
+                      "expression": "`dataset`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "fiscal_year_label",
+                  "displayName": "Fiscal year",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "natural-order"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "award_rows",
+                  "displayName": "Rows",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    },
+                    "hideGroupSeparator": false
+                  }
+                },
+                "color": {
+                  "fieldName": "dataset",
+                  "displayName": "Dataset",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "Awards since FY2020",
+                        "color": "#106ca1"
+                      },
+                      {
+                        "value": "Awards, FY2001–16",
+                        "color": "#b65f0c"
+                      },
+                      {
+                        "value": "Award notices, FY2017–19",
+                        "color": "#664ab6"
+                      }
+                    ]
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Contract-award rows per fiscal year, by dataset",
+                "showDescription": true,
+                "description": "Rows per fiscal year. A missing bar means no rows."
+              },
+              "mark": {
+                "colors": [
+                  "#106ca1",
+                  "#b65f0c",
+                  "#664ab6"
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "source_rows",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "rows_by_year",
+                  "fields": [
+                    {
+                      "name": "source",
+                      "expression": "`source`"
+                    },
+                    {
+                      "name": "fiscal_year_label",
+                      "expression": "`fiscal_year_label`"
+                    },
+                    {
+                      "name": "source_rows",
+                      "expression": "`source_rows`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pivot",
+              "encodings": {
+                "rows": [
+                  {
+                    "fieldName": "source",
+                    "displayName": "Source"
+                  }
+                ],
+                "columns": [
+                  {
+                    "fieldName": "fiscal_year_label",
+                    "displayName": "Fiscal year"
+                  }
+                ],
+                "cell": {
+                  "type": "multi-cell",
+                  "fields": [
+                    {
+                      "fieldName": "source_rows",
+                      "cellType": "text",
+                      "displayName": "Rows"
+                    }
+                  ]
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Rows per fiscal year, by source",
+                "showDescription": true,
+                "description": "Every source's rows in each fiscal year, with exact counts. It is the table for the chart of contract-award rows."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 11,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "links",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "readiness_links",
+                  "fields": [
+                    {
+                      "name": "link",
+                      "expression": "`link`"
+                    },
+                    {
+                      "name": "share_percent",
+                      "expression": "`share_percent`"
+                    },
+                    {
+                      "name": "count",
+                      "expression": "`count`"
+                    },
+                    {
+                      "name": "denominator",
+                      "expression": "`denominator`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "share_percent",
+                  "displayName": "Share (%)",
+                  "scale": {
+                    "type": "quantitative",
+                    "domain": {
+                      "min": 0,
+                      "max": 100
+                    }
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    },
+                    "hideGroupSeparator": false
+                  }
+                },
+                "y": {
+                  "fieldName": "link",
+                  "displayName": "Link",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "natural-order"
+                    }
+                  }
+                },
+                "label": {
+                  "show": true
+                },
+                "extra": [
+                  {
+                    "fieldName": "count"
+                  },
+                  {
+                    "fieldName": "denominator"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Share of rows that link, by link",
+                "showDescription": true,
+                "description": "Each link with 20 rows or more, as the share of its rows that link. The table of freshness and link counts lists every link with its counts."
+              },
+              "mark": {
+                "colors": [
+                  "#106ca1"
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "routes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "readiness_routes",
+                  "fields": [
+                    {
+                      "name": "route",
+                      "expression": "`route`"
+                    },
+                    {
+                      "name": "share_percent",
+                      "expression": "`share_percent`"
+                    },
+                    {
+                      "name": "count",
+                      "expression": "`count`"
+                    },
+                    {
+                      "name": "denominator",
+                      "expression": "`denominator`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "share_percent",
+                  "displayName": "Share (%)",
+                  "scale": {
+                    "type": "quantitative",
+                    "domain": {
+                      "min": 0,
+                      "max": 100
+                    }
+                  },
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 0
+                    },
+                    "hideGroupSeparator": false
+                  }
+                },
+                "y": {
+                  "fieldName": "route",
+                  "displayName": "Route",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "natural-order"
+                    }
+                  }
+                },
+                "label": {
+                  "show": true
+                },
+                "extra": [
+                  {
+                    "fieldName": "count"
+                  },
+                  {
+                    "fieldName": "denominator"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Share of pages read well, by route",
+                "showDescription": true,
+                "description": "The Procurement Plan pages each reading route read without losing their table rows."
+              },
+              "mark": {
+                "colors": [
+                  "#106ca1"
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 17,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "freshness",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "readiness_sources",
+                  "fields": [
+                    {
+                      "name": "source",
+                      "expression": "`source`"
+                    },
+                    {
+                      "name": "latest_data",
+                      "expression": "`latest_data`"
+                    },
+                    {
+                      "name": "updates",
+                      "expression": "`updates`"
+                    },
+                    {
+                      "name": "days_late",
+                      "expression": "`days_late`"
+                    },
+                    {
+                      "name": "linked",
+                      "expression": "`linked`"
+                    },
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "source",
+                    "title": "Source",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 0
+                  },
+                  {
+                    "fieldName": "latest_data",
+                    "title": "Latest data",
+                    "type": "date",
+                    "displayAs": "datetime",
+                    "order": 1,
+                    "dateTimeFormat": "MMM D, YYYY"
+                  },
+                  {
+                    "fieldName": "updates",
+                    "title": "Updates",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 2
+                  },
+                  {
+                    "fieldName": "days_late",
+                    "title": "Days late",
+                    "type": "integer",
+                    "displayAs": "integer",
+                    "order": 3
+                  },
+                  {
+                    "fieldName": "linked",
+                    "title": "Linked",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 4
+                  },
+                  {
+                    "fieldName": "status",
+                    "title": "Status",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 5
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Freshness and link counts, by source",
+                "showDescription": true,
+                "description": "Each source's latest data, how often it updates, how late it is, its link counts and its status."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 23,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "fixes",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "readiness_fixes",
+                  "fields": [
+                    {
+                      "name": "rank",
+                      "expression": "`rank`"
+                    },
+                    {
+                      "name": "fix",
+                      "expression": "`fix`"
+                    },
+                    {
+                      "name": "projects",
+                      "expression": "`projects`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "rank",
+                    "title": "Rank",
+                    "type": "integer",
+                    "displayAs": "integer",
+                    "order": 0
+                  },
+                  {
+                    "fieldName": "fix",
+                    "title": "Fix",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 1
+                  },
+                  {
+                    "fieldName": "projects",
+                    "title": "Projects it would add evidence to",
+                    "type": "integer",
+                    "displayAs": "integer",
+                    "order": 2
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Fixes ranked by what they would unlock",
+                "showDescription": true,
+                "description": "Ranked by how many projects each fix would add evidence to, as on the Data readiness page."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 30,
+            "width": 6,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "notes",
+            "multilineTextboxSpec": {
+              "lines": [
+                "Source: Strata's data readiness measures in strata.ops.\n",
+                "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 35,
+            "width": 6,
+            "height": 2
+          }
+        }
+      ]
+    }
+  ]
+}

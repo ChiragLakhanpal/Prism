@@ -29,7 +29,11 @@
 #                     for a dataset, all three: the World Bank's [Data source] in the attribution
 #                     line "The World Bank: [Dataset name]: [Data source]. License: CC BY 4.0.", the
 #                     dataset's page in the World Bank's catalog, and the day dataset_name was
-#                     checked against that page (docs/PLAN.md section 18)
+#                     checked against that page (docs/PLAN.md section 18). On October 23, 2026 each
+#                     name matched its page word for word. Finances One lists "World Bank Group" as
+#                     the source of its datasets; the awards and the notices name STEP as theirs, as
+#                     DESIGN.md section 8's example does; CPIA comes through the World Development
+#                     Indicators.
 #   [[sources.<key>.readiness]]
 #                     one row of the Sources table: id (unique in the file), label, noun (the
 #                     source's records in the plural, for the gap sentences), optional stratum (the
@@ -104,7 +108,7 @@ limitations = ["A joint venture appears as one row per member, with the contract
 
 # What the Data readiness page and the Sources and licenses page show (ticket 16).
 data_source = "Systematic Tracking of Exchanges in Procurement (STEP)"
-catalog_url = "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-since-fy-2020/DS00005"
+catalog_url = "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-(since-fy-2020)/DS00005"
 name_checked = 2026-10-23
 
 [[sources.awards.readiness]]
@@ -153,8 +157,8 @@ silver_transform = "awards_fy2001_2016"
 stratum = "What"
 limitations = ["It holds prior-review contracts only, and has not changed since March 2022.", "Its references are free text, not STEP references, so its contracts rarely join notices or packages.", "It writes methods by the names used before the 2016 Procurement Regulations. I store the current name and keep its words."]
 
-data_source = "Finances One"
-catalog_url = "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-since-fy-2001-fy-2016/DS01004"
+data_source = "World Bank Group"
+catalog_url = "https://financesone.worldbank.org/contract-awards-in-investment-project-financing-(since-fy-2001-fy-2016)/DS01004"
 name_checked = 2026-10-23
 
 [[sources.awards_fy2001_2016.readiness]]
@@ -191,7 +195,7 @@ silver_transform = "ieg_ratings"
 stratum = "What"
 limitations = ["It gives the fiscal year of each evaluation, not its date, so a rating counts as public from the last day of that fiscal year."]
 
-data_source = "Independent Evaluation Group (IEG)"
+data_source = "World Bank Group"
 catalog_url = "https://financesone.worldbank.org/ieg-world-bank-project-performance-ratings/DS00053"
 name_checked = 2026-10-23
 
@@ -221,7 +225,7 @@ license = "CC BY 4.0"
 silver_transform = "loans"
 stratum = "What"
 
-data_source = "Finances One"
+data_source = "World Bank Group"
 catalog_url = "https://financesone.worldbank.org/ida-statement-of-credits-grants-and-guarantees-latest-available-snapshot/DS00001"
 name_checked = 2026-10-23
 
@@ -249,7 +253,7 @@ license = "CC BY 4.0"
 silver_transform = "loans"
 stratum = "What"
 
-data_source = "Finances One"
+data_source = "World Bank Group"
 catalog_url = "https://financesone.worldbank.org/ibrd-statement-of-loans-and-guarantees-latest-available-snapshot/DS00047"
 name_checked = 2026-10-23
 
@@ -279,7 +283,7 @@ silver_transform = "loan_history"
 stratum = "What"
 limitations = ["I fetch the monthly history for the slice's countries only."]
 
-data_source = "Finances One"
+data_source = "World Bank Group"
 catalog_url = "https://financesone.worldbank.org/ida-statement-of-credits-grants-and-guarantees-historical-data/DS00976"
 name_checked = 2026-10-23
 
@@ -309,7 +313,7 @@ silver_transform = "loan_history"
 stratum = "What"
 limitations = ["I fetch the monthly history for the slice's countries only."]
 
-data_source = "Finances One"
+data_source = "World Bank Group"
 catalog_url = "https://financesone.worldbank.org/ibrd-statement-of-loans-and-guarantees-historical-data/DS00975"
 name_checked = 2026-10-23
 
@@ -367,8 +371,8 @@ silver_transform = "projects"
 stratum = "What"
 limitations = ["The projects API keeps only the latest ISR ratings, and lists some of them twice. I keep each rating once.", "I fetch only the projects updated since my last fetch, so a project the source drops later still counts in my total."]
 
-data_source = "Projects API"
-catalog_url = "https://projects.worldbank.org/en/projects-operations/projects-home"
+data_source = "World Bank Group"
+catalog_url = "https://datacatalog.worldbank.org/search/dataset/0037800/world-bank-projects-operations"
 name_checked = 2026-10-23
 
 [[sources.projects.readiness]]
@@ -383,7 +387,7 @@ fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", 
 
 # CPIA: every IQ.CPA code on the Indicators API (21 on October 23, 2026). CPIA covers IDA countries only.
 [sources.cpia]
-dataset_name = "World Development Indicators: Country Policy and Institutional Assessment"
+dataset_name = "Country Policy and Institutional Assessment"
 endpoint = "https://api.worldbank.org/v2/country/all/indicator/{indicator}?format=json"
 api = "indicators"
 indicators = [
@@ -403,7 +407,7 @@ stratum = "What"
 limitations = ["CPIA scores exist for IDA countries only.", "When the API revises a score, I keep both versions, and a join on a past date uses the version public then.", "A score I fetch for the first time counts as public from the day the API last updated it, so I have no score for dates before that day."]
 
 data_source = "World Development Indicators"
-catalog_url = "https://datacatalog.worldbank.org/search/dataset/0037712/world-development-indicators"
+catalog_url = "https://datacatalog.worldbank.org/search/dataset/0038988/country-policy-and-institutional-assessment"
 name_checked = 2026-10-23
 
 [[sources.cpia.readiness]]
@@ -434,7 +438,7 @@ silver_transform = "indicators"
 stratum = "What"
 limitations = ["When the API revises a score, I keep both versions, and a join on a past date uses the version public then.", "A score I fetch for the first time counts as public from the day the API last updated it, so I have no score for dates before that day."]
 
-data_source = "Worldwide Governance Indicators"
+data_source = "World Bank Group"
 catalog_url = "https://datacatalog.worldbank.org/search/dataset/0038026/worldwide-governance-indicators"
 name_checked = 2026-10-23
 

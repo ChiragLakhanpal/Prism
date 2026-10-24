@@ -15,6 +15,9 @@ It builds four things, with no network:
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
   plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
   adds it to the nightly job.
+- The Data readiness page as data_readiness_for builds it, in strata.ops.readiness_snapshot, written
+  once the plan reader, the nightly job and the passage reader have all measured, as the dashboard
+  reads it (strata.dashboard.snapshot).
 - Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
   (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
   the fixture can never drift from the code that makes the real tables. They run after the plan
@@ -38,6 +41,7 @@ import sys
 from pathlib import Path
 
 from strata.config import load_slice
+from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
 from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
@@ -114,6 +118,8 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
+                # The dashboard's copy of the Data readiness page, once every reader has measured.
+                snapshot.write(engine, RUN_ID, clock)
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it
     except (CatalogError, EngineError, NotFetched) as error:  # one sentence, never a traceback
         building.unlink(missing_ok=True)
