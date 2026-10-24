@@ -70,10 +70,14 @@
   --spacing: 0.25rem;
   --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
   --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
-  /* The same four breakpoints as container sizes. The page column is a size container (ticket 14),
-     so a page lays out by the page area's width, which the evidence drawer narrows: its classes use
-     @md/page:, @lg/page: and @xl/page: where the bar and the band use md:, lg: and xl:. */
+  /* The same four breakpoints as container sizes, and one for a table's own frame. The page column
+     is a size container (ticket 14), so a page lays out by the page area's width, which the evidence
+     drawer narrows: its classes use @md/page:, @lg/page: and @xl/page: where the bar and the band use
+     md:, lg: and xl:. */
   --container-md: 48rem;  --container-lg: 64rem;  --container-xl: 75rem;  --container-2xl: 87.5rem;
+  /* A table's own frame, for Table's cardsBelow="fit" (DESIGN.md section 5, Tables): the past
+     range's six columns need about 776 px with one line per cell. */
+  --container-table-fit: 49rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 

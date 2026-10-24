@@ -67,15 +67,15 @@ type Level = 2 | 3 | 4 | 5;
 
 // Where the rows turn into cards. The class names are written out whole, so Tailwind finds them.
 // md and lg read the page area. fit reads the table's own frame, which is a container of its own
-// then: cards while the frame is under 49rem (784 px). It is for a table whose columns need that
-// much wherever it sits, as the past range's need about 776 px with one line per cell, because a
-// table that keeps to columns 1 to 8 has less room at 1200 px than at 1024 px. The 8 px over leave
-// room for small font differences between systems.
+// then: cards while the frame is under 49rem (784 px, the table-fit container size in app.css). It is
+// for a table whose columns need that much wherever it sits, as the past range's need about 776 px
+// with one line per cell, because a table that keeps to columns 1 to 8 has less room at 1200 px than
+// at 1024 px. The 8 px over leave room for small font differences between systems.
 export type CardsBelow = "md" | "lg" | "fit";
 const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
   md: { table: "@md/page:block", cards: "@md/page:hidden" },
   lg: { table: "@lg/page:block", cards: "@lg/page:hidden" },
-  fit: { table: "@min-[49rem]/table:block", cards: "@min-[49rem]/table:hidden" },
+  fit: { table: "@table-fit/table:block", cards: "@table-fit/table:hidden" },
 };
 // The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
 // breakpoint as cardsBelow="lg".

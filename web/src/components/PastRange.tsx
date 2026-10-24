@@ -16,7 +16,7 @@
 // Every width here is the page area's, not the window's, since the evidence drawer narrows it
 // (DESIGN.md section 4): the classes are container queries on the page column (@md/page:, @lg/page:),
 // and the summary's place follows the page column's width too. The one exception is the table twin,
-// which reads its own frame's width (@min-[49rem]/table:), as the comment at its columns says.
+// which reads its own frame's width (@table-fit/table:, 49rem), as the comment at its columns says.
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
