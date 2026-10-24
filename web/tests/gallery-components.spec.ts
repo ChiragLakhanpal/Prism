@@ -17,6 +17,17 @@ async function axe(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
+// Moved from web/tests/routes.spec.ts when the package workspace replaced the last placeholder page
+// whose empty state named a STEP reference; the gallery's page header sample keeps that empty state.
+test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
+  await page.goto("/gallery/pages");
+  for (const width of [390, 768, 1024, 1279]) {
+    await page.setViewportSize({ width, height: 900 });
+    const id = page.locator("[data-state-section=header] [data-empty-state] h3").getByText("KE-SAMPLE-000001-CW-RFB");
+    expect(await id.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(1);
+  }
+});
+
 const badge = (page: Page, text: string) => page.locator("[data-badge]", { hasText: new RegExp(`^${text}$`) });
 
 test("the status badge shows Needs a look, Watch and No signals, each with its own icon shape and its word", async ({ page }) => {

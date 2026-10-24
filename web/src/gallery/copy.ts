@@ -79,6 +79,11 @@ export const galleryCopy = {
       purpose:
         "Check a plan's parts: the trail above it, the check pill, and the plan check as a table from 1024 px and as activity cards below it. Activities with no signals fold behind a button.",
     },
+    "past-range": {
+      title: "Package workspace and range chart",
+      purpose:
+        "The package workspace's header and facts, and section 1 with lane 1 of the range chart in each of its states. Hover a dot or focus the chart to see a package. The page's own states, with real comparables, are captured from the production build.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -151,6 +156,14 @@ export const galleryCopy = {
     removed: "Removed box",
     steps: "Steps",
     states: "States",
+    packageHeader: "The header and the package's facts",
+    rangeReady: "The past range, with the plan as a line",
+    rangeNoPlan: "A plan row with no planned dates",
+    rangeDots: "More than 60 comparables: 20 quantile dots",
+    rangeAbstained: "Fewer than 20 comparables: no range, every package",
+    rangeNone: "No comparable package",
+    rangeUnmeasured: "Packages matched, but none could be measured",
+    rangeNotMeasurable: "No public notice to measure from",
   },
 
   // The Numbers page's three tables: the value a tool sent, the rule Num follows and what it
@@ -204,6 +217,65 @@ export const galleryCopy = {
         "In a table, a date has the short month.",
       ],
     },
+  },
+
+  // The package workspace's sample: a made-up package and comparables in find_comparables' shape
+  // (web/src/lib/api.ts), built in web/src/gallery/pages.tsx from these months so its counts agree.
+  // In every sample the packages still open ran longest, so each quantile is a rank among the
+  // signed ones.
+  pastRange: {
+    // The package in GET /api/packages/{stepRef}'s shape (web/src/lib/api.ts).
+    package: {
+      evidence_id: "sample-package",
+      public_from: "2026-10-09",
+      step_reference: "KE-SAMPLE-000301-CW-RFB",
+      description: "Construction of a sample water storage tank and distribution lines",
+      project_id: "P000000",
+      project_name: "Sample Water Project",
+      country_code: "KE",
+      country_name: "Kenya",
+      section: "WORKS",
+      category: "Works",
+      method: "Request for Bids",
+      market_approach: "Open - National",
+      review_type: "Post",
+      estimated_amount_usd: "1450000.00",
+      process_status: "Pending Implementation",
+      planned_notice_on: "2026-03-02",
+      planned_signing_on: "2026-07-02",
+      plan: {
+        document_id: "sample-plan",
+        implementing_agency: "Sample Water Agency",
+        agency_id: "sample-water-agency",
+        plan_date: "2026-10-09",
+        disclosed_on: "2026-10-09",
+        pdf_page: 3,
+      },
+    },
+    reference: "KE-SAMPLE-000301-CW-RFB",
+    referencePrefix: "KE-SAMPLE-0004",
+    referenceSuffix: "-CW-RFB",
+    description: "Construction of a sample water storage tank and distribution lines",
+    projectName: "Sample Water Project",
+    agency: "Sample Water Agency",
+    country: "Kenya",
+    method: "Request for Bids",
+    category: "Works",
+    marketApproach: "Open - National",
+    sources: ["Sample notices", "Sample contract awards"],
+    signedMonths: [2.1, 2.6, 3.0, 3.2, 3.4, 3.7, 3.9, 4.1, 4.4, 4.6, 4.8, 5.1, 5.3, 5.6, 6.0, 6.3, 6.9, 7.4, 8.2, 9.0, 10.5],
+    openMonths: [11.2, 12.8, 14.6],
+    planMonths: 4.0,
+    plannedNotice: "2026-03-02",
+    plannedSigning: "2026-07-02",
+    // The wide sample: 67 signed, from 1.5 months in steps of 0.15, and five still open.
+    wideSigned: 67,
+    wideOpen: [12.0, 12.5, 13.0, 13.5, 14.0],
+    // The narrow sample: the first eight signed comparables.
+    narrowCount: 8,
+    unmeasured: 6,
+    notMeasurableField: "Market Approach",
+    notMeasurableValue: "Limited - National",
   },
 
   sample: {

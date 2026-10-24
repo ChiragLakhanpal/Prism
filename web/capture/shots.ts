@@ -173,6 +173,65 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("projects--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects"),
 ];
 
+// Ticket 12: the package workspace for KE-NWWDA-541055-CW-RFB, in every state the 12 brief lists, with
+// its two /api reads answered from the recordings. A state the fixture cannot reach, such as a plan row
+// with no planned dates, is the recorded answer with one value changed, so it still shows real rows.
+const PACKAGE = "/packages/KE-NWWDA-541055-CW-RFB";
+const PACKAGE_API = "/api/packages/KE-NWWDA-541055-CW-RFB";
+const COMPARABLES_API = `${PACKAGE_API}/comparables`;
+const COMPARABLES = "comparables-ke-nwwda-541055.json";
+const comparables = (name: string): Answer => ({ recorded: name });
+const noPlanDates = derived(COMPARABLES, (body) => {
+  body.plan = null;
+  body.package.planned_notice_on = null;
+  body.package.planned_signing_on = null;
+});
+function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = {}, pkg: Answer | null = { recorded: "package-ke-nwwda-541055.json" }, path = PACKAGE): Shot {
+  const api = `/api${path}`;
+  const answers: Record<string, Answer> = { ...app(name, path).api };
+  if (pkg) answers[api] = pkg;
+  if (answer) answers[`${api}/comparables`] = answer;
+  const pending = [...(pkg ? [] : [api]), ...(answer ? [] : [`${api}/comparables`]), ...(rest.pending ?? [])];
+  return app(name, path, {}, { ...rest, api: answers, pending });
+}
+const wideAndNarrow = [1440, 390];
+// The chart's dots answer the pointer by distance, so the mouse goes to the dot's centre.
+const hoverDot = (index: number) => async (page: Page) => {
+  const dot = page.locator(`[data-dot-target='${index}']`);
+  await dot.scrollIntoViewIfNeeded();
+  const box = (await dot.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(250);
+};
+
+const PACKAGE_SHOTS: Shot[] = [
+  packageShot("package", comparables(COMPARABLES)),
+  packageShot("package--loading", null, {}, null),
+  packageShot("package--section-loading", null),
+  packageShot("package--no-plan-dates", { body: noPlanDates }),
+  packageShot("package--quantile-dots", comparables("comparables-ke-nwwda-541055-any-category.json")),
+  packageShot("package--abstention", comparables("comparables-ke-nwwda-541055-prior.json")),
+  packageShot("package--no-match", comparables("comparables-ke-nwwda-541055-india.json")),
+  packageShot("package--none-measurable", comparables("comparables-ke-nwwda-541055-non-consulting.json")),
+  packageShot(
+    "package--not-measurable",
+    comparables("comparables-ke-nwwda-541062.json"),
+    {},
+    { recorded: "package-ke-nwwda-541062.json" },
+    "/packages/KE-NWWDA-541062-CW-RFQ",
+  ),
+  packageShot("package--section-error", { status: 503, body: SERVICE_DOWN }),
+  packageShot("package--error", null, {}, { status: 503, body: SERVICE_DOWN }),
+  packageShot("package--not-found", null, {}, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-000000-CW-RFB"),
+  packageShot("package--moved", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),
+  packageShot("package--hover-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(20) }),
+  packageShot("package--focus-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
+  packageShot("package--focus-slider", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[role=slider]") }),
+  packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
+  packageShot("package--table-open", comparables(COMPARABLES), { widths: wideAndNarrow, full: true, act: click("[aria-controls][aria-expanded]:visible") }),
+  packageShot("package--320", comparables(COMPARABLES), { widths: [320] }),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -270,4 +329,5 @@ export const SHOTS: Shot[] = [
   // lists (section 10), with /api answered from the recordings.
   ...PLAN_SHOTS,
   ...PROJECT_SHOTS,
+  ...PACKAGE_SHOTS,
 ];

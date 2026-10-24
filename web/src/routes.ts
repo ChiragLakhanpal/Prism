@@ -5,7 +5,8 @@
 //
 // Ticket 10 adds a project's Procurement tab (/projects/:pid/procurement, which /projects/:pid shows
 // until ticket 21 adds Summary) and Check a plan (/projects/:pid/procurement/:agencyId/:version, or
-// with no version for the agency's latest plan; :version is the plan's ISO date).
+// with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 12 builds the
+// package workspace at /packages/:id, where :id is the package's STEP reference.
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
 
@@ -40,7 +41,6 @@ function page(key: PageKey, section?: Section, values: Record<string, string> = 
 const LINKS: Partial<Record<PageKey, (values: Record<string, string>) => string>> = {
   home: () => "/data",
   packages: () => "/data",
-  package: () => "/packages",
   activity: (values) => `/projects/${values.pid}`,
   document: (values) => `/projects/${values.pid}`,
   lessons: () => "/data",

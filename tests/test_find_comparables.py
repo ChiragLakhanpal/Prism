@@ -242,6 +242,8 @@ def test_criteria_no_package_meets_give_an_empty_answer_and_unmeasurable_ones_sa
     unmeasured = find(engine, category="Non-consulting Services")
 
     assert nothing["abstention"] == {"reason": "no_comparables", "matched": 0}
+    # The empty state names the country it looked in, as the World Bank lists it.
+    assert (nothing["criteria"]["country"], nothing["criteria"]["country_name"]) == ("IN", "India")
     assert unmeasured["abstention"]["reason"] == "none_measurable"
     assert unmeasured["abstention"]["matched"] == unmeasured["coverage"]["matched"] > 0
     assert unmeasured["rows"] == nothing["rows"] == []

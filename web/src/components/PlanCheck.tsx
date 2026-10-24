@@ -321,6 +321,24 @@ const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolea
 ];
 const CELL = "px-2 py-3 xl:px-3";
 
+// Each activity's link to its package workspace (the 12 brief). Its accessible name adds the
+// reference, so a list of links tells the activities apart, and starts with the visible words
+// (WCAG 2.5.3). Every row gets it: a row with no public notice opens the workspace's "not
+// measurable" state, which says why.
+function PastRangeLink({ reference }: { reference: string }) {
+  return (
+    <span className="mt-1 block text-small font-normal">
+      <TextLink
+        href={`/packages/${encodeURIComponent(reference)}`}
+        aria-label={words.pastRangeLabel(reference)}
+        data-past-range-link={reference}
+      >
+        {words.pastRangeLink}
+      </TextLink>
+    </span>
+  );
+}
+
 // A row or card a link's hash names keeps the selected row's tint after focus moves on
 // (DESIGN.md: tint, Selected row).
 function TableRow({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
@@ -330,6 +348,7 @@ function TableRow({ row, result, fresh, named }: { row: Activity; result: Checke
       <th scope="row" tabIndex={-1} data-activity={ref} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
+        <PastRangeLink reference={ref} />
       </th>
       <td className={CELL}>{methodText(row)}</td>
       <td className={CELL}>{row.review_type ?? blank}</td>
@@ -391,6 +410,7 @@ function ActivityCard({ row, result, fresh, named }: { row: Activity; result: Ch
           {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
           {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
+        <PastRangeLink reference={ref} />
       </article>
     </li>
   );
@@ -716,6 +736,8 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
                 </div>
               ))}
             </dl>
+            {/* "See the past range", the card's last line. */}
+            <SkeletonLine className="mt-1 text-small" width="w-32" />
           </li>
         ))}
       </ul>

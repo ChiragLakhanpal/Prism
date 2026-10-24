@@ -85,6 +85,8 @@ export const NON_COPY_PROPS = new Set([
   "term",
   "rowHeader",
   "autoComplete",
+  // The keyboard a phone shows for a field, such as "decimal".
+  "inputMode",
   "scope",
   "live",
   "show",
@@ -96,6 +98,9 @@ export const NON_COPY_PROPS = new Set([
   "breakpoint",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
+  // SVG settings in the range chart: a text's alignment ("start", "end") and a paint ("none").
+  "textAnchor",
+  "fill",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

@@ -3,13 +3,14 @@
 // person, what the page can't show yet and what will appear there. The not-found pages have no card: their purpose
 // already says what to do, and their one link follows it.
 //
-// All projects, a project's page and Check a plan are built (ticket 10), so they render their own
-// pages.
+// All projects, a project's page and Check a plan are built (ticket 10), and so is the package
+// workspace (ticket 12), so they render their own pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
 import { CheckPlanPage } from "./pages/CheckPlanPage";
+import { PackagePage } from "./pages/PackagePage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
@@ -19,6 +20,7 @@ export function RoutePage({ match }: { match: Match }) {
   if (match.key === "projects") return <ProjectsPage />;
   if (match.key === "project") return <ProjectPage pid={pid} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
+  if (match.key === "package") return <PackagePage stepRef={match.values.id} />;
   return (
     <div className="layout-grid">
       <div className="col-span-12 md:col-span-8">

@@ -334,10 +334,12 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
     criteria = _criteria(package, limits, asked)
     through = _rows(call.engine, "records_through.sql", as_of=call.as_of)
     records_through = _iso(_date(through[0]["records_through"])) if through else None
+    country_name = None
+    if criteria["country"] is not None:
+        named = _rows(call.engine, "country.sql", country=criteria["country"])
+        country_name = named[0]["country_name"] if named else criteria["country"]
     found = {**empty, "criteria": {**{key: _iso(value) if isinstance(value, dt.date) else value
-                                      for key, value in criteria.items()},
-                                   "country_name": package["country_name"] if criteria["country"] == package["country_code"]
-                                   else None},
+                                      for key, value in criteria.items()}, "country_name": country_name},
              "records_through": records_through}
     no_notice = _no_notice(package, limits)
     if no_notice:
