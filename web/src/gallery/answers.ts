@@ -4,6 +4,7 @@
 import agentUnavailable from "../../../tests/fixtures/api/ask-agent-unavailable.sse?raw";
 import contentFilter from "../../../tests/fixtures/api/ask-content-filter.sse?raw";
 import beforeTheIcr from "../../../tests/fixtures/api/ask-p130164-before-the-icr.sse?raw";
+import isrSection from "../../../tests/fixtures/api/ask-p130164-isr-section.sse?raw";
 import nothingFound from "../../../tests/fixtures/api/ask-p130164-nothing-found.sse?raw";
 import rebidding from "../../../tests/fixtures/api/ask-p130164-rebidding.sse?raw";
 import removedNumber from "../../../tests/fixtures/api/ask-p130164-removed-number.sse?raw";
@@ -79,17 +80,10 @@ export const ICR_55_ID = "strata.gold.passage:31525018/v1/55";
 // A section of P130164's first ISR, which numbers no paragraphs, as GET /api/evidence answers it.
 export const ISR_S4 = isrS4 as unknown as EvidenceEvent;
 
-// The showcase answer with its third sentence citing that ISR section and ICR paragraph 54, for a
-// switcher whose tabs name a section and a paragraph.
-export const SECTION_SWITCHER_RUN: Run = {
-  ...RUNS.ready,
-  evidence: { ...RUNS.ready.evidence, [ISR_S4.id]: ISR_S4 },
-  sentences: RUNS.ready.sentences.map((sentence) =>
-    sentence.index === 2
-      ? { ...sentence, text: sample.isrSentence, evidence_ids: [ISR_S4.id, ...sentence.evidence_ids], numbers: [{ text: sample.isrNumber, evidence_id: ISR_S4.id }], dates: [] }
-      : sentence,
-  ),
-};
+// The showcase answer with a fourth sentence that quotes the table in that ISR section and also cites
+// the ICR's Annex 1.A, for a switcher whose tabs name two sections, and a card that highlights the quote.
+export const SECTION_SWITCHER_RUN: Run = played(isrSection, showcase);
+export const ISR_S4_SENT = SECTION_SWITCHER_RUN.evidence[ISR_S4.id];
 
 // The box's lookups as the server answered them (tests/fixtures/api).
 const intent = (text: string) => intentsFor(text).ids[0];

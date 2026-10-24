@@ -683,7 +683,8 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
 @pytest.mark.parametrize("case_id, recorded", [("p130164-rebidding", "ask-p130164-rebidding.sse"),
                                                ("p130164-number-with-no-record", "ask-p130164-removed-number.sse"),
                                                ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
-                                               ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse")])
+                                               ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse"),
+                                               ("p130164-isr-section", "ask-p130164-isr-section.sse")])
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 
@@ -702,6 +703,27 @@ def test_the_server_sends_the_failed_streams_the_screen_tests_serve(code, record
     assert sent == (RECORDED / recorded).read_text(), (
         f"Check the change, then write the file again: uv run --frozen python -m strata.agent.scripted --error {code} "
         f"> tests/fixtures/api/{recorded}")
+
+
+def test_a_number_matched_to_an_isr_section_sits_inside_the_highlight_of_the_quote_that_backs_it(ask_case):
+    """A passage backs a number only inside quoted words (check 1), so a number the verifier matched to an
+    ISR's section is always inside that quote, and the quote's highlight shows it in the evidence card and
+    drawer. A second source the sentence cites but does not quote gets no highlight."""
+    isr, annex = "strata.gold.passage:19095337/v1/s4", "strata.gold.passage:31525018/v1/s38"
+    parsed, _ = ask_case("p130164-isr-section")
+
+    [quoting] = [sentence for sentence in of(parsed, "sentence") if isr in sentence["evidence_ids"]]
+    assert quoting["evidence_ids"] == [isr, annex]
+    assert quoting["numbers"] == [{"text": "67.00", "evidence_id": isr}, {"text": "67.00", "evidence_id": isr},
+                                  {"text": "80.00", "evidence_id": isr}]
+    sources = {evidence["id"]: evidence for evidence in of(parsed, "evidence")}
+    [highlight] = sources[isr]["highlights"]
+    assert highlight["sentence"] == quoting["index"]
+    # values.toml, isr-1-rural-access-end-target.
+    assert sources[isr]["row"]["text"][highlight["start"]:highlight["end"]] == "Percentage Value 67.00 67.00 80.00"
+    assert sources[annex]["highlights"] == []
+    assert (sources[isr]["row"]["paragraph_numbered"], sources[annex]["row"]["paragraph_numbered"]) == (False, False)
+    assert of(parsed, "removed") == []
 
 
 def test_an_agent_that_finds_nothing_to_cite_writes_no_sentence_and_the_checks_count_none(ask_case):

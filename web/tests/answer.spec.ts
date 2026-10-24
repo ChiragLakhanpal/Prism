@@ -351,31 +351,23 @@ function changedText(text: string, type: string, index: number, change: (data: a
     .join("\n\n");
 }
 
-// An ISR numbers no paragraphs: ticket 11 keys each section ("s4") and marks the passage unnumbered.
-// The showcase answer with its third sentence citing ISR 1's section on the PDO indicators
-// (tests/ground_truth/values.toml, isr-1-pdo-indicators), then ICR paragraph 54, as no recorded stream
-// does yet.
+// An ISR numbers no paragraphs: ticket 11 keys each section ("s4") and marks the passage unnumbered. The
+// recorded answer's fourth sentence quotes the table in ISR 1's section on the PDO indicators
+// (tests/ground_truth/values.toml, isr-1-rural-access-end-target) and also cites the ICR's Annex 1.A,
+// which tracked the same indicator. A passage backs a number only inside quoted words, so the numbers
+// 67.00 and 80.00 sit inside the quote's highlight (tests/test_answer_stream.py).
 const ISR_S4 = "strata.gold.passage:19095337/v1/s4";
-async function citingAnIsrSection() {
-  const isr = JSON.parse(await recorded("evidence-isr-p130164-s4.json"));
-  let stream = await changed("ask-p130164-removed-number.sse", "sentence", 2, (data) => ({
-    ...data,
-    text: "The first status report set an end target of 80.00 for the share of rural people with an all-season road.",
-    evidence_ids: [ISR_S4, ICR_54],
-    numbers: [{ text: "80.00", evidence_id: ISR_S4 }],
-    dates: [],
-  }));
-  stream = changedText(stream, "evidence", 1, (data) => [data, isr]);
-  return stream;
-}
+const ISR_QUOTE = "Percentage Value 67.00 67.00 80.00";
+const marked = (words: string) => `Highlight starts. ${words} Highlight ends.`;
+// What the card shows, without the words only a screen reader hears.
+const shownExcerpt = async (page: Page) =>
+  (await page.locator("[data-evidence-card] [data-excerpt]").textContent())!.replace("Highlight starts. ", "").replace(" Highlight ends.", "");
 
-test("a sentence that cites an ISR section names the section, never a paragraph, in the card, a number's tooltip and the switcher", async ({ page }) => {
-  const stream = await citingAnIsrSection();
-  await open(page);
-  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+test("a sentence that quotes an ISR section names the section, never a paragraph, and highlights the quote that holds its numbers", async ({ page }) => {
+  await open(page, { stream: "ask-p130164-isr-section.sse" });
   await askFromTheBox(page);
   await landed(page);
-  const sentence = panel(page).locator("[data-sentence-text='2']");
+  const sentence = panel(page).locator("[data-sentence-text='3']");
   const isrMarker = sentence.locator("[data-citation='3']");
 
   await expect(isrMarker).toHaveAccessibleName(
@@ -386,34 +378,81 @@ test("a sentence that cites an ISR section names the section, never a paragraph,
   await expect(card.locator("[data-source]")).toHaveText(
     "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
   );
-  // The section is table text with no sentence ends, so the card quotes about 280 characters of it, cut
-  // between words, and never cuts a number such as 80.00 at its decimal point.
-  const quote = (await card.locator("[data-excerpt]").textContent())!;
-  expect(quote).toContain("Percentage Value 67.00 67.00 80.00 season road");
+  // The section is table text with no sentence end, so the card quotes about 280 characters of it around
+  // the quote, cut between words, with the quote highlighted whole and no number cut at its decimal point.
+  await expect(card.locator("mark")).toHaveText(marked(ISR_QUOTE));
+  const quote = await shownExcerpt(page);
   expect(quote.length).toBeLessThanOrEqual(290);
+  expect(quote).toMatch(/^"…\S/);
   expect(quote).toMatch(/ \S+…"$/);
   const cardText = await card.textContent();
   await page.mouse.move(5, 880);
   await expect(card).toBeHidden();
 
-  await sentence.locator("[data-num]").hover();
+  // Every number in the sentence matched the section, inside its quote.
+  await expect(sentence.locator("[data-num]")).toHaveText(["67.00", "67.00", "80.00"]);
+  await sentence.locator("[data-num]").last().hover();
   await expect(page.getByRole("tooltip")).toHaveText("Matches the section Project Development Objective Indicators of the status report for P130164.");
+  // DESIGN.md section 3: Roboto Mono for IDs, in the tooltip as in the Asked line above it.
+  const tipFaces = await page.getByRole("tooltip").evaluate((tip) =>
+    Array.from(tip.querySelectorAll("*"))
+      .filter((child) => child.children.length === 0 && child.textContent === "P130164")
+      .map((child) => getComputedStyle(child).fontFamily.split(",")[0].replaceAll('"', "")),
+  );
+  expect(tipFaces).toEqual(["Roboto Mono"]);
 
   await isrMarker.click();
   const tabs = drawer(page).getByRole("tab");
   await expect(tabs.first()).toHaveText("ISR, Project Development Objective Indicators");
   await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
-  await expect(tabs.nth(1)).toHaveAccessibleName("ICR paragraph 54");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     "Implementation Status and Results Report · Rajasthan Road Sector Modernization (P130164) · February 22, 2014 · " +
       "Section Project Development Objective Indicators · PDF page 2 of 4",
   );
-  // The sentence quotes nothing, so no words are highlighted, and the drawer says so of the section.
-  await expect(drawer(page)).toContainText("This sentence does not quote the section, so no words are highlighted.");
+  // The project's name keeps its ID beside it: the line never breaks between "Modernization" and "(P130164)".
+  const sameLine = await drawer(page)
+    .locator("[data-meta-part]")
+    .nth(1)
+    .evaluate((part) => {
+      const name = part.querySelector(":scope > span:not(.font-mono)")!.getClientRects();
+      return Math.round(name[name.length - 1].top) === Math.round(part.querySelector(".font-mono")!.getClientRects()[0].top);
+    });
+  expect(sameLine).toBe(true);
+  // The drawer marks the quote in the whole section and scrolls it into view.
+  const mark = drawer(page).locator("[data-passage] mark");
+  await expect(mark).toHaveText(marked(ISR_QUOTE));
+  await expect(mark).toBeInViewport();
   await expect(drawer(page)).toContainText("The whole section, word for word.");
   for (const text of [cardText, await tabs.first().textContent(), await drawer(page).locator("[data-meta-line]").textContent()]) {
     expect(text).not.toMatch(/\bs4\b|¶/);
   }
+
+  // The ICR's annex is cited but not quoted, so its section has no highlight, and the drawer says so.
+  await tabs.first().press("ArrowRight");
+  await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex /);
+  await expect(drawer(page).locator("[data-passage] mark")).toHaveCount(0);
+  await expect(drawer(page)).toContainText("This sentence does not quote the section, so no words are highlighted.");
+});
+
+// A whole sentence a reader quotes is often longer than the third of the card's room that goes before
+// the match, so the cut must never fall inside the matched words.
+test("a long quote stays whole and highlighted in the evidence card, which still keeps to about 280 characters", async ({ page }) => {
+  const isr = JSON.parse(await recorded("evidence-isr-p130164-s4.json"));
+  // From "Share of rural population" to "250-500": 248 characters of the section.
+  const [start, end] = [64, 312];
+  const stream = await changed("ask-p130164-isr-section.sse", "evidence", 2, (data) => ({ ...data, highlights: [{ sentence: 3, start, end }] }));
+  await open(page);
+  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+  await askFromTheBox(page);
+  await landed(page);
+
+  await panel(page).locator("[data-sentence-text='3'] [data-citation='3']").hover();
+
+  const card = page.locator("[data-evidence-card]");
+  await expect(card.locator("mark")).toHaveCount(1);
+  await expect(card.locator("mark")).toHaveText(marked(isr.row.text.slice(start, end)));
+  expect((await shownExcerpt(page)).length).toBeLessThanOrEqual(290);
 });
 
 test("a reason code with no sentence in the copy file makes no claim about the removed sentence", async ({ page }) => {
@@ -444,7 +483,7 @@ test("a date written before the numbers in a sentence is checkable too", async (
   await expect(panel(page).locator("[data-sentence-text='2'] [data-num]")).toHaveText(["October 10, 2019", "108", "328"]);
 });
 
-test("Close the answer closes the panel and its drawer, and returns focus to the box without opening its list", async ({ page }) => {
+test("Close the answer closes the panel and its drawer, and returns focus to the box without opening its list until you ask for it", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
@@ -458,8 +497,12 @@ test("Close the answer closes the panel and its drawer, and returns focus to the
   expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
   await expect(box(page)).toBeFocused();
   // The question is still in the box, but its list stays shut over the page you return to (the 14
-  // brief, section 6.4), until you press Down or type.
+  // brief, section 6.4), until you click in the box, press Down or type.
   await expect(box(page)).toHaveValue(QUESTION);
+  await expect(box(page)).toHaveAttribute("aria-expanded", "false");
+  await box(page).click();
+  await expect(box(page)).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
   await expect(box(page)).toHaveAttribute("aria-expanded", "false");
   await page.keyboard.press("ArrowDown");
   await expect(box(page)).toHaveAttribute("aria-expanded", "true");

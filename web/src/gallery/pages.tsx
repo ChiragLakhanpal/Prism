@@ -26,7 +26,7 @@ import { POPOVER } from "../components/Popover";
 import type { Run } from "../lib/answer";
 import type { Lookup } from "../lib/intents";
 import { cx } from "../lib/cx";
-import { FAILED, ICR_54, ICR_54_ID, ISR_S4, LOOKUPS, PENDING, PLAN_RECORD, RUNS, SECTION_SWITCHER_RUN, STEP_REF, SWITCHER_RUN } from "./answers";
+import { FAILED, ICR_54, ICR_54_ID, ISR_S4, ISR_S4_SENT, LOOKUPS, PENDING, PLAN_RECORD, RUNS, SECTION_SWITCHER_RUN, STEP_REF, SWITCHER_RUN } from "./answers";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
@@ -932,7 +932,7 @@ export const PAGES: GalleryPage[] = [
             </Labeled>
             <Labeled label={s.cardSection}>
               <div data-card-sample="section" className={cx(POPOVER, "w-[min(22.5rem,calc(100vw-3.5rem))] px-3 py-2 text-small")}>
-                <EvidenceCard evidence={ISR_S4} n={3} sentence={2} />
+                <EvidenceCard evidence={ISR_S4_SENT} n={3} sentence={3} />
               </div>
             </Labeled>
             <Labeled label={s.cardRecord}>
@@ -945,7 +945,7 @@ export const PAGES: GalleryPage[] = [
       },
       { id: "from-answer", title: s.fromAnswer, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} /> },
       { id: "switcher", title: s.switcher, body: <DrawerSample id={ICR_54_ID} run={SWITCHER_RUN} sentence={0} /> },
-      { id: "switcher-section", title: s.switcherSection, body: <DrawerSample id={ISR_S4.id} run={SECTION_SWITCHER_RUN} sentence={2} /> },
+      { id: "switcher-section", title: s.switcherSection, body: <DrawerSample id={ISR_S4.id} run={SECTION_SWITCHER_RUN} sentence={3} /> },
       { id: "from-link", title: s.fromLink, body: <DrawerSample id={ICR_54_ID} data={{ status: "ready", evidence: ICR_54 }} /> },
       { id: "section", title: s.section, body: <DrawerSample id={ISR_S4.id} data={{ status: "ready", evidence: ISR_S4 }} /> },
       { id: "record", title: s.record, body: <DrawerSample id={PLAN_RECORD.id} data={{ status: "ready", evidence: PLAN_RECORD }} /> },

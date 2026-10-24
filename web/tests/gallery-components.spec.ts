@@ -799,7 +799,8 @@ test("the drawer's record view writes the STEP amount in STEP's form, right-alig
 });
 
 // The 14 brief, section 5.11: one source line for a record, in its card and in its drawer. An ISR section
-// (tests/ground_truth/values.toml, isr-1-pdo-indicators) is cited by its section, never by its key "s4".
+// (tests/ground_truth/values.toml, isr-1-pdo-indicators) is cited by its section, never by its key "s4",
+// and a quote from it (isr-1-rural-access-end-target) is highlighted in its card.
 test("a record's evidence card ends with its drawer's source line, and an ISR section's card and drawer name the section", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/gallery/evidence");
@@ -823,14 +824,18 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   await expect(page.locator("[data-card-sample=section] [data-source]")).toHaveText(
     "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
   );
+  await expect(page.locator("[data-card-sample=section] mark")).toHaveText("Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.");
   const section = page.locator("[data-state-section=section] [role=dialog]");
   await expect(section.getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
   await expect(section).toContainText("The whole section, word for word.");
   await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
-  // The switcher's tabs name a section and a paragraph, and a long tab wraps inside its pill.
+  // The switcher's tabs name two sections, and a long tab wraps inside its pill.
   const tabs = page.locator("[data-state-section=switcher-section]").getByRole("tab");
   await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
-  await expect(tabs.nth(1)).toHaveAccessibleName("ICR paragraph 54");
+  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex /);
+  await expect(page.locator("[data-state-section=switcher-section] [data-passage] mark")).toHaveText(
+    "Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.",
+  );
   const overflow = await tabs.first().evaluate((tab) => tab.scrollWidth > tab.clientWidth || tab.getBoundingClientRect().right > window.innerWidth);
   expect(overflow).toBe(false);
 });

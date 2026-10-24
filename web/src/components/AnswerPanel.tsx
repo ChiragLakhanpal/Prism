@@ -133,15 +133,23 @@ function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
     : copy.evidence.markerSourceSection(fields.docType, fields.date, place.text);
 }
 
-function numTooltip(evidence: EvidenceEvent | undefined): string | null {
+// "Matches paragraph 54 of the completion report for P130164.", with the ID in Roboto Mono.
+function numTooltip(evidence: EvidenceEvent | undefined): ReactNode {
   if (!evidence) return null;
-  if (evidence.kind === "record") return copy.evidence.numTooltipRecord(recordKind(evidence), recordReference(evidence));
+  const words = copy.evidence;
+  if (evidence.kind === "record") {
+    const reference = <span className="font-mono">{recordReference(evidence)}</span>;
+    return <Fill template={words.numTooltipRecord} slots={{ kind: recordKind(evidence), reference }} />;
+  }
   const fields = passageFields(evidence);
-  const kind = copy.evidence.docKinds[evidence.short_name ?? ""] ?? fields.docType;
+  const kind = words.docKinds[evidence.short_name ?? ""] ?? fields.docType;
   const place = placeOf(fields);
-  return place.kind === "paragraph"
-    ? copy.evidence.numTooltip(place.text, kind, fields.pcode)
-    : copy.evidence.numTooltipSection(place.text, kind, fields.pcode);
+  const pid = <span className="font-mono">{fields.pcode}</span>;
+  return place.kind === "paragraph" ? (
+    <Fill template={words.numTooltip} slots={{ para: place.text, kind, pid }} />
+  ) : (
+    <Fill template={words.numTooltipSection} slots={{ section: place.text, kind, pid }} />
+  );
 }
 
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,

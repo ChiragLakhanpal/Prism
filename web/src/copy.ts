@@ -138,7 +138,7 @@ export const copy = {
     viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
     // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
     // Ticket 40 replaces it with its as-of banner.
-    asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box use ${date}.`,
+    asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use ${date}.`,
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
@@ -480,7 +480,8 @@ export const copy = {
     // Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 ·
     // PDF page 23 of 66". The project ID shows in Roboto Mono.
     meta: {
-      project: "{project} ({pcode})",
+      // A no-break space keeps the project's name with its ID.
+      project: "{project}\u00a0({pcode})",
       section: (section: string) => `Section ${section}`,
       para: (para: string) => `¶${para}`,
       page: (page: string, pages: string) => `PDF page ${page} of ${pages}`,
@@ -500,9 +501,10 @@ export const copy = {
     markerSourceSection: (docType: string, date: string, section: string) => `${docType}, ${date}, section ${section}`,
     markerRecord: (kind: string, reference: string) => `${kind} ${reference}`,
     // A number in a sentence says which source the verifier matched it to.
-    numTooltip: (para: string, docKind: string, pcode: string) => `Matches paragraph ${para} of the ${docKind} for ${pcode}.`,
-    numTooltipSection: (section: string, docKind: string, pcode: string) => `Matches the section ${section} of the ${docKind} for ${pcode}.`,
-    numTooltipRecord: (kind: string, reference: string) => `Matches the ${kind} record ${reference}.`,
+    // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
+    numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
+    numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
+    numTooltipRecord: "Matches the {kind} record {reference}.",
     // What a number's tooltip calls each kind of document, by its short name.
     docKinds: {
       ICR: "completion report",

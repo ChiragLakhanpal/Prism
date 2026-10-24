@@ -220,3 +220,27 @@ question = "Why were works contracts in P130164 advertised again?"
 scope = "P130164"
 as_of = 2019-10-15
 recording = "p130164-before-the-icr"
+
+[[cases]]
+id = "p130164-isr-section"
+says = """The showcase answer, with a fourth sentence that quotes the table in the first ISR's section on the PDO \
+indicators and also cites the ICR's Annex 1.A, which tracked the same indicator. An ISR numbers no paragraphs, so \
+both sources are sections. The numbers sit inside the quote, so the quote's highlight holds them."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_rounds]]
+calls = [
+  { name = "search_passages", arguments = { query = "share of rural population with access to an all-season road end target", project_id = "P130164", as_of = "2026-10-23" } },
+  { name = "search_passages", arguments = { query = "PDO indicators rural population all-season road baseline end target", project_id = "P130164", as_of = "2026-10-23" } },
+]
+
+[[cases.plant_claims]]
+sentence = "The first status report's table for the share of rural people with an all-season road reads \"Percentage Value 67.00 67.00 80.00\", and the completion report tracked the same indicator."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:19095337/v1/s4", "strata.gold.passage:31525018/v1/s38"]
+numbers = ["67.00", "67.00", "80.00"]
+dates = []
+quote = { text = "Percentage Value 67.00 67.00 80.00", passage_id = "strata.gold.passage:19095337/v1/s4" }
