@@ -242,19 +242,29 @@ def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, to
 
 # ── Command line ─────────────────────────────────────────────────────────
 
-def main(argv: list[str] | None = None, workspace=None, env: dict | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--env-file", type=Path, default=None,
+def parse(argv: list[str] | None = None) -> argparse.Namespace:
+    """The command line. --env-file may come before the subcommand or after it, as every command
+    in docs/workspace-catchup.md writes it. Given in both places, the later one wins."""
+    shared = argparse.ArgumentParser(add_help=False)
+    # SUPPRESS keeps a subcommand that was not given --env-file from writing over the one given
+    # before it. The namespace below starts with None, which means the main checkout's .env.
+    shared.add_argument("--env-file", type=Path, default=argparse.SUPPRESS,
                         help="The main checkout's .env, which the wizard filled. That file is the default.")
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0], parents=[shared])
     commands = parser.add_subparsers(dest="command", required=True)
-    run = commands.add_parser("job-run", help="Run the nightly job by hand and check its rows.")
+    run = commands.add_parser("job-run", parents=[shared], help="Run the nightly job by hand and check its rows.")
     run.add_argument("--run-id", help="Check this finished run instead of starting one.")
-    commands.add_parser("same-rows", help="Run the sample queries on DuckDB and on the SQL warehouse.")
-    times = commands.add_parser("schedules", help="Check fairshare's and Strata's nightly schedules.")
+    commands.add_parser("same-rows", parents=[shared],
+                        help="Run the sample queries on DuckDB and on the SQL warehouse.")
+    times = commands.add_parser("schedules", parents=[shared], help="Check fairshare's and Strata's nightly schedules.")
     times.add_argument("--fairshare-job", help="fairshare's nightly job, when its name does not contain fairshare.")
     times.add_argument("--write", action="store_true", help="Record both schedules in bundle/README.md.")
     times.add_argument("--notes", type=Path, default=NOTES, help=argparse.SUPPRESS)
-    args = parser.parse_args(argv)
+    return parser.parse_args(argv, argparse.Namespace(env_file=None))
+
+
+def main(argv: list[str] | None = None, workspace=None, env: dict | None = None) -> int:
+    args = parse(argv)
 
     if env is None:
         try:
