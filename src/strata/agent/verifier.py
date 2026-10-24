@@ -6,7 +6,9 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
    rounding, or appears inside the sentence's quote from a cited passage that is not a table summary.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
-   still checked. A paragraph's text is never a "value": a number from a passage must be quoted.
+   still checked. A passage backs only its dates, such as its report's date: its text is never a
+   value, and its page, paragraph and version numbers say where it is, not what the report counted,
+   so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
 3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation.
@@ -280,6 +282,12 @@ def _is_passage(row: Mapping | None) -> bool:
     return row is not None and "passage_id" in row and isinstance(row.get("text"), str)
 
 
+def _values(row: Mapping | None) -> tuple[set, set]:
+    """The numbers and dates a cited row backs. A passage backs its dates and no number."""
+    numbers, days = row_values(row)
+    return (set(), days) if _is_passage(row) else (numbers, days)
+
+
 def check(index: int, claim: Claim, facts: Facts) -> Checked:
     reasons: list[Reason] = []
     # Check 2: every cited id came back this turn.
@@ -300,7 +308,7 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     else:
         backs = False
     # Check 1: every number and date matches a value in a cited row, or sits inside the quote.
-    rows = [(evidence, row_values(facts.get(evidence))) for evidence in returned]
+    rows = [(evidence, _values(facts.get(evidence))) for evidence in returned]
     stated = mentions(claim.sentence)
     checked: dict[str, list] = {"number": [], "date": []}
     for mention in stated + _declared(claim, stated):

@@ -122,6 +122,15 @@ def test_a_number_no_record_holds_is_removed_with_the_copy_files_reason(ask_case
     assert checks["sentences"] == {"written": 4, "kept": 3, "removed": 1}
 
 
+def test_a_passage_s_page_and_paragraph_numbers_never_back_a_number(ask_case):
+    parsed, _ = ask_case("p130164-page-number-as-a-number")
+
+    # Paragraph 54 is on PDF page 23 (values.toml, icr-para-54); neither number is a count the report gave.
+    [removed] = of(parsed, "removed")
+    assert [(reason["code"], reason["text"]) for reason in removed["reasons"]] == [
+        ("number_not_in_records", "23"), ("number_not_in_records", "54")]
+
+
 def test_a_sentence_citing_a_source_no_tool_returned_this_turn_is_removed(ask_case):
     parsed, _ = ask_case("p130164-source-not-returned")
 

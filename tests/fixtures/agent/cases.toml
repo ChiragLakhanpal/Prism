@@ -59,6 +59,22 @@ numbers = []
 dates = []
 
 [[cases]]
+id = "p130164-page-number-as-a-number"
+says = """The agent states paragraph 54's page and paragraph numbers as if the report counted something with them. A passage's \
+place in its report is not a value, so the verifier removes that sentence."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "In 23 districts, 54 works contracts were bid again."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["23", "54"]
+dates = []
+
+[[cases]]
 id = "p130164-misquote"
 says = "The agent quotes paragraph 54 in words that are not on its page. The verifier removes that sentence."
 question = "Why were works contracts in P130164 advertised again?"
