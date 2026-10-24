@@ -40,8 +40,6 @@ from strata.knowledge.suppliers.matching import Pair, Record, candidate_pairs
 from strata.knowledge.suppliers.names import joint_venture_members
 from strata.lakehouse.engine import Engine
 
-ROUTES = ("auto_merge", "model", "person", "kept_apart")
-OUTCOMES = ("merge", "no_merge", "waiting")
 RESOLVED_SOURCES = ("notices", "awards_fy2001_2016")  # the sources whose rows may lack a STEP supplier ID
 SPLIT_SOURCES = ("awards_fy2001_2016",)  # the sources whose one row may name a joint venture's members
 

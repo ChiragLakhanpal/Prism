@@ -28,7 +28,6 @@ from pathlib import Path
 from strata.lakehouse.engine import Engine
 
 SQL = Path(__file__).resolve().parent / "sql" / "suppliers"
-CHOICES = ("merge", "no_merge")
 
 
 @cache
