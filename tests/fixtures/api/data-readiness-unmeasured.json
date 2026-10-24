@@ -25,6 +25,9 @@
       "count": 632,
       "denominator": 632,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -53,6 +56,9 @@
       "count": 8,
       "denominator": 8,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -81,6 +87,9 @@
       "count": 528,
       "denominator": 603,
       "share_percent": 88,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -109,6 +118,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -137,6 +149,9 @@
       "count": 62,
       "denominator": 62,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -165,6 +180,9 @@
       "count": 5,
       "denominator": 5,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -193,6 +211,9 @@
       "count": 7,
       "denominator": 62,
       "share_percent": 11,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -221,6 +242,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2016-06-10",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -249,6 +273,9 @@
       "count": 1,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -277,6 +304,9 @@
       "count": 1,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -305,6 +335,9 @@
       "count": 1,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -333,6 +366,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -361,6 +397,9 @@
       "count": 3,
       "denominator": 3,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -389,6 +428,9 @@
       "count": 2,
       "denominator": 4,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -417,6 +459,9 @@
       "count": 3,
       "denominator": 3,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -445,6 +490,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -473,6 +521,9 @@
       "count": 1,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -501,6 +552,9 @@
       "count": 1,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -529,6 +583,9 @@
       "count": 0,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -557,6 +614,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -585,6 +645,9 @@
       "count": 384,
       "denominator": 384,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -613,6 +676,9 @@
       "count": 14,
       "denominator": 14,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -641,6 +707,9 @@
       "count": 3,
       "denominator": 3,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -669,6 +738,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -697,6 +769,9 @@
       "count": 88,
       "denominator": 88,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -725,6 +800,9 @@
       "count": 9,
       "denominator": 9,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -753,6 +831,9 @@
       "count": 0,
       "denominator": 1,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -781,6 +862,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -809,6 +893,9 @@
       "count": 418,
       "denominator": 418,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -837,6 +924,9 @@
       "count": 15,
       "denominator": 15,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -865,6 +955,9 @@
       "count": 418,
       "denominator": 418,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -893,6 +986,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -921,6 +1017,9 @@
       "count": 93,
       "denominator": 93,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -949,6 +1048,9 @@
       "count": 14,
       "denominator": 14,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -977,6 +1079,9 @@
       "count": 91,
       "denominator": 92,
       "share_percent": 99,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1005,6 +1110,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1033,6 +1141,9 @@
       "count": 264,
       "denominator": 264,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1060,7 +1171,10 @@
       ],
       "count": 21,
       "denominator": 21,
-      "share_percent": 100,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1089,6 +1203,9 @@
       "count": 2,
       "denominator": 2,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1117,6 +1234,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-10-23",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1145,6 +1265,9 @@
       "count": 11,
       "denominator": 240,
       "share_percent": 5,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1173,6 +1296,9 @@
       "count": 88,
       "denominator": 88,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1200,7 +1326,10 @@
       ],
       "count": 46,
       "denominator": 46,
-      "share_percent": 100,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1228,7 +1357,10 @@
       ],
       "count": 0,
       "denominator": 46,
-      "share_percent": 0,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1258,7 +1390,10 @@
       ],
       "count": 20,
       "denominator": 21,
-      "share_percent": 95,
+      "share_percent": null,
+      "share_bound": "over",
+      "in_ten": 10,
+      "in_ten_exact": false,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1289,6 +1424,9 @@
       "count": 733,
       "denominator": 733,
       "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1319,6 +1457,9 @@
       "count": 145,
       "denominator": 175,
       "share_percent": 83,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1349,6 +1490,9 @@
       "count": null,
       "denominator": null,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": "2026-06-30",
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1377,6 +1521,9 @@
       "count": 2,
       "denominator": 3,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1405,6 +1552,9 @@
       "count": 2,
       "denominator": 2,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1435,6 +1585,9 @@
       "count": 733,
       "denominator": 733,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
@@ -1463,10 +1616,75 @@
       "count": 7,
       "denominator": 7,
       "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
       "as_of": null,
       "measured_on": "2026-10-23",
       "run_ids": [
         "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634/pages_read_route_a",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_a",
+        "subjects": [
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_a",
+      "kind": "read_well",
+      "subjects": [
+        "P156634"
+      ],
+      "count": 22,
+      "denominator": 22,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634/pages_read_route_b",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_b",
+        "subjects": [
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.layout_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_b",
+      "kind": "read_well",
+      "subjects": [
+        "P156634"
+      ],
+      "count": 15,
+      "denominator": 15,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000"
       ]
     }
   ],
@@ -1487,6 +1705,7 @@
     "sources": null,
     "unknown": 0,
     "from": null,
+    "shown": 13,
     "total": 13
   },
   "sources": [
@@ -1505,7 +1724,9 @@
           "measure": "coverage_rows",
           "row": 0,
           "counts": "award rows held",
+          "counts_one": "award row held",
           "noun": "award rows",
+          "noun_one": "award row",
           "status": null,
           "note": null,
           "years_row": 1
@@ -1513,8 +1734,10 @@
         "linked": {
           "measure": "linked_step_reference",
           "row": 2,
-          "counts": "carry a STEP reference",
+          "counts": "contracts carry a STEP reference",
+          "counts_one": "contract carries a STEP reference",
           "noun": "contracts",
+          "noun_one": "contract",
           "status": "partial",
           "note": null
         },
@@ -1525,7 +1748,9 @@
           "measure": "fresh_fetched",
           "row": 3,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "daily",
@@ -1551,13 +1776,15 @@
       "scope": {
         "kind": "every_country"
       },
-      "covers": "fiscal 2001 to 2016",
+      "covers": "fiscal 2001–16",
       "cells": {
         "coverage": {
           "measure": "coverage_rows",
           "row": 4,
           "counts": "award rows held",
+          "counts_one": "award row held",
           "noun": "award rows",
+          "noun_one": "award row",
           "status": "partial",
           "note": "prior-review contracts only",
           "years_row": 5
@@ -1565,8 +1792,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 6,
-          "counts": "have their project record",
+          "counts": "contracts have their project record",
+          "counts_one": "contract has its project record",
           "noun": "contracts",
+          "noun_one": "contract",
           "status": "partial",
           "note": null
         },
@@ -1577,7 +1806,9 @@
           "measure": "fresh_newest_record",
           "row": 7,
           "counts": "newest signing date",
+          "counts_one": null,
           "noun": "contracts",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "frozen",
@@ -1589,7 +1820,7 @@
       "type": "measured",
       "id": "ieg_ratings",
       "source_key": "ieg_ratings",
-      "label": "IEG ratings",
+      "label": "Independent Evaluation Group (IEG) ratings",
       "stratum": "What",
       "scope": {
         "kind": "every_country"
@@ -1600,7 +1831,9 @@
           "measure": "coverage_rows",
           "row": 8,
           "counts": "ratings held",
+          "counts_one": "rating held",
           "noun": "ratings",
+          "noun_one": "rating",
           "status": null,
           "note": null,
           "years_row": 9
@@ -1608,8 +1841,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 10,
-          "counts": "have their project record",
+          "counts": "ratings have their project record",
+          "counts_one": "rating has its project record",
           "noun": "ratings",
+          "noun_one": "rating",
           "status": null,
           "note": null
         },
@@ -1620,7 +1855,9 @@
           "measure": "fresh_fetched",
           "row": 11,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "monthly",
@@ -1632,7 +1869,7 @@
       "type": "measured",
       "id": "ida_credits",
       "source_key": "ida_credits",
-      "label": "IDA credits and grants",
+      "label": "International Development Association (IDA) credits and grants",
       "stratum": "What",
       "scope": {
         "kind": "every_country"
@@ -1643,7 +1880,9 @@
           "measure": "coverage_rows",
           "row": 12,
           "counts": "credits held",
+          "counts_one": "credit held",
           "noun": "credits",
+          "noun_one": "credit",
           "status": null,
           "note": null,
           "years_row": 13
@@ -1651,8 +1890,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 14,
-          "counts": "have their project record",
+          "counts": "credits have their project record",
+          "counts_one": "credit has its project record",
           "noun": "credits",
+          "noun_one": "credit",
           "status": null,
           "note": null
         },
@@ -1663,7 +1904,9 @@
           "measure": "fresh_fetched",
           "row": 15,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "monthly",
@@ -1675,7 +1918,7 @@
       "type": "measured",
       "id": "ibrd_loans",
       "source_key": "ibrd_loans",
-      "label": "IBRD loans",
+      "label": "International Bank for Reconstruction and Development (IBRD) loans",
       "stratum": "What",
       "scope": {
         "kind": "every_country"
@@ -1686,7 +1929,9 @@
           "measure": "coverage_rows",
           "row": 16,
           "counts": "loans held",
+          "counts_one": "loan held",
           "noun": "loans",
+          "noun_one": "loan",
           "status": null,
           "note": null,
           "years_row": 17
@@ -1694,8 +1939,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 18,
-          "counts": "have their project record",
+          "counts": "loans have their project record",
+          "counts_one": "loan has its project record",
           "noun": "loans",
+          "noun_one": "loan",
           "status": "partial",
           "note": null
         },
@@ -1706,7 +1953,9 @@
           "measure": "fresh_fetched",
           "row": 19,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "monthly",
@@ -1735,7 +1984,9 @@
           "measure": "coverage_rows",
           "row": 20,
           "counts": "monthly records held",
+          "counts_one": "monthly record held",
           "noun": "monthly records",
+          "noun_one": "monthly record",
           "status": null,
           "note": null,
           "years_row": 21
@@ -1743,8 +1994,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 22,
-          "counts": "have their project record",
+          "counts": "credits have their project record",
+          "counts_one": "credit has its project record",
           "noun": "credits",
+          "noun_one": "credit",
           "status": null,
           "note": null
         },
@@ -1755,7 +2008,9 @@
           "measure": "fresh_fetched",
           "row": 23,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "monthly",
@@ -1784,7 +2039,9 @@
           "measure": "coverage_rows",
           "row": 24,
           "counts": "monthly records held",
+          "counts_one": "monthly record held",
           "noun": "monthly records",
+          "noun_one": "monthly record",
           "status": null,
           "note": null,
           "years_row": 25
@@ -1792,8 +2049,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 26,
-          "counts": "have their project record",
+          "counts": "loans have their project record",
+          "counts_one": "loan has its project record",
           "noun": "loans",
+          "noun_one": "loan",
           "status": "partial",
           "note": null
         },
@@ -1804,7 +2063,9 @@
           "measure": "fresh_fetched",
           "row": 27,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "monthly",
@@ -1827,7 +2088,9 @@
           "measure": "coverage_rows",
           "row": 28,
           "counts": "notices held",
+          "counts_one": "notice held",
           "noun": "notices",
+          "noun_one": "notice",
           "status": null,
           "note": null,
           "years_row": 29
@@ -1835,8 +2098,10 @@
         "linked": {
           "measure": "linked_project",
           "row": 30,
-          "counts": "have their project record",
+          "counts": "notices have their project record",
+          "counts_one": "notice has its project record",
           "noun": "notices",
+          "noun_one": "notice",
           "status": null,
           "note": null
         },
@@ -1847,7 +2112,9 @@
           "measure": "fresh_fetched",
           "row": 31,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "daily",
@@ -1870,7 +2137,9 @@
           "measure": "coverage_rows",
           "row": 32,
           "counts": "projects held",
+          "counts_one": "project held",
           "noun": "projects",
+          "noun_one": "project",
           "status": null,
           "note": null,
           "years_row": 33
@@ -1878,8 +2147,10 @@
         "linked": {
           "measure": "linked_sector",
           "row": 34,
-          "counts": "map to one sector",
+          "counts": "projects map to one sector",
+          "counts_one": "project maps to one sector",
           "noun": "projects",
+          "noun_one": "project",
           "status": null,
           "note": null
         },
@@ -1890,7 +2161,9 @@
           "measure": "fresh_fetched",
           "row": 35,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "daily",
@@ -1902,7 +2175,7 @@
       "type": "measured",
       "id": "cpia",
       "source_key": "cpia",
-      "label": "CPIA scores",
+      "label": "Country Policy and Institutional Assessment (CPIA) scores",
       "stratum": "What",
       "scope": {
         "kind": "every_country"
@@ -1913,7 +2186,9 @@
           "measure": "coverage_rows",
           "row": 36,
           "counts": "scores held",
+          "counts_one": "score held",
           "noun": "scores",
+          "noun_one": "score",
           "status": "partial",
           "note": "IDA countries only",
           "years_row": 37
@@ -1922,7 +2197,9 @@
           "measure": "linked_country",
           "row": 38,
           "counts": "countries held as borrowers",
+          "counts_one": "country held as a borrower",
           "noun": "countries",
+          "noun_one": "country",
           "status": null,
           "note": null
         },
@@ -1933,7 +2210,9 @@
           "measure": "fresh_fetched",
           "row": 39,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "yearly",
@@ -1945,7 +2224,7 @@
       "type": "unmeasured",
       "id": "wgi",
       "source_key": "wgi",
-      "label": "WGI scores",
+      "label": "Worldwide Governance Indicators (WGI) scores",
       "stratum": "What",
       "scope": {
         "kind": "every_country"
@@ -1956,7 +2235,9 @@
           "measure": "coverage_rows",
           "row": null,
           "counts": "scores held",
+          "counts_one": "score held",
           "noun": "scores",
+          "noun_one": "score",
           "status": null,
           "note": null,
           "years_row": null
@@ -1965,7 +2246,9 @@
           "measure": "linked_country",
           "row": null,
           "counts": "countries held as borrowers",
+          "counts_one": "country held as a borrower",
           "noun": "countries",
+          "noun_one": "country",
           "status": null,
           "note": null
         },
@@ -1976,7 +2259,9 @@
           "measure": "fresh_fetched",
           "row": null,
           "counts": "last fetched",
+          "counts_one": null,
           "noun": "fetches",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "yearly",
@@ -2000,29 +2285,36 @@
           "measure": "plan_versions_read",
           "row": 40,
           "counts": "plan versions read",
+          "counts_one": "plan version read",
           "noun": "plan versions listed",
+          "noun_one": "plan version listed",
           "status": null,
           "note": null
         },
         "linked": {
           "measure": "step_rows_with_reference",
           "row": 41,
-          "counts": "STEP rows with an Activity Reference No.",
-          "noun": "STEP rows",
+          "counts": "plan rows in STEP's format with an Activity Reference No.",
+          "counts_one": "plan row in STEP's format with an Activity Reference No.",
+          "noun": "plan rows in STEP's format",
+          "noun_one": "plan row in STEP's format",
           "status": null,
           "note": null
         },
         "read_well": {
           "measure": "latest_activities_with_step_rows",
           "row": 42,
-          "counts": "activity entries in the latest plan versions with STEP rows",
+          "counts": "activity entries in the latest plan versions with rows in STEP's format",
+          "counts_one": "activity entry in the latest plan versions with rows in STEP's format",
           "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
           "status": null,
           "note": null
         },
         "fresh": {
           "measure": null,
-          "row": null
+          "row": null,
+          "schedule": "as published"
         }
       }
     },
@@ -2042,7 +2334,9 @@
           "measure": "documents_read_route_a_text",
           "row": 44,
           "counts": "reports read from their published text",
+          "counts_one": "report read from its published text",
           "noun": "reports chosen",
+          "noun_one": "report chosen",
           "status": null,
           "note": null
         },
@@ -2050,7 +2344,9 @@
           "measure": "passages_linked_to_project",
           "row": 45,
           "counts": "passages with their project record",
+          "counts_one": "passage with its project record",
           "noun": "passages",
+          "noun_one": "passage",
           "status": null,
           "note": null
         },
@@ -2058,7 +2354,9 @@
           "measure": "document_pages_paragraph_numbering_found",
           "row": 46,
           "counts": "body pages with their paragraph numbers found",
+          "counts_one": "body page with its paragraph numbers found",
           "noun": "body pages",
+          "noun_one": "body page",
           "status": "partial",
           "note": null
         },
@@ -2066,7 +2364,9 @@
           "measure": "documents_fresh",
           "row": 47,
           "counts": "newest report",
+          "counts_one": null,
           "noun": "reports",
+          "noun_one": null,
           "status": null,
           "note": null,
           "schedule": "as published",
@@ -2084,20 +2384,14 @@
       "holds_back": [
         [
           {
-            "text": "The "
+            "text": "Of "
           },
           {
             "number": 46,
             "row": 43,
-            "noun": "activity entries in the latest plan versions"
-          },
-          {
-            "text": " of "
-          },
-          {
-            "number": 46,
-            "row": 43,
-            "noun": "activity entries in the latest plan versions"
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": null
           },
           {
             "text": " "
@@ -2106,10 +2400,20 @@
             "text": "activity entries in the latest plan versions"
           },
           {
-            "text": " that lack "
+            "text": ", "
           },
           {
-            "text": "a confirmed first listing I read"
+            "number": 46,
+            "row": 43,
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": "missing"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "a first listing I could confirm"
           },
           {
             "text": "."
@@ -2125,12 +2429,14 @@
       "holds_back": [
         [
           {
-            "text": "The "
+            "text": "I couldn't read "
           },
           {
             "number": 30,
             "row": 46,
-            "noun": "body pages"
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": "missing"
           },
           {
             "text": " of "
@@ -2138,7 +2444,9 @@
           {
             "number": 175,
             "row": 46,
-            "noun": "body pages"
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": null
           },
           {
             "text": " "
@@ -2147,10 +2455,7 @@
             "text": "body pages"
           },
           {
-            "text": " I couldn't read without errors"
-          },
-          {
-            "text": "."
+            "text": " without errors."
           }
         ]
       ]
@@ -2172,7 +2477,9 @@
         {
           "number": 75,
           "row": 2,
-          "noun": "contracts"
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2180,7 +2487,9 @@
         {
           "number": 603,
           "row": 2,
-          "noun": "contracts"
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": null
         },
         {
           "text": " "
@@ -2192,7 +2501,7 @@
           "text": " that lack "
         },
         {
-          "text": "a STEP reference"
+          "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
         }
       ]
     },
@@ -2243,7 +2552,9 @@
         {
           "number": 30,
           "row": 46,
-          "noun": "body pages"
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2251,7 +2562,9 @@
         {
           "number": 175,
           "row": 46,
-          "noun": "body pages"
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": null
         },
         {
           "text": " "
@@ -2279,7 +2592,9 @@
         {
           "number": 46,
           "row": 43,
-          "noun": "activity entries in the latest plan versions"
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2287,7 +2602,9 @@
         {
           "number": 46,
           "row": 43,
-          "noun": "activity entries in the latest plan versions"
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "role": null
         },
         {
           "text": " "
@@ -2299,7 +2616,7 @@
           "text": " that lack "
         },
         {
-          "text": "a confirmed first listing I read"
+          "text": "a first listing I could confirm"
         }
       ]
     },
@@ -2341,7 +2658,9 @@
         {
           "number": 55,
           "row": 6,
-          "noun": "contracts"
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2349,7 +2668,9 @@
         {
           "number": 62,
           "row": 6,
-          "noun": "contracts"
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": null
         },
         {
           "text": " "
@@ -2380,7 +2701,9 @@
         {
           "number": 1,
           "row": 18,
-          "noun": "loans"
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2388,7 +2711,9 @@
         {
           "number": 1,
           "row": 18,
-          "noun": "loans"
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": null
         },
         {
           "text": " "
@@ -2419,7 +2744,9 @@
         {
           "number": 1,
           "row": 26,
-          "noun": "loans"
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": "missing"
         },
         {
           "text": " of "
@@ -2427,7 +2754,9 @@
         {
           "number": 1,
           "row": 26,
-          "noun": "loans"
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": null
         },
         {
           "text": " "
@@ -2472,6 +2801,7 @@
       "rank": 1,
       "gap": "awards/linked",
       "projects": 2,
+      "row": 2,
       "projects_row": 48,
       "projects_from": "measure",
       "sentence": [
@@ -2481,10 +2811,12 @@
         {
           "number": 75,
           "row": 2,
-          "noun": null
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing"
         },
         {
-          "text": " contract awards that lack one, so each joins its package and its notices."
+          "text": " contracts that lack one, so each joins its package and its notices."
         }
       ]
     },
@@ -2492,6 +2824,7 @@
       "rank": 2,
       "gap": "fy2017_2019",
       "projects": 2,
+      "row": 51,
       "projects_row": 49,
       "projects_from": "measure",
       "sentence": [
@@ -2501,10 +2834,24 @@
         {
           "number": 7,
           "row": 51,
-          "noun": null
+          "noun": "contracts in local currency",
+          "noun_one": null,
+          "role": null
         },
         {
-          "text": " contracts from award notices for fiscal 2017 to 2019 from local currency to US dollars, so they compare with the awards datasets."
+          "text": " contracts in award notices for fiscal "
+        },
+        {
+          "text": "2017"
+        },
+        {
+          "text": " to "
+        },
+        {
+          "text": "2019"
+        },
+        {
+          "text": " from local currency to US dollars, so they can be compared with the awards datasets."
         }
       ]
     },
@@ -2512,19 +2859,22 @@
       "rank": 3,
       "gap": "reports/read_well",
       "projects": 2,
-      "projects_row": 46,
+      "row": 46,
+      "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
         {
-          "text": "Read the "
+          "text": "Use the layout parser on the "
         },
         {
           "number": 30,
           "row": 46,
-          "noun": null
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": "missing"
         },
         {
-          "text": " body pages where I found no paragraph numbers with the layout parser, so each passage keeps its number."
+          "text": " body pages where I found no paragraph numbers, so each passage keeps its number."
         }
       ]
     },
@@ -2532,21 +2882,38 @@
       "rank": 4,
       "gap": "plans/latest_activities_with_confirmed_first_listing_read",
       "projects": 1,
-      "projects_row": 43,
+      "row": 43,
+      "projects_row": null,
       "projects_from": "subjects",
       "sentence": [
         {
-          "text": "Read the older plan versions each project's document list names, so the first listing of each of the "
+          "text": "Read the older plan versions named in each project's document list, so I can confirm the first listing of each of the "
         },
         {
           "number": 46,
           "row": 43,
-          "noun": null
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "role": "missing"
         },
         {
-          "text": " activities is confirmed."
+          "text": " activity entries."
         }
       ]
+    }
+  ],
+  "routes": [
+    {
+      "measure": "pages_read_route_a",
+      "label": "Published text (Route A)",
+      "noun": "plan pages with published text",
+      "row": 52
+    },
+    {
+      "measure": "pages_read_route_b",
+      "label": "Layout parser (Route B)",
+      "noun": "plan table pages",
+      "row": 53
     }
   ],
   "headline": null,

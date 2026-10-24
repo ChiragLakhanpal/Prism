@@ -92,30 +92,32 @@
   "collections": [
     {
       "name": "Procurement Plans",
-      "publisher": "the borrower's implementing agency, disclosed by the World Bank",
-      "origin": "Documents & Reports"
+      "publisher": "the borrower's implementing agency",
+      "origin": "the World Bank's Documents & Reports"
     },
     {
       "name": "Project Appraisal Documents (PADs)",
       "publisher": "the World Bank",
-      "origin": "Documents & Reports"
+      "origin": "the World Bank's Documents & Reports"
     },
     {
       "name": "Implementation Status and Results Reports (ISRs)",
       "publisher": "the World Bank",
-      "origin": "Documents & Reports"
+      "origin": "the World Bank's Documents & Reports"
     },
     {
       "name": "Implementation Completion and Results Reports (ICRs)",
       "publisher": "the World Bank",
-      "origin": "Documents & Reports"
+      "origin": "the World Bank's Documents & Reports"
     },
     {
       "name": "Implementation Completion and Results Report Reviews (ICR Reviews)",
       "publisher": "the Independent Evaluation Group (IEG)",
-      "origin": "Documents & Reports"
+      "origin": "the World Bank's Documents & Reports"
     }
   ],
   "readiness_rows": 13,
-  "kinds": 2
+  "kinds": 2,
+  "known_gaps": 1,
+  "fixes": 4
 }

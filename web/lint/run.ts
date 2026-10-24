@@ -50,7 +50,7 @@ function options(argv: string[]) {
 
 // The source registry's values that people read, each with its line: labels, nouns, notes, what a
 // number counts, fix sentences, collections and data sources. Addresses and ids are left out.
-const REGISTRY_WORDS = /\b(label|noun|covers|note|sentence|counts|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+const REGISTRY_WORDS = /\b(label|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
 
 function registryWords(text: string): { line: number; text: string }[] {
   return text.split("\n").flatMap((line, index) =>

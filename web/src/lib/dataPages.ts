@@ -5,7 +5,11 @@
 // count, sum and share arrives from the tool.
 import { createStore } from "./store";
 
-export type Segment = { text: string } | { number: number; row: number | null; noun: string | null };
+// A sentence's part: text, or a number with the result row it comes from, what it counts, and, when
+// it is neither that row's count nor its denominator, what it is (a shortfall, or days late).
+export type Segment =
+  | { text: string }
+  | { number: number; row: number | null; noun: string | null; noun_one?: string | null; role?: "missing" | "days" | null };
 
 export type MeasureRow = {
   evidence_id: string;
@@ -17,7 +21,12 @@ export type MeasureRow = {
   subjects: string[];
   count: number | null;
   denominator: number | null;
+  // The share as the tool rounded it (data_readiness_for.share): a percent from 50 rows, about N in
+  // 10 from 20, and whether a part rounds to an end of its scale.
   share_percent: number | null;
+  share_bound: "under" | "over" | null;
+  in_ten: number | null;
+  in_ten_exact: boolean | null;
   as_of: string | null;
   measured_on: string;
   run_ids: string[];
@@ -30,7 +39,9 @@ export type Cell = {
   measure?: string | null;
   row?: number | null;
   counts?: string;
+  counts_one?: string | null;
   noun?: string;
+  noun_one?: string | null;
   status?: "partial" | "gap" | null;
   note?: string | null;
   years_row?: number | null;
@@ -56,7 +67,17 @@ export type SourceRow =
 
 export type Kind = { kind: string; tool: string; status: "ready" | "partial" | "gap"; ready_for: number | null; holds_back: Segment[][] };
 
-export type Fix = { rank: number; gap: string; projects: number; projects_row: number | null; projects_from: string; sentence: Segment[] };
+// row is the fix measure's result row; projects_row is the measure that counted its projects, or null
+// when they are the measure's own projects that fall short.
+export type Fix = {
+  rank: number;
+  gap: string;
+  projects: number;
+  row: number;
+  projects_row: number | null;
+  projects_from: "measure" | "subjects";
+  sentence: Segment[];
+};
 
 export type Readiness = {
   tool: string;
@@ -64,13 +85,16 @@ export type Readiness = {
   view: string;
   rows: MeasureRow[];
   abstention: null | { reason: "no_measures" | "before_first_measure" | "unknown_sources"; first_measured_on?: string };
-  filter: { sources: string[] | null; unknown: number; from: string | null; total: number };
+  // shown counts the Sources table's rows in view, which the alert, the count line and the headline use.
+  filter: { sources: string[] | null; unknown: number; from: string | null; shown: number; total: number };
   sources: SourceRow[];
   kinds: Kind[];
   fixes: Fix[];
+  routes: { measure: string; label: string; noun: string; row: number }[];
   headline: { segments: Segment[]; text: string } | null;
   headline_abstention: null | { reason: "unmeasured"; unmeasured: number; sources: number };
-  parse_failures: { project_id: string; document_id: string; pdf_page: number; failed_on: string }[];
+  // null when the Procurement Plans' row is out of view.
+  parse_failures: { project_id: string; document_id: string; pdf_page: number; failed_on: string }[] | null;
   measured: { first: string; last: string } | null;
 };
 
@@ -112,7 +136,9 @@ export type Registry = {
   datasets: { key: string; dataset_name: string; data_source: string; catalog_url: string; name_checked: string; license: string }[];
   collections: { name: string; publisher: string; origin: string }[];
   readiness_rows: number;
+  known_gaps: number;
   kinds: number;
+  fixes: number;
 };
 
 export type RegistryState = { status: "loading" } | { status: "ready"; registry: Registry } | { status: "error" };

@@ -17,6 +17,7 @@ import httpx
 import pytest
 
 from strata import config
+from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, Result
 from strata.server.app import create_app
 
@@ -65,6 +66,7 @@ def each_viewer_gets(engine):
 @pytest.mark.parametrize("query, name", [
     (ON_THE_FIXTURE_DAY, "data-readiness.json"),
     (f"sources=awards,notices&from=find_comparables&{ON_THE_FIXTURE_DAY}", "data-readiness-filtered.json"),
+    (f"sources=documents,projects&from=check_plan&{ON_THE_FIXTURE_DAY}", "data-readiness-plan-check.json"),
     (f"sources=awards,not-a-source&from=find_comparables&{ON_THE_FIXTURE_DAY}", "data-readiness-unknown-key.json"),
     (f"sources=not-a-source&{ON_THE_FIXTURE_DAY}", "data-readiness-no-known-key.json"),
     ("asof=2026-10-01", "data-readiness-before-first.json"),
@@ -76,6 +78,40 @@ def test_the_page_s_answers_on_the_fixture_are_the_recorded_ones(fixture_app, vi
     assert response.json() == recorded(name)
     assert [(viewer.email, viewer.token) for viewer in viewers_seen] == [("ana.example@worldbank.org", "token-for-ana-only")]
     assert "token-for-ana-only" not in response.text
+
+
+@pytest.fixture
+def engine_on(tmp_path):
+    """An app that reads a catalog this test builds under tmp_path."""
+    def app_for(rows=None):
+        path = tmp_path / "strata.duckdb"
+        with DuckDBEngine.open(path) as engine:
+            catalog.build(engine)
+            if rows is not None:
+                engine.insert_rows("strata.ops.data_readiness", rows.columns, list(rows.rows))
+
+        @contextmanager
+        def engine_for(viewer):
+            with DuckDBEngine.open(path, read_only=True) as engine:
+                yield engine
+        return create_app(engine_for=engine_for)
+    return app_for
+
+
+def test_the_recorded_answer_with_no_measures_yet_is_the_server_s_on_an_empty_catalog(engine_on):
+    response = get(engine_on(), f"/api/data/readiness?{ON_THE_FIXTURE_DAY}", ANA)
+
+    assert response.json() == recorded("data-readiness-empty.json")
+
+
+def test_the_recorded_answer_with_one_source_unmeasured_is_the_server_s_without_wgi_s_measures(fixture_db, engine_on):
+    """As tests/record_api.py makes it: the fixture's measures for every source but WGI."""
+    with DuckDBEngine.open(fixture_db, read_only=True) as fixture:
+        measured = fixture.run("SELECT * FROM strata.ops.data_readiness WHERE source <> :left_out", {"left_out": "wgi"})
+
+    response = get(engine_on(measured), f"/api/data/readiness?{ON_THE_FIXTURE_DAY}", ANA)
+
+    assert response.json() == recorded("data-readiness-unmeasured.json")
 
 
 def test_with_no_forwarded_identity_the_page_runs_no_query():

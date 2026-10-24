@@ -43,9 +43,14 @@
 #                     measure (in strata.ops.data_readiness), counts (what the number counts, shown
 #                     under it), noun (one counted thing, in the plural), counted_in (the table it
 #                     counts), lack (for a share: what a row that falls short lacks) and, for
-#                     coverage, years (the measure that counts its fiscal years). A paged source
-#                     with no read_well shows "Published as a table". checks lists more measures
-#                     whose shortfall holds answers back, in the same shape.
+#                     coverage, years (the measure that counts its fiscal years). counts_one and
+#                     noun_one are their singular forms, for a count or a denominator of one. A
+#                     paged source with no read_well shows "Published as a table", and a row with
+#                     no fresh measure but a schedule shows the schedule. checks lists more
+#                     measures whose shortfall holds answers back, in the same shape. routes lists a
+#                     paged reader's reading routes, each with measure (the pages it read well),
+#                     label (its name on the dashboard's chart of pages read well), noun and
+#                     counted_in.
 #   [[sources.<key>.known_gaps]]
 #                     fiscal years no dataset publishes, shown as a Gap row under the source: id,
 #                     label, noun, first_fiscal_year, last_fiscal_year and note
@@ -54,9 +59,11 @@
 #                     note (shown under the number) and, when the source has two rows, row
 #   [[sources.<key>.fixes]]
 #                     what would close a gap: sentence (with {count}, {denominator} and {missing}
-#                     from measure), measure, and projects, the measure that counts the projects the
-#                     fix would add evidence to. Without projects, they are the measure's subjects
-#                     (project IDs) that fall short. gap names the known gap a fix closes.
+#                     from measure, and {fromYear} and {toYear} from the known gap it closes),
+#                     measure, and projects, the measure that counts the projects the fix would add
+#                     evidence to. Without projects, they are the measure's subjects (project IDs)
+#                     that fall short. gap names the known gap a fix closes. noun is what measure
+#                     counts, for its numbers' tooltips, when no column of the source shows it.
 #   [[sources.<key>.collections]]
 #                     for the documents source: each collection's name, publisher and origin
 #
@@ -116,8 +123,8 @@ id = "awards"
 label = "Contract awards"
 noun = "contract awards since fiscal 2020"
 covers = "since fiscal 2020"
-coverage = { measure = "coverage_rows", counts = "award rows held", noun = "award rows", counted_in = "strata.silver.awards", years = "coverage_years" }
-linked = { measure = "linked_step_reference", counts = "carry a STEP reference", noun = "contracts", lack = "a STEP reference", counted_in = "strata.gold.contract" }
+coverage = { measure = "coverage_rows", counts = "award rows held", counts_one = "award row held", noun = "award rows", noun_one = "award row", counted_in = "strata.silver.awards", years = "coverage_years" }
+linked = { measure = "linked_step_reference", counts = "contracts carry a STEP reference", counts_one = "contract carries a STEP reference", noun = "contracts", noun_one = "contract", lack = "a reference from Systematic Tracking of Exchanges in Procurement (STEP)", counted_in = "strata.gold.contract" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [[sources.awards.known_gaps]]
@@ -131,13 +138,14 @@ note = "No World Bank dataset publishes contract awards for these years. Award n
 [[sources.awards.fixes]]
 measure = "linked_step_reference"
 projects = "projects_with_contracts_lacking_step_reference"
-sentence = "Find a STEP reference for the {missing} contract awards that lack one, so each joins its package and its notices."
+sentence = "Find a STEP reference for the {missing} contracts that lack one, so each joins its package and its notices."
 
 [[sources.awards.fixes]]
 gap = "fy2017_2019"
 measure = "gap_years_contracts_in_local_currency"
 projects = "gap_years_projects_in_local_currency"
-sentence = "Convert the {count} contracts from award notices for fiscal 2017 to 2019 from local currency to US dollars, so they compare with the awards datasets."
+noun = "contracts in local currency"
+sentence = "Convert the {count} contracts in award notices for fiscal {fromYear} to {toYear} from local currency to US dollars, so they can be compared with the awards datasets."
 
 [sources.awards_fy2001_2016]
 dataset_name = "Contract Awards in Investment Project Financing (since FY 2001 - FY 2016)"
@@ -165,9 +173,9 @@ name_checked = 2026-10-23
 id = "awards_fy2001_2016"
 label = "Contract awards"
 noun = "contract awards for fiscal 2001 to 2016"
-covers = "fiscal 2001 to 2016"
-coverage = { measure = "coverage_rows", counts = "award rows held", noun = "award rows", counted_in = "strata.silver.awards_fy2001_2016", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "contracts", lack = "a project record I hold", counted_in = "strata.gold.contract" }
+covers = "fiscal 2001–16"
+coverage = { measure = "coverage_rows", counts = "award rows held", counts_one = "award row held", noun = "award rows", noun_one = "award row", counted_in = "strata.silver.awards_fy2001_2016", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "contracts have their project record", counts_one = "contract has its project record", noun = "contracts", noun_one = "contract", lack = "a project record I hold", counted_in = "strata.gold.contract" }
 fresh = { measure = "fresh_newest_record", counts = "newest signing date", noun = "contracts", counted_in = "strata.bronze.api_pages" }
 
 [[sources.awards_fy2001_2016.declared]]
@@ -201,10 +209,10 @@ name_checked = 2026-10-23
 
 [[sources.ieg_ratings.readiness]]
 id = "ieg_ratings"
-label = "IEG ratings"
+label = "Independent Evaluation Group (IEG) ratings"
 noun = "IEG ratings"
-coverage = { measure = "coverage_rows", counts = "ratings held", noun = "ratings", counted_in = "strata.silver.ieg_ratings", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "ratings", lack = "a project record I hold", counted_in = "strata.gold.ieg_rating" }
+coverage = { measure = "coverage_rows", counts = "ratings held", counts_one = "rating held", noun = "ratings", noun_one = "rating", counted_in = "strata.silver.ieg_ratings", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "ratings have their project record", counts_one = "rating has its project record", noun = "ratings", noun_one = "rating", lack = "a project record I hold", counted_in = "strata.gold.ieg_rating" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── Loans and credits: the latest snapshot, and the monthly history ──────
@@ -231,10 +239,10 @@ name_checked = 2026-10-23
 
 [[sources.ida_credits.readiness]]
 id = "ida_credits"
-label = "IDA credits and grants"
+label = "International Development Association (IDA) credits and grants"
 noun = "IDA credits and grants"
-coverage = { measure = "coverage_rows", counts = "credits held", noun = "credits", counted_in = "strata.silver.loans", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "credits", lack = "a project record I hold", counted_in = "strata.gold.loan" }
+coverage = { measure = "coverage_rows", counts = "credits held", counts_one = "credit held", noun = "credits", noun_one = "credit", counted_in = "strata.silver.loans", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "credits have their project record", counts_one = "credit has its project record", noun = "credits", noun_one = "credit", lack = "a project record I hold", counted_in = "strata.gold.loan" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [sources.ibrd_loans]
@@ -259,10 +267,10 @@ name_checked = 2026-10-23
 
 [[sources.ibrd_loans.readiness]]
 id = "ibrd_loans"
-label = "IBRD loans"
+label = "International Bank for Reconstruction and Development (IBRD) loans"
 noun = "IBRD loans"
-coverage = { measure = "coverage_rows", counts = "loans held", noun = "loans", counted_in = "strata.silver.loans", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "loans", lack = "a project record I hold", counted_in = "strata.gold.loan" }
+coverage = { measure = "coverage_rows", counts = "loans held", counts_one = "loan held", noun = "loans", noun_one = "loan", counted_in = "strata.silver.loans", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "loans have their project record", counts_one = "loan has its project record", noun = "loans", noun_one = "loan", lack = "a project record I hold", counted_in = "strata.gold.loan" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [sources.ida_credit_history]
@@ -291,8 +299,8 @@ name_checked = 2026-10-23
 id = "ida_credit_history"
 label = "IDA credit history"
 noun = "monthly IDA credit records"
-coverage = { measure = "coverage_rows", counts = "monthly records held", noun = "monthly records", counted_in = "strata.silver.loan_history", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "credits", lack = "a project record I hold", counted_in = "strata.silver.loan_history" }
+coverage = { measure = "coverage_rows", counts = "monthly records held", counts_one = "monthly record held", noun = "monthly records", noun_one = "monthly record", counted_in = "strata.silver.loan_history", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "credits have their project record", counts_one = "credit has its project record", noun = "credits", noun_one = "credit", lack = "a project record I hold", counted_in = "strata.silver.loan_history" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [sources.ibrd_loan_history]
@@ -321,8 +329,8 @@ name_checked = 2026-10-23
 id = "ibrd_loan_history"
 label = "IBRD loan history"
 noun = "monthly IBRD loan records"
-coverage = { measure = "coverage_rows", counts = "monthly records held", noun = "monthly records", counted_in = "strata.silver.loan_history", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "loans", lack = "a project record I hold", counted_in = "strata.silver.loan_history" }
+coverage = { measure = "coverage_rows", counts = "monthly records held", counts_one = "monthly record held", noun = "monthly records", noun_one = "monthly record", counted_in = "strata.silver.loan_history", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "loans have their project record", counts_one = "loan has its project record", noun = "loans", noun_one = "loan", lack = "a project record I hold", counted_in = "strata.silver.loan_history" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── The search APIs: procurement notices and projects ────────────────────
@@ -350,8 +358,8 @@ name_checked = 2026-10-23
 id = "notices"
 label = "Procurement notices"
 noun = "procurement notices"
-coverage = { measure = "coverage_rows", counts = "notices held", noun = "notices", counted_in = "strata.silver.notices", years = "coverage_years" }
-linked = { measure = "linked_project", counts = "have their project record", noun = "notices", lack = "a project record I hold", counted_in = "strata.gold.notice" }
+coverage = { measure = "coverage_rows", counts = "notices held", counts_one = "notice held", noun = "notices", noun_one = "notice", counted_in = "strata.silver.notices", years = "coverage_years" }
+linked = { measure = "linked_project", counts = "notices have their project record", counts_one = "notice has its project record", noun = "notices", noun_one = "notice", lack = "a project record I hold", counted_in = "strata.gold.notice" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # The projects API answers with every field unless asked for some, and the full record is many
@@ -379,8 +387,8 @@ name_checked = 2026-10-23
 id = "projects"
 label = "Projects"
 noun = "project records"
-coverage = { measure = "coverage_rows", counts = "projects held", noun = "projects", counted_in = "strata.silver.projects", years = "coverage_years" }
-linked = { measure = "linked_sector", counts = "map to one sector", noun = "projects", lack = "one sector", counted_in = "strata.gold.project" }
+coverage = { measure = "coverage_rows", counts = "projects held", counts_one = "project held", noun = "projects", noun_one = "project", counted_in = "strata.silver.projects", years = "coverage_years" }
+linked = { measure = "linked_sector", counts = "projects map to one sector", counts_one = "project maps to one sector", noun = "projects", noun_one = "project", lack = "one sector", counted_in = "strata.gold.project" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── Governance indicators: CPIA and WGI ──────────────────────────────────
@@ -412,10 +420,10 @@ name_checked = 2026-10-23
 
 [[sources.cpia.readiness]]
 id = "cpia"
-label = "CPIA scores"
+label = "Country Policy and Institutional Assessment (CPIA) scores"
 noun = "CPIA scores"
-coverage = { measure = "coverage_rows", counts = "scores held", noun = "scores", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries held as borrowers", noun = "countries", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
+linked = { measure = "linked_country", counts = "countries held as borrowers", counts_one = "country held as a borrower", noun = "countries", noun_one = "country", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [[sources.cpia.declared]]
@@ -444,10 +452,10 @@ name_checked = 2026-10-23
 
 [[sources.wgi.readiness]]
 id = "wgi"
-label = "WGI scores"
+label = "Worldwide Governance Indicators (WGI) scores"
 noun = "WGI scores"
-coverage = { measure = "coverage_rows", counts = "scores held", noun = "scores", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries held as borrowers", noun = "countries", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
+linked = { measure = "linked_country", counts = "countries held as borrowers", counts_one = "country held as a borrower", noun = "countries", noun_one = "country", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── Documents ────────────────────────────────────────────────────────────
@@ -481,11 +489,16 @@ id = "plans"
 label = "Procurement Plans"
 noun = "Procurement Plans"
 stratum = "How"
-coverage = { measure = "plan_versions_read", counts = "plan versions read", noun = "plan versions listed", counted_in = "strata.silver.plan_versions" }
-linked = { measure = "step_rows_with_reference", counts = "STEP rows with an Activity Reference No.", noun = "STEP rows", lack = "an Activity Reference No.", counted_in = "strata.silver.plan_rows" }
-read_well = { measure = "latest_activities_with_step_rows", counts = "activity entries in the latest plan versions with STEP rows", noun = "activity entries in the latest plan versions", counted_in = "strata.silver.plan_rows" }
+schedule = "as published"
+coverage = { measure = "plan_versions_read", counts = "plan versions read", counts_one = "plan version read", noun = "plan versions listed", noun_one = "plan version listed", counted_in = "strata.silver.plan_versions" }
+linked = { measure = "step_rows_with_reference", counts = "plan rows in STEP's format with an Activity Reference No.", counts_one = "plan row in STEP's format with an Activity Reference No.", noun = "plan rows in STEP's format", noun_one = "plan row in STEP's format", lack = "an Activity Reference No.", counted_in = "strata.silver.plan_rows" }
+read_well = { measure = "latest_activities_with_step_rows", counts = "activity entries in the latest plan versions with rows in STEP's format", counts_one = "activity entry in the latest plan versions with rows in STEP's format", noun = "activity entries in the latest plan versions", noun_one = "activity entry in the latest plan versions", counted_in = "strata.silver.plan_rows" }
 checks = [
-  { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activity entries in the latest plan versions whose confirmed first listing was read", noun = "activity entries in the latest plan versions", lack = "a confirmed first listing I read", counted_in = "strata.silver.plan_listings" },
+  { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activity entries in the latest plan versions whose confirmed first listing was read", noun = "activity entries in the latest plan versions", noun_one = "activity entry in the latest plan versions", lack = "a first listing I could confirm", counted_in = "strata.silver.plan_listings" },
+]
+routes = [
+  { measure = "pages_read_route_a", label = "Published text (Route A)", noun = "plan pages with published text", counted_in = "strata.bronze.document_pages" },
+  { measure = "pages_read_route_b", label = "Layout parser (Route B)", noun = "plan table pages", counted_in = "strata.bronze.layout_pages" },
 ]
 
 [[sources.documents.readiness]]
@@ -494,40 +507,40 @@ label = "Project reports"
 noun = "project reports"
 stratum = "Why"
 schedule = "as published"
-coverage = { measure = "documents_read_route_a_text", counts = "reports read from their published text", noun = "reports chosen", counted_in = "strata.bronze.document_texts" }
-linked = { measure = "passages_linked_to_project", counts = "passages with their project record", noun = "passages", lack = "a project record I hold", counted_in = "strata.gold.passage" }
-read_well = { measure = "document_pages_paragraph_numbering_found", counts = "body pages with their paragraph numbers found", noun = "body pages", counted_in = "strata.silver.passages" }
+coverage = { measure = "documents_read_route_a_text", counts = "reports read from their published text", counts_one = "report read from its published text", noun = "reports chosen", noun_one = "report chosen", counted_in = "strata.bronze.document_texts" }
+linked = { measure = "passages_linked_to_project", counts = "passages with their project record", counts_one = "passage with its project record", noun = "passages", noun_one = "passage", lack = "a project record I hold", counted_in = "strata.gold.passage" }
+read_well = { measure = "document_pages_paragraph_numbering_found", counts = "body pages with their paragraph numbers found", counts_one = "body page with its paragraph numbers found", noun = "body pages", noun_one = "body page", counted_in = "strata.silver.passages" }
 fresh = { measure = "documents_fresh", counts = "newest report", noun = "reports", counted_in = "strata.bronze.document_texts" }
 
 [[sources.documents.fixes]]
 measure = "document_pages_paragraph_numbering_found"
-sentence = "Read the {missing} body pages where I found no paragraph numbers with the layout parser, so each passage keeps its number."
+sentence = "Use the layout parser on the {missing} body pages where I found no paragraph numbers, so each passage keeps its number."
 
 [[sources.documents.fixes]]
 measure = "latest_activities_with_confirmed_first_listing_read"
-sentence = "Read the older plan versions each project's document list names, so the first listing of each of the {missing} activities is confirmed."
+sentence = "Read the older plan versions named in each project's document list, so I can confirm the first listing of each of the {missing} activity entries."
 
 [[sources.documents.collections]]
 name = "Procurement Plans"
-publisher = "the borrower's implementing agency, disclosed by the World Bank"
-origin = "Documents & Reports"
+publisher = "the borrower's implementing agency"
+origin = "the World Bank's Documents & Reports"
 
 [[sources.documents.collections]]
 name = "Project Appraisal Documents (PADs)"
 publisher = "the World Bank"
-origin = "Documents & Reports"
+origin = "the World Bank's Documents & Reports"
 
 [[sources.documents.collections]]
 name = "Implementation Status and Results Reports (ISRs)"
 publisher = "the World Bank"
-origin = "Documents & Reports"
+origin = "the World Bank's Documents & Reports"
 
 [[sources.documents.collections]]
 name = "Implementation Completion and Results Reports (ICRs)"
 publisher = "the World Bank"
-origin = "Documents & Reports"
+origin = "the World Bank's Documents & Reports"
 
 [[sources.documents.collections]]
 name = "Implementation Completion and Results Report Reviews (ICR Reviews)"
 publisher = "the Independent Evaluation Group (IEG)"
-origin = "Documents & Reports"
+origin = "the World Bank's Documents & Reports"

@@ -892,14 +892,14 @@ function readinessSections(): GalleryPage["sections"] {
   const words = galleryCopy.readiness;
   const result = words.result as unknown as Readiness;
   const ready = (changes: Partial<Readiness>): ReadinessState => ({ status: "ready", result: { ...result, ...changes } });
-  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, kinds: words.kinds } };
+  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes } };
   const states: [string, string, ReadinessState, boolean?][] = [
     ["ready", words.sections.ready, ready({})],
     [
       "filtered",
       words.sections.filtered,
       ready({
-        filter: { sources: ["sample", "notes"], unknown: 1, from: "find_comparables", total: 4 },
+        filter: { sources: ["sample", "notes"], unknown: 1, from: "find_comparables", shown: 2, total: 4 },
         sources: result.sources.slice(0, 3),
         kinds: [],
         fixes: result.fixes.slice(0, 1),

@@ -1,21 +1,22 @@
 -- Tile 5: every source's rows per fiscal year, with exact counts, as public on the measure date:
--- the table beside tile 4's chart, and the coverage of the sources that are not awards.
+-- the table beside tile 4's chart, and the coverage of the sources that are not awards. The sources'
+-- names are parameters whose values are copy.dataReadiness.server.dashboard.labels.
 WITH counted AS (
   SELECT
     CASE source
-      WHEN 'awards' THEN 'Awards since FY2020'
-      WHEN 'awards_fy2001_2016' THEN 'Awards, FY2001–16'
-      ELSE 'Award notices, FY2017–19'
+      WHEN 'awards' THEN :awards_label
+      WHEN 'awards_fy2001_2016' THEN :fy2001_label
+      ELSE :notices_awards_label
     END AS source,
     fiscal_year
   FROM strata.gold.contract
   WHERE public_from <= :measure_date
   UNION ALL
-  SELECT 'Procurement notices', fiscal_year FROM strata.silver.notices WHERE public_from <= :measure_date
+  SELECT :notices_label, fiscal_year FROM strata.silver.notices WHERE public_from <= :measure_date
   UNION ALL
-  SELECT 'Projects', approval_fiscal_year FROM strata.gold.project WHERE public_from <= :measure_date
+  SELECT :projects_label, approval_fiscal_year FROM strata.gold.project WHERE public_from <= :measure_date
   UNION ALL
-  SELECT 'IEG ratings', evaluation_fy FROM strata.gold.ieg_rating WHERE public_from <= :measure_date
+  SELECT :ieg_label, evaluation_fy FROM strata.gold.ieg_rating WHERE public_from <= :measure_date
 )
 SELECT
   source,

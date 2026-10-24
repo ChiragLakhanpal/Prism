@@ -43,11 +43,12 @@ from decimal import ROUND_HALF_UP, Decimal
 from functools import cache
 from importlib import resources
 
-from strata.config import (AS_PUBLISHED, EVERY_COUNTRY, READINESS_COLUMNS, SLICE_COUNTRIES, ReadinessColumn,
+from strata.config import (AS_PUBLISHED, EVERY_COUNTRY, READINESS_COLUMNS, SLICE_COUNTRIES, Fix, ReadinessColumn,
                            ReadinessRow, Source, load_sources, load_tools)
-from strata.tools.registry import Call
+from strata.tools.registry import Call, ToolContractError
 
 ALL = "all"  # the subject of a source's measure for every country
+PLANS = "plans"  # the readiness row of the plan reader, whose layout parser's failures the page lists
 PROJECT = re.compile(r"P\d{6}")
 SHARES = {"linked": "linked_min_share", "read_well": "read_well_min_share"}
 TABLE = "strata.ops.data_readiness"
@@ -98,11 +99,15 @@ def _date_text(day: dt.date, today: dt.date) -> str:
     return f"{month} {day.day}" if day.year == today.year else f"{month} {day.day}, {day.year}"
 
 
-def number(value: int, row: int | None = None, noun: str | None = None) -> dict:
-    return {"number": value, "row": row, "noun": noun}
+def number(value: int, row: int | None = None, noun: str | None = None, role: str | None = None,
+           noun_one: str | None = None) -> dict:
+    """A number in a sentence: the result row it comes from, what it counts (plural, and singular for
+    a one), and, when it is neither that row's count nor its denominator, what it is (missing, a
+    shortfall; days, how late), so its window can show it above the measure's own numbers."""
+    return {"number": value, "row": row, "noun": noun, "noun_one": noun_one, "role": role}
 
 
-def _fill(template: str, slots: dict) -> Segments:
+def fill(template: str, slots: dict) -> Segments:
     """A template with each {slot} replaced by text or by segments."""
     out: Segments = []
     for index, part in enumerate(re.split(r"\{(\w+)\}", template)):
@@ -118,13 +123,6 @@ def _fill(template: str, slots: dict) -> Segments:
 def text_of(segments: Segments) -> str:
     """Segments as plain text, with each number written as Num writes it in a sentence."""
     return "".join(segment["text"] if "text" in segment else _count_text(segment["number"]) for segment in segments)
-
-
-def _sentence(segments: Segments) -> Segments:
-    """A gap phrase as a sentence: a capital letter and a full stop."""
-    first = dict(segments[0])
-    first["text"] = first["text"][:1].upper() + first["text"][1:]
-    return [first, *segments[1:], {"text": "."}]
 
 
 def _joined(parts: list[Segments]) -> Segments:
@@ -177,7 +175,9 @@ class Measures:
             "subjects": subjects,
             "count": count,
             "denominator": denominator,
-            "share_percent": None,  # filled by the caller, which knows the thresholds
+            # share_percent, share_bound, in_ten and in_ten_exact: filled by the caller, which knows
+            # the thresholds (share)
+            **share(None, None, 0, 0),
             "as_of": _iso(as_of),
             "measured_on": measured_on.isoformat(),
             "run_ids": sorted({row["run_id"] for row in chosen}),
@@ -191,27 +191,65 @@ class Measures:
                    if PROJECT.fullmatch(row["subject"]) and (_whole(row["count"]) or 0) < (_whole(row["denominator"]) or 0))
 
 
-def _share(count: int | None, denominator: int | None, fewest: int) -> int | None:
-    """The whole percent, rounded half up as Num rounds it, from fewest rows; else None."""
-    if count is None or not denominator or denominator < fewest:
-        return None
-    return int((Decimal(count) * 100 / Decimal(denominator)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+def _rounded(count: int, denominator: int, scale: int) -> int:
+    return int((Decimal(count) * scale / Decimal(denominator)).quantize(Decimal(1), rounding=ROUND_HALF_UP))
+
+
+def share(count: int | None, denominator: int | None, fewest_in_ten: int, fewest_percent: int) -> dict:
+    """A share as DESIGN.md section 7 writes it (rules 6, 11 and 15), worked out here once, rounded
+    half up, so neither the page nor the dashboard divides (CLAUDE.md rule 1):
+
+    - share_percent, the whole percent, from fewest_percent rows, for the page and the dashboard's
+      charts, 0 and 100 included;
+    - in_ten, "about N in 10", with in_ten_exact when it is exact, from fewest_in_ten rows up to
+      fewest_percent, for a part strictly between none and all (the count says the rest);
+    - share_bound, "under" or "over", when a part strictly between none and all rounds to the end of
+      its scale, so it reads "<1%" or "more than 9 in 10", never 0 or 100 for a part.
+    Under fewest_in_ten rows, none of them: the cell shows the count alone."""
+    out = {"share_percent": None, "share_bound": None, "in_ten": None, "in_ten_exact": None}
+    if count is None or not denominator or denominator < fewest_in_ten:
+        return out
+    part = 0 < count < denominator
+    if denominator >= fewest_percent:
+        out["share_percent"] = _rounded(count, denominator, 100)
+        top = 100
+    elif part:
+        out["in_ten"], out["in_ten_exact"] = _rounded(count, denominator, 10), count * 10 % denominator == 0
+        top = 10
+    else:
+        return out
+    rounded = out["share_percent"] if out["share_percent"] is not None else out["in_ten"]
+    if part and rounded in (0, top):
+        out["share_bound"] = "under" if rounded == 0 else "over"
+    return out
 
 
 # ── The page ─────────────────────────────────────────────────────────────
 
 @dataclass
 class Gap:
+    """One gap, with its words twice: as a phrase in the headline (copy's server.gap) and as a full
+    sentence under "What holds it back" (server.holds), both filled from the same slots."""
+
     id: str
     type: str  # published, no_rows, declared, linked, read_well, late or check
     status: str  # gap or partial
     row_id: str
     source_key: str
     column: str | None
-    phrase: Segments
+    words: str  # the key of its templates in server.gap and server.holds
+    slots: dict
     measure: str | None = None
     projects: int | None = None
     order: int = 0
+
+    @property
+    def phrase(self) -> Segments:
+        return fill(words()["gap"][self.words], self.slots)
+
+    @property
+    def holds(self) -> Segments:
+        return fill(words()["holds"][self.words], self.slots)
 
     def as_dict(self) -> dict:
         return {"id": self.id, "type": self.type, "status": self.status, "row_id": self.row_id,
@@ -230,10 +268,14 @@ class Page:
         return self.call.thresholds.value(f"data_readiness.{name}")
 
     def row_ref(self, source: Source, column: ReadinessColumn, newest: bool = False) -> int | None:
-        index = self.measures.use(source.key, column.measure, column.counted_in, newest)
+        return self.shared(self.measures.use(source.key, column.measure, column.counted_in, newest))
+
+    def shared(self, index: int | None) -> int | None:
+        """A result row with its share filled in, by the thresholds file's rules."""
         if index is not None:
             row = self.measures.rows[index]
-            row["share_percent"] = _share(row["count"], row["denominator"], int(self.value("fewest_for_a_share")))
+            row.update(share(row["count"], row["denominator"], int(self.value("fewest_for_a_share")),
+                             int(self.value("fewest_for_a_percentage"))))
         return index
 
     def gap(self, **fields) -> Gap:
@@ -249,13 +291,11 @@ class Page:
             return False
         return Decimal(row["count"]) / Decimal(row["denominator"]) < Decimal(str(self.value(threshold)))
 
-    def shortfall(self, index: int, column: ReadinessColumn, kind: str) -> Segments:
+    def shortfall(self, index: int, column: ReadinessColumn) -> dict:
         row = self.measures.rows[index]
-        template = words()["gap"]["readWell" if kind == "read_well" else kind]
-        return _fill(template, {
-            "missing": number(row["denominator"] - row["count"], index, column.noun),
-            "total": number(row["denominator"], index, column.noun),
-            "noun": column.noun, "lack": column.lack or ""})
+        return {"missing": number(row["denominator"] - row["count"], index, column.noun, "missing", column.noun_one),
+                "total": number(row["denominator"], index, column.noun, noun_one=column.noun_one),
+                "noun": column.noun, "lack": column.lack or ""}
 
     def late_days(self, source: Source, schedule: str, as_of: dt.date | None) -> int | None:
         if as_of is None or schedule in ("frozen", AS_PUBLISHED):
@@ -270,11 +310,12 @@ class Page:
         if column is None:
             if name == "read_well" and source.paged:
                 return {"published_as_table": True}
-            return {"measure": None, "row": None}
+            # No measure, and none to wait for; a row whose documents arrive as published says so.
+            return {"measure": None, "row": None, **({"schedule": row.schedule} if name == "fresh" else {})}
         schedule = row.schedule or source.cadence
         index = self.row_ref(source, column, newest=schedule == AS_PUBLISHED)
-        cell = {"measure": column.measure, "row": index, "counts": column.counts, "noun": column.noun,
-                "status": None, "note": None}
+        cell = {"measure": column.measure, "row": index, "counts": column.counts, "counts_one": column.counts_one,
+                "noun": column.noun, "noun_one": column.noun_one, "status": None, "note": None}
         if name == "coverage" and column.years:
             cell["years_row"] = self.row_ref(source, ReadinessColumn(column.years, "", "", column.counted_in))
         if name == "fresh":
@@ -286,26 +327,26 @@ class Page:
         base = {"row_id": row.id, "source_key": source.key, "column": name, "measure": column.measure}
         if name == "coverage" and measured["count"] == 0:
             cell["status"] = "gap"
-            self.gap(id=f"{row.id}/{name}", type="no_rows", status="gap",
-                     phrase=_fill(words()["gap"]["noRows"], {"sourceNoun": row.noun}), **base)
+            self.gap(id=f"{row.id}/{name}", type="no_rows", status="gap", words="noRows",
+                     slots={"sourceNoun": row.noun}, **base)
         elif name in SHARES and self.short(index, SHARES[name]):
             cell["status"] = "partial"
             self.gap(id=f"{row.id}/{name}", type=name, status="partial",
-                     phrase=self.shortfall(index, column, name if name == "linked" else "read_well"), **base)
+                     words="linked" if name == "linked" else "readWell", slots=self.shortfall(index, column), **base)
         elif name == "fresh":
             late = self.late_days(source, schedule, _date(measured["as_of"]))
             if late is not None:
                 cell["status"], cell["late_days"] = "partial", late
                 fetched = _date(measured["as_of"])
-                template = words()["gap"]["lateOneDay" if late == 1 else "late"]
-                self.gap(id=f"{row.id}/{name}", type="late", status="partial", phrase=_fill(template, {
-                    "sourceNoun": row.noun, "date": _date_text(fetched, self.call.as_of),
-                    "days": number(late, index, None), "schedule": words()["schedules"][schedule]}), **base)
+                self.gap(id=f"{row.id}/{name}", type="late", status="partial",
+                         words="lateOneDay" if late == 1 else "late", slots={
+                             "sourceNoun": row.noun, "date": _date_text(fetched, self.call.as_of),
+                             "days": number(late, index, words()["daysLate"], "days", words()["dayLate"]),
+                             "schedule": words()["schedules"][schedule]}, **base)
         if declared and cell["status"] is None:
             cell["status"], cell["note"] = "partial", declared[0].note
-            self.gap(id=f"{row.id}/{name}/declared", type="declared", status="partial",
-                     phrase=_fill(words()["gap"]["declared"], {"sourceNoun": row.noun, "note": declared[0].note}),
-                     **base)
+            self.gap(id=f"{row.id}/{name}/declared", type="declared", status="partial", words="declared",
+                     slots={"sourceNoun": row.noun, "note": declared[0].note}, **base)
         return cell
 
     def checks(self, source: Source, row: ReadinessRow) -> None:
@@ -313,8 +354,8 @@ class Page:
             index = self.row_ref(source, check)
             if index is not None and self.short(index, "check_min_share"):
                 self.gap(id=f"{row.id}/{check.measure}", type="check", status="partial", row_id=row.id,
-                         source_key=source.key, column=None, measure=check.measure,
-                         phrase=self.shortfall(index, check, "check"))
+                         source_key=source.key, column=None, measure=check.measure, words="check",
+                         slots=self.shortfall(index, check))
 
     def scope(self, source: Source, row: ReadinessRow, cells: dict) -> dict:
         if source.scope == EVERY_COUNTRY:
@@ -341,17 +382,42 @@ class Page:
                             "first_fiscal_year": known.first_fiscal_year, "last_fiscal_year": known.last_fiscal_year,
                             "note": known.note})
                 self.gap(id=known.id, type="published", status="gap", row_id=source.readiness[0].id, source_key=key,
-                         column=None, phrase=_fill(words()["gap"]["published"], {
+                         column=None, words="published", slots={
                              "sourceNoun": known.noun, "fromYear": known.first_fiscal_year,
-                             "toYear": known.last_fiscal_year}))
+                             "toYear": known.last_fiscal_year})
+        return out
+
+    def fix_for(self, found: Gap) -> Fix | None:
+        """The registry's fix for a gap: the one that names its known gap, or the one on its measure."""
+        return next((fix for fix in self.sources[found.source_key].fixes
+                     if (fix.gap == found.id if found.type == "published"
+                         else fix.gap is None and fix.measure == found.measure)), None)
+
+    def noun(self, source: Source, measure: str) -> tuple[str | None, str | None]:
+        """What a measure of a source counts, plural and singular, from the column that shows it."""
+        for row in source.readiness:
+            for column in (*(getattr(row, name) for name in READINESS_COLUMNS), *row.checks):
+                if column and column.measure == measure:
+                    return column.noun, column.noun_one
+        return None, None
+
+    def routes(self, in_view: set[str]) -> list[dict]:
+        """Each reading route of the rows in view, with the result row of the pages it read well."""
+        out = []
+        for source in self.sources.values():
+            for row in source.readiness:
+                for route in row.routes if row.id in in_view else ():
+                    index = self.shared(self.measures.use(source.key, route.measure, route.counted_in))
+                    if index is not None:
+                        out.append({"measure": route.measure, "label": route.label, "noun": route.noun,
+                                    "row": index})
         return out
 
     def rank(self) -> list[Gap]:
         """Gaps by the projects their fix would add evidence to, highest first, ties in registry order."""
         for found in self.gaps:
             source = self.sources[found.source_key]
-            fix = next((fix for fix in source.fixes if (fix.gap == found.id if found.type == "published"
-                                                        else fix.gap is None and fix.measure == found.measure)), None)
+            fix = self.fix_for(found)
             if fix is None:
                 continue
             if fix.projects:
@@ -365,8 +431,7 @@ class Page:
         out = []
         for found in ranked:
             source = self.sources[found.source_key]
-            fix = next((fix for fix in source.fixes if (fix.gap == found.id if found.type == "published"
-                                                        else fix.gap is None and fix.measure == found.measure)), None)
+            fix = self.fix_for(found)
             if fix is None or not found.projects:
                 continue
             index = self.measures.use(source.key, fix.measure)
@@ -374,35 +439,49 @@ class Page:
                 continue
             row = self.measures.rows[index]
             count, denominator = row["count"] or 0, row["denominator"] or 0
-            projects_row = self.measures.use(source.key, fix.projects) if fix.projects else index
-            out.append({"rank": len(out) + 1, "gap": found.id, "projects": found.projects,
-                        "projects_row": projects_row, "projects_from": "measure" if fix.projects else "subjects",
-                        "sentence": _fill(fix.sentence, {"count": number(count, index), "denominator": number(
-                            denominator, index), "missing": number(denominator - count, index)})})
+            noun, noun_one = (fix.noun, None) if fix.noun else self.noun(source, fix.measure)
+            known = next((gap for gap in source.known_gaps if gap.id == fix.gap), None)
+            slots = {"count": number(count, index, noun, noun_one=noun_one),
+                     "denominator": number(denominator, index, noun, noun_one=noun_one),
+                     "missing": number(denominator - count, index, noun, "missing", noun_one),
+                     "fromYear": known.first_fiscal_year if known else "", "toYear": known.last_fiscal_year if known else ""}
+            # Projects counted by a measure open it; projects counted as the measure's subjects that
+            # fall short have no row of their own.
+            out.append({"rank": len(out) + 1, "gap": found.id, "projects": found.projects, "row": index,
+                        "projects_row": self.measures.use(source.key, fix.projects) if fix.projects else None,
+                        "projects_from": "measure" if fix.projects else "subjects",
+                        "sentence": fill(fix.sentence, slots)})
         return out
 
 
-def _kinds(page: Page, ranked: list[Gap], keys: list[str]) -> list[dict]:
-    rows_in_view = {row.id: key for key in keys for row in page.sources[key].readiness}
+def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | None) -> list[dict]:
+    """Each kind of question in view, with its status from every gap in the rows it draws on, even
+    rows a filtered view leaves out, so a kind is never called ready because its gaps are hidden.
+    Opened from a tool that answers a kind, the view shows that kind alone."""
     out = []
     for tool in load_tools().values():
-        if tool.readiness is None or not set(tool.sources) & set(keys):
+        if tool.readiness is None:
             continue
         kind = tool.readiness
-        source = rows_in_view.get(kind.ready_for_row) or next(
-            key for key, found in page.sources.items() if kind.ready_for_row in {row.id for row in found.readiness})
+        if (from_tool != tool.name) if from_tool in _kind_tools() else not set(kind.draws_on) & in_view:
+            continue
+        source = next((key for key, found in page.sources.items()
+                       if kind.ready_for_row in {row.id for row in found.readiness}), None)
+        if source is None:
+            raise ToolContractError(f"The tool {tool.name}'s readiness names the row {kind.ready_for_row!r}, which "
+                                    "no source in config/sources.toml has.")
         ready_for = page.measures.use(source, kind.ready_for_measure)
         mine = [found for found in ranked if found.row_id in kind.draws_on]
         if ready_for is None or not page.measures.rows[ready_for]["count"]:
             status = "gap"
         else:
             status = "partial" if mine else "ready"
-        held = [_sentence(found.phrase) for found in mine[:2]]
+        held = [found.holds for found in mine[:2]]
         more = len(mine) - len(held)
         if more == 1:
             held.append([{"text": words()["moreOne"]}])
         elif more > 1:
-            held.append(_fill(words()["more"], {"n": number(more)}))
+            held.append(fill(words()["more"], {"n": number(more)}))
         if not mine:
             held.append([{"text": words()["nothingHolds"]}])
         out.append({"kind": kind.kind, "tool": tool.name, "status": status, "ready_for": ready_for,
@@ -410,12 +489,16 @@ def _kinds(page: Page, ranked: list[Gap], keys: list[str]) -> list[dict]:
     return out
 
 
+def _kind_tools() -> set[str]:
+    return {name for name, tool in load_tools().items() if tool.readiness}
+
+
 def _gaps_sentence(ranked: list[Gap]) -> Segments:
     if not ranked:
         return [{"text": words()["gapsNone"]}]
     if len(ranked) == 1:
-        return _fill(words()["gapsOne"], {"gap1": ranked[0].phrase})
-    return _fill(words()["gapsTwo"], {"gap1": ranked[0].phrase, "gap2": ranked[1].phrase})
+        return fill(words()["gapsOne"], {"gap1": ranked[0].phrase})
+    return fill(words()["gapsTwo"], {"gap1": ranked[0].phrase, "gap2": ranked[1].phrase})
 
 
 def _kinds_sentence(kinds: list[dict]) -> Segments:
@@ -423,22 +506,22 @@ def _kinds_sentence(kinds: list[dict]) -> Segments:
     count = {status: sum(1 for kind in kinds if kind["status"] == status) for status in ("ready", "partial", "gap")}
     if total == 1:
         clause = {"ready": "oneFull", "partial": "onePart", "gap": "oneNone"}[kinds[0]["status"]]
-        return _fill(words()["kindsOne"], {"clause": words()[clause]})
+        return fill(words()["kindsOne"], {"clause": words()[clause]})
     if count["ready"] == total:
-        return _fill(words()["kindsAllFull"], {"kindCount": number(total)})
-    clauses = [_fill(words()[template], {"n": number(count[status])})
+        return fill(words()["kindsAllFull"], {"kindCount": number(total)})
+    clauses = [fill(words()[template], {"n": number(count[status])})
                for status, template in (("ready", "clauseFull"), ("partial", "clausePart"), ("gap", "clauseNone"))
                if count[status]]
-    return _fill(words()["kinds"], {"kindCount": number(total), "clauses": _joined(clauses)})
+    return fill(words()["kinds"], {"kindCount": number(total), "clauses": _joined(clauses)})
 
 
 def _filtered_sentence(shown: int, from_noun: str) -> Segments:
     if shown == 1:
-        return _fill(words()["filteredOne"], {"fromNoun": from_noun})
+        return fill(words()["filteredOne"], {"fromNoun": from_noun})
     if shown <= 9:
         word = _count_text(shown)
-        return _fill(words()["filteredFew"], {"SourceCount": word[:1].upper() + word[1:], "fromNoun": from_noun})
-    return _fill(words()["filteredMany"], {"sourceCount": number(shown), "fromNoun": from_noun})
+        return fill(words()["filteredFew"], {"SourceCount": word[:1].upper() + word[1:], "fromNoun": from_noun})
+    return fill(words()["filteredMany"], {"sourceCount": number(shown), "fromNoun": from_noun})
 
 
 def _keys(sources: dict[str, Source], asked: str | None) -> tuple[list[str], int, bool]:
@@ -451,10 +534,18 @@ def _keys(sources: dict[str, Source], asked: str | None) -> tuple[list[str], int
     return known, len({key for key in wanted if key not in sources}), True
 
 
+def _in_view(sources: dict[str, Source], keys: list[str], from_tool: str | None) -> set[str]:
+    """The readiness rows in view: every row of the keys in view, and, when the link came from a tool
+    that answers a kind of question, only the rows that tool draws on (config/tools.toml)."""
+    rows = {row.id for key in keys for row in sources[key].readiness}
+    tool = load_tools().get(from_tool) if from_tool else None
+    return rows & set(tool.readiness.draws_on) if tool and tool.readiness else rows
+
+
 def _empty(filter_: dict, abstention: dict, matched: int) -> dict:
     return {"rows": [], "coverage": {"matched": matched, "used": 0, "not_used": []}, "abstention": abstention,
-            "filter": filter_, "sources": [], "kinds": [], "gaps": [], "fixes": [], "headline": None,
-            "headline_abstention": None, "parse_failures": [], "measured": None}
+            "filter": filter_, "sources": [], "kinds": [], "gaps": [], "fixes": [], "routes": [], "headline": None,
+            "headline_abstention": None, "parse_failures": None, "measured": None}
 
 
 def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | None = None) -> dict:
@@ -463,9 +554,9 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
     keys, unknown, filtered = _keys(registry_sources, sources)
     nouns = words()["fromNouns"]
     from_key = from_tool if from_tool in nouns and from_tool != "unknown" else "unknown"
+    in_view = _in_view(registry_sources, keys, from_tool if filtered else None)
     filter_ = {"sources": keys if filtered else None, "unknown": unknown, "from": from_key if filtered else None,
-               "total": sum(len(source.readiness) for source in registry_sources.values())}
-    matched = sum(len(registry_sources[key].readiness) for key in keys)
+               "shown": len(in_view), "total": sum(len(source.readiness) for source in registry_sources.values())}
     if filtered and not keys:
         return _empty(filter_, {"reason": "unknown_sources"}, 0)
 
@@ -475,41 +566,50 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
     if not latest:
         first = _rows(call, "first_measured.sql")[0]["first_measured_on"]
         if first in (None, ""):
-            return _empty(filter_, {"reason": "no_measures"}, matched)
-        return _empty(filter_, {"reason": "before_first_measure", "first_measured_on": _iso(_date(first))}, matched)
+            return _empty(filter_, {"reason": "no_measures"}, len(in_view))
+        return _empty(filter_, {"reason": "before_first_measure", "first_measured_on": _iso(_date(first))},
+                      len(in_view))
 
+    # Every row is measured, so each kind's status counts the gaps a filtered view leaves out.
     page = Page(call, registry_sources, Measures(latest))
-    rows = page.source_rows(keys)
-    ranked = page.rank()
-    kinds = _kinds(page, ranked, keys)
+    every_row = page.source_rows(list(registry_sources))
+    every_gap = page.rank()
+    first_rows = {key: source.readiness[0].id for key, source in registry_sources.items() if source.readiness}
+    rows = [row for row in every_row
+            if (first_rows[row["source_key"]] if row["type"] == "gap" else row["id"]) in in_view]
+    ranked = [found for found in every_gap if found.row_id in in_view]
+    kinds = _kinds(page, every_gap, in_view, from_tool if filtered else None)
     fixes = page.fixes(ranked)
+    routes = page.routes(in_view)
     unmeasured = [row["id"] for row in rows if row["type"] == "unmeasured"]
-    measured_rows = [row for row in rows if row["type"] != "gap"]
 
     headline = abstained = None
     if unmeasured:
-        abstained = {"reason": "unmeasured", "unmeasured": len(unmeasured), "sources": len(measured_rows)}
+        abstained = {"reason": "unmeasured", "unmeasured": len(unmeasured), "sources": len(in_view)}
     else:
-        first = (_filtered_sentence(len(keys), nouns[from_key]) if filtered else _kinds_sentence(kinds))
+        first = (_filtered_sentence(len(in_view), nouns[from_key]) if filtered else _kinds_sentence(kinds))
         segments = [*first, {"text": " "}, *_gaps_sentence(ranked)]
         headline = {"segments": segments, "text": text_of(segments)}
 
+    # The plan pages the layout parser could not read belong with the plans' row: none to list
+    # (None) when that row is out of view.
     failures = [{"project_id": row["project_id"], "document_id": row["document_id"], "pdf_page": int(row["pdf_page"]),
                  "failed_on": _iso(_date(row["failed_on"]))}
-                for row in _rows(call, "parse_failures.sql", as_of=call.as_of)] if "documents" in keys else []
-    days = [_date(row["measured_on"]) for row in page.measures.rows]
+                for row in _rows(call, "parse_failures.sql", as_of=call.as_of)] if PLANS in in_view else None
+    days = [_date(row["measured_on"]) for row in page.measures.rows if row["source_key"] in keys]
     not_used = [{"reason": "not_measured", "rows": unmeasured}] if unmeasured else []
     if unknown:
         not_used.append({"reason": "unknown_source", "keys": unknown})
     return {
         "rows": page.measures.rows,
-        "coverage": {"matched": matched, "used": matched - len(unmeasured), "not_used": not_used},
+        "coverage": {"matched": len(in_view), "used": len(in_view) - len(unmeasured), "not_used": not_used},
         "abstention": None,
         "filter": filter_,
         "sources": rows,
         "kinds": kinds,
         "gaps": [found.as_dict() for found in ranked],
         "fixes": fixes,
+        "routes": routes,
         "headline": headline,
         "headline_abstention": abstained,
         "parse_failures": failures,
@@ -518,8 +618,8 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
 
 
 def registry_page() -> dict:
-    """What the Sources and licenses page lists, and how many rows the Data readiness page's skeleton
-    holds, from the source and tool registries alone: it never waits for the warehouse."""
+    """What the Sources and licenses page lists, and how many rows and fixes the Data readiness page's
+    skeleton holds, from the source and tool registries alone: it never waits for the warehouse."""
     sources = load_sources()
     return {
         "datasets": [{"key": key, "dataset_name": source.dataset_name, "data_source": source.attribution.data_source,
@@ -530,4 +630,6 @@ def registry_page() -> dict:
                         for source in sources.values() for found in source.collections],
         "readiness_rows": sum(len(source.readiness) for source in sources.values()),
         "kinds": sum(1 for tool in load_tools().values() if tool.readiness),
+        "known_gaps": sum(len(source.known_gaps) for source in sources.values()),
+        "fixes": sum(len(source.fixes) for source in sources.values()),
     }

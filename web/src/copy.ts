@@ -112,17 +112,17 @@ export const copy = {
     data: {
       title: "Data",
       documentTitle: "Data readiness",
-      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
     },
     dataSources: {
       title: "Data",
       documentTitle: "Sources and licenses",
-      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
     },
     dataHow: {
       title: "Data",
       documentTitle: "How Strata works",
-      purpose: "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
     },
     notFound: {
       title: "Page not found",
@@ -332,16 +332,21 @@ export const copy = {
       holds: "What holds it back",
       holdsAbout: "gaps that limit answers",
       holdsDefinition:
-        "The gaps in the sources each kind of question draws on, biggest first: the ones whose fix would add " +
-        "evidence to the most projects.",
+        "The gaps in the sources each kind of question draws on. The biggest gaps come first: the ones whose fix " +
+        "would add evidence to the most projects.",
       // Each kind, by the key its tool gives in config/tools.toml, and what its number counts.
       names: {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
       } as Record<string, string>,
       counts: {
-        plan_check: "activity entries in the latest plan versions with STEP rows",
+        plan_check: "activity entries in the latest plan versions with rows in STEP's format",
         document_search: "passages you can search",
+      } as Record<string, string>,
+      // The same, for a count of one.
+      countsOne: {
+        plan_check: "activity entry in the latest plan versions with rows in STEP's format",
+        document_search: "passage you can search",
       } as Record<string, string>,
     },
     sources: {
@@ -350,7 +355,7 @@ export const copy = {
       source: "Source",
       columns: {
         coverage: { label: "Coverage", about: "rows and fiscal years" },
-        linked: { label: "Linked", about: "to projects and notices" },
+        linked: { label: "Linked", about: "to projects and other records" },
         read_well: { label: "Read well", about: "read without errors" },
         fresh: { label: "Fresh", about: "latest data, how often" },
       },
@@ -359,8 +364,8 @@ export const copy = {
           "How many rows or documents I hold for this source, and which fiscal years they span. Fiscal years run " +
           "from July to June.",
         linked:
-          "How many of these rows I could join to a project, a notice or a Procurement Plan. A row that doesn't join " +
-          "can't count in answers that need the join.",
+          "How many of these rows I could join to the record they need: a project, a notice, a Procurement Plan, " +
+          "a sector or a borrower country. A row that doesn't join can't count in answers that need the join.",
         read_well:
           "How many pages or rows I read without losing their paragraph numbers or table rows. Records the World " +
           "Bank publishes as tables need no reading.",
@@ -377,9 +382,16 @@ export const copy = {
       years: "in {count} fiscal years",
       yearsOne: "in {count} fiscal year",
       yearsOf: "in {count} of {total} fiscal years",
+      // What a fiscal-years count counts, in its tooltip.
+      yearsNoun: "fiscal years",
+      yearsNounOne: "fiscal year",
       gapYears: (from: string, to: string) => `fiscal ${from}–${to}`,
       publishedAsTable: "Published as a table",
       notMeasured: "Not measured yet",
+      // A column the registry gives this row no measure for, so no run will measure it.
+      noMeasure: "No measure",
+      // A row with no freshness measure whose documents arrive as their authors publish them.
+      asPublished: "As published",
       notMeasuredRow: "Not measured yet. The next data run measures it.",
       nonePublished: "None published",
       fresh: "{date} · {schedule}",
@@ -397,19 +409,24 @@ export const copy = {
       caption: "Ranked by how many projects each fix would add evidence to.",
       projects: "Would add evidence to {count} projects.",
       oneProject: "Would add evidence to {count} project.",
+      projectsNoun: "projects",
+      projectsNounOne: "project",
       none: "Nothing I measured falls short, so there are no fixes to rank.",
       noneHere: "None of these sources needs a fix.",
     },
     loading: {
       slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",
     },
+    // DESIGN.md's Empty-state card, before the first data run.
     empty: {
-      first: "I haven't measured any sources yet. The measures appear here after the first data run.",
-      meanwhile: { before: "Meanwhile, ", link: "Sources and licenses", after: " lists the datasets I'm set up to read." },
+      title: "I haven't measured any sources yet.",
+      body: "The measures appear here after the first data run.",
+      link: "See the datasets I'm set up to read",
     },
     abstain: {
       unmeasured: "I'm not giving a headline: {count} of the {total} sources below have no measures yet. Their rows say so.",
-      beforeFirst: "I have no measures from on or before {asked}. My first measures were taken {first}.",
+      unmeasuredOne: "I'm not giving a headline: {count} of the {total} sources below has no measures yet. Its row says so.",
+      beforeFirst: "I have no measures taken on or before {asked}. I took my first measures on {first}.",
       showToday: "Show today's measures",
     },
     errors: {
@@ -429,6 +446,12 @@ export const copy = {
       day: (day: string, date: string) => `The latest data are from ${day}. Measured ${date}.`,
       kinds: "Counted from the table of what you can ask, below.",
       sources: "Counted from the sources this link names.",
+      // A fix's project count that no measure counted: the projects whose rows fall short.
+      projects: (count: string, date: string) => `${count} projects have rows behind this gap. Measured ${date}.`,
+      projectsOne: (count: string, date: string) => `${count} project has rows behind this gap. Measured ${date}.`,
+      // A number the reader clicked that is neither the measure's count nor its denominator.
+      missing: "Falling short",
+      days: "Days late",
       numerator: "Counted",
       denominator: "Out of",
       measured: "Measured",
@@ -453,6 +476,7 @@ export const copy = {
       changes: "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
       caveat: "The World Bank does not guarantee the accuracy of the data.",
       empty: "I haven't been set up to read any datasets yet.",
+      emptyBody: "Each dataset appears here, credited the way the World Bank asks, once I'm set up to read it.",
       failed: "I couldn't load the list of sources, because the server didn't answer. Try again.",
     },
     howPage: {
@@ -505,6 +529,20 @@ export const copy = {
         declared: "the {sourceNoun}, which cover {note}",
         noRows: "the {sourceNoun}, of which I hold no rows yet",
       },
+      // The same gaps as full sentences, under "What holds it back", filled from the same slots.
+      holds: {
+        published: "No World Bank dataset publishes the {sourceNoun} for fiscal {fromYear} to {toYear}.",
+        linked: "Of {total} {noun}, {missing} lack {lack}.",
+        check: "Of {total} {noun}, {missing} lack {lack}.",
+        readWell: "I couldn't read {missing} of {total} {noun} without errors.",
+        late: "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
+        lateOneDay: "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
+        declared: "The {sourceNoun} cover {note}.",
+        noRows: "I hold no rows of the {sourceNoun} yet.",
+      },
+      // What a late source's count of days counts, in its tooltip.
+      daysLate: "days late",
+      dayLate: "day late",
       // The coverage line a reader opened the page from, by the tool that wrote it. The page never
       // shows words from its address.
       fromNouns: {
@@ -527,11 +565,6 @@ export const copy = {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December",
       ],
-      // The dashboard's words for the two reading routes, beside its chart of pages read well.
-      routes: {
-        pages_read_route_a: "Published text (Route A)",
-        pages_read_route_b: "Layout parser (Route B)",
-      },
       // The dashboard's Data readiness page (the 16 design brief, section 10), which
       // src/strata/dashboard builds from code. Each chart's title names what it measures and never
       // states a number, because a title is fixed when the dashboard is deployed; the day's finding
@@ -544,9 +577,9 @@ export const copy = {
           "How fit each source is to support answers. These are the same measures as the Data readiness page in " +
           "Strata. Pick a measure date to compare the two.",
         measureDate: "Measure date",
-        measureDateAbout: "Every tile shows the newest measures taken on or before this date. It starts at today.",
+        measureDateAbout: "Every tile shows the newest measures taken on or before this date. It starts on today's date.",
         headline: "What the measures say",
-        headlineAbout: "The day's headline, built by the same function as the Data readiness page in Strata.",
+        headlineAbout: "The day's headline, written by the same code as the Data readiness page in Strata.",
         measuredOn: "Measured on",
         headlineColumn: "Headline",
         awardRows: "Contract-award rows per fiscal year, by dataset",
@@ -555,16 +588,22 @@ export const copy = {
         rows: "Rows",
         dataset: "Dataset",
         sourceRows: "Rows per fiscal year, by source",
-        sourceRowsAbout: "Every source's rows in each fiscal year, with exact counts. It is the table for the chart of contract-award rows.",
+        sourceRowsAbout:
+          "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the IEG " +
+          "ratings, with exact counts. It is the table for the chart of contract-award rows.",
         source: "Source",
         links: "Share of rows that link, by link",
+        // {fewest} is config/thresholds.toml's data_readiness.fewest_for_a_percentage, filled in when
+        // src/strata/dashboard writes the dashboard file.
         linksAbout:
-          "Each link with 20 rows or more, as the share of its rows that link. The table of freshness and link " +
-          "counts lists every link with its counts.",
+          "Each link with {fewest} rows or more, as the share of its rows that link. The table of freshness and " +
+          "link counts lists every link with its counts.",
         link: "Link",
         share: "Share (%)",
         routes: "Share of pages read well, by route",
-        routesAbout: "The Procurement Plan pages each reading route read without losing their table rows.",
+        routesAbout:
+          "Each reading route with {fewest} Procurement Plan pages or more, as the share of its pages it read " +
+          "without losing their table rows.",
         route: "Route",
         freshness: "Freshness and link counts, by source",
         freshnessAbout: "Each source's latest data, how often it updates, how late it is, its link counts and its status.",
@@ -579,6 +618,21 @@ export const copy = {
         fix: "Fix",
         projects: "Projects it would add evidence to",
         notes: "Source: Strata's data readiness measures in strata.ops.",
+        // The names the dashboard's queries give their rows, bound as parameters of each query.
+        labels: {
+          awards_label: "Awards since FY2020",
+          fy2001_label: "Awards, FY2001–16",
+          notices_awards_label: "Award notices, FY2017–19",
+          notices_label: "Procurement notices",
+          projects_label: "Projects",
+          ieg_label: "IEG ratings",
+        },
+        // The snapshot's row names: a source with what its rows span, a known gap, and a link.
+        sourceLabel: "{label}, {covers}",
+        gapLabel: "{label}, FY{fromYear}–{toYear}",
+        linkLabel: "{label}: {counts}",
+        // A link's counts in the table of freshness and link counts, in numerals, as tables write them.
+        linkedCount: "{count} of {denominator}",
       },
     },
   },

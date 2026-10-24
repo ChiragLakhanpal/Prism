@@ -1,5 +1,5 @@
--- Tile 6: the share of rows that link, for each linked measure with enough rows to give a share
--- (config/thresholds.toml, data_readiness.fewest_for_a_share). The table in tile 8 keeps every
+-- Tile 6: the share of rows that link, for each linked measure with enough rows to give a percentage
+-- (config/thresholds.toml, data_readiness.fewest_for_a_percentage). The table in tile 8 keeps every
 -- link's counts.
 WITH chosen AS (
   SELECT measured_on, written_at

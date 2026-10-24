@@ -63,6 +63,8 @@ def fixture_clock(start=RUNS_START):
     runs write keep the order they were written in."""
     ticks = itertools.count()
     return lambda: start + dt.timedelta(milliseconds=next(ticks))
+
+
 RECORDED_TABLES = """
 CREATE SCHEMA recorded;
 CREATE TABLE recorded.files (file VARCHAR PRIMARY KEY, source VARCHAR NOT NULL, license VARCHAR NOT NULL,

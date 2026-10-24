@@ -188,6 +188,7 @@ export const SHOTS: Shot[] = [
   // works, and its focus and hover states. The loading states are the gallery's readiness page.
   data("readiness", "/data"),
   data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
+  data("filtered-plan-check", "/data?sources=documents,projects&from=check_plan", { recorded: "data-readiness-plan-check.json" }),
   data("filtered-unknown-key", "/data?sources=awards,not-a-source&from=find_comparables", { recorded: "data-readiness-unknown-key.json" }),
   data("no-known-key", "/data?sources=not-a-source", { recorded: "data-readiness-no-known-key.json" }),
   data("empty", "/data", { recorded: "data-readiness-empty.json" }),
@@ -197,7 +198,7 @@ export const SHOTS: Shot[] = [
   data("no-access", "/data", { status: 403, recorded: "data-readiness-no-access.json" }),
   data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
   data("sources", "/data/sources"),
-  data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"kinds":0}' }),
+  data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"known_gaps":0,"kinds":0,"fixes":0}' }),
   data("how", "/data/how-strata-works"),
   data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
   data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
@@ -206,6 +207,7 @@ export const SHOTS: Shot[] = [
   data("focus-num", "/data", undefined, { act: focus("[data-headline] [data-num] >> nth=2") }),
   data("num-window", "/data", undefined, { act: click("[data-headline] [data-num] >> nth=2") }),
   data("hover-num", "/data", undefined, { widths: WIDE, act: hover("[data-cell='awards:linked'] [data-num]") }),
+  data("fix-projects-window", "/data", undefined, { widths: WIDE, act: click("[data-fixes] li >> nth=0 >> p.text-small [data-num]") }),
   data("hover-link", "/data", { recorded: "data-readiness-empty.json" }, { act: hover("[data-readiness=empty] a") }),
   data("cards-320", "/data", undefined, { widths: [320] }),
 ];

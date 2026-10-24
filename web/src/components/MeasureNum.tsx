@@ -40,7 +40,7 @@ export function MeasureNum({
       // A short number, such as "two" or "10", pads its hit area to 24 px with a layer over it, not
       // its type (DESIGN.md section 10).
       className={cx(
-        "relative inline cursor-pointer py-0.5 text-left tabular-nums after:absolute after:-inset-x-1.5 after:-inset-y-1 after:content-['']",
+        "relative inline cursor-pointer py-0.5 text-left tabular-nums after:absolute after:-inset-x-2 after:-inset-y-1 after:content-['']",
         DOTTED_UNDERLINE,
         className,
       )}

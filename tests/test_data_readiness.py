@@ -160,7 +160,7 @@ def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_
     assert result["rows"][plan_check["ready_for"]]["count"] == 46
     held = registry_text(plan_check["holds_back"][0])
     # The measure counts an activity once in each latest version that lists it (ticket 08's verifier, F3).
-    assert held == "The 46 of 46 activity entries in the latest plan versions that lack a confirmed first listing I read."
+    assert held == "Of 46 activity entries in the latest plan versions, 46 lack a first listing I could confirm."
 
 
 def registry_text(segments):
@@ -177,8 +177,8 @@ def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_rea
 
     assert result["headline"]["text"] == (
         "Of the two kinds of question below, I can answer two in part. The biggest gaps are the 75 of 603 "
-        "contracts that lack a STEP reference and the contract awards for fiscal 2017 to 2019, which no World "
-        "Bank dataset publishes.")
+        "contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP) and the "
+        "contract awards for fiscal 2017 to 2019, which no World Bank dataset publishes.")
     statuses = [kind["status"] for kind in result["kinds"]]
     numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:2]
     assert numbers == [len(statuses), statuses.count("partial")]
@@ -191,7 +191,45 @@ def test_the_fixes_are_ranked_by_the_projects_each_would_add_evidence_to(engine)
     assert ranked == [(1, "awards/linked", 2), (2, "fy2017_2019", 2), (3, "reports/read_well", 2),
                       (4, "plans/latest_activities_with_confirmed_first_listing_read", 1)]
     assert registry_text(result["fixes"][1]["sentence"]).startswith(
-        "Convert the seven contracts from award notices for fiscal 2017 to 2019 from local currency")
+        "Convert the seven contracts in award notices for fiscal 2017 to 2019 from local currency")
+    # The measure counts activity entries: one activity sits in two agencies' latest plans (ticket 08, F3).
+    assert registry_text(result["fixes"][3]["sentence"]) == (
+        "Read the older plan versions named in each project's document list, so I can confirm the first listing "
+        "of each of the 46 activity entries.")
+
+
+def test_every_number_with_a_row_says_what_it_counts_and_a_fix_s_projects_open_only_their_own_measure(engine):
+    """Design review B1: a tooltip never reads "2 . Measured", and a project count that no measure
+    counted opens no other measure's window."""
+    result = readiness(engine)
+    sentences = [result["headline"]["segments"], *(fix["sentence"] for fix in result["fixes"]),
+                 *(sentence for kind in result["kinds"] for sentence in kind["holds_back"])]
+
+    numbers = [segment for sentence in sentences for segment in sentence if "number" in segment]
+    assert numbers and all(segment["noun"] for segment in numbers if segment["row"] is not None)
+    for fix in result["fixes"]:
+        if fix["projects_from"] == "subjects":
+            assert fix["projects_row"] is None
+        else:
+            assert result["rows"][fix["projects_row"]]["count"] == fix["projects"]
+    [awards_fix] = [fix for fix in result["fixes"] if fix["gap"] == "awards/linked"]
+    [missing] = [segment for segment in awards_fix["sentence"] if segment.get("role") == "missing"]
+    assert (missing["number"], missing["noun"]) == (KENYA["contracts"] - KENYA["with_step_reference"], "contracts")
+
+
+def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_shares(engine):
+    """Review B3: the dashboard's chart of pages read well by route reads these rows, so each share
+    has its evidence row and one definition. The plan reader measures each project's routes."""
+    result = readiness(engine)
+
+    routes = {route["measure"]: result["rows"][route["row"]] for route in result["routes"]}
+    assert list(routes) == ["pages_read_route_a", "pages_read_route_b"]
+    for measure, row in routes.items():
+        stored = latest(engine, "documents", measure)
+        assert (row["count"], row["denominator"]) == (
+            sum(entry["count"] for entry in stored), sum(entry["denominator"] for entry in stored)), measure
+        assert row["evidence_id"].startswith("strata.ops.data_readiness:documents/")
+    assert [route["label"] for route in result["routes"]] == ["Published text (Route A)", "Layout parser (Route B)"]
 
 
 def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine):
@@ -199,9 +237,37 @@ def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine)
 
     assert [row["id"] for row in result["sources"]] == ["awards", "fy2017_2019", "notices"]
     assert result["filter"] == {"sources": ["awards", "notices"], "unknown": 0, "from": "find_comparables",
-                                "total": 13}
+                                "shown": 2, "total": 13}
     assert result["kinds"] == []  # neither tool in the registry reads awards or notices yet
     assert result["headline"]["text"].startswith("Two sources are behind the past range. The biggest gaps are ")
+
+
+def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_on(engine):
+    """The documents source has two rows, and the plan check reads only its Procurement Plans
+    (config/tools.toml, check_plan's draws_on), so the reports' gaps stay out of this view."""
+    result = readiness(engine, sources="documents,projects", from_tool="check_plan")
+
+    assert [row["id"] for row in result["sources"]] == ["projects", "plans"]  # in registry order
+    assert (result["filter"]["shown"], result["filter"]["total"]) == (2, 13)
+    assert result["headline"]["text"].startswith("Two sources are behind the plan check.")
+    assert all(gap["row_id"] in ("plans", "projects") for gap in result["gaps"])
+    assert [kind["kind"] for kind in result["kinds"]] == ["plan_check"]
+    assert "body pages" not in result["headline"]["text"]
+
+    one = readiness(engine, sources="documents", from_tool="check_plan")
+    assert [row["id"] for row in one["sources"]] == ["plans"]
+    assert one["filter"]["shown"] == 1
+    assert one["headline"]["text"].startswith("One source is behind the plan check.")
+
+
+def test_a_filtered_view_counts_the_rows_it_shows(engine):
+    """The count line, the alert and the headline count the Sources table's rows, never the keys
+    in the link: the documents source alone fills two rows."""
+    result = readiness(engine, sources="documents,projects", from_tool="find_comparables")
+
+    assert [row["id"] for row in result["sources"]] == ["projects", "plans", "reports"]
+    assert result["filter"]["shown"] == 3
+    assert result["headline"]["text"].startswith("Three sources are behind the past range.")
 
 
 def test_a_link_never_puts_its_own_words_in_the_headline_and_unknown_keys_are_only_counted(engine):
@@ -366,6 +432,7 @@ def test_the_plan_pages_the_layout_parser_could_not_read_are_listed(written):
 
     assert result["parse_failures"] == [
         {"project_id": "P156634", "document_id": "doc-1", "pdf_page": 4, "failed_on": DAY.isoformat()}]
+    assert call_on(path, sources="awards")["parse_failures"] is None  # the plans' row is out of view
 
 
 def test_the_share_rule_agrees_with_the_number_formatter():
@@ -374,4 +441,31 @@ def test_the_share_rule_agrees_with_the_number_formatter():
 
     formatter = (ROOT / "web" / "src" / "lib" / "format.ts").read_text()
     fewest = int(re.search(r"FEWEST_FOR_A_FREQUENCY = (\d+)", formatter).group(1))
-    assert config.load_thresholds().value("data_readiness.fewest_for_a_share") == fewest
+    percentage = int(re.search(r"FEWEST_FOR_A_PERCENTAGE = (\d+)", formatter).group(1))
+    limits = config.load_thresholds()
+    assert limits.value("data_readiness.fewest_for_a_share") == fewest
+    assert limits.value("data_readiness.fewest_for_a_percentage") == percentage
+
+
+SHARE = ("share_percent", "share_bound", "in_ten", "in_ten_exact")
+
+
+@pytest.mark.parametrize("linked, expected", [
+    ((29, 200), (15, None, None, None)),  # 14.5 rounds half up to 15; JavaScript's Math.round gives 14
+    ((528, 603), (88, None, None, None)),
+    ((995, 1000), (100, "over", None, None)),  # more than 99 percent, never 100 for a part
+    ((3, 1000), (0, "under", None, None)),  # less than 1 percent, never 0 for a part
+    ((1000, 1000), (100, None, None, None)),
+    ((31, 37), (None, None, 8, False)),  # DESIGN.md section 7, rule 15: about 8 in 10, under 50 rows
+    ((10, 20), (None, None, 5, True)),  # exactly 5 in 10
+    ((1, 40), (None, "under", 0, False)),  # fewer than 1 in 10
+    ((20, 20), (None, None, None, None)),  # all of them: the count says it
+    ((6, 12), (None, None, None, None)),  # under 20 rows: the count alone
+])
+def test_the_tool_gives_each_share_as_the_page_and_the_dashboard_show_it(written, linked, expected):
+    """Review B2: the share is worked out once, in the tool, at its rounding, so the browser divides
+    nothing and the app and the dashboard cannot disagree."""
+    result = call_on(written(*awards(linked=linked)), sources="awards")
+
+    row = result["rows"][cell(result, "awards", "linked")["row"]]
+    assert tuple(row[name] for name in SHARE) == expected

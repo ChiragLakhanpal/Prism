@@ -16,14 +16,16 @@
     "sources": null,
     "unknown": 0,
     "from": null,
+    "shown": 13,
     "total": 13
   },
   "sources": [],
   "kinds": [],
   "gaps": [],
   "fixes": [],
+  "routes": [],
   "headline": null,
   "headline_abstention": null,
-  "parse_failures": [],
+  "parse_failures": null,
   "measured": null
 }

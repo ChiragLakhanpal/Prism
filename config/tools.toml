@@ -219,11 +219,13 @@ description = "Use only measures taken on or before this date, and judge freshne
 
 [tools.data_readiness_for.result]
 row = """One measure behind the page: its latest count and denominator, or its date, for the source \
-as a whole or summed over the projects it was measured for, with its share when it has enough rows."""
+as a whole or summed over the projects it was measured for, with its share when it has enough rows: a \
+whole percent, or about N in 10 for fewer rows, and whether a part rounds to an end of its scale."""
 row_fields = ["evidence_id", "public_from", "source", "source_key", "measure", "kind", "subjects", "count",
-              "denominator", "share_percent", "as_of", "measured_on", "run_ids"]
+              "denominator", "share_percent", "share_bound", "in_ten", "in_ten_exact", "as_of", "measured_on",
+              "run_ids"]
 source_fields = ["table", "source_key", "measure", "subjects", "measured_on", "counted_in"]
-fields = ["filter", "sources", "kinds", "gaps", "fixes", "headline", "headline_abstention", "parse_failures",
-          "measured"]
+fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "headline_abstention",
+          "parse_failures", "measured"]
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]

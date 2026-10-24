@@ -109,9 +109,10 @@ projects_missing AS (
   WHERE source = 'awards' AND project_id IS NOT NULL
 ),
 gap_year_contracts AS (
+  -- gold builds contracts from award notices only for the known gap's fiscal years (gold/contract.sql)
   SELECT project_id, country_code, amount_basis = 'local currency, from award notices' AS in_local_currency
   FROM strata.gold.contract
-  WHERE source = 'notices' AND fiscal_year BETWEEN 2017 AND 2019
+  WHERE source = 'notices'
 ),
 gap_years AS (
   SELECT country_code AS subject,

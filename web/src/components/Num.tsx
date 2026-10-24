@@ -10,9 +10,11 @@ import {
   formatDate,
   formatNumber,
   formatRatio,
+  formatToolShare,
   formatYear,
   type DateStyle,
   type NumberOptions,
+  type ToolShare,
 } from "../lib/format";
 import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 
@@ -22,7 +24,9 @@ export type NumValue =
   | { year: number }
   // today, an ISO date, decides whether a short date needs its year; the browser's date when unset.
   | { date: string; style?: DateStyle; today?: string }
-  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" };
+  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
+  // A share a tool rounded, written as it came: the browser divides nothing.
+  | { share: ToolShare; style?: "sentence" | "table" };
 
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
@@ -38,6 +42,7 @@ export function numText(num: NumValue): string {
   if ("count" in num) return formatCount(num.count);
   if ("year" in num) return formatYear(num.year);
   if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
+  if ("share" in num) return formatToolShare(num.share, { style: num.style }).text;
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
 }

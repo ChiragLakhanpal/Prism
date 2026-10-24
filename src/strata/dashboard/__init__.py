@@ -20,9 +20,11 @@ Write the file again after changing this module or the words:
 from __future__ import annotations
 
 import json
+import re
 from importlib import resources
 from pathlib import Path
 
+from strata.config import load_thresholds
 from strata.tools.data_readiness_for import words
 
 FILE = Path(__file__).resolve().parents[3] / "bundle" / "dashboards" / "strata.lvdash.json"
@@ -31,8 +33,10 @@ PARAMETER = "measure_date"
 # and cat9, because bars are essential marks and those four fall below 3:1 on white.
 COLORS = ("#106ca1", "#b65f0c", "#664ab6", "#208383", "#f3578e", "#081079", "#0c7c68", "#aa0000", "#767712")
 SINGLE = COLORS[0]  # a single-series chart separates nothing by color
-# The datasets tile 4 colors, in the order their colors are given.
-AWARD_DATASETS = ("Awards since FY2020", "Awards, FY2001–16", "Award notices, FY2017–19")
+# The parameters that name tile 4's datasets, in the order their colors are given. Their values are
+# copy.dataReadiness.server.dashboard.labels.
+AWARD_LABELS = ("awards_label", "fy2001_label", "notices_awards_label")
+LABEL = re.compile(r":(\w+_label)\b")
 # Each dataset: its name, the file of its query in sql/, and what it is.
 DATASETS = (
     ("readiness_headline", "The day's headline"),
@@ -54,14 +58,34 @@ def query(name: str) -> str:
     return "\n".join(line for line in _query(name).splitlines() if not line.lstrip().startswith("--")).strip()
 
 
+def labels(name: str) -> dict[str, str]:
+    """The row names a dataset's query takes as parameters, from the copy file."""
+    given = words()["dashboard"]["labels"]
+    return {label: given[label] for label in dict.fromkeys(LABEL.findall(query(name)))}
+
+
+def award_datasets() -> tuple[str, ...]:
+    """Tile 4's datasets by name, in the order their colors are given."""
+    return tuple(words()["dashboard"]["labels"][label] for label in AWARD_LABELS)
+
+
+def _fewest(text: str) -> str:
+    """A description with the fewest rows a share is charted from, as the thresholds file says."""
+    return text.replace("{fewest}", str(load_thresholds().value("data_readiness.fewest_for_a_percentage")))
+
+
 def _dataset(name: str, about: str) -> dict:
     return {
         "name": name,
         "displayName": about,
         "queryLines": [line + "\n" for line in query(name).splitlines()],
-        # The page starts at today: AI/BI writes a dynamic date as "now", rounded to the day.
+        # The page starts at today: AI/BI writes a dynamic date as "now", rounded to the day. Row
+        # names are fixed text parameters, so the words stay in the copy file.
         "parameters": [{"displayName": PARAMETER, "keyword": PARAMETER, "dataType": "DATE",
-                        "defaultSelection": {"values": {"dataType": "DATE", "values": [{"value": "now/d"}]}}}],
+                        "defaultSelection": {"values": {"dataType": "DATE", "values": [{"value": "now/d"}]}}},
+                       *({"displayName": label, "keyword": label, "dataType": "STRING",
+                          "defaultSelection": {"values": {"dataType": "STRING", "values": [{"value": value}]}}}
+                         for label, value in labels(name).items())],
     }
 
 
@@ -112,14 +136,14 @@ def _bars(name: str, dataset: str, category: tuple[str, str], value: tuple[str, 
     if color:
         encodings["color"] = {"fieldName": color[0], "displayName": color[1], "scale": {
             "type": "categorical", "mappings": [{"value": value_name, "color": shade}
-                                                for value_name, shade in zip(AWARD_DATASETS, COLORS)]}}
+                                                for value_name, shade in zip(award_datasets(), COLORS)]}}
     else:
         encodings["label"] = {"show": True}
     if tooltip:
         encodings["extra"] = [{"fieldName": field} for field in tooltip]
     fields = [category[0], value[0], *([color[0]] if color else []), *tooltip]
     spec = {"version": 3, "widgetType": "bar", "encodings": encodings, "frame": _frame(title, about),
-            "mark": {"colors": [SINGLE] if not color else list(COLORS[:len(AWARD_DATASETS)])}}
+            "mark": {"colors": [SINGLE] if not color else list(COLORS[:len(AWARD_LABELS)])}}
     return {"widget": {"name": name, "queries": _main(dataset, *fields), "spec": spec}, "position": position}
 
 
@@ -154,9 +178,11 @@ def data_readiness_page() -> dict:
                               {"fieldName": "source_rows", "cellType": "text", "displayName": say["rows"]}]}},
             "frame": _frame(say["sourceRows"], say["sourceRowsAbout"])}}, "position": _at(0, 11, 6, 6)},
         _bars("links", "readiness_links", ("link", say["link"]), ("share_percent", say["share"]), say["links"],
-              say["linksAbout"], _at(0, 17, 3, 6), horizontal=True, domain=(0, 100), tooltip=("count", "denominator")),
+              _fewest(say["linksAbout"]), _at(0, 17, 3, 6), horizontal=True, domain=(0, 100),
+              tooltip=("count", "denominator")),
         _bars("routes", "readiness_routes", ("route", say["route"]), ("share_percent", say["share"]), say["routes"],
-              say["routesAbout"], _at(3, 17, 3, 6), horizontal=True, domain=(0, 100), tooltip=("count", "denominator")),
+              _fewest(say["routesAbout"]), _at(3, 17, 3, 6), horizontal=True, domain=(0, 100),
+              tooltip=("count", "denominator")),
         _table("freshness", "readiness_sources", [
             ("source", say["source"], "string"), ("latest_data", say["latestData"], "date"),
             ("updates", say["updates"], "string"), ("days_late", say["daysLate"], "integer"),

@@ -37,6 +37,7 @@ DAY = "asof=2026-10-23"
 FROM_THE_FIXTURE = {
     "data-readiness.json": f"/api/data/readiness?{DAY}",
     "data-readiness-filtered.json": f"/api/data/readiness?sources=awards,notices&from=find_comparables&{DAY}",
+    "data-readiness-plan-check.json": f"/api/data/readiness?sources=documents,projects&from=check_plan&{DAY}",
     "data-readiness-unknown-key.json": f"/api/data/readiness?sources=awards,not-a-source&from=find_comparables&{DAY}",
     "data-readiness-no-known-key.json": f"/api/data/readiness?sources=not-a-source&{DAY}",
     "data-readiness-before-first.json": "/api/data/readiness?asof=2026-10-01",

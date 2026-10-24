@@ -168,13 +168,11 @@ def _pair(found: tuple[int, int] | None) -> str:
 
 
 def readiness_check(workspace) -> int:
-    from strata.config import load_thresholds
     from strata.dbx import Viewer
-    from strata.tools.data_readiness_for import data_readiness_for
-    from strata.tools.registry import Call, today
+    from strata.tools import registry
 
     engine = workspace.engine()
-    page = data_readiness_for(Call(engine, Viewer(name="the workspace check"), "staff", today(), load_thresholds()))
+    page = registry.call("data_readiness_for", {}, registry.Context(engine, Viewer(name="the workspace check")))
     awards = [row for row in page["sources"] if row["id"] == "awards" and row["type"] == "measured"]
     if not awards:
         reason = (page["abstention"] or {}).get("reason", "no measures for the awards")

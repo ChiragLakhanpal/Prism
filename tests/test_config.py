@@ -247,6 +247,14 @@ def test_a_fix_names_the_measure_whose_numbers_fill_its_sentence(tmp_path):
     assert all("{" in fix.sentence for fix in fixes)
 
 
+def test_a_fix_on_a_measure_no_column_shows_must_say_what_it_counts(tmp_path):
+    """Its numbers' tooltips need a noun (design review B1), and no column gives one."""
+    path = copy("sources.toml", tmp_path, 'noun = "contracts in local currency"\n', "")
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.fixes\[2\]\.noun must say what its measure counts"):
+        config.load_sources(path)
+
+
 def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):
     slice_file = copy("slice.toml", tmp_path)
     slice_file.write_text(slice_file.read_text() + '\n[[countries]]\nname = "Nepal"\niso2 = "NP"\niso3 = "NPL"\n')

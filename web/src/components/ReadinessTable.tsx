@@ -6,12 +6,13 @@
 // Gap. A row can span the measure columns with one note, so no cell is ever blank.
 //
 // Below 768 px each row becomes a card in a list labelled by the section: the row's name as an h3,
-// and each column as a term (its name and short definition) and its value, every value from one
-// left edge. Numbers share a grid of 120 px columns; text takes the card's full width. The full
-// definitions open from the table's heads, so a card repeats only the words.
+// and each column as a term (its label, which opens its full definition, and its short definition)
+// and its value, every value from one left edge. Numbers share a grid of 120 px columns when a card
+// has two or more; otherwise, like text, they take the card's full width.
 //
-// While the measures load, the real column heads stay and skeleton rows of a fixed height hold the
-// rows' places, so nothing moves when they arrive. Rows have no hover: a row does nothing on a press.
+// While the measures load, the real column heads stay and skeleton rows as tall as the real rows
+// hold their places, so nothing moves when they arrive. Rows have no hover: a row does nothing on a
+// press.
 import { useId, type ReactNode } from "react";
 import { cx } from "../lib/cx";
 import { SkeletonLine } from "./Skeleton";
@@ -27,6 +28,8 @@ export type ReadinessColumn = {
   numeric?: boolean;
   // The column's share of the table, as a width class such as "w-1/5".
   width?: string;
+  // More classes for the column's head and cells in the table, such as extra padding.
+  className?: string;
 };
 
 export type ReadinessRow =
@@ -35,10 +38,13 @@ export type ReadinessRow =
 
 export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { status: "loading"; rows: number };
 
-// Skeleton rows as tall as the rows they stand for: 64 px for a kind of question, 72 px for a source.
-const ROW_HEIGHT = { kinds: "h-16", sources: "h-18" } as const;
+// Skeleton rows as tall, on average, as the rows they stand for, measured on the fixture's page at
+// 1440 and 1024 px, and below 768 px a card's body as tall as a real card's.
+const ROW_HEIGHT = { kinds: "h-32 xl:h-29", sources: "h-[7.625rem] xl:h-27" } as const;
+const CARD_HEIGHT = { kinds: "h-64", sources: "h-[15.75rem]" } as const;
 
-const HEAD = "px-4 py-3 align-bottom font-semibold text-ink-heading";
+// Heads sit at the top, so their labels share one line however their short definitions wrap.
+const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";
 const CELL = "px-4 py-3 wrap-anywhere text-ink";
 
 function Heading({ label, about }: { label: ReactNode; about: ReactNode }) {
@@ -58,7 +64,7 @@ export function ReadinessTable({
   columns,
   state,
   source,
-  skeleton,
+  skeletonRows,
   spanName,
 }: {
   // A key for tests and screenshots: kinds or sources.
@@ -71,7 +77,8 @@ export function ReadinessTable({
   columns: ReadinessColumn[];
   state: ReadinessTableState;
   source?: ReactNode;
-  skeleton: keyof typeof ROW_HEIGHT;
+  // Which rows the skeleton stands for, and so how tall each is: kinds or sources.
+  skeletonRows: keyof typeof ROW_HEIGHT;
   // What a card's spanning note is for a screen reader, such as "Coverage, linked, read well and fresh".
   spanName?: string;
 }) {
@@ -79,16 +86,21 @@ export function ReadinessTable({
   const loading = state.status === "loading";
   const rows = state.status === "ready" ? state.rows : [];
   const placeholders = Array.from({ length: loading ? state.rows : 0 }, (_, index) => index);
+  // DESIGN.md section 5, Tables: numbers share a grid only when a card has two or more.
+  const numberGrid = columns.filter((column) => column.numeric).length >= 2;
 
   return (
     <section aria-labelledby={titleId} data-readiness-table={id} className="flex flex-col">
       <h2 id={titleId} className="text-title text-ink-heading">
         {title}
       </h2>
-      {lines && (
+      {lines ? (
         <p className="mt-1 text-caption text-pretty text-ink-muted" data-numbers>
           {lines}
         </p>
+      ) : (
+        // The count line shows only with the rows; its skeleton holds its place until then.
+        loading && <SkeletonLine width="w-1/4" className="mt-1 text-caption" />
       )}
 
       <div data-table-view="table" className="mt-3 hidden rounded-md border border-line bg-surface md:block">
@@ -100,7 +112,7 @@ export function ReadinessTable({
                 <Heading label={head.label} about={head.about} />
               </th>
               {columns.map((column) => (
-                <th key={column.key} scope="col" className={cx(HEAD, column.numeric ? "text-right" : "text-left", column.width)}>
+                <th key={column.key} scope="col" className={cx(HEAD, column.numeric ? "text-right" : "text-left", column.width, column.className)}>
                   <Heading label={column.label} about={column.about} />
                 </th>
               ))}
@@ -108,12 +120,12 @@ export function ReadinessTable({
           </thead>
           <tbody>
             {placeholders.map((index) => (
-              <tr key={index} aria-hidden="true" className={cx("border-t border-line", ROW_HEIGHT[skeleton])}>
+              <tr key={index} aria-hidden="true" className={cx("border-t border-line", ROW_HEIGHT[skeletonRows])}>
                 <td className="px-4">
                   <SkeletonLine width="w-4/5" className="text-small" />
                 </td>
                 {columns.map((column) => (
-                  <td key={column.key} className="px-4">
+                  <td key={column.key} className={cx("px-4", column.className)}>
                     <SkeletonLine width={column.numeric ? "ml-auto w-1/2" : "w-4/5"} className="text-small" />
                   </td>
                 ))}
@@ -134,7 +146,7 @@ export function ReadinessTable({
                     <td
                       key={column.key}
                       data-cell={`${row.id}:${column.key}`}
-                      className={cx(CELL, column.numeric && "text-right [&>*]:items-end")}
+                      className={cx(CELL, column.numeric && "text-right [&>*]:items-end", column.className)}
                     >
                       {row.cells[column.key]}
                     </td>
@@ -150,8 +162,8 @@ export function ReadinessTable({
         {placeholders.map((index) => (
           <li key={index} aria-hidden="true" className="rounded-md border border-line bg-surface p-4">
             <SkeletonLine width="w-3/5" className="text-title" />
-            <SkeletonLine width="w-2/5" className="text-caption" />
-            <div className={cx("mt-3", ROW_HEIGHT[skeleton])} />
+            {skeletonRows === "sources" && <SkeletonLine width="w-2/5" className="text-caption" />}
+            <div className={cx("mt-3", CARD_HEIGHT[skeletonRows])} />
           </li>
         ))}
         {rows.map((row) => (
@@ -166,9 +178,10 @@ export function ReadinessTable({
                 </div>
               ) : (
                 columns.map((column) => (
-                  <div key={column.key} className={cx("flex min-w-0 flex-col", !column.numeric && "col-span-full")}>
+                  <div key={column.key} className={cx("flex min-w-0 flex-col", (!column.numeric || !numberGrid) && "col-span-full")}>
                     <dt className="text-caption text-ink-muted">
-                      <span className="block font-semibold text-ink">{column.name}</span>
+                      {/* At the small size, so the label that opens its definition is a 24 px target. */}
+                      <span className="block text-small font-semibold text-ink">{column.label}</span>
                       <span className="block">{column.about}</span>
                     </dt>
                     <dd className="mt-1 text-small wrap-anywhere text-ink">{row.cells[column.key]}</dd>
@@ -180,7 +193,7 @@ export function ReadinessTable({
         ))}
       </ul>
 
-      {source && <Source className="mt-2">{source}</Source>}
+      {source ? <Source className="mt-2">{source}</Source> : loading && <SkeletonLine width="w-1/3" className="mt-2 text-caption" />}
     </section>
   );
 }

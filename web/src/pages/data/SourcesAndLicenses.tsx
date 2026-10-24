@@ -5,6 +5,7 @@
 import { useEffect } from "react";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
+import { EmptyState } from "../../components/Card";
 import { Num } from "../../components/Num";
 import { SkeletonText } from "../../components/Skeleton";
 import { Template } from "../../components/Template";
@@ -50,7 +51,9 @@ export function SourcesAndLicenses() {
             {words.failed}
           </Alert>
         )}
-        {state.status === "ready" && state.registry.datasets.length === 0 && <p className="mt-3 text-body">{words.empty}</p>}
+        {state.status === "ready" && state.registry.datasets.length === 0 && (
+          <EmptyState level={3} className="mt-3" title={words.empty} body={words.emptyBody} />
+        )}
         {state.status === "ready" && state.registry.datasets.length > 0 && (
           <>
             <p className="mt-1 text-caption text-ink-muted">

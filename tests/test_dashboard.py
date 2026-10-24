@@ -28,6 +28,17 @@ def engine(fixture_db):
         yield engine
 
 
+@pytest.fixture
+def empty_catalog_copy(tmp_path):
+    """Every table and no rows, as a first deploy leaves the catalog."""
+    from strata.lakehouse import catalog
+
+    path = tmp_path / "strata.duckdb"
+    with DuckDBEngine.open(path) as engine:
+        catalog.build(engine)
+    return path
+
+
 @pytest.fixture(scope="module")
 def page(engine):
     return registry.call("data_readiness_for", {"as_of": DAY.isoformat()}, registry.Context(engine=engine, viewer=ANA))
@@ -68,6 +79,17 @@ def test_the_snapshot_gives_each_source_the_app_s_status_and_link_counts(engine,
             assert (stored["count"], stored["denominator"]) == (measure["count"], measure["denominator"]), row["id"]
 
 
+def test_the_snapshot_s_pages_read_well_by_route_are_the_tool_s_route_rows(engine, page):
+    """Review B3: the routes' shares come from data_readiness_for's rows, never a sum of the
+    snapshot's own."""
+    routes = snapshot(engine, "route")
+
+    assert [(row["label"], row["count"], row["denominator"], row["share_percent"]) for row in routes] == [
+        (route["label"], page["rows"][route["row"]]["count"], page["rows"][route["row"]]["denominator"],
+         page["rows"][route["row"]]["share_percent"]) for route in page["routes"]]
+    assert routes
+
+
 # ── The definition, and one deploy ────────────────────────────────────────
 
 import json  # noqa: E402
@@ -85,8 +107,8 @@ def lvdash() -> dict:
     return json.loads(dashboard.FILE.read_text())
 
 
-def dataset_rows(engine, name):
-    result = engine.run(dashboard.query(name), {dashboard.PARAMETER: DAY})
+def dataset_rows(engine, name, day=DAY):
+    result = engine.run(dashboard.query(name), {dashboard.PARAMETER: day, **dashboard.labels(name)})
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
@@ -129,9 +151,12 @@ def test_one_date_filter_sets_every_dataset_and_starts_at_today():
     assert {query["query"]["datasetName"] for query in date["widget"]["queries"]} == {
         dataset["name"] for dataset in board["datasets"]}
     for dataset in board["datasets"]:
-        [parameter] = dataset["parameters"]
-        assert (parameter["keyword"], parameter["dataType"]) == ("measure_date", "DATE")
+        date, *names = dataset["parameters"]
+        assert (date["keyword"], date["dataType"]) == ("measure_date", "DATE")
         assert ":measure_date" in "".join(dataset["queryLines"])
+        # Any other parameter is a row name, fixed to its words in the copy file.
+        assert {name["keyword"]: name["defaultSelection"]["values"]["values"][0]["value"] for name in names} == (
+            dashboard.labels(dataset["name"]))
 
 
 def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_variants_for_essential_marks():
@@ -151,8 +176,25 @@ def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_va
 
 
 def test_every_dataset_runs_on_the_fixture_on_the_day_it_was_measured(engine):
+    """The routes chart charts a route only from the thresholds file's fewest rows for a percentage
+    (DESIGN.md section 7, rule 15); the fixture's routes read 22 and 15 pages, so it has no bar."""
     for name, _ in dashboard.DATASETS:
-        assert dataset_rows(engine, name), name
+        rows = dataset_rows(engine, name)
+        assert rows if name != "readiness_routes" else rows == [], name
+
+
+def test_a_route_or_a_link_is_charted_only_from_enough_rows_for_a_percentage(empty_catalog_copy):
+    """Review P11: a share the tool leaves empty draws no empty bar."""
+    from strata.dashboard import snapshot as written
+    at = dt.datetime(2026, 10, 23, 9, tzinfo=dt.UTC)
+    result = {"headline": None, "sources": [], "fixes": [],
+              "rows": [{"count": 60, "denominator": 64, "share_percent": 94}, {"count": 15, "denominator": 15,
+                                                                               "share_percent": None}],
+              "routes": [{"label": "Published text (Route A)", "row": 0}, {"label": "Layout parser (Route B)", "row": 1}]}
+    with DuckDBEngine.open(empty_catalog_copy) as engine:
+        engine.insert_rows("strata.ops.readiness_snapshot", written.COLUMNS, written.rows(result, "run-1", DAY, at))
+        assert [(row["route"], row["share_percent"]) for row in dataset_rows(engine, "readiness_routes")] == [
+            ("Published text (Route A)", 94)]
 
 
 def test_the_dashboard_s_headline_fixes_and_link_shares_are_the_app_s_for_the_same_day(engine, page):
@@ -164,7 +206,7 @@ def test_the_dashboard_s_headline_fixes_and_link_shares_are_the_app_s_for_the_sa
         (fix["rank"], text_of(fix["sentence"]), fix["projects"]) for fix in page["fixes"]]
 
     shares = {row["link"]: row["share_percent"] for row in dataset_rows(engine, "readiness_links")}
-    assert shares["Contract awards: carry a STEP reference"] == 88  # 528 of 603, as the app shows
+    assert shares["Contract awards: contracts carry a STEP reference"] == 88  # 528 of 603, as the app shows
 
 
 def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_contracts(engine):
@@ -176,11 +218,9 @@ def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_contracts(engine):
     rows = dataset_rows(engine, "award_rows_by_year")
 
     assert sum(row["award_rows"] for row in rows if row["dataset"] == "Awards since FY2020") == kenya["contracts"]
-    assert {row["dataset"] for row in rows} <= set(dashboard.AWARD_DATASETS)
+    assert {row["dataset"] for row in rows} <= set(dashboard.award_datasets())
     assert all(re.fullmatch(r"FY\d\d", row["fiscal_year_label"]) for row in rows)
 
 
 def test_a_date_before_the_first_snapshot_shows_no_headline(engine):
-    result = engine.run(dashboard.query("readiness_headline"), {dashboard.PARAMETER: DAY - dt.timedelta(days=1)})
-
-    assert result.rows == ()
+    assert dataset_rows(engine, "readiness_headline", DAY - dt.timedelta(days=1)) == []

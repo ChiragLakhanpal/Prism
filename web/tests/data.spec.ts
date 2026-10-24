@@ -57,7 +57,7 @@ test("the Data tab has one header, and its three sub-tabs are links in a nav tha
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
   await expect(page.locator("main h1 + p")).toHaveText(
-    "How fit each source is to support answers, where each dataset comes from, and how I read them.",
+    "See how far each source can support answers, where each dataset comes from, and how I read them.",
   );
   await expect(page).toHaveTitle("Data readiness | Strata");
   const tabs = page.getByRole("navigation", { name: "Data pages" }).getByRole("link");
@@ -91,10 +91,30 @@ test("every number in the Sources table is the measure the server returned for i
       const measure = answer.rows[given.row];
       const shown = await cell(page, `${row.id}:${column}`).locator("[data-num]").first().textContent();
       const count = measure.count.toLocaleString("en-US");
-      expect(shown, `${row.id} ${column}`).toContain(column === "coverage" ? count : `${count} of ${measure.denominator.toLocaleString("en-US")}`);
+      const whole = column === "coverage" && measure.denominator === measure.count;
+      expect(shown, `${row.id} ${column}`).toBe(whole ? count : `${count} of ${measure.denominator.toLocaleString("en-US")}${share(measure)}`);
     }
   }
 });
+
+// The share a cell shows, from the columns the tool returned, never from a division in the browser
+// (review B2): a percent from 50 rows, about N in 10 from 20, and the words for a part that rounds to
+// an end of its scale.
+function share(measure: { share_percent: number | null; share_bound: string | null; in_ten: number | null; in_ten_exact: boolean | null }) {
+  if (measure.share_percent !== null) {
+    return measure.share_bound === "under" ? ", <1%" : measure.share_bound === "over" ? ", >99%" : `, ${measure.share_percent}%`;
+  }
+  if (measure.in_ten !== null) {
+    return measure.share_bound === "under"
+      ? ", fewer than 1 in 10"
+      : measure.share_bound === "over"
+        ? ", more than 9 in 10"
+        : measure.in_ten_exact
+          ? `, ${measure.in_ten} in 10`
+          : `, about ${measure.in_ten} in 10`;
+  }
+  return "";
+}
 
 test("the headline is the server's sentence, and its caption says the measures' date and that no model wrote it", async ({ page }) => {
   const answer = await json("data-readiness.json");
@@ -125,7 +145,8 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 �
   await expect(cell(page, "awards_fy2001_2016:fresh")).toContainText("Jun 2016 · frozen");
   await expect(cell(page, "reports:fresh")).toContainText("Jun 30 · as published");
   await expect(cell(page, "awards:read_well")).toHaveText("Published as a table");
-  await expect(cell(page, "plans:fresh")).toHaveText("Not measured yet");
+  // The registry gives the plans no freshness measure; their versions arrive as published.
+  await expect(cell(page, "plans:fresh")).toHaveText("As published");
   // CPIA and WGI scores are a source's own values; no score of Strata's rates a source.
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
@@ -138,14 +159,14 @@ test("each column head holds its definition, and its label opens the full defini
   await expect(heads).toHaveText([
     "Sourcewhere",
     "Coveragerows and fiscal years",
-    "Linkedto projects and notices",
+    "Linkedto projects and other records",
     "Read wellread without errors",
     "Freshlatest data, how often",
   ].map((text) => text.replace("Sourcewhere", "Source")));
   await heads.nth(2).getByRole("button", { name: "Linked" }).click();
   const definition = page.getByRole("dialog", { name: "Linked" });
   await expect(definition).toContainText(
-    "How many of these rows I could join to a project, a notice or a Procurement Plan. A row that doesn't join can't count in answers that need the join.",
+    "How many of these rows I could join to the record they need: a project, a notice, a Procurement Plan, a sector or a borrower country. A row that doesn't join can't count in answers that need the join.",
   );
   await page.keyboard.press("Escape");
   await expect(definition).toBeHidden();
@@ -186,6 +207,65 @@ test("a number's tooltip says what was counted and when, and a click opens its m
   await expect(number).toBeFocused();
 });
 
+test("every number's tooltip names what it counts, and its window shows the number that opened it", async ({ page }) => {
+  await mockData(page, FULL);
+  await open(page);
+
+  // Design review B1: no tooltip reads "2 . Measured". Focus opens each one; the open tooltip is the
+  // one the number names as its description.
+  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  // The cards below 768 px repeat the table's numbers and are hidden at this width.
+  const numbers = page.locator("main button[data-num]").filter({ visible: true });
+  const count = await numbers.count();
+  expect(count).toBeGreaterThan(40);
+  for (let index = 0; index < count; index += 1) {
+    const number = numbers.nth(index);
+    await number.focus();
+    await expect(number, `number ${index}`).toHaveAttribute("aria-describedby", /.+/);
+    const said = await page.locator(`[id="${await number.getAttribute("aria-describedby")}"]`).textContent();
+    // A bare number would read "2 . Measured" or "2. Measured": a noun always sits between them.
+    expect(said, `number ${index}`).not.toMatch(/^[\d,]+ ?\./);
+  }
+
+  // The headline's 75 is a shortfall: its window shows it above the measure's own numbers.
+  await page.locator("[data-headline] [data-num]", { hasText: /^75$/ }).click();
+  const window = page.getByRole("dialog", { name: "Linked" });
+  await expect(window).toContainText("Falling short75");
+  await expect(window).toContainText("Counted528");
+  await page.keyboard.press("Escape");
+
+  // A fix's project count opens only a window whose Counted is that count, or none at all.
+  const answer = await json("data-readiness.json");
+  for (const [index, fix] of answer.fixes.entries()) {
+    const projects = page.locator("[data-fixes] li").nth(index).locator("p.text-small [data-num]");
+    if (fix.projects_row === null) {
+      await expect(projects).not.toHaveAttribute("aria-haspopup", "dialog");
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await projects.hover();
+      const said = fix.projects === 1 ? "project has" : "projects have";
+      await expect(page.getByRole("tooltip").filter({ hasText: `${fix.projects} ${said} rows behind this gap. Measured Oct 23, 2026.` })).toBeVisible();
+    } else {
+      await projects.click();
+      await expect(page.getByRole("dialog")).toContainText(`Counted${fix.projects}`);
+      await page.keyboard.press("Escape");
+    }
+    await page.keyboard.press("Escape");
+  }
+});
+
+test("opened from the plan check, it shows only the rows the plan check reads, and every count is of those rows", async ({ page }) => {
+  await mockData(page, { file: "data-readiness-plan-check.json" });
+  await open(page, "/data?sources=documents,projects&from=check_plan");
+
+  await expect(page.getByRole("main").locator("[data-alert=info]").first()).toContainText(
+    "I'm showing only the two sources behind the plan check.",
+  );
+  await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the plan check.");
+  await expect(page.locator("[data-headline]")).not.toContainText("body pages");
+  await expect(table(page, "sources").locator("tbody tr")).toHaveCount(2);
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 13 sources.");
+});
+
 test("What you can ask shows each kind of question with what it is ready for and what holds it back", async ({ page }) => {
   await mockData(page, FULL);
   await open(page);
@@ -193,7 +273,7 @@ test("What you can ask shows each kind of question with what it is ready for and
   const kinds = table(page, "kinds");
   await expect(kinds.locator("tbody th")).toHaveText(["Checking a plan against its own dates", "What project documents say"]);
   await expect(kinds.locator("[data-cell='plan_check:holds']")).toContainText(
-    "The 46 of 46 activity entries in the latest plan versions that lack a confirmed first listing I read.",
+    "Of 46 activity entries in the latest plan versions, 46 lack a first listing I could confirm.",
   );
   await expect(kinds.locator("[data-cell='plan_check:readyFor'] [data-badge=partial]")).toHaveText("Partial");
 });
@@ -219,7 +299,7 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the past range.");
   const rows = table(page, "sources").locator("tbody tr");
   await expect(rows).toHaveCount(3);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing two of 13 sources.");
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 13 sources.");
 
   await page.getByRole("link", { name: "Show all sources" }).click();
   await expect(page).toHaveURL(/\/data$/);
@@ -271,7 +351,8 @@ test("while the measures load, skeletons hold each table's rows, and after three
 
   const loading = page.locator("[data-readiness=loading]");
   await expect(loading).toHaveAttribute("aria-busy", "true");
-  await expect(table(page, "sources").locator("tbody tr")).toHaveCount((await json("data-sources.json")).readiness_rows);
+  const registry = await json("data-sources.json");
+  await expect(table(page, "sources").locator("tbody tr")).toHaveCount(registry.readiness_rows + registry.known_gaps);
   await expect(page.getByRole("status")).toHaveText("");
   await page.clock.runFor(3100);
   await expect(page.getByRole("main").getByRole("status")).toHaveText(
@@ -281,14 +362,41 @@ test("while the measures load, skeletons hold each table's rows, and after three
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
 });
 
-test("with no measures yet, the page says so and points to Sources and licenses", async ({ page }) => {
+for (const width of [1440, 1024, 390]) {
+  test(`at ${width} px the section titles land within 16 px of where the skeleton put them`, async ({ page }) => {
+    await mockShell(page);
+    await page.route("**/api/data/sources", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("data-sources.json") }));
+    let release: () => void = () => {};
+    const held = new Promise<void>((done) => (release = done));
+    await page.route("**/api/data/readiness*", async (route) => {
+      await held;
+      await route.fulfill({ contentType: "application/json", body: await recorded("data-readiness.json") });
+    });
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/data");
+    await expect(table(page, "sources").or(page.locator("[data-readiness-table=sources] [data-table-view=cards]")).locator("[aria-hidden=true]").first()).toBeAttached();
+    const titles = () =>
+      page.locator("[data-readiness] h2").evaluateAll((found) => found.map((h) => [h.textContent, Math.round(h.getBoundingClientRect().top + window.scrollY)]));
+    await expect.poll(async () => (await titles()).length).toBeGreaterThanOrEqual(3);
+    const before = Object.fromEntries(await titles());
+    release();
+    await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+    const after = Object.fromEntries(await titles());
+    expect(Object.keys(after)).toEqual(Object.keys(before));
+    for (const title of Object.keys(after)) {
+      expect(Math.abs(after[title] - before[title]), `${title} at ${width} px`).toBeLessThanOrEqual(16);
+    }
+  });
+}
+
+test("with no measures yet, the page shows DESIGN.md's empty-state card, which points to Sources and licenses", async ({ page }) => {
   await mockData(page, { file: "data-readiness-empty.json" });
   await open(page);
 
-  await expect(page.locator("[data-readiness=empty]")).toContainText(
-    "I haven't measured any sources yet. The measures appear here after the first data run.",
-  );
-  await expect(page.getByRole("main").getByRole("link", { name: "Sources and licenses" }).last()).toHaveAttribute("href", "/data/sources");
+  const card = page.locator("[data-readiness=empty] [data-empty-state]");
+  await expect(card.getByRole("heading")).toHaveText("I haven't measured any sources yet.");
+  await expect(card).toContainText("The measures appear here after the first data run.");
+  await expect(card.getByRole("link", { name: "See the datasets I'm set up to read" })).toHaveAttribute("href", "/data/sources");
   await expect(page.locator("[data-readiness-table]")).toHaveCount(0);
 });
 
@@ -297,7 +405,7 @@ test("a source with no measures leaves the headline out, and its row says it is 
   await open(page);
 
   await expect(page.locator("[data-headline]")).toHaveText(
-    "I'm not giving a headline: one of the 13 sources below have no measures yet. Their rows say so.",
+    "I'm not giving a headline: 1 of the 13 sources below has no measures yet. Its row says so.",
   );
   await expect(cell(page, "wgi:span")).toHaveText("Not measured yet. The next data run measures it.");
 });
@@ -307,7 +415,7 @@ test("a date before the first measure says when the measures start and links to 
   await open(page, "/data?asof=2026-10-01");
 
   await expect(page.locator("[data-readiness=before-first]")).toContainText(
-    "I have no measures from on or before October 1, 2026. My first measures were taken October 23, 2026.",
+    "I have no measures taken on or before October 1, 2026. I took my first measures on October 23, 2026.",
   );
   await expect(page.getByRole("link", { name: "Show today's measures" })).toHaveAttribute("href", "/data");
   // The page applies the date itself, so the frame does not say it shows today's data.
@@ -329,12 +437,24 @@ for (const [name, file, status, text, retry] of [
   });
 }
 
-test("Try again keeps focus on the button while loading, then moves it to the headline", async ({ page }) => {
+test("Try again moves focus to the busy lead at once, and it stays there when the headline arrives", async ({ page }) => {
   let calls = 0;
-  await mockData(page, () => (++calls === 1 ? { file: "data-readiness-error.json", status: 502 } : FULL));
+  let release: () => void = () => {};
+  const held = new Promise<void>((done) => (release = done));
+  await mockShell(page);
+  await page.route("**/api/data/sources", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("data-sources.json") }));
+  await page.route("**/api/data/readiness*", async (route) => {
+    if (++calls === 1) return route.fulfill({ status: 502, contentType: "application/json", body: await recorded("data-readiness-error.json") });
+    await held;
+    await route.fulfill({ contentType: "application/json", body: await recorded("data-readiness.json") });
+  });
   await open(page);
 
-  await page.getByRole("button", { name: "Try again" }).click();
+  await page.getByRole("button", { name: "Try again" }).press("Enter");
+  await expect(page.locator("[data-readiness=loading]")).toBeVisible();
+  await expect(page.locator("main [data-lead]")).toBeFocused();
+  await expect(page.locator("main [data-lead]")).toHaveAttribute("aria-busy", "true");
+  release();
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
   await expect(page.locator("main [data-lead]")).toBeFocused();
 });
@@ -348,6 +468,14 @@ test("below 768 px each table becomes cards, each with the source's name as a he
   await expect(cards.first().getByRole("heading", { level: 3 })).toHaveText("Contract awards");
   await expect(cards.first().locator("dt").first()).toHaveText("Coveragerows and fiscal years");
   await expect(cards.first().locator("dd").nth(1)).toContainText("528 of 603, 88%");
+  // Each label opens its full definition on a phone too.
+  await cards.first().locator("dt").nth(1).getByRole("button", { name: "Linked" }).click();
+  await expect(page.getByRole("dialog", { name: "Linked" })).toContainText("a sector or a borrower country");
+  await page.keyboard.press("Escape");
+  // A kind's card has one number, so its Ready for runs the card's full width.
+  const kind = page.locator("[data-readiness-table=kinds] [data-table-view=cards] > li").first();
+  const [card, value] = await Promise.all([kind.locator("dl").boundingBox(), kind.locator("dl > div").first().boundingBox()]);
+  expect(Math.round(value!.width)).toBe(Math.round(card!.width));
   await page.setViewportSize({ width: 320, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
@@ -398,6 +526,7 @@ test("How Strata works states its purpose and links to the other two pages, and 
 const STATES: [string, string, Answer | ((query: URLSearchParams) => Answer)][] = [
   ["populated", "/data", FULL],
   ["filtered", "/data?sources=awards,notices&from=find_comparables", byQuery],
+  ["filtered from the plan check", "/data?sources=documents,projects&from=check_plan", { file: "data-readiness-plan-check.json" }],
   ["filtered with an unknown key", "/data?sources=awards,not-a-source&from=find_comparables", byQuery],
   ["empty", "/data", { file: "data-readiness-empty.json" }],
   ["abstention", "/data", { file: "data-readiness-unmeasured.json" }],
