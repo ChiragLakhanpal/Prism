@@ -50,6 +50,28 @@ test("All projects lists 50 projects whose IDs link to their pages, and Show 50 
   expect(unrecorded).toEqual([]);
 });
 
+test("All projects' skeleton rows are as tall as its rows, so the page does not jump when they arrive", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/projects", async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("projects.json") });
+  });
+  await page.goto("/projects");
+  await page.evaluate(() => document.fonts.ready);
+  const firstRow = page.locator("[data-table-view=table] tbody tr").first();
+  const height = () => firstRow.evaluate((row) => row.getBoundingClientRect().height);
+  await expect(page.locator("[data-projects-page=loading]")).toBeVisible();
+  const loading = await height();
+
+  release();
+  await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
+
+  expect(Math.abs((await height()) - loading)).toBeLessThanOrEqual(1);
+});
+
 test("All projects says when it holds no records, and when the data service didn't answer", async ({ page }) => {
   await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } });
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
@@ -91,7 +113,13 @@ test("a project's page shows its header, one Procurement tab, and each agency's 
   ]);
   await expect(nwwda.locator("[data-table-view=table] tbody tr").first().locator("td")).toHaveText(["Oct 9, 2026", "9"]);
   await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing 1 version")).toBeVisible();
-  await expect(main.locator("[data-agency=water-sector-trust-fund]")).toContainText("I don't have a Procurement Plan from this agency yet.");
+  // The agencies with no plan share one block after the ones with plans, rather than ten alike.
+  const others = main.locator("[data-other-agencies]");
+  await expect(others.getByRole("heading", { level: 3 })).toHaveText("Other implementing agencies");
+  await expect(others).toContainText("I don't have a Procurement Plan from these agencies yet:");
+  await expect(others.getByRole("listitem")).toHaveCount(10);
+  await expect(others.getByRole("listitem").filter({ hasText: "Water Sector Trust Fund" })).toHaveCount(1);
+  await expect(main.getByRole("heading", { level: 3 })).toHaveCount(5);
 
   await nwwda.locator("[data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   await expect(page).toHaveURL(/\/projects\/P156634\/procurement\/northern-water-works-development-agency\/2026-10-09$/);

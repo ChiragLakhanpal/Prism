@@ -167,6 +167,24 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
   );
 }
 
+// The agencies the project record names that have published no plan, together after the ones
+// with plans, so the exceptions stand out and the rest fold into one block.
+function OtherAgencies({ agencies }: { agencies: Agency[] }) {
+  return (
+    <section data-other-agencies>
+      <h3 className="text-title text-ink-heading">{plans.otherAgencies}</h3>
+      <p className="mt-2 text-small text-ink-muted">{plans.othersEmpty}</p>
+      <ul className="mt-2 list-disc pl-6 text-small text-ink">
+        {agencies.map((agency) => (
+          <li key={agency.agency_id} data-agency={agency.agency_id}>
+            {agency.implementing_agency}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function ProjectPage({ pid }: { pid: string }) {
   const [load, retry] = useLoad<Page>(`/api/projects/${encodeURIComponent(pid)}`);
   const title = useRef<HTMLHeadingElement>(null);
@@ -251,11 +269,14 @@ export function ProjectPage({ pid }: { pid: string }) {
       />
     );
   } else {
+    const withPlans = load.data.agencies.filter((agency) => agency.version_count > 0);
+    const without = load.data.agencies.filter((agency) => agency.version_count === 0);
     tab = (
       <div className="flex flex-col gap-10">
-        {load.data.agencies.map((agency) => (
+        {(without.length > 1 ? withPlans : load.data.agencies).map((agency) => (
           <AgencyPlans key={agency.agency_id} agency={agency} pid={pid} through={load.data.documents_through} />
         ))}
+        {without.length > 1 && <OtherAgencies agencies={without} />}
       </div>
     );
   }

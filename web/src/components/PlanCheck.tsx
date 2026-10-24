@@ -640,9 +640,13 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   return (
     <div aria-hidden="true" data-plan-skeleton>
       <Prose className="mt-6">
-        <SkeletonLine className="text-title" width="w-[70%]" />
+        {/* The finding's count words are buttons whose 2 px padding makes its line 4 px taller,
+            and the method sentence takes three lines at the prose width. */}
+        <div className="py-0.5">
+          <SkeletonLine className="text-title" width="w-[70%]" />
+        </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
-        <SkeletonText className="mt-2 text-body" widths={["w-full", "w-3/5"]} />
+        <SkeletonText className="mt-2 text-body" widths={["w-full", "w-full", "w-2/5"]} />
       </Prose>
       <SkeletonLine className="mt-4 text-caption" width="w-40" />
       <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
@@ -683,11 +687,27 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
           </tbody>
         </table>
       </div>
+      {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
+          of Description, two of reason, the hairline and the four STEP fields under their labels. */}
       <ul className={cx("mt-2 flex flex-col gap-3", VIEW.cards)}>
         {[0, 1, 2].map((index) => (
-          <li key={index} className="h-60 rounded-md border border-line bg-surface p-4">
-            <Skeleton className="h-7 w-28 rounded-pill" />
-            <SkeletonText className="mt-2 text-small" widths={["w-3/5", "w-full", "w-4/5"]} />
+          <li key={index} className="rounded-md border border-line bg-surface p-4">
+            <div className="flex flex-col items-start gap-2 text-small">
+              <Skeleton className="h-[30px] w-28 rounded-pill" />
+              <SkeletonLine width="w-[190px] max-w-full" />
+            </div>
+            <SkeletonText className="mt-1 text-small" widths={["w-full", "w-3/5"]} />
+            <SkeletonText className="mt-2 text-small" widths={["w-full", "w-4/5"]} />
+            <dl className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2 border-t border-line pt-3">
+              {[words.columns.method, words.columns.review, words.columns.estimated, words.columns.status].map((label, field) => (
+                <div key={field} className={cx("flex min-w-0 flex-col justify-end", field === 0 && "col-span-full")}>
+                  <dt className="text-caption text-ink-muted">{label}</dt>
+                  <dd>
+                    <SkeletonLine className="text-small" width={field === 0 ? "w-4/5" : "w-3/5"} />
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </li>
         ))}
       </ul>

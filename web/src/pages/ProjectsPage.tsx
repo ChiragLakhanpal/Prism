@@ -8,6 +8,7 @@ import { Button } from "../components/Button";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { PageHeader } from "../components/PageHeader";
+import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { Table, type Column, type Row } from "../components/Table";
 import { TextLink } from "../components/TextLink";
@@ -26,6 +27,17 @@ const columns: Column[] = [
 ];
 
 const blank = <span className="text-ink-muted">{copy.notInRecord}</span>;
+
+// While the list loads, each Project cell holds a bar for the ID link and one for the name, so a
+// skeleton row is as tall as a project's row (the link's 4 px padding is pulled up by -mt-1).
+const PROJECT_SKELETON = (
+  <>
+    <span aria-hidden="true" className="-mt-1 flex h-7 items-center">
+      <Skeleton className="h-[1em] w-16" />
+    </span>
+    <SkeletonLine className="text-small" width="w-3/5" />
+  </>
+);
 
 // The alert and the empty state hold columns 1 to 8 from 1024 px, as on every other page.
 function EightColumns({ children }: { children: ReactNode }) {
@@ -54,7 +66,14 @@ export function ProjectsPage() {
   if (load.status === "loading") {
     body = (
       <>
-        <Table title={words.tableTitle} level={2} count={{ noun: words.noun, total: 0 }} columns={columns} rowHeader="project" state={{ status: "loading", rows: 8 }} />
+        <Table
+          title={words.tableTitle}
+          level={2}
+          count={{ noun: words.noun, total: 0 }}
+          columns={columns}
+          rowHeader="project"
+          state={{ status: "loading", rows: 8, header: PROJECT_SKELETON }}
+        />
         <p role="status" className="sr-only">
           {words.loading}
         </p>

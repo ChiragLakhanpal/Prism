@@ -373,6 +373,9 @@ export const copy = {
     source: "World Bank documents and reports API, Procurement Plans for {pid}, through {date}.",
     sourceUndated: "World Bank documents and reports API, Procurement Plans for {pid}.",
     agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
+    // Two or more agencies with no plan share one block after the agencies with plans.
+    otherAgencies: "Other implementing agencies",
+    othersEmpty: "I don't have a Procurement Plan from these agencies yet:",
     projectEmptyTitle: "I don't have a Procurement Plan for this project yet.",
     projectEmptyBody:
       "I can check a plan only after the World Bank discloses it and I have read it. Data readiness shows how much of " +

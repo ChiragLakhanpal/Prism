@@ -408,8 +408,17 @@ test("while the check loads, skeletons hold its places and a status says so", as
     "What Strata found",
   ]);
   await expect(page.getByText("Still checking this plan.")).toBeVisible({ timeout: 5000 });
+  // The header's skeleton has the populated header's shape, with the pill's bar on the right, so
+  // the table under it does not move when the rows arrive (the 10 brief, section 7).
+  await page.evaluate(() => document.fonts.ready);
+  const top = (selector: string) => page.locator(selector).evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  const header = { loading: await top("[data-plan-header]"), table: await top("[data-plan-skeleton] thead") };
+  // "Still checking this plan." and its 4 px margin go when the rows arrive; nothing else moves.
+  const still = await page.getByText("Still checking this plan.").evaluate((element) => element.getBoundingClientRect().height + 4);
   release();
   await expect(page.getByRole("status").filter({ hasText: "Checked nine activities." })).toHaveCount(1);
+  expect(Math.abs((await top("[data-plan-header]")) - header.loading)).toBeLessThanOrEqual(1);
+  expect(Math.abs(header.table - still - (await top("[data-view=table] thead")))).toBeLessThanOrEqual(1);
 });
 
 test("opening a plan from the Procurement tab keeps focus on the page's h1 while the check loads and after it arrives", async ({ page }) => {
@@ -434,6 +443,32 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
 
   await expect(h1).toHaveText("Northern Water Works Development Agency");
   await expect(h1).toBeFocused();
+});
+
+test("below 1024 px the skeleton cards are as tall as the activity cards they stand for", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await page.goto(PLAN);
+  await page.evaluate(() => document.fonts.ready);
+  const heights = (selector: string) =>
+    page.locator(selector).evaluateAll((cards) => cards.filter((card) => card.getClientRects().length > 0).map((card) => card.getBoundingClientRect().height));
+  await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
+  const skeleton = await heights("[data-plan-skeleton] li");
+
+  release();
+  await expect(page.locator("[data-plan-check]")).toBeVisible();
+
+  const real = await heights("[data-view=cards] ul:first-child > li:not([data-fold])");
+  for (const card of skeleton) {
+    expect(card).toBeGreaterThanOrEqual(Math.min(...real) - 1);
+    expect(card).toBeLessThanOrEqual(Math.max(...real) + 1);
+  }
 });
 
 test("an agency with no plan says so and links to the project's plans", async ({ page }) => {

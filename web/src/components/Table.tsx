@@ -42,7 +42,9 @@ export type Row = { id: string; cells: Record<string, ReactNode> };
 
 export type TableState =
   | { status: "ready"; rows: Row[] }
-  | { status: "loading"; rows: number }
+  // header: the row header cell's skeleton when that cell holds more than one line, such as a
+  // project ID over its name, so each skeleton row is as tall as the row it stands for.
+  | { status: "loading"; rows: number; header?: ReactNode }
   | { status: "empty"; title: ReactNode; body: ReactNode; link?: { href: string; text: ReactNode } }
   | { status: "error"; message: ReactNode; onRetry?: () => void };
 
@@ -140,6 +142,7 @@ export function Table({
   const loading = state.status === "loading";
   const rows = state.status === "ready" ? state.rows : [];
   const skeletonRows = Array.from({ length: loading ? state.rows : 0 }, (_, index) => index);
+  const skeletonHeader = loading ? state.header : undefined;
   const align = (column: Column) => (column.numeric ? "text-right" : "text-left");
   const cardHeading = `h${level + 1}`;
   const fields = columns.filter((column) => column.key !== rowHeader);
@@ -202,8 +205,12 @@ export function Table({
             {skeletonRows.map((index) => (
               <tr key={index} className="border-t border-line">
                 {columns.map((column) => (
-                  <td key={column.key} className="px-3 py-2">
-                    <SkeletonLine width={column.numeric ? "ml-auto w-1/2" : "w-4/5"} />
+                  <td key={column.key} className="px-3 py-2 align-top">
+                    {column.key === rowHeader && skeletonHeader ? (
+                      skeletonHeader
+                    ) : (
+                      <SkeletonLine width={column.numeric ? "ml-auto w-1/2" : "w-4/5"} />
+                    )}
                   </td>
                 ))}
               </tr>
@@ -238,7 +245,7 @@ export function Table({
       >
         {skeletonRows.map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
-            <SkeletonLine className="text-small" width="w-3/5" />
+            {skeletonHeader ? <div className="text-small">{skeletonHeader}</div> : <SkeletonLine className="text-small" width="w-3/5" />}
             <dl className={CARD_FIELDS}>
               {fields.map((column) => (
                 <div key={column.key} className={cardField(column, shared)}>
