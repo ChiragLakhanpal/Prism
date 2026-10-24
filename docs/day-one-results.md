@@ -25,7 +25,7 @@ Each probe also runs alone, with the command under its test. Every probe writes 
 | 4 | An AI Search endpoint and a hybrid index | not run | Default |
 | 5 | The Genie conversation API as the token's user | not run | Default |
 | 6 | An outside email joins the workspace and opens the app | not run | Default |
-| 7 | A personal access token or a service principal | failed | Undecided |
+| 7 | A personal access token or a service principal | not run | Default |
 | 8 | The four models within the subscription's quota | not run | Default |
 | 9 | Foundry evaluations after an Entra sign-in | not run | Default |
 | 10 | Traces from the app in Application Insights | not run | Default |
@@ -178,12 +178,12 @@ A personal access token or a service principal can be created.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-7 -->
-- Status: failed
-- Result: Neither a personal access token nor a service principal reached Databricks.
+- Status: not run
+- Result: Not run yet, because it needs the wizard first.
 - Evidence:
-  - Databricks refused the token and the service principal's client ID and secret.
-- Chosen path: Undecided. PLAN.md section 14 names no gap fill for this test, so the user decides.
-- Last run: October 24, 2026
+  - None yet. The command above fills it.
+- Chosen path: Default, until a result says otherwise. Scripts and probes reach Databricks with a personal access token.
+- Last run: never
 <!-- /dayone:test-7 -->
 
 ### Test 8. The four models within the subscription's quota
