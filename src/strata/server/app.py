@@ -109,12 +109,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
     runner answers /api/ask; without it, the stream says there is no agent (app_from_env in
-    src/strata/server/settings.py gives it the Foundry agent its environment names). usage receives one event per request, and
-    tracer_provider (the process's global one when None) one span. runs writes each answer stream's
-    run to strata.ops.agent_runs; without it, runs go to the server log only. trace_ids reads the
-    request's trace ids while its span is open. web_dist is the built web app: its files are served
-    as they are, and every other address outside /api gets its index.html, whose router shows the
-    page or the not-found page.
+    src/strata/server/settings.py gives it the Foundry agent its environment names). usage
+    receives one event per request, and tracer_provider (the process's global one when None) one
+    span. runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the
+    server log only. trace_ids reads the request's trace ids while its span is open. web_dist is
+    the built web app: its files are served as they are, and every other address outside /api gets
+    its index.html, whose router shows the page or the not-found page.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
