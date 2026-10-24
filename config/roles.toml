@@ -9,9 +9,10 @@
 #   groups   the workspace groups whose members are on the team. The server reads a viewer's groups
 #            with their own token. A viewer in the groups of two teams is on the first one in this file.
 #
-# A viewer in none of these groups is on a team of their own, so their drafts are theirs alone until a
-# group puts them on a team. Changing who shares drafts is one line here, or a change of group
-# membership in the workspace.
+# A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
+# when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the
+# author was on their team. Changing who shares drafts is one line here, or a change of group membership
+# in the workspace, and it never hides anyone's own drafts from them.
 
 [teams.kenya-water]
 name = "Kenya water and sanitation"

@@ -7,7 +7,6 @@
 // NoteSentences draws one note's sentences with their citation markers, which open the evidence drawer at
 // the plan row each cites. Numbers the verifier matched explain themselves, as in an answer.
 import { Fragment, type ReactNode } from "react";
-import { copy } from "../copy";
 import type { DraftNote } from "../lib/drafts";
 import type { EvidenceEvent, SentenceEvent } from "../lib/answer";
 import { evidenceHref, openEvidence } from "../lib/evidence";
@@ -95,14 +94,16 @@ function Activity({ row, card = false }: { row: NoteRow; card?: boolean }) {
   );
 }
 
-export function DraftNotes({ rows, caption, cardsLabelId }: {
+export function DraftNotes({ rows, columns, caption, cardsLabelId }: {
   rows: NoteRow[];
+  // The two column headings, from the kind's layout (config/drafts.toml) in the kind's words.
+  columns: string[];
   // The table's caption, for screen readers.
   caption: string;
   // The lede's id, which names the list of cards.
   cardsLabelId: string;
 }) {
-  const columns = copy.draft.kinds.review_notes.columns;
+  const [activity, note] = columns;
   return (
     <div data-draft-notes>
       <div data-view="table" className="hidden overflow-hidden rounded-md border border-line bg-surface @min-[35rem]/doc:block">
@@ -111,10 +112,10 @@ export function DraftNotes({ rows, caption, cardsLabelId }: {
           <thead className="bg-surface-2">
             <tr>
               <th scope="col" className="w-60 p-3 text-left font-semibold text-ink-heading">
-                {columns.activity}
+                {activity}
               </th>
               <th scope="col" className="p-3 text-left font-semibold text-ink-heading">
-                {columns.note}
+                {note}
               </th>
             </tr>
           </thead>

@@ -4,8 +4,9 @@
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 
-export function Skeleton({ className }: { className: string }) {
-  return <span aria-hidden="true" data-skeleton className={cx("block rounded-xs bg-surface-2", className)} />;
+// radius: the shape it stands for, such as rounded-pill for a button or a badge.
+export function Skeleton({ className, radius = "rounded-xs" }: { className: string; radius?: string }) {
+  return <span aria-hidden="true" data-skeleton className={cx("block bg-surface-2", radius, className)} />;
 }
 
 // One line of text: a box exactly one line tall in the text style around it (1lh), holding a

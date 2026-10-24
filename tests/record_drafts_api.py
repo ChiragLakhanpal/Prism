@@ -8,7 +8,8 @@ database first, then run:
 
 One story makes them all, on the fixture database as of October 23, 2026, with the scripted writer's cases
 (tests/fixtures/agent/writers.toml), a fixed clock and fixed ids: Ana, on the Kenya water team, drafts
-review notes on the NWWDA plan of October 9, 2026, Ben (her teammate) opens them, Ana checks and exports
+review notes on the NWWDA plan of October 9, 2026, Ben (her teammate) opens them and finds them from the
+plan check, as Ana does, Ana checks and exports
 them after opening one source, and drafts three more (one with an activity whose sentences all failed,
 one with a refused activity, and one she discards). The writing streams of a draft no sentence of which
 passed, and of a writer that did not answer, are recorded too.
@@ -29,7 +30,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from strata.agent.loop import AgentError  # noqa: E402
 from strata.agent.scripted import WRITER_CASES, ScriptedAgent, load_cases  # noqa: E402
-from strata.config import load_roles  # noqa: E402
+from strata.config import load_draft_kinds, load_roles  # noqa: E402
+from strata.drafts import files  # noqa: E402
 from strata.drafts.store import DraftStore  # noqa: E402
 from strata.lakehouse import catalog  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
@@ -108,9 +110,18 @@ def answers(folder: Path) -> dict[str, str]:
 
             found["drafts-write-review-notes.sse"] = await write("review-notes-nwwda-2026-10-09", "key-1")
             found["drafts-review-notes-draft.json"] = await get("/api/drafts/draft-0001")
+            # The check line the evidence pack writes for this draft, which the page must write word for word
+            # (src/strata/drafts/files.py and web/src/components/Checks.tsx state the same rule twice).
+            kind = load_draft_kinds().kinds["review_notes"]
+            checks = json.loads(found["drafts-review-notes-draft.json"])["checks"]
+            found["drafts-check-line.txt"] = files.check_line(checks, kind) + "\n"
             found["drafts-review-notes-teammate.json"] = await get("/api/drafts/draft-0001", BEN)
             found["drafts-existing.json"] = await get("/api/drafts/existing", BEN, **{
                 key: value for key, value in NWWDA.items()})
+            found["drafts-existing-yours.json"] = await get("/api/drafts/existing", ANA, **{
+                key: value for key, value in NWWDA.items()})
+            # Ben's own /api/me, for the screens that show Ana's draft to her teammate.
+            found["drafts-me-teammate.json"] = await get("/api/me", BEN)
             later(2)
             found["drafts-review-notes-checked.json"] = await act("draft-0001", "check", "draft")
             later(2)

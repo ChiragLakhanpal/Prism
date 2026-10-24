@@ -21,7 +21,8 @@
 #                  agent wrote and what the verifier kept into the draft to save (assemble). The draft
 #                  runtime calls the agent and runs the verifier between them, so no kind can skip it.
 #   agent          its writer agent in config/agents.toml
-#   word           the function that lays out its Word file, as module:function
+#   word           the function that lays out its Word file, as module:function; its first heading is the
+#                  file's title, which the evidence pack repeats
 #   export         the export button: word, which reads "Export to Word"
 #   csv            more CSV files its export makes, as module:function (ticket 38 adds STEP rows)
 #   columns        the columns of its table on the page and in Word, in order
@@ -34,7 +35,8 @@
 #
 # [holds.<key>]
 #   test           the function that says whether the hold applies to a draft in a view, as module:function
-#   copy           its hold line, the key under copy.draft.bar.hold
+#   copy           its hold line, the key under copy.draft.bar.hold (notChecked is each kind's own
+#                  holdNotChecked). tests/test_drafts.py fails when a key has no line.
 #   capability     what the refusal names when the hold stops an export (brief 40's capability kinds)
 
 [kinds.review_notes]

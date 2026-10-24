@@ -51,6 +51,41 @@ function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: bool
   }, [header, active]);
 }
 
+// How long the populated page waits for the existing-draft lookup. A notice that arrived after the page was
+// drawn would push it down, so a later answer is dropped for this visit (the 35 design review).
+const LOOKUP_WAIT_MS = 300;
+
+// The review notes the team already started on this plan version: settled when the lookup answers, or
+// LOOKUP_WAIT_MS after it starts, whichever comes first. With no version to look up, it is settled.
+function useExistingDraft(pid: string, agencyId: string, version: string | undefined, enabled: boolean) {
+  const [found, setFound] = useState<{ key: string; draft: Existing["draft"] } | null>(null);
+  const key = enabled && version ? `${pid}/${agencyId}/${version}` : null;
+  useEffect(() => {
+    if (!key || !version) return;
+    let late = false;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      late = true;
+      setFound({ key, draft: null });
+    }, LOOKUP_WAIT_MS);
+    const query = new URLSearchParams({ kind: "review_notes", project_id: pid, agency_id: agencyId, plan_date: version });
+    const settle = (draft: Existing["draft"]) => {
+      if (late) return;
+      clearTimeout(timer);
+      setFound({ key, draft });
+    };
+    getJson<Existing>(`/api/drafts/existing?${query.toString()}`, { signal: controller.signal }).then(
+      (answer) => settle(answer.draft),
+      () => settle(null),
+    );
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [key]);
+  return { settled: key === null || found?.key === key, draft: found?.key === key ? found.draft : null };
+}
+
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
   const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`;
   const [load, retry] = useLoad<CheckPlanResult>(path);
@@ -64,14 +99,18 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const slotShown = !preview && asOf === null;
 
   const result = load.status === "ready" ? load.data : null;
-  const checked = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
+  const ready = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
+  // The populated page waits, at most LOOKUP_WAIT_MS, for the notice that names an open draft.
+  const lookup = useExistingDraft(pid, ready?.plan.agency_id ?? agencyId, ready?.plan.plan_date ?? version, !preview);
+  const waiting = ready !== null && !lookup.settled;
+  const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked));
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
   const total = checked?.counts.activities;
   const statusText =
-    load.status === "loading"
+    load.status === "loading" || waiting
       ? words.status.checking
       : total === undefined
         ? ""
@@ -106,7 +145,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   let body: ReactNode;
   let crumbs: Crumb[];
-  if (load.status === "loading") {
+  if (load.status === "loading" || waiting) {
     // The project's name is not known yet, so its link reads "Project P156634" to a screen reader.
     const loadingName = (
       <>
@@ -153,7 +192,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.slow} />
+        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
     );
@@ -288,7 +327,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   return (
     <div data-check-plan-page={load.status}>
-      <DraftNotices pid={pid} agencyId={checked?.plan.agency_id ?? agencyId} version={checked?.plan.plan_date ?? version} preview={preview} />
+      <DraftNotices existing={lookup.draft} />
       <Breadcrumb trail={crumbs} />
       <div className="mt-4">{body}</div>
       <p role="status" className="sr-only">
@@ -300,22 +339,11 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
 // Above the page, in brief 06's alert slot's place: "I stopped writing ..." once after "Stop writing", and
 // a notice naming the review notes the team already started on this plan version, newest first.
-function DraftNotices({ pid, agencyId, version, preview }: { pid: string; agencyId: string; version?: string; preview: boolean }) {
+function DraftNotices({ existing }: { existing: Existing["draft"] }) {
   // Read once, then cleared, so the notice shows on this visit only.
   const [stoppedHere] = useState(() => stopped.get());
   useEffect(() => stopped.set(null), []);
-  const [existing, setExisting] = useState<Existing["draft"]>(null);
   const action = copy.checkPlan.draftAction;
-  useEffect(() => {
-    if (!version || preview) return;
-    const controller = new AbortController();
-    const query = new URLSearchParams({ kind: "review_notes", project_id: pid, agency_id: agencyId, plan_date: version });
-    getJson<Existing>(`/api/drafts/existing?${query.toString()}`, { signal: controller.signal }).then(
-      (found) => setExisting(found.draft),
-      () => setExisting(null),
-    );
-    return () => controller.abort();
-  }, [pid, agencyId, version, preview]);
   const notices: ReactNode[] = [];
   if (stoppedHere) notices.push(<Alert key="stopped" state="info" live="status">{action.stopped}</Alert>);
   if (existing) {

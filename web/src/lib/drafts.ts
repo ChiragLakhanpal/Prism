@@ -42,9 +42,12 @@ export type DraftSubject = {
 
 export type DraftFile = { name: string; media_type: string; size: number };
 
+// The kinds of draft (config/drafts.toml); each has its words under copy.draft.kinds.<kind>.
+export type DraftKind = "review_notes";
+
 export type Draft = {
   draft_id: string;
-  kind: "review_notes";
+  kind: DraftKind;
   state: DraftState;
   discarded_from: DraftState | null;
   author: { name: string | null; you: boolean };
@@ -57,6 +60,8 @@ export type Draft = {
   notes: DraftNote[];
   evidence: Record<string, EvidenceEvent>;
   checks: ChecksEvent;
+  // How many checks the verifier ran on this draft.
+  checks_count: number;
   removed: (RemovedEvent & { key: string })[];
   sources: DraftSource[];
   citations: number;
@@ -72,6 +77,8 @@ export type Draft = {
     footnotes: number;
     sources: number;
     opened: number;
+    // How many sources the author kept in place of one Strata leaned on, with a reason (ticket 23).
+    disagreements: number;
     files: DraftFile[];
     files_available: boolean;
   } | null;
@@ -79,13 +86,16 @@ export type Draft = {
 
 export type DraftRow = {
   draft_id: string;
-  kind: "review_notes";
+  kind: DraftKind;
   state: DraftState;
   subject: DraftSubject;
   notes: number;
   author: { name: string | null; you: boolean };
   created_at: string;
   changed: Who;
+  // When the notes were marked as checked and exported, by whom: a restore is not a check.
+  checked: Who | null;
+  exported: Who | null;
   opened: { count: number; of: number } | null;
 };
 
@@ -116,6 +126,11 @@ export function refusalOf(error: unknown): Refusal | null {
   return error instanceof ApiError && (error.status === 409 || error.status === 403) ? (error.body as Refusal) : null;
 }
 
+// The app's own store of drafts refused or is missing: not the viewer's account, and nothing they can fix.
+export function storeFailed(error: ApiError | null): boolean {
+  return error?.body.code === "draft_store" || error?.body.code === "no_data_service";
+}
+
 export function fileHref(draftId: string, name: string): string {
   return `/api/drafts/${encodeURIComponent(draftId)}/files/${encodeURIComponent(name)}`;
 }
@@ -136,13 +151,14 @@ export type WriteStep = {
   notes?: number;
   sentences?: number;
   checks_run?: number[];
+  checks?: number;
   written?: number;
   removed?: number;
 };
 
 // A draft being written: what Check a plan handed over, and the stream's events so far.
 export type Writing = {
-  request: { kind: "review_notes"; project_id: string; agency_id: string; plan_date: string; idempotency_key: string };
+  request: { kind: DraftKind; project_id: string; agency_id: string; plan_date: string; idempotency_key: string };
   // The plan check the client held when the person asked, for the activity cells that show at once.
   plan: CheckPlanResult;
   rows: Activity[];
@@ -216,9 +232,18 @@ async function run(request: Writing["request"], signal: AbortSignal) {
     if (!signal.aborted) update((current) => (current.phase === "writing" ? { ...current, phase: "dropped" } : current));
   } catch (error) {
     if (signal.aborted) return;
-    const code = error instanceof StreamError ? (error.status === 403 ? "permission" : error.status === 503 ? "data_service" : "internal") : null;
+    const code = error instanceof StreamError ? refusedStream(error) : null;
     update((current) => (code ? { ...current, phase: "failed", error: code } : { ...current, phase: "dropped" }));
   }
+}
+
+// Why the server would not open the stream, from its answer's code where it gave one: a server with no
+// draft store says so in the store's words, not the data service's.
+function refusedStream(error: StreamError): string {
+  const code = typeof error.body?.code === "string" ? error.body.code : null;
+  if (code === "no_data_service" || code === "draft_store") return "draft_store";
+  if (error.status === 403) return "permission";
+  return error.status === 503 ? "data_service" : "internal";
 }
 
 // "Stop writing": cancel the stream. The server saves nothing it has not finished.

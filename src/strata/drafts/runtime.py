@@ -7,7 +7,7 @@ step event: read the facts as the viewer, have the writer agent write, run the v
 saved when no sentence passed the checks, so a failed model call leaves nothing in Drafts.
 
 A draft moves from draft to checked to exported, and to discarded and back, only when its author acts
-(ACTIONS). fairshare's "approved" state is gone: no code that reaches the screen uses the word.
+(ACTIONS). fairshare's second state is gone, and no code that reaches the screen uses its word.
 
 draft_view and list_row build what the draft page and the Drafts tab read. Every count the screens state
 comes from here: the sources a draft cites, how many of them the viewer opened since it was saved, how
@@ -27,7 +27,7 @@ from functools import cache
 
 from strata.agent.claims import ClaimsError, claims_from
 from strata.agent.loop import AgentError, output_text
-from strata.agent.verifier import Verdict, answer_events, verify
+from strata.agent.verifier import Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
@@ -41,8 +41,10 @@ log = logging.getLogger("strata.drafts")
 STAFF = "staff"
 # Why a draft could not be written, as the writing page's error event says it. web/src/copy.ts has one
 # sentence for each kind under draft.kinds.<kind>.writeErrors.
+# permission is the viewer's own read of the facts refused; draft_store is the app's own account unable to
+# save the draft, which the viewer cannot fix.
 WRITE_ERRORS = ("no_agent", "agent_unavailable", "content_filter", "agent_output", "data_service", "no_plan",
-                "nothing_marked", "permission", "internal")
+                "nothing_marked", "permission", "draft_store", "internal")
 OPEN_STATES = ("draft", "checked")
 
 
@@ -107,17 +109,23 @@ def parse_notes(text: str, key: str) -> dict[str, dict]:
 
 def compose(module, facts, written: dict[str, dict]) -> tuple[dict, Verdict]:
     """The draft from what the writer wrote and what the verifier kept: one note per item, in order, each
-    with its kept sentences, the evidence they cite, the verifier's counts and the removed sentences."""
+    with its kept sentences, the evidence they cite, the verifier's counts and the removed sentences.
+
+    Each note cites only its own item's row, so the verifier checks each note's sentences against that
+    row alone: a sentence that cites another item's row is removed as a source the check did not return
+    for this note (id_not_returned), even though the tool returned that row for another note."""
     items = module.items(facts)
     seen = Facts()
     for row in facts.rows:
         seen.record(row["evidence_id"], row, tool=module.TOOL)
-    claims, owners = [], []
+    checked, owners = [], []
     for item in items:
+        own = Facts()
+        own.record(item["evidence_id"], seen.get(item["evidence_id"]), tool=module.TOOL)
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
-            claims.append(claim)
+            checked.append(check(len(checked), claim, own))
             owners.append(item["key"])
-    verdict = verify(claims, seen)
+    verdict = Verdict(tuple(checked))
     events = answer_events(verdict, seen, [module.TOOL])
     kept: dict[str, list[dict]] = {}
     evidence, checks, removed = {}, None, []
@@ -211,8 +219,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     content, verdict = compose(module, facts, written)
     writing.verdict = verdict
     counts = content["checks"]
-    yield step("check", "done", checks_run=counts["checks_run"], written=counts["sentences"]["written"],
-               removed=counts["sentences"]["removed"])
+    yield step("check", "done", checks_run=counts["checks_run"], checks=len(counts["checks_run"]),
+               written=counts["sentences"]["written"], removed=counts["sentences"]["removed"])
     if not verdict.kept:
         yield Event("nothing_survived", {"removed": content["removed"], "checks": counts})
         return
@@ -227,10 +235,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
                       content, now())
     try:
         await asyncio.to_thread(store.create, record)
-    except PermissionDenied as error:
-        raise WriteError("permission") from error
-    except EngineError as error:
-        raise WriteError("data_service") from error
+    except EngineError as error:  # the app's own account saves drafts, a PermissionDenied included
+        raise WriteError("draft_store") from error
     writing.draft_id = draft_id
     yield step("save", "done")
     yield Event("draft", {"draft_id": draft_id})
@@ -296,6 +302,7 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "notes": saved.content["notes"],
         "evidence": saved.content["evidence"],
         "checks": saved.content["checks"],
+        "checks_count": len(saved.content["checks"]["checks_run"]),
         "removed": saved.content["removed"],
         "sources": listed,
         "citations": citations(saved.content),
@@ -307,7 +314,9 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "export": None if export is None else {
             "export_id": export.export_id, "exported_at": iso(export.exported_at), "by": export.actor_name,
             "you": bool(viewer.user_id) and export.actor_id == viewer.user_id, "footnotes": export.footnotes,
-            "sources": export.sources, "opened": export.opened, "files": list(export.files),
+            "sources": export.sources, "opened": export.opened,
+            "disagreements": sum(1 for row in export.snapshot.get("sources", []) if row.get("kept_another")),
+            "files": list(export.files),
             "files_available": bool(export.files)},
         "writer": saved.content.get("writer"),
     }
@@ -325,6 +334,8 @@ def list_row(saved: Saved, viewer: Viewer, opened: dict[str, dt.datetime] | None
         "author": {"name": saved.author_name, "you": is_author(viewer, saved.author_id)},
         "created_at": iso(saved.created_at),
         "changed": _who(saved.state, viewer),
+        "checked": _who(saved.last("checked"), viewer),
+        "exported": _who(saved.last("exported"), viewer),
         "opened": None if opened is None else {
             "count": sum(1 for entry in listed if entry["evidence_id"] in opened), "of": len(listed)},
     }

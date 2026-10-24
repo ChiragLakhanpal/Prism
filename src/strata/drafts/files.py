@@ -107,8 +107,8 @@ class Footnote:
 class Word:
     """A .docx file built from headings, paragraphs and tables, with footnotes numbered in order."""
 
-    def __init__(self, title: str, created: dt.datetime):
-        self.title, self.created = title, created
+    def __init__(self, created: dt.datetime):
+        self.title, self.created = "", created
         self.body: list[str] = []
         self.notes: list[str] = []
 
@@ -133,6 +133,8 @@ class Word:
         return f"<w:p>{properties}{self._runs(runs, bold)}</w:p>"
 
     def heading(self, text: str) -> None:
+        """A Heading 1. The first one is the file's title, which the evidence pack repeats."""
+        self.title = self.title or text
         self.body.append(self._paragraph([text], "Heading1"))
 
     def paragraph(self, *runs) -> None:
@@ -331,10 +333,19 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
 
     text(pack["title"], 24, "B", "ink_heading", 4)
     text(title, 14, "B", "ink_heading", 12)
+    # "Draft ID draft-0001", with the ID in Roboto Mono, as DESIGN.md section 3 sets every ID.
+    label, _, after = pack["draftId"].partition("{id}")
+    pdf.set_text_color(*STATE_COLORS["ink"])
+    pdf.set_font("OpenSans", "", 11)
+    pdf.write(11 * 1.45, label)
+    pdf.set_font("RobotoMono", "", 10.5)
+    pdf.write(11 * 1.45, draft["draft_id"])
+    pdf.set_font("OpenSans", "", 11)
+    pdf.write(11 * 1.45, after)
+    pdf.ln(11 * 1.45 + 2)
     checked = draft["checked"] or {}
     export_line = _fill(pack["exported"], author=exporter or "", date=say.date(exported_at.date()))
-    record = [_fill(pack["draftId"], id=draft["draft_id"]),
-              _fill(pack["drafted"], date=say.date(draft["created_at"]), author=draft["author"]["name"] or ""),
+    record = [_fill(pack["drafted"], date=say.date(draft["created_at"]), author=draft["author"]["name"] or ""),
               _fill(pack["checked"], author=checked.get("by") or "", date=say.date(checked["at"])) if checked else None,
               export_line,
               _fill(pack["opened"], author=draft["author"]["name"] or "", opened=draft["opened"]["count"],
@@ -345,7 +356,7 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
     pdf.ln(10)
     text(check_line(draft["checks"], kind), 10, color="ink", gap=8)
     text(pack["removedTitle"], 13, "B", "ink_heading", 4)
-    reasons = copy["removed"]["reasons"]
+    reasons = {**copy["removed"]["reasons"], **copy["removedReasons"].get(kind.key, {})}
     if not draft["removed"]:
         text(pack["removedNone"], 10, gap=8)
     for item in draft["removed"]:
@@ -358,9 +369,10 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
     pdf.set_draw_color(*STATE_COLORS["line"])
     heading = FontFace(emphasis="BOLD", color=STATE_COLORS["ink_heading"], fill_color=STATE_COLORS["surface_2"])
     # STEP references in Roboto Mono, as every ID Strata writes (DESIGN.md section 3), in a column wide
-    # enough that a 22-character reference keeps to one line.
+    # enough that a 22-character reference keeps to one line. Number needs little room; the reason a
+    # source was kept needs more.
     mono = FontFace(family="RobotoMono", size_pt=8)
-    with pdf.table(col_widths=(10, 34, 24, 9, 13, 10), headings_style=heading, line_height=13,
+    with pdf.table(col_widths=(6, 33, 24, 9, 14, 14), headings_style=heading, line_height=13,
                    text_align="LEFT", padding=4) as table:
         header = table.row()
         for name in pack["columns"]:
@@ -396,10 +408,9 @@ def make(kind: DraftKind, draft: dict, exporter: str | None, exported_at: dt.dat
     from strata.drafts.runtime import function
 
     say = Say()
-    heading = _fill(words()["files"]["word"][kind.key]["heading"], agency=draft["subject"].get("implementing_agency"),
-                    date=say.date(draft["subject"]["plan_date"]))
-    document = Word(heading, exported_at)
-    function(kind.word)(document, draft, words(), say)
+    document = Word(exported_at)
+    function(kind.word)(document, draft, words(), say)  # the kind lays out its file, its heading first
+    heading = document.title
     taken = snapshot(draft, say)
     named = names(kind, draft["subject"])
     files = [(named["word"], DOCX, document.bytes()),

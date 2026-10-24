@@ -33,8 +33,13 @@ export function serverCopy(): string {
 }
 
 export function draftsCopy(): string {
+  const kinds = Object.entries(copy.draft.kinds);
   return json({
     files: copy.draft.files,
+    // Each kind's hold lines by copy key, as the draft bar looks them up, so a test can check every hold
+    // in config/drafts.toml has its sentence; and the kind's own words for removed sentences' reasons.
+    holds: Object.fromEntries(kinds.map(([key, words]) => [key, { ...copy.draft.bar.hold, notChecked: words.holdNotChecked }])),
+    removedReasons: Object.fromEntries(kinds.map(([key, words]) => [key, words.removedReasons])),
     source: copy.source,
     recordSource: copy.evidence.recordSource,
     recordSourceShort: copy.evidence.recordSourceShort,

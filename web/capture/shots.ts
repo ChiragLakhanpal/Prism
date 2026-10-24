@@ -285,7 +285,11 @@ const DRAFT_API = "/api/drafts/draft-0001";
 const DRAFT_FILE = "drafts-review-notes-draft.json";
 const draftWith = (edit: (body: Record<string, any>) => void, name = DRAFT_FILE) => derived(name, edit);
 const OPENED: Answer = { body: '{"recorded":true}' };
-const EXISTING: Answer = { recorded: "drafts-existing.json" };
+// The open draft the plan check names: your own, and a teammate's as Ben sees Ana's.
+const EXISTING: Answer = { recorded: "drafts-existing-yours.json" };
+const EXISTING_TEAMMATE: Answer = { recorded: "drafts-existing.json" };
+// Ben, Ana's teammate, signed in: the screens that show him Ana's draft.
+const AS_TEAMMATE: Shot["api"] = { "/api/me": { recorded: "drafts-me-teammate.json" } };
 const NO_EXISTING: Answer = { body: '{"draft":null}' };
 // The read a draft page makes: /api/drafts/:draftId for /drafts/:draftId.
 const draftRead = (path: string) => `/api${path.split("?")[0]}`;
@@ -321,6 +325,7 @@ const DRAFT_SHOTS: Shot[] = [
   planWithDraft("draft--plan-action", NO_EXISTING),
   planWithDraft("draft--plan-none", NO_EXISTING, {}, { body: noSignals }),
   planWithDraft("draft--plan-existing", EXISTING),
+  planWithDraft("draft--plan-existing-teammate", EXISTING_TEAMMATE, { api: AS_TEAMMATE }),
   planWithDraft("draft--plan-asof", NO_EXISTING, {}, plan, `${PLAN}?asof=2026-10-01`),
   writingShot("draft--writing", { recorded: "drafts-write-review-notes.sse" }, { pending: ["/api/drafts"] }),
   writingShot("draft--writing-error", { recorded: "drafts-write-agent-unavailable.sse" }),
@@ -340,7 +345,7 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--exported-files-missing", { body: filesMissing }),
   draftShot("draft--partial", { recorded: "drafts-review-notes-partial.json" }, {}, "/drafts/draft-0002"),
   draftShot("draft--refused", { recorded: "drafts-review-notes-refused.json" }, {}, "/drafts/draft-0003"),
-  draftShot("draft--teammate", { recorded: "drafts-review-notes-teammate.json" }),
+  draftShot("draft--teammate", { recorded: "drafts-review-notes-teammate.json" }, { api: AS_TEAMMATE }),
   draftShot("draft--discarded", { recorded: "drafts-review-notes-discarded.json" }, {}, "/drafts/draft-0004"),
   draftShot("draft--action-failed", { recorded: DRAFT_FILE }, { full: true, api: failingAct, act: click("[data-draft-bar] [data-button=primary]") }),
   draftShot("draft--conflict", { recorded: "drafts-review-notes-checked.json" }, {
@@ -369,7 +374,7 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--focus-file", { recorded: "drafts-review-notes-exported.json" }, { widths: [1440, 390], act: focus("[data-export-success] a") }),
   draftShot("draft--320", { recorded: DRAFT_FILE }, { widths: [320] }),
   draftShot("drafts-tab", { recorded: "drafts-list.json" }, { api: { "/api/drafts": { recorded: "drafts-list.json" } } }, "/drafts"),
-  draftShot("drafts-tab--teammate", { recorded: "drafts-list-teammate.json" }, { api: { "/api/drafts": { recorded: "drafts-list-teammate.json" } } }, "/drafts"),
+  draftShot("drafts-tab--teammate", { recorded: "drafts-list-teammate.json" }, { api: { ...AS_TEAMMATE, "/api/drafts": { recorded: "drafts-list-teammate.json" } } }, "/drafts"),
   draftShot("drafts-tab--loading", { recorded: "drafts-list.json" }, { pending: ["/api/drafts"] }, "/drafts"),
   draftShot("drafts-tab--empty", { recorded: "drafts-list-empty.json" }, { api: { "/api/drafts": { recorded: "drafts-list-empty.json" } } }, "/drafts"),
   draftShot("drafts-tab--discarded-open", { recorded: "drafts-list.json" }, { full: true, api: { "/api/drafts": { recorded: "drafts-list.json" } }, act: click("[data-discarded-fold] button") }, "/drafts"),

@@ -236,6 +236,7 @@ export const galleryCopy = {
     teammate: "A teammate's draft: read only",
     preview: "In a preview: both buttons held, with the preview's reason",
     failed: "An act that failed",
+    conflict: "Reloaded after a change in another tab",
     fresh: "Just exported",
     revisit: "Exported, revisited",
     missing: "Exported, the files missing",

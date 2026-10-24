@@ -39,7 +39,7 @@ Two assertions about the same thing, for the same period, that cannot both be tr
 _Avoid_: Conflict (reads as conflict of interest), contradiction, discrepancy
 
 **Evidence pack**:
-Everything a single answer is allowed to cite.
+Everything an answer or a draft may cite. For an exported draft, the PDF and CSV that list those sources, where each is cited, and whether its author opened it.
 _Avoid_: Context
 
 **Data readiness**:

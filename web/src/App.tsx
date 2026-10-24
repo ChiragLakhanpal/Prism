@@ -29,6 +29,7 @@ import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
 import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
+import { pageTitle } from "./lib/title";
 import { RoutePage } from "./RoutePage";
 import { fill, isDay, matchRoute, type Match } from "./routes";
 
@@ -143,8 +144,10 @@ export function App() {
   }, [match.canonical]);
 
   // A page with sub-pages, such as the Data tab's, names the sub-page in the browser tab.
+  // A page that knows a more specific title once its data loads, such as a draft, sets it (lib/title.ts).
   const words: { title: string; documentTitle?: string } = copy.pages[match.key];
-  const title = fill(words.documentTitle ?? words.title, match.values);
+  const own = useStore(pageTitle);
+  const title = own && own.path === here.pathname ? own.title : fill(words.documentTitle ?? words.title, match.values);
   useEffect(() => {
     document.title = copy.pageTitle(title);
   }, [title]);

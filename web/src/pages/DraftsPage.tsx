@@ -14,36 +14,41 @@ import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { DraftGroup, DraftList, DraftRow as Row } from "../lib/drafts";
-import { draftHref } from "../lib/drafts";
+import { draftHref, storeFailed } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 
 const words = copy.draft.tab;
-const kind = copy.draft.kinds.review_notes;
 const page = copy.pages.drafts;
+// The previews say the same for every kind; they read the one kind there is today.
+const PREVIEW = copy.draft.kinds.review_notes;
 const GROUPS: DraftGroup[] = ["to_check", "checked", "exported"];
 const PAGE_SIZE = 20;
 const whole = (value: number) => formatNumber(value, { compact: false });
 const short = (iso: string) => formatDate(iso.slice(0, 10), { style: "table" });
 const day = (iso: string) => formatDate(iso.slice(0, 10));
 
+// Who acted, and when: the check and the export each keep their own time, so a restored draft still says
+// when it was checked.
 function lineTwo(row: Row): string {
-  const date = day(row.changed.at);
   const author = row.author.name ?? "";
+  const checked = row.checked ?? row.changed;
+  const exported = row.exported ?? row.changed;
   switch (row.state) {
     case "draft":
       return row.author.you ? words.draftedYou(day(row.created_at)) : words.draftedOther(author, day(row.created_at));
     case "checked":
-      return row.changed.you ? words.checkedYou(date) : words.checkedOther(row.changed.by ?? author, date);
+      return checked.you ? words.checkedYou(day(checked.at)) : words.checkedOther(checked.by ?? author, day(checked.at));
     case "exported":
-      return row.changed.you ? words.exportedYou(date) : words.exportedOther(row.changed.by ?? author, date);
+      return exported.you ? words.exportedYou(day(exported.at)) : words.exportedOther(exported.by ?? author, day(exported.at));
     default:
-      return words.discardedYou(date);
+      return words.discardedYou(day(row.changed.at));
   }
 }
 
 export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLAnchorElement | null) => void }) {
   const subject = row.subject;
+  const kind = copy.draft.kinds[row.kind];
   return (
     <li className="border-t border-line p-4 first:border-t-0" data-draft-row={row.draft_id}>
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
@@ -176,7 +181,7 @@ export function DraftsPage({ search }: { search: string }) {
         <PageHeader title={page.title} purpose={page.purpose} />
         <div className="mt-6 @lg/page:mt-8">
           {view === "piu" ? (
-            <EmptyState title={kind.previewPiuTitle} body={kind.previewPiuBody} />
+            <EmptyState title={PREVIEW.previewPiuTitle} body={PREVIEW.previewPiuBody} />
           ) : view === "public" ? (
             <EmptyState title={copy.draft.page.publicTitle} body={copy.draft.page.publicBody} />
           ) : (
@@ -193,7 +198,14 @@ function TeamDrafts() {
   if (load.status === "loading") return <Loading />;
   if (load.status === "error") {
     return (
-      <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      <LoadError
+        error={load.error}
+        message={storeFailed(load.error) ? words.draftStore : words.error}
+        permission={words.permission}
+        onRetry={retry}
+        retrying={load.retrying}
+        attempt={load.attempt}
+      />
     );
   }
   return <DraftsList list={load.data} />;

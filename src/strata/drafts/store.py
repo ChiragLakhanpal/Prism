@@ -1,10 +1,11 @@
 """Where drafts are kept: strata.ops, written as the app's own service principal (ticket 35).
 
-Adapted from fairshare's server/drafts.py, which kept drafts in memory for two hours with the states
-"draft" and "approved". Strata keeps them in four tables (src/strata/lakehouse/tables/ops/): the draft
-with its author's team, every state it has been in, each export with the evidence pack's snapshot, and
-the files each export made. Nothing is updated or deleted: a change of state is a new row, written
-only while the state the person saw is still the latest (CLAUDE.md rule 5).
+Adapted from fairshare's server/drafts.py, which kept drafts in memory for two hours with two states,
+"draft" and fairshare's second state, which Strata leaves behind. Strata keeps them in four tables
+(src/strata/lakehouse/tables/ops/): the draft with its author's team, every state it has been in, each
+export with the evidence pack's snapshot, and the files each export made. Nothing is updated or deleted: a change of state is a new row, merged on
+the draft and its step, so it is written only while the state the person saw is still the latest, and
+two acts at the same moment cannot both write the next step (CLAUDE.md rule 5).
 
 The store holds no access rule. The draft routes (src/strata/server/drafts.py) ask the one access rule
 (src/strata/server/access.py) before they show or change anything. Values arrive typed from DuckDB and
@@ -22,7 +23,7 @@ from dataclasses import dataclass, field
 from functools import cache
 from importlib import resources
 
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import Engine, EngineError
 
 STATES = ("draft", "checked", "exported", "discarded")
 DRAFT_COLUMNS = ("draft_id", "kind", "team_key", "author_id", "author_name", "idempotency_key", "project_id",
@@ -95,8 +96,11 @@ class Saved:
         return self.states[-1]
 
     def last(self, state: str) -> State | None:
-        """The latest step into this state, if the draft has been in it."""
-        return next((step for step in reversed(self.states) if step.state == state), None)
+        """The latest act that put the draft in this state, if it has been in it. A restore returns a draft
+        to the state it was discarded from, so it is not the act: after a restore, "Checked by" keeps the
+        time of the check."""
+        return next((step for step in reversed(self.states) if step.state == state and step.from_state != "discarded"),
+                    None)
 
 
 @dataclass
@@ -202,9 +206,10 @@ class DraftStore:
             found = self._saved(engine, self._rows(engine, "draft", draft_id=draft_id))
         return found[0] if found else None
 
-    def for_team(self, team_key: str) -> list[Saved]:
+    def for_team(self, team_key: str, author_id: str) -> list[Saved]:
+        """The drafts saved under a team, and every draft of this author whatever team it was saved under."""
         with self._open() as engine:
-            return self._saved(engine, self._rows(engine, "team_drafts", team_key=team_key))
+            return self._saved(engine, self._rows(engine, "team_drafts", team_key=team_key, author_id=author_id))
 
     def change(self, draft_id: str, expected: str, state: str, actor_id: str, actor_name: str | None,
                at: dt.datetime) -> None:
@@ -213,8 +218,16 @@ class DraftStore:
             before = self._rows(engine, "states", ids=draft_id)
             if before[-1]["state"] != expected:
                 raise Stale(before[-1]["state"])
-            engine.run(_sql("change_state"), {"draft_id": draft_id, "expected": expected, "state": state,
-                                              "actor_id": actor_id, "actor_name": actor_name, "changed_at": at})
+            try:
+                engine.run(_sql("change_state"), {"draft_id": draft_id, "expected": expected, "state": state,
+                                                  "actor_id": actor_id, "actor_name": actor_name, "changed_at": at})
+            except EngineError:
+                # Delta refuses the second of two writers of the same step: if another act moved the
+                # draft meanwhile, say so; any other failure is the data service's.
+                now = self._rows(engine, "states", ids=draft_id)
+                if len(now) != len(before):
+                    raise Stale(now[-1]["state"]) from None
+                raise
             after = self._rows(engine, "states", ids=draft_id)
         if len(after) != len(before) + 1 or after[-1]["state"] != state:
             raise Stale(after[-1]["state"])

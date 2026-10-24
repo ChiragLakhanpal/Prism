@@ -84,3 +84,21 @@ activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
 claims = [
   { sentence = "The plan lists this activity as Pending Implementation.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFB"], numbers = [], dates = [] },
 ]
+
+[[cases]]
+id = "review-notes-a-cross-cited-sentence"
+says = """The note on KE-NWWDA-541055-CW-RFB adds a sentence that cites, and quotes a value from, the row of \
+KE-NWWDA-229129-CW-RFB. A note cites only its own activity's row, so the verifier removes that sentence and keeps \
+the note's own."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541055-CW-RFB"
+claims = [
+  { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"], numbers = ["0.00"], dates = [] },
+  { sentence = "The plan records an Actual Amount of 1,245,092.76.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"], numbers = ["1,245,092.76"], dates = [] },
+]

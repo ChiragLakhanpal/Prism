@@ -42,13 +42,27 @@
       ],
       "yes": "Yes",
       "no": "No",
-      "moment": "{date}, {time} UTC",
+      "moment": "{date}, {time}",
       "citedJoin": ", ",
       "dataCaveat": "The World Bank does not guarantee the accuracy of the data."
     }
   },
+  "holds": {
+    "review_notes": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "notChecked": "Mark the notes as checked before you export them."
+    }
+  },
+  "removedReasons": {
+    "review_notes": {
+      "id_not_returned": {
+        "item": "It cited a source other than this activity's row in my check of the plan.",
+        "joined": "it cited a source other than this activity's row in my check of the plan"
+      }
+    }
+  },
   "source": "Source:",
-  "recordSource": "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+  "recordSource": "{doc}, {agency}, {pid}, version of {date}, page {page}.",
   "recordSourceShort": "{doc}, {pid}, {date}.",
   "checkLine": {
     "checked": "Checked:",

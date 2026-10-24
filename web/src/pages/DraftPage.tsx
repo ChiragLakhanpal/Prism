@@ -27,15 +27,18 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { act, draftScope, fileHref, preloaded, refusalOf, type Action, type Draft } from "../lib/drafts";
+import { act, draftScope, fileHref, preloaded, refusalOf, storeFailed, type Action, type Draft } from "../lib/drafts";
 import { evidenceIn, openedAt, origin, remember } from "../lib/evidence";
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
+import { setPageTitle } from "../lib/title";
 
 const words = copy.draft;
-const kind = copy.draft.kinds.review_notes;
+type KindWords = (typeof copy.draft.kinds)[keyof typeof copy.draft.kinds];
+// Before a draft loads, its kind is not known yet: the skeleton draws the one kind there is today.
+const SKELETON_KIND: KindWords = copy.draft.kinds.review_notes;
 const whole = (value: number) => formatNumber(value, { compact: false });
 const day = (iso: string) => formatDate(iso.slice(0, 10));
 const short = (iso: string) => formatDate(iso.slice(0, 10), { style: "table" });
@@ -46,8 +49,15 @@ type Loaded =
   | { status: "missing" }
   | { status: "error"; error: ApiError | null; retrying: boolean; attempt: number };
 
-function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void] {
-  const held = preloaded.get()[draftId];
+// A draft the writing page just saved opens with no request, once: the entry is taken from the store, so
+// the same draft opened again later in the visit (from Drafts, or with Back and Forward) is read from the
+// server, which holds its state now. It is read in the initializer and removed in an effect, which
+// StrictMode may run twice without harm.
+function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void, boolean] {
+  const [held] = useState<Draft | null>(() => preloaded.get()[draftId] ?? null);
+  useEffect(() => {
+    if (held) preloaded.set(({ [draftId]: _taken, ...rest }) => rest);
+  }, [held, draftId]);
   const [loaded, setLoaded] = useState<Loaded>(held ? { status: "ready", draft: held } : { status: "loading" });
   const [attempt, setAttempt] = useState(held ? -1 : 0);
   useEffect(() => {
@@ -68,7 +78,7 @@ function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void]
     setLoaded((current) => (current.status === "error" ? { ...current, retrying: true } : current));
     setAttempt((count) => Math.max(count, 0) + 1);
   }, []);
-  return [loaded, replace, reload];
+  return [loaded, replace, reload, held !== null];
 }
 
 // Keeps focused elements 8 px clear of the sticky header and the sticky bar, as each one's height
@@ -94,8 +104,9 @@ function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
   }, [header, bar]);
 }
 
-function removedItems(draft: Draft): Removed[] {
-  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
+function removedItems(draft: Draft, kind: KindWords): Removed[] {
+  // The kind's own words for a reason first, then the answer's.
+  const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kind.removedReasons };
   return draft.removed.map((item) => {
     const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
     const reason = code ? reasons[code] : copy.removed.unknownReason;
@@ -103,28 +114,36 @@ function removedItems(draft: Draft): Removed[] {
   });
 }
 
-// The writing's four steps, as the draft keeps them, past tense.
-function stepsOf(draft: Draft): Step[] {
+// The writing's four steps, as the draft keeps them, past tense. The number of checks is the server's.
+function stepsOf(draft: Draft, kind: KindWords): Step[] {
   const steps = kind.steps;
   const checks = draft.checks;
   const done = (key: string, text: string): Step => ({ key, running: "", done: text, state: "done" });
   return [
     done("read", steps.read.done(day(draft.subject.plan_date))),
     done("write", steps.write.done(draft.written.sentences, formatCount(draft.written.sentences), draft.written.notes, formatCount(draft.written.notes))),
-    done("check", words.writing.checkDone(formatCount(checks.checks_run.length), checks.sentences.written, formatCount(checks.sentences.written),
+    done("check", words.writing.checkDone(formatCount(draft.checks_count), checks.sentences.written, formatCount(checks.sentences.written),
       checks.sentences.removed, formatCount(checks.sentences.removed))),
     done("save", steps.save.done),
   ];
 }
 
-export function DraftHeader({ title, subtitle, state, headerRef }: {
+// The sticky header: it sticks from a page area of 1024 px, and in a window of 1200 px or more, where the
+// column keeps its place beside the evidence drawer. It must be a direct child of the tall page, with its
+// margin on itself (className), or sticky has no room to move.
+export function DraftHeader({ title, subtitle, state, headerRef, className }: {
   title: ReactNode;
   subtitle: ReactNode;
   state: ReactNode;
   headerRef?: (element: HTMLDivElement | null) => void;
+  className?: string;
 }) {
   return (
-    <div ref={headerRef} data-draft-header className="border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-0 @lg/page:z-10">
+    <div
+      ref={headerRef}
+      data-draft-header
+      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-0 @lg/page:z-10 xl:sticky xl:top-0 xl:z-10", className)}
+    >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">
@@ -152,11 +171,13 @@ export function DraftCrumbs({ pid, name, last }: { pid: string; name: ReactNode;
   );
 }
 
-export function subtitleOf(agency: string, planDate: string): ReactNode {
+export function subtitleOf(kind: KindWords, agency: string, planDate: string): ReactNode {
   return <Fill template={kind.subtitle} slots={{ agency, date: <Num date={planDate} /> }} />;
 }
 
 // The column: columns 1 to 7 from a page area of 1200 px, all 12 below. It is the notes' size container.
+// In a window of 1200 px or more it keeps the same place and width when the evidence drawer narrows the
+// page area (the 35 brief, section 3.2; app.css, "A draft's document column").
 export function DocumentColumn({ children }: { children: ReactNode }) {
   return (
     <div className="layout-grid">
@@ -170,11 +191,11 @@ export function DocumentColumn({ children }: { children: ReactNode }) {
 export function DraftPage({ draftId, search }: { draftId: string; search: string }) {
   const params = new URLSearchParams(search);
   const view = params.get("view");
-  if (view === "piu" || view === "public") return <PreviewCard view={view} />;
+  if (view === "piu" || view === "public") return <PreviewCard view={view} kind={SKELETON_KIND} />;
   return <Draft draftId={draftId} view={view} />;
 }
 
-function PreviewCard({ view }: { view: "piu" | "public" }) {
+function PreviewCard({ view, kind }: { view: "piu" | "public"; kind: KindWords }) {
   return (
     <DocumentColumn>
       <div data-draft-page="preview">
@@ -191,7 +212,7 @@ function PreviewCard({ view }: { view: "piu" | "public" }) {
 }
 
 function Draft({ draftId, view }: { draftId: string; view: string | null }) {
-  const [loaded, replace, reload] = useDraft(draftId);
+  const [loaded, replace, reload, justWritten] = useDraft(draftId);
   const [busy, setBusy] = useState<Action | null>(null);
   const [failed, setFailed] = useState<Action | null>(null);
   const [status, setStatus] = useState("");
@@ -203,10 +224,8 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const checkButton = useRef<HTMLButtonElement>(null);
   const success = useRef<HTMLHeadingElement>(null);
   const discarded = useRef<HTMLSpanElement>(null);
-  // A draft the writing page just saved opens here with no request; the page says it is ready.
-  const [justWritten] = useState(() => Boolean(preloaded.get()[draftId]));
   const [announced, setAnnounced] = useState("");
-  const focusNext = useRef<"export" | "check" | "success" | "discarded" | null>(null);
+  const focusNext = useRef<"export" | "check" | "success" | "discarded" | "heading" | null>(null);
   const ledeId = useId();
   const loadedAt = useRef(Date.now());
   const here = useStore(address);
@@ -221,7 +240,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     if (!draft) return;
     for (const evidence of Object.values(draft.evidence)) remember(evidence);
     draftScope.set(draft.subject.project_id);
-    document.title = copy.pageTitle(kind.pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
+    setPageTitle(copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
   }, [draft]);
   useEffect(() => () => draftScope.set(null), []);
 
@@ -234,7 +253,8 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
       document.querySelector<HTMLElement>("main h1")?.focus({ preventScroll: true });
     }
     if (justWritten && draft) {
-      const timer = setTimeout(() => setAnnounced(kind.ready(draft.counts.written, formatCount(draft.counts.written))), 100);
+      const ready = copy.draft.kinds[draft.kind].ready;
+      const timer = setTimeout(() => setAnnounced(ready(draft.counts.written, formatCount(draft.counts.written))), 100);
       return () => clearTimeout(timer);
     }
   }, [ready]);
@@ -246,6 +266,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     if (target === "export") exportButton.current?.focus();
     if (target === "check") checkButton.current?.focus();
     if (target === "discarded") discarded.current?.focus();
+    if (target === "heading") document.querySelector<HTMLElement>("main h1")?.focus();
     if (target === "success" && success.current) {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       success.current.closest("section")?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
@@ -284,7 +305,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </h1>
           <LoadError
             error={loaded.error}
-            message={words.page.error}
+            message={storeFailed(loaded.error) ? words.page.draftStore : words.page.error}
             permission={words.page.permission}
             onRetry={reload}
             retrying={loaded.retrying}
@@ -296,6 +317,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   }
 
   const d = loaded.draft;
+  const kind: KindWords = copy.draft.kinds[d.kind];
   const subject = d.subject;
   const planHref = `/projects/${subject.project_id}/procurement/${subject.agency_id}/${subject.plan_date}`;
   const open = { id: evidenceIn(here.search), sentence: from && from.serial === null ? from.sentence : null };
@@ -327,6 +349,10 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     } catch (error) {
       const refusal = refusalOf(error);
       if (refusal?.code === "stale") {
+        // The draft reloads in the state it is in now; focus goes to that state's next step.
+        const now = refusal.state;
+        focusNext.current = now === "checked" ? "export" : now === "draft" ? "check" : now === "discarded" ? "discarded" : "heading";
+        setStatus(words.conflict);
         setConflict(true);
         reload();
       } else {
@@ -373,16 +399,17 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
       ),
   }));
 
-  const removed = removedItems(d);
+  const removed = removedItems(d, kind);
   const showRemoved = d.layout.removed_box === "always" || removed.length > 0;
   const created = day(d.created_at);
 
   let end: ReactNode;
   if (d.state === "exported" && d.export) {
-    end = <ExportSuccess draft={d} fresh={fresh} headingRef={success} date={day} />;
+    end = <ExportSuccess className="mt-8" draft={d} fresh={fresh} headingRef={success} date={day} />;
   } else if (d.state === "discarded") {
     end = (
       <DiscardedNotice
+        className="mt-8"
         ref={setBar}
         sentenceRef={discarded}
         sentence={kind.discarded}
@@ -395,9 +422,11 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   } else {
     end = (
       <DraftBar
+        className="mt-8"
         ref={setBar}
         draft={d}
         words={kind}
+        notice={conflict ? words.conflict : null}
         opened={openedCount}
         busy={busy}
         failed={failed}
@@ -418,20 +447,19 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </Alert>
         )}
         <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={kind.crumb(short(subject.plan_date))} />
-        <div className="mt-4">
-          <DraftHeader
-            headerRef={setHeader}
-            title={kind.title}
-            subtitle={subtitleOf(subject.implementing_agency, subject.plan_date)}
-            state={
-              d.state === "discarded" && d.discarded ? (
-                <DiscardedOn date={day(d.discarded.at)} />
-              ) : (
-                <StateStepper state={d.state === "discarded" ? "draft" : d.state} checkedBy={d.author.you ? null : d.author.name} />
-              )
-            }
-          />
-        </div>
+        <DraftHeader
+          className="mt-4"
+          headerRef={setHeader}
+          title={kind.title}
+          subtitle={subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
+          state={
+            d.state === "discarded" && d.discarded ? (
+              <DiscardedOn date={day(d.discarded.at)} />
+            ) : (
+              <StateStepper state={d.state === "discarded" ? "draft" : d.state} checkedBy={d.author.you ? null : d.author.name} />
+            )
+          }
+        />
         <div className="mt-6 max-w-[72ch]">
           <h2 id={ledeId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none" data-lede>
             {lede}
@@ -444,16 +472,29 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           <CheckLine numbers={d.checks.numbers} dates={d.checks.dates} quotes={d.checks.quotes} notChecked={notCheckedFor(d.checks, d.layout.not_checked)} />
           {showRemoved && <RemovedBox removed={removed} />}
         </div>
-        <StepsTaken steps={stepsOf(d)} runId={d.draft_id} idLabel={words.idLabel} />
+        <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
         <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
           {kind.countLine(signal, whole(signal))}
         </p>
         <div className="mt-2">
-          <DraftNotes rows={rows} caption={kind.tableCaption(subject.implementing_agency, day(subject.plan_date))} cardsLabelId={ledeId} />
+          <DraftNotes
+            rows={rows}
+            columns={d.layout.columns.map((column) => (kind.columns as Record<string, string>)[column])}
+            caption={kind.tableCaption(subject.implementing_agency, day(subject.plan_date))}
+            cardsLabelId={ledeId}
+          />
         </div>
         {d.layout.sources_list && (
           <div className="mt-8">
-            <SourcesList sources={d.sources} evidence={d.evidence} opened={opened} openedCount={openedCount} citations={d.citations} open={open} />
+            <SourcesList
+              sources={d.sources}
+              evidence={d.evidence}
+              opened={opened}
+              openedCount={openedCount}
+              total={d.opened.of}
+              citations={d.citations}
+              open={open}
+            />
           </div>
         )}
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted" data-not-visible>
@@ -462,7 +503,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         <p className="mt-2 text-caption text-ink-muted" data-meta>
           {d.author.you ? kind.metaYou(created) : kind.metaTeammate(d.author.name ?? "", created)}
         </p>
-        <div className="mt-8">{end}</div>
+        {end}
         <p role="status" className="sr-only" data-page-status>
           {announced}
         </p>
@@ -472,9 +513,10 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
 }
 
 // While the draft loads (the 35 brief, section 8.3): the places of the header, the lede, the method, the
-// check line, the removed box, the table's real head over three rows, the sources and the bar.
+// check line, the removed box, the steps disclosure, the count line, the table's real head over three
+// rows, the sources and the bar, each the height of what it stands for, so nothing moves when it loads.
 function DraftSkeleton() {
-  const columns = kind.columns;
+  const kind = SKELETON_KIND;
   return (
     <DocumentColumn>
       <div data-draft-page="loading" aria-busy="true">
@@ -485,28 +527,38 @@ function DraftSkeleton() {
           <SkeletonLine width="w-[200px] max-w-full" />
         </nav>
         <div className="mt-4 border-b border-line py-4">
-          <h1 tabIndex={-1} className="focus:outline-none">
-            <span className="sr-only">{copy.pages.draft.title}</span>
-            <Skeleton className="h-7 w-[200px] max-w-full" />
-          </h1>
-          <Skeleton className="mt-2 h-4 w-[280px] max-w-full" />
-          <Skeleton className="mt-2 h-5 w-[300px] max-w-full" />
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+            <div className="min-w-0">
+              <h1 tabIndex={-1} className="text-h1 focus:outline-none">
+                <span className="sr-only">{copy.pages.draft.title}</span>
+                <SkeletonLine width="w-[200px] max-w-full" />
+              </h1>
+              <SkeletonLine className="mt-2 text-body" width="w-[280px] max-w-full" />
+            </div>
+            <SkeletonLine className="text-small @lg/page:mt-2" width="w-[300px] max-w-full" />
+          </div>
         </div>
         <div className="mt-6 max-w-[72ch]">
           <SkeletonText className="text-title" widths={["w-full", "w-2/5"]} />
           <SkeletonText className="mt-2 text-body" widths={["w-full", "w-4/5"]} />
         </div>
-        <Skeleton className="mt-4 h-9 w-full max-w-prose rounded-sm" />
-        <Skeleton className="mt-2 h-12 w-full max-w-prose rounded-sm" />
-        <div className="mt-8 hidden overflow-hidden rounded-md border border-line bg-surface @min-[35rem]/doc:block">
+        <div className="mt-4 flex max-w-prose flex-col gap-2">
+          <Skeleton className="h-14 w-full" radius="rounded-sm" />
+          <Skeleton className="h-12 w-full" radius="rounded-sm" />
+        </div>
+        <div className="mt-4 flex h-11 items-center">
+          <Skeleton className="h-4 w-56" />
+        </div>
+        <SkeletonLine className="mt-6 text-caption" width="w-56" />
+        <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @min-[35rem]/doc:block">
           <table className="w-full table-fixed border-collapse text-small">
             <thead className="bg-surface-2">
               <tr>
                 <th scope="col" className="w-60 p-3 text-left font-semibold text-ink-heading">
-                  {columns.activity}
+                  {kind.columns.activity}
                 </th>
                 <th scope="col" className="p-3 text-left font-semibold text-ink-heading">
-                  {columns.note}
+                  {kind.columns.note}
                 </th>
               </tr>
             </thead>
@@ -514,7 +566,7 @@ function DraftSkeleton() {
               {[0, 1, 2].map((index) => (
                 <tr key={index} className="h-30 border-t border-line align-top">
                   <td className="p-3">
-                    <Skeleton className="h-7 w-28 rounded-pill" />
+                    <Skeleton className="h-7 w-28" radius="rounded-pill" />
                     <SkeletonText className="mt-1" widths={["w-4/5", "w-3/5"]} />
                   </td>
                   <td className="p-3">
@@ -525,24 +577,28 @@ function DraftSkeleton() {
             </tbody>
           </table>
         </div>
-        <ul aria-hidden="true" className="mt-8 flex flex-col gap-3 @min-[35rem]/doc:hidden">
+        <ul aria-hidden="true" className="mt-2 flex flex-col gap-3 @min-[35rem]/doc:hidden">
           {[0, 1, 2].map((index) => (
             <li key={index} className="h-50 rounded-md border border-line bg-surface p-4">
-              <Skeleton className="h-7 w-28 rounded-pill" />
+              <Skeleton className="h-7 w-28" radius="rounded-pill" />
               <SkeletonText className="mt-2 text-small" widths={["w-4/5", "w-full", "w-3/5"]} />
             </li>
           ))}
         </ul>
-        <div className="mt-8 flex flex-col gap-2">
-          {[0, 1, 2].map((index) => (
-            <Skeleton key={index} className="h-4 w-4/5" />
-          ))}
+        <div className="mt-8">
+          <SkeletonLine className="text-title" width="w-24" />
+          <SkeletonLine className="mt-2 text-caption" width="w-4/5 max-w-[72ch]" />
+          <div className="mt-4 flex flex-col gap-4">
+            {[0, 1, 2].map((index) => (
+              <SkeletonText key={index} className="text-small" widths={["w-4/5", "w-3/5", "w-2/5"]} />
+            ))}
+          </div>
         </div>
-        <section aria-label={words.bar.label} className={cx("mt-8 border-t border-line bg-surface px-4 py-3 md:px-6")}>
-          <p className="max-w-[80ch] text-small text-ink">{words.bar.consequence}</p>
+        <section aria-label={words.bar.label} className="mt-8 border-t border-line bg-surface px-4 py-3 md:px-6">
+          <SkeletonText className="max-w-[80ch] text-small" widths={["w-full", "w-full", "w-2/5"]} />
           <div className="mt-3 flex justify-between gap-2">
-            <Skeleton className="h-11 w-28 rounded-pill" />
-            <Skeleton className="h-11 w-40 rounded-pill" />
+            <Skeleton className="h-11 w-28" radius="rounded-pill" />
+            <Skeleton className="h-11 w-40" radius="rounded-pill" />
           </div>
         </section>
       </div>

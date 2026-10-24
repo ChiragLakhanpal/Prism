@@ -142,7 +142,7 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
           <div className="flex flex-col gap-6">
             <Labeled label={ds.table}>
               <Column>
-                <DraftNotes rows={rows} caption={kind.tableCaption(D.subject.implementing_agency, day(D.subject.plan_date))} cardsLabelId="gallery-notes" />
+                <DraftNotes rows={rows} columns={D.layout.columns.map((column) => (kind.columns as Record<string, string>)[column])} caption={kind.tableCaption(D.subject.implementing_agency, day(D.subject.plan_date))} cardsLabelId="gallery-notes" />
               </Column>
             </Labeled>
             <Labeled label={ds.cards}>
@@ -150,7 +150,7 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
                 <p id="gallery-notes" className="sr-only">
                   {kind.tableCaption(D.subject.implementing_agency, day(D.subject.plan_date))}
                 </p>
-                <DraftNotes rows={rows} caption={kind.tableCaption(D.subject.implementing_agency, day(D.subject.plan_date))} cardsLabelId="gallery-notes" />
+                <DraftNotes rows={rows} columns={D.layout.columns.map((column) => (kind.columns as Record<string, string>)[column])} caption={kind.tableCaption(D.subject.implementing_agency, day(D.subject.plan_date))} cardsLabelId="gallery-notes" />
               </div>
             </Labeled>
           </div>
@@ -162,7 +162,7 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
         body: (
           <Labeled label={ds.sourceStates}>
             <Column>
-              <SourcesList sources={D.sources} evidence={D.evidence} opened={opened} openedCount={1} citations={D.citations} open={open} />
+              <SourcesList sources={D.sources} evidence={D.evidence} opened={opened} openedCount={1} total={D.opened.of} citations={D.citations} open={open} />
             </Column>
           </Labeled>
         ),
@@ -192,6 +192,9 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
             </Labeled>
             <Labeled label={ds.failed}>
               <Column>{bar(D, { failed: "check" })}</Column>
+            </Labeled>
+            <Labeled label={ds.conflict}>
+              <Column>{bar(CHECKED, { notice: copy.draft.conflict })}</Column>
             </Labeled>
           </div>
         ),

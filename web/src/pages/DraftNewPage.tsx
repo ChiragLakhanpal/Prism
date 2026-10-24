@@ -23,17 +23,19 @@ import { formatCount, formatDate } from "../lib/format";
 import { draftScope, newKey, preloaded, startWriting, stopped, stopWriting, writing as writingStore, type Draft, type Writing } from "../lib/drafts";
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { setPageTitle } from "../lib/title";
 import { DocumentColumn, DraftCrumbs, DraftHeader, subtitleOf } from "./DraftPage";
 
 const words = copy.draft;
-const kind = copy.draft.kinds.review_notes;
+type KindWords = (typeof copy.draft.kinds)[keyof typeof copy.draft.kinds];
 const STILL_WORKING_MS = 30_000;
 const short = (iso: string) => formatDate(iso, { style: "table" });
 
-function stepsOf(current: Writing): Step[] {
+// The steps as the stream announces them. Every number in them is one the server sent.
+function stepsOf(current: Writing, kind: KindWords): Step[] {
   const s = kind.steps;
   const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
-  const count = current.rows.length;
+  const count = by.write?.count ?? 0;
   const lines: Step[] = [
     { key: "read", running: s.read.running, done: s.read.done(formatDate(by.read?.plan_date ?? current.request.plan_date)), state: by.read?.status ?? "running" },
   ];
@@ -46,7 +48,7 @@ function stepsOf(current: Writing): Step[] {
     });
   }
   if (by.check) {
-    const checks = by.check.checks_run?.length ?? 0;
+    const checks = by.check.checks ?? 0;
     lines.push({
       key: "check",
       running: words.writing.checkRunning,
@@ -59,8 +61,9 @@ function stepsOf(current: Writing): Step[] {
   return lines;
 }
 
-function removedItems(current: Writing): Removed[] {
-  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
+function removedItems(current: Writing, kind: KindWords): Removed[] {
+  // The kind's own words for a reason first, then the answer's.
+  const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kind.removedReasons };
   return current.removed.map((item) => {
     const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
     const reason = code ? reasons[code] : copy.removed.unknownReason;
@@ -97,6 +100,7 @@ export function DraftNewPage({ search }: { search: string }) {
 }
 
 function WritingPage({ current, planHref }: { current: Writing; planHref: string }) {
+  const kind: KindWords = copy.draft.kinds[current.request.kind];
   const ledeId = useId();
   const [stillWorking, setStillWorking] = useState(false);
   const opening = useRef(false);
@@ -104,7 +108,7 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
   const project = current.plan.project!;
 
   useEffect(() => {
-    document.title = copy.pageTitle(kind.pageTitle(plan.implementing_agency, short(plan.plan_date)));
+    setPageTitle(kind.pageTitle(plan.implementing_agency, short(plan.plan_date)));
     // The box carries the draft's project as its scope chip here too.
     draftScope.set(plan.project_id);
     return () => draftScope.set(null);
@@ -163,29 +167,37 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
 
   const failed = current.phase === "failed" || current.phase === "dropped";
   const message = current.phase === "dropped" ? kind.writeErrors.dropped : kind.writeErrors[current.error ?? "internal"] ?? kind.writeErrors.internal;
-  const steps = stepsOf(current);
+  // Trying again can't help when the viewer can't read the plan or no writer is connected.
+  const retry = current.error !== "permission" && current.error !== "no_agent";
+  const steps = stepsOf(current, kind);
   return (
     <DocumentColumn>
       <div data-draft-new={current.phase} aria-busy={current.phase === "writing"}>
         <DraftCrumbs pid={project.project_id} name={project.project_name} last={kind.title} />
-        <div className="mt-4">
-          <DraftHeader
-            title={kind.title}
-            subtitle={subtitleOf(plan.implementing_agency, plan.plan_date)}
-            state={
-              current.phase === "writing" && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                  <p className="text-small text-ink">{words.writing.state}</p>
-                  <Button variant="ghost" onClick={stop} data-stop-writing>
-                    {words.writing.stop}
-                  </Button>
-                </div>
-              )
-            }
-          />
-        </div>
+        <DraftHeader
+          className="mt-4"
+          title={kind.title}
+          subtitle={subtitleOf(kind, plan.implementing_agency, plan.plan_date)}
+          state={
+            current.phase === "writing" && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-small text-ink">{words.writing.state}</p>
+                <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
+                  {words.writing.stop}
+                </Button>
+              </div>
+            )
+          }
+        />
         <div className="mt-6">
-          <Steps steps={failed ? steps.filter((step) => step.state === "done") : steps} stillWorking={stillWorking} reserveLines={4} rail={!failed} />
+          {/* Four lines are kept while the steps stream in, so they never push the table down; once
+              writing has stopped, the space goes. */}
+          <Steps
+            steps={failed ? steps.filter((step) => step.state === "done") : steps}
+            stillWorking={stillWorking}
+            reserveLines={failed || current.phase === "nothing" ? 0 : 4}
+            rail={!failed}
+          />
         </div>
         {current.phase === "nothing" ? (
           <div className="mt-6 max-w-prose" data-nothing-survived>
@@ -194,7 +206,7 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
             </h2>
             <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
             <div className="mt-4">
-              <RemovedBox removed={removedItems(current)} all />
+              <RemovedBox removed={removedItems(current, kind)} all />
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
               <Button variant="secondary" onClick={tryAgain}>
@@ -210,7 +222,7 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
               live="alert"
               action={
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  {current.error !== "permission" && (
+                  {retry && (
                     <Button variant="secondary" onClick={tryAgain}>
                       {words.writing.tryAgain}
                     </Button>
@@ -221,9 +233,9 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
             >
               {message}
             </Alert>
-            {current.reference && current.error !== "permission" && (
+            {current.reference && retry && (
               <p className="mt-2 text-caption text-ink-muted" data-write-reference>
-                <Fill template={copy.service.reference} slots={{ reference: <span className="font-mono">{current.reference}</span> }} />
+                <Fill template={copy.service.reference} slots={{ reference: <span className="inline-block max-w-full wrap-anywhere font-mono">{current.reference}</span> }} />
               </p>
             )}
           </div>
@@ -233,7 +245,12 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
               {kind.tableCaption(plan.implementing_agency, formatDate(plan.plan_date))}
             </p>
             <div className="mt-6">
-              <DraftNotes rows={rows} caption={kind.tableCaption(plan.implementing_agency, formatDate(plan.plan_date))} cardsLabelId={ledeId} />
+              <DraftNotes
+                rows={rows}
+                columns={Object.values(kind.columns)}
+                caption={kind.tableCaption(plan.implementing_agency, formatDate(plan.plan_date))}
+                cardsLabelId={ledeId}
+              />
             </div>
           </>
         )}

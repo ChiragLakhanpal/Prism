@@ -33,10 +33,14 @@ const DISABLED: Record<ButtonVariant, string> = {
 // Held (DESIGN.md section 5, Held button; the 35 brief, section 4.3): a button that cannot act yet, such
 // as Export to Word before the notes are checked. It stays in its place, so you can see what comes
 // next, and stays focusable, described by the visible sentence that says what releases it.
-// surface-2 fill and border, ink-muted text (5.67:1), no hover.
+// surface-2 fill and border, ink-muted text (5.67:1), no hover. A held ghost stays a bare label in
+// ink-muted, as a disabled one does, so no button changes its shape.
 const HELD =
   "cursor-not-allowed border-surface-2 bg-surface-2 text-ink-muted hover:border-surface-2 hover:bg-surface-2 " +
   "active:border-surface-2 active:bg-surface-2 active:text-ink-muted";
+const HELD_GHOST =
+  "cursor-not-allowed border-transparent bg-transparent text-ink-muted hover:bg-transparent active:bg-transparent " +
+  "active:text-ink-muted";
 
 export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   variant?: ButtonVariant;
@@ -98,7 +102,7 @@ export function Button({
         "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
         "transition-paint duration-150 select-none",
         iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2" : loading && !Icon ? "px-3" : "px-6",
-        held ? HELD : VARIANTS[variant],
+        held ? (variant === "ghost" ? HELD_GHOST : HELD) : VARIANTS[variant],
         !held && variant === "ghost" && (onPage ? "hover:bg-tint" : "hover:bg-tint-hover"),
         DISABLED[variant],
         loading && "cursor-progress",
@@ -112,8 +116,9 @@ export function Button({
       )}
       {busyLabel ? (
         // Both labels in one grid cell: the one not showing is invisible, so it keeps its width and
-        // a screen reader hears only the one that shows.
-        <span className={cx("grid", iconOnly && "sr-only")}>
+        // a screen reader hears only the one that shows. A flush button's label starts on the text's
+        // edge, so it sits at the start of the cell instead of in its middle.
+        <span className={cx("grid", flush && "justify-items-start", iconOnly && "sr-only")}>
           <span className={cx("col-start-1 row-start-1", loading && "invisible")}>{children}</span>
           <span className={cx("col-start-1 row-start-1", !loading && "invisible")}>{busyLabel}</span>
         </span>

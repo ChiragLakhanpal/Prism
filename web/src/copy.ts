@@ -301,6 +301,7 @@ export const copy = {
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
+    other: "The other:",
     // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
     item: (sentence: string, reason: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
     // A reason code with no sentence below: it makes no claim about why.
@@ -488,7 +489,8 @@ export const copy = {
     recordDescription: "Description",
     // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
     // Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3."
-    recordSource: "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+    // "page" and its number never part at a line end: a no-break space joins them (DESIGN.md section 7).
+    recordSource: "{doc}, {agency}, {pid}, version of {date}, page\u00a0{page}.",
     recordSourceShort: "{doc}, {pid}, {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
@@ -832,7 +834,7 @@ export const copy = {
           "above, with the reason for each.",
         // A note cell the writer refused, by its refusal code. Ticket 24 adds its refusal keys here.
         refused: {
-          out_of_scope: "I didn't write a note on this activity, because it asked for more than the plan's record shows.",
+          out_of_scope: "I didn't write a note on this activity, because a note would need more than the plan's record shows.",
         } as Record<string, string>,
         refusedOther: "I didn't write a note on this activity.",
         metaYou: (date: string) => `I drafted these notes for you on ${date}.`,
@@ -843,7 +845,15 @@ export const copy = {
         holdNotChecked: "Mark the notes as checked before you export them.",
         readOnly: (author: string) => `Only ${author} can mark these notes as checked or export them.`,
         markedChecked: "You marked these notes as checked. You can export them now.",
-        discarded: "I discarded these review notes, and your team no longer sees them in Drafts.",
+        discarded: "You discarded these review notes, so your team no longer sees them in Drafts.",
+        // A removed sentence's reason, where the answer's words would say "question": each note may cite
+        // only its own activity's row (src/strata/drafts/runtime.py, compose).
+        removedReasons: {
+          id_not_returned: {
+            item: "It cited a source other than this activity's row in my check of the plan.",
+            joined: "it cited a source other than this activity's row in my check of the plan",
+          },
+        } as Record<string, { item: string; joined: string }>,
         // The Drafts tab's row: {project} is "Water and Sanitation Development Project (P156634)".
         rowNotes: (count: number, countText: string) => (count === 1 ? "One note." : `${countText} notes.`),
         // The writing page (section 5.2).
@@ -866,11 +876,14 @@ export const copy = {
           content_filter: "I couldn't write the review notes, because a content filter stopped the writer. I saved nothing.",
           agent_output: "I wrote review notes I couldn't check, so I saved nothing.",
           data_service: "I couldn't read my check of the plan, because the data service didn't answer. I saved nothing.",
+          // The app's own account could not save the draft: nothing the viewer can fix.
+          draft_store: "I couldn't save the draft, because Strata can't write to its drafts tables right now. I saved nothing.",
           no_plan: "I couldn't find this version of the plan, so I wrote nothing and saved nothing.",
           nothing_marked: "No activity in this plan needs a look or is worth watching, so I saved nothing.",
+          // The viewer's own read of the plan's check was refused.
           permission:
-            "Your account can't save drafts in Strata's tables, so I can't write review notes. Ask your workspace " +
-            "admin for write access to the strata catalog.",
+            "Your account can't read this plan's check in Strata's tables, so I can't write review notes. Ask your " +
+            "workspace admin for read access to the strata catalog.",
           internal: "Something went wrong on my side, so I couldn't write the review notes. I saved nothing.",
           dropped: "The connection dropped before I finished the review notes. I saved nothing.",
         } as Record<string, string>,
@@ -926,9 +939,11 @@ export const copy = {
       consequence: "Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
       opened: (opened: string, total: string) => `You opened ${opened} of ${total} sources`,
       end: ".",
+      // Each hold's line by its copy key (config/drafts.toml, [holds.<key>].copy). notChecked is the kind's
+      // own (copy.draft.kinds.<kind>.holdNotChecked); tests/test_drafts.py checks every key has a line.
       hold: {
         preview: "This is a preview, so you can't mark drafts as checked or export them.",
-      },
+      } as Record<string, string>,
       discard: "Discard",
       export: "Export to Word",
       check: "Mark as checked",
@@ -940,8 +955,8 @@ export const copy = {
         restore: "I couldn't restore the draft just now. It is still discarded.",
       },
       exportStarted: "I'm making the Word file and the evidence pack.",
-      restored: "I restored the draft.",
-      restoredChecked: "I restored the draft. It is still marked as checked.",
+      restored: "You restored the draft.",
+      restoredChecked: "You restored the draft. It is still marked as checked.",
     },
     conflict: "This draft changed in another tab or window, so I reloaded it.",
     // The export success panel and the discarded notice (section 5.6).
@@ -950,13 +965,17 @@ export const copy = {
         count === 1
           ? "Exported. I made a Word file with 1 footnote and an evidence pack."
           : `Exported. I made a Word file with ${countText} footnotes and an evidence pack.`,
-      body: (count: number, countText: string) =>
-        `The evidence pack lists ${count === 1 ? "the one source" : `all ${countText} sources`}, whether you opened ${
+      // The reason clause shows only when the author kept another source, with a reason (ticket 23).
+      body: (count: number, countText: string, disagreed: boolean) =>
+        `The evidence pack lists ${count === 1 ? "the one source" : `all ${countText} sources`}${disagreed ? "," : " and"} whether you opened ${
           count === 1 ? "it" : "each one"
-        }, and any reason you gave for keeping another source. The files went only to your browser's downloads. I sent nothing to anyone.`,
+        }${disagreed ? ", and the reason you gave for keeping another source" : ""}. Your browser downloaded the Word file, ` +
+        "and the evidence pack's files are below. I keep all three with this draft for your team. I sent nothing to anyone.",
       revisitTitle: (date: string, count: number, countText: string) =>
         `Exported on ${date}. I made a Word file with ${count === 1 ? "1 footnote" : `${countText} footnotes`} and an evidence pack.`,
       revisitBody: "You can download the same files again. I sent nothing to anyone.",
+      // In place of revisitBody when the export's files are gone.
+      revisitBodyMissing: "I sent nothing to anyone.",
       revisitTeammate: (author: string, date: string, count: number, countText: string) =>
         `${author} exported these notes on ${date}. I made a Word file with ${count === 1 ? "1 footnote" : `${countText} footnotes`} and an evidence pack.`,
       word: (count: number, countText: string) => (count === 1 ? "Word file, 1 footnote" : `Word file, ${countText} footnotes`),
@@ -966,8 +985,8 @@ export const copy = {
       // A file link's name: its file name, then what it is.
       fileName: (name: string, caption: string) => `${name}, ${caption}`,
       filesMissing:
-        "I can't find the files from this export. The record of the export is kept, and you can ask the data team to " +
-        "restore the files with Draft ID {id}.",
+        "I can't find the files from this export. I kept the record of the export, so the data team can restore the " +
+        "files from Draft ID {id}.",
     },
     discarded: {
       restore: "Restore the draft",
@@ -980,6 +999,7 @@ export const copy = {
       notFoundBody: "The link may be incomplete, or the draft may belong to another team.",
       notFoundLink: "Go to Drafts",
       error: "I couldn't load this draft because the data service didn't answer.",
+      draftStore: "I can't show this draft, because Strata can't read its drafts tables right now.",
       permission: "Your account can't read Strata's tables, so I can't show this draft.",
       publicTitle: "The public view has no drafts.",
       publicBody: "Drafts belong to the team that made them. Leave the preview to see yours.",
@@ -1010,6 +1030,7 @@ export const copy = {
       more: (count: string) => `Show ${count} more`,
       loading: "Loading your team's drafts.",
       error: "I couldn't load your team's drafts because the data service didn't answer.",
+      draftStore: "I can't list your team's drafts, because Strata can't read its drafts tables right now.",
       permission: "Your account can't read Strata's tables, so I can't list your team's drafts.",
     },
     // The export's files (section 6.7), which the server writes from src/strata/drafts/copy.json
@@ -1041,7 +1062,8 @@ export const copy = {
         csvColumns: ["Number", "Evidence ID", "Source", "Cited in", "Opened before export", "Last opened (UTC)", "Kept another source", "Reason"],
         yes: "Yes",
         no: "No",
-        moment: "{date}, {time} UTC",
+        // The column heading already says UTC.
+        moment: "{date}, {time}",
         citedJoin: ", ",
         dataCaveat: "The World Bank does not guarantee the accuracy of the data.",
       },

@@ -125,6 +125,20 @@
   [data-page-column] > * { --layout-margin: 72px; --layout-gutter: 32px; }
 }
 
+/* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a
+   1200 px window it spans columns 1 to 7 and keeps its place and width when the evidence drawer opens
+   beside it: the drawer narrows the page area, so the column is measured against the window instead,
+   with the window's margins and gutter, and the page keeps its left edge where it was. */
+@media (width >= 75rem) {
+  [data-page-column] > main:has([data-document-column]) { --layout-margin: 72px; --layout-gutter: 32px; }
+  main:has([data-document-column]) > .layout {
+    margin-inline: max(0px, (100vw - var(--layout-max)) / 2 - var(--layout-margin)) 0;
+  }
+  [data-document-column] {
+    width: calc((min(100vw - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+  }
+}
+
 @utility layout {
   width: 100%;
   max-width: calc(var(--layout-max) + 2 * var(--layout-margin));

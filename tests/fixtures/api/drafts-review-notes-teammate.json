@@ -149,7 +149,7 @@
       "sentences": [
         {
           "index": 4,
-          "text": "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.",
+          "text": "The plan still lists this activity as Pending Implementation, with an Actual Amount of 0.00, and the project closes on October 31, 2026.",
           "kind": "record",
           "evidence_ids": [
             "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
@@ -160,7 +160,12 @@
               "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
             }
           ],
-          "dates": [],
+          "dates": [
+            {
+              "text": "October 31, 2026",
+              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
+            }
+          ],
           "quote": null
         },
         {
@@ -373,8 +378,8 @@
       "matched": 6
     },
     "dates": {
-      "total": 6,
-      "matched": 6
+      "total": 7,
+      "matched": 7
     },
     "quotes": {
       "total": 0,
@@ -388,6 +393,7 @@
       "check_plan"
     ]
   },
+  "checks_count": 3,
   "removed": [],
   "sources": [
     {

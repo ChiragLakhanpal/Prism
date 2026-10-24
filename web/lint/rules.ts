@@ -69,6 +69,8 @@ export const GLOSSARY_AVOID: [string, string][] = [
 // off, because a person's name, a STEP method and a file name are all read by someone.
 export const NON_COPY_PROPS = new Set([
   "className",
+  // Skeleton's corner radius class, such as rounded-pill.
+  "radius",
   "href",
   "src",
   "id",

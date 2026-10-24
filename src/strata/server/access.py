@@ -1,14 +1,17 @@
 """The one access rule for what Strata keeps for a team (ticket 35; the 38 design brief, section 11).
 
-A draft belongs to its author's team. Everyone on that team can open it and its files; only its author
-can mark it as checked, export it, discard it or restore it (the 35 brief, section 2). Ticket 38 sends
-its uploads, and the packages made from them, through the same helper, so one rule decides who reads
-what a team keeps, on every route.
+A draft keeps the team its author was on when it was saved. An author always sees their own drafts. A
+teammate sees the drafts saved while the author was on their team, and can open them and their files;
+only the author can mark a draft as checked, export it, discard it or restore it (the 35 brief, section
+2). So joining or leaving a team, or a group lookup that fails, never hides an author's own work from
+them. Ticket 38 sends its uploads, and the packages made from them, through the same helper, so one rule
+decides who reads what a team keeps, on every route.
 
 - Access.team(viewer) is the viewer's team: the first team in the roles file (config/roles.toml) one of
   whose workspace groups the viewer is in, or else a team of their own, keyed by their user id, so their
   drafts are theirs alone.
-- Access.may_read(viewer, team_key) says whether the viewer is on that team.
+- Access.may_read(viewer, team_key, author_id) says whether the viewer may read what was saved under that
+  team by that author: they are its author, or on that team now.
 - is_author(viewer, author_id) says whether the viewer is the author.
 
 A viewer's workspace groups come from an adapter: WorkspaceGroups asks the workspace's SCIM API for the
@@ -95,5 +98,5 @@ class Access:
                 return Membership(f"team:{team.key}", team.name, True)
         return Membership(f"viewer:{viewer.user_id}", None, False)
 
-    def may_read(self, viewer: Viewer, team_key: str) -> bool:
-        return bool(viewer.user_id) and self.team(viewer).key == team_key
+    def may_read(self, viewer: Viewer, team_key: str, author_id: str) -> bool:
+        return is_author(viewer, author_id) or (bool(viewer.user_id) and self.team(viewer).key == team_key)

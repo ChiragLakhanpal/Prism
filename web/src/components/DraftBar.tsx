@@ -14,8 +14,8 @@
 // A busy button shows its busy label within 100 ms and keeps its width, and the bar is aria-busy until
 // the server answers. The state changes only when the server confirms it. A status line announces each
 // change, and a failure shows as a line between the rows.
-import { forwardRef, useId, type ReactNode, type Ref } from "react";
-import { Check, CircleX } from "lucide-react";
+import { forwardRef, useEffect, useId, useRef, type ReactNode, type Ref } from "react";
+import { Check, CircleX, Info } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import type { Action, Draft } from "../lib/drafts";
@@ -28,8 +28,9 @@ import { SOURCES_ID } from "./SourcesList";
 import { TextLink } from "./TextLink";
 
 const whole = (value: number) => formatNumber(value, { compact: false });
-
-
+// After the notes are marked as checked, Export to Word takes Mark as checked's place under the pointer.
+// For this long after it turns solid, a click on it is the end of the click that checked the notes.
+const SETTLE_MS = 400;
 
 // Sticky only in a window at least 768 px wide and 640 px tall (48rem by 40rem). Every class name with
 // this media query is written out whole, so Tailwind finds it.
@@ -48,15 +49,26 @@ export type BarProps = {
   onAct: (action: Action) => void;
   exportRef?: Ref<HTMLButtonElement>;
   checkRef?: Ref<HTMLButtonElement>;
+  // A line under row 1 that says the draft changed elsewhere and was reloaded.
+  notice?: string | null;
+  // Its margin, on the bar itself: the bar must be a direct child of the tall page, or sticky has no room.
+  className?: string;
 };
 
+// Each hold's sentence by the copy key its registry entry names (config/drafts.toml, [holds.<key>].copy):
+// the kind's own sentence for notChecked, and the shared ones for every other hold.
+export function holdLines(words: BarProps["words"]): Record<string, string> {
+  return { ...copy.draft.bar.hold, notChecked: words.holdNotChecked };
+}
+
 function holdLine(draft: Draft, words: BarProps["words"]): string | null {
-  const said = draft.holds.map((hold) => (hold.copy === "notChecked" ? words.holdNotChecked : copy.draft.bar.hold.preview));
+  const lines = holdLines(words);
+  const said = draft.holds.map((hold) => lines[hold.copy]).filter(Boolean);
   return said.length ? said.join(" ") : null;
 }
 
 export const DraftBar = forwardRef(function DraftBar(
-  { draft, words, opened, busy, failed, status, onAct, exportRef, checkRef }: BarProps,
+  { draft, words, opened, busy, failed, status, onAct, exportRef, checkRef, notice, className }: BarProps,
   ref: Ref<HTMLElement>,
 ) {
   const bar = copy.draft.bar;
@@ -68,13 +80,28 @@ export const DraftBar = forwardRef(function DraftBar(
   const exportPrimary = checked && draft.holds.length === 0;
   const held = draft.holds.length > 0 || !draft.may_act;
   const holdId = useId();
+  // When Export to Word turned solid in this visit: a click that lands just after is not a request to
+  // export. A draft that opens already checked has no such moment.
+  const solidSince = useRef(0);
+  const wasPrimary = useRef(exportPrimary);
+  useEffect(() => {
+    if (exportPrimary && !wasPrimary.current) solidSince.current = Date.now();
+    wasPrimary.current = exportPrimary;
+  }, [exportPrimary]);
+  const exportClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    // The second click of a double click, or a click in the moment after the button changed under the
+    // pointer: export can't be undone, so it waits for a deliberate press. A key press has detail 0.
+    if (event.detail > 1 || Date.now() - solidSince.current < SETTLE_MS) return;
+    onAct("export");
+  };
+  const describedBy = hold ? holdId : undefined;
   return (
     <section
       ref={ref}
       aria-label={bar.label}
       aria-busy={busy !== null}
       data-draft-bar={draft.state}
-      className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY)}
+      className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY, className)}
     >
       <p className="max-w-[80ch] text-small text-ink" data-bar-lead>
         {mine ? words.barLead : words.barLeadTeammate(author)} {bar.consequence}{" "}
@@ -97,6 +124,12 @@ export const DraftBar = forwardRef(function DraftBar(
           {bar.failed[failed]}
         </p>
       )}
+      {!failed && notice && (
+        <p className="mt-2 flex items-start gap-2 text-small text-ink" data-bar-notice>
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info-icon" />
+          {notice}
+        </p>
+      )}
       <p role="status" className="sr-only" data-bar-status>
         {status}
       </p>
@@ -109,7 +142,15 @@ export const DraftBar = forwardRef(function DraftBar(
           )}
         >
           <div>
-            <Button variant="ghost" flush held={!draft.may_act} loading={busy === "discard"} busyLabel={bar.busy.discard} onClick={() => onAct("discard")}>
+            <Button
+              variant="ghost"
+              flush
+              held={!draft.may_act}
+              aria-describedby={!draft.may_act ? describedBy : undefined}
+              loading={busy === "discard"}
+              busyLabel={bar.busy.discard}
+              onClick={() => onAct("discard")}
+            >
               {bar.discard}
             </Button>
           </div>
@@ -124,10 +165,10 @@ export const DraftBar = forwardRef(function DraftBar(
               ref={exportRef}
               variant={exportPrimary ? "primary" : "secondary"}
               held={held}
-              aria-describedby={hold ? holdId : undefined}
+              aria-describedby={held ? describedBy : undefined}
               loading={busy === "export"}
               busyLabel={bar.busy.export}
-              onClick={() => onAct("export")}
+              onClick={exportClick}
               className="w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-auto"
             >
               {bar.export}
@@ -137,6 +178,7 @@ export const DraftBar = forwardRef(function DraftBar(
                 ref={checkRef}
                 variant="primary"
                 held={!draft.may_act}
+                aria-describedby={!draft.may_act ? describedBy : undefined}
                 loading={busy === "check"}
                 busyLabel={bar.busy.check}
                 onClick={() => onAct("check")}
@@ -171,9 +213,10 @@ export type SuccessProps = {
   // "These notes" in the teammate's heading: the kind's words.
   revisitTeammate?: (author: string, date: string, count: number, countText: string) => string;
   date: (iso: string) => string;
+  className?: string;
 };
 
-export function ExportSuccess({ draft, fresh, headingRef, date }: SuccessProps) {
+export function ExportSuccess({ draft, fresh, headingRef, date, className }: SuccessProps) {
   const headingId = useId();
   const words = copy.draft.exported;
   const record = draft.export!;
@@ -195,7 +238,7 @@ export function ExportSuccess({ draft, fresh, headingRef, date }: SuccessProps) 
     <section
       aria-labelledby={headingId}
       data-export-success={fresh ? "fresh" : "revisit"}
-      className={cx("flex gap-3 rounded-r-md border-l-4 border-success bg-success-bg p-4 md:p-6", fresh && "animate-[fade-in_200ms_ease-out]")}
+      className={cx("flex gap-3 rounded-r-md border-l-4 border-success bg-success-bg p-4 md:p-6", fresh && "animate-[fade-in_200ms_ease-out]", className)}
     >
       <Check aria-hidden="true" className="size-5 shrink-0 text-success" />
       <div className="min-w-0">
@@ -203,7 +246,11 @@ export function ExportSuccess({ draft, fresh, headingRef, date }: SuccessProps) 
           {title}
         </h2>
         <p className="mt-2 max-w-[72ch] text-body text-ink">
-          {fresh ? words.body(record.sources, whole(record.sources)) : words.revisitBody}
+          {!record.files_available
+            ? words.revisitBodyMissing
+            : fresh
+              ? words.body(record.sources, whole(record.sources), record.disagreements > 0)
+              : words.revisitBody}
         </p>
         {record.files_available ? (
           <ul aria-label={words.filesLabel} className="mt-4 flex flex-col gap-2">
@@ -213,11 +260,11 @@ export function ExportSuccess({ draft, fresh, headingRef, date }: SuccessProps) 
                   href={fileHref(draft.draft_id, file.name)}
                   download={file.name}
                   aria-label={words.fileName(file.name, captions[extension(file.name)])}
-                  className="font-mono wrap-anywhere"
+                  className="block w-fit max-w-full font-mono wrap-anywhere"
                 >
                   {file.name}
-                </TextLink>{" "}
-                <span className="text-caption text-ink-muted">{captions[extension(file.name)]}</span>
+                </TextLink>
+                <span className="mt-0.5 block text-caption text-ink-muted">{captions[extension(file.name)]}</span>
               </li>
             ))}
           </ul>
@@ -245,7 +292,9 @@ export const DiscardedNotice = forwardRef(function DiscardedNotice(
     failed,
     onRestore,
     sentenceRef,
+    className,
   }: {
+    className?: string;
     sentence: ReactNode;
     restoring: boolean;
     may_act: boolean;
@@ -257,7 +306,7 @@ export const DiscardedNotice = forwardRef(function DiscardedNotice(
   ref: Ref<HTMLElement>,
 ) {
   return (
-    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice className={cx("z-10 bg-page", STICKY)}>
+    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice className={cx("z-10 bg-page", STICKY, className)}>
       <Alert state="info">
         <span ref={sentenceRef} tabIndex={-1} className="focus:outline-none" data-discarded-sentence>
           {sentence}

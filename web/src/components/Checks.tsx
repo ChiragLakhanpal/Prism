@@ -169,7 +169,7 @@ export function RemovedBox({
         </p>
         {(all ? removed : others).length > 0 && (
           <>
-            {!all && <p className="mt-2">{words.others}</p>}
+            {!all && <p className="mt-2">{others.length === 1 ? words.other : words.others}</p>}
             <ul className="mt-2 flex list-disc flex-col gap-1 pl-4">
               {(all ? removed : others).map((item, index) => (
                 <li key={index}>{words.item(item.sentence, item.reason)}</li>

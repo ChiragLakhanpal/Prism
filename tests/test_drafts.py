@@ -25,10 +25,10 @@ import pytest
 from strata.agent.loop import AgentError
 from strata.agent.runs import RunLog
 from strata.agent.scripted import WRITER_CASES, ScriptedAgent, load_cases
-from strata.config import load_roles
+from strata.config import load_draft_kinds, load_roles
 from strata.drafts.store import DraftStore
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, PermissionDenied
 from strata.server.access import Access, StaticGroups
 from strata.server.app import create_app
 from strata.server.evidence import OpenedLog
@@ -110,12 +110,12 @@ def drafting(fixture_db, state_db, clock):
     def state():
         return DuckDBEngine.open(state_db)
 
-    def make(case: str = "review-notes-nwwda-2026-10-09", writer=None):
+    def make(case: str = "review-notes-nwwda-2026-10-09", writer=None, groups=GROUPS, store=None):
         written = load_cases(WRITER_CASES)[case]
         numbers = iter(range(1, 100))
-        return create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=clock),
+        return create_app(engine_for=reading, drafts=store or DraftStore(state), opened=OpenedLog(state, now=clock),
                           writers=writer or (lambda kind: ScriptedAgent(written)), runs=RunLog(state),
-                          access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY, now=clock,
+                          access=Access(load_roles(), StaticGroups(groups)), today=lambda: TODAY, now=clock,
                           new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001")
     return make
 
@@ -124,6 +124,16 @@ def draft_review_notes(app, headers=ANA, key="key-1", **extra) -> tuple[list, st
     sent = events(call(app, "POST", "/api/drafts", headers, json={**NWWDA, "idempotency_key": key, **extra}).text)
     made = [data["draft_id"] for kind, data in sent if kind == "draft"]
     return sent, made[0] if made else None
+
+
+def test_every_hold_a_kind_names_has_its_line_in_the_copy_file():
+    """The draft bar shows each hold's line by its copy key, and copy.json repeats the bar's lines by kind."""
+    kinds = load_draft_kinds()
+    lines = json.loads((ROOT / "src" / "strata" / "drafts" / "copy.json").read_text())["holds"]
+
+    for key, kind in kinds.kinds.items():
+        for hold in kind.holds:
+            assert kinds.holds[hold].copy in lines[key], f"{key}'s hold {hold} has no line in web/src/copy.ts"
 
 
 def test_the_screens_recorded_draft_answers_are_what_the_routes_answer(fixture_db, tmp_path):
@@ -193,6 +203,20 @@ def test_an_activity_whose_sentences_all_fail_keeps_its_row_with_no_note_and_its
     assert draft["counts"] == {"signal": 3, "written": 2}
 
 
+def test_a_sentence_citing_another_activity_s_row_is_removed_from_the_note(drafting):
+    app = drafting("review-notes-a-cross-cited-sentence")
+
+    _, draft_id = draft_review_notes(app)
+
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+    first = draft["notes"][0]
+    assert [sentence["text"] for sentence in first["sentences"]] == [
+        "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00."]
+    [removed] = draft["removed"]
+    assert (removed["key"], removed["reason"], removed["sentence"]) == (
+        MARKED[0], "id_not_returned", "The plan records an Actual Amount of 1,245,092.76.")
+
+
 def test_a_refused_activity_keeps_its_row_with_the_refusal_and_no_sentence(drafting):
     app = drafting("review-notes-a-refused-activity")
 
@@ -230,6 +254,27 @@ def test_when_the_writer_is_not_connected_or_does_not_answer_nothing_is_saved_an
     assert [data for kind, data in sent if kind == "error"] == [{"code": code}]
     assert sent[-1][0] == "done"
     assert call(app, "GET", "/api/drafts", ANA).json()["total"] == 0
+
+
+class RefusedStore(DraftStore):
+    """The app's own account may not write or read the drafts tables."""
+
+    def __init__(self):
+        super().__init__(lambda: None)
+
+    def _open(self):
+        raise PermissionDenied("The app's service principal has no grant on strata.ops.")
+
+
+def test_when_the_app_cannot_save_or_read_drafts_the_viewer_is_not_blamed(drafting):
+    app = drafting(store=RefusedStore())
+
+    sent, draft_id = draft_review_notes(app, key=None)
+    listed = call(app, "GET", "/api/drafts", ANA)
+
+    assert draft_id is None
+    assert [data for kind, data in sent if kind == "error"] == [{"code": "draft_store"}]
+    assert (listed.status_code, listed.json()["code"]) == (503, "draft_store")
 
 
 def test_a_request_with_no_forwarded_viewer_writes_nothing(drafting):
@@ -288,6 +333,23 @@ def test_a_draft_another_team_made_is_not_found(drafting):
         assert (answer.status_code, answer.json()["code"]) == (404, "unknown_draft")
 
 
+def test_an_author_keeps_their_own_drafts_after_a_group_puts_them_on_a_team(drafting):
+    # Cy, on no team, saves a draft; then a workspace group puts Cy on the Kenya water team.
+    groups = dict(GROUPS)
+    app = drafting(groups=groups)
+    _, draft_id = draft_review_notes(app, headers=CY)
+    groups["4023@1984"] = ["strata-team-kenya-water"]
+
+    opened = call(app, "GET", f"/api/drafts/{draft_id}", CY)
+    listed = call(app, "GET", "/api/drafts", CY).json()
+
+    assert (opened.status_code, opened.json()["author"]["you"]) == (200, True)
+    assert [row["draft_id"] for row in listed["groups"]["to_check"]] == [draft_id]
+    assert act(app, draft_id, "check", "draft", headers=CY).status_code == 200
+    # Ana, already on the team, never saw a draft Cy saved before joining it.
+    assert call(app, "GET", f"/api/drafts/{draft_id}", ANA).status_code == 404
+
+
 @pytest.mark.parametrize("view", ["piu", "public"])
 def test_a_preview_cannot_check_or_export_and_says_which_capability_and_why(drafting, view):
     app = drafting()
@@ -330,6 +392,22 @@ def test_discard_can_be_undone_and_restores_the_state_the_draft_was_in(drafting,
     assert restored.json()["state"] == before
     assert [row["draft_id"] for row in call(app, "GET", "/api/drafts", BEN).json()["groups"][
         "to_check" if before == "draft" else "checked"]] == [draft_id]
+
+
+def test_after_restore_checked_by_keeps_the_time_of_the_check(drafting, clock):
+    app = drafting()
+    _, draft_id = draft_review_notes(app)
+    clock.move(minutes=5)
+    act(app, draft_id, "check", "draft")
+    clock.move(minutes=1)
+    act(app, draft_id, "discard", "checked")
+    clock.move(minutes=1)
+
+    restored = act(app, draft_id, "restore", "discarded").json()
+
+    assert restored["checked"] == {"at": "2026-10-23T14:05:00Z", "by": "Ana Example", "you": True}
+    [row] = call(app, "GET", "/api/drafts", ANA).json()["groups"]["checked"]
+    assert row["checked"] == {"at": "2026-10-23T14:05:00Z", "by": "Ana Example", "you": True}
 
 
 def test_an_exported_draft_cannot_be_discarded(drafting):

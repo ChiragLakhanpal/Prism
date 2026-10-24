@@ -6,8 +6,8 @@
   id, or a nothing_survived event with the removed sentences when none passed the checks (and nothing
   is saved), or an error event with a code from WRITE_ERRORS, and last a done event with the run id.
   A second request with the same idempotency key opens the same draft and writes nothing.
-- GET /api/drafts lists the viewer's team's drafts in three groups, to_check, checked and exported,
-  newest first by their last change, and the viewer's own discarded drafts.
+- GET /api/drafts lists the viewer's team's drafts and the viewer's own in three groups, to_check, checked
+  and exported, newest first by their last change, and the viewer's own discarded drafts.
 - GET /api/drafts/existing?kind=&project_id=&agency_id=&plan_date= names the newest draft of that kind
   the viewer's team has open (in Draft or Checked by you) on that plan version, or null.
 - GET /api/drafts/{draft_id} gives one draft as its page shows it, with how many of its sources the
@@ -18,8 +18,8 @@
   nothing anywhere.
 - GET /api/drafts/{draft_id}/files/{name} downloads one of those files.
 
-Every read and act asks the one access rule (src/strata/server/access.py): a draft another team made
-is not found, and only its author acts. A refusal says why in the shape later tickets build on: 403
+Every read and act asks the one access rule (src/strata/server/access.py): an author always sees their
+own drafts, a draft another team made is not found, and only its author acts. A refusal says why in the shape later tickets build on: 403
 with error not_author, or preview with its capability and the copy key of its reason (the 40 brief),
 409 with error stale or draft_state and the state the draft is in now (the 39 brief), or held with the
 holds left. App state is written by the app's own service principal, like the opened sources it reads.
@@ -96,13 +96,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         return viewer_from_headers(request.headers)
 
     def guarded(what: str, act: Callable[[], object]):
-        """One use of the store, or the error a page can show: no store, permission, or the data service."""
+        """One use of the store, or the error a page can show: no store, the store refused, or the data
+        service. The app's own account reads and writes drafts, so a refusal is its grant, not the viewer's."""
         if store is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         try:
             return act()
         except PermissionDenied:
-            return JSONResponse({"code": "permission"}, status_code=403)
+            ref = reference()
+            log.exception("The app's account was refused on %s, reference %s.", what, ref)
+            return JSONResponse({"code": "draft_store", "trace_id": ref}, status_code=503)
         except EngineError:
             ref = reference()
             log.exception("The data service failed on %s, reference %s.", what, ref)
@@ -110,7 +113,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
     def readable(viewer: Viewer, draft_id: str) -> Saved | None:
         saved = store.get(draft_id)
-        return saved if saved is not None and access.may_read(viewer, saved.team_key) else None
+        return saved if saved is not None and access.may_read(viewer, saved.team_key, saved.author_id) else None
 
     def opened_by(viewer_id: str | None, saved: Saved) -> dict[str, dt.datetime]:
         ids = [entry["evidence_id"] for entry in runtime.sources(saved.content)]
@@ -208,7 +211,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
         def read():
             team = access.team(viewer)
-            saved = store.for_team(team.key)
+            saved = store.for_team(team.key, viewer.user_id)
             groups: dict[str, list[dict]] = {group: [] for group in GROUPS.values()}
             discarded = []
             for draft in saved:
@@ -235,7 +238,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(401, "no_identity")
 
         def read():
-            found = [draft for draft in store.for_team(access.team(viewer).key)
+            found = [draft for draft in store.for_team(access.team(viewer).key, viewer.user_id)
                      if draft.kind == kind and draft.state.state in runtime.OPEN_STATES
                      and draft.content["subject"].get("project_id") == project_id
                      and draft.content["subject"].get("agency_id") == agency_id

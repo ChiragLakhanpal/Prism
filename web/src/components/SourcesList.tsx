@@ -10,7 +10,7 @@ import { evidenceHref, openEvidence } from "../lib/evidence";
 import { formatNumber } from "../lib/format";
 import { DRAWER_ID, markerSource } from "./AnswerPanel";
 import { CitationMarker } from "./CitationMarker";
-import { EvidenceCard, RecordSourceLine } from "./EvidenceCard";
+import { EvidenceCard, RecordSourceLine, sourceTitle } from "./EvidenceCard";
 import { Fill, Joined } from "./Fill";
 import type { OpenSource } from "./DraftNotes";
 
@@ -23,6 +23,7 @@ export function SourcesList({
   evidence,
   opened,
   openedCount,
+  total,
   citations,
   open,
 }: {
@@ -31,6 +32,8 @@ export function SourcesList({
   // The sources opened since the draft was saved, with this page's own opens added.
   opened: ReadonlySet<string>;
   openedCount: number;
+  // How many distinct sources the draft cites, as the server counted them.
+  total: number;
   citations: number;
   open: OpenSource;
 }) {
@@ -41,7 +44,7 @@ export function SourcesList({
         {words.title}
       </h2>
       <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-sources-caption data-numbers>
-        {words.caption(whole(openedCount), whole(sources.length), citations, whole(citations))}
+        {words.caption(whole(openedCount), whole(total), citations, whole(citations))}
       </p>
       <ol aria-labelledby={SOURCES_ID} className="mt-4 flex flex-col gap-4">
         {sources.map((source) => {
@@ -68,6 +71,12 @@ export function SourcesList({
                 />
               </span>
               <div className="min-w-0">
+                {/* The record's title, as the drawer heads it, so each source says which record it is. */}
+                {evidence[id] && (
+                  <p className="text-small font-semibold text-ink-heading" data-source-title>
+                    {sourceTitle(evidence[id])}
+                  </p>
+                )}
                 {evidence[id] && <RecordSourceLine evidence={evidence[id]} />}
                 <p className="mt-1 text-caption text-ink-muted">
                   <Fill template={words.citedIn(source.cited_in.length)} slots={{ refs: <Joined items={refs} /> }} />
