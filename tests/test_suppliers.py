@@ -144,7 +144,7 @@ def match(*records):
     return candidate_pairs(list(records), load_supplier_matching(), floor=0.01)
 
 
-def test_a_row_with_a_step_supplier_id_never_enters_name_matching():
+def test_two_suppliers_with_step_supplier_ids_are_never_compared_by_name():
     """Two suppliers with IDs are never compared by name, however alike their names. Only the row with no
     ID is matched, and it may join either of them."""
     pairs = match(record("1001211", "CHINA INTERNATIONAL WATER AND ELECTRIC CORPORATION", "China", has_id=True),

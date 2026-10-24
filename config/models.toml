@@ -55,7 +55,7 @@ rerank_columns = ["header", "text"]
 # Each comparison lists its levels, most alike first. m is how often two rows of one supplier fall in
 # a level, u how often two rows of different suppliers do, and each column adds up to 1. The levels'
 # rules are in src/strata/knowledge/suppliers/matching.py. Source: starting values for the owner to
-# confirm, written so that only the same name with a project in common clears the auto-merge
+# confirm, written so that only the same name with a project in common reaches the auto-merge
 # threshold. The labeled pairs in strata.ops.supplier_pair_labels are what to estimate them from.
 [supplier_matching]
 judge_role = "draft"

@@ -336,7 +336,7 @@ def test_a_judgement_in_another_shape_stops_the_run():
     from strata.knowledge.suppliers.judge import AzureOpenAIJudge, JudgeError, Question, Side
 
     side = Side("A", "Kenya", (), ())
-    unreadable = {"choices": [{"message": {"content": '{"decision": "approve", "confidence": 2}'}}]}
+    unreadable = {"choices": [{"message": {"content": '{"decision": "accept", "confidence": 2}'}}]}
     judge = AzureOpenAIJudge("https://wb-strata.openai.azure.com/openai/v1", "not-a-real-key", "gpt-5.4",
                              post=Post(unreadable))
 

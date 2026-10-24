@@ -57,7 +57,7 @@ Finances One answers at `https://datacatalogapi.worldbank.org/dexapps/fone/api/a
 
 - `project_id` joins everything at project level.
 - The STEP reference (for example `KE-MOWASCO-16771-CW-RFB`) joins a notice's `bid_reference_no`, an award's `borrower_contract_reference_number` and a plan's activity reference. About 64% of recent awards carry one. Read the method from the plan's Method column, not from the reference.
-- The STEP supplier ID in award notices usually equals the awards table's `supplier_id`, but not always. In the fixture, 29 of the 157 awarded bidders named the same as the award's supplier on the same STEP reference carry another ID (`tests/ground_truth/values.toml`, `[counts.supplier_ids]`). Each ID stays as written, two IDs are never merged by name, and `strata.ops.data_readiness` measures how often they agree (`awarded_bidder_id_on_award` and `awarded_bidder_id_same_name`).
+- The STEP supplier ID in award notices usually equals the awards table's `supplier_id`, but not always. In the fixture, 157 awarded bidders have the same name as a supplier on the award rows of their STEP reference. Of those, 29 carry another ID (`tests/ground_truth/values.toml`, `[counts.supplier_ids]`). Each ID stays as written, two IDs are never merged by name, and `strata.ops.data_readiness` measures how often they agree (`awarded_bidder_id_on_award` and `awarded_bidder_id_same_name`).
 - Loan numbers come in five forms (`IDA60290`, `IDA-60290`, `60290`, `IDA / 60300`, and the older four-digit number with a country code, `6030-KE`, which is credit `IDA60300`); normalize them once.
 - Country and year join CPIA and WGI, lagged to what had been published at the time.
 

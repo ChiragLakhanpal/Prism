@@ -92,7 +92,9 @@ def _bronze_to_gold(run: Run) -> int:
     """Silver from bronze, the awarded bidders read from award notices, each supplier row resolved to its
     supplier, then gold. Ticket 19 resolves suppliers here, since the bundle's task list belongs to
     ticket 43 and docs/PLAN.md section 11. Only a run that fetches from the live APIs asks the live
-    model about the uncertain middle of name matching; any other run uses the offline stand-in."""
+    model about the uncertain middle of name matching; any other run uses the offline stand-in. On
+    Databricks the job passes no Azure OpenAI keys until ticket 43 wires its tasks, so until then every
+    pair in the middle waits for a person (no_model)."""
     from strata.knowledge.suppliers import bidders, judge, resolve
 
     added = sum(silver.run(run.engine, source) for source in _paged())

@@ -7,8 +7,8 @@
 --
 -- A STEP supplier ID decides first: a row that has one resolves to it and never enters name matching.
 -- A row with no ID is matched by name within its country, and joins a supplier only through a pair in
--- strata.ops.supplier_pairs that merged. A row whose name a person hired as an individual consultant
--- is never matched and never named.
+-- strata.ops.supplier_pairs that merged. A row for a person hired as an individual consultant is never
+-- matched and never named.
 --
 -- run_id                 the nightly run that resolved it; only the latest run's rows are kept
 -- source                 notices or awards_fy2001_2016

@@ -3,7 +3,7 @@
 - review_list(engine) reads the review list as the viewer: each candidate pair that waits for a person
   (strata.ops.supplier_review_list), with both sides' names, countries and contracts, why it waits,
   and the model's judgement when it gave one.
-- labeling_list(engine, limit) reads the labeling tool's next pairs as the viewer: candidate pairs of
+- labeling_list(engine, limit, labeled_pairs_target) reads the labeling tool's next pairs as the viewer: candidate pairs of
   the latest run with no label yet, most likely first, without where Strata sent them, and how many
   pairs are labeled of how many found, beside docs/PLAN.md section 5's aim of 1,000.
 - SupplierLog writes a person's decision (merge or no merge, with the reason) to

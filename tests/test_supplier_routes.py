@@ -107,7 +107,7 @@ def test_a_decision_writes_merge_with_the_reviewer_and_the_reason_and_the_next_r
 @pytest.mark.parametrize(("headers", "body", "status", "code"), [
     ({}, {"decision": "merge", "reason": "Same firm."}, 401, "no_identity"),
     (ANA, {"decision": "merge", "reason": "   "}, 422, None),
-    (ANA, {"decision": "approve", "reason": "Same firm."}, 422, None),
+    (ANA, {"decision": "accept", "reason": "Same firm."}, 422, None),
     (ANA, {"decision": "no_merge", "reason": "Same firm.", "pair_id": "OP00000000/1|503708"}, 404, "unknown_pair"),
 ])
 def test_a_decision_needs_a_signed_in_viewer_a_reason_merge_or_no_merge_and_a_pair_the_latest_run_found(

@@ -11,8 +11,9 @@
 --               CONSULTANT, and Strata never names a person (spec, user story 115).
 -- kind          firm, joint venture, or individual consultant
 -- member_count  how many members a joint venture has; 1 for anyone else
--- resolved_on   step_supplier_id, or name for a supplier, or a joint venture with a member, known
---               only by name
+-- resolved_on   step_supplier_id when the supplier, or every member of a joint venture, has a STEP
+--               supplier ID; name when the supplier, or any member of a joint venture, is known only
+--               by name
 -- public_from   the earliest public_from of its rows (ADR 0002)
 --
 -- No column scores, ranks or rates a supplier.

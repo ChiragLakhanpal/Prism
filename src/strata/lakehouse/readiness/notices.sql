@@ -178,7 +178,7 @@ WHERE on_award > 0
 UNION ALL
 SELECT 'notices', subject, 'awarded_bidder_id_same_name', 'linked', CAST(same_name_same_id AS BIGINT),
   CAST(same_name AS BIGINT), CAST(NULL AS DATE),
-  'This counts the awarded bidders whose STEP supplier ID is the one the award rows give the same name on the same STEP reference, out of the awarded bidders with an ID named the same on those rows.'
+  'This counts the awarded bidders that the award rows of the same STEP reference name the same way and give the same STEP supplier ID. It is out of the awarded bidders with an ID that those rows name the same way.'
 FROM supplier_ids
 WHERE same_name > 0
 UNION ALL
