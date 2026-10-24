@@ -2,8 +2,8 @@
 
 plan() runs four steps, each announced as a step event: read the sentence with the package reader (one
 structured call to the drafting model), compute review type and market approach from the thresholds file,
-save the package in strata.ops for the person, then run find_comparables as the viewer on the criteria that
-pick the comparables. Nothing is saved until the reader has read the sentence, so a failed model call, or a
+save the package in the app state store (Lakebase on the App, ADR 0005) for the person, then run
+find_comparables as the viewer on the criteria that pick the comparables. Nothing is saved until the reader has read the sentence, so a failed model call, or a
 sentence with no package in it, leaves nothing in the Packages tab. A person who sets the criteria themselves
 skips the reading: the package is saved with their sentence and no criteria.
 

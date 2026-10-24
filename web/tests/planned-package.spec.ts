@@ -500,6 +500,25 @@ test("Enter on the focused dot opens its records, and Escape closes the drawer a
   await expect(dot(page, MOWI)).toBeFocused();
 });
 
+test("when a rerun has redrawn the dot that opened the records away, closing them gives focus to section 1's heading", async ({ page }) => {
+  await openChart(page);
+  await changes(page);
+  await dot(page, MOWI).focus();
+  await page.keyboard.press("Enter");
+  await expect(drawer(page)).toBeVisible();
+
+  // Beside the drawer the page stays usable: a new method finds no packages it can measure, so the chart goes.
+  await chip(page, "method").click();
+  await page.getByRole("dialog", { name: "Method" }).locator("label", { hasText: "Request for Quotations (RFQ)" }).click();
+  await expect(page.locator("[data-past-range]")).toHaveAttribute("data-past-range", "unmeasured");
+  await expect(page.locator("[data-dot-target]")).toHaveCount(0);
+
+  await drawer(page).getByRole("heading").first().focus();
+  await page.keyboard.press("Escape");
+  await expect(drawer(page)).toHaveCount(0);
+  await expect(page.locator("[data-past-range] h2")).toBeFocused();
+});
+
 test("a row of the table twin opens the same records, and the row stays marked while they show", async ({ page }) => {
   await openChart(page);
   await page.getByRole("button", { name: "Show the table" }).click();

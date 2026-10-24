@@ -216,12 +216,14 @@ export const COMPARABLE = "strata.gold.package:";
 export type OpenComparable = { onOpen: (row: Comparable, element: HTMLElement) => void; opened: string | null };
 
 // A dot or a table row opens its comparable package's records in the evidence drawer, through the address's
-// ?evidence= (ticket 14's parameter), and the drawer gives focus back to the element that opened it.
+// ?evidence= (ticket 14's parameter), and the drawer gives focus back to the element that opened it, or to
+// section 1's heading when a rerun has redrawn that element away.
 export function useOpenComparable(): OpenComparable {
   const here = useStore(address);
   const id = evidenceIn(here.search);
   const onOpen = useCallback((row: Comparable, element: HTMLElement) => {
-    openEvidence(row.evidence_id, { serial: null, sentence: null, marker: element, runId: null });
+    const heading = element.closest("[data-past-range]")?.querySelector<HTMLElement>("h2") ?? null;
+    openEvidence(row.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: heading });
   }, []);
   return { onOpen, opened: id && id.startsWith(COMPARABLE) ? id.slice(COMPARABLE.length) : null };
 }

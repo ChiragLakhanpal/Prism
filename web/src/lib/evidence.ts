@@ -23,8 +23,18 @@ export const openedAt = createStore<Record<string, number>>({});
 // drawer opened from a link has none. The serial keeps a later answer's sentence from being paired
 // with a source an earlier answer opened (CLAUDE.md rule 2). The marker's top in the window when it was
 // clicked lets a draft put the marker back where the reader saw it after the notes reflow; a switch between
-// a sentence's sources has none, since nothing reflows.
-export type Origin = { id: string; serial: number | null; sentence: number | null; marker: HTMLElement | null; runId: string | null; top: number | null };
+// a sentence's sources has none, since nothing reflows. The fallback takes focus on close when the marker is
+// gone, such as section 1's heading when a rerun of find_comparables redrew the dot that opened the drawer
+// (the 15 brief, section 8).
+export type Origin = {
+  id: string;
+  serial: number | null;
+  sentence: number | null;
+  marker: HTMLElement | null;
+  runId: string | null;
+  top: number | null;
+  fallback?: HTMLElement | null;
+};
 export const origin = createStore<Origin | null>(null);
 
 // Whether this session pushed the open drawer's history entry, so closing can go back to the page.

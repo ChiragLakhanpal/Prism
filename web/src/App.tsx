@@ -76,7 +76,8 @@ function returnFocus() {
     from?.marker && from.marker.isConnected
       ? from.marker
       : from
-        ? document.querySelector<HTMLElement>(`[data-citation-id="${CSS.escape(from.id)}"][data-sentence="${from.sentence ?? ""}"]`)
+        ? (document.querySelector<HTMLElement>(`[data-citation-id="${CSS.escape(from.id)}"][data-sentence="${from.sentence ?? ""}"]`) ??
+          (from.fallback?.isConnected ? from.fallback : null))
         : null;
   // Focus given back to a marker does not open its evidence card over the answer again; the card
   // opens when a person moves the focus or the pointer there (web/src/components/Popover.tsx).
