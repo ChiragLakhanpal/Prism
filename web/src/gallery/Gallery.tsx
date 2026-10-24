@@ -4,7 +4,8 @@
 //
 // From 1024 px the list of components sits in columns 1 to 3 and the page in columns 4 to 12.
 // Below 1024 px a component page puts the list after its content, and the index leaves it
-// out, because its cards already link to every page.
+// out, because its cards already link to every page. A wide page, such as the Plan check,
+// takes all 12 columns at every width, as its screen does, and puts the list after it.
 import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
 import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
@@ -50,11 +51,11 @@ export function GalleryFrame({
   );
 }
 
-function ComponentList({ active }: { active?: string }) {
+function ComponentList({ active, wide }: { active?: string; wide?: boolean }) {
   return (
     <nav
       aria-label={galleryCopy.listLabel}
-      className={cx("col-span-12 lg:order-first lg:col-span-3", active ? "order-last" : "hidden lg:block")}
+      className={cx("col-span-12", !wide && "lg:order-first lg:col-span-3", active ? "order-last" : "hidden lg:block")}
     >
       <h2 className="text-label text-ink-muted uppercase">{galleryCopy.listLabel}</h2>
       <ul className="mt-2 flex flex-wrap gap-x-4 lg:flex-col lg:gap-x-0">
@@ -80,7 +81,7 @@ function ComponentList({ active }: { active?: string }) {
 function Page({ page }: { page: GalleryPage }) {
   const words = galleryCopy.pages[page.slug];
   return (
-    <div className="col-span-12 min-w-0 lg:col-span-9">
+    <div className={cx("col-span-12 min-w-0", !page.wide && "lg:col-span-9")}>
       <p className="text-small">
         <a href="/gallery" className="inline-flex min-h-6 items-center text-primary underline underline-offset-3 hover:text-link-hover">
           {galleryCopy.allComponents}
@@ -146,7 +147,7 @@ export function Gallery({ path, search = "" }: { path: string; search?: string }
       <GalleryFrame current={page?.current} {...frameState(search)}>
         <div className="layout layout-grid gap-y-8 pt-10">
           {page ? <Page page={page} /> : <Index />}
-          <ComponentList active={page?.slug} />
+          <ComponentList active={page?.slug} wide={page?.wide} />
         </div>
       </GalleryFrame>
     </div>

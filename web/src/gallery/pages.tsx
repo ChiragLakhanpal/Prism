@@ -53,6 +53,9 @@ export type GalleryPage = {
   slug: keyof typeof galleryCopy.pages;
   // The tab the frame selects on this page.
   current?: Section;
+  // A component that sizes itself to the page's 12 columns, as the plan check's table does, takes
+  // them all here too, so the gallery shows it as it ships.
+  wide?: boolean;
   sections: { id: string; title: string; body: ReactNode }[];
 };
 
@@ -893,6 +896,7 @@ export const PAGES: GalleryPage[] = [
     // the real plan, are captured from the production build (web/capture/shots.ts).
     slug: "plan-check",
     current: "projects",
+    wide: true,
     sections: [
       { id: "breadcrumb", title: t.breadcrumb, body: <Breadcrumb trail={planTrail} /> },
       {
