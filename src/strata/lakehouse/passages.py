@@ -211,16 +211,16 @@ def _versioned(engine: Engine, held: Held, listed: list[Listed]) -> Held:
 
 @dataclass(frozen=True)
 class Project:
-    """What a passage's header says about its project, and the slice sector search filters on."""
+    """What a passage's header says about its project, and the sector search filters on."""
 
     project_id: str
     country: str | None
     sector: str | None  # the header's word, such as roads
-    slice_sector: str | None = None  # water or transport
+    slice_sector: str | None = None  # its one sector in strata.gold.project, such as water
 
 
 PROJECT = """
-SELECT p.project_id, c.country_name, p.sector_codes
+SELECT p.project_id, c.country_name, p.sector_codes, p.sector
 FROM strata.gold.project AS p
 LEFT JOIN strata.gold.country AS c ON c.country_code = p.country_code
 WHERE p.project_id = :project_id
@@ -231,9 +231,9 @@ def project(engine: Engine, project_id: str) -> Project:
     found = _rows(engine, PROJECT, project_id=project_id)
     if not found:
         return Project(project_id, None, None)
-    sector = main_sector(found[0]["sector_codes"])
-    return Project(project_id, found[0]["country_name"], sector.word if sector else None,
-                   sector.slice_sector if sector else None)
+    sector = found[0]["sector"]  # its one sector in Strata's taxonomy (config/sectors.toml)
+    code = main_sector(found[0]["sector_codes"], sector)
+    return Project(project_id, found[0]["country_name"], code.word if code else None, sector)
 
 
 def header(short_name: str, project: Project, passage: route_a.Passage) -> str:

@@ -4,11 +4,12 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Three tasks have their work (ticket 07): fetch_by_watermark fetches each source in
-config/sources.toml that it fetches page by page into bronze, bronze_to_gold builds silver and
-gold from bronze, and measure_data_readiness writes the data readiness measures to strata.ops. The
-rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and adds
-the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
+Three tasks have their work (tickets 07 and 17): fetch_by_watermark fetches each source in
+config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
+countries as each entry says, bronze_to_gold builds silver and gold from bronze, and
+measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
+The rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and
+adds the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
@@ -30,7 +31,7 @@ from dataclasses import dataclass
 from importlib import resources
 
 from strata.config import Source, load_sources
-from strata.lakehouse import bronze, gold, pages, readiness, silver
+from strata.lakehouse import bronze, gold, pages, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, daily_start
 
@@ -70,7 +71,15 @@ def _paged() -> list[Source]:
 
 
 def _fetch_by_watermark(run: Run) -> int:
-    return sum(bronze.store(run.engine, source, run.fetch(source, run.engine)) for source in _paged())
+    """Each source's new pages into bronze. A frozen source no longer changes, so once bronze holds
+    its pages from a fetch task that finished, it is not asked for again. A fetch that stopped
+    partway does not count, so the next run asks for the pages it missed."""
+    added = 0
+    for source in _paged():
+        if source.cadence == "frozen" and bronze.holds_a_finished_fetch(run.engine, source):
+            continue
+        added += bronze.store(run.engine, source, run.fetch(source, run.engine))
+    return added
 
 
 def _bronze_to_gold(run: Run) -> int:
@@ -79,7 +88,8 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _measure_data_readiness(run: Run) -> int:
-    return readiness.measure(run.engine, run.run_id)
+    """The data readiness measures of every source, and the room each table takes."""
+    return readiness.measure(run.engine, run.run_id) + storage.measure(run.engine, run.run_id)
 
 
 # Each task's work, by the task key the bundle uses. Each returns the number of rows it changed.

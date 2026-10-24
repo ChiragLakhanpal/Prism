@@ -78,6 +78,11 @@ def fiscal_year(day: dt.date | None) -> int | None:
     return day.year + 1 if day.month >= 7 else day.year
 
 
+def fiscal_year_end(year: int) -> dt.date:
+    """The last day of a World Bank fiscal year: FY2020 ends on June 30, 2020."""
+    return dt.date(year, 6, 30)
+
+
 def public_from(published: dt.date | None, fetched: dt.date) -> dt.date:
     """The day a row became public: the source's own date, unless it is missing or after the fetch."""
     if published is None or published > fetched:
@@ -88,6 +93,77 @@ def public_from(published: dt.date | None, fetched: dt.date) -> dt.date:
 # ── STEP references ──────────────────────────────────────────────────────
 
 CATEGORIES = {"CW": "Works", "GO": "Goods", "CS": "Consultant Services", "NC": "Non-consulting Services"}
+# A category as the FY2001 to FY2016 awards dataset writes it, where it differs from STEP's name.
+OLD_CATEGORIES = {"CIVIL WORKS": "Works"}
+
+
+def category(name) -> str | None:
+    """A procurement category in STEP's words: Works, Goods, Consultant Services or Non-consulting Services."""
+    written = text(name)
+    return OLD_CATEGORIES.get(written.upper(), written) if written else None
+
+
+# A personal title followed by a name, as a description names a consultant hired in person: "the
+# Consultancy Services of Dr. ..." or "CONSULTANCY SERVICES OF DR ...". In capitals, MS and ENG
+# count only with their period, so MS OFFICE and ENG WORKS are not people; MR, MRS, DR, CAPT and
+# PROF are not words of their own, so they count without one. DR before Congo, in any case, is the
+# Democratic Republic of the Congo.
+PERSONAL_TITLE = re.compile(
+    r"\b(?:(?:Mr|Mrs|Ms|Miss|Dr(?!\.?\s+(?i:congo)\b)|Capt|Eng|Prof)\.?|(?:MS|ENG)\.|"
+    r"(?:MR|MRS|DR(?!\.?\s+(?i:congo)\b)|CAPT|PROF)\.?)\s+[A-Z]")
+
+# A word that names a firm, not a person, in any case: a legal form such as LTD or GMBH, a word such
+# as PARTNERS, ENTERPRISES or UNIVERSITY that is never part of a person's name, or an ampersand.
+# CONSULTANT alone is not one, as a person is one.
+FIRM = re.compile(r"\b(?:LTD|LIMITED|LLC|LLP|INC|PLC|PVT|PTY|SARL|GMBH|COMPANY|CORP(?:ORATION)?|"
+                  r"PARTNERS?|ASSOCIATES|LABORATORIES|CONSULT(?:ING|ANTS|ANCY)|GROUP|ENGINEERS?|ENGINEERING|"
+                  r"ENTERPRISES?|SOLUTIONS?|SERVICES|SUPPLIES|SUPPLIERS|INVESTMENTS?|INTERNATIONAL|HOLDINGS|"
+                  r"TECHNOLOGIES|SYSTEMS|INDUSTRIES|INDUSTRIAL|TRADING|CONSTRUCTION|CONTRACTORS|VENTURES?|"
+                  r"MOTORS|MERCHANTS|HARDWARE|LOGISTICS|AGENC(?:Y|IES)|UNIVERSITY|INSTITUTE|FOUNDATION|"
+                  r"ASSOCIATION|AUTHORITY)\b|&", re.I)
+
+# A two-letter legal form such as S.A., B.V., AG or CO, where a firm writes it: at the end of the name
+# or before a comma or a bracket. A person's initials or surname can end a name the same way, as in
+# DOE, S.A. or JOHN CO, so this form alone never makes a titled supplier a firm, and it does not
+# keep the name of the person a description names.
+LEGAL_FORM = re.compile(r"\b(?:S\.?A|B\.?V|AG|CO)\b\.?\s*(?:[,(]|$)", re.I)
+
+
+def names_a_person(procurement_category, description) -> bool:
+    """Whether a contract's description names a person: a Consultant Services contract whose
+    description gives a personal title followed by a name (spec, user stories 59 and 115)."""
+    return category(procurement_category) == "Consultant Services" and bool(PERSONAL_TITLE.search(text(description) or ""))
+
+
+def titled(name) -> bool:
+    """Whether a supplier is written as a person, in any category: a personal title before the name,
+    and no word that names a firm, so DR. REDDY'S LABORATORIES LTD stays a firm."""
+    written = text(name) or ""
+    return bool(PERSONAL_TITLE.match(written)) and not FIRM.search(written)
+
+
+def _words(written: str) -> set[str]:
+    return set(re.findall(r"[A-Z]+", written.upper()))
+
+
+def is_the_named_person(description, supplier) -> bool:
+    """Whether every word of the supplier's name is in the description from its personal title on,
+    so the supplier is the person the description names."""
+    written = text(description) or ""
+    title = PERSONAL_TITLE.search(written)
+    return bool(title) and _words(text(supplier) or "") <= _words(written[title.start():])
+
+
+def hires_a_named_person(procurement_category, description, supplier) -> bool:
+    """Whether a contract is with a person whom the row may name: its supplier is written with a
+    personal title, or its description names a person and its supplier has no word that names a firm
+    and either no two-letter legal form or is that person. A firm hired for a person's services keeps
+    its name."""
+    written = text(supplier) or ""
+    return titled(supplier) or (names_a_person(procurement_category, description) and not FIRM.search(written)
+                                and (not LEGAL_FORM.search(written) or is_the_named_person(description, supplier)))
+
+
 STEP_REFERENCE = re.compile(
     r"(?P<country>[A-Z]{2})-(?P<agency>[A-Z0-9][A-Z0-9 &.()]*?)-(?P<number>\d+)-"
     r"(?P<category>CW|GO|CS|NC)-(?P<method>[A-Z]+)(?P<suffix>-.+)?")

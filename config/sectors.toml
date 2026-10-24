@@ -1,0 +1,97 @@
+# The sector file: Strata's one sector taxonomy, and the codes of the two taxonomies the projects
+# API uses that map to each sector (docs/PLAN.md section 3, "Quirks to handle on purpose").
+#
+# The projects API gives each project its major sectors, each with a code and its sectors' shares.
+# Some projects carry the older taxonomy's single-letter codes (WX, named "FY17 - Water, Sanitation
+# and Waste Management", or "(Historic)Urban Development" for UX); others carry the newer
+# double-letter codes (WWX, "Water, Sanitation and Waste Management"). A project maps to the sector
+# with the largest share, so each project has one sector: the shares of its major sectors add up by
+# the sector each maps to, since the older taxonomy splits energy and industry across several
+# codes. Ties go to the sector listed first in this file. A code that no sector lists leaves the
+# project without one, and the projects source's data readiness measure linked_sector counts it.
+#
+# This is the one place to change how a code maps (CLAUDE.md rule 9). config/slice.toml names the
+# slice's sectors by their keys here. strata.config.load_sectors() reads it and stops with a
+# sentence when a code is listed twice or a key is missing.
+#
+# Each [[sector]] has:
+#   key     the name code and config/slice.toml use
+#   name    the name people read
+#   codes   the major sector codes that map to it, from both taxonomies. The codes and their names
+#           were read from the projects API for Kenya, Bangladesh, Vietnam and Pakistan on
+#           October 23, 2026.
+
+[[sector]]
+key = "agriculture"
+name = "Agriculture, Fishing and Forestry"
+codes = ["AX", "AAX"]
+
+[[sector]]
+key = "digital"
+name = "Information and Communications Technologies"
+codes = ["CX", "DDX"]
+
+[[sector]]
+key = "education"
+name = "Education"
+codes = ["EX", "EEX"]
+
+[[sector]]
+key = "energy"
+name = "Energy and Extractives"
+codes = ["LX", "LLX", "PX", "GX", "NX"]
+
+[[sector]]
+key = "environment"
+name = "Environment"
+codes = ["VX"]
+
+[[sector]]
+key = "finance"
+name = "Financial Sector"
+codes = ["FX", "FFX"]
+
+[[sector]]
+key = "health"
+name = "Health"
+codes = ["HX", "HHX", "JX"]
+
+[[sector]]
+key = "industry_trade"
+name = "Industry, Trade and Services"
+codes = ["YX", "YYX", "IX", "QX", "DX"]
+
+[[sector]]
+key = "multisector"
+name = "Multisector"
+codes = ["MX", "XX"]
+
+[[sector]]
+key = "public_administration"
+name = "Public Administration"
+codes = ["BX", "BBX"]
+
+[[sector]]
+key = "social_protection"
+name = "Social Protection"
+codes = ["SX", "SSX"]
+
+[[sector]]
+key = "social_sustainability"
+name = "Social Sustainability and Inclusion"
+codes = ["NNX"]
+
+[[sector]]
+key = "transport"
+name = "Transportation"
+codes = ["TX", "TTX"]
+
+[[sector]]
+key = "urban"
+name = "Urban Development"
+codes = ["UX"]
+
+[[sector]]
+key = "water"
+name = "Water, Sanitation and Waste Management"
+codes = ["WX", "WWX"]

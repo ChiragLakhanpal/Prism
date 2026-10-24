@@ -87,6 +87,9 @@ class Engine(Protocol):
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
         """Append rows that Python built to a table, by column name. Returns how many it added."""
 
+    def table_bytes(self, table: str) -> int:
+        """How many bytes a table's stored data takes."""
+
 
 TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
 COLUMN_NAME = re.compile(r"[a-z][a-z0-9_]*")
@@ -163,6 +166,23 @@ class DuckDBEngine:
                 raise EngineError(f"DuckDB could not add rows to {table}: {error}") from error
         return len(rows)
 
+    def table_bytes(self, table: str) -> int:
+        """The bytes of the database file's blocks that hold the table, after a checkpoint writes
+        everything to the file. An in-memory database holds no blocks, so it gives 0."""
+        _names(table, ())
+        try:
+            self.connection.execute("CHECKPOINT strata")
+        except Exception:  # noqa: BLE001 - a read-only database has nothing to write
+            pass
+        blocks = self.connection.execute(  # sql-lint: names only, the table name is checked above
+            f"SELECT count(DISTINCT block) FROM ("
+            f"SELECT block_id AS block FROM pragma_storage_info('{table}') WHERE block_id >= 0 "
+            f"UNION ALL SELECT unnest(additional_block_ids) FROM pragma_storage_info('{table}') "
+            f"WHERE additional_block_ids IS NOT NULL)").fetchone()[0]
+        size = self.connection.execute("SELECT block_size FROM pragma_database_size() "
+                                       "WHERE database_name = 'strata'").fetchone()[0]
+        return int(blocks) * int(size)
+
     def close(self):
         self.connection.close()
 
@@ -171,6 +191,13 @@ class DuckDBEngine:
 
     def __exit__(self, *exc):
         self.close()
+
+
+def _delta_bytes(engine, table: str) -> int:
+    """DESCRIBE DETAIL's sizeInBytes for a Delta table on Databricks."""
+    _names(table, ())
+    result = engine.run(f"DESCRIBE DETAIL {table}")  # sql-lint: names only, the table name is checked above
+    return int(dict(zip(result.columns, result.rows[0], strict=True))["sizeInBytes"])
 
 
 # ── Spark, inside a Databricks job ───────────────────────────────────────
@@ -195,6 +222,10 @@ class SparkEngine:
             schema = self.spark.table(table).select(*columns).schema
             self.spark.createDataFrame(rows, schema).write.mode("append").saveAsTable(table)
         return len(rows)
+
+    def table_bytes(self, table: str) -> int:
+        """The bytes of the table's Delta files, as DESCRIBE DETAIL gives them."""
+        return _delta_bytes(self, table)
 
 
 # ── The SQL warehouse, through the Statement Execution API ───────────────
@@ -311,6 +342,10 @@ class WarehouseEngine:
                                for number in range(len(part)))
             self.run(f"INSERT INTO {table} ({', '.join(columns)}) VALUES {values}", params)  # sql-lint: names only
         return len(rows)
+
+    def table_bytes(self, table: str) -> int:
+        """The bytes of the table's Delta files, as DESCRIBE DETAIL gives them."""
+        return _delta_bytes(self, table)
 
     def _result(self, reply: dict) -> Result:
         columns = sorted(reply.get("manifest", {}).get("schema", {}).get("columns", []),

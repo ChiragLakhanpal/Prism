@@ -1,5 +1,5 @@
--- Kenya's contracts in the fixture, and how many carry a STEP reference, in the run's data readiness
--- measure and in gold.
+-- Kenya's contracts in the fixture from the awards since FY2020, and how many carry a STEP
+-- reference, in the run's data readiness measure and in gold.
 --
 -- The expected counts are tests/ground_truth/values.toml's [counts.kenya], counted from the
 -- recorded award files apart from Strata's code: 603 contracts (contracts = 603), of which 528
@@ -9,7 +9,7 @@
 -- expect: ops,528,603
 SELECT 'gold' AS counted_in, count(step_reference) AS with_step_reference, count(*) AS contracts
 FROM strata.gold.contract
-WHERE country_code = 'KE'
+WHERE country_code = 'KE' AND source = 'awards'
 UNION ALL
 SELECT 'ops', count, denominator
 FROM strata.ops.data_readiness
