@@ -79,7 +79,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Since ticket 13 merged, it also lists `strata.ops.agent_runs` as new, where each answer's run is logged. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -382,3 +382,46 @@ Run the job a second night. `coverage_rows` for notices and projects still equal
     SELECT source, count, denominator FROM strata.ops.data_readiness WHERE measure = 'coverage_rows' AND subject = 'all' AND source IN ('notices', 'projects') AND run_id = (SELECT run_id FROM strata.ops.data_readiness WHERE measure = 'coverage_rows' ORDER BY measured_at DESC LIMIT 1)
 
 It worked if both rows show `count` equal to `denominator`. On the fixture they read 418 of 418 for notices and 93 of 93 for projects. The same-rows check shows the second part, and the table sizes query in step 1 shows the last. If notices or projects read over the total, see ticket 17's third parked decision in its done comment: the job cannot see a record that a search source withdraws after Strata fetched it.
+
+## Ticket 13, step 1 of 4: the Foundry agent and its guardrail match the repo
+
+The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after ticket 03's wizard. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`.
+
+Run this from the main checkout, and then run it again with `--check`:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run prints what differed, with a diff of the instructions, and ends "I made version N of strata-orchestrator, which matches the repo." The first run also makes the guardrail `strata-guardrail`: content filters, and Prompt Shields on the question and on tool results. The second run must exit 0 and print "Foundry's agent strata-orchestrator, version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." (criterion 5, live half). Exit 1 means `--check` found a difference, and exit 2 means it could not run. Run the pair again after any change to `src/strata/agent/instructions/orchestrator.md`, `config/agents.toml`, `config/models.toml` or a tool in `config/tools.toml`.
+
+## Ticket 13, step 2 of 4: five passages with rule-like sentences reach the agent with no refusal
+
+The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after step 1 and after a gate run, because it reads the passages from the fixture database that the gate builds (`data/out/fixture.duckdb`). It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and `az` signed in.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/shields_live.py --env-file .env
+
+It worked if it exits 0, prints "passed" for each of the five passages in `evals/shield_passages.toml` (ICR P130164 ¶71 and ¶86, and P156634's PAD Annex 3 ¶51 and ¶52 and Annex 2 ¶46), and ends "All 5 passages reached the agent as tool results with no refusal." (criterion 7). Exit 1 means a content filter or Prompt Shields refused a passage, or the agent called no tool, and the lines above the exit name each one.
+
+## Ticket 13, step 3 of 4: the showcase question through the live agent, logged with its trace
+
+The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after step 1, after ticket 11's step 1 (the live passage run, `ops/documents/run_live.py`), and after ticket 04's step 1 deployed from c42d9ce or later, because that deploy makes `strata.ops.agent_runs`. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN` and `APPLICATIONINSIGHTS_CONNECTION_STRING` in `.env`, and `az` signed in. The connection string must hold `ApplicationId=`, because the script looks the trace up by it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/ask_live.py --env-file .env
+
+It sends "Why were works contracts in P130164 advertised again?" through the same `POST /api/ask` route and stream the App runs. It worked if it exits 0 and prints four lines that each start "Holds.": "1. Checks 1 to 3" with every number matched, every quote found, every source returned and nothing removed; "2. A kept sentence cites strata.gold.passage:31525018/v1/54."; "3. strata.ops.agent_runs holds run ..." with the run's row and its Application Insights trace id; and "4. Application Insights holds operation ..." (criterion 6). The fourth check waits up to 10 minutes for the trace to arrive. Then open that operation id in Application Insights, under Transaction search, and check that the trace opens.
+
+## Ticket 13, step 4 of 4: re-record the scripted cases from the live agent
+
+The merger parked this step on October 23, 2026, after merge commit c42d9ce. Run it after step 1 and after ticket 11's step 1, so the agent and the passages it cites are on the workspace. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in.
+
+Run this from the main checkout, then review the diff and run the gate:
+
+    uv run --script ops/agent/record.py --env-file .env
+    git diff tests/fixtures/agent
+    .githooks/pre-commit
+
+It worked if the recording exits 0 and prints a unified diff for each file in `tests/fixtures/agent/recorded`, with the verifier's counts for each answer, such as "The verifier kept 3 of 3 sentences; 2 of 2 numbers matched and 2 of 2 quotes were on their pages." Each file's `"recorded"` changes from `false` to `true`, and the agent version is filled in. The gate must then pass, because every scripted case replays from the new recordings on the fixture (criterion 8, live half). If it passes, commit the recordings on a branch. If a case no longer gets the answer its test expects, the live agent answers differently from the hand-written recording, so tell the orchestrator before you change a test.
