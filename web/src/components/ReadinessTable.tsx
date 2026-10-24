@@ -40,7 +40,7 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 
 // Skeleton rows as tall, on average, as the rows they stand for, measured on the fixture's page at
 // 1440 and 1024 px, and below 768 px a card's body as tall as a real card's.
-const ROW_HEIGHT = { kinds: "h-40 xl:h-35", sources: "h-[7.875rem] xl:h-[6.9375rem]" } as const;
+const ROW_HEIGHT = { kinds: "h-40 xl:h-35", sources: "h-[7.875rem] xl:h-[7.0625rem]" } as const;
 const CARD_HEIGHT = { kinds: "h-[17.375rem]", sources: "h-[16rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.

@@ -2196,10 +2196,10 @@
         "linked": {
           "measure": "linked_country",
           "row": 38,
-          "counts": "countries held as borrowers",
-          "counts_one": "country held as a borrower",
-          "noun": "countries",
-          "noun_one": "country",
+          "counts": "countries are borrowers I hold",
+          "counts_one": "country is a borrower I hold",
+          "noun": "countries and groups",
+          "noun_one": "country or group",
           "status": null,
           "note": null
         },
@@ -2245,10 +2245,10 @@
         "linked": {
           "measure": "linked_country",
           "row": null,
-          "counts": "countries held as borrowers",
-          "counts_one": "country held as a borrower",
-          "noun": "countries",
-          "noun_one": "country",
+          "counts": "countries are borrowers I hold",
+          "counts_one": "country is a borrower I hold",
+          "noun": "countries and groups",
+          "noun_one": "country or group",
           "status": null,
           "note": null
         },

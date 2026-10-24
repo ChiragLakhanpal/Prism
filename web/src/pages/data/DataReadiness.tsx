@@ -186,7 +186,8 @@ function sourceRows(result: Readiness, measures: Measures): ReadinessRow[] {
               <span className="font-semibold">{words.sources.nonePublished}</span>
               <StatusBadge kind="gap" />
             </span>
-            <span className="text-body">{row.note}</span>
+            {/* A comfortable measure, not the full width of the four columns it spans. */}
+            <span className="max-w-prose text-body">{row.note}</span>
           </div>
         ),
       };

@@ -83,7 +83,8 @@ export function SourcesAndLicenses() {
           <h2 id="data-documents" className="text-title text-ink-heading">
             {words.documents}
           </h2>
-          <ul className="mt-3 flex list-disc flex-col gap-2 pl-6 text-body">
+          {/* Set like the datasets above, so the two lists of sources read as one kind of list. */}
+          <ul className="mt-3 flex flex-col gap-3 text-body">
             {state.registry.collections.map((collection) => (
               <li key={collection.name}>{words.collection(collection.name, collection.publisher, collection.origin)}</li>
             ))}

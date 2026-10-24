@@ -428,7 +428,7 @@ id = "cpia"
 label = "Country Policy and Institutional Assessment (CPIA) scores"
 noun = "CPIA scores"
 coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries held as borrowers", counts_one = "country held as a borrower", noun = "countries", noun_one = "country", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+linked = { measure = "linked_country", counts = "countries are borrowers I hold", counts_one = "country is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [[sources.cpia.declared]]
@@ -460,7 +460,7 @@ id = "wgi"
 label = "Worldwide Governance Indicators (WGI) scores"
 noun = "WGI scores"
 coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries held as borrowers", counts_one = "country held as a borrower", noun = "countries", noun_one = "country", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+linked = { measure = "linked_country", counts = "countries are borrowers I hold", counts_one = "country is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── Documents ────────────────────────────────────────────────────────────
