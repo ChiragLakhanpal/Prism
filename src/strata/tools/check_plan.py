@@ -59,6 +59,12 @@ def agency_id(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
+def implementing_agencies(text: str | None) -> list[str]:
+    """The agencies a projects API record names. The API joins them with a bare comma, and a comma
+    followed by a space sits inside a name ("Ministry of Water, Sanitation and Irrigation")."""
+    return [name.strip() for name in re.split(r",(?! )", text or "") if name.strip()]
+
+
 # Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
 
 def _date(value) -> dt.date | None:

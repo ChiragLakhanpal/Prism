@@ -1,0 +1,20 @@
+{
+  "as_of": "2026-10-22",
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "status": "Closed",
+    "implementing_agencies": [
+      "Rajasthan State Public Works Department"
+    ]
+  },
+  "agencies": [
+    {
+      "implementing_agency": "Rajasthan State Public Works Department",
+      "agency_id": "rajasthan-state-public-works-department",
+      "versions": []
+    }
+  ],
+  "documents_through": "2026-10-22"
+}
