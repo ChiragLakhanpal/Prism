@@ -5,6 +5,7 @@ The offline adapter is a Foundry project kept in memory. The live adapter, the F
 API and Azure's RAI policies, runs on the workspace with ops/agent/sync.py.
 """
 
+import re
 import shutil
 
 from strata.agent import sync
@@ -24,6 +25,23 @@ def test_the_agents_tools_and_the_tool_section_of_its_instructions_come_from_the
     # The thresholds file allows three rounds of tool calls (agent.tool_rounds).
     assert "at most 3 rounds of tool calls" in definition["instructions"]
     assert definition["model"] == "gpt-5.4-mini"  # config/models.toml, the agent role
+
+
+def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_person_reads():
+    """The agent's sentences reach the page, and the copy lint reads only the copy file, so the agent is
+    told DESIGN.md section 7's rules itself: rule 19's words, read here from DESIGN.md, and rules 3, 4,
+    8 and 12."""
+    wanted = agent_definition(load_agent("orchestrator"), guardrail_id="local/strata-guardrail")
+    words = wanted["definition"]["instructions"].split("## Words", 1)[1].split("\n## ", 1)[0]
+    design = (AGENTS_FILE.parent.parent / "DESIGN.md").read_text()
+    rule_19 = re.search(r"^19\. Never write: (.*?)\. Write", design, re.M).group(1)
+    never = [word.strip() for word in re.split(r"[,;]", re.sub(r"\(.*?\)", "", rule_19))]
+
+    assert len(never) == 14
+    assert [word for word in never if not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", words)] == []
+    for rule in ('"the Bank"', "no em dashes", "no exclamation marks", "past tense", "one to nine in words",
+                 "10 and up in numerals"):
+        assert rule in words
 
 
 def test_the_guardrail_puts_content_filters_and_prompt_shields_on_the_question_and_the_tool_results():
