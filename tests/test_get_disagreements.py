@@ -115,6 +115,71 @@ def test_the_2023_reissue_of_the_icr_review_replaces_the_2020_version_for_curren
     assert [row["attribute"] for row in between["rows"]] == ["pdo_progress"]
 
 
+@pytest.mark.parametrize("old, new, rule", [
+    ('tiers = ["ieg", "icr", "isr", "pad"]', 'tiers = ["ieg", "isr", "icr", "pad"]', "outcome"),
+    ('class = "judgment"', 'class = "moment"', "moment"),
+], ids=["isrs-above-the-icr", "progress-as-a-moment"])
+def test_reordering_the_ladder_in_its_config_flips_the_side_strata_leans_on(fixture_db, tmp_path, old, new, rule):
+    """Criterion 4: an edited copy of config/evidence_ladder.toml, and no code change. Ranking ISRs above the
+    ICR, or classing progress towards the PDO as a fact about a moment (which ISR 7 recorded at that moment),
+    makes Strata lean on ISR 7 instead. The disagreements are decided again from the assertions held."""
+    ladder = tmp_path / "evidence_ladder.toml"
+    text = (ROOT / "config" / "evidence_ladder.toml").read_text()
+    assert old in text
+    ladder.write_text(text.replace(old, new, 1))
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+
+    with DuckDBEngine.open(copy) as engine:
+        assertions.redetect(engine, ["P130164"], config.load_ladder(ladder))
+        [row] = about(get_disagreements(engine, subject_id="P130164"), "pdo_progress")
+
+    assert (row["lean_assertion_id"], row["other_assertion_id"], row["rule_id"]) == (ISR_7, PARAGRAPH_78, rule)
+    assert row["if_you_keep"]["assertion_id"] == PARAGRAPH_78
+
+
+# ── Ties between records ─────────────────────────────────────────────────
+
+def sides_of(row) -> list[tuple[str, str]]:
+    return [(side["form"], side["value"]) for side in row["sides"]]
+
+
+def test_a_tie_between_records_goes_to_the_more_specific_source(engine):
+    """Criterion 5, first tie: the October 9, 2026 plan dates KE-NWWDA-199461-GO-RFB's signing July 19, 2021,
+    and the awards dataset and the award notice July 9. Every record was made at its moment, so the moment rule
+    ranks them the same; a record of the signed contract is more specific than the package's plan row."""
+    result = get_disagreements(engine, subject_id="KE-NWWDA-199461-GO-RFB", attribute="signed_on")
+
+    found = {tuple(sorted(sides_of(row))): row for row in result["rows"]}
+    plan = ("plan_row", value("plan-199461-signed").isoformat())
+    contract = ("contract_record", value("award-199461-signed").isoformat())
+    notice = ("award_notice", value("notice-199461-signed").isoformat())
+    assert set(found) == {tuple(sorted((contract, plan))), tuple(sorted((notice, plan)))}
+    for row in found.values():
+        leaned = next(side for side in row["sides"] if side["assertion_id"] == row["lean_assertion_id"])
+        assert (leaned["form"], row["rule_id"]) in {("contract_record", "tieSpecific"), ("award_notice", "tieSpecific")}
+        assert row["period"]["event"] == "contract_signing"
+        assert row["subject_kind"] == "package"
+    plan_side = next(side for side in next(iter(found.values()))["sides"] if side["form"] == "plan_row")
+    assert plan_side["evidence_id"].startswith("strata.silver.plan_rows:") and plan_side["made_at"] == "2026-10-09"
+
+
+def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engine):
+    """Criterion 5, second tie: the awards dataset dates KE-MOWASCO-307378-GO-RFB's signing December 1, 2022
+    and its award notice, published March 3, 2023, November 22, 2022. Both are records of the signed contract,
+    equally specific, so the notice, made later, wins."""
+    result = get_disagreements(engine, subject_id="KE-MOWASCO-307378-GO-RFB")
+
+    [row] = result["rows"]
+    assert sides_of(row) == [("contract_record", value("award-307378-signed").isoformat()),
+                             ("award_notice", value("notice-307378-signed").isoformat())]
+    notice = row["sides"][1]
+    assert notice["made_at"] == value("notice-307378-date").isoformat()
+    assert (row["lean_assertion_id"], row["rule_id"]) == (notice["assertion_id"], "tieRecent")
+    assert notice["evidence_id"] == "strata.gold.notice:OP00216847"
+    assert row["sides"][0]["evidence_id"] == "strata.gold.contract:1729599"
+
+
 def test_the_rejected_assertion_is_counted_for_the_project(engine):
     """Criterion 7 at seam 2: the timeline states how many assertions the run left out (brief 23)."""
     result = get_disagreements(engine, subject_id="P130164")

@@ -93,6 +93,14 @@ def notice_date(gold, value):
     assert (row["notice_date"], row["public_from"]) == (value["value"], value["value"])
 
 
+def notice_signature_date(gold, value):
+    """An award notice's Contract Signature Date, which gold keeps, public from the notice's own date."""
+    notice = value["at"].split("id=")[1].split("]")[0]
+    row = one(gold, "SELECT contract_signature_date, notice_date, public_from FROM strata.gold.notice "
+                    "WHERE notice_id = :notice", notice=notice)
+    assert (row["contract_signature_date"], row["public_from"]) == (value["value"], row["notice_date"])
+
+
 def notice_loan(gold, value):
     """A loan form in a notice's text: the notice carries the one normalized loan number."""
     notice = value["at"].split("id=")[1].split("]")[0]
@@ -207,6 +215,12 @@ CHECKS = {
     "award-229129-signed": contract_signed,
     "award-541055-amount": supplier_share,
     "award-notice-541055": notice_date,
+    # The evidence ladder's two record ties (ticket 20).
+    "award-199461-signed": contract_signed,
+    "notice-199461-signed": notice_signature_date,
+    "award-307378-signed": contract_signed,
+    "notice-307378-signed": notice_signature_date,
+    "notice-307378-date": notice_date,
     "loan-form-hyphen": notice_loan,
     "loan-form-bare": notice_loan,
     "loan-form-older": notice_loan,

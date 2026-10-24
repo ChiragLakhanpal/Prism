@@ -739,6 +739,63 @@ quote = "03-Jan-2022"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1686165].contract_signing_date"
 
+# The evidence ladder's two record ties (ticket 20). Each package has one contract in the awards dataset
+# and one Contract Award notice that gives a signature date, so the sources are about one signing.
+# KE-NWWDA-199461-GO-RFB: the October 9, 2026 plan dates its signing ten days after the awards dataset and
+# its award notice do. In the goods table on page 3, the Signed Contract heads sit at x 678 (Planned) and
+# x 701 (Actual); the plan's 2021-07-19 starts at x 698, under Actual.
+[[value]]
+id = "plan-199461-signed"
+says = "The October 9, 2026 plan says KE-NWWDA-199461-GO-RFB's contract was signed on July 19, 2021 (Signed Contract Actual, x 698)."
+value = 2021-07-19
+quote = "2021-02-06 2021-07-19 2021-05-07 2022-01-30"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "award-199461-signed"
+says = "The contract awards dataset says KE-NWWDA-199461-GO-RFB (contract 1671570) was signed on July 9, 2021."
+value = 2021-07-09
+quote = "09-Jul-2021"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1671570].contract_signing_date"
+
+[[value]]
+id = "notice-199461-signed"
+says = "Its award notice, OP00147052, gives the same Contract Signature Date, July 9, 2021."
+value = 2021-07-09
+quote = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>2021/07/09"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00147052].notice_text"
+
+# KE-MOWASCO-307378-GO-RFB: the award notice and the awards dataset give different signing dates.
+[[value]]
+id = "notice-307378-signed"
+says = "Award notice OP00216847 gives KE-MOWASCO-307378-GO-RFB's Contract Signature Date as November 22, 2022."
+value = 2022-11-22
+quote = "Contract Signature Date</b><br/>(YYYY/MM/DD)<br/>2022/11/22"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00216847].notice_text"
+
+[[value]]
+id = "notice-307378-date"
+says = "Award notice OP00216847 was published on March 3, 2023."
+value = 2023-03-03
+quote = "03-Mar-2023"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00216847].noticedate"
+
+[[value]]
+id = "award-307378-signed"
+says = "The contract awards dataset says KE-MOWASCO-307378-GO-RFB (contract 1729599) was signed on December 1, 2022."
+value = 2022-12-01
+quote = "01-Dec-2022"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1729599].contract_signing_date"
+
 [[value]]
 id = "plan-199461-reference-method"
 says = "KE-NWWDA-199461-GO-RFB's reference ends in RFB."

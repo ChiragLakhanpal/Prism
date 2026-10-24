@@ -8,6 +8,9 @@ made, its public date, its source document and passage, and its evidence tier. T
 - the ISRs' ratings, which ticket 18 read from each ISR's own ratings table (strata.silver.isr_ratings).
   Each ISR rates the period since the ISR before it, so the ratings of one series never overlap and form
   a trajectory, not a disagreement.
+- the records of a package's signing: the awards datasets' contracts, Contract Award notices and each
+  version of a Procurement Plan, each giving the signing date and, where it gives one, the signed amount
+  in US dollars. The subject is the package, by its STEP reference.
 
 The nightly job's detect_disagreements task runs run() for every project the run read, and the fixture
 build runs it after the passage reader (gates/build_fixture.py). Every table it writes is rebuilt for
@@ -141,6 +144,60 @@ def isr_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Asse
                 day, _date(row["replaced_on"]), ladder.tier_of(row["document_type"]) or "isr", "rating_field",
                 "documents", str(row["document_id"]), row["document_type"], row["report_number"], _int(row["version"]),
                 _int(row["sequence"]), row["passage_id"], evidence, _int(row["pdf_page"]), None, ISR_READER,
+                _date(row["public_from"])))
+    return made
+
+
+# ── The records of a package's signing ───────────────────────────────────
+
+CONTRACT_SOURCES = ("awards", "awards_fy2001_2016")  # the awards datasets (config/sources.toml)
+AWARD_NOTICE, SIGNED_STEP, PLAN_TYPE = "Contract Award", "Signed Contract", "Procurement Plan"
+CONTRACT_RECORD, AWARD_NOTICE_FORM, PLAN_ROW = "contract_record", "award_notice", "plan_row"
+# Each record's own name for the signing date and the signed amount, word for word: the awards datasets'
+# field, the award notice's label, and the Procurement Plan's step and column. Each is one of its
+# attribute's names in config/evidence_ladder.toml.
+RECORD_FIELDS = {
+    CONTRACT_RECORD: {"signed_on": "contract_signing_date", "signed_amount_usd": "contract_amount_usd"},
+    AWARD_NOTICE_FORM: {"signed_on": "Contract Signature Date"},
+    PLAN_ROW: {"signed_on": "Signed Contract", "signed_amount_usd": "Actual Amount (US$)"},
+}
+# The table each record is a row of, which its evidence id names, as the tools return it.
+RECORD_TABLES = {CONTRACT_RECORD: "strata.gold.contract", AWARD_NOTICE_FORM: "strata.gold.notice",
+                 PLAN_ROW: "strata.silver.plan_rows"}
+
+
+def _record_key(row: dict) -> str:
+    """The record's key in its table: the contract's or notice's id, or a plan row's version and reference,
+    as check_plan's evidence id gives it."""
+    if row["form"] == PLAN_ROW:
+        return f"{row['document_id']}/{row['step_reference']}"
+    return str(row["document_id"])
+
+
+def record_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Assertion]:
+    """Each record's signing date and signed amount for each of the project's packages, about the signing,
+    which each record dates for itself. A plan whose Actual Amount reads 0 gives no amount: the borrower has
+    not filled it in, and a missing amount is never a difference."""
+    made = []
+    for row in _rows(engine, _sql("records.sql"), project_id=project_id, contract_sources=",".join(CONTRACT_SOURCES),
+                     award_notice=AWARD_NOTICE, contract_record=CONTRACT_RECORD, award_notice_form=AWARD_NOTICE_FORM,
+                     notices_source="notices", plan_row=PLAN_ROW, documents_source="documents", plan_type=PLAN_TYPE,
+                     signed_step=SIGNED_STEP):
+        signed = _date(row["signed_on"])
+        amount = None if row["amount_usd"] in (None, "") else Decimal(str(row["amount_usd"]))
+        values = {"signed_on": signed.isoformat()}
+        if amount and "signed_amount_usd" in RECORD_FIELDS[row["form"]]:
+            values["signed_amount_usd"] = f"{amount:.2f}"
+        key = _record_key(row)
+        evidence = f"{RECORD_TABLES[row['form']]}:{key}"
+        for attribute_key, value in values.items():
+            attribute = ladder.attribute(attribute_key)
+            made.append(Assertion(
+                assertion_id(evidence, row["step_reference"], attribute.key), "package", row["step_reference"],
+                project_id, attribute.key, attribute.kind, RECORD_FIELDS[row["form"]][attribute.key], value,
+                attribute.kind, None, CONTRACT_SIGNING, signed, signed, _date(row["made_at"]), _date(row["replaced_on"]),
+                "record", row["form"], row["source_key"], str(row["document_id"]), row["document_type"], None, None,
+                None, key, evidence, _int(row["pdf_page"]), None, RECORD_TABLES[row["form"]],
                 _date(row["public_from"])))
     return made
 
@@ -434,9 +491,12 @@ def cannot_both_be_true(a: Assertion, b: Assertion) -> bool:
 
 def _same_report(a: Assertion, b: Assertion) -> bool:
     """Two assertions of one report, or of two versions of it: a report re-issued under the same number
-    replaces its earlier version rather than disagreeing with it (ticket 11's rule)."""
+    replaces its earlier version rather than disagreeing with it (ticket 11's rule), as a new version of a
+    Procurement Plan replaces the one before."""
     if a.document_id == b.document_id:
         return True
+    if a.form == b.form == PLAN_ROW:
+        return True  # a package has one row in its agency's plan, and each version replaces the one before
     return (a.source_key == b.source_key == "documents" and a.report_number is not None
             and (a.project_id, a.document_type, a.report_number) == (b.project_id, b.document_type, b.report_number))
 
@@ -522,7 +582,7 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder
     ladder = ladder or load_ladder()
     made, rejected = [], []
     for project_id in projects:
-        made += isr_assertions(engine, project_id, ladder)
+        made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder)
         more, less = text_assertions(engine, project_id, ladder, model, run_id, clock)
         made += more
         rejected += less
