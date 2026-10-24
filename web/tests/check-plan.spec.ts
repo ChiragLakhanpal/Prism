@@ -286,6 +286,18 @@ test("below 1024 px the count line's row opens the What Strata found definition,
   await term.click();
 
   await expect(page.getByRole("dialog", { name: "What Strata found" })).toContainText("It gives a reason to look, never a finding.");
+  await page.keyboard.press("Escape");
+
+  // At 320 px the two don't fit side by side, so the definition takes a line of its own and
+  // neither breaks.
+  await page.setViewportSize({ width: 320, height: 900 });
+  const lines = (element: Element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+  };
+  expect(await page.locator("[data-count-line]").evaluate(lines)).toBe(1);
+  expect(await term.evaluate(lines)).toBe(1);
 });
 
 test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
@@ -511,8 +523,10 @@ test("a service that didn't answer gives Try again and a reference; Try again th
 
   await expect(page.getByRole("alert")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
   await expect(page.getByText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.")).toBeVisible();
-  // The header keeps what the address says: the plan's date. The status no longer says it is checking.
-  await expect(page.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
+  // The h1 keeps what the address says, the plan's date, and says "Procurement Plan" once. The
+  // status no longer says it is checking.
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Procurement Plan of October 9, 2026");
+  await expect(page.getByRole("main").getByText("Procurement Plan", { exact: false })).toHaveCount(1);
   await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(0);
   expect(await widthOf(page, "[role=alert]")).toBe(EIGHT_COLUMNS);
   await page.getByRole("button", { name: "Try again" }).click();

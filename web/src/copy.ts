@@ -366,7 +366,8 @@ export const copy = {
     noun: "projects",
     loading: "Loading projects.",
     columns: { project: "Project", country: "Country", status: "Status" },
-    more: "Show 50 more",
+    // The page size, from PAGE_SIZE in web/src/pages/ProjectsPage.tsx.
+    more: (count: string) => `Show ${count} more`,
     source: "World Bank projects API, records through {date}.",
     sourceUndated: "World Bank projects API.",
     emptyTitle: "I don't have any project records yet.",

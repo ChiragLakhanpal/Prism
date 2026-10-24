@@ -75,7 +75,9 @@ export function formatNumber(value: number, options: NumberOptions = {}): string
 // instead (formatNumber with decimals: 2).
 export function formatAmountText(value: number): string {
   const size = Math.abs(value);
-  const unit = size >= 1e9 ? { size: 1e9, words: copy.num.billion } : size >= 1e6 ? { size: 1e6, words: copy.num.million } : null;
+  // It rounds before it chooses: from 999.5 million an amount reads "1,000 million" rounded, so it
+  // takes billions' rule and reads "1 billion".
+  const unit = size >= 999_500_000 ? { size: 1e9, words: copy.num.billion } : size >= 1e6 ? { size: 1e6, words: copy.num.million } : null;
   if (!unit) return formatNumber(value, { compact: false });
   const mantissa = value / unit.size;
   return unit.words(grouped(Math.abs(mantissa) < 100 ? 1 : 0).format(mantissa).replace(/\.0$/, ""));

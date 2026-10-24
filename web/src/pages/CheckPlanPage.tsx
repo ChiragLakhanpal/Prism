@@ -85,6 +85,12 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     { text: last },
   ];
   const versionCrumb = version ? copy.breadcrumb.plan(short(version)) : null;
+  // The header's h1 and the line under it. With no agency's name, a known date makes the h1
+  // "Procurement Plan of October 9, 2026" and nothing goes under it, so the words come once.
+  const headerWords = (agency: ReactNode | null, planDate: string | undefined) =>
+    agency
+      ? { agency, plan: planDate ? words.subtitle(formatDate(planDate)) : undefined }
+      : { agency: planDate ? words.subtitle(formatDate(planDate)) : words.agencyUnknown };
 
   let body: ReactNode;
   let crumbs: Crumb[];
@@ -120,7 +126,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     crumbs = trail(unnamed, versionCrumb ?? words.agencyUnknown);
     body = (
       <>
-        <PlanCheckHeader agency={words.agencyUnknown} plan={version ? words.subtitle(formatDate(version)) : undefined} />
+        <PlanCheckHeader {...headerWords(null, version)} />
         <EightColumns className="mt-6">
           <LoadError
             error={load.error}
@@ -193,10 +199,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     }
     body = (
       <>
-        <PlanCheckHeader
-          agency={knownAgency ?? words.agencyUnknown}
-          plan={found.plan ? words.subtitle(formatDate(found.plan.plan_date)) : undefined}
-        />
+        <PlanCheckHeader {...headerWords(knownAgency, found.plan?.plan_date)} />
         <EightColumns className="mt-6">
           <EmptyState title={title} body={text} link={link} />
         </EightColumns>

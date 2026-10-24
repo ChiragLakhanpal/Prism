@@ -78,6 +78,9 @@ test("in a sentence a large amount reads in millions or billions, as DESIGN.md r
   expect(formatAmountText(250_000_000)).toBe("250 million");
   expect(formatAmountText(2_000_000_000)).toBe("2 billion");
   expect(formatAmountText(999_999)).toBe("999,999");
+  // An amount that rounds to 1,000 million takes billions' rule, as formatNumber rounds first.
+  expect(formatAmountText(999_950_000)).toBe("1 billion");
+  expect(formatAmountText(999_499_999)).toBe("999 million");
 });
 
 test("years have no comma", () => {

@@ -309,7 +309,7 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
 // The table from 1024 px (the 10 brief, section 2.1, with round 2's design review). At 1024 px a
 // 24-character reference (202 px) fits the Activity column, "Limited - National" (116 px) the
 // Method column, "Review" and "Prior" the Review column, "2,000,000.00" the Estimated column and
-// "Implementation" the Process status column; from 1200 px "Open - International" (132 px) fits
+// "Implementation" the Process status column; from 1100 px "Open - International" (132 px) fits
 // too. What Strata found keeps the rest and stays the widest column. Cells are padded 8 px at the
 // sides from 1024 px and 12 px from 1200 px (CELL).
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean }[] = [
@@ -506,12 +506,12 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
         </div>
       </EightColumns>
       {/* Below 1024 px the cards have no column heads, so the definition of the marks sits at the
-          right end of the count line's row. */}
-      <div className="mt-4 flex items-baseline justify-between gap-4 text-caption">
-        <p className="text-ink-muted" data-count-line data-numbers>
+          right end of the count line's row, or on a line of its own when the two don't fit. */}
+      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 text-caption">
+        <p className="whitespace-nowrap text-ink-muted" data-count-line data-numbers>
           {countLine}
         </p>
-        <div className={VIEW.cards}>
+        <div className={cx("whitespace-nowrap", VIEW.cards)}>
           <Definition result={result} triggerClassName="inline-flex min-h-6 items-center" />
         </div>
       </div>

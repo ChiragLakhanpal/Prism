@@ -162,9 +162,9 @@ def _version(row: dict) -> dict:
 
 
 def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
-            named: list[str]) -> tuple[dict | None, dict | None]:
-    """The plan version to check, or the abstention that says why there is none. named is the
-    agencies the project record names, so an agency with no plan can still be named in full."""
+            record_agencies: list[str]) -> tuple[dict | None, dict | None]:
+    """The plan version to check, or the abstention that says why there is none. record_agencies
+    is the agencies the project record names, so an agency with no plan can still be named in full."""
     versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
                 if row["implementing_agency"]]
     # By date, so the latest is last even when an agency's name is spelled two ways.
@@ -176,7 +176,7 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
         agencies = {}
         for version in public:  # the latest public version of each agency, by name
             agencies[version["implementing_agency"]] = version["plan_date"]
-        record = [name for name in named if name.lower() == wanted or agency_id(name) == wanted]
+        record = [name for name in record_agencies if name.lower() == wanted or agency_id(name) == wanted]
         return None, {"reason": "no_plan_from_agency", "implementing_agency": asked,
                       "agency_name": record[0] if record else None,
                       "agencies": [{"implementing_agency": name, "agency_id": agency_id(name),
@@ -317,12 +317,12 @@ def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dic
 def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date: dt.date | None = None) -> dict:
     """Check every activity in the chosen plan version, as of call.as_of."""
     limits = Thresholds.read(call)
-    project, named = _project(call, project_id)
+    project, record_agencies = _project(call, project_id)
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "plan": None, "project": project,
              "checks_run": [], "thresholds": limits.as_values(), "counts": None}
     if project is None:
         return {**empty, "abstention": {"reason": "unknown_project", "project_id": project_id}}
-    version, abstention = _choose(call, project_id, implementing_agency, plan_date, named)
+    version, abstention = _choose(call, project_id, implementing_agency, plan_date, record_agencies)
     if abstention:
         return {**empty, "abstention": abstention}
     plan = _plan(version, project_id)

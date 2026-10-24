@@ -15,7 +15,7 @@ import { Table, type Column, type Row } from "../components/Table";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { ProjectList } from "../lib/api";
-import { formatDate } from "../lib/format";
+import { formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 
 const words = copy.projectsPage;
@@ -120,7 +120,7 @@ export function ProjectsPage() {
               setMoved(true);
             }}
           >
-            {words.more}
+            {words.more(formatNumber(PAGE_SIZE, { compact: false }))}
           </Button>
         )}
         <Source className="mt-2">
