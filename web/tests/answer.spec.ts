@@ -435,6 +435,36 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   await expect(drawer(page)).toContainText("This sentence does not quote the section, so no words are highlighted.");
 });
 
+// WCAG 2.2 SC 2.4.11, Focus Not Obscured: the drawer scrolls to the ISR's highlight on open, and the tab
+// that Tab then moves to must never sit hidden under the drawer's sticky header (the 14 design review,
+// round 4, B1). These two window sizes hid it.
+for (const [width, height] of [
+  [1024, 600],
+  [320, 900],
+] as const) {
+  test(`at ${width} by ${height} px the source tab you Tab to shows below the drawer's sticky header`, async ({ page }) => {
+    await open(page, { stream: "ask-p130164-isr-section.sse", width });
+    await page.setViewportSize({ width, height });
+    await askFromTheBox(page);
+    await landed(page);
+    await panel(page).locator("[data-sentence-text='3'] [data-citation='3']").click();
+    await expect(drawer(page).locator("[data-passage] mark")).toBeInViewport();
+
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Tab");
+    const tab = drawer(page).getByRole("tab", { name: "ISR, Project Development Objective Indicators" });
+    await expect(tab).toBeFocused();
+    // The sticky header that holds the heading and "Close the source".
+    const header = drawer(page).locator("[data-drawer-header]");
+    await expect(header.getByRole("button", { name: "Close the source" })).toBeVisible();
+    await expect(async () => {
+      const [tabBox, headerBox] = [await tab.boundingBox(), await header.boundingBox()];
+      expect(tabBox!.y).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height);
+      expect(tabBox!.y + tabBox!.height).toBeLessThanOrEqual(height);
+    }).toPass({ timeout: 2000 });
+  });
+}
+
 // A whole sentence a reader quotes is often longer than the third of the card's room that goes before
 // the match, so the cut must never fall inside the matched words.
 test("a long quote stays whole and highlighted in the evidence card, which still keeps to about 280 characters", async ({ page }) => {

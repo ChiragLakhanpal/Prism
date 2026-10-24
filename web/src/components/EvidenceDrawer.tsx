@@ -293,6 +293,20 @@ export function EvidenceDrawerView({
   const headingId = useId();
   const passageId = useId();
   const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  // The browser keeps a focused element below the sticky header (WCAG 2.2 SC 2.4.11, technique C43):
+  // the panel's scroll padding is as tall as the header, plus 8 px, and follows it as the heading wraps.
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    const container = panelRef?.current;
+    if (!header || !container) return;
+    const pad = () => container.style.setProperty("scroll-padding-top", `calc(${header.offsetHeight}px + var(--spacing) * 2)`);
+    pad();
+    const watch = new ResizeObserver(pad);
+    watch.observe(header);
+    return () => watch.disconnect();
+  }, [panelRef]);
 
   // The sentence it was opened from, while that same answer is still on the page.
   const claim =
@@ -325,7 +339,11 @@ export function EvidenceDrawerView({
         className={cx(!sample && "overflow-y-auto", !sample && (narrow ? "h-dvh" : "sticky top-0 max-h-dvh"))}
         style={narrow ? { paddingBottom: "env(safe-area-inset-bottom)" } : undefined}
       >
-        <div className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}>
+        <div
+          ref={headerRef}
+          data-drawer-header
+          className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}
+        >
           <div className="min-w-0 flex-1">
             {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
