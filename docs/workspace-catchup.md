@@ -654,3 +654,73 @@ The builder named `ops/documents/search_live.py` for this step. That script asks
     uv run --frozen python -c "import sys; sys.path.insert(0, 'ops/documents'); import search_live; search_live.QUESTION = 'search-passages-similar-experience'; sys.exit(search_live.main(['--env-file', '.env']))"
 
 It worked if the first ends "1 of the 1 expected passages are in the top three." (the new passages did not push paragraph 54 out), and the second lists `strata.gold.passage:OP00118817/v1/s5` and `strata.gold.passage:OP00128730/v1/s6`, each with its notice id, and ends "2 of the 2 expected passages are in the top three." (criterion 8, live half). Both must start "search_passages ranked with AI Search". Exit 2 means it could not ask, and the line it prints says why.
+
+## Ticket 35, step 1 of 5: the Foundry review notes writer matches the repo
+
+The merger parked this step on October 24, 2026, after merge commit 0756ed6. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`. At 08:46 on October 24 that key was set, but `DATABRICKS_TOKEN` and `APPLICATIONINSIGHTS_CONNECTION_STRING` were missing and day-one test 7 had failed, so the build's standing rule kept all five of this ticket's steps here. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. The writer runs under the same guardrail.
+
+Run this from the main checkout, and then run it again with `--check`:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer --check
+
+It worked if the first run prints what differed and ends "I made version N of strata-review-notes-writer, which matches the repo." The second run must exit 0 and print "Foundry's agent strata-review-notes-writer, version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Exit 1 means `--check` found a difference, and exit 2 means it could not run. Run the pair again after any change to `src/strata/agent/instructions/review_notes_writer.md`, the `draft` role in `config/models.toml` or the writer's entry in `config/agents.toml`.
+
+## Ticket 35, step 2 of 5: re-record the review notes writer's cases from the live writer
+
+The merger parked this step on October 24, 2026, after merge commit 0756ed6. Run it after step 1, after ticket 04's step 1 deployed the bundle from 0756ed6 or later, and after ticket 08's step 1 filled the plan tables on the warehouse, because the writer drafts from check_plan's rows, read as you. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in.
+
+Run this from the main checkout, then review the diff:
+
+    uv run --script ops/agent/record.py --env-file .env --writers
+    git diff tests/fixtures/agent
+
+It worked if the recording exits 0 and prints a diff for `tests/fixtures/agent/recorded/review-notes-nwwda-2026-10-09.json` with the verifier's counts, such as "The verifier kept 6 of 6 sentences; ...". The file's `"recorded"` changes from `false` to `true`. Read the diff before you keep it: it must hold three notes, on KE-NWWDA-541055-CW-RFB, KE-NWWDA-229129-CW-RFB and KE-NWWDA-541062-CW-RFQ, each citing its own row in `strata.silver.plan_rows`, with no sentence removed. The draft screens play answers made from this recording, so write them again and run the gate:
+
+    uv run --frozen python tests/record_drafts_api.py
+    git diff tests/fixtures/api
+    .githooks/pre-commit
+
+The gate must pass, because the route tests and the screen tests replay the new recordings (criterion 1, live half). If it passes, commit the recordings on a branch. If a test no longer gets what it expects, the live writer answers differently from the hand-written note, so tell the orchestrator before you change a test. Criterion 1's "six checks" also waits on ticket 24: once 24 merges, a new draft's `checks_run` must read `[1, 2, 3, 4, 5, 6]`, with check 4's judge call wired into `runtime.write`.
+
+## Ticket 35, step 3 of 5: redeploy the App with the draft routes
+
+The merger parked this step on October 24, 2026, after merge commit 0756ed6. It needs the Databricks keys in `.env`, and the four Foundry keys that ticket 14's step 1 names, because the App reaches the writer through Foundry. Run it after step 1, and after ticket 04's step 1 deployed the bundle from 0756ed6 or later, because that deploy makes `strata.ops.drafts`, `strata.ops.draft_states`, `strata.ops.draft_exports` and `strata.ops.draft_files`, and this deploy grants the App's own service principal SELECT and MODIFY on them. Ticket 06's step 1 runs the same command. Run it again here if that deploy came from a commit before 0756ed6.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its step 6 prints "6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to strata.ops.", and its last line is `Strata is running at https://...`. Then sign in to the App in a browser and open:
+
+    <App url>/api/drafts/existing?kind=review_notes&project_id=P156634&agency_id=northern-water-works-development-agency
+
+It must answer `{"by_plan_date": {...}}`, with no `plan_date` in the address: `{"by_plan_date": {}}` before anyone drafts on that plan, and a `"2026-10-09"` key naming the draft after step 4.
+
+## Ticket 35, step 4 of 5: two acts on one draft at the same moment
+
+The merger parked this step on October 24, 2026, after merge commit 0756ed6. Run it after step 3, after ticket 09's step 1 (user authorization) and after ticket 08's step 1 (the plan tables). It needs the Databricks keys in `.env`.
+
+First make the team, because a draft keeps the team its author was on when it was saved, and step 5 reads it. In the workspace's admin settings, make a group named exactly `strata-team-kenya-water` (`config/roles.toml`), with you and one other user as direct members. The App reads groups through SCIM `/Me`, which lists only direct groups, so a nested group does not count.
+
+Then sign in to the App as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`, open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09`, choose "Draft review notes (3 rows)", and wait for the draft page. Copy the draft id from the address (`/drafts/<draft id>`). Click one citation marker in a note and close the drawer: the bar must read "You opened 1 of 3 sources." (criterion 3, live half). Then open the browser's console on that tab and run:
+
+    const act = (name, state) => fetch(`/api/drafts/<draft id>/${name}`, {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({expected_state: state, view: "staff"})}).then(async (r) => [r.status, (await r.json()).error])
+    await Promise.all([act("check", "draft"), act("check", "draft")])
+
+It worked if one answer is 200 and the other is `[409, "stale"]`, in either order. Then run this in the workspace's SQL editor:
+
+    SELECT step, state, from_state, actor_id, changed_at FROM strata.ops.draft_states WHERE draft_id = '<draft id>' ORDER BY step
+
+It must return exactly two rows: the saved draft, and one `checked` row (criterion 2, live half). Then try the same with two exports at once:
+
+    await Promise.all([act("export", "checked"), act("export", "checked")])
+    SELECT export_id, exported_at, footnotes FROM strata.ops.draft_exports WHERE draft_id = '<draft id>'
+
+One answer must be 200 and the other `[409, "stale"]`, and the query must return exactly one row. The verifier read the code and expects that two exports at once may each save an export row before one is refused. If the query returns two rows, tell the orchestrator. Last, run `DESCRIBE HISTORY strata.ops.draft_states LIMIT 5`: the MERGE rows' `userName` must be the App's own service principal (its application id, shown on the App's page in the workspace), not your user. That shows drafts are written by the App's account, as built.
+
+## Ticket 35, step 5 of 5: teams come from workspace groups
+
+The merger parked this step on October 24, 2026, after merge commit 0756ed6. Run it right after step 4, with the draft step 4 saved. It needs a second user in `strata-team-kenya-water` and a third user outside it.
+
+Each of the other two users signs in to the App in their own browser profile and opens `<App url>/api/drafts`. It worked if the member's answer lists step 4's draft under `exported` with your name as its author, and the non-member's answer lists only their own drafts, which is none unless they made one (criterion 6, live half). Then each opens `<App url>/drafts/<draft id>`. The member sees the draft and cannot act on it. The non-member gets "not found" (404). If the member sees only their own drafts, the App's token could not read SCIM `/Me`, so every viewer was on a team of their own. The App asks only for the `sql` user scope (`ops/app/deploy_app.py`), which may not cover `/api/2.0/preview/scim/v2/Me`. Tell the orchestrator, because the review's parked decision 2 covers this.
