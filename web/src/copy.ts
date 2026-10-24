@@ -578,7 +578,8 @@ export const copy = {
     error: "I couldn't load this package.",
     permission: "Your account can't read Strata's tables, so I can't show this package.",
     notFoundTitle: "I can't find a package with this reference",
-    notFoundBody: "No package in Strata has the reference {ref}. Check the reference in STEP, or find its project in All projects.",
+    // {ref} carries its own full stop, so the two move to a new line together.
+    notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in All projects.",
     notFoundLink: "All projects",
   },
 

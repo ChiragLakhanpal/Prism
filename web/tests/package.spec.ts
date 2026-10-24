@@ -786,26 +786,53 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   expect(lines).toBe(1);
 });
 
-test("a reference too long for the line wraps inside its box, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {
+test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {
   const long = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
   expect(long).toHaveLength(40);
-  await openPackage(page, { width: 320, ref: long, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-  const sentence = page.locator("main p", { hasText: "No package in Strata has the reference" });
-  await expect(sentence.locator(".font-mono").first()).toHaveText(long);
+  for (const width of [320, 390]) {
+    await openPackage(page, { width, ref: long, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+    const sentence = page.locator("main p", { hasText: "No package in Strata has the reference" });
+    await expect(sentence.locator(".font-mono").first()).toHaveText(long);
 
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  // The full stop after it stays on its last line, and a copy of the sentence holds the reference as written.
-  const stop = await sentence.evaluate((p) => {
-    const mono = p.querySelector(".font-mono")!;
-    const after = mono.nextSibling!;
-    const range = document.createRange();
-    range.setStart(after, 0);
-    range.setEnd(after, 1);
-    const tops = [...mono.getClientRects()].map((r) => r.top);
-    return { char: range.toString(), sameLine: Math.abs(range.getBoundingClientRect().top - Math.max(...tops)) < 2 };
-  });
-  expect(stop).toEqual({ char: ".", sameLine: true });
-  await expect(sentence).toContainText(`reference ${long}. Check`);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
+    // The sentence's lines as the reader sees them, one string per line.
+    const lines = await sentence.evaluate((p) => {
+      const rows = new Map<number, string>();
+      const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        for (let i = 0; i < node.textContent!.length; i++) {
+          const range = document.createRange();
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          const rect = range.getBoundingClientRect();
+          if (rect.width === 0) continue;
+          const top = Math.round(rect.top);
+          rows.set(top, (rows.get(top) ?? "") + range.toString());
+        }
+      }
+      return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, text]) => text.trim());
+    });
+    // It breaks after a hyphen: no line starts with one, no line ends inside a run of digits, and the
+    // full stop stays with the reference's last part.
+    for (const [index, line] of lines.entries()) {
+      expect(line.startsWith("-"), `${width} px, line ${index + 1}: ${line}`).toBe(false);
+      if (index > 0) expect(/\d$/.test(lines[index - 1]) && /^\d/.test(line), `${width} px: ${lines[index - 1]} | ${line}`).toBe(false);
+    }
+    expect(lines.some((line) => line.includes("ABC.")), `${width} px: ${lines.join(" | ")}`).toBe(true);
+    // A copy of the sentence holds the reference as written.
+    await expect(sentence).toContainText(`reference ${long}. Check`);
+  }
+
+  // A reference with a county's name breaks at its space first.
+  await openPackage(page, { width: 320, ref: "KE-MIGORI COUNTY-532367-CW-RFB", pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+  const county = page.locator("main p", { hasText: "No package in Strata has the reference" });
+  await expect(county).toContainText("reference KE-MIGORI COUNTY-532367-CW-RFB. Check");
+  const tops = await county.evaluate((p) =>
+    [...p.querySelectorAll(".font-mono")].map((part) => [part.textContent, Math.round(part.getBoundingClientRect().top)]),
+  );
+  expect(tops).toHaveLength(2);
+  expect(tops[1][1]).toBeGreaterThan(tops[0][1] as number);
+  expect((await county.locator(".font-mono").nth(1).evaluate((el) => el.getClientRects().length))).toBe(1);
 });
 
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.

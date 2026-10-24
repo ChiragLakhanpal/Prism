@@ -81,7 +81,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       <>
         <PackageHeader title={words.notFoundTitle} reference={mono(stepRef)} sticky={false} />
         <p className="mt-4 max-w-prose text-body text-ink">
-          <Fill template={words.notFoundBody} slots={{ ref: inlineMono(stepRef) }} />
+          <Fill template={words.notFoundBody} slots={{ ref: inlineMono(stepRef, ".") }} />
         </p>
         <p className="mt-4">
           <TextLink href="/projects">{words.notFoundLink}</TextLink>

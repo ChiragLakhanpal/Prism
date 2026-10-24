@@ -2,7 +2,7 @@
 // over its STEP reference, sticky from 768 px, and the package's facts as a definition list in STEP's
 // field names, word for word, which are the defaults find_comparables started from. A missing value
 // reads "Not in the plan row". "In the plan" links back to the plan check with this row in view.
-import type { ReactNode, RefObject } from "react";
+import { Fragment, type ReactNode, type RefObject } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
 import { cx } from "../lib/cx";
@@ -16,23 +16,22 @@ import { TextLink } from "./TextLink";
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
-// A reference inside a sentence. With no spaces it reads as one word: each hyphen or slash sits in a
-// nowrap span with the character after it, so the line never breaks there. It then moves to the next
-// line whole when it fits there, with the full stop after it (DESIGN.md section 3, an ID stays readable
-// as one ID), and breaks inside only when it is wider than the line, so the page never scrolls
-// sideways. One with a county's name wraps at its spaces.
-export function inlineMono(text: string) {
-  if (text.includes(" ")) return <span className="font-mono font-medium">{text}</span>;
-  const parts: ReactNode[] = [];
-  let start = 0;
-  for (const joint of text.matchAll(/[-/](?=.)/g)) {
-    const at = joint.index;
-    if (at < start) continue;
-    parts.push(text.slice(start, at), <span key={at} className="whitespace-nowrap">{text.slice(at, at + 2)}</span>);
-    start = at + 2;
-  }
-  parts.push(text.slice(start));
-  return <span className="font-mono font-medium wrap-anywhere">{parts}</span>;
+// A reference inside a sentence, with the punctuation after it, in one inline box: it moves to the
+// next line whole with its full stop when it fits there (DESIGN.md section 3, an ID stays readable as
+// one ID), and when it is wider than the line, breaks after a hyphen like any ID. Only a part with no
+// hyphen that is wider than the line breaks inside, so the page never scrolls sideways. One with a
+// county's name has a box for each word, so it breaks at its space first.
+export function inlineMono(text: string, after = "") {
+  const parts = text.split(" ");
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && " "}
+      <span className="inline-block max-w-full wrap-anywhere">
+        <span className="font-mono font-medium">{part}</span>
+        {index === parts.length - 1 && after}
+      </span>
+    </Fragment>
+  ));
 }
 
 export function PackageHeader({
