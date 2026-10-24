@@ -152,6 +152,8 @@ export type Writing = {
   removed: RemovedEvent[];
   checks: ChecksEvent | null;
   error: string | null;
+  // What an error tells the data team to look for: the run's trace id, or else its run id.
+  reference: string | null;
   lastEventAt: number;
 };
 
@@ -184,6 +186,8 @@ function withEvent(current: Writing, type: string, data: any): Writing {
       return { ...current, phase: "nothing", removed: data.removed as RemovedEvent[], checks: data.checks as ChecksEvent };
     case "error":
       return { ...current, phase: "failed", error: String(data.code ?? "internal") };
+    case "done":
+      return { ...current, reference: data.trace_ids?.application_insights ?? data.run_id ?? null };
     default:
       return current;
   }
@@ -196,7 +200,7 @@ export function startWriting(request: Writing["request"], plan: CheckPlanResult,
   if (current && current.request.idempotency_key === request.idempotency_key && current.phase === "writing") return;
   stopping?.abort();
   stopping = new AbortController();
-  writing.set({ request, plan, rows, phase: "writing", steps: [], draftId: null, removed: [], checks: null, error: null, lastEventAt: Date.now() });
+  writing.set({ request, plan, rows, phase: "writing", steps: [], draftId: null, removed: [], checks: null, error: null, reference: null, lastEventAt: Date.now() });
   void run(request, stopping.signal);
 }
 

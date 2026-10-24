@@ -11,6 +11,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
+import { Fill } from "../components/Fill";
 import { RemovedBox, type Removed } from "../components/Checks";
 import { DraftNotes, type NoteRow } from "../components/DraftNotes";
 import { Skeleton } from "../components/Skeleton";
@@ -220,6 +221,11 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
             >
               {message}
             </Alert>
+            {current.reference && current.error !== "permission" && (
+              <p className="mt-2 text-caption text-ink-muted" data-write-reference>
+                <Fill template={copy.service.reference} slots={{ reference: <span className="font-mono">{current.reference}</span> }} />
+              </p>
+            )}
           </div>
         ) : (
           <>

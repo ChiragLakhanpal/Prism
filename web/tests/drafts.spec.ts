@@ -161,6 +161,7 @@ test("a writer that does not answer, or notes that all fail the checks, save not
   await expect(page.getByRole("alert")).toContainText(
     "I couldn't write the review notes, because the model that writes my drafts did not respond. I saved nothing.",
   );
+  await expect(page.locator("[data-write-reference]")).toHaveText("If it fails again, send the data team this reference: run-0006.");
 
   stream.body = await recorded("drafts-write-nothing-survived.sse");
   await page.getByRole("button", { name: "Try again" }).click();
