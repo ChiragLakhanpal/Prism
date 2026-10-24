@@ -65,7 +65,17 @@ def no_pages(source, engine):
 WORKING = {"fetch_by_watermark", "bronze_to_gold", "detect_disagreements", "measure_data_readiness"}
 
 
+def with_a_plan_read(engine, project_id="P156634"):
+    """One Procurement Plan version of the project, as the plan reader leaves it. detect_disagreements rebuilds
+    the assertions of the projects with documents or a plan read, and a local run over the recorded pages
+    reads neither, so the row brings the project's contracts into the run."""
+    engine.run("INSERT INTO strata.silver.plan_versions VALUES (:document_id, :project_id, 'NWWDA', DATE '2026-10-09', "
+               "DATE '2026-10-09', 1, NULL, true, 12, 6, 'latest', 'text', 'pdf', DATE '2026-10-09')",
+               {"document_id": "40132287", "project_id": project_id})
+
+
 def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(engine):
+    with_a_plan_read(engine)
     run_id = nightly.run_locally(engine)  # over the recorded fixture
 
     rows = runs(engine, run_id)
@@ -79,7 +89,7 @@ def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(eng
 
 def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_model_only_on_a_live_run(
         engine, monkeypatch):
-    """detect_disagreements rebuilds the assertions and disagreements of every project with records. A run
+    """detect_disagreements rebuilds the assertions and disagreements of every project with documents or a plan. A run
     that fetches from the live APIs asks the live batch model. When the job has no Azure OpenAI keys there is
     none, and the run replays the answers bronze holds from the batch role's deployment, so it keeps what the
     live model read. Any other run uses the recorded answers."""
@@ -94,6 +104,7 @@ def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_m
 
     monkeypatch.setattr("strata.knowledge.batch.from_environment", lambda: asked.append("live"))
     monkeypatch.setattr("strata.knowledge.batch.HeldAnswers", Replays)
+    with_a_plan_read(engine)
     nightly.run_locally(engine)
 
     assert asked == [] and replayed == []

@@ -171,16 +171,21 @@ def test_every_assertion_from_a_field_keeps_a_field_name_the_evidence_ladder_lis
     assert [row for row in found if row["field_name"] not in ladder.attribute(row["attribute"]).names] == []
 
 
-def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine):
-    """A project's records are read whether or not Strata has read its documents."""
+def test_the_run_reads_the_records_of_the_projects_whose_documents_or_plan_it_read_and_no_others(engine):
+    """A project's records are read when Strata has read its documents or its Procurement Plan. A project with
+    records alone is not read: the workspace holds about 16,000 of them and the run queries each project on
+    its own (sql/assertions/projects.sql), so their contract-against-notice disagreements wait on a set-based
+    rewrite (the catch-up notes under ticket 04's step 2, October 24, 2026)."""
     with_records = {row["project_id"] for row in rows(
         engine, "SELECT DISTINCT project_id FROM strata.gold.contract WHERE step_reference IS NOT NULL "
                 "AND contract_signing_date IS NOT NULL AND source <> :notices", notices="notices")}
     asserted = {row["project_id"] for row in rows(
         engine, "SELECT DISTINCT project_id FROM strata.gold.assertion WHERE form = :form", form="contract_record")}
+    read = set(assertions.default_projects(engine))
 
-    assert len(with_records) > 1
-    assert with_records <= asserted
+    assert with_records & read == {"P156634"}
+    assert with_records & read <= asserted
+    assert with_records - read and not (with_records - read) & asserted
 
 
 def test_the_source_registry_names_the_datasets_whose_rows_are_records_of_a_signed_contract(engine):
@@ -362,3 +367,14 @@ def test_a_batch_still_running_keeps_the_rest_of_the_run_and_is_waited_for_on_th
     assert finished.asked == [(asked, "batch-not-a-real-id")]
     assert report.pending == 0
     assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+
+
+def test_the_run_s_projects_are_those_with_documents_or_a_plan_read_and_not_those_with_records_alone(engine):
+    """The workspace holds about 16,000 projects with a contract, a notice or an IEG rating, and the run reads
+    each project with its own queries, so the records alone do not bring a project in. The fixture's P176758
+    and P170941 have contracts and no document."""
+    projects = assertions.default_projects(engine)
+
+    assert projects == ["P127203", "P130164", "P156634", "P161305"]
+    assert engine.run("SELECT count(DISTINCT project_id) FROM strata.gold.contract", {}).rows[0][0] > len(projects)
+
