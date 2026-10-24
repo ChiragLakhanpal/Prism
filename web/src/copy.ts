@@ -692,8 +692,9 @@ export const copy = {
         `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
       tipMonths: (months: string) => `${months} months`,
       tipPast: (months: string) => `Past ${months} months`,
-      tipSigned: (signed: string, notice: string, country: string) => `Signed ${signed}. Its notice was published ${notice} in ${country}.`,
-      tipOpen: (notice: string, country: string) => `Still open. Its notice was published ${notice} in ${country}.`,
+      // The country leads, as it follows the reference in the dot's name, so the notice is not read as published there.
+      tipSigned: (signed: string, notice: string, country: string) => `${country}. Signed ${signed}. Its notice was published ${notice}.`,
+      tipOpen: (notice: string, country: string) => `${country}. Still open. Its notice was published ${notice}.`,
       tipQuantile: (k: string) => `Dot ${k} of 20`,
       tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
       tipQuantileOpen: "Too many of these packages are still open to place this dot.",

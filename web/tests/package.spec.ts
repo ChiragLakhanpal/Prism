@@ -394,7 +394,9 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   await expect(fourth).toHaveAccessibleName(
     "KE-WAJWASCO-372776-CW-RFB, Kenya. Signed after 1.1 months, on October 6, 2023. Dot 4 of 49.",
   );
-  await expect(tip).toContainText("Signed Oct 6, 2023. Its notice was published Sep 2, 2023 in Kenya.");
+  // The country leads the line, as it follows the reference in the dot's name, so the notice is not
+  // read as published in Kenya.
+  await expect(tip).toContainText("Kenya. Signed Oct 6, 2023. Its notice was published Sep 2, 2023.");
 
   await page.keyboard.press("Escape");
   await expect(tip).toHaveCount(0);
