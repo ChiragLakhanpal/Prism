@@ -230,6 +230,12 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
   packageShot("package--table-open", comparables(COMPARABLES), { widths: wideAndNarrow, full: true, act: click("[data-past-range] button[aria-controls][aria-expanded]") }),
   packageShot("package--320", comparables(COMPARABLES), { widths: [320] }),
+  // Round 1's fixes: months typed into a row with no plan dates, the last dot's tooltip opened first,
+  // and the quantile dot past the axis, pinned at the plot's edge.
+  packageShot("package--no-plan-typed", { body: noPlanDates }, { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),
+  packageShot("package--hover-last-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(48) }),
+  packageShot("package--quantile-last-dot", comparables("comparables-ke-nwwda-541055-any-category.json"), { widths: wideAndNarrow, act: hoverDot(19) }),
+  packageShot("package--moved-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "9") }),
 ];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));

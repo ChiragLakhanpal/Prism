@@ -321,14 +321,15 @@ function Populated({ result }: { result: ComparablesResult }) {
   const counts = result.counts!;
   const open = counts.still_open;
   const quantile = !abstained && result.quantile_dots ? result.quantile_dots : null;
-  const own = result.plan?.months ?? null;
+  // The plan row's own months, from its planned dates, as find_comparables returned them.
+  const planRowMonths = result.plan?.months ?? null;
   const maxMonths = result.thresholds.max_plan_months;
   const pkg = result.package!;
 
-  const [plan, setPlan] = useState<number | null>(own);
-  const [text, setText] = useState(own === null ? "" : months1(own));
+  const [plan, setPlan] = useState<number | null>(planRowMonths);
+  const [text, setText] = useState(planRowMonths === null ? "" : months1(planRowMonths));
   const [invalid, setInvalid] = useState(false);
-  const [axisValue, setAxisValue] = useState<number | null>(own);
+  const [axisValue, setAxisValue] = useState<number | null>(planRowMonths);
   const [announce, setAnnounce] = useState("");
   const [tableOpen, setTableOpen] = useState(abstained);
   const [page, setPage] = useState(0);
@@ -357,7 +358,7 @@ function Populated({ result }: { result: ComparablesResult }) {
   // edge instead of stretching the axis to its last follow-up.
   const placed = quantile ? quantile.filter((dot) => dot.reached).map((dot) => dot.months) : rows.map((row) => row.months);
   const range = abstained ? null : result.past_range;
-  const largest = Math.max(...placed, range?.q80 ?? 0, own ?? 0, axisValue ?? 0, 0.5);
+  const largest = Math.max(...placed, range?.q80 ?? 0, planRowMonths ?? 0, axisValue ?? 0, 0.5);
   const axis = axisFor(largest, width || Number.POSITIVE_INFINITY);
   const say = (months: number) => setAnnounce(words.chart.announce(whole(withinOf(months)), whole(total), months1(months)));
 
@@ -388,12 +389,12 @@ function Populated({ result }: { result: ComparablesResult }) {
   };
 
   const reset = () => {
-    if (own === null) return;
-    setPlan(own);
-    setText(months1(own));
+    if (planRowMonths === null) return;
+    setPlan(planRowMonths);
+    setText(months1(planRowMonths));
     setInvalid(false);
-    setAxisValue(own);
-    say(own);
+    setAxisValue(planRowMonths);
+    say(planRowMonths);
     inputRef.current?.focus();
   };
 
@@ -401,11 +402,11 @@ function Populated({ result }: { result: ComparablesResult }) {
     setTableOpen(true);
     requestAnimationFrame(() => captionRef.current?.focus());
   };
-  const explainCounts: NumCheck | undefined = own === null ? undefined : {
-    tooltip: words.explain.counts(months1(own), whole(total), whole(open)),
+  const explainCounts: NumCheck | undefined = planRowMonths === null ? undefined : {
+    tooltip: words.explain.counts(months1(planRowMonths), whole(total), spelled(open)),
     onOpen: showRows,
   };
-  const explainQuantiles: NumCheck = { tooltip: words.explain.quantiles(whole(total), whole(open)), onOpen: showRows };
+  const explainQuantiles: NumCheck = { tooltip: words.explain.quantiles(whole(total), spelled(open)), onOpen: showRows };
   const explainPlan: NumCheck = {
     tooltip: words.explain.plan(pkg.plan.implementing_agency, formatDate(pkg.plan.plan_date)),
   };
@@ -533,7 +534,7 @@ function Populated({ result }: { result: ComparablesResult }) {
   const valueText =
     plan === null || within === null
       ? null
-      : (plan === own ? c.valueTextPlan : c.valueText)(months1(plan), whole(within), whole(total));
+      : (plan === planRowMonths ? c.valueTextPlan : c.valueText)(months1(plan), whole(within), whole(total));
 
   const control = (
     <PlanControl
@@ -542,7 +543,7 @@ function Populated({ result }: { result: ComparablesResult }) {
       text={text}
       invalid={invalid}
       maxMonths={maxMonths}
-      own={own}
+      planRowMonths={planRowMonths}
       plan={plan}
       notice={result.plan?.planned_notice_on ?? null}
       signing={result.plan?.planned_signing_on ?? null}
@@ -577,7 +578,7 @@ function Populated({ result }: { result: ComparablesResult }) {
             axisMax={axis.max}
             step={axis.step}
             plan={plan}
-            ownPlan={own}
+            ownPlan={planRowMonths}
             readout={readout}
             readoutLines={readoutLines}
             keySigned={quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed))}
@@ -669,7 +670,7 @@ function PlanControl({
   text,
   invalid,
   maxMonths,
-  own,
+  planRowMonths,
   plan,
   notice,
   signing,
@@ -681,7 +682,7 @@ function PlanControl({
   text: string;
   invalid: boolean;
   maxMonths: number;
-  own: number | null;
+  planRowMonths: number | null;
   plan: number | null;
   notice: string | null;
   signing: string | null;
@@ -689,7 +690,7 @@ function PlanControl({
   onReset: () => void;
 }) {
   const w = words.control;
-  const moved = own !== null && plan !== null && plan !== own;
+  const moved = planRowMonths !== null && plan !== null && plan !== planRowMonths;
   return (
     <div data-plan-control>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -717,11 +718,11 @@ function PlanControl({
         {/* The reset button keeps its place while hidden, so showing it moves nothing: at the row's end
             from 768 px, and on a row of its own below. visibility: hidden also takes it out of the tab
             order and the accessibility tree. */}
-        {own !== null && (
+        {planRowMonths !== null && (
           <span className={cx(!moved && "invisible")} data-plan-reset>
             {/* Flush, so on a row of its own below 768 px its label starts on the label's edge above. */}
             <Button variant="ghost" flush onClick={onReset}>
-              {w.reset(months1(own))}
+              {w.reset(months1(planRowMonths))}
             </Button>
           </span>
         )}
