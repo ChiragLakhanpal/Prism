@@ -236,7 +236,8 @@ const ADDRESS_ALERTS: [string, string][] = [
   ["?view=piu", "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view."],
   ["?view=public", "I can't show the public preview yet, so you are seeing the World Bank staff view."],
   ["?view=board", "I don't know the view in this link, so you are seeing the World Bank staff view."],
-  ["?asof=2016-08-26", "I can't show pages as of August 26, 2016 yet, so you are seeing today's data."],
+  // The answer panel does use the date (App.tsx sends it to /api/ask), so the alert speaks for the page.
+  ["?asof=2016-08-26", "I can't show this page as of August 26, 2016 yet, so it shows today's data. Questions you ask from the box use August 26, 2016."],
   ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
 ];
 

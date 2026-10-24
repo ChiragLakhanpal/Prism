@@ -136,7 +136,9 @@ export const copy = {
     viewPiu: "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view.",
     viewPublic: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
-    asOf: (date: string) => `I can't show pages as of ${date} yet, so you are seeing today's data.`,
+    // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
+    // Ticket 40 replaces it with its as-of banner.
+    asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box use ${date}.`,
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
