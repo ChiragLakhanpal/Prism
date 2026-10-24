@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import { cx } from "../lib/cx";
 
 // The class names are written out whole, so Tailwind finds them.
-const FROM = { lg: "lg:col-span-8", xl: "xl:col-span-8" } as const;
+const FROM = { lg: "@lg/page:col-span-8", xl: "@xl/page:col-span-8" } as const;
 
 export function EightColumns({
   children,

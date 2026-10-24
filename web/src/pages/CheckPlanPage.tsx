@@ -24,22 +24,21 @@ import { useLoad } from "../lib/load";
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
 
-// From 1024 px the header sticks; keep focused elements 8 px clear of it.
+// From a page area of 1024 px the header sticks; keep focused elements 8 px clear of it. The page area
+// narrows when the evidence drawer opens, so the header's own position says whether it sticks.
 function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: boolean) {
   useEffect(() => {
     const element = header.current;
     if (!element || !active) return;
-    const wide = window.matchMedia("(width >= 64rem)");
     const update = () => {
-      document.documentElement.style.scrollPaddingTop = wide.matches ? `${element.offsetHeight + 8}px` : "";
+      const sticks = getComputedStyle(element).position === "sticky";
+      document.documentElement.style.scrollPaddingTop = sticks ? `${element.offsetHeight + 8}px` : "";
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
-    wide.addEventListener("change", update);
     return () => {
       observer.disconnect();
-      wide.removeEventListener("change", update);
       document.documentElement.style.scrollPaddingTop = "";
     };
   }, [header, active]);
@@ -112,8 +111,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             // An agency's name takes two lines below 768 px and one from it, as most do.
             <>
               <span className="sr-only">{words.status.checking}</span>
-              <SkeletonText className="md:hidden" widths={["w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden md:flex" width="w-3/5 max-w-[560px]" />
+              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden @md/page:flex" width="w-3/5 max-w-[560px]" />
             </>
           }
           plan={<SkeletonLine width="w-60" />}

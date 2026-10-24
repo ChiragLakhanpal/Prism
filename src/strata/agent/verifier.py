@@ -43,6 +43,7 @@ from strata.agent.claims import Claim
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 from strata.reader.passages import TABLE_SUMMARY
+from strata.reader.templates import template_for
 
 CHECKS_RUN = (1, 2, 3)
 # Reason codes. web/src/copy.ts holds one sentence for each, under removed.reasons.
@@ -517,8 +518,11 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
         if found is None and not (inside is None and explained):
             reasons.append(Reason(1, NUMBER if mention.kind == "number" else DATE, mention.text))
     quoted = bool(spans) or quote is not None
+    # A quote counts as on its page only when its page was checked: a quote whose passage did not come
+    # back this turn was compared with nothing, so the check line may not count it.
+    on_page = quoted and not quote_reasons and (quote is None or span is not None)
     return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
-                   quoted=quoted, quote_found=quoted and not quote_reasons)
+                   quoted=quoted, quote_found=on_page)
 
 
 def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
@@ -527,6 +531,15 @@ def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
 
 
 # ── The answer's events ──────────────────────────────────────────────────
+
+def labels(row: Mapping | None) -> dict:
+    """What the evidence card and the source switcher call a source: its stratum (GLOSSARY.md) and its
+    document's short name, from the reader's templates. A record is in the What stratum and has none."""
+    if not _is_passage(row):
+        return {"stratum": "What", "short_name": None}
+    template = template_for(str(row.get("document_type") or ""))
+    return {"stratum": template.stratum if template else None, "short_name": template.short_name if template else None}
+
 
 def _supported(pairs) -> list[dict]:
     return [{"text": mention.text, "evidence_id": found} for mention, found in pairs]
@@ -554,7 +567,8 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> 
     for evidence, highlights in cited.items():
         row = facts.get(evidence)
         events.append(Event("evidence", {"id": evidence, "kind": "passage" if _is_passage(row) else "record",
-                                         "tool": facts.tool(evidence), "row": _plain(row), "highlights": highlights}))
+                                         "tool": facts.tool(evidence), **labels(row), "row": _plain(row),
+                                         "highlights": highlights}))
     events.append(Event("checks", {**verdict.counts(), "tools": sorted(set(tools))}))
     for sentence in verdict.removed:
         events.append(Event("removed", {

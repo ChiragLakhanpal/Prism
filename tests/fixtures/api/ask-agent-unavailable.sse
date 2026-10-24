@@ -1,0 +1,6 @@
+event: error
+data: {"code": "agent_unavailable"}
+
+event: done
+data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}
+

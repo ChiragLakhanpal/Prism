@@ -23,7 +23,7 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
   return (
     <div className="layout-grid">
-      <div className="col-span-12 md:col-span-8">
+      <div className="col-span-12 @md/page:col-span-8">
         <PlaceholderPage match={match} />
       </div>
     </div>
@@ -38,7 +38,7 @@ function PlaceholderPage({ match }: { match: Match }) {
       <PageHeader title={<WithIds template={words.title} values={match.values} />} purpose={words.purpose} />
       {words.emptyTitle && words.emptyBody ? (
         <EmptyState
-          className="mt-6 lg:mt-8"
+          className="mt-6 @lg/page:mt-8"
           title={<WithIds whole template={words.emptyTitle} values={match.values} />}
           body={words.emptyBody}
           link={link}

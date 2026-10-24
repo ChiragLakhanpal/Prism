@@ -145,7 +145,9 @@ export const copy = {
     viewPiu: "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view.",
     viewPublic: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
-    asOf: (date: string) => `I can't show pages as of ${date} yet, so you are seeing today's data.`,
+    // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
+    // Ticket 40 replaces it with its as-of banner.
+    asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use ${date}.`,
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
@@ -174,12 +176,41 @@ export const copy = {
   },
 
   // The white band under the bar: the one box and the data-freshness stamp.
+  // The one box (the 14 brief, section 5.1). The placeholder names only what the box can do now;
+  // ticket 15 adds "describe a package" back. {id}, {pcode}, {loan} and {step_ref} show in Roboto Mono.
   box: {
-    label: "Search a project, check a plan, describe a package, or ask",
-    placeholderWide: "Search a project, check a plan, describe a package, or ask",
-    placeholderMedium: "Search a project, check a plan, or ask",
-    placeholderNarrow: "Search a project, or ask",
-    notReady: "I can't open projects or answer questions from this box yet.",
+    label: "Open a project or package, or ask a question",
+    placeholderWide: "Open a project or package, or ask a question",
+    placeholderNarrow: "Open a project, or ask",
+    placeholderProject: "Ask about this project",
+    placeholderPackage: "Ask about this package",
+    // {pid} is hintId, set in Roboto Mono.
+    hint: "Type a project ID such as {pid}, a STEP reference, a loan number, or a question.",
+    hintId: "P130164",
+    listName: "What Enter will do",
+    enter: "Enter",
+    option: {
+      project: "Open {pcode}",
+      projectLine: (name: string, country: string | null) => (country ? `${name}, ${country}` : name),
+      loan: "Open the project for {loan}",
+      loanLine: "{pcode}, {name}",
+      activity: "Show {step_ref} in its plan",
+      activityLine: (agency: string, date: string) => `In the ${agency} plan of ${date}, {pcode}`,
+      ask: "Ask this",
+      askWithin: "Within {id}",
+      askAcross: "Across all projects",
+      lookingUp: "Looking up {id}",
+    },
+    notFound: {
+      project: "I have no project {id}.",
+      loan: "I have no loan or credit {id} in the records.",
+      activity: "I have no activity {id} in a published plan.",
+    },
+    lookupFailed: "I couldn't look up {id} just now. You can still ask about it.",
+    chipWithin: "Within",
+    chipRemove: (id: string) => `Remove the scope ${id}`,
+    scoped: (id: string) => `Questions you ask here cover ${id} only.`,
+    scopeRemoved: "The scope is removed. Questions now cover all projects.",
   },
   stamp: {
     loading: "Reading the data date",
@@ -219,6 +250,8 @@ export const copy = {
       plural(total, `${matched} of ${totalText} number matches records`, `${matched} of ${totalText} numbers match records`),
     quotes: (found: string, total: number, totalText: string) =>
       plural(total, `${found} of ${totalText} quote is on its page`, `${found} of ${totalText} quotes are on their pages`),
+    dates: (matched: string, total: number, totalText: string) =>
+      plural(total, `${matched} of ${totalText} date matches records`, `${matched} of ${totalText} dates match records`),
     sourcesOnly: "every source I cite came back from this search",
     notCheckedJoin: ", or ",
     clauseJoin: "; ",
@@ -251,7 +284,10 @@ export const copy = {
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
-    item: (sentence: string, reason: string) => `"${sentence}" ${reason}`,
+    // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
+    item: (sentence: string, reason: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
+    // A reason code with no sentence below: it makes no claim about why.
+    unknownReason: { item: "It failed a check.", joined: "it failed a check" },
     // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
     // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
     // lacks either.
@@ -290,22 +326,100 @@ export const copy = {
     showOne: "Show the step I took",
     hide: "Hide the steps",
     answerId: "Answer ID",
+    // Each step's line while it runs, which the live region says once, and once it is done (the 14
+    // brief, section 5.2). Tool steps are keyed by the tool registry's name (config/tools.toml), so a
+    // new tool needs two lines here. Counts are words from one to nine (DESIGN.md section 7).
+    read: { running: "I'm reading your question.", done: "I read your question." },
+    tools: {
+      search_passages: {
+        running: (scope: string | null) => (scope ? `I'm searching the documents for ${scope}.` : "I'm searching the documents."),
+        done: (count: number, countText: string, scope: string | null) =>
+          `I found ${count === 0 ? "no" : countText} ${count === 1 ? "passage" : "passages"}${scope ? ` for ${scope}` : ""}.`,
+      },
+      check_plan: {
+        running: () => "I'm checking the plan.",
+        done: (count: number, countText: string) => `I checked ${countText} ${count === 1 ? "activity" : "activities"} in the plan.`,
+      },
+      find_comparables: {
+        running: () => "I'm finding comparable packages.",
+        done: (count: number, countText: string) => `I found ${countText} comparable ${count === 1 ? "package" : "packages"}.`,
+      },
+      ask_genie: {
+        running: () => "I'm looking through the records.",
+        done: (count: number, countText: string) => `I found ${countText} matching ${count === 1 ? "record" : "records"}.`,
+      },
+      get_lessons: {
+        running: () => "I'm looking for lessons.",
+        done: (count: number, countText: string) => `I found ${countText} ${count === 1 ? "lesson" : "lessons"}.`,
+      },
+    },
+    otherTool: { running: (tool: string) => `I'm using ${tool}.`, done: (tool: string) => `I used ${tool}.` },
+    write: {
+      running: "I'm writing the answer.",
+      done: (count: number, countText: string) =>
+        count === 0 ? "I wrote no sentences." : `I wrote ${countText} ${count === 1 ? "sentence" : "sentences"}.`,
+      // A step still to come, listed in ink-muted so the block keeps its height (02's round 7 critique).
+      todo: "To do: write the answer.",
+    },
+    check: {
+      running: "I'm checking each number and quote against the sources.",
+      done: "I checked each number and quote against the sources.",
+      doneCounted: (numbers: string, quotes: string, removed: string) => `I checked ${numbers} and ${quotes}, and removed ${removed}.`,
+      numbers: (count: number, countText: string) => (count === 1 ? "one number" : `${countText} numbers`),
+      quotes: (count: number, countText: string) => (count === 1 ? "one quote" : `${countText} quotes`),
+      removed: (count: number, countText: string) => (count === 0 ? "none" : count === 1 ? "one sentence" : `${countText} sentences`),
+      todo: "To do: check each number and quote against the sources.",
+    },
   },
   answer: {
     inShort: "In short",
     // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
+    readyRemoved: (count: number, countText: string) =>
+      count === 1
+        ? "The answer is ready. I removed one sentence that failed a check."
+        : `The answer is ready. I removed ${countText} sentences that failed a check.`,
     tryAgain: "Try again",
+    // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
+    panel: "Answer",
+    close: "Close the answer",
+    askedWithin: "Asked within {id}",
+    askedAcross: "Asked across all projects",
+    askedAsOf: (date: string) => `, as of ${date}`,
+    // No view is named: until ticket 40 applies a view's rules on the server, every answer is the
+    // World Bank staff view's. Ticket 40 adds ", in a preview of the {view} view" back.
+    askedEnd: ".",
+    // Every sentence the agent wrote failed a check (the 14 brief, section 5.7).
+    nothingSurvived: (count: number, countText: string) =>
+      count === 1
+        ? "I don't have an answer I can support with a source. I wrote one sentence, and it failed a check."
+        : `I don't have an answer I can support with a source. I wrote ${countText} sentences, and each one failed a check.`,
+    // The agent found nothing to cite (section 5.6).
+    emptyScoped: "I found nothing in the records or documents for {id} that answers this. You can ask the same question across all projects.",
+    emptyUnscoped: "I found nothing in the records or documents that answers this. {link} shows which sources and years I have read so far.",
+    emptyLink: "Data readiness",
+    askAcross: "Ask across all projects",
+    // A refusal is an answer, not an error (section 5.8): a content filter's is errors.content_filter
+    // below, shown as plain text. Ticket 24 adds the refusal list's own lines.
+    refusalNote: "{link} lists what I don't do, and why.",
+    refusalLink: "How Strata works",
+    // The stream ended before its done event (section 5.9).
+    dropped: "The connection dropped before the answer was ready.",
+    stillInBox: "Your question is still in the box.",
     // Why an answer stopped, keyed by the code its stream's error event carries (ERROR_CODES in
     // src/strata/harness/turn.py). A test fails when a code has no sentence here.
+    // One idea a sentence: the "Try again" button carries the instruction, and stillInBox follows
+    // each. no_agent gets no button, because trying again cannot connect the model.
     errors: {
       no_agent: "I can't answer questions yet, because the model that writes my answers isn't connected.",
-      agent_unavailable: "I can't reach the model that writes my answers right now; try again in a few minutes.",
-      content_filter: "A safety filter stopped this answer, so I can't show it; try asking in other words.",
-      agent_output: "I wrote an answer I couldn't check, so I'm not showing it; try asking again.",
-      data_service: "I can't reach the data right now, so I can't answer; try again in a few minutes.",
-      internal: "Something went wrong on my side, so I can't answer; try again, and if it happens again, share the answer ID.",
+      agent_unavailable: "I couldn't reach the model that writes my answers.",
+      content_filter: "I can't answer this as written, because a content filter stopped the question. Try asking it in different words.",
+      agent_output: "I wrote an answer I couldn't check, so I'm not showing it.",
+      data_service: "I can't reach the data right now, so I can't answer.",
+      internal: "Something went wrong on my side, so I can't answer. If it happens again, share the answer ID below.",
     },
+    // internal, when the stream never opened and so has no answer ID to share.
+    internalNoId: "Something went wrong on my side, so I can't answer.",
   },
 
   // Term and DefinitionWindow.
@@ -317,17 +431,102 @@ export const copy = {
   document: {
     // The source line's words on each side of the project ID, which shows in mono:
     // "Implementation Completion and Results Report, " P000000 ", June 30, 2021, paragraph 54,
-    // page 23."
+    // page 23." A no-break space keeps each word with its number, so no line ends on "paragraph".
     sourceLine: (docType: string, date: string, para: string, page: string) => ({
       before: `${docType}, `,
-      after: `, ${date}, paragraph ${para}, page ${page}.`,
+      after: `, ${date}, paragraph\u00a0${para}, page\u00a0${page}.`,
+    }),
+    // A passage with no paragraph number, such as an ISR's, is cited by its section: "...,
+    // February 22, 2014, section Project Development Objective Indicators, page 2."
+    sourceLineSection: (docType: string, date: string, section: string, page: string) => ({
+      before: `${docType}, `,
+      after: `, ${date}, section\u00a0${section}, page\u00a0${page}.`,
     }),
     highlightStarts: "Highlight starts.",
     highlightEnds: "Highlight ends.",
     openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
-    missing: "I have no source with this ID, so the link may be incomplete.",
+    missing: "I have no source with this ID. The link may be incomplete.",
+    // The server gives the same answer for a source not public by the address's as-of date.
+    missingAsOf: (date: string) => `I have no source with this ID as of ${date}. It may not have been public yet, or the link may be incomplete.`,
+  },
+
+  // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
+  // stratum and its document's short name come from the answer stream.
+  evidence: {
+    eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
+    // The heading names the source, not the claim, so a drawer opened from a link still reads.
+    title: "{project}, paragraph {para}",
+    titleSection: "{project}, section {section}",
+    recordTitle: "{kind} {reference}",
+    // What a record is called, by the table its evidence id names (web/src/lib/sources.ts).
+    recordKinds: {
+      "strata.silver.plan_rows": "Activity",
+      "strata.gold.contract": "Contract",
+      "strata.gold.package": "Package",
+    } as Record<string, string>,
+    recordKindOther: "Record",
+    // The record view's fields keep STEP's own names; the description's is STEP's "Description".
+    recordDescription: "Description",
+    // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
+    // Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3."
+    recordSource: "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+    recordSourceShort: "{doc}, {pid}, {date}.",
+    // The heading when no source could be shown.
+    untitled: "Source",
+    visited: "You have opened this source.",
+    // The excerpt sits in straight quotes, as the paragraph's own words.
+    quoteOpen: '"',
+    quoteClose: '"',
+    // Where an excerpt longer than the card's limit was cut, between words.
+    cut: "…",
+    close: "Close the source",
+    fromAnswer: "From the answer",
+    switcher: "Sources for this sentence",
+    // A switcher tab reads "ICR ¶54", and a screen reader hears "ICR paragraph 54". A section reads
+    // "ISR, Project Development Objective Indicators".
+    paraMark: "¶",
+    paraSpoken: "paragraph ",
+    switcherSection: (short: string, section: string) => `${short}, ${section}`,
+    // The meta line, word for word as the ticket writes it: "Implementation Completion and Results
+    // Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 ·
+    // PDF page 23 of 66". The project ID shows in Roboto Mono.
+    meta: {
+      // A no-break space keeps the project's name with its ID.
+      project: "{project}\u00a0({pcode})",
+      section: (section: string) => `Section ${section}`,
+      para: (para: string) => `¶${para}`,
+      page: (page: string, pages: string) => `PDF page ${page} of ${pages}`,
+      pageOnly: (page: string) => `PDF page ${page}`,
+      // The dot ends each part with a no-break space before it, so a line breaks only after a dot,
+      // never inside "PDF page 23 of 66" or before a dot.
+      dot: "\u00a0·",
+    },
+    noHighlight: "This sentence does not quote the paragraph, so no words are highlighted.",
+    noHighlightSection: "This sentence does not quote the section, so no words are highlighted.",
+    whole: "The whole paragraph, word for word.",
+    wholeSection: "The whole section, word for word.",
+    preview: "The address asks for a preview, so I'm not recording the sources you open.",
+    // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
+    // 2019, paragraph 54".
+    markerSource: (docType: string, date: string, para: string) => `${docType}, ${date}, paragraph ${para}`,
+    markerSourceSection: (docType: string, date: string, section: string) => `${docType}, ${date}, section ${section}`,
+    markerRecord: (kind: string, reference: string) => `${kind} ${reference}`,
+    // A number in a sentence says which source the verifier matched it to.
+    // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
+    numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
+    numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
+    numTooltipRecord: "Matches the {kind} record {reference}.",
+    // A date a passage backs because it is its report's date, not because the paragraph holds it.
+    numTooltipReportDate: "Matches the date of the {kind} for {pid}.",
+    // What a number's tooltip calls each kind of document, by its short name.
+    docKinds: {
+      ICR: "completion report",
+      "ICR Review": "review of the completion report",
+      PAD: "appraisal document",
+      ISR: "status report",
+    } as Record<string, string>,
   },
 
   // Tables (DESIGN.md section 5): a title sentence, a count line and a source line.

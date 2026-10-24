@@ -604,7 +604,8 @@ test("while the measures load, skeletons hold each table's rows, and after three
   await expect(loading).toHaveAttribute("aria-busy", "true");
   const registry = await json("data-sources.json");
   await expect(table(page, "sources").locator("tbody tr")).toHaveCount(registry.readiness_rows + registry.known_gaps);
-  await expect(page.getByRole("status")).toHaveText("");
+  // The page's own status line, in main: the band holds the box's status line too (ticket 14).
+  await expect(page.getByRole("main").getByRole("status")).toHaveText("");
   await page.clock.runFor(3100);
   await expect(page.getByRole("main").getByRole("status")).toHaveText(
     "I'm still loading the measures. The database may be starting up, which can take up to a minute.",

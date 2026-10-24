@@ -26,7 +26,10 @@ export type NumValue =
   | { date: string; style?: DateStyle; today?: string }
   | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
   // A share a tool rounded, written as it came: the browser divides nothing.
-  | { share: ToolShare; style?: "sentence" | "table" };
+  | { share: ToolShare; style?: "sentence" | "table" }
+  // A number or date as a checked answer sentence wrote it: the verifier matched it to a record at
+  // that rounding, so it is shown as written (ticket 14).
+  | { written: string };
 
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
@@ -38,6 +41,7 @@ export type NumCheck = {
 };
 
 export function numText(num: NumValue): string {
+  if ("written" in num) return num.written;
   if ("value" in num) return formatNumber(num.value, num.options);
   if ("count" in num) return formatCount(num.count, { capital: num.capital });
   if ("year" in num) return formatYear(num.year);
@@ -87,7 +91,9 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
           tabIndex={check.tabStop === false ? -1 : undefined}
           onClick={check.onOpen}
           className={cx(
-            "inline cursor-pointer py-0.5 text-left tabular-nums",
+            // A button lays out as an inline block, so its padding would make its line taller than the
+            // body's 24 px; the negative margin keeps the 28 px hit area inside the line's own height.
+            "inline cursor-pointer -my-0.5 py-0.5 text-left tabular-nums",
             DOTTED_UNDERLINE,
             className,
           )}

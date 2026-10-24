@@ -771,3 +771,102 @@ test("the Plan check page shows the plan check at the page's full width, so its 
     expect(overflow, `${width} px`).toEqual([]);
   }
 });
+
+// Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB
+// as check_plan returned it (tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json), whose
+// Estimated amount the plan check writes as 300,000.00 (DESIGN.md section 6).
+test("the drawer's record view writes the STEP amount in STEP's form, right-aligned, keeps the market approach whole, names every field and ends with its source", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/evidence");
+  const record = page.locator("[data-state-section=record]");
+  const amount = record.locator("[data-record] dd", { hasText: "300,000.00" });
+  await expect(amount).toHaveText("300,000.00");
+  expect(await amount.evaluate((element) => [getComputedStyle(element).textAlign, getComputedStyle(element).fontVariantNumeric])).toEqual([
+    "right",
+    "tabular-nums",
+  ]);
+  // "Open - National" moves to the next line whole, so no line ends inside STEP's own dash.
+  const approach = record.locator("[data-record] [data-market-approach]");
+  await expect(approach).toHaveText("Open - National");
+  expect(await approach.evaluate((element) => element.getClientRects().length)).toBe(1);
+  // Every value has its name: the description's is STEP's "Description".
+  const groups = await record.locator("[data-record] > div").evaluateAll((divs) => divs.map((div) => [div.querySelectorAll("dt").length, div.querySelectorAll("dd").length]));
+  expect(groups.every(([dt, dd]) => dt === 1 && dd === 1)).toBe(true);
+  await expect(record.locator("[data-record] dt").first()).toHaveText("Description");
+  await expect(record.locator("[data-source]")).toHaveText(
+    "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3.",
+  );
+});
+
+// The 14 brief, section 5.11: one source line for a record, in its card and in its drawer. An ISR section
+// (tests/ground_truth/values.toml, isr-1-pdo-indicators) is cited by its section, never by its key "s4",
+// and a quote from it (isr-1-rural-access-end-target) is highlighted in its card.
+test("a record's evidence card ends with its drawer's source line, and an ISR section's card and drawer name the section", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/gallery/evidence");
+  const recordSource = "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3.";
+  await expect(page.locator("[data-card-sample=record] [data-source]")).toHaveText(recordSource);
+  await expect(page.locator("[data-state-section=record] [data-source]")).toHaveText(recordSource);
+  // The STEP reference in a record's heading moves to its own line whole when it fits there: at 430 px
+  // the drawer sample's heading is too narrow for "Activity" and the reference together.
+  await page.setViewportSize({ width: 430, height: 900 });
+  for (const where of ["[data-card-sample=record]", "[data-state-section=record] [role=dialog] h2"]) {
+    const reference = page.locator(where).locator(".font-mono", { hasText: "KE-NWWDA-229129-CW-RFB" });
+    const lines = await reference.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+    });
+    expect(lines, where).toBe(1);
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+
+  await expect(page.locator("[data-card-sample=section] [data-source]")).toHaveText(
+    "Source: Implementation Status and Results Report, P130164, February 22, 2014, section Project Development Objective Indicators, page 2.",
+  );
+  await expect(page.locator("[data-card-sample=section] mark")).toHaveText("Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.");
+  const section = page.locator("[data-state-section=section] [role=dialog]");
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
+  await expect(section).toContainText("The whole section, word for word.");
+  await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
+  // The switcher's tabs name two sections, and a long tab wraps inside its pill.
+  const tabs = page.locator("[data-state-section=switcher-section]").getByRole("tab");
+  await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
+  await expect(tabs.nth(1)).toHaveAccessibleName(/^ICR, Annex\s/);
+  await expect(page.locator("[data-state-section=switcher-section] [data-passage] mark")).toHaveText(
+    "Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.",
+  );
+  const overflow = await tabs.first().evaluate((tab) => tab.scrollWidth > tab.clientWidth || tab.getBoundingClientRect().right > window.innerWidth);
+  expect(overflow).toBe(false);
+});
+
+test("the drawer's meta line breaks only after a middle dot, and the switcher's tabs read ICR ¶54", async ({ page }) => {
+  for (const width of [1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/evidence");
+    // Each part of the line keeps to one line: "PDF page 23 of 66", "October 10, 2019", "Section III.B".
+    const parts = page.locator("[data-state-section=from-answer] [data-meta-line] [data-meta-part]");
+    await expect(parts).toHaveCount(6);
+    const lines = await parts.evaluateAll((elements) =>
+      elements.slice(2).map((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return new Set(Array.from(range.getClientRects(), (rect) => Math.round(rect.top))).size;
+      }),
+    );
+    expect(lines, `at ${width} px`).toEqual([1, 1, 1, 1]);
+  }
+  // "ICR ¶54", with a space between the short name and the mark that the tab really draws.
+  const tabs = page.locator("[data-state-section=switcher]").getByRole("tab");
+  const gaps = await tabs.evaluateAll((elements) =>
+    elements.map((tab) => {
+      const name = document.createTreeWalker(tab, NodeFilter.SHOW_TEXT).nextNode()!;
+      const range = document.createRange();
+      range.selectNodeContents(name);
+      return [name.textContent, Math.round(tab.querySelector("[data-para-mark]")!.getBoundingClientRect().left - range.getBoundingClientRect().right)];
+    }),
+  );
+  expect(gaps.map(([name]) => name)).toEqual(["ICR", "ICR"]);
+  expect(gaps.every(([, gap]) => Number(gap) >= 3)).toBe(true);
+  await expect(tabs.first()).toHaveAccessibleName("ICR paragraph 54");
+});

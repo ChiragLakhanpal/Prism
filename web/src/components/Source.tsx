@@ -4,6 +4,7 @@
 import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import type { Place } from "../lib/sources";
 
 export function Source({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -14,12 +15,13 @@ export function Source({ children, className }: { children: ReactNode; className
 }
 
 // A document's source line: "Source: Implementation Completion and Results Report, P000000,
-// June 30, 2021, paragraph 54, page 23." The project ID is in mono.
+// June 30, 2021, paragraph 54, page 23." The project ID is in mono. A passage with no paragraph
+// number names its section in the paragraph's place.
 export function DocumentSource({
   docType,
   pcode,
   date,
-  para,
+  place,
   page,
   className,
 }: {
@@ -27,11 +29,13 @@ export function DocumentSource({
   pcode: string;
   // Already written by Num or formatDate, such as "June 30, 2021".
   date: string;
-  para: number;
+  // A paragraph number, or an item such as 10.b in an ICR Review; or a section (lib/sources.ts, placeOf).
+  place: Place;
   page: number;
   className?: string;
 }) {
-  const words = copy.document.sourceLine(docType, date, String(para), String(page));
+  const write = place.kind === "paragraph" ? copy.document.sourceLine : copy.document.sourceLineSection;
+  const words = write(docType, date, place.text, String(page));
   return (
     <Source className={className}>
       {words.before}

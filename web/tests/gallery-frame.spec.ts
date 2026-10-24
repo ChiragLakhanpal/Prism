@@ -84,7 +84,7 @@ test("the band holds the box over columns 1 to 8 and the stamp at the right, and
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
-  await expect(page.locator("[data-box-band]").getByRole("textbox", { name: /Search a project/ })).toBeFocused();
+  await expect(page.locator("[data-box-band]").getByRole("combobox", { name: /Open a project/ })).toBeFocused();
 });
 
 test("below 1024 px a labeled Menu holds the tabs and the view lines, and Escape closes it", async ({ page }) => {
