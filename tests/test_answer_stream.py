@@ -382,8 +382,9 @@ def removed_reasons(parsed):
 
 
 def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is_a_number_a_record_must_hold():
-    """Every digit run is a number unless its whole token is an id: a project, a loan, a STEP reference, a
-    passage or a section label. "45-day", "US$1.2M", "300k" and "3x" are read as their digits, "10-15" and
+    """Every digit run is a number unless its whole token is an id: a project, a loan (four digits or
+    more), a STEP reference (three parts or more), a passage or a section label, so Q3-2020 and "IBRD 45
+    contracts" are read. "45-day", "US$1.2M", "300k" and "3x" are read as their digits, "10-15" and
     "2019/20" as two numbers each, and number words go past nine. "Half" and "a dozen" are numbers too."""
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
         claim("Bids were opened within a 45-day period."),
@@ -395,7 +396,10 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         claim("Forty-five contracts were bid again."),
         claim("A dozen bids came in, and half were rejected."),
         claim("Bids took a while to open.", numbers=["45-day"]),
+        claim("Most works were signed in Q3-2020."),
+        claim("The IBRD 45 contracts were signed."),
         claim("The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b."),
+        claim("IDA 51030KE paid for NWWDA-WSDP-03-2019-2020 and MWI-WSDP-001."),
     ), no_engine))))
 
     assert removed_reasons(parsed) == [
@@ -408,9 +412,12 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         [("number_not_in_records", "Forty-five")],
         [("number_not_in_records", "A dozen"), ("number_not_in_records", "half")],
         [("number_not_in_records", "45")],
+        [("number_not_in_records", "3"), ("date_not_in_records", "2020")],
+        [("number_not_in_records", "45")],
     ]
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
-        "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b."]
+        "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b.",
+        "IDA 51030KE paid for NWWDA-WSDP-03-2019-2020 and MWI-WSDP-001."]
     assert of(parsed, "checks")[0]["numbers"]["matched"] == 0
 
 

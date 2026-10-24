@@ -98,8 +98,13 @@ ID_SHAPES = (
     r"\bstrata\.\w+\.\w+:[^\s,;()\"]*[^\s,;()\".]",  # an evidence id, strata.gold.passage:31525018/v1/54
     r"\b\d+/v\d+/[\w.]*\w",  # a passage id, 31525018/v1/54
     r"\bP\d{6}\b",  # a project, P130164
-    r"\b(?:IDA|IBRD|TF)[- ]?[A-Z0-9]*\d[A-Z0-9]*\b",  # a credit, loan or trust fund, IDA-60290 or IBRD 8541
-    r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+\b",  # a STEP reference, KE-NWWDA-541062-CW-RFQ, or a name such as COVID-19
+    # A credit, loan or trust fund with four digits or more: IDA-60290, IBRD 8541, TF0A1234 or IDA 51030KE.
+    # "IBRD 45 contracts" is a count.
+    r"\b(?:IDA|IBRD|TF)[- ]?[A-Z0-9]{0,2}\d{4,}[A-Z]{0,2}\b",
+    # A STEP reference has three parts or more: KE-NWWDA-541062-CW-RFQ, NWWDA-WSDP-03-2019-2020 or
+    # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read.
+    r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
+    r"\bCOVID-19\b",
     r"\b(?:[IVX]+|\d+)\.[A-Za-z]\b",  # a section label, III.B or 10.b
 )
 ID = re.compile("|".join(ID_SHAPES))
