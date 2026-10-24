@@ -352,6 +352,8 @@ export function DocumentsTab({ pid }: { pid: string }) {
         <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
       </EightColumns>
     );
+  } else if (load.data.groups.length === 0 && !load.data.in_document_set) {
+    body = <EmptyState level={3} title={words.outsideTitle} body={words.outsideBody} link={{ href: "/data?sources=documents", text: words.outsideLink }} />;
   } else if (load.data.groups.length === 0) {
     body = <EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data?sources=documents", text: words.emptyLink }} />;
   } else {

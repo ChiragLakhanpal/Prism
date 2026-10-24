@@ -246,6 +246,20 @@ def test_p130164_s_documents_list_each_type_in_project_cycle_order_with_its_date
     assert (first["document_date"], first["reissue"]) == (str(ground_truth("icr-review-date")), None)
 
 
+def test_documents_say_whether_a_project_is_in_the_set_whose_documents_i_fetch(hub):
+    # config/slice.toml names P130164 as the showcase. P117635, Kenya Water Security and Climate Resilience,
+    # is a Kenya water project with a Board date in fiscal 2013, so the slice's criteria select it, though
+    # the fixture holds no list of its documents. P120014, KE Electricity Modernization, is an energy
+    # project, so its documents are never fetched (data/fixture/recorded/api/projects/kenya-fy2012-2025.json).
+    shown = get(hub, "/api/projects/P130164/documents?asof=2026-10-23").json()
+    waiting = get(hub, "/api/projects/P117635/documents?asof=2026-10-23").json()
+    outside = get(hub, "/api/projects/P120014/documents?asof=2026-10-23").json()
+
+    assert (shown["in_document_set"], shown["total"] > 0) == (True, True)
+    assert (waiting["in_document_set"], waiting["groups"]) == (True, [])
+    assert (outside["in_document_set"], outside["groups"]) == (False, [])
+
+
 SOURCE = "/api/projects/P130164/documents"
 
 

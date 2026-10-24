@@ -1,0 +1,35 @@
+{
+  "as_of": "2026-10-22",
+  "project": {
+    "project_id": "P117635",
+    "project_name": "Kenya Water Security and Climate Resilience Project",
+    "display_name": "Kenya Water Security and Climate Resilience",
+    "country": "Kenya",
+    "status": "Closed",
+    "implementing_agencies": [
+      "Ministry of Water, Sanitation and Irrigation",
+      "The National Land Commission"
+    ]
+  },
+  "agencies": [
+    {
+      "implementing_agency": "Ministry of Water, Sanitation and Irrigation",
+      "agency_id": "ministry-of-water-sanitation-and-irrigation",
+      "versions": [],
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
+    },
+    {
+      "implementing_agency": "The National Land Commission",
+      "agency_id": "the-national-land-commission",
+      "versions": [],
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
+    }
+  ],
+  "documents_through": null
+}

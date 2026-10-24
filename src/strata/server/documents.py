@@ -6,7 +6,9 @@
   with the date on the document, the day the World Bank made it public (its public_from, ADR 0002) and
   how many of its pages Strata read. A report re-issued under the same report number replaces its
   earlier version in one row. The route counts each group and says which documents show before "Show
-  all" (app.documents_shown), so the screen counts nothing.
+  all" (app.documents_shown), so the screen counts nothing. It also says whether the project is in the
+  set whose documents Strata fetches (config/slice.toml: the projects its criteria select and the ones it
+  names), so a project outside that set is not told its documents are still to come.
 - source_page gives one PDF page of a document as the reader read it: its paragraphs as the document
   numbers them and its tables' rows, never a table's summary, which is Strata's own words, with a
   paragraph that runs onto the page from the one before. A page with none says why: it has no text
@@ -31,8 +33,10 @@ import re
 from functools import cache
 from pathlib import Path
 
+from strata.config import load_slice
 from strata.lakehouse.clean import public_from
 from strata.lakehouse.engine import Engine
+from strata.lakehouse.passages import select
 from strata.server.projects import display_name
 from strata.tools.check_plan import agency_id
 
@@ -171,6 +175,7 @@ def documents_tab(engine: Engine, project_id: str, as_of: dt.date, shown: int = 
         groups.append({"type": group, "count": len(mine), "shown_count": min(len(mine), shown), "documents": mine})
     return {"as_of": as_of.isoformat(),
             "project": {"project_id": project_id, "display_name": display_name(found[0]["project_name"])},
+            "in_document_set": project_id in select(engine, load_slice()).projects,
             "groups": groups, "total": sum(group["count"] for group in groups),
             "shown_total": sum(group["shown_count"] for group in groups),
             "documents_through": _through(engine, project_id, as_of)}

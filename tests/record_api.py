@@ -83,6 +83,11 @@ HUB = {
     "packages-p156634-boreholes.json": f"/api/projects/P156634/packages?{DAY}&q=boreholes",
     "packages-p156634-no-match.json": f"/api/projects/P156634/packages?{DAY}&q=atlantis",
     "documents-p130164.json": f"/api/projects/P130164/documents?{DAY}",
+    # A project the slice selects whose documents the fixture holds no list of, and one outside the slice.
+    "project-p117635.json": "/api/projects/P117635?asof=2026-10-22",
+    "documents-p117635-none-yet.json": f"/api/projects/P117635/documents?{DAY}",
+    "project-p120014.json": "/api/projects/P120014?asof=2026-10-22",
+    "documents-p120014-outside.json": f"/api/projects/P120014/documents?{DAY}",
     "source-icr-p130164-23-54.json": f"{SOURCE}/icr-2019-10-10?page=23&para=54&{DAY}",
     "source-icr-p130164-23.json": f"{SOURCE}/icr-2019-10-10?page=23&{DAY}",
     "source-icr-p130164-moved.json": f"{SOURCE}/icr-2019-10-10?page=22&para=54&{DAY}",

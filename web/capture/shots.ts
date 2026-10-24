@@ -205,6 +205,16 @@ const HUB_API: Shot["api"] = {
 const hubShot = (name: string, path: string, rest: Partial<Shot> = {}, answers: Shot["api"] = {}): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...HUB_API, [PLAN_API]: { recorded: PLAN_FILE }, ...answers } });
 const SOURCE = "/projects/P130164/documents/icr-2019-10-10";
+const BASELINE_API = `${PLAN_API.replace(/\/2026-10-09$/, "")}/baseline`;
+const JULY_2025 = PLAN.replace(/2026-10-09$/, "2025-07-21");
+const JULY_2025_API = `/api${JULY_2025}`;
+// A baseline write: the plan check answers as it reads after the write, then the button is clicked, so the
+// shot shows the panel's message beside the reasons the new baseline gives.
+const thenClick = (path: string, after: string, selector: string) => async (page: Page) => {
+  const body = readFileSync(new URL(after, RECORDED), "utf8");
+  await page.route(`**${path}`, (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
+  await click(selector)(page);
+};
 const summaryWithout = (edit: (body: Record<string, any>) => void) => ({ body: derived("summary-p130164.json", edit) });
 const longVersions = derived("project-p156634-baseline.json", (body) => {
   const nwwda = body.agencies[0];
@@ -229,6 +239,15 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("projects--page-2", { recorded: "projects-page-2.json" }, {}, "/projects?page=2"),
   planShot("projects--india", { recorded: "projects-india.json" }, {}, "/projects?q=india"),
   planShot("projects--no-match", { recorded: "projects-no-match.json" }, {}, "/projects?q=atlantis"),
+  // A search the server has not answered after 400 ms keeps the rows, dimmed, and says it is searching.
+  planShot("projects--searching", { recorded: "projects.json" }, {
+    act: async (page) => {
+      await page.route((url) => url.pathname === "/api/projects" && url.searchParams.has("q"), () => undefined);
+      await page.locator("[data-list-search] input").first().fill("kenya");
+      await page.waitForTimeout(900);
+    },
+    full: true,
+  }, "/projects"),
   planShot("projects--focus-search", { recorded: "projects.json" }, { widths: [1440, 390], act: focus("[data-list-search] input") }, "/projects"),
   planShot("projects--focus-next", { recorded: "projects.json" }, { widths: [1440, 390], act: focus("[data-pagination] a:visible >> nth=-1") }, "/projects"),
   planShot("projects--empty", { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' }, {}, "/projects"),
@@ -273,7 +292,16 @@ const HUB_SHOTS: Shot[] = [
   hubShot("check-plan--baseline-another", PLAN, {}, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
   hubShot("check-plan--baseline-this", "/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21"),
   hubShot("check-plan--baseline-confirm", PLAN, { act: click("[data-baseline] button[data-button=secondary]") }, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
-  hubShot("check-plan--baseline-saving", PLAN, { act: click("[data-baseline] button") }, { [`${PLAN_API.replace(/\/2026-10-09$/, "")}/baseline`]: { status: 503, body: SERVICE_DOWN } }),
+  hubShot("check-plan--baseline-saving", PLAN, { pending: [BASELINE_API], act: click("[data-baseline] button") }),
+  hubShot("check-plan--baseline-saved", JULY_2025, { act: thenClick(JULY_2025_API, "check-plan-p156634-nwwda-2025-07-21-baseline.json", "[data-baseline] button") }, {
+    [JULY_2025_API]: { recorded: "check-plan-p156634-nwwda-2025-07-21.json" },
+    [BASELINE_API]: { recorded: "baseline-saved.json" },
+  }),
+  hubShot("check-plan--baseline-removed", JULY_2025, { act: thenClick(JULY_2025_API, "check-plan-p156634-nwwda-2025-07-21.json", "[data-baseline] button") }, {
+    [BASELINE_API]: { body: '{"baseline":null}' },
+  }),
+  hubShot("check-plan--baseline-error", PLAN, { act: click("[data-baseline] button") }, { [BASELINE_API]: { status: 503, body: SERVICE_DOWN } }),
+  hubShot("check-plan--baseline-permission", PLAN, { act: click("[data-baseline] button") }, { [BASELINE_API]: { status: 403, body: '{"code":"permission"}' } }),
   hubShot("check-plan--baseline-piu", `${PLAN}?view=piu`, {}, { [`${PLAN_API}?view=piu`]: { body: derived("check-plan-p156634-nwwda-2026-10-09-baseline.json", (body) => (body.baseline.saved_by = null)) } }),
   hubShot("check-plan--baseline-delay-num", PLAN, { widths: [1440, 390], act: focus("[data-baseline-delay] button[data-num]:visible") }, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
   // Documents.
@@ -281,7 +309,15 @@ const HUB_SHOTS: Shot[] = [
   hubShot("documents--loading", "/projects/P130164/documents", { pending: ["/api/projects/P130164/documents"] }),
   hubShot("documents--group-open", "/projects/P130164/documents", { full: true, act: click("[data-documents] button[aria-expanded=false]:visible") }),
   hubShot("documents--term-open", "/projects/P130164/documents", { widths: [1440], act: click("[data-documents] [data-term]") }),
-  hubShot("documents--empty", "/projects/P130164/documents", {}, { "/api/projects/P130164/documents": { body: derived("documents-p130164.json", (body) => Object.assign(body, { groups: [], total: 0, shown_total: 0 })) } }),
+  // A project the slice selects whose documents are still to come, and one outside the slice.
+  hubShot("documents--empty", "/projects/P117635/documents", {}, {
+    "/api/projects/P117635": { recorded: "project-p117635.json" },
+    "/api/projects/P117635/documents": { recorded: "documents-p117635-none-yet.json" },
+  }),
+  hubShot("documents--outside", "/projects/P120014/documents", {}, {
+    "/api/projects/P120014": { recorded: "project-p120014.json" },
+    "/api/projects/P120014/documents": { recorded: "documents-p120014-outside.json" },
+  }),
   hubShot("documents--error", "/projects/P130164/documents", {}, { "/api/projects/P130164/documents": { status: 503, body: SERVICE_DOWN } }),
   // The source view.
   hubShot("source", `${SOURCE}?page=23&para=54`),

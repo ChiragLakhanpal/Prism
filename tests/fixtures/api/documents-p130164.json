@@ -4,6 +4,7 @@
     "project_id": "P130164",
     "display_name": "Rajasthan Road Sector Modernization"
   },
+  "in_document_set": true,
   "groups": [
     {
       "type": "pad",

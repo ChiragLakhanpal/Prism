@@ -194,6 +194,27 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents");
 });
 
+test("Documents says when a project's documents are still to come, and when the project is outside the set I fetch documents for", async ({ page }) => {
+  const file = async (name: string) => ({ body: await recorded(name) });
+  // P117635 is a Kenya water project the slice selects, with no list of its documents yet; P120014 is an
+  // energy project, outside the slice (tests/test_project_hub.py checks both against the server).
+  await open(page, "/projects/P117635/documents", 1440, {
+    "/api/projects/P117635": await file("project-p117635.json"),
+    "/api/projects/P117635/documents": await file("documents-p117635-none-yet.json"),
+    "/api/projects/P120014": await file("project-p120014.json"),
+    "/api/projects/P120014/documents": await file("documents-p120014-outside.json"),
+  });
+  const card = page.locator("[data-documents=ready] [data-empty-state]");
+  await expect(card.getByRole("heading")).toHaveText("I don't have any documents for this project yet.");
+  await expect(page.locator("[data-documents-count]")).toHaveCount(0);
+
+  await page.goto("/projects/P120014/documents");
+  await expect(card.getByRole("heading")).toHaveText("I don't list documents for this project.");
+  await expect(card).toContainText("I fetch and read documents only for a set of projects chosen for this demo, and this project isn't one of them.");
+  await expect(card.getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data?sources=documents");
+  await expect(page.locator("[data-documents-count]")).toHaveCount(0);
+});
+
 // ── The source view and the drawer's link ───────────────────────────────
 
 test("the source view opens the ICR at page 23 with paragraph 54 highlighted and focused, and links the World Bank's PDF at that page", async ({ page }) => {

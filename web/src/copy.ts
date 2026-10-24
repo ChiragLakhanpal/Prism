@@ -1034,6 +1034,12 @@ export const copy = {
       "I list a project's documents once I fetch them from the World Bank's documents and reports API. Data readiness " +
       "shows which projects' documents I hold.",
     emptyLink: "Data readiness",
+    // A project outside the set of projects whose documents I fetch (config/slice.toml).
+    outsideTitle: "I don't list documents for this project.",
+    outsideBody:
+      "I fetch and read documents only for a set of projects chosen for this demo, and this project isn't one of them. " +
+      "Data readiness lists that set.",
+    outsideLink: "Data readiness",
     loading: "Loading this project's documents.",
     error: "I couldn't load this project's documents because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't list this project's documents.",

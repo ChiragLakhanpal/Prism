@@ -219,6 +219,9 @@ export type ListedDocument = {
 export type DocumentList = {
   as_of: string;
   project: { project_id: string; display_name: string | null };
+  // Whether the project is in the set whose documents I fetch: the projects config/slice.toml's criteria
+  // select and the ones it names.
+  in_document_set: boolean;
   groups: { type: DocumentGroupKey; count: number; shown_count: number; documents: ListedDocument[] }[];
   total: number;
   shown_total: number;
