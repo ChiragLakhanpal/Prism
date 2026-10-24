@@ -638,7 +638,7 @@
                 "showTitle": true,
                 "title": "Rows per fiscal year, by source",
                 "showDescription": true,
-                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows."
+                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows."
               }
             }
           },
@@ -825,7 +825,7 @@
                 "showTitle": true,
                 "title": "Share of pages read well, by route",
                 "showDescription": true,
-                "description": "Each reading route with 50 Procurement Plan pages or more, as the share of its pages it read without losing their table rows."
+                "description": "The share of pages each reading route read well, for routes with 50 pages or more. The routes are the published text and the layout parser, which reads scans and tables. The pages come from Procurement Plans and project reports."
               },
               "mark": {
                 "colors": [
@@ -944,7 +944,7 @@
                 "showTitle": true,
                 "title": "Freshness, links and pages read well, by source",
                 "showDescription": true,
-                "description": "Each source's latest data, how often it updates, how late it is, its link counts and its status. The last rows give the Procurement Plan pages each reading route read well. It is the table for the two charts of shares."
+                "description": "Each source's latest data, how often it updates, how late it is, its link counts and its status. The last rows give the Procurement Plan and project report pages each reading route read well. It is the table for the two charts of shares."
               }
             }
           },

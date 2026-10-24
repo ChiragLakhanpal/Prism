@@ -39,9 +39,23 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 | `recorded/api/` | API responses, one JSON file each, with the keys `source`, `license`, `recorded`, `about` and `response` |
 | `recorded/documents/<project>/<name>.txt` | The text the World Bank publishes for a document, byte for byte, after a few header lines |
 | `recorded/documents/<project>/<name>.pages.txt` | The text of each PDF page of the same document, one page after each form feed, read from the PDF's text layer |
-| `recorded/documents/<project>/<name>.words.json` | For each Procurement Plan (`words = true` in `sources.toml`), every word on each PDF page with its box, read with poppler's `pdftotext -bbox`. Offline, the layout parser reads the plans' tables from these words, because `ai_parse_document` runs only on the workspace |
+| `recorded/documents/<project>/<name>.words.json` | For each Procurement Plan and for the scanned P130164 PAD (`words = true` in `sources.toml`), every word on each PDF page with its box, read with poppler's `pdftotext -bbox`. Offline, the layout parser reads the plans' tables, the PAD's pages and its two-column risk annex from these words, because `ai_parse_document` runs only on the workspace. A page whose text layer is empty has no words, so the offline parser records it as a page it could not read |
 
 The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer, so the public-date check skips it. The gate then builds bronze, silver, gold and the data readiness measures from every recorded structured source (awards, notices, projects, IEG ratings, loans and credits with their monthly history, CPIA and WGI) with the nightly job's own tasks, which read these files in place of the live APIs. `config/sources.toml` names, for each source the job fetches, the dataset here whose files stand in for it.
+
+## The stress shelf's documents (ticket 18)
+
+The stress shelf holds the hardest documents Strata reads (`config/slice.toml`, `[[stress_shelf]]`), and the fixture records what it needs of each:
+
+- The P130164 PAD, a scan of 100 PDF pages whose text layer is empty on pages 4, 6 and 12, with its words, so the offline layout parser reads every page and the risk annex, Annex 4, on PDF pages 65 to 70. The builder counted its eight rated risks from the scan's text layer (the recorded `.pages.txt`) on October 24, 2026, and quoted each rating on its page (`tests/ground_truth/values.toml`, `[stress_shelf.pad_risk_annex]`). A person has not yet checked the count against the page images, so `config/slice.toml` gives the shelf no hand count, and the page shows the risks recovered with nothing to check them against.
+- The longest PAD the fixture records is P156634's, with 103 PDF pages; the run picks it by its rule.
+- P161305's Procurement Plan of September 24, 2026, with its words: 14 PDF pages whose STEP tables list 212 activities, most of them on pages that carry on a table from the page before with no header. P161305's project record is in the Kenya projects file, and its document list is recorded, so the plan reader reads it in the gate as it reads the demo plan's.
+- P127203's completion report in French (ICR4990, July 29, 2021), with P127203's project record and document list. The list also names the English report under the same number, which the fixture does not record.
+- No recorded document has more than 500 pages, so the shelf's last entry records that none needed dividing.
+
+The passage reader also reads Project Papers and PPARs (ticket 18, review round 2). The fixture records one Project Paper, P156634's restructuring paper of May 24, 2021 (RES45456, 18 PDF pages), whose numbered paragraphs 1 to 11 the tests check; the reader skips the project's other nine Project Papers, which the fixture does not record. No fixture project lists a PPAR, so a test reads a hand-written one.
+
+The passage reader also reads the scope and qualification text of the run's projects' notices into passages, from `strata.silver.notices.notice_text`, never from these recorded files, whose notices keep their contact details on purpose.
 
 ## The plans as STEP rows
 

@@ -118,9 +118,21 @@ def _years_query(key: str) -> str:
     return (resources.files("strata.dashboard") / "sql" / f"{GAP_ROWS[key]}.sql").read_text()
 
 
+# Tile 5's last rows (ticket 18): the documents the latest document run read, by type and fiscal year of
+# disclosure, from strata.ops.documents_read.
+DOCUMENTS_BY_YEAR = """
+SELECT document_type, fiscal_year, sum(documents) AS documents
+FROM strata.ops.documents_read
+WHERE run_id = (SELECT max_by(run_id, measured_at) FROM strata.ops.documents_read WHERE public_from <= :day)
+GROUP BY document_type, fiscal_year
+ORDER BY document_type, fiscal_year
+"""
+
+
 def year_rows(engine: Engine, run_id: str, measured_on: dt.date, written_at: dt.datetime) -> list[tuple]:
     """Each charted source's rows in each fiscal year, in the copy file's order: tile 4's award rows
-    and tile 5's rows by source. A source's years add up to its Coverage number."""
+    and tile 5's rows by source, then the documents read of each type. A source's years add up to its
+    Coverage number."""
     say = readiness.words()["dashboard"]
     out = []
     for position, (key, label) in enumerate(say["years"].items(), 1):
@@ -133,6 +145,18 @@ def year_rows(engine: Engine, run_id: str, measured_on: dt.date, written_at: dt.
                 readiness.fill(say["fiscalYearLabel"], {"year": f"{year % 100:02d}"}))
             out.append((run_id, measured_on, part, position, label, name, None, None, None, None, int(records),
                         None, None, None, year, written_at, written_at.date()))
+    position = len(say["years"])
+    types: dict[str, int] = {}
+    for document_type, year, documents in engine.run(DOCUMENTS_BY_YEAR, {"day": measured_on}).rows:
+        if document_type not in types:
+            position += 1
+            types[document_type] = position
+        label = readiness.text_of(readiness.fill(say["documentRows"], {"type": document_type}))
+        year = None if year in (None, "") else int(year)
+        name = say["noYear"] if year is None else readiness.text_of(
+            readiness.fill(say["fiscalYearLabel"], {"year": f"{year % 100:02d}"}))
+        out.append((run_id, measured_on, "source_year", types[document_type], label, name, None, None, None, None,
+                    int(documents), None, None, None, year, written_at, written_at.date()))
     return out
 
 

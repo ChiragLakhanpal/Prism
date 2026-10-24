@@ -108,13 +108,18 @@ abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "versi
                "no_activities"]
 
 [tools.search_passages]
-description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs and \
-ICR Reviews) by words and by meaning, and returns the best passages first. A passage is one numbered \
-paragraph, or a part of a long one, with its document, section, paragraph number and PDF page, so a \
-citation can point to it. Filter by project, document type, country, sector or the date a document became \
-public. A report re-issued under the same number replaces its earlier version, unless the as-of date comes \
-before the re-issue. When Prompt Shields found a prompt attack in a passage as it was read in, the passage \
-is left out, and the coverage line says how many. Quote a passage only word for word, from its text."""
+description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \
+ICR Reviews, Project Papers and PPARs) and the scope and qualification text of procurement notices, by \
+words and by meaning, and \
+returns the best passages first. A passage is one numbered paragraph, or a part of a long one, with its \
+document, section, paragraph number and PDF page, so a citation can point to it. Its kind says what it is: \
+a paragraph (from the published text, or read by the layout parser from a scanned page), one row of a \
+table with its cells, a table's summary, or a section of a notice's text with the notice's id. A table's \
+summary is Strata's own words and never backs a number: cite the table's rows. Filter by project, \
+document type, country, sector or the date a document became public. A report re-issued under the same \
+number replaces its earlier version, unless the as-of date comes before the re-issue. When Prompt Shields \
+found a prompt attack in a passage as it was read in, the passage is left out, and the coverage line says \
+how many. Quote a passage only word for word, from its text."""
 adapter = "strata.tools.search_passages:search_passages"
 benchmark = "search-passages-icr-rebidding"
 sources = ["documents", "projects"]
@@ -122,7 +127,7 @@ sources = ["documents", "projects"]
 [tools.search_passages.readiness]
 kind = "document_search"
 ready_for = { row = "reports", measure = "passages_embedded", counted_in = "strata.gold.passage" }
-draws_on = ["reports", "projects"]
+draws_on = ["reports", "notice_text", "projects"]
 
 [[tools.search_passages.parameters]]
 name = "query"
@@ -140,8 +145,8 @@ description = "Only passages of this project, P followed by six digits, such as 
 name = "document_type"
 type = "string"
 required = false
-description = """Only passages of this type of document: PAD, ISR, ICR or ICR Review, or the documents \
-API's full name, such as Implementation Completion and Results Report."""
+description = """Only passages of this type of document: PAD, ISR, ICR, ICR Review, Project Paper or PPAR, \
+or the documents API's full name, such as Implementation Completion and Results Report."""
 
 [[tools.search_passages.parameters]]
 name = "country"
@@ -184,9 +189,11 @@ then. Leave it out for today."""
 row = "One passage, best first: its document, section, paragraph number, pages and text, with its place and score."
 row_fields = ["evidence_id", "public_from", "source", "passage_id", "document_id", "document_type", "project_id",
               "version", "section_path", "paragraph", "paragraph_numbered", "part", "parts", "pdf_page",
-              "last_pdf_page", "printed_page", "language", "parse_route", "header", "text", "rank", "score"]
+              "last_pdf_page", "printed_page", "language", "parse_route", "kind", "route", "scanned", "table_title",
+              "table_row", "cells", "notice_id", "header", "text", "rank", "score"]
 source_fields = ["document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
-                 "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url"]
+                 "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url",
+                 "doc_key", "notice_id", "notice_url"]
 fields = ["query", "filters", "search"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
@@ -234,7 +241,7 @@ row_fields = ["evidence_id", "public_from", "source", "source_key", "measure", "
               "run_ids"]
 source_fields = ["table", "source_key", "measure", "subjects", "measured_on", "counted_in"]
 fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "headline_abstention",
-          "parse_failures", "measured"]
+          "parse_failures", "measured", "stress_shelf"]
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
 

@@ -19,10 +19,12 @@ ticket 40 applies each view's rules, every view gets the World Bank staff result
 from __future__ import annotations
 
 import datetime as dt
+import json
 from importlib import resources
 
-from strata.config import load_slice
+from strata.config import load_slice, load_sources
 from strata.knowledge.search import Filters, searcher_for
+from strata.reader.passages import NOTICE_TEXT, ROUTE_B
 from strata.reader.templates import template_for
 from strata.tools.registry import Call
 
@@ -52,9 +54,17 @@ def _row(found: dict, rank: int, score: float) -> dict:
     return {**passage_row(found), "rank": rank, "score": score}
 
 
+def _cells(value) -> list[list[str]] | None:
+    """A table row's cells, [[column head, value], ...], from the JSON silver keeps."""
+    return None if value is None or value == "" else json.loads(value)
+
+
 def passage_row(found: dict) -> dict:
     """One passage in the registry's row shape, without a search's rank. Values arrive typed from DuckDB
-    and as text from the SQL warehouse, so each is read once here."""
+    and as text from the SQL warehouse, so each is read once here. A notice's text has its notice's id
+    and its page on the World Bank's site; a table row has its table, its row and its cells."""
+    kind = found["kind"]
+    notice = kind == NOTICE_TEXT
     return {
         "evidence_id": f"{TABLE}:{found['passage_id']}",
         "public_from": _iso(found["public_from"]),
@@ -74,6 +84,10 @@ def passage_row(found: dict) -> dict:
             "pdf_page": _int(found["pdf_page"]),
             "pdf_pages": _int(found["pdf_pages"]),
             "pdf_url": found["pdf_url"],
+            "doc_key": found["doc_key"],
+            "notice_id": str(found["document_id"]) if notice else None,
+            # A notice's own page, from the source registry's address for it (CLAUDE.md rule 9).
+            "notice_url": notice_page(str(found["document_id"])) if notice else None,
         },
         "passage_id": found["passage_id"],
         "document_id": str(found["document_id"]),
@@ -90,6 +104,13 @@ def passage_row(found: dict) -> dict:
         "printed_page": found["printed_page"],
         "language": found["language"],
         "parse_route": found["parse_route"],
+        "kind": kind,
+        "route": "layout_parser" if found["parse_route"] == ROUTE_B else "published_text",
+        "scanned": _boolean(found["scanned"]),
+        "table_title": found["table_title"],
+        "table_row": _int(found["table_row"]),
+        "cells": _cells(found["cells"]),
+        "notice_id": str(found["document_id"]) if notice else None,
         "header": found["header"],
         "text": found["text"],
     }
@@ -102,6 +123,12 @@ def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
     result = engine.run(_sql("passages.sql"), {"ids": passage_id, "as_of": as_of})
     rows = [dict(zip(result.columns, row)) for row in result.rows]
     return passage_row(rows[0]) if rows else None
+
+
+def notice_page(notice_id: str) -> str | None:
+    """A notice's own page on the World Bank's site, from config/sources.toml (notices' record_url)."""
+    address = load_sources()["notices"].record_url
+    return address.replace("{id}", notice_id) if address else None
 
 
 def search_passages(call: Call, query: str, project_id: str | None = None, document_type: str | None = None,

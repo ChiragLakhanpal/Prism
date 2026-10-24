@@ -31,8 +31,15 @@ dimensions = 1024
 # ai_parse_document on the SQL warehouse when the test passes, Content Understanding's
 # prebuilt-layout when it fails. The name must be one of the adapters in PARSERS in
 # src/strata/reader/layout.py. strata.config.load_layout_parser() reads it.
+#
+# rejoin_split_words: a narrow table cell wraps a word where it meets the cell's edge ("Explor" then
+# "atory"), and the reader keeps a space at each wrap, so such a word shows split. When this is true,
+# the offline parser joins a wrap with no space when the line above reaches the cell's right edge and
+# the next line starts with a lower-case letter. It is false until the user decides (ticket 18 parked
+# it again; tickets 08 and 10 parked it first, decision 8), so plans show their words as the PDF does.
 [layout]
 parser = "ai_parse_document"
+rejoin_split_words = false
 
 # How search_passages ranks passages on the workspace (docs/PLAN.md section 5): the Delta Sync index
 # over strata.gold.passage on Databricks AI Search, and the reranker AI Search runs over the best

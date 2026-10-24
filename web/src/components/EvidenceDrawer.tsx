@@ -8,7 +8,7 @@
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
-import { ExternalLink, X } from "lucide-react";
+import { X } from "lucide-react";
 import { copy } from "../copy";
 import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
@@ -29,13 +29,12 @@ import { highlightsFor, passageFields, placeOf, recordReference } from "../lib/s
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { highlighted } from "./Document";
-import { WORD_JOINER } from "./CitationMarker";
+import { highlighted, withoutMarkers } from "./Document";
+import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
-import { TextLink } from "./TextLink";
 
 export type DrawerData =
   | { status: "loading" }
@@ -77,10 +76,15 @@ const SHORT_SECTION = 12;
 // paragraph and the page ("October 10, 2019", "Section III.B", "¶54", "PDF page 23 of 66") each keep
 // to one line. Each dot stays with the part before it, so a line breaks only after a dot or inside a
 // long section's name.
+// A table row's meta line names its table and row; a notice's names its type and section and has no
+// page; a passage in another language ends with its language (the 18 brief, section 7).
 function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   const fields = passageFields(evidence);
   const place = placeOf(fields);
   const words = copy.evidence.meta;
+  const table = fields.kind === "table_row" || fields.kind === "table_summary";
+  const notice = fields.kind === "notice_text";
+  const language = fields.lang && fields.lang !== "en" ? copy.language.name[fields.lang] : null;
   const parts: { text: ReactNode; whole: boolean }[] = [
     { text: fields.docType, whole: false },
     {
@@ -94,9 +98,33 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
       whole: false,
     },
     { text: fields.date, whole: true },
-    ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
-    ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
-    ...(fields.page ? [{ text: fields.pages ? words.page(String(fields.page), String(fields.pages)) : words.pageOnly(String(fields.page)), whole: true }] : []),
+    ...(table
+      ? [
+          ...(fields.tableTitle ? [{ text: fields.tableTitle, whole: false }] : []),
+          ...(fields.tableRow ? [{ text: copy.evidence.rowOf(String(fields.tableRow)), whole: true }] : []),
+        ]
+      : notice
+        ? fields.section
+          ? [{ text: fields.section, whole: false }]
+          : []
+        : [
+            ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
+            ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
+          ]),
+    ...(fields.page
+      ? [
+          {
+            text:
+              fields.kind === "table_summary" && fields.lastPage && fields.lastPage !== fields.page && fields.pages
+                ? words.pageRange(String(fields.page), String(fields.lastPage), String(fields.pages))
+                : fields.pages
+                  ? words.page(String(fields.page), String(fields.pages))
+                  : words.pageOnly(String(fields.page)),
+            whole: true,
+          },
+        ]
+      : []),
+    ...(language ? [{ text: copy.evidence.inLanguage(language), whole: true }] : []),
   ].filter((part) => part.text !== "");
   return (
     <p data-meta-line className="rounded-t-md bg-surface-2 px-3 py-2 text-caption text-ink-muted">
@@ -113,36 +141,105 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   );
 }
 
+// Where each cell's value sits in the row's text, which joins the cells as "Risk: Capacity; Rating: Low",
+// so a highlight in the text lands on the cell it matched. Null when the text is not that join.
+function cellSpans(fields: ReturnType<typeof passageFields>): [number, number][] | null {
+  const spans: [number, number][] = [];
+  let at = 0;
+  for (const [label, value] of fields.cells) {
+    const start = at + label.length + 2;
+    spans.push([start, start + value.length]);
+    at = start + value.length + 2;
+  }
+  return fields.cells.map(([label, value]) => `${label}: ${value}`).join("; ") === fields.text ? spans : null;
+}
+
+// A highlight's part inside one cell, counted from the cell's own start.
+function inCell([start, end]: [number, number], ranges: [number, number][]): [number, number][] {
+  return ranges.filter(([from, to]) => from < end && to > start).map(([from, to]) => [Math.max(from, start) - start, Math.min(to, end) - start]);
+}
+
+// A table row's cells: each column head as a row header on the left and its value on the right, as the
+// layout parser read them. A Procurement Plan's heads are STEP's own field names. The cell whose value a
+// sentence quoted carries the highlight (the 18 brief, section 7.2).
+function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>; ranges: [number, number][] }) {
+  const spans = cellSpans(fields);
+  return (
+    <table data-row-cells className="m-4 w-[calc(100%-2rem)] border-collapse text-small">
+      <thead className="sr-only">
+        <tr>
+          <th scope="col">{copy.evidence.rowField}</th>
+          <th scope="col">{copy.evidence.rowValue}</th>
+        </tr>
+      </thead>
+      <tbody lang={fields.lang ?? undefined}>
+        {fields.cells.map(([label, value], index) => (
+          <tr key={index} className="border-t border-line first:border-t-0 align-top">
+            <th scope="row" className="w-2/5 py-2 pr-3 text-left font-semibold text-ink">
+              {label}
+            </th>
+            <td className={cx("py-2 wrap-break-word text-ink", /^[\d,.\s]+$/.test(value) && "text-right tabular-nums")}>
+              {spans ? highlighted(value, inCell(spans[index], ranges), true) : value}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean }) {
   const fields = passageFields(evidence);
   const section = placeOf(fields).kind === "section";
   const ranges = highlightsFor(evidence, sentence);
-  const pdf = fields.pdfUrl && fields.page ? `${fields.pdfUrl}#page=${fields.page}` : null;
+  const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
+  const notice = fields.kind === "notice_text";
+  const row = fields.kind === "table_row";
+  const summary = fields.kind === "table_summary";
+  const note = notice
+    ? copy.evidence.noticeWhole
+    : row
+      ? copy.evidence.rowNote
+      : summary
+        ? null
+        : fields.scanned
+          ? copy.evidence.wholeScanned
+          : section
+            ? copy.evidence.wholeSection
+            : copy.evidence.whole;
   return (
     <>
       <div className="rounded-md border border-line">
         <MetaLine evidence={evidence} />
-        {fromAnswer && ranges.length === 0 && (
-          <p className="px-4 pt-3 text-caption text-ink-muted">{section ? copy.evidence.noHighlightSection : copy.evidence.noHighlight}</p>
+        {summary && fields.page && (
+          <p className="px-4 pt-3 text-caption text-ink-muted">
+            {copy.evidence.summaryNote(String(fields.page), fields.lastPage && fields.lastPage !== fields.page ? String(fields.lastPage) : null)}
+          </p>
         )}
-        <p data-passage lang={fields.lang ?? undefined} className="max-w-prose p-4 text-body text-ink">
-          {highlighted(fields.text, ranges, true)}
-        </p>
+        {fromAnswer && ranges.length === 0 && (
+          <p className="px-4 pt-3 text-caption text-ink-muted">
+            {row ? copy.evidence.noHighlightRow : section ? copy.evidence.noHighlightSection : copy.evidence.noHighlight}
+          </p>
+        )}
+        {row ? (
+          <RowCells fields={fields} ranges={ranges} />
+        ) : (
+          <p data-passage data-kind={fields.kind} lang={fields.lang ?? undefined} className="max-w-prose p-4 text-body text-ink">
+            {notice ? withoutMarkers(highlighted(fields.text, ranges, true)) : highlighted(fields.text, ranges, true)}
+          </p>
+        )}
       </div>
-      <p className="text-caption text-ink-muted">{section ? copy.evidence.wholeSection : copy.evidence.whole}</p>
-      {pdf !== null && (
-        <p className="text-small">
-          {/* The icon sits inline after the last word, tied to it by a word joiner, so it wraps with
-              "PDF" instead of staying at the end of the line above. */}
-          <TextLink href={pdf} target="_blank" rel="noreferrer">
-            {copy.document.openAtPage(String(fields.page))}
-            <span className="sr-only">{copy.document.newTab}</span>
-            <span className="whitespace-nowrap">
-              {WORD_JOINER}
-              <ExternalLink aria-hidden="true" className="ml-1 inline-block size-4 align-[-2px]" />
-            </span>
-          </TextLink>
+      {note && <p className="text-caption text-ink-muted">{note}</p>}
+      {notice && fields.noticeUrl ? (
+        <p>
+          <ExternalLink href={fields.noticeUrl}>{copy.evidence.openNotice}</ExternalLink>
         </p>
+      ) : (
+        pdf !== null && (
+          <p>
+            <ExternalLink href={pdf}>{copy.document.openAtPage(String(fields.page))}</ExternalLink>
+          </p>
+        )
       )}
     </>
   );

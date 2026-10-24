@@ -203,12 +203,20 @@ def in_top_three(result, question) -> dict[str, list[str]]:
             "left_out": sorted(left_out)}
 
 
-def link_rate_and_gaps(result, question) -> dict[str, list]:
-    """data_readiness_for's answer: the awards row's STEP-reference measure, and the known gaps shown."""
-    [awards] = [row for row in result["sources"] if row["id"] == "awards"]
-    linked = result["rows"][awards["cells"]["linked"]["row"]]
-    return {"linked_step_reference": [linked["count"], linked["denominator"]],
-            "known_gaps": [row["id"] for row in result["sources"] if row["type"] == "gap"]}
+def readiness_answer(result, question) -> dict[str, list]:
+    """data_readiness_for's answer, in the keys its question expects: the awards row's STEP-reference
+    measure and the known gaps shown, or the stress shelf's P130164 risk annex outcome."""
+    found = {}
+    awards = [row for row in result["sources"] if row["id"] == "awards"]
+    if awards:
+        linked = result["rows"][awards[0]["cells"]["linked"]["row"]]
+        found["linked_step_reference"] = [linked["count"], linked["denominator"]]
+    found["known_gaps"] = [row["id"] for row in result["sources"] if row["type"] == "gap"]
+    annex = [entry for entry in result["stress_shelf"] if entry["kind"] == "scan_annex"]
+    if annex and annex[0]["outcome_row"] is not None:
+        outcome = result["rows"][annex[0]["outcome_row"]]
+        found["rated_risks_recovered"] = [outcome["count"], outcome["denominator"]]
+    return {key: found.get(key) for key in question["expected"]}
 
 
 def past_range(result, question) -> dict[str, list]:
@@ -231,7 +239,7 @@ def past_range(result, question) -> dict[str, list]:
     }
 
 
-ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": link_rate_and_gaps,
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range}
 
 

@@ -1,0 +1,1745 @@
+{
+ "source": "https://search.worldbank.org/api/v3/projects?format=json&id=P127203&fl=*",
+ "license": "The World Bank: World Bank Projects & Operations: Projects API (search.worldbank.org/api/v3/projects). License: CC BY 4.0.",
+ "recorded": "2026-10-24",
+ "about": "The project record for Haiti's Rebuilding Energy Infrastructure and Access Project (P127203), whose completion report in French is on the stress shelf (ticket 18).",
+ "response": {
+  "rows": 10,
+  "os": "0",
+  "page": "1",
+  "total": "1",
+  "projects": {
+   "P127203": {
+    "id": "P127203",
+    "themev2_level1_exact": [
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Finance",
+     "FY17 - Private Sector Development",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Urban and Rural Development",
+     "FY17 - Urban and Rural Development"
+    ],
+    "themev2_level2_exact": [
+     "FY17 - Climate change",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Finance for Development",
+     "FY17 - Jobs",
+     "FY17 - Rural Development",
+     "FY17 - Urban Development"
+    ],
+    "themev2_level3_exact": [
+     "FY17 - Disaster Preparedness",
+     "FY17 - Disaster Response and Recovery",
+     "FY17 - Disaster Risk Finance",
+     "FY17 - Disaster Risk Reduction",
+     "FY17 - Job Creation",
+     "FY17 - Mitigation",
+     "FY17 - Rural Infrastructure and service delivery",
+     "FY17 - Urban Infrastructure and Service Delivery"
+    ],
+    "proj_id": "P127203",
+    "countryshortname": "Haiti",
+    "boardapprovaldate": "2012-09-27T00:00:00Z",
+    "curr_ibrd_commitment": "0",
+    "envassesmentcategorycode": "B",
+    "grantamt": "10000000",
+    "totalamt": "90000000",
+    "regionname": "Latin America and Caribbean",
+    "lendprojectcost": "100000000",
+    "closingdate": "2020-08-31",
+    "project_abstract": "The objectives of the  Rebuilding Energy Infrastructure and Access Project for Haiti are to (a) strengthen the recipient's energy policy and planning capacity; (b) improve the sustainability and resilience of the recipients electricity sector and restore and expand access to reliable electricity services; and (c) provide financial assistance in case of an energy sector emergency. The project has three components. (1) Strengthening energy sector institutions and improving energy access. (2) Enhancing Electricite d'Haiti (EDH's) performance and rehabilitating and expanding infrastructure. (3) Energy sector risk and emergency response contingent reserve component will provide support upon occurrence of an energy sector emergency through: (a) the carrying out of emergency recovery and rehabilitation activities; and/or (b) technical assistance to support Ministry of Public Works, Transport, Energy and Communication (MTPTEC) and EDH in its response to an energy sector emergency.",
+    "borrower": "Republic of Haiti",
+    "impagency": "EDH,MTPTC, UCP Energie",
+    "sector_name": "FY17 - Energy Transmission and Distribution,FY17 - Other Energy and Extractives,FY17 - Public Administration - Energy and Extractives,FY17 - Renewable Energy Hydro,FY17 - Renewable Energy Solar",
+    "sector_percent": "26.0,4.0,4.0,4.0,62.0",
+    "sectorcode": "LH,LP,LT,LU,LZ",
+    "major_sectors": [
+     {
+      "major_sector": {
+       "major_sector_code": "LX",
+       "major_sector_name": "FY17 - Energy and Extractives",
+       "sectors": [
+        {
+         "sector_name": "FY17 - Renewable Energy Hydro",
+         "sector_code": "LH",
+         "sector_percent": "4.0"
+        },
+        {
+         "sector_name": "FY17 - Public Administration - Energy and Extractives",
+         "sector_code": "LP",
+         "sector_percent": "26.0"
+        },
+        {
+         "sector_name": "FY17 - Energy Transmission and Distribution",
+         "sector_code": "LT",
+         "sector_percent": "62.0"
+        },
+        {
+         "sector_name": "FY17 - Renewable Energy Solar",
+         "sector_code": "LU",
+         "sector_percent": "4.0"
+        },
+        {
+         "sector_name": "FY17 - Other Energy and Extractives",
+         "sector_code": "LZ",
+         "sector_percent": "4.0"
+        }
+       ]
+      }
+     }
+    ],
+    "idacommamt": "90000000",
+    "boardapprovaldate_exact": "2012-09-27",
+    "countryshortname_exact": "Haiti",
+    "regionname_exact": "Latin America and Caribbean",
+    "borrower_exact": "Republic of Haiti",
+    "impagency_exact": "EDH,MTPTC, UCP Energie",
+    "sector_exact": "FY17 - Energy Transmission and Distribution,FY17 - Other Energy and Extractives,FY17 - Public Administration - Energy and Extractives,FY17 - Renewable Energy Hydro,FY17 - Renewable Energy Solar",
+    "sectorcode_exact": "LH,LP,LT,LU,LZ",
+    "major_sector_name": "FY17 - Energy and Extractives",
+    "major_sector_code": "LX",
+    "milestones": [
+     {
+      "concpt_review_date": "2011-07-07T00:00:00Z",
+      "begin_apprsl_date": "2012-07-16T00:00:00Z",
+      "authorize_negotiations_date": "2012-08-14T00:00:00Z",
+      "apprvl_date": "2012-09-27T00:00:00Z",
+      "dsclsr_of_concpt_pid_date": "2012-10-02T00:00:00Z",
+      "decsn_review_date": "2012-07-11T00:00:00Z",
+      "effctvnss_date": "2013-02-06T00:00:00Z",
+      "icr_nco_date": "2021-07-28T00:00:00Z"
+     }
+    ],
+    "indicators": [
+     {
+      "Name": "Capacity of Renewable Energy (including Hydropower) constructed or rehabilitated",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "2.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "3.08",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "4.00",
+       "Date": "2018-01-17T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Cash Recovery Index",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "22.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "37.80",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "35.00",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Direct project beneficiaries",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "151822.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "200000.00",
+       "Date": "2018-01-17T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Distribution lines rehabilitated",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "186.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "148.00",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Electricity sector financial model and energy sector database",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No model exists for the sector.",
+       "Date": "2012-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "The model is utilized to prepare budget proposal, ",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "Data and financial model updated",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "External audits of EDH accounts",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No audit conducted since 2006.",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "Carrying out the External Audit of EDH accounts ov",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "External audit of accounts available",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Female beneficiaries",
+      "Type": "PDO Indicator",
+      "Subtype": "Supplemental",
+      "Baseline": {
+       "Value": "28000.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "81500.00",
+       "Date": "2018-06-15T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "0.00",
+       "Date": null,
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Government entity responsible for the energy sector adequately staffed",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "No Government entity exists to oversee the energy ",
+       "Date": "2012-11-12T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "2 permanent staff allocated to support MTPTC's Ene",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "Idem as original target",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Offgrid access to electricity for collective uses (street lighting, schools etc.)",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "2038.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "1500.00",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Offgrid connections to electricity",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "19040.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "15000.00",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "People provided with new or improved electricity service",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-30T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "2501.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "20000.00",
+       "Date": "2018-01-17T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Restored connections",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "0.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "16806.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "33000.00",
+       "Date": "2018-01-17T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Strengthening of Government's oversight capacity and transparency in sector financial flows",
+      "Type": "PDO Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "Oversight capacity is weak in utility EDH, non exi",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "The Energy Cell is fully operational. It is suppor",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "Oversight capacity strengthened; Energy Cell with ",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     },
+     {
+      "Name": "Technical and non technical losses",
+      "Type": "Intermediate Results Indicator",
+      "Subtype": null,
+      "Baseline": {
+       "Value": "66.00",
+       "Date": "2011-12-31T00:00:00Z",
+       "Comment": null
+      },
+      "Current": {
+       "Value": "70.00",
+       "Date": "2020-08-31T00:00:00Z",
+       "Comment": null
+      },
+      "Target": {
+       "Value": "50.00",
+       "Date": "2019-07-19T00:00:00Z",
+       "Comment": null
+      }
+     }
+    ],
+    "countrycode": [
+     "HT"
+    ],
+    "status": "Closed",
+    "status_exact": [
+     "Closed"
+    ],
+    "mjsector": "FY17 - Energy Transmission and Distribution,FY17 - Other Energy and Extractives,FY17 - Public Administration - Energy and Extractives,FY17 - Renewable Energy Hydro,FY17 - Renewable Energy Solar",
+    "mjsector_exact": [
+     "FY17 - Energy Transmission and Distribution",
+     "FY17 - Other Energy and Extractives",
+     "FY17 - Public Administration - Energy and Extractives",
+     "FY17 - Renewable Energy Hydro",
+     "FY17 - Renewable Energy Solar"
+    ],
+    "theme": "FY17 - Climate change,FY17 - Disaster Preparedness,FY17 - Disaster Response and Recovery,FY17 - Disaster Risk Finance,FY17 - Disaster Risk Management,FY17 - Disaster Risk Reduction,FY17 - Environment and Natural Resource Management,FY17 - Finance,FY17 - Finance for Development,FY17 - Job Creation,FY17 - Jobs,FY17 - Mitigation,FY17 - Private Sector Development,FY17 - Rural Development,FY17 - Rural Infrastructure and service delivery,FY17 - Urban Development,FY17 - Urban Infrastructure and Service Delivery,FY17 - Urban and Rural Development",
+    "pdo": "The objectives of the Project are to (a) strengthen energy policy and planning capacity, (b) to improve the sustainability and resilience of the electricity sector and to restore and expand access to reliable electricity services, and (c) provide financial assistance to the electricity sector in case of an emergency.",
+    "regionhomepageurl": "https://www.worldbank.org/lac",
+    "themecode": "20,22,221,30,33,331,70,71,711,72,723,75,751,752,753,80,81,811",
+    "theme_exact": [
+     "FY17 - Climate change",
+     "FY17 - Disaster Preparedness",
+     "FY17 - Disaster Response and Recovery",
+     "FY17 - Disaster Risk Finance",
+     "FY17 - Disaster Risk Management",
+     "FY17 - Disaster Risk Reduction",
+     "FY17 - Environment and Natural Resource Management",
+     "FY17 - Finance",
+     "FY17 - Finance for Development",
+     "FY17 - Job Creation",
+     "FY17 - Jobs",
+     "FY17 - Mitigation",
+     "FY17 - Private Sector Development",
+     "FY17 - Rural Development",
+     "FY17 - Rural Infrastructure and service delivery",
+     "FY17 - Urban Development",
+     "FY17 - Urban Infrastructure and Service Delivery",
+     "FY17 - Urban and Rural Development"
+    ],
+    "themecode_exact": [
+     "20",
+     "22",
+     "221",
+     "30",
+     "33",
+     "331",
+     "70",
+     "71",
+     "711",
+     "72",
+     "723",
+     "75",
+     "751",
+     "752",
+     "753",
+     "80",
+     "81",
+     "811"
+    ],
+    "teamleaderupi": "00000450519",
+    "prodline_exact": "PE",
+    "geo_locations": [
+     {
+      "geo_loc_id": "3718426",
+      "place_id": "PLA0041901",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Port-au-Prince",
+      "geo_latitude_nbr": "18.539169",
+      "geo_longitude_nbr": "-72.334999",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3718962",
+      "place_id": "PLA0041904",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Petit Goâve",
+      "geo_latitude_nbr": "18.42939",
+      "geo_longitude_nbr": "-72.862968",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3720811",
+      "place_id": "PLA0041902",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Mirebalais",
+      "geo_latitude_nbr": "18.83333",
+      "geo_longitude_nbr": "-72.105278",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3724337",
+      "place_id": "PLA0041900",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Grand Goâve",
+      "geo_latitude_nbr": "18.426201",
+      "geo_longitude_nbr": "-72.766533",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3726106",
+      "place_id": "PLA0041905",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Drouet",
+      "geo_latitude_nbr": "18.216669",
+      "geo_longitude_nbr": "-73.783333",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3728474",
+      "place_id": "PLA0041906",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Cap-Haïtien",
+      "geo_latitude_nbr": "19.75938",
+      "geo_longitude_nbr": "-72.198151",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     },
+     {
+      "geo_loc_id": "3731053",
+      "place_id": "PLA0041903",
+      "wbg_cntry_key": "HT",
+      "geo_loc_name": "Département de l'Artibonite",
+      "geo_latitude_nbr": "19.33333",
+      "geo_longitude_nbr": "-72.5",
+      "admin_unit1_name": null,
+      "admin_unit2_name": null
+     }
+    ],
+    "project_name": "Rebuilding Energy Infrastructure and Access",
+    "icr_ratings": [
+     {
+      "bankqualityentry": "Not Rated",
+      "banksupervision": "Not Rated",
+      "borrgovt": null,
+      "borrimplegency": null,
+      "borroverall": null,
+      "completion_riskdo": null,
+      "outratingind": "Moderately Unsatisfactory",
+      "overallrating": "Moderately Satisfactory",
+      "value": "2021-07-28"
+     }
+    ],
+    "ieg_ratings": [
+     {
+      "evaldate": "2022-02-07",
+      "borrowcompliance": "Not Rated",
+      "icrquality": "Substantial",
+      "mequality": "Modest",
+      "outcome": "Moderately Unsatisfactory",
+      "overallbankperf": "Moderately Satisfactory",
+      "overallborrowperf": null,
+      "evaluation_riskdo": null,
+      "bankqualityofsupervision": "Moderately Satisfactory",
+      "borrowimplementation": null,
+      "evaltype": "ES"
+     }
+    ],
+    "isr_ratings": [
+     {
+      "name": "Financial Management",
+      "code": "18",
+      "isr_date": "2020-03-02",
+      "value": "Moderately Satisfactory"
+     },
+     {
+      "name": "Monitoring and Evaluation",
+      "code": "125",
+      "isr_date": "2020-03-02",
+      "value": "Satisfactory"
+     },
+     {
+      "name": "Overall Implementation Progress (IP)",
+      "code": "10",
+      "isr_date": "2020-03-02",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Procurement",
+      "code": "27",
+      "isr_date": "2020-03-02",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Progress towards achievement of PDO",
+      "code": "5",
+      "isr_date": "2020-03-02",
+      "value": "Moderately Unsatisfactory"
+     },
+     {
+      "name": "Project Management",
+      "code": "20",
+      "isr_date": "2020-03-02",
+      "value": "Moderately Unsatisfactory"
+     }
+    ],
+    "financers": [
+     {
+      "fincrname": "Clean Technology Fund",
+      "fincr_curr_amt": "10000000",
+      "fincr_usd_amt": "10000000",
+      "fincr_id": "CCTF",
+      "fincr_curr_id": "USD  ",
+      "projectfinancialtype": "Trust Funds"
+     },
+     {
+      "fincrname": "IDA Grant",
+      "fincr_curr_amt": "59700000",
+      "fincr_usd_amt": "90000000",
+      "fincr_id": "IDAT",
+      "fincr_curr_id": "XDR  ",
+      "projectfinancialtype": "World Bank Group"
+     }
+    ],
+    "loan_transactions": [
+     {
+      "amount": "-118265.93",
+      "period": "2020-09-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "-6851.75",
+      "period": "2021-05-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "-814.04",
+      "period": "2021-05-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "1.399999991E7",
+      "period": "2019-06-07T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "100000",
+      "period": "2013-11-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "100000",
+      "period": "2014-11-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "1050613.37",
+      "period": "2019-07-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "106155.83",
+      "period": "2015-10-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "106171.13",
+      "period": "2016-10-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "110157.14",
+      "period": "2014-12-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "110340",
+      "period": "2017-04-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "110347.64",
+      "period": "2020-04-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "113023.68",
+      "period": "2016-03-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "114002.75",
+      "period": "2014-03-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "114283.5",
+      "period": "2015-05-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "114765.36",
+      "period": "2020-01-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "115558.68",
+      "period": "2018-12-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "115681.87",
+      "period": "2017-09-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "116293.7",
+      "period": "2016-09-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "1164463.69",
+      "period": "2015-11-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "116508",
+      "period": "2016-11-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "117939.12",
+      "period": "2015-09-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "120000",
+      "period": "2015-08-13T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "120222.06",
+      "period": "2018-12-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "124934.85",
+      "period": "2015-10-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "126641.58",
+      "period": "2015-09-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "126772.15",
+      "period": "2015-06-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "129663.72",
+      "period": "2015-08-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "130186.01",
+      "period": "2014-07-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "130325.72",
+      "period": "2018-12-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "134014.97",
+      "period": "2014-10-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "134398.24",
+      "period": "2017-12-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "136542.32",
+      "period": "2019-05-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "139811.94",
+      "period": "2019-06-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "140074.27",
+      "period": "2019-11-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "141456.09",
+      "period": "2020-05-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "142137.48",
+      "period": "2016-03-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "143276.01",
+      "period": "2016-02-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "144750.01",
+      "period": "2014-04-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "145748.14",
+      "period": "2014-07-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "147379.52",
+      "period": "2019-12-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "1495839.96",
+      "period": "2016-02-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "153165.95",
+      "period": "2019-11-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "156871.97",
+      "period": "2016-02-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "157505",
+      "period": "2018-01-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "158603",
+      "period": "2014-01-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "159469.86",
+      "period": "2016-08-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "160047.76",
+      "period": "2019-01-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "162719.96",
+      "period": "2017-09-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "162857.18",
+      "period": "2019-12-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "165357.12",
+      "period": "2014-12-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "167037.43",
+      "period": "2015-09-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "172195.63",
+      "period": "2017-03-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "172689.91",
+      "period": "2017-02-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "175186.16",
+      "period": "2020-11-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "178223.49",
+      "period": "2019-08-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "179795.16",
+      "period": "2017-08-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "184289.95",
+      "period": "2019-06-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "184300",
+      "period": "2016-07-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "185733.1",
+      "period": "2020-01-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "193163.75",
+      "period": "2019-03-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "195706.15",
+      "period": "2020-05-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "199999.99",
+      "period": "2014-12-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "199999.99",
+      "period": "2015-08-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "2005977.2",
+      "period": "2020-08-24T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "201081.24",
+      "period": "2020-11-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "203116.89",
+      "period": "2017-11-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "206758.83",
+      "period": "2018-02-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "208032.23",
+      "period": "2018-06-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "211740.91",
+      "period": "2020-01-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "213040.71",
+      "period": "2018-09-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "219756.88",
+      "period": "2016-07-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "2250000.53",
+      "period": "2018-06-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "226707.41",
+      "period": "2016-09-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "229928.27",
+      "period": "2018-05-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "230628.11",
+      "period": "2014-09-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "231660.54",
+      "period": "2015-06-03T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "235802.15",
+      "period": "2020-11-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "237019.05",
+      "period": "2016-08-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "239648.13",
+      "period": "2017-07-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "245280.22",
+      "period": "2016-08-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "245474.65",
+      "period": "2020-11-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "246873.98",
+      "period": "2016-11-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "246985.96",
+      "period": "2015-04-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "249561.78",
+      "period": "2015-10-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "25000000",
+      "period": "2017-11-05T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "254076.37",
+      "period": "2019-12-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "258713.3",
+      "period": "2016-07-13T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "260806.52",
+      "period": "2019-06-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "263325.1",
+      "period": "2020-11-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "266440.91",
+      "period": "2017-09-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "272518.71",
+      "period": "2015-04-28T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "277976.01",
+      "period": "2018-01-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "280628.38",
+      "period": "2017-09-08T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "281662.62",
+      "period": "2018-10-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "283350.03",
+      "period": "2019-03-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "283640.28",
+      "period": "2016-02-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "287373.08",
+      "period": "2017-07-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "288994.17",
+      "period": "2015-02-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "296238.21",
+      "period": "2018-06-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "305325.94",
+      "period": "2015-11-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "331522.77",
+      "period": "2017-02-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "341981.74",
+      "period": "2015-07-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "342706",
+      "period": "2020-03-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "356069.7",
+      "period": "2015-04-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "361039.8",
+      "period": "2017-07-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "367021.5",
+      "period": "2020-02-25T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "375347.54",
+      "period": "2014-09-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "377605.26",
+      "period": "2017-02-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "406110",
+      "period": "2019-01-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "408676.05",
+      "period": "2020-11-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "409889.82",
+      "period": "2015-12-10T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "43031.88",
+      "period": "2013-12-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "433380",
+      "period": "2015-10-29T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "435734.64",
+      "period": "2014-11-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "436881.47",
+      "period": "2019-06-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "448999.84",
+      "period": "2019-03-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "492299.99",
+      "period": "2017-10-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "50623.58",
+      "period": "2014-05-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "521072.31",
+      "period": "2018-05-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "522836.99",
+      "period": "2017-12-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "533348.3",
+      "period": "2017-08-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "550592.23",
+      "period": "2017-09-01T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "55198.54",
+      "period": "2013-08-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "567479",
+      "period": "2018-01-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "579820",
+      "period": "2018-05-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "585651.88",
+      "period": "2018-05-07T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "608719.88",
+      "period": "2017-08-22T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "611461.23",
+      "period": "2015-03-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "61525.57",
+      "period": "2013-12-19T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "618536.48",
+      "period": "2019-05-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "61887.05",
+      "period": "2017-10-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "621806.28",
+      "period": "2016-09-30T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "639244.8",
+      "period": "2014-11-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "64362.33",
+      "period": "2017-12-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "64738.05",
+      "period": "2015-11-23T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "650063.59",
+      "period": "2019-11-12T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "65222.28",
+      "period": "2015-08-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "67310.94",
+      "period": "2013-11-27T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "681571.02",
+      "period": "2019-10-16T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "722152.6",
+      "period": "2020-04-17T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "7365.35",
+      "period": "2022-03-28T00:00:00.000Z",
+      "transactiontype": "LOAN_CANCEL",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "74715",
+      "period": "2017-03-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "75976.06",
+      "period": "2014-04-14T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "76645.41",
+      "period": "2017-02-15T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "80289.92",
+      "period": "2014-09-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "820284",
+      "period": "2016-08-31T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "83391.17",
+      "period": "2017-07-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "84672",
+      "period": "2015-08-26T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "85481.53",
+      "period": "2017-07-20T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "85703.33",
+      "period": "2014-11-05T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "86225.91",
+      "period": "2021-02-09T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "88671.89",
+      "period": "2016-02-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "90000000",
+      "period": "2012-09-27T00:00:00.000Z",
+      "transactiontype": "LOAN_COMMITMENT",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "90720.49",
+      "period": "2015-08-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "90881.41",
+      "period": "2014-06-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "93061.6",
+      "period": "2021-03-04T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "933842.76",
+      "period": "2015-03-06T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "934490.96",
+      "period": "2019-08-28T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "93600.01",
+      "period": "2017-07-18T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "96612.93",
+      "period": "2014-12-02T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     },
+     {
+      "amount": "97428.33",
+      "period": "2013-10-21T00:00:00.000Z",
+      "transactiontype": "LOAN_DISB",
+      "financier_loan": "IDA-H8060"
+     }
+    ],
+    "teamleadname": [
+     "Jose Francisco Perez Caceres "
+    ],
+    "fiscalyear": "2013",
+    "cons_serv_reqd_ind": "Yes",
+    "countryname": "Republic of Haiti",
+    "projectfinancialtype": [
+     "Grants",
+     "IDA"
+    ],
+    "projectfinancialtype_exact": "Grants,IDA",
+    "proj_last_upd_date": "2023-11-01T00:00:00Z",
+    "curr_project_cost": "100000000",
+    "last_stage_reached_name": "Board Approved",
+    "cons_serv_reqd_ind_exact": "Yes",
+    "curr_total_commitment": "100000000",
+    "curr_ida_commitment": "90000000",
+    "projid_id_display": "P127203",
+    "public_disclosure_date": "2012-07-25",
+    "loan_effective_date": "2013-02-06",
+    "theme_list": [
+     {
+      "name": "FY17 - Environment and Natural Resource Management",
+      "code": "80",
+      "seqno": "16",
+      "percent": "2",
+      "theme2": [
+       {
+        "name": "FY17 - Climate change",
+        "code": "81",
+        "seqno": "17",
+        "percent": "2",
+        "theme3": [
+         {
+          "name": "FY17 - Mitigation",
+          "code": "811",
+          "seqno": "18",
+          "percent": "2"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "FY17 - Finance",
+      "code": "30",
+      "seqno": "4",
+      "percent": "8",
+      "theme2": [
+       {
+        "name": "FY17 - Finance for Development",
+        "code": "33",
+        "seqno": "5",
+        "percent": "8",
+        "theme3": [
+         {
+          "name": "FY17 - Disaster Risk Finance",
+          "code": "331",
+          "seqno": "6",
+          "percent": "8"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "FY17 - Private Sector Development",
+      "code": "20",
+      "seqno": "1",
+      "percent": "11",
+      "theme2": [
+       {
+        "name": "FY17 - Jobs",
+        "code": "22",
+        "seqno": "2",
+        "percent": "11",
+        "theme3": [
+         {
+          "name": "FY17 - Job Creation",
+          "code": "221",
+          "seqno": "3",
+          "percent": "11"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "FY17 - Urban and Rural Development",
+      "code": "70",
+      "seqno": "7",
+      "percent": "78",
+      "theme2": [
+       {
+        "name": "FY17 - Disaster Risk Management",
+        "code": "75",
+        "seqno": "12",
+        "percent": "24",
+        "theme3": [
+         {
+          "name": "FY17 - Disaster Preparedness",
+          "code": "753",
+          "seqno": "15",
+          "percent": "8"
+         },
+         {
+          "name": "FY17 - Disaster Response and Recovery",
+          "code": "751",
+          "seqno": "13",
+          "percent": "8"
+         },
+         {
+          "name": "FY17 - Disaster Risk Reduction",
+          "code": "752",
+          "seqno": "14",
+          "percent": "8"
+         }
+        ]
+       },
+       {
+        "name": "FY17 - Rural Development",
+        "code": "72",
+        "seqno": "10",
+        "percent": "22",
+        "theme3": [
+         {
+          "name": "FY17 - Rural Infrastructure and service delivery",
+          "code": "723",
+          "seqno": "11",
+          "percent": "22"
+         }
+        ]
+       },
+       {
+        "name": "FY17 - Urban Development",
+        "code": "71",
+        "seqno": "8",
+        "percent": "32",
+        "theme3": [
+         {
+          "name": "FY17 - Urban Infrastructure and Service Delivery",
+          "code": "711",
+          "seqno": "9",
+          "percent": "32"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "facets": {}
+ }
+}

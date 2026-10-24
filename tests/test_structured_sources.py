@@ -634,20 +634,23 @@ def test_each_source_has_coverage_linked_and_fresh_measures_for_the_data_readine
     assert {"coverage", "linked", "fresh"} <= kinds, key
     assert {"fresh_fetched", "fresh_newest_record"} <= set(found), key
     assert all(row["count"] is not None and row["denominator"] for row in found.values() if row["kind"] != "fresh")
-    assert found["fresh_fetched"]["as_of"] == dt.date(2026, 10, 23)  # the day the fixture was recorded
+    # The day the fixture was recorded. Ticket 18 recorded one project record, P127203's, a day later, and a
+    # measure sees only the fetches made before it (review r2 P4).
+    assert found["fresh_fetched"]["as_of"] == dt.date(2026, 10, 23)
     assert found["fresh_fetched"]["detail"] == config.load_sources()[key].cadence
     assert all(row["detail"] for row in found.values())
 
 
 def test_the_projects_measure_counts_the_projects_mapped_to_a_sector(db):
-    """The Kenya page lists one project with no major sector, P163538, so 91 of the 92 projects held
-    for every country map to a sector: P130164 and the 91 Kenya projects, P156634 among them."""
+    """The Kenya page lists one project with no major sector, P163538, so 92 of the 93 projects held
+    for every country map to a sector: P130164, P127203 (ticket 18's report in French) and the 91 Kenya
+    projects, P156634 among them."""
     linked = measures(db, "projects")["linked_sector"]
     unmapped = [pid for pid, project in recorded(SLICE_FILE)["projects"].items() if not project.get("major_sectors")]
 
     assert unmapped == ["P163538"]
     assert (linked["count"], linked["denominator"]) == (linked["denominator"] - 1, len(
-        set(recorded(SLICE_FILE)["projects"]) | {"P130164", "P156634"}))
+        set(recorded(SLICE_FILE)["projects"]) | {"P130164", "P156634", "P127203"}))
 
 
 # ── How much room structured data takes ──────────────────────────────────

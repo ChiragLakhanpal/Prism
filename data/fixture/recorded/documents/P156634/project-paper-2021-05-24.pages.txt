@@ -1,0 +1,558 @@
+Source: https://documents.worldbank.org/curated/en/897271621840231892/pdf/Disclosable-Restructuring-Paper-Water-and-Sanitation-Development-Project-P156634.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-24
+About: A Project Paper for P156634: the restructuring paper of May 24, 2021 (RES45456), which revised the project's results framework after its midterm review, so the passage reader reads a Project Paper (ticket 18). Documents API id 33103725.
+Pages: 18, one after each form feed, read from the PDF's text layer
+
+The World Bank
+Water and Sanitation Development Project (P156634)
+REPORT NO.: RES45456
+RESTRUCTURING PAPER
+ON A
+PROPOSED PROJECT RESTRUCTURING
+OF
+WATER AND SANITATION DEVELOPMENT PROJECT
+APPROVED ON APRIL 26, 2017 
+TO
+GOVERNMENT OF THE REPUBLIC OF KENYA
+WATER GLOBAL PRACTICE
+AFRICA EAST AND SOUTHERN REGION
+Regional Vice President: Hafez M. H. Ghanem 
+Country Director: Keith E. Hansen
+Regional Director: Mark R. Lundell
+Practice Manager/Manager: Catherine Signe Tovey 
+Task Team Leader(s): Lewnida Sara, Iain Menzies 
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+The World Bank
+Water and Sanitation Development Project (P156634)
+ABBREVIATIONS AND ACRONYMS
+GoK Government of the Republic of Kenya
+IDA International Development Association
+IP Implementation progress
+MS Moderately satisfactory
+MU Moderately unsatisfactory
+NRW Non-revenue water
+PDO Project Development Objective
+WSDP Water and Sanitation Development Project
+WSP Water services providerThe World Bank
+Water and Sanitation Development Project (P156634)
+  
+BASIC DATA
+Product Information 
+Project ID Financing Instrument
+P156634 Investment Project Financing
+Original EA Category Current EA Category
+Partial Assessment (B) Partial Assessment (B)
+Approval Date Current Closing Date
+26-Apr-2017 31-Oct-2022
+Organizations
+Borrower Responsible Agency
+Government of the Republic of Kenya
+Water Services Regulatory Board,Mombasa Water and 
+Sanitation Services Company,Tavevo Water and 
+Sewerage Company Ltd,Kilifi - Mariakani Water and 
+Sewerage Company Ltd,Malindi Water and Sewerage 
+Company Ltd,Kwale Water and Sewerage Company 
+Ltd.,Mavoko Water & Sewarage Co. Ltd,Eldoret Water & 
+Sanitation Co. Ltd,Garissa Water and Saniation 
+Company,Wajir Water and Sewerage Company,Northern 
+Water Works Development Agency,Coast Water Works 
+Development Agency,Ministry of Water, Sanitation and 
+Irrigation,Water Sector Trust Fund
+Project Development Objective (PDO)
+Original PDO
+The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and 
+northeastern regions in Kenya.
+Current PDO
+The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and 
+northeastern regions in Kenya and improve the financial performance of water service providers affected by the COVID-
+19 pandemic.
+OPS_TABLE_PDO_CURRENTPDOThe World Bank
+Water and Sanitation Development Project (P156634)
+Summary Status of Financing (US$, Millions)    
+Ln/Cr/Tf Approval Signing Effectiveness Closing
+Net
+Commitment Disbursed Undisbursed
+IDA-60290 26-Apr-2017 21-Jun-2017 09-Mar-2018 31-Oct-2022 37.00 0 39.78
+IDA-60300 26-Apr-2017 21-Jun-2017 09-Mar-2018 31-Oct-2022 263.00 60.40 233.84
+Policy Waiver(s)
+Does this restructuring trigger the need for any policy waiver(s)?
+No
+  
+I. PROJECT STATUS AND RATIONALE FOR RESTRUCTURING
+A. Project status
+1.The Water and Sanitation Development Project (WSDP) was approved by the Board on April 26, 2017 and became 
+effective on March 9, 2018.  The closing date is October 31, 2022.  The total IDA financing for the project is US$300 million 
+equivalent, consisting of an International Development Association (IDA) credit on regular terms in the amount of SDR 
+27.4 million (equivalent to US$37 million) and an IDA Scale-Up Facility credit in the amount of Euro 248.1 million 
+(equivalent to US$263 million).
+2. The slow start to project implementation was due to delays in meeting project effectiveness conditions, 
+bottlenecks in transferring funds to the implementing agencies, and a lack of detailed designs for some critical 
+infrastructure investments.  The project is the first World Bank-financed water and sanitation operation to be 
+implemented under the devolved structure under which counties and their water services providers (WSPs) are 
+responsible for implementing county-specific project activities.  A new water act was enacted in 2016 that specified the 
+roles of the water sector institutions and the county governments in the regulation, management, development, and 
+delivery of water and sanitation services consistent with the 2010 Constitution.  However, the transition of responsibilities 
+from the previous dispensation to the current one has been slow and institutional mandates are still being refined.  
+Moreover, all but one implementing agency (the Coast Water Works Development Agency) are implementing a Bank-
+financed project for the first time and needed to understand how to comply with the Bank’s policies and procedures.  
+Finally, one component of the project is intended to assist historically marginalized north-eastern counties, where capacity 
+for implementation of project activities is limited.
+3. Implementation progress improved significantly in 2020.  Disbursements totaled only US$13.4 million on 
+December 31, 2019 but reached US$61.9 million on March 31, 2021.  As at May 2021, contracts totaling $177 million have 
+been fully awarded, with another batch of US$22m at advanced procurement stages and expected to be awarded by July The World Bank
+Water and Sanitation Development Project (P156634)
+2021. This will see a total of 67 percent of the Credit committed.  A final batch of activities are at advanced design stage.  
+As a result, disbursements are projected to rise significantly over the remaining project implementation period.
+4. The project has been rated moderately unsatisfactory (MU) for overall implementation progress (IP) and for 
+progress towards achievement of the Project Development Objectives (PDOs) over the past 18 months.  This is due to the 
+slow progress of implementation and the risk that the original PDO targets may not be achieved within the current project 
+period.  The Government of Kenya (GoK) is committed to the project and has now complied with all the covenants specified 
+in the Financing Agreement.  Compliance with environmental and social safeguards has been rated moderately 
+satisfactory.  There are no outstanding fiduciary and safeguard issues.  An assessment of the project’s financial 
+management arrangements, including compliance with the legal covenants related to financial management, found that 
+they provide reasonable assurance that the project funds are used for the intended purposes.  The project account has 
+been audited for the fiscal years ending June 30, 2019 and 2020 and an unqualified report has been issued for each year.  
+Recent Implementation Status and Results (ISR) reports rates financial management and procurement as moderately 
+satisfactory (MS).
+5. An action plan has been agreed with the Client to upgrade IP and PDO ratings.  The Bank team has been closely 
+monitoring implementation of the action plan to quickly identify issues and seek solutions to challenges.  The plan is largely 
+on track, and the project is likely to be upgraded following the next implementation support mission in May 2021 if 
+implementation continues to improve.  Key milestones are presented in the attached matrix of agreed actions.
+6. The project has been restructured twice, to address implementation bottlenecks and to respond to the Covid-19 
+pandemic.  The first restructuring approved by the Bank in January 2020 adjusted the project's institutional arrangements 
+aimed at accelerating implementation.  This resulted in improved coordination between the national and county-level 
+governments, allowing for the transfer of funds to WSPs to implement agreed activities.  The second restructuring 
+approved by the Bank in July 2020 broadened the project’s scope to include interventions to strengthen the financial 
+performance of WSPs affected by the Covid-19 pandemic and to enhance their capacity to provide safe and reliable water 
+services during and after the pandemic.  Some US$50 million was reallocated to support a Conditional Liquidity Support 
+Grant (CLSG) facility to this end.  The first tranche of about US$30 million was disbursed in December 2020.  
+B. Rationale for restructuring
+7. During the midterm review that took place in September/October 2020, the Bank and the implementing agencies 
+assessed the likelihood that envisaged contracts could be executed within the project implementation period.  They 
+agreed that contracts not likely to be completed by the project closing date of October 31, 2021 would be reviewed for 
+cancellation at the next mission.  These include contracts estimated at the time to total about US$93.6, for fecal sludge 
+management facilities (components 1 and 2), pilot onsite sanitation facilities and water supply (component 2), and water 
+supply (component 3).  Some of the funds would be considered for reallocation to a second phase of the CLSG facility, 
+depending on performance of WSPs and demand for the facility.
+8. The rationale for the restructuring is to revise the results framework to reflect the resulting changes to the project 
+scope.  Through a letter dated February 9, 2021, the GoK requested the Bank in consultation with the implementing 
+agencies to revise the results framework to reflect activities that can realistically be achieved by the project closing date.  
+An additional restructuring is planned following the implementation support mission to take place in May 2021 to 
+reallocate or cancel the funds that will not be used for currently envisaged activities.  The World Bank
+Water and Sanitation Development Project (P156634)
+II. DESCRIPTION OF PROPOSED CHANGES
+9. The proposed changes are to the results framework to reflect what the project can achieve.  No changes are 
+proposed to the PDO or the safeguard category, and no new safeguard policy will be triggered.  Therefore, the proposed 
+restructuring is a level 2 restructuring.  Details of the proposed changes are presented below.
+10. One PDO level indicator has been dropped.  This is “People provided with access to improved sanitation services 
+under the project—urban.”  This indicator was intended to reflect investments in improved sanitation in the north-eastern 
+counties, which are no longer expected to take place.  Four intermediate indicators—(a) quantity of septic sludge treated 
+in facilities supported under the project (component 1), (b) new piped household water connections that are resulting 
+from the project intervention (component 2), (c) quantity of septic sludge treated in facilities supported under the project 
+(component 2), and (d) results-based financing mechanism established and operational (component 3)—have been 
+dropped because the associated investments will not be carried out.  
+11. Targets for some indicators have been revised, based on information from ongoing and anticipated contracts.  The 
+outcome target for “people in urban areas provided with access to improved water sources under the project” has been 
+increased from 66,050 to 89,200 to reflect increases in the number of community water points to be constructed in the 
+north-eastern counties.  The target for “people benefiting under the project from a connection to the sewage system or 
+from improved septic sludge management” has been reduced from 240,000 to 130,000 because no septic sludge 
+management facilities will be constructed under the project.  The revised results framework is presented in Annex 1.  A 
+table describing the changes to the results framework is presented in Annex 2.  
+  
+III. SUMMARY OF CHANGES
+Changed Not Changed
+Results Framework ✔   
+Implementing Agency   ✔
+DDO Status   ✔
+Project's Development Objectives   ✔
+PBCs   ✔
+Components and Cost   ✔
+Loan Closing Date(s)   ✔
+Cancellations Proposed   ✔
+Reallocation between Disbursement Categories   ✔
+Disbursements Arrangements   ✔
+Disbursement Estimates   ✔
+Overall Risk Rating   ✔The World Bank
+Water and Sanitation Development Project (P156634)
+Safeguard Policies Triggered   ✔
+EA category   ✔
+Legal Covenants   ✔
+Institutional Arrangements   ✔
+Financial Management   ✔
+Procurement   ✔
+Implementation Schedule   ✔
+Other Change(s)   ✔
+Economic and Financial Analysis   ✔
+Technical Analysis   ✔
+Social Analysis   ✔
+Environmental Analysis   ✔
+IV. DETAILED CHANGE(S)
+.The World Bank
+Water and Sanitation Development Project (P156634)
+.
+Results framework
+COUNTRY: Kenya
+Water and Sanitation Development Project
+Project Development Objectives(s)
+The Project Development Objective (PDO) is to improve water supply and sanitation services in select coastal and northeastern regions in Kenya and 
+improve the financial performance of water service providers affected by the COVID-19 pandemic.
+Project Development Objective Indicators by Objectives/ Outcomes
+RESULT_FRAME_TBL_PDO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+is to improve water supply and sanitation services in select coastal and northeastern regions in Ken 
+People in urban areas 
+provided with access to 
+Improved Water Sources 
+under the project 
+(Number) 
+0.00 0.00 0.00 0.00 3,550.00 32,800.00 89,200.00 89,200.00
+Action: This indicator has 
+been Revised 
+People provided with 
+access to improved 
+sanitation services under 
+the projectâurban. 
+(Number) 
+0.00 0.00 0.00 0.00 0.00 13,200.00 22,000.00 22,000.00
+Action: This indicator has 
+been Marked for 
+Deletion The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_PDO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+People benefiting under 
+the project from a 
+connection to the sewage 
+system. (Number) 
+0.00 0.00 0.00 0.00 0.00 26,000.00 130,000.00 130,000.00
+Action: This indicator has 
+been Revised 
+People with existing 
+connections benefiting 
+from more hours per 
+week of water services. 
+(Number) 
+0.00 0.00 0.00 0.00 0.00 1,930,000.00 1,930,000.00 1,930,000.00
+Action: This indicator has 
+been Revised 
+Direct project 
+beneficiaries (Number) 0.00 0.00 0.00 0.00 3,550.00 1,965,650.00 2,023,700.00 2,023,700.00
+Action: This indicator has 
+been Revised 
+Female beneficiaries 
+(Percentage) 0.00 0.00 0.00 0.00 50.00 50.00 50.00 50.00
+Action: This indicator 
+has been Revised 
+To improve financial performance of Water Service Providers affected by COVID-19 pandemic 
+WSPs supported under 
+the project that 
+demonstrate an increase 
+in their operating cost 
+0.00 0.00 0.00 0.00 0.00 20.00 25.00 25.00The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_PDO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+coverage ratio (OCCR) 
+(Number) 
+Action: This indicator has 
+been Revised 
+PDO Table SPACE
+Intermediate Results Indicators by Components
+RESULT_FRAME_TBL_IO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+Component 1: Rehabilitation and expansion of urban water supply and sanitation services in the coastal region (US$176 of which IDA-SUF US$160 million). 
+Piped household water 
+connections that are 
+benefiting from 
+rehabilitation works 
+undertaken under the 
+project. (Number) 
+0.00 0.00 0.00 0.00 710.00 24,350.00 44,150.00 44,150.00
+Action: This indicator has 
+been Revised 
+New piped household 
+water connections under 
+the project. (Number) 
+0.00 0.00 0.00 0.00 0.00 5,600.00 15,200.00 15,200.00
+Action: This indicator has 
+been Revised 
+Water delivered by WSPs 
+to customers (as 39.30 39.30 39.30 39.30 39.30 53.70 54.40 54.40The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_IO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+reflected in water bills). 
+(Cubic meters/year) 
+Action: This indicator has 
+been Revised 
+People provided with 
+access to improved 
+shared sanitation 
+facilities under the 
+project. (Number) 
+0.00 0.00 0.00 0.00 0.00 2,850.00 4,500.00 4,500.00
+Action: This indicator has 
+been Revised 
+Quantity of septic sludge 
+treated in facilities 
+supported under the 
+project. (Tones/year) 
+0.00 0.00 0.00 0.00 0.00 11,500.00 13,300.00 13,300.00
+Action: This indicator has 
+been Marked for 
+Deletion 
+Volume of biological 
+oxygen demand pollution 
+loads removed by 
+treatment plants 
+supported under the 
+project. (Tones/year) 
+0.00 0.00 0.00 0.00 0.00 730.00 1,600.00 1,600.00
+Action: This indicator has 
+been Revised The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_IO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+Hours of service per 
+week provided by coastal 
+WSPs benefiting from the 
+project. (Hours) 
+10.00 10.00 10.00 10.00 10.00 11.00 11.00 11.00
+Action: This indicator has 
+been Revised 
+Non-revenue water (% of 
+water that a service 
+provider supplies to its 
+distribution system that 
+is not reflected in 
+revenues). (Percentage) 
+50.00 50.00 50.00 50.00 50.00 44.00 43.00 43.00
+Operations and 
+maintenance costs of 
+coastal WSPs benefiting 
+from the project 
+recovered from 
+customers. (Percentage) 
+90.00 100.00 100.00 100.00 65.00 75.00 100.00 100.00
+Action: This indicator has 
+been Revised 
+Component 2: Expansion of water supply and sanitation services in underserved northeastern counties of Kenya (US$110 of which IDA US$100 million). 
+New piped household 
+water connections that 
+are resulting from the 
+project intervention 
+(Number) 
+0.00 0.00 0.00 0.00 0.00 550.00 1,100.00 1,100.00The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_IO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+Action: This indicator has 
+been Marked for 
+Deletion 
+Improved community 
+water points constructed 
+or rehabilitated under 
+the project (Number) 
+0.00 0.00 0.00 0.00 0.00 12.00 33.00 33.00
+Action: This indicator has 
+been Revised 
+New water supplied to 
+northeastern WSPs under 
+the project (m3/day). 
+(Number) 
+0.00 0.00 0.00 0.00 0.00 4,700.00 5,400.00 5,400.00
+Action: This indicator has 
+been Revised 
+Quantity of septic sludge 
+treated in facilities 
+supported under the 
+project. (Tones/year) 
+0.00 0.00 0.00 0.00 0.00 660.00 970.00 970.00
+Action: This indicator has 
+been Marked for 
+Deletion 
+Gender action plans 
+developed and under 
+implementation. 
+(Number) 
+0.00 0.00 0.00 0.00 0.00 0.00 2.00 2.00The World Bank
+Water and Sanitation Development Project (P156634)
+RESULT_FRAME_TBL_IO
+Indicator Name PBC Baseline Intermediate Targets End Target
+1 2 3 4 5 6
+Action: This indicator has 
+been Revised 
+Component 3: National performance-based financing (PBF) (US$82.5 of which IDA-SUF US$75 million). 
+Guidelines for results-
+based financing adopted 
+(Yes/No) 
+No Yes Yes Yes Yes Yes Yes Yes
+Results-based financing 
+mechanism established 
+and operational. (Yes/No) 
+No No No No Yes Yes Yes Yes
+Action: This indicator has 
+been Marked for 
+Deletion 
+Complaints handling 
+system (Maji Voice) 
+established in WSPs 
+supported under the 
+project. (Number) 
+0.00 0.00 0.00 0.00 0.00 0.00 2.00 2.00
+Action: This indicator has 
+been Revised 
+Average performance 
+score for WSPs receiving 
+the CLSG (Percentage) 
+0.00 0.00 0.00 0.00 0.00 60.00 70.00 70.00
+Action: This indicator has 
+been Revised 
+IO Table SPACEThe World Bank
+Water and Sanitation Development Project (P156634)
+ANNEX - 1
+Revisions to the Results Framework
+Revisions to the Results Framework Comments/
+Rationale for Change
+PDO
+Current (PAD) Proposed
+The project’s development objective is to improve water 
+supply and sanitation services in select coastal and 
+northeastern regions in Kenya and improve the financial 
+performance of water service providers affected by the COVID-
+19 pandemic.
+No change. No change.
+PDO indicators
+Current (PAD) Proposed change*
+1. People in urban areas provided with access to improved 
+water sources under the project.
+No change in indicator, end of project target 
+increased.
+WSDP is supporting more community water points in the 
+north-eastern counties than originally envisaged.  Each 
+community water point serves an average of 400 people.
+2. People provided with access to improved sanitation 
+services under the project urban.
+Dropped. This indicator was to track progress in northeastern 
+counties in upgrading toilets, for example to EcoSan or VIP.  
+Few of such interventions are currently planned.  
+3.People benefiting under the project from a connection to 
+the sewage system or from improved septic sludge 
+management.
+People benefiting under the project from a 
+connection to the sewage system.  End of target 
+reduced from 240,000 to 130,000.
+No septic sludge management facilities are now expected 
+under the project.  
+4.People with existing connections benefiting from more 
+hours per day of water services.
+No change in indicator, or target.  
+5. WSPs supported under the project that demonstrate an 
+increase in their OCCR.
+No change in indicator, or target. This indicator will be revised once agreements are reached 
+on the next phase of the CLSG.
+6. Direct project beneficiaries No change in indicator, or target.
+7.Of which female. No change in indicator, or target.  The World Bank
+Water and Sanitation Development Project (P156634)
+Revisions to the Results Framework Comments/
+Rationale for Change
+Intermediate Results indicators for each component
+Current (PAD) Proposed change*
+Component 1
+1. Piped household water connections that are benefiting 
+from rehabilitation works undertaken under the project.
+No change in indicator.  Target reduced. The new target reflects work taking place under an ongoing 
+contract.
+2. New piped household water connections under the 
+project.
+No change in indicator.  Target increased.  The new target reflects work taking place under an ongoing 
+contract.
+3. Water delivered by WSPs to customers (as reflected in 
+water bills) (million cubic meters per year).  
+No change in indicator.  Target increased. The new target reflects additional water expected from 
+new and rehabilitated boreholes in Kwale.  The previous 
+target reflected water produced at the Baricho wellfields 
+only.
+4. People provided with access to improved shared 
+sanitation facilities under the project.
+No change in indicator.  Target reduced. The new target reflects work taking place under ongoing 
+contracts.
+5. Quantity of septic sludge treated in facilities supported 
+under the project.
+Dropped. No septic sludge management facilities will be constructed 
+in the coastal counties under the project.
+6. Volume of biological oxygen demand pollution loads 
+removed by treatment plants supported under the project.
+No change in indicator.  Target reduced. The new target reflects work taking place under an ongoing 
+contract, which will be complete only shortly prior to the 
+project closing date when operations will be well below 
+design capacity.
+7. Hours of service per day provided by coastal WSPs 
+benefiting from the project.
+No change in indicator.  Baseline and target 
+reduced.
+Baseline and target reduced to reflect information obtained 
+during the midterm review mission.  
+8. Non-revenue water (% of water that a service provider 
+supplies to its distribution system that is not reflected in 
+revenues).
+No change in indicator or in target.  NRW for WSPs currently ranges from 60% for Kwale to 30% 
+for Malindi.
+9. Operations and maintenance costs of coastal WSPs 
+benefiting from the project recovered from customers.
+No change in indicator or in end-project target.  
+Baseline changed from 100% to 90%.
+Baseline has been revised to reflect updated information 
+from the WSPs.
+Component 2
+10. New piped household water connections that are 
+resulting from the project intervention. 
+Dropped. No investments resulting in new water connections will be 
+undertaken under the project.
+11. Improved community water points constructed or 
+rehabilitated under the project.
+No change in indicator.  Target increased from 
+five to 33.
+Work under ongoing contracts indicates that a higher 
+number of community water points will be constructed 
+than previously envisaged.The World Bank
+Water and Sanitation Development Project (P156634)
+Revisions to the Results Framework Comments/
+Rationale for Change
+12. New water supplied to northeastern WSPs under the 
+project (m3/day).
+No change in indicator.  Target increased. Work under ongoing contracts indicates that more new 
+boreholes will be constructed under the project than 
+originally envisaged.
+13. Quantity of septic sludge treated in facilities supported 
+under the project.
+Dropped. No septic sludge management facilities will be constructed 
+in the north-eastern counties under the project.
+14. Gender action plans developed and under 
+implementation.
+No change in indicator or in target.
+Component 3
+15. Guidelines for results-based financing adopted. No change in indicator or in target.
+16. Results-based financing mechanism established and 
+operational.
+Dropped. No implementing agencies will benefit from this activity, so 
+the mechanism will not become operational.
+17. Complaints handling system operational in WSPs 
+supported under the project.
+No change in indicator or in target.
+18. Average performance score for WSPs receiving the CLSG 
+(percentage)
+No change in indicator or in target.  This indicator will be revised once agreements are reached 
+on the next phase of the CLSG.The World Bank
+Water and Sanitation Development Project (P156634)

@@ -168,6 +168,15 @@ export const galleryCopy = {
     unknown: "An ID no source has",
     unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",
+    // Ticket 18's kinds of passage (design review r2 P9).
+    scanned: "A paragraph the layout parser read from a scanned page",
+    tableRow: "A row of a table, opened from a link",
+    tableRowQuoted: "A row of a table, opened from a sentence that quotes its rating",
+    tableSummary: "A table's summary, which never backs a number",
+    notice: "A section of a notice's text, its qualifications",
+    noticeContacts: "A section of a notice's text, with contact details removed",
+    frenchParagraph: "A paragraph in French",
+    removedSummary: "A sentence removed because only a table's summary held its number",
   },
 
   notes: {
@@ -186,6 +195,7 @@ export const galleryCopy = {
     flush: "A ghost button under text",
     onPage: "A ghost button on the page background",
     textLink: "Text link",
+    externalLink: "External link, which opens the World Bank's PDF in a new tab",
     tabs: "Tabs on a light surface",
     tabsLater: "Tabs with a later one selected",
     cardsBelowLg: "Cards below 1024 px, for a table with wide columns",
@@ -349,6 +359,9 @@ export const galleryCopy = {
     flushText: "Two of the 24 packages were advertised again.",
     icon: "Close the source",
     textLink: "See which data I hold",
+    externalLink: "Open at page 65",
+    externalLinkHref: "https://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf",
+    externalLinkMore: " of the Project Appraisal Document for P130164 in the World Bank's PDF",
     tabsLabel: "Project sections",
     tabs: ["Summary", "Procurement", "Timeline", "Documents", "Connections"],
     cardTitle: "Sample Water Agency, Procurement Plan of October 9, 2026",
@@ -636,6 +649,24 @@ export const galleryCopy = {
     rows: 4,
     kinds: 2,
     fixes: 2,
+    // The hardest documents' states (the 18 brief, section 5), each the sample shelf with one change.
+    shelf: {
+      entries: ["sample_pad", "longest_pad", "long_plan", "french_report", "over_parser_limit"],
+      sections: {
+        overLimit: "The hardest documents, with a document over the parser's limit",
+        abstentions: "The hardest documents: no document fits, no hand count, stopped at the cap, not read yet",
+        empty: "The hardest documents, before the first document run",
+        twoGaps: "What holds it back, with two hard documents I couldn't read",
+        filtered: "Opened from the plan check, with only the Procurement Plan's row",
+      },
+      overLimit: { key: "over_parser_limit", kind: "over_parser_limit", position: 5, row_id: "papers", state: "read", project_id: "P000005", document: { document_id: "100005", project_id: "P000005", project_name: "Sample Corridor Project", document_type: "Project Appraisal Document", document_date: "2019-05-02", pdf_pages: 640, pdf_url: "https://documents.worldbank.org/sample/100005.pdf", language: "en" }, part: null, language: null, hard_page: 501, parser_row: 21, outcome_row: 22, read_pages_row: null, longest_row: null, status: null, unreadable: false, denominator_from: "pdf_pages", counted_on: null, parts: 2, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21" },
+      noHandCount: { outcome_row: 23, status: null, denominator_from: null, unreadable: false },
+      stopped: { state: "stopped_at_cap", outcome_row: null, read_pages_row: 24, status: null },
+      noDocument: { state: "no_document", document: null, parser_row: null, outcome_row: null, status: null },
+      twoGaps: [
+        { text: "I couldn't read parts of " }, { number: 2, row: null, noun: null }, { text: " of " }, { link: "the hardest documents I read", href: "#hardest-documents" }, { text: ", such as the risk annex in the Project Appraisal Document for " }, { mono: "P000001" }, { text: "." },
+      ],
+    },
     filteredHeadline: "Two sources are behind the past range. The biggest gap is the 180 of 1,200 sample contracts that lack a STEP reference.",
     result: {
       tool: "data_readiness_for",
@@ -676,6 +707,26 @@ export const galleryCopy = {
         { evidence_id: "strata.ops.data_readiness:papers/P000000/read", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "read", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.silver.passages" }, source_key: "papers", measure: "read", kind: "read_well", subjects: ["P000000"], count: 140, denominator: 160, share_percent: 88, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
         { evidence_id: "strata.ops.data_readiness:papers/P000000/fresh", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "fresh", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.bronze.document_texts" }, source_key: "papers", measure: "fresh", kind: "fresh", subjects: ["P000000"], count: null, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: "2026-06-30", measured_on: "2026-10-21", run_ids: ["sample"] },
         { evidence_id: "strata.ops.data_readiness:papers/P000000/passages", public_from: "2026-10-21", source: { table: "strata.ops.data_readiness", source_key: "papers", measure: "passages", subjects: ["P000000"], measured_on: "2026-10-21", counted_in: "strata.gold.passage" }, source_key: "papers", measure: "passages", kind: "coverage", subjects: ["P000000"], count: 600, denominator: 600, share_percent: 100, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-pad/stress_shelf_parser_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_parser_pages", subjects: ["sample-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_parser_pages", kind: "read_well", subjects: ["sample-pad"], count: 100, denominator: 100, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-pad/stress_shelf_scan_annex", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_scan_annex", subjects: ["sample-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_scan_annex", kind: "read_well", subjects: ["sample-pad"], count: 0, denominator: 8, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-long-pad/stress_shelf_parser_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_parser_pages", subjects: ["sample-long-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_parser_pages", kind: "read_well", subjects: ["sample-long-pad"], count: 6, denominator: 103, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-long-pad/stress_shelf_longest_pad", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_longest_pad", subjects: ["sample-long-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_longest_pad", kind: "read_well", subjects: ["sample-long-pad"], count: 84, denominator: 103, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-plan/stress_shelf_parser_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_parser_pages", subjects: ["sample-plan"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_parser_pages", kind: "read_well", subjects: ["sample-plan"], count: 12, denominator: 14, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-plan/stress_shelf_large_plan", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_large_plan", subjects: ["sample-plan"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_large_plan", kind: "read_well", subjects: ["sample-plan"], count: 212, denominator: 212, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-report/stress_shelf_parser_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_parser_pages", subjects: ["sample-report"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_parser_pages", kind: "read_well", subjects: ["sample-report"], count: 5, denominator: 87, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-report/stress_shelf_other_language", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_other_language", subjects: ["sample-report"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_other_language", kind: "read_well", subjects: ["sample-report"], count: 202, denominator: 202, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-shelf/stress_shelf_longest_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_longest_pages", subjects: ["sample-shelf"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_longest_pages", kind: "read_well", subjects: ["sample-shelf"], count: 103, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-long-doc/stress_shelf_parser_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_parser_pages", subjects: ["sample-long-doc"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_parser_pages", kind: "read_well", subjects: ["sample-long-doc"], count: 640, denominator: 640, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-long-doc/stress_shelf_over_parser_limit", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_over_parser_limit", subjects: ["sample-long-doc"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_over_parser_limit", kind: "read_well", subjects: ["sample-long-doc"], count: 640, denominator: 640, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-pad/stress_shelf_scan_annex", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_scan_annex", subjects: ["sample-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_scan_annex", kind: "read_well", subjects: ["sample-pad"], count: 6, denominator: null, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+        { evidence_id: "strata.ops.stress_shelf:sample/sample-pad/stress_shelf_read_pages", public_from: "2026-10-21", source: { table: "strata.ops.stress_shelf", source_key: "documents", measure: "stress_shelf_read_pages", subjects: ["sample-pad"], measured_on: "2026-10-21", counted_in: "strata.ops.stress_shelf" }, source_key: "documents", measure: "stress_shelf_read_pages", kind: "read_well", subjects: ["sample-pad"], count: 61, denominator: 100, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null, as_of: null, measured_on: "2026-10-21", run_ids: ["sample"] },
+      ],
+      stress_shelf: [
+        { key: "sample_pad", kind: "scan_annex", position: 1, row_id: "papers", state: "read", project_id: "P000001", part: "risk_annex", language: "en", parser_row: 12, outcome_row: 13, read_pages_row: null, longest_row: null, status: "gap", unreadable: true, denominator_from: "hand_count", counted_on: "2026-10-20", parts: null, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21", hard_page: 65, document: { document_id: "100001", project_id: "P000001", project_name: "Sample Roads Project", document_type: "Project Appraisal Document", document_date: "2013-10-01", pdf_pages: 100, pdf_url: "https://documents.worldbank.org/sample/100001.pdf", language: "en" } },
+        { key: "longest_pad", kind: "longest_pad", position: 2, row_id: "papers", state: "read", project_id: "P000002", part: null, language: "en", parser_row: 14, outcome_row: 15, read_pages_row: null, longest_row: null, status: "partial", unreadable: false, denominator_from: "pdf_pages", counted_on: null, parts: null, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21", hard_page: 6, document: { document_id: "100002", project_id: "P000002", project_name: "Sample Water Project", document_type: "Project Appraisal Document", document_date: "2017-04-05", pdf_pages: 103, pdf_url: "https://documents.worldbank.org/sample/100002.pdf", language: "en" } },
+        { key: "long_plan", kind: "large_plan", position: 3, row_id: "plans", state: "read", project_id: "P000003", part: null, language: "en", parser_row: 16, outcome_row: 17, read_pages_row: null, longest_row: null, status: null, unreadable: false, denominator_from: "text_references", counted_on: null, parts: null, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21", hard_page: 3, document: { document_id: "100003", project_id: "P000003", project_name: "Sample Gateway Project", document_type: "Procurement Plan", document_date: "2026-09-24", pdf_pages: 14, pdf_url: "https://documents.worldbank.org/sample/100003.pdf", language: "en" } },
+        { key: "french_report", kind: "other_language", position: 4, row_id: "papers", state: "read", project_id: "P000004", part: null, language: "fr", parser_row: 18, outcome_row: 19, read_pages_row: null, longest_row: null, status: null, unreadable: false, denominator_from: "passages_made", counted_on: null, parts: null, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21", hard_page: 13, document: { document_id: "100004", project_id: "P000004", project_name: "Projet exemple pour l'énergie", document_type: "Implementation Completion and Results Report", document_date: "2021-07-29", pdf_pages: 87, pdf_url: "https://documents.worldbank.org/sample/100004.pdf", language: "fr" } },
+        { key: "over_parser_limit", kind: "over_parser_limit", position: 5, row_id: "papers", state: "no_document", project_id: null, part: null, language: "en", parser_row: null, outcome_row: null, read_pages_row: null, longest_row: 20, status: null, unreadable: false, denominator_from: null, counted_on: null, parts: null, parser: "ai_parse_document", parser_limit_pages: 500, daily_page_cap: 500, measured_on: "2026-10-21", hard_page: null, document: null },
       ],
       sources: [
         { type: "measured", id: "sample", source_key: "sample", label: "Sample awards", stratum: "What", scope: { kind: "every_country" }, covers: "since fiscal 2020", cells: {
@@ -706,7 +757,9 @@ export const galleryCopy = {
           [{ text: "Of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts, " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " lack a STEP reference." }],
           [{ text: "I list one more gap under Sources." }],
         ] },
-        { kind: "document_search", tool: "search_passages", status: "ready", ready_for: 11, spell_out: false, holds_back: [[{ text: "Nothing I measured holds it back." }]] },
+        { kind: "document_search", tool: "search_passages", status: "partial", ready_for: 11, spell_out: false, holds_back: [
+          [{ text: "I couldn't read the risk annex in the Project Appraisal Document for " }, { mono: "P000001" }, { text: ", one of " }, { link: "the hardest documents I read", href: "#hardest-documents" }, { text: "." }],
+        ] },
       ],
       gaps: [
         { id: "sample/linked", type: "linked", status: "partial", row_id: "sample", source_key: "sample", column: "linked", projects: 12, phrase: [{ text: "the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts that lack a STEP reference" }] },

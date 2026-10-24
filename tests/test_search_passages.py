@@ -183,3 +183,24 @@ def test_a_passage_with_no_stored_shield_result_is_left_out_and_the_coverage_lin
     assert all(row["paragraph"] != "54" or row["document_type"] != ICR for row in result["rows"])
     [held_back] = [entry for entry in result["coverage"]["not_used"] if entry["reason"] == "not_screened"]
     assert held_back["count"] == 1 and held_back["evidence_ids"][0].endswith("/v1/54")
+
+
+def test_a_search_for_similar_experience_returns_notice_passages_with_their_notice_ids(engine):
+    """Ticket 18, criterion 8. Notices' scope and qualification text is indexed as passages, from
+    strata.silver.notices.notice_text, so qualification criteria can be compared. No notice uses the
+    words "similar experience" side by side; the two values.toml names come closest, each in one
+    section of its notice."""
+    case = TRUTH["stress_shelf"]["similar_experience"]
+
+    result = search(engine, query="similar experience")
+
+    notices = [row for row in result["rows"] if row["kind"] == "notice_text"]
+    for expected in case["notices"]:
+        [row] = [found for found in notices if found["notice_id"] == expected["notice"]]
+        assert expected["quote"] in row["text"]
+        assert row["passage_id"].startswith(f"{expected['notice']}/v1/s")
+        assert row["evidence_id"] == f"strata.gold.passage:{row['passage_id']}"
+        assert (row["source"]["notice_id"], row["pdf_page"], row["source"]["pdf_url"]) == (expected["notice"], None, None)
+        assert row["source"]["notice_url"].endswith(f"/procurement-detail/{expected['notice']}")
+        assert row["document_type"] == "Request for Expression of Interest"
+    assert [row["notice_id"] for row in result["rows"][:2]] == [notice["notice"] for notice in case["notices"]]

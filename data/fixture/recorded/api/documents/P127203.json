@@ -1,0 +1,784 @@
+{
+ "source": "https://search.worldbank.org/api/v3/wds?format=json&proid=P127203&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc",
+ "license": "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0.",
+ "recorded": "2026-10-24",
+ "about": "Every document the Documents API lists for P127203 in Haiti, including its completion report ICR4990 in English and in French under one report number (ticket 18).",
+ "response": {
+  "rows": 500,
+  "os": 0,
+  "page": 1,
+  "total": 46,
+  "documents": {
+   "D33723614": {
+    "id": "33723614",
+    "docty": "Implementation Completion Report Review",
+    "lang": "English",
+    "repnb": "ICRR0022705",
+    "docdt": "2022-02-07T05:00:00Z",
+    "display_title": "Haiti - HT Rebuilding Energy Infrastr   Access",
+    "disclosure_date": "2022-02-07T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/099325002072212224/pdf/Haiti000HT0Reb0gy0Infrastr000Access.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/099325002072212224/text/Haiti000HT0Reb0gy0Infrastr000Access.txt",
+    "guid": "099325002072212224",
+    "url": "http://documents.worldbank.org/curated/en/099325002072212224"
+   },
+   "D33311180": {
+    "id": "33311180",
+    "docty": "Implementation Completion and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08885d7f5_1_0"
+    },
+    "repnb": "ICR4990",
+    "docdt": "2021-07-29T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The Rebuilding Energy Infrastructure and Access Project for Haiti had a moderately satisfactory outcome.  The lessons learned were: (1) In a fragile political and social context like Haiti’s, the enthusiasm and momentum of a post-natural disaster reconstruction effort cannot necessarily be relied on to sustain a challenging sector reform program. (2) World Bank Group Fragility, Conflict and Violence-Affected States (FCV) financed investment operations in FCV countries should be modest in both scope and objectives. (3) In the absence of political will, policy conditionality in donor funded projects will not improve governance or institutional performance and may even be counterproductive. (4) Sustained sector reform requires a suitable institutional set-up and a high-level oversight and decision-making body. (5) In post-natural disaster and FCV situations, it is appropriate to invest in rehabilitating, modernizing and diversifying infrastructure for energy production, transmission and distribution despite imperfect sector governance and management. (6) The introduction and scaling up of renewable energy in an FCV country can be a valuable part of improving energy access and supply diversification. (7) Shortcomings of the project’s key indicators complicated and impaired the assessment of the project’s outcomes."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project",
+    "disclosure_date": "2021-08-02T12:57:34Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/832371627909222752/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/832371627909222752/text/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.txt",
+    "guid": "832371627909222752",
+    "url": "http://documents.worldbank.org/curated/en/832371627909222752"
+   },
+   "D33407968": {
+    "id": "33407968",
+    "docty": "Implementation Completion and Results Report",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b088981413_1_0"
+    },
+    "repnb": "ICR4990",
+    "docdt": "2021-07-29T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The Rebuilding Energy Infrastructure and Access Project for Haiti had a moderately satisfactory outcome.  The lessons learned were: (1) In a fragile political and social context like Haiti’s, the enthusiasm and momentum of a post-natural disaster reconstruction effort cannot necessarily be relied on to sustain a challenging sector reform program. (2) World Bank Group Fragility, Conflict and Violence-Affected States (FCV) financed investment operations in FCV countries should be modest in both scope and objectives. (3) In the absence of political will, policy conditionality in donor funded projects will not improve governance or institutional performance and may even be counterproductive. (4) Sustained sector reform requires a suitable institutional set-up and a high-level oversight and decision-making body. (5) In post-natural disaster and FCV situations, it is appropriate to invest in rehabilitating, modernizing and diversifying infrastructure for energy production, transmission and distribution despite imperfect sector governance and management. (6) The introduction and scaling up of renewable energy in an FCV country can be a valuable part of improving energy access and supply diversification. (7) Shortcomings of the project’s key indicators complicated and impaired the assessment of the project’s outcomes."
+    },
+    "display_title": "Haiti - Projet de Reconstruction de l’Infrastructure Electrique et d’Expansion de l’Acces a l’Energie",
+    "disclosure_date": "2021-09-13T04:49:09Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/310191631508626407/text/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.txt",
+    "guid": "310191631508626407",
+    "url": "http://documents.worldbank.org/curated/en/310191631508626407"
+   },
+   "D33288664": {
+    "id": "33288664",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08881a7c8_1_0"
+    },
+    "repnb": "SCA0053710",
+    "docdt": "2021-07-21T04:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN - P127203 - Rebuilding Energy Infrastructure and Access - Audited Financial Statement",
+    "disclosure_date": "2021-07-22T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/938211626987502479/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Audited-Financial-Statement.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/938211626987502479/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Audited-Financial-Statement.txt",
+    "guid": "938211626987502479",
+    "url": "http://documents.worldbank.org/curated/en/938211626987502479"
+   },
+   "D32359057": {
+    "id": "32359057",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087d1bcbf_1_0"
+    },
+    "repnb": "RES42903",
+    "docdt": "2020-08-27T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objectives of Rebuilding Energy Infrastructure and Access Project for Haiti are to (a) strengthen energy policy and planning capacity, (b) to improve the sustainability and resilience of the electricity sector and to restore and expand access to reliable electricity services, and (c) provide financial assistance to the electricity sector in case of an emergency. This restructuring requires the following changes: (i) components and cost; (ii) cancellations proposed; and (iii) reallocation between disbursement categories."
+    },
+    "display_title": "Disclosable Restructuring Paper - Rebuilding Energy Infrastructure and Access - P127203",
+    "disclosure_date": "2020-08-27T16:37:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/546021598546276101/pdf/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/546021598546276101/text/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.txt",
+    "guid": "546021598546276101",
+    "url": "http://documents.worldbank.org/curated/en/546021598546276101"
+   },
+   "D31831459": {
+    "id": "31831459",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087696a90_1_0"
+    },
+    "repnb": "ISR40557",
+    "docdt": "2020-03-02T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rebuilding Energy Infrastructure and Access - P127203 - Sequence No : 12",
+    "disclosure_date": "2020-03-02T22:17:45Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/971051583187465684/pdf/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-12.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/971051583187465684/text/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-12.txt",
+    "guid": "971051583187465684",
+    "url": "http://documents.worldbank.org/curated/en/971051583187465684"
+   },
+   "D31591857": {
+    "id": "31591857",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087373aab_1_0"
+    },
+    "repnb": "RES39151",
+    "docdt": "2019-11-27T05:00:00Z",
+    "display_title": "Disclosable Restructuring Paper - Rebuilding Energy Infrastructure and Access - P127203",
+    "disclosure_date": "2019-11-27T20:44:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/835231574887495669/pdf/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/835231574887495669/text/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.txt",
+    "guid": "835231574887495669",
+    "url": "http://documents.worldbank.org/curated/en/835231574887495669"
+   },
+   "D31413287": {
+    "id": "31413287",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0870f139c_1_0"
+    },
+    "repnb": "STEP24563",
+    "docdt": "2019-09-17T04:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN- P127203- Rebuilding Energy Infrastructure and Access - Procurement Plan",
+    "disclosure_date": "2019-09-17T19:56:51Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/607151568750215876/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/607151568750215876/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.txt",
+    "guid": "607151568750215876",
+    "url": "http://documents.worldbank.org/curated/en/607151568750215876"
+   },
+   "D31321807": {
+    "id": "31321807",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086fa38a8_1_0"
+    },
+    "repnb": "ISR36898",
+    "docdt": "2019-08-07T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rebuilding Energy Infrastructure and Access - P127203 - Sequence No : 11",
+    "disclosure_date": "2019-08-07T20:11:35Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/541361565208698977/pdf/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-11.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/541361565208698977/text/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-11.txt",
+    "guid": "541361565208698977",
+    "url": "http://documents.worldbank.org/curated/en/541361565208698977"
+   },
+   "D31262032": {
+    "id": "31262032",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086ee9274_1_0"
+    },
+    "repnb": "RES36730",
+    "docdt": "2019-07-19T04:00:00Z",
+    "display_title": "Disclosable Restructuring Paper - Rebuilding Energy Infrastructure and Access - P127203",
+    "disclosure_date": "2019-07-19T20:34:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/521171563568504866/pdf/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/521171563568504866/text/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.txt",
+    "guid": "521171563568504866",
+    "url": "http://documents.worldbank.org/curated/en/521171563568504866"
+   },
+   "D31079590": {
+    "id": "31079590",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086cad9fd_1_0"
+    },
+    "repnb": "STEP20758",
+    "docdt": "2019-05-16T04:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN- P127203- Rebuilding Energy Infrastructure and Access - Procurement Plan",
+    "disclosure_date": "2019-05-16T15:19:50Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/916211558019994065/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/916211558019994065/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.txt",
+    "guid": "916211558019994065",
+    "url": "http://documents.worldbank.org/curated/en/916211558019994065"
+   },
+   "D30980529": {
+    "id": "30980529",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086b90894_1_0"
+    },
+    "repnb": "STEP19687",
+    "docdt": "2019-04-12T04:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN- P127203- Rebuilding Energy Infrastructure and Access - Procurement Plan",
+    "disclosure_date": "2019-04-12T16:09:46Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/427861555085386940/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/427861555085386940/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.txt",
+    "guid": "427861555085386940",
+    "url": "http://documents.worldbank.org/curated/en/427861555085386940"
+   },
+   "D30764055": {
+    "id": "30764055",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086881271_1_0"
+    },
+    "repnb": "ISR35563",
+    "docdt": "2019-01-16T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rebuilding Energy Infrastructure and Access - P127203 - Sequence No : 10",
+    "disclosure_date": "2019-01-16T14:36:05Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/487731547649370237/pdf/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-10.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/487731547649370237/text/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-10.txt",
+    "guid": "487731547649370237",
+    "url": "http://documents.worldbank.org/curated/en/487731547649370237"
+   },
+   "D30761985": {
+    "id": "30761985",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08687a8ab_1_0"
+    },
+    "repnb": "STEP16262",
+    "docdt": "2019-01-15T05:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN- P127203- Rebuilding Energy Infrastructure and Access - Procurement Plan",
+    "disclosure_date": "2019-01-15T21:28:19Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/280411547587700754/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/280411547587700754/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.txt",
+    "guid": "280411547587700754",
+    "url": "http://documents.worldbank.org/curated/en/280411547587700754"
+   },
+   "D30689597": {
+    "id": "30689597",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0867813c3_1_0"
+    },
+    "repnb": "STEP15387",
+    "docdt": "2018-12-12T05:00:00Z",
+    "display_title": "Haiti - LATIN AMERICA AND CARIBBEAN- P127203- Rebuilding Energy Infrastructure and Access - Procurement Plan",
+    "disclosure_date": "2018-12-12T20:40:53Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/972811544647259107/pdf/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/972811544647259107/text/Haiti-LATIN-AMERICA-AND-CARIBBEAN-P127203-Rebuilding-Energy-Infrastructure-and-Access-Procurement-Plan.txt",
+    "guid": "972811544647259107",
+    "url": "http://documents.worldbank.org/curated/en/972811544647259107"
+   },
+   "D30224147": {
+    "id": "30224147",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085d07b69_1_0"
+    },
+    "repnb": "ISR33196",
+    "docdt": "2018-06-29T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rebuilding Energy Infrastructure and Access - P127203 - Sequence No : 09",
+    "disclosure_date": "2018-06-29T20:52:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/884181530305539737/pdf/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-09.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/884181530305539737/text/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-09.txt",
+    "guid": "884181530305539737",
+    "url": "http://documents.worldbank.org/curated/en/884181530305539737"
+   },
+   "D29515749": {
+    "id": "29515749",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085566c45_1_0"
+    },
+    "repnb": "RES30247",
+    "docdt": "2018-01-17T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the Rebuilding Energy Infrastructure and Access Project for Haiti are to: (a) strengthen energy policy and planning capacity, (b) to improve the sustainability and resilience of the electricity sector and to restore and expand access to reliable electricity services, and (c) provide financial assistance to the electricity sector in case of an emergency. strategic shift is proposed towards more focus on off-grid renewable energy initiatives while maintaining emphasis on the improvement of EDH’s operational and financial performance. In addition, the Bank has discussed and agreed with the Government the cancellation of US$25 million from the original grant of US$90 million to be reallocated to Haiti IDA portfolio. The Risk Rating of the project remains the same as the lessons learned from the past five (5) years have clearly shown that governance issues have heavily affected the sector performance, as stated by the Risk Rating table of the original project, this Project alone will not address these issues. However, it aims to contribute to providing foundational operational principles and tools to improve on sector governance. Technical discussions with the Government led to the need for this strategic shift in focus and fund reallocation. Notably US$2,532,772.21 will be reallocated from component two to component one to finance: (a) new off-grid renewable energy initiatives which are in close alignment with the CTF and SREP financed projects; (b) technical assistance to the Government for designing and implementing a legal and regulatory framework, (c) to contribute to government efforts to improve governance in the energy sector by supporting the newly created regulatory authority, ANARSE, and the process leading to the re-negotiation of IPPs’ contracts. Therefore, the new budget for component one will be US$21,961,866.16 compared to the initial budget of US$19,429,094 after the first reallocation. The following activities originally proposed under component two such as: (a) the rehabilitation of countryside grids, (b) the construction of the transmission line between Drouet and Mirebalais, (c) the second phase of installation of remote meters to large industrial clients, as well as (d) the second phase of rehabilitation of remaining grids in Port-au-Prince area will be dropped. The restructured project would support ongoing activities, such as financial and human resources audit of EDH, as well as technical assistance on commercial and planning issues. It was also agreed to support the rehabilitation of Drouet hydropower plant. Component three will remain unchanged."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : restructuring",
+    "disclosure_date": "2017-12-23T04:18:20Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/542681516249101298/pdf/IL-FRESDATA-EXT-P127203-01-17-2018-1516249090061.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/542681516249101298/text/IL-FRESDATA-EXT-P127203-01-17-2018-1516249090061.txt",
+    "guid": "542681516249101298",
+    "url": "http://documents.worldbank.org/curated/en/542681516249101298"
+   },
+   "D29322248": {
+    "id": "29322248",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0854cb619_1_0"
+    },
+    "repnb": "ISR30974",
+    "docdt": "2017-12-31T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Rebuilding Energy Infrastructure and Access - P127203 - Sequence No : 08",
+    "disclosure_date": "2017-12-31T16:14:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/137851514736846371/pdf/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-08.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/137851514736846371/text/Disclosable-Version-of-the-ISR-Rebuilding-Energy-Infrastructure-and-Access-P127203-Sequence-No-08.txt",
+    "guid": "137851514736846371",
+    "url": "http://documents.worldbank.org/curated/en/137851514736846371"
+   },
+   "D29500994": {
+    "id": "29500994",
+    "docty": "Financing Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "HQBOCS"
+    },
+    "docdt": "2017-12-22T05:00:00Z",
+    "display_title": "Official Documents- Agreement Providing for the Amendment and Restatement of the Financing Agreement for Grant H806-0-HT",
+    "disclosure_date": "2018-01-11T15:06:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/341891515681520019/pdf/ITK171540-201800110936.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/341891515681520019/text/ITK171540-201800110936.txt",
+    "guid": "341891515681520019",
+    "url": "http://documents.worldbank.org/curated/en/341891515681520019"
+   },
+   "D29283781": {
+    "id": "29283781",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085460ac5_1_0"
+    },
+    "repnb": "RES30247",
+    "docdt": "2017-12-19T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the Rebuilding Energy Infrastructure and Access Project for Haiti are to: (a) strengthen energy policy and planning capacity, (b) to improve the sustainability and resilience of the electricity sector and to restore and expand access to reliable electricity services, and (c) provide financial assistance to the electricity sector in case of an emergency. strategic shift is proposed towards more focus on off-grid renewable energy initiatives while maintaining emphasis on the improvement of EDH’s operational and financial performance. In addition, the Bank has discussed and agreed with the Government the cancellation of US$25 million from the original grant of US$90 million to be reallocated to Haiti IDA portfolio. The Risk Rating of the project remains the same as the lessons learned from the past five (5) years have clearly shown that governance issues have heavily affected the sector performance, as stated by the Risk Rating table of the original project, this Project alone will not address these issues. However, it aims to contribute to providing foundational operational principles and tools to improve on sector governance. Technical discussions with the Government led to the need for this strategic shift in focus and fund reallocation. Notably US$2,532,772.21 will be reallocated from component two to component one to finance: (a) new off-grid renewable energy initiatives which are in close alignment with the CTF and SREP financed projects; (b) technical assistance to the Government for designing and implementing a legal and regulatory framework, (c) to contribute to government efforts to improve governance in the energy sector by supporting the newly created regulatory authority, ANARSE, and the process leading to the re-negotiation of IPPs’ contracts. Therefore, the new budget for component one will be US$21,961,866.16 compared to the initial budget of US$19,429,094 after the first reallocation. The following activities originally proposed under component two such as: (a) the rehabilitation of countryside grids, (b) the construction of the transmission line between Drouet and Mirebalais, (c) the second phase of installation of remote meters to large industrial clients, as well as (d) the second phase of rehabilitation of remaining grids in Port-au-Prince area will be dropped. The restructured project would support ongoing activities, such as financial and human resources audit of EDH, as well as technical assistance on commercial and planning issues. It was also agreed to support the rehabilitation of Drouet hydropower plant. Component three will remain unchanged."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : restructuring : Disclosable Restructuring Paper - Rebuilding Energy Infrastructure and Access - P127203",
+    "disclosure_date": "2017-12-19T08:17:28Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/283261513671449558/pdf/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/283261513671449558/text/Disclosable-Restructuring-Paper-Rebuilding-Energy-Infrastructure-and-Access-P127203.txt",
+    "guid": "283261513671449558",
+    "url": "http://documents.worldbank.org/curated/en/283261513671449558"
+   },
+   "D27680750": {
+    "id": "27680750",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084d4d868_1_0"
+    },
+    "repnb": "ISR27403",
+    "docdt": "2017-06-28T04:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 07",
+    "disclosure_date": "2017-06-28T15:49:58Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/761751498664998700/pdf/ISR-Disclosable-P127203-06-28-2017-1498664989312.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/761751498664998700/text/ISR-Disclosable-P127203-06-28-2017-1498664989312.txt",
+    "guid": "761751498664998700",
+    "url": "http://documents.worldbank.org/curated/en/761751498664998700"
+   },
+   "D27039914": {
+    "id": "27039914",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0847e68ea_1_0"
+    },
+    "repnb": "ISR24529",
+    "docdt": "2016-12-20T05:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 06",
+    "disclosure_date": "2016-12-20T19:35:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/172201482262505656/pdf/1482262504063-0000A8056-ISR-Disclosable-P127203-12-20-2016-1482262491887.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/172201482262505656/text/1482262504063-0000A8056-ISR-Disclosable-P127203-12-20-2016-1482262491887.txt",
+    "guid": "172201482262505656",
+    "url": "http://documents.worldbank.org/curated/en/172201482262505656"
+   },
+   "D26046880": {
+    "id": "26046880",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0841ebd4c_1_0"
+    },
+    "repnb": "ISR21427",
+    "docdt": "2016-03-09T05:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 05",
+    "disclosure_date": "2016-03-10T00:11:03Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/373891468252602579/pdf/ISR-Disclosable-P127203-03-09-2016-1457568652740.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/373891468252602579/text/ISR-Disclosable-P127203-03-09-2016-1457568652740.txt",
+    "guid": "373891468252602579",
+    "url": "http://documents.worldbank.org/curated/en/373891468252602579"
+   },
+   "D24738629": {
+    "id": "24738629",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b082faceba_1_0"
+    },
+    "repnb": "ISR16317",
+    "docdt": "2015-06-30T04:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 04",
+    "disclosure_date": "2015-06-30T21:07:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/453321468274770279/pdf/ISR-Disclosable-P127203-06-30-2015-1435698455067.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/453321468274770279/text/ISR-Disclosable-P127203-06-30-2015-1435698455067.txt",
+    "guid": "453321468274770279",
+    "url": "http://documents.worldbank.org/curated/en/453321468274770279"
+   },
+   "D19234565": {
+    "id": "19234565",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b082321aa7_1_0"
+    },
+    "repnb": "ISR13843",
+    "docdt": "2014-03-12T04:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 03",
+    "disclosure_date": "2014-03-12T14:49:56Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/636161468034454243/pdf/ISR-Disclosable-P127203-03-12-2014-1394635766611.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/636161468034454243/text/ISR-Disclosable-P127203-03-12-2014-1394635766611.txt",
+    "guid": "636161468034454243",
+    "url": "http://documents.worldbank.org/curated/en/636161468034454243"
+   },
+   "D18223562": {
+    "id": "18223562",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081de137c_1_0"
+    },
+    "repnb": "ISR11226",
+    "docdt": "2013-08-12T04:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 02",
+    "disclosure_date": "2013-08-12T18:59:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/992001468035936457/pdf/ISR-Disclosable-P127203-08-12-2013-1376333979162.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/992001468035936457/text/ISR-Disclosable-P127203-08-12-2013-1376333979162.txt",
+    "guid": "992001468035936457",
+    "url": "http://documents.worldbank.org/curated/en/992001468035936457"
+   },
+   "D17180172": {
+    "id": "17180172",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081894074_1_0"
+    },
+    "repnb": "ISR8891",
+    "docdt": "2013-01-15T05:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access : P127203 - Implementation Status Results Report : Sequence 01",
+    "disclosure_date": "2013-01-15T21:36:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/953421468035935221/pdf/ISR-Disclosable-P127203-01-15-2013-1358285811249.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/953421468035935221/text/ISR-Disclosable-P127203-01-15-2013-1358285811249.txt",
+    "guid": "953421468035935221",
+    "url": "http://documents.worldbank.org/curated/en/953421468035935221"
+   },
+   "D17303797": {
+    "id": "17303797",
+    "docty": "Financing Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081883287_1_0"
+    },
+    "docdt": "2012-11-06T05:00:00Z",
+    "display_title": "Official Documents- Financing Agreement, Grant H806-HT (Closing Package)",
+    "disclosure_date": "2013-01-11T16:37:26Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/976581468251079720/pdf/RAD2019902702.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/976581468251079720/text/RAD2019902702.txt",
+    "guid": "976581468251079720",
+    "url": "http://documents.worldbank.org/curated/en/976581468251079720"
+   },
+   "D17303799": {
+    "id": "17303799",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08188328a_1_0"
+    },
+    "docdt": "2012-11-06T05:00:00Z",
+    "display_title": "Official Documents- Letter ref. Disbursement, Grant H806-HT (Closing Package)",
+    "disclosure_date": "2013-01-11T16:40:13Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/587411468274151075/pdf/RAD760535773.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/587411468274151075/text/RAD760535773.txt",
+    "guid": "587411468274151075",
+    "url": "http://documents.worldbank.org/curated/en/587411468274151075"
+   },
+   "D17303802": {
+    "id": "17303802",
+    "docty": "Side Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0818832e7_1_0"
+    },
+    "docdt": "2012-11-06T05:00:00Z",
+    "display_title": "Official Documents- Supplemental Letter ref. Financial Data, Grant H806-HT (Closing Package)",
+    "disclosure_date": "2013-01-11T16:42:03Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/119591468035934656/pdf/RAD1923586711.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/119591468035934656/text/RAD1923586711.txt",
+    "guid": "119591468035934656",
+    "url": "http://documents.worldbank.org/curated/en/119591468035934656"
+   },
+   "D16788709": {
+    "id": "16788709",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "0000A8056_2012100211110809"
+    },
+    "repnb": "PIDC637",
+    "docdt": "2012-10-01T04:00:00Z",
+    "display_title": "Project Information Document (Concept Stage) - Rebuilding Energy Infrastructure and Access - P127203",
+    "pdfurl": "http://documents.worldbank.org/curated/en/145861468773956499/pdf/PID0Print0P12720301002201201349190666524.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/145861468773956499/text/PID0Print0P12720301002201201349190666524.txt",
+    "guid": "145861468773956499",
+    "url": "http://documents.worldbank.org/curated/en/145861468773956499"
+   },
+   "D16775420": {
+    "id": "16775420",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0816a06af_1_0"
+    },
+    "docdt": "2012-09-26T04:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Advance Q835-HT",
+    "disclosure_date": "2012-09-27T15:20:27Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/529431468252253422/pdf/RAD1561494364.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/529431468252253422/text/RAD1561494364.txt",
+    "guid": "529431468252253422",
+    "url": "http://documents.worldbank.org/curated/en/529431468252253422"
+   },
+   "D16775249": {
+    "id": "16775249",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0816a031d_1_0"
+    },
+    "docdt": "2012-09-26T04:00:00Z",
+    "display_title": "Official Documents- Agreement for Advance Q835-HT",
+    "disclosure_date": "2012-09-27T15:15:16Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/579781468274150526/pdf/RAD266504657.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/579781468274150526/text/RAD266504657.txt",
+    "guid": "579781468274150526",
+    "url": "http://documents.worldbank.org/curated/en/579781468274150526"
+   },
+   "D17191669": {
+    "id": "17191669",
+    "docty": "Project Appraisal Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000231615_20130118141418"
+    },
+    "repnb": "72266",
+    "docdt": "2012-08-27T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the  Rebuilding Energy Infrastructure and Access Project for Haiti are to (a) strengthen the recipient's energy policy and planning capacity; (b) improve the sustainability and resilience of the recipients electricity sector and restore and expand access to reliable electricity services; and (c) provide financial assistance in case of an energy sector emergency. The project has three components. (1) Strengthening energy sector institutions and improving energy access. (2) Enhancing Electricite d'Haiti (EDH's) performance and rehabilitating and expanding infrastructure. (3) Energy sector risk and emergency response contingent reserve component will provide support upon occurrence of an energy sector emergency through: (a) the carrying out of emergency recovery and rehabilitation activities; and/or (b) technical assistance to support Ministry of Public Works, Transport, Energy and Communication (MTPTEC) and EDH in its response to an energy sector emergency."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : Haiti- Projet de reconstruction de linfrastructure électrique et dexpansion de laccès à lélectricité",
+    "disclosure_date": "2012-09-14T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/259661468273710114/pdf/NonAsciiFileName0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/259661468273710114/text/NonAsciiFileName0.txt",
+    "guid": "259661468273710114",
+    "url": "http://documents.worldbank.org/curated/en/259661468273710114"
+   },
+   "D16734564": {
+    "id": "16734564",
+    "docty": "Project Appraisal Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000350881_20120914163308"
+    },
+    "repnb": "72266",
+    "docdt": "2012-08-27T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the  Rebuilding Energy Infrastructure and Access Project for Haiti are to (a) strengthen the recipient's energy policy and planning capacity; (b) improve the sustainability and resilience of the recipients electricity sector and restore and expand access to reliable electricity services; and (c) provide financial assistance in case of an energy sector emergency. The project has three components. (1) Strengthening energy sector institutions and improving energy access. (2) Enhancing Electricite d'Haiti (EDH's) performance and rehabilitating and expanding infrastructure. (3) Energy sector risk and emergency response contingent reserve component will provide support upon occurrence of an energy sector emergency through: (a) the carrying out of emergency recovery and rehabilitation activities; and/or (b) technical assistance to support Ministry of Public Works, Transport, Energy and Communication (MTPTEC) and EDH in its response to an energy sector emergency."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project",
+    "disclosure_date": "2012-09-14T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/739381468037774840/pdf/722660PAD0P1270y0disclosed090140120.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/739381468037774840/text/722660PAD0P1270y0disclosed090140120.txt",
+    "guid": "739381468037774840",
+    "url": "http://documents.worldbank.org/curated/en/739381468037774840"
+   },
+   "D16547415": {
+    "id": "16547415",
+    "docty": "Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "0000A8056_2012072716421615"
+    },
+    "repnb": "ISDSA84",
+    "docdt": "2012-07-27T04:00:00Z",
+    "display_title": "Integrated Safeguards Data Sheet (Appraisal Stage) - Rebuilding Energy Infrastructure and Access - P127203",
+    "pdfurl": "http://documents.worldbank.org/curated/en/769941468751548231/pdf/AppraisalISDS0027201201343421734957.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/769941468751548231/text/AppraisalISDS0027201201343421734957.txt",
+    "guid": "769941468751548231",
+    "url": "http://documents.worldbank.org/curated/en/769941468751548231"
+   },
+   "D16539147": {
+    "id": "16539147",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "0000A8056_2012072511080147"
+    },
+    "repnb": "PIDA27",
+    "docdt": "2012-07-25T04:00:00Z",
+    "display_title": "Project Information Document (Appraisal Stage) - Rebuilding Energy Infrastructure and Access - P127203",
+    "pdfurl": "http://documents.worldbank.org/curated/en/222441468771048200/pdf/PID0Appraisal0025201201343228880141.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/222441468771048200/text/PID0Appraisal0025201201343228880141.txt",
+    "guid": "222441468771048200",
+    "url": "http://documents.worldbank.org/curated/en/222441468771048200"
+   },
+   "D16589908": {
+    "id": "16589908",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120809140807"
+    },
+    "repnb": "E3083",
+    "docdt": "2012-07-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 1 of 6) : Plan de gestion environnementale et sociale",
+    "disclosure_date": "2012-08-09T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/900041468257082966/pdf/E30830HT0FR0rebuilding0energy.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/900041468257082966/text/E30830HT0FR0rebuilding0energy.txt",
+    "guid": "900041468257082966",
+    "url": "http://documents.worldbank.org/curated/en/900041468257082966"
+   },
+   "D16592756": {
+    "id": "16592756",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810094025"
+    },
+    "repnb": "E3083",
+    "docdt": "2012-07-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 4 of 6) : Cadre de Gestion Environnementale et Sociale",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/394011468249293028/pdf/E30830V40HT0FR0rebuilding0energy.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/394011468249293028/text/E30830V40HT0FR0rebuilding0energy.txt",
+    "guid": "394011468249293028",
+    "url": "http://documents.worldbank.org/curated/en/394011468249293028"
+   },
+   "D16589189": {
+    "id": "16589189",
+    "docty": "Resettlement Plan",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120809113243"
+    },
+    "repnb": "RP1327",
+    "docdt": "2012-06-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of this Resettlement Plan (RAP) are: (i) minimize, to the extent possible, involuntary resettlement and land acquisition, exploring all viable alternative project design (ii) ensure that those affected are consulted effectively and freely in the most transparent way and have the opportunity to participate in all key stages of process development and implementation activities of involuntary resettlement and compensation, (iii) ensure that compensation, if any, are determined in a participatory manner with persons related to the impacts caused, to ensure that no person affected by the project being penalized disproportionately, (iv ) ensure that those affected, including the poor and vulnerable groups, are assisted in their efforts to improve their livelihoods and their level and quality of life. Activities that could cause the relocation work mainly concern infrastructure (location of poles and the passage of MV lines). This phase will involve the execution of civil works and the laying and connecting lines. Taking into account the minimization efforts, in strict compliance with the road allowance, the potential impacts of the project could be relatively modest and focus on losses of rain-fed crops (corn) and fruit trees.<BR>"
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : abbreviated resettlement plan (Vol. 1 of 2) : Plan succinct de reinstallation",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/462541468273711457/pdf/RP13270HT0FR0rebuilding0energy.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/462541468273711457/text/RP13270HT0FR0rebuilding0energy.txt",
+    "guid": "462541468273711457",
+    "url": "http://documents.worldbank.org/curated/en/462541468273711457"
+   },
+   "D16593148": {
+    "id": "16593148",
+    "docty": "Resettlement Plan",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810110422"
+    },
+    "repnb": "RP1327",
+    "docdt": "2012-06-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of this Resettlement Plan (RAP) are: (i) minimize, to the extent possible, involuntary resettlement and land acquisition, exploring all viable alternative project design (ii) ensure that those affected are consulted effectively and freely in the most transparent way and have the opportunity to participate in all key stages of process development and implementation activities of involuntary resettlement and compensation, (iii) ensure that compensation, if any, are determined in a participatory manner with persons related to the impacts caused, to ensure that no person affected by the project being penalized disproportionately, (iv ) ensure that those affected, including the poor and vulnerable groups, are assisted in their efforts to improve their livelihoods and their level and quality of life. Activities that could cause the relocation work mainly concern infrastructure (location of poles and the passage of MV lines). This phase will involve the execution of civil works and the laying and connecting lines. Taking into account the minimization efforts, in strict compliance with the road allowance, the potential impacts of the project could be relatively modest and focus on losses of rain-fed crops (corn) and fruit trees.<BR>"
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : abbreviated resettlement plan (Vol. 2 of 2) : Cadre de Politique de Réinstallation",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/657191468257083240/pdf/RP13270v20HT0FR0rebuilding0energy.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/657191468257083240/text/RP13270v20HT0FR0rebuilding0energy.txt",
+    "guid": "657191468257083240",
+    "url": "http://documents.worldbank.org/curated/en/657191468257083240"
+   },
+   "D14644317": {
+    "id": "14644317",
+    "docty": "Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000003596_20110725120800"
+    },
+    "repnb": "AC6464",
+    "docdt": "2011-07-21T04:00:00Z",
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project",
+    "disclosure_date": "2011-07-26T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/955551468251119641/pdf/Integrated0Saf00Sheet0Concept0Stage.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/955551468251119641/text/Integrated0Saf00Sheet0Concept0Stage.txt",
+    "guid": "955551468251119641",
+    "url": "http://documents.worldbank.org/curated/en/955551468251119641"
+   },
+   "D16592680": {
+    "id": "16592680",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810085702"
+    },
+    "repnb": "E3083",
+    "docdt": "2007-04-30T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 2 of 6) : Annexe 7",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/859301468251123050/pdf/E30830v20annexe070HT.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/859301468251123050/text/E30830v20annexe070HT.txt",
+    "guid": "859301468251123050",
+    "url": "http://documents.worldbank.org/curated/en/859301468251123050"
+   },
+   "D16593115": {
+    "id": "16593115",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810103547"
+    },
+    "repnb": "E3083",
+    "docdt": "2007-04-30T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 5 of 6) : Annexe 7",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/344041468039530729/pdf/E30830v50Annexe070HT0FR.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/344041468039530729/text/E30830v50Annexe070HT0FR.txt",
+    "guid": "344041468039530729",
+    "url": "http://documents.worldbank.org/curated/en/344041468039530729"
+   },
+   "D16593061": {
+    "id": "16593061",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810105101"
+    },
+    "repnb": "E3083",
+    "docdt": "2007-04-30T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 6 of 6) : Annexe 8",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/306981468032150118/pdf/E30830v60Annexe080HT0FR.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/306981468032150118/text/E30830v60Annexe080HT0FR.txt",
+    "guid": "306981468032150118",
+    "url": "http://documents.worldbank.org/curated/en/306981468032150118"
+   },
+   "D16592684": {
+    "id": "16592684",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000020953_20120810090725"
+    },
+    "repnb": "E3083",
+    "docdt": "2007-04-30T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the proposed Project are to strengthen energy policy and planning capacity and expand access to reliable electricity services in urban and rural areas and to sustainable energy for cooking. The Project direct beneficiaries will be (i) Haiti's population, including existing energy consumers (residential, commercial and industrial electricity users as well as charcoal consumers) mostly in the capital, and new electricity customers both in cities and in rural areas, and (ii) energy sector institutions, whose capacity will be strengthened.The study showed that the project involves both relatively large positive impacts, but also some negative social impacts moderate to minor, especially during phases of way and work release. In this project, grid rehabilitation and extension, expansion of the power transmission network and grid densification activities could potentially have negative environmental and/or social impacts. Negative environmental impacts may be related to waste/debris removal and disposal, worker and fire safety, soil removal and erosion, increased levels of dust and noise, oil spill or leakage from machinery or transformers, etc."
+    },
+    "display_title": "Haiti - Rebuilding Energy Infrastructure and Access Project : framework for environmental and social management (Vol. 3 of 6) : Annexe 8",
+    "disclosure_date": "2012-08-08T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/751501468037774325/pdf/E30830v30annexe80FR0HT.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/751501468037774325/text/E30830v30annexe80FR0HT.txt",
+    "guid": "751501468037774325",
+    "url": "http://documents.worldbank.org/curated/en/751501468037774325"
+   },
+   "facets": {}
+  }
+ }
+}

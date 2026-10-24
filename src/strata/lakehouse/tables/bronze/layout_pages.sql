@@ -1,4 +1,5 @@
--- What the layout parser (Route B) read on each page: the page's tables, as JSON. Each page is
+-- What the layout parser (Route B) read on each page: the page's tables, as JSON, its other text and
+-- how many figures it holds. The plan reader and the document reader both write here. Each page is
 -- parsed once: a page whose document_id, pdf_page and page_hash already have a row is not parsed
 -- again, and the rows here count against the daily page cap on the day they were parsed.
 --
@@ -8,6 +9,9 @@
 -- page_hash     SHA-256 of the page's text when it was parsed (bronze.document_pages)
 -- parser        the layout parser that read it: ai_parse_document, or the offline stand-in
 -- tables        the page's tables as JSON: {"tables": [{"title", "header_rows", "rows"}]}
+-- text          the page's words outside its tables, in reading order: one line per line, and a blank
+--               line between blocks. For a scanned page, the paragraphs the parser read from the image
+-- figures       how many figures the parser found on the page
 -- parsed_at     when it was parsed, in UTC
 -- run_id        the run that parsed it
 -- public_from   the document's public date (ADR 0002)
@@ -18,6 +22,8 @@ CREATE TABLE IF NOT EXISTS strata.bronze.layout_pages (
   page_hash STRING NOT NULL,
   parser STRING NOT NULL,
   tables STRING NOT NULL,
+  text STRING,
+  figures INT,
   parsed_at TIMESTAMP NOT NULL,
   run_id STRING NOT NULL,
   public_from DATE NOT NULL

@@ -134,8 +134,9 @@ def test_only_cells_that_fall_short_get_a_status_and_each_is_partial(engine):
         ("ibrd_loans", "linked"): "partial",  # 0 of 1
         ("ibrd_loan_history", "linked"): "partial",  # 0 of 1
         ("cpia", "coverage"): "partial",  # IDA countries only
-        ("reports", "read_well"): "partial",  # 145 of 175 body pages
     }
+    # Ticket 18: the reports' Read well is the pages read well across both routes, over 90 percent. The
+    # body pages whose paragraph numbers I could not find are one of the row's checks, a gap below.
     [cpia] = [row for row in result["sources"] if row["id"] == "cpia"]
     assert cpia["cells"]["coverage"]["note"] == "IDA countries only"
 
@@ -150,23 +151,27 @@ def test_a_published_table_needs_no_reading_and_a_row_without_a_freshness_measur
 
 
 def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_on(engine):
-    """The plan check reads plans whose confirmed first listing was read for none of the 46 activities
-    of the latest versions (ticket 08's verifier); document search reads reports in which 30 of 175 body
+    """The plan check reads plans whose confirmed first listing was read for none of the activities of
+    the latest versions: the demo plan project's 46 (ticket 08's verifier) and the 212 of the stress
+    shelf's plan (values.toml, stress_shelf.long_plan); document search reads reports in which some body
     pages show no paragraph numbers."""
+    long_plan = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]["long_plan"]
+    latest = 46 + long_plan["activity_references"]
     result = readiness(engine)
 
     kinds = {kind["kind"]: kind for kind in result["kinds"]}
     assert {name: kind["status"] for name, kind in kinds.items()} == {"plan_check": "partial", "document_search": "partial"}
     plan_check = kinds["plan_check"]
-    assert result["rows"][plan_check["ready_for"]]["count"] == 46
+    assert result["rows"][plan_check["ready_for"]]["count"] == latest
     held = registry_text(plan_check["holds_back"][0])
     # The measure counts an activity once in each latest version that lists it (ticket 08's verifier, F3).
-    # Design r3 N2: when every entry falls short, the sentence says so rather than compare 46 with 46.
-    assert held == "None of the 46 activity entries in the latest plan versions has a first listing I could confirm."
-    # Design r4 P3: in that form the 46 is also what falls short, so it opens its measure as the
+    # Design r3 N2: when every entry falls short, the sentence says so rather than compare 258 with 258.
+    assert held == (f"None of the {latest} activity entries in the latest plan versions has a first listing I "
+                    "could confirm.")
+    # Design r4 P3: in that form the whole is also what falls short, so it opens its measure as the
     # missing records and says what they lack.
     [whole] = [segment for segment in plan_check["holds_back"][0] if "number" in segment]
-    assert (whole["number"], whole["role"], whole["lack"]) == (46, "missing", "a first listing I could confirm")
+    assert (whole["number"], whole["role"], whole["lack"]) == (latest, "missing", "a first listing I could confirm")
 
 
 def registry_text(segments):
@@ -176,16 +181,18 @@ def registry_text(segments):
 
 
 def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_reach_the_most_projects(engine):
-    """Two projects have a contract with no STEP reference, two have fiscal 2017 to 2019 contracts in
-    local currency, and both projects' reports have pages with no paragraph numbers. Ties go in
-    registry order."""
+    """Three projects' reports have body pages with no paragraph numbers (P130164's, P156634's and the
+    French report's P127203), two projects have a contract with no STEP reference, and two have fiscal
+    2017 to 2019 contracts in local currency. Ties go in registry order."""
     result = readiness(engine)
+    numbering = latest(engine, "documents", "document_pages_paragraph_numbering_found")
+    found, pages = sum(row["count"] for row in numbering), sum(row["denominator"] for row in numbering)
 
     # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part".
     assert result["headline"]["text"] == (
-        "I can answer each of the two kinds of question below in part. The biggest gaps are the 75 of 603 "
-        "contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP) and the "
-        "contract awards for fiscal 2017 to 2019, which no World Bank dataset publishes.")
+        f"I can answer each of the two kinds of question below in part. The biggest gaps are the {pages - found} "
+        f"of {pages} body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a "
+        "reference from Systematic Tracking of Exchanges in Procurement (STEP).")
     numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:1]
     assert numbers == [len(result["kinds"])]
 
@@ -205,14 +212,16 @@ def test_the_fixes_are_ranked_by_the_projects_each_would_add_evidence_to(engine)
     result = readiness(engine)
 
     ranked = [(fix["rank"], fix["gap"], fix["projects"]) for fix in result["fixes"]]
-    assert ranked == [(1, "awards/linked", 2), (2, "fy2017_2019", 2), (3, "reports/read_well", 2),
-                      (4, "plans/latest_activities_with_confirmed_first_listing_read", 1)]
-    assert registry_text(result["fixes"][1]["sentence"]).startswith(
+    # Ticket 18: the reports of three projects now fall short of paragraph numbers, and the plans of two
+    # (the demo plan's project and the stress shelf's P161305) have unconfirmed first listings.
+    assert ranked == [(1, "reports/document_pages_paragraph_numbering_found", 3), (2, "awards/linked", 2),
+                      (3, "fy2017_2019", 2), (4, "plans/latest_activities_with_confirmed_first_listing_read", 2)]
+    assert registry_text(result["fixes"][2]["sentence"]).startswith(
         "Convert the seven contracts in award notices for fiscal 2017 to 2019 from local currency")
     # The measure counts activity entries: one activity sits in two agencies' latest plans (ticket 08, F3).
     assert registry_text(result["fixes"][3]["sentence"]) == (
         "Read the older plan versions named in each project's document list, so I can confirm the first listing "
-        "of each of the 46 activity entries.")
+        "of each of the 258 activity entries.")
 
 
 def test_every_number_with_a_row_says_what_it_counts_and_a_fix_s_projects_open_only_their_own_measure(engine):
@@ -286,7 +295,8 @@ def test_a_shortfall_says_what_its_records_lack_so_its_tooltip_can_name_them(eng
     """Design r3, low polish: the headline's 75 says these are the contracts that lack a reference."""
     result = readiness(engine)
 
-    [missing] = [segment for segment in result["headline"]["segments"] if segment.get("role") == "missing"]
+    [missing] = [segment for segment in result["headline"]["segments"] if segment.get("role") == "missing"
+                 and "STEP" in (segment.get("lack") or "")]
     assert (missing["number"], missing["lack"]) == (
         KENYA["contracts"] - KENYA["with_step_reference"],
         "a reference from Systematic Tracking of Exchanges in Procurement (STEP)")
@@ -298,13 +308,17 @@ def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_sh
     result = readiness(engine)
 
     routes = {route["measure"]: result["rows"][route["row"]] for route in result["routes"]}
-    assert list(routes) == ["pages_read_route_a", "pages_read_route_b"]
+    # Ticket 18: the reports' routes too, the published text and the layout parser.
+    assert list(routes) == ["pages_read_route_a", "pages_read_route_b", "document_pages_read_route_a",
+                            "document_pages_read_route_b"]
     for measure, row in routes.items():
         stored = latest(engine, "documents", measure)
         assert (row["count"], row["denominator"]) == (
             sum(entry["count"] for entry in stored), sum(entry["denominator"] for entry in stored)), measure
         assert row["evidence_id"].startswith("strata.ops.data_readiness:documents/")
-    assert [route["label"] for route in result["routes"]] == ["Published text (Route A)", "Layout parser (Route B)"]
+    assert [route["label"] for route in result["routes"]] == [
+        "Plan pages, published text", "Plan pages, layout parser", "Report pages, published text",
+        "Report pages, layout parser"]
 
 
 def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine):
@@ -312,7 +326,7 @@ def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine)
 
     assert [row["id"] for row in result["sources"]] == ["awards", "fy2017_2019", "notices"]
     assert result["filter"] == {"sources": ["awards", "notices"], "unknown": 0, "from": "find_comparables",
-                                "shown": 2, "total": 13}
+                                "shown": 2, "total": 14}
     assert result["kinds"] == []  # neither tool in the registry reads awards or notices yet
     assert result["headline"]["text"].startswith("Two sources are behind the past range. The biggest gaps are ")
 
@@ -323,10 +337,10 @@ def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_
     result = readiness(engine, sources="documents,projects", from_tool="check_plan")
 
     assert [row["id"] for row in result["sources"]] == ["projects", "plans"]  # in registry order
-    assert (result["filter"]["shown"], result["filter"]["total"]) == (2, 13)
-    # Review r4 P3: when every entry falls short, the headline's gap says so rather than "46 of 46".
+    assert (result["filter"]["shown"], result["filter"]["total"]) == (2, 14)
+    # Review r4 P3: when every entry falls short, the headline's gap says so rather than "258 of 258".
     assert result["headline"]["text"] == (
-        "Two sources are behind the plan check. The biggest gap is the 46 activity entries in the latest plan "
+        "Two sources are behind the plan check. The biggest gap is the 258 activity entries in the latest plan "
         "versions, none of which has a first listing I could confirm.")
     assert all(gap["row_id"] in ("plans", "projects") for gap in result["gaps"])
     assert [kind["kind"] for kind in result["kinds"]] == ["plan_check"]
@@ -353,12 +367,12 @@ def test_a_kind_s_count_spells_step_out_only_where_the_headline_above_it_does_no
 
 def test_a_filtered_view_counts_the_rows_it_shows(engine):
     """The count line, the alert and the headline count the Sources table's rows, never the keys
-    in the link: the documents source alone fills two rows."""
+    in the link: the documents source alone fills three rows (ticket 18 added its notices' text)."""
     result = readiness(engine, sources="documents,projects", from_tool="find_comparables")
 
-    assert [row["id"] for row in result["sources"]] == ["projects", "plans", "reports"]
-    assert result["filter"]["shown"] == 3
-    assert result["headline"]["text"].startswith("Three sources are behind the past range.")
+    assert [row["id"] for row in result["sources"]] == ["projects", "plans", "reports", "notice_text"]
+    assert result["filter"]["shown"] == 4
+    assert result["headline"]["text"].startswith("Four sources are behind the past range.")
 
 
 def test_a_link_never_puts_its_own_words_in_the_headline_and_unknown_keys_are_only_counted(engine):
@@ -513,7 +527,7 @@ def test_a_source_with_no_measures_leaves_the_headline_out_and_says_how_many(wri
     result = call_on(written(*awards()))
 
     assert result["headline"] is None
-    assert result["headline_abstention"] == {"reason": "unmeasured", "unmeasured": 12, "sources": 13}
+    assert result["headline_abstention"] == {"reason": "unmeasured", "unmeasured": 13, "sources": 14}
     [notices] = [row for row in result["sources"] if row["id"] == "notices"]
     assert notices["type"] == "unmeasured"
 

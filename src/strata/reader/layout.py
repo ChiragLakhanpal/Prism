@@ -1,18 +1,26 @@
-"""Route B: the layout parser, which reads the tables on one PDF page.
+"""Route B: the layout parser, which reads one PDF page: its tables, its text and its figures.
 
-The page router sends a page here when it holds a table that the published text scrambles, such as
-the STEP table of a Procurement Plan (docs/PLAN.md section 5). A parser returns each table on the
-page as a grid: its header rows first, then one row per table row, each row with one cell per
-column. Each parser has a name, which the run records with every page it reads. A parser raises
-ParseFailed for a page it cannot read; the run records the page and goes on to the next one.
+The page router sends a page here when the published text cannot be trusted with it: a scanned page,
+a table that the published text scrambles, such as the STEP table of a Procurement Plan or a PAD's
+risk table, or a figure (docs/PLAN.md section 5). A parser returns the page's Layout: each table as a
+grid (its header rows first, then one row per table row, each row with one cell per column), the
+page's other words as text in reading order, one line per line with a blank line between blocks,
+and how many figures it found. Each parser has a name, which the run records with every page it
+reads. A parser raises ParseFailed for a page it cannot read; the run records the page and goes on to
+the next one.
 
-- RecordedLayout, offline. The fixture records every word on each plan's PDF pages with its box
-  (data/fixture/recorded/documents/<project>/<name>.words.json). This parser finds each table from
-  its line of "Planned" and "Actual" column heads, takes the other columns from the gaps between
-  words, and joins the words of each cell. It reads the layout of STEP's plan export, and it
-  stands in for ai_parse_document so that the gate needs no workspace.
+- RecordedLayout, offline. The fixture records every word on the PDF pages of each Procurement Plan
+  and of the scanned P130164 PAD with its box (data/fixture/recorded/documents/<project>/<name>.words.json,
+  read from the PDF's text layer). This parser finds each STEP table from its line of "Planned" and
+  "Actual" column heads, takes the other columns from the gaps between words, and joins the words
+  of each cell. It reads a PAD's risk table, set in two columns, from the line of each risk's
+  Rating (risk_table below). It stands in for ai_parse_document so that the gate needs no
+  workspace. It cannot read a page whose words the fixture did not record, or a page with no words
+  (a scan's text layer can be empty), so it raises ParseFailed for each.
 - AiParseDocument, live. It puts the one page, as a PDF of its own, in a volume and runs
-  ai_parse_document on the SQL warehouse, then reads each table element's HTML into a grid.
+  ai_parse_document on the SQL warehouse, then reads each table element's HTML into a grid and the
+  other elements into text. Each page goes on its own, so a document of any length is read in parts
+  of one page, and every page keeps its number in the whole PDF.
 
 A PDF cell wraps its text at the cell's edge, sometimes inside a word, and the PDF keeps no space at
 the wrap. Joining a cell's lines therefore keeps a space at each wrap, as the published text does,
@@ -59,6 +67,16 @@ def tables_from_json(text: str) -> list[Table]:
 
 
 @dataclass(frozen=True)
+class Layout:
+    """What the layout parser read on one page: its tables, its other words as text in reading order
+    (one line per line, a blank line between blocks), and how many figures it found."""
+
+    tables: tuple[Table, ...] = ()
+    text: str = ""
+    figures: int = 0
+
+
+@dataclass(frozen=True)
 class Page:
     """One PDF page to read: the document it belongs to, where its PDF is, and its number from 1."""
 
@@ -74,8 +92,8 @@ class ParseFailed(RuntimeError):
 class LayoutParser(Protocol):
     name: str
 
-    def parse(self, page: Page) -> list[Table]:
-        """The tables on one page. Raises ParseFailed when it cannot read the page."""
+    def parse(self, page: Page) -> Layout:
+        """One page's tables, text and figures. Raises ParseFailed when it cannot read the page."""
 
 
 def https(url: str) -> str:
@@ -89,28 +107,37 @@ Word = tuple[float, float, float, float, str]  # x0, y0, x1, y1, text, in points
 
 
 class RecordedLayout:
-    """The layout parser's offline stand-in, which reads tables from each plan's recorded words."""
+    """The layout parser's offline stand-in, which reads each page from its document's recorded words."""
 
     name = "recorded words (pdftotext -bbox)"
 
-    def __init__(self, manifest):
+    def __init__(self, manifest, rejoin_split_words: bool | None = None):
+        from strata.config import load_rejoin_split_words
+
         self.files = {https(source.pdf_url): manifest.recorded / f"{source.file}.words.json"
                       for source in manifest.sources if source.words}
+        # config/models.toml's [layout] rejoin_split_words, a parked decision: false until the user decides.
+        self.rejoin = load_rejoin_split_words() if rejoin_split_words is None else rejoin_split_words
 
-    def parse(self, page: Page) -> list[Table]:
+    def parse(self, page: Page) -> Layout:
         path = self.files.get(https(page.pdf_url))
         if path is None:
-            raise LookupError(f"The fixture has no recorded words for {page.pdf_url}. Mark its source "
-                              "words = true in data/fixture/sources.toml and record it again.")
-        pages = _recorded_tables(path)
+            raise ParseFailed(f"The fixture has no recorded words for {page.pdf_url}, so the offline layout "
+                              "parser cannot read it. Mark its source words = true in data/fixture/sources.toml "
+                              "and record it again.")
+        pages = _recorded_layouts(path, self.rejoin)
         if not 1 <= page.pdf_page <= len(pages):
-            raise LookupError(f"{page.pdf_url} has {len(pages)} pages, so it has no page {page.pdf_page}.")
-        return list(pages[page.pdf_page - 1])
+            raise ParseFailed(f"{page.pdf_url} has {len(pages)} pages, so it has no page {page.pdf_page}.")
+        found = pages[page.pdf_page - 1]
+        if found is None:
+            raise ParseFailed(f"Page {page.pdf_page} of {page.pdf_url} has no words in its text layer, so the "
+                              "offline layout parser cannot read it. ai_parse_document reads the scanned image.")
+        return found
 
 
 @lru_cache(maxsize=64)
-def _recorded_tables(path: Path) -> tuple[tuple[Table, ...], ...]:
-    return tuple(tuple(tables) for tables in read_pages(_recorded_pages(path)))
+def _recorded_layouts(path: Path, rejoin: bool = False) -> tuple[Layout | None, ...]:
+    return tuple(read_layouts(_recorded_pages(path), rejoin))
 
 
 @lru_cache(maxsize=64)
@@ -168,8 +195,21 @@ def join_lines(parts: list[str]) -> str:
     return text
 
 
-def _text(words) -> str:
-    return join_lines([" ".join(word[4] for word in line) for _, line in _lines(words)])
+def _text(words, right: float | None = None, rejoin: bool = False) -> str:
+    """A cell's words as one text. With rejoin, a word the cell wrapped at its right edge joins its end
+    on the next line with no space ("Explor" then "atory" reads "Exploratory")."""
+    lines = _lines(words)
+    if not (rejoin and right is not None and right != float("inf")):
+        return join_lines([" ".join(word[4] for word in line) for _, line in lines])
+    text = ""
+    for at, (_, line) in enumerate(lines):
+        part = " ".join(word[4] for word in line)
+        previous = lines[at - 1][1] if at else None
+        if previous and previous[-1][2] >= right - 2 and part[:1].islower() and previous[-1][4][-1:].isalpha():
+            text += part
+        else:
+            text = join_lines([text, part]) if text else part
+    return text
 
 
 def _centre(word) -> float:
@@ -186,21 +226,55 @@ class _Header:
 
 
 def read_pages(pages) -> list[list[Table]]:
-    """The tables on each page of a document's recorded words, in page order.
+    """The tables on each page of a document's recorded words, in page order."""
+    return [list(layout.tables) if layout else [] for layout in read_layouts(pages)]
+
+
+def read_layouts(pages, rejoin: bool = False) -> list[Layout | None]:
+    """Each page of a document's recorded words as the layout parser reads it, in page order, or None
+    for a page with no words.
 
     A table that runs onto the next page goes on there without its header, so the rows at the top
     of a page, above its first header, are read with the columns of the last table on the page before.
+    A risk table runs from the page that names the risk assessment framework to the next annex.
     """
-    found, carried = [], None
+    found, carried, risks = [], None, None
     for words in pages:
-        tables, carried = _tables_on(list(words), carried)
-        found.append(tables)
+        words = list(words)
+        if not words:
+            found.append(None)
+            continue
+        risks = risk_table_title(words, risks)
+        if risks is not None:
+            table, used = _risk_table(words, risks)
+            tables = [table] if table else []
+        else:
+            tables, carried, used = _tables_on(words, carried, rejoin)
+        text = _text_blocks([w for i, w in enumerate(words) if i not in used])
+        found.append(Layout(tuple(tables), text, 0))
     return found
 
 
-def _tables_on(words, carried: _Header | None) -> tuple[list[Table], _Header | None]:
+def _text_blocks(words) -> str:
+    """Words in reading order: one line per line, and a blank line where the gap between two lines is
+    wider than a line, so a paragraph reads as one block."""
     if not words:
-        return [], carried
+        return ""
+    height = statistics.median(w[3] - w[1] for w in words)
+    out, last = [], None
+    for top, line in _lines(words):
+        if last is not None and top - last > 2 * height:
+            out.append("")
+        out.append(" ".join(w[4] for w in line))
+        last = top
+    return "\n".join(out)
+
+
+def _tables_on(words, carried: _Header | None, rejoin: bool = False) -> tuple[list[Table], _Header | None, set[int]]:
+    """The STEP tables on a page, the header the next page carries on with, and the indexes of the
+    words the tables hold."""
+    if not words:
+        return [], carried, set()
     height = statistics.median(w[3] - w[1] for w in words)
     lines = _lines(words)
     heads = [(top, line) for top, line in lines if sum(w[4] in PLANNED_ACTUAL for w in line) >= 2]
@@ -216,14 +290,17 @@ def _tables_on(words, carried: _Header | None) -> tuple[list[Table], _Header | N
         header = _Header(title, tuple(w for w in words if start - 0.5 <= w[1] < top_of_heads - 0.5),
                          tuple(sorted(w for w in line if w[4] in PLANNED_ACTUAL)))
         found.append((title_top, header, top_of_heads + 0.5, end))
-    tables = []
+    tables, used = [], set()
     first = found[0][0] - 0.5 if found else float("inf")
-    rest = [w for w in words if w[1] < first]
+    rest = [i for i, w in enumerate(words) if w[1] < first]
     if carried and rest:
-        tables.append(_grid(carried, rest, height))
-    for _, header, top, end in found:
-        tables.append(_grid(header, [w for w in words if top < w[1] < end], height))
-    return tables, (found[-1][1] if found else carried)
+        tables.append(_grid(carried, [words[i] for i in rest], height, rejoin))
+        used |= set(rest)
+    for title_top, header, top, end in found:
+        body = [i for i, w in enumerate(words) if top < w[1] < end]
+        tables.append(_grid(header, [words[i] for i in body], height, rejoin))
+        used |= set(body) | {i for i, w in enumerate(words) if title_top - 0.5 <= w[1] <= top}
+    return tables, (found[-1][1] if found else carried), used
 
 
 LEFT = 60  # points: a table's title and its first column start left of this
@@ -245,7 +322,7 @@ def _header_start(lines, activity: int, height: float) -> tuple[float, str, floa
     return start, "", start
 
 
-def _grid(table: _Header, body: list[Word], height: float) -> Table:
+def _grid(table: _Header, body: list[Word], height: float, rejoin: bool = False) -> Table:
     title, header, heads = table.title, list(table.words), table.heads
     first = heads[0][0]
     space = _space(body or header)
@@ -272,8 +349,16 @@ def _grid(table: _Header, body: list[Word], height: float) -> Table:
         for member in pair:
             member["label"] = label
 
-    # Each column's words make cells where a gap between lines is wider than a line; cells whose
-    # middles sit at the same height make a row.
+    # A row starts at each Activity Reference No. at the left of the first column. Every word from its
+    # line down to the next reference's line belongs to it, so rows set close together, with no gap
+    # wider than a line between them, stay apart.
+    anchored = _anchored_rows(columns, body, height, space, rejoin)
+    if anchored is not None:
+        return Table(title=title, header_rows=2, rows=(tuple(c["label"] for c in columns),
+                                                       tuple(c["head"] for c in columns), *anchored))
+
+    # Otherwise each column's words make cells where a gap between lines is wider than a line; cells
+    # whose middles sit at the same height make a row.
     cells = []
     for index, column in enumerate(columns):
         mine = sorted((w for w in body if column["left"] <= _centre(w) < column["right"]), key=lambda w: (w[1], w[0]))
@@ -301,6 +386,127 @@ def _grid(table: _Header, body: list[Word], height: float) -> Table:
     return Table(title=title, header_rows=2, rows=tuple(grid))
 
 
+# ── A PAD's risk table, set in two columns ───────────────────────────────
+
+# The heading that starts a PAD's risk table, a line of its own: the Operational Risk Assessment
+# Framework (ORAF) in a PAD from before 2014, the Systematic Operations Risk-Rating Tool (SORT) after
+# it, perhaps as an annex ("Annex 4 - Operational Risk Assessment Framework (ORAF)"). A mention in a
+# sentence, in the list of abbreviations or in the contents (with its dotted leader) is not one. The
+# table runs to the next annex. The PAD's template (src/strata/reader/templates.py) routes by it too.
+RISK_TITLE = re.compile(r"^\s*(?:Annex\s+\d+\s*[:.\-\u2013]\s*)?(?:Operational Risk Assessment Framework|"
+                        r"Systematic Operations Risk[-\s]*Rating Tool)\s*(?:\([A-Z]+\))?\s*$", re.I)
+ANNEX_HEAD = re.compile(r"^Annex\s+\d+", re.I)
+RISK_HEAD = ("Risk", "Rating", "Risk Description", "Risk Management")
+RISK_LABELS = ("Description:", "Management:")
+
+
+def risk_table_title(words, current: str | None) -> str | None:
+    """The title of the risk table this page holds or carries on, or None. A page that names a risk
+    assessment framework starts one; a page that starts another annex ends it."""
+    lines = _lines(words)
+    for _, line in lines:
+        text = " ".join(w[4] for w in line)
+        if RISK_TITLE.match(text):
+            return text
+    if current is not None and any(ANNEX_HEAD.match(" ".join(w[4] for w in line)) for _, line in lines[:3]):
+        return None
+    return current
+
+
+def _risk_table(words, title: str) -> tuple[Table | None, set[int]]:
+    """A page of a risk table: one row from each risk's line of "{Risk} Rating {rating}" to the next,
+    its left column the risk's description and its right column how it is managed. Words above the
+    first such line carry on the last risk of the page before, and make a row with no risk or rating.
+    The title, the project's line under it and the printed page number at the foot are not in the
+    table. Returns the table, or None when the page holds no risk, and the indexes of its words."""
+    index = {id(w): i for i, w in enumerate(words)}
+    lines = _lines(words)
+    ratings = [(top, line, next(w for w in line if w[4].rstrip(":") == "Rating"))
+               for top, line in lines if _rating_line(line)]
+    labels = [w for _, line in lines for a, w in zip(line, line[1:]) if a[4] == "Risk" and w[4] in RISK_LABELS]
+    marks = [rating for *_, rating in ratings] + [w for w in labels if w[4] == "Management:"]
+    if not marks:
+        return None, set()
+    split = min(w[0] for w in marks) - 2
+    if any(w[4] == "Management:" for w in marks):
+        split = min(split, min(w[0] for w in labels if w[4] == "Management:") - 35)  # "Risk" starts left of it
+    outside = set()
+    for top, line in lines:
+        text = " ".join(w[4] for w in line)
+        if RISK_TITLE.match(text) or re.search(r"\(P\d{6}\)", text) and not _rating_line(line):
+            outside |= {index[id(w)] for w in line}
+    if lines and re.fullmatch(r"\d{1,3}|[ivxlc]{1,7}", " ".join(w[4] for w in lines[-1][1])):
+        outside |= {index[id(w)] for w in lines[-1][1]}
+    dropped = {id(w) for _, line in lines for a, w in zip(line, line[1:]) if a[4] == "Risk" and w[4] in RISK_LABELS}
+    dropped |= {id(a) for _, line in lines for a, w in zip(line, line[1:]) if a[4] == "Risk" and w[4] in RISK_LABELS}
+    starts = [top for top, *_ in ratings]
+    rows = []
+    for number in range(-1, len(ratings)):
+        top = starts[number] if number >= 0 else float("-inf")
+        bottom = starts[number + 1] if number + 1 < len(starts) else float("inf")
+        if number >= 0:
+            line, rating = ratings[number][1], ratings[number][2]
+            risk = " ".join(w[4] for w in line if w[0] < rating[0]).rstrip(":")
+            value = " ".join(w[4] for w in line if w[0] > rating[0])
+            below = [w for t, l in lines if top < t < bottom for w in l]
+        else:
+            risk = value = ""
+            below = [w for t, l in lines if t < bottom for w in l]
+        below = [w for w in below if index[id(w)] not in outside and id(w) not in dropped]
+        description = _text([w for w in below if w[0] < split])
+        management = _text([w for w in below if w[0] >= split])
+        if number >= 0 or description or management:
+            rows.append((risk, value, description, management))
+    used = set(range(len(words))) - outside
+    return Table(title=title, header_rows=1, rows=(RISK_HEAD, *rows)), used
+
+
+def _rating_line(line) -> bool:
+    """A risk's first line: its name, the word Rating, then its rating, as in "Capacity Rating Low"."""
+    at = next((i for i, w in enumerate(line) if w[4].rstrip(":") == "Rating"), None)
+    return at is not None and 0 < at < len(line) - 1
+
+
+# A reference at the start of a row, perhaps cut short where its cell wraps: KE-NWWDA-541055-CW-RFB,
+# or NWWDA-WSDP-03-2019- with 2020 on the next line.
+ROW_START = re.compile(r"^[A-Z][A-Z0-9]*(?:-[A-Z0-9]*){2,}$")
+
+
+def _anchored_rows(columns, body: list[Word], height: float, space: float,
+                   rejoin: bool = False) -> list[tuple[str, ...]] | None:
+    """The table's rows, each from a reference at the left edge of the first column to the next, or
+    None when the first column starts no row with a reference. Words above the first reference, the
+    end of a row the page before began, make a row of their own.
+
+    STEP's export lets a long description run past the foot of its cell, so its last line can be
+    printed over the next row's reference ("CELARS Co" then "nstruction Works" over
+    KE-KENHA-201831-CS-QCBS). A word on a reference's line that overlaps the reference belongs to the
+    row above."""
+    if not columns or not body:
+        return None
+    first = columns[0]
+    anchors = sorted((w for w in body if first["left"] <= _centre(w) < first["right"]
+                      and w[0] - first["left"] < 2 * space and ROW_START.match(w[4])), key=lambda w: w[1])
+    if not anchors:
+        return None
+    groups: dict[int, list[Word]] = {}
+    for word in body:
+        row = sum(1 for anchor in anchors if anchor[1] <= word[1] + height / 2) - 1  # -1: above the first reference
+        if row >= 0 and word is not anchors[row]:
+            anchor = anchors[row]
+            if abs(word[1] - anchor[1]) < height / 2 and word[0] < anchor[2] and word[2] > anchor[0]:
+                row -= 1
+        groups.setdefault(row, []).append(word)
+    rows = []
+    for row in sorted(groups):
+        texts = []
+        for column in columns:
+            texts.append(_text([w for w in groups[row] if column["left"] <= _centre(w) < column["right"]],
+                               column["right"], rejoin))
+        rows.append(tuple(texts))
+    return rows
+
+
 # ── Live: ai_parse_document on the SQL warehouse ─────────────────────────
 
 PARSE_SQL = """
@@ -325,8 +531,8 @@ class AiParseDocument:
         self.engine, self.upload, self.fetch, self.volume = engine, upload, fetch, volume.rstrip("/")
         self._pdfs: dict[str, bytes] = {}
 
-    def parse(self, page: Page) -> list[Table]:
-        """One page's tables. A page that cannot be cut out of its PDF, or that ai_parse_document
+    def parse(self, page: Page) -> Layout:
+        """One page's layout. A page that cannot be cut out of its PDF, or that ai_parse_document
         refuses or answers with nothing it can read, raises ParseFailed. A PDF that cannot be fetched,
         or a volume that refuses the upload, stops the run, because every page would fail the same way."""
         from strata.lakehouse.engine import EngineError
@@ -347,7 +553,7 @@ class AiParseDocument:
         if not result.rows or not result.rows[0][0]:
             raise ParseFailed(f"ai_parse_document returned nothing for {path}.")
         try:
-            return tables_from_parsed(json.loads(result.rows[0][0]))
+            return layout_from_parsed(json.loads(result.rows[0][0]))
         except (ValueError, TypeError, AttributeError) as error:
             raise ParseFailed(f"I could not read ai_parse_document's answer for {path}: {error}") from error
 
@@ -367,6 +573,22 @@ def single_page(pdf: bytes, number: int) -> bytes:
     out = io.BytesIO()
     writer.write(out)
     return out.getvalue()
+
+
+# ai_parse_document's element types that are not text of the page: a figure is counted, and a page's
+# running header, its footer and its page number are left out.
+FIGURES = ("figure", "image", "picture")
+NOT_TEXT = ("page_header", "page_footer", "page_number")
+
+
+def layout_from_parsed(parsed: dict) -> Layout:
+    """One page's layout from ai_parse_document's output (version 2.0): its tables, the content of its
+    other elements as text blocks in their order, and how many figures it has."""
+    elements = (parsed.get("document") or {}).get("elements") or []
+    blocks = [(element.get("content") or "").strip() for element in elements
+              if element.get("type") not in ("table", *FIGURES, *NOT_TEXT)]
+    figures = sum(1 for element in elements if element.get("type") in FIGURES)
+    return Layout(tuple(tables_from_parsed(parsed)), "\n\n".join(block for block in blocks if block), figures)
 
 
 def tables_from_parsed(parsed: dict) -> list[Table]:

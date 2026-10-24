@@ -9,6 +9,10 @@ import { createStore } from "./store";
 // it is neither that row's count nor its denominator, what it is (a shortfall, or days late).
 export type Segment =
   | { text: string }
+  // An in-page link, such as "the hardest documents I read" to #hardest-documents (ticket 18).
+  | { link: string; href: string }
+  // Text set in mono, such as a project ID.
+  | { mono: string }
   | {
       number: number;
       row: number | null;
@@ -56,9 +60,23 @@ export type Cell = {
   schedule?: string;
   late_days?: number | null;
   published_as_table?: boolean;
+  // Ticket 18: a row whose records arrive as text; a document collection's projects, those its documents
+  // belong to; and
+  // its Read well share split by route for its window, the published text first.
+  published_as_text?: boolean;
+  projects_row?: number | null;
+  // A document collection's pilot projects read, out of every pilot project (design review r2 B1).
+  slice_row?: number | null;
+  routes?: { route: "published_text" | "layout_parser"; row: number | null }[];
 };
 
-export type Scope = { kind: "every_country" } | { kind: "countries"; names: string[] } | { kind: "projects"; count: number };
+export type Scope =
+  | { kind: "every_country" }
+  | { kind: "countries"; names: string[] }
+  | { kind: "projects"; count: number }
+  // A document collection's slice, from the slice file (ticket 18), and whether the hardest documents,
+  // whose projects are read too, show below.
+  | { kind: "slice"; sectors: string[]; countries: string[]; first_fiscal_year: number; last_fiscal_year: number; shelf: boolean };
 
 export type SourceRow =
   | {
@@ -114,6 +132,45 @@ export type Readiness = {
   // null when the Procurement Plans' row is out of view.
   parse_failures: { project_id: string; document_id: string; pdf_page: number; failed_on: string }[] | null;
   measured: { first: string; last: string } | null;
+  // Empty when a filtered view holds none of the shelf's sources, and then the section is left out.
+  stress_shelf: ShelfEntry[];
+};
+
+// One entry of the stress shelf, "The hardest documents I read" (the 18 brief, section 4), in the
+// slice file's order. Each number is a result row, so it opens its window. The server sets the badge.
+export type ShelfEntry = {
+  key: string;
+  kind: "scan_annex" | "longest_pad" | "large_plan" | "other_language" | "over_parser_limit";
+  position: number;
+  row_id: string;
+  state: "read" | "stopped_at_cap" | "not_read" | "no_document";
+  project_id: string | null;
+  document: {
+    document_id: string;
+    project_id: string;
+    project_name: string | null;
+    document_type: string;
+    document_date: string | null;
+    pdf_pages: number | null;
+    pdf_url: string | null;
+    language: string | null;
+  } | null;
+  part: string | null;
+  language: string | null;
+  hard_page: number | null;
+  parser_row: number | null;
+  outcome_row: number | null;
+  read_pages_row: number | null;
+  longest_row: number | null;
+  status: "partial" | "gap" | null;
+  unreadable: boolean;
+  denominator_from: "hand_count" | "pdf_pages" | "text_references" | "passages_made" | null;
+  counted_on: string | null;
+  parts: number | null;
+  parser: string | null;
+  parser_limit_pages: number | null;
+  daily_page_cap: number | null;
+  measured_on: string | null;
 };
 
 export type ReadinessState =
@@ -157,6 +214,8 @@ export type Registry = {
   known_gaps: number;
   kinds: number;
   fixes: number;
+  // The stress shelf's entries in the slice file, so the loading state holds a row for each.
+  shelf: number;
 };
 
 export type RegistryState = { status: "loading" } | { status: "ready"; registry: Registry } | { status: "error" };

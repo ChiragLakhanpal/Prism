@@ -192,3 +192,26 @@ def test_sources_and_licenses_list_every_dataset_in_registry_order_with_its_chec
         "Contract Awards in Investment Project Financing (Since FY 2020)",
         "Systematic Tracking of Exchanges in Procurement (STEP)")
     assert recorded("data-sources.json")["readiness_rows"] == sum(len(s.readiness) for s in sources.values())
+
+
+SHELF_STATES = ["data-readiness-shelf-gap.json", "data-readiness-shelf-two-gaps.json",
+                "data-readiness-shelf-abstentions.json", "data-readiness-shelf-empty.json"]
+
+
+@pytest.mark.parametrize("name", SHELF_STATES)
+def test_the_recorded_hardest_documents_states_are_the_server_s_on_the_fixture_with_its_outcomes_changed(
+        fixture_db, tmp_path, monkeypatch, name):
+    """Ticket 18: the stress shelf's states the fixture does not reach, as tests/record_api.py makes them
+    (SHELF_STATES there): the fixture's measures with one or two shelf outcomes changed."""
+    monkeypatch.syspath_prepend(str(Path(__file__).parent))
+    import record_api
+
+    path = record_api.with_shelf(tmp_path, name, fixture_db)
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(path, read_only=True) as engine:
+            yield engine
+
+    response = get(create_app(engine_for=engine_for), f"/api/data/readiness?{ON_THE_FIXTURE_DAY}", ANA)
+    assert response.json() == recorded(name)

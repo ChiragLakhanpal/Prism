@@ -89,11 +89,16 @@ def test_the_stamp_gives_the_day_the_fixture_s_daily_sources_were_last_loaded(fi
     assert response.status_code == 200
     assert response.json() == recorded("freshness.json")
     # The independent source: each recorded page of the three daily sources says when it was
-    # recorded, and the fixture loads each page as fetched on that day.
+    # recorded, and the fixture loads each page as fetched on that day. A source was last loaded on
+    # its newest page's day, and the stamp is the stalest source's: one project record was recorded
+    # a day after the rest, for ticket 18's stress shelf, and the stamp does not move with it.
     manifest = fmt.load_manifest()
-    days = {fmt.read(manifest.recorded / entry.file).recorded for entry in manifest.sources
-            if entry.dataset in ("awards", "notices", "projects") and entry.kind == "json"}
-    assert days == {recorded("freshness.json")["data_through"]}
+    last_loaded = {}
+    for entry in manifest.sources:
+        if entry.dataset in ("awards", "notices", "projects") and entry.kind == "json":
+            day = fmt.read(manifest.recorded / entry.file).recorded
+            last_loaded[entry.dataset] = max(day, last_loaded.get(entry.dataset, day))
+    assert min(last_loaded.values()) == recorded("freshness.json")["data_through"] == "2026-10-23"
 
 
 def test_a_catalog_with_no_rows_loaded_gives_the_empty_stamp(empty_catalog):

@@ -11,6 +11,7 @@ import dataclasses
 import datetime as dt
 import json
 import re
+import tomllib
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from strata.tools.check_plan import check_plan
 from strata.tools.search_passages import search_passages
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
+TRUTH = tomllib.loads((Path(__file__).parent / "ground_truth" / "values.toml").read_text())
 ICR_54 = "strata.gold.passage:31525018/v1/54"
 TODAY = dt.date(2026, 10, 23)
 ANA = {
@@ -545,7 +547,7 @@ def as_table_summaries(call, **arguments):
     """search_passages, with every passage it finds marked as a table's one summary passage."""
     result = search_passages(call, **arguments)
     for row in result["rows"]:
-        row["parse_route"] = TABLE_SUMMARY
+        row["kind"] = TABLE_SUMMARY
     return result
 
 
@@ -572,7 +574,8 @@ def ask_with_tools(fixture_db, agent, tools):
 
 def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
     """A table's summary passage is the reader's words for a table, not the report's, so even a number
-    inside a quote from it must match a record (spec, check 1)."""
+    inside a quote from it must match a record (spec, check 1), and the removed box says the number
+    came only from the summary."""
     rebidding = "108 of 328 cases had to go through rebidding"
     agent = CallsThenAnswers(
         [("search_passages", {"query": "works contracts advertised again rebidding", "project_id": "P130164",
@@ -582,7 +585,8 @@ def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
 
     parsed = ask_with_tools(fixture_db, agent, with_adapter("search_passages", "as_table_summaries"))
 
-    assert removed_reasons(parsed) == [[("number_not_in_records", "108"), ("number_not_in_records", "328")]]
+    assert removed_reasons(parsed) == [[("number_only_in_table_summary", "108"),
+                                        ("number_only_in_table_summary", "328")]]
 
 
 def test_a_quote_with_straight_quote_marks_matches_a_page_with_curly_ones(fixture_db):
@@ -735,7 +739,9 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
                                                ("p130164-number-with-no-record", "ask-p130164-removed-number.sse"),
                                                ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
                                                ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse"),
-                                               ("p130164-isr-section", "ask-p130164-isr-section.sse")])
+                                               ("p130164-isr-section", "ask-p130164-isr-section.sse"),
+                                               ("p130164-number-from-a-table-summary", "ask-p130164-table-summary.sse"),
+                                               ("p130164-rating-from-a-table-row", "ask-p130164-table-row.sse")])
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 
@@ -831,3 +837,22 @@ def copy_reasons():
     reasons = re.search(r"reasons: \{(.*?)\n    \}", removed, re.S).group(1)
     return {code: {"item": item, "joined": joined} for code, item, joined in re.findall(
         r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?\s*\}', reasons)}
+
+
+def test_a_claim_whose_number_rests_only_on_a_table_summary_passage_is_removed_with_its_own_reason(ask_case):
+    """Ticket 18, criterion 7, through the answer contract with the scripted agent: the PAD's risk annex
+    has one summary passage, which names its eight risks (tests/ground_truth/values.toml,
+    stress_shelf.pad_risk_annex). The number is in the summary and in no row the sentence cites, so the
+    sentence is removed, and the removed box gets the summary's reason, not "no record supports this
+    number". The other sentences stand."""
+    annex = TRUTH["stress_shelf"]["pad_risk_annex"]
+    summary = f"strata.gold.passage:{annex['document_id']}/v1/table{annex['first_pdf_page']}"
+    parsed, _ = ask_case("p130164-number-from-a-table-summary")
+
+    [removed] = of(parsed, "removed")
+    assert removed["sentence"] == "The appraisal document's risk annex rated 8 risks."
+    assert removed["reason"] == "number_only_in_table_summary"
+    assert removed["reasons"] == [{"check": 1, "code": "number_only_in_table_summary", "text": "8"}]
+    assert str(annex["risks"]) == "8"
+    assert [sentence["index"] for sentence in of(parsed, "sentence")] == [0, 1, 2]
+    assert summary not in {evidence["id"] for evidence in of(parsed, "evidence")}

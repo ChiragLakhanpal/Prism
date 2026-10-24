@@ -139,6 +139,10 @@ class ReadinessColumn:
     years: str | None = None  # for coverage: the measure that counts its fiscal years
     counts_one: str | None = None  # counts in the singular, for a count or a denominator of one
     noun_one: str | None = None  # noun in the singular, likewise
+    # For a document collection's coverage: the measure that counts the projects its documents belong to,
+    # and the one that counts the slice's projects whose documents were read, out of the slice's projects.
+    projects: str | None = None
+    slice_read: str | None = None
 
 
 @dataclass(frozen=True)
@@ -146,7 +150,7 @@ class ReadinessRoute:
     """One way a reader reads a source's pages, whose pages read well the dashboard charts by route."""
 
     measure: str  # the measure in strata.ops.data_readiness that counts the pages it read well
-    label: str  # its name on the dashboard's chart, such as "Layout parser (Route B)"
+    label: str  # its name on the dashboard's chart, such as "Plan pages, layout parser"
     noun: str  # what the measure counts, in the plural
     counted_in: str  # the table it counts, by its three-part name
 
@@ -167,6 +171,9 @@ class ReadinessRow:
     fresh: ReadinessColumn | None = None
     checks: tuple[ReadinessColumn, ...] = ()  # more measures that hold answers back when they fall short
     routes: tuple[ReadinessRoute, ...] = ()  # the reading routes of a paged reader, for the dashboard
+    published_as: str | None = None  # "text": a row whose records arrive as text, with nothing to read well
+    # Whether its Read well counts the same pages its routes do, so its window splits it by route.
+    read_well_by_route: bool = False
 
 
 @dataclass(frozen=True)
@@ -250,6 +257,8 @@ class Source:
     dataset_id: str | None = None
     resource_id: str | None = None
     stratum: str | None = None
+    # A record's own page on the World Bank's site, with {id} for its id, such as a notice's page.
+    record_url: str | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -270,7 +279,7 @@ class Source:
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter")
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -310,10 +319,12 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
 
 def _column(path: Path, where: str, table) -> ReadinessColumn:
     entry = _Entry(path, where, table)
-    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one"})
+    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one", "projects",
+                "slice_read"})
     return ReadinessColumn(entry.text("measure"), entry.text("counts"), entry.text("noun"), entry.text("counted_in"),
                            entry.text("lack", required=False), entry.text("years", required=False),
-                           entry.text("counts_one", required=False), entry.text("noun_one", required=False))
+                           entry.text("counts_one", required=False), entry.text("noun_one", required=False),
+                           entry.text("projects", required=False), entry.text("slice_read", required=False))
 
 
 def _route(path: Path, where: str, table) -> ReadinessRoute:
@@ -331,13 +342,24 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     rows = []
     for row in _tables(path, table, "readiness"):
         row.where = f"sources.{key}.{row.where}"
-        row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", "routes", *READINESS_COLUMNS})
+        row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", "routes", "published_as",
+                  "read_well_by_route", *READINESS_COLUMNS})
         row_stratum = row.text("stratum", required=False) or stratum
         if row_stratum not in STRATA:
             row._fail("stratum", f"must be one of {', '.join(STRATA)}, here or on the source")
         schedule = row.text("schedule", required=False)
         if schedule not in (None, AS_PUBLISHED):
             row._fail("schedule", f'can only be "{AS_PUBLISHED}"; leave it out to use the source\'s cadence')
+        published_as = row.text("published_as", required=False)
+        by_route = row.table.get("read_well_by_route", False)
+        if not isinstance(by_route, bool):
+            row._fail("read_well_by_route", "must be true or false")
+        if by_route and not row.table.get("routes"):
+            row._fail("read_well_by_route", "needs routes to split Read well into")
+        if published_as not in (None, "text"):
+            row._fail("published_as", 'can only be "text": a row whose records arrive as text')
+        if published_as and "read_well" in row.table:
+            row._fail("read_well", "is not needed: a row published as text has nothing to read well")
         columns = {name: _column(path, f"{row.where}.{name}", row.table[name])
                    for name in READINESS_COLUMNS if name in row.table}
         checks, routes = row.table.get("checks", []), row.table.get("routes", [])
@@ -349,7 +371,8 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
                                  checks=tuple(_column(path, f"{row.where}.checks[{n}]", check)
                                               for n, check in enumerate(checks, 1)),
                                  routes=tuple(_route(path, f"{row.where}.routes[{n}]", route)
-                                              for n, route in enumerate(routes, 1))))
+                                              for n, route in enumerate(routes, 1)),
+                                 published_as=published_as, read_well_by_route=by_route))
     fields["readiness"] = tuple(rows)
     gaps = []
     for gap in _tables(path, table, "known_gaps"):
@@ -454,13 +477,29 @@ class DemoPlan:
     plan_date: dt.date
 
 
+# The stress shelf's kinds, in the order the 18 design brief lists them, and the rules that pick a
+# document at run time.
+SHELF_KINDS = ("scan_annex", "longest_pad", "large_plan", "other_language", "over_parser_limit")
+SHELF_RULES = ("longest", "over_parser_limit")
+
+
 @dataclass(frozen=True)
 class ShelfItem:
-    """One document on the stress shelf. Without a project_id it is a slot still to fill."""
+    """One entry on the stress shelf: a fixed document (project_id and document_id) or a rule that
+    picks one at run time, with what its kind needs (config/slice.toml says what each key means)."""
 
-    why: str
+    key: str
+    kind: str
     project_id: str | None = None
+    document_id: str | None = None
+    rule: str | None = None
     document_type: str | None = None
+    part: str | None = None
+    first_page: int | None = None
+    last_page: int | None = None
+    expected_rows: int | None = None
+    counted_on: dt.date | None = None
+    language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -472,10 +511,54 @@ class Slice:
     showcase: Showcase
     demo_plan: DemoPlan
     stress_shelf: tuple[ShelfItem, ...]
+    planned_projects: int | None = None  # docs/PLAN.md section 3's planning figure, never shown as a finding
+    notice_types: tuple[str, ...] = ()  # the notice types whose scope and qualification text become passages
 
     @property
     def fiscal_years(self) -> range:
         return range(self.first_fiscal_year, self.last_fiscal_year + 1)
+
+    @property
+    def named_projects(self) -> tuple[str, ...]:
+        """The projects the document run reads by name, whatever the criteria select: the showcase,
+        the demo plan's project and each fixed shelf document's project, once each, in that order."""
+        named = [self.showcase.project_id, self.demo_plan.project_id,
+                 *(item.project_id for item in self.stress_shelf if item.project_id)]
+        return tuple(dict.fromkeys(named))
+
+
+def _shelf_item(entry: _Entry) -> ShelfItem:
+    entry.only({"key", "kind", "project_id", "document_id", "rule", "document_type", "part", "first_page",
+                "last_page", "expected_rows", "counted_on", "language"})
+    kind = entry.text("kind")
+    if kind not in SHELF_KINDS:
+        entry._fail("kind", f"must be one of {', '.join(SHELF_KINDS)}")
+    document_id, rule = entry.text("document_id", required=False), entry.text("rule", required=False)
+    if (document_id is None) == (rule is None):
+        raise ConfigError(f"In {entry.path.name}, {entry.where} names a document_id and a rule, or neither. "
+                          "Name one: a fixed document with its project_id, or a rule that picks one.")
+    if rule is not None and rule not in SHELF_RULES:
+        entry._fail("rule", f"must be one of {', '.join(SHELF_RULES)}")
+    if rule == "longest" and entry.text("document_type", required=False) is None:
+        entry._fail("document_type", "is missing. The longest rule picks the longest document of that type")
+    item = {"key": entry.text("key"), "kind": kind, "document_id": document_id, "rule": rule,
+            "project_id": entry.project_id("project_id", required=document_id is not None),
+            "document_type": entry.text("document_type", required=False)}
+    if kind == "scan_annex":
+        item |= {"part": entry.text("part"), "first_page": entry.integer("first_page"),
+                 "last_page": entry.integer("last_page")}
+        if not 1 <= item["first_page"] <= item["last_page"]:
+            entry._fail("last_page", "must come on or after first_page, and both from 1")
+        if "expected_rows" in entry.table:
+            if "counted_on" not in entry.table:
+                entry._fail("counted_on", "is missing. A hand count needs the day a person counted it")
+            item |= {"expected_rows": entry.integer("expected_rows"), "counted_on": entry.date("counted_on")}
+    if kind == "other_language":
+        language = entry.text("language")
+        if not re.fullmatch(r"[a-z]{2}", language):
+            entry._fail("language", "must be a two-letter ISO 639-1 code, such as fr")
+        item["language"] = language
+    return ShelfItem(**item)
 
 
 def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
@@ -483,7 +566,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     data = _read(path)
     top = _Entry(path, "the file", data)
     top.only({"first_fiscal_year", "last_fiscal_year", "sectors", "countries", "showcase", "demo_plan",
-              "stress_shelf"})
+              "stress_shelf", "planned_projects", "notice_types"})
 
     countries = []
     for entry in _tables(path, data, "countries"):
@@ -514,11 +597,10 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     plan = _Entry(path, "demo_plan", data.get("demo_plan"))
     plan.only({"project_id", "project_name", "implementing_agency", "agency_short_name", "plan_date"})
 
-    shelf = []
-    for entry in _tables(path, data, "stress_shelf"):
-        entry.only({"project_id", "document_type", "why"})
-        shelf.append(ShelfItem(why=entry.text("why"), project_id=entry.project_id("project_id", required=False),
-                               document_type=entry.text("document_type", required=False)))
+    shelf = [_shelf_item(entry) for entry in _tables(path, data, "stress_shelf")]
+    keys = [item.key for item in shelf]
+    if len(set(keys)) != len(keys):
+        raise ConfigError(f"In {path.name}, two stress_shelf entries share a key. Give each its own.")
 
     return Slice(
         countries=tuple(countries),
@@ -529,6 +611,8 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
         demo_plan=DemoPlan(plan.project_id("project_id"), plan.text("project_name"),
                            plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date")),
         stress_shelf=tuple(shelf),
+        planned_projects=top.integer("planned_projects", required=False),
+        notice_types=top.texts("notice_types"),
     )
 
 
@@ -637,8 +721,15 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
 def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
     """The name of the layout parser that reads table pages on the workspace (Route B)."""
     entry = _Entry(path, "layout", _read(path).get("layout"))
-    entry.only({"parser"})
+    entry.only({"parser", "rejoin_split_words"})
     return entry.text("parser")
+
+
+def load_rejoin_split_words(path: Path = CONFIG_DIR / "models.toml") -> bool:
+    """Whether the offline layout parser joins a word a table cell wrapped at its edge (parked decision)."""
+    entry = _Entry(path, "layout", _read(path).get("layout"))
+    entry.only({"parser", "rejoin_split_words"})
+    return entry.boolean("rejoin_split_words") if "rejoin_split_words" in entry.table else False
 
 
 @dataclass(frozen=True)

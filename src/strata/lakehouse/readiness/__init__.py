@@ -112,6 +112,7 @@ held AS (
 fresh AS (
   SELECT CAST(max(fetched_at) AS DATE) AS fetched_on, max(newest_record_on) AS newest
   FROM pages
+  WHERE fetched_at <= :measured_at
 )
 SELECT :source AS source, 'all' AS subject, 'coverage_rows' AS measure, 'coverage' AS kind,
   CAST(coalesce(h.records, 0) AS BIGINT) AS count, CAST(r.total AS BIGINT) AS denominator,
