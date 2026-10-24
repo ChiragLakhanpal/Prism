@@ -855,6 +855,32 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
   expect((await county.locator(".font-mono").nth(1).evaluate((el) => el.getClientRects().length))).toBe(1);
 });
 
+// Ticket 16's Data readiness page answers an empty sources= or from= with a server error, so a
+// coverage line's link names the sources behind it and the tool, and never sends an empty value.
+test("each coverage line's link names the sources behind it and find_comparables, and never sends an empty parameter", async ({ page }) => {
+  const answers: [string, Answer][] = [
+    ["populated", { body: await recorded("comparables-ke-nwwda-541055.json") }],
+    ["quantile dots", { body: await recorded("comparables-ke-nwwda-541055-any-category.json") }],
+    ["abstention", { body: await recorded("comparables-ke-nwwda-541055-prior.json") }],
+    ["none measurable", { body: await recorded("comparables-ke-nwwda-541055-non-consulting.json") }],
+    ["no match", { body: await recorded("comparables-ke-nwwda-541055-india.json") }],
+    ["no sources", await derived("comparables-ke-nwwda-541055.json", (body) => (body.sources = []))],
+  ];
+  for (const [name, comparables] of answers) {
+    await openPackage(page, { comparables });
+    await ready(page);
+    const sources = (JSON.parse(comparables.body) as { sources: { key: string }[] }).sources.map((source) => source.key);
+    const links = await section(page).locator("a[href^='/data']").evaluateAll((all) => all.map((a) => a.getAttribute("href")!));
+    expect(links.length, name).toBeGreaterThanOrEqual(1);
+    for (const href of links) {
+      const query = new URL(href, "http://strata.test").searchParams;
+      expect([...query.entries()].filter(([, value]) => value === ""), `${name}: ${href}`).toEqual([]);
+      expect(query.get("from"), `${name}: ${href}`).toBe("find_comparables");
+      expect(query.get("sources")?.split(",") ?? [], `${name}: ${href}`).toEqual(sources);
+    }
+  }
+});
+
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.
 const SERVICE_DOWN = '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}';
 const STATES: [string, () => Promise<Parameters<typeof openPackage>[1]>][] = [

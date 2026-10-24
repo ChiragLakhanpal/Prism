@@ -193,8 +193,14 @@ function NoChart({ title, children }: { title: ReactNode; children: ReactNode })
 export const planCheckHref = (pkg: { project_id: string; step_reference: string; plan: { agency_id: string; plan_date: string } }) =>
   `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
 
-const readinessHref = (result: ComparablesResult) =>
-  `/data?sources=${result.sources.map((source) => source.key).join(",")}&from=${result.tool}`;
+// Data readiness, showing only the sources behind the answer and naming the tool that wrote the line.
+// An empty value is left out, never sent: ticket 16's page answers sources= or from= with an error.
+const readinessHref = (result: ComparablesResult) => {
+  const query = new URLSearchParams();
+  if (result.sources.length > 0) query.set("sources", result.sources.map((source) => source.key).join(","));
+  query.set("from", result.tool);
+  return `/data?${query.toString().replaceAll("%2C", ",")}`;
+};
 
 // The criteria the tool used, as phrases: the fields compared, and the others in a second sentence.
 function criteriaParts(result: ComparablesResult, form: "note" | "empty") {
