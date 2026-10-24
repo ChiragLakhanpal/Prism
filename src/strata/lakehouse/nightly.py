@@ -109,8 +109,8 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _detect_disagreements(run: Run) -> int:
-    """The assertions of every project Strata holds documents or records for, rebuilt, and the disagreements
-    between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
+    """The assertions of every project Strata holds documents or a Procurement Plan for, rebuilt, and the
+    disagreements between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
     asks the live batch model to read the reports. On Databricks the job passes no Azure OpenAI keys until
     ticket 43 wires its tasks, so until then it replays the answers bronze holds from the batch role's
     deployment, such as those ops/assertions/batch_live.py asked for, and keeps what the live model read.
