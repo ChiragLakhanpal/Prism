@@ -85,6 +85,38 @@ days_before_closing = 90
 # documents.worldbank.org, 099062824153516589), so a mark on each would hide the exceptions.
 actual_to_estimate_ratio = 2.0
 
+# The past range (ticket 12). find_comparables (src/strata/tools/find_comparables.py) reads these,
+# returns the values it used, and the package workspace's range chart takes them from its result,
+# so no screen writes one of these numbers itself.
+[past_range]
+# Below this many comparables, subgroups included, no tool returns a range or a share: it returns
+# every comparable and says why. Source: the spec ("Below 20 comparables, subgroups included, no
+# tool returns a range or a percentage") and DESIGN.md section 7, rules 6 and 15.
+min_comparables = 20
+# Above this many comparables the chart draws quantile_dots dots, each standing for an equal share
+# of the packages, instead of one dot per package. Source: the spec and DESIGN.md section 6 ("Above
+# about 60 comparables, the past range switches to 20 quantile dots").
+quantile_dots_above = 60
+quantile_dots = 20
+# The default period starts here: the first day of the awards dataset since FY2020, which most
+# signing dates come from. It ends on the plan's date. Source: tests/ground_truth/values.toml's
+# default criteria for the comparables.
+period_from = 2019-07-01
+# The plan's months a reader can type or drag to, from 0.5 up to this. Source: the 12 design brief,
+# a starting value for the owner to confirm.
+max_plan_months = 60
+# Whether a canceled package counts as still open (drawn hollow and kept in the range as not signed
+# yet) or is left out and named in the coverage line. A canceled package is not open, and its
+# months "so far" would run to the as-of date, so it is left out. Source: ticket 12's decision,
+# parked for the owner to confirm; the blueprint's table of estimates keeps canceled packages as
+# still open, and true here does the same.
+canceled_as_still_open = false
+# A package with this Method, or with a Market Approach that starts with one of these words, has no
+# specific procurement notice, so its procurement cycle time cannot be measured. Source: the
+# Procurement Regulations: a limited market approach and Direct Selection are not advertised.
+no_notice_methods = ["Direct Selection"]
+no_notice_market_approaches = ["Limited"]
+
 # Signals on followed projects: late direct selection, closing-date moves, rating downgrades,
 # disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).
 [signals]

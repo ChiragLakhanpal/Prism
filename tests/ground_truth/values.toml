@@ -334,6 +334,28 @@ date = 2026-10-09
 pdf_page = 3
 
 [[value]]
+id = "plan-541055-planned-notice"
+says = "KE-NWWDA-541055-CW-RFB's planned specific procurement notice is March 10, 2026 (Specific Procurement Notice / Invitation Planned, the second date in its row)."
+value = 2026-03-10
+quote = "Pending Implementation 2026-03-09 2026-03-10 2026-04-01 2026-04-06 2026-04-24 2026-07-31"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541055-planned-signing"
+says = "KE-NWWDA-541055-CW-RFB's planned signed contract is April 24, 2026 (Signed Contract Planned, x 720)."
+value = 2026-04-24
+quote = "Pending Implementation 2026-03-09 2026-03-10 2026-04-01 2026-04-06 2026-04-24 2026-07-31"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
 id = "plan-541055-no-signed-contract"
 says = "The plan shows no signed contract for KE-NWWDA-541055-CW-RFB: the Signed Contract Actual cell is blank, its last dated step is the Signed Contract Planned date April 24, 2026 (x 720), and its Actual Amount reads 0.00."
 value = "no signed contract"
@@ -1101,6 +1123,47 @@ notice = "OP00474209"
 notice_date = 2026-10-09
 project = "P176758"
 bids_due = 2026-11-09
+
+# The past range of these comparables for KE-NWWDA-541055-CW-RFB with the default criteria, as of
+# October 22, 2026, which ticket 12's find_comparables must return.
+#
+# Each signed package counts the days from its notice_date to its signed date above. Each package
+# still open counts the days from its notice_date to the as-of date and is kept as not signed yet
+# (censored). The three canceled packages are left out, because they are not still open
+# (config/thresholds.toml, past_range.canceled_as_still_open = false). That leaves 49 packages:
+# 45 signed and four still open.
+#
+# The quantiles were computed once with lifelines 0.30.3 (KaplanMeierFitter, then
+# lifelines.utils.qth_survival_time) and checked with statsmodels 0.15.0 (SurvfuncRight.quantile),
+# which gave the same days. The quantile for a share p is the first day on which the share of
+# packages not yet signed is 1 - p or less. The middle half runs from q25 to q75, the middle is q50,
+# and q80 is the day by which 8 in 10 were signed. Months are days divided by 30.4375 (365.25 / 12),
+# rounded to one decimal, half up. quantile_dot_days are the 20 quantile dots, at the shares 0.025,
+# 0.075 and so on to 0.975, from the same fit.
+#
+# The plan's months run from the planned notice to the planned signed contract in the October 9,
+# 2026 plan (values plan-541055-planned-notice and plan-541055-planned-signing): March 10 to April
+# 24, 2026, 45 days, 1.5 months. Two signed packages took 1.5 months or less:
+# KE-WAJWASCO-372776-CW-RFB (September 2 to October 6, 2023, 34 days, 1.1 months) and
+# KE-WAJWASCO-356671-CW-RFB (July 7 to August 22, 2023, 46 days, 1.5 months).
+[past_range]
+as_of = 2026-10-22
+comparables = 49
+signed = 45
+still_open = 4
+canceled_left_out = 3
+q25_days = 100
+q50_days = 133
+q75_days = 240
+q80_days = 277
+q25_months = 3.3
+q50_months = 4.4
+q75_months = 7.9
+q80_months = 9.1
+quantile_dot_days = [46, 85, 89, 89, 94, 102, 106, 108, 119, 125, 140, 162, 206, 213, 218, 254, 277, 290, 408, 530]
+plan_days = 45
+plan_months = 1.5
+signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the

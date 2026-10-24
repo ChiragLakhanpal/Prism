@@ -36,6 +36,28 @@ questions:
       (tests/ground_truth/values.toml, plan_row wireframe_mark), and the ninth activity the
       wireframe leaves out, with no mark (values.toml, plan.also_lists).
 
+  - id: find-comparables-ke-nwwda-541055
+    kind: estimates
+    tool: find_comparables
+    question: >-
+      As of October 22, 2026, how long did packages like KE-NWWDA-541055-CW-RFB take from their
+      notice to a signed contract, and how many were signed within the 1.5 months its plan allows?
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      as_of: "2026-10-22"
+    expected:
+      past_range_months: [3.3, 4.4, 7.9, 9.1]
+      still_open: [KE-ICTA-571738-CW-RFB, KE-KAJIADO COUNTY-567787-CW-RFB, KE-MIGORI COUNTY-532367-CW-RFB,
+                   KE-UASIN GISHU COUNTY-571338-CW-RFB]
+      canceled_left_out: [KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB, KE-KIMAWASCO-377450-CW-RFB]
+      signed_within_plan: [KE-WAJWASCO-356671-CW-RFB, KE-WAJWASCO-372776-CW-RFB]
+    ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
+    source: >-
+      The comparables and their Kaplan-Meier quantiles in tests/ground_truth/values.toml ([[comparable]]
+      and [past_range]): the middle half, the middle and the 8-in-10 point in months, computed once
+      with lifelines and checked with statsmodels, the four packages still open, the three canceled
+      ones left out, and the two signed within the plan's 1.5 months.
+
   - id: search-passages-icr-rebidding
     kind: documents
     tool: search_passages

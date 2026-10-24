@@ -174,7 +174,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
 
 def check_contract(tool: Tool, result: dict) -> None:
     """Every result has the shared envelope and the tool's own fields; every row is cited, dated on or
-    before the as-of date, and has its source line. An abstention gives a reason and no rows. Each
+    before the as-of date, and has its source line. An abstention gives a reason and no rows, unless the
+    registry lists it under abstentions_with_rows, such as too few comparables for a range. Each
     reason code, in a row's marks or in the coverage line, and each abstention reason is one the
     registry lists, so the screens' copy has a sentence for it."""
     def broken(what: str):
@@ -195,7 +196,7 @@ def check_contract(tool: Tool, result: dict) -> None:
         broken("an abstention must give its reason")
     if abstention is not None and abstention["reason"] not in tool.result.abstentions:
         broken(f"it abstained for {abstention['reason']!r}, which its result's abstentions do not list")
-    if abstention is not None and result["rows"]:
+    if abstention is not None and result["rows"] and abstention["reason"] not in tool.result.abstentions_with_rows:
         broken("it abstained and still returned rows")
     for row in result["rows"]:
         if set(row) != set(tool.result.row_fields):
