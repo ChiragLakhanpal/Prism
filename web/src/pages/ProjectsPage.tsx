@@ -2,7 +2,7 @@
 // the order the route gives (active ones first, then by name). Each project ID links to its page.
 // The first 50 rows show; "Show 50 more" adds the next 50 and moves focus to the first new row's
 // link. Search arrives with ticket 21 and Following with ticket 37.
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { EmptyState } from "../components/Card";
 import { Button } from "../components/Button";
 import { Fill } from "../components/Fill";
@@ -26,6 +26,15 @@ const columns: Column[] = [
 ];
 
 const blank = <span className="text-ink-muted">{copy.notInRecord}</span>;
+
+// The alert and the empty state hold columns 1 to 8 from 1024 px, as on every other page.
+function EightColumns({ children }: { children: ReactNode }) {
+  return (
+    <div className="layout-grid">
+      <div className="col-span-12 lg:col-span-8">{children}</div>
+    </div>
+  );
+}
 
 export function ProjectsPage() {
   const [load, retry] = useLoad<ProjectList>("/api/projects");
@@ -53,10 +62,16 @@ export function ProjectsPage() {
     );
   } else if (load.status === "error") {
     body = (
-      <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      <EightColumns>
+        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      </EightColumns>
     );
   } else if (load.data.total === 0) {
-    body = <EmptyState title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />;
+    body = (
+      <EightColumns>
+        <EmptyState title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />
+      </EightColumns>
+    );
   } else {
     const { rows: all, total, records_through: through } = load.data;
     const visible = all.slice(0, shown);

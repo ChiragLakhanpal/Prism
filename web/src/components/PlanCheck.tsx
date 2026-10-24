@@ -17,7 +17,7 @@ import { createElement, useEffect, useId, useState, type ReactNode, type Ref } f
 import { copy } from "../copy";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
-import { formatCount, formatDate, formatNumber } from "../lib/format";
+import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { Fill, Joined } from "./Fill";
@@ -68,7 +68,15 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
   const r = words.reason;
   const e = words.explain;
   const closingLines = (days: number): [ReactNode, ReactNode][] => [
-    [e.closing, <Fill template={e.closingRecord} slots={{ date: day(reason.closing_date!), record: day(result.project.record_date ?? result.as_of) }} />],
+    // check_plan gives the record's date with every closing date; without one, the line gives the date alone.
+    [
+      e.closing,
+      result.project.record_date ? (
+        <Fill template={e.closingRecord} slots={{ date: day(reason.closing_date!), record: day(result.project.record_date) }} />
+      ) : (
+        day(reason.closing_date!)
+      ),
+    ],
     [e.asOf, day(result.as_of)],
     [e.daysBetween, whole(days)],
   ];
@@ -244,9 +252,12 @@ function Definition({ result }: { result: CheckedPlan }) {
       <Fill
         template={words.foundDefinition}
         slots={{
-          lookRule: <Fill template={words.lookRule} slots={{ amount: amount(limits.completion_passed_min_estimated_usd) }} />,
+          lookRule: <Fill template={words.lookRule} slots={{ amount: formatAmountText(Number(limits.completion_passed_min_estimated_usd)) }} />,
           watchRule: (
-            <Fill template={words.watchRule} slots={{ days: whole(limits.days_before_closing), ratio: limits.actual_to_estimate_ratio }} />
+            <Fill
+              template={words.watchRule}
+              slots={{ days: whole(limits.days_before_closing), ratio: formatNumber(Number(limits.actual_to_estimate_ratio)) }}
+            />
           ),
         }}
       />

@@ -69,6 +69,18 @@ export function formatNumber(value: number, options: NumberOptions = {}): string
   return grouped(decimals ?? defaultDecimals(value)).format(value);
 }
 
+// Section 7, rule 11: in a sentence a large amount reads "12.5 million" or "2 billion" (the
+// sentence writes the "US$" before it), with one decimal below 100 and a trailing ".0" dropped.
+// Below a million it is written in full. A STEP amount a reader looks up in STEP keeps its cents
+// instead (formatNumber with decimals: 2).
+export function formatAmountText(value: number): string {
+  const size = Math.abs(value);
+  const unit = size >= 1e9 ? { size: 1e9, words: copy.num.billion } : size >= 1e6 ? { size: 1e6, words: copy.num.million } : null;
+  if (!unit) return formatNumber(value, { compact: false });
+  const mantissa = value / unit.size;
+  return unit.words(grouped(Math.abs(mantissa) < 100 ? 1 : 0).format(mantissa).replace(/\.0$/, ""));
+}
+
 // Years have no comma.
 export function formatYear(year: number): string {
   return String(year);

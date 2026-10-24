@@ -22,6 +22,9 @@ const MARKED = [
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+// At 1440 px, columns 1 to 8 of the 12-column grid: 8 columns of 78.67 px and 7 gutters of 32 px.
+const EIGHT_COLUMNS = 853;
+const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
 
 type Answer = { status?: number; body: string };
 
@@ -179,6 +182,8 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
   await expect(source).toContainText(
     "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, disclosed October 9, 2026.",
   );
+  // The marks are as of the date the page reads the records, not a date the checks ran.
+  await expect(source).toContainText("Marks from Strata's fixed checks, as of October 22, 2026.");
   const [tableBox, sourceBox] = [await table.boundingBox(), await source.boundingBox()];
   expect(sourceBox!.y).toBeGreaterThan(tableBox!.y + tableBox!.height);
   await expect(page.getByRole("link", { name: "The plan on the World Bank's documents site (opens in a new tab)" })).toHaveAttribute(
@@ -226,8 +231,11 @@ test("a number explains itself on focus, and What Strata found opens its definit
   const term = view(page, "table").getByRole("button", { name: "What Strata found" });
   await term.click();
   const definition = page.getByRole("dialog", { name: "What Strata found" });
-  await expect(definition).toContainText("An activity needs a look when its planned completion passed with no signed contract");
-  await expect(definition).toContainText("US$1,000,000.00");
+  await expect(definition).toContainText("A signal is a fixed check on public records. It gives a reason to look, never a finding.");
+  await expect(definition).toContainText(
+    "An activity needs a look when its planned completion passed with no signed contract. I mark it only when its estimate is US$1 million or more, or when the plan gives no estimate.",
+  );
+  await expect(definition).toContainText("It is also worth watching when it was signed at 2 times its estimate or more.");
   await page.keyboard.press("Escape");
   await expect(definition).toHaveCount(0);
   await expect(term).toBeFocused();
@@ -409,6 +417,8 @@ test("an agency with no plan says so and links to the project's plans", async ({
   await expect(card).toContainText("I can check a plan only after the World Bank discloses it and I have read it.");
   await expect(card.getByRole("link", { name: "All Procurement Plans for this project" })).toHaveAttribute("href", "/projects/P156634/procurement");
   await expect(page.locator("[data-check-pill]")).toHaveCount(0);
+  // Empty states and alerts hold columns 1 to 8, as on every other page.
+  expect(await widthOf(page, "[data-empty-state]")).toBe(EIGHT_COLUMNS);
 });
 
 test("a version the agency never published names the latest one", async ({ page }) => {
@@ -436,6 +446,10 @@ test("a service that didn't answer gives Try again and a reference; Try again th
 
   await expect(page.getByRole("alert")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
   await expect(page.getByText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.")).toBeVisible();
+  // The header keeps what the address says: the plan's date. The status no longer says it is checking.
+  await expect(page.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
+  await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(0);
+  expect(await widthOf(page, "[role=alert]")).toBe(EIGHT_COLUMNS);
   await page.getByRole("button", { name: "Try again" }).click();
 
   await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeFocused();

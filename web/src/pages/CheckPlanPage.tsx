@@ -8,7 +8,7 @@
 // The header sticks from 1024 px, so the page keeps scroll-padding-top at its height plus 8 px and a
 // focused control is never hidden under it (DESIGN.md section 10). A visually hidden status says
 // "Checking this plan." and then "Checked nine activities.".
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
@@ -17,6 +17,7 @@ import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedP
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
+import { cx } from "../lib/cx";
 import { formatCount, formatDate } from "../lib/format";
 import { useLoad } from "../lib/load";
 
@@ -44,24 +45,36 @@ function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: bool
   }, [header, active]);
 }
 
+// Alerts and empty states hold columns 1 to 8 from 1024 px, as on every other page.
+function EightColumns({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cx("layout-grid", className)}>
+      <div className="col-span-12 lg:col-span-8">{children}</div>
+    </div>
+  );
+}
+
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
   const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`;
   const [load, retry] = useLoad<CheckPlanResult>(path);
   const header = useRef<HTMLDivElement>(null);
   const finding = useRef<HTMLHeadingElement>(null);
-  const [said, setSaid] = useState<string>(words.status.checking);
 
   const result = load.status === "ready" ? load.data : null;
   const checked = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
   useScrollPadding(header, Boolean(checked));
 
-  useEffect(() => {
-    if (load.status === "loading") setSaid(words.status.checking);
-    if (checked) {
-      const total = checked.counts.activities;
-      setSaid(total === 1 ? words.status.checkedOne : words.status.checked(formatCount(total)));
-    }
-  }, [load.status, checked]);
+  // The visually hidden status announces steps: checking, then how many activities were checked.
+  // Any other end has its own alert or heading, so the status then says nothing.
+  const total = checked?.counts.activities;
+  const statusText =
+    load.status === "loading"
+      ? words.status.checking
+      : total === undefined
+        ? ""
+        : total === 1
+          ? words.status.checkedOne
+          : words.status.checked(formatCount(total));
 
   // After a "Try again" that works, the finding takes focus, so a screen reader reads the result.
   useEffect(() => {
@@ -70,8 +83,10 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
 
   const procurementHref = `/projects/${pid}/procurement`;
   const projectCrumb = (name: ReactNode): Crumb => ({ text: name, href: `/projects/${pid}` });
-  const named = (name: string) => <Fill template={copy.breadcrumb.project} slots={{ name, pid: <span className="font-mono">{pid}</span> }} />;
-  const unnamed = <Fill template={copy.breadcrumb.projectId} slots={{ pid: <span className="font-mono">{pid}</span> }} />;
+  // An ID from the address in Roboto Mono 500 (DESIGN.md section 5, Page header).
+  const idText = <span className="font-mono font-medium">{pid}</span>;
+  const named = (name: string) => <Fill template={copy.breadcrumb.project} slots={{ name, pid: idText }} />;
+  const unnamed = <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />;
   const trail = (project: ReactNode, last: ReactNode): Crumb[] => [
     { text: copy.breadcrumb.projects, href: "/projects" },
     projectCrumb(project),
@@ -114,8 +129,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     crumbs = trail(unnamed, versionCrumb ?? words.agencyUnknown);
     body = (
       <>
-        <PlanCheckHeader agency={words.agencyUnknown} />
-        <div className="mt-6 max-w-[72ch]">
+        <PlanCheckHeader agency={words.agencyUnknown} plan={version ? words.subtitle(formatDate(version)) : undefined} />
+        <EightColumns className="mt-6">
           <LoadError
             error={load.error}
             message={words.error}
@@ -124,7 +139,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             retrying={load.retrying}
             attempt={load.attempt}
           />
-        </div>
+        </EightColumns>
       </>
     );
   } else if (checked) {
@@ -156,7 +171,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       : allPlans;
     switch (abstention?.reason) {
       case "unknown_project":
-        title = <Fill template={copy.projectPage.notFoundTitle} slots={{ pid: <span className="font-mono">{pid}</span> }} />;
+        title = <Fill template={copy.projectPage.notFoundTitle} slots={{ pid: idText }} />;
         text = copy.projectPage.notFoundBody;
         link = { href: "/projects", text: copy.projectPage.notFoundLink };
         break;
@@ -191,7 +206,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           agency={knownAgency ?? words.agencyUnknown}
           plan={found.plan ? words.subtitle(formatDate(found.plan.plan_date)) : undefined}
         />
-        <EmptyState className="mt-6" title={title} body={text} link={link} />
+        <EightColumns className="mt-6">
+          <EmptyState title={title} body={text} link={link} />
+        </EightColumns>
       </>
     );
   }
@@ -201,7 +218,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       <Breadcrumb trail={crumbs} />
       <div className="mt-4">{body}</div>
       <p role="status" className="sr-only">
-        {said}
+        {statusText}
       </p>
     </div>
   );

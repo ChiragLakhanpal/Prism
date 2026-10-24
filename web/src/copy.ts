@@ -64,7 +64,7 @@ export const copy = {
     },
     project: {
       title: "Project {pid}",
-      purpose: "This page shows what I hold about one project, one part on each tab.",
+      purpose: "This page shows what I hold about one project. Each tab shows one part of it.",
     },
     checkPlan: {
       title: "Plan check, {pid}",
@@ -327,7 +327,6 @@ export const copy = {
     noun: "projects",
     loading: "Loading projects.",
     columns: { project: "Project", country: "Country", status: "Status" },
-    // A row's caption below 768 px: "Kenya. Active."
     more: "Show 50 more",
     source: "World Bank projects API, records through {date}.",
     sourceUndated: "World Bank projects API.",
@@ -387,7 +386,7 @@ export const copy = {
     // The h1 when the agency's name is not known.
     agencyUnknown: "Procurement Plan",
     pill: (total: number, totalText: string) => (total === 1 ? "1 activity checked" : `${totalText} activities checked`),
-    pillPartial: (checked: string, total: string) => `${checked} of ${total} activities checked`,
+    pillPartial: (checked: string, total: string) => `${checked} of ${total} activities fully checked`,
     // The finding: the first part, then the notes part, then the full stop. {look}, {watch} and
     // {notes} are the tool's counts, in words.
     finding: {
@@ -428,15 +427,15 @@ export const copy = {
     methodDot: "\u00a0·",
     noSignals: "No signals.",
     foundDefinition:
-      "Needs a look and Watch are signals. A signal is a fixed check on public records that gives a reason to look, " +
-      "never a finding. An activity needs a look when {lookRule}. It is worth watching when {watchRule}. A data note " +
-      "means the record is missing a value or contradicts itself.",
+      "Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, " +
+      "never a finding. {lookRule} {watchRule} A data note means the record is missing a value or contradicts itself.",
+    // {amount} is the threshold in rule 11's text form ("1 million"), since no one looks it up in STEP.
     lookRule:
-      "its planned completion passed with no signed contract, and the plan estimates it at US${amount} or more or " +
-      "gives no estimate",
+      "An activity needs a look when its planned completion passed with no signed contract. I mark it only when its " +
+      "estimate is US${amount} or more, or when the plan gives no estimate.",
     watchRule:
-      "it is still pending {days} days or fewer before the project closes, or after it closes, or when it was signed " +
-      "at {ratio} times its estimate or more",
+      "An activity is worth watching when it is still pending {days} days or fewer before the project closes, or " +
+      "after the project closed. It is also worth watching when it was signed at {ratio} times its estimate or more.",
     // The fold under the marked rows. Up to fold.listUpTo references are named in the sentence.
     fold: {
       listUpTo: 3,
@@ -452,7 +451,8 @@ export const copy = {
     source: {
       plan: "Procurement Plan, {agency}, {pid}, version of {date}, disclosed {disclosed}.",
       closing: "Project closing date from the World Bank's projects API, record of {date}.",
-      marks: "Marks from Strata's fixed checks, run {date}.",
+      // {date} is the date the page reads the records as of, not a date the checks ran.
+      marks: "Marks from Strata's fixed checks, as of {date}.",
       open: "The plan on the World Bank's documents site",
     },
     // The visually hidden status that announces steps, not rows.
@@ -509,7 +509,7 @@ export const copy = {
     notFoundBody: (date: string) => `The latest plan I have from this agency is dated ${date}.`,
     notPublicTitle: (date: string) => `I can't show this plan as of ${date}.`,
     notPublicBody: (date: string) => `The World Bank disclosed it on ${date}, after that date.`,
-    noPlanAsOfTitle: (date: string) => `No plan from this agency was public on ${date}.`,
+    noPlanAsOfTitle: (date: string) => `I have no plan from this agency that was public on ${date}.`,
     latestLink: (date: string) => `Plan of ${date}`,
     error: "I couldn't load this plan's check because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't show this plan.",
@@ -532,5 +532,8 @@ export const copy = {
     overNinetyNinePercent: "more than 99 percent",
     overNinetyNinePercentShort: ">99%",
     countWithFrequency: (count: string, frequency: string) => `${count}, ${frequency}`,
+    // An amount in a sentence (rule 11): "12.5 million", "2 billion".
+    million: (n: string) => `${n} million`,
+    billion: (n: string) => `${n} billion`,
   },
 } as const;

@@ -1,7 +1,7 @@
 // The number rules Num enforces (DESIGN.md sections 6 and 7), checked against literal
 // strings. Num renders exactly what these functions return.
 import { expect, test } from "@playwright/test";
-import { formatCount, formatDate, formatNumber, formatRatio, formatYear } from "../src/lib/format";
+import { formatAmountText, formatCount, formatDate, formatNumber, formatRatio, formatYear } from "../src/lib/format";
 
 test("a ratio under 20 cases is a count and never a percentage", () => {
   expect(formatRatio(6, 12)).toEqual({ text: "6 of 12", count: "6 of 12", frequency: null });
@@ -70,6 +70,14 @@ test("a number that rounds over a boundary takes the next size's rule", () => {
   // A number that stays inside its size keeps its rule.
   expect(formatNumber(9.95)).toBe("10.0");
   expect(formatNumber(45.04)).toBe("45.0");
+});
+
+test("in a sentence a large amount reads in millions or billions, as DESIGN.md rule 11 writes US$12.5 million", () => {
+  expect(formatAmountText(1_000_000)).toBe("1 million");
+  expect(formatAmountText(12_500_000)).toBe("12.5 million");
+  expect(formatAmountText(250_000_000)).toBe("250 million");
+  expect(formatAmountText(2_000_000_000)).toBe("2 billion");
+  expect(formatAmountText(999_999)).toBe("999,999");
 });
 
 test("years have no comma", () => {

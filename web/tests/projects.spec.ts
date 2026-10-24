@@ -54,10 +54,13 @@ test("All projects says when it holds no records, and when the data service didn
   await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } });
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
   await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
+  expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(853);
 
   await open(page, "/projects", { "/api/projects": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
   await expect(page.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  // At 1440 px the alert holds columns 1 to 8, as on every other page.
+  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(853);
 });
 
 test("a project's page shows its header, one Procurement tab, and each agency's plan versions newest first", async ({ page }) => {
