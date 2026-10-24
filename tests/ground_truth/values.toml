@@ -1197,6 +1197,69 @@ quote = "INDIVIDUAL CONSULTANT"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1668349].supplier"
 
+# Awarded bidders in award notices (ticket 19). An award notice writes each awarded bidder as its
+# name with its STEP supplier ID in brackets, then its address and its country. Consultant notices
+# write "Awarded Firm(s):", and a person hired as an individual consultant is written
+# "Individual Consultant" with no name and no ID.
+
+[[value]]
+id = "notice-bidder-503708"
+says = "Award notice OP00125855 for KE-KIMAWASCO-158691-CW-RFB lists the joint venture's first member as an awarded bidder, with STEP supplier ID 503708."
+value = "503708"
+name = "SALAMA ROAD AND BRIDGE CORPORATION LTD"
+notice = "OP00125855"
+quote = "SALAMA ROAD AND BRIDGE CORPORATION LTD (503708)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125855].notice_text"
+
+[[value]]
+id = "notice-bidder-503711"
+says = "The same notice lists the joint venture's second member as an awarded bidder, with STEP supplier ID 503711."
+value = "503711"
+name = "AGUNGA & COMPANY LIMITED"
+notice = "OP00125855"
+quote = "AGUNGA & COMPANY LIMITED (503711)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125855].notice_text"
+
+[[value]]
+id = "notice-firm-636626"
+says = "Award notice OP00192301, a consultant award, lists its first awarded firm with STEP supplier ID 636626, followed by the line Registry ID: 24."
+value = "636626"
+name = "GEOSPATIAL RESEARCH INTERNATIONAL (GRI)"
+notice = "OP00192301"
+quote = "GEOSPATIAL RESEARCH INTERNATIONAL (GRI) (636626)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00192301].notice_text"
+
+[[value]]
+id = "notice-firm-637051"
+says = "The same notice lists its second awarded firm with STEP supplier ID 637051, followed by the firms' evaluation scores."
+value = "637051"
+name = "AFRICAN SYSTEMS LLC"
+notice = "OP00192301"
+quote = "AFRICAN SYSTEMS LLC (637051)"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00192301].notice_text"
+
+[[value]]
+id = "notice-individual-consultant"
+says = "Award notice OP00410598 for KE-MAWASCO-501974-CS-INDV writes its awarded firm as Individual Consultant, with no name and no STEP supplier ID."
+value = "Individual Consultant"
+notice = "OP00410598"
+quote = "Individual Consultant"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00410598].notice_text"
+
+[[value]]
+id = "notice-bidder-no-id"
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB, signed in the FY2017-19 gap, writes its awarded bidder with no STEP supplier ID."
+value = "AMIT CONSTRUCTION"
+notice = "OP00044090"
+quote = "AMIT CONSTRUCTION"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+
 [[value]]
 id = "notice-icb-code"
 says = "Notice OP00034393, a Kenya Invitation for Bids of September 14, 2015 for the Nairobi bulk water supply, gives its method's code as ICB, an old name that silver maps to Request for Bids, Open - International."

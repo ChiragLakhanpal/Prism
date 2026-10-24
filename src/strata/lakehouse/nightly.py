@@ -89,7 +89,12 @@ def _fetch_by_watermark(run: Run) -> int:
 
 
 def _bronze_to_gold(run: Run) -> int:
+    """Silver from bronze, the awarded bidders read from award notices, then gold (ticket 19 resolves
+    suppliers here, since the bundle's task list belongs to ticket 43 and docs/PLAN.md section 11)."""
+    from strata.knowledge.suppliers import bidders
+
     added = sum(silver.run(run.engine, source) for source in _paged())
+    added += bidders.store(run.engine)
     return added + gold.build(run.engine)
 
 

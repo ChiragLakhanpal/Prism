@@ -137,7 +137,23 @@ def isr_rating(gold, value):
     assert (row["value"], row["public_from"]) == (value["value"], dt.date(2026, 6, 30))
 
 
+def awarded_bidder(gold, value):
+    """An awarded bidder of an award notice, read from its text into silver.notice_bidders with its STEP
+    supplier ID, or as an unnamed individual consultant, public from the notice's own date (ticket 19)."""
+    notice = one(gold, "SELECT public_from FROM strata.gold.notice WHERE notice_id = :notice", notice=value["notice"])
+    found = gold.run("SELECT name, step_supplier_id, individual_consultant, public_from FROM strata.silver.notice_bidders "
+                     "WHERE notice_id = :notice", {"notice": value["notice"]}).rows
+    expected = ((None, None, True, notice["public_from"]) if value["value"] == "Individual Consultant"
+                else (value["name"], value["value"], False, notice["public_from"]))
+    assert expected in found
+
+
 CHECKS = {
+    "notice-bidder-503708": awarded_bidder,
+    "notice-bidder-503711": awarded_bidder,
+    "notice-firm-636626": awarded_bidder,
+    "notice-firm-637051": awarded_bidder,
+    "notice-individual-consultant": awarded_bidder,
     "notice-icb-code": notice_method_as_written,
     "notice-icb-name": notice_method_as_written,
     "award-541055-signed": contract_signed,
