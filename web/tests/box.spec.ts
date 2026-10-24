@@ -101,6 +101,29 @@ test("a STEP reference opens its plan's check with that activity in view and foc
   await expect(page.locator("tr[id='KE-NWWDA-541055-CW-RFB']")).toHaveAttribute("data-named", "true");
 });
 
+// The critique of ticket 14, round 2: a landing that cuts the title or the box at the top edge reads as
+// a scroll gone wrong. The row is in view, and the band and the title are each wholly in view or wholly
+// scrolled away.
+for (const width of [1440, 390]) {
+  test(`at ${width} px landing on a STEP reference cuts neither the band nor the title at the top edge`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    await typeInBox(page, "KE-NWWDA-541055-CW-RFB");
+    await expect(options(page).first()).toContainText("Northern Water Works Development Agency");
+    await page.keyboard.press("Enter");
+
+    const view = width >= 1024 ? "table" : "cards";
+    const row = page.locator(`[data-view=${view}] [data-activity='KE-NWWDA-541055-CW-RFB']`);
+    await expect(row).toBeFocused();
+    await expect(row).toBeInViewport({ ratio: 1 });
+    await page.waitForTimeout(100);
+    for (const part of ["[data-box-band]", "main h1"]) {
+      const box = (await page.locator(part).boundingBox())!;
+      expect(box.y >= 0 || box.y + box.height <= 0, `${part} at ${Math.round(box.y)} px, ${Math.round(box.height)} px tall`).toBe(true);
+    }
+  });
+}
+
 test("free text offers Ask this, and nothing is sent until the person chooses it", async ({ page }) => {
   const { asked } = await open(page);
 

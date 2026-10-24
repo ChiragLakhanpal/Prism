@@ -11,8 +11,9 @@
 // Every number comes from the tool: the counts, the days, the ratio and the amounts. The screen
 // writes them (web/src/lib/format.ts) and counts nothing. Marked rows come first, by their strongest
 // mark, then in the order check_plan returns them. Each row and each card names its STEP reference
-// in data-activity, and an address whose hash names a reference opens the fold if it must, scrolls
-// that activity into view and focuses it (ticket 14 links to plan rows this way).
+// in data-activity, and an address whose hash names a reference opens the fold if it must, brings
+// that activity into view with nothing cut at the top edge, and focuses it (ticket 14 links to plan
+// rows this way).
 import { createElement, useEffect, useId, useState, type ReactNode, type Ref } from "react";
 import { copy } from "../copy";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
@@ -419,6 +420,33 @@ function visibleActivity(ref: string): HTMLElement | null {
   return found[0] ?? null;
 }
 
+// The space left above a named activity when the page lands on it.
+const LANDING_GAP = 16;
+
+// Brings a named activity into view without cutting the box band or the page's title at the top
+// edge: the page from its top when the activity fits on the first screen, or else the activity just
+// under the sticky header. The band and the title are each shown whole when the activity still fits
+// under them, and otherwise scrolled away whole.
+function bringIntoView(target: HTMLElement) {
+  const place = (element: Element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
+  };
+  const row = place(target);
+  const header = document.querySelector<HTMLElement>("[data-plan-header]");
+  const stuck = header && getComputedStyle(header).position === "sticky" ? header.offsetHeight : 0;
+  const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
+  let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
+  // A title inside the sticky header stays in view whatever the page does.
+  const parts = [document.querySelector("[data-box-band]"), stuck ? null : document.querySelector("main h1")];
+  for (const part of parts) {
+    if (!part) continue;
+    const { top: partTop, bottom: partBottom } = place(part);
+    if (top > partTop && top < partBottom) top = fits(partTop) ? partTop : partBottom;
+  }
+  window.scrollTo({ top: Math.max(0, top) });
+}
+
 export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, sticky = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
@@ -497,8 +525,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
       if (unmarkedRows.some((row) => row.activity_reference_no === ref)) setOpen(true);
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
-        target?.scrollIntoView({ block: "center" });
-        target?.focus({ preventScroll: true });
+        if (!target) return;
+        bringIntoView(target);
+        target.focus({ preventScroll: true });
       });
     };
     follow();
