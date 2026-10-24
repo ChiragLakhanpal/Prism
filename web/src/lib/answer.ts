@@ -31,7 +31,7 @@ export type SentenceEvent = {
 };
 export type EvidenceEvent = {
   id: string;
-  kind: "passage" | "record";
+  kind: "passage" | "record" | "package";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

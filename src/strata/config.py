@@ -844,6 +844,9 @@ class ToolParameter:
     type: str
     required: bool
     description: str
+    # Whether it names the record a call is about, such as find_comparables' step_reference, so the summary's
+    # evidence id is keyed by it even when it is optional. A required parameter always does.
+    key: bool = False
 
 
 @dataclass(frozen=True)
@@ -933,9 +936,9 @@ def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter,
     parameters = []
     for entry in _tables(path, table, "parameters"):
         entry.where = f"tools.{name}.{entry.where}"
-        entry.only({"name", "type", "required", "description"})
+        entry.only({"name", "type", "required", "description", "key"})
         parameter = ToolParameter(entry.text("name"), entry.text("type"), entry.boolean("required"),
-                                  entry.text("description"))
+                                  entry.text("description"), bool(entry.table.get("key", False)))
         if parameter.type not in PARAMETER_TYPES:
             entry._fail("type", f"must be one of {', '.join(PARAMETER_TYPES)}")
         parameters.append(parameter)

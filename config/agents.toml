@@ -51,6 +51,19 @@ guardrail = "strata"
 description = "Writes one review note per marked activity in a borrower's Procurement Plan, citing the plan rows its check returned."
 tools = []
 
+# The plan-a-package workflow's reader (ticket 15): one structured call that reads a person's sentence, such
+# as "rural roads, Kenya, about US$15 million", into the fields of the package form schema
+# (config/package_form.toml) that the app hands it. It writes no sentence a person reads, so no verifier
+# runs on it; the app checks each value against the schema and computes review type and market approach
+# from config/thresholds.toml itself (src/strata/packages).
+[agents.package_reader]
+name = "strata-package-reader"
+role = "draft"
+instructions = "package_reader.md"
+guardrail = "strata"
+description = "Reads a sentence that describes a procurement package into the criteria of Strata's package form."
+tools = []
+
 [guardrails.strata]
 name = "strata-guardrail"
 base_policy = "Microsoft.DefaultV2"

@@ -33,19 +33,9 @@ export const ROUTES: Route[] = [
       link: DATA_LINK,
     },
   },
-  {
-    path: "/packages",
-    h1: "Packages",
-    tab: "Packages",
-    purpose: "Check a borrower's Procurement Plan against comparable past packages, or plan a new package from one sentence.",
-    empty: {
-      title: "There are no plans or packages here yet.",
-      body: "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of Exchanges in Procurement (STEP).",
-      link: DATA_LINK,
-    },
-  },
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
-  // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it.
+  // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it. The Packages tab and a
+  // package planned from a sentence are built in ticket 15; web/tests/planned-package.spec.ts tests them.
   {
     path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
     h1: "Activity IN-RRSMP-7431-CW-RFB",

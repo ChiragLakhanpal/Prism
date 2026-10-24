@@ -1,0 +1,190 @@
+# The package form schema: the criteria of a package someone plans from a sentence (spec, "Ten single
+# places", item 7; ticket 15).
+#
+# This is the one place a criterion chip is defined (CLAUDE.md rule 9). Each [[fields]] entry is one chip in
+# the package workspace's "What I understood" card, in its group and in this order. Adding an entry adds a
+# chip in its group, and the package reader is asked for it; removing one removes the chip. No other code
+# names a field. strata.packages.form.load_form() reads this file, and GET /api/planned-packages/{id} hands
+# it to the screen with each package.
+#
+# [groups.<key>], in the card's order:
+#   label   the group's visible label, "What", "Where" or "How"
+#   name    its longer accessible name, so a screen reader never takes the chip group "What" for the What stratum
+#
+# [[fields]]:
+#   key         the field's key, which a saved package stores its value under
+#   group       its group above
+#   kind        choice (one of options), text, amount (US dollars), count (a whole number), country (an ISO
+#               code from the World Bank's country list) or months (the person's plan)
+#   source      typed (from the sentence, a default or the person), computed (from config/thresholds.toml,
+#               by rule) or guessed (the reader may guess it when the sentence does not say)
+#   label       the editor's heading, such as Method
+#   add_label   the chip's words while the field has no value, such as "Add the method"
+#   step_field  STEP's field name, word for word, which the editor's STEP line names. Leave it out for a
+#               field STEP has no field for.
+#   picks       the find_comparables parameter the field sets, when it picks the comparables. Changing such
+#               a field reruns find_comparables. Market approach, review type and the amount do not pick
+#               them, as ticket 12's defaults have it: the records rarely hold them for packages still open,
+#               so a range picked by them would leave those packages out.
+#   default     the value a field takes when the sentence does not say, in STEP's words
+#   options     a choice's values: value is STEP's word for word, label the chip's sentence-case words
+#   rule        a computed field's rule in config/thresholds.toml: review or market_approach
+#   optional    true when the person may remove the value
+#   asked       false for a field the package reader is never asked for, such as the person's own plan
+#   unit, unit_one   a count's unit, such as lots and lot
+#   aliases     true for a choice that takes the old names of selection methods (ICB, NCB, Shopping),
+#               which strata.lakehouse.clean's OLD_METHODS maps to the Procurement Regulations' names
+
+[groups.what]
+label = "What"
+name = "What is being bought"
+
+[groups.where]
+label = "Where"
+name = "Where the package is"
+
+[groups.how]
+label = "How"
+name = "How it will be procured"
+
+[[fields]]
+key = "category"
+group = "what"
+kind = "choice"
+source = "typed"
+label = "Category"
+add_label = "Add the category"
+step_field = "Procurement Category"
+picks = "category"
+options = [
+  { value = "Works", label = "Works" },
+  { value = "Goods", label = "Goods" },
+  { value = "Non-consulting Services", label = "Non-consulting services" },
+  { value = "Consultant Services", label = "Consultant services" },
+]
+
+[[fields]]
+key = "description"
+group = "what"
+kind = "text"
+source = "typed"
+label = "Description"
+add_label = "Add a description"
+step_field = "Description"
+
+[[fields]]
+key = "estimated_amount_usd"
+group = "what"
+kind = "amount"
+source = "typed"
+label = "Estimated amount"
+add_label = "Add the estimated amount"
+step_field = "Estimated Amount (US$)"
+
+[[fields]]
+key = "lots"
+group = "what"
+kind = "count"
+source = "guessed"
+label = "Number of lots"
+add_label = "Add the number of lots"
+unit = "lots"
+unit_one = "lot"
+optional = true
+
+[[fields]]
+key = "country"
+group = "where"
+kind = "country"
+source = "typed"
+label = "Country"
+add_label = "Add the country"
+picks = "country"
+
+[[fields]]
+key = "method"
+group = "how"
+kind = "choice"
+source = "typed"
+label = "Method"
+add_label = "Add the method"
+step_field = "Method"
+picks = "method"
+default = "Request for Bids"
+aliases = true
+options = [
+  { value = "Request for Bids", label = "Request for Bids (RFB)" },
+  { value = "Request for Quotations", label = "Request for Quotations (RFQ)" },
+  { value = "Request for Proposals", label = "Request for Proposals (RFP)" },
+  { value = "Direct Selection", label = "Direct selection" },
+]
+
+[[fields]]
+key = "market_approach"
+group = "how"
+kind = "choice"
+source = "computed"
+rule = "market_approach"
+label = "Market approach"
+add_label = "Add the market approach"
+step_field = "Market Approach"
+options = [
+  { value = "Open - International", label = "Open international" },
+  { value = "Open - National", label = "Open national" },
+  { value = "Limited - International", label = "Limited international" },
+  { value = "Limited - National", label = "Limited national" },
+  { value = "Direct", label = "Direct" },
+]
+
+[[fields]]
+key = "procurement_process"
+group = "how"
+kind = "choice"
+source = "typed"
+label = "Procurement process"
+add_label = "Add the procurement process"
+step_field = "Procurement Process"
+default = "Single Stage - One Envelope"
+options = [
+  { value = "Single Stage - One Envelope", label = "Single stage, one envelope" },
+  { value = "Single Stage - Two Envelope", label = "Single stage, two envelopes" },
+  { value = "Multi-Stage", label = "Multistage" },
+]
+
+[[fields]]
+key = "prequalification"
+group = "how"
+kind = "choice"
+source = "typed"
+label = "Qualification"
+add_label = "Add the qualification"
+step_field = "Prequalification (Y/N)"
+default = "No"
+options = [
+  { value = "No", label = "Post-qualification" },
+  { value = "Yes", label = "Prequalification" },
+]
+
+[[fields]]
+key = "review_type"
+group = "how"
+kind = "choice"
+source = "computed"
+rule = "review"
+label = "Review type"
+add_label = "Add the review type"
+step_field = "Review Type"
+options = [
+  { value = "Prior", label = "Prior review" },
+  { value = "Post", label = "Post review" },
+]
+
+[[fields]]
+key = "plan_months"
+group = "how"
+kind = "months"
+source = "typed"
+label = "Your plan"
+add_label = "Add your plan"
+asked = false
+optional = true

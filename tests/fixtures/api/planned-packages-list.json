@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "type": "package",
+      "package_id": "pkg-000000000003",
+      "description": "Rural roads",
+      "country": "KE",
+      "country_name": "Kenya",
+      "step_reference": null,
+      "project_id": null,
+      "guesses": 0,
+      "last_worked_on": "2026-10-23T14:26:00Z"
+    },
+    {
+      "type": "package",
+      "package_id": "pkg-000000000002",
+      "description": null,
+      "country": null,
+      "country_name": null,
+      "step_reference": null,
+      "project_id": null,
+      "guesses": 0,
+      "last_worked_on": "2026-10-23T14:16:00Z"
+    },
+    {
+      "type": "package",
+      "package_id": "pkg-000000000001",
+      "description": "Rural roads",
+      "country": "KE",
+      "country_name": "Kenya",
+      "step_reference": null,
+      "project_id": null,
+      "guesses": 1,
+      "last_worked_on": "2026-10-23T14:05:00Z"
+    },
+    {
+      "type": "plan_check",
+      "project_id": "P156634",
+      "agency_id": "northern-water-works-development-agency",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "plan_date": "2026-10-09",
+      "latest": false,
+      "activities": 9,
+      "country_name": null,
+      "last_worked_on": "2026-10-23T14:00:00Z"
+    }
+  ],
+  "counts": {
+    "packages": 3,
+    "plan_checks": 1,
+    "total": 4
+  }
+}

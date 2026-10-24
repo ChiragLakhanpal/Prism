@@ -144,14 +144,19 @@ for (const width of [1440, 390, 320]) {
   });
 }
 
-test("free text offers Ask this, and nothing is sent until the person chooses it", async ({ page }) => {
+// Ticket 15 gives free text a second option, "Plan a package from this sentence", which is never first
+// (the 15 brief, section 7.1); web/tests/planned-package.spec.ts tests what choosing it does.
+test("free text offers Ask this, then Plan a package, and nothing is sent until the person chooses one", async ({ page }) => {
   const { asked } = await open(page);
 
   await typeInBox(page, "Why were works contracts advertised again?");
 
-  await expect(options(page)).toHaveCount(1);
+  await expect(options(page)).toHaveCount(2);
   await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
   await expect(options(page).first()).toContainText("Enter");
+  await expect(options(page).nth(1)).toHaveAccessibleName(
+    "Plan a package from this sentence I'll read the criteria from your sentence and open a new package. You can change any of them.",
+  );
   await page.waitForTimeout(400);
   expect(asked).toEqual([]);
   await expect(page.getByRole("region", { name: "Answer" })).toHaveCount(0);
@@ -162,9 +167,10 @@ test("free text that holds one project ID also offers to open it, second", async
 
   await typeInBox(page, "Why were works contracts in P130164 advertised again?");
 
-  await expect(options(page)).toHaveCount(2);
+  await expect(options(page)).toHaveCount(3);
   await expect(options(page).first()).toHaveAccessibleName("Ask this Across all projects");
   await expect(options(page).nth(1)).toHaveAccessibleName(/^Open P130164/);
+  await expect(options(page).nth(2)).toHaveAccessibleName(/^Plan a package from this sentence/);
   await page.keyboard.press("ArrowDown");
   await expect(options(page).nth(1)).toHaveAttribute("aria-selected", "true");
   await expect(box(page)).toHaveAttribute("aria-activedescendant", (await options(page).nth(1).getAttribute("id"))!);

@@ -16,6 +16,8 @@ import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
 import { DraftsPage } from "./pages/DraftsPage";
 import { PackagePage } from "./pages/PackagePage";
+import { PackagesPage } from "./pages/PackagesPage";
+import { PlannedPackagePage } from "./pages/PlannedPackagePage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
@@ -30,6 +32,9 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "draftNew") return <DraftNewPage search={search} />;
   if (match.key === "draft") return <DraftPage draftId={match.values.id} search={search} />;
   if (match.key === "package") return <PackagePage stepRef={match.values.id} />;
+  if (match.key === "packages") return <PackagesPage search={search} />;
+  if (match.key === "packageNew") return <PlannedPackagePage packageId={null} search={search} />;
+  if (match.key === "plannedPackage") return <PlannedPackagePage packageId={match.values.id} search={search} />;
   return (
     <div className="layout-grid">
       <div className="col-span-12 @md/page:col-span-8">

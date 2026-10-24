@@ -1,0 +1,174 @@
+{
+  "tool": "find_comparables",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 27,
+    "used": 0,
+    "not_used": [
+      {
+        "reason": "no_step_reference",
+        "count": 12,
+        "evidence_ids": [
+          "strata.gold.contract:1790259",
+          "strata.gold.contract:1790478",
+          "strata.gold.contract:1791265",
+          "strata.gold.contract:1791267",
+          "strata.gold.contract:1797777",
+          "strata.gold.contract:1798169",
+          "strata.gold.contract:1801021",
+          "strata.gold.contract:1811604",
+          "strata.gold.contract:1814221",
+          "strata.gold.contract:1814225",
+          "strata.gold.contract:1848572",
+          "strata.gold.contract:1872371"
+        ]
+      },
+      {
+        "reason": "no_notice",
+        "count": 15,
+        "evidence_ids": [
+          "strata.gold.package:KE-BUSIA COUNTY-441544-CW-RFQ",
+          "strata.gold.package:KE-BUSIA COUNTY-531857-CW-RFQ",
+          "strata.gold.package:KE-HOMABAY COUNTY-440636-CW-RFQ",
+          "strata.gold.package:KE-KAJIADO COUNTY-429306-CW-RFQ",
+          "strata.gold.package:KE-KIAMBU COUNTY-423779-GO-RFQ",
+          "strata.gold.package:KE-KISII COUNTY-423778-CW-RFQ",
+          "strata.gold.package:KE-MIGORI COUNTY-425987-CW-RFQ",
+          "strata.gold.package:KE-NANDI COUNTY-425085-CW-RFQ",
+          "strata.gold.package:KE-NAROK COUNTY-426505-CW-RFQ",
+          "strata.gold.package:KE-NWWDA-541062-CW-RFQ",
+          "strata.gold.package:KE-NYAMIRA COUNTY-424306-CW-RFQ",
+          "strata.gold.package:KE-THARAKA NITHI COUNTY-426315-CW-RFQ",
+          "strata.gold.package:KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
+          "strata.gold.package:KE-WAJWASCO-380658-CW-RFQ",
+          "strata.gold.package:KE-WAJWASCO-503126-CW-RFQ"
+        ]
+      }
+    ]
+  },
+  "package": null,
+  "criteria": {
+    "method": "Request for Quotations",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2026-10-23",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [],
+    "country_name": "Kenya"
+  },
+  "counts": {
+    "comparables": 0,
+    "signed": 0,
+    "still_open": 0,
+    "canceled": 0,
+    "canceled_as_still_open": false
+  },
+  "past_range": null,
+  "plan": null,
+  "frequencies": null,
+  "quantile_dots": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "quantile_dots_above": 60,
+    "quantile_dots": 20,
+    "max_plan_months": 60,
+    "canceled_as_still_open": false
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "none_measurable",
+    "matched": 27
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:@2026-10-23?method=Request%20for%20Quotations&category=Works&country=KE",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "frequencies": null,
+    "counts": {
+      "comparables": 0,
+      "signed": 0,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 27,
+      "used": 0,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 12,
+          "evidence_ids": [
+            "strata.gold.contract:1790259",
+            "strata.gold.contract:1790478",
+            "strata.gold.contract:1791265",
+            "strata.gold.contract:1791267",
+            "strata.gold.contract:1797777",
+            "strata.gold.contract:1798169",
+            "strata.gold.contract:1801021",
+            "strata.gold.contract:1811604",
+            "strata.gold.contract:1814221",
+            "strata.gold.contract:1814225",
+            "strata.gold.contract:1848572",
+            "strata.gold.contract:1872371"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 15,
+          "evidence_ids": [
+            "strata.gold.package:KE-BUSIA COUNTY-441544-CW-RFQ",
+            "strata.gold.package:KE-BUSIA COUNTY-531857-CW-RFQ",
+            "strata.gold.package:KE-HOMABAY COUNTY-440636-CW-RFQ",
+            "strata.gold.package:KE-KAJIADO COUNTY-429306-CW-RFQ",
+            "strata.gold.package:KE-KIAMBU COUNTY-423779-GO-RFQ",
+            "strata.gold.package:KE-KISII COUNTY-423778-CW-RFQ",
+            "strata.gold.package:KE-MIGORI COUNTY-425987-CW-RFQ",
+            "strata.gold.package:KE-NANDI COUNTY-425085-CW-RFQ",
+            "strata.gold.package:KE-NAROK COUNTY-426505-CW-RFQ",
+            "strata.gold.package:KE-NWWDA-541062-CW-RFQ",
+            "strata.gold.package:KE-NYAMIRA COUNTY-424306-CW-RFQ",
+            "strata.gold.package:KE-THARAKA NITHI COUNTY-426315-CW-RFQ",
+            "strata.gold.package:KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
+            "strata.gold.package:KE-WAJWASCO-380658-CW-RFQ",
+            "strata.gold.package:KE-WAJWASCO-503126-CW-RFQ"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-package-reader, written by hand in the Responses API's shape: a sentence that describes nothing to buy. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --packages",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "what is the weather like in Nairobi",
+ "scope": null,
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-package-reader",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_package_no_package_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_package_no_package_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"package\": false, \"dividing\": false, \"fields\": {}}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

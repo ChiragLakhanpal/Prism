@@ -4,7 +4,9 @@
   the answer stream's evidence event carries ({id, kind, tool, row, highlights}), so a drawer opened from
   a link shows what a drawer opened from an answer shows. READERS names the reader for each kind of
   evidence id, by the table before its colon: adding a kind is one entry there (CLAUDE.md rule 9). A
-  link carries no claim, so it has no highlights.
+  link carries no claim, so it has no highlights. A comparable package from the range chart
+  (strata.gold.package:<STEP reference>, ticket 15) comes back as kind "package", with its procurement
+  cycle time and its notice and contract award records.
 - OpenedLog records that a viewer opened a source, one row per viewer and evidence id in
   strata.ops.evidence_opened, and says which of an answer's sources a viewer has opened. It writes as
   the app's own service principal (ticket 06's settings), as the run log does, so no viewer's token can
@@ -21,7 +23,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
-from strata.tools import search_passages
+from strata.tools import find_comparables, search_passages
 
 log = logging.getLogger("strata.server.evidence")
 SQL = Path(__file__).resolve().parent / "sql" / "evidence"
@@ -38,9 +40,16 @@ def _passage(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return None if row is None else {"kind": "passage", "row": row}
 
 
+def _comparable(engine: Engine, key: str, as_of: dt.date) -> dict | None:
+    """A comparable package from the range chart (ticket 15): its months, its notice and its contract award."""
+    row = find_comparables.read_comparable(engine, key, as_of)
+    return None if row is None else {"kind": "package", "row": row}
+
+
 # The reader for each kind of evidence id, by the table its id names before the colon.
 READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     search_passages.TABLE: _passage,
+    "strata.gold.package": _comparable,
 }
 
 

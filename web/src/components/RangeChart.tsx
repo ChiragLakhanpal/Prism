@@ -300,6 +300,10 @@ export function RangeChart({
   sliderName,
   valueText,
   onPlan,
+  onOpen,
+  opened = null,
+  openHint,
+  openLabel,
 }: {
   width: number;
   marks: RangeMark[];
@@ -337,6 +341,15 @@ export function RangeChart({
   sliderName: string;
   valueText: string | null;
   onPlan: (value: number, how: PlanMove) => void;
+  // Ticket 15: a click on a dot, Enter on the focused dot, or a tapped dot's "Open its records" button
+  // opens that package in the evidence drawer, with the dot's element to give focus back to. The opened
+  // mark, by its key, keeps a 2 px selection1 ring while the drawer shows it. Charts that open nothing,
+  // such as a quantile dot's, leave these out.
+  onOpen?: (key: string, element: HTMLElement) => void;
+  opened?: string | null;
+  // The tooltip's last line for a pointer, and the touch tooltip's button.
+  openHint?: string;
+  openLabel?: string;
 }) {
   const altId = useId();
   const helpId = useId();
@@ -430,6 +443,8 @@ export function RangeChart({
   const [focused, setFocused] = useState<number | null>(null);
   const [active, setActive] = useState(0);
   const [dismissed, setDismissed] = useState<number | null>(null);
+  // Whether the last press on the chart was a finger's or a pen's, so a tapped dot's details hold a button.
+  const [tapped, setTapped] = useState(false);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const restTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The pointer's last point on the hovered dot, where the band toward its tooltip starts.
@@ -512,10 +527,14 @@ export function RangeChart({
       return;
     }
     const found = nearest(px, py);
+    setTapped(event.pointerType !== "mouse");
     if (found !== null) {
       apex.current = { x: px, y: py };
       setHover(found);
       setDismissed(null);
+      // A click on a dot opens its records; a tap shows its details, whose button opens them, since dots
+      // are too small and close to tap one by one (the 15 brief, section 3).
+      if (onOpen && event.pointerType === "mouse" && dotRefs.current[found]) onOpen(dots[found].key, dotRefs.current[found]!);
     } else if (event.pointerType !== "mouse") {
       setHover(null);
     }
@@ -618,6 +637,11 @@ export function RangeChart({
   };
   const onGroupKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const index = focused ?? active;
+    if (event.key === "Enter" && onOpen && focused !== null && dotRefs.current[focused]) {
+      event.preventDefault();
+      onOpen(dots[focused].key, dotRefs.current[focused]!);
+      return;
+    }
     const next: Record<string, number> = {
       ArrowLeft: index - 1,
       ArrowUp: index - 1,
@@ -856,6 +880,13 @@ export function RangeChart({
             )}
           </g>
         ))}
+        {/* The opened dot's ring, in selection1, while the evidence drawer shows its records (ticket 15). */}
+        {opened !== null &&
+          dots
+            .filter((dot) => dot.key === opened)
+            .map((dot) => (
+              <circle key="opened" data-opened-ring cx={dot.cx} cy={dot.cy} r={layout.r + 3} fill="none" strokeWidth={2} className="stroke-info-icon" />
+            ))}
         {/* The hovered dot's ring, drawn after every dot so the dots stacked around it never hide part of it. */}
         {hover !== null && focused === null && dots[hover] && (
           <circle data-hover-ring cx={dots[hover].cx} cy={dots[hover].cy} r={layout.r + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
@@ -1050,6 +1081,23 @@ export function RangeChart({
             {tipFor.tip.number}
           </p>
           <p className="text-chart-text-subtle">{tipFor.tip.line}</p>
+          {onOpen && openHint && !tapped && <p className="mt-1 text-chart-text-subtle">{openHint}</p>}
+          {/* The tooltip is hidden from screen readers, so its button leaves the tab order: a keyboard opens
+              the focused dot with Enter, and the table twin's buttons are the full-size way in. */}
+          {onOpen && openLabel && tapped && shown !== null && (
+            <button
+              type="button"
+              tabIndex={-1}
+              data-open-records
+              onClick={() => {
+                const element = dotRefs.current[shown];
+                if (element) onOpen(dots[shown].key, element);
+              }}
+              className="mt-2 inline-flex min-h-6 items-center rounded-pill border border-primary px-3 text-small font-bold text-primary hover:bg-tint"
+            >
+              {openLabel}
+            </button>
+          )}
         </div>
       )}
     </div>

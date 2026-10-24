@@ -27,6 +27,10 @@ export function SourceNumber({ n }: { n: number }) {
 // A record's reference moves to the next line whole when it fits there, and breaks after its hyphens
 // only when it does not (DESIGN.md section 5, Page header; PageHeader.tsx's WithIds).
 export function sourceTitle(evidence: EvidenceEvent) {
+  // A comparable package opened from the range chart is headed by its STEP reference alone (ticket 15).
+  if (evidence.kind === "package") {
+    return <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
+  }
   if (evidence.kind === "record") {
     const reference = <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
     return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference }} />;
@@ -76,7 +80,7 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
 export function eyebrow(evidence: EvidenceEvent): string {
   // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
   if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
-  const stratum = evidence.kind === "record" ? "What" : (evidence.stratum ?? "Why");
+  const stratum = evidence.kind === "record" || evidence.kind === "package" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }
 

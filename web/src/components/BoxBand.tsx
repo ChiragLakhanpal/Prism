@@ -90,7 +90,13 @@ export function OneBox({
   inputRef,
   shortcut = true,
   focusedHint,
+  modePlaceholder,
+  modeHelp,
 }: {
+  // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
+  // the box and takes the hint's place.
+  modePlaceholder?: string;
+  modeHelp?: string;
   value: string;
   onChange: (value: string) => void;
   // What Enter will do, best first. The list shows while open is true and there are options.
@@ -141,9 +147,11 @@ export function OneBox({
   const showHint = (focused || focusedHint) && value.length === 0;
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
-  const described = [showHint && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
+  const described =
+    [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
   const optionId = (index: number) => `${listId}-${index}`;
-  const placeholder = scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null;
+  const placeholder =
+    modePlaceholder ?? (scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null);
 
   return (
     <form
@@ -248,6 +256,12 @@ export function OneBox({
           </kbd>
         </div>
       </div>
+      {/* A mode's help line describes the box whether or not the list shows. */}
+      {modeHelp && !showHint && (
+        <span id={hintId} hidden>
+          {modeHelp}
+        </span>
+      )}
       {(showHint || showList || showNotes) && (
         <div
           data-box-popup
@@ -256,8 +270,8 @@ export function OneBox({
           onMouseDown={(event) => event.preventDefault()}
         >
           {showHint && (
-            <p id={hintId} className="px-4 py-2 text-caption text-ink-muted">
-              <Fill template={copy.box.hint} slots={{ pid: <span className="font-mono">{copy.box.hintId}</span> }} />
+            <p id={hintId} className="px-4 py-2 text-caption text-ink-muted" data-box-help={modeHelp ? "" : undefined}>
+              {modeHelp ?? <Fill template={copy.box.hint} slots={{ pid: <span className="font-mono">{copy.box.hintId}</span> }} />}
             </p>
           )}
           {showList && (

@@ -34,6 +34,8 @@ import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
+import { ComparableRecords } from "./ComparableRecords";
+import { COMPARABLE } from "../lib/packages";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 
 export type DrawerData =
@@ -417,13 +419,18 @@ export function EvidenceDrawerView({
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
   const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
+  // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
+  // what it closes.
+  const comparable = id.startsWith(COMPARABLE);
+  const comparableRef = comparable ? id.slice(COMPARABLE.length) : null;
 
   return (
     <div
       role="dialog"
       id={dialogId}
       aria-modal={narrow}
-      aria-labelledby={headingId}
+      aria-labelledby={comparableRef ? undefined : headingId}
+      aria-label={comparableRef ? copy.evidence.package.region(comparableRef) : undefined}
       data-evidence-drawer={narrow ? "sheet" : "drawer"}
       className={cx(
         "bg-surface",
@@ -453,8 +460,14 @@ export function EvidenceDrawerView({
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
           </div>
-          <Button variant="ghost" icon={X} iconOnly onClick={onClose} className="-mt-2 -mr-2">
-            {copy.evidence.close}
+          <Button
+            variant="ghost"
+            icon={X}
+            iconOnly
+            onClick={onClose}
+            className="-mt-2 -mr-2"
+          >
+            {comparable ? copy.evidence.package.close : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -497,11 +510,18 @@ export function EvidenceDrawerView({
                   </Button>
                 }
               >
-                {copy.document.failed}
+                {comparable ? copy.evidence.package.error : copy.document.failed}
               </Alert>
             )}
             {evidence?.kind === "passage" && <PassageView evidence={evidence} sentence={claim ? claim.index : null} fromAnswer={Boolean(claim)} />}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
+            {data.status === "loading" && comparable && (
+              <div aria-hidden="true" className="flex flex-col gap-4">
+                <Skeleton className="h-48 w-full rounded-md" />
+                <Skeleton className="h-48 w-full rounded-md" />
+              </div>
+            )}
           </div>
           {preview && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
         </div>

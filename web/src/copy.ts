@@ -40,19 +40,25 @@ export const copy = {
         "waiting for you.",
       link: "Go to Data",
     },
+    // The Packages tab has its own words below (the 15 brief, packagesTab); this title names the browser tab.
     packages: {
       title: "Packages",
-      purpose: "Check a borrower's Procurement Plan against comparable past packages, or plan a new package from one sentence.",
-      emptyTitle: "There are no plans or packages here yet.",
-      emptyBody:
-        "Plans you check and packages you plan appear here, each with its reference from Systematic Tracking of " +
-        "Exchanges in Procurement (STEP).",
-      link: "Go to Data",
+      purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
     },
     // The package workspace has its own words below (the 12 brief); this title names the browser tab.
     package: {
       title: "Package {id}",
       purpose: "This page shows how comparable packages went, so you can judge whether this package's plan is realistic.",
+    },
+    // A package planned from a sentence (the 15 brief): while I read the sentence, and once it is saved. Each
+    // names itself in the browser tab with its title once it loads, such as "Rural roads, Kenya · Packages".
+    packageNew: {
+      title: "New package",
+      purpose: "I'm reading your sentence as the criteria of a new package.",
+    },
+    plannedPackage: {
+      title: "Package",
+      purpose: "I read your sentence as the criteria below and compared them with past packages.",
     },
     // All projects, the project page and Check a plan have their own words below (the 10 brief):
     // these titles name the browser tab, and the purposes are the pages' own.
@@ -206,6 +212,20 @@ export const copy = {
       askWithin: "Within {id}",
       askAcross: "Across all projects",
       lookingUp: "Looking up {id}",
+      // The plan-a-package intent (the 15 brief, section 7.1). It is never the default for free text.
+      plan: "Plan a package from this sentence",
+      planLine: "I'll read the criteria from your sentence and open a new package. You can change any of them.",
+      planPreviewOff: "Planning a package is off in a preview.",
+      // Check mode, opened by the Packages tab's "Check a plan": one option per agency's latest plan.
+      checkPlan: (agency: string, date: string) => `Check the ${agency} plan of ${date}`,
+      checkPlanLine: "{pcode}",
+      noPlan: "I found no published Procurement Plan for {pcode}.",
+    },
+    // The two modes the Packages tab's buttons put the box in.
+    mode: {
+      planPlaceholder: "Describe the package in one sentence",
+      planHelp: "Say what is being bought, where, and about how much. For example: rural roads, Kenya, about US$15 million.",
+      checkPlaceholder: "Type a project ID, such as P156634",
     },
     notFound: {
       project: "I have no project {id}.",
@@ -558,6 +578,52 @@ export const copy = {
     openNotice: "Open this notice on the World Bank's site",
     inLanguage: (language: string) => `In ${language}`,
     preview: "The address asks for a preview, so I'm not recording the sources you open.",
+    // A comparable package opened from the range chart (the 15 brief, section 7.8). Its eyebrow is the What
+    // stratum's, as for any record.
+    package: {
+      region: (ref: string) => `Records for comparable package ${ref}`,
+      eyebrow: "What · record",
+      meta: "{project} ({pcode})",
+      findingSigned: "This package took {months} months from its notice on {notice} to its signed contract on {signed}.",
+      findingOpen:
+        "This package had no signed contract {months} months after its notice on {notice}. I count it as still open, using records through {through}.",
+      whyHeading: "Why I compared it",
+      why: {
+        method: "Method",
+        category: "Procurement Category",
+        marketApproach: "Market Approach",
+        reviewType: "Review Type",
+        country: "Country",
+      },
+      recordEyebrow: "What",
+      noticeTitle: "Specific procurement notice",
+      contractTitle: "Contract award",
+      awardNoticeTitle: "Contract award notice",
+      fields: {
+        noticeType: "Notice Type",
+        published: "Published Date",
+        bidReference: "Bid Reference No",
+        description: "Bid Description",
+        method: "Procurement Method",
+        deadline: "Submission Deadline Date",
+        contractNumber: "WB Contract No",
+        contractDescription: "Contract Description",
+        reviewType: "Review Type",
+        signed: "Contract Signing Date",
+        amount: "Contract Amount (US$)",
+        signature: "Contract Signature Date",
+        price: "Signed Contract Price",
+      },
+      price: (amount: string, currency: string) => `${amount} ${currency}`,
+      noticeSource: "Procurement notice {id}, published {date}. {dataset}",
+      contractSource: "Contract award {id}, signed {date}. {dataset}",
+      dataset: (name: string, origin: string, license: string) => `The World Bank: ${name}: ${origin}. License: ${license}.`,
+      openNotice: "Open the notice on worldbank.org",
+      noContract: "No contract award in the records through {date}.",
+      projectLink: "Open the project page",
+      close: "Close the records",
+      error: "I couldn't load this package's records just now. Try again in a moment.",
+    },
     // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
     // 2019, paragraph 54".
     markerSource: (docType: string, date: string, para: string) => `${docType}, ${date}, paragraph ${para}`,
@@ -1206,6 +1272,9 @@ export const copy = {
       helperNoPlan:
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
+      // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
+      helperPlanned: "The line shows your plan, the same months as your plan chip. Moving it changes your plan.",
+      helperPlannedNone: "Type your plan's months, or add your plan in the How group, to see it as a line.",
       invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
     },
@@ -1228,6 +1297,10 @@ export const copy = {
       group: (total: string) => `${total} comparable packages, one dot each`,
       groupDots: (total: string) => `20 dots, each 1 in 20 of the ${total} comparable packages`,
       groupHelp: "Use the arrow keys to move between packages. Press Escape to hide the details.",
+      // Where a dot opens its package's records in the evidence drawer (ticket 15).
+      groupHelpOpen: "Use the arrow keys to move between packages. Press Enter to open a package's records, or Escape to hide the details.",
+      openHint: "Press Enter or click to open its records.",
+      openRecords: "Open its records",
       dotSigned: (ref: string, country: string, months: string, date: string, index: string, total: string) =>
         `${ref}, ${country}. Signed after ${months} months, on ${date}. Dot ${index} of ${total}.`,
       dotOpen: (ref: string, country: string, months: string, index: string, total: string) =>
@@ -1305,6 +1378,7 @@ export const copy = {
       notYet: "Not yet",
       previous: "Previous 20",
       next: "Next 20",
+      openRow: (ref: string) => `Open the records for ${ref}`,
     },
     // The states with no chart.
     empty: {
@@ -1330,6 +1404,205 @@ export const copy = {
       // Packages matched, but none could be measured: what they lacked, with no "Based on 0 of".
       unmeasuredOf: "Of the {matched}, {gaps}.",
     },
+  },
+
+  // A package planned from a sentence (the 15 brief): the workspace at /packages/new and /packages/:id, its
+  // "What I understood" card, its chip editors, its saved stamp and its section 1 additions. The words of each
+  // field (its label, its add label and its options) are in the package form schema, config/package_form.toml,
+  // which the copy lint checks too, so a field added there needs nothing here.
+  packageWorkspace: {
+    titleNew: "New package",
+    title: (description: string, country: string) => `${description}, ${country}`,
+    documentTitle: (title: string) => `${title} · Packages`,
+    breadcrumbPackages: "Packages",
+    referenceNone: "No STEP reference yet",
+    purpose:
+      "I read your sentence as the criteria below and compared them with past packages. A package gets its reference " +
+      "when the implementing agency enters it in Systematic Tracking of Exchanges in Procurement (STEP).",
+    stamp: {
+      notSaved: "Not saved yet",
+      saving: "Saving",
+      justNow: "Saved just now",
+      minutes: (minutes: number) => (minutes === 1 ? "Saved 1 minute ago" : `Saved ${minutes} minutes ago`),
+      at: (time: string) => `Saved at ${time}`,
+      on: (date: string) => `Saved ${date}`,
+      failed: "Not saved",
+      tryAgain: "Try again",
+      preview: "Changes are off in a preview",
+    },
+    card: {
+      heading: "What I understood",
+      youWrote: "You wrote:",
+      quoted: (sentence: string) => `"${sentence}"`,
+      instruction: "Choose any part to change it.",
+      guesses: (count: number, words: string) => (count === 1 ? `${words} guess to check.` : `${words} guesses to check.`),
+      noGuesses: "No guesses left to check.",
+    },
+    // A chip's words, by the kind of its field. The suffixes say a chip's state in words (DESIGN.md section 10).
+    chip: {
+      computed: (label: string) => `${label} · computed`,
+      guess: (label: string) => `${label} · guess`,
+      amount: (amount: string) => `US$${amount}`,
+      amountAbout: (amount: string) => `About US$${amount}`,
+      count: (count: string, unit: string) => `${count} ${unit}`,
+      // "Your plan:" is set in 600 weight.
+      plan: "{yours} {months} months",
+      planYours: "Your plan:",
+      // The chip's description: its field, then where its value came from.
+      described: (label: string, from: string) => `${label}. ${from}.`,
+      from: {
+        sentence: "From your sentence",
+        default: "The default, since your sentence did not say",
+        guess: "My guess",
+        computed: "Computed from the thresholds",
+        you: "You set this",
+        empty: "No value yet",
+      },
+    },
+    // The computed note under the chips, in the order its lines appear.
+    note: {
+      changed: (field: string, from: string, to: string, cause: string) =>
+        `${field} changed from ${from} to ${to} because the ${cause} changed.`,
+      intro: "I computed review type and market approach from the thresholds.",
+      review: "{category} of US${threshold} or more go to prior review.",
+      market: "In {country}, plans send {category} of US${threshold} or more to international bidding.",
+      assumed: (rating: string) => `I assumed the implementing agency's procurement risk is ${rating}, because I don't know it yet.`,
+      youSet: (field: string, value: string, computed: string) => `You set ${field} to ${value}. The thresholds give ${computed}.`,
+      source: "{source}, as of {date}.",
+      // A threshold's tooltip names its entry in the thresholds file and its source.
+      thresholdTip: (entry: string, source: string) => `From ${entry} in Strata's thresholds file. ${source}.`,
+      noRule: "I can compute review type and market approach once the category, the estimated amount and the country are set.",
+    },
+    refusal: "I don't suggest dividing a package to stay under a review threshold, so I computed review type from the whole package.",
+    steps: {
+      read: { running: "Reading your sentence", done: "I read your sentence." },
+      compute: {
+        running: "Computing review type and market approach from the thresholds",
+        done: "I computed review type and market approach from the thresholds.",
+      },
+      save: { running: "Saving the package", done: "I saved the package." },
+      compare: { running: "Finding comparable packages", done: "I found the comparable packages." },
+    },
+    readDone: (count: string, guesses: string) => `I read ${count} criteria from your sentence. ${guesses}`.trim(),
+    noPackageTitle: "I couldn't find a package in that sentence.",
+    noPackageBody: "Say what is being bought, where, and about how much. For example: rural roads, Kenya, about US$15 million.",
+    changeSentence: "Change the sentence",
+    setYourself: "Set the criteria yourself",
+    tryAgain: "Try again",
+    // Why a sentence could not be read, by the workflow's error code (src/strata/packages/workflow.py).
+    readErrors: {
+      no_reader: "I can't read sentences here, because no model is connected. Nothing is saved yet.",
+      agent_unavailable: "I couldn't read your sentence just now. Nothing is saved yet.",
+      content_filter: "I couldn't read that sentence, because a content filter stopped it. Nothing is saved yet.",
+      agent_output: "I couldn't read your sentence just now. Nothing is saved yet.",
+      package_store: "I read your sentence, but I couldn't save the package just now. Nothing is saved yet.",
+      internal: "I couldn't read your sentence just now. Nothing is saved yet.",
+      dropped: "The connection dropped while I read your sentence. Nothing is saved yet.",
+    } as Record<string, string>,
+    saveFailed: "I couldn't save your last change.",
+    loading: "Loading this package.",
+    loadError: "I couldn't load this package just now. Try again in a moment.",
+    notFoundTitle: "I can't find this package. It may have been removed, or it was saved by someone else.",
+    notFoundBody: "Packages you plan are saved for you alone, and they are listed on the Packages tab.",
+    notFoundLink: "Go to Packages",
+    publicTitle: "Packages are not part of the public view.",
+    publicBody: "The public view shows projects, lessons and data.",
+    publicLink: "Go to Projects",
+    preview: "Changes are off in a preview.",
+    // The chip editor (the 15 brief, section 7.6).
+    editor: {
+      fromSentence: "From your sentence.",
+      fromDefault: "Your sentence did not say, so I used the default.",
+      fromComputed: "I computed this from the thresholds.",
+      fromGuess: "This is my guess. Your sentence did not say.",
+      fromYou: "You set this.",
+      thresholdsGive: (value: string) => `The thresholds give ${value}.`,
+      empty: "This has no value yet.",
+      stepLine: (field: string, value: string) => `In STEP: ${field}, ${value}.`,
+      picks: "Changing this updates the past range.",
+      doesNotPick: "This doesn't change which packages I compare with.",
+      amountReadBack: (amount: string) => `I read this as US$${amount}.`,
+      oldName: (input: string) => `I read "${input}" as this, the name the Procurement Regulations use now.`,
+      use: "Use this",
+      keep: (value: string) => `Keep ${value}`,
+      setYourself: "Set it yourself",
+      useComputed: "Use the computed value",
+      remove: "Remove this value",
+      close: "Close",
+      options: "Choices",
+      unit: "months",
+      errors: {
+        amount: "I couldn't read that amount. Type a number in US dollars, such as 15 million.",
+        months: (max: string) => `Type a number of months, from 0.5 to ${max}.`,
+        count: "Type a whole number from 1 to 99.",
+        country: "I don't have that country in the World Bank's list. Choose one from the list.",
+        text: "Type a few words about what is being bought.",
+        choice: "Choose one of the options.",
+      },
+    },
+    // What the live region says after a change (the 15 brief, section 8).
+    announce: {
+      setPicks: (label: string, value: string) => `${label} set to ${value}. Updating the past range.`,
+      set: (label: string, value: string) => `${label} set to ${value}.`,
+      removed: (label: string) => `${label} removed.`,
+      recomputed: (field: string, from: string, to: string) => `${field} changed from ${from} to ${to}, computed from the thresholds.`,
+      kept: (label: string, value: string) => `${label} kept as ${value}.`,
+      updated: "Updated the past range.",
+    },
+    // Section 1's additions for a planned package.
+    section: {
+      criteria: "Comparable packages: {list}.",
+      review: (type: string) => `${type} review`,
+      notices: (from: string, to: string) => `notices from ${from} to ${to}`,
+      promptQuestion:
+        "How many months does your plan allow from bid notice to signed contract? I ask before I show the past range, so " +
+        "the range doesn't set your plan.",
+      promptFound: (count: number, words: string) =>
+        count === 1 ? "I found one comparable package for these criteria." : `I found ${words} comparable packages for these criteria.`,
+      promptLabel: "Your plan, in months",
+      showRange: "Show the past range",
+      showWithout: "Show it without a plan",
+      updating: "Finding comparable packages for your new criteria.",
+      more: "To compare with more packages, change a criterion above.",
+      noneFound: "I found no comparable packages for these criteria. To compare with more packages, change a criterion above.",
+      error: "I couldn't get the past range just now. Your criteria are saved. Try again in a moment.",
+      errorUnsaved: "I couldn't get the past range just now. Try again in a moment.",
+      missing: "{list}, and I'll find comparable packages.",
+      missingStart: "Add",
+    },
+  },
+
+  // The Packages tab (the 15 brief, section 7.9).
+  packagesTab: {
+    purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
+    checkPlan: "Check a plan",
+    planPackage: "Plan a package",
+    previewOff: "Checking and planning are off in a preview.",
+    title: (packages: number, packageWords: string, plans: number, planWords: string) =>
+      `You have ${packageWords} ${packages === 1 ? "package" : "packages"} in progress and ${planWords} checked ${plans === 1 ? "plan" : "plans"}.`,
+    noun: "packages and plans",
+    nounOne: "package or plan",
+    columns: {
+      name: "Package or plan",
+      type: "Type",
+      country: "Country",
+      project: "Project",
+      lastWorked: "Last worked on",
+      lastWorkedNote: "When you last saved the package or opened the plan check",
+    },
+    noReference: "No STEP reference yet.",
+    planName: (agency: string, date: string) => `${agency}, plan of ${date}`,
+    activities: (count: number, words: string) => (count === 1 ? "One activity checked." : `${words} activities checked.`),
+    typePackage: "Package",
+    typePlan: "Plan check",
+    noProject: "None yet",
+    source: "your packages and plan checks, saved in Strata.",
+    emptyTitle: "You have no packages or checked plans yet.",
+    emptyBody: "Use Check a plan or Plan a package above to start one.",
+    error: "I couldn't load your packages and checked plans just now. Try again in a moment.",
+    loading: "Loading your packages and checked plans.",
+    previous: "Previous 20",
+    next: "Next 20",
   },
 
   // The Data readiness page (the 16 design brief). Every number on it comes from the

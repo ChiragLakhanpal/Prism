@@ -9,9 +9,10 @@
 // finds any. Tests pass --copy, --component, --glossary, --registry and --design to point it at
 // other files; Term's words are always looked up in the repo's GLOSSARY.md.
 //
-// Two more files hold words people read. The source registry, config/sources.toml, holds each
+// More files hold words people read. The source registry, config/sources.toml, holds each
 // source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
-// sentences), and every one is checked like the copy. src/strata/tools/data_readiness_copy.json and
+// sentences), and the package form schema, config/package_form.toml, each criterion chip's words
+// (ticket 15). Every one is checked like the copy. src/strata/tools/data_readiness_copy.json and
 // src/strata/drafts/copy.json are the server's copies of copy.dataReadiness.server and of a draft's
 // files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them).
 import { readFileSync, readdirSync } from "node:fs";
@@ -42,15 +43,19 @@ function options(argv: string[]) {
     copy: given.copy ?? (custom ? [] : COPY_FILES),
     components: given.component ?? (custom ? [] : sourceFiles(join(WEB, "src")).filter((file) => !COPY_FILES.includes(file))),
     glossary: given.glossary ?? (custom ? [] : [join(REPO, "GLOSSARY.md")]),
-    registry: given.registry ?? (custom ? [] : [join(REPO, "config", "sources.toml")]),
+    registry: given.registry ?? (custom ? [] : [join(REPO, "config", "sources.toml"), join(REPO, "config", "package_form.toml")]),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
     custom,
   };
 }
 
 // The source registry's values that people read, each with its line: labels, nouns, notes, what a
-// number counts, fix sentences, collections and data sources. Addresses and ids are left out.
-const REGISTRY_WORDS = /\b(label|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+// number counts, fix sentences, collections and data sources. Addresses and ids are left out. The package
+// form schema's (ticket 15) are its groups' labels and names, each field's label and add_label, its
+// options' labels and a count's units; STEP's own values and field names are left out, as they are words
+// Strata copies word for word.
+const REGISTRY_WORDS =
+  /\b(label|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
 
 function registryWords(text: string): { line: number; text: string }[] {
   return text.split("\n").flatMap((line, index) =>

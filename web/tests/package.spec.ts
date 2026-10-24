@@ -1205,13 +1205,18 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     // No cell's text runs past its cell, and the frame does not scroll sideways.
     expect(await spillOf(table), where).toEqual({ scroll: 0, cells: [] });
 
-    // Each cell's text and the lines it sits on, counted by their tops.
+    // Each cell's text and the lines it sits on, counted by the tops of its text, so a button around a
+    // reference (ticket 15's row button, whose padding starts above its text) does not count as a line.
     const lines = (selector: string) =>
       table.locator(selector).evaluateAll((cells) =>
         cells.map((cell) => {
-          const range = document.createRange();
-          range.selectNodeContents(cell);
-          const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
+          const tops: number[] = [];
+          const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            tops.push(...[...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top)));
+          }
           return [cell.textContent!, new Set(tops).size] as const;
         }),
       );

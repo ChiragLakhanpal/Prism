@@ -160,6 +160,10 @@ test("an account the warehouse refuses gets one error alert that says how to get
 test("while the stamp tries again, the access alert stays where it is, so it is not announced twice", async ({ page }) => {
   await page.clock.install({ time: TODAY });
   await mockShell(page);
+  // The Packages tab lists the viewer's packages (ticket 15); an empty list keeps its own alert out of the count.
+  await page.route("**/api/planned-packages", async (route) =>
+    route.fulfill({ contentType: "application/json", body: await recorded("planned-packages-empty.json") }),
+  );
   let reads = 0;
   let answer: () => void = () => {};
   const answered = new Promise<void>((resolve) => (answer = resolve));

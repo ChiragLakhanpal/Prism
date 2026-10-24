@@ -1,0 +1,82 @@
+{
+  "id": "strata.gold.package:KE-MOWI-47509-CW-RFB",
+  "kind": "package",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.gold.package:KE-MOWI-47509-CW-RFB",
+    "public_from": "2021-03-23",
+    "source": {
+      "project_id": "P156634",
+      "notice_id": "OP00078259",
+      "contract_id": "1652775",
+      "award_notice_id": null,
+      "signed_in": "contract awards"
+    },
+    "step_reference": "KE-MOWI-47509-CW-RFB",
+    "project_id": "P156634",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "notice_id": "OP00078259",
+    "notice_date": "2019-10-01",
+    "signed_on": "2021-03-23",
+    "still_open": false,
+    "days": 539,
+    "months": 17.7,
+    "rank": null,
+    "description": "PROGRAM FOR THE IMPROVEMENT OF WATER SERVICES IN MOMBASA COUNTY MOMBASA NORTH MAINLAND - PHASE 1",
+    "project_name": "Water and Sanitation Development Project",
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": "Post",
+    "amount_usd": "5475030.46",
+    "process_status": null,
+    "notice": {
+      "notice_id": "OP00078259",
+      "notice_type": "Invitation for Bids",
+      "notice_date": "2019-10-01",
+      "bid_reference_no": "KE-MOWI-47509-CW-RFB",
+      "bid_description": "PROGRAM FOR THE IMPROVEMENT OF WATER SERVICES IN MOMBASA COUNTY MOMBASA NORTH MAINLAND - PHASE 1",
+      "procurement_category": "Works",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "submission_deadline": "2019-11-05",
+      "contract_signature_date": null,
+      "signed_contract_price": null,
+      "signed_contract_currency": null,
+      "public_from": "2019-10-01"
+    },
+    "contract": {
+      "contract_id": "1652775",
+      "wb_contract_number": "1652775",
+      "contract_description": "Program for improvement of water services in Mombasa county, North Mainland Nyali Phase 1",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "review_type": "Post",
+      "contract_signing_date": "2021-03-23",
+      "contract_amount_usd": "5475030.46",
+      "supplier_count": 1,
+      "joint_venture": false,
+      "public_from": "2021-03-23"
+    },
+    "award_notice": null,
+    "records_through": "2026-10-13",
+    "datasets": {
+      "notices": {
+        "dataset_name": "Procurement Notices",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
+      },
+      "awards": {
+        "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": null
+      }
+    }
+  },
+  "highlights": []
+}

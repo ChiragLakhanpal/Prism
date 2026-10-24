@@ -178,15 +178,17 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
 
 
 def summary_id(tool: Tool, bound: Mapping[str, Any], as_of: str) -> str:
-    """The summary's evidence id: the tool, its required arguments, the as-of date, then any other
-    argument the call set, so two calls with different criteria in one turn are two records.
-    strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?review_type=Prior"""
+    """The summary's evidence id: the tool, its required arguments and those that name the record it is about
+    (key = true), the as-of date, then any other argument the call set, so two calls with different criteria
+    in one turn are two records. strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?review_type=Prior,
+    or, for a package with no STEP row, strata.tools.find_comparables:@2026-10-22?method=Request%20for%20Bids&..."""
     def text(value: Any) -> str:
         return quote(value.isoformat() if isinstance(value, dt.date) else str(value), safe="-_.~")
 
-    key = "/".join(text(bound[parameter.name]) for parameter in tool.parameters if parameter.required)
+    keyed = [parameter for parameter in tool.parameters if parameter.required or parameter.key]
+    key = "/".join(text(bound[parameter.name]) for parameter in keyed if parameter.name in bound)
     others = "&".join(f"{parameter.name}={text(bound[parameter.name])}" for parameter in tool.parameters
-                      if not parameter.required and parameter.name in bound)
+                      if parameter not in keyed and parameter.name in bound)
     return f"strata.tools.{tool.name}:{key}@{as_of}" + (f"?{others}" if others else "")
 
 

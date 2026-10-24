@@ -7,12 +7,13 @@
 // list, then empties the box, and only then reaches the evidence drawer; Backspace in an empty box
 // removes the scope chip and says so.
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { FolderOpen, MessageSquareText, Table2 } from "lucide-react";
+import { FolderOpen, MessageSquareText, PackagePlus, Table2 } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
 import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type Lookup } from "../lib/intents";
+import { boxMode, startPlanning } from "../lib/packages";
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { OneBox, type BoxOption } from "./BoxBand";
@@ -40,11 +41,42 @@ function foundLine(found: Found): ReactNode {
   return <Fill template={words.activityLine(found.agency, formatDate(found.planDate))} slots={{ pcode: mono(found.pcode) }} />;
 }
 
-export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent };
+export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent } | { kind: "plan" } | { kind: "go"; href: string };
 
 // What the box lists for this input, scope chip and lookups so far: the options, best first, what
 // choosing each does, and the lines under the list for an ID no record holds or a lookup that failed.
-export function boxList(value: string, chip: string | null, lookups: Record<string, Lookup>) {
+// Free text also offers "Plan a package from this sentence" (ticket 15), never first unless the Packages
+// tab's "Plan a package" put the box in plan mode. In check mode, a project ID lists each implementing
+// agency's latest plan to check, then the project itself.
+export function boxList(value: string, chip: string | null, lookups: Record<string, Lookup>, mode: "plan" | "check" | null = null) {
+  const listed = boxListOf(value, chip, lookups);
+  const text = value.trim();
+  if (mode === "check") {
+    const project = listed.ids.length === 1 && listed.ids[0].kind === "project" ? listed.ids[0] : null;
+    const lookup = project ? lookups[intentKey(project)] : undefined;
+    if (project && lookup?.status === "found" && lookup.found.kind === "project") {
+      const plans = lookup.found.plans ?? [];
+      const options: BoxOption[] = plans.map((plan) => ({
+        key: `check:${plan.agencyId}`,
+        icon: Table2,
+        label: copy.box.option.checkPlan(plan.agency, formatDate(plan.planDate)),
+        line: <Fill template={copy.box.option.checkPlanLine} slots={{ pcode: mono(project.id) }} />,
+      }));
+      const choices: Choice[] = plans.map((plan) => ({ kind: "go", href: `/projects/${project.id}/procurement/${plan.agencyId}` }));
+      const notes = plans.length === 0 ? [<Fill template={copy.box.option.noPlan} slots={{ pcode: mono(project.id) }} />] : [];
+      return { ...listed, options: [...options, ...listed.options], choices: [...choices, ...listed.choices], notes: [...notes, ...listed.notes] };
+    }
+    return listed;
+  }
+  if (!text || !listed.askFirst) return listed;
+  const planOption: BoxOption = { key: "plan", icon: PackagePlus, label: copy.box.option.plan, line: copy.box.option.planLine };
+  if (mode === "plan") {
+    return { ...listed, options: [planOption, ...listed.options], choices: [{ kind: "plan" } as Choice, ...listed.choices] };
+  }
+  return { ...listed, options: [...listed.options, planOption], choices: [...listed.choices, { kind: "plan" } as Choice] };
+}
+
+function boxListOf(value: string, chip: string | null, lookups: Record<string, Lookup>) {
   const { ids, askFirst } = intentsFor(value);
   const notes: ReactNode[] = [];
   const idOptions: { option: BoxOption; intent: Intent }[] = [];
@@ -90,7 +122,7 @@ export function boxList(value: string, chip: string | null, lookups: Record<stri
     options.push(option);
   }
   if (!askFirst) addAsk();
-  return { ids, options, choices, notes };
+  return { ids, options, choices, notes, askFirst };
 }
 
 export function IntentBox({
@@ -111,12 +143,27 @@ export function IntentBox({
   const asked = useRef(new Map<string, Promise<Lookup>>());
   const input = useRef<HTMLInputElement>(null);
   const removed = useStore(removedScopes);
+  const asked_mode = useStore(boxMode);
+  const mode = asked_mode?.mode ?? null;
 
   // A new page brings its own scope back, and says nothing about the last one.
   useEffect(() => setSaid(""), [scope]);
   const chip = scope && !removed.has(scope) ? scope : null;
 
-  const { ids, options, choices, notes } = boxList(value, chip, lookups);
+  // The Packages tab's buttons (and "Change the sentence") put the box in a mode: it takes focus, with the
+  // sentence to change in it, if there is one (the 15 brief, section 7.1).
+  useEffect(() => {
+    if (!asked_mode) return;
+    setValue(asked_mode.text ?? "");
+    setActive(0);
+    const element = input.current;
+    if (!element) return;
+    element.focus();
+    element.setSelectionRange(element.value.length, element.value.length);
+    setOpen(Boolean(asked_mode.text));
+  }, [asked_mode?.at]);
+
+  const { ids, options, choices, notes } = boxList(value, chip, lookups, mode);
 
   const lookupOf = (intent: Intent) => {
     const key = intentKey(intent);
@@ -158,7 +205,25 @@ export function IntentBox({
     if (!choice || !value.trim()) return;
     if (choice.kind === "ask") {
       setOpen(false);
+      boxMode.set(null);
       onAsk(value.trim(), chip);
+      return;
+    }
+    // The only way the box makes a package (the 15 brief, section 6): the workflow starts, and the reading
+    // page shows it at once.
+    if (choice.kind === "plan") {
+      startPlanning(value.trim());
+      setValue("");
+      setOpen(false);
+      boxMode.set(null);
+      navigate("/packages/new");
+      return;
+    }
+    if (choice.kind === "go") {
+      setValue("");
+      setOpen(false);
+      boxMode.set(null);
+      navigate(choice.href);
       return;
     }
     const { intent } = choice;
@@ -203,6 +268,10 @@ export function IntentBox({
         event.preventDefault();
         event.stopPropagation();
         setValue("");
+      } else if (mode) {
+        event.preventDefault();
+        event.stopPropagation();
+        boxMode.set(null);
       }
     } else if (event.key === "Tab") {
       setOpen(false);
@@ -239,8 +308,12 @@ export function IntentBox({
           // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key or a click.
           const given = input.current?.hasAttribute(RETURNING) ?? false;
           if (!focused) input.current?.removeAttribute(RETURNING);
+          // Leaving the box ends its mode.
+          if (!focused && mode) boxMode.set(null);
           setOpen(focused && !given && value.trim().length > 0);
         }}
+        modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
+        modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
       />
       <p role="status" className="sr-only">
         {said}
