@@ -1053,6 +1053,44 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
   await expect(section(page).locator("[data-table-view=table]")).toBeHidden();
 });
 
+// DESIGN.md section 5, Tables: the past range's table needs about 750 px with one line per cell,
+// more than a 768 px page area leaves, so it shows cards below a page area of 1024 px, as the plan
+// check does. At 1440 px the drawer leaves 864 px; an 834 px window is an iPad held upright.
+test("below a page area of 1024 px the past range's table shows cards, beside the evidence drawer or not", async ({ page }) => {
+  for (const [width, evidence] of [
+    [1440, true],
+    [834, false],
+  ] as const) {
+    await openPackage(page, { width, evidence });
+    await ready(page);
+    await section(page).getByRole("button", { name: "Show the table" }).click();
+    await expect(section(page).locator("[data-table-view=cards]"), `${width} px`).toBeVisible();
+    await expect(section(page).locator("[data-table-view=table]"), `${width} px`).toBeHidden();
+  }
+});
+
+test("from a page area of 1024 px the past range's table shows its rows, with each reference without a space on one line", async ({ page }) => {
+  await openPackage(page, { width: 1024 });
+  await ready(page);
+  await section(page).getByRole("button", { name: "Show the table" }).click();
+  const table = section(page).locator("[data-table-view=table]");
+  await expect(table).toBeVisible();
+  await expect(section(page).locator("[data-table-view=cards]")).toBeHidden();
+
+  // Each row's reference and the lines its text sits on, counted by their tops.
+  const references = await table.locator("tbody th").evaluateAll((cells) =>
+    cells.map((cell) => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
+      return [cell.textContent!, new Set(tops).size] as const;
+    }),
+  );
+  const spaceless = references.filter(([reference]) => !reference.includes(" "));
+  expect(spaceless).toHaveLength(46);
+  expect(spaceless.filter(([, lines]) => lines !== 1)).toEqual([]);
+});
+
 test("a plan row with no planned dates has no plan line until you type months", async ({ page }) => {
   await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);

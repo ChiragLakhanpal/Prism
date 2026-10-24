@@ -797,10 +797,12 @@ function ComparablesTable({
   const paged = total > result.thresholds.quantile_dots_above;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
-  // From a page area of 1024 px a STEP reference keeps to one line, and the Months head's definition to two lines.
+  // With one line per cell the six columns need about 750 px, more than a 768 px page area leaves, so
+  // the table shows from a page area of 1024 px and cards below that (cardsBelow="lg", DESIGN.md
+  // section 5, Tables). There a STEP reference keeps to one line, and the Months head's definition to two.
   const columns: Column[] = [
-    { key: "package", header: t.columns.package, width: "w-[30%] @lg/page:w-[15.25rem]" },
-    { key: "country", header: t.columns.country, short: true, width: "@lg/page:w-[5.5rem]" },
+    { key: "package", header: t.columns.package, width: "w-[15.25rem]" },
+    { key: "country", header: t.columns.country, short: true, width: "w-[5.5rem]" },
     { key: "notice", header: t.columns.notice, short: true },
     { key: "signed", header: t.columns.signed, short: true },
     {
@@ -845,6 +847,7 @@ function ComparablesTable({
         count={{ noun: t.noun, one: t.nounOne, total, from: from + 1, to: from + shown.length }}
         columns={columns}
         rowHeader="package"
+        cardsBelow="lg"
         cardsNote={t.columns.monthsCards}
         state={{ status: "ready", rows: tableRows }}
         source={<SourceLine result={result} />}
