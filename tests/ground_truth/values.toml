@@ -261,6 +261,34 @@ section = "10"
 paragraph = "10.a"
 pdf_page = 12
 
+# Two figures of the May 4, 2023 ICR Review, written with a decimal point and with a thousands comma. The
+# answer tests quote from inside each number and prove the quote is not on its page (tests/test_answer_stream.py).
+[[value]]
+id = "icr-review-2023-item-2e-cost"
+says = "The May 4, 2023 ICR Review, item 2.e: the actual project cost was US$177.6 million."
+value = "US$177.6 million"
+quote = "The actual project cost was US$177.6 million"
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+section = "2"
+paragraph = "2.e"
+pdf_page = 3
+
+[[value]]
+id = "icr-review-2023-item-4-roads"
+says = "The May 4, 2023 ICR Review, item 4: the project constructed 2,334 km of roads."
+value = "2,334 km"
+quote = "The project constructed 2,334 km of roads"
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+section = "4"
+paragraph = "4"
+pdf_page = 5
+
 [[value]]
 id = "ieg-outcome-p130164"
 says = "IEG rated P130164's outcome Moderately Unsatisfactory."

@@ -57,6 +57,8 @@ def fake_workspace():
                                     "expires_in": 3600})
             statement = json.loads(body)
             calls.append(("statement", self.headers["Authorization"], statement["statement"]))
+            if "strata.ops.agent_runs" in statement["statement"]:
+                calls.append(("run", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
             return self.answer({"statement_id": "s-1", "status": {"state": "SUCCEEDED"},
                                 "manifest": {"schema": {"columns": [{"name": "data_through", "position": 0}]}},
                                 "result": {"data_array": [["2026-10-21"]]}})
@@ -97,6 +99,27 @@ def test_on_the_app_each_viewer_s_query_carries_their_own_token_and_usage_events
     assert token_auth == "Basic " + base64.b64encode(b"strata-app:not-a-real-key").decode()
     assert form["grant_type"] == ["client_credentials"]
     assert [auth for auth, text in statements if "usage_events" in text] == ["Bearer app-not-real"]
+
+
+def test_on_the_app_each_answer_stream_s_run_is_logged_with_the_app_s_own_token():
+    """Every run goes to strata.ops.agent_runs (ticket 13). The app writes it as itself, so no viewer's token
+    can write another person's run. With no Foundry agent named, the run is logged as one that failed."""
+    with fake_workspace() as (host, calls):
+        app = app_from_env({"DATABRICKS_HOST": host, "DATABRICKS_WAREHOUSE_ID": "wh-1",
+                            "DATABRICKS_CLIENT_ID": "strata-app", "DATABRICKS_CLIENT_SECRET": "not-a-real-key"})
+
+        async def ask():
+            async with app.router.lifespan_context(app):
+                transport = httpx.ASGITransport(app=app)
+                async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                    return await client.post("/api/ask", headers=ANA, json={"question": "Why was P130164 rebid?"})
+
+        answer = asyncio.run(ask())
+
+    assert "no_agent" in answer.text
+    runs = [(auth, params) for kind, auth, params in calls if kind == "run"]
+    assert [auth for auth, _ in runs] == ["Bearer app-not-real"]
+    assert "4021@1984" in runs[0][1] and "token-for-ana-only" not in runs[0][1]
 
 
 def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_built_web_app(fixture_db, tmp_path):
