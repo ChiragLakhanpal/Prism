@@ -659,7 +659,7 @@ export const copy = {
       helperNoPlan:
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
-      invalid: (max: string) => `Type a number of months from 0.5 to ${max}.`,
+      invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
     },
     // The range chart's words. Numbers arrive written by web/src/lib/format.ts.
@@ -667,7 +667,9 @@ export const copy = {
       lane: "What happened",
       keySigned: (count: string) => `${count} signed`,
       keyOpen: (count: string) => `${count} still open`,
-      keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages`,
+      keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
+      // Open packages are not drawn one by one among quantile dots, so their count is words alone.
+      keyOpenDots: (count: string) => `${count} still open.`,
       plan: "Plan",
       readout: (within: string, total: string, months: string) => `${within} of ${total} signed within ${months} months`,
       // The same readout as two lines, for a chart under 400 px wide.

@@ -271,11 +271,16 @@ function gapsOf(result: ComparablesResult, check?: NumCheck) {
   ));
 }
 
-// Packages matched but none could be measured: what they lacked, without "Based on 0 of".
+// What a coverage count counts, in its tooltip.
+const EXPLAIN_COVERAGE: NumCheck = { tooltip: words.explain.coverage };
+
+// Packages matched but none could be measured: what they lacked, without "Based on 0 of". Each count
+// can be checked, as on the populated coverage line.
 function Unmeasured({ result }: { result: ComparablesResult }) {
+  const matched = <Num count={result.coverage.matched} check={EXPLAIN_COVERAGE} />;
   return (
     <p data-coverage-line className="text-small text-ink">
-      <Fill template={words.empty.unmeasuredOf} slots={{ matched: <Num count={result.coverage.matched} />, gaps: <Joined items={gapsOf(result)} /> }} />{" "}
+      <Fill template={words.empty.unmeasuredOf} slots={{ matched, gaps: <Joined items={gapsOf(result, EXPLAIN_COVERAGE)} /> }} />{" "}
       <TextLink href={readinessHref(result)}>{copy.coverage.link}</TextLink>
     </p>
   );
@@ -410,7 +415,6 @@ function Populated({ result }: { result: ComparablesResult }) {
   const explainPlan: NumCheck = {
     tooltip: words.explain.plan(pkg.plan.implementing_agency, formatDate(pkg.plan.plan_date)),
   };
-  const explainCoverage: NumCheck = { tooltip: words.explain.coverage };
 
   const type = chartType(width || 800);
 
@@ -512,8 +516,8 @@ function Populated({ result }: { result: ComparablesResult }) {
     quantile
       ? c.altDots(whole(total), whole(axis.max))
       : open > 0
-        ? c.alt(whole(total), whole(axis.max), spelled(counts.signed), spelled(open))
-        : c.altAllSigned(whole(total), whole(axis.max), spelled(counts.signed)),
+        ? c.alt(spelled(total), whole(axis.max), spelled(counts.signed), spelled(open))
+        : c.altAllSigned(spelled(total), whole(axis.max), spelled(counts.signed)),
   ];
   if (abstained) altParts.push(c.altAbstain);
   else if (range?.q25 != null && range.q75 != null && range.q50 != null) {
@@ -582,7 +586,7 @@ function Populated({ result }: { result: ComparablesResult }) {
             readout={readout}
             readoutLines={readoutLines}
             keySigned={quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed))}
-            keyHollow={open > 0 ? c.keyOpen(whole(open)) : null}
+            keyHollow={open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null}
             keyLead={Boolean(quantile)}
             laneLabel={c.lane}
             planLabel={c.plan}
@@ -606,7 +610,7 @@ function Populated({ result }: { result: ComparablesResult }) {
       {!narrow && <div className="mt-4">{summaryBlock}</div>}
       <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
         <Note result={result} />
-        <Coverage result={result} check={explainCoverage} />
+        <Coverage result={result} check={EXPLAIN_COVERAGE} />
         <Source>
           <SourceLine result={result} />
         </Source>
@@ -691,6 +695,19 @@ function PlanControl({
 }) {
   const w = words.control;
   const moved = planRowMonths !== null && plan !== null && plan !== planRowMonths;
+  // The reset button keeps its place while hidden, so showing it moves nothing: at the row's end from
+  // 768 px, and below that on a row of its own after the helper, so the helper stays with its input.
+  // Only one of the two is ever displayed. visibility: hidden also takes it out of the tab order and the
+  // accessibility tree.
+  const resetButton = (className: string) =>
+    planRowMonths !== null && (
+      <span className={cx(className, !moved && "invisible")} data-plan-reset>
+        {/* Flush, so on a row of its own its label starts on the label's edge above. */}
+        <Button variant="ghost" flush onClick={onReset}>
+          {w.reset(months1(planRowMonths))}
+        </Button>
+      </span>
+    );
   return (
     <div data-plan-control>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -715,17 +732,7 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {/* The reset button keeps its place while hidden, so showing it moves nothing: at the row's end
-            from 768 px, and on a row of its own below. visibility: hidden also takes it out of the tab
-            order and the accessibility tree. */}
-        {planRowMonths !== null && (
-          <span className={cx(!moved && "invisible")} data-plan-reset>
-            {/* Flush, so on a row of its own below 768 px its label starts on the label's edge above. */}
-            <Button variant="ghost" flush onClick={onReset}>
-              {w.reset(months1(planRowMonths))}
-            </Button>
-          </span>
-        )}
+        {resetButton("hidden md:inline")}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
       <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
@@ -741,6 +748,7 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
+      {resetButton("mt-2 block md:hidden")}
     </div>
   );
 }
@@ -835,37 +843,41 @@ function ComparablesTable({
 // ── Loading ──────────────────────────────────────────────────────────────
 
 // Sized like the populated section at each width, in its order: below 768 px the summary comes right
-// after the title, and the reset button keeps its own row; from 768 px the summary follows the chart.
+// after the title, and the reset button's row is held after the helper; from 768 px the summary follows
+// the chart. Its type sizes are the chart's own (chartType), read from the section's width, as the
+// populated section reads them.
 function PastRangeSkeleton() {
+  const [measure, width] = useWidth<HTMLDivElement>();
+  const type = chartType(width || 800);
   const lines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
   // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
-    <div aria-hidden="true" className="mt-4" data-past-range-skeleton>
-      <SkeletonText className="pb-2 md:hidden" widths={lines(3)} style={{ fontSize: 16, lineHeight: 1.3 }} />
-      <SkeletonText className="hidden pb-2 md:flex" widths={lines(2)} style={{ fontSize: 20, lineHeight: 1.3 }} />
+    <div ref={measure} aria-hidden="true" className="mt-4" data-past-range-skeleton>
+      <SkeletonText className="pb-2 md:hidden" widths={lines(3)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
+      <SkeletonText className="hidden pb-2 md:flex" widths={lines(2)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
       <SkeletonText className="mt-2 pb-2 text-body md:hidden" widths={lines(7, "w-2/5")} />
-      <SkeletonText className="mt-2 md:hidden" widths={lines(3)} style={{ fontSize: 14 }} />
-      <SkeletonLine className="mt-2 hidden md:flex" width="w-4/5" style={{ fontSize: 16 }} />
+      <SkeletonText className="mt-2 md:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
+      <SkeletonLine className="mt-2 hidden md:flex" width="w-4/5" style={{ fontSize: type.m }} />
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SkeletonLine className="text-small" width="w-28" />
         <Skeleton className="h-11 w-[88px] rounded-md" />
-        {/* The reset button's row, held below 768 px. */}
-        <span className="h-11 w-full md:hidden" />
       </div>
       <span className="mt-1 block min-h-[1.5em] text-caption" />
       <SkeletonText className="text-caption md:hidden" widths={lines(2)} />
       <SkeletonLine className="hidden text-caption md:flex" width="w-3/5" />
+      {/* The reset button's row, held after the helper below 768 px. */}
+      <span className="mt-2 block h-11 md:hidden" />
       <div className="mt-4" style={{ height: CHART_HEIGHT }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
       <SkeletonText className="mt-4 hidden pb-2 text-body md:flex" widths={lines(3, "w-2/5")} />
-      <div className="mt-4 flex flex-col gap-2">
-        <SkeletonText className="text-caption md:hidden" widths={lines(3)} />
-        <SkeletonText className="hidden md:flex" widths={lines(2)} style={{ fontSize: 14 }} />
+      <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
+        <SkeletonText className="md:hidden" widths={lines(3)} />
+        <SkeletonText className="hidden md:flex" widths={lines(2)} />
         <SkeletonText className="pb-2 text-small md:hidden" widths={lines(6)} />
         <SkeletonText className="hidden pb-2 text-small md:flex" widths={lines(2)} />
-        <SkeletonText className="text-caption md:hidden" widths={lines(4)} />
-        <SkeletonText className="hidden md:flex" widths={lines(2)} style={{ fontSize: 14 }} />
+        <SkeletonText className="md:hidden" widths={lines(4)} />
+        <SkeletonText className="hidden md:flex" widths={lines(2)} />
       </div>
       <span className="mt-4 block h-11" />
     </div>

@@ -236,6 +236,10 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--hover-last-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(48) }),
   packageShot("package--quantile-last-dot", comparables("comparables-ke-nwwda-541055-any-category.json"), { widths: wideAndNarrow, act: hoverDot(19) }),
   packageShot("package--moved-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "9") }),
+  // Round 2's fixes: the plan just past the 8-in-10 point, where its label moves or sits on its knockout,
+  // and a bad number at 320 px, whose one-line error moves nothing.
+  packageShot("package--plan-10", comparables(COMPARABLES), { widths: [1440, 390, 320], act: type("[data-plan-control] input", "10") }),
+  packageShot("package--invalid-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "abc") }),
 ];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));

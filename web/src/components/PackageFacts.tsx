@@ -5,6 +5,7 @@
 import type { ReactNode, RefObject } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
+import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -15,6 +16,11 @@ import { TextLink } from "./TextLink";
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
+// A reference inside a sentence: with no spaces it keeps to one line, so it moves to the next line whole
+// (DESIGN.md section 3, an ID stays readable as one ID); one with a county's name wraps at its spaces.
+export const inlineMono = (text: string) => (
+  <span className={cx("font-mono font-medium", !text.includes(" ") && "whitespace-nowrap")}>{text}</span>
+);
 
 export function PackageHeader({
   title,

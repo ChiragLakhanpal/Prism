@@ -101,10 +101,17 @@ function fit(xs: number[], r: number, minR: number, lane: number): Layout {
   return { r: minR, lane: MAX_LANE, offsets: swarm(xs, minR, Number.MAX_SAFE_INTEGER) ?? xs.map(() => 0) };
 }
 
-// The widths of the svg text a label needs to stay inside the plot, read after each render.
+type Box = { x: number; y: number; width: number; height: number };
+const NO_BOX: Box = { x: 0, y: 0, width: 0, height: 0 };
+const sameBox = (a: Box | undefined, b: Box) =>
+  a !== undefined && Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5 && Math.abs(a.width - b.width) < 0.5 && Math.abs(a.height - b.height) < 0.5;
+
+// The widths of the svg text a label needs to stay inside the plot, and each label's box for the
+// knockout drawn under it, read after each render.
 function useTextWidths(keys: string[]) {
   const refs = useRef<Record<string, SVGTextContentElement | null>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
+  const [boxes, setBoxes] = useState<Record<string, Box>>({});
   const [fontsReady, setFontsReady] = useState(0);
   useEffect(() => {
     let live = true;
@@ -115,17 +122,28 @@ function useTextWidths(keys: string[]) {
   }, []);
   useLayoutEffect(() => {
     const next: Record<string, number> = {};
+    const nextBoxes: Record<string, Box> = {};
     for (const key of keys) {
       const element = refs.current[key];
       next[key] = element ? element.getComputedTextLength() : 0;
+      const box = element?.getBBox();
+      nextBoxes[key] = box ? { x: box.x, y: box.y, width: box.width, height: box.height } : NO_BOX;
     }
     setWidths((now) => (keys.every((key) => Math.abs((now[key] ?? -1) - next[key]) < 0.5) ? now : next));
+    setBoxes((now) => (keys.every((key) => sameBox(now[key], nextBoxes[key])) ? now : nextBoxes));
   });
   void fontsReady;
   const ref = useCallback((key: string) => (element: SVGTextContentElement | null) => {
     refs.current[key] = element;
   }, []);
-  return { widths, ref };
+  return { widths, boxes, ref };
+}
+
+// A surface rect under a label, its box plus 2 px, drawn after the plan line: where the label cannot
+// move off the line, the line stops cleanly above it and resumes below it (DESIGN.md section 6).
+function Knockout({ kind, box }: { kind: string; box: Box | undefined }) {
+  if (!box || box.width === 0) return null;
+  return <rect data-knockout={kind} x={box.x - 2} y={box.y - 2} width={box.width + 4} height={box.height + 4} className="fill-surface" />;
 }
 
 // A 3 px surface halo under text that sits over marks (DESIGN.md section 6).
@@ -175,7 +193,8 @@ export function RangeChart({
   readout: string | null;
   readoutLines: [string, string] | null;
   // The key: the signed count beside a filled dot and the open count beside a hollow one. With
-  // keyLead, the first half is a lead with no dot, such as "Each dot is 1 in 20 of the packages".
+  // keyLead, the key is words alone, with no glyphs: a lead, "Each dot is 1 in 20 of the 103 packages.",
+  // then the open count, because quantile dots do not draw open packages one by one.
   keySigned: string | null;
   keyHollow: string | null;
   keyLead?: boolean;
@@ -204,7 +223,7 @@ export function RangeChart({
   const r0 = big ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
   const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
-  const { widths, ref } = useTextWidths([
+  const { widths, boxes, ref } = useTextWidths([
     "lane", "keySigned", "keyHollow", "plan", "readout", "readout0", "readout1", "middle", "in10", "tickLast", "tickPrev",
   ]);
   // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
@@ -212,16 +231,20 @@ export function RangeChart({
   const glyph = narrow ? 4 : 4.5;
   const signedWidth = widths.keySigned ?? 0;
   const hollowWidth = widths.keyHollow ?? 0;
-  const signedPart = keySigned ? (keyLead ? 0 : 2 * glyph + 6) + signedWidth : 0;
-  const hollowPart = keyHollow ? 2 * glyph + 6 + hollowWidth : 0;
-  const keyWidth = signedPart + (keySigned && keyHollow ? 16 : 0) + hollowPart;
+
+  const glyphPart = keyLead ? 0 : 2 * glyph + 6;
+  const signedPart = keySigned ? glyphPart + signedWidth : 0;
+  const hollowPart = keyHollow ? glyphPart + hollowWidth : 0;
+  // Two sentences in words alone sit a space apart; a glyph's halves sit 16 px apart.
+  const keyGap = keyLead ? Math.round(type.s * 0.3) : 16;
+  const keyWidth = signedPart + (keySigned && keyHollow ? keyGap : 0) + hollowPart;
   // When the lane label and the key don't both fit on row A, the key keeps the row: it is the legend.
   const showLaneLabel = (widths.lane ?? 0) + 12 + keyWidth <= width;
   const keyStart = showLaneLabel ? (widths.lane ?? 0) + 12 : 0;
   const keyWraps = Boolean(keySigned && keyHollow) && keyStart + keyWidth > width;
   const lineGap = type.s + 2;
   const rowA = ROW_A + (keyWraps ? lineGap : 0);
-  const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + 16 : keyStart;
+  const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + keyGap : keyStart;
   const textBaseline = ROW_A / 2 + type.s * 0.35;
   const hollowY = keyWraps ? lineGap : 0;
   const laneTop = rowA + rowB;
@@ -280,19 +303,27 @@ export function RangeChart({
   const [knobHover, setKnobHover] = useState(false);
   const frame = useRef<number | undefined>(undefined);
   const wrapper = useRef<HTMLDivElement>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
   const planX = plan === null ? null : x(plan);
   const local = (event: PointerEvent) => {
     const box = wrapper.current!.getBoundingClientRect();
     return { px: event.clientX - box.left, py: event.clientY - box.top };
   };
   const moveTo = (px: number, how: PlanMove) => onPlan(snap(monthsAt(px), axisMax), how);
+  // The tooltip is part of its dot's hover area (WCAG 1.4.13): the pointer on it keeps it, and a press
+  // on it selects its text rather than reaching the chart under it.
+  const onTip = (event: PointerEvent) => tipRef.current?.contains(event.target as Node) ?? false;
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (onTip(event)) return;
     const { px, py } = local(event);
     const onKnob = (event.target as HTMLElement).closest("[data-plan-knob]") !== null;
     const nearLine = planX !== null && event.pointerType !== "touch" && Math.abs(px - planX) <= NEAR_LINE && py >= rowA && py <= axisY;
     if (plan !== null && (onKnob || nearLine)) {
       event.preventDefault();
+      // A drag gives the slider focus, as a native slider takes it when pressed, so the arrow keys can
+      // nudge the line just moved.
+      knobRef.current?.focus({ preventScroll: true });
       wrapper.current!.setPointerCapture(event.pointerId);
       setDrag({ pointer: event.pointerId, from: plan });
       return;
@@ -318,6 +349,10 @@ export function RangeChart({
       return;
     }
     if (event.pointerType !== "mouse") return;
+    if (onTip(event)) {
+      clearTimeout(hideTimer.current);
+      return;
+    }
     const found = nearest(px, py);
     if (found !== null) {
       clearTimeout(hideTimer.current);
@@ -435,12 +470,14 @@ export function RangeChart({
     else if (!onRight && !fitsLeft) onRight = fitsRight ? true : width - planX >= planX;
   }
   const readoutX = planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth) : clamp(planX - GAP, readoutWidth, width);
-  const readoutLine1 = rowA + type.s + 2;
+  // Its last line's descenders stay clear of the lane, where the middle tick starts 4 px down.
+  const readoutLine1 = rowA + type.s;
   const readoutStep = type.s + 3;
   const firstLine = showPlanWord ? readoutLine1 + readoutStep : readoutLine1;
 
-  // Row C: the middle's label centred on its tick, moved off the plan line when it would cross it,
-  // and the 8-in-10 label beside its line.
+  // Row C: the middle's label centred on its tick, and the 8-in-10 label beside its line, right of it
+  // when it fits. Each moves off the plan line when it would cross it, if it can clear the line by 6 px;
+  // where it cannot, its knockout stops the line around it.
   const middleWidth = widths.middle ?? 0;
   let middleX = stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
   if (stats?.q50 != null && planX !== null && middleX - 3 < planX && planX < middleX + middleWidth + 3) {
@@ -450,7 +487,16 @@ export function RangeChart({
   }
   const in10Width = widths.in10 ?? 0;
   const q80x = stats?.q80 != null ? x(stats.q80) : 0;
-  const in10Right = q80x + 4 + in10Width <= plotRight;
+  const in10Start = (right: boolean) => (right ? q80x + 4 : q80x - 4 - in10Width);
+  let in10Right = q80x + 4 + in10Width <= plotRight;
+  if (stats?.q80 != null && planX !== null) {
+    const start = in10Start(in10Right);
+    const other = in10Start(!in10Right);
+    const crossed = start - 3 < planX && planX < start + in10Width + 3;
+    const otherFits = other >= 0 && other + in10Width <= plotRight;
+    const otherClears = other + in10Width <= planX - 6 || other >= planX + 6;
+    if (crossed && otherFits && otherClears) in10Right = !in10Right;
+  }
   const rowC1 = laneBottom + type.s + 2;
   const rowC2 = rowC1 + type.s + 4;
 
@@ -460,9 +506,13 @@ export function RangeChart({
   const prevTick = ticks.length > 2 ? ticks[ticks.length - 2] : null;
   const dropPrev = prevTick !== null && x(prevTick) + (widths.tickPrev ?? 0) / 2 > x(lastTick) - (widths.tickLast ?? 0) - 8;
 
+  // The tooltip covers no dot, so the pointer can move onto it and keep it (WCAG 1.4.13) and can still
+  // reach every other dot: it sits above every dot within reach of its width when that fits inside the
+  // card, and below them all otherwise.
   const tipLeft = tipFor ? clamp(tipFor.cx - tipBox.w / 2, 0, width - tipBox.w) : 0;
-  const above = tipFor ? tipFor.cy - layout.r - TIP_GAP - tipBox.h : 0;
-  const tipTop = tipFor ? (above >= -tipBox.room ? above : tipFor.cy + layout.r + TIP_GAP) : 0;
+  const underTip = tipFor ? dots.filter((dot) => dot.cx + HIT >= tipLeft && dot.cx - HIT <= tipLeft + tipBox.w).map((dot) => dot.cy) : [];
+  const above = tipFor ? Math.min(tipFor.cy, ...underTip) - layout.r - TIP_GAP - tipBox.h : 0;
+  const tipTop = tipFor ? (above >= -tipBox.room ? above : Math.max(tipFor.cy, ...underTip) + layout.r + TIP_GAP) : 0;
   const knobLeft = planX ?? 0;
   const chevronX = plotRight - 2 + 3;
 
@@ -507,15 +557,17 @@ export function RangeChart({
         {keySigned && (
           <>
             {!keyLead && <circle cx={keyStart + glyph} cy={ROW_A / 2} r={glyph} className="fill-chart-cat1-text" />}
-            <text ref={ref("keySigned")} x={keyLead ? keyStart : keyStart + 2 * glyph + 6} y={textBaseline} fontSize={type.s} className="fill-chart-text">
+            <text ref={ref("keySigned")} x={keyStart + glyphPart} y={textBaseline} fontSize={type.s} className="fill-chart-text">
               {keySigned}
             </text>
           </>
         )}
         {keyHollow && (
           <>
-            <circle cx={hollowStart + glyph} cy={ROW_A / 2 + hollowY} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
-            <text ref={ref("keyHollow")} x={hollowStart + 2 * glyph + 6} y={textBaseline + hollowY} fontSize={type.s} className="fill-chart-text">
+            {!keyLead && (
+              <circle cx={hollowStart + glyph} cy={ROW_A / 2 + hollowY} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
+            )}
+            <text ref={ref("keyHollow")} x={hollowStart + glyphPart} y={textBaseline + hollowY} fontSize={type.s} className="fill-chart-text">
               {keyHollow}
             </text>
           </>
@@ -542,7 +594,7 @@ export function RangeChart({
             data-middle
             x1={x(stats.q50)}
             x2={x(stats.q50)}
-            y1={laneTop + 2}
+            y1={laneTop + 4}
             y2={laneBottom - 2}
             strokeWidth={2.5}
             className="stroke-chart-grey500"
@@ -639,15 +691,18 @@ export function RangeChart({
             )}
           </g>
         )}
-        {/* Row C: the statistics' labels, over the plan line, each with its halo. */}
+        {/* Row C: the statistics' labels, over the plan line, each on its knockout and with its halo. */}
+        {middleLabel && stats?.q50 != null && <Knockout kind="middle" box={boxes.middle} />}
+        {in10Label && stats?.q80 != null && <Knockout kind="in10" box={boxes.in10} />}
         {middleLabel && stats?.q50 != null && (
-          <text ref={ref("middle")} x={middleX} y={rowC1} fontSize={type.s} className="fill-chart-text" style={HALO}>
+          <text ref={ref("middle")} data-row-c="middle" x={middleX} y={rowC1} fontSize={type.s} className="fill-chart-text" style={HALO}>
             {middleLabel}
           </text>
         )}
         {in10Label && stats?.q80 != null && (
           <text
             ref={ref("in10")}
+            data-row-c="in10"
             x={in10Right ? q80x + 4 : q80x - 4}
             y={rowC2}
             textAnchor={in10Right ? "start" : "end"}
@@ -665,6 +720,7 @@ export function RangeChart({
           keys, or set by clicking the axis row. Only the knob stops the page from scrolling under a thumb. */}
       {plan !== null && planX !== null && (
         <div
+          ref={knobRef}
           role="slider"
           tabIndex={0}
           aria-label={sliderName}
@@ -743,7 +799,7 @@ export function RangeChart({
             hideLater();
           }}
           // Its width is its content's, up to 240 px, so it never shrinks to the room left of the chart's edge.
-          className="absolute z-10 w-max max-w-[240px] animate-fade-in rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
+          className="absolute z-10 w-max max-w-[240px] animate-fade-in cursor-text select-text rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{ left: tipLeft, top: tipTop, fontSize: type.s }}
         >
           <p className={cx("font-semibold text-chart-text", tipFor.tip.mono && "font-mono wrap-anywhere")}>{tipFor.tip.header}</p>

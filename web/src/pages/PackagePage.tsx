@@ -14,7 +14,7 @@ import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
-import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { FactsSkeleton, inlineMono, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
@@ -80,7 +80,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       <>
         <PackageHeader title={words.notFoundTitle} reference={mono(stepRef)} sticky={false} />
         <p className="mt-4 max-w-prose text-body text-ink">
-          <Fill template={words.notFoundBody} slots={{ ref: mono(stepRef) }} />
+          <Fill template={words.notFoundBody} slots={{ ref: inlineMono(stepRef) }} />
         </p>
         <p className="mt-4">
           <TextLink href="/projects">{words.notFoundLink}</TextLink>

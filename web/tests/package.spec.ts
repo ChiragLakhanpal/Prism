@@ -175,6 +175,24 @@ test("dragging the plan line, pressing arrow keys on it or typing months updates
   await expect(readout(page)).toHaveText("2 of 49 signed within 1.5 months");
 });
 
+test("a drag gives the slider focus, so the arrow keys nudge the line you just moved", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const slider = page.getByRole("slider", { name: "Planned months" });
+  const box = (await page.locator("[data-range-chart]").boundingBox())!;
+  const knob = (await slider.boundingBox())!;
+
+  await page.mouse.move(knob.x + knob.width / 2, knob.y + knob.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 8 + ((box.width - 16) * 6) / 18, knob.y + knob.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect(slider).toHaveAttribute("aria-valuenow", "6");
+  await expect(slider).toBeFocused();
+
+  await page.keyboard.press("ArrowRight");
+  await expect(slider).toHaveAttribute("aria-valuenow", "6.5");
+});
+
 test("at phone widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
   const overlap = (a: { x: number; y: number; width: number; height: number }, b: typeof a) =>
     a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -197,8 +215,59 @@ test("at phone widths the readout never crosses the knob, wherever the line sits
   }
 });
 
+test("the plan line never runs through a statistic's label: the label moves off it, or the line stops above it and resumes below", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    // 10 months sits just past the 8-in-10 point, where a reader drags the line to ask whether 10 would be enough.
+    for (const months of ["10", "6", "3.5"]) {
+      await page.getByRole("textbox", { name: "Planned months" }).fill(months);
+      await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      // A label the line's x falls inside must sit on its knockout, drawn over the line and wider than the label.
+      const through = await page.evaluate(() => {
+        const svg = document.querySelector("[data-chart-drawing]")!;
+        const x = svg.getBoundingClientRect().x + Number(svg.querySelector("[data-plan-line] line")!.getAttribute("x1"));
+        const crossed: string[] = [];
+        for (const label of svg.querySelectorAll("[data-row-c]")) {
+          const box = label.getBoundingClientRect();
+          if (x <= box.left - 1 || x >= box.right + 1) continue;
+          const knockout = svg.querySelector(`[data-knockout="${label.getAttribute("data-row-c")}"]`);
+          const cover = knockout?.getBoundingClientRect();
+          const after = knockout ? svg.querySelector("[data-plan-line]")!.compareDocumentPosition(knockout) & Node.DOCUMENT_POSITION_FOLLOWING : 0;
+          const covers = cover && after && cover.left <= box.left && cover.right >= box.right && cover.top <= box.top && cover.bottom >= box.bottom;
+          if (!covers) crossed.push(label.textContent ?? "");
+        }
+        return crossed;
+      });
+      expect(through, `${width} px, ${months} months`).toEqual([]);
+    }
+  }
+});
+
+test("below 768 px the helper sits right under the input, and the reset button's held row comes after it", async ({ page }) => {
+  for (const width of [390, 320]) {
+    await openPackage(page, { width });
+    await ready(page);
+    const input = (await page.getByRole("textbox", { name: "Planned months" }).boundingBox())!;
+    const helper = (await page.getByText(/^The plan row puts the notice on/).boundingBox())!;
+
+    expect(helper.y - (input.y + input.height), `${width} px`).toBeLessThanOrEqual(28);
+    await page.getByRole("slider").focus();
+    await page.keyboard.press("ArrowRight");
+    const reset = page.getByRole("button", { name: "Use the plan's 1.5 months" });
+    await expect(reset).toBeVisible();
+    // Read both after the key press, since focusing the slider may scroll the page.
+    const below = await page.evaluate(() => {
+      const helperBox = [...document.querySelectorAll("[data-plan-control] p")].find((p) => p.textContent?.startsWith("The plan row puts"))!;
+      const button = [...document.querySelectorAll("[data-plan-reset]")].find((span) => getComputedStyle(span).display !== "none")!;
+      return button.getBoundingClientRect().top - helperBox.getBoundingClientRect().bottom;
+    });
+    expect(below, `${width} px`).toBeGreaterThanOrEqual(0);
+  }
+});
+
 test("moving the line or typing a bad number moves nothing else on the page", async ({ page }) => {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 1440]) {
     await openPackage(page, { width });
     await ready(page);
     // The chart's top on the page, wherever the page is scrolled.
@@ -226,6 +295,8 @@ test("below 768 px the table's cards say what Months counts once, on the count l
   await expect(cards.locator("li")).toHaveCount(49);
   await expect(cards).not.toContainText("so far if still open");
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeVisible();
+  // The definition is its own element beside the count, never run on into the count's sentence.
+  await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing all 49 packages");
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeHidden();
@@ -240,7 +311,7 @@ test("a number that is not between 0.5 and 60 months leaves the line where it wa
   await input.fill("90");
 
   await expect(input).toHaveAttribute("aria-invalid", "true");
-  await expect(section(page).getByText("Type a number of months from 0.5 to 60.", { exact: true })).toBeVisible();
+  await expect(section(page).getByText("Type months from 0.5 to 60.", { exact: true })).toBeVisible();
   await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", "1.5");
 });
 
@@ -322,32 +393,71 @@ test("a tooltip opened first on the last dot keeps its own width and sits above 
   }
 });
 
-test("a tooltip stays while the pointer rests on the next dot, even when the first tooltip covered it", async ({ page }) => {
+test("a dot's tooltip never covers another dot, so moving from dot to dot always shows the dot under the pointer", async ({ page }) => {
   await openPackage(page, { width: 390 });
   await ready(page);
   await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
   const name = async (index: number) =>
     (await page.locator(`[data-dot-target='${index}']`).getAttribute("aria-label"))!.split(",")[0];
   const tip = page.locator("[data-dot-tooltip]");
-  const covers = (point: { x: number; y: number }) =>
-    page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest("[data-dot-tooltip]") !== null, point);
+  // The centre of every dot the tooltip lies over: none, wherever the pointer opened it.
+  const covered = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll("[data-dot-target]")].filter((dot) => {
+        const r = dot.getBoundingClientRect();
+        return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest("[data-dot-tooltip]") !== null;
+      }).length,
+    );
 
-  // The first dot whose tooltip covers the next dot, where stacked dots make the pointer land on the
-  // tooltip, which then moves away from under it.
-  let pair: number | null = null;
-  for (let index = 0; index < 48 && pair === null; index++) {
+  for (let index = 0; index < 49; index += 3) {
     const here = await centre(page, `[data-dot-target='${index}']`);
     await page.mouse.move(here.x, here.y);
     await expect(tip).toContainText(await name(index));
-    if (await covers(await centre(page, `[data-dot-target='${index + 1}']`))) pair = index;
+    expect(await covered(), `dot ${index}`).toBe(0);
   }
+  // Two dots stacked in one column at this width: the pointer moves straight up from one to the other.
+  const pair = await page.evaluate(() => {
+    const boxes = [...document.querySelectorAll("[data-dot-target]")].map((dot) => dot.getBoundingClientRect());
+    for (let i = 0; i < boxes.length; i++)
+      for (let j = 0; j < boxes.length; j++)
+        if (Math.abs(boxes[i].x - boxes[j].x) < 4 && boxes[j].y < boxes[i].y - 4) return [i, j];
+    return null;
+  });
   expect(pair).not.toBeNull();
-  const next = await centre(page, `[data-dot-target='${pair! + 1}']`);
-
-  await page.mouse.move(next.x, next.y);
+  const [from, to] = pair!;
+  const a = await centre(page, `[data-dot-target='${from}']`);
+  const b = await centre(page, `[data-dot-target='${to}']`);
+  await page.mouse.move(a.x, a.y);
+  await expect(tip).toContainText(await name(from));
+  await page.mouse.move(b.x, b.y, { steps: 4 });
   await page.waitForTimeout(300);
+  await expect(tip).toContainText(await name(to));
+});
 
-  await expect(tip).toContainText(await name(pair! + 1));
+test("a dot's tooltip stays while the pointer moves onto it, so you can select its reference, and hides when the pointer leaves both", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    const last = await centre(page, "[data-dot-target='48']");
+    const tip = page.locator("[data-dot-tooltip]");
+    await page.mouse.move(last.x, last.y);
+    await expect(tip).toContainText("KE-");
+
+    // WCAG 2.2, 1.4.13: content shown on hover stays while the pointer moves over it.
+    const box = (await tip.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 8 });
+    await page.waitForTimeout(500);
+    await expect(tip, `${width} px`).toBeVisible();
+    await page.mouse.move(box.x + box.width / 2 + 3, box.y + box.height / 2 + 2);
+    await page.waitForTimeout(300);
+    await expect(tip, `${width} px`).toBeVisible();
+    expect(await tip.evaluate((el) => getComputedStyle(el).userSelect), `${width} px`).not.toBe("none");
+
+    // Leaving the tooltip and the dot hides it.
+    await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 4 });
+    await expect(tip, `${width} px`).toHaveCount(0);
+  }
 });
 
 test.describe("on a touch screen", () => {
@@ -375,6 +485,11 @@ test("above 60 comparables the lane draws 20 quantile dots, and the table still 
 
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(20);
   await expect(page.getByRole("group", { name: /^20 dots, each 1 in 20 of the 103 comparable packages$/ })).toBeVisible();
+  // Open packages are not drawn one by one here, so the key states their count in words, with no hollow glyph.
+  const chart = page.locator("[data-chart-drawing]");
+  await expect(chart).toContainText("Each dot is 1 in 20 of the 103 packages.");
+  await expect(chart).toContainText("Eight still open.");
+  await expect(chart.locator(":scope > circle")).toHaveCount(0);
   await section(page).getByRole("button", { name: "Show the table" }).click();
   await expect(page.locator("[data-comparables-table] table tbody tr")).toHaveCount(20);
   await expect(page.locator("[data-comparables-table]")).toContainText("Showing 1–20 of 103 packages");
@@ -422,7 +537,7 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await expect(page.locator("[data-comparables-table] table tbody tr")).toHaveCount(7);
   // With none still open, the text alternative names only the signed ones.
   await expect(page.locator("[data-chart-alt]")).toHaveText(
-    "Dot chart of 7 comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +
+    "Dot chart of seven comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +
       "A line marks 1.5 months, and 0 of 7 were signed within it.",
   );
 });
@@ -439,6 +554,11 @@ test("when packages matched but none could be measured, the reasons say how many
   );
   await expect(section(page)).not.toContainText("Based on");
   await expect(section(page).getByRole("link", { name: /^See data readiness/ })).toBeVisible();
+  // Each count can be checked, with the same tooltip as the populated coverage line.
+  const line = section(page).locator("[data-coverage-line]");
+  await expect(line.getByRole("button")).toHaveText(["six", "two", "four"]);
+  await line.getByRole("button", { name: "two" }).hover();
+  await expect(page.getByText("Counted from the records behind this section. Data readiness lists them by source.")).toBeVisible();
 });
 
 test("a package with no public notice quotes its Market Approach and offers the way back to the plan check", async ({ page }) => {
@@ -460,6 +580,15 @@ test("when the whole page fails, the reference is the heading and is not repeate
   await expect(page.locator("main h1")).toHaveText(REF);
 
   await expect(page.locator("[data-package-header]")).toHaveText(REF);
+});
+
+test("a reference no plan lists stays whole in the not-found sentence at phone width", async ({ page }) => {
+  await openPackage(page, { width: 390, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+  const reference = page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono");
+
+  await expect(reference).toHaveText(REF);
+  const lines = await reference.evaluate((el) => el.getClientRects().length);
+  expect(lines).toBe(1);
 });
 
 // The states the 12 brief lists, each checked with axe at the three widths the review captures.
@@ -502,7 +631,8 @@ test("the page barely moves when the package and then its comparables arrive, at
     await new Promise((resolve) => setTimeout(resolve, ms));
     await route.fulfill({ contentType: "application/json", body: await recorded(name) });
   };
-  for (const width of [320, 390, 1024, 1440]) {
+  // 600 and 700 sit where the chart's type sizes and the page's 768 px break disagree.
+  for (const width of [320, 390, 600, 700, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
     await page.route(`**${API}`, later(400, "package-ke-nwwda-541055.json"));

@@ -186,15 +186,18 @@ export function Table({
         <>
           {createElement(`h${level}`, { id: titleId, className: "text-title text-ink-heading" }, title)}
           {count && (
-            <p id={countId} className="text-caption text-ink-muted" data-numbers>
-              {countText(count)}
+            // The count, and the cards' note as its own element at the row's end, which wraps to a line
+            // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
+              <p id={countId} data-numbers>
+                {countText(count)}
+              </p>
               {cardsNote && (
-                <span className={SHOW[cardsBelow].cards} data-cards-note>
-                  {" "}
+                <p className={SHOW[cardsBelow].cards} data-cards-note>
                   {cardsNote}
-                </span>
+                </p>
               )}
-            </p>
+            </div>
           )}
         </>
       )}
