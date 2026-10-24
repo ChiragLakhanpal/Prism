@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -51,6 +52,12 @@ CASE = "p130164-rebidding"
 ICR_54 = "strata.gold.passage:31525018/v1/54"
 RUN_ROW = "SELECT run_id, status, application_insights_trace_id FROM strata.ops.agent_runs WHERE run_id = :run_id"
 TRACE = "union requests, dependencies, traces | where operation_Id == '{trace_id}' | take 5"
+TRACE_ID = re.compile(r"[0-9a-f]{32}")  # an OpenTelemetry trace id, the only text the query above may hold
+
+
+def trace_query(trace_id: str | None) -> str | None:
+    """The Application Insights query for a trace, or None when the text is not a trace id."""
+    return TRACE.format(trace_id=trace_id) if trace_id and TRACE_ID.fullmatch(trace_id) else None
 
 
 def events(text: str) -> list[tuple[str, dict]]:
@@ -122,11 +129,11 @@ def main(argv=None) -> int:
     results.append((bool(rows) and rows[0][2] == trace_id and trace_id is not None,
                     f"3. strata.ops.agent_runs holds run {run_id}: {rows}"))
     parts = dict(part.split("=", 1) for part in env["APPLICATIONINSIGHTS_CONNECTION_STRING"].split(";") if "=" in part)
-    found, deadline = [], time.monotonic() + 600
-    while trace_id and parts.get("ApplicationId") and not found:
+    found, deadline, query = [], time.monotonic() + 600, trace_query(trace_id)
+    while query and parts.get("ApplicationId") and not found:
         answer = json.loads(az("rest", "--method", "post", "--resource", "https://api.applicationinsights.io",
                                 "--url", f"https://api.applicationinsights.io/v1/apps/{parts['ApplicationId']}/query",
-                                "--body", json.dumps({"query": TRACE.format(trace_id=trace_id)})) or "{}")
+                                "--body", json.dumps({"query": query})) or "{}")
         found = ((answer.get("tables") or [{}])[0].get("rows")) or []
         if found or time.monotonic() > deadline:
             break
