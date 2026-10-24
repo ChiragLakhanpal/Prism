@@ -21,8 +21,10 @@ export const openedAt = createStore<Record<string, number>>({});
 // Where the open drawer came from: the answer (its run's serial, web/src/lib/answer.ts), the sentence
 // whose marker opened it, and that marker, for the claim block, the switcher and focus on close. A
 // drawer opened from a link has none. The serial keeps a later answer's sentence from being paired
-// with a source an earlier answer opened (CLAUDE.md rule 2).
-export type Origin = { id: string; serial: number | null; sentence: number | null; marker: HTMLElement | null; runId: string | null };
+// with a source an earlier answer opened (CLAUDE.md rule 2). The marker's top in the window when it was
+// clicked lets a draft put the marker back where the reader saw it after the notes reflow; a switch between
+// a sentence's sources has none, since nothing reflows.
+export type Origin = { id: string; serial: number | null; sentence: number | null; marker: HTMLElement | null; runId: string | null; top: number | null };
 export const origin = createStore<Origin | null>(null);
 
 // Whether this session pushed the open drawer's history entry, so closing can go back to the page.
@@ -104,8 +106,10 @@ export async function loadVisited(ids: string[]) {
 
 // Open the drawer at a source: from a marker, a number or a switcher tab. A switcher tab replaces the
 // entry; anything else adds one, on the same page, so Back closes the drawer.
-export function openEvidence(id: string, from: Omit<Origin, "id"> | null, options: { replace?: boolean; focus?: boolean } = {}) {
-  origin.set(from ? { id, ...from } : null);
+export function openEvidence(id: string, from: Omit<Origin, "id" | "top"> | null, options: { replace?: boolean; focus?: boolean } = {}) {
+  const marker = from?.marker;
+  const top = !options.replace && marker && marker.getClientRects().length > 0 ? marker.getBoundingClientRect().top : null;
+  origin.set(from ? { id, ...from, top } : null);
   if (options.focus ?? true) focusRequests.set((count) => count + 1);
   const open = evidenceIn(address.get().search);
   if (open === id) return;

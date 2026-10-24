@@ -3,8 +3,8 @@
 //
 // The bar is a section named "Check and export" at the end of the document column, held to it, on
 // surface with a 1px line on top. It sticks to the bottom of the window only when the window is at least
-// 768 px wide and 640 px tall; otherwise it sits at the end of the page, because a sticky bar this tall
-// would cover the note you are checking. It always has two rows. Row 1 says what exporting does and is
+// 768 px wide and 640 px tall and the document column at least 30rem wide; otherwise it sits at the end of
+// the page with its buttons stacked, because a sticky bar this tall would cover the note you are checking. It always has two rows. Row 1 says what exporting does and is
 // not: the kind's lead sentence, the fixed consequence sentence, how many sources you opened (a link to
 // the Sources list), and the hold line when export is held. Row 2 has Discard at the left edge, set apart
 // by the whole row, and Export to Word and the solid button at the right. In Draft the solid button is
@@ -32,9 +32,9 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 // For this long after it turns solid, a click on it is the end of the click that checked the notes.
 const SETTLE_MS = 400;
 
-// Sticky only in a window at least 768 px wide and 640 px tall (48rem by 40rem). Every class name with
-// this media query is written out whole, so Tailwind finds it.
-export const STICKY = "[@media(min-width:48rem)_and_(min-height:40rem)]:sticky [@media(min-width:48rem)_and_(min-height:40rem)]:bottom-0";
+// Sticky only where the bar-sticks variant holds (app.css): a window at least 768 px wide and 640 px tall,
+// and a document column at least 30rem wide. Every class name is written out whole, so Tailwind finds it.
+export const STICKY = "bar-sticks:sticky bar-sticks:bottom-0";
 // The fixed consequence sentence, with each hyphenated word kept whole at a line end, so its key word never
 // breaks as "no-" and "objection". The draft page's skeleton shows it too, since it is true before the
 // draft loads (the 35 brief, section 8.3).
@@ -55,28 +55,20 @@ export function Consequence() {
   );
 }
 
-// The bar's two rows of buttons: stacked below the sticky size (Discard, a 1px rule with 16 px above and
-// below, then the full-width buttons 8 px apart), and one row with Discard at the far left when it sticks.
-// The draft page's skeleton draws its pills with the same classes, so they stand where the buttons will.
-// Each class is spelled out in full, so Tailwind finds it.
-export const BAR_BUTTONS = cx(
-  "mt-3 flex flex-col",
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:flex-row [@media(min-width:48rem)_and_(min-height:40rem)]:items-center",
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:justify-between [@media(min-width:48rem)_and_(min-height:40rem)]:gap-2",
-);
+// The bar's two rows of buttons: stacked where the bar does not stick (Discard, a 1px rule with 16 px above
+// and below, then the full-width buttons 8 px apart), and one row with Discard at the far left where it
+// does (the bar-sticks variant in app.css). The draft page's skeleton draws its pills with the same classes,
+// so they stand where the buttons will.
+export const BAR_BUTTONS = cx("mt-3 flex flex-col", "bar-sticks:flex-row bar-sticks:items-center bar-sticks:justify-between bar-sticks:gap-2");
 export const BAR_MAIN = cx(
   "mt-4 flex flex-col gap-2 border-t border-line pt-4",
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:mt-0 [@media(min-width:48rem)_and_(min-height:40rem)]:flex-row",
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:border-t-0 [@media(min-width:48rem)_and_(min-height:40rem)]:pt-0",
+  "bar-sticks:mt-0 bar-sticks:flex-row bar-sticks:border-t-0 bar-sticks:pt-0",
 );
-export const BAR_BUTTON_WIDTH = "w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-auto";
+export const BAR_BUTTON_WIDTH = "w-full bar-sticks:w-auto";
 
 // The discarded notice takes the bar's place, so when it sticks it ends the scrolling notes the same way: a
 // 1px rule above it and 12 px of the page above and below the alert, so no text is cut at the alert's edge.
-const STICKY_FRAME = cx(
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:border-t [@media(min-width:48rem)_and_(min-height:40rem)]:border-line",
-  "[@media(min-width:48rem)_and_(min-height:40rem)]:py-3",
-);
+const STICKY_FRAME = "bar-sticks:border-t bar-sticks:border-line bar-sticks:py-3";
 
 export type BarProps = {
   draft: Draft;

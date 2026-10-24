@@ -32,21 +32,26 @@ const short = (iso: string) => formatDate(iso, { style: "table" });
 const whole = (value: number) => formatNumber(value, { compact: false });
 
 // From a page area of 1024 px the header sticks; keep focused elements 8 px clear of it. The page area
-// narrows when the evidence drawer opens, so the header's own position says whether it sticks.
+// narrows when the evidence drawer opens, so the header's own position says whether it sticks. The same
+// padding goes to --sticky-top, which shifts the scroll margin of the draft action in the header (app.css),
+// so Shift+Tab into the header does not scroll the page.
 function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: boolean) {
   useEffect(() => {
     const element = header.current;
     if (!element || !active) return;
+    const root = document.documentElement;
     const update = () => {
-      const sticks = getComputedStyle(element).position === "sticky";
-      document.documentElement.style.scrollPaddingTop = sticks ? `${element.offsetHeight + 8}px` : "";
+      const padding = getComputedStyle(element).position === "sticky" ? `${element.offsetHeight + 8}px` : "";
+      root.style.scrollPaddingTop = padding;
+      root.style.setProperty("--sticky-top", padding);
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
     return () => {
       observer.disconnect();
-      document.documentElement.style.scrollPaddingTop = "";
+      root.style.scrollPaddingTop = "";
+      root.style.removeProperty("--sticky-top");
     };
   }, [header, active]);
 }

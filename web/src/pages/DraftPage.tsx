@@ -81,15 +81,24 @@ function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void,
   return [loaded, replace, reload, held !== null];
 }
 
+// Whether this sticky part of the page sticks now: the header, the bar or the discarded notice sit in the
+// page like any other block on a phone, in a short window, or beside the open drawer below about 960 px.
+const sticks = (element: HTMLElement | null | undefined) => Boolean(element && getComputedStyle(element).position === "sticky");
+
 // Keeps focused elements 8 px clear of the sticky header and the sticky bar, as each one's height
-// changes (DESIGN.md section 10; WCAG 2.4.11).
+// changes (DESIGN.md section 10; WCAG 2.4.11). The same paddings go to --sticky-top and --sticky-bottom,
+// which shift the scroll margins of the controls inside those parts (app.css), so the Tab key does not
+// scroll the page to bring a control in the bar out of the bar's own padding.
 function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const update = () => {
-      const stuck = (element: HTMLElement | null) => element && getComputedStyle(element).position === "sticky";
-      root.style.scrollPaddingTop = stuck(header) ? `${header!.offsetHeight + 8}px` : "";
-      root.style.scrollPaddingBottom = stuck(bar) ? `${bar!.offsetHeight + 8}px` : "";
+      const top = sticks(header) ? `${header!.offsetHeight + 8}px` : "";
+      const bottom = sticks(bar) ? `${bar!.offsetHeight + 8}px` : "";
+      root.style.scrollPaddingTop = top;
+      root.style.scrollPaddingBottom = bottom;
+      root.style.setProperty("--sticky-top", top);
+      root.style.setProperty("--sticky-bottom", bottom);
     };
     update();
     const observer = new ResizeObserver(update);
@@ -100,6 +109,8 @@ function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
       window.removeEventListener("resize", update);
       root.style.scrollPaddingTop = "";
       root.style.scrollPaddingBottom = "";
+      root.style.removeProperty("--sticky-top");
+      root.style.removeProperty("--sticky-bottom");
     };
   }, [header, bar]);
 }
@@ -130,7 +141,9 @@ function stepsOf(draft: Draft, kind: KindWords): Step[] {
 
 // The sticky header: it sticks from a page area of 1024 px, and in a window of 1200 px or more, where the
 // column keeps its place beside the evidence drawer. It must be a direct child of the tall page, with its
-// margin on itself (className), or sticky has no room to move.
+// margin on itself (className), or sticky has no room to move. Its type sets a height such as 134.89 px, and
+// a stuck header whose bottom edge falls inside a pixel lets the notes under it show through that pixel, so
+// its bottom padding takes up the fraction and the header ends on a whole pixel.
 export function DraftHeader({ title, subtitle, state, headerRef, className }: {
   title: ReactNode;
   subtitle: ReactNode;
@@ -138,9 +151,24 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
   headerRef?: (element: HTMLDivElement | null) => void;
   className?: string;
 }) {
+  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const ref = useCallback((node: HTMLDivElement | null) => {
+    setElement(node);
+    headerRef?.(node);
+  }, [headerRef]);
+  useLayoutEffect(() => {
+    if (!element) return;
+    // The content box only, so the padding this sets never sets it off again.
+    const observer = new ResizeObserver(([entry]) => {
+      const content = entry.contentRect.height;
+      element.style.paddingBottom = `calc(var(--spacing) * 4 + ${Math.ceil(content) - content}px)`;
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [element]);
   return (
     <div
-      ref={headerRef}
+      ref={ref}
       data-draft-header
       className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-0 @lg/page:z-10 xl:sticky xl:top-0 xl:z-10", className)}
     >
@@ -162,6 +190,7 @@ export function DraftCrumbs({ pid, name, last }: { pid: string; name: ReactNode;
   return (
     <Breadcrumb
       back={drafts}
+      held
       trail={[
         drafts,
         { text: <Fill template={copy.breadcrumb.project} slots={{ name, pid: <span className="font-mono font-medium">{pid}</span> }} />, href: `/projects/${pid}` },
@@ -244,7 +273,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const success = useRef<HTMLHeadingElement>(null);
   const discarded = useRef<HTMLSpanElement>(null);
   const [announced, setAnnounced] = useState("");
-  const focusNext = useRef<"export" | "check" | "success" | "discarded" | "heading" | null>(null);
+  const focusNext = useRef<"export" | "check" | "success" | "discarded" | null>(null);
   const ledeId = useId();
   const loadedAt = useRef(Date.now());
   const here = useStore(address);
@@ -278,17 +307,18 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     }
   }, [ready]);
 
-  // Focus moves where the brief says once the server has answered and the page has drawn. The bar, the
-  // discarded notice and the h1 sit in sticky parts that are already in view, and the page's scroll padding
-  // would otherwise make the browser scroll the notes away (DESIGN.md section 10).
+  // Focus moves where the brief says once the server has answered and the page has drawn. While the bar or
+  // the discarded notice sticks, it is already in view, and the page's scroll padding would otherwise make
+  // the browser scroll the notes away, so focus moves without scrolling. Where it does not stick, focus
+  // scrolls to it as usual (DESIGN.md section 10).
   useEffect(() => {
     const target = focusNext.current;
     focusNext.current = null;
-    const still = { preventScroll: true };
-    if (target === "export") exportButton.current?.focus(still);
-    if (target === "check") checkButton.current?.focus(still);
-    if (target === "discarded") discarded.current?.focus(still);
-    if (target === "heading") document.querySelector<HTMLElement>("main h1")?.focus(still);
+    const move = (element: HTMLElement | null) =>
+      element?.focus({ preventScroll: sticks(element.closest<HTMLElement>("[data-draft-bar],[data-discarded-notice]")) });
+    if (target === "export") move(exportButton.current);
+    if (target === "check") move(checkButton.current);
+    if (target === "discarded") move(discarded.current);
     if (target === "success" && success.current) {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       success.current.closest("section")?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
@@ -305,24 +335,32 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const numbers = useMemo(() => new Map(draft?.sources.map((source) => [source.evidence_id, source.number]) ?? []), [draft]);
   const openedCount = draft ? draft.sources.filter((source) => opened.has(source.evidence_id)).length : 0;
 
-  // The note whose marker opened the drawer stays in view beside its source. From a window of 1200 px
-  // nothing moves; below that the narrower column may turn the notes into cards, which moves the note, so
-  // the same marker in the view now shown is brought just clear of the sticky header or bar, and only if
-  // one of them hides it (the 35 brief, section 3.1).
+  // The marker that opened the drawer stays where the reader saw it, beside its source. From a window of
+  // 1200 px nothing moves; below that the narrower column may turn the notes into cards, which moves the
+  // notes and everything under them, the Sources list too. So the same marker, in the view now shown, is put
+  // back at the height in the window it had when it was opened, then kept clear of the sticky header and
+  // bar (the 35 brief, section 3.1). A marker in a note is found by its source and sentence, since the table
+  // and the cards each have one; a marker in the Sources list is the one that was opened.
   const openId = evidenceIn(here.search);
-  const openSentence = from && from.serial === null ? from.sentence : null;
+  const draftOrigin = from && from.serial === null && from.id === openId ? from : null;
   // It waits a second frame, so the scroll padding has followed the bar, which may wrap taller.
   useEffect(() => {
-    if (!openId || openSentence === null) return;
+    if (!openId || !draftOrigin) return;
+    const { sentence, marker, top } = draftOrigin;
     let frame = requestAnimationFrame(() => {
       frame = requestAnimationFrame(() => {
-        const selector = `[data-draft-notes] [data-citation-id="${CSS.escape(openId)}"][data-sentence="${openSentence}"]`;
-        const shown = [...document.querySelectorAll<HTMLElement>(selector)].find((marker) => marker.getClientRects().length > 0);
-        shown?.scrollIntoView({ block: "nearest" });
+        const candidates =
+          sentence === null
+            ? [marker]
+            : [...document.querySelectorAll<HTMLElement>(`[data-draft-notes] [data-citation-id="${CSS.escape(openId)}"][data-sentence="${sentence}"]`)];
+        const shown = candidates.find((element) => element?.isConnected && element.getClientRects().length > 0);
+        if (!shown) return;
+        if (top !== null) window.scrollBy({ top: shown.getBoundingClientRect().top - top, behavior: "instant" });
+        shown.scrollIntoView({ block: "nearest" });
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [openId, openSentence]);
+  }, [openId, draftOrigin]);
 
   if (loaded.status === "loading") return <DraftSkeleton />;
   if (loaded.status === "missing") {
@@ -361,7 +399,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const kind: KindWords = copy.draft.kinds[d.kind];
   const subject = d.subject;
   const planHref = `/projects/${subject.project_id}/procurement/${subject.agency_id}/${subject.plan_date}`;
-  const open = { id: openId, sentence: openSentence };
+  const open = { id: openId, sentence: draftOrigin ? draftOrigin.sentence : null };
 
   const onAct = async (action: Action) => {
     if (busy) return;
@@ -390,9 +428,10 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     } catch (error) {
       const refusal = refusalOf(error);
       if (refusal?.code === "stale") {
-        // The draft reloads in the state it is in now; focus goes to that state's next step.
+        // The draft reloads in the state it is in now; focus goes to that state's next step. An exported draft
+        // ends on its export panel, which scrolls into view and takes focus, as on a revisit.
         const now = refusal.state;
-        focusNext.current = now === "checked" ? "export" : now === "draft" ? "check" : now === "discarded" ? "discarded" : "heading";
+        focusNext.current = now === "checked" ? "export" : now === "draft" ? "check" : now === "discarded" ? "discarded" : "success";
         setStatus(words.conflict);
         setConflict(true);
         reload();
@@ -558,7 +597,8 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
 // rows, the sources, the page's last lines and the bar, each the height of what it stands for at its
 // width, so nothing moves when it loads. Below 48rem the subtitle, the lede, the method and the check line
 // take more lines, the breadcrumb is the short link back to Drafts, and the bar stacks its buttons. The
-// bar's frame sticks as the bar will, with its consequence sentence, which is true before the draft loads.
+// bar's frame sticks as the bar will (the bar-sticks variant), with its consequence sentence, which is true
+// before the draft loads.
 function DraftSkeleton() {
   const kind = SKELETON_KIND;
   // Lines that differ below 48rem and from it: one set is shown at each width.
@@ -627,11 +667,17 @@ function DraftSkeleton() {
             </tbody>
           </table>
         </div>
+        {/* Each card's parts where they will be: the badge, the reference, two lines of description, the
+            rule, then the note. */}
         <ul aria-hidden="true" className="mt-2 flex flex-col gap-3 @min-[35rem]/doc:hidden">
           {["h-72", "h-72", "h-77"].map((height, index) => (
             <li key={index} className={cx(height, "rounded-md border border-line bg-surface p-4")}>
               <Skeleton className="h-7 w-28" radius="rounded-pill" />
-              <SkeletonText className="mt-2 text-small" widths={["w-4/5", "w-full", "w-3/5"]} />
+              <SkeletonLine className="mt-1 text-small" width="w-48" />
+              <SkeletonText className="mt-1 text-small" widths={["w-full", "w-3/5"]} />
+              <div className="mt-3 border-t border-line pt-3">
+                <SkeletonText className="text-small" widths={["w-full", "w-full", "w-11/12", "w-full", "w-2/5"]} />
+              </div>
             </li>
           ))}
         </ul>
@@ -661,8 +707,8 @@ function DraftSkeleton() {
             </div>
             <div className={BAR_MAIN}>
               {/* Full width while stacked, and each button's width in a row. */}
-              <Skeleton className="h-11 w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-36" radius="rounded-pill" />
-              <Skeleton className="h-11 w-full [@media(min-width:48rem)_and_(min-height:40rem)]:w-40" radius="rounded-pill" />
+              <Skeleton className="h-11 w-full bar-sticks:w-36" radius="rounded-pill" />
+              <Skeleton className="h-11 w-full bar-sticks:w-40" radius="rounded-pill" />
             </div>
           </div>
         </section>

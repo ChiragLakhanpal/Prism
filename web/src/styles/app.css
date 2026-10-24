@@ -141,6 +141,31 @@
   }
 }
 
+/* Where the draft bar sticks (the 35 brief, section 4.3; DESIGN.md section 5, Draft bar): in a window at
+   least 48rem wide and 40rem tall, and only while the document column it sits in is at least 30rem wide.
+   Beside the open drawer below about 960 px the column is phone-sized, so the bar sits at the end of the
+   column with its buttons stacked, as on a phone. The bar, the discarded notice and the draft page's
+   skeleton write bar-sticks: for every class that differs, so a change to where it sticks lands here. */
+@custom-variant bar-sticks {
+  @media (width >= 48rem) and (height >= 40rem) {
+    @container doc (width >= 30rem) {
+      @slot;
+    }
+  }
+}
+
+/* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
+   not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
+   and --sticky-bottom on html only while their header or bar sticks. */
+:is([data-draft-bar], [data-discarded-notice]) :is(a, button) {
+  scroll-margin-top: var(--sticky-bottom, 0px);
+  scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
+}
+:is([data-draft-header], [data-plan-header]) :is(a, button) {
+  scroll-margin-top: calc(-1 * var(--sticky-top, 0px));
+  scroll-margin-bottom: var(--sticky-top, 0px);
+}
+
 @utility layout {
   width: 100%;
   max-width: calc(var(--layout-max) + 2 * var(--layout-margin));

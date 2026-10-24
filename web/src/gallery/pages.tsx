@@ -329,7 +329,7 @@ function DrawerSample({
   const [current, setCurrent] = useState(id);
   const evidence = run?.evidence[current];
   const shown: DrawerData = data ?? (evidence ? { status: "ready", evidence } : { status: "missing" });
-  const from = sentence === undefined ? null : { id: current, serial: run?.serial ?? null, sentence, marker: null, runId: run?.runId ?? null };
+  const from = sentence === undefined ? null : { id: current, serial: run?.serial ?? null, sentence, marker: null, runId: run?.runId ?? null, top: null };
   return (
     <div className="max-w-[37.5rem] overflow-hidden rounded-md border border-line">
       <EvidenceDrawerView

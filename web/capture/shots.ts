@@ -372,7 +372,7 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--focus-held-export", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus("[data-draft-bar] [data-held]") }),
   draftShot("draft--focus-discard", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus("[data-draft-bar] [data-button=ghost]") }),
   draftShot("draft--focus-last-marker", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus(LAST_MARKER) }),
-  draftShot("draft--drawer", { recorded: DRAFT_FILE }, { widths: [1440, 1024], act: click(MARKER) }),
+  draftShot("draft--drawer", { recorded: DRAFT_FILE }, { widths: [1440, 1024, 800], act: click(MARKER) }),
   draftShot("draft--lede-num", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: hover("[data-lede] [data-num]") }),
   draftShot("draft--focus-restore", { recorded: "drafts-review-notes-discarded.json" }, { widths: [1440, 390], act: focus("[data-discarded-notice] button") }, "/drafts/draft-0004"),
   draftShot("draft--focus-file", { recorded: "drafts-review-notes-exported.json" }, { widths: [1440, 390], act: focus("[data-export-success] a") }),

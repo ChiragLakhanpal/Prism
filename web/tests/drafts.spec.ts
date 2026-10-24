@@ -79,6 +79,24 @@ test("Check a plan offers to draft review notes on its three marked rows, and sa
   );
 });
 
+test("Shift+Tab back to the draft action in Check a plan's stuck header does not scroll the page", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") } });
+  await page.goto(PLAN);
+  const action = page.locator("[data-draft-action]");
+  await expect(action).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 600));
+  // Focus the control after the action, where it is, without scrolling, then go back to the action.
+  await page.evaluate(() => {
+    const all = [...document.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), [tabindex='0']")];
+    all[all.indexOf(document.querySelector<HTMLElement>("[data-draft-action]")!) + 1].focus({ preventScroll: true });
+  });
+  const before = await page.evaluate(() => window.scrollY);
+  await page.keyboard.press("Shift+Tab");
+  await expect(action).toBeFocused();
+  expect(Math.abs((await page.evaluate(() => window.scrollY)) - before)).toBeLessThanOrEqual(2);
+});
+
 test("with no activity marked, a preview or an as-of date, Check a plan offers no draft", async ({ page }) => {
   const result = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
   for (const row of result.rows) row.marks = row.marks.filter((mark: { mark: string }) => mark.mark === "data_note");
@@ -353,39 +371,64 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   expect(await place()).toEqual(before);
   // The header keeps its height too, so nothing under it moves up.
   expect(await headerHeight()).toBe(tall);
+
+  // At 1200 px the drawer narrows the page area below 48rem, but the breadcrumb keeps its whole trail, as
+  // the column keeps its place, so nothing above the notes changes and the window does not move.
+  await openDraft(page, { width: 1200, height: 900 });
+  const marker = notes(page).locator("[data-citation='2']").first();
+  await page.evaluate((by) => window.scrollBy(0, by), (await marker.boundingBox())!.y - 400);
+  const [at1200, scrolled] = [await place(), await page.evaluate(() => window.scrollY)];
+  await marker.click();
+  await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
+  await expect(page.locator("[data-breadcrumb] ol")).toBeVisible();
+  expect(await place()).toEqual(at1200);
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
 });
 
-test("opening a source, by click or by Enter, or switching to another, keeps the window still and the note in view above the bar", async ({ page }) => {
+test("opening a source, by click or by Enter, or switching to another, keeps the marker where it was and above the bar", async ({ page }) => {
   const scrollY = () => page.evaluate(() => window.scrollY);
+  // Put a marker at a height in the window, open its source, and say where the marker shown now sits: the
+  // same one in the Sources list, or in the cards if the notes turned into cards.
+  const openFrom = async (marker: ReturnType<Page["locator"]>, shown: ReturnType<Page["locator"]>, at: number, how = "click") => {
+    await page.evaluate((by) => window.scrollBy(0, by), (await marker.boundingBox())!.y - at);
+    await expect.poll(async () => Math.abs((await marker.boundingBox())!.y - at)).toBeLessThanOrEqual(2);
+    const before = await scrollY();
+    if (how === "click") await marker.click();
+    else {
+      await marker.focus();
+      await page.keyboard.press("Enter");
+    }
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
+    await page.waitForFunction(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true)))));
+    const [box, edge] = [(await shown.boundingBox())!, (await bar(page).boundingBox())!];
+    return { y: box.y, clear: box.y + box.height <= edge.y, moved: Math.abs((await scrollY()) - before) };
+  };
+
+  // From 1200 px nothing moves; at 1024 px the notes turn into cards, and the marker is put back where it was.
   for (const [width, height] of [[1440, 900], [1024, 768]]) {
     for (const how of ["click", "Enter"]) {
       const where = `${how} at ${width} by ${height}`;
       await openDraft(page, { width, height });
       const marker = notes(page).locator("[data-citation='2']").first();
-      // Put the second note's marker 450 px down the window.
-      const top = (await marker.boundingBox())!.y;
-      await page.evaluate((by) => window.scrollBy(0, by), top - 450);
-      await expect.poll(async () => Math.abs((await marker.boundingBox())!.y - 450)).toBeLessThanOrEqual(2);
-      const before = await scrollY();
-
-      if (how === "click") await marker.click();
-      else {
-        await marker.focus();
-        await page.keyboard.press("Enter");
-      }
-      await expect(page.getByRole("dialog")).toBeVisible();
-      await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
-      // The marker shown now (in the cards, if the notes turned into cards) sits in the window above the bar.
-      const clear = async () => {
-        const [box, edge] = [await notes(page).locator("[data-citation='2']").first().boundingBox(), await bar(page).boundingBox()];
-        return box!.y >= 0 && box!.y + box!.height <= edge!.y;
-      };
-      await expect.poll(clear, { message: where }).toBe(true);
-      // From 1200 px the notes keep their place. At 1024 px the narrower column turns the notes into cards,
-      // which moves the note, so the page scrolls only the few pixels that keep its marker clear of the bar.
-      expect(Math.abs((await scrollY()) - before), where).toBeLessThanOrEqual(width >= 1200 ? 8 : 40);
+      const after = await openFrom(marker, marker, 450, how);
+      expect(Math.abs(after.y - 450), where).toBeLessThanOrEqual(8);
+      expect(after.clear, where).toBe(true);
+      if (width >= 1200) expect(after.moved, where).toBeLessThanOrEqual(8);
     }
   }
+  // Each of the three notes keeps its marker in place at 1024 px, and so does a source in the Sources list.
+  for (const n of ["1", "3"]) {
+    await openDraft(page, { width: 1024, height: 768 });
+    const after = await openFrom(notes(page).locator(`[data-citation='${n}']`).first(), notes(page).locator(`[data-citation='${n}']`).first(), 450);
+    expect(Math.abs(after.y - 450), `note ${n}`).toBeLessThanOrEqual(8);
+    expect(after.clear, `note ${n}`).toBe(true);
+  }
+  await openDraft(page, { width: 1024, height: 768 });
+  const listed = page.locator("[data-sources] [data-citation='2']");
+  const fromList = await openFrom(listed, listed, 400);
+  expect(Math.abs(fromList.y - 400), "Sources list at 1024").toBeLessThanOrEqual(8);
+  expect(fromList.clear, "Sources list at 1024").toBe(true);
 
   // With the drawer open, the next note's source opens in it without moving the window either.
   const next = notes(page).locator("[data-citation='3']").first();
@@ -398,13 +441,23 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
 
   // A source opened from the Sources list keeps the window still too.
   await openDraft(page, { width: 1440, height: 900 });
-  const listed = page.locator("[data-sources] [data-citation='1']");
-  await page.evaluate((by) => window.scrollBy(0, by), (await listed.boundingBox())!.y - 450);
-  await expect.poll(async () => Math.abs((await listed.boundingBox())!.y - 450)).toBeLessThanOrEqual(2);
-  const still = await scrollY();
-  await listed.click();
-  await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
-  expect(Math.abs((await scrollY()) - still)).toBeLessThanOrEqual(8);
+  const wide = page.locator("[data-sources] [data-citation='1']");
+  expect((await openFrom(wide, wide, 450)).moved).toBeLessThanOrEqual(8);
+});
+
+test("beside the open drawer at 768 and 800 px the column is phone-sized, so the bar sits at its end with its buttons stacked inside it", async ({ page }) => {
+  for (const [width, height] of [[768, 1024], [800, 900]]) {
+    await openDraft(page, { width, height });
+    await notes(page).locator("[data-citation='2']").first().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    const where = `${width} by ${height}`;
+    await expect.poll(() => bar(page).evaluate((element) => getComputedStyle(element).position), { message: where }).toBe("static");
+    const edge = (await bar(page).boundingBox())!;
+    for (const button of await bar(page).getByRole("button").all()) {
+      const box = (await button.boundingBox())!;
+      expect(box.x + box.width, where).toBeLessThanOrEqual(edge.x + edge.width);
+    }
+  }
 });
 
 test("Mark as checked saves, moves the state on and makes Export to Word the solid button, with focus on it", async ({ page }) => {
@@ -527,6 +580,59 @@ test("Mark as checked, Discard and Restore the draft move focus into the sticky 
   await press("Restore the draft");
   await expect(bar(page).getByRole("button", { name: "Mark as checked" })).toBeFocused();
   expect(Math.abs((await scrollY()) - 300), "Restore the draft").toBeLessThanOrEqual(2);
+});
+
+test("where the bar does not stick, Restore the draft moves focus to Mark as checked and scrolls it into view", async ({ page }) => {
+  const discarded = JSON.parse(await recorded("drafts-review-notes-discarded.json"));
+  Object.assign(discarded, { draft_id: "draft-0001" });
+  for (const [width, height] of [[390, 844], [1440, 600]]) {
+    await openDraft(page, {
+      width,
+      height,
+      answers: {
+        "POST /api/drafts/draft-0001/discard": { body: JSON.stringify(discarded) },
+        "POST /api/drafts/draft-0001/restore": { body: await recorded("drafts-review-notes-draft.json") },
+      },
+    });
+    await bar(page).getByRole("button", { name: "Discard" }).click();
+    const restore = page.getByRole("button", { name: "Restore the draft" });
+    await restore.focus();
+    // Restore the draft sits 8 px above the window's bottom edge, so Mark as checked will be below it.
+    await page.evaluate((by) => window.scrollBy(0, by), await restore.evaluate((element, h) => element.getBoundingClientRect().bottom - (h - 8), height));
+    await page.keyboard.press("Enter");
+    const check = bar(page).getByRole("button", { name: "Mark as checked" });
+    await expect(check).toBeFocused();
+    const box = (await check.boundingBox())!;
+    expect(box.y, `${width} by ${height}`).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height, `${width} by ${height}`).toBeLessThanOrEqual(height);
+  }
+});
+
+test("pressing Tab into and through the stuck bar does not scroll the page", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  await page.locator("[data-sources] [data-citation]").last().focus();
+  const before = await page.evaluate(() => window.scrollY);
+  for (let press = 0; press < 4; press += 1) await page.keyboard.press("Tab");
+  await expect(bar(page).getByRole("button", { name: "Mark as checked" })).toBeFocused();
+  expect(Math.abs((await page.evaluate(() => window.scrollY)) - before)).toBeLessThanOrEqual(2);
+});
+
+test("after a change made elsewhere exported the draft, focus goes to the export panel, in the window", async ({ page }) => {
+  let reads = 0;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await serve(page, { "POST /api/drafts/draft-0001/check": { status: 409, body: '{"code":"stale","error":"stale","state":"exported"}' } });
+  await page.route("**/api/drafts/draft-0001", async (route) => {
+    reads += 1;
+    return route.fulfill({
+      contentType: "application/json",
+      body: await recorded(reads === 1 ? "drafts-review-notes-draft.json" : "drafts-review-notes-exported.json"),
+    });
+  });
+  await page.goto(DRAFT);
+  await bar(page).getByRole("button", { name: "Mark as checked" }).click();
+  const heading = page.locator("[data-export-success] h2");
+  await expect(heading).toBeFocused();
+  await expect(page.locator("[data-export-success]")).toBeInViewport();
 });
 
 test("a refused act shows its failure in the bar and keeps the state; a change made elsewhere reloads the draft", async ({ page }) => {
