@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart, Coverage 
 
 **Blocked by:** 07 (Kenya's procurement records, bronze to gold); 10 (Check a plan, on screen, for the NWWDA plan)
 
-**Status:** in-progress
+**Status:** done
 **Area:** ml
 **Phase:** P1
 **Design review:** yes
@@ -26,3 +26,31 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart, Coverage 
 - October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/12-comparables-and-past-range, as soon as ticket 10 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
 
 - October 24, 2026, orchestrator: ticket 16 passed verification (branch strata/16-data-readiness-page-and-dashboard at 0d5d2d3; it merges at the start of the next wave) with one finding outside its criteria that touches this ticket, V1 in `.notes/16-verify-r8.md`: a Data readiness link with an empty `from=` or `sources=` gets HTTP 500 and the page shows a server error. Your coverage lines link to that page, so build them against 16's branch or its merge, never pass an empty parameter, and add a test that each coverage line's link opens the page without an error. If you reach the fix first (it is in 16's routes), take it in the same change and say so.
+- October 24, 2026, merger: merged into build/strata as merge commit bbab425 (parents 02460b2 and 66b595a, so the branch's history is kept). The history scan found no keys. The worktree that built it was `.claude/worktrees/wf_4416a505-c6d-45`; I removed it after this commit, and the branch stays.
+  - **Conflicts.** Git stopped on nine files, all where ticket 35 (drafts) and this ticket added beside each other: `README.md`, `src/strata/agent/definition.py`, `src/strata/server/app.py`, `web/capture/shots.ts`, `web/src/RoutePage.tsx`, `web/src/routes.ts`, `web/src/copy.ts`, `web/src/gallery/copy.ts` and `web/src/pages/CheckPlanPage.tsx`. I kept both sides in each: the draft routes and the package routes, the drafts copy and the package workspace copy, both gallery pages and their labels, both sets of capture shots, both route comments, and README's drafts rows with this ticket's estimates row. In `definition.py`, the instructions list only the tools an agent is offered (ticket 35), and the sentence about citing a summary appears when one of those tools returns a summary (this ticket). In `CheckPlanPage.tsx`, this ticket had moved the sticky padding hook to `web/src/lib/useScrollPadding.ts`, and ticket 35 had made the page's own copy of it also set `--sticky-top` for the draft action's scroll margin. So the shared hook now sets `--sticky-top` as well, and Check a plan uses it with its 8 px gap. That is part of ticket 35's follow-up 2; `DraftPage.tsx` still has its own hook. No dependency file changed, and `scripts/install` added nothing.
+  - **The gate.** It passed by hand on the staged merge in 101.7 seconds. The first commit then stopped at the 120-second limit, with no test failing, while the machine's load was 68 from other worktrees' gates. I waited for the load to drop, and the second commit passed in 117.1 seconds and made the merge commit. By hand on build/strata after the merge, it passed in 68.6 seconds at 09:45: the Python tests took 56.0, Playwright 49.9, and the wizard and day-one tests 45.6.
+  - **The wizard's uncommitted results.** The main checkout held the wizard's `docs/day-one-results.md` as an uncommitted change. As the note at the top of `docs/workspace-catchup.md` says, I copied it to the session scratchpad, put the file back to its committed version for the merge, and copied the wizard's file back after this commit, unchanged.
+  - **Evidence.** Eleven review rounds across four runs. Review r11 (`.notes/12-review-r11.md`) approved with 0 blocking and 3 polish items, from 530 page loads. Design r11 (`.notes/12-design-r11.md`) passed with polish, from 424 cases and 13,992 plan values with no fault. Critique r11 (`.notes/12-critique-r11.md`) does not block, and its lowest score is 4. Verify r11 (`.notes/12-verify-r11.md`) passed all 8 criteria and parked none:
+    - With the default criteria, find_comparables returned the 49 ground-truth comparables (45 signed, 4 still open and censored, 3 canceled left out). Its Kaplan-Meier quantiles of 100, 133, 240 and 277 days equal lifelines 0.30.3's, and round to 3.3, 4.4, 7.9 and 9.1 months.
+    - With `review_type=Prior`, it returned 7 comparables, abstained with `too_few_comparables`, and gave no range and no share. The screen read "I'm not giving a range: only seven comparable packages. Here are all seven."
+    - The coverage line's 65 matched and 49 used (3 with no STEP reference, 10 with no notice, 3 canceled) equal a direct count over the recorded JSON.
+    - Over 51 as-of dates, 201 rows signed after their date came back still open, and none was shown as signed.
+    - The chart matched DESIGN.md's computed styles; arrow keys, typing and dragging gave readouts equal to the verifier's own counts; `?category=any` gave 103 comparables as 20 quantile dots; axe found no WCAG 2.2 AA violations in 24 settled states and 6 readout arrangements.
+  - **Workspace results.** Nothing ran. At 09:45 `guard.py --env-keys` showed `DATABRICKS_TOKEN` missing, and the wizard is still running. I parked the builder's three steps in `docs/workspace-catchup.md`: step 1 runs the same-rows check, which covers `past_range_criteria_ke_works_rfb.sql` and `past_range_coverage_ke_works_rfb.sql`; step 2 runs the agent sync and its `--check` run for the new tool and instructions; step 3 redeploys the App and opens `/packages/KE-NWWDA-541055-CW-RFB`.
+  - **Decisions parked for the user.**
+    1. Below 768 px, the reset button takes the helper line's place.
+    2. The dot tooltip's line starts with the country.
+    3. The package screen tests take 52.9 seconds against the 10-second budget, because of the axe runs and the readout sweeps the criteria ask for.
+    4. Round 3's word choices: the words code, "N in 10", canceled packages left out of the comparison (one config line), open packages kept as censored, and months at one decimal.
+    5. The readout's room leaves out the 3 px margin of the knob's halo.
+    6. The readout takes two lines from 400 px wide, and three lines with text spacing at 320 and 360 px, so the chart grows to 303 px there.
+    7. The plan line stays on top of the dot at the plan's own value, as the brief says. The critic has raised this for five rounds.
+  - **Follow-ups, not blocking.**
+    1. Verify V1: a future `?asof=` on the package routes is not capped at today, so still-open packages get time that has not passed. Use `as_of_for(asof)` in `open_package` and `comparables` in `src/strata/server/app.py` (or cap in `registry.call` for every tool), and add a route test with a future date. Ticket 10's check plan route has the same gap. Route it to ticket 40 or a one-line fix.
+    2. `readinessHref` is written twice. Ticket 16 has merged, so it can move to one place now.
+    3. The critic's untaken items from earlier rounds.
+    4. A STEP reference with a county's name, such as KE-KAJIADO COUNTY-567787-CW-RFB, breaks inside the ID.
+    5. The verifier lets a summary's bare numbers back a sentence, such as "3.3 to 8.0 months" or 45 days read as months. It is older than this ticket and already routed to ticket 24.
+    6. The slow sweep lags by 128 ms.
+    7. Round 11's polish: row B can change height once when slow fonts arrive near 368 to 376 px; a knockout rect can get a negative height for one render; one header comment line is too long; the chart is 256 px tall where the readout takes two lines, while the brief says 240 (design-lead to settle with DESIGN.md); and from 450 to 767 px the skeleton is 82 to 158 px taller than the drawn section.
+  - **What this unblocks.** Ticket 15 (its other blocker, 14, is done) and ticket 25 (its other blocker, 17, is done). Both are now in progress.

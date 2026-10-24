@@ -726,3 +726,38 @@ One answer must be 200 and the other `[409, "stale"]`, and the query must return
 The merger parked this step on October 24, 2026, after merge commit 0756ed6. Run it right after step 4, with the draft step 4 saved. It needs a second user in `strata-team-kenya-water` and a third user outside it.
 
 Each of the other two users signs in to the App in their own browser profile and opens `<App url>/api/drafts`. It worked if the member's answer lists step 4's draft under `exported` with your name as its author, and the non-member's answer lists only their own drafts, which is none unless they made one (criterion 6, live half). Then each opens `<App url>/drafts/<draft id>`. The member sees the draft and cannot act on it. The non-member gets "not found" (404). If the member sees only their own drafts, the App's token could not read SCIM `/Me`, so every viewer was on a team of their own. The App asks only for the `sql` user scope (`ops/app/deploy_app.py`), which may not cover `/api/2.0/preview/scim/v2/Me`. Tell the orchestrator, because the review's parked decision 2 covers this.
+
+## Ticket 12, step 1 of 3: the past range's rows on DuckDB and on the SQL warehouse
+
+The merger parked this step on October 24, 2026, after merge commit bbab425. It needs the Databricks keys in `.env`, and at 09:45 on October 24 `DATABRICKS_TOKEN` was still missing. Run it after ticket 04's steps 1 and 2, ticket 07's step 1 and ticket 08's step 1, because the two files read the notices, the contracts and the plan rows those steps write. It is the same command as ticket 04's step 3, and one run after those steps serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for both `past_range_criteria_ke_works_rfb.sql` and `past_range_coverage_ke_works_rfb.sql` (criteria 1 and 3, live half). As of October 22, 2026, the coverage file's rows are canceled 3, matched 65, no STEP reference 3, no notice 10 and used 49. The warehouse returns every value as text, and this is the first time find_comparables' date and amount handling runs there. If the warehouse holds Kenya works packages that the fixture does not record, the command prints the DuckDB rows, the warehouse rows and the expected rows side by side. Tell the orchestrator before you change a file's expected rows.
+
+## Ticket 12, step 2 of 3: the Foundry agent offers find_comparables
+
+The merger parked this step on October 24, 2026, after merge commit bbab425. It needs `FOUNDRY_PROJECT_ENDPOINT` in `.env` and the `az` command line signed in to the subscription that holds the Foundry resource named in `ops/dayone/dayone.toml`. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 12 adds the find_comparables tool to `config/tools.toml` and changes `src/strata/agent/instructions/orchestrator.md`, so the agent in Foundry no longer matches the repo. If ticket 13's step 1 ran from bbab425 or later, the first command below has nothing to change, and the `--check` run is enough.
+
+Run this from the main checkout, and then run it again with `--check`:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run prints what differed, with find_comparables among the tools and the sentence about citing a tool's summary in the instructions, and ends "I made version N of strata-orchestrator, which matches the repo." The second run must exit 0 and print "Foundry's agent strata-orchestrator, version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Exit 1 means `--check` found a difference, and exit 2 means it could not run.
+
+## Ticket 12, step 3 of 3: the package workspace on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit bbab425. It needs the Databricks keys in `.env`. Run it after step 1, after ticket 08's step 1 has filled the plan tables on the warehouse, and after ticket 09's step 1 has turned on user authorization. Ticket 06's step 1 runs the same deploy command. Run it again here if that deploy came from a commit before bbab425, because the package workspace and its two routes arrived in this merge.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`, and open:
+
+    <App url>/packages/KE-NWWDA-541055-CW-RFB
+
+It worked if the deploy exits 0 with its last line `Strata is running at https://...`, and the page shows the "Planning" eyebrow over "1 · How long it took", with a title that counts the comparable packages signed within the plan's 1.5 months. On the fixture, as of October 24, 2026, the server's answer was 49 comparable packages (45 signed and 4 still open), a middle half of 3.3 to 7.9 months, a middle of 4.4 months, 8 in 10 signed within 9.1 months, and 2 signed within the plan's 1.5 months. Its coverage line began "Based on 49 of 65 matching packages". The four still-open packages gain a day each day, so the quartiles can move by a tenth of a month as the date moves. Then open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` and choose "See the past range" on the KE-NWWDA-541055-CW-RFB row. It must open the same page, with focus on its heading.

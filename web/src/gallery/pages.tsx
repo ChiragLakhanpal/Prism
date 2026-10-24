@@ -71,13 +71,138 @@ import { Tabs } from "../components/Tabs";
 import { DefinitionWindow, Term } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import type { Section } from "../components/TopNav";
+import { FactsSkeleton, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { PastRange } from "../components/PastRange";
 import { copy } from "../copy";
 import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
+import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+
+// ── The package workspace's samples (ticket 12) ──────────────────────────
+// Made-up comparables in find_comparables' shape, built from the gallery copy's months so that every
+// count in a sample agrees with its rows. The packages still open ran longest in every sample, so each
+// quantile is a rank among the signed ones, as Kaplan-Meier gives it then.
+const pr = galleryCopy.pastRange;
+const DAY_MS = 86_400_000;
+const isoAfter = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
+const samplePackage = pr.package as PackageFacts;
+
+function sampleResult(signed: readonly number[], open: readonly number[], options: { plan?: boolean; abstain?: boolean } = {}): ComparablesResult {
+  const total = signed.length + open.length;
+  const rows: Comparable[] = [...signed.map((months) => ({ months, still: false })), ...open.map((months) => ({ months, still: true }))].map(
+    ({ months, still }, index) => {
+      const notice = isoAfter("2021-01-04", index * 9);
+      const days = Math.round(months * 30.4375);
+      return {
+        evidence_id: `sample-${index}`,
+        public_from: notice,
+        source: { project_id: galleryCopy.sample.pcode, notice_id: `OP-SAMPLE-${index}`, contract_id: null, award_notice_id: null, signed_in: still ? null : "contract awards" },
+        step_reference: `${pr.referencePrefix}${String(10 + index).padStart(2, "0")}${pr.referenceSuffix}`,
+        project_id: galleryCopy.sample.pcode,
+        country_code: "KE",
+        country_name: pr.country,
+        notice_id: `OP-SAMPLE-${index}`,
+        notice_date: notice,
+        signed_on: still ? null : isoAfter(notice, days),
+        still_open: still,
+        days,
+        months: Math.round(months * 10) / 10,
+        rank: 0,
+      };
+    },
+  );
+  rows.sort((a, b) => a.months - b.months || a.step_reference.localeCompare(b.step_reference));
+  rows.forEach((row, index) => (row.rank = index + 1));
+  const done = rows.filter((row) => !row.still_open).map((row) => row.months);
+  const at = (share: number) => {
+    const rank = Math.ceil(total * share);
+    return rank <= done.length ? done[rank - 1] : null;
+  };
+  const within = done.filter((months) => months <= pr.planMonths).length;
+  const longest = Math.max(...rows.map((row) => row.months));
+  return {
+    tool: "find_comparables",
+    as_of: galleryCopy.sampleDate,
+    view: "staff",
+    rows,
+    coverage: {
+      matched: total + 3,
+      used: total,
+      not_used: [
+        { reason: "no_step_reference", count: 2, evidence_ids: ["sample-a", "sample-b"] },
+        { reason: "no_notice", count: 1, evidence_ids: ["sample-c"] },
+      ],
+    },
+    abstention: options.abstain ? { reason: "too_few_comparables", count: total, min_comparables: 20 } : null,
+    package: samplePackage,
+    criteria: {
+      method: pr.method,
+      category: pr.category,
+      market_approach: null,
+      review_type: null,
+      country: "KE",
+      country_name: pr.country,
+      notice_from: "2019-07-01",
+      notice_to: "2026-10-09",
+      size_from_usd: null,
+      size_to_usd: null,
+      from_package: ["method", "category", "country", "notice_to"],
+    },
+    counts: { comparables: total, signed: done.length, still_open: open.length, canceled: 0, canceled_as_still_open: false },
+    past_range: options.abstain ? null : { q25: at(1 / 4), q50: at(1 / 2), q75: at(3 / 4), q80: at(4 / 5) },
+    plan:
+      options.plan === false
+        ? null
+        : {
+            days: 122,
+            months: pr.planMonths,
+            planned_notice_on: pr.plannedNotice,
+            planned_signing_on: pr.plannedSigning,
+            plan_date: "2026-10-09",
+            within,
+            in10: options.abstain ? null : Math.round((within * 10) / total),
+          },
+    // Every sample's share falls between 1 and 9 in 10, so the tool's words for it are "about".
+    frequencies: options.abstain
+      ? null
+      : { q80: [8, 10], plan: options.plan === false ? null : { words: "about", states: [Math.round((within * 10) / total), 10] } },
+    quantile_dots:
+      total > 60 && !options.abstain
+        ? Array.from({ length: 20 }, (_, index) => {
+            const reached = at((2 * index + 1) / 40);
+            return { k: index + 1, days: 0, months: reached ?? longest, reached: reached !== null };
+          })
+        : null,
+    thresholds: { min_comparables: 20, quantile_dots_above: 60, quantile_dots: 20, max_plan_months: 60, canceled_as_still_open: false },
+    sources: pr.sources.map((name, index) => ({ key: `sample-${index}`, dataset_name: name })),
+    records_through: "2026-10-13",
+  };
+}
+
+const rangeReady = sampleResult(pr.signedMonths, pr.openMonths);
+const rangeNoPlan = sampleResult(pr.signedMonths, pr.openMonths, { plan: false });
+const rangeWide = sampleResult(
+  Array.from({ length: pr.wideSigned }, (_, index) => 1.5 + index * 0.15),
+  pr.wideOpen,
+);
+const rangeNarrow = sampleResult(pr.signedMonths.slice(0, pr.narrowCount), [], { abstain: true });
+const rangeEmpty = (abstention: ComparablesResult["abstention"], matched: number): ComparablesResult => ({
+  ...rangeReady,
+  rows: [],
+  counts: null,
+  past_range: null,
+  plan: null,
+  frequencies: null,
+  abstention,
+  coverage: matched
+    ? { matched, used: 0, not_used: [{ reason: "no_notice", count: matched, evidence_ids: [] }] }
+    : { matched: 0, used: 0, not_used: [] },
+});
 
 const s = galleryCopy.states;
 const t = galleryCopy.sections;
@@ -312,12 +437,27 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 // The one box as the band shows it for this input, with its list open.
-function BoxSample({ text, hint = false, scope = null, lookups = LOOKUPS }: { text: string; hint?: boolean; scope?: string | null; lookups?: Record<string, Lookup> }) {
+function BoxSample({
+  text,
+  hint = false,
+  scope = null,
+  scopeKind = "project",
+  lookups = LOOKUPS,
+  narrow = false,
+}: {
+  text: string;
+  hint?: boolean;
+  scope?: string | null;
+  scopeKind?: "project" | "package";
+  lookups?: Record<string, Lookup>;
+  // A box about as narrow as the band's at 390 px, at every width of the gallery.
+  narrow?: boolean;
+}) {
   const [value, setValue] = useState(text);
   const { options, notes } = boxList(value, scope, lookups);
   return (
-    <div className="min-h-[15rem] max-w-prose">
-      <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} focusedHint={hint} shortcut={false} />
+    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : "max-w-prose")}>
+      <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} scopeKind={scopeKind} focusedHint={hint} shortcut={false} />
     </div>
   );
 }
@@ -946,6 +1086,11 @@ export const PAGES: GalleryPage[] = [
       { id: "not-found", title: s.notFound, body: <BoxSample text={sample.unknownProject} /> },
       { id: "lookup-failed", title: s.lookupFailed, body: <BoxSample text={STEP_REF} lookups={FAILED} /> },
       { id: "scoped", title: s.scoped, body: <BoxSample text={sample.boxQuestion} scope={sample.boxProject} /> },
+      {
+        id: "scoped-long",
+        title: s.scopedLong,
+        body: <BoxSample text={sample.boxQuestion} scope={sample.boxPackageLong} scopeKind="package" narrow />,
+      },
     ],
   },
   {
@@ -1057,6 +1202,15 @@ export const PAGES: GalleryPage[] = [
         body: <Table {...tableProps} cardsBelow="lg" state={{ status: "ready", rows }} />,
       },
       {
+        // The past range's table keeps to columns 1 to 8 from 1200 px, where its frame is narrower than
+        // at 1024 px, so it reads its own width: cards while its frame is under 49rem. Here it sits in the
+        // gallery's main column, so the rows show from a window of 880 to 1023 px and from 1200 px, and
+        // cards elsewhere.
+        id: "cards-below-fit",
+        title: t.cardsBelowFit,
+        body: <Table {...tableProps} cardsBelow="fit" state={{ status: "ready", rows }} />,
+      },
+      {
         id: "empty",
         title: s.empty,
         body: <Table {...tableProps} state={{ status: "empty", title: sample.tableEmptyTitle, body: sample.tableEmptyBody }} />,
@@ -1131,6 +1285,65 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   draftsPage(planSample),
+  {
+    // Ticket 12's package workspace (web/src/components/PackageFacts.tsx, PastRange.tsx and
+    // RangeChart.tsx). The page's own states, with the real comparables, are captured from the
+    // production build (web/capture/shots.ts).
+    slug: "past-range",
+    current: "packages",
+    sections: [
+      {
+        id: "header",
+        title: t.packageHeader,
+        body: (
+          <>
+            <PackageHeader level={2} sticky={false} title={pr.description} reference={<span className="font-mono font-medium">{pr.reference}</span>} />
+            <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
+            <div className="mt-4">
+              <PackageFactsList pkg={samplePackage} />
+            </div>
+          </>
+        ),
+      },
+      { id: "header-loading", title: s.loading, body: <FactsSkeleton /> },
+      { id: "range", title: t.rangeReady, body: <PastRange state={{ status: "ready", result: rangeReady }} /> },
+      { id: "no-plan", title: t.rangeNoPlan, body: <PastRange state={{ status: "ready", result: rangeNoPlan }} /> },
+      { id: "dots", title: t.rangeDots, body: <PastRange state={{ status: "ready", result: rangeWide }} /> },
+      { id: "abstained", title: t.rangeAbstained, body: <PastRange state={{ status: "ready", result: rangeNarrow }} /> },
+      {
+        id: "none",
+        title: t.rangeNone,
+        body: <PastRange state={{ status: "ready", result: rangeEmpty({ reason: "no_comparables", matched: 0 }, 0) }} />,
+      },
+      {
+        id: "unmeasured",
+        title: t.rangeUnmeasured,
+        body: (
+          <PastRange
+            state={{ status: "ready", result: rangeEmpty({ reason: "none_measurable", matched: pr.unmeasured }, pr.unmeasured) }}
+          />
+        ),
+      },
+      {
+        id: "not-measurable",
+        title: t.rangeNotMeasurable,
+        body: (
+          <PastRange
+            state={{
+              status: "ready",
+              result: rangeEmpty({ reason: "no_public_notice", field: pr.notMeasurableField, value: pr.notMeasurableValue }, 0),
+            }}
+          />
+        ),
+      },
+      { id: "loading", title: s.loading, body: <PastRange state={{ status: "loading" }} /> },
+      {
+        id: "error",
+        title: s.error,
+        body: <PastRange state={{ status: "error", error: null, retrying: false, attempt: 0, onRetry: () => {} }} />,
+      },
+    ],
+  },
   {
     slug: "icons",
     sections: [

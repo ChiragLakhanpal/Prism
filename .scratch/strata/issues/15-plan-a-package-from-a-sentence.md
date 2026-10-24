@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 1 and 8; DESIGN.md sections 5, 7 and 10; the b
 
 **Blocked by:** 12 (Comparables and the past range, on the package workspace); 14 (Ask from the one box: the answer panel and the evidence drawer)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P1
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md sections 1 and 8; DESIGN.md sections 5, 7 and 10; the b
 - [ ] A saved package reopens with the same chips, and the Packages tab lists it with the person's checked plans.
 - [ ] Opening a dot on the range chart, by click or by Enter on the focused mark, opens the evidence drawer at that comparable's records, and closing it returns focus to the mark.
 - [ ] Chips are at least 32px tall and editable by keyboard; computed and guessed chips say so in text, not only by style (DESIGN.md section 10); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/15-plan-a-package-from-a-sentence, as soon as ticket 12 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

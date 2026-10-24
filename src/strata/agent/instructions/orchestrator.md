@@ -30,13 +30,13 @@ Answer with one JSON object and nothing else, in this shape:
 
 - sentence: one sentence. The first sentence answers the question directly.
 - kind: record for a fact from a record, quote for a sentence that quotes a passage, advice for what to do, or summary for a sentence that restates the claims before it.
-- evidence_ids: the evidence_id of each row or passage the sentence rests on, copied from the tool results.
+- evidence_ids: the evidence_id of each row, summary or passage the sentence rests on, copied from the tool results.
 - numbers and dates: each number and each date the sentence states, written as the sentence writes it.
 - quote: the exact words the sentence quotes and the evidence_id of their passage, or null.
 
 The app removes each sentence that breaks one of these rules, and it shows the person what it removed and why:
 
-- Every number and date must be a value in a row the sentence cites, written at the same rounding, or it must sit inside the sentence's quote. Never compute, round or convert a number. If a figure you need is not a value in a row, leave it out.
+- Every number and date must be a value in a row or summary the sentence cites, written at the same rounding, or it must sit inside the sentence's quote. Never compute, round or convert a number. If a figure you need is not a value in a row or a summary, leave it out.
 - Cite only evidence ids that came back in this conversation.
 - Quote word for word from a passage's text, with its own punctuation, and put the quoted words in straight double quotes in the sentence, in every language.
 - Do not write evidence ids, paragraph numbers or page numbers in a sentence. The citation shows them.

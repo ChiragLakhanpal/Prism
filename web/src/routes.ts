@@ -5,7 +5,8 @@
 //
 // Ticket 10 adds a project's Procurement tab (/projects/:pid/procurement, which /projects/:pid shows
 // until ticket 21 adds Summary) and Check a plan (/projects/:pid/procurement/:agencyId/:version, or
-// with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 35 adds the
+// with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 12 builds the
+// package workspace at /packages/:id, where :id is the package's STEP reference. Ticket 35 adds the
 // Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId.
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
@@ -40,9 +41,12 @@ export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow:
 
 // Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
 // the answer, by their source registry keys, and the tool that wrote the line, such as
-// find_comparables, which the page turns into words from the copy file.
+// find_comparables, which the page turns into words from the copy file. An empty list is left out,
+// never sent as an empty sources=.
 export function dataReadinessHref(sources: string[], from: string): string {
-  const query = new URLSearchParams({ sources: sources.join(","), from });
+  const query = new URLSearchParams();
+  if (sources.length > 0) query.set("sources", sources.join(","));
+  query.set("from", from);
   return `${DATA_HREF.data}?${query.toString().replaceAll("%2C", ",")}`;
 }
 
@@ -53,7 +57,6 @@ function page(key: PageKey, section?: Section, values: Record<string, string> = 
 const LINKS: Partial<Record<PageKey, (values: Record<string, string>) => string>> = {
   home: () => "/data",
   packages: () => "/data",
-  package: () => "/packages",
   activity: (values) => `/projects/${values.pid}`,
   document: (values) => `/projects/${values.pid}`,
   lessons: () => "/data",

@@ -6,6 +6,7 @@ tests/ground_truth/values.toml, or from hand-made catalogs whose rows each test 
 the way the tool computes them.
 """
 
+import copy
 import datetime as dt
 import json
 from pathlib import Path
@@ -500,7 +501,9 @@ def test_a_share_one_under_the_threshold_is_partial_and_the_threshold_is_one_lin
     path = written(*awards(linked=(89, 100)))
     assert cell(call_on(path, sources="awards"), "awards", "linked")["status"] == "partial"
 
-    values = json.loads(json.dumps(config.load_thresholds().values))
+    # A deep copy, not a JSON round trip: the thresholds file holds TOML dates too, such as
+    # past_range.period_from, which JSON cannot write.
+    values = copy.deepcopy(config.load_thresholds().values)
     values["data_readiness"]["linked_min_share"] = 0.85
     lowered = Thresholds(config.load_thresholds().path, values)
     assert cell(call_on(path, sources="awards", thresholds=lowered), "awards", "linked")["status"] is None

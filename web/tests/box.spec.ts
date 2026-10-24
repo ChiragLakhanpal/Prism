@@ -270,3 +270,130 @@ test("/ focuses the box from anywhere outside a text field, and is not typed", a
   await expect(box(page)).toHaveValue("");
   await expect(box(page)).toHaveAttribute("aria-keyshortcuts", "/");
 });
+
+// Tickets 12 and 14 together: on a package page the chip holds a STEP reference, which is far longer
+// than a P-code. When the chip and a box you can type in do not fit on one line, the chip takes a row
+// of its own above the text; a reference wider than that row breaks after a hyphen inside the chip.
+// The page never scrolls sideways, and what you type stays in view.
+const LONG_REF = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
+
+async function openPackage(page: Page, ref: string, width: number) {
+  await page.setViewportSize({ width, height: 900 });
+  const known = ref === "KE-NWWDA-541055-CW-RFB";
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api/packages/${ref}`]: known ? { body: await recorded("package-ke-nwwda-541055.json") } : { status: 404, body: '{"code":"unknown_package"}' },
+    [`/api/packages/${ref}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+  await page.goto(`/packages/${encodeURIComponent(ref)}`);
+  await expect(page.locator("main h1")).toBeVisible();
+}
+
+const rect = async (page: Page, selector: string) => (await page.locator(selector).boundingBox())!;
+
+for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
+  test(`at every width the scope chip keeps ${ref.length === 22 ? "a STEP reference" : "a 40-character reference"} whole inside the box, and the box stays wide enough to type in`, async ({ page }) => {
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await openPackage(page, ref, width);
+      const chip = page.locator("[data-box-band] [data-scope-chip]");
+      await expect(chip).toContainText(ref);
+
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
+      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+      const inner = await rect(page, "[data-box-band] [data-scope-chip]");
+      expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
+      expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
+      // Room for about ten characters of a question, and for the whole placeholder on a package page.
+      const field = await rect(page, "[data-box-band] input");
+      expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
+      const cut = await page.locator("[data-box-band] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(cut, `${width} px: the placeholder is cut`).toBe(false);
+      // The "/" hint, where a keyboard is assumed, stays at the end of the text field's row.
+      const hint = page.locator("[data-box-band] kbd");
+      if (await hint.isVisible()) {
+        const key = await hint.boundingBox();
+        expect(Math.round(key!.y + key!.height / 2), `${width} px: the / hint`).toBe(Math.round(field.y + field.height / 2));
+      }
+    }
+  });
+}
+
+test("a reference wider than its row breaks after a hyphen inside the chip, and one that fits a line moves there whole", async ({ page }) => {
+  for (const [width, wider] of [[320, true], [390, true], [768, false]] as const) {
+    await openPackage(page, LONG_REF, width);
+    const lines = await page.locator("[data-box-band] [data-scope-chip] .font-mono").evaluate((element) => {
+      const rows = new Map<number, string>();
+      const text = element.firstChild!;
+      for (let i = 0; i < text.textContent!.length; i++) {
+        const range = document.createRange();
+        range.setStart(text, i);
+        range.setEnd(text, i + 1);
+        const top = Math.round(range.getBoundingClientRect().top);
+        rows.set(top, (rows.get(top) ?? "") + range.toString());
+      }
+      return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, line]) => line);
+    });
+    expect(lines.join(""), `${width} px`).toBe(LONG_REF);
+    // At 768 px "Within" comes first, and the reference fits on the chip's next line whole.
+    if (!wider) expect(lines, `${width} px`).toEqual([LONG_REF]);
+    else expect(lines.length, `${width} px: ${lines.join(" | ")}`).toBeGreaterThan(1);
+    // A chip that fills its row sits as far from the box's right edge as from its left.
+    if (wider) {
+      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+      const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+      expect(Math.round(chip.x - outer.x), `${width} px: the chip's left inset`).toBe(5);
+      expect(Math.round(outer.x + outer.width - (chip.x + chip.width)), `${width} px: the chip's right inset`).toBe(5);
+    }
+    for (const [index, line] of lines.entries()) {
+      expect(line.startsWith("-"), `${width} px, line ${index + 1}: ${lines.join(" | ")}`).toBe(false);
+      if (index > 0) expect(lines[index - 1].endsWith("-"), `${width} px: ${lines.join(" | ")}`).toBe(true);
+    }
+  }
+});
+
+test("a press on the empty part of the chip's row puts the cursor in the text field, as a press on the field would", async ({ page }) => {
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 390);
+  const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+  const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+  expect(await page.locator("[data-box-band] form > [data-focus-ring]").evaluate((el) => getComputedStyle(el).cursor)).toBe("text");
+  await page.mouse.click(outer.x + outer.width - 24, chip.y + chip.height / 2);
+  await expect(page.locator("[data-box-band] input")).toBeFocused();
+});
+
+// The whole box shows the text cursor, so a press anywhere in it outside the chip acts as a press on
+// the field: on the "/" hint and on the search icon too. The chip keeps the pointer's own cursor.
+test("a press on the box's / hint or its search icon puts the cursor in the text field, and the chip keeps its own cursor", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page);
+  const input = page.locator("[data-box-band] input");
+  for (const part of ["kbd", "svg"]) {
+    await page.locator("main h1").click();
+    await expect(input, part).not.toBeFocused();
+    const target = page.locator(`[data-box-band] form > [data-focus-ring] ${part}`).first();
+    await expect(target, part).toBeVisible();
+    await target.click();
+    await expect(input, part).toBeFocused();
+  }
+
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
+  expect(await page.locator("[data-box-band] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
+});
+
+test("a P-code's chip and a STEP reference's chip on a wide screen sit on one row with the text, in a 44 px box", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await open(page, "/projects/P130164");
+  const single = async (label: string) => {
+    const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+    const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+    const field = await rect(page, "[data-box-band] input");
+    expect(Math.round(outer.height), label).toBe(44);
+    expect(Math.round(chip.height), label).toBe(32);
+    expect(Math.round(chip.y + chip.height / 2), label).toBe(Math.round(field.y + field.height / 2));
+    expect(Math.round(field.x - (chip.x + chip.width)), `${label}: the gap after the chip`).toBe(8);
+  };
+  await single("P130164 at 320 px");
+
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
+  await single("KE-NWWDA-541055-CW-RFB at 1440 px");
+});

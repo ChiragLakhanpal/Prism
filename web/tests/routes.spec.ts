@@ -44,19 +44,8 @@ export const ROUTES: Route[] = [
       link: DATA_LINK,
     },
   },
-  {
-    path: "/packages/KE-NWWDA-541055-CW-RFB",
-    h1: "Package",
-    tab: "Packages",
-    purpose:
-      "This page shows one package: the past range of comparable packages, a planned date for each step, its risks and its approach options.",
-    empty: {
-      title: "I can't show package KE-NWWDA-541055-CW-RFB on this page yet.",
-      body: "A package appears here after you plan it or check the plan it belongs to.",
-      link: ["Go to Packages", "/packages"],
-    },
-  },
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
+  // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it.
   {
     path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
     h1: "Activity IN-RRSMP-7431-CW-RFB",
@@ -180,14 +169,6 @@ test("IDs from the address render in Roboto Mono", async ({ page }) => {
     '"Roboto Mono"',
     "500",
   ]);
-});
-
-test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
-  for (const width of [390, 768, 1024, 1279]) {
-    await open(page, "/packages/KE-NWWDA-541055-CW-RFB", width);
-    const id = page.locator("[data-empty-state] h2").getByText("KE-NWWDA-541055-CW-RFB");
-    expect(await id.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(1);
-  }
 });
 
 test("a lowercase p in a project ID is read as P, and the address is rewritten in place", async ({ page }) => {

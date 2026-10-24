@@ -49,14 +49,10 @@ export const copy = {
         "Exchanges in Procurement (STEP).",
       link: "Go to Data",
     },
+    // The package workspace has its own words below (the 12 brief); this title names the browser tab.
     package: {
-      title: "Package",
-      purpose:
-        "This page shows one package: the past range of comparable packages, a planned date for each step, its " +
-        "risks and its approach options.",
-      emptyTitle: "I can't show package {id} on this page yet.",
-      emptyBody: "A package appears here after you plan it or check the plan it belongs to.",
-      link: "Go to Packages",
+      title: "Package {id}",
+      purpose: "This page shows how comparable packages went, so you can judge whether this package's plan is realistic.",
     },
     // All projects, the project page and Check a plan have their own words below (the 10 brief):
     // these titles name the browser tab, and the purposes are the pages' own.
@@ -864,6 +860,10 @@ export const copy = {
       existingLink: "Open the draft",
       stopped: "I stopped writing the review notes and saved nothing.",
     },
+    // Each activity's link to its package workspace (the 12 brief). Its accessible name adds the
+    // reference, so a list of links tells the activities apart.
+    pastRangeLink: "See the past range",
+    pastRangeLabel: (ref: string) => `See the past range for ${ref}`,
   },
 
   // Drafts (the 35 brief): the writing page, a draft's page with its bar, its files and the Drafts tab.
@@ -1134,6 +1134,233 @@ export const copy = {
         citedJoin: ", ",
         dataCaveat: "The World Bank does not guarantee the accuracy of the data.",
       },
+    },
+  },
+
+  // The package workspace's frame (the 12 brief): the header, the package's facts in STEP's field
+  // names, and the states of the whole page.
+  packagePage: {
+    breadcrumbPackages: "Packages",
+    facts: {
+      method: "Method",
+      marketApproach: "Market Approach",
+      reviewType: "Review Type",
+      estimated: "Estimated Amount (US$)",
+      processStatus: "Process Status",
+      inPlan: "In the plan",
+    },
+    // The "In the plan" value, a link back to the plan check with this row in view.
+    inPlan: "{agency} plan of {date}",
+    missing: "Not in the plan row",
+    loading: "Loading this package.",
+    error: "I couldn't load this package.",
+    permission: "Your account can't read Strata's tables, so I can't show this package.",
+    notFoundTitle: "I can't find a package with this reference",
+    // {ref} carries its own full stop, so the two move to a new line together.
+    notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in All projects.",
+    notFoundLink: "All projects",
+  },
+
+  // Section 1 of the package workspace, "How long it took": the past range of comparable packages
+  // (the 12 brief). Every number is find_comparables', written by web/src/lib/format.ts; the screen
+  // only counts rows for the plan line's readout. Strings with {slots} are filled with Num elements.
+  pastRange: {
+    eyebrow: "Planning",
+    // Hidden from screen readers, so the heading reads "How long it took".
+    number: "1 ·",
+    heading: "How long it took",
+    loading: "Loading the comparable packages.",
+    error: "I couldn't load the comparable packages for this section.",
+    permission: "Your account can't read Strata's tables, so I can't show the comparable packages.",
+    // The finding, at the plan row's own months.
+    title: {
+      about: "{within} of {total} comparable packages, about {in10} in 10, were signed within the plan's {plan} months.",
+      none: "None of the {total} comparable packages were signed within the plan's {plan} months.",
+      all: "All {total} comparable packages were signed within the plan's {plan} months.",
+      fewerThanOne: "{within} of {total} comparable packages, fewer than 1 in 10, were signed within the plan's {plan} months.",
+      moreThanNine: "{within} of {total} comparable packages, more than 9 in 10, were signed within the plan's {plan} months.",
+      noPlan: "The middle half of the {total} comparable packages took {q25} to {q75} months from notice to signature.",
+      noPlanNoRange: "I found {total} comparable packages, but so many are still open that I can't place their middle half.",
+      abstain: "I'm not giving a range: only {n} comparable packages. Here are all {n}.",
+      abstainOne: "I'm not giving a range: only one comparable package. Here it is.",
+    },
+    subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
+    subtitleDots:
+      "Each dot is 1 in 20 of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
+    summary: {
+      middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
+      // With no plan dates the title already gives the middle half, so the summary starts here.
+      middleOnly: "The middle one took {q50} months.",
+      in10: "8 in 10 were signed within {q80} months.",
+      noIn10: "Fewer than 8 in 10 of these packages have been signed so far, so I can't say when 8 in 10 were signed.",
+      noUpper: "So many of these packages are still open that I can't place the upper edge of the middle half.",
+      openMany: "{open} of the {total} are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
+      openOne: "One of the {total} is still open. I kept it in the range as not signed yet, so the range does not look shorter than it was.",
+      abstain: "I give a range only from {min} or more comparable packages, because a range from fewer can mislead. Each dot is one real package, and the table lists them all.",
+      abstainOpenMany: "{open} of them are still open.",
+      abstainOpenOne: "One of them is still open.",
+    },
+    // The note on what "comparable" meant: the criteria find_comparables used.
+    note: {
+      label: "Note:",
+      same: "I compared packages with the same {fields}.",
+      they: "They {parts}.",
+      field: "{field} ({value})",
+      category: "Category",
+      size: "had signed contracts of US${from} to US${to}",
+      sizeFrom: "had signed contracts of US${from} or more",
+      sizeTo: "had signed contracts of US${to} or less",
+      region: "were in {region}",
+      period: "had notices from {from} to {to}",
+    },
+    // The coverage line's noun and one phrase per reason code find_comparables returns
+    // (config/tools.toml, [tools.find_comparables.result]).
+    coverageNoun: "matching packages",
+    // A phrase that changes with its count is a function of it.
+    reasons: {
+      no_step_reference: () => "{count} lacked the STEP reference that links notice to contract",
+      no_notice: () => "{count} had no specific procurement notice in the records I hold",
+      canceled: (count: number) => (count === 1 ? "{count} was canceled before a contract was signed" : "{count} were canceled before a contract was signed"),
+      signed_before_notice: (count: number) =>
+        count === 1 ? "{count} was signed before the date of its notice" : "{count} were signed before the date of their notice",
+      no_review_type: () => "{count} had no review type in any record",
+      no_market_approach: () => "{count} had no market approach in any record",
+      no_amount: () => "{count} had no signed amount in US dollars",
+    },
+    reasonsEnd: ".",
+    source: "{sources}. Records run through {date}.",
+    sourceUndated: "{sources}.",
+    // The plan control above the chart.
+    control: {
+      label: "Planned months",
+      unit: "months",
+      helper: "The plan row puts the notice on {notice} and the signed contract on {signing}.",
+      helperNoPlan:
+        "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
+      helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
+      invalid: (max: string) => `Type months from 0.5 to ${max}.`,
+      reset: (plan: string) => `Use the plan's ${plan} months`,
+    },
+    // The range chart's words. Numbers arrive written by web/src/lib/format.ts.
+    chart: {
+      lane: "What happened",
+      keySigned: (count: string) => `${count} signed`,
+      keyOpen: (count: string) => `${count} still open`,
+      keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
+      // Open packages are not drawn one by one among quantile dots, so their count is words alone.
+      keyOpenDots: (count: string) => `${count} still open.`,
+      plan: "Plan",
+      readout: (within: string, total: string, months: string) => `${within} of ${total} signed within ${months} months`,
+      // The same readout as two lines, for a chart where one line does not fit beside a plan line in its middle.
+      readoutCount: (within: string, total: string) => `${within} of ${total} signed`,
+      readoutWithin: (months: string) => `within ${months} months`,
+      middle: (q25: string, q75: string, q50: string) => `Middle half ${q25} to ${q75}, middle ${q50}`,
+      in10: (q80: string) => `8 in 10 within ${q80}`,
+      axisLast: (months: string) => `${months} months`,
+      group: (total: string) => `${total} comparable packages, one dot each`,
+      groupDots: (total: string) => `20 dots, each 1 in 20 of the ${total} comparable packages`,
+      groupHelp: "Use the arrow keys to move between packages. Press Escape to hide the details.",
+      dotSigned: (ref: string, country: string, months: string, date: string, index: string, total: string) =>
+        `${ref}, ${country}. Signed after ${months} months, on ${date}. Dot ${index} of ${total}.`,
+      dotOpen: (ref: string, country: string, months: string, index: string, total: string) =>
+        `${ref}, ${country}. Still open after ${months} months. Dot ${index} of ${total}.`,
+      dotQuantile: (k: string, total: string, months: string) =>
+        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. This one is at ${months} months.`,
+      dotQuantileOpen: (k: string, total: string, months: string) =>
+        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
+      tipMonths: (months: string) => `${months} months`,
+      tipPast: (months: string) => `Past ${months} months`,
+      // The country leads, as it follows the reference in the dot's name, so the notice is not read as published there.
+      tipSigned: (signed: string, notice: string, country: string) => `${country}. Signed ${signed}. Its notice was published ${notice}.`,
+      tipOpen: (notice: string, country: string) => `${country}. Still open. Its notice was published ${notice}.`,
+      tipQuantile: (k: string) => `Dot ${k} of 20`,
+      tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
+      tipQuantileOpen: "Too many of these packages are still open to place this dot.",
+      slider: "Planned months",
+      valueText: (months: string, within: string, total: string) =>
+        `${months} months. ${within} of ${total} were signed within ${months} months.`,
+      valueTextPlan: (months: string, within: string, total: string) =>
+        `${months} months, the plan's own figure. ${within} of ${total} were signed within ${months} months.`,
+      announce: (within: string, total: string, months: string) => `${within} of ${total} were signed within ${months} months.`,
+      // The text alternative: the same numbers the chart draws.
+      alt: (total: string, axisMax: string, signed: string, open: string) =>
+        `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed and ${open} still open.`,
+      altAllSigned: (total: string, axisMax: string, signed: string) =>
+        `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed.`,
+      altDots: (total: string, axisMax: string) =>
+        `Dot chart of 20 dots, each 1 in 20 of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
+      altRange: (q25: string, q75: string, q50: string, q80: string) =>
+        `The middle half took ${q25} to ${q75} months, the middle one took ${q50}, and 8 in 10 were signed within ${q80}.`,
+      altMiddle: (q25: string, q75: string, q50: string) => `The middle half took ${q25} to ${q75} months, and the middle one took ${q50}.`,
+      altNoIn10: "Fewer than 8 in 10 have been signed so far.",
+      altNoUpper: "Too many are still open to place the upper edge of the middle half.",
+      altAbstain: "I'm not giving a range for so few.",
+      altPlan: (months: string, within: string, total: string) => `A line marks ${months} months, and ${within} of ${total} were signed within it.`,
+      altCanceledLeftOut: (count: number, text: string) =>
+        count === 1
+          ? "I left out the one canceled package, because it was never signed and is not still open."
+          : `I left out the ${text} canceled packages, because a canceled package was never signed and is not still open.`,
+      altCanceledCounted: (count: number, text: string) =>
+        count === 1 ? "I counted the one canceled package as still open." : `I counted the ${text} canceled packages as still open.`,
+    },
+    // What each checkable number counts, in its tooltip.
+    explain: {
+      counts: (plan: string, total: string, open: string) =>
+        `Packages signed in ${plan} months or less, out of all ${total}, including the ${open} still open. Select to see the rows.`,
+      quantiles: (total: string, open: string) =>
+        `Worked out from all ${total} comparable packages, with the ${open} still open counted as not signed yet. This is the Kaplan-Meier method. Select to see the rows.`,
+      plan: (agency: string, date: string) => `From the planned dates in the ${agency} plan of ${date}.`,
+      coverage: "Counted from the records behind this section. Data readiness lists them by source.",
+    },
+    // The table twin under the chart.
+    table: {
+      show: "Show the table",
+      hide: "Hide the table",
+      caption: (total: string) => `All ${total} comparable packages, shortest first.`,
+      captionOne: "The one comparable package.",
+      noun: "packages",
+      nounOne: "package",
+      columns: {
+        package: "Package (STEP reference)",
+        country: "Country",
+        notice: "Notice published",
+        signed: "Contract signed",
+        months: "Months",
+        monthsNote: "From notice to signature, or so far if still open",
+        // Cards have no column heads, so the Months definition ends the count line's row once.
+        monthsCards: "Months run from notice to signature, or so far if still open.",
+        within: (months: string) => `Signed within ${months} months`,
+      },
+      stillOpen: "Still open",
+      yes: "Yes",
+      no: "No",
+      notYet: "Not yet",
+      previous: "Previous 20",
+      next: "Next 20",
+    },
+    // The states with no chart.
+    empty: {
+      noneTitle: "No past package matched this one, so I have nothing to compare it with.",
+      noneLooked: "I looked for packages with the same {fields}.",
+      noneHadTo: "They had to {parts}.",
+      noneSize: "have signed contracts of US${from} to US${to}",
+      noneSizeFrom: "have signed contracts of US${from} or more",
+      noneSizeTo: "have signed contracts of US${to} or less",
+      noneRegion: "be in {region}",
+      nonePeriod: "have notices from {from} to {to}",
+      noneEnd: "Data readiness shows which records I hold for this region and period.",
+      noneLink: "Open Data readiness",
+      unmeasuredTitle: (matched: number) =>
+        matched === 1
+          ? "{matched} past package matched this one, but I can't measure how long it took."
+          : "{matched} past packages matched this one, but I can't measure how long any of them took.",
+      notMeasurableTitle: "I can't measure procurement cycle time for this package.",
+      // STEP's value in quote marks, so the field's name and its value don't run together.
+      notMeasurableBody:
+        'I measure it from the specific procurement notice to the signed contract. Packages with the {field} "{value}" had no public notice to start from.',
+      notMeasurableLink: "Back to the plan check",
+      // Packages matched, but none could be measured: what they lacked, with no "Based on 0 of".
+      unmeasuredOf: "Of the {matched}, {gaps}.",
     },
   },
 
