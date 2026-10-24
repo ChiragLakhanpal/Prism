@@ -622,14 +622,18 @@ export const copy = {
         measuredOn: "Measured on",
         headlineColumn: "Headline",
         awardRows: "Contract-award rows per fiscal year, by dataset",
-        awardRowsAbout: "Rows per fiscal year. A missing bar means no rows.",
+        awardRowsAbout:
+          "Rows per fiscal year, counted as the Coverage column in Strata counts them: one row for each " +
+          "joint-venture member. A missing bar means no rows.",
         fiscalYear: "Fiscal year",
         rows: "Rows",
         dataset: "Dataset",
         sourceRows: "Rows per fiscal year, by source",
         sourceRowsAbout:
-          "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the IEG " +
-          "ratings, with exact counts. It is the table for the chart of contract-award rows.",
+          "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the " +
+          "Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its " +
+          "Coverage column in Strata counts them, so its years add up to that number on the same date. It is the " +
+          "table for the chart of contract-award rows.",
         source: "Source",
         links: "Share of rows that link, by link",
         // {fewest} is config/thresholds.toml's data_readiness.fewest_for_a_percentage, filled in when
@@ -644,12 +648,16 @@ export const copy = {
           "Each reading route with {fewest} Procurement Plan pages or more, as the share of its pages it read " +
           "without losing their table rows.",
         route: "Route",
-        freshness: "Freshness and link counts, by source",
-        freshnessAbout: "Each source's latest data, how often it updates, how late it is, its link counts and its status.",
+        freshness: "Freshness, links and pages read well, by source",
+        freshnessAbout:
+          "Each source's latest data, how often it updates, how late it is, its link counts and its status. The " +
+          "last rows give the Procurement Plan pages each reading route read well. It is the table for the two " +
+          "charts of shares.",
         latestData: "Latest data",
         updates: "Updates",
         daysLate: "Days late",
         linked: "Linked",
+        readWell: "Read well",
         status: "Status",
         fixes: "Fixes ranked by what they would unlock",
         fixesAbout: "Ranked by how many projects each fix would add evidence to, as on the Data readiness page.",
@@ -657,15 +665,31 @@ export const copy = {
         fix: "Fix",
         projects: "Projects it would add evidence to",
         notes: "Source: Strata's data readiness measures in strata.ops.",
-        // The names the dashboard's queries give their rows, bound as parameters of each query.
-        labels: {
-          awards_label: "Awards since FY2020",
-          fy2001_label: "Awards, FY2001–16",
-          notices_awards_label: "Award notices, FY2017–19",
-          notices_label: "Procurement notices",
-          projects_label: "Projects",
-          ieg_label: "IEG ratings",
-        },
+        // What each dataset is, by its name in src/strata/dashboard, as AI/BI shows it in its data panel.
+        datasets: {
+          readiness_headline: "The day's headline",
+          award_rows_by_year: "Contract-award rows per fiscal year",
+          rows_by_year: "Rows per fiscal year, by source",
+          readiness_links: "Shares of rows that link",
+          readiness_routes: "Shares of pages read well",
+          readiness_sources: "Freshness, links and pages read well",
+          readiness_fixes: "Fixes",
+        } as Record<string, string>,
+        // The rows of the chart and the table of rows per fiscal year, in their order: each source by
+        // its key in config/sources.toml, and a known gap by its id. The snapshot counts each source's
+        // rows as its Coverage cell counts them (strata.dashboard.snapshot).
+        years: {
+          awards: "Awards since FY2020",
+          awards_fy2001_2016: "Awards, FY2001–16",
+          fy2017_2019: "Award notices, FY2017–19",
+          notices: "Procurement notices",
+          projects: "Projects",
+          ieg_ratings: "IEG ratings",
+        } as Record<string, string>,
+        // A fiscal year as the dashboard writes it, with its last two digits, such as FY20, and the
+        // column for rows with none.
+        fiscalYearLabel: "FY{year}",
+        noYear: "No fiscal year",
         // The snapshot's row names: a source with what its rows span, a known gap, and a link.
         sourceLabel: "{label}, {covers}",
         gapLabel: "{label}, FY{fromYear}–{toYear}",

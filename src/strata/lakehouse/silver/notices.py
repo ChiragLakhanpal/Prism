@@ -31,6 +31,8 @@ TABLES = {
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("notice_id",)
+# Each record's fiscal year, by which the dashboard splits coverage_rows (strata.lakehouse.readiness).
+FISCAL_YEAR = "fiscal_year"
 
 
 BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)

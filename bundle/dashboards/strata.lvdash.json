@@ -38,19 +38,18 @@
       "name": "award_rows_by_year",
       "displayName": "Contract-award rows per fiscal year",
       "queryLines": [
-        "SELECT\n",
-        "  fiscal_year,\n",
-        "  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,\n",
-        "  CASE source\n",
-        "    WHEN 'awards' THEN :awards_label\n",
-        "    WHEN 'awards_fy2001_2016' THEN :fy2001_label\n",
-        "    ELSE :notices_awards_label\n",
-        "  END AS dataset,\n",
-        "  count(*) AS award_rows\n",
-        "FROM strata.gold.contract\n",
-        "WHERE public_from <= :measure_date AND fiscal_year IS NOT NULL\n",
-        "GROUP BY fiscal_year, source\n",
-        "ORDER BY fiscal_year, dataset\n"
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
+        ")\n",
+        "SELECT s.fiscal_year, s.text AS fiscal_year_label, s.label AS dataset, s.count AS award_rows\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part = 'award_year'\n",
+        "ORDER BY s.fiscal_year, s.position\n"
       ],
       "parameters": [
         {
@@ -63,51 +62,6 @@
               "values": [
                 {
                   "value": "now/d"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "awards_label",
-          "keyword": "awards_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Awards since FY2020"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "fy2001_label",
-          "keyword": "fy2001_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Awards, FY2001–16"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "notices_awards_label",
-          "keyword": "notices_awards_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Award notices, FY2017–19"
                 }
               ]
             }
@@ -119,32 +73,18 @@
       "name": "rows_by_year",
       "displayName": "Rows per fiscal year, by source",
       "queryLines": [
-        "WITH counted AS (\n",
-        "  SELECT\n",
-        "    CASE source\n",
-        "      WHEN 'awards' THEN :awards_label\n",
-        "      WHEN 'awards_fy2001_2016' THEN :fy2001_label\n",
-        "      ELSE :notices_awards_label\n",
-        "    END AS source,\n",
-        "    fiscal_year\n",
-        "  FROM strata.gold.contract\n",
-        "  WHERE public_from <= :measure_date\n",
-        "  UNION ALL\n",
-        "  SELECT :notices_label, fiscal_year FROM strata.silver.notices WHERE public_from <= :measure_date\n",
-        "  UNION ALL\n",
-        "  SELECT :projects_label, approval_fiscal_year FROM strata.gold.project WHERE public_from <= :measure_date\n",
-        "  UNION ALL\n",
-        "  SELECT :ieg_label, evaluation_fy FROM strata.gold.ieg_rating WHERE public_from <= :measure_date\n",
+        "WITH chosen AS (\n",
+        "  SELECT measured_on, written_at\n",
+        "  FROM strata.ops.readiness_snapshot\n",
+        "  WHERE measured_on <= :measure_date\n",
+        "  ORDER BY measured_on DESC, written_at DESC\n",
+        "  LIMIT 1\n",
         ")\n",
-        "SELECT\n",
-        "  source,\n",
-        "  fiscal_year,\n",
-        "  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,\n",
-        "  count(*) AS source_rows\n",
-        "FROM counted\n",
-        "WHERE fiscal_year IS NOT NULL\n",
-        "GROUP BY source, fiscal_year\n",
-        "ORDER BY source, fiscal_year\n"
+        "SELECT s.position, s.label AS source, s.fiscal_year, s.text AS fiscal_year_label, s.count AS source_rows\n",
+        "FROM strata.ops.readiness_snapshot AS s\n",
+        "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
+        "WHERE s.part IN ('award_year', 'source_year')\n",
+        "ORDER BY s.position, s.fiscal_year\n"
       ],
       "parameters": [
         {
@@ -157,96 +97,6 @@
               "values": [
                 {
                   "value": "now/d"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "awards_label",
-          "keyword": "awards_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Awards since FY2020"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "fy2001_label",
-          "keyword": "fy2001_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Awards, FY2001–16"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "notices_awards_label",
-          "keyword": "notices_awards_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Award notices, FY2017–19"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "notices_label",
-          "keyword": "notices_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Procurement notices"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "projects_label",
-          "keyword": "projects_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "Projects"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "displayName": "ieg_label",
-          "keyword": "ieg_label",
-          "dataType": "STRING",
-          "defaultSelection": {
-            "values": {
-              "dataType": "STRING",
-              "values": [
-                {
-                  "value": "IEG ratings"
                 }
               ]
             }
@@ -326,7 +176,7 @@
     },
     {
       "name": "readiness_sources",
-      "displayName": "Freshness and link counts",
+      "displayName": "Freshness, links and pages read well",
       "queryLines": [
         "WITH chosen AS (\n",
         "  SELECT measured_on, written_at\n",
@@ -342,11 +192,12 @@
         "  s.updates,\n",
         "  s.days_late,\n",
         "  CASE WHEN s.part = 'source' THEN s.text END AS linked,\n",
+        "  CASE WHEN s.part = 'route' THEN s.text END AS read_well,\n",
         "  s.status\n",
         "FROM strata.ops.readiness_snapshot AS s\n",
         "JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at\n",
-        "WHERE s.part IN ('source', 'gap')\n",
-        "ORDER BY s.position\n"
+        "WHERE s.part IN ('source', 'gap', 'route')\n",
+        "ORDER BY CASE WHEN s.part = 'route' THEN 1 ELSE 0 END, s.position\n"
       ],
       "parameters": [
         {
@@ -712,7 +563,7 @@
                 "showTitle": true,
                 "title": "Contract-award rows per fiscal year, by dataset",
                 "showDescription": true,
-                "description": "Rows per fiscal year. A missing bar means no rows."
+                "description": "Rows per fiscal year, counted as the Coverage column in Strata counts them: one row for each joint-venture member. A missing bar means no rows."
               },
               "mark": {
                 "colors": [
@@ -787,7 +638,7 @@
                 "showTitle": true,
                 "title": "Rows per fiscal year, by source",
                 "showDescription": true,
-                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the IEG ratings, with exact counts. It is the table for the chart of contract-award rows."
+                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. It is the table for the chart of contract-award rows."
               }
             }
           },
@@ -1020,6 +871,10 @@
                       "expression": "`linked`"
                     },
                     {
+                      "name": "read_well",
+                      "expression": "`read_well`"
+                    },
+                    {
                       "name": "status",
                       "expression": "`status`"
                     }
@@ -1070,19 +925,26 @@
                     "order": 4
                   },
                   {
+                    "fieldName": "read_well",
+                    "title": "Read well",
+                    "type": "string",
+                    "displayAs": "string",
+                    "order": 5
+                  },
+                  {
                     "fieldName": "status",
                     "title": "Status",
                     "type": "string",
                     "displayAs": "string",
-                    "order": 5
+                    "order": 6
                   }
                 ]
               },
               "frame": {
                 "showTitle": true,
-                "title": "Freshness and link counts, by source",
+                "title": "Freshness, links and pages read well, by source",
                 "showDescription": true,
-                "description": "Each source's latest data, how often it updates, how late it is, its link counts and its status."
+                "description": "Each source's latest data, how often it updates, how late it is, its link counts and its status. The last rows give the Procurement Plan pages each reading route read well. It is the table for the two charts of shares."
               }
             }
           },

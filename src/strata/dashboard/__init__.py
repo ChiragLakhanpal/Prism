@@ -6,11 +6,11 @@ bundle's one deploy command (ops/bundle/deploy.py) deploys it with the catalog a
 checks that the file says what this module says, and runs every dataset's query on the fixture.
 
 Ticket 16 builds the first page, Data readiness (the 16 design brief, section 10). Its queries read
-only strata.ops and strata.gold: the day's headline, statuses and fixes come from
-strata.ops.readiness_snapshot, which the measure run writes with the same function as the app's page
-(strata.dashboard.snapshot), and the rows per fiscal year come from gold. Every dataset takes the
-measure_date parameter, so one date filter sets the whole page. The words are copy.dataReadiness.server
-.dashboard in web/src/copy.ts, which the copy lint checks.
+only strata.ops.readiness_snapshot, which the measure run writes with the same function as the app's
+page (strata.dashboard.snapshot): the day's headline, statuses and fixes, and each charted source's
+rows per fiscal year, counted as its Coverage cell counts them. Every dataset takes the measure_date
+parameter, so one date filter sets the whole page. The words are copy.dataReadiness.server.dashboard
+in web/src/copy.ts, which the copy lint checks.
 
 Write the file again after changing this module or the words:
 
@@ -20,11 +20,11 @@ Write the file again after changing this module or the words:
 from __future__ import annotations
 
 import json
-import re
 from importlib import resources
 from pathlib import Path
 
 from strata.config import load_thresholds
+from strata.dashboard.snapshot import AWARD_ROWS
 from strata.tools.data_readiness_for import words
 
 FILE = Path(__file__).resolve().parents[3] / "bundle" / "dashboards" / "strata.lvdash.json"
@@ -33,20 +33,10 @@ PARAMETER = "measure_date"
 # and cat9, because bars are essential marks and those four fall below 3:1 on white.
 COLORS = ("#106ca1", "#b65f0c", "#664ab6", "#208383", "#f3578e", "#081079", "#0c7c68", "#aa0000", "#767712")
 SINGLE = COLORS[0]  # a single-series chart separates nothing by color
-# The parameters that name tile 4's datasets, in the order their colors are given. Their values are
-# copy.dataReadiness.server.dashboard.labels.
-AWARD_LABELS = ("awards_label", "fy2001_label", "notices_awards_label")
-LABEL = re.compile(r":(\w+_label)\b")
-# Each dataset: its name, the file of its query in sql/, and what it is.
-DATASETS = (
-    ("readiness_headline", "The day's headline"),
-    ("award_rows_by_year", "Contract-award rows per fiscal year"),
-    ("rows_by_year", "Rows per fiscal year, by source"),
-    ("readiness_links", "Shares of rows that link"),
-    ("readiness_routes", "Shares of pages read well"),
-    ("readiness_sources", "Freshness and link counts"),
-    ("readiness_fixes", "Fixes"),
-)
+# Each dataset by name: the file of its query in sql/. What each is, the name AI/BI shows in its data
+# panel, is copy.dataReadiness.server.dashboard.datasets.
+DATASETS = ("readiness_headline", "award_rows_by_year", "rows_by_year", "readiness_links", "readiness_routes",
+            "readiness_sources", "readiness_fixes")
 
 
 def _query(name: str) -> str:
@@ -58,15 +48,14 @@ def query(name: str) -> str:
     return "\n".join(line for line in _query(name).splitlines() if not line.lstrip().startswith("--")).strip()
 
 
-def labels(name: str) -> dict[str, str]:
-    """The row names a dataset's query takes as parameters, from the copy file."""
-    given = words()["dashboard"]["labels"]
-    return {label: given[label] for label in dict.fromkeys(LABEL.findall(query(name)))}
+def year_labels() -> dict[str, str]:
+    """The rows of tiles 4 and 5, by source key or known gap id, in order, from the copy file."""
+    return dict(words()["dashboard"]["years"])
 
 
 def award_datasets() -> tuple[str, ...]:
     """Tile 4's datasets by name, in the order their colors are given."""
-    return tuple(words()["dashboard"]["labels"][label] for label in AWARD_LABELS)
+    return tuple(year_labels()[key] for key in AWARD_ROWS)
 
 
 def _fewest(text: str) -> str:
@@ -74,18 +63,14 @@ def _fewest(text: str) -> str:
     return text.replace("{fewest}", str(load_thresholds().value("data_readiness.fewest_for_a_percentage")))
 
 
-def _dataset(name: str, about: str) -> dict:
+def _dataset(name: str) -> dict:
     return {
         "name": name,
-        "displayName": about,
+        "displayName": words()["dashboard"]["datasets"][name],
         "queryLines": [line + "\n" for line in query(name).splitlines()],
-        # The page starts at today: AI/BI writes a dynamic date as "now", rounded to the day. Row
-        # names are fixed text parameters, so the words stay in the copy file.
+        # The page starts at today: AI/BI writes a dynamic date as "now", rounded to the day.
         "parameters": [{"displayName": PARAMETER, "keyword": PARAMETER, "dataType": "DATE",
-                        "defaultSelection": {"values": {"dataType": "DATE", "values": [{"value": "now/d"}]}}},
-                       *({"displayName": label, "keyword": label, "dataType": "STRING",
-                          "defaultSelection": {"values": {"dataType": "STRING", "values": [{"value": value}]}}}
-                         for label, value in labels(name).items())],
+                        "defaultSelection": {"values": {"dataType": "DATE", "values": [{"value": "now/d"}]}}}],
     }
 
 
@@ -143,14 +128,14 @@ def _bars(name: str, dataset: str, category: tuple[str, str], value: tuple[str, 
         encodings["extra"] = [{"fieldName": field} for field in tooltip]
     fields = [category[0], value[0], *([color[0]] if color else []), *tooltip]
     spec = {"version": 3, "widgetType": "bar", "encodings": encodings, "frame": _frame(title, about),
-            "mark": {"colors": [SINGLE] if not color else list(COLORS[:len(AWARD_LABELS)])}}
+            "mark": {"colors": [SINGLE] if not color else list(COLORS[:len(AWARD_ROWS)])}}
     return {"widget": {"name": name, "queries": _main(dataset, *fields), "spec": spec}, "position": position}
 
 
 def _date_filter(name: str, title: str, about: str, position: dict) -> dict:
     """One date for the whole page: the measure_date parameter of every dataset."""
     queries = [{"name": f"parameter_{dataset}", "query": {"datasetName": dataset, "parameters": [
-        {"name": PARAMETER, "keyword": PARAMETER}], "disaggregated": False}} for dataset, _ in DATASETS]
+        {"name": PARAMETER, "keyword": PARAMETER}], "disaggregated": False}} for dataset in DATASETS]
     return {"widget": {"name": name, "queries": queries, "spec": {
         "version": 2, "widgetType": "filter-date-picker",
         "encodings": {"fields": [{"parameterName": PARAMETER, "queryName": entry["name"]} for entry in queries]},
@@ -186,7 +171,8 @@ def data_readiness_page() -> dict:
         _table("freshness", "readiness_sources", [
             ("source", say["source"], "string"), ("latest_data", say["latestData"], "date"),
             ("updates", say["updates"], "string"), ("days_late", say["daysLate"], "integer"),
-            ("linked", say["linked"], "string"), ("status", say["status"], "string")],
+            ("linked", say["linked"], "string"), ("read_well", say["readWell"], "string"),
+            ("status", say["status"], "string")],
             say["freshness"], say["freshnessAbout"], _at(0, 23, 6, 7)),
         _table("fixes", "readiness_fixes", [("rank", say["rank"], "integer"), ("fix", say["fix"], "string"),
                                             ("projects", say["projects"], "integer")],
@@ -197,7 +183,7 @@ def data_readiness_page() -> dict:
 
 def dashboard() -> dict:
     """The whole dashboard, as an AI/BI dashboard file holds it."""
-    return {"datasets": [_dataset(name, about) for name, about in DATASETS], "pages": [data_readiness_page()]}
+    return {"datasets": [_dataset(name) for name in DATASETS], "pages": [data_readiness_page()]}
 
 
 def written() -> str:

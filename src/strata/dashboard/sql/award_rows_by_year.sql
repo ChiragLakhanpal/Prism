@@ -1,17 +1,16 @@
--- Tile 4: contract-award rows per fiscal year, by the dataset they came from, as public on the
--- measure date (ADR 0002). Fiscal 2017 to 2019 come from award notices, which neither awards
--- dataset covers. A year with no rows has no bar. The datasets' names are parameters whose values
--- are copy.dataReadiness.server.dashboard.labels in web/src/copy.ts (strata.dashboard binds them).
-SELECT
-  fiscal_year,
-  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,
-  CASE source
-    WHEN 'awards' THEN :awards_label
-    WHEN 'awards_fy2001_2016' THEN :fy2001_label
-    ELSE :notices_awards_label
-  END AS dataset,
-  count(*) AS award_rows
-FROM strata.gold.contract
-WHERE public_from <= :measure_date AND fiscal_year IS NOT NULL
-GROUP BY fiscal_year, source
-ORDER BY fiscal_year, dataset
+-- Tile 4: contract-award rows per fiscal year, by the dataset they came from, from the newest snapshot
+-- on or before the measure date. Each awards dataset's rows are counted as its Coverage cell in the
+-- app counts them, so its years add up to that number. Fiscal 2017 to 2019 come from award notices,
+-- which neither awards dataset covers. A year with no rows has no bar.
+WITH chosen AS (
+  SELECT measured_on, written_at
+  FROM strata.ops.readiness_snapshot
+  WHERE measured_on <= :measure_date
+  ORDER BY measured_on DESC, written_at DESC
+  LIMIT 1
+)
+SELECT s.fiscal_year, s.text AS fiscal_year_label, s.label AS dataset, s.count AS award_rows
+FROM strata.ops.readiness_snapshot AS s
+JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at
+WHERE s.part = 'award_year'
+ORDER BY s.fiscal_year, s.position

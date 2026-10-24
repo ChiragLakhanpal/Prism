@@ -1,29 +1,16 @@
--- Tile 5: every source's rows per fiscal year, with exact counts, as public on the measure date:
--- the table beside tile 4's chart, and the coverage of the sources that are not awards. The sources'
--- names are parameters whose values are copy.dataReadiness.server.dashboard.labels.
-WITH counted AS (
-  SELECT
-    CASE source
-      WHEN 'awards' THEN :awards_label
-      WHEN 'awards_fy2001_2016' THEN :fy2001_label
-      ELSE :notices_awards_label
-    END AS source,
-    fiscal_year
-  FROM strata.gold.contract
-  WHERE public_from <= :measure_date
-  UNION ALL
-  SELECT :notices_label, fiscal_year FROM strata.silver.notices WHERE public_from <= :measure_date
-  UNION ALL
-  SELECT :projects_label, approval_fiscal_year FROM strata.gold.project WHERE public_from <= :measure_date
-  UNION ALL
-  SELECT :ieg_label, evaluation_fy FROM strata.gold.ieg_rating WHERE public_from <= :measure_date
+-- Tile 5: every charted source's rows per fiscal year, with exact counts, from the newest snapshot on
+-- or before the measure date: the table beside tile 4's chart, and the coverage of the sources that
+-- are not awards. Each source's rows are counted as its Coverage cell in the app counts them, so its
+-- years add up to that number on the same date.
+WITH chosen AS (
+  SELECT measured_on, written_at
+  FROM strata.ops.readiness_snapshot
+  WHERE measured_on <= :measure_date
+  ORDER BY measured_on DESC, written_at DESC
+  LIMIT 1
 )
-SELECT
-  source,
-  fiscal_year,
-  concat('FY', right(CAST(fiscal_year AS STRING), 2)) AS fiscal_year_label,
-  count(*) AS source_rows
-FROM counted
-WHERE fiscal_year IS NOT NULL
-GROUP BY source, fiscal_year
-ORDER BY source, fiscal_year
+SELECT s.position, s.label AS source, s.fiscal_year, s.text AS fiscal_year_label, s.count AS source_rows
+FROM strata.ops.readiness_snapshot AS s
+JOIN chosen AS c ON c.measured_on = s.measured_on AND c.written_at = s.written_at
+WHERE s.part IN ('award_year', 'source_year')
+ORDER BY s.position, s.fiscal_year

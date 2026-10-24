@@ -22,6 +22,8 @@ TABLES = {
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("project_id", "evaluation_type", "evaluation_fiscal_year")
+# Each record's fiscal year, by which the dashboard splits coverage_rows (strata.lakehouse.readiness).
+FISCAL_YEAR = "evaluation_fiscal_year"
 
 
 def _year(value) -> int | None:

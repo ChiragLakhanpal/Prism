@@ -2,9 +2,10 @@
 
 The dashboard is defined in code (src/strata/dashboard, the spec's tenth single place) and deployed
 with the bundle by one command. Its numbers come from the same measures as the app: the measure run
-writes the page data_readiness_for builds into strata.ops.readiness_snapshot, and the dashboard's
-own queries read that table and strata.gold. Here each query runs on the fixture database on the
-day the fixture was measured, and its rows are compared with the tool's answer for that day.
+writes the page data_readiness_for builds into strata.ops.readiness_snapshot, with each charted
+source's rows per fiscal year counted as its Coverage cell counts them, and the dashboard's own
+queries read only that table. Here each query runs on the fixture database on the day the fixture
+was measured, and its rows are compared with the tool's answer for that day.
 """
 
 import datetime as dt
@@ -108,7 +109,7 @@ def lvdash() -> dict:
 
 
 def dataset_rows(engine, name, day=DAY):
-    result = engine.run(dashboard.query(name), {dashboard.PARAMETER: day, **dashboard.labels(name)})
+    result = engine.run(dashboard.query(name), {dashboard.PARAMETER: day})
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
@@ -151,12 +152,9 @@ def test_one_date_filter_sets_every_dataset_and_starts_at_today():
     assert {query["query"]["datasetName"] for query in date["widget"]["queries"]} == {
         dataset["name"] for dataset in board["datasets"]}
     for dataset in board["datasets"]:
-        date, *names = dataset["parameters"]
+        [date] = dataset["parameters"]
         assert (date["keyword"], date["dataType"]) == ("measure_date", "DATE")
         assert ":measure_date" in "".join(dataset["queryLines"])
-        # Any other parameter is a row name, fixed to its words in the copy file.
-        assert {name["keyword"]: name["defaultSelection"]["values"]["values"][0]["value"] for name in names} == (
-            dashboard.labels(dataset["name"]))
 
 
 def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_variants_for_essential_marks():
@@ -178,7 +176,7 @@ def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_va
 def test_every_dataset_runs_on_the_fixture_on_the_day_it_was_measured(engine):
     """The routes chart charts a route only from the thresholds file's fewest rows for a percentage
     (DESIGN.md section 7, rule 15); the fixture's routes read 22 and 15 pages, so it has no bar."""
-    for name, _ in dashboard.DATASETS:
+    for name in dashboard.DATASETS:
         rows = dataset_rows(engine, name)
         assert rows if name != "readiness_routes" else rows == [], name
 
@@ -209,18 +207,55 @@ def test_the_dashboard_s_headline_fixes_and_link_shares_are_the_app_s_for_the_sa
     assert shares["Contract awards: contracts carry a STEP reference"] == 88  # 528 of 603, as the app shows
 
 
-def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_contracts(engine):
-    """values.toml counts Kenya's 603 contracts from the recorded award files; the fixture records
-    awards since fiscal 2020 for Kenya only."""
+def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_award_rows(engine):
+    """values.toml counts Kenya's 632 award rows from the recorded award files (one per joint-venture
+    member, as the Coverage column counts them); the fixture records awards since fiscal 2020 for
+    Kenya only. Review r3 B1: the tile once counted gold's 603 contracts."""
     import tomllib
 
     kenya = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["counts"]["kenya"]
     rows = dataset_rows(engine, "award_rows_by_year")
+    since_2020 = dashboard.year_labels()["awards"]
 
-    assert sum(row["award_rows"] for row in rows if row["dataset"] == "Awards since FY2020") == kenya["contracts"]
-    assert {row["dataset"] for row in rows} <= set(dashboard.award_datasets())
+    assert sum(row["award_rows"] for row in rows if row["dataset"] == since_2020) == kenya["award_rows"]
+    assert {row["dataset"] for row in rows} == set(dashboard.award_datasets())
     assert all(re.fullmatch(r"FY\d\d", row["fiscal_year_label"]) for row in rows)
+
+
+def coverage_numbers(page) -> dict[str, int]:
+    """Each source's Coverage number as the app shows it, by source key."""
+    out = {}
+    for row in page["sources"]:
+        cell = row["cells"]["coverage"] if row["type"] == "measured" else {}
+        if cell.get("row") is not None:
+            out.setdefault(row["source_key"], page["rows"][cell["row"]]["count"])
+    return out
+
+
+def test_each_source_s_rows_per_fiscal_year_add_up_to_its_coverage_number_in_the_app(engine, page):
+    """Review r3 B1: the dashboard says its tiles are the app's measures, so tiles 4 and 5 count each
+    source's rows as its Coverage cell counts them, and a source's years add up to that number on the
+    same date. The award notices for fiscal 2017 to 2019 are a Gap row in the app, with no count."""
+    labels = dashboard.year_labels()
+    totals: dict[str, int] = {}
+    for row in dataset_rows(engine, "rows_by_year"):
+        totals[row["source"]] = totals.get(row["source"], 0) + row["source_rows"]
+    coverage = coverage_numbers(page)
+
+    compared = {key: totals[label] for key, label in labels.items() if key in coverage}
+    assert compared == {key: coverage[key] for key in compared}
+    assert compared == {"awards": 632, "awards_fy2001_2016": 62, "ieg_ratings": 1, "notices": 418, "projects": 93}
+    assert set(totals) == set(labels.values())
 
 
 def test_a_date_before_the_first_snapshot_shows_no_headline(engine):
     assert dataset_rows(engine, "readiness_headline", DAY - dt.timedelta(days=1)) == []
+
+
+def test_the_table_of_freshness_and_links_keeps_the_pages_each_route_read_well(engine):
+    """Design r3 N9: tile 7 charts a route only from enough pages for a percentage, so tile 8, its
+    table, lists every route's counts, as the app shows them."""
+    rows = dataset_rows(engine, "readiness_sources")
+
+    assert {row["source"]: row["read_well"] for row in rows if row["read_well"]} == {
+        "Published text (Route A)": "22 of 22", "Layout parser (Route B)": "15 of 15"}
