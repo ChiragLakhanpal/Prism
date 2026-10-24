@@ -712,14 +712,14 @@ export const copy = {
         title: "First listing confirmed",
         definition:
           "How many activity entries in the latest plan versions I could trace back to the plan version that first " +
-          "listed them, where I also read that version's table in STEP's format. I confirm a first listing only " +
-          "when I have read every older or undated plan version in the project's document list.",
+          "listed them, and then read in that version's table. I confirm a first listing only when I have read " +
+          "every older or undated plan version in the project's document list.",
       },
       projects_with_contracts_lacking_step_reference: {
         title: "Projects with contracts that lack a STEP reference",
         definition:
           "How many projects have at least one contract with no STEP reference, out of every project with a " +
-          "contract I hold from this source.",
+          "contract in the Contract awards source.",
       },
       gap_years_contracts_in_local_currency: {
         title: "Award-notice contracts in local currency",
