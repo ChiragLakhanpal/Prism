@@ -814,6 +814,8 @@ The merger parked this step on October 24, 2026, after merge commit da1ab20. All
 
 Run it after these steps. Ticket 07's step 1 fills the contracts and notices. Ticket 17's step 1 fills the IEG ratings dataset. Ticket 18's step 2 reads the documents into passages and fills `strata.silver.isr_ratings`. Then deploy again from da1ab20 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`. The deploy on October 24 came before this merge, and this merge adds four tables: `strata.bronze.batch_answers`, `strata.gold.assertion`, `strata.gold.disagreement` and `strata.ops.assertion_rejections`. The deploy must list those four as new, and it changes no existing table.
 
+**Deploy part ran on October 24, 2026 (orchestrator):** ticket 29's step 1 deploy listed the four tables as new and changed no existing table. The `batch_live.py` run itself stays parked on decision 2 (gpt-5.4-nano is Global Standard, not Global Batch).
+
 The batch role's deployment is gpt-5.4-nano (`config/models.toml`, `[roles.batch]`). Day-one test 8 found it deployed as GlobalStandard, and Azure's Batch API takes only a Global Batch (or Data Zone Batch) deployment. Until decision 2 in `docs/STATUS.md` is answered, expect this step to stop with exit 2 and the error Azure gives. Do not change `config/models.toml` to get past it; tell the orchestrator.
 
 Run this from the main checkout:
@@ -866,6 +868,8 @@ Run this from the main checkout, twice:
     uv run --script ops/bundle/deploy.py --env-file .env
 
 It worked if both runs exit 0. The first run lists these ten tables as new and changes no existing table: `strata.bronze.lesson_batches`; `strata.silver.lesson_proposals`, `strata.silver.lesson_evidence` and `strata.silver.lesson_restatements`; `strata.ops.lesson_versions`, `strata.ops.lesson_review_items`, `strata.ops.lesson_review_acts`, `strata.ops.lesson_sources`, `strata.ops.lesson_review_notes` and `strata.ops.lesson_uses`. It also lists the new job "strata lesson cross-check" (`bundle/lessons.yml`, at 06:00 New York time on the second day of January, April, July and October). The second run prints "No changes."
+
+**Ran on October 24, 2026 (orchestrator):** both runs exited 0, with `--fairshare-catalog workspace`. The first listed the ten lesson tables as new, and ticket 20's four (`strata.bronze.batch_answers`, `strata.gold.assertion`, `strata.gold.disagreement` and `strata.ops.assertion_rejections`), and changed no existing table. The job "strata lesson cross-check" (849400525894800) was not listed as new because the plain `databricks bundle deploy` runs of ticket 04's step 2 had already made it from 65293cd. The second run printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." Passed.
 
 ## Ticket 29, step 2 of 5: the Foundry lesson review writer matches the repo
 
