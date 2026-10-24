@@ -210,3 +210,12 @@ interval_z = 1.959964
 
 # The score a contract and a passage need to be linked as "appeared together" (ticket 22).
 [links]
+
+# How the run tells two assertions apart (ticket 20, src/strata/knowledge/assertions.py).
+[disagreements]
+# Two signed amounts in US dollars disagree only when they differ by more than this share of the larger
+# one. The awards dataset and a Procurement Plan can convert one contract's amount at two exchange
+# rates, as for KE-KIMAWASCO-141042-CW-RFB (7,741,614.92 and 7,741,367.65, a gap of 0.003 percent),
+# which is not two claims that cannot both be true. Source: ticket 20's review, round 2 (P2); 0.1
+# percent is a value for the owner to confirm, and 0 compares amounts exactly.
+amount_tolerance_share = 0.001

@@ -4,12 +4,14 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Three tasks have their work (tickets 07 and 17): fetch_by_watermark fetches each source in
+Four tasks have their work (tickets 07, 17 and 20): fetch_by_watermark fetches each source in
 config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
-countries as each entry says, bronze_to_gold builds silver and gold from bronze, and
-measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
-The rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and
-adds the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
+countries as each entry says, bronze_to_gold builds silver and gold from bronze,
+detect_disagreements rebuilds the assertions and the disagreements between them
+(strata.knowledge.assertions), and measure_data_readiness writes the data readiness measures and
+each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed;
+ticket 43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches
+the documents source itself.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
@@ -104,6 +106,21 @@ def _bronze_to_gold(run: Run) -> int:
     return added + gold.build(run.engine)
 
 
+def _detect_disagreements(run: Run) -> int:
+    """The assertions of every project Strata holds documents or records for, rebuilt, and the disagreements
+    between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
+    asks the live batch model to read the reports. On Databricks the job passes no Azure OpenAI keys until
+    ticket 43 wires its tasks, so until then it replays the answers bronze holds from the batch role's
+    deployment, such as those ops/assertions/batch_live.py asked for, and keeps what the live model read.
+    Any other run replays the recorded answers."""
+    from strata.knowledge import assertions, batch
+
+    model = (batch.from_environment() or batch.HeldAnswers()) if run.fetch is fetch_live else batch.RecordedBatch()
+    projects = assertions.default_projects(run.engine)
+    report = assertions.run(run.engine, projects, model=model, run_id=run.run_id, clock=run.clock)
+    return report.assertions + report.rejected + report.disagreements
+
+
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
     pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
@@ -124,7 +141,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "sync_index": _nothing_yet,
     "relink": _nothing_yet,
     "propose_lessons": _nothing_yet,
-    "detect_disagreements": _nothing_yet,
+    "detect_disagreements": _detect_disagreements,
     "score": _nothing_yet,
     "measure_data_readiness": _measure_data_readiness,
     "refresh_drafts": _nothing_yet,

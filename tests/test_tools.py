@@ -240,8 +240,24 @@ def past_range(result, question) -> dict[str, list]:
     }
 
 
+def disagreement_answer(result, question) -> dict[str, list]:
+    """get_disagreements' answer: each disagreement's two sides by evidence id in the order written, the side
+    it leans on, the ladder's rule, the sides that carry their passage's words for a quote, and, from the
+    summary record the agent cites them by, the runs of the trajectory, each as [rating, first ISR, last ISR],
+    and the count of assertions the run left out."""
+    evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
+    return {"disagreements": [[side["evidence_id"] for side in row["sides"]] for row in result["rows"]],
+            "leans_on": [evidence[row["lean_assertion_id"]] for row in result["rows"]],
+            "rules": [row["rule_id"] for row in result["rows"]],
+            "quotable_sides": [side["evidence_id"] for row in result["rows"] for side in row["sides"] if side["text"]],
+            "cited_as": [result["summary"]["evidence_id"]],
+            "trajectory_runs": [[run["value"], run["first_sequence"], run["last_sequence"]]
+                                for trajectory in result["summary"]["trajectories"] for run in trajectory["runs"]],
+            "rejected": [result["summary"]["rejected"]["count"]]}
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
-           "find_comparables": past_range}
+           "find_comparables": past_range, "get_disagreements": disagreement_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -250,7 +266,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] == "data_readiness_for":
+    if question["tool"] in ("data_readiness_for", "get_disagreements"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
