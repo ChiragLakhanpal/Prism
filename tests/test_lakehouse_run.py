@@ -148,7 +148,21 @@ def awarded_bidder(gold, value):
     assert expected in found
 
 
+def contract_supplier_id(gold, value):
+    """A contract keeps the supplier_id the awards dataset gives it, public from its signing date."""
+    contract = one(gold, "SELECT supplier_id, contract_signing_date, public_from FROM strata.gold.contract "
+                         "WHERE contract_id = :number", number=value["contract"])
+    assert contract["supplier_id"] == value["value"]
+    assert contract["public_from"] == contract["contract_signing_date"]
+
+
 CHECKS = {
+    "supplier-id-tradecon-notice": awarded_bidder,
+    "supplier-id-tradecon-award": contract_supplier_id,
+    "supplier-id-jedel-notice": awarded_bidder,
+    "supplier-id-jedel-award": contract_supplier_id,
+    "supplier-id-geoscintex-notice": awarded_bidder,
+    "supplier-id-geoscintex-award": contract_supplier_id,
     "notice-bidder-503708": awarded_bidder,
     "notice-bidder-503711": awarded_bidder,
     "notice-firm-636626": awarded_bidder,
@@ -408,6 +422,7 @@ def test_each_measure_has_the_kind_the_spec_names(gold):
     assert kinds == {"coverage_rows": "coverage", "coverage_years": "coverage", "linked_step_reference": "linked",
                      "linked_notice": "linked", "linked_project": "linked", "linked_sector": "linked",
                      "contact_details_removed": "stripped", "fresh_fetched": "fresh", "fresh_newest_record": "fresh",
+                     "awarded_bidder_id_on_award": "linked", "awarded_bidder_id_same_name": "linked",
                      "projects_with_contracts_lacking_step_reference": "fix",
                      "gap_years_contracts_in_local_currency": "fix", "gap_years_projects_in_local_currency": "fix"}
 

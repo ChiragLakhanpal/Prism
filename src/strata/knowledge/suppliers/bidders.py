@@ -23,8 +23,10 @@ from importlib import resources
 from strata.lakehouse.engine import Engine
 
 AWARDED = ("Awarded Bidder(s):", "Awarded Firm(s):", "Awarded Firm/Individual:")
-# The lists that follow the awarded bidders, which end their list.
-NOT_AWARDED = ("Evaluated Bidder(s):", "Evaluated Firm(s):", "Rejected Bidder(s):", "Rejected Firm(s):")
+# The parts that follow the awarded bidders, which end their list. A notice's beneficial ownership
+# details name the firm again, and the people who own it, who are never bidders.
+NOT_AWARDED = ("Evaluated Bidder(s):", "Evaluated Firm(s):", "Rejected Bidder(s):", "Rejected Firm(s):",
+               "Beneficial Ownership Details")
 COUNTRY = "Country:"
 # A price heading, whose value is on the next line. Neither line is a bidder.
 PRICE_HEADINGS = ("Bid Price at Opening", "Evaluated Bid Price", "Signed Contract price", "Signed Contract Price",

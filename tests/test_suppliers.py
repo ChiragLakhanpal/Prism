@@ -69,6 +69,41 @@ def test_an_individual_consultant_awarded_in_a_notice_is_never_named(fixture):
     assert [(b["name"], b["step_supplier_id"], b["individual_consultant"]) for b in found] == [(None, None, True)]
 
 
+def measures(engine, subject):
+    return {row["measure"]: (row["count"], row["denominator"]) for row in rows(
+        engine, "SELECT measure, count, denominator FROM strata.ops.data_readiness WHERE run_id = 'fixture' "
+                "AND source = 'notices' AND subject = :subject "
+                "AND measure IN ('awarded_bidder_id_on_award', 'awarded_bidder_id_same_name')", subject=subject)}
+
+
+@pytest.mark.parametrize("subject", ["KE", "all"])  # every awarded bidder with an ID in the fixture is Kenya's
+def test_strata_ops_counts_how_often_an_award_notice_carries_the_supplier_id_the_awards_give(fixture, subject):
+    counted = TRUTH["counts"]["supplier_ids"]
+
+    assert measures(fixture, subject) == {
+        "awarded_bidder_id_on_award": (counted["agrees"], counted["on_award"]),
+        "awarded_bidder_id_same_name": (counted["same_name_agrees"], counted["same_name"]),
+    }
+
+
+@pytest.mark.parametrize("firm", ["tradecon", "jedel", "geoscintex"])
+def test_an_award_notice_can_give_a_firm_another_step_supplier_id_than_the_awards_give_it(fixture, firm):
+    """The blueprint's "7 of 7" does not hold over every award notice: these three firms carry one ID in
+    their award notice and another in the awards dataset, on the same STEP reference."""
+    in_notice, in_awards = VALUES[f"supplier-id-{firm}-notice"], VALUES[f"supplier-id-{firm}-award"]
+
+    bidder = rows(fixture, "SELECT b.name, b.step_supplier_id, n.step_reference FROM strata.silver.notice_bidders AS b "
+                           "JOIN strata.gold.notice AS n ON n.notice_id = b.notice_id WHERE b.notice_id = :notice",
+                  notice=in_notice["notice"])
+    contract = rows(fixture, "SELECT c.step_reference, c.supplier_id, s.name FROM strata.gold.contract AS c "
+                             "JOIN strata.gold.supplier AS s ON s.supplier_id = c.supplier_id WHERE c.contract_id = :id",
+                    id=in_awards["contract"])
+
+    assert bidder == [{"name": in_notice["name"], "step_supplier_id": in_notice["value"],
+                       "step_reference": contract[0]["step_reference"]}]
+    assert contract[0]["name"] == in_notice["name"] and contract[0]["supplier_id"] == in_awards["value"]
+
+
 def test_an_awarded_bidder_written_without_an_id_keeps_its_name(fixture):
     case = VALUES["notice-bidder-no-id"]  # the FY2017-19 gap's award notice, OP00044090
 
