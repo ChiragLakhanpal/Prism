@@ -155,41 +155,64 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
 
+// The places where a Sources row's cell text comes within 8 px of the next cell's on the same line.
+async function tightCells(page: Page) {
+  await expect(table(page, "sources")).toBeVisible();
+  return table(page, "sources").evaluate((view) => {
+    // The boxes of a cell's visible text, one for each line it runs.
+    const boxes = (cell: Element) => {
+      const found: DOMRect[] = [];
+      const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.textContent?.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        found.push(...Array.from(range.getClientRects()).filter((box) => box.width > 1 && box.height > 1));
+      }
+      return found;
+    };
+    const close: string[] = [];
+    for (const row of Array.from(view.querySelectorAll("tbody tr"))) {
+      const cells = Array.from(row.children);
+      cells.slice(1).forEach((right, index) => {
+        const left = cells[index];
+        for (const a of boxes(left))
+          for (const b of boxes(right))
+            if (a.top < b.bottom && b.top < a.bottom && b.left - a.right < 8)
+              close.push(`${left.getAttribute("data-cell") ?? left.textContent} | ${right.getAttribute("data-cell")}: ${Math.round(b.left - a.right)} px`);
+      });
+    }
+    return close;
+  });
+}
+
 // Between 768 px, where the Sources table starts, and the widths a tablet holds in portrait, every
 // cell's text keeps 8 px from its neighbour's on the same line: nothing spills into the next cell.
 test("from 768 px no cell's text in the Sources table runs into the next cell's", async ({ page }) => {
   await mockData(page, FULL);
   for (const width of [768, 820, 900]) {
     await open(page, "/data", width);
-    await expect(table(page, "sources")).toBeVisible();
-    const tight = await table(page, "sources").evaluate((view) => {
-      // The boxes of a cell's visible text, one for each line it runs.
-      const boxes = (cell: Element) => {
-        const found: DOMRect[] = [];
-        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
-        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          if (!node.textContent?.trim()) continue;
-          const range = document.createRange();
-          range.selectNodeContents(node);
-          found.push(...Array.from(range.getClientRects()).filter((box) => box.width > 1 && box.height > 1));
-        }
-        return found;
-      };
-      const close: string[] = [];
-      for (const row of Array.from(view.querySelectorAll("tbody tr"))) {
-        const cells = Array.from(row.children);
-        cells.slice(1).forEach((right, index) => {
-          const left = cells[index];
-          for (const a of boxes(left))
-            for (const b of boxes(right))
-              if (a.top < b.bottom && b.top < a.bottom && b.left - a.right < 8)
-                close.push(`${left.getAttribute("data-cell") ?? left.textContent} | ${right.getAttribute("data-cell")}: ${Math.round(b.left - a.right)} px`);
-        });
-      }
-      return close;
-    });
-    expect(tight, `${width} px`).toEqual([]);
+    expect(await tightCells(page), `${width} px`).toEqual([]);
   }
+
+  // Review r5 P2: a fresh measure can have no date. Its "Not measured yet" wraps like other text,
+  // so it keeps clear of Read well too.
+  const answer = await json("data-readiness.json");
+  const reports = answer.sources.find((row: { id: string }) => row.id === "reports");
+  answer.rows[reports.cells.fresh.row].as_of = null;
+  await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(answer) }));
+  await open(page, "/data", 768);
+  const fresh = cell(page, "reports:fresh");
+  await expect(fresh).toContainText("Not measured yet");
+  expect(await tightCells(page), "768 px, with no date").toEqual([]);
+  // Its text stays inside its own cell, so it never reaches the Read well cell's padding.
+  const spill = await fresh.evaluate((box) => {
+    const edge = box.getBoundingClientRect().left;
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    return Math.max(0, ...Array.from(range.getClientRects()).map((line) => Math.round(edge - line.left)));
+  });
+  expect(spill, "px the dateless Fresh cell's text runs past its own cell").toBe(0);
 });
 
 test("each column head holds its definition, and its label opens the full definition", async ({ page }) => {
@@ -391,6 +414,11 @@ test("with no fix to rank, the fixes card says nothing falls short only when not
   expect(answer.gaps.length).toBeGreaterThan(0);
   await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("I don't have a fix to suggest for these sources.");
 
+  // Design r5 P3: with one source in view, as the alert and the headline say, the card says "this source".
+  body = { ...answer, fixes: [], filter: { ...answer.filter, shown: 1 } };
+  await page.reload();
+  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("I don't have a fix to suggest for this source.");
+
   body = { ...answer, fixes: [], gaps: [] };
   await page.reload();
   await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("Nothing I measured falls short, so there are no fixes to rank.");
@@ -512,7 +540,8 @@ test("a source with no measures leaves the headline out, and its row says it is 
   await open(page);
 
   await expect(page.locator("[data-headline]")).toHaveText(
-    "I'm not giving a headline: 1 of the 13 sources below has no measures yet. Its row says so.",
+    // One to nine in words, as in any sentence (DESIGN.md section 7, rule 12; design r5 P4).
+    "I'm not giving a headline: one of the 13 sources below has no measures yet. Its row says so.",
   );
   // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
   await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");

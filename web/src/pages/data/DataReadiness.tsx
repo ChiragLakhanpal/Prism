@@ -82,19 +82,18 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
     return (
       <Stack>
         {/* The date and the schedule each keep to one line, and the dot stays with the date, so the
-            cell wraps only after the dot and never spills into the next cell. */}
+            cell wraps only after the dot and never spills into the next cell. With no date, "Not
+            measured yet" wraps like other text, since it is too wide for a narrow cell (review r5 P2). */}
         <span className="font-semibold">
           <Template
             text={words.sources.fresh}
             values={{
-              date: (
+              date: row.as_of ? (
                 <span className="whitespace-nowrap">
-                  {row.as_of ? (
-                    <MeasureValue measures={measures} index={cell.row} value={{ date: row.as_of, style, today: measures.asOf }} noun={noun} tooltipKind="day" windowColumn="fresh" />
-                  ) : (
-                    words.sources.notMeasured
-                  )}
+                  <MeasureValue measures={measures} index={cell.row} value={{ date: row.as_of, style, today: measures.asOf }} noun={noun} tooltipKind="day" windowColumn="fresh" />
                 </span>
+              ) : (
+                words.sources.notMeasured
               ),
               schedule: <span className="whitespace-nowrap">{schedule}</span>,
             }}
@@ -365,7 +364,7 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
   );
 }
 
-function Fixes({ fixes, measures, shortfalls }: { fixes: Fix[]; measures: Measures; shortfalls: boolean }) {
+function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures: Measures; shortfalls: boolean; shown: number }) {
   return (
     <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 md:p-6">
       <h2 id="data-fixes" className="text-title text-ink-heading">
@@ -373,7 +372,7 @@ function Fixes({ fixes, measures, shortfalls }: { fixes: Fix[]; measures: Measur
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{words.fixes.caption}</p>
       {fixes.length === 0 ? (
-        <p className="mt-3 text-body">{shortfalls ? words.fixes.noneKnown : words.fixes.none}</p>
+        <p className="mt-3 text-body">{shortfalls ? (shown === 1 ? words.fixes.noneKnownOne : words.fixes.noneKnown) : words.fixes.none}</p>
       ) : (
         <ol className="mt-3 flex flex-col gap-3">
           {fixes.map((fix) => (
@@ -459,7 +458,7 @@ function Tables({ result }: { result: Readiness }) {
       </div>
       <Failures result={result} />
       <div className="mt-12">
-        <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} />
+        <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} shown={result.filter.shown} />
       </div>
     </>
   );
@@ -729,7 +728,7 @@ function render(
           <p className="text-title text-pretty text-ink-heading md:text-h3" data-headline>
             <Template
               text={result.headline_abstention.unmeasured === 1 ? words.abstain.unmeasuredOne : words.abstain.unmeasured}
-              values={{ count: <Num value={result.headline_abstention.unmeasured} />, total: <Num value={result.headline_abstention.sources} /> }}
+              values={{ count: <Num count={result.headline_abstention.unmeasured} />, total: <Num value={result.headline_abstention.sources} /> }}
             />
           </p>
         ) : null}

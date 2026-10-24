@@ -697,8 +697,8 @@ export const copy = {
       oneProject: "Would add evidence to {count} project.",
       projectsNoun: "projects",
       projectsNounOne: "project",
-      // With no fix to rank: the first only when nothing in view falls short, and the second when
-      // something does but the registry lists no fix for it.
+      // With no fix to rank: the first only when nothing in view falls short, and the second (the
+      // third with one source in view) when something does but the registry lists no fix for it.
       none: "Nothing I measured falls short, so there are no fixes to rank.",
       noneKnown: "I don't have a fix to suggest for these sources.",
       noneKnownOne: "I don't have a fix to suggest for this source.",
