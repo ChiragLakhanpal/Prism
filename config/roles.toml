@@ -1,24 +1,33 @@
-# The roles file: which workspace groups hold which roles in Strata, and the people in them.
+# The roles file: who sees what Strata keeps for a team, and who reviews lessons (spec, "Ten single
+# places": the roles file sits beside the registries). strata.config.load_roles() reads it. One server
+# helper, src/strata/server/access.py, applies its teams to every read of a draft (and later of an upload
+# or a package made from one), so there is one access rule (the 38 design brief, section 11). The lesson
+# review (src/strata/knowledge/lessons/review.py) applies its groups and people to the Lessons pages.
+# Later tickets add to it: query judges and passage reviewers (ticket 32), implementing agency teams
+# (ticket 38), a [views] section (ticket 40), the reviewing panel's group (ticket 41), each team's
+# working language (ticket 42) and an operators group (ticket 45).
 #
-# This is the one place a role is defined (CLAUDE.md rule 9; the spec's "Ten single places" puts the
-# roles file beside them). strata.config.load_roles() reads it, and the server decides from it, per
-# request, what the viewer may open and do: the viewer is the email the Databricks App forwards
-# (src/strata/dbx.py), never a value the page sends. Later tickets add to it: query judges and
-# passage reviewers (ticket 32), implementing agency teams (ticket 38), a [views] section (ticket 40),
-# the reviewing panel's group (ticket 41), each team's working language (ticket 42) and an operators
-# group (ticket 45).
+# [teams.<key>], one team of World Bank staff that shares its drafts:
+#   name     the team's name
+#   groups   the workspace groups whose members are on the team. The server reads a viewer's groups
+#            with their own token. A viewer in the groups of two teams is on the first one in this file.
 #
-# [groups.<key>], one per workspace group:
+# A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
+# when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the
+# author was on their team. Changing who shares drafts is one line here, or a change of group membership
+# in the workspace, and it never hides anyone's own drafts from them.
+#
+# [groups.<key>], one reviewer group (ticket 29):
 #   workspace_group  the group's name in the Databricks workspace, which the deploy grants write
 #                    access to. The names below wait for the workspace (docs/workspace-catchup.md).
 #   role             what its members are called on reviewer pages, such as "lead procurement specialist"
 #   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review
 #   acts             what its members may do there: recommend, decide or cross_check a lesson
 #
-# [[people]], one per person in any group:
+# [[people]], one per person in any reviewer group:
 #   email     the email the Databricks App forwards for them
 #   name      their name, shown only on reviewer-only pages (the 29 design brief, section 4.1)
-#   groups    the keys of the groups they belong to
+#   groups    the keys of the reviewer groups they belong to
 #   regions   the regions whose lessons they review, written word for word as strata.gold.project.region
 #             writes them, such as "South Asia" or "Eastern and Southern Africa"
 #   projects  the projects they work on, by project ID. They never recommend or decide on a lesson
@@ -32,6 +41,10 @@
 # The people are left out until the owner names them (a parked decision), so until then no one is a
 # lesson reviewer and the review queue stays hidden. tests/fixtures/roles.toml lists the made-up
 # reviewers the offline tests use.
+
+[teams.kenya-water]
+name = "Kenya water and sanitation"
+groups = ["strata-team-kenya-water"]
 
 [groups.accredited_procurement_specialist]
 workspace_group = "strata-accredited-procurement-specialists"

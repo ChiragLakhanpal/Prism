@@ -127,6 +127,28 @@ def nth_business_day(start: dt.date, n: int, holidays: frozenset[dt.date]) -> dt
         day += dt.timedelta(days=1)
 
 
+# ── IEG's part in the evidence ───────────────────────────────────────────
+
+# The four values, in order of the evidence's strength: IEG wrote it, IEG restated it, IEG's review is out and
+# did not restate it, IEG has not reviewed the project yet. get_lessons ranks by this order (strata.tools.get_lessons).
+IEG_STATUSES = ("ieg_lesson", "restated", "not_restated", "awaiting")
+
+
+def ieg_status(evidence: list[dict], reviewed_on) -> dict:
+    """Which of the four evidence badges a lesson shows (the 29 brief, section 4.4): ieg_lesson ("IEG's
+    lesson") when IEG wrote its evidence, restated ("Restated by IEG") when an ICR Review or PPAR restated it,
+    not_restated ("Rests on the ICR alone") when IEG's review is out and did not, with that review's date, and
+    awaiting ("Awaiting IEG review") when IEG has not reviewed the project yet. One field covers all four, so
+    ticket 30 reads the same contract."""
+    if any(row["role"] == "source" and _bool(row["restated_by_ieg"]) for row in evidence):
+        return {"ieg_status": "ieg_lesson", "review_date": None}
+    if any(row["role"] == "restatement" for row in evidence):
+        return {"ieg_status": "restated", "review_date": None}
+    if reviewed_on:
+        return {"ieg_status": "not_restated", "review_date": _iso(reviewed_on)}
+    return {"ieg_status": "awaiting", "review_date": None}
+
+
 # ── Refusals ─────────────────────────────────────────────────────────────
 
 @dataclass
@@ -305,17 +327,7 @@ class LessonReview:
         return found
 
     def ieg(self, store: Store, evidence: list[dict], project_id: str) -> dict:
-        """Which of the four evidence badges a lesson shows (the 29 brief, section 4.4), as ieg_status:
-        ieg_lesson when IEG wrote its evidence, restated when an ICR Review or PPAR restated it, not_restated
-        when IEG's review is out and did not, awaiting when IEG has not reviewed the project yet."""
-        if any(row["role"] == "source" and _bool(row["restated_by_ieg"]) for row in evidence):
-            return {"ieg_status": "ieg_lesson", "review_date": None}
-        if any(row["role"] == "restatement" for row in evidence):
-            return {"ieg_status": "restated", "review_date": None}
-        reviewed = (store.projects.get(project_id) or {}).get("ieg_reviewed_on")
-        if reviewed:
-            return {"ieg_status": "not_restated", "review_date": _iso(reviewed)}
-        return {"ieg_status": "awaiting", "review_date": None}
+        return ieg_status(evidence, (store.projects.get(project_id) or {}).get("ieg_reviewed_on"))
 
     def tags(self, row: dict) -> dict:
         factors = _json(row["risk_factors"], [])

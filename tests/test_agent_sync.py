@@ -94,3 +94,30 @@ def test_a_check_reports_a_difference_and_changes_nothing():
 
     assert report.differences and not report.changed
     assert foundry.agent("strata-orchestrator") is None and foundry.guardrail("strata-guardrail") is None
+
+
+def test_the_review_notes_writer_runs_on_the_drafting_model_with_no_tools_and_design_md_s_words():
+    """Ticket 35's writer writes from the plan rows the app hands it, so Foundry offers it no tool, and its
+    notes go into a Word file, so it is told rule 19's words and the document's voice."""
+    wanted = agent_definition(load_agent("review_notes_writer"), guardrail_id="local/strata-guardrail")
+
+    definition = wanted["definition"]
+    assert definition["tools"] == []
+    assert "## Your tools" not in definition["instructions"]
+    assert definition["model"] == "gpt-5.4"  # config/models.toml, the draft role
+    words = definition["instructions"].split("## Words", 1)[1]
+    design = (AGENTS_FILE.parent.parent / "DESIGN.md").read_text()
+    rule_19 = re.search(r"^19\. Never write: (.*?)\. Write", design, re.M).group(1)
+    never = [word.strip() for word in re.split(r"[,;]", re.sub(r"\(.*?\)", "", rule_19))]
+    assert [word for word in never if not re.search(rf"(?<![\w-]){re.escape(word)}(?![\w-])", words)] == []
+    assert 'never "I" or "you"' in words
+
+
+def test_the_sync_makes_the_writer_in_foundry_and_a_second_run_finds_no_difference():
+    foundry = LocalFoundry()
+
+    first = sync.run(foundry, "review_notes_writer")
+    second = sync.run(foundry, "review_notes_writer", apply=False)
+
+    assert first.changed and foundry.agent("strata-review-notes-writer")["definition"]["tools"] == []
+    assert second.differences == []

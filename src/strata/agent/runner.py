@@ -15,15 +15,31 @@ no agent.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 
 from strata.agent.foundry import FOUNDRY_SCOPE, FoundryAgent, entra_token
 from strata.agent.loop import answer_runner
-from strata.config import load_agent
+from strata.config import load_agent, load_draft_kinds
 from strata.harness.turn import Runner
 from strata.server.engines import EngineFor
 
 NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "FOUNDRY_TENANT_ID", "FOUNDRY_CLIENT_ID", "FOUNDRY_CLIENT_SECRET")
+
+
+def writers_from_environment(environ: Mapping[str, str]) -> Callable[[str], FoundryAgent | None]:
+    """Each draft kind's writer: the Foundry agent its entry in config/drafts.toml names, as the app's own
+    principal, or None for every kind when the environment names no Foundry project."""
+    values = {key: environ.get(key, "").strip() for key in NEEDS}
+    if not all(values.values()):
+        return lambda kind: None
+    kinds = load_draft_kinds()
+    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
+                        FOUNDRY_SCOPE)
+
+    def writer(kind: str) -> FoundryAgent | None:
+        entry = kinds.kinds.get(kind)
+        return FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], load_agent(entry.agent), token) if entry else None
+    return writer
 
 
 def from_environment(environ: Mapping[str, str], engine_for: EngineFor | None) -> Runner | None:

@@ -125,6 +125,47 @@
   [data-page-column] > * { --layout-margin: 72px; --layout-gutter: 32px; }
 }
 
+/* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a
+   1200 px window it spans columns 1 to 7 and keeps its place and width when the evidence drawer opens
+   beside it: the drawer narrows the page area, so the column is measured against the window instead,
+   with the window's margins and gutter, and the page keeps its left edge where it was. The window's width
+   is --window-inline, which DraftPage.tsx sets without a classic scroll bar; 100vw counts one. */
+@media (width >= 75rem) {
+  [data-page-column] > main:has([data-document-column]) { --layout-margin: 72px; --layout-gutter: 32px; }
+  main:has([data-document-column]) > .layout {
+    margin-inline: max(0px, (var(--window-inline, 100vw) - var(--layout-max)) / 2 - var(--layout-margin)) 0;
+    padding-top: calc(var(--spacing) * 10);
+  }
+  [data-document-column] {
+    width: calc((min(var(--window-inline, 100vw) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+  }
+}
+
+/* Where the draft bar sticks (the 35 brief, section 4.3; DESIGN.md section 5, Draft bar): in a window at
+   least 48rem wide and 40rem tall, and only while the document column it sits in is at least 30rem wide.
+   Beside the open drawer below about 960 px the column is phone-sized, so the bar sits at the end of the
+   column with its buttons stacked, as on a phone. The bar, the discarded notice and the draft page's
+   skeleton write bar-sticks: for every class that differs, so a change to where it sticks lands here. */
+@custom-variant bar-sticks {
+  @media (width >= 48rem) and (height >= 40rem) {
+    @container doc (width >= 30rem) {
+      @slot;
+    }
+  }
+}
+
+/* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
+   not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
+   and --sticky-bottom on html only while their header or bar sticks. */
+:is([data-draft-bar], [data-discarded-notice]) :is(a, button) {
+  scroll-margin-top: var(--sticky-bottom, 0px);
+  scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
+}
+:is([data-draft-header], [data-plan-header]) :is(a, button) {
+  scroll-margin-top: calc(-1 * var(--sticky-top, 0px));
+  scroll-margin-bottom: var(--sticky-top, 0px);
+}
+
 @utility layout {
   width: 100%;
   max-width: calc(var(--layout-max) + 2 * var(--layout-margin));

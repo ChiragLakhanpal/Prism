@@ -17,6 +17,10 @@ with the verifier's counts on each answer. Then review it with git diff tests/fi
 (the scripted cases replay the new recordings on the fixture), and commit them. It exits 0 when every
 recording was made, and 2 when it could not run.
 
+With --writers it re-records the draft writers' cases in tests/fixtures/agent/writers.toml instead, such as
+the review notes on the NWWDA plan (ticket 35): each kind's workflow reads its facts on the SQL warehouse,
+and its Foundry writer (after ops/agent/sync.py --agent review_notes_writer) writes the answer.
+
 It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env
 file, and the az command line signed in.
 """
@@ -33,8 +37,8 @@ from live import REPO, LiveSetupError, foundry_agent, load_env, warehouse_engine
 
 from strata.agent import record  # noqa: E402
 from strata.agent.loop import AgentError  # noqa: E402
-from strata.agent.scripted import load_cases  # noqa: E402
-from strata.config import load_agent  # noqa: E402
+from strata.agent.scripted import WRITER_CASES, load_cases  # noqa: E402
+from strata.config import load_agent, load_draft_kinds  # noqa: E402
 from strata.dbx import Viewer  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 
@@ -44,12 +48,21 @@ NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="ops/agent/record.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--env-file", help="the env file with the Foundry endpoint and the workspace's token")
+    parser.add_argument("--writers", action="store_true",
+                        help="re-record the draft writers' cases in tests/fixtures/agent/writers.toml instead")
     args = parser.parse_args(argv)
     try:
         env = load_env(args.env_file, NEEDS)
-        spec = load_agent("orchestrator")
         viewer = Viewer(name="the env file's token", token=env["DATABRICKS_TOKEN"])
-        done = record.record_all(load_cases(), lambda: foundry_agent(env, spec), warehouse_engine_for(env), viewer)
+        if args.writers:
+            cases = load_cases(WRITER_CASES)
+            kinds = load_draft_kinds().kinds
+            specs = {case.recording: load_agent(kinds[case.request["kind"]].agent) for case in cases.values()}
+            spec = next(iter(specs.values()))  # one writer kind so far: review notes
+            done = record.record_writers(cases, lambda: foundry_agent(env, spec), warehouse_engine_for(env), viewer)
+        else:
+            spec = load_agent("orchestrator")
+            done = record.record_all(load_cases(), lambda: foundry_agent(env, spec), warehouse_engine_for(env), viewer)
     except (LiveSetupError, AgentError, EngineError) as error:
         print(f"I could not re-record the scripted cases: {error}")
         return 2

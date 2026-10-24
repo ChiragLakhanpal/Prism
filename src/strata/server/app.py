@@ -89,14 +89,17 @@ from pydantic import BaseModel, Field, StringConstraints
 from strata.agent import traces
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import answer_events, verify
-from strata.config import load_roles, load_thresholds
+from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds
 from strata.dbx import Viewer, viewer_from_headers
+from strata.drafts.store import DraftStore
 from strata.knowledge.lessons.review import LessonReview, Refused
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
+from strata.server import drafts as draft_routes
 from strata.server import engines, evidence, lookup, projects, suppliers, tracing
+from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageEvent, UsageLog
@@ -177,13 +180,21 @@ def refused(status: int, code: str, **details) -> JSONResponse:
     return JSONResponse({"code": code, **details}, status_code=status, headers={"Cache-Control": "no-store"})
 
 
+def new_draft_id() -> str:
+    return f"draft-{uuid.uuid4().hex[:12]}"
+
+
 def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None,
                stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
                tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None,
                runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current,
                opened: OpenedLog | None = None, supplier_log: SupplierLog | None = None,
-               lessons: LessonReview | None = None) -> FastAPI:
+               drafts: DraftStore | None = None,
+               writers: Callable[[str], object | None] | None = None, access: Access | None = None,
+               kinds: DraftKinds | None = None, today: Callable[[], dt.date] = registry.today,
+               now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
+               new_draft_id: Callable[[], str] = new_draft_id, lessons: LessonReview | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -198,6 +209,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     clock; without it, config/roles.toml and today. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
+
+    drafts keeps the drafts (src/strata/drafts/store.py), written as the app's own service principal;
+    without it, the draft routes say there is no data service. writers gives each draft kind's writer
+    agent, or None when none is connected. access is the one access rule (src/strata/server/access.py);
+    without it, every viewer is on a team of their own. kinds is the draft-kind registry, today the day
+    a draft's facts are read as of, now the clock and new_draft_id the ids drafts get.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -395,6 +412,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         if opened is None or not viewer.user_id:
             return {"opened": []}
         return {"opened": opened.opened(viewer.user_id, evidence_ids)}
+
+    draft_routes.add_routes(app, engine_for=engine_for, store=drafts,
+                            access=access or Access(load_roles(), NoGroups()), writers=writers or (lambda kind: None),
+                            kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
+                            new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
+                            heartbeat_seconds=heartbeat_seconds)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):
         """A decision or a label on a candidate pair, recorded with the viewer's user id, or why it was not."""

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 6 and 8 (Exports); the blueprint's Draft wiref
 
 **Blocked by:** 10 (Check a plan, on screen, for the NWWDA plan); 14 (Ask from the one box: the answer panel and the evidence drawer)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -22,3 +22,37 @@ Read first: docs/PLAN.md sections 6 and 8 (Exports); the blueprint's Draft wiref
 ## Comments
 
 - October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/35-drafts-runtime-and-review-notes, as soon as ticket 14 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
+- October 24, 2026, merger: merged into build/strata as merge commit 0756ed6 (parents 5fb2bb5 and 09dc507, so the branch's history is kept). The history scan found no keys. Git merged it with no conflicts, and `scripts/install` added fpdf2, fonttools, pillow and defusedxml from the branch's `pyproject.toml` and `uv.lock` before the commit. The worktree that built it was `.claude/worktrees/wf_a1d03afa-56c-4`; I removed it after this commit, and the branch stays.
+  - **One fix inside the merge.** The first gate failed in the lint lane: `src/strata/drafts/copy.json` was out of date. Ticket 18 added the removed reason `number_only_in_table_summary` to `copy.removed.reasons`, and this ticket's file repeats that list. `node web/lint/server-copy.ts --write` wrote it again, which adds ticket 18's reason and changes nothing else, and the merge commit's message says so. The draft files fall back to `copy.removed.reasons` for a reason the kind does not name, so a draft that loses a sentence that way now says why.
+  - **The gate.** On the second try, two Playwright tests failed while the machine's load was 35 from other worktrees' gates: the draft skeleton test and the gallery's Plan check width test. Both passed alone, 6 of 6 over three repeats. The third try passed in 70.0 seconds and made the merge commit. By hand on build/strata after the merge, it passed in 63.8 seconds at 08:45: the Python tests took 50.1, the wizard and day-one tests 44.2, and Playwright 39.9. Ticket 43 is already asked to bring it back under a minute.
+  - **The wizard's uncommitted results.** The main checkout held the wizard's day-one results (test 7 failed, test 8 passed) as an uncommitted change, which the gate refuses beside a merge. I stashed that one file for the merge and put it back after this commit, unchanged. See parked decision 6.
+  - **Evidence.** Four rounds. Review r4 (`.notes/35-review-r4.md`) approved with 0 blocking and 3 polish findings. Design r4 (`.notes/35-design-r4.md`) passed with 0 blocking and 4 polish findings, from 186 capture shots. Critique r4 (`.notes/35-critique-r4.md`) does not block, and its lowest score is 4. Verify r4 (`.notes/35-verify-r4.md`) passed criteria 2 to 7 against the real server and the fixture, and parked criterion 1:
+    - "Draft review notes (3 rows)" saved a draft with notes on KE-NWWDA-541055-CW-RFB, KE-NWWDA-229129-CW-RFB and KE-NWWDA-541062-CW-RFQ, each citing only its own plan row. The verifier kept 6 of 6 sentences, 6 of 6 numbers, 7 of 7 dates and 3 of 3 sources, with `checks_run` [1, 2, 3].
+    - Export from Draft gave 409 `draft_state` and left no file. A teammate's act gave 403 `not_author`, another team's viewer 404. Discard and Restore gave back Draft and Checked. The state table held one row per act.
+    - The bar read DESIGN.md section 5's sentences, ending "Exporting sends nothing and is not a World Bank review, clearance or no-objection.", and "You opened N of M sources" counted distinct cited sources per viewer.
+    - The Word file had footnotes 1 to 6, one per citation. The evidence pack's PDF and CSV listed all three sources with whether each was opened. The success panel named the file and its 6 footnotes.
+    - The no-call test failed when the verifier planted a hidden `urllib` call. Every browser request went to the server's own address.
+    - Seven planted bad sentences: five were removed and shown with their reasons, and none reached the Word file.
+    - Axe found no WCAG 2.2 AA violation and no sideways scroll in 137 captured states at 1440, 1024 and 390 px.
+    - The ticket's own tests: `tests/test_drafts.py` and `tests/test_draft_files.py`, 35 passed in about 10 seconds; `web/tests/drafts.spec.ts`, 37 passed in 8.2 seconds.
+  - **Parked criteria.** Criterion 1: the writer is a Foundry agent whose recorded answer is written by hand, and its "six checks" wait on ticket 24, since the verifier runs checks 1 to 3 today. The workspace halves of criteria 2, 3 and 6.
+  - **Workspace results.** Nothing ran. `guard.py --env-keys` showed `DATABRICKS_TOKEN` and `APPLICATIONINSIGHTS_CONNECTION_STRING` missing, and day-one test 7 had failed. Foundry's endpoint was set, but the build's standing rule parks every step while a key is missing, and the catch-up file runs in order after ticket 03's wizard and ticket 13's step 1. I parked five steps in `docs/workspace-catchup.md`, in the order to run them: step 1 syncs the Foundry writer with a `--check` run; step 2 re-records the writer's cases and the draft API recordings, then runs the gate; step 3 redeploys the App and checks `GET /api/drafts/existing` with no `plan_date`; step 4 sends two checks and then two exports at the same moment and counts the rows, and checks that the App's service principal wrote them; step 5 opens `/api/drafts` as a member and a non-member of `strata-team-kenya-water`. The builder listed the redeploy last; it moved to step 3 because steps 4 and 5 need it.
+  - **Follow-ups, not blocking.**
+    1. Review P1: the existing-draft lookup compares the agency id exactly (`src/strata/server/drafts.py`, `existing_draft`), so a typed address that names the agency in another form finds no draft. Compare through `agency_id` from `strata.tools.check_plan`.
+    2. Review P2: DESIGN.md section 10's sticky padding rule is coded in two hooks, in `CheckPlanPage.tsx` and `DraftPage.tsx`. Move it to `web/src/lib/sticky.ts`.
+    3. Review, carried from round 2: the order of the rows with a signal is decided in both `src/strata/drafts/review_notes.py` and `CheckPlanPage.tsx`. Open a ticket if it waits past the next ticket that touches either.
+    4. Review P3: three stale or long comments, and Breadcrumb's doubled class strings.
+    5. Design P1 to P4: one painted frame shows the notes jumped below 1200 px (move the put-back into a layout effect); the skeleton at 320 px is 440 px shorter than the draft; when another tab exported the draft, the export panel does not say so; DESIGN.md says "below about 960 px" where the figure is 936 px.
+    6. Verify F1: two footnotes point at plan page 3, which does not hold the date their sentence states (the closing date comes from `strata.gold.project:P156634`, and March 5, 2026 from an earlier plan version). Let a note also cite its row's mark reason evidence, with its own footnote.
+    7. Verify F2: the no-call test does not watch child processes or `connect_ex`.
+    8. Verify F3: with `STRATA_APP_STATE_FILE`, two requests at once give a 500, because DuckDB's `ResourceInUseException` is not mapped to `EngineError`. The deployed App is not affected.
+    9. Verify, from the code: two exports at once may each save an export row. Workspace step 4 checks it.
+    10. Critique 4s: the discarded caption changes sides with the width, the bar's buttons are 695 px wide at 1440 x 600, and the empty slot's sentence repeats the title above it.
+  - **Decisions parked for the user.**
+    1. Drafts are kept by the App's own account (review r1). Drafts, states, exports and files are written and read by the App's service principal, and team scope is enforced in app code (`src/strata/server/access.py`). Kept as built, like usage events and opened sources.
+    2. Teams come from workspace groups through SCIM `/Me`, read with the viewer's token (review r1). The App asks only for the `sql` scope, and `/Me` lists direct groups only. If the call is refused, every viewer is on a team of their own. Workspace step 5 checks it.
+    3. The writer's answer is written by hand (`tests/fixtures/agent/recorded/review-notes-nwwda-2026-10-09.json`, `"recorded": false`) until workspace step 2 re-records it.
+    4. How much of the window the sticky header and bar may take (design-lead, rounds 1 to 4): 31% of 1440 x 900 and 36% of 1024 x 768, with no note on the first screen at 1440 x 900. The simplest change is to let the bar stick only from 45rem tall, one line in `web/src/styles/app.css`.
+    5. Ticket 35 lands with criterion 1's "six checks" carried to ticket 24 (verifier). I kept that choice. Ticket 24 must wire check 4's batched judge call into `runtime.write`, because the draft runtime calls the verifier itself and does not go through the answer stream.
+    6. The wizard's results stay uncommitted, carried from ticket 18's decision 6. Simplest: change ticket 03's two tests in `ops/dayone/tests/test_results_document.py` to check the document's shape, then commit the wizard's results.
+  - **What this unblocks.** Nothing yet. Ticket 36 still waits on 30, and ticket 37 on 21.

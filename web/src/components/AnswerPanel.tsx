@@ -27,7 +27,7 @@ import { highlightsFor, passageFields, placeOf, recordKind, recordReference } fr
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
-import type { NotChecked, Removed } from "./Checks";
+import { notCheckedFor, type Removed } from "./Checks";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -123,7 +123,7 @@ function Announcer({ messages }: { messages: string[] }) {
 
 export type Opened = { id: string | null; sentence: number | null };
 
-function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
+export function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
   if (!evidence) return id;
   if (evidence.kind === "record") return copy.evidence.markerRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
@@ -165,7 +165,7 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,
 // a tooltip naming the source, and a click that opens it. Numbers are not tab stops; the markers carry
 // the keyboard to the same sources.
-function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
+export function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before
   // the numbers, so each list keeps its own place in the text.
@@ -189,14 +189,27 @@ function sentenceText(sentence: SentenceEvent, evidence: Record<string, Evidence
     if (mention.start < at) continue;
     parts.push(sentence.text.slice(at, mention.start));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
-    parts.push(
+    const num = (
       <Num
         key={mention.start}
         written={mention.text}
         check={tooltip ? { tooltip, tabStop: false, onOpen: () => open(mention.id) } : undefined}
-      />,
+      />
     );
-    at = mention.end;
+    // A number is a button, which a line may break after; the punctuation that follows it stays on its
+    // line, so no line starts with a period or a comma (ticket 35's review notes showed it).
+    const stop = /^[.,;:)\]]+/.exec(sentence.text.slice(mention.end))?.[0] ?? "";
+    parts.push(
+      stop ? (
+        <span key={mention.start} className="whitespace-nowrap">
+          {num}
+          {stop}
+        </span>
+      ) : (
+        num
+      ),
+    );
+    at = mention.end + stop.length;
   }
   // The sentence's last characters stay with its marker (CitationMarker's word joiner).
   parts.push(sentence.text.slice(at));
@@ -278,13 +291,6 @@ function names(run: Run): string[] {
   return [...found];
 }
 
-function notChecked(checks: ChecksEvent): NotChecked[] {
-  const clauses: NotChecked[] = ["sentences"];
-  if (checks.tools.includes("find_comparables")) clauses.push("comparables");
-  if (checks.tools.includes("search_passages")) clauses.push("passages");
-  return clauses;
-}
-
 function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWorking: boolean): AnswerState {
   const steps = stepsOf(run);
   const runId = run.runId ?? "";
@@ -354,7 +360,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       numbers: checks.numbers,
       dates: checks.dates,
       quotes: checks.quotes,
-      notChecked: notChecked(checks),
+      notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
     },

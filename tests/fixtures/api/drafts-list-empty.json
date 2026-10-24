@@ -1,0 +1,15 @@
+{
+  "groups": {
+    "to_check": [],
+    "checked": [],
+    "exported": []
+  },
+  "counts": {
+    "to_check": 0,
+    "checked": 0,
+    "exported": 0
+  },
+  "discarded": [],
+  "discarded_count": 0,
+  "total": 0
+}

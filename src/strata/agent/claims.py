@@ -91,4 +91,11 @@ def parse_claims(text: str) -> list[Claim]:
         raise ClaimsError(f"The answer is not JSON: {error}.") from error
     if not isinstance(answer, dict) or not isinstance(answer.get("claims"), list):
         raise ClaimsError("The answer must be an object with a list of claims.")
-    return [_claim(claim, number) for number, claim in enumerate(answer["claims"], 1)]
+    return claims_from(answer["claims"])
+
+
+def claims_from(items) -> list[Claim]:
+    """Claims from a list in the agreed shape, such as a writer's claims for one note."""
+    if not isinstance(items, list):
+        raise ClaimsError("The claims must be a list.")
+    return [_claim(claim, number) for number, claim in enumerate(items, 1)]

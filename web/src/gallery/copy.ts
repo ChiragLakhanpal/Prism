@@ -99,6 +99,11 @@ export const galleryCopy = {
       purpose:
         "Check a plan's parts: the trail above it, the check pill, and the plan check as a table from 1024 px and as activity cards below it. Activities with no signals fold behind a button.",
     },
+    drafts: {
+      title: "Drafts",
+      purpose:
+        "A draft's parts: the state stepper, the notes, the Sources list, the draft bar in each state with what takes its place, Check a plan's draft action and the Drafts tab's rows. Each sample is a draft the server wrote, recorded in tests/fixtures/api.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -214,6 +219,44 @@ export const galleryCopy = {
     removed: "Removed box",
     steps: "Steps",
     states: "States",
+    held: "Held, with the sentence that says what releases it",
+    busy: "Busy, with its busy label at the label's width",
+    stepper: "State stepper",
+    notes: "Review notes: a table on a wide column, cards on a narrow one",
+    sources: "Sources list",
+    draftBar: "Draft bar",
+    draftEnd: "What takes the bar's place",
+    draftAction: "Check a plan's draft action",
+    draftRows: "The Drafts tab's rows",
+  },
+  // The Drafts page's state labels (ticket 35).
+  draftStates: {
+    stepDraft: "Draft is the current state",
+    stepChecked: "Checked by you is the current state",
+    stepExported: "Exported is the current state",
+    stepTeammate: "As a teammate sees it",
+    stepDiscarded: "Discarded: a caption in its place",
+    table: "As a table, from a 560 px column",
+    cards: "As cards, below a 560 px column",
+    sourceStates: "One source opened, two not yet",
+    author: "Draft, as its author sees it, with Export to Word held",
+    saving: "Draft, saving the check",
+    checked: "Checked by you: Export to Word is the solid button",
+    exporting: "Checked by you, exporting",
+    teammate: "A teammate's draft: read only",
+    preview: "In a preview: both buttons held, with the preview's reason",
+    failed: "An act that failed",
+    conflict: "Reloaded after a change in another tab",
+    fresh: "Just exported",
+    revisit: "Exported, revisited",
+    missing: "Exported, the files missing",
+    discarded: "Discarded",
+    actionSome: "Activities with a signal: the button and its caption",
+    actionNone: "No activity with a signal",
+    actionAsOf: "With an as-of date in the address",
+    own: "Your own drafts, with a discarded one folded",
+    teammates: "As a teammate sees them",
+    noDrafts: "No drafts at all",
   },
 
   // The Numbers page's three tables: the value a tool sent, the rule Num follows and what it
@@ -446,7 +489,7 @@ export const galleryCopy = {
         abstention: null,
         checks_run: ["own_dates", "estimate", "closing_date"],
         thresholds: { completion_passed_min_estimated_usd: "1000000.00", days_before_closing: 90, actual_to_estimate_ratio: "2.0" },
-        counts: { activities: 5, checked: 5, not_fully_checked: 0, needs_a_look: 1, watch: 1, data_note: 1, marked: 3, unmarked: 2 },
+        counts: { activities: 5, checked: 5, not_fully_checked: 0, needs_a_look: 1, watch: 1, data_note: 1, signal: 2, marked: 3, unmarked: 2 },
         plan: {
           document_id: "sample-plan",
           project_id: "P000000",

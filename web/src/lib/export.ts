@@ -1,25 +1,15 @@
-// Exports are files the person saves. Strata sends nothing itself: this builds the file in
-// the browser and hands it to the browser's download, and nothing leaves the page.
+// Exports are files the person saves. Strata sends nothing itself: the server builds a draft's files and
+// keeps them with the export record (src/strata/drafts/files.py, ticket 35), and this hands one to the
+// browser's downloads, from Strata's own address. The evidence pack's CSV, with its quoting rules, is
+// written on the server, and tests/test_draft_files.py reads it back cell for cell.
 
-type Cell = string | number | null | undefined;
-
-// CSV with every field quoted when it holds a comma, a quote or a line break (RFC 4180),
-// and CRLF line ends, which Excel and STEP's import both read.
-export function toCsv(header: string[], rows: Cell[][]): string {
-  const field = (cell: Cell) => {
-    const text = cell === null || cell === undefined ? "" : String(cell);
-    return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-  };
-  return [header, ...rows].map((row) => row.map(field).join(",")).join("\r\n") + "\r\n";
-}
-
-export function saveFile(name: string, type: string, content: BlobPart): void {
-  const url = URL.createObjectURL(new Blob([content], { type }));
+// Save a file from Strata's own server. The person's press of the button that called this is the gesture
+// the browser needs, and the link's download attribute keeps it from opening in the page.
+export function download(href: string, name: string): void {
   const link = document.createElement("a");
-  link.href = url;
+  link.href = href;
   link.download = name;
   document.body.append(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 0);
 }
