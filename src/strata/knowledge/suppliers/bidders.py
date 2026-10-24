@@ -6,7 +6,9 @@ Bidder(s):", a consultant notice "Awarded Firm(s):", and a small assignment "Awa
 Firm/Individual:". Several awarded bidders on one notice are the members of a joint venture. A
 consultant notice adds lines such as "Registry ID: 24" and the evaluation scores; none of them is a
 bidder, and none is kept, because suppliers are never scored or ranked. A person hired as an
-individual consultant is written "Individual Consultant" and is never named.
+individual consultant is never named: a notice writes "Individual Consultant", or writes the person
+with a personal title such as DR. or MR., which the awards transform also reads as a person
+(strata.lakehouse.clean.titled).
 
 It reads strata.silver.notices.notice_text, the notice after the fetch removed contact details, and
 never the recorded files, which keep them on purpose (data/fixture/README.md). A name the fetch
@@ -20,6 +22,7 @@ import re
 from dataclasses import dataclass
 from importlib import resources
 
+from strata.lakehouse import clean
 from strata.lakehouse.engine import Engine
 
 AWARDED = ("Awarded Bidder(s):", "Awarded Firm(s):", "Awarded Firm/Individual:")
@@ -53,7 +56,7 @@ def _bidder(line: str, country: str, position: int) -> Bidder:
     written = WITH_ID.match(line)
     name, supplier_id = (written["name"], written["id"]) if written else (line, None)
     name = " ".join(name.split())
-    individual = name.upper() == INDIVIDUAL_CONSULTANT
+    individual = name.upper() == INDIVIDUAL_CONSULTANT or clean.titled(name)
     if individual or REMOVED in name or not name:
         name = None
     return Bidder(position, name, supplier_id, " ".join(country.split()) or None, individual)

@@ -89,8 +89,10 @@ def test_a_decision_writes_merge_with_the_reviewer_and_the_reason_and_the_next_r
                     json={"pair_id": LOSAI_PAIR, "decision": "merge", "reason": reason})
 
     assert response.status_code == 200 and response.json() == {"recorded": True}
-    assert query(database, "SELECT decision, reviewer, reason FROM strata.ops.supplier_review_decisions") == [
-        {"decision": "merge", "reviewer": "4021@1984", "reason": reason}]
+    assert query(database, "SELECT decision, reviewer, reason, left_name, right_name "
+                           "FROM strata.ops.supplier_review_decisions") == [
+        {"decision": "merge", "reviewer": "4021@1984", "reason": reason, "left_name": LOSAI_ROW["value"],
+         "right_name": LOSAI_AWARD["name"]}]
     with DuckDBEngine.open(database) as engine:
         resolve.run(engine, "after-the-decision", SameNameStandIn())
     assert query(database, "SELECT supplier_id, resolved_on FROM strata.silver.supplier_resolution "

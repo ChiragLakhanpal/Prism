@@ -9,10 +9,13 @@ Each supplier is one record across the contract awards and the award notices:
    notice writes with no ID, or a row of the FY2001 to FY2016 awards, whose dataset has no supplier_id
    column. Such a row may join a supplier with an ID, or other rows with no ID.
 3. config/thresholds.toml's [supplier_matching] routes each candidate pair by its match probability:
-   auto-merge, the model (strata.knowledge.suppliers.judge), or kept apart. A pair the model is not
-   sure enough of goes to a person, as does a pair whose merge would join two STEP supplier IDs by
+   auto-merge, the model (strata.knowledge.suppliers.judge), or kept apart. The model is asked about at
+   most model_pairs_per_run new pairs a night, the likeliest first, and the rest wait for a person
+   until a later night. A pair the model is not sure enough of goes to a person, as does a pair whose merge would join two STEP supplier IDs by
    name. A person's decision (strata.ops.supplier_review_decisions) outranks the thresholds and the
-   model.
+   model, while both of the pair's names are still the ones the person saw. A pair is keyed by row
+   positions, so a revised notice that lists its bidders in a new order may give the same key to
+   another firm; the decision is then not applied, and the pair is routed as if no one had decided.
 4. A joint venture stays its own supplier, linked to its members: JV- and its members' supplier IDs,
    as strata.gold.contract keys the awards' joint ventures, so the joint venture an award notice
    lists is the same supplier as the one the awards hold. A row of the FY2001 to FY2016 awards that
@@ -22,26 +25,32 @@ Each supplier is one record across the contract awards and the award notices:
 resolve() does the work on plain rows and returns plain rows, so the nightly task calls it the same
 way on DuckDB and on Databricks (spec, "Data and the lakehouse run"). run() reads the rows and the
 decisions, calls resolve(), and writes strata.ops.supplier_pairs and strata.silver.supplier_resolution,
-keeping only this run's rows in each. No supplier score, rank or profile is computed.
+keeping only this run's rows in each. When the judge cannot answer, run() logs it and resolves again
+with no judge, so the pairs in the middle wait for a person and the night's gold build goes on;
+resolve() itself stays strict, so ops/suppliers/judge_live.py still fails on a bad answer. No supplier
+score, rank or profile is computed.
 """
 
 from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import logging
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, replace
 from importlib import resources
 
 from strata.config import ConfigError, SupplierMatching, Thresholds, load_supplier_matching, load_thresholds
-from strata.knowledge.suppliers.judge import Judge, Judgement, Question, Side
+from strata.knowledge.suppliers.judge import Judge, JudgeError, Judgement, Question, Side
 from strata.knowledge.suppliers.matching import Pair, Record, candidate_pairs
 from strata.knowledge.suppliers.names import joint_venture_members
 from strata.lakehouse.engine import Engine
 
 RESOLVED_SOURCES = ("notices", "awards_fy2001_2016")  # the sources whose rows may lack a STEP supplier ID
 SPLIT_SOURCES = ("awards_fy2001_2016",)  # the sources whose one row may name a joint venture's members
+
+log = logging.getLogger("strata.suppliers")
 
 
 @dataclass(frozen=True)
@@ -73,17 +82,22 @@ class Routing:
     model_min: float
     auto_merge_min: float
     model_confidence_min: float
+    model_pairs_per_run: int
 
     @classmethod
     def from_thresholds(cls, thresholds: Thresholds) -> Routing:
         def value(name: str) -> float:
             return float(thresholds.value(f"supplier_matching.{name}"))
 
+        per_run = thresholds.value("supplier_matching.model_pairs_per_run")
         routing = cls(value("candidate_min_probability"), value("model_min_probability"),
-                      value("auto_merge_min_probability"), value("model_confidence_min"))
+                      value("auto_merge_min_probability"), value("model_confidence_min"), per_run)
         if not 0 < routing.candidate_min <= routing.model_min <= routing.auto_merge_min <= 1:
             raise ConfigError("In thresholds.toml, supplier_matching needs 0 < candidate_min_probability <= "
                               "model_min_probability <= auto_merge_min_probability <= 1.")
+        if isinstance(per_run, bool) or not isinstance(per_run, int) or per_run < 0:
+            raise ConfigError("In thresholds.toml, supplier_matching.model_pairs_per_run needs a whole number "
+                              f"of 0 or more, not {per_run!r}.")
         return routing
 
     def route(self, probability: float) -> str:
@@ -100,6 +114,8 @@ class Decision:
     decision: str  # merge or no_merge
     reviewer: str
     reason: str
+    left_name: str  # the pair's two names when the person decided
+    right_name: str
 
 
 @dataclass(frozen=True)
@@ -220,10 +236,11 @@ def _question(pair: Pair, sides: dict[str, SideOfPair]) -> Question:
     return Question(pair_id(pair.left, pair.right), side(pair.left), side(pair.right))
 
 
-def _judged(questions: list[Question], judge: Judge | None,
-            past: dict[str, PastJudgement]) -> dict[str, tuple[str, Judgement]]:
+def _judged(questions: list[Question], judge: Judge | None, past: dict[str, PastJudgement],
+            limit: int) -> dict[str, tuple[str, Judgement]]:
     """Each question's judgement and the judge that gave it: kept from an earlier run when the judge and
-    both names are the same, or asked now."""
+    both names are the same, or asked now. Questions come likeliest first, and at most limit are asked
+    now; the rest have no judgement this run."""
     if judge is None:
         return {}
     found, ask = {}, []
@@ -234,6 +251,7 @@ def _judged(questions: list[Question], judge: Judge | None,
             found[question.pair_id] = (earlier.model, earlier.judgement)
         else:
             ask.append(question)
+    ask = ask[:limit]
     for question, judgement in zip(ask, judge.decide(ask) if ask else [], strict=True):
         found[question.pair_id] = (judge.name, judgement)
     return found
@@ -260,7 +278,7 @@ def _routed(pair: Pair, sides: dict[str, SideOfPair], routing: Routing,
 
 
 def _by_a_person(routed: RoutedPair, decision: Decision | None) -> RoutedPair:
-    if decision is None:
+    if decision is None or (decision.left_name, decision.right_name) != (routed.left.name, routed.right.name):
         return routed
     return replace(routed, outcome=decision.decision, decided_by="person", reviewer=decision.reviewer,
                    decision_reason=decision.reason)
@@ -370,8 +388,9 @@ def resolve(rows: list[SupplierRow], routing: Routing, model: SupplierMatching, 
     members = _members(rows)
     sides = _sides(members)
     found = candidate_pairs(_records(sides, members), model, routing.candidate_min)
-    questions = [_question(pair, sides) for pair in found if routing.route(pair.probability) == "model"]
-    judged = _judged(questions, judge, past or {})
+    middle = sorted((pair for pair in found if routing.route(pair.probability) == "model"),
+                    key=lambda pair: (-pair.probability, pair_id(pair.left, pair.right)))
+    judged = _judged([_question(pair, sides) for pair in middle], judge, past or {}, routing.model_pairs_per_run)
     pairs = _apart_from_two_ids([_routed(pair, sides, routing, judged, decisions or {}) for pair in found])
     return Resolution(pairs, _resolved(members, pairs))
 
@@ -403,8 +422,8 @@ def read_rows(engine: Engine) -> list[SupplierRow]:
 
 
 def read_decisions(engine: Engine) -> dict[str, Decision]:
-    return {row["pair_id"]: Decision(row["decision"], row["reviewer"], row["reason"])
-            for row in _dicts(engine, "latest_decisions.sql")}
+    return {row["pair_id"]: Decision(row["decision"], row["reviewer"], row["reason"], row["left_name"],
+                                     row["right_name"]) for row in _dicts(engine, "latest_decisions.sql")}
 
 
 def read_past_judgements(engine: Engine) -> dict[str, PastJudgement]:
@@ -434,8 +453,15 @@ def run(engine: Engine, run_id: str, judge: Judge | None,
         clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
         thresholds: Thresholds | None = None, model: SupplierMatching | None = None) -> int:
     """Resolve every supplier row and write this run's pairs and resolution. Returns the rows written."""
-    resolution = resolve(read_rows(engine), Routing.from_thresholds(thresholds or load_thresholds()),
-                         model or load_supplier_matching(), judge, read_decisions(engine), read_past_judgements(engine))
+    rows, routing, model = read_rows(engine), Routing.from_thresholds(thresholds or load_thresholds()), \
+        model or load_supplier_matching()
+    decisions, past = read_decisions(engine), read_past_judgements(engine)
+    try:
+        resolution = resolve(rows, routing, model, judge, decisions, past)
+    except JudgeError as error:
+        log.warning("The judge %s could not answer (%s), so the pairs in the middle wait for a person.",
+                    judge.name, error)
+        resolution = resolve(rows, routing, model, None, decisions, past)
     matched_at = clock()
     written = engine.insert_rows("strata.ops.supplier_pairs", PAIR_COLUMNS,
                                  [_pair_row(run_id, matched_at, pair) for pair in resolution.pairs])

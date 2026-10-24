@@ -115,6 +115,16 @@ def test_an_awarded_bidder_written_without_an_id_keeps_its_name(fixture):
         (case["value"], None, False)]
 
 
+def test_an_awarded_bidder_written_with_a_personal_title_is_a_person_and_is_never_named():
+    """No fixture notice writes a person this way, so the notice text is made up. The awards transform
+    treats a supplier written with a personal title as a person (clean.titled), and so does the reader."""
+    from strata.knowledge.suppliers.bidders import read
+
+    [found] = read("Awarded Firm(s):\nDR. JANE DOE (123456)\nCountry: Kenya\n")
+
+    assert (found.name, found.step_supplier_id, found.individual_consultant) == (None, "123456", True)
+
+
 # ── Name matching, on plain rows ─────────────────────────────────────────
 # The matching function takes plain rows and returns plain rows, so the nightly task calls it the
 # same way on DuckDB and on Databricks (spec, "Data and the lakehouse run"). These rows are written
@@ -320,6 +330,30 @@ def test_changing_a_threshold_changes_the_routing_of_a_fixture_pair(writable, tm
     assert supplier == award["value"] if route == "auto_merge" else supplier.startswith("N-")
 
 
+class FailingJudge:
+    """A judge that cannot answer, as when Azure OpenAI times out or answers in the wrong shape."""
+
+    name = "failing judge"
+
+    def decide(self, questions):
+        from strata.knowledge.suppliers.judge import JudgeError
+
+        raise JudgeError("Azure OpenAI did not answer in 60 seconds.")
+
+
+def test_a_judge_that_cannot_answer_leaves_the_middle_to_a_person_and_the_run_goes_on(writable, caplog):
+    """One failed call to the model must not stop the night's gold build. The CHINA RAILWAY pair, which
+    the model decides when it answers, waits for a person instead."""
+    old, award = VALUES["fy2001-china-railway"], VALUES["award-china-railway-426408"]
+
+    resolve_again(writable, judge=FailingJudge())
+
+    [found] = routed(writable, old["value"], award["name"])
+    assert (found["route"], found["review_reason"], found["outcome"], found["model"]) == (
+        "person", "no_model", "waiting", None)
+    assert "failing judge could not answer" in caplog.text
+
+
 # ── Routing, on plain rows written by hand ───────────────────────────────
 
 def supplier_row(source_key, name, country="Kenya", project="P000001", supplier_id=None, source="awards_fy2001_2016",
@@ -380,6 +414,27 @@ def test_a_judgement_an_earlier_run_kept_is_not_asked_again_while_the_judge_and_
     assert judge.asked == [] and (found.outcome, found.decided_by) == ("no_merge", "model")
 
 
+def test_the_model_is_asked_about_at_most_model_pairs_per_run_new_pairs_and_the_rest_wait_for_a_person():
+    """config/thresholds.toml's model_pairs_per_run caps one night's calls to the model, the pairs Splink
+    is surer of first. A name cut off at 40 characters, on the same project, scores about 0.85; the
+    MWANGI pair, on two projects, about 0.80. With a limit of 1, the model is asked about the first,
+    and the MWANGI pair waits for a person until a later night."""
+    cut_off = [supplier_row("1500003", "OTIENO ROADS AND BRIDGES CONSTRUCTION", project="P000003"),
+               supplier_row("1500004", "OTIENO ROADS AND BRIDGES CONSTR", project="P000003")]
+    judge = CountingJudge()
+
+    pairs = resolved_by_hand(APART + cut_off, judge=judge, model_pairs_per_run=1).pairs
+
+    [asked] = judge.asked
+    assert {asked.left.name, asked.right.name} == {"OTIENO ROADS AND BRIDGES CONSTRUCTION",
+                                                   "OTIENO ROADS AND BRIDGES CONSTR"}
+    by_name = {pair.left.name: pair for pair in pairs}
+    mwangi = next(pair for name, pair in by_name.items() if name.startswith("MWANGI"))
+    otieno = next(pair for name, pair in by_name.items() if name.startswith("OTIENO"))
+    assert (otieno.route, otieno.decided_by, otieno.outcome) == ("model", "model", "merge")
+    assert (mwangi.route, mwangi.review_reason, mwangi.outcome) == ("person", "no_model", "waiting")
+
+
 def test_a_model_decision_below_the_confidence_threshold_goes_to_a_person():
     [found] = resolved_by_hand(APART, judge=CountingJudge(confidence=0.6)).pairs
 
@@ -389,7 +444,8 @@ def test_a_model_decision_below_the_confidence_threshold_goes_to_a_person():
 def test_a_persons_decision_outranks_the_thresholds_and_the_model():
     from strata.knowledge.suppliers.resolve import Decision
 
-    no = {"1500001/1|1500002/1": Decision("no_merge", "4021@1984", "Different directors, per the notices.")}
+    no = {"1500001/1|1500002/1": Decision("no_merge", "4021@1984", "Different directors, per the notices.",
+                                          "MWANGI WATER WORKS LTD", "MWANGI WATER WORKS LIMITED")}
 
     resolution = resolved_by_hand(APART, judge=CountingJudge(), decisions=no)
 
@@ -397,6 +453,19 @@ def test_a_persons_decision_outranks_the_thresholds_and_the_model():
     assert (found.outcome, found.decided_by, found.reviewer, found.decision_reason) == (
         "no_merge", "person", "4021@1984", "Different directors, per the notices.")
     assert len({row.supplier_id for row in resolution.rows}) == 2
+
+
+def test_a_persons_decision_is_not_applied_once_the_pair_names_another_firm():
+    """A pair is keyed by row positions. When a revised notice lists its bidders in a new order, the same
+    key names another firm, so a decision stands only while both names are the ones the person saw."""
+    from strata.knowledge.suppliers.resolve import Decision
+
+    seen = {"1500001/1|1500002/1": Decision("no_merge", "4021@1984", "Different directors, per the notices.",
+                                            "KAMAU WATER WORKS LTD", "MWANGI WATER WORKS LIMITED")}
+
+    [found] = resolved_by_hand(APART, judge=CountingJudge(), decisions=seen).pairs
+
+    assert (found.outcome, found.decided_by, found.reviewer) == ("merge", "model", None)
 
 
 # ── Labels and the auto-merge precision on them ──────────────────────────

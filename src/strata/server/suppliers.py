@@ -84,25 +84,27 @@ class SupplierLog:
         self.engine = engine
         self.now = now
 
-    def _write(self, query: str, pair_id: str, values: dict, stamped: str) -> None:
-        """One row about a pair of the latest run, stamped now in the column stamped names."""
+    def _write(self, query: str, pair_id: str, values: dict, stamped: str, kept: tuple[str, ...]) -> None:
+        """One row about a pair of the latest run, with the pair's columns kept names, stamped now in the
+        column stamped names."""
         engine = self.engine()
         try:
             found = _dicts(engine, "pair", {"pair_id": pair_id})
             if not found:
                 raise UnknownPair(pair_id)
             at = self.now()
-            engine.run(_query(query), {"pair_id": pair_id, "left_key": found[0]["left_key"],
-                                       "right_key": found[0]["right_key"], **values, stamped: at,
-                                       "public_from": at.astimezone(dt.UTC).date()})
+            engine.run(_query(query), {"pair_id": pair_id, **{column: found[0][column] for column in kept},
+                                       **values, stamped: at, "public_from": at.astimezone(dt.UTC).date()})
         finally:
             _close(engine)
 
     def decide(self, pair_id: str, decision: str, reviewer: str, reason: str) -> None:
-        """Record a person's decision. Raises UnknownPair for a pair the latest run did not find."""
+        """Record a person's decision, with the two names they saw. Raises UnknownPair for a pair the latest
+        run did not find."""
         self._write("record_decision", pair_id, {"decision": decision, "reviewer": reviewer, "reason": reason},
-                    "decided_at")
+                    "decided_at", ("left_key", "right_key", "left_name", "right_name"))
 
     def label(self, pair_id: str, label: str, labeler: str) -> None:
         """Record a person's label. Raises UnknownPair for a pair the latest run did not find."""
-        self._write("record_label", pair_id, {"label": label, "labeler": labeler}, "labeled_at")
+        self._write("record_label", pair_id, {"label": label, "labeler": labeler}, "labeled_at",
+                    ("left_key", "right_key"))
