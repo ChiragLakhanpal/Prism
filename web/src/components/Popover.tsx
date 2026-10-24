@@ -77,6 +77,9 @@ export function Tooltip({
           collisionPadding={16}
           onOpenAutoFocus={(event) => event.preventDefault()}
           onCloseAutoFocus={(event) => event.preventDefault()}
+          // Radix reads the focus that opened the tooltip as focus outside it, and would close it
+          // at once when Tab moves onto its trigger. The trigger's own blur closes it instead.
+          onFocusOutside={(event) => event.preventDefault()}
           onPointerEnter={() => clearTimeout(timer.current)}
           onPointerLeave={() => after(hide)}
           className={cx(POPOVER, "px-3 py-2 text-small", width)}

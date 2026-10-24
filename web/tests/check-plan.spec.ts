@@ -224,6 +224,18 @@ test("a number explains itself on focus, and What Strata found opens its definit
   await expect(term).toBeFocused();
 });
 
+test("tabbing onto a number opens its tooltip, which stays open while it has focus", async ({ page }) => {
+  await openPlan(page);
+  // After the breadcrumb's last link, the next tab stop is the finding's first count word.
+  await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Procurement" }).focus();
+
+  await page.keyboard.press("Tab");
+
+  await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
+  await page.waitForTimeout(200);
+  await expect(page.getByRole("tooltip")).toContainText("The activities I counted:KE-NWWDA-541055-CW-RFB");
+});
+
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {
   await openPlan(page, 1440, undefined, `${PLAN}#KE-NWWDA-207796-CS-INDV`);
 
