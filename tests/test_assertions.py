@@ -167,6 +167,19 @@ def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine)
     assert with_records <= asserted
 
 
+def test_the_source_registry_names_the_datasets_whose_rows_are_records_of_a_signed_contract(engine):
+    """A third awards dataset is one entry in config/sources.toml with assertion_form = "contract_record", and
+    no code change (CLAUDE.md rule 9). The run's contract records come only from the sources marked so."""
+    from strata import config
+
+    marked = {key for key, source in config.load_sources().items() if source.assertion_form == "contract_record"}
+    found = {row["source_key"] for row in rows(
+        engine, "SELECT DISTINCT source_key FROM strata.gold.assertion WHERE form = :form", form="contract_record")}
+
+    assert marked == {"awards", "awards_fy2001_2016"}
+    assert found and found <= marked
+
+
 # ── Disagreements ────────────────────────────────────────────────────────
 
 ISR_7 = "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress"
@@ -213,6 +226,27 @@ def test_the_reissued_icr_reviews_efficiency_rating_disagrees_with_the_icrs_and_
     assert efficiency["second_assertion_id"] == "strata.gold.passage:34056616/v2/5#P130164/efficiency"
     assert (efficiency["lean_assertion_id"], efficiency["rule_id"]) == (efficiency["second_assertion_id"], "outcome")
     assert efficiency["public_from"] == value("icr-review-reissue-date")
+
+
+def test_two_signed_amounts_within_the_tolerance_share_are_not_a_disagreement(engine, copy_db, tmp_path):
+    """The awards dataset gives KE-KIMAWASCO-141042-CW-RFB's contract 7,741,614.92 US dollars and the plan
+    7,741,367.65, a gap of less than 0.1 percent, likely two exchange rates. Below the share in
+    config/thresholds.toml ([disagreements] amount_tolerance_share) that is not a disagreement; with a share
+    of 0 it is, and a wider gap, as for KE-KIMAWASCO-142995-CW-RFB, always is."""
+    from strata import config
+
+    def amounts(held, subject):
+        return [row for row in disagreements(held, subject) if row["attribute"] == "signed_amount_usd"]
+
+    assert amounts(engine, "KE-KIMAWASCO-141042-CW-RFB") == []
+    assert amounts(engine, "KE-KIMAWASCO-142995-CW-RFB") != []
+    exact = tmp_path / "thresholds.toml"
+    exact.write_text((ROOT / "config" / "thresholds.toml").read_text().replace(
+        "amount_tolerance_share = 0.001", "amount_tolerance_share = 0", 1))
+
+    assertions.redetect(copy_db, ["P156634"], config.load_ladder(), config.load_thresholds(exact))
+
+    assert len(amounts(copy_db, "KE-KIMAWASCO-141042-CW-RFB")) == 1
 
 
 def test_every_assertion_has_its_subject_attribute_value_period_dates_source_and_evidence_tier(engine):

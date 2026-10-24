@@ -264,6 +264,9 @@ class Source:
     stratum: str | None = None
     # A record's own page on the World Bank's site, with {id} for its id, such as a notice's page.
     record_url: str | None = None
+    # The form of assertion each of its rows gives the evidence ladder, such as contract_record for a dataset of
+    # signed contracts (ticket 20, src/strata/knowledge/assertions.py).
+    assertion_form: str | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -284,7 +287,7 @@ class Source:
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url")
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url", "assertion_form")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables

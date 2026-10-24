@@ -33,7 +33,7 @@ from decimal import Decimal
 from importlib import resources
 
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
-from strata.config import SIDES, Ladder, load_ladder
+from strata.config import SIDES, Ladder, Thresholds, load_ladder, load_sources, load_thresholds
 from strata.knowledge.batch import Answer, BatchModel, BatchPending, RecordedBatch, Request
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
@@ -154,9 +154,9 @@ def isr_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Asse
 
 # ── The records of a package's signing ───────────────────────────────────
 
-CONTRACT_SOURCES = ("awards", "awards_fy2001_2016")  # the awards datasets (config/sources.toml)
 AWARD_NOTICE, SIGNED_STEP, PLAN_TYPE = "Contract Award", "Signed Contract", "Procurement Plan"
 CONTRACT_RECORD, AWARD_NOTICE_FORM, PLAN_ROW = "contract_record", "award_notice", "plan_row"
+
 # Each record's own name for the signing date and the signed amount, word for word: the awards datasets'
 # field, the award notice's label, and the Procurement Plan's step and column. The awards datasets give an
 # amount per supplier, so a contract's amount is gold.contract's column, which adds a joint venture's
@@ -171,6 +171,11 @@ RECORD_TABLES = {CONTRACT_RECORD: "strata.gold.contract", AWARD_NOTICE_FORM: "st
                  PLAN_ROW: "strata.silver.plan_rows"}
 
 
+def contract_sources() -> tuple[str, ...]:
+    """The datasets of signed contracts: the sources config/sources.toml marks assertion_form = contract_record."""
+    return tuple(key for key, source in load_sources().items() if source.assertion_form == CONTRACT_RECORD)
+
+
 def _record_key(row: dict) -> str:
     """The record's key in its table: the contract's or notice's id, or a plan row's version and reference,
     as check_plan's evidence id gives it."""
@@ -179,12 +184,13 @@ def _record_key(row: dict) -> str:
     return str(row["document_id"])
 
 
-def record_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Assertion]:
+def record_assertions(engine: Engine, project_id: str, ladder: Ladder, contracts: tuple[str, ...] | None = None
+                      ) -> list[Assertion]:
     """Each record's signing date and signed amount for each of the project's packages, about the signing,
     which each record dates for itself. A plan whose Actual Amount reads 0 gives no amount: the borrower has
     not filled it in, and a missing amount is never a difference."""
     made = []
-    for row in _rows(engine, _sql("records.sql"), project_id=project_id, contract_sources=",".join(CONTRACT_SOURCES),
+    for row in _rows(engine, _sql("records.sql"), project_id=project_id, contract_sources=",".join(contracts or contract_sources()),
                      award_notice=AWARD_NOTICE, contract_record=CONTRACT_RECORD, award_notice_form=AWARD_NOTICE_FORM,
                      notices_source="notices", plan_row=PLAN_ROW, documents_source="documents", plan_type=PLAN_TYPE,
                      signed_step=SIGNED_STEP):
@@ -541,13 +547,15 @@ def overlap(a: Assertion, b: Assertion) -> tuple[str, dt.date, dt.date] | None:
     return narrower.period_event, start, end
 
 
-def cannot_both_be_true(a: Assertion, b: Assertion) -> bool:
+def cannot_both_be_true(a: Assertion, b: Assertion, amount_tolerance: Decimal = Decimal(0)) -> bool:
     """Two ratings of one scale that differ, a rating and an account (or two accounts) on different sides of
-    the line, two different dates, or two different amounts."""
+    the line, two different dates, or two amounts that differ by more than the tolerance share of the larger
+    one (config/thresholds.toml, disagreements.amount_tolerance_share)."""
     if "judgment" in (a.value_form, b.value_form):
         return a.judgment is not None and b.judgment is not None and a.judgment != b.judgment
     if a.value_form == "amount":
-        return Decimal(a.value) != Decimal(b.value)
+        first, second = Decimal(a.value), Decimal(b.value)
+        return abs(first - second) > amount_tolerance * max(abs(first), abs(second))
     return a.value.strip().lower() != b.value.strip().lower()
 
 
@@ -591,8 +599,9 @@ def written_order(a: Assertion, b: Assertion) -> tuple[Assertion, Assertion]:
     return first, second
 
 
-def detect(assertions: list[Assertion], ladder: Ladder) -> list[Disagreement]:
+def detect(assertions: list[Assertion], ladder: Ladder, thresholds: Thresholds | None = None) -> list[Disagreement]:
     """Every disagreement among the assertions, each decided by the ladder."""
+    tolerance = Decimal(str((thresholds or load_thresholds()).value("disagreements.amount_tolerance_share")))
     groups: dict[tuple[str, str, str], list[Assertion]] = {}
     for assertion in assertions:
         groups.setdefault((assertion.subject_kind, assertion.subject_id, assertion.attribute), []).append(assertion)
@@ -601,7 +610,7 @@ def detect(assertions: list[Assertion], ladder: Ladder) -> list[Disagreement]:
         for at, a in enumerate(group):
             for b in group[at + 1:]:
                 period = overlap(a, b)
-                if period is None or _same_report(a, b) or not cannot_both_be_true(a, b):
+                if period is None or _same_report(a, b) or not cannot_both_be_true(a, b, tolerance):
                     continue
                 first, second = written_order(a, b)
                 leaned, rule = lean(first, second, ladder)
@@ -639,32 +648,34 @@ def write(engine: Engine, projects: list[str], assertions: list[Assertion], reje
 
 
 def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladder | None = None,
-        run_id: str = "local", clock: Callable[[], dt.datetime] = _now) -> RunReport:
+        thresholds: Thresholds | None = None, run_id: str = "local", clock: Callable[[], dt.datetime] = _now
+        ) -> RunReport:
     """Every assertion of the run's projects, rebuilt, with the rejected ones counted and the disagreements
     between the rest decided by the ladder. A run with no live model passes HeldAnswers, so the assertions
     read from text come from the answers bronze holds."""
     ladder = ladder or load_ladder()
     made, rejected, pending = [], [], 0
+    contracts = contract_sources()
     for project_id in projects:
         dates = periods(engine, project_id)
-        made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder)
+        made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder, contracts)
         made += ieg_assertions(engine, project_id, ladder, dates)
         more, less, waiting = text_assertions(engine, project_id, ladder, model, run_id, clock, dates)
         made += more
         rejected += less
         pending += waiting
-    found = detect(made, ladder)
+    found = detect(made, ladder, thresholds)
     write(engine, projects, made, rejected, found)
     return RunReport(len(made), len(rejected), len(found), pending)
 
 
-def redetect(engine: Engine, projects: list[str], ladder: Ladder) -> int:
-    """Decide the run's projects' disagreements again from the assertions held, as a ladder change needs no new
-    reading. Returns how many it found."""
+def redetect(engine: Engine, projects: list[str], ladder: Ladder, thresholds: Thresholds | None = None) -> int:
+    """Decide the run's projects' disagreements again from the assertions held, as a change to the ladder or to
+    the thresholds needs no new reading. Returns how many it found."""
     held = [from_row(row) for project_id in projects
             for row in _rows(engine, "SELECT * FROM strata.gold.assertion WHERE project_id = :project_id",
                              project_id=project_id)]
-    found = detect(held, ladder)
+    found = detect(held, ladder, thresholds)
     for project_id in projects:
         engine.run("DELETE FROM strata.gold.disagreement WHERE project_id = :project_id", {"project_id": project_id})
     return engine.insert_rows("strata.gold.disagreement", DISAGREEMENT_COLUMNS, [astuple(row) for row in found])

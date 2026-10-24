@@ -21,6 +21,9 @@
 #                     or, for a source its own reader fetches, the SQL file of its first transform
 #   stratum           optional: What, How or Why (GLOSSARY.md)
 #   limitations       optional: what a person should know about the source, in full sentences
+#   assertion_form    optional: the form of assertion each of its rows gives the evidence ladder
+#                     (ticket 20). contract_record marks a dataset of signed contracts, whose signing
+#                     dates and amounts become assertions about each package.
 #
 # What the Data readiness page and the Sources and licenses page show (ticket 16). Their words are
 # read by people, so the gate's copy lint checks every text value in this file (web/lint/run.ts).
@@ -119,6 +122,7 @@ page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
 fixture_dataset = "awards"
+assertion_form = "contract_record"
 cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "awards"
@@ -174,6 +178,7 @@ page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
 fixture_dataset = "awards_fy2001_2016"
+assertion_form = "contract_record"
 cadence = "frozen"
 license = "CC BY 4.0"
 silver_transform = "awards_fy2001_2016"
