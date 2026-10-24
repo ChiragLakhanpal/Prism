@@ -17,10 +17,12 @@ each project of the run.
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import json
 import re
 from collections.abc import Callable
 from dataclasses import astuple, dataclass, fields
+from decimal import Decimal
 from importlib import resources
 
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
@@ -378,27 +380,145 @@ def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: Batc
     return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected
 
 
+# ── Disagreements and the evidence ladder ────────────────────────────────
+
+# A period that names one event of its subject, which each source dates for itself: two sources about a
+# package's signing describe the same moment, whatever date each gives it.
+ONE_TIME_EVENTS = (CONTRACT_SIGNING,)
+
+
+@dataclass(frozen=True)
+class Disagreement:
+    """One row of strata.gold.disagreement (its table definition says what each column holds)."""
+
+    disagreement_id: str
+    project_id: str
+    subject_kind: str
+    subject_id: str
+    attribute: str
+    first_assertion_id: str
+    second_assertion_id: str
+    period_event: str
+    period_start: dt.date
+    period_end: dt.date
+    lean_assertion_id: str | None
+    rule_id: str | None
+    replaced_on: dt.date | None
+    public_from: dt.date
+
+
+DISAGREEMENT_COLUMNS = tuple(f.name for f in fields(Disagreement))
+
+
+def overlap(a: Assertion, b: Assertion) -> tuple[str, dt.date, dt.date] | None:
+    """The period two assertions both describe, or None when their periods do not meet. An ISR's period
+    starts the day after the ISR before it, so two ISRs never meet."""
+    if a.period_event == b.period_event and a.period_event in ONE_TIME_EVENTS:
+        return a.period_event, min(a.period_start, b.period_start), max(a.period_end, b.period_end)
+    start, end = max(a.period_start, b.period_start), min(a.period_end, b.period_end)
+    if start > end:
+        return None
+    narrower = b if (b.period_start, b.period_end) == (start, end) else a
+    return narrower.period_event, start, end
+
+
+def cannot_both_be_true(a: Assertion, b: Assertion) -> bool:
+    """Two ratings of one scale that differ, a rating and an account (or two accounts) on different sides of
+    the line, two different dates, or two different amounts."""
+    if "judgment" in (a.value_form, b.value_form):
+        return a.judgment is not None and b.judgment is not None and a.judgment != b.judgment
+    if a.value_form == "amount":
+        return Decimal(a.value) != Decimal(b.value)
+    return a.value.strip().lower() != b.value.strip().lower()
+
+
+def _same_report(a: Assertion, b: Assertion) -> bool:
+    """Two assertions of one report, or of two versions of it: a report re-issued under the same number
+    replaces its earlier version rather than disagreeing with it (ticket 11's rule)."""
+    if a.document_id == b.document_id:
+        return True
+    return (a.source_key == b.source_key == "documents" and a.report_number is not None
+            and (a.project_id, a.document_type, a.report_number) == (b.project_id, b.document_type, b.report_number))
+
+
+def lean(a: Assertion, b: Assertion, ladder: Ladder) -> tuple[str | None, str | None]:
+    """The side the ladder leans on and the rule that decided, or (None, None) when it ranks both the same."""
+    rule = ladder.rule_for(a.attribute)
+    if rule is not None and rule.tiers:
+        rank = {side.assertion_id: rule.tiers.index(side.evidence_tier) if side.evidence_tier in rule.tiers
+                else len(rule.tiers) for side in (a, b)}
+        if rank[a.assertion_id] != rank[b.assertion_id]:
+            return min((a, b), key=lambda side: rank[side.assertion_id]).assertion_id, rule.id
+    elif rule is not None:
+        def at_the_moment(side: Assertion) -> bool:
+            return side.evidence_tier in rule.at_the_moment or side.period_start <= side.made_at <= side.period_end
+
+        if at_the_moment(a) != at_the_moment(b):
+            return (a if at_the_moment(a) else b).assertion_id, rule.id
+    for tie in ladder.ties:
+        if tie == "tieSpecific" and ladder.specificity_of(a.form) != ladder.specificity_of(b.form):
+            return min((a, b), key=lambda side: ladder.specificity_of(side.form)).assertion_id, tie
+        if tie == "tieRecent" and (a.made_at, a.public_from) != (b.made_at, b.public_from):
+            return max((a, b), key=lambda side: (side.made_at, side.public_from)).assertion_id, tie
+    return None, None
+
+
+def written_order(a: Assertion, b: Assertion) -> tuple[Assertion, Assertion]:
+    """The two sides in the order they were written."""
+    first, second = sorted((a, b), key=lambda side: (side.made_at, side.public_from, side.assertion_id))
+    return first, second
+
+
+def detect(assertions: list[Assertion], ladder: Ladder) -> list[Disagreement]:
+    """Every disagreement among the assertions, each decided by the ladder."""
+    groups: dict[tuple[str, str, str], list[Assertion]] = {}
+    for assertion in assertions:
+        groups.setdefault((assertion.subject_kind, assertion.subject_id, assertion.attribute), []).append(assertion)
+    found = []
+    for group in groups.values():
+        for at, a in enumerate(group):
+            for b in group[at + 1:]:
+                period = overlap(a, b)
+                if period is None or _same_report(a, b) or not cannot_both_be_true(a, b):
+                    continue
+                first, second = written_order(a, b)
+                leaned, rule = lean(first, second, ladder)
+                replaced = [day for day in (first.replaced_on, second.replaced_on) if day is not None]
+                key = hashlib.sha256(f"{first.assertion_id}\n{second.assertion_id}".encode()).hexdigest()[:16]
+                found.append(Disagreement(key, first.project_id, first.subject_kind, first.subject_id, first.attribute,
+                                          first.assertion_id, second.assertion_id, *period, leaned, rule,
+                                          min(replaced) if replaced else None,
+                                          max(first.public_from, second.public_from)))
+    return found
+
+
 # ── The run ──────────────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
 class RunReport:
     assertions: int
     rejected: int
+    disagreements: int
 
 
-def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection]) -> int:
-    """Rebuild strata.gold.assertion and strata.ops.assertion_rejections for the run's projects."""
+def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection],
+          disagreements: list[Disagreement]) -> int:
+    """Rebuild strata.gold.assertion, strata.gold.disagreement and strata.ops.assertion_rejections for the run's
+    projects. Returns how many rows it wrote."""
     for project_id in projects:
-        engine.run("DELETE FROM strata.gold.assertion WHERE project_id = :project_id", {"project_id": project_id})
-        engine.run("DELETE FROM strata.ops.assertion_rejections WHERE project_id = :project_id",
-                   {"project_id": project_id})
-    engine.insert_rows("strata.ops.assertion_rejections", REJECTION_COLUMNS, [astuple(row) for row in rejections])
-    return engine.insert_rows("strata.gold.assertion", ASSERTION_COLUMNS, [astuple(row) for row in assertions])
+        for table in ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections"):
+            engine.run(f"DELETE FROM {table} WHERE project_id = :project_id",  # sql-lint: names only
+                       {"project_id": project_id})
+    return (engine.insert_rows("strata.ops.assertion_rejections", REJECTION_COLUMNS, [astuple(row) for row in rejections])
+            + engine.insert_rows("strata.gold.assertion", ASSERTION_COLUMNS, [astuple(row) for row in assertions])
+            + engine.insert_rows("strata.gold.disagreement", DISAGREEMENT_COLUMNS,
+                                 [astuple(row) for row in disagreements]))
 
 
 def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder: Ladder | None = None,
         run_id: str = "local", clock: Callable[[], dt.datetime] = _now) -> RunReport:
-    """Every assertion of the run's projects, rebuilt, with the rejected ones counted."""
+    """Every assertion of the run's projects, rebuilt, with the rejected ones counted and the disagreements
+    between the rest decided by the ladder."""
     ladder = ladder or load_ladder()
     made, rejected = [], []
     for project_id in projects:
@@ -406,7 +526,40 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder
         more, less = text_assertions(engine, project_id, ladder, model, run_id, clock)
         made += more
         rejected += less
-    return RunReport(write(engine, projects, made, rejected), len(rejected))
+    found = detect(made, ladder)
+    write(engine, projects, made, rejected, found)
+    return RunReport(len(made), len(rejected), len(found))
+
+
+def redetect(engine: Engine, projects: list[str], ladder: Ladder) -> int:
+    """Decide the run's projects' disagreements again from the assertions held, as a ladder change needs no new
+    reading. Returns how many it found."""
+    held = [from_row(row) for project_id in projects
+            for row in _rows(engine, "SELECT * FROM strata.gold.assertion WHERE project_id = :project_id",
+                             project_id=project_id)]
+    found = detect(held, ladder)
+    for project_id in projects:
+        engine.run("DELETE FROM strata.gold.disagreement WHERE project_id = :project_id", {"project_id": project_id})
+    return engine.insert_rows("strata.gold.disagreement", DISAGREEMENT_COLUMNS, [astuple(row) for row in found])
+
+
+DATES = {"period_start", "period_end", "made_at", "replaced_on", "public_from"}
+INTS = {"version", "sequence", "pdf_page"}
+
+
+def typed(column: str, value):
+    """A column of strata.gold.assertion or strata.gold.disagreement as Python holds it, from DuckDB's types or
+    the warehouse's text."""
+    if column in DATES:
+        return _date(value)
+    if column in INTS:
+        return _int(value)
+    return None if value is None else str(value)
+
+
+def from_row(row: dict) -> Assertion:
+    """An assertion as a query of strata.gold.assertion returns it."""
+    return Assertion(**{column: typed(column, row[column]) for column in ASSERTION_COLUMNS})
 
 
 PROJECTS = "SELECT DISTINCT project_id FROM strata.silver.documents ORDER BY project_id"

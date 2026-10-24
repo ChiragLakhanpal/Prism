@@ -18,6 +18,7 @@ sys.path.insert(0, str(REPO / "ops" / "bundle"))
 
 import check  # noqa: E402
 
+from strata.knowledge import assertions  # noqa: E402
 from strata.lakehouse import catalog, nightly, passages, plans  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, Result  # noqa: E402
 
@@ -114,6 +115,7 @@ def deployed_warehouse():
     plans.run_on_fixture(engine)
     nightly.run_locally(engine)
     passages.run_on_fixture(engine)
+    assertions.run_on_fixture(engine)
     return engine
 
 

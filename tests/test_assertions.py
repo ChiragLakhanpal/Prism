@@ -116,6 +116,54 @@ def test_each_version_of_the_icr_review_keeps_its_ratings_and_the_reissue_replac
     assert {row["made_at"] for row in reissue.values()} == {value("icr-review-reissue-date")}
 
 
+# ── Disagreements ────────────────────────────────────────────────────────
+
+ISR_7 = "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress"
+PARAGRAPH_78 = "strata.gold.passage:31525018/v1/78#P130164/pdo_progress"
+
+
+def disagreements(engine, subject_id: str) -> list[dict]:
+    return rows(engine, "SELECT * FROM strata.gold.disagreement WHERE subject_id = :subject_id "
+                        "ORDER BY attribute, public_from", subject_id=subject_id)
+
+
+def test_isr_7_and_the_icrs_paragraph_78_are_one_disagreement_and_the_ladder_leans_on_the_icr(engine):
+    """Criterion 1 at seam 1: the mid-term review (May 16, 2016) falls in ISR 7's period, the day after ISR 6
+    to August 26, 2016, and in no other ISR's. Satisfactory and "part of the PDO was compromised" cannot both
+    be true, and progress towards the PDO is an outcome judgment, so the ICR outranks the ISR."""
+    found = [row for row in disagreements(engine, "P130164") if row["attribute"] == "pdo_progress"]
+
+    assert [(row["first_assertion_id"], row["second_assertion_id"]) for row in found] == [(ISR_7, PARAGRAPH_78)]
+    [paragraph] = found
+    assert (paragraph["lean_assertion_id"], paragraph["rule_id"]) == (PARAGRAPH_78, "outcome")
+    assert paragraph["period_event"] == "mid_term_review"
+    assert paragraph["period_start"] == paragraph["period_end"] == value("mid-term-review")
+    assert paragraph["public_from"] == value("icr-disclosed")
+    assert paragraph["replaced_on"] is None
+
+
+def test_isr_ratings_of_successive_periods_never_disagree_with_each_other(engine):
+    """Criterion 2 at seam 1: ISRs 1 to 13 rate successive periods, so a changed rating is a trajectory."""
+    between_isrs = rows(engine, "SELECT d.disagreement_id FROM strata.gold.disagreement AS d "
+                                "JOIN strata.gold.assertion AS a ON a.assertion_id = d.first_assertion_id "
+                                "JOIN strata.gold.assertion AS b ON b.assertion_id = d.second_assertion_id "
+                                "WHERE a.evidence_tier = :isr AND b.evidence_tier = :isr", isr="isr")
+
+    assert len(isr_assertions(engine)) == 13
+    assert between_isrs == []
+
+
+def test_the_reissued_icr_reviews_efficiency_rating_disagrees_with_the_icrs_and_ieg_outranks_the_icr(engine):
+    """The ICR rated efficiency Substantial (paragraph 44); the 2023 re-issue of the ICR Review rated it Modest.
+    The 2020 version gave no efficiency rating, so it is in no disagreement."""
+    [efficiency] = [row for row in disagreements(engine, "P130164") if row["attribute"] == "efficiency"]
+
+    assert efficiency["first_assertion_id"] == "strata.gold.passage:31525018/v1/44#P130164/efficiency"
+    assert efficiency["second_assertion_id"] == "strata.gold.passage:34056616/v2/5#P130164/efficiency"
+    assert (efficiency["lean_assertion_id"], efficiency["rule_id"]) == (efficiency["second_assertion_id"], "outcome")
+    assert efficiency["public_from"] == value("icr-review-reissue-date")
+
+
 def test_every_assertion_has_its_subject_attribute_value_period_dates_source_and_evidence_tier(engine):
     """Criterion 8: the schema every assertion keeps (spec, "The knowledge model")."""
     required = ("assertion_id", "subject_kind", "subject_id", "project_id", "attribute", "attribute_kind",

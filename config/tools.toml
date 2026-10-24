@@ -239,3 +239,53 @@ fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "
           "parse_failures", "measured", "stress_shelf"]
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
+
+[tools.get_disagreements]
+description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \
+An assertion is a dated claim a source made: a rating in an ISR, an ICR, an ICR Review, a PPAR or a PAD, an \
+account in a report of how the project was going at a named moment, or a contract's signing date or amount in \
+the awards, an award notice or a Procurement Plan. A disagreement is two assertions about the same thing, for \
+the same or an overlapping period, that cannot both be true. Each row gives both sides in the order they were \
+written, each with its value or quote, its date, its evidence tier and its evidence id; the side Strata leans \
+on and the id of the evidence ladder's rule that decided; and what you would \
+treat as true if you kept the other side. Ratings of successive periods, such as one ISR after another, are \
+a trajectory, not a disagreement, and come back under trajectories. A report re-issued under the same number \
+replaces its earlier version, unless the as-of date comes before the re-issue. It also counts the assertions \
+read from the project's reports that were left out because their quote was not word for word on the cited page. \
+When an answer rests on one side of a disagreement, show both sides."""
+adapter = "strata.tools.get_disagreements:get_disagreements"
+benchmark = "get-disagreements-p130164"
+sources = ["documents", "ieg_ratings", "awards", "awards_fy2001_2016", "notices"]
+
+[[tools.get_disagreements.parameters]]
+name = "subject_id"
+type = "string"
+required = true
+description = """The project ID, P followed by six digits, such as P130164, for the disagreements about the \
+project and its packages; or a package's STEP reference, such as KE-MOWASCO-307378-GO-RFB, for that package's."""
+
+[[tools.get_disagreements.parameters]]
+name = "attribute"
+type = "string"
+required = false
+description = """Only disagreements and trajectories about this attribute, as the evidence ladder names it, such \
+as pdo_progress for progress towards the PDO or signed_on for a contract's signing date. Leave it out for all \
+of them."""
+
+[[tools.get_disagreements.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only assertions whose sources were public on or before this date, each report in the \
+version that was current then. Leave it out for today."""
+
+[tools.get_disagreements.result]
+row = """One disagreement: its subject, attribute and period, both sides in the order written, the side \
+Strata leans on with the rule that decided, and what you would treat as true if you kept the other side."""
+row_fields = ["evidence_id", "public_from", "source", "disagreement_id", "subject_kind", "subject_id", "project_id",
+              "attribute", "attribute_kind", "period", "sides", "lean_assertion_id", "other_assertion_id", "rule_id",
+              "if_you_keep"]
+source_fields = ["table", "project_id", "subject_id", "evidence_ids"]
+fields = ["subject", "trajectories", "rejected"]
+reasons = ["replaced_by_later_version"]
+abstentions = ["unknown_subject", "unknown_attribute", "no_assertions"]

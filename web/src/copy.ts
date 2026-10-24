@@ -357,6 +357,14 @@ export const copy = {
         running: () => "I'm looking for lessons.",
         done: (count: number, countText: string) => `I found ${countText} ${count === 1 ? "lesson" : "lessons"}.`,
       },
+      get_disagreements: {
+        running: (scope: string | null) =>
+          scope ? `I'm checking where sources disagree about ${scope}.` : "I'm checking where sources disagree.",
+        done: (count: number, countText: string, scope: string | null) =>
+          count === 0
+            ? `I found no sources that disagree${scope ? ` about ${scope}` : ""}.`
+            : `I found ${countText} ${count === 1 ? "disagreement" : "disagreements"} between sources${scope ? ` about ${scope}` : ""}.`,
+      },
     },
     otherTool: { running: (tool: string) => `I'm using ${tool}.`, done: (tool: string) => `I used ${tool}.` },
     write: {

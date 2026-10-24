@@ -46,6 +46,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
+from strata.knowledge import assertions  # noqa: E402
 from strata.lakehouse import catalog, ground_truth, nightly, passages, plans, schedule  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
@@ -104,7 +105,7 @@ def _table(columns, rows) -> list[str]:
 def _local_engine() -> DuckDBEngine:
     """The fixture database the gate builds or, when it is missing, the same tables built in memory:
     the demo plan's recorded Procurement Plans, then the nightly job's tasks over the recorded pages,
-    then the first documents read into passages."""
+    then the first documents read into passages, then their assertions and disagreements."""
     if FIXTURE_DB.exists():
         return DuckDBEngine.open(FIXTURE_DB, read_only=True)
     engine = DuckDBEngine.open()
@@ -112,6 +113,7 @@ def _local_engine() -> DuckDBEngine:
     plans.run_on_fixture(engine)
     nightly.run_locally(engine, run_id="fixture")
     passages.run_on_fixture(engine, run_id="fixture")
+    assertions.run_on_fixture(engine, run_id="fixture")
     return engine
 
 
