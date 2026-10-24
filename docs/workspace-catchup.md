@@ -123,6 +123,8 @@ If the name of fairshare's job does not contain "fairshare", add `--fairshare-jo
 
 ## Ticket 08, step 1 of 2: read P156634's Procurement Plans on the warehouse
 
+**First run on October 24, 2026 (orchestrator):** it stopped with "Parameterized query's parameters are too large: the combined size of parameters is 4911047, exceeding the limit of 1048576 characters." The warehouse engine sent 100 layout pages in one INSERT. `WarehouseEngine.insert_rows` now also splits a chunk when its values pass 900,000 characters (`tests/test_engine.py`). The pages parsed before the stop stayed in bronze, and the second run is recorded below when it finishes.
+
 The merger parked this step on October 23, 2026, after merge commit eba87ed. It needs the Databricks keys in `.env`. Run it after ticket 04's step 1, because the deploy makes the plan tables and the volume `strata.bronze.files`. Run it after ticket 03's step 2 too, because day-one test 3 decides the layout parser. If test 3 failed in `docs/day-one-results.md`, stop here: Strata has an adapter only for `ai_parse_document`, so a Content Understanding adapter must first join `PARSERS` in `src/strata/reader/layout.py`.
 
 Run this from the main checkout:
@@ -458,6 +460,8 @@ It worked if the deploy exits 0 with its last line `Strata is running at https:/
 
 ## Ticket 16, step 1 of 4: deploy the Strata dashboard with the bundle
 
+**Ran on October 24, 2026 (orchestrator).** Ticket 04's step 1 ran this deploy from 3b96b34, after 69e97c8. The dashboard Strata (01f1cfd370f01f6ab7aafcb4fffadd48) is ACTIVE and its only page is Data readiness; `strata.ops.readiness_snapshot` was created. The second run printed "No changes." The page fills once the nightly job's readiness task has run.
+
 The merger parked this step on October 24, 2026, after merge commit 69e97c8. It needs the Databricks keys in `.env`, including `DATABRICKS_WAREHOUSE_ID`, because the dashboard's queries run on that SQL warehouse. Ticket 04's step 1 runs the same command. Run it again here if that deploy came from a commit before 69e97c8, because the dashboard and its snapshot table arrived in this merge.
 
 Run this from the main checkout, and then run it a second time:
@@ -520,6 +524,8 @@ Run this in the workspace's SQL editor:
 It worked if it returns one row for your user id with `times_opened` 1 (criterion 5, live write). Then press Escape to close the drawer, click [1] again and run the query again. It must still return one row for you, now with `times_opened` 2. This proves the MERGE runs on Delta as the App's own service principal. If the first query returns no row, check that the deploy's step 6 ran ("Letting the app's own service principal write usage events, agent runs and opened sources to strata.ops."), and that the address has no `?view=`, because a preview of another view records nothing.
 
 ## Ticket 19, step 1 of 5: deploy the bundle with the supplier tables
+
+**Ran on October 24, 2026 (orchestrator).** Ticket 04's step 1 ran this deploy from 3b96b34, after a7bcc99, and no earlier deploy existed, so the ALTER TABLE lines were not needed. The six tables and the view were listed as new. `SHOW CREATE TABLE strata.gold.contract_supplier` shows `contract_id STRING NOT NULL` and `wb_contract_number STRING` with no NOT NULL; `strata.gold.supplier` shows `resolved_on STRING NOT NULL`.
 
 The merger parked this step on October 24, 2026, after merge commit a7bcc99. It needs the Databricks keys in `.env`. Ticket 04's step 1 runs the same deploy. Run it again here if that deploy came from a commit before a7bcc99, because the supplier tables arrived in this merge.
 
