@@ -184,6 +184,8 @@ test("while a project loads, its h1 and last crumb name it, and its section tabs
   // A route change focuses the h1, so it names the project while the bars stand in for its name.
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Project P156634");
   await expect(page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]")).toHaveText("Project P156634");
+  // A heading holds only phrasing content, so the bars inside it are spans, never a div.
+  await expect(page.getByRole("main").locator("h1 div")).toHaveCount(0);
   const loading = await tabTops(page, widths);
   expect(await axe(page), "loading at 390 px").toEqual([]);
 

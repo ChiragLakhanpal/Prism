@@ -426,7 +426,9 @@ export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, stic
   return (
     <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "lg:sticky lg:top-0 lg:z-10")}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
-        <div className="min-w-0">
+        {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
+            is as wide as the name it stands for. */}
+        <div className="min-w-0 lg:flex-1">
           {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
@@ -434,6 +436,11 @@ export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, stic
       </div>
     </div>
   );
+}
+
+// "Procurement Plan of October 9, 2026", with the date on one line, as every sentence date is.
+export function planSubtitle(planDate: string): ReactNode {
+  return <Fill template={words.subtitle} slots={{ date: day(planDate) }} />;
 }
 
 export function checkPill(result: CheckedPlan): ReactNode {

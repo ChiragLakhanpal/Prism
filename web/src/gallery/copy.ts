@@ -137,7 +137,7 @@ export const galleryCopy = {
     planChecks: "Plan checks",
     breadcrumb: "The trail above a project's pages",
     pill: "Check pill",
-    planReady: "A checked plan, with three activities folded",
+    planReady: "A checked plan, with two activities folded",
     planOpen: "The fold open",
     planPartial: "A partial check: one activity the plan gives no planned date for",
     ratios: "Ratios",

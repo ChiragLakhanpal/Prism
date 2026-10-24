@@ -21,7 +21,7 @@ import { Answer } from "../components/Answer";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
-import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedPlan } from "../components/PlanCheck";
+import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { Alert } from "../components/Alert";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/BoxBand";
 import { Button } from "../components/Button";
@@ -918,7 +918,7 @@ export const PAGES: GalleryPage[] = [
               level={2}
               sticky={false}
               agency={planSample.plan.implementing_agency}
-              plan={copy.checkPlan.subtitle(date(planSample.plan.plan_date))}
+              plan={planSubtitle(planSample.plan.plan_date)}
               pill={checkPill(planSample)}
             />
             <PlanCheck result={planSample} />

@@ -305,6 +305,13 @@ test("below 1024 px the count line's row opens the What Strata found definition,
   expect(await term.evaluate(textLines)).toBe(1);
 });
 
+test("the plan's date in the header keeps to one line, even at 320 px", async ({ page }) => {
+  await openPlan(page, 320);
+  const date = page.locator("[data-plan-header] p").getByText("October 9, 2026", { exact: true });
+  await expect(date).toBeVisible();
+  expect(await date.evaluate(textLines)).toBe(1);
+});
+
 test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
   for (const width of [1023, 768, 390]) {
     await openPlan(page, width);
@@ -430,6 +437,12 @@ test("while the check loads, skeletons hold its places and a status says so", as
 
   await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(1);
+  // The h1's bar stands for the agency's name: 60% of the header's row, at most 560 px (the 10
+  // brief, section 6), not the width of the date's bar under it.
+  const nameBar = page.locator("[data-plan-header] h1 [data-skeleton]").filter({ visible: true });
+  expect(Math.round((await nameBar.boundingBox())!.width)).toBeGreaterThanOrEqual(480);
+  // A heading holds only phrasing content, so the bars inside it are spans, never a div.
+  await expect(page.locator("[data-plan-header] h1 div")).toHaveCount(0);
   await expect(page.locator("[data-plan-skeleton] thead th")).toHaveText([
     "Activity",
     "Method · market approach",
@@ -588,6 +601,7 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   // The h1 keeps what the address says, the plan's date, and says "Procurement Plan" once. The
   // status no longer says it is checking.
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Procurement Plan of October 9, 2026");
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 }).getByText("October 9, 2026", { exact: true })).toHaveCSS("white-space", "nowrap");
   await expect(page.getByRole("main").getByText("Procurement Plan", { exact: false })).toHaveCount(1);
   await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(0);
   expect(await widthOf(page, "[role=alert]")).toBe(EIGHT_COLUMNS);
@@ -624,7 +638,7 @@ test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px with the fold
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
-test("axe finds no violations in the loading, empty and error states at 1440, 1024 and 390 px", async ({ page }) => {
+test("axe finds no violations in the loading state at 1440, 1024 and 390 px, and in the empty and error states at 1440 and 390 px", async ({ page }) => {
   // Loading: the check never arrives.
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
   await page.route(`**${API}`, () => new Promise(() => {}));
@@ -642,6 +656,7 @@ test("axe finds no violations in the loading, empty and error states at 1440, 10
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await openPlan(page, 1440, answer, path);
     const ready = page.locator(`[data-check-plan-page=${name === "empty" ? "ready" : "error"}]`);
-    await axeAtEveryWidth(page, name, () => expect(ready).toBeVisible());
+    // At 1024 px these states draw the same card or alert in columns 1 to 8 as at 1440 px.
+    await axeAtEveryWidth(page, name, () => expect(ready).toBeVisible(), [1440, 390]);
   }
 });

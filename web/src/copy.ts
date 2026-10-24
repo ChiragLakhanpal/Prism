@@ -425,7 +425,8 @@ export const copy = {
 
   // Check a plan (the 10 brief, section 2). Counts are the tool's; the screen counts nothing.
   checkPlan: {
-    subtitle: (date: string) => `Procurement Plan of ${date}`,
+    // The plan's date, under the agency's name. {date} stays on one line.
+    subtitle: "Procurement Plan of {date}",
     // The h1 when the agency's name is not known.
     agencyUnknown: "Procurement Plan",
     pill: (total: number, totalText: string) => (total === 1 ? "1 activity checked" : `${totalText} activities checked`),

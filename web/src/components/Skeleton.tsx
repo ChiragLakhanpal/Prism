@@ -18,14 +18,16 @@ export function SkeletonLine({ width, className }: { width: string; className?: 
   );
 }
 
-// Lines of text, one per entry, at the given widths, with no gap: a paragraph of n lines.
+// Lines of text, one per entry, at the given widths, with no gap: a paragraph of n lines. It is a
+// span with display flex, so it can stand in for a heading's text: a heading holds only phrasing
+// content.
 export function SkeletonText({ widths, className }: { widths: string[]; className?: string }) {
   return (
-    <div aria-hidden="true" className={cx("flex flex-col", className)}>
+    <span aria-hidden="true" className={cx("flex flex-col", className)}>
       {widths.map((width, index) => (
         <SkeletonLine key={index} width={width} />
       ))}
-    </div>
+    </span>
   );
 }
 

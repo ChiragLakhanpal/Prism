@@ -14,7 +14,7 @@ import { EmptyState } from "../components/Card";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
-import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedPlan } from "../components/PlanCheck";
+import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
@@ -89,8 +89,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   // "Procurement Plan of October 9, 2026" and nothing goes under it, so the words come once.
   const headerWords = (agency: ReactNode | null, planDate: string | undefined) =>
     agency
-      ? { agency, plan: planDate ? words.subtitle(formatDate(planDate)) : undefined }
-      : { agency: planDate ? words.subtitle(formatDate(planDate)) : words.agencyUnknown };
+      ? { agency, plan: planDate ? planSubtitle(planDate) : undefined }
+      : { agency: planDate ? planSubtitle(planDate) : words.agencyUnknown };
 
   let body: ReactNode;
   let crumbs: Crumb[];
@@ -148,7 +148,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         <PlanCheckHeader
           headerRef={header}
           agency={checked.plan.implementing_agency}
-          plan={words.subtitle(formatDate(checked.plan.plan_date))}
+          plan={planSubtitle(checked.plan.plan_date)}
           pill={checkPill(checked)}
         />
         <PlanCheck result={checked} findingRef={finding} />
