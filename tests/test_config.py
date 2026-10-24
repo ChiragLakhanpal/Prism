@@ -78,24 +78,63 @@ def test_a_slice_file_whose_years_run_backwards_is_refused(tmp_path):
 
 # ── The source registry ──────────────────────────────────────────────────
 
-def test_the_source_registry_holds_kenya_s_three_procurement_sources():
-    """The ticket's three sources (docs/PLAN.md section 3): awards since FY2020 from Finances One
-    DS00005, and procurement notices and projects from the search APIs. The job fetches Kenya."""
+# docs/PLAN.md section 3's structured sources: each Finances One dataset with its dataset and
+# resource ids, and the search and indicator APIs.
+FINANCES_ONE = {
+    "awards": ("DS00005", "RS00005"),
+    "awards_fy2001_2016": ("DS01004", "RS00934"),
+    "ieg_ratings": ("DS00053", "RS00055"),
+    "ida_credits": ("DS00001", "RS00001"),
+    "ibrd_loans": ("DS00047", "RS00047"),
+    "ida_credit_history": ("DS00976", "RS00976"),
+    "ibrd_loan_history": ("DS00975", "RS00975"),
+}
+
+
+def test_the_source_registry_holds_every_structured_source_in_plan_section_3():
     sources = config.load_sources()
 
-    assert {"awards", "notices", "projects"} <= set(sources)
-    assert (sources["awards"].dataset_id, sources["awards"].resource_id) == ("DS00005", "RS00005")
+    assert {key: (sources[key].dataset_id, sources[key].resource_id) for key in FINANCES_ONE} == FINANCES_ONE
     assert sources["notices"].endpoint.startswith("https://search.worldbank.org/api/")
     assert sources["projects"].endpoint.startswith("https://search.worldbank.org/api/v3/projects")
+    assert {sources["cpia"].api, sources["wgi"].api} == {"indicators"}
     assert all(source.license == "CC BY 4.0" for source in sources.values())
-    assert all("KE" in [country.iso2 for country in source.countries] for source in sources.values())
 
 
-def test_the_nightly_job_fetches_kenya_s_sources_page_by_page_and_the_plan_reader_fetches_the_documents():
+def test_the_frozen_awards_dataset_says_so_and_the_cpia_and_wgi_sources_name_their_indicators():
+    """PLAN.md section 3: the FY2001 to FY2016 awards have been frozen since March 2022; CPIA is the
+    IQ.CPA codes (21 on the Indicators API on October 23, 2026) and WGI the GOV_WGI codes, whose six
+    estimates are its six dimensions. The old GE.EST code no longer works."""
     sources = config.load_sources()
 
-    assert {key for key, source in sources.items() if source.paged} == {"awards", "notices", "projects"}
+    assert sources["awards_fy2001_2016"].cadence == "frozen"
+    assert len(sources["cpia"].indicators) == 21
+    assert all(code.startswith("IQ.CPA.") for code in sources["cpia"].indicators)
+    assert sorted(sources["wgi"].indicators) == ["GOV_WGI_CC.EST", "GOV_WGI_GE.EST", "GOV_WGI_PV.EST",
+                                                 "GOV_WGI_RL.EST", "GOV_WGI_RQ.EST", "GOV_WGI_VA.EST"]
+
+
+def test_the_nightly_job_fetches_every_structured_source_page_by_page_and_the_plan_reader_fetches_the_documents():
+    sources = config.load_sources()
+
+    assert {key for key, source in sources.items() if source.paged} == set(FINANCES_ONE) | {
+        "notices", "projects", "cpia", "wgi"}
     assert not sources["documents"].paged
+
+
+def test_structured_sources_cover_every_country_and_the_monthly_history_covers_the_slice():
+    """PLAN.md section 3: structured data for every country; the monthly loan history for the slice only."""
+    sources = config.load_sources()
+    slice_countries = config.load_slice().countries
+    histories = {"ida_credit_history", "ibrd_loan_history"}
+
+    for key, source in sources.items():
+        if not source.paged:
+            continue
+        if key in histories:
+            assert source.countries == slice_countries, key
+        else:
+            assert source.countries == (), key  # one request series with no country filter
 
 
 def test_the_source_registry_loads_and_names_the_documents_api_that_plan_versions_come_from():
@@ -124,7 +163,7 @@ dataset_id = "DS00005"
 resource_id = "RS00005"
 api = "finances_one"
 records = "data"
-country_filter = "filter=borrower_country_code%3D%27{iso2}%27"
+scope = "every country"
 page_size = 1000
 watermark_field = "contract_signing_date"
 ignore_keys = ["as_of_date"]
@@ -149,11 +188,22 @@ def test_a_source_is_one_entry_in_the_registry(tmp_path):
     assert awards.known_gaps == ("Awards for FY2017 to FY2019 are in neither dataset.",)
 
 
-def test_adding_a_country_to_fetch_is_one_entry(tmp_path):
-    path = copy("sources.toml", tmp_path)
-    path.write_text(path.read_text().replace("[sources.", '[[countries]]\nname = "Nepal"\niso2 = "NP"\n\n[sources.', 1))
+def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):
+    slice_file = copy("slice.toml", tmp_path)
+    slice_file.write_text(slice_file.read_text() + '\n[[countries]]\nname = "Nepal"\niso2 = "NP"\niso3 = "NPL"\n')
 
-    assert [country.iso2 for country in config.load_sources(path)["notices"].countries][-1] == "NP"
+    sources = config.load_sources(slice_path=slice_file)
+
+    assert [country.iso2 for country in sources["ida_credit_history"].countries][-1] == "NP"
+    assert sources["notices"].countries == ()
+
+
+def test_a_source_fetched_for_the_slice_countries_needs_its_country_filter(tmp_path):
+    path = copy("sources.toml", tmp_path)
+    path.write_text(path.read_text() + AWARDS_COPY.replace('scope = "every country"', 'scope = "slice countries"'))
+
+    with pytest.raises(ConfigError, match=r"awards_copy\.country_filter"):
+        config.load_sources(path)
 
 
 def test_a_source_without_its_watermark_field_is_refused(tmp_path):
@@ -176,7 +226,7 @@ def test_a_source_that_names_some_of_the_paging_keys_but_not_all_is_refused(tmp_
     path = copy("sources.toml", tmp_path)
     path.write_text(path.read_text() + AWARDS_COPY.replace('records = "data"\n', ""))
 
-    with pytest.raises(ConfigError, match=r"awards_copy.*records.*api, records, country_filter, page_size"):
+    with pytest.raises(ConfigError, match=r"awards_copy.*records.*api, records, page_size, fixture_dataset, scope"):
         config.load_sources(path)
 
 
@@ -184,7 +234,7 @@ def test_a_source_that_pages_an_api_strata_does_not_know_is_refused(tmp_path):
     path = copy("sources.toml", tmp_path)
     path.write_text(path.read_text() + AWARDS_COPY.replace('api = "finances_one"', 'api = "socrata"'))
 
-    with pytest.raises(ConfigError, match=r"awards_copy\.api.*finances_one, search"):
+    with pytest.raises(ConfigError, match=r"awards_copy\.api.*finances_one, search, indicators"):
         config.load_sources(path)
 
 

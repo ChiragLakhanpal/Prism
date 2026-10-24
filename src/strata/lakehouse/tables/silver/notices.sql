@@ -16,6 +16,8 @@
 -- loan_digits                     the loan or credit number's digits (6030-KE gives 60300), which gold
 --                                 matches to the project's loans
 -- contract_signature_date         a Contract Award notice's Contract Signature Date
+-- contract_fiscal_year            a Contract Award notice's contract's fiscal year, July to June, from its
+--                                 Contract Signature Date, or its notice date when it gives none
 -- signed_contract_price, _currency  a Contract Award notice's signed price, in the currency it names
 -- notice_text                     the notice as plain text
 -- contact_details_removed         true when the fetch removed any contact detail from the notice
@@ -45,6 +47,7 @@ CREATE TABLE IF NOT EXISTS strata.silver.notices (
   loan_number STRING,
   loan_digits STRING,
   contract_signature_date DATE,
+  contract_fiscal_year INT,
   signed_contract_price DECIMAL(20, 2),
   signed_contract_currency STRING,
   notice_text STRING,

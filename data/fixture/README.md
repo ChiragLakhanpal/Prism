@@ -14,7 +14,21 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 - The comparable works packages are 52 Kenya works packages under Request for Bids: 45 signed, three canceled and four still open. `tests/ground_truth/values.toml` lists them with the default criteria.
   - 48 come from P156634's notices and awards. Two of the signed ones have no row in the awards dataset, and only their award notices give the signing date. The three canceled ones are marked Canceled in their agency's plan of March 19, 2025.
   - The four still open come from P176758 and P170941. The fixture holds every notice for each of the four and every award row for the two projects. Their bids were due after October 9, 2026, the demo plan's date.
-- CPIA and WGI cover Kenya and India. IEG ratings and IDA credits cover the two projects.
+- CPIA and WGI cover Kenya and India. IEG ratings and IDA credits cover the two projects, and the
+  credits' monthly history shows P156634's closing date move three times since 2022.
+- Every Kenya project approved from FY2012 to FY2025, the slice's fiscal years, in every sector
+  (`api/projects/kenya-fy2012-2025.json`), with the fields the nightly job asks for. Their major
+  sectors come from both of the projects API's taxonomies, so a test maps each one to one sector
+  (`config/sectors.toml`). One of them, P163538, lists no sector at all. The file lists P156634
+  again, with the same values as `P156634.json`.
+- One Kenya project's awards from the frozen FY2001 to FY2016 dataset, P124109, written with the old
+  method names International Competitive Bidding, Limited International Bidding and Shopping. P130164's
+  awards from the same dataset add National Competitive Bidding. The dataset writes no award as Direct
+  Contracting, so a test changes one recorded row to that name by hand.
+- One IBRD loan and its monthly history, IBRD89940 for P164704 in Pakistan, since the two projects
+  above borrow from IDA only.
+- The FY2017 to FY2019 gap: seven Contract Award notices of P130164 and P156634 were signed in those
+  years, which `tests/ground_truth/values.toml` lists under `[counts.gap_years]`.
 - One Kenya notice from before the 2016 Procurement Regulations, OP00034393 of September 14, 2015, gives its method as International Competitive Bidding (ICB), so a test can prove that silver stores it as Request for Bids, Open - International.
 
 ## What is here
@@ -27,7 +41,7 @@ The fixture is a small, real, offline copy of the World Bank sources behind Stra
 | `recorded/documents/<project>/<name>.pages.txt` | The text of each PDF page of the same document, one page after each form feed, read from the PDF's text layer |
 | `recorded/documents/<project>/<name>.words.json` | For each Procurement Plan (`words = true` in `sources.toml`), every word on each PDF page with its box, read with poppler's `pdftotext -bbox`. Offline, the layout parser reads the plans' tables from these words, because `ai_parse_document` runs only on the workspace |
 
-The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer, so the public-date check skips it. The gate then builds bronze, silver, gold and the data readiness measures from the recorded awards, notices and projects with the nightly job's own tasks, which read these files in place of the live APIs. `config/sources.toml` names, for each source the job fetches, the dataset here whose files stand in for it.
+The gate loads these files into the schema `strata.recorded`. The `recorded` schema is the fixture's copy of the sources, not a catalog layer, so the public-date check skips it. The gate then builds bronze, silver, gold and the data readiness measures from every recorded structured source (awards, notices, projects, IEG ratings, loans and credits with their monthly history, CPIA and WGI) with the nightly job's own tasks, which read these files in place of the live APIs. `config/sources.toml` names, for each source the job fetches, the dataset here whose files stand in for it.
 
 ## The plans as STEP rows
 
@@ -35,9 +49,11 @@ The gate then runs the plan reader (`src/strata/lakehouse/plans.py`) over the re
 
 The documents API lists about 240 Procurement Plan versions for P156634, and the fixture records 11 of them, so the run reads 11 and says so in `strata.ops.data_readiness` (`plan_versions_read`). Each of the 11 is an agency's latest version, the version before it, or the first version to list one of its activities, so the layout parser reads the tables of all 11: 15 table pages. The other 22 pages hold the plans' narrative and are read from their text.
 
-Delay is measured from each activity's first listing, the earliest version read that lists it. The list names older versions that the fixture does not record, so no first listing is confirmed here: `first_listing_confirmed` is false in `silver.plan_listings` and `plan_step_delays`, and `latest_activities_with_first_listing_read` reads 0 of 46. For KE-NWWDA-229129-CW-RFB and KE-NWWDA-541055-CW-RFB, the first listing the fixture holds is the first in the whole list. For other activities, such as those in the Kilifi - Mariakani plan, it may not be. A test trims the list to the recorded plans and shows every first listing confirmed.
+Delay is measured from each activity's first listing, the earliest version read that lists it. The list names older versions that the fixture does not record, so no first listing is confirmed here: `first_listing_confirmed` is false in `silver.plan_listings` and `plan_step_delays`, and `latest_activities_with_confirmed_first_listing_read` reads 0 of 46. For KE-NWWDA-229129-CW-RFB and KE-NWWDA-541055-CW-RFB, the first listing the fixture holds is the first in the whole list. For other activities, such as those in the Kilifi - Mariakani plan, it may not be. A test trims the list to the recorded plans and shows every first listing confirmed.
 
 No recorded plan re-dates a step that an earlier version planned, so a test writes two versions by hand to show that a re-dated step keeps its first published planned date.
+
+The Indicators API serves only the current value of each score, so the fixture cannot record a revision. A test copies the recorded WGI page, changes one value and the page's `lastupdated` date, and shows that gold keeps both versions and that a join on a date between them takes the earlier one.
 
 Every recorded file starts with its source and its license line, which is CC BY 4.0. Notices keep their contact names, emails and phone numbers on purpose, because the lakehouse must strip them at ingestion (CLAUDE.md rule 8).
 

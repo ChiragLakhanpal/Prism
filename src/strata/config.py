@@ -1,10 +1,11 @@
 """The registry and config files for the change drill, each read through one function.
 
 Each file in config/ is one of the spec's single places ("Ten single places"), so a change
-request lands in one file (CLAUDE.md rule 9). This module reads five of them:
+request lands in one file (CLAUDE.md rule 9). This module reads six of them:
 
 - load_sources()     config/sources.toml, the source registry
 - load_slice()       config/slice.toml, the slice file
+- load_sectors()     config/sectors.toml, the one sector taxonomy
 - load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table,
                      and load_search() its [search] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
@@ -113,23 +114,21 @@ def _tables(path: Path, data: dict, key: str) -> list[_Entry]:
 
 CADENCES = ("daily", "weekly", "monthly", "quarterly", "yearly", "frozen")
 STRATA = ("What", "How", "Why")
-APIS = ("finances_one", "search")
-
-
-@dataclass(frozen=True)
-class FetchCountry:
-    """A country whose records the nightly job fetches: its name and its ISO 3166 two-letter code."""
-
-    name: str
-    iso2: str
+APIS = ("finances_one", "search", "indicators")
+EVERY_COUNTRY, SLICE_COUNTRIES = "every country", "slice countries"
+SCOPES = (EVERY_COUNTRY, SLICE_COUNTRIES)
 
 
 @dataclass(frozen=True)
 class Source:
     """One data source: where it answers, how its pages are fetched, how often it changes, and how
-    it is credited. A source the nightly job fetches page by page names api, records,
-    country_filter, page_size and fixture_dataset; a source its own reader fetches, such as
-    documents (the plan reader), names none of them."""
+    it is credited. A source the nightly job fetches page by page names api, records, page_size,
+    fixture_dataset and scope; a source its own reader fetches, such as documents (the plan
+    reader), names none of them.
+
+    countries is empty for a source fetched for every country, which the job asks for in one series
+    of pages with no country filter. For a source fetched for the slice countries, it holds the
+    slice file's countries, and the job asks for each one with the source's country_filter."""
 
     key: str
     dataset_name: str
@@ -140,6 +139,7 @@ class Source:
     silver_transform: str
     api: str | None = None
     records: str | None = None
+    scope: str | None = None
     country_filter: str | None = None
     page_size: int | None = None
     fixture_dataset: str | None = None
@@ -149,7 +149,8 @@ class Source:
     ignore_keys: tuple[str, ...] = ()
     known_gaps: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
-    countries: tuple[FetchCountry, ...] = ()
+    indicators: tuple[str, ...] = ()
+    countries: tuple[Country, ...] = ()
 
     @property
     def paged(self) -> bool:
@@ -158,22 +159,17 @@ class Source:
 
 
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
-SOURCE_PAGING = ("api", "records", "country_filter", "page_size", "fixture_dataset")  # all of them or none
-SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum")
-SOURCE_LISTS = ("ignore_keys", "known_gaps", "limitations")
+SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
+SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter")
+SOURCE_LISTS = ("ignore_keys", "known_gaps", "limitations", "indicators")
 
 
-def load_sources(path: Path = CONFIG_DIR / "sources.toml") -> dict[str, Source]:
-    """Every source in the registry, by its key, each with the countries the job fetches."""
+def load_sources(path: Path = CONFIG_DIR / "sources.toml",
+                 slice_path: Path = CONFIG_DIR / "slice.toml") -> dict[str, Source]:
+    """Every source in the registry, by its key. A source fetched for the slice countries carries
+    the countries of the slice file at slice_path."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"sources", "countries"})
-    countries = []
-    for entry in _tables(path, data, "countries"):
-        entry.only({"name", "iso2"})
-        country = FetchCountry(entry.text("name"), entry.text("iso2"))
-        if not re.fullmatch(r"[A-Z]{2}", country.iso2):
-            entry._fail("iso2", "must be two capital letters")
-        countries.append(country)
+    _Entry(path, "the file", data).only({"sources"})
     sources = {}
     for key, table in data.get("sources", {}).items():
         entry = _Entry(path, f"sources.{key}", table)
@@ -186,24 +182,38 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml") -> dict[str, Source]:
         if fields["stratum"] is not None and fields["stratum"] not in STRATA:
             entry._fail("stratum", f"must be one of {', '.join(STRATA)}")
         if any(name in table for name in SOURCE_PAGING):
-            fields |= _paging(entry, table)
-        sources[key] = Source(key=key, countries=tuple(countries), **fields)
+            fields |= _paging(entry, table, fields)
+            if fields["scope"] == SLICE_COUNTRIES:
+                fields["countries"] = load_slice(slice_path).countries
+        sources[key] = Source(key=key, **fields)
     return sources
 
 
-def _paging(entry: _Entry, table: dict) -> dict:
-    """The five keys of a source the nightly job fetches page by page, which it names all together."""
-    missing = [name for name in SOURCE_PAGING if name not in table]
+def _paging(entry: _Entry, table: dict, fields: dict) -> dict:
+    """The keys of a source the nightly job fetches page by page, which it names all together. An
+    indicators source keeps its records in the second part of each page, so it names no records."""
+    api = table.get("api")
+    needed = [name for name in SOURCE_PAGING if not (name == "records" and api == "indicators")]
+    missing = [name for name in needed if name not in table]
     if missing:
         entry._fail(missing[0], f"is missing. A source the nightly job fetches page by page names all of "
-                                f"{', '.join(SOURCE_PAGING)}, and a source its own reader fetches names none")
-    fields = {name: entry.text(name) for name in SOURCE_PAGING if name != "page_size"}
-    fields["page_size"] = entry.integer("page_size")
-    if fields["api"] not in APIS:
+                                f"{', '.join(SOURCE_PAGING)} (an indicators source needs no records), and a "
+                                "source its own reader fetches names none")
+    paging = {name: entry.text(name) for name in needed if name != "page_size"}
+    paging["page_size"] = entry.integer("page_size")
+    if paging["api"] not in APIS:
         entry._fail("api", f"must be one of {', '.join(APIS)}")
-    if fields["page_size"] < 1:
+    if paging["page_size"] < 1:
         entry._fail("page_size", "must be 1 or more")
-    return fields
+    if paging["scope"] not in SCOPES:
+        entry._fail("scope", f"must be one of {', '.join(SCOPES)}")
+    if paging["scope"] == SLICE_COUNTRIES and not fields["country_filter"]:
+        entry._fail("country_filter", "is missing. A source fetched for the slice countries asks for each "
+                                      "country with it, such as filter=country_code%3D%27{iso2}%27")
+    if paging["api"] == "indicators" and (not fields["indicators"] or "{indicator}" not in fields["endpoint"]):
+        entry._fail("indicators", "must list the indicator codes, and the endpoint must hold {indicator} where "
+                                  "each code goes")
+    return paging
 
 
 # ── The slice file ───────────────────────────────────────────────────────
@@ -282,6 +292,10 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     sectors = top.texts("sectors")
     if not sectors:
         raise ConfigError(f"{path.name} names no sector. List at least one in sectors.")
+    unknown = [sector for sector in sectors if sector not in load_sectors().names]
+    if unknown:
+        raise ConfigError(f"In {path.name}, sectors names {', '.join(unknown)}, which config/sectors.toml does not "
+                          "list. Use a key from that file.")
 
     showcase = _Entry(path, "showcase", data.get("showcase"))
     showcase.only({"project_id", "name"})
@@ -304,6 +318,74 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
                            plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date")),
         stress_shelf=tuple(shelf),
     )
+
+
+# ── The sector file ──────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Sectors:
+    """Strata's one sector taxonomy: each sector's key and name, and the major sector codes of both
+    of the projects API's taxonomies that map to it."""
+
+    keys: tuple[str, ...]
+    names: dict[str, str]
+    codes: dict[str, str]  # a major sector code -> its sector's key
+
+    def of(self, major_sectors) -> tuple[str | None, str | None]:
+        """A project's one sector and the major sector code it came from, from the projects API's
+        major_sectors. The shares add up by sector, since the older taxonomy splits a sector across
+        codes (energy is LX, PX, GX and NX), and the sector with the largest total wins, ties to the
+        sector listed first. Its code is the one with the largest share within it. A code no sector
+        lists counts on its own. (None, None) when the project lists no major sector; (None, code)
+        when an unmapped code wins."""
+        shares: dict[str, float] = {}
+        for entry in major_sectors or []:
+            major = entry.get("major_sector", entry) if isinstance(entry, dict) else {}
+            code = (major.get("major_sector_code") or "").strip()
+            if code:
+                shares[code] = shares.get(code, 0.0) + sum(_percent(sector.get("sector_percent"))
+                                                           for sector in major.get("sectors") or [])
+        if not shares:
+            return None, None
+
+        def group(code: str) -> tuple[str | None, str]:  # (its sector's key, or None and the code itself)
+            return (self.codes[code], "") if code in self.codes else (None, code)
+
+        totals: dict[tuple[str | None, str], float] = {}
+        for code, share in shares.items():
+            totals[group(code)] = totals.get(group(code), 0.0) + share
+        order = {key: number for number, key in enumerate(self.keys)}
+        best = min(totals, key=lambda found: (-totals[found], order.get(found[0], len(order)), found[1]))
+        code = min((code for code in shares if group(code) == best), key=lambda code: (-shares[code], code))
+        return best[0], code
+
+
+def _percent(value) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def load_sectors(path: Path = CONFIG_DIR / "sectors.toml") -> Sectors:
+    """The sector taxonomy, in file order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"sector"})
+    keys, names, codes = [], {}, {}
+    for entry in _tables(path, data, "sector"):
+        entry.only({"key", "name", "codes"})
+        key = entry.text("key")
+        if key in names:
+            entry._fail("key", f"repeats {key!r}. Each sector is listed once")
+        keys.append(key)
+        names[key] = entry.text("name")
+        for code in entry.texts("codes"):
+            if code in codes:
+                entry._fail("codes", f"lists {code}, which {codes[code]} lists too. Each code maps to one sector")
+            codes[code] = key
+    if not keys:
+        raise ConfigError(f"{path.name} names no sector. Add at least one [[sector]] entry.")
+    return Sectors(tuple(keys), names, codes)
 
 
 # ── The model file ───────────────────────────────────────────────────────

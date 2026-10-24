@@ -11,8 +11,9 @@
 first_fiscal_year = 2012
 last_fiscal_year = 2025
 
-# Sectors, by the slice's own key. The ticket that maps the two sector taxonomies to one
-# (docs/PLAN.md section 3, "Quirks") maps each key to its sector codes.
+# Sectors, by their keys in config/sectors.toml, which maps the projects API's two sector
+# taxonomies to one (docs/PLAN.md section 3, "Quirks"). A project is in the slice when its one
+# sector is one of these.
 sectors = ["water", "transport"]
 
 # Each country with its ISO 3166 codes: two letters for the projects API, three for the indicators.

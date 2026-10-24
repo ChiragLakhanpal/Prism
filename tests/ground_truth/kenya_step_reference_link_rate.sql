@@ -1,5 +1,6 @@
 -- The STEP-reference link rate that the nightly job's last run wrote to strata.ops equals a
--- direct count over gold: Kenya's contracts carrying a STEP reference, out of all its contracts.
+-- direct count over gold: Kenya's contracts from the awards since FY2020 carrying a STEP reference,
+-- out of all of them.
 -- It returns true or false rather than the counts, so it holds on the fixture and on the
 -- workspace alike. Run it on the warehouse, after the job has ingested Kenya, with:
 -- uv run --script ops/bundle/check.py same-rows --env-file .env
@@ -22,7 +23,7 @@ stored AS (
 counted AS (
   SELECT count(step_reference) AS with_reference, count(*) AS contracts
   FROM strata.gold.contract
-  WHERE country_code = 'KE'
+  WHERE country_code = 'KE' AND source = 'awards'
 )
 SELECT
   'linked_step_reference' AS measure,

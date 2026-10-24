@@ -26,7 +26,7 @@ ventures AS (
     min(c.public_from) AS public_from
   FROM strata.gold.contract AS c
   JOIN latest AS l ON l.wb_contract_number = c.wb_contract_number
-  WHERE c.joint_venture
+  WHERE c.joint_venture AND c.source = 'awards'
   GROUP BY c.supplier_id
 )
 SELECT

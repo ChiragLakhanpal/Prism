@@ -38,6 +38,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
 from strata.config import load_layout_parser, load_slice  # noqa: E402
 from strata.lakehouse import plans  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
+from strata.reader.documents import NotFetched  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 
@@ -77,9 +78,9 @@ def main(argv=None) -> int:
               f"{parsing.cap} pages a day. {report.versions_with_rows} versions have STEP rows.")
         if parsing.failed:
             document, page = parsing.failed[0]
-            print(f"The layout parser could not read {len(parsing.failed)} of them, first page {page} of "
-                  f"document {document}. strata.ops.parse_failures says why, and the next run tries them "
-                  "again tomorrow.")
+            print(f"The layout parser could not read {len(parsing.failed)} of them. The first was page {page} "
+                  f"of document {document}. strata.ops.parse_failures says why. A run on a later day, in UTC, "
+                  "tries them again.")
         if parsing.stopped_at:
             print(f"It stopped at the cap, at page {parsing.stopped_at[1]} of document {parsing.stopped_at[0]}. "
                   "Run it again tomorrow to read the rest.")
@@ -87,6 +88,10 @@ def main(argv=None) -> int:
         return 0
     except EngineError as error:
         print(f"The warehouse could not run a statement: {error}")
+        return 2
+    except (NotFetched, OSError) as error:  # urllib's errors and the Databricks SDK's are OSErrors
+        print(f"The run stopped before it finished: {str(error).rstrip('.')}. The pages it parsed are kept, "
+              "and the next run goes on from there.")
         return 2
 
 

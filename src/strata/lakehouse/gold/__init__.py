@@ -17,7 +17,8 @@ from importlib import resources
 from strata.lakehouse.engine import Engine, EngineError
 
 # The order the tables are built in: a table comes after every gold table its query reads.
-ORDER = ("country", "project", "project_loan", "notice", "contract", "supplier", "contract_supplier", "package")
+ORDER = ("country", "project", "project_loan", "project_isr_rating", "notice", "contract", "supplier",
+         "contract_supplier", "package", "ieg_rating", "loan", "project_closing_date", "governance_score")
 
 
 def _query(table: str) -> tuple[str, tuple[str, ...]]:

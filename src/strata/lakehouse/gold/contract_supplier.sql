@@ -9,5 +9,5 @@ SELECT
   l.supplier_contract_amount_usd,
   c.public_from
 FROM strata.silver.awards_current AS l
-JOIN strata.gold.contract AS c ON c.wb_contract_number = l.wb_contract_number
+JOIN strata.gold.contract AS c ON c.wb_contract_number = l.wb_contract_number AND c.source = 'awards'
 WHERE l.supplier_id IS NOT NULL

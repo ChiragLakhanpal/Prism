@@ -60,6 +60,12 @@ attribution = "The World Bank: World Development Indicators: Country Policy and 
 [datasets.wgi]
 attribution = "The World Bank: Worldwide Governance Indicators (GOV_WGI codes), from api.worldbank.org/v2. License: CC BY 4.0."
 
+[datasets.ibrd_loans]
+attribution = "The World Bank: IBRD Statement of Loans and Guarantees - Latest Available Snapshot, Finances One dataset DS00047. License: CC BY 4.0."
+
+[datasets.ibrd_loan_history]
+attribution = "The World Bank: IBRD Statement Of Loans and Guarantees - Historical Data, Finances One dataset DS00975. License: CC BY 4.0."
+
 # Projects
 
 [[source]]
@@ -204,6 +210,36 @@ kind = "json"
 dataset = "wgi"
 url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_CC.EST?format=json&per_page=500&source=3"
 about = "The Worldwide Governance Indicators estimate of control of corruption for Kenya and India."
+
+# Added for every structured source (ticket 17)
+
+[[source]]
+file = "api/projects/kenya-fy2012-2025.json"
+kind = "json"
+dataset = "projects"
+url = "https://search.worldbank.org/api/v3/projects?format=json&countrycode_exact=KE&strdate=2011-07-01&enddate=2025-06-30&rows=500&os=0&fl=id,project_name,countrycode,countryshortname,regionname,status,boardapprovaldate,closingdate,impagency,borrower,sectorcode,major_sector_name,major_sectors,curr_total_commitment,totalamt,public_disclosure_date,proj_last_upd_date,loan_transactions,isr_ratings"
+about = "Every Kenya project approved from FY2012 to FY2025, the slice's fiscal years, in every sector, with the fields the nightly job asks for. Each project's major sectors come from one of two taxonomies, so the test maps every one of them to one sector. It lists P156634 again, with the same values as P156634.json."
+
+[[source]]
+file = "api/awards/P124109-fy2001-2016.json"
+kind = "json"
+dataset = "awards_fy2001_2016"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS01004&resourceId=RS00934&type=json&top=1000&skip=0&filter=project_id%3D%27P124109%27"
+about = "A Kenya project's prior-review contract awards from the frozen FY2001 to FY2016 dataset, written with the old method names International Competitive Bidding, Limited International Bidding and Shopping, and with people named as suppliers under Individual Consultant Selection and Consultant Qualification Selection, and in contract descriptions. The transform keeps none of those names."
+
+[[source]]
+file = "api/loans/P164704-ibrd.json"
+kind = "json"
+dataset = "ibrd_loans"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00047&resourceId=RS00047&type=json&top=100&skip=0&filter=project_id%3D%27P164704%27"
+about = "The latest snapshot of the IBRD loan for the Karachi Water and Sewerage Services Improvement Project (P164704), a water project in Pakistan, one of the slice's countries."
+
+[[source]]
+file = "api/loans/P164704-ibrd-history.json"
+kind = "json"
+dataset = "ibrd_loan_history"
+url = "https://datacatalogapi.worldbank.org/dexapps/fone/api/apiservice?datasetId=DS00975&resourceId=RS00975&type=json&top=1000&skip=0&filter=project_id%3D%27P164704%27"
+about = "The monthly history of the same IBRD loan, which shows its closing date as each month reported it."
 
 # Documents: the published text and the text of each PDF page
 

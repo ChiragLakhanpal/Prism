@@ -5,11 +5,12 @@
 # value with strata.config.load_thresholds().value("section.name"). A value that is missing here is
 # an error that says where to add it, never a silent default.
 
-# Ingestion caps. The layout parser (Route B) tries at most this many PDF pages a day, counted in
-# UTC across every project, whether it reads the page or fails on it, and a run that reaches the cap
-# stops and records the first page it left for the next day in strata.ops.parse_runs. Source: the spec's "Platform, identity and limits" (a
-# daily page cap in ingestion holds Azure and workspace spend). 500 is a starting value for the
-# owner to confirm; ticket 18 sets it for the whole document slice.
+# These are the ingestion caps. The layout parser (Route B) tries at most this many PDF pages a
+# day, counted in UTC across every project, whether it reads the page or fails on it. A run that
+# reaches the cap stops and records the first page it left for the next day in
+# strata.ops.parse_runs. Source: the spec's "Platform, identity and limits" (a daily page cap in
+# ingestion holds Azure and workspace spend). 500 is a starting value for the owner to confirm;
+# ticket 18 sets it for the whole document slice.
 [ingestion]
 daily_page_cap = 500
 # The passage reader (src/strata/lakehouse/passages.py) reads at most this many documents whose
@@ -17,6 +18,11 @@ daily_page_cap = 500
 # project's ICR Reviews, ICRs, PADs and ISRs in that order, newest first. Source: ticket 11, "the
 # first 20 documents". Ticket 18 raises it to the whole document slice.
 passage_documents = 20
+
+# Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
+# table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records
+# each run.
+structured_data_limit_bytes = 500_000_000
 
 # Passages (docs/PLAN.md section 5). A paragraph over max_tokens tokens is divided at sentence ends,
 # and each part is its own passage with the paragraph's number. Source: the spec's "Reading
