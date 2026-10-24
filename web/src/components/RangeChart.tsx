@@ -386,9 +386,9 @@ export function RangeChart({
   // moves. A band's least room is on the roomier side of the line where the line sits nearest the middle
   // of the plot. The readout is one line where one line fits there, from 400 px wide; otherwise it is
   // the copy's two lines; and where a copy line is still too wide, as with WCAG 1.4.12's text spacing at
-  // 320 px, its words fill as many lines as they need. "Plan" sits on a line above them at the plan
-  // row's own months. Row B holds it with up to two lines of the readout, and grows by a line for each
-  // line past that.
+  // 320 px, its words fill as few lines as fit, as even as they can be (wrapAt). "Plan" sits on a line
+  // above them at the plan row's own months. Row B holds it with up to two lines of the readout, and
+  // grows by a line for each line past that.
   //
   // The knob is 12 px wide and its focus ring sits 2 px out and is 2 px thick, so it ends 10 px from the
   // line; the readout starts 4 px past that (GAP). Its halo's box reaches 3 px past its letters, so the
