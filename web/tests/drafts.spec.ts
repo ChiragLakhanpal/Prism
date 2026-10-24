@@ -372,6 +372,16 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
   await next.click();
   await expect(page.getByRole("dialog")).toContainText("KE-NWWDA-541062-CW-RFQ");
   expect(Math.abs((await scrollY()) - before)).toBeLessThanOrEqual(8);
+
+  // A source opened from the Sources list keeps the window still too.
+  await openDraft(page, { width: 1440, height: 900 });
+  const listed = page.locator("[data-sources] [data-citation='1']");
+  await page.evaluate((by) => window.scrollBy(0, by), (await listed.boundingBox())!.y - 450);
+  await expect.poll(async () => Math.abs((await listed.boundingBox())!.y - 450)).toBeLessThanOrEqual(2);
+  const still = await scrollY();
+  await listed.click();
+  await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
+  expect(Math.abs((await scrollY()) - still)).toBeLessThanOrEqual(8);
 });
 
 test("Mark as checked saves, moves the state on and makes Export to Word the solid button, with focus on it", async ({ page }) => {
