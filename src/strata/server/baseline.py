@@ -84,6 +84,6 @@ def read_record(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     event = record_event(f"{TABLE}:{key}", row["public_from"], "plan_baseline", project_id, row["public_from"],
                          row["implementing_agency"],
                          [("implementing_agency", row["implementing_agency"], "text"),
-                          ("plan_date", row["plan_date"].isoformat(), "date"),
-                          ("saved_on", row["public_from"].isoformat(), "date")])
+                          ("plan_date", str(row["plan_date"])[:10], "date"),
+                          ("saved_on", str(row["public_from"])[:10], "date")])
     return {"kind": "record", "row": event["row"]}

@@ -267,7 +267,7 @@ function RowsTable({
         <thead className="bg-surface-2">
           <tr>
             {heads.map((head) => (
-              <th key={head} scope="col" className="px-3 py-2 text-left align-bottom font-semibold text-ink-heading">
+              <th key={head} scope="col" className="min-w-[8ch] px-3 py-2 text-left align-bottom font-semibold wrap-break-word text-ink-heading">
                 {head}
               </th>
             ))}
@@ -277,7 +277,9 @@ function RowsTable({
           {rows.map((row) => (
             <tr key={row.passage_id} id={`passage-${row.passage_id}`} className={cx("border-t border-line align-top", row.passage_id === highlight && "bg-highlight")}>
               {heads.map((head) => (
-                <td key={head} className="px-3 py-2 wrap-anywhere text-ink">
+                // Each column keeps room for a short word, and words break only when one is longer than its
+                // column, so "Stakeholder" never splits into "Stak / ehol / der" (the 21 design review, F18).
+                <td key={head} className="min-w-[8ch] px-3 py-2 wrap-break-word text-ink">
                   {row.cells.find(([name]) => name === head)?.[1] ?? ""}
                 </td>
               ))}

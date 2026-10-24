@@ -290,6 +290,8 @@ const HUB_SHOTS: Shot[] = [
   hubShot("check-plan--earliest", "/projects/P156634/procurement/northern-water-works-development-agency/2020-12-07", {}, {
     "/api/projects/P156634/procurement/northern-water-works-development-agency/2020-12-07": { body: derived(PLAN_FILE, (body) => (body.plan.plan_date = "2020-12-07")) },
   }),
+  // Only the comparison fails: the change line says so, and the section keeps its heading over the alert.
+  hubShot("check-plan--changes-error", PLAN, {}, { [`${PLAN_API}/changes`]: { status: 503, body: SERVICE_DOWN } }),
   hubShot("check-plan--baseline-none", PLAN),
   hubShot("check-plan--baseline-another", PLAN, {}, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
   hubShot("check-plan--baseline-this", "/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21"),
@@ -321,6 +323,10 @@ const HUB_SHOTS: Shot[] = [
     "/api/projects/P120014/documents": { recorded: "documents-p120014-outside.json" },
   }),
   hubShot("documents--error", "/projects/P130164/documents", {}, { "/api/projects/P130164/documents": { status: 503, body: SERVICE_DOWN } }),
+  // A listed document whose type the documents API leaves blank is named by its date.
+  hubShot("documents--untyped", "/projects/P130164/documents", {}, {
+    "/api/projects/P130164/documents": { body: derived("documents-p130164.json", (body) => (body.groups.find((group: { type: string }) => group.type === "other").documents[0].document_type = "")) },
+  }),
   // The source view.
   hubShot("source", `${SOURCE}?page=23&para=54`),
   hubShot("source--loading", `${SOURCE}?page=23&para=54`, { pending: [`/api${SOURCE}`] }),
