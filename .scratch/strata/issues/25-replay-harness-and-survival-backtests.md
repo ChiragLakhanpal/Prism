@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 7 and 10; ADR 0002; the blueprint's "What Stra
 
 **Blocked by:** 12 (Comparables and the past range, on the package workspace); 17 (Every structured source, for every country, kept as published)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** no
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md sections 7 and 10; ADR 0002; the blueprint's "What Stra
 - [ ] The model is registered in Unity Catalog with a champion alias, and its model card lists the data, the features, the leakage exclusions, the backtest results and the abstention rule.
 - [ ] The track-record sentence for the latest test year ("Of N packages from YEAR that Strata had not seen, M finished inside its 8-in-10 range") is filled from stored results, never typed.
 - [ ] A package with fewer than 20 comparables, or in a subgroup with fewer than 20, gets an abstention instead of a range.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/25-replay-harness-and-survival-backtests, as soon as ticket 12 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
