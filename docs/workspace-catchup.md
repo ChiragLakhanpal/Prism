@@ -877,6 +877,8 @@ Run this from the main checkout, twice:
 
 It worked if the first run creates or updates the Foundry agent `lesson_review_writer` from `config/agents.toml` and `lesson_review_writer.md`, and the second run reports no difference.
 
+**Ran on October 24, 2026 (orchestrator):** the first run printed the instructions diff and "I made version 1 of strata-lesson-review-writer, which matches the repo."; the second printed "Foundry's agent strata-lesson-review-writer, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Both exited 0. Passed.
+
 ## Ticket 29, step 3 of 5: redeploy the App, which writes the lesson review record as itself
 
 The merger parked this step on October 24, 2026, after merge commit 65293cd. It needs the Databricks keys in `.env`, and the four Foundry keys. Run it after step 1, because this deploy grants the App's own service principal SELECT and MODIFY on five tables that step 1 makes. Ticket 06's step 1 runs the same command. Run it again here if that deploy came from a commit before 65293cd.
