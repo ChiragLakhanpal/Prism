@@ -88,7 +88,9 @@ function returnFocus() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-const DRAFT_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew"]);
+// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35)
+// and the Packages tab with its planned packages (ticket 15).
+const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage"]);
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
@@ -98,9 +100,9 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
   if (problem === "no_identity") found.push({ state: "error", text: copy.alerts.noIdentity });
   const view = params.get("view");
-  // The draft pages apply the implementing agency and public previews themselves (ticket 35): they show
-  // what each preview holds, so the alert that says the page shows the staff view would be untrue there.
-  const appliesView = (view === "piu" || view === "public") && DRAFT_PAGES.has(page);
+  // These pages show what each preview holds, so the alert that says the page shows the staff view would be
+  // untrue there.
+  const appliesView = (view === "piu" || view === "public") && VIEW_PAGES.has(page);
   if (view !== null && view !== "staff" && !appliesView) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
   if (asOf !== null && !appliesAsOf) {

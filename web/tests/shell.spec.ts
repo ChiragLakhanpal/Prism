@@ -256,10 +256,11 @@ const ADDRESS_ALERTS: [string, string][] = [
   ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
 ];
 
+// Home, which applies none of these: the draft pages and the Packages tab apply the previews themselves.
 for (const [query, sentence] of ADDRESS_ALERTS) {
   test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
     await mockShell(page);
-    await page.goto(`/packages${query}`);
+    await page.goto(`/${query}`);
 
     const alert = page.locator("[data-alert=info]");
     await expect(alert).toHaveText(sentence);

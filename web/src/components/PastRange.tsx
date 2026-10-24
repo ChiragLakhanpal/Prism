@@ -102,6 +102,7 @@ export function PastRange({
   status,
   busy = false,
   lead,
+  more,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -113,8 +114,12 @@ export function PastRange({
   // the section announces; busy marks the section as updating.
   status?: ReactNode;
   busy?: boolean;
-  // A line under the heading before the finding, such as the criteria find_comparables used.
+  // A line under the heading before the finding, such as the criteria find_comparables used. While a status
+  // line shows, the status takes its place, since the line is out of date until the rerun answers.
   lead?: ReactNode;
+  // Where find_comparables gave no range, how to compare with more, after the sentence that says why
+  // (ticket 15, brief 7.7).
+  more?: ReactNode;
 }) {
   const headingId = useId();
   const loading = state.status === "loading";
@@ -139,12 +144,13 @@ export function PastRange({
         <span aria-hidden="true">{words.number} </span>
         {words.heading}
       </h2>
-      {status && (
+      {status ? (
         <p className="mt-2 text-small text-ink-muted" data-section-status>
           {status}
         </p>
+      ) : (
+        lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>
       )}
-      {lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>}
       {body}
       {!body && state.status === "loading" && <PastRangeSkeleton />}
       {!body && state.status === "error" && (
@@ -159,8 +165,9 @@ export function PastRange({
           />
         </div>
       )}
-      {!body && result && <Ready result={result} open={open} planned={planned} />}
-      {loading && (
+      {!body && result && <Ready result={result} open={open} planned={planned} more={more} />}
+      {/* The page that gives a status line says what is happening itself, in its own live region. */}
+      {loading && !status && (
         <p role="status" className="sr-only">
           {words.loading}
         </p>
@@ -187,7 +194,7 @@ function kind(result: ComparablesResult): Kind {
   }
 }
 
-function Ready({ result, open, planned }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths }) {
+function Ready({ result, open, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
   const abstention = result.abstention;
   if (abstention?.reason === "no_public_notice") {
     return (
@@ -216,6 +223,7 @@ function Ready({ result, open, planned }: { result: ComparablesResult; open?: Op
         <div className="mt-2">
           <Unmeasured result={result} />
         </div>
+        {more}
       </NoChart>
     );
   }
@@ -241,7 +249,7 @@ function Ready({ result, open, planned }: { result: ComparablesResult; open?: Op
       </NoChart>
     );
   }
-  return <Populated result={result} open={open} planned={planned} />;
+  return <Populated result={result} open={open} planned={planned} more={more} />;
 }
 
 // A state with no chart: a first-person title beside the dashed circle of the neutral state.
@@ -391,7 +399,7 @@ function SourceLine({ result }: { result: ComparablesResult }) {
 
 // ── The populated states ─────────────────────────────────────────────────
 
-function Populated({ result, open: opening, planned }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths }) {
+function Populated({ result, open: opening, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
   const abstained = result.abstention?.reason === "too_few_comparables";
   const rows = result.rows;
   const total = rows.length;
@@ -667,6 +675,7 @@ function Populated({ result, open: opening, planned }: { result: ComparablesResu
       <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: type.l, lineHeight: 1.3 }} data-finding>
         {title}
       </h3>
+      {abstained && more}
       {narrow && <div className="mt-2">{summaryBlock}</div>}
       <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
         {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}

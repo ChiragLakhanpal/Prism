@@ -225,6 +225,12 @@ test("each chip is a 32 px button that says its state in words, and opens its ed
     const box = (await chip(page, key).boundingBox())!;
     expect(box.height, key).toBeGreaterThanOrEqual(32);
   }
+  // Each group's label centres on its first row of chips, even when the chips wrap to more rows (brief 5.4).
+  for (const key of ["what", "where", "how"]) {
+    const label = (await page.locator(`[data-group="${key}"] > p`).boundingBox())!;
+    const first = (await page.locator(`[data-group="${key}"] [data-chip]`).first().boundingBox())!;
+    expect(Math.abs(label.y + label.height / 2 - (first.y + first.height / 2)), key).toBeLessThanOrEqual(1);
+  }
   await expect(chip(page, "lots")).toHaveAccessibleName("2 lots · guess");
   await expect(chip(page, "lots")).toHaveAccessibleDescription("Number of lots. My guess.");
   await expect(chip(page, "review_type")).toHaveAccessibleName("Prior review · computed");
@@ -334,18 +340,28 @@ test("changing a chip that picks the comparables reruns find_comparables and red
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
   expect(comparables()).toEqual(["Request for Bids"]);
 
+  // Within section 1: the chip whose words changed may rewrap its own group above, which the brief allows.
+  const promptTop = async () =>
+    (await page.locator("[data-plan-prompt]").boundingBox())!.y - (await page.locator("[data-past-range]").boundingBox())!.y;
+  const before = await promptTop();
   await chip(page, "method").click();
   await page.getByRole("dialog", { name: "Method" }).locator("label", { hasText: "Request for Quotations (RFQ)" }).click();
-  // The chip shows the new value at once, and the section says it is updating until the answer comes.
+  // The chip shows the new value at once, and the section says it is updating until the answer comes. The status
+  // takes the out-of-date criteria line's place, so nothing below it moves (brief section 9).
   await expect(chip(page, "method")).toHaveText("Request for Quotations (RFQ)");
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saving");
   await expect(page.locator("[data-section-status]")).toHaveText("Finding comparable packages for your new criteria.");
   await expect(page.locator("[data-past-range]")).toHaveAttribute("aria-busy", "true");
+  await expect(page.locator("[data-criteria-line]")).toHaveCount(0);
+  expect(Math.abs((await promptTop()) - before)).toBeLessThanOrEqual(0.5);
   await expect.poll(comparables).toEqual(["Request for Bids", "Request for Quotations"]);
   await expect(page.locator("[data-past-range]")).toHaveAttribute("data-past-range", "unmeasured");
   await expect(page.locator("[data-section-status]")).toHaveCount(0);
   await expect(page.locator("[data-criteria-line]")).toHaveText(/^Comparable packages: Works, Request for Quotations, Kenya/);
-  await expect(page.locator("[data-past-range]")).toContainText("To compare with more packages, change a criterion above.");
+  // The reason comes first, then how to compare with more (brief 7.7).
+  await expect(page.locator("[data-more]")).toHaveText("To compare with more packages, change a criterion above.");
+  expect(await page.locator("[data-no-chart] h3").evaluate((reason) =>
+    Boolean(reason.compareDocumentPosition(document.querySelector("[data-more]")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
   await expect(live(page)).toHaveText("Updated. 27 past packages matched this one, but I can't measure how long any of them took.");
 });
 
@@ -665,6 +681,7 @@ test("the Packages tab says when it could not load, and a preview holds its butt
 
   await page.goto("/packages?view=piu");
   await expect(page.getByText("Checking and planning are off in a preview.")).toBeVisible();
+  await expect(page.getByText(/you are seeing the World Bank staff view/)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Check a plan" })).toHaveAttribute("aria-disabled", "true");
   await expect(page.getByRole("button", { name: "Plan a package" })).toHaveAttribute("aria-disabled", "true");
 });
@@ -678,11 +695,21 @@ test("a package someone else saved, or that does not exist, says so and links to
 });
 
 test("in the public view the workspace and the Packages tab are not offered", async ({ page }) => {
-  await openPackage(page, { path: `${PACKAGE}?view=public` });
+  const asked = await openPackage(page, { path: `${PACKAGE}?view=public` });
 
   await expect(page.locator("[data-planned-package=public]")).toBeVisible();
   await expect(page.getByText("Packages are not part of the public view.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to Projects" })).toHaveAttribute("href", "/projects");
+  // The page applies the public view itself, so the frame does not say it shows the staff view.
+  await expect(page.getByText(/you are seeing the World Bank staff view/)).toHaveCount(0);
+
+  await page.goto("/packages?view=public");
+  await expect(page.getByText("Packages are not part of the public view.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go to Projects" })).toHaveAttribute("href", "/projects");
+  await expect(page.getByRole("button", { name: "Plan a package" })).toHaveCount(0);
+  await expect(page.locator("table")).toHaveCount(0);
+  await expect(page.getByText(/you are seeing the World Bank staff view/)).toHaveCount(0);
+  expect(asked.filter((request) => new URL(request.url()).pathname === "/api/planned-packages")).toEqual([]);
 });
 
 test("in an implementing agency preview the chips open read-only editors and nothing is saved", async ({ page }) => {
@@ -690,6 +717,10 @@ test("in an implementing agency preview the chips open read-only editors and not
   const sent = await changes(page);
 
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Changes are off in a preview");
+  // The card says changes are off rather than asking you to change a part, and the frame does not say the
+  // page shows the staff view, since the page applies the preview itself.
+  await expect(card(page).locator("[data-instruction]")).toHaveText("Changes are off in a preview.");
+  await expect(page.getByText(/you are seeing the World Bank staff view/)).toHaveCount(0);
   await chip(page, "method").click();
   const editor = page.getByRole("dialog", { name: "Method" });
   await expect(editor).toContainText("Changes are off in a preview.");

@@ -115,9 +115,13 @@ def _the_app_s_engine(environ: Mapping[str, str]) -> Callable[[], Engine] | None
     return lambda: WarehouseEngine(warehouse, transport)
 
 
-def _app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
-    """On this computer, STRATA_APP_STATE_FILE names a DuckDB file for the opened sources and the drafts,
-    made with the catalog's tables, so scripts/dev can write a draft without the workspace."""
+def app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
+    """On this computer, STRATA_APP_STATE_FILE names a DuckDB file for the opened sources, the drafts and the
+    packages, made with the catalog's tables, so scripts/dev can write a draft without the workspace.
+
+    DuckDB refuses to attach one file twice in a process, and two requests can arrive at once (React's
+    StrictMode sends each of scripts/dev's reads twice). So the file is opened once, on first use, and each use
+    gets its own cursor of that connection, which closing leaves the file open for the next."""
     path = environ.get("STRATA_APP_STATE_FILE", "").strip()
     if not path:
         return None
@@ -126,7 +130,15 @@ def _app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
 
     with DuckDBEngine.open(path) as engine:
         catalog.build(engine)
-    return lambda: DuckDBEngine.open(path)
+    lock, held = threading.Lock(), {}
+
+    def open_state() -> Engine:
+        with lock:
+            if "engine" not in held:
+                held["engine"] = DuckDBEngine.open(path)
+            return held["engine"].cursor()
+
+    return open_state
 
 
 def _app_state(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
@@ -145,7 +157,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
     engine_for = engines.from_environment(environ, timeout_seconds=timeout)
     the_app = _the_app_s_engine(environ)
-    state_file = _app_state_file(environ) if not the_app else None
+    state_file = app_state_file(environ) if not the_app else None
     state = the_app or state_file
     app_state = _app_state(environ) or state_file
     host = environ.get("DATABRICKS_HOST", "").strip()

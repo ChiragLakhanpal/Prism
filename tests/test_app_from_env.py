@@ -19,7 +19,7 @@ from urllib.parse import parse_qs
 
 import httpx
 
-from strata.server.settings import app_from_env
+from strata.server.settings import app_from_env, app_state_file
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
 ANA = {
@@ -231,6 +231,21 @@ def test_on_this_computer_packages_are_kept_in_the_app_state_file(fixture_db, tm
     assert "event: error" in read.text and '"no_reader"' in read.text
     assert "event: package" in yourself.text
     assert [row["type"] for row in listed.json()["rows"]] == ["package"]
+
+
+def test_on_this_computer_two_uses_of_the_app_state_file_at_once_both_work(tmp_path):
+    """scripts/dev's StrictMode sends each list request twice, so two requests open the app state file at once
+    (ticket 15's critique, round 2, and ticket 35's verify F3). Both must get an engine that works."""
+    opener = app_state_file({"STRATA_APP_STATE_FILE": str(tmp_path / "state.duckdb")})
+
+    with opener() as first, opener() as second:
+        listed = [engine.run("SELECT count(*) FROM strata.ops.drafts").rows for engine in (first, second)]
+        zone = second.run("SELECT current_setting('TimeZone')").rows
+
+    assert listed == [((0,),), ((0,),)]
+    assert zone == (("UTC",),)
+    with opener() as again:
+        assert again.run("SELECT count(*) FROM strata.ops.drafts").rows == ((0,),)
 
 
 def test_on_the_app_a_package_is_saved_in_lakebase_signed_in_as_the_app_with_its_own_token(monkeypatch):

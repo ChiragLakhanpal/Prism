@@ -13,6 +13,7 @@ import { copy } from "../copy";
 import { formatCount, formatDate } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
+import { PublicView } from "./PlannedPackagePage";
 
 const words = copy.packagesTab;
 const PAGE = 20;
@@ -120,10 +121,16 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
   return table;
 }
 
+// The public view holds no packages, so the route shows the not-in-this-view state and reads nothing; the
+// implementing agency preview lists them with both buttons held (brief 7.9).
 export function PackagesPage({ search }: { search: string }) {
-  const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
   const view = new URLSearchParams(search).get("view");
-  const preview = view === "piu" || view === "public";
+  if (view === "public") return <PublicView />;
+  return <PackagesTab preview={view === "piu"} />;
+}
+
+function PackagesTab({ preview }: { preview: boolean }) {
+  const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
   return (
     <div className="layout-grid" data-packages-page={load.status}>
       <div className="col-span-12">

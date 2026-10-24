@@ -94,7 +94,8 @@ export function PlannedPackagePage({ packageId, search }: { packageId: string | 
   return <SavedPackage packageId={packageId} preview={preview === "piu"} />;
 }
 
-function PublicView() {
+// The public view holds no packages: the workspace and the Packages tab both show this (brief 7.5 and 7.9).
+export function PublicView() {
   return (
     <DocumentColumn>
       <div data-planned-package="public">
@@ -519,7 +520,15 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
       setAnnounce(words.readDone(formatCount(count), guesses > 0 ? words.card.guesses(guesses, formatCount(guesses, { capital: true })) : ""));
     }
   }, [mine?.compared]);
-  useEffect(() => () => request.current?.abort(), []);
+  // Leaving aborts the read in flight. StrictMode's remount in the development build runs this cleanup and then
+  // the effect above again, so the effect above must be free to start the read once more.
+  useEffect(
+    () => () => {
+      request.current?.abort();
+      started.current = false;
+    },
+    [],
+  );
   // Once a rerun has drawn, say "Updated." with the section's title as it reads now: its finding, the
   // sentence that says why there is no range, or the plan prompt's count.
   useEffect(() => {
@@ -711,6 +720,13 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   }
 
   const lead = result && missing.length === 0 ? <CriteriaLine result={result} /> : undefined;
+  // With too few comparables, or none it could measure, how to compare with more follows the reason.
+  const abstained = result?.abstention?.reason === "too_few_comparables" || result?.abstention?.reason === "none_measurable";
+  const more = abstained && missing.length === 0 ? (
+    <p className="mt-2 max-w-prose text-body text-ink" data-more>
+      {words.section.more}
+    </p>
+  ) : undefined;
 
   return (
     <DocumentColumn>
@@ -726,7 +742,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         </div>
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
         <section aria-labelledby="what-i-understood" className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-criteria-card>
-          <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId="what-i-understood" />
+          <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId="what-i-understood" preview={preview} />
           {pkg.refusal === "dividing" && <RefusalAlert />}
           <div className="mt-4">
             <ChipGroups form={form} chip={chip} />
@@ -743,6 +759,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             status={updating ? words.section.updating : undefined}
             busy={updating}
             lead={lead}
+            more={more}
           />
         </div>
         <p role="status" className="sr-only" data-workspace-live>
@@ -753,8 +770,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   );
 }
 
-// The criteria find_comparables used, as it returned them, under section 1's heading, and, when it gave no
-// range, how to compare with more.
+// The criteria find_comparables used, as it returned them, under section 1's heading.
 function CriteriaLine({ result }: { result: ComparablesResult }) {
   const criteria = result.criteria;
   if (!criteria) return null;
@@ -764,15 +780,10 @@ function CriteriaLine({ result }: { result: ComparablesResult }) {
   const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
   const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
   parts.push(s.notices(from, to));
-  // With too few comparables, or none it could measure, say how to compare with more.
-  const abstained = result.abstention?.reason === "too_few_comparables" || result.abstention?.reason === "none_measurable";
   return (
-    <div className="flex flex-col gap-1">
-      <p className="text-small text-ink-muted" data-criteria-line>
-        <Fill template={s.criteria} slots={{ list: parts.join(copy.list.comma) }} />
-      </p>
-      {abstained && <p className="text-small text-ink">{s.more}</p>}
-    </div>
+    <p className="text-small text-ink-muted" data-criteria-line>
+      <Fill template={s.criteria} slots={{ list: parts.join(copy.list.comma) }} />
+    </p>
   );
 }
 

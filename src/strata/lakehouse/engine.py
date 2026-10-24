@@ -146,6 +146,15 @@ class DuckDBEngine:
         connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
         return cls(connection)
 
+    def cursor(self) -> DuckDBEngine:
+        """Another connection to the same open database, for use beside this one, such as by another request:
+        it sees the same catalog, and closing it leaves this one open. DuckDB refuses to attach one file twice
+        in a process, so two uses at once share the database this way."""
+        connection = self.connection.cursor()
+        connection.execute("USE strata")
+        connection.execute("SET TimeZone = 'UTC'")
+        return DuckDBEngine(connection)
+
     def run(self, sql: str, params: Params = None) -> Result:
         try:
             cursor = self.connection.execute(transpile(sql), dict(params) if params else None)
