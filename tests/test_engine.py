@@ -152,6 +152,35 @@ def test_duckdb_adds_rows_with_every_value_bound_so_a_quote_in_a_name_stays_as_i
         assert engine.run("SELECT * FROM strata.silver.awards ORDER BY supplier_id").rows == tuple(ROWS)
 
 
+def test_the_warehouse_splits_an_insert_whose_values_would_pass_the_apis_size_limit():
+    # The Statement Execution API refuses parameters over 1,048,576 characters in all. Three pages of
+    # layout elements at 400 characters each, with a budget of 1,000, go as two INSERTs: two rows, then one.
+    pages = [("1", "1", "x" * 400), ("1", "2", "y" * 400), ("1", "3", "z" * 400)]
+    warehouse = FakeWarehouse([succeeded([]), succeeded([])])
+
+    added = WarehouseEngine("wh-1", warehouse).insert_rows("strata.bronze.layout_pages", COLUMNS, pages,
+                                                           chunk_characters=1_000)
+
+    assert added == 3
+    statements = [call[2]["statement"] for call in warehouse.calls]
+    assert statements[0].endswith("VALUES (:v0_0, :v0_1, :v0_2), (:v1_0, :v1_1, :v1_2)")
+    assert statements[1].endswith("VALUES (:v0_0, :v0_1, :v0_2)")
+    assert {"name": "v0_2", "value": "z" * 400, "type": "STRING"} in warehouse.calls[1][2]["parameters"]
+
+
+def test_a_row_too_large_for_the_apis_parameters_is_refused_before_anything_is_sent():
+    from strata.lakehouse.engine import RowTooLarge
+
+    warehouse = FakeWarehouse([succeeded([])])
+    text = ("1", "33218784", "x" * 1_001)
+
+    with pytest.raises(RowTooLarge, match="1,010 characters of values.*at most 1,000"):
+        WarehouseEngine("wh-1", warehouse).insert_rows("strata.bronze.document_texts", COLUMNS, [text],
+                                                       chunk_characters=1_000)
+
+    assert warehouse.calls == []
+
+
 def test_the_warehouse_adds_rows_in_one_insert_whose_every_value_is_a_parameter():
     warehouse = FakeWarehouse([succeeded([])])
 

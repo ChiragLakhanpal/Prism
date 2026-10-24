@@ -37,6 +37,10 @@ class EngineError(RuntimeError):
     """A statement an engine could not run, with the reason the engine gave."""
 
 
+class RowTooLarge(EngineError):
+    """One row's values pass the limit the Statement Execution API puts on a statement's parameters."""
+
+
 class PermissionDenied(EngineError):
     """The token cannot read what the statement asks for: a grant is missing, or the workspace refused the
     token itself. The app runs as each viewer (ADR 0003), so this is the viewer's own permission."""
@@ -284,6 +288,30 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
     return call
 
 
+
+# The Statement Execution API's limit on the combined size of a statement's parameters, with room
+# for the parameter names and the API's own encoding.
+PARAMETER_CHARACTERS = 900_000
+
+
+def _characters(row: tuple) -> int:
+    """How many characters a row's values take as parameters."""
+    return sum(len(str(value)) for value in row if value is not None)
+
+
+def _parts(rows: list[tuple], chunk: int, chunk_characters: int):
+    """rows in parts of at most `chunk` rows whose values hold at most `chunk_characters` characters."""
+    part, size = [], 0
+    for row in rows:
+        row_size = _characters(row)
+        if part and (len(part) >= chunk or size + row_size > chunk_characters):
+            yield part
+            part, size = [], 0
+        part.append(row)
+        size += row_size
+    if part:
+        yield part
+
 class WarehouseEngine:
     """The workspace's SQL warehouse, run as whoever owns the token."""
 
@@ -330,12 +358,23 @@ class WarehouseEngine:
 
         return self._result(reply)
 
-    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 100) -> int:
-        """Rows in chunks, each one INSERT whose every value is a bound parameter."""
+    def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 100,
+                    chunk_characters: int = PARAMETER_CHARACTERS) -> int:
+        """Rows in chunks, each one INSERT whose every value is a bound parameter.
+
+        A chunk holds at most `chunk` rows, and its values together at most `chunk_characters`
+        characters, because the Statement Execution API refuses parameters over 1,048,576 characters
+        in all. A page of layout elements can run to 50,000 characters, so 100 such rows would not fit.
+        """
         _names(table, columns)
         rows = list(rows)
-        for start in range(0, len(rows), chunk):
-            part = rows[start:start + chunk]
+        for row in rows:
+            size = _characters(row)
+            if size > chunk_characters:
+                raise RowTooLarge(f"A row for {table} holds {size:,} characters of values, and the warehouse's "
+                                  f"Statement Execution API takes at most {chunk_characters:,} in one statement's "
+                                  "parameters, so the row cannot be written this way.")
+        for part in _parts(rows, chunk, chunk_characters):
             params = {f"v{number}_{column}": value for number, row in enumerate(part)
                       for column, value in zip(range(len(columns)), row, strict=True)}
             values = ", ".join("(" + ", ".join(f":v{number}_{column}" for column in range(len(columns))) + ")"

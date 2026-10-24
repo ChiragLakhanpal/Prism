@@ -48,7 +48,7 @@ KINDS = {"catalog": "The catalog", "schemas": "The schema", "volumes": "The volu
 
 def dashboard_name() -> str:
     """The dashboard's name in the workspace, as bundle/dashboard.yml gives it."""
-    return bundle.load().resources("dashboards")["strata"]["display_name"]
+    return bundle.load().resources("dashboards")["strata_dashboard"]["display_name"]
 
 
 def flatten(listing: dict | None, job: dict | None = None, dashboard: dict | None = None) -> dict:
