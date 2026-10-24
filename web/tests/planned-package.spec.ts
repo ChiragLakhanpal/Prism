@@ -244,6 +244,39 @@ test("each chip is a 32 px button that says its state in words, and opens its ed
   await expect(chip(page, "review_type")).toBeFocused();
 });
 
+// The package form schema is the one place a chip is defined: the screen draws whatever fields the server hands
+// it, in their group and order. tests/test_planned_packages.py proves the server hands over a field added to
+// config/package_form.toml and drops one removed from it; here the screen draws exactly those.
+test("a field added to the package form schema is a chip in its group, and a field removed from it is no chip", async ({ page }) => {
+  const recordedPage = JSON.parse(await recorded("planned-package-rural-roads.json"));
+  const added = structuredClone(recordedPage);
+  added.form.fields.push({
+    ...added.form.fields.find((field: { key: string }) => field.key === "procurement_process"),
+    key: "high_sea_sh_risk",
+    label: "SEA/SH risk",
+    add_label: "Add the SEA/SH risk",
+    step_field: "High SEA/SH Risk",
+    default: null,
+    options: [{ value: "Yes", label: "High SEA/SH risk" }, { value: "No", label: "Not high" }],
+  });
+  added.package.fields.push({ key: "high_sea_sh_risk", group: "how", value: null, provenance: null, computed: null });
+  await openPackage(page, { answers: { "GET /api/planned-packages/pkg-000000000001": { body: JSON.stringify(added) } } });
+
+  expect((await chipTexts(page, "How it will be procured")).at(-1)).toBe("Add the SEA/SH risk");
+  await chip(page, "high_sea_sh_risk").click();
+  await expect(page.getByRole("dialog", { name: "SEA/SH risk" })).toContainText("High SEA/SH risk");
+
+  const removed = structuredClone(recordedPage);
+  removed.form.fields = removed.form.fields.filter((field: { key: string }) => field.key !== "lots");
+  removed.package.fields = removed.package.fields.filter((field: { key: string }) => field.key !== "lots");
+  removed.package.guesses = 0;
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await openPackage(page, { answers: { "GET /api/planned-packages/pkg-000000000001": { body: JSON.stringify(removed) } } });
+
+  expect(await chipTexts(page, "What is being bought")).toEqual(["Works", "Rural roads", "About US$15 million"]);
+  await expect(chip(page, "lots")).toHaveCount(0);
+});
+
 test("the computed note states the rules with the thresholds file's values and its source", async ({ page }) => {
   await openPackage(page);
 
