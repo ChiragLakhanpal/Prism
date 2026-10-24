@@ -604,37 +604,54 @@ function within12(dots: { x: number; y: number; name: string }[], x: number, y: 
   return best;
 }
 
-const tooltipHeader = (page: Page) => page.evaluate(() => document.querySelector("[data-dot-tooltip] p")?.textContent ?? null);
-
-test("a pointer sweeping along the dots, above or below the lane's centre, shows the dot under it within 48 ms", async ({ page }) => {
-  for (const width of [1440, 390]) {
-    await openPackage(page, { width });
-    await ready(page);
-    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
-    const { centre, dots } = await swarmGeometry(page);
-    const start = Math.min(...dots.map((dot) => dot.x)) - 16;
-    const end = Math.max(...dots.map((dot) => dot.x)) + 16;
-
-    for (const dy of [-9, 9]) {
-      const y = centre + dy;
-      await page.mouse.move(start, y);
-      await expect(page.locator("[data-dot-tooltip]")).toHaveCount(0);
-      // Left to right, 3 px every 16 ms. Each reading comes 16 ms after its move; while the pointer is
-      // within 12 px of a dot, the tooltip may name another for at most three readings in a row.
-      let wrong = 0;
-      let longest = { steps: 0, at: "" };
-      for (let x = start; x <= end; x += 3) {
-        await page.mouse.move(x, y);
-        await page.waitForTimeout(16);
-        const under = within12(dots, x, y);
-        const shown = await tooltipHeader(page);
-        wrong = under === null || shown === under.name ? 0 : wrong + 1;
-        if (wrong > longest.steps) longest = { steps: wrong, at: `on ${under!.name}, the tooltip named ${shown}` };
-      }
-      expect.soft(longest.steps, `${width} px, ${dy} px from the lane's centre, ${longest.at}`).toBeLessThanOrEqual(3);
-    }
+// A sweep from left of the swarm to right of it, 3 px every 16 ms, dy px from the lane's centre. The
+// page notes the tooltip's header as each move arrives, so each move's reading is the tooltip 16 ms
+// after the move before it, with no round trip between moves. While the pointer is within 12 px of a
+// dot, it returns the longest run of readings in a row that named another dot.
+async function sweep(page: Page, dy: number) {
+  const { centre, dots } = await swarmGeometry(page);
+  const start = Math.min(...dots.map((dot) => dot.x)) - 16;
+  const end = Math.max(...dots.map((dot) => dot.x)) + 16;
+  const y = centre + dy;
+  await page.mouse.move(start, y);
+  await expect(page.locator("[data-dot-tooltip]")).toHaveCount(0);
+  await page.evaluate(() => {
+    const seen: (string | null)[] = ((window as unknown as { seen: (string | null)[] }).seen = []);
+    window.addEventListener("pointermove", () => seen.push(document.querySelector("[data-dot-tooltip] p")?.textContent ?? null), { capture: true });
+  });
+  const xs: number[] = [];
+  let next = performance.now();
+  for (let x = start; x <= end; x += 3) {
+    await page.mouse.move(x, y);
+    xs.push(x);
+    next += 16;
+    await new Promise((resolve) => setTimeout(resolve, Math.max(0, next - performance.now())));
   }
-});
+  await page.mouse.move(end + 3, y);
+  const seen = await page.evaluate(() => (window as unknown as { seen: (string | null)[] }).seen);
+  let wrong = 0;
+  let longest = { steps: 0, at: "" };
+  xs.forEach((x, index) => {
+    const under = within12(dots, x, y);
+    const shown = seen[index + 1];
+    wrong = under === null || shown === under.name ? 0 : wrong + 1;
+    if (wrong > longest.steps) longest = { steps: wrong, at: `on ${under!.name}, the tooltip named ${shown}` };
+  });
+  return longest;
+}
+
+for (const width of [1440, 390]) {
+  for (const [side, dy] of [["above", -9], ["below", 9]] as const) {
+    test(`at ${width} px, a pointer sweeping along the dots 9 px ${side} the lane's centre shows the dot under it within 48 ms`, async ({ page }) => {
+      await openPackage(page, { width });
+      await ready(page);
+      await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+      const longest = await sweep(page, dy);
+      // Three readings are 48 ms.
+      expect(longest.steps, longest.at).toBeLessThanOrEqual(3);
+    });
+  }
+}
 
 test("a pointer that takes a dot from below its centre keeps it on the way up to its tooltip", async ({ page }) => {
   await openPackage(page, { width: 1024 });
