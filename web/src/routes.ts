@@ -7,7 +7,8 @@
 // until ticket 21 adds Summary) and Check a plan (/projects/:pid/procurement/:agencyId/:version, or
 // with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 12 builds the
 // package workspace at /packages/:id, where :id is the package's STEP reference. Ticket 35 adds the
-// Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId.
+// Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId. Ticket 29 adds the Lessons tab's
+// Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId).
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
 
@@ -89,6 +90,9 @@ export function matchRoute(pathname: string): Match {
   if (first === "packages" && parts.length === 2 && PLANNED_ID.test(second)) return page("plannedPackage", "packages", { id: second });
   if (first === "packages" && parts.length === 2) return page("package", "packages", { id: second });
   if (first === "lessons" && parts.length === 1) return page("lessons", "lessons");
+  // Ticket 29: the lesson review queue and one item's review page, for lesson reviewers.
+  if (first === "lessons" && second === "review" && parts.length === 2) return page("lessonsQueue", "lessons");
+  if (first === "lessons" && second === "review" && parts.length === 3) return page("lessonReview", "lessons", { itemId: third });
   if (first === "drafts" && parts.length === 1) return page("drafts", "drafts");
   // Ticket 35: writing a draft (/drafts/new?kind=...), and a draft by its id. PLAN.md section 8 does not
   // list these two routes; "new" is never a draft's id.

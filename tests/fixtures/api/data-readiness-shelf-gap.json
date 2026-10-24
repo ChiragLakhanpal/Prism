@@ -2257,6 +2257,37 @@
       ]
     },
     {
+      "evidence_id": "strata.ops.data_readiness:documents/P130164/lessons_verified",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "lessons_verified",
+        "subjects": [
+          "P130164"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.lesson_proposals"
+      },
+      "source_key": "documents",
+      "measure": "lessons_verified",
+      "kind": "verified",
+      "subjects": [
+        "P130164"
+      ],
+      "count": 3,
+      "denominator": 4,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
       "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_contracts_in_local_currency",
       "public_from": "2026-10-23",
       "source": {
@@ -3229,6 +3260,84 @@
         ]
       ],
       "spell_out": false
+    },
+    {
+      "kind": "lessons",
+      "tool": "get_lessons",
+      "status": "partial",
+      "ready_for": 71,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 264,
+            "row": 56,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "body pages"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 70,
+            "row": 56,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": "missing",
+            "lack": "paragraph numbers I could find"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "paragraph numbers I could find"
+          },
+          {
+            "text": "."
+          }
+        ],
+        [
+          {
+            "text": "I couldn't read the "
+          },
+          {
+            "text": "risk annex"
+          },
+          {
+            "text": " in the "
+          },
+          {
+            "text": "Project Appraisal Document"
+          },
+          {
+            "text": " for "
+          },
+          {
+            "mono": "P130164"
+          },
+          {
+            "text": ", one of "
+          },
+          {
+            "link": "the hardest documents I read",
+            "href": "#hardest-documents"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": false
     }
   ],
   "gaps": [
@@ -3601,7 +3710,7 @@
       "rank": 3,
       "gap": "fy2017_2019",
       "projects": 2,
-      "row": 71,
+      "row": 72,
       "projects_row": 60,
       "projects_from": "measure",
       "sentence": [
@@ -3610,7 +3719,7 @@
         },
         {
           "number": 7,
-          "row": 71,
+          "row": 72,
           "noun": "contracts in local currency",
           "noun_one": null,
           "role": null,
@@ -3663,13 +3772,13 @@
       "measure": "pages_read_route_a",
       "label": "Plan pages, published text",
       "noun": "plan pages with published text",
-      "row": 72
+      "row": 73
     },
     {
       "measure": "pages_read_route_b",
       "label": "Plan pages, layout parser",
       "noun": "plan table pages",
-      "row": 73
+      "row": 74
     },
     {
       "measure": "document_pages_read_route_a",
@@ -3690,7 +3799,7 @@
         "text": "I can answer each of the "
       },
       {
-        "number": 2,
+        "number": 3,
         "row": null,
         "noun": null,
         "noun_one": null,
@@ -3781,7 +3890,7 @@
         "text": "."
       }
     ],
-    "text": "I can answer each of the two kinds of question below in part. The biggest gaps are the 70 of 264 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
+    "text": "I can answer each of the three kinds of question below in part. The biggest gaps are the 70 of 264 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
   },
   "headline_abstention": null,
   "parse_failures": [],

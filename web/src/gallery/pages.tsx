@@ -81,6 +81,7 @@ import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
@@ -1286,6 +1287,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   draftsPage(planSample),
+  lessonsPage(),
   {
     // Ticket 12's package workspace (web/src/components/PackageFacts.tsx, PastRange.tsx and
     // RangeChart.tsx). The page's own states, with the real comparables, are captured from the

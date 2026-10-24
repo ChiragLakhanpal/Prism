@@ -23,6 +23,9 @@ It builds four things, with no network:
   (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
   the fixture can never drift from the code that makes the real tables. They run after the plan
   reader, so gold can read the plan rows.
+- The proposed lessons and the review queue, by the nightly job's propose_lessons task
+  (strata.knowledge.lessons.propose) with the batch model's recorded answers, run again once the
+  passage reader has read the documents it proposes from (ticket 29).
 
 The build stops when any table outside the `recorded` schema lacks a public_from DATE column
 (ADR 0002).
@@ -45,6 +48,7 @@ from strata.config import load_slice
 from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
 from strata.knowledge import assertions
+from strata.knowledge.lessons import propose
 from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
@@ -127,6 +131,9 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
+                # The nightly job's propose_lessons task again, now that the passages are read (ticket 29):
+                # the batch model's recorded answers, the quote check and the review queue.
+                propose.run_on_fixture(engine, RUN_ID, clock)
                 # Assertions and disagreements, once the passages they rest on are read (ticket 20).
                 assertions.run_on_fixture(engine, run_id=RUN_ID, clock=clock)
                 # The dashboard's copy of the Data readiness page, once every reader has measured.

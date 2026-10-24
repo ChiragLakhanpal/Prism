@@ -4,14 +4,16 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Four tasks have their work (tickets 07, 17 and 20): fetch_by_watermark fetches each source in
+Five tasks have their work (tickets 07, 17, 20 and 29): fetch_by_watermark fetches each source in
 config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
-countries as each entry says, bronze_to_gold builds silver and gold from bronze,
+countries as each entry says; bronze_to_gold builds silver and gold from bronze; propose_lessons has
+the batch model propose lessons from the evaluation reports the passage reader holds, and those whose
+quotes pass the check wait in the review queue (strata.knowledge.lessons.propose);
 detect_disagreements rebuilds the assertions and the disagreements between them
-(strata.knowledge.assertions), and measure_data_readiness writes the data readiness measures and
-each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed;
-ticket 43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches
-the documents source itself.
+(strata.knowledge.assertions); and measure_data_readiness writes the data readiness measures and
+each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed; ticket
+43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches the
+documents source itself, and the passage reader, whose passages propose_lessons reads.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
@@ -121,6 +123,30 @@ def _detect_disagreements(run: Run) -> int:
     return report.assertions + report.rejected + report.disagreements
 
 
+def _propose_lessons(run: Run) -> int:
+    """Lessons proposed from the evaluation reports the passage reader holds, then the lesson review writer's
+    note on each open item of the review queue (ticket 29). Only a run that fetches from the live APIs sends
+    them to the live batch model and the live writer; any other run replays their recorded answers. On
+    Databricks the job passes no Azure OpenAI or Foundry keys until ticket 43 wires its tasks, so until then
+    the task proposes nothing and changes no rows."""
+    import os
+
+    from strata.agent.runner import lesson_writer_from_environment
+    from strata.config import load_thresholds
+    from strata.knowledge.lessons import batch, propose, writer
+
+    if run.fetch is not fetch_live:
+        return propose.run_on_fixture(run.engine, run.run_id, run.clock)
+    model = batch.from_environment()
+    changed = 0 if model is None else propose.run(run.engine, model, run.run_id, run.clock)
+    # The review-proposed-lessons workflow, with the live lesson review writer when the job can reach Foundry.
+    agent = lesson_writer_from_environment(os.environ)()
+    if agent is not None:
+        most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
+        changed += writer.run(run.engine, lambda item, subject: agent, run.clock, most)
+    return changed
+
+
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
     pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
@@ -140,7 +166,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "parse_and_embed": _nothing_yet,
     "sync_index": _nothing_yet,
     "relink": _nothing_yet,
-    "propose_lessons": _nothing_yet,
+    "propose_lessons": _propose_lessons,
     "detect_disagreements": _detect_disagreements,
     "score": _nothing_yet,
     "measure_data_readiness": _measure_data_readiness,

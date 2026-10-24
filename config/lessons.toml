@@ -1,0 +1,87 @@
+# The lesson lists: the closed lists every lesson is tagged from, and the projects the lesson
+# extractor's instructions use as examples.
+#
+# This is the one place each list is defined (CLAUDE.md rule 9). strata.config.load_lesson_lists()
+# reads it. The extractor's instructions list these keys and a proposed lesson that names another
+# key is rejected; the lesson editor offers these choices; get_lessons returns each lesson's keys and
+# labels; ticket 30's risk table stores a selection by its risk keys. A key never changes once a lesson
+# uses it, because stored lessons and selections hold the key; a label may change. Ticket 39 adds
+# procurement categories and selection methods as two more lists in the same shape.
+#
+# Labels are words people read, so the gate's copy lint checks them as it checks web/src/copy.ts.
+# Source for the lists: docs/PLAN.md section 5 (a lesson has risk factors from a closed list, a
+# lifecycle stage and a polarity) and the blueprint's Lessons wireframe ("Procurement planning", and
+# "What worked" and "What didn't work"). The risk factors and stages are starting lists for the owner
+# to confirm (a parked decision), drawn from the procurement causes completion reports give most often.
+
+# [[risk_factors]]: what made a procurement go wrong or right.
+[[risk_factors]]
+key = "cost_estimates"
+label = "Cost estimates out of line with market prices"
+
+[[risk_factors]]
+key = "permits_before_award"
+label = "Land, forest and other permits not in place before award"
+
+[[risk_factors]]
+key = "procurement_capacity"
+label = "Too little procurement capacity in the implementing agency"
+
+[[risk_factors]]
+key = "coordination"
+label = "Weak coordination between agencies"
+
+[[risk_factors]]
+key = "market_response"
+label = "Few bids or a weak market response"
+
+[[risk_factors]]
+key = "designs_and_specifications"
+label = "Incomplete designs or specifications"
+
+[[risk_factors]]
+key = "evaluation_delays"
+label = "Slow bid evaluation or award"
+
+[[risk_factors]]
+key = "contractor_performance"
+label = "Poor contractor performance"
+
+[[risk_factors]]
+key = "contract_management"
+label = "Weak contract management"
+
+# [[stages]]: the stage of procurement the lesson is about.
+[[stages]]
+key = "procurement_planning"
+label = "Procurement planning"
+
+[[stages]]
+key = "tender_design"
+label = "Tender design and packaging"
+
+[[stages]]
+key = "bidding_and_evaluation"
+label = "Bidding and evaluation"
+
+[[stages]]
+key = "contract_award"
+label = "Contract award"
+
+[[stages]]
+key = "contract_management"
+label = "Contract management"
+
+# [[kinds]]: the lesson's polarity, as DESIGN.md section 7 writes it.
+[[kinds]]
+key = "worked"
+label = "What worked"
+
+[[kinds]]
+key = "did_not_work"
+label = "What didn't work"
+
+# The projects whose documents the extractor's instructions quote as examples. The hindsight test
+# (ticket 34) leaves them out, since the extractor has seen their answers. The instructions use none yet.
+[extraction]
+example_projects = []

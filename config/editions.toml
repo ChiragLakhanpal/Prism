@@ -1,0 +1,38 @@
+# The editions of the World Bank's procurement rules: which rules a project followed, and how a
+# project's documents name them.
+#
+# This is the one place an edition is defined (CLAUDE.md rule 9; spec story 107: lessons and models
+# are tagged with the edition each project follows). strata.config.load_editions() reads it. A
+# lesson takes the edition its project's Project Appraisal Document names: the first edition below
+# whose phrases all appear in one of the PAD's passages, ignoring case, spacing and the shape of
+# quote marks. So list an edition that names more phrases before one whose phrases it contains. A
+# project whose PAD names none of them has no edition, and the screens say "I couldn't tell which
+# rules the project followed." rather than guess one (the showcase project followed the 2011
+# Guidelines, never the latest Regulations by default).
+#
+# [[editions]]
+#   key      never changes once a lesson holds it
+#   name     the edition as a sentence names it: "Its projects followed {name}." The copy lint checks it.
+#   short    the edition as a label names it, starting with a capital: "Rules followed: {short}". The
+#            copy lint checks it too.
+#   phrases  the words a PAD uses for it, each found word for word
+#
+# Only editions a recorded document names are listed: the source for each is the PAD that names it.
+# The Procurement Regulations' editions join when a recorded PAD names one (a parked decision), and
+# brief 24's {edition_name} for quoting the Regulations should come from here too.
+
+[[editions]]
+key = "guidelines_2011_revised_2014"
+name = "the World Bank's Procurement Guidelines of January 2011, revised July 2014"
+short = "Procurement Guidelines, January 2011, revised July 2014"
+# P156634's PAD, paragraph 79: "'Guidelines: Procurement of Goods, Works, and Non-Consulting Services
+# under IBRD Loans and IDA Credits and Grants by World Bank Borrowers' dated January 2011, revised July 2014".
+phrases = ["Guidelines: Procurement of Goods, Works, and Non-Consulting Services", "January 2011", "revised July 2014"]
+
+[[editions]]
+key = "guidelines_2011"
+name = "the World Bank's Procurement Guidelines of January 2011"
+short = "Procurement Guidelines, January 2011"
+# P130164's PAD, PDF page 49, paragraph 21: "the \"Guidelines: Procurement under IBRD Loans and IDA
+# Credits\" (dated January 2011)" (tests/ground_truth/values.toml, pad-procurement-guidelines).
+phrases = ["Guidelines: Procurement under IBRD Loans and IDA Credits", "January 2011"]

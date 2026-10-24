@@ -64,6 +64,17 @@ guardrail = "strata"
 description = "Reads a sentence that describes a procurement package into the criteria of Strata's package form."
 tools = []
 
+# The review-proposed-lessons workflow's writer (ticket 29): a summary of each lesson review item's evidence and
+# the current lessons it may repeat, from the passages and lessons the app hands it. The workflow
+# (src/strata/knowledge/lessons/writer.py) runs the verifier on what it writes before any reviewer reads it.
+[agents.lesson_review_writer]
+name = "strata-lesson-review-writer"
+role = "draft"
+instructions = "lesson_review_writer.md"
+guardrail = "strata"
+description = "Summarizes the evidence for a proposed lesson and names the current lessons it may repeat, for lesson reviewers."
+tools = []
+
 [guardrails.strata]
 name = "strata-guardrail"
 base_policy = "Microsoft.DefaultV2"

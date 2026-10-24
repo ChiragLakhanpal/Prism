@@ -182,7 +182,7 @@ def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_
     assert "FOUNDRY_CLIENT_SECRET" in out and "there is no agent" in out
 
 
-def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_sources_drafts_and_supplier_decisions_and_nothing_more(tmp_path, capsys):
+def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_sources_drafts_supplier_decisions_and_lesson_reviews_and_nothing_more(tmp_path, capsys):
     workspace = FakeWorkspace()
 
     deploy(workspace, tmp_path, capsys)
@@ -201,6 +201,13 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{PRINCIPAL}`",
+        # Ticket 29's lesson review record: the reviewers' acts, the queue, the versions, what each rests on
+        # and the writer's notes. No reviewer group may write them outside the app.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_acts TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_items TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_versions TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_sources TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_notes TO `{PRINCIPAL}`",
     ]
 
 

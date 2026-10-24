@@ -11,8 +11,10 @@
 //
 // More files hold words people read. The source registry, config/sources.toml, holds each
 // source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
-// sentences), and the package form schema, config/package_form.toml, each criterion chip's words
-// (ticket 15). Every one is checked like the copy. src/strata/tools/data_readiness_copy.json and
+// sentences), and every one is checked like the copy. So are the package form schema's words,
+// config/package_form.toml, each criterion chip's words (ticket 15), the lesson lists' labels
+// (config/lessons.toml), the editions' names (config/editions.toml) and the roles' names
+// (config/roles.toml), which the Lessons pages show (ticket 29). src/strata/tools/data_readiness_copy.json and
 // src/strata/drafts/copy.json are the server's copies of copy.dataReadiness.server and of a draft's
 // files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them).
 import { readFileSync, readdirSync } from "node:fs";
@@ -43,7 +45,11 @@ function options(argv: string[]) {
     copy: given.copy ?? (custom ? [] : COPY_FILES),
     components: given.component ?? (custom ? [] : sourceFiles(join(WEB, "src")).filter((file) => !COPY_FILES.includes(file))),
     glossary: given.glossary ?? (custom ? [] : [join(REPO, "GLOSSARY.md")]),
-    registry: given.registry ?? (custom ? [] : [join(REPO, "config", "sources.toml"), join(REPO, "config", "package_form.toml")]),
+    registry:
+      given.registry ??
+      (custom
+        ? []
+        : ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml"].map((name) => join(REPO, "config", name))),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
     custom,
   };
@@ -55,7 +61,7 @@ function options(argv: string[]) {
 // options' labels and a count's units; STEP's own values and field names are left out, as they are words
 // Strata copies word for word.
 const REGISTRY_WORDS =
-  /\b(label|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+  /\b(label|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|short|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
 
 function registryWords(text: string): { line: number; text: string }[] {
   return text.split("\n").flatMap((line, index) =>

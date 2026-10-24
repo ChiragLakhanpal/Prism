@@ -64,7 +64,8 @@ export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   // its text 24 px, the icon and its gap). A ghost's border is clear, so dropping its sides
   // changes nothing you see. Its hover fill then reaches 8 px past the text and its focus ring
   // 12 px, inside the 16 px padding of the smallest card. A flush button carries an icon, so
-  // its spinner takes the icon's place and loading does not change its width.
+  // its spinner takes the icon's place and loading does not change its width. A label that wraps,
+  // as at 320 px, keeps its lines on the text's edge too, never centred.
   flush?: boolean;
   // A ghost button on the page background, such as "Show them" in the plan check's fold row:
   // tint-hover barely shows on page, so it hovers to tint.
@@ -101,7 +102,7 @@ export function Button({
       className={cx(
         "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
         "transition-paint duration-150 select-none",
-        iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2" : loading && !Icon ? "px-3" : "px-6",
+        iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2 text-left" : loading && !Icon ? "px-3" : "px-6",
         held ? (variant === "ghost" ? HELD_GHOST : HELD) : VARIANTS[variant],
         !held && variant === "ghost" && (onPage ? "hover:bg-tint" : "hover:bg-tint-hover"),
         DISABLED[variant],

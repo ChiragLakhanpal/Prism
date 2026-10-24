@@ -14,10 +14,15 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
                      (strata.agent.definition builds the agent's definition from it)
 - load_draft_kinds() config/drafts.toml, the draft-kind registry: each kind of draft and its holds
-- load_roles()       config/roles.toml, the roles file: the teams that share drafts, by workspace group
+- load_roles()       config/roles.toml, the roles file: the teams that share drafts, by workspace
+                     group, and the groups that review lessons, with the people in them, their
+                     regions and their projects (ticket 29)
 - load_ladder()      config/evidence_ladder.toml, the evidence ladder: the rules that choose the
                      assertion Strata leans on when two disagree, the evidence tiers, the attributes
                      an assertion can be about and their rating scales
+- load_lesson_lists() config/lessons.toml, the lesson lists: the closed lists of risk factors, stages
+                     and kinds, and the extractor's example projects (ticket 29)
+- load_editions()    config/editions.toml, the editions of the procurement rules a project followed
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -1143,6 +1148,48 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
 
 # ── The roles file ───────────────────────────────────────────────────────
 
+# The reviewer pages a group's members may open, and what they may do there. Later tickets add theirs.
+ROLE_PAGES = ("lesson_review",)
+ROLE_ACTS = ("recommend", "decide", "cross_check")
+
+
+@dataclass(frozen=True)
+class Group:
+    """One workspace group and what its members may do in Strata."""
+
+    key: str
+    workspace_group: str
+    role: str  # what its members are called on reviewer pages
+    pages: tuple[str, ...]
+    acts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Person:
+    """One person in the roles file, found by the email the Databricks App forwards."""
+
+    email: str
+    name: str
+    groups: tuple[str, ...]
+    regions: tuple[str, ...]
+    projects: tuple[str, ...]
+
+    def acts(self, roles: Roles) -> tuple[str, ...]:
+        """Everything this person may do, from every group they are in, in ROLE_ACTS's order."""
+        held = {act for key in self.groups for act in roles.groups[key].acts}
+        return tuple(act for act in ROLE_ACTS if act in held)
+
+    def pages(self, roles: Roles) -> tuple[str, ...]:
+        """The reviewer pages this person may open, in ROLE_PAGES's order."""
+        held = {page for key in self.groups for page in roles.groups[key].pages}
+        return tuple(page for page in ROLE_PAGES if page in held)
+
+    def role(self, roles: Roles) -> str:
+        """The role a reviewer page names them by: the role of their group that may do the most."""
+        groups = sorted((roles.groups[key] for key in self.groups), key=lambda group: -len(group.acts))
+        return groups[0].role
+
+
 @dataclass(frozen=True)
 class Team:
     """A team of World Bank staff that shares its drafts, by the workspace groups its members are in."""
@@ -1155,12 +1202,22 @@ class Team:
 @dataclass(frozen=True)
 class Roles:
     teams: tuple[Team, ...]
+    groups: dict[str, Group]
+    people: tuple[Person, ...]
+
+    def person(self, email: str | None) -> Person | None:
+        """The person with this email, ignoring case, or None for anyone the file does not list."""
+        if not email:
+            return None
+        wanted = email.strip().lower()
+        return next((person for person in self.people if person.email.lower() == wanted), None)
 
 
 def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
-    """The roles file's teams, in the file's order, each with at least one workspace group."""
+    """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
+    groups and the people in them."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"teams"})
+    _Entry(path, "the file", data).only({"teams", "groups", "people"})
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
@@ -1168,7 +1225,41 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
         if not entry.texts("groups"):
             entry._fail("groups", "must name at least one workspace group")
         teams.append(Team(key, entry.text("name"), entry.texts("groups")))
-    return Roles(tuple(teams))
+    groups = {}
+    for key, table in (data.get("groups") or {}).items():
+        entry = _Entry(path, f"groups.{key}", table)
+        entry.only({"workspace_group", "role", "pages", "acts"})
+        pages, acts = entry.texts("pages"), entry.texts("acts")
+        for name, given, allowed in (("pages", pages, ROLE_PAGES), ("acts", acts, ROLE_ACTS)):
+            unknown = [item for item in given if item not in allowed]
+            if unknown:
+                entry._fail(name, f"names {', '.join(unknown)}, which Strata does not know. Use only these: "
+                                  f"{', '.join(allowed)}")
+        groups[key] = Group(key, entry.text("workspace_group"), entry.text("role"), pages, acts)
+    people, seen = [], set()
+    for entry in _tables(path, data, "people"):
+        entry.only({"email", "name", "groups", "regions", "projects"})
+        email = entry.text("email")
+        if email.lower() in seen:
+            raise ConfigError(f"In {path.name}, {email} is listed more than once. List each person once, with "
+                              "all their groups.")
+        seen.add(email.lower())
+        named = entry.texts("groups")
+        if not named:
+            entry._fail("groups", "must name at least one group")
+        for key in named:
+            if key not in groups:
+                entry._fail("groups", f"names the group {key}, which [groups] does not define. It defines "
+                                      f"{', '.join(groups) or 'none'}")
+        regions = entry.texts("regions")
+        if not regions:
+            entry._fail("regions", "must name at least one region, as strata.gold.project.region writes it")
+        projects = entry.texts("projects")
+        for project in projects:
+            if not PROJECT_ID.fullmatch(project):
+                entry._fail("projects", f"must be a project ID, P followed by six digits, not {project!r}")
+        people.append(Person(email, entry.text("name"), named, regions, projects))
+    return Roles(tuple(teams), groups, tuple(people))
 
 
 # ── The evidence ladder ──────────────────────────────────────────────────
@@ -1354,3 +1445,116 @@ def load_ladder(path: Path = CONFIG_DIR / "evidence_ladder.toml") -> Ladder:
         raise ConfigError(f"In {path.name}, a field name means two attributes. Each name must mean one.")
     return Ladder(path, rules, order, tuple(tuple(group) for group in groups), tiers, attributes, scales,
                   scales_entry.texts("no_rating"))
+
+
+# ── The lesson lists ─────────────────────────────────────────────────────
+
+LESSON_LISTS = ("risk_factors", "stages", "kinds")
+
+
+@dataclass(frozen=True)
+class ListItem:
+    key: str
+    label: str
+
+
+@dataclass(frozen=True)
+class LessonLists:
+    """The closed lists a lesson is tagged from, each in file order, and the extractor's example projects."""
+
+    risk_factors: tuple[ListItem, ...]
+    stages: tuple[ListItem, ...]
+    kinds: tuple[ListItem, ...]
+    example_projects: tuple[str, ...]
+
+    def _find(self, items: tuple[ListItem, ...], key: str | None) -> ListItem | None:
+        return next((item for item in items if item.key == key), None)
+
+    def risk_factor(self, key: str | None) -> ListItem | None:
+        return self._find(self.risk_factors, key)
+
+    def stage(self, key: str | None) -> ListItem | None:
+        return self._find(self.stages, key)
+
+    def kind(self, key: str | None) -> ListItem | None:
+        return self._find(self.kinds, key)
+
+    def as_dict(self) -> dict:
+        """The lists as a page or a prompt takes them: each item's key and label, in order."""
+        return {name: [{"key": item.key, "label": item.label} for item in getattr(self, name)]
+                for name in LESSON_LISTS}
+
+
+def load_lesson_lists(path: Path = CONFIG_DIR / "lessons.toml") -> LessonLists:
+    """The lesson lists. A key may appear once in its list."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({*LESSON_LISTS, "extraction"})
+    lists = {}
+    for name in LESSON_LISTS:
+        items: list[ListItem] = []
+        for entry in _tables(path, data, name):
+            entry.only({"key", "label"})
+            item = ListItem(entry.text("key"), entry.text("label"))
+            if not re.fullmatch(r"[a-z][a-z0-9_]*", item.key):
+                entry._fail("key", "must be lower case letters, digits and _")
+            if item.key in {seen.key for seen in items}:
+                entry._fail("key", f"repeats {item.key!r}. Each key is listed once")
+            items.append(item)
+        if not items:
+            raise ConfigError(f"{path.name} lists no {name}. Add at least one [[{name}]] entry.")
+        lists[name] = tuple(items)
+    extraction = _Entry(path, "extraction", data.get("extraction", {}))
+    extraction.only({"example_projects"})
+    examples = extraction.texts("example_projects")
+    for project in examples:
+        if not PROJECT_ID.fullmatch(project):
+            extraction._fail("example_projects", f"must list project IDs, not {project!r}")
+    return LessonLists(**lists, example_projects=examples)
+
+
+# ── The editions of the procurement rules ────────────────────────────────
+
+@dataclass(frozen=True)
+class Edition:
+    key: str
+    name: str  # as a sentence names it: "Its projects followed {name}."
+    phrases: tuple[str, ...]
+    short: str = ""  # as a label names it, with a capital: "Procurement Guidelines, January 2011"
+
+
+_STRAIGHT = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
+
+
+def _plain(text: str) -> str:
+    """Text as an edition's phrases are matched: lower case, quote marks straight, each run of spaces one."""
+    return " ".join(text.translate(_STRAIGHT).lower().split())
+
+
+@dataclass(frozen=True)
+class Editions:
+    editions: tuple[Edition, ...]
+
+    def named_in(self, text: str) -> Edition | None:
+        """The first edition whose phrases all appear in the text, or None."""
+        plain = _plain(text)
+        return next((edition for edition in self.editions
+                     if all(_plain(phrase) in plain for phrase in edition.phrases)), None)
+
+    def get(self, key: str | None) -> Edition | None:
+        return next((edition for edition in self.editions if edition.key == key), None)
+
+
+def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
+    """The editions, in file order, which is the order they are matched in."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"editions"})
+    editions: list[Edition] = []
+    for entry in _tables(path, data, "editions"):
+        entry.only({"key", "name", "short", "phrases"})
+        edition = Edition(entry.text("key"), entry.text("name"), entry.texts("phrases"), entry.text("short"))
+        if not edition.phrases:
+            entry._fail("phrases", "must list at least one phrase a PAD uses for the edition")
+        if edition.key in {seen.key for seen in editions}:
+            entry._fail("key", f"repeats {edition.key!r}. Each edition is listed once")
+        editions.append(edition)
+    return Editions(tuple(editions))

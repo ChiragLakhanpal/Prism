@@ -204,3 +204,26 @@ questions:
       on the ICR. The ISRs' ratings are a trajectory (tests/ground_truth/values.toml, isr-1-rating to
       isr-13-rating). The recording plants one rating whose quote is not on paragraph 45's page, which
       the run left out and counts.
+  - id: get-lessons-cost-estimates
+    kind: documents
+    tool: get_lessons
+    question: >-
+      What lessons does Strata's library hold on works cost estimates and rebidding, and did IEG's
+      review of the completion report say the same?
+    arguments:
+      query: works contract estimates market rates rebidding
+      as_of: "2026-10-28"
+    # The library holds lessons only after two people decide them, so the offline gate asks this
+    # question once tests/lesson_scenario.py has had reviewers from tests/fixtures/roles.toml add the
+    # fixture's three proposed lessons on October 27, 2026. The live benchmark asks the live library.
+    needs: decided_lessons
+    expected:
+      first: [Base works estimates on market rates to avoid rebidding]
+      first_evidence: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
+      first_ieg_status: [restated]
+      editions: [guidelines_2011]
+    source: >-
+      ICR P130164 paragraph 54, on PDF page 23, "108 of 328 cases had to go through rebidding"
+      (tests/ground_truth/values.toml, icr-para-54), which the ICR Review restates in section 10.b on
+      PDF page 13 (icr-review-2023-restates-para-54). P130164's PAD names the January 2011 Guidelines
+      (pad-procurement-guidelines).

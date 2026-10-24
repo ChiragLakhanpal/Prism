@@ -1,0 +1,17 @@
+{
+  "signed_in": true,
+  "tabs": [
+    "library",
+    "review"
+  ],
+  "acts": [
+    "recommend",
+    "cross_check"
+  ],
+  "regions": [
+    "South Asia"
+  ],
+  "role": "accredited procurement specialist",
+  "waiting": 3,
+  "limit_days": 10
+}

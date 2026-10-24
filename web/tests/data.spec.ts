@@ -500,7 +500,11 @@ test("What you can ask shows each kind of question with what it is ready for and
   await open(page);
 
   const kinds = table(page, "kinds");
-  await expect(kinds.locator("tbody th")).toHaveText(["Checking a plan against its own dates", "What project documents say"]);
+  await expect(kinds.locator("tbody th")).toHaveText([
+    "Checking a plan against its own dates",
+    "What project documents say",
+    "Lessons from completion reports",
+  ]);
   await expect(kinds.locator("[data-cell='plan_check:holds']")).toContainText(
     "None of the 258 activity entries in the latest plan versions has a first listing I could confirm.",
   );

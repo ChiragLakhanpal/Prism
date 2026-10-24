@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-lesson-review-writer through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It summarizes the evidence for IEG's lesson in section 12 of the ICR Review, and names the ICR's lesson from paragraph 55 as a likely repeat. The repeat counts only once that lesson is in the library. Replace it with a recording when the live writer first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Summarize the evidence for the proposed lesson from 34056616/v2/12, and name the current lessons it may repeat.",
+ "scope": "P130164",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-lesson-review-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_lesson_review_34056616_v2_12_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_lesson_review_34056616_v2_12_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"summary\": [{\"sentence\": \"IEG wrote this lesson itself: \\\"To avoid cost and time overruns and contract administration issues\\\" the permits need to be in place before award.\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:34056616/v2/12\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"To avoid cost and time overruns and contract administration issues\", \"passage_id\": \"34056616/v2/12\"}}], \"repeats\": [{\"lesson_id\": \"lesson-64ec0401e3\", \"claims\": [{\"sentence\": \"The ICR's lesson from paragraph 55 asks for the same permits before contracts are awarded.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.ops.lesson_versions:lesson-64ec0401e3/v1\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

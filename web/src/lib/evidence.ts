@@ -25,7 +25,9 @@ export const openedAt = createStore<Record<string, number>>({});
 // clicked lets a draft put the marker back where the reader saw it after the notes reflow; a switch between
 // a sentence's sources has none, since nothing reflows. The fallback takes focus on close when the marker is
 // gone, such as section 1's heading when a rerun of find_comparables redrew the dot that opened the drawer
-// (the 15 brief, section 8).
+// (the 15 brief, section 8). A lesson's evidence card or Source chip, which is no answer's sentence, gives
+// the quote's place in the passage itself (highlight, from the server), so the drawer opens with the quote
+// it showed highlighted (the 29 brief, section 8).
 export type Origin = {
   id: string;
   serial: number | null;
@@ -34,6 +36,7 @@ export type Origin = {
   runId: string | null;
   top: number | null;
   fallback?: HTMLElement | null;
+  highlight?: [number, number] | null;
 };
 export const origin = createStore<Origin | null>(null);
 

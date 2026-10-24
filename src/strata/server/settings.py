@@ -12,8 +12,10 @@ reads only the environment it is given:
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
   strata.ops.evidence_opened, drafts to strata.ops.drafts and the tables beside it (ticket 35), and
   each decision or label a person gives a candidate pair of supplier name matching to
-  strata.ops.supplier_review_decisions or supplier_pair_labels, with its token. Without them, the server
-  keeps no usage events, records no opened sources, decisions or labels and keeps no drafts, and runs go
+  strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
+  lesson review tables (ticket 29), with its token. Each row names the viewer the Databricks App
+  forwarded. Without them, the server
+  keeps no usage events, records no opened sources, decisions, labels or lesson reviews and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
   opened sources and the drafts instead.
 - PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
@@ -56,6 +58,7 @@ from strata.agent.runs import RunLog
 from strata.appstate import lakebase
 from strata.config import load_roles, load_thresholds
 from strata.drafts.store import DraftStore
+from strata.knowledge.lessons.review import LessonReview
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.packages.store import PackageStore
 from strata.server import engines, tracing
@@ -157,5 +160,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       writers=agent_runner.writers_from_environment(environ),
                       access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
                       supplier_log=SupplierLog(the_app) if the_app else None,
+                      lessons=LessonReview(load_roles()), lesson_record=the_app,
+                      lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)
