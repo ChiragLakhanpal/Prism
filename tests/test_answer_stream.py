@@ -114,7 +114,8 @@ def test_a_number_no_record_holds_is_removed_with_the_copy_files_reason(ask_case
     removed = of(parsed, "removed")
     assert [(item["sentence"], item["reason"]) for item in removed] == [
         ("Bids were usually opened within 45 days.", "number_not_in_records")]
-    assert copy_reasons()[removed[0]["reason"]] == "No record supports this number."
+    assert copy_reasons()[removed[0]["reason"]] == {
+        "item": "No record supports this number.", "joined": "no record supports that number"}
     assert "45 days" not in " ".join(sentence["text"] for sentence in of(parsed, "sentence"))
     checks = of(parsed, "checks")[0]
     # The base answer states 108 and 328, both on ICR paragraph 54; the planted sentence adds 45.
@@ -138,7 +139,7 @@ def test_a_sentence_citing_a_source_no_tool_returned_this_turn_is_removed(ask_ca
     assert [(item["sentence"], item["reason"]) for item in removed] == [
         ("Some works started before their forest clearance came through.", "id_not_returned")]
     assert removed[0]["reasons"][0]["text"] == "strata.gold.passage:31525018/v1/71"
-    assert copy_reasons()["id_not_returned"] == "It cited a source I did not retrieve for this question."
+    assert copy_reasons()["id_not_returned"]["item"] == "It cited a source I did not retrieve for this question."
     assert "strata.gold.passage:31525018/v1/71" not in [evidence["id"] for evidence in of(parsed, "evidence")]
     checks = of(parsed, "checks")[0]
     assert checks["sources"] == {"total": 3, "returned": 2}
@@ -152,11 +153,31 @@ def test_a_quote_that_is_not_word_for_word_on_its_page_is_removed(ask_case):
     assert [(item["sentence"], item["reason"]) for item in removed] == [
         ('The report puts it plainly: "108 of 328 works contracts had to be bid again".', "quote_not_on_page")]
     assert [reason["code"] for reason in removed[0]["reasons"]] == ["quote_not_on_page"]
-    assert copy_reasons()["quote_not_on_page"] == "The quote is not on the page it cites."
+    assert copy_reasons()["quote_not_on_page"]["item"] == "The quote is not on the page it cites."
     checks = of(parsed, "checks")[0]
     assert checks["quotes"] == {"total": 3, "found": 2}
     # The misquote's two numbers are not backed by a quote that is on its page.
     assert checks["numbers"] == {"total": 4, "matched": 2}
+
+
+def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_page(ask_case):
+    """Check 3 reads the quote the person reads: the words in the sentence's quote marks must be in its
+    quote, and its quote on the page. A number gets its support from the quote only from inside them."""
+    parsed, _ = ask_case("p130164-quote-marks-and-quote-disagree")
+
+    assert [(item["sentence"], [(reason["code"], reason["text"]) for reason in item["reasons"]])
+            for item in of(parsed, "removed")] == [
+        ('The report said "the estimates were sound and no contract was bid again".',
+         [("quote_not_on_page", ICR_54)]),
+        ("In 108 districts the works ran late.",
+         [("quote_not_in_sentence", ICR_54), ("number_not_in_records", "108")]),
+        ('The ICR called the delay "avoidable".', [("quote_not_on_page", None)]),
+    ]
+    assert copy_reasons()["quote_not_in_sentence"]["item"] == "It cited a quote that the sentence does not show."
+    checks = of(parsed, "checks")[0]
+    # The base answer quotes twice, both on their pages; each planted sentence quotes, and none is found.
+    assert checks["quotes"] == {"total": 5, "found": 2}
+    assert checks["sentences"] == {"written": 6, "kept": 3, "removed": 3}
 
 
 def test_a_fourth_round_of_tool_calls_gets_no_results_and_the_answer_rests_on_the_first_three(ask_case):
@@ -402,12 +423,15 @@ def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():
     from strata.agent.verifier import REASONS
 
     sentences = copy_reasons()
-    assert [code for code in REASONS if not sentences.get(code)] == []
+    assert [code for code in REASONS if not (sentences.get(code) or {}).get("item")
+            or not sentences[code].get("joined")] == []
 
 
 def copy_reasons():
-    """The removed box's reason sentences, read from the copy file (web/src/copy.ts, removed.reasons)."""
+    """The removed box's reasons, read from the copy file (web/src/copy.ts, removed.reasons): each code's
+    list item ("No record supports this number.") and its clause ("no record supports that number")."""
     text = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_text()
     removed = re.search(r"\n  removed: \{(.*?)\n  \},", text, re.S).group(1)
     reasons = re.search(r"reasons: \{(.*?)\n    \}", removed, re.S).group(1)
-    return dict(re.findall(r'(\w+): "([^"]*)"', reasons))
+    return {code: {"item": item, "joined": joined} for code, item, joined in re.findall(
+        r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?\s*\}', reasons)}

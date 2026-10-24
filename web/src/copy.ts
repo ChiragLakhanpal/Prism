@@ -243,14 +243,34 @@ export const copy = {
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
     item: (sentence: string, reason: string) => `"${sentence}" ${reason}`,
-    // One sentence for each reason the verifier gives, keyed by its code (REASONS in
-    // src/strata/agent/verifier.py). A test fails when a code has no sentence here.
+    // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
+    // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
+    // lacks either.
     reasons: {
-      number_not_in_records: "No record supports this number.",
-      date_not_in_records: "No record supports this date.",
-      id_not_returned: "It cited a source I did not retrieve for this question.",
-      no_source: "It cited no source.",
-      quote_not_on_page: "The quote is not on the page it cites.",
+      number_not_in_records: {
+        item: "No record supports this number.",
+        joined: "no record supports that number",
+      },
+      date_not_in_records: {
+        item: "No record supports this date.",
+        joined: "no record supports that date",
+      },
+      id_not_returned: {
+        item: "It cited a source I did not retrieve for this question.",
+        joined: "it cited a source I did not retrieve for this question",
+      },
+      no_source: {
+        item: "It cited no source.",
+        joined: "it cited no source",
+      },
+      quote_not_on_page: {
+        item: "The quote is not on the page it cites.",
+        joined: "the quote is not on the page it cited",
+      },
+      quote_not_in_sentence: {
+        item: "It cited a quote that the sentence does not show.",
+        joined: "it cited a quote that the sentence did not show",
+      },
     },
   },
 

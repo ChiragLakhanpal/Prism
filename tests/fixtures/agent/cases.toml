@@ -91,6 +91,39 @@ dates = []
 quote = { text = "108 of 328 works contracts had to be bid again", passage_id = "strata.gold.passage:31525018/v1/54" }
 
 [[cases]]
+id = "p130164-quote-marks-and-quote-disagree"
+says = """The agent's quote marks and its quotes disagree three ways: quote marks around words that are not on \
+the page, a quote the sentence never shows in quote marks, and quote marks with no quote. The verifier removes \
+all three."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The report said \"the estimates were sound and no contract was bid again\"."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "In 108 districts the works ran late."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["108"]
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "The ICR called the delay \"avoidable\"."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases]]
 id = "p156634-plan-not-yet-public"
 says = """The agent asks check_plan for the October 9, 2026 plan as of October 1, 2026. The tool abstains, \
 and the agent gets no date after October 1, 2026 in what comes back."""

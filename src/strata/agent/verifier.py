@@ -4,7 +4,7 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 (ADR 0003, the turn's Facts). Each claim is checked against them:
 
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
-   rounding, or appears inside the sentence's quote from a cited passage that is not a table summary.
+   rounding, or sits inside the words it quotes from a cited passage that is not a table summary.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
    still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
    (ID_SHAPES); so is a number written in words ("forty-five", or "one" as a count), and an amount no
@@ -14,11 +14,16 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
 3. Every quote is word for word on the cited page, ignoring only whitespace and line-end hyphenation.
+   The quote checked is the one the person reads: the words in the sentence's double quotes must be in
+   the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
+   not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
+   cited record's text value, such as a STEP description, are on that record.
 
 Checks 4 to 6 come with ticket 24. A sentence that fails is removed, with its reasons in this order:
 an id that did not come back first, since nothing else about that sentence can be checked, then a quote
-that is not on its page, then numbers and dates. A number inside a quote that is not on its page is
-counted as unmatched but gets no reason of its own, because the quote's reason already explains it.
+that is not on its page or not in the sentence, then numbers and dates. A number inside quoted words
+that are not on the page is counted as unmatched but gets no reason of its own, because the quote's
+reason already explains it.
 Each reason has a code, and the copy file (web/src/copy.ts, removed.reasons) has its sentence.
 """
 
@@ -39,9 +44,10 @@ from strata.reader.passages import TABLE_SUMMARY
 
 CHECKS_RUN = (1, 2, 3)
 # Reason codes. web/src/copy.ts holds one sentence for each, under removed.reasons.
-NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE = (
-    "number_not_in_records", "date_not_in_records", "id_not_returned", "no_source", "quote_not_on_page")
-REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE)
+NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE = (
+    "number_not_in_records", "date_not_in_records", "id_not_returned", "no_source", "quote_not_on_page",
+    "quote_not_in_sentence")
+REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE)
 MUST_CITE = ("record", "quote", "advice")
 
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -290,6 +296,15 @@ def _normalized(text: str) -> tuple[str, list[int]]:
     return "".join(out), where
 
 
+# The words a sentence puts in double quotes. The agent is told to use straight ones; curly ones count too.
+QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d')
+
+
+def quoted_spans(sentence: str) -> list[tuple[int, int]]:
+    """Where each run of quoted words sits in the sentence, inside its quote marks."""
+    return [match.span(1) if match.group(1) is not None else match.span(2) for match in QUOTED.finditer(sentence)]
+
+
 def find_quote(quote: str, text: str) -> tuple[int, int] | None:
     """Where the quote is in the text, word for word but for whitespace and line-end hyphenation."""
     wanted, _ = _normalized(quote)
@@ -322,6 +337,8 @@ class Checked:
     numbers: tuple[tuple[Mention, str | None], ...]
     dates: tuple[tuple[Mention, str | None], ...]
     quote_span: tuple[int, int] | None  # where the quote sits in its passage's text, when it was found
+    quoted: bool = False  # the sentence quotes: it has quote marks, or a quote
+    quote_found: bool = False  # and every quoted word is on the page it cites
 
     @property
     def kept(self) -> bool:
@@ -344,7 +361,7 @@ class Verdict:
         """The counts behind the check line, over everything the agent wrote, removed sentences included."""
         numbers = [found for sentence in self.sentences for _, found in sentence.numbers]
         dates = [found for sentence in self.sentences for _, found in sentence.dates]
-        quotes = [sentence for sentence in self.sentences if sentence.claim.quote is not None]
+        quotes = [sentence for sentence in self.sentences if sentence.quoted]
         cited = {evidence: sentence for sentence in self.sentences for evidence in sentence.claim.evidence_ids}
         not_back = {reason.text for sentence in self.sentences for reason in sentence.reasons
                     if reason.code == NOT_RETURNED}
@@ -353,7 +370,7 @@ class Verdict:
             "sentences": {"written": len(self.sentences), "kept": len(self.kept), "removed": len(self.removed)},
             "numbers": {"total": len(numbers), "matched": sum(found is not None for found in numbers)},
             "dates": {"total": len(dates), "matched": sum(found is not None for found in dates)},
-            "quotes": {"total": len(quotes), "found": sum(sentence.quote_span is not None for sentence in quotes)},
+            "quotes": {"total": len(quotes), "found": sum(sentence.quote_found for sentence in quotes)},
             "sources": {"total": len(cited), "returned": len(set(cited) - not_back)},
         }
 
@@ -368,6 +385,32 @@ def _values(row: Mapping | None) -> tuple[set, set]:
     return (set(), days) if _is_passage(row) else (numbers, days)
 
 
+def _texts(row: Any) -> list[str]:
+    """The text values a row holds at any depth, leaving out a passage's text."""
+    if isinstance(row, Mapping):
+        return [text for key, value in row.items() if key not in NOT_VALUES for text in _texts(value)]
+    if isinstance(row, list | tuple):
+        return [text for value in row for text in _texts(value)]
+    return [row] if isinstance(row, str) else []
+
+
+def _plain_words(text: str) -> str:
+    return " ".join(re.sub(r"[\s\-\u2013\u2014]+", " ", text.lower()).split())
+
+
+def _in_a_value(mention: Mention, sentence: str, texts: list[str]) -> bool:
+    """A number word that is part of a text value of a cited row, such as "Two" in STEP's market approach
+    "Single Stage - Two Envelope": a name, not a count."""
+    if mention.start is None or not isinstance(mention.value, Decimal) or any(ch.isdigit() for ch in mention.text):
+        return False
+    after = re.match(r"[\s-]+([A-Za-z]+)", sentence[mention.end:])
+    before = re.search(r"([A-Za-z]+)[\s-]+$", sentence[:mention.start])
+    phrases = [f"{mention.text} {after[1]}"] if after else []
+    phrases += [f"{before[1]} {mention.text}"] if before else []
+    values = [_plain_words(text) for text in texts]
+    return any(re.search(rf"\b{re.escape(_plain_words(phrase))}\b", value) for phrase in phrases for value in values)
+
+
 def check(index: int, claim: Claim, facts: Facts) -> Checked:
     reasons: list[Reason] = []
     # Check 2: every cited id came back this turn.
@@ -375,31 +418,51 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     reasons += [Reason(2, NOT_RETURNED, evidence) for evidence in claim.evidence_ids if evidence not in returned]
     if not claim.evidence_ids and claim.kind in MUST_CITE:
         reasons.append(Reason(2, NO_SOURCE))
-    # Check 3: the quote is word for word on its page.
-    span, quoted = None, []
-    if claim.quote is not None:
-        passage = facts.get(claim.quote.evidence_id)
+    records = [(evidence, facts.get(evidence)) for evidence in returned if not _is_passage(facts.get(evidence))]
+    # Check 3: the words in the sentence's quote marks are its quote, and its quote is on its page. Words
+    # quoted from a cited record's text value, such as a STEP description, are on that record.
+    quote, span, backs = claim.quote, None, False
+    if quote is not None:
+        passage = facts.get(quote.evidence_id)
         if _is_passage(passage):
-            span = find_quote(claim.quote.text, passage["text"])
-        if span is None and facts.came_back(claim.quote.evidence_id):
-            reasons.append(Reason(3, NOT_ON_PAGE, claim.quote.evidence_id))
-        quoted = mentions(claim.quote.text)
-        backs = span is not None and passage.get("parse_route") != TABLE_SUMMARY
-    else:
-        backs = False
-    # Check 1: every number and date matches a value in a cited row, or sits inside the quote.
+            span = find_quote(quote.text, passage["text"])
+            backs = span is not None and passage.get("parse_route") != TABLE_SUMMARY
+        if span is None and facts.came_back(quote.evidence_id):
+            reasons.append(Reason(3, NOT_ON_PAGE, quote.evidence_id))
+    spans = []  # each run of quoted words: where it is in the sentence, and the evidence id that holds it
+    for start, end in quoted_spans(claim.sentence):
+        words = claim.sentence[start:end]
+        source = quote.evidence_id if quote is not None and span is not None and find_quote(words, quote.text) \
+            else next((evidence for evidence, row in records if any(find_quote(words, text) for text in _texts(row))),
+                      None)
+        spans.append((start, end, source))
+    if quote is None or span is not None:
+        if any(source is None for *_, source in spans):
+            reasons.append(Reason(3, NOT_ON_PAGE, None if quote is None else quote.evidence_id))
+        elif quote is not None and not any(source == quote.evidence_id for *_, source in spans):
+            reasons.append(Reason(3, NOT_IN_SENTENCE, quote.evidence_id))
+    quote_reasons = [reason for reason in reasons if reason.check == 3]
+    explained = bool(quote_reasons) or any(reason.code == NOT_RETURNED for reason in reasons)
+    # Check 1: every number and date matches a value in a cited row, or sits inside quoted words that a
+    # cited row's text or a cited passage that is not a table summary holds.
     rows = [(evidence, _values(facts.get(evidence))) for evidence in returned]
-    stated = mentions(claim.sentence)
+    texts = [text for _, row in records for text in _texts(row)]
+    stated = [mention for mention in mentions(claim.sentence) if not _in_a_value(mention, claim.sentence, texts)]
     checked: dict[str, list] = {"number": [], "date": []}
     for mention in stated + _declared(claim, stated):
         found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days)), None)
-        in_quote = any(mention.value == other.value for other in quoted)
-        if found is None and in_quote and backs:
-            found = claim.quote.evidence_id
+        inside = next((source for start, end, source in spans
+                       if mention.start is not None and start <= mention.start and mention.end <= end), False)
+        if found is None and inside and (inside != getattr(quote, "evidence_id", None) or backs):
+            found = inside
         checked[mention.kind].append((mention, found))
-        if found is None and not (in_quote and span is None):
+        # A number inside quoted words that are not on the page, or whose page did not come back, gets no
+        # reason of its own: the quote's or the id's reason explains it.
+        if found is None and not (inside is None and explained):
             reasons.append(Reason(1, NUMBER if mention.kind == "number" else DATE, mention.text))
-    return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span)
+    quoted = bool(spans) or quote is not None
+    return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
+                   quoted=quoted, quote_found=quoted and not quote_reasons)
 
 
 def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
@@ -424,7 +487,8 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> 
             "index": sentence.index, "text": claim.sentence, "kind": claim.kind,
             "evidence_ids": list(claim.evidence_ids), "numbers": _supported(sentence.numbers),
             "dates": _supported(sentence.dates),
-            "quote": None if claim.quote is None else {"text": claim.quote.text, "evidence_id": claim.quote.evidence_id},
+            "quote": None if claim.quote is None else {"text": claim.quote.text,
+                                                       "evidence_id": claim.quote.evidence_id},
         }))
         for evidence in claim.evidence_ids:
             highlights = cited.setdefault(evidence, [])
