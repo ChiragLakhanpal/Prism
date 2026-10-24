@@ -4,6 +4,7 @@ Each test builds a throwaway repo that holds this repo's hook and gate runner, w
 list of steps, so a step can fail, sleep or plant a key without touching this repo.
 """
 
+import fcntl
 import json
 import os
 import shutil
@@ -47,10 +48,24 @@ def head_count(repo):
     return int(git(repo, "rev-list", "--count", "HEAD").stdout.strip())
 
 
+@pytest.fixture(autouse=True)
+def gate_lock(tmp_path, monkeypatch):
+    """A lock file of this test's own, so its gates never wait for a real gate or another test's gates.
+
+    The gate that runs these tests holds the real lock, in the temporary folder, for its whole run.
+    """
+    path = tmp_path / "gate.lock"
+    monkeypatch.setenv("STRATA_GATE_LOCK", str(path))
+    return path
+
+
 @pytest.fixture
 def repo(tmp_path):
     """A repo with the gate installed and a first commit, ready for a steps file."""
-    path = tmp_path / "repo"
+    return make_repo(tmp_path / "repo")
+
+
+def make_repo(path):
     path.mkdir()
     git(path, "init", "-q", "-b", "work")
     shutil.copytree(ROOT / ".githooks", path / ".githooks")
@@ -71,12 +86,12 @@ def write(repo, name, text):
     target.write_text(textwrap.dedent(text))
 
 
-def steps_file(limit=120, steps=()):
+def steps_file(limit=120, steps=(), lock_wait=None):
     """A steps file: the secret scan always runs, then the given test steps.
 
-    Each step is (name, run) or (name, run, lane).
+    Each step is (name, run) or (name, run, lane). lock_wait sets how long the gate waits for the lock.
     """
-    lines = [f"limit_seconds = {limit}", ""]
+    lines = [f"limit_seconds = {limit}"] + ([f"lock_wait_seconds = {lock_wait}"] if lock_wait else []) + [""]
     lines += ["[[step]]", 'name = "Scan for secrets"',
               'run = ["python3", "gates/secret_scan.py"]', "always = true", "git_env = true", ""]
     for name, run, *lane in steps:
@@ -551,6 +566,73 @@ def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(re
     assert done.returncode != 0
     assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python".' \
         in done.stdout + done.stderr
+
+
+# One gate at a time. Each gate below runs hold.py, which notes in a log that both gates share
+# when its step starts and when it finishes.
+
+HOLD = """\
+    import sys, time
+    log, name = sys.argv[1], sys.argv[2]
+    def note(word):
+        with open(log, "a") as handle:
+            handle.write(f"{name} {word}\\n")
+    note("started")
+    time.sleep(2)
+    note("finished")
+    """
+
+# What a gate prints when another gate holds the lock.
+WAITING = "Another gate is running on this computer, so this gate waits for it to finish."
+
+
+def test_two_gates_started_together_take_turns_and_each_limit_starts_when_its_gate_holds_the_lock(repo, tmp_path):
+    shared_log = tmp_path / "steps.txt"
+    trees = {"A": repo, "B": make_repo(tmp_path / "other")}
+    # Each step takes 2 seconds, so each gate fits in its 3.5-second limit once it holds the lock,
+    # but the gate that waits takes longer than that in all.
+    for name, tree in trees.items():
+        hold = json.dumps(["python3", "hold.py", str(shared_log), name])
+        write(tree, "gates/steps.toml", steps_file(limit=3.5, steps=[("Hold", hold)]))
+        write(tree, "hold.py", HOLD)
+
+    started = time.monotonic()
+    gates = {name: subprocess.Popen([".githooks/pre-commit"], cwd=tree, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, text=True, env=clean_env())
+             for name, tree in trees.items()}
+    output, took = {}, {}
+    for name, gate in gates.items():
+        output[name] = gate.communicate(timeout=60)[0]
+        took[name] = time.monotonic() - started
+
+    log = shared_log.read_text().splitlines()
+    first, second = log[0].split()[0], log[-1].split()[0]
+    assert log == [f"{first} started", f"{first} finished", f"{second} started", f"{second} finished"], output
+    assert gates[first].returncode == 0, output[first]
+    assert gates[second].returncode == 0, output[second]
+    assert WAITING not in output[first]
+    assert WAITING in output[second]
+    assert "Its 3.5-second limit starts now." in output[second]
+    # The waiting gate ran longer than its limit in all, and passed, so its limit started when it held the lock.
+    assert took[second] > 3.5, output[second]
+
+
+def test_a_gate_that_cannot_get_the_lock_in_time_stops_with_one_sentence(repo, gate_lock):
+    write(repo, "gates/steps.toml", steps_file(lock_wait=1, steps=[CHECK]))
+    write(repo, "check.py", "raise SystemExit('The checks ran.')\n")
+
+    with open(gate_lock, "a") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)
+        started = time.monotonic()
+        done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
+        took = time.monotonic() - started
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert (f"The gate gave up after 1 seconds, the wait limit in gates/steps.toml, because another gate "
+            f"on this computer still holds the lock {gate_lock}.") in output
+    assert "The checks ran." not in output
+    assert 1 <= took < 10, output
 
 
 # This repo's own steps file.
