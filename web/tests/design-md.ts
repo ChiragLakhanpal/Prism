@@ -73,6 +73,15 @@ export async function fallbackMetrics(): Promise<Record<string, string>> {
   return Object.fromEntries(sentence[1].split(";").map((part) => part.split(":").map((side) => side.trim())));
 }
 
+// Section 5's Draft bar sentence for review notes, word for word (ticket 35).
+export async function draftBarSentence(): Promise<string> {
+  const text = await section(5);
+  const row = text.split("\n").find((line) => line.startsWith("| Draft bar |"));
+  const said = row && /For review notes it reads: "([^"]+)"/.exec(row);
+  if (!said) throw new Error("DESIGN.md section 5's Draft bar row does not give the review notes' sentence.");
+  return said[1];
+}
+
 // Section 8's footer sentence, word for word.
 export async function footerSentence(): Promise<string> {
   const text = await section(8);

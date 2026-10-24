@@ -69,9 +69,10 @@ test("the copy lint checks the words the source registry puts on the Data readin
   expect(passed.code).toBe(0);
 });
 
-test("the server's copy of the Data readiness sentences says what the copy file says", async () => {
-  const { serverCopyIsCurrent } = await import("../lint/server-copy.ts");
+test("the server's copies of the Data readiness sentences and the draft files' words say what the copy file says", async () => {
+  const { serverCopyIsCurrent, staleServerCopies } = await import("../lint/server-copy.ts");
   expect(serverCopyIsCurrent(), "run node web/lint/server-copy.ts --write").toBe(true);
+  expect(staleServerCopies(), "run node web/lint/server-copy.ts --write").toEqual([]);
 });
 
 test("every kind of question in config/tools.toml has its words in the copy file, and its tool a coverage-line noun", async () => {
@@ -143,14 +144,20 @@ test("the copy lint allows DESIGN.md section 8's footer sentence word for word, 
   expect(lint({ copy: copyWith(footer.replace("Strata is", "This is")) }).code).toBe(1);
 });
 
-test("the copy lint allows DESIGN.md section 5's draft-bar sentence word for word", () => {
+test("the copy lint allows the draft bar's fixed sentence and the Word file's origin sentence word for word", () => {
+  // DESIGN.md section 5's Draft bar, after the review notes' lead sentence (ticket 35), and section 8's
+  // last sentence of the Word file's origin paragraph.
   const draftBar =
-    "A working draft for the borrower's PPSD. Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
-  const passed = lint({ copy: copyWith(draftBar) });
-  expect(passed.output).toBe("");
-  expect(passed.code).toBe(0);
-  // Outside that sentence, "clearance" is still caught.
+    "A working draft of your review notes on the borrower's Procurement Plan. Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
+  const word = "Strata is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.";
+  for (const text of [draftBar, word]) {
+    const passed = lint({ copy: copyWith(text) });
+    expect(passed.output).toBe("");
+    expect(passed.code).toBe(0);
+  }
+  // Outside those sentences, "clearance" is still caught, and so is a changed fixed sentence.
   expect(lint({ copy: copyWith("I gave this draft its clearance.") }).code).toBe(1);
+  expect(lint({ copy: copyWith("Exporting sends it and is a World Bank review, clearance or no-objection.") }).code).toBe(1);
 });
 
 test("the copy lint finds the Bank in capitals and with a no-break space, but not a bank guarantee", () => {

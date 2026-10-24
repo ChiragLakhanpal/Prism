@@ -15,6 +15,9 @@ export type Address = {
   moves: number;
   // The history entry's key: the same for a page and the drawer opened on it.
   key: string;
+  // A page that became another in place, such as a draft being written that is now saved (ticket 35):
+  // the address changed, but focus and the scroll stay where they are.
+  quiet?: boolean;
 };
 
 const newKey = () => Math.random().toString(36).slice(2, 10);
@@ -33,10 +36,10 @@ const here = (moves: number): Address => ({
 
 export const address = createStore<Address>(here(0));
 
-export function navigate(to: string, options: { replace?: boolean; samePage?: boolean } = {}) {
+export function navigate(to: string, options: { replace?: boolean; samePage?: boolean; quiet?: boolean } = {}) {
   if (options.replace) {
     window.history.replaceState(window.history.state, "", to);
-    address.set(here(address.get().moves));
+    address.set({ ...here(address.get().moves), quiet: options.quiet });
     return;
   }
   window.history.pushState({ key: options.samePage ? currentKey() : newKey() }, "", to);

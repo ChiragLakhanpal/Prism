@@ -16,13 +16,18 @@ export async function* streamEvents(
     signal: init.signal,
   });
   if (!response.ok || !response.body) {
-    throw new StreamError(response.status);
+    const body = response.ok ? null : await response.json().catch(() => null);
+    throw new StreamError(response.status, body && typeof body === "object" ? (body as Record<string, unknown>) : null);
   }
   yield* readEvents(response.body);
 }
 
 export class StreamError extends Error {
-  constructor(readonly status: number) {
+  // body: the JSON the server answered with instead of a stream, when it sent some.
+  constructor(
+    readonly status: number,
+    readonly body: Record<string, unknown> | null = null,
+  ) {
     super(`The stream did not open: HTTP ${status}.`);
   }
 }

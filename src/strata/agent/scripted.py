@@ -26,6 +26,8 @@ from strata.harness.turn import TraceIds
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = ROOT / "tests" / "fixtures" / "agent"
 CASES = FIXTURES / "cases.toml"
+# The draft writers' cases, such as the review notes writer's (ticket 35), in the same shape.
+WRITER_CASES = FIXTURES / "writers.toml"
 RECORDINGS = FIXTURES / "recorded"
 
 
@@ -43,6 +45,10 @@ class Case:
     recording: str
     plant_rounds: tuple[tuple[dict, ...], ...] = ()
     plant_claims: tuple[dict, ...] = ()
+    # A writer case (tests/fixtures/agent/writers.toml): the draft runtime's request, and planted notes,
+    # each taking the place of the recorded note on the same activity.
+    request: dict | None = None
+    plant_notes: tuple[dict, ...] = ()
     folder: Path = field(default=RECORDINGS, compare=False)
 
     @property
@@ -63,12 +69,17 @@ class Case:
                                 "arguments": json.dumps(call.get("arguments", {})), "status": "completed"}
                                for place, call in enumerate(calls, 1)]}
                    for number, calls in enumerate(self.plant_rounds, 1)]
-        if self.plant_claims:
-            claims = json.loads(output_text(answer))
-            claims["claims"] += [copy.deepcopy(claim) for claim in self.plant_claims]
+        if self.plant_claims or self.plant_notes:
+            written = json.loads(output_text(answer))
+            if self.plant_claims:
+                written["claims"] += [copy.deepcopy(claim) for claim in self.plant_claims]
+            for note in self.plant_notes:  # a planted note replaces the recorded note on its activity
+                written["notes"] = [kept for kept in written["notes"]
+                                    if kept.get("activity_reference_no") != note["activity_reference_no"]]
+                written["notes"].append(copy.deepcopy(note))
             answer["output"] = [{"type": "message", "id": "msg_planted", "role": "assistant", "status": "completed",
                                  "content": [{"type": "output_text", "annotations": [],
-                                              "text": json.dumps(claims, ensure_ascii=False)}]}]
+                                              "text": json.dumps(written, ensure_ascii=False)}]}]
         return [*rounds, *planted, answer]
 
 
@@ -81,7 +92,8 @@ def load_cases(path: Path = CASES, recordings: Path | None = None) -> dict[str, 
         id=case["id"], says=case["says"], question=case["question"], scope=case.get("scope"), as_of=case["as_of"],
         recording=case["recording"],
         plant_rounds=tuple(tuple(planted["calls"]) for planted in case.get("plant_rounds", [])),
-        plant_claims=tuple(case.get("plant_claims", [])), folder=folder) for case in cases}
+        plant_claims=tuple(case.get("plant_claims", [])), request=case.get("request"),
+        plant_notes=tuple(case.get("plant_notes", [])), folder=folder) for case in cases}
 
 
 class ScriptedAgent:

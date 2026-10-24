@@ -11,15 +11,15 @@
 //
 // Two more files hold words people read. The source registry, config/sources.toml, holds each
 // source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
-// sentences), and every one is checked like the copy. src/strata/tools/data_readiness_copy.json is
-// the server's copy of copy.dataReadiness.server, and the lint fails when it is out of date
-// (web/lint/server-copy.ts writes it again).
+// sentences), and every one is checked like the copy. src/strata/tools/data_readiness_copy.json and
+// src/strata/drafts/copy.json are the server's copies of copy.dataReadiness.server and of a draft's
+// files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them).
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { copyChecker } from "./copy.ts";
 import { copyStrings, lineOf, literalText, offTokenClasses, termLiterals } from "./source.ts";
-import { SERVER_COPY_FILE, serverCopyIsCurrent } from "./server-copy.ts";
+import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
@@ -91,11 +91,13 @@ function main(): number {
       for (const problem of check(text)) problems.push(`${at(file, line)}: "${text.trim()}" ${problem}`);
     }
   }
-  if (!custom && !serverCopyIsCurrent()) {
-    problems.push(
-      `${at(SERVER_COPY_FILE, 1)}: it is out of date with copy.dataReadiness.server in web/src/copy.ts. ` +
-        "Run node web/lint/server-copy.ts --write.",
-    );
+  if (!custom) {
+    for (const stale of staleServerCopies()) {
+      problems.push(
+        `${at(stale.file, 1)}: it is out of date with ${stale.from} in web/src/copy.ts. ` +
+          "Run node web/lint/server-copy.ts --write.",
+      );
+    }
   }
   for (const file of components) {
     const source = readFileSync(file, "utf8");

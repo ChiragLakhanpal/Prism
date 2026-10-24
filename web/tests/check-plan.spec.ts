@@ -259,9 +259,12 @@ test("a number explains itself on focus, and What Strata found opens its definit
 
 test("tabbing onto a number opens its tooltip, which stays open while it has focus", async ({ page }) => {
   await openPlan(page);
-  // After the breadcrumb's last link, the next tab stop is the finding's first count word.
+  // After the breadcrumb's last link, the header's draft action (ticket 35), then the finding's first
+  // count word.
   await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Procurement" }).focus();
 
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Draft review notes (3 rows)" })).toBeFocused();
   await page.keyboard.press("Tab");
 
   await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();

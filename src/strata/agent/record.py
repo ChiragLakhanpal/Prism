@@ -25,7 +25,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from strata.agent.loop import Agent, answer_runner
+from strata.agent.loop import Agent, answer_runner, output_text
 from strata.agent.scripted import Case
 from strata.agent.verifier import verify
 from strata.dbx import Viewer
@@ -35,6 +35,9 @@ from strata.server.engines import EngineFor
 KEPT = ("id", "object", "status", "model", "agent", "incomplete_details", "output")
 ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops/agent/record.py from the live "
          "agent with the live tools. The scripted agent replays them in the offline gate.")
+ABOUT_WRITER = ("The Foundry writer's answer through the Responses API, recorded by ops/agent/record.py --writers "
+                "from the live writer, given the facts its workflow read on the workspace. The scripted writer "
+                "replays it in the offline gate.")
 
 
 @dataclass(frozen=True)
@@ -81,15 +84,41 @@ def _record_one(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
     return recording, verify(claims, turn.facts).counts() if claims is not None else None
 
 
+def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
+                   today: dt.date) -> tuple[dict, dict | None]:
+    """A draft writer's case (tests/fixtures/agent/writers.toml): its kind's workflow reads its facts as the
+    viewer, the live writer answers the one message, and the verifier's counts go with the recording."""
+    from strata.config import load_draft_kinds
+    from strata.drafts import runtime
+
+    module = runtime.writer_module(load_draft_kinds().kinds[case.request["kind"]])
+    with engine_for(viewer) as engine:
+        facts = module.read(engine, viewer, case.request, today)
+    keeper = Keeper(agent)
+    response = keeper.respond([{"role": "user", "content": json.dumps(module.message(facts), ensure_ascii=False,
+                                                                      default=str)}], None)
+    _, verdict = runtime.compose(module, facts, runtime.parse_notes(output_text(response), module.KEY))
+    recording = {"about": ABOUT_WRITER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, verdict.counts()
+
+
+def record_writers(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+                   today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the draft writers' cases name, once each, and write it over its file."""
+    return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_writer)
+
+
 def record_all(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
-               today: dt.date | None = None) -> list[Recorded]:
+               today: dt.date | None = None, record_one=_record_one) -> list[Recorded]:
     """Re-record every recording the cases name, once each, and write it over its file."""
     today = today or dt.datetime.now(dt.UTC).date()
     done = []
     for name in dict.fromkeys(case.recording for case in cases.values()):
         sharing = [case for case in cases.values() if case.recording == name]
         first = sharing[0]
-        recording, counts = _record_one(first, agent_for(), engine_for, viewer, today)
+        recording, counts = record_one(first, agent_for(), engine_for, viewer, today)
         before = first.path.read_text() if first.path.exists() else ""
         after = json.dumps(recording, indent=1, ensure_ascii=False) + "\n"
         first.path.write_text(after)

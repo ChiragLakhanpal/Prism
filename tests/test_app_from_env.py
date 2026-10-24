@@ -49,6 +49,12 @@ def fake_workspace():
     calls = []
 
     class Workspace(BaseHTTPRequestHandler):
+        def do_GET(self):
+            # The SCIM API's answer for the viewer whose token asks: Ana is on the Kenya water team.
+            calls.append(("scim", self.headers["Authorization"], self.path))
+            groups = [{"display": "strata-team-kenya-water"}] if "ana" in self.headers["Authorization"] else []
+            return self.answer({"userName": "viewer@example.org", "groups": groups})
+
         def do_POST(self):
             body = self.rfile.read(int(self.headers["Content-Length"] or 0))
             if self.path == "/oidc/v1/token":
@@ -59,6 +65,11 @@ def fake_workspace():
             calls.append(("statement", self.headers["Authorization"], statement["statement"]))
             if "strata.ops.agent_runs" in statement["statement"]:
                 calls.append(("run", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
+            if "strata.ops.drafts" in statement["statement"]:
+                calls.append(("drafts", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
+                return self.answer({"statement_id": "s-2", "status": {"state": "SUCCEEDED"},
+                                    "manifest": {"schema": {"columns": [{"name": "draft_id", "position": 0}]}},
+                                    "result": {"data_array": []}})
             return self.answer({"statement_id": "s-1", "status": {"state": "SUCCEEDED"},
                                 "manifest": {"schema": {"columns": [{"name": "data_through", "position": 0}]}},
                                 "result": {"data_array": [["2026-10-21"]]}})
@@ -141,6 +152,27 @@ def test_on_the_app_an_opened_source_is_recorded_with_the_app_s_own_token():
     assert answer.json() == {"recorded": True}
     writes = [auth for kind, auth, text in calls if kind == "statement" and "strata.ops.evidence_opened" in text]
     assert writes == ["Bearer app-not-real"]
+
+
+def test_on_the_app_drafts_are_read_with_the_app_s_own_token_for_the_team_the_viewer_s_own_groups_name():
+    """Drafts live in strata.ops, written and read by the app as itself (ticket 35), and the one access rule
+    reads the viewer's workspace groups from the SCIM API with the viewer's own token, so it learns the
+    viewer's team (config/roles.toml) without any other identity."""
+    with fake_workspace() as (host, calls):
+        app = app_from_env({"DATABRICKS_HOST": host, "DATABRICKS_WAREHOUSE_ID": "wh-1",
+                            "DATABRICKS_CLIENT_ID": "strata-app", "DATABRICKS_CLIENT_SECRET": "not-a-real-key"})
+
+        ana, ben = serve(app, [("/api/drafts", ANA), ("/api/drafts", BEN)])
+
+    assert ana.json()["total"] == ben.json()["total"] == 0
+    assert [(auth, path) for kind, auth, path in calls if kind == "scim"] == [
+        ("Bearer token-for-ana-only", "/api/2.0/preview/scim/v2/Me"),
+        ("Bearer token-for-ben-only", "/api/2.0/preview/scim/v2/Me")]
+    reads = [(auth, json.loads(params)) for kind, auth, params in calls if kind == "drafts"]
+    assert [auth for auth, _ in reads] == ["Bearer app-not-real", "Bearer app-not-real"]
+    # Ben is in no team's group, so his team is his own.
+    assert [[p["value"] for p in params if p["name"] == "team_key"] for _, params in reads] == [
+        ["team:kenya-water"], ["viewer:4022@1984"]]
 
 
 def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_built_web_app(fixture_db, tmp_path):

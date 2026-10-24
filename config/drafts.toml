@@ -1,0 +1,63 @@
+# The draft-kind registry: each kind of draft Strata writes for a person to check, and what makes it
+# differ from the others (CLAUDE.md rule 9; the 35 design brief, section 1). One draft page, one draft
+# bar, one stepper, one Sources list and one set of files serve every kind. This file says, for each
+# kind, which workflow writes it, what its page shows, which holds keep it from export and how its
+# files are named. strata.config.load_draft_kinds() reads it, and the draft runtime
+# (src/strata/drafts) and the draft routes (src/strata/server/drafts.py) use it.
+#
+# The words for a kind live in web/src/copy.ts, under the kind's key: copy.draft.kinds.<kind> holds its
+# title, crumb, subtitle, browser tab title, bar lead sentences, lede, method sentence, columns, steps
+# and its row on the Drafts tab, and copy.draft.files holds the words of the files. The server reads
+# the files' words from src/strata/drafts/copy.json, which node web/lint/server-copy.ts --write
+# writes from the copy file, and the lint lane fails when it is out of date.
+#
+# Adding a kind is one entry here, its workflow module, its words in the copy file and its benchmark
+# question. Tickets 36 to 41 add their kinds and keys (row_label_sentence, rewrite_row, home_cites,
+# home_progress) here.
+#
+# [kinds.<key>]
+#   writer         the workflow module that writes it. It reads the facts the draft is written from as
+#                  the viewer (read), builds the writer agent's message (message), and turns what the
+#                  agent wrote and what the verifier kept into the draft to save (assemble). The draft
+#                  runtime calls the agent and runs the verifier between them, so no kind can skip it.
+#   agent          its writer agent in config/agents.toml
+#   word           the function that lays out its Word file, as module:function; its first heading is the
+#                  file's title, which the evidence pack repeats
+#   export         the export button: word, which reads "Export to Word"
+#   csv            more CSV files its export makes, as module:function (ticket 38 adds STEP rows)
+#   columns        the columns of its table on the page and in Word, in order
+#   holds          the holds that can keep it from export, in the order the bar names them ([holds])
+#   sources_list   whether the page lists its sources under the notes
+#   removed_box    always, or when_removed to show the removed box only when a sentence was removed
+#   not_checked    its own "Not checked" clauses, keys of copy.checkLine.notCheckedClauses, which follow
+#                  the clauses of the checks that did not run and of the tools its writer read
+#   files          the stem of its files' names, filled from the draft's subject
+#
+# [holds.<key>]
+#   test           the function that says whether the hold applies to a draft in a view, as module:function
+#   copy           its hold line, the key under copy.draft.bar.hold (notChecked is each kind's own
+#                  holdNotChecked). tests/test_drafts.py fails when a key has no line.
+#   capability     what the refusal names when the hold stops an export (brief 40's capability kinds)
+
+[kinds.review_notes]
+writer = "strata.drafts.review_notes"
+agent = "review_notes_writer"
+word = "strata.drafts.review_notes:word"
+export = "word"
+csv = []
+columns = ["activity", "note"]
+holds = ["notChecked", "preview"]
+sources_list = true
+removed_box = "always"
+not_checked = ["writer_review_notes"]
+files = "review-notes-{project_id}-{agency_id}-{plan_date}"
+
+[holds.notChecked]
+test = "strata.drafts.holds:not_checked"
+copy = "notChecked"
+capability = "export"
+
+[holds.preview]
+test = "strata.drafts.holds:preview"
+copy = "preview"
+capability = "export"

@@ -109,6 +109,16 @@ export const copy = {
         "to check.",
       link: "Go to Packages",
     },
+    // A draft's page and the page that writes one (ticket 35). Each names itself in the browser tab with
+    // its kind's title once the draft loads, such as "Review notes on the ... plan of Oct 9, 2026".
+    draft: {
+      title: "Draft",
+      purpose: "I wrote this draft for you to check. Only its author can mark it as checked or export it.",
+    },
+    draftNew: {
+      title: "Review notes",
+      purpose: "I'm writing review notes for you to check. I save the draft when I finish.",
+    },
     // The Data tab's three pages share one title and purpose, and each names itself in the browser
     // tab (the 16 design brief, section 2).
     data: {
@@ -243,23 +253,30 @@ export const copy = {
   },
 
   // The check line (DESIGN.md section 5): neutral, and it says what was not checked.
+  // Its parts are templates, {part} of {whole}, one form for a whole of one and one for more, so the
+  // server writes the same line into a draft's evidence pack (src/strata/drafts/copy.json).
   checkLine: {
     checked: "Checked:",
     notChecked: "Not checked:",
-    numbers: (matched: string, total: number, totalText: string) =>
-      plural(total, `${matched} of ${totalText} number matches records`, `${matched} of ${totalText} numbers match records`),
-    quotes: (found: string, total: number, totalText: string) =>
-      plural(total, `${found} of ${totalText} quote is on its page`, `${found} of ${totalText} quotes are on their pages`),
-    dates: (matched: string, total: number, totalText: string) =>
-      plural(total, `${matched} of ${totalText} date matches records`, `${matched} of ${totalText} dates match records`),
+    numbers: { one: "{part} of {whole} number matches records", many: "{part} of {whole} numbers match records" },
+    quotes: { one: "{part} of {whole} quote is on its page", many: "{part} of {whole} quotes are on their pages" },
+    dates: { one: "{part} of {whole} date matches records", many: "{part} of {whole} dates match records" },
     sourcesOnly: "every source I cite came back from this search",
+    // Two clauses take ", or " ("A, or B"); three or more take commas, with ", or " before the last
+    // ("A, B, or C"), as the 24 brief joins them.
     notCheckedJoin: ", or ",
+    notCheckedComma: ", ",
     clauseJoin: "; ",
     end: ".",
+    // Keyed by what was not checked: "sentences" until ticket 24 adds the fourth check, then the
+    // tools that ran (config/tools.toml), so a new tool adds one line, then a draft kind's writer
+    // (config/drafts.toml's not_checked).
     notCheckedClauses: {
       sentences: "whether each sentence follows from its sources",
-      comparables: "whether these are the right comparables",
-      passages: "whether I found every passage that matters",
+      find_comparables: "whether these are the right comparables",
+      search_passages: "whether I found every passage that matters",
+      check_plan: "whether the plan's published records are complete",
+      writer_review_notes: "whether these notes are what you would tell the borrower",
     },
   },
 
@@ -284,6 +301,7 @@ export const copy = {
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
+    other: "The other:",
     // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
     item: (sentence: string, reason: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
     // A reason code with no sentence below: it makes no claim about why.
@@ -489,7 +507,8 @@ export const copy = {
     recordDescription: "Description",
     // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
     // Northern Water Works Development Agency, P156634, version of October 9, 2026, page 3."
-    recordSource: "{doc}, {agency}, {pid}, version of {date}, page {page}.",
+    // "page" and its number never part at a line end: a no-break space joins them (DESIGN.md section 7).
+    recordSource: "{doc}, {agency}, {pid}, version of {date}, page\u00a0{page}.",
     recordSourceShort: "{doc}, {pid}, {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
@@ -808,6 +827,290 @@ export const copy = {
     latestLink: (date: string) => `Plan of ${date}`,
     error: "I couldn't load this plan's check because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't show this plan.",
+    // The draft action in the header's free slot (the 35 brief, section 5.1). {n} is check_plan's count of
+    // the activities with a signal.
+    draftAction: {
+      button: (count: number, countText: string) => (count === 1 ? "Draft review notes (1 row)" : `Draft review notes (${countText} rows)`),
+      feedforward: "The draft waits in Drafts for you to check. I send nothing.",
+      description: "I write one note for each activity that needs a look or is worth watching.",
+      none: "No activity needs a look or is worth watching, so I have no review notes to draft.",
+      asof: "I draft review notes only from today's check, not from a past date.",
+      existingYou: (date: string) => `You started review notes on this plan on ${date}.`,
+      existingTeammate: (author: string, date: string) => `${author} started review notes on this plan on ${date}.`,
+      existingLink: "Open the draft",
+      stopped: "I stopped writing the review notes and saved nothing.",
+    },
+  },
+
+  // Drafts (the 35 brief): the writing page, a draft's page with its bar, its files and the Drafts tab.
+  // Every count comes from the draft runtime or a tool; the browser counts nothing. Each kind of draft
+  // (config/drafts.toml) has its words under kinds, by its key.
+  draft: {
+    kinds: {
+      review_notes: {
+        title: "Review notes",
+        // The breadcrumb's last step and the Drafts tab's row title, with the short date.
+        crumb: (date: string) => `Review notes on the plan of ${date}`,
+        rowTitle: (agency: string, date: string) => `Review notes on the ${agency} plan of ${date}`,
+        // The browser tab, before " | Strata".
+        pageTitle: (agency: string, date: string) => `Review notes on the ${agency} plan of ${date}`,
+        // Under the h1: "Northern Water Works Development Agency, Procurement Plan of October 9, 2026".
+        subtitle: "{agency}, Procurement Plan of {date}",
+        // The lede, an h2: {count} is a Num whose popover lists the activities.
+        lede: (count: number) =>
+          count === 1
+            ? "I drafted a note on the one activity that needs a look or is worth watching."
+            : "I drafted a note on each of the {count} activities that need a look or are worth watching.",
+        ledePartial: "I drafted notes on {written} of the {count} activities that need a look or are worth watching.",
+        method:
+          "I wrote each note from {check} and cited the records behind every sentence. Open a source number to see " +
+          "its record beside the note.",
+        methodLink: "my check of this plan",
+        countLine: (count: number, countText: string) =>
+          count === 1 ? "Showing the 1 activity with a signal" : `Showing all ${countText} activities with a signal`,
+        columns: { activity: "Activity", note: "Review note" },
+        tableCaption: (agency: string, date: string) =>
+          `Review notes on the ${agency} plan of ${date}, one row per activity with a signal`,
+        // A note cell with nothing that passed the checks.
+        abstain:
+          "I couldn't write a note on this activity that passed my checks. The sentences I removed are listed " +
+          "above, with the reason for each.",
+        // A note cell the writer refused, by its refusal code. Ticket 24 adds its refusal keys here.
+        refused: {
+          out_of_scope: "I didn't write a note on this activity, because a note would need more than the plan's record shows.",
+        } as Record<string, string>,
+        refusedOther: "I didn't write a note on this activity.",
+        metaYou: (date: string) => `I drafted these notes for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted these notes for ${author} on ${date}.`,
+        // The draft bar: the kind's lead sentence, before the fixed consequence sentence.
+        barLead: "A working draft of your review notes on the borrower's Procurement Plan.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s review notes on the borrower's Procurement Plan.`,
+        holdNotChecked: "Mark the notes as checked before you export them.",
+        readOnly: (author: string) => `Only ${author} can mark these notes as checked or export them.`,
+        markedChecked: "You marked these notes as checked. You can export them now.",
+        discarded: "You discarded these review notes, so your team no longer sees them in Drafts.",
+        // A removed sentence's reason, where the answer's words would say "question": each note may cite
+        // only its own activity's row (src/strata/drafts/runtime.py, compose).
+        removedReasons: {
+          id_not_returned: {
+            item: "It cited a source other than this activity's row in my check of the plan.",
+            joined: "it cited a source other than this activity's row in my check of the plan",
+          },
+        } as Record<string, { item: string; joined: string }>,
+        // The Drafts tab's row: {project} is "Water and Sanitation Development Project (P156634)".
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One note." : `${countText} notes.`),
+        // The writing page (section 5.2).
+        steps: {
+          read: { running: "I'm reading my check of the plan.", done: (date: string) => `I read my check of the plan of ${date}.` },
+          write: {
+            running: (count: number, countText: string) =>
+              count === 1 ? "I'm writing a note on the one activity." : `I'm writing a note on each of the ${countText} activities.`,
+            done: (sentences: number, sentencesText: string, notes: number, notesText: string) =>
+              `I wrote ${sentences === 1 ? "one sentence" : `${sentencesText} sentences`} in ${notes === 1 ? "one note" : `${notesText} notes`}.`,
+          },
+          save: { running: "I'm saving the draft.", done: "I saved the draft." },
+        },
+        ready: (count: number, countText: string) =>
+          count === 1 ? "The draft is ready. I wrote one note." : `The draft is ready. I wrote ${countText} notes.`,
+        writeErrors: {
+          no_agent: "I can't write review notes yet, because the model that writes my drafts isn't connected. I saved nothing.",
+          agent_unavailable:
+            "I couldn't write the review notes, because the model that writes my drafts did not respond. I saved nothing.",
+          content_filter: "I couldn't write the review notes, because a content filter stopped the writer. I saved nothing.",
+          agent_output: "I wrote review notes I couldn't check, so I saved nothing.",
+          data_service: "I couldn't read my check of the plan, because the data service didn't answer. I saved nothing.",
+          // The app's own account could not save the draft: nothing the viewer can fix.
+          draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+          no_plan: "I couldn't find this version of the plan, so I wrote nothing and saved nothing.",
+          nothing_marked: "No activity in this plan needs a look or is worth watching, so I saved nothing.",
+          // The viewer's own read of the plan's check was refused.
+          permission:
+            "Your account can't read this plan's check in Strata's tables, so I can't write review notes. Ask your " +
+            "workspace admin for read access to the strata catalog.",
+          internal: "Something went wrong on my side, so I couldn't write the review notes. I saved nothing.",
+          dropped: "The connection dropped before I finished the review notes. I saved nothing.",
+        } as Record<string, string>,
+        nothingTitle: "I couldn't write a note that passed my checks, so I saved no draft.",
+        nothingBody: "The sentences I removed are below, with the reason for each.",
+        previewPiuTitle: "I don't show review notes in this preview, because they are a World Bank staff draft.",
+        previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+      },
+    },
+    // The writing page (`/drafts/new`).
+    writing: {
+      state: "I'm writing. I save the draft when I finish.",
+      stop: "Stop writing",
+      // The verifier's step, with the number of checks it ran from its checks event.
+      checkRunning: "I'm checking each sentence against its sources.",
+      checkDone: (checks: string, written: number, writtenText: string, removed: number, removedText: string) =>
+        `I ran ${checks} checks on the ${written === 1 ? "one sentence" : `${writtenText} sentences`} I wrote and removed ${
+          removed === 0 ? "none" : removed === 1 ? "one" : removedText
+        }.`,
+      tryAgain: "Try again",
+      backToPlan: "Back to the plan check",
+      reloadTitle: "I'm not writing a draft right now.",
+      reloadBody: "If you reloaded this page while I was writing, I stopped and saved nothing. Start again from the plan check.",
+      reloadLink: "Go to Drafts",
+    },
+    // A draft's page (section 5.3).
+    state: {
+      label: "State of this draft",
+      draft: "Draft",
+      checkedYou: "Checked by you",
+      checkedOther: (author: string) => `Checked by ${author}`,
+      exported: "Exported",
+      doneSuffix: ", done",
+      discarded: (date: string) => `Discarded on ${date}`,
+    },
+    // Under the steps I took, before the draft's ID in Roboto Mono.
+    idLabel: "Draft ID",
+    // Sources (section 5.4).
+    sources: {
+      title: "Sources",
+      caption: (opened: string, total: string, citations: number, citationsText: string) =>
+        citations === 1
+          ? `You opened ${opened} of ${total}. In the Word file, the one citation becomes a footnote.`
+          : `You opened ${opened} of ${total}. In the Word file, each of the ${citationsText} citations becomes a footnote.`,
+      citedIn: (count: number) => (count === 1 ? "Cited in the note on {refs}." : "Cited in the notes on {refs}."),
+      opened: "You opened this.",
+      notOpened: "You haven't opened this yet.",
+    },
+    // The draft bar (section 5.5). The consequence sentence is fixed for every kind: the one place
+    // rule 19's "clearance" and "no-objection" appear (web/lint/rules.ts, FIXED_TERMS).
+    bar: {
+      label: "Check and export",
+      consequence: "Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
+      opened: (opened: string, total: string) => `You opened ${opened} of ${total} sources`,
+      end: ".",
+      // Each hold's line by its copy key (config/drafts.toml, [holds.<key>].copy). notChecked is the kind's
+      // own (copy.draft.kinds.<kind>.holdNotChecked); tests/test_drafts.py checks every key has a line.
+      hold: {
+        preview: "This is a preview, so you can't mark drafts as checked or export them.",
+      } as Record<string, string>,
+      discard: "Discard",
+      export: "Export to Word",
+      check: "Mark as checked",
+      busy: { discard: "Discarding", export: "Exporting", check: "Saving", restore: "Restoring" },
+      failed: {
+        check: "I couldn't save your check just now. The notes are still a draft.",
+        export: "I couldn't make the files just now. The notes are still checked, and I exported nothing.",
+        discard: "I couldn't discard the draft just now. It is unchanged.",
+        restore: "I couldn't restore the draft just now. It is still discarded.",
+      },
+      exportStarted: "I'm making the Word file and the evidence pack.",
+      restored: "You restored the draft.",
+      restoredChecked: "You restored the draft. It is still marked as checked.",
+    },
+    conflict: "This draft changed in another tab or window, so I reloaded it.",
+    // The export success panel and the discarded notice (section 5.6).
+    exported: {
+      title: (count: number, countText: string) =>
+        count === 1
+          ? "Exported. I made a Word file with 1 footnote and an evidence pack."
+          : `Exported. I made a Word file with ${countText} footnotes and an evidence pack.`,
+      // The reason clause shows only when the author kept another source, with a reason (ticket 23).
+      body: (count: number, countText: string, disagreed: boolean) =>
+        `The evidence pack lists ${count === 1 ? "the one source" : `all ${countText} sources`}${disagreed ? "," : " and"} whether you opened ${
+          count === 1 ? "it" : "each one"
+        }${disagreed ? ", and the reason you gave for keeping another source" : ""}. Your browser downloaded the Word file, ` +
+        "and the evidence pack's files are below. I keep all three with this draft for your team. I sent nothing to anyone.",
+      revisitTitle: (date: string, count: number, countText: string) =>
+        `Exported on ${date}. I made a Word file with ${count === 1 ? "1 footnote" : `${countText} footnotes`} and an evidence pack.`,
+      revisitBody: "You can download the same files again. I sent nothing to anyone.",
+      // In place of revisitBody when the export's files are gone.
+      revisitBodyMissing: "I sent nothing to anyone.",
+      revisitTeammate: (author: string, date: string, count: number, countText: string) =>
+        `${author} exported these notes on ${date}. I made a Word file with ${count === 1 ? "1 footnote" : `${countText} footnotes`} and an evidence pack.`,
+      word: (count: number, countText: string) => (count === 1 ? "Word file, 1 footnote" : `Word file, ${countText} footnotes`),
+      pdf: "Evidence pack, PDF",
+      csv: "Evidence pack, CSV",
+      filesLabel: "The exported files",
+      // A file link's name: its file name, then what it is.
+      fileName: (name: string, caption: string) => `${name}, ${caption}`,
+      filesMissing:
+        "I can't find the files from this export. I kept the record of the export, so the data team can restore the " +
+        "files from Draft ID {id}.",
+    },
+    discarded: {
+      restore: "Restore the draft",
+      link: "Go to Drafts",
+    },
+    // The other states of a draft's page (section 5.9).
+    page: {
+      loading: "Loading this draft.",
+      notFoundTitle: "I can't find this draft.",
+      notFoundBody: "The link may be incomplete, or the draft may belong to another team.",
+      notFoundLink: "Go to Drafts",
+      error: "I couldn't load this draft because the data service didn't answer.",
+      draftStore: "I can't show this draft, because I can't read my drafts tables right now.",
+      permission: "Your account can't read Strata's tables, so I can't show this draft.",
+      publicTitle: "The public view has no drafts.",
+      publicBody: "Drafts belong to the team that made them. Leave the preview to see yours.",
+    },
+    // The Drafts tab (section 5.8). Its title, purpose and empty card are pages.drafts.
+    tab: {
+      groups: { to_check: "To check", checked: "Checked", exported: "Exported" },
+      count: (count: number, countText: string) => (count === 1 ? "One draft." : `${countText} drafts, newest first.`),
+      // Line 2's sentences, after the project.
+      draftedYou: (date: string) => `Drafted by you on ${date}.`,
+      draftedOther: (author: string, date: string) => `Drafted by ${author} on ${date}.`,
+      checkedYou: (date: string) => `Checked by you on ${date}.`,
+      checkedOther: (author: string, date: string) => `Checked by ${author} on ${date}.`,
+      exportedYou: (date: string) => `Exported by you on ${date}.`,
+      exportedOther: (author: string, date: string) => `Exported by ${author} on ${date}.`,
+      discardedYou: (date: string) => `Discarded by you on ${date}.`,
+      project: "{name} ({pid}).",
+      opened: (opened: string, total: string) => `You opened ${opened} of ${total} sources.`,
+      empty: {
+        to_check: "No drafts are waiting to be checked.",
+        checked: "No checked drafts are waiting to be exported.",
+        exported: "Nobody on your team has exported a draft yet.",
+      },
+      discardedFold: (count: number, countText: string) =>
+        count === 1 ? "You discarded one draft." : `You discarded ${countText} drafts.`,
+      showDiscarded: (count: number) => (count === 1 ? "Show it" : "Show them"),
+      hideDiscarded: (count: number) => (count === 1 ? "Hide it" : "Hide them"),
+      more: (count: string) => `Show ${count} more`,
+      loading: "Loading your team's drafts.",
+      error: "I couldn't load your team's drafts because the data service didn't answer.",
+      draftStore: "I can't list your team's drafts, because I can't read my drafts tables right now.",
+      permission: "Your account can't read Strata's tables, so I can't list your team's drafts.",
+    },
+    // The export's files (section 6.7), which the server writes from src/strata/drafts/copy.json
+    // (node web/lint/server-copy.ts --write). Word's text speaks in the document's voice: no "I" or
+    // "you". {braces} are filled from the draft.
+    files: {
+      word: {
+        review_notes: {
+          heading: "Review notes on the {agency} plan of {date}",
+          line: "{project_name} ({project_id}). Procurement Plan of {date}.",
+          origin:
+            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
+          columns: ["Activity", "Review note"],
+        },
+      },
+      pack: {
+        title: "Evidence pack",
+        draftId: "Draft ID {id}",
+        drafted: "Drafted on {date} for {author}.",
+        checked: "Checked by {author} on {date}.",
+        exported: "Exported by {author} on {date}.",
+        opened: "{author} opened {opened} of {total} sources before exporting.",
+        removedTitle: "Sentences I removed",
+        removedNone: "I removed no sentences.",
+        removedItem: '"{sentence}" {reason}',
+        sourcesTitle: "Sources",
+        columns: ["Number", "Source", "Cited in", "Opened", "Last opened (UTC)", "Kept another source, and why"],
+        csvColumns: ["Number", "Evidence ID", "Source", "Cited in", "Opened before export", "Last opened (UTC)", "Kept another source", "Reason"],
+        yes: "Yes",
+        no: "No",
+        // The column heading already says UTC.
+        moment: "{date}, {time}",
+        citedJoin: ", ",
+        dataCaveat: "The World Bank does not guarantee the accuracy of the data.",
+      },
+    },
   },
 
   // The Data readiness page (the 16 design brief). Every number on it comes from the

@@ -18,6 +18,9 @@
 #                 names in braces, such as {agent.tool_rounds}.
 #   guardrail     the key of its guardrail below
 #   description   what it does, as Foundry's list of agents shows it
+#   tools         the tool registry's tools it may call, by name. Leave it out to offer every tool. A
+#                 writer that writes from facts the app hands it has tools = [] (fairshare's tool-less
+#                 writer), and the sync gives it no tool section.
 #
 # [guardrails.<key>], the content filters and Prompt Shields the agent runs under, kept as an RAI policy
 # on the Foundry resource (ops/dayone/dayone.toml names it, foundry_resource):
@@ -36,6 +39,17 @@ role = "agent"
 instructions = "orchestrator.md"
 guardrail = "strata"
 description = "Answers a question about World Bank-financed procurement with claims cited to the rows and passages its tools return."
+
+# The check-a-plan workflow's writer (ticket 35): one review note per activity that check_plan marked
+# needs_a_look or watch, from the rows the app hands it. The draft runtime (src/strata/drafts) runs the
+# verifier on what it writes before any draft is saved.
+[agents.review_notes_writer]
+name = "strata-review-notes-writer"
+role = "draft"
+instructions = "review_notes_writer.md"
+guardrail = "strata"
+description = "Writes one review note per marked activity in a borrower's Procurement Plan, citing the plan rows its check returned."
+tools = []
 
 [guardrails.strata]
 name = "strata-guardrail"

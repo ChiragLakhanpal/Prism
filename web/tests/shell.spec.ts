@@ -149,7 +149,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
 
 test("an account the warehouse refuses gets one error alert that says how to get access", async ({ page }) => {
   await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
-  await page.goto("/drafts");
+  await page.goto("/lessons");
 
   await expect(page.getByRole("alert")).toHaveText(
     "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
@@ -168,7 +168,7 @@ test("while the stamp tries again, the access alert stays where it is, so it is 
     if (reads > 1) await answered;
     await route.fulfill({ status: 403, contentType: "application/json", body: await recorded("freshness-no-access.json") });
   });
-  await page.goto("/drafts");
+  await page.goto("/lessons");
   const alert = page.getByRole("alert");
   await expect(alert).toHaveCount(1);
 

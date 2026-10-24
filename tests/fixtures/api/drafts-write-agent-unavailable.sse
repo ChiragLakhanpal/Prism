@@ -1,0 +1,15 @@
+event: step
+data: {"id": "read", "kind": "read", "status": "running"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "done", "plan_date": "2026-10-09"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running", "count": 3}
+
+event: error
+data: {"code": "agent_unavailable"}
+
+event: done
+data: {"run_id": "run-0006"}
+
