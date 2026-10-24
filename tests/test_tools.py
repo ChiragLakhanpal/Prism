@@ -418,6 +418,16 @@ def test_an_agency_with_no_plan_gets_an_abstention_that_lists_the_agencies_with_
                                "latest_plan_date": "2026-10-09"}
 
 
+def test_an_agency_with_no_plan_named_by_its_id_is_named_in_full_when_the_project_record_names_it(engine):
+    # The screen's empty state names the agency ("I don't have a Procurement Plan from ... yet."),
+    # and the projects API's record for P156634 lists Wajir Water and Sewerage Company.
+    result = check_plan(engine, implementing_agency="wajir-water-and-sewerage-company", as_of="2026-10-22")
+    unknown = check_plan(engine, implementing_agency="no-such-agency", as_of="2026-10-22")
+
+    assert result["abstention"]["agency_name"] == "Wajir Water and Sewerage Company"
+    assert unknown["abstention"]["agency_name"] is None
+
+
 def test_an_agency_can_be_named_by_its_id_from_an_earlier_result(engine):
     result = check_plan(engine, implementing_agency="northern-water-works-development-agency", as_of="2026-10-22")
 
