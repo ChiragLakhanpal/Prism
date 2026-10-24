@@ -17,17 +17,24 @@ each project of the run.
 from __future__ import annotations
 
 import datetime as dt
+import json
+import re
 from collections.abc import Callable
 from dataclasses import astuple, dataclass, fields
 from importlib import resources
 
-from strata.config import Ladder, load_ladder
+from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
+from strata.config import SIDES, Ladder, load_ladder
+from strata.knowledge.batch import Answer, BatchModel, RecordedBatch, Request
 from strata.lakehouse.engine import Engine
+from strata.reader.passages import TABLE_SUMMARY
 
 PASSAGES = "strata.gold.passage"  # the table a passage's evidence id names, as search_passages returns it
+ISR = "Implementation Status and Results Report"
 ISR_READER = "isr_ratings"  # ticket 18's reader of each ISR's ratings table (src/strata/lakehouse/isr_ratings.py)
 # The periods an assertion can describe.
 REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING = "report_period", "whole_project", "contract_signing"
+MID_TERM_REVIEW, APPRAISAL = "mid_term_review", "appraisal"
 
 
 def _now() -> dt.datetime:
@@ -136,26 +143,270 @@ def isr_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Asse
     return made
 
 
-# ── The run ──────────────────────────────────────────────────────────────
+# ── Assertions read from text, by the batch model ────────────────────────
+
+INSTRUCTIONS = """You read one World Bank report about one project and list the ratings it gives and its
+accounts of how the project was going at a named moment. The message gives the report's passages, each
+with its passage_id, its PDF pages and its text, the attributes you may report with the ratings each
+takes, and the periods an assertion may describe. Use only what the passages say.
+For each assertion give: passage_id, the passage it is in; pdf_page, the PDF page its words are on;
+quote, the shortest run of the passage's words that states it, copied word for word; attribute, one of
+the attributes given; field_name, the report's own name for what it rates, word for word; value, the
+rating as the report writes it, or, for an account that gives no rating, an empty value and side,
+satisfactory or unsatisfactory, for the side of the line it falls on; form, rating_field when the rating
+sits in its own field or table,
+narrative when a sentence tells it; period, whole_project for a rating of the whole project, or the
+named moment the account is about, such as mid_term_review.
+Never guess a value, never join words from two places, and leave out what does not fit.
+Answer with one JSON object and nothing else: {"assertions": [...]}, with an empty list when there is none."""
+# The periods a report's assertion may describe: the whole project, from the Board's approval to closing,
+# or a moment whose date the ISRs' key dates give.
+TEXT_PERIODS = (WHOLE_PROJECT, MID_TERM_REVIEW, APPRAISAL)
+KEY_DATE_LABELS = {MID_TERM_REVIEW: re.compile(r"Actual Mid[- ]Term Review Date:?\s*(\d{1,2}-[A-Za-z]{3}-\d{4})")}
+REPORT_TIERS = ("pad", "icr", "ieg")  # the tiers whose reports the batch model reads; ISRs come from their tables
+CUSTOM_ID = "assertions:{document_id}/v{version}"
+
+
+@dataclass(frozen=True)
+class Rejection:
+    """One row of strata.ops.assertion_rejections (its table definition says what each column holds)."""
+
+    run_id: str
+    project_id: str
+    document_id: str
+    version: int | None
+    passage_id: str | None
+    pdf_page: int | None
+    attribute: str | None
+    value: str | None
+    quote: str | None
+    reason: str
+    read_by: str
+    rejected_at: dt.datetime
+    public_from: dt.date
+
+
+REJECTION_COLUMNS = tuple(f.name for f in fields(Rejection))
+
 
 @dataclass(frozen=True)
 class Report:
+    """A report the batch model is asked about, with the passages it is given."""
+
+    document_id: str
+    project_id: str
+    document_type: str
+    report_number: str | None
+    version: int | None
+    document_date: dt.date
+    replaced_on: dt.date | None
+    public_from: dt.date
+    passages: dict[str, dict]
+
+    @property
+    def custom_id(self) -> str:
+        return CUSTOM_ID.format(document_id=self.document_id, version=self.version or 1)
+
+
+def reports(engine: Engine, project_id: str, ladder: Ladder) -> list[Report]:
+    types = [kind for tier in REPORT_TIERS if tier in ladder.tiers for kind in ladder.tiers[tier].document_types]
+    found = []
+    for row in _rows(engine, _sql("reports.sql"), project_id=project_id, document_types=",".join(types)):
+        passages = {passage["passage_id"]: passage for passage in _rows(
+            engine, _sql("report_passages.sql"), document_id=str(row["document_id"]), table_summary=TABLE_SUMMARY)}
+        if passages:
+            found.append(Report(str(row["document_id"]), project_id, row["document_type"], row["report_number"],
+                                _int(row["version"]), _date(row["document_date"]), _date(row["replaced_on"]),
+                                _date(row["public_from"]), passages))
+    return found
+
+
+def request(report: Report, ladder: Ladder) -> Request:
+    """What the batch model is asked about one report: its passages, the attributes it may report and the
+    periods an assertion may describe."""
+    attributes = [{"attribute": attribute.key, "ratings": list(ladder.scales[attribute.scale].ratings)}
+                  for attribute in ladder.attributes.values() if attribute.kind == "rating"]
+    passages = [{"passage_id": key, "pdf_page": _int(passage["pdf_page"]), "last_pdf_page": _int(passage["last_pdf_page"]),
+                 "section": passage["section_path"], "text": passage["text"]} for key, passage in report.passages.items()]
+    return Request(report.custom_id, INSTRUCTIONS, {
+        "project_id": report.project_id, "document_type": report.document_type, "report_number": report.report_number,
+        "document_date": report.document_date.isoformat(), "attributes": attributes, "periods": list(TEXT_PERIODS),
+        "passages": passages})
+
+
+@dataclass(frozen=True)
+class Periods:
+    """The dates of the periods a project's reports describe, from its records and its ISRs' key dates."""
+
+    whole_project: tuple[dt.date, dt.date] | None
+    moments: dict[str, dt.date]
+
+    def dates(self, period: str, report: Report) -> tuple[dt.date, dt.date] | None:
+        if period == WHOLE_PROJECT:
+            return self.whole_project
+        if period == APPRAISAL:
+            return (report.document_date, report.document_date) if report.document_type in APPRAISAL_TYPES else None
+        day = self.moments.get(period)
+        return (day, day) if day else None
+
+
+APPRAISAL_TYPES = ("Project Appraisal Document",)
+PROJECT_DATES = "SELECT approval_date, closing_date FROM strata.gold.project WHERE project_id = :project_id"
+
+
+def periods(engine: Engine, project_id: str) -> Periods:
+    project = _rows(engine, PROJECT_DATES, project_id=project_id)
+    approved, closing = (_date(project[0]["approval_date"]), _date(project[0]["closing_date"])) if project else (None,
+                                                                                                                 None)
+    moments = {}
+    for period, label in KEY_DATE_LABELS.items():
+        for row in _rows(engine, _sql("key_dates.sql"), project_id=project_id, document_type=ISR, label="Review Date"):
+            found = label.search(row["text"] or "")
+            if found:
+                moments[period] = dt.datetime.strptime(found.group(1), "%d-%b-%Y").date()
+                break
+    return Periods((approved, closing) if approved and closing and approved <= closing else None, moments)
+
+
+def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], clock: Callable[[], dt.datetime]
+        ) -> dict[str, Answer]:
+    """The model's answer to each request: one held in bronze for the same request from the same reader, or a
+    new one, which is kept there. Only requests with no answer held go to the model."""
+    hashes = {request.custom_id: request.digest(model.deployment) for _, request in asked}
+    held: dict[str, Answer] = {}
+    for row in _rows(engine, _sql("answers_held.sql"), read_by=model.name, hashes=",".join(hashes.values()) or "-"):
+        held.setdefault(row["request_hash"], Answer(row["custom_id"], row["content"], row["error"]))
+    answers = {custom_id: held[digest] for custom_id, digest in hashes.items() if digest in held}
+    waiting = [(report, request) for report, request in asked if request.custom_id not in answers]
+    if waiting:
+        public = {request.custom_id: report.public_from for report, request in waiting}
+        new = [answer for answer in model.answer([request for _, request in waiting]) if answer.custom_id in public]
+        when = clock()
+        engine.insert_rows("strata.bronze.batch_answers", ("custom_id", "request_hash", "read_by", "content", "error",
+                                                           "answered_at", "public_from"),
+                           [(answer.custom_id, hashes[answer.custom_id], model.name, answer.content, answer.error,
+                             when, public[answer.custom_id]) for answer in new])
+        answers |= {answer.custom_id: answer for answer in new}
+    return answers
+
+
+def _page_of(passage: dict, page) -> bool:
+    first, last = _int(passage["pdf_page"]), _int(passage["last_pdf_page"])
+    try:
+        page = int(page)
+    except (TypeError, ValueError):
+        return False
+    return first is not None and first <= page <= (last or first)
+
+
+def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, read_by: str, run_id: str,
+                when: dt.datetime) -> tuple[list[Assertion], list[Rejection]]:
+    """The assertions in one answer that pass the checks, and those rejected with their reason. The check
+    rejects; it never repairs."""
+    try:
+        items = json.loads(answer.content or "{}").get("assertions") or []
+    except (ValueError, AttributeError):
+        items = []
+    kept, rejected = [], []
+
+    def reject(item: dict, reason: str):
+        rejected.append(Rejection(run_id, report.project_id, report.document_id, report.version,
+                                  item.get("passage_id"), _int(item.get("pdf_page")), item.get("attribute"),
+                                  item.get("value"), item.get("quote"), reason, read_by, when, report.public_from))
+
+    for item in items if isinstance(items, list) else []:
+        if not isinstance(item, dict):
+            continue
+        passage = report.passages.get(str(item.get("passage_id")))
+        if passage is None:
+            reject(item, "passage_not_found")
+            continue
+        quote = str(item.get("quote") or "")
+        if not quote.strip() or not _page_of(passage, item.get("pdf_page")) or find_quote(quote, passage["text"]) is None:
+            reject(item, "quote_not_on_page")
+            continue
+        attribute = ladder.attributes.get(str(item.get("attribute")))
+        if attribute is None or attribute.kind != "rating":
+            reject(item, "unknown_attribute")
+            continue
+        period = dates.dates(str(item.get("period")), report) if item.get("period") in TEXT_PERIODS else None
+        if period is None:
+            reject(item, "unknown_period")
+            continue
+        value, side = str(item.get("value") or "").strip(), str(item.get("side") or "").strip().lower()
+        if value in ladder.no_rating:
+            continue  # the report gives no rating here, such as "Efficiency Rating ---"
+        rating = ladder.rating(attribute.key, value) if value else None
+        side = side if not value and side in SIDES else None
+        if rating is None and side is None:
+            reject(item, "value_not_on_scale")
+            continue
+        form = item.get("form") if item.get("form") in ("rating_field", "narrative") else "narrative"
+        evidence = f"{PASSAGES}:{passage['passage_id']}"
+        kept.append(Assertion(
+            assertion_id(evidence, report.project_id, attribute.key), "project", report.project_id, report.project_id,
+            attribute.key, attribute.kind, str(item.get("field_name") or attribute.names[0]), rating or side,
+            "rating" if rating else "judgment", ladder.side(attribute.key, rating) if rating else side,
+            str(item["period"]), period[0], period[1], report.document_date, report.replaced_on,
+            ladder.tier_of(report.document_type) or "record", form, "documents", report.document_id,
+            report.document_type, report.report_number, report.version, None, passage["passage_id"], evidence,
+            _int(item.get("pdf_page")), quote, read_by, report.public_from))
+    return kept, rejected
+
+
+def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel | None, run_id: str,
+                    clock: Callable[[], dt.datetime]) -> tuple[list[Assertion], list[Rejection]]:
+    """The assertions the batch model read from the project's reports, each kept only when its quote is word
+    for word in the passage it cites, on the page it cites, and the ones rejected. With no model, none."""
+    if model is None:
+        return [], []
+    found = reports(engine, project_id, ladder)
+    if not found:
+        return [], []
+    asked = [(report, request(report, ladder)) for report in found]
+    answers = ask(engine, model, asked, clock)
+    dates, when = periods(engine, project_id), clock()
+    kept, rejected = [], []
+    for report, question in asked:
+        answer = answers.get(question.custom_id)
+        if answer is not None and answer.content is not None:
+            more, less = read_answer(report, answer, ladder, dates, model.name, run_id, when)
+            kept += more
+            rejected += less
+    # One passage can state one attribute once: a second assertion of the same id is a repeat.
+    unique = {assertion.assertion_id: assertion for assertion in reversed(kept)}
+    return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected
+
+
+# ── The run ──────────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class RunReport:
     assertions: int
+    rejected: int
 
 
-def write(engine: Engine, projects: list[str], assertions: list[Assertion]) -> int:
-    """Rebuild strata.gold.assertion for the run's projects."""
+def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection]) -> int:
+    """Rebuild strata.gold.assertion and strata.ops.assertion_rejections for the run's projects."""
     for project_id in projects:
         engine.run("DELETE FROM strata.gold.assertion WHERE project_id = :project_id", {"project_id": project_id})
+        engine.run("DELETE FROM strata.ops.assertion_rejections WHERE project_id = :project_id",
+                   {"project_id": project_id})
+    engine.insert_rows("strata.ops.assertion_rejections", REJECTION_COLUMNS, [astuple(row) for row in rejections])
     return engine.insert_rows("strata.gold.assertion", ASSERTION_COLUMNS, [astuple(row) for row in assertions])
 
 
-def run(engine: Engine, projects: list[str], *, ladder: Ladder | None = None, run_id: str = "local",
-        clock: Callable[[], dt.datetime] = _now) -> Report:
-    """Every assertion of the run's projects, rebuilt."""
+def run(engine: Engine, projects: list[str], *, model: BatchModel | None, ladder: Ladder | None = None,
+        run_id: str = "local", clock: Callable[[], dt.datetime] = _now) -> RunReport:
+    """Every assertion of the run's projects, rebuilt, with the rejected ones counted."""
     ladder = ladder or load_ladder()
-    made = [assertion for project_id in projects for assertion in isr_assertions(engine, project_id, ladder)]
-    return Report(write(engine, projects, made))
+    made, rejected = [], []
+    for project_id in projects:
+        made += isr_assertions(engine, project_id, ladder)
+        more, less = text_assertions(engine, project_id, ladder, model, run_id, clock)
+        made += more
+        rejected += less
+    return RunReport(write(engine, projects, made, rejected), len(rejected))
 
 
 PROJECTS = "SELECT DISTINCT project_id FROM strata.silver.documents ORDER BY project_id"
@@ -166,6 +417,6 @@ def default_projects(engine: Engine) -> list[str]:
     return [row["project_id"] for row in _rows(engine, PROJECTS)]
 
 
-def run_on_fixture(engine: Engine, run_id: str = "fixture", clock: Callable[[], dt.datetime] = _now) -> Report:
-    """The run over the fixture database, as the gate builds it."""
-    return run(engine, default_projects(engine), run_id=run_id, clock=clock)
+def run_on_fixture(engine: Engine, run_id: str = "fixture", clock: Callable[[], dt.datetime] = _now) -> RunReport:
+    """The run over the fixture database, as the gate builds it, with the batch model's recorded answers."""
+    return run(engine, default_projects(engine), model=RecordedBatch(), run_id=run_id, clock=clock)

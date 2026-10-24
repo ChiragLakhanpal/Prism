@@ -1,0 +1,78 @@
+{
+ "about": "The batch role's answers (config/models.toml, gpt-5.4-nano on Global Batch) to the assertion requests for P130164's ICR and its two ICR Reviews, as lines of a Batch API output file, keyed by custom_id. They are written by hand in the shape the Batch API documents, because the gate's machine has no key. Each answer lists the ratings the report gives in its own fields or sentences, and the ICR's account of the mid-term review in paragraph 78. A live answer may also read item 8.b of the ICR Reviews, which restates what the mid-term review found. One assertion, marked planted, quotes words that are not on its page, so the gate proves the check rejects it. Replace the lines with a recorded answer by running ops/assertions/batch_live.py --record (docs/workspace-catchup.md); it keeps the planted assertion.",
+ "recorded": false,
+ "lines": [
+  {
+   "id": "batch_req_not-a-real-id-1",
+   "custom_id": "assertions:31525018/v1",
+   "response": {
+    "status_code": 200,
+    "request_id": "not-a-real-request-1",
+    "body": {
+     "id": "chatcmpl-not-a-real-id-1",
+     "object": "chat.completion",
+     "model": "gpt-5.4-nano",
+     "choices": [
+      {
+       "index": 0,
+       "finish_reason": "stop",
+       "message": {
+        "role": "assistant",
+        "content": "{\"assertions\": [{\"passage_id\": \"31525018/v1/44\", \"pdf_page\": 21, \"quote\": \"the efficiency rating is Substantial\", \"attribute\": \"efficiency\", \"field_name\": \"efficiency rating\", \"value\": \"Substantial\", \"form\": \"narrative\", \"period\": \"whole_project\"}, {\"passage_id\": \"31525018/v1/45\", \"pdf_page\": 21, \"quote\": \"the overall outcome is rated Moderately Unsatisfactory\", \"attribute\": \"outcome\", \"field_name\": \"overall outcome\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"narrative\", \"period\": \"whole_project\"}, {\"passage_id\": \"31525018/v1/45\", \"pdf_page\": 21, \"quote\": \"the overall outcome is rated Moderately Satisfactory\", \"attribute\": \"outcome\", \"field_name\": \"overall outcome\", \"value\": \"Moderately Satisfactory\", \"form\": \"narrative\", \"period\": \"whole_project\", \"planted\": \"Written by hand with a quote that is not on its page, so the gate proves the check rejects it.\"}, {\"passage_id\": \"31525018/v1/67\", \"pdf_page\": 25, \"quote\": \"the quality of M&E is rated Modest\", \"attribute\": \"me_quality\", \"field_name\": \"quality of M&E\", \"value\": \"Modest\", \"form\": \"narrative\", \"period\": \"whole_project\"}, {\"passage_id\": \"31525018/v1/78\", \"pdf_page\": 27, \"quote\": \"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\", \"attribute\": \"pdo_progress\", \"field_name\": \"achievement of part of the PDO\", \"value\": \"\", \"side\": \"unsatisfactory\", \"form\": \"narrative\", \"period\": \"mid_term_review\"}, {\"passage_id\": \"31525018/v1/79\", \"pdf_page\": 27, \"quote\": \"the World Bank performance is rated Moderately Unsatisfactory\", \"attribute\": \"bank_performance\", \"field_name\": \"World Bank performance\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"narrative\", \"period\": \"whole_project\"}]}"
+       }
+      }
+     ]
+    }
+   },
+   "error": null
+  },
+  {
+   "id": "batch_req_not-a-real-id-2",
+   "custom_id": "assertions:31906731/v1",
+   "response": {
+    "status_code": 200,
+    "request_id": "not-a-real-request-2",
+    "body": {
+     "id": "chatcmpl-not-a-real-id-2",
+     "object": "chat.completion",
+     "model": "gpt-5.4-nano",
+     "choices": [
+      {
+       "index": 0,
+       "finish_reason": "stop",
+       "message": {
+        "role": "assistant",
+        "content": "{\"assertions\": [{\"passage_id\": \"31906731/v1/5\", \"pdf_page\": 9, \"quote\": \"Efficiency Rating ---\", \"attribute\": \"efficiency\", \"field_name\": \"Efficiency Rating\", \"value\": \"---\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"31906731/v1/6.a\", \"pdf_page\": 9, \"quote\": \"Outcome Rating Moderately Unsatisfactory\", \"attribute\": \"outcome\", \"field_name\": \"Outcome Rating\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"31906731/v1/8.b\", \"pdf_page\": 10, \"quote\": \"Overall Bank Performance Rating Moderately Unsatisfactory\", \"attribute\": \"bank_performance\", \"field_name\": \"Overall Bank Performance Rating\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"31906731/v1/9.c\", \"pdf_page\": 11, \"quote\": \"M&E Quality Rating Modest\", \"attribute\": \"me_quality\", \"field_name\": \"M&E Quality Rating\", \"value\": \"Modest\", \"form\": \"rating_field\", \"period\": \"whole_project\"}]}"
+       }
+      }
+     ]
+    }
+   },
+   "error": null
+  },
+  {
+   "id": "batch_req_not-a-real-id-3",
+   "custom_id": "assertions:34056616/v2",
+   "response": {
+    "status_code": 200,
+    "request_id": "not-a-real-request-3",
+    "body": {
+     "id": "chatcmpl-not-a-real-id-3",
+     "object": "chat.completion",
+     "model": "gpt-5.4-nano",
+     "choices": [
+      {
+       "index": 0,
+       "finish_reason": "stop",
+       "message": {
+        "role": "assistant",
+        "content": "{\"assertions\": [{\"passage_id\": \"34056616/v2/5\", \"pdf_page\": 9, \"quote\": \"Efficiency Rating Modest\", \"attribute\": \"efficiency\", \"field_name\": \"Efficiency Rating\", \"value\": \"Modest\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"34056616/v2/6.a\", \"pdf_page\": 9, \"quote\": \"Outcome Rating Moderately Unsatisfactory\", \"attribute\": \"outcome\", \"field_name\": \"Outcome Rating\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"34056616/v2/8.b\", \"pdf_page\": 10, \"quote\": \"Overall Bank Performance Rating Moderately Unsatisfactory\", \"attribute\": \"bank_performance\", \"field_name\": \"Overall Bank Performance Rating\", \"value\": \"Moderately Unsatisfactory\", \"form\": \"rating_field\", \"period\": \"whole_project\"}, {\"passage_id\": \"34056616/v2/9.c\", \"pdf_page\": 11, \"quote\": \"M&E Quality Rating Modest\", \"attribute\": \"me_quality\", \"field_name\": \"M&E Quality Rating\", \"value\": \"Modest\", \"form\": \"rating_field\", \"period\": \"whole_project\"}]}"
+       }
+      }
+     ]
+    }
+   },
+   "error": null
+  }
+ ]
+}

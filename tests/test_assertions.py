@@ -59,6 +59,63 @@ def test_each_isr_rates_progress_for_the_period_since_the_isr_before_it(engine):
     assert isr_7["pdf_page"] == TRUTH["isr-7-rating"]["pdf_page"]
 
 
+def by_document(engine, document_id: str) -> dict[str, dict]:
+    return {row["attribute"]: row for row in rows(
+        engine, "SELECT * FROM strata.gold.assertion WHERE document_id = :document_id", document_id=document_id)}
+
+
+def test_the_icrs_account_of_the_mid_term_review_is_an_assertion_about_that_moment(engine):
+    """The batch model read paragraph 78 (tests/fixtures/azure/batch_assertions.json); its quote was found
+    word for word on PDF page 27, and the mid-term review's date comes from the ISRs' key dates."""
+    paragraph = by_document(engine, "31525018")["pdo_progress"]
+
+    assert (paragraph["subject_kind"], paragraph["subject_id"]) == ("project", "P130164")
+    assert (paragraph["value_form"], paragraph["judgment"]) == ("judgment", "unsatisfactory")
+    assert paragraph["period_event"] == "mid_term_review"
+    assert paragraph["period_start"] == paragraph["period_end"] == value("isr-7-mid-term-review")
+    assert value("mid-term-review") == value("isr-7-mid-term-review")
+    assert paragraph["made_at"] == value("icr-date")
+    assert paragraph["public_from"] == value("icr-disclosed")
+    assert (paragraph["evidence_tier"], paragraph["form"]) == ("icr", "narrative")
+    assert paragraph["evidence_id"] == "strata.gold.passage:31525018/v1/78"
+    assert paragraph["pdf_page"] == TRUTH["icr-para-78"]["pdf_page"]
+    assert paragraph["quote"] == value("icr-para-78")
+    assert paragraph["read_by"].startswith("gpt-5.4-nano")
+
+
+def test_an_extracted_assertion_whose_quote_is_not_on_its_cited_page_is_rejected_and_counted(engine):
+    """The recording plants one outcome rating whose words are not in paragraph 45. It never becomes an
+    assertion, and the run counts it with its reason in strata.ops.assertion_rejections."""
+    rejected = rows(engine, "SELECT * FROM strata.ops.assertion_rejections WHERE project_id = :project_id",
+                    project_id="P130164")
+    outcome = rows(engine, "SELECT value, quote FROM strata.gold.assertion WHERE document_id = :document_id "
+                           "AND attribute = :attribute", document_id="31525018", attribute="outcome")
+
+    assert [(row["document_id"], row["passage_id"], row["reason"]) for row in rejected] == [
+        ("31525018", "31525018/v1/45", "quote_not_on_page")]
+    assert rejected[0]["quote"] == "the overall outcome is rated Moderately Satisfactory"
+    assert rejected[0]["public_from"] == value("icr-disclosed")
+    assert outcome == [{"value": "Moderately Unsatisfactory",
+                        "quote": "the overall outcome is rated Moderately Unsatisfactory"}]
+
+
+def test_each_version_of_the_icr_review_keeps_its_ratings_and_the_reissue_replaces_the_first(engine):
+    """Both ICR Reviews are report ICRR0021929. The re-issue of May 4, 2023 replaces the version of March 27,
+    2020 from the day it became public (ticket 11's rule), and the first version's "Efficiency Rating ---"
+    is no rating."""
+    first, reissue = by_document(engine, "31906731"), by_document(engine, "34056616")
+
+    assert set(first) == {"outcome", "bank_performance", "me_quality"}
+    assert set(reissue) == {"outcome", "bank_performance", "me_quality", "efficiency"}
+    assert reissue["efficiency"]["value"] == value("icr-review-efficiency-2023")
+    assert {row["replaced_on"] for row in first.values()} == {value("icr-review-reissue-date")}
+    assert {row["replaced_on"] for row in reissue.values()} == {None}
+    assert {(row["report_number"], row["version"], row["evidence_tier"]) for row in first.values()} == {
+        (value("icr-review-number-2020"), 1, "ieg")}
+    assert {(row["report_number"], row["version"]) for row in reissue.values()} == {(value("icr-review-number-2023"), 2)}
+    assert {row["made_at"] for row in reissue.values()} == {value("icr-review-reissue-date")}
+
+
 def test_every_assertion_has_its_subject_attribute_value_period_dates_source_and_evidence_tier(engine):
     """Criterion 8: the schema every assertion keeps (spec, "The knowledge model")."""
     required = ("assertion_id", "subject_kind", "subject_id", "project_id", "attribute", "attribute_kind",
