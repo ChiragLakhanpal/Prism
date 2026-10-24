@@ -93,7 +93,8 @@ from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, Tr
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.server import drafts as draft_routes
-from strata.server import engines, evidence, lookup, projects, suppliers, tracing
+from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
+                           tracing)
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -114,6 +115,17 @@ UNCOUNTED = {"/api/health"}
 # every request sees the World Bank staff view, whatever ?view= asks for.
 STAFF = "staff"
 IMMUTABLE = "public, max-age=31536000, immutable"
+# The tag on every route that calls a model: the answer stream now, and the draft writers when they
+# land. A project's Summary must render without a request to one (ticket 21), and the screen test
+# checks that against the list model_routes() gives, recorded in tests/fixtures/api/model-routes.json.
+MODEL = "model"
+
+
+def model_routes(app: FastAPI) -> list[dict]:
+    """Every route the app tags as calling a model, as {method, path}, sorted."""
+    found = [{"method": method, "path": route.path} for route in app.routes
+             if MODEL in (getattr(route, "tags", None) or []) for method in sorted(getattr(route, "methods", []))]
+    return sorted(found, key=lambda route: (route["path"], route["method"]))
 
 
 class AskRequest(BaseModel):
@@ -140,6 +152,10 @@ class DecisionRequest(BaseModel):
 class LabelRequest(BaseModel):
     pair_id: str = Field(min_length=1, max_length=512)
     label: Literal["merge", "no_merge"]
+
+
+class BaselineRequest(BaseModel):
+    plan_date: dt.date  # the version of the agency's plans to save as the baseline
 
 
 def current_viewer(request: Request) -> Viewer:
@@ -193,7 +209,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     without it, the draft routes say there is no data service. writers gives each draft kind's writer
     agent, or None when none is connected. access is the one access rule (src/strata/server/access.py);
     without it, every viewer is on a team of their own. kinds is the draft-kind registry, today the day
-    a draft's facts are read as of, now the clock and new_draft_id the ids drafts get.
+    a draft's facts are read as of, now the clock (also for when a baseline was saved) and new_draft_id
+    the ids drafts get.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -309,19 +326,57 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 return JSONResponse({"code": "tool_contract", "trace_id": reference}, status_code=500)
         return read_for(name, viewer, call)
 
+    page_size = int(thresholds.value("app.page_size"))
+
     @app.get("/api/projects")
-    def list_projects(asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+    def list_projects(asof: dt.date | None = None, q: str = Query("", max_length=200), page: int = Query(1, ge=1),
+                      viewer: Viewer = Depends(current_viewer)):
         as_of = asof or registry.today()
-        return read_for("all projects", viewer, lambda engine: projects.all_projects(engine, as_of))
+        return read_for("all projects", viewer,
+                        lambda engine: projects.all_projects(engine, as_of, q.strip(), page, page_size))
+
+    versions_shown = int(thresholds.value("app.versions_shown"))
 
     @app.get("/api/projects/{project_id}")
-    def open_project(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+    def open_project(project_id: str, asof: dt.date | None = None, view: str = "staff",
+                     viewer: Viewer = Depends(current_viewer)):
         as_of = asof or registry.today()
 
         def read(engine: Engine):
-            found = projects.project_page(engine, project_id, as_of)
+            found = projects.project_page(engine, project_id, as_of, view, versions_shown)
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"project {project_id}", viewer, read)
+
+    @app.get("/api/projects/{project_id}/summary")
+    def project_summary(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = summary.summary(engine, project_id, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the summary of {project_id}", viewer, read)
+
+    documents_shown = int(thresholds.value("app.documents_shown"))
+
+    @app.get("/api/projects/{project_id}/packages")
+    def project_packages(project_id: str, asof: dt.date | None = None, q: str = Query("", max_length=200),
+                         page: int = Query(1, ge=1), viewer: Viewer = Depends(current_viewer)):
+        return read_for(f"the packages of {project_id}", viewer,
+                        lambda engine: projects.packages(engine, project_id, as_of_for(asof), q.strip(), page, page_size))
+
+    @app.get("/api/projects/{project_id}/documents")
+    def project_documents(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = documents.documents_tab(engine, project_id, as_of_for(asof), documents_shown)
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the documents of {project_id}", viewer, read)
+
+    @app.get("/api/projects/{project_id}/documents/{doc}")
+    def source_page(project_id: str, doc: str, page: int | None = Query(None, ge=0, le=100_000),
+                    para: str | None = Query(None, max_length=32), passage: str | None = Query(None, max_length=256),
+                    asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = documents.source_page(engine, project_id, doc, page, para, passage, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"{doc} of {project_id}", viewer, read)
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
     def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",
@@ -334,6 +389,38 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                            view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
                                        "plan_date": version}, viewer, view, asof)
+
+    @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}/changes")
+    def plan_changes(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
+                     viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = changes.plan_changes(engine, project_id, agency_id, version, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_plan"}, status_code=404)
+        return read_for(f"the changes in {project_id}'s plan of {version}", viewer, read)
+
+    def write_baseline(viewer: Viewer, view: str, what: str, write: Callable[[Engine], object]):
+        """A write to an agency's baseline as the viewer, or why it was not made. Only a signed-in viewer
+        in the World Bank staff view writes: a preview can only take things away (the 40 brief)."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        if view != STAFF:
+            return refused(403, "preview")
+        return read_for(what, viewer, write)
+
+    @app.put("/api/projects/{project_id}/procurement/{agency_id}/baseline")
+    def save_baseline(project_id: str, agency_id: str, body: BaselineRequest, view: str = "staff",
+                      viewer: Viewer = Depends(current_viewer)):
+        def write(engine: Engine):
+            saved = baseline.save(engine, project_id, agency_id, body.plan_date, viewer, now())
+            return {"baseline": saved} if saved is not None else refused(404, "unknown_plan")
+        return write_baseline(viewer, view, f"saving the baseline of {project_id}, {agency_id}", write)
+
+    @app.delete("/api/projects/{project_id}/procurement/{agency_id}/baseline")
+    def remove_baseline(project_id: str, agency_id: str, view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+        def write(engine: Engine):
+            baseline.remove(engine, project_id, agency_id)
+            return {"baseline": None}
+        return write_baseline(viewer, view, f"removing the baseline of {project_id}, {agency_id}", write)
 
     @app.get("/api/data/readiness")
     async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
@@ -480,7 +567,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return await as_viewer(viewer, data_through,
                                lambda day: {"data_through": day.isoformat() if day else None})
 
-    @app.post("/api/ask")
+    @app.post("/api/ask", tags=[MODEL])
     async def ask(body: AskRequest, viewer: Viewer = Depends(current_viewer)) -> StreamingResponse:
         scope = Scope(chip=body.scope.strip().upper() if body.scope and body.scope.strip() else None,
                       as_of=body.asof, view=body.view, language=body.lang)

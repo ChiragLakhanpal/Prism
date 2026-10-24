@@ -104,7 +104,13 @@ def test_each_quote_is_word_for_word_where_the_ground_truth_says(value):
 # test shows KE-NWWDA-541055-CW-RFB's Actual Amount 0.00 and status Pending Implementation,
 # and the day-count test counts the days between two dates. A first-listed value is its
 # plan's date, which the first-listed test checks.
-READINGS = {"plan-541055-no-signed-contract", "plan-229129-days-late"}
+READINGS = {"plan-541055-no-signed-contract", "plan-229129-days-late", "icr-pdf-pages"}
+
+
+def test_a_page_count_is_the_pages_of_its_document():
+    """icr-pdf-pages reads its document's last page: the pages file holds that many pages."""
+    value = BY_ID["icr-pdf-pages"]
+    assert len(fmt.pages(RECORDED / f"{value['document']}.pages.txt")) == value["value"] == value["pdf_page"]
 
 
 def written_forms(value):

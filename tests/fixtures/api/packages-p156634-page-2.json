@@ -1,0 +1,233 @@
+{
+  "as_of": "2026-10-23",
+  "query": "",
+  "total": 46,
+  "page": 2,
+  "pages": 3,
+  "page_size": 20,
+  "first": 21,
+  "last": 40,
+  "rows": [
+    {
+      "activity_reference_no": "KE-KIMAWASCO-157517-CW-RFB",
+      "description": "Construction of 2No.Slu dge Handling Facilities in Kilif i and Mtwapa Towns",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "1200000.00",
+      "process_status": "Canceled"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-158691-CW-RFB",
+      "description": "Construction of 12No.A blution Blocks",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "1800000.00",
+      "process_status": "Terminated"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-377450-CW-RFB",
+      "description": "CONSTRUCTION OF SL UDGE TREATMENT FACILITIE S FOR KILIFI AND MTWAPA T OWNS;",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "2849262.19",
+      "process_status": "Canceled"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-416959-CW-RFB",
+      "description": "Construction of Sludge treatment facilities in Kilifi an d Mtwapa towns",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "2839107.71",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-448687-CW-DIR",
+      "description": "CONSTRUCTION OF 12N O.ABLUTION BLOCKS IN KILIF I,MTWAPA AND MARIAKANI T OWNS",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Direct Selection",
+      "market_approach": "Direct - International",
+      "estimated_amount_usd": "1376565.99",
+      "process_status": "Canceled"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-459000-CW-DIR",
+      "description": "Construction of 12Nr Ab lution Blocks in Kilifi, Mtwapa and Mariakani Towns",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "1376565.99",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-74957-CW-RFB",
+      "description": "Water Works distributio n for Kilifi Town",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "6564500.00",
+      "process_status": "Canceled"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-50038-GO-RFB",
+      "description": "Supply and delivery of m eters(13,700 no.) to AMR ena bled meters(DN15mm-32mm ) and major customer meters (81 no-ultrasonic meters with integrated radio module of si ze DN40,DN50-DN150mm),15nos.portable meter testing kit and 1no.testing bench.",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "850750.00",
+      "process_status": "Canceled"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-50050-GO-RFB",
+      "description": "Supply and delivery of KI MAWASCO repair Kit ( pipes and fittings,Gate valves,Vikin g Johnson couplings & Range r Couplings,Sluice valves,Air valves of Assorted sizes",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "600000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-74939-GO-RFQ",
+      "description": "Supply and delivery of 15no. Motor Cycles for project monitoring 175cc and meter reading",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Quotations",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "75000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-130411-GO-RFB",
+      "description": "Supply and Delivery of 2No.Exhausters 10M³",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "300000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-372126-GO-RFQ",
+      "description": "Supply and Delivery of Commercial and Finance ICT Goods under Utility Turnarou nd framework (UTF)-( Deskto p computers for office users, UPS for Desktops, Anti virus, 19inch TFT Monitors )",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "27536.00",
+      "process_status": "Under Implementation"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-372128-GO-RFQ",
+      "description": "Supply and Delivery of NRW field Operation goods u nder Utlity Turnaround Fram ework ( Overals, Gumboots, Flood lights, Tape measure, Muttocks, Pipe wrenches, sur veyor wheel, Ring spanners)",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "3623.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-372408-GO-RFQ",
+      "description": "Supply and Delivery of NRW and GIS Hardware Good s under Utility Turnaround Fr amework",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "186693.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-372410-GO-RFQ",
+      "description": "Supply and delivery of HRM Goods under Utility Tur naround framework ( UTF) co ntract ( Sage Modules for 100 people;- Accounting and Hu man Resource department)",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "8696.00",
+      "process_status": "Under Implementation"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-481608-GO-RFB",
+      "description": "Supply and Delivery of AMR enabled Consumer Wat er Meters (Size DN15mm, DN 20mm)",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "275743.49",
+      "process_status": "Pending Implementation"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-74931-GO-RFB",
+      "description": "Supply and delivery of 2 nos 4WD 4x4 vehicle",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "216000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-76105-GO-RFB",
+      "description": "Supply and delivery of al l small customer meters(3,510 no.) to AMR enabled meter s(DN15mm-32mm) and majo r customer meters (81 no-ult rasonic meters with integrate d radio module of size DN40, DN50-DN150mm),15nos.port able meter testing kit and 1n o. bench",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "329900.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-74960-CS-QCBS",
+      "description": "Supervision consultanc y for water distribution works in Kilifi Town",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "345500.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "MWSI-WSDP-04-2019-2020",
+      "description": "Procurement of 2No. Four wheel drive vehicles for project monitoring and management",
+      "implementing_agency": "Ministry of Water and Irrigation",
+      "agency_id": "ministry-of-water-and-irrigation",
+      "plan_date": "2020-04-30",
+      "method": "Request for Bids",
+      "market_approach": "Open",
+      "estimated_amount_usd": "160000.00",
+      "process_status": "Pending Implementation"
+    }
+  ],
+  "read_through": "2026-10-23"
+}

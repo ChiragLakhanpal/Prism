@@ -69,7 +69,9 @@ def test_all_projects_lists_active_projects_first_then_by_name(fixture_app):
     assert response.status_code == 200
     body = response.json()
     assert body == recorded("projects.json")
-    rows = body["rows"]
+    # Every page, in order: ticket 21 shows them 20 at a time.
+    rows = [row for page in range(1, body["pages"] + 1)
+            for row in get(fixture_app, f"/api/projects?asof=2026-10-23&page={page}").json()["rows"]]
     assert body["total"] == len(rows)
     assert {"project_id": "P156634", "project_name": "Water and Sanitation Development Project", "country": "Kenya",
             "status": "Active"} in rows
@@ -110,7 +112,7 @@ def test_a_project_page_gives_its_header_and_each_agency_s_plan_versions_newest_
     assert counts["kilifi-mariakani-water-and-sewerage-company-ltd"] == 1
     # An agency the project record names that has published no plan is listed with no versions.
     assert {"implementing_agency": "Water Sector Trust Fund", "agency_id": "water-sector-trust-fund",
-            "versions": [], "version_count": 0} in body["agencies"]
+            "versions": [], "baseline": None, "changes": None, "version_count": 0, "shown_count": 0} in body["agencies"]
     assert body["documents_through"] == "2026-10-22"
 
 

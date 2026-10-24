@@ -3,6 +3,7 @@
   "project": {
     "project_id": "P156634",
     "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
     "country": "Kenya",
     "status": "Active",
     "implementing_agencies": [
@@ -31,7 +32,9 @@
           "disclosed_on": "2026-10-09",
           "is_latest": true,
           "read": true,
-          "activities": 9
+          "activities": 9,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "40090127",
@@ -39,7 +42,9 @@
           "disclosed_on": "2026-03-05",
           "is_latest": false,
           "read": true,
-          "activities": 9
+          "activities": 9,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "40031468",
@@ -47,7 +52,9 @@
           "disclosed_on": "2025-07-21",
           "is_latest": false,
           "read": true,
-          "activities": 6
+          "activities": 6,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "33014836",
@@ -55,7 +62,9 @@
           "disclosed_on": "2021-04-21",
           "is_latest": false,
           "read": true,
-          "activities": 5
+          "activities": 5,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "32642978",
@@ -63,10 +72,24 @@
           "disclosed_on": "2020-12-07",
           "is_latest": false,
           "read": true,
-          "activities": 4
+          "activities": 4,
+          "is_baseline": false,
+          "shown": true
         }
       ],
-      "version_count": 5
+      "baseline": null,
+      "changes": {
+        "state": "compared",
+        "previous_plan_date": "2026-03-05",
+        "counts": {
+          "added": 0,
+          "dropped": 0,
+          "redated": 0,
+          "reestimated": 2
+        }
+      },
+      "version_count": 5,
+      "shown_count": 5
     },
     {
       "implementing_agency": "Coast Water Services Board",
@@ -78,7 +101,9 @@
           "disclosed_on": "2026-08-17",
           "is_latest": true,
           "read": true,
-          "activities": 8
+          "activities": 8,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "40119876",
@@ -86,10 +111,24 @@
           "disclosed_on": "2026-07-31",
           "is_latest": false,
           "read": true,
-          "activities": 7
+          "activities": 7,
+          "is_baseline": false,
+          "shown": true
         }
       ],
-      "version_count": 2
+      "baseline": null,
+      "changes": {
+        "state": "compared",
+        "previous_plan_date": "2026-07-31",
+        "counts": {
+          "added": 1,
+          "dropped": 0,
+          "redated": 0,
+          "reestimated": 0
+        }
+      },
+      "version_count": 2,
+      "shown_count": 2
     },
     {
       "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
@@ -101,10 +140,19 @@
           "disclosed_on": "2025-03-19",
           "is_latest": true,
           "read": true,
-          "activities": 22
+          "activities": 22,
+          "is_baseline": false,
+          "shown": true
         }
       ],
-      "version_count": 1
+      "baseline": null,
+      "changes": {
+        "state": "earliest",
+        "previous_plan_date": null,
+        "counts": null
+      },
+      "version_count": 1,
+      "shown_count": 1
     },
     {
       "implementing_agency": "Ministry of Water and Irrigation",
@@ -116,7 +164,9 @@
           "disclosed_on": "2020-04-30",
           "is_latest": true,
           "read": true,
-          "activities": 7
+          "activities": 7,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "31541426",
@@ -124,7 +174,9 @@
           "disclosed_on": "2019-11-08",
           "is_latest": false,
           "read": true,
-          "activities": 6
+          "activities": 6,
+          "is_baseline": false,
+          "shown": true
         },
         {
           "document_id": "31362180",
@@ -132,70 +184,114 @@
           "disclosed_on": "2019-08-26",
           "is_latest": false,
           "read": true,
-          "activities": 5
+          "activities": 5,
+          "is_baseline": false,
+          "shown": true
         }
       ],
-      "version_count": 3
+      "baseline": null,
+      "changes": {
+        "state": "compared",
+        "previous_plan_date": "2019-11-08",
+        "counts": {
+          "added": 1,
+          "dropped": 0,
+          "redated": 1,
+          "reestimated": 0
+        }
+      },
+      "version_count": 3,
+      "shown_count": 3
     },
     {
       "implementing_agency": "Coast Water Works Development Agency",
       "agency_id": "coast-water-works-development-agency",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Garissa Water and Saniation Company",
       "agency_id": "garissa-water-and-saniation-company",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Kwale Water and Sewerage Company Ltd.",
       "agency_id": "kwale-water-and-sewerage-company-ltd",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Malindi Water and Sewerage Company Ltd",
       "agency_id": "malindi-water-and-sewerage-company-ltd",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Ministry of Water, Sanitation and Irrigation",
       "agency_id": "ministry-of-water-sanitation-and-irrigation",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Mombasa Water and Sanitation Services Company",
       "agency_id": "mombasa-water-and-sanitation-services-company",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Tavevo Water and Sewerage Company Ltd",
       "agency_id": "tavevo-water-and-sewerage-company-ltd",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Wajir Water and Sewerage Company",
       "agency_id": "wajir-water-and-sewerage-company",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Water Sector Trust Fund",
       "agency_id": "water-sector-trust-fund",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     },
     {
       "implementing_agency": "Water Services Regulatory Board",
       "agency_id": "water-services-regulatory-board",
       "versions": [],
-      "version_count": 0
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
     }
   ],
   "documents_through": "2026-10-22"

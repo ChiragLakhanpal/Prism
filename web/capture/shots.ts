@@ -65,7 +65,6 @@ const ROUTES: [string, string][] = [
   ["home", "/"],
   ["packages", "/packages"],
   ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
-  ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
   ["not-found", "/nowhere"],
@@ -176,7 +175,12 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("project--focus-version", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: focus("[data-agency] a:visible") }, "/projects/P156634"),
   planShot("projects", { recorded: "projects.json" }, {}, "/projects"),
   planShot("projects--loading", { recorded: "projects.json" }, { pending: ["/api/projects"] }, "/projects"),
-  planShot("projects--more", { recorded: "projects.json" }, { act: click("[data-projects-page] button") }, "/projects"),
+  // Ticket 21: pages of 20, the list search, its answer and no match.
+  planShot("projects--page-2", { recorded: "projects-page-2.json" }, {}, "/projects?page=2"),
+  planShot("projects--india", { recorded: "projects-india.json" }, {}, "/projects?q=india"),
+  planShot("projects--no-match", { recorded: "projects-no-match.json" }, {}, "/projects?q=atlantis"),
+  planShot("projects--focus-search", { recorded: "projects.json" }, { widths: [1440, 390], act: focus("[data-list-search] input") }, "/projects"),
+  planShot("projects--focus-next", { recorded: "projects.json" }, { widths: [1440, 390], act: focus("[data-pagination] a:visible >> nth=-1") }, "/projects"),
   planShot("projects--empty", { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' }, {}, "/projects"),
   planShot("projects--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects"),
 ];

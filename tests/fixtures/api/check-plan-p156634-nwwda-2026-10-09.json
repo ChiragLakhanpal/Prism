@@ -414,6 +414,7 @@
     "days_before_closing": 90,
     "actual_to_estimate_ratio": "2.0"
   },
+  "baseline": null,
   "counts": {
     "activities": 9,
     "checked": 9,

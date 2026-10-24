@@ -93,7 +93,7 @@ export const CARD_FIELD = "flex min-w-0 flex-col justify-end";
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
-function countText({ noun, one, total, from, to }: Count): string {
+export function countText({ noun, one, total, from, to }: Count): string {
   if (total === 1 && one) return copy.table.showingOne(one);
   return from !== undefined && to !== undefined && (from > 1 || to < total)
     ? copy.table.showing(n(from), n(to), n(total), noun)
@@ -110,6 +110,9 @@ export function Table({
   level = 3,
   cardsBelow = "md",
   cardsNote,
+  labelledBy,
+  busy,
+  countLead = false,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -127,8 +130,17 @@ export function Table({
   // A sentence that ends the count line's row only while the rows are cards, such as the definition
   // a column's head carries in the table, said once there because cards have no column heads.
   cardsNote?: ReactNode;
+  // A list whose heading and search sit above the table (ticket 21's All projects and Packages): the id
+  // of that heading, which names the table, so the table draws no title of its own in any state.
+  labelledBy?: string;
+  // A new page of rows is on its way, such as while a search waits for its answer: the rows stay, dimmed,
+  // marked busy, and this sentence takes the count line's place (the 21 brief, section 8.1).
+  busy?: ReactNode;
+  // The count line takes focus after Previous page or Next page (data-lead, App.tsx), so the new range is read.
+  countLead?: boolean;
 }) {
-  const titleId = useId();
+  const ownTitleId = useId();
+  const titleId = labelledBy ?? ownTitleId;
   const countId = useId();
 
   if (state.status === "empty") {
@@ -177,13 +189,13 @@ export function Table({
     // carries no name of its own.
     <section
       data-table={state.status}
-      aria-busy={loading || undefined}
+      aria-busy={loading || Boolean(busy) || undefined}
       className={cx("flex flex-col gap-2", cardsBelow === "fit" && "@container/table")}
     >
       {loading ? (
         <>
           <LoadingLabel />
-          {state.shortTitle ? (
+          {labelledBy ? null : state.shortTitle ? (
             <SkeletonLine className="text-title" width="w-2/5" />
           ) : (
             <>
@@ -197,13 +209,13 @@ export function Table({
         </>
       ) : (
         <>
-          {createElement(`h${level}`, { id: titleId, className: "text-title text-ink-heading" }, title)}
+          {!labelledBy && createElement(`h${level}`, { id: titleId, className: "text-title text-ink-heading" }, title)}
           {count && (
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
-              <p id={countId} data-numbers>
-                {countText(count)}
+              <p id={countId} data-numbers data-lead={countLead || undefined} tabIndex={countLead ? -1 : undefined} className="focus:outline-none">
+                {busy ?? countText(count)}
               </p>
               {cardsNote && (
                 <p className={SHOW[cardsBelow].cards} data-cards-note>
@@ -224,7 +236,7 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="table"
-        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table)}
+        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table, Boolean(busy) && "opacity-60")}
       >
         <table
           aria-labelledby={loading ? undefined : titleId}
@@ -284,7 +296,7 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="cards"
-        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards)}
+        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards, Boolean(busy) && "opacity-60")}
       >
         {skeletonRows.map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">

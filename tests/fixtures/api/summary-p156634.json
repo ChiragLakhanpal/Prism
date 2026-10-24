@@ -1,0 +1,551 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "status": "Active"
+  },
+  "lead": {
+    "kind": "active",
+    "closing_date": "2026-10-31",
+    "moves": 3,
+    "commitment": "300.0",
+    "disbursed": "293.5",
+    "canceled": "19.4",
+    "disbursed_as_of": "2026-09-30"
+  },
+  "dates": [
+    {
+      "key": "approval_date",
+      "value": "2017-04-26",
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    },
+    {
+      "key": "original_closing_date",
+      "value": "2022-10-31",
+      "source": {
+        "evidence_id": "strata.gold.project_closing_date:P156634/2017-04-30",
+        "kind": "loan_history",
+        "date": "2017-04-30"
+      }
+    },
+    {
+      "key": "closing_date",
+      "value": "2026-10-31",
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    }
+  ],
+  "history": {
+    "known": true,
+    "rows": [
+      {
+        "first_recorded": "2022-11-30",
+        "before": "2022-10-31",
+        "after": "2024-04-30",
+        "source": {
+          "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+          "kind": "loan_history",
+          "date": "2022-11-30"
+        }
+      },
+      {
+        "first_recorded": "2024-04-30",
+        "before": "2024-04-30",
+        "after": "2025-10-31",
+        "source": {
+          "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+          "kind": "loan_history",
+          "date": "2024-04-30"
+        }
+      },
+      {
+        "first_recorded": "2025-11-30",
+        "before": "2025-10-31",
+        "after": "2026-10-31",
+        "source": {
+          "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+          "kind": "loan_history",
+          "date": "2025-11-30"
+        }
+      }
+    ]
+  },
+  "money": [
+    {
+      "key": "commitment",
+      "value": "300.0",
+      "loans": [
+        {
+          "loan_number": "IDA60290",
+          "value": "37.0"
+        },
+        {
+          "loan_number": "IDA60300",
+          "value": "263.0"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P156634/IDA60290",
+        "strata.gold.loan:P156634/IDA60300"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P156634/IDA60290",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 2
+      }
+    },
+    {
+      "key": "disbursed",
+      "value": "293.5",
+      "loans": [
+        {
+          "loan_number": "IDA60290",
+          "value": "17.6"
+        },
+        {
+          "loan_number": "IDA60300",
+          "value": "275.9"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P156634/IDA60290",
+        "strata.gold.loan:P156634/IDA60300"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P156634/IDA60290",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 2
+      }
+    },
+    {
+      "key": "canceled",
+      "value": "19.4",
+      "loans": [
+        {
+          "loan_number": "IDA60290",
+          "value": "19.4"
+        },
+        {
+          "loan_number": "IDA60300",
+          "value": "0.0"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P156634/IDA60290",
+        "strata.gold.loan:P156634/IDA60300"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P156634/IDA60290",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 2
+      }
+    }
+  ],
+  "ratings": [
+    {
+      "key": "pdo",
+      "value": "Moderately Satisfactory",
+      "source": {
+        "evidence_id": null,
+        "kind": "isr",
+        "date": "2026-06-30",
+        "sequence": 19
+      }
+    },
+    {
+      "key": "implementation",
+      "value": "Moderately Satisfactory",
+      "source": {
+        "evidence_id": null,
+        "kind": "isr",
+        "date": "2026-06-30",
+        "sequence": 19
+      }
+    },
+    {
+      "key": "procurement",
+      "value": "Moderately Satisfactory",
+      "source": {
+        "evidence_id": "strata.gold.project_isr_rating:P156634/27",
+        "kind": "projects_api_ratings",
+        "date": "2026-06-30"
+      }
+    },
+    {
+      "key": "ea_category",
+      "value": "B",
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    }
+  ],
+  "who": [
+    {
+      "key": "region",
+      "value": "Eastern and Southern Africa",
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    },
+    {
+      "key": "sectors",
+      "value": "Water, Sanitation and Waste Management",
+      "values": [
+        "Water Supply: 37%",
+        "Public Administration - Water, Sanitation and Waste Management: 33%",
+        "Sanitation: 30%"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    },
+    {
+      "key": "agencies",
+      "value": null,
+      "values": [
+        "Coast Water Works Development Agency",
+        "Garissa Water and Saniation Company",
+        "Kilifi - Mariakani Water and Sewerage Company Ltd",
+        "Kwale Water and Sewerage Company Ltd.",
+        "Malindi Water and Sewerage Company Ltd",
+        "Ministry of Water, Sanitation and Irrigation",
+        "Mombasa Water and Sanitation Services Company",
+        "Northern Water Works Development Agency",
+        "Tavevo Water and Sewerage Company Ltd",
+        "Wajir Water and Sewerage Company",
+        "Water Sector Trust Fund",
+        "Water Services Regulatory Board"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.project:P156634",
+        "kind": "projects_api",
+        "date": "2024-04-24"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "strata.gold.project:P156634",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project:P156634",
+        "public_from": "2024-04-24",
+        "reference": "P156634",
+        "source": {
+          "source_key": "projects_api",
+          "project_id": "P156634",
+          "document_date": "2024-04-24"
+        },
+        "fields": [
+          {
+            "key": "project_name",
+            "value": "Water and Sanitation Development Project",
+            "kind": "text"
+          },
+          {
+            "key": "country",
+            "value": "Kenya",
+            "kind": "text"
+          },
+          {
+            "key": "status",
+            "value": "Active",
+            "kind": "text"
+          },
+          {
+            "key": "approval_date",
+            "value": "2017-04-26",
+            "kind": "date"
+          },
+          {
+            "key": "closing_date",
+            "value": "2026-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "region",
+            "value": "Eastern and Southern Africa",
+            "kind": "text"
+          },
+          {
+            "key": "implementing_agency",
+            "value": "Coast Water Works Development Agency,Garissa Water and Saniation Company,Kilifi - Mariakani Water and Sewerage Company Ltd,Kwale Water and Sewerage Company Ltd.,Malindi Water and Sewerage Company Ltd,Ministry of Water, Sanitation and Irrigation,Mombasa Water and Sanitation Services Company,Northern Water Works Development Agency,Tavevo Water and Sewerage Company Ltd,Wajir Water and Sewerage Company,Water Sector Trust Fund,Water Services Regulatory Board",
+            "kind": "text"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_closing_date:P156634/2022-11-30",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+        "public_from": "2022-11-30",
+        "reference": "P156634",
+        "source": {
+          "source_key": "loan_history",
+          "project_id": "P156634",
+          "document_date": "2022-11-30"
+        },
+        "fields": [
+          {
+            "key": "closing_date",
+            "value": "2024-04-30",
+            "kind": "date"
+          },
+          {
+            "key": "previous_closing_date",
+            "value": "2022-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "reported_on",
+            "value": "2022-11-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_closing_date:P156634/2024-04-30",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+        "public_from": "2024-04-30",
+        "reference": "P156634",
+        "source": {
+          "source_key": "loan_history",
+          "project_id": "P156634",
+          "document_date": "2024-04-30"
+        },
+        "fields": [
+          {
+            "key": "closing_date",
+            "value": "2025-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "previous_closing_date",
+            "value": "2024-04-30",
+            "kind": "date"
+          },
+          {
+            "key": "reported_on",
+            "value": "2024-04-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_closing_date:P156634/2025-11-30",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+        "public_from": "2025-11-30",
+        "reference": "P156634",
+        "source": {
+          "source_key": "loan_history",
+          "project_id": "P156634",
+          "document_date": "2025-11-30"
+        },
+        "fields": [
+          {
+            "key": "closing_date",
+            "value": "2026-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "previous_closing_date",
+            "value": "2025-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "reported_on",
+            "value": "2025-11-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_closing_date:P156634/2017-04-30",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_closing_date:P156634/2017-04-30",
+        "public_from": "2017-04-30",
+        "reference": "P156634",
+        "source": {
+          "source_key": "loan_history",
+          "project_id": "P156634",
+          "document_date": "2017-04-30"
+        },
+        "fields": [
+          {
+            "key": "closing_date",
+            "value": "2022-10-31",
+            "kind": "date"
+          },
+          {
+            "key": "reported_on",
+            "value": "2017-04-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.loan:P156634/IDA60290",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.loan:P156634/IDA60290",
+        "public_from": "2026-09-30",
+        "reference": "IDA60290",
+        "source": {
+          "source_key": "loans",
+          "project_id": "P156634",
+          "document_date": "2026-09-30"
+        },
+        "fields": [
+          {
+            "key": "original_principal_usd",
+            "value": "37000000.00",
+            "kind": "usd"
+          },
+          {
+            "key": "disbursed_usd",
+            "value": "17599724.38",
+            "kind": "usd"
+          },
+          {
+            "key": "cancelled_usd",
+            "value": "19445255.47",
+            "kind": "usd"
+          },
+          {
+            "key": "snapshot",
+            "value": "2026-09-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.loan:P156634/IDA60300",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.loan:P156634/IDA60300",
+        "public_from": "2026-09-30",
+        "reference": "IDA60300",
+        "source": {
+          "source_key": "loans",
+          "project_id": "P156634",
+          "document_date": "2026-09-30"
+        },
+        "fields": [
+          {
+            "key": "original_principal_usd",
+            "value": "263000000.00",
+            "kind": "usd"
+          },
+          {
+            "key": "disbursed_usd",
+            "value": "275912875.34",
+            "kind": "usd"
+          },
+          {
+            "key": "cancelled_usd",
+            "value": "0.00",
+            "kind": "usd"
+          },
+          {
+            "key": "snapshot",
+            "value": "2026-09-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_isr_rating:P156634/27",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_isr_rating:P156634/27",
+        "public_from": "2026-06-30",
+        "reference": "P156634",
+        "source": {
+          "source_key": "projects_api_ratings",
+          "project_id": "P156634",
+          "document_date": "2026-06-30"
+        },
+        "fields": [
+          {
+            "key": "rating_name",
+            "value": "Procurement",
+            "kind": "text"
+          },
+          {
+            "key": "value",
+            "value": "Moderately Satisfactory",
+            "kind": "text"
+          },
+          {
+            "key": "isr_date",
+            "value": "2026-06-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    }
+  ]
+}

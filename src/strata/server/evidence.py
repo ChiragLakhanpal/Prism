@@ -21,6 +21,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
+from strata.server import summary
 from strata.tools import search_passages
 
 log = logging.getLogger("strata.server.evidence")
@@ -38,9 +39,11 @@ def _passage(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return None if row is None else {"kind": "passage", "row": row}
 
 
-# The reader for each kind of evidence id, by the table its id names before the colon.
+# The reader for each kind of evidence id, by the table its id names before the colon: a passage, and
+# each record a project's Summary cites (ticket 21).
 READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     search_passages.TABLE: _passage,
+    **summary.RECORD_READERS,
 }
 
 

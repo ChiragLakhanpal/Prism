@@ -32,26 +32,81 @@ async function axe(page: Page) {
 const projects = async () => ({ "/api/projects": { body: await recorded("projects.json") } });
 const p156634 = async () => ({ "/api/projects/P156634": { body: await recorded("project-p156634.json") } });
 
-test("All projects lists 50 projects whose IDs link to their pages, and Show 50 more adds the rest", async ({ page }) => {
-  const unrecorded = await open(page, "/projects", await projects());
+test("All projects shows 20 projects a page with the range it shows, sets project IDs in Roboto Mono as links, and pages by address", async ({ page }) => {
+  const unrecorded = await open(page, "/projects", {
+    ...(await projects()),
+    "/api/projects?page=2": { body: await recorded("projects-page-2.json") },
+  });
   const main = page.getByRole("main");
 
   await expect(main.getByRole("heading", { level: 1 })).toHaveText("Projects");
-  await expect(main.getByText("These are the projects I have records for. Open a project ID to see its Procurement Plans.")).toBeVisible();
+  await expect(
+    main.getByText("Find a World Bank-financed project by its name, project ID or country. Open a project ID to see the project's summary, Procurement Plans and documents."),
+  ).toBeVisible();
   await expect(main.getByRole("heading", { level: 2, name: "All projects" })).toBeVisible();
   const table = main.locator("[data-table-view=table] tbody tr");
-  await expect(table).toHaveCount(50);
-  await expect(main.getByText("Showing 1–50 of 93 projects")).toBeVisible();
-  await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P156634" })).toHaveAttribute("href", "/projects/P156634");
+  await expect(table).toHaveCount(20);
+  await expect(main.getByText("Showing 1–20 of 93 projects")).toBeVisible();
+  const first = main.locator("[data-table-view=table]").getByRole("link", { name: "P176704" });
+  await expect(first).toHaveAttribute("href", "/projects/P176704");
+  expect(await first.evaluate((el) => [getComputedStyle(el).fontFamily.split(",")[0], getComputedStyle(el).fontWeight])).toEqual(['"Roboto Mono"', "500"]);
   await expect(main.getByText("Source: World Bank projects API, records through October 23, 2026.")).toBeVisible();
+  const pages = main.getByRole("navigation", { name: "Pages of the project list" });
+  await expect(pages.getByText("Page 1 of 5")).toBeVisible();
+  // On the first page, Previous page keeps its place but is not there to press.
+  await expect(pages.getByRole("link", { name: "Previous page" })).toHaveCount(0);
 
-  await main.getByRole("button", { name: "Show 50 more" }).click();
+  await pages.getByRole("link", { name: "Next page" }).click();
 
-  await expect(table).toHaveCount(93);
-  await expect(main.getByText("Showing all 93 projects")).toBeVisible();
-  await expect(main.locator("[data-table-view=table] [data-row='50']")).toBeFocused();
-  await expect(main.getByRole("button", { name: "Show 50 more" })).toHaveCount(0);
+  await expect(page).toHaveURL(/\/projects\?page=2$/);
+  const countLine = main.locator("[data-lead]");
+  await expect(countLine).toHaveText("Showing 21–40 of 93 projects");
+  await expect(countLine).toBeFocused();
+  await expect(table.first().getByRole("link")).toHaveText("P167814");
+  await page.goBack();
+  await expect(countLine).toHaveText("Showing 1–20 of 93 projects");
   expect(unrecorded).toEqual([]);
+});
+
+test("the list search filters on the server as you type, by name, project ID or country, and says when nothing matches", async ({ page }) => {
+  const asked: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname === "/api/projects") asked.push(url.search);
+  });
+  await open(page, "/projects", {
+    ...(await projects()),
+    "/api/projects?q=india": { body: await recorded("projects-india.json") },
+    "/api/projects?q=atlantis": { body: await recorded("projects-no-match.json") },
+  });
+  const main = page.getByRole("main");
+  const field = main.getByRole("searchbox", { name: "Search projects" });
+  await expect(field).toHaveAccessibleDescription("Type part of a project's name, its project ID or its country.");
+  await expect(field).not.toHaveAttribute("placeholder");
+
+  await field.pressSequentially("india");
+
+  await expect(main.locator("[data-lead]")).toHaveText("Showing 1 project");
+  await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
+  await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();
+  // One request for the word, sent once typing stopped, and the address keeps the search in place.
+  expect(asked).toEqual(["", "?q=india"]);
+  await expect(page).toHaveURL(/\/projects\?q=india$/);
+  await expect(field).toBeFocused();
+  await expect(main.getByRole("navigation", { name: "Pages of the project list" })).toHaveCount(0);
+
+  await field.fill("atlantis");
+  const card = main.locator("[data-empty-state]");
+  await expect(card.getByRole("heading")).toHaveText("I found no projects that match your search.");
+  await expect(card).toContainText("I search project names, project IDs and country names.");
+  await expect(main.locator("[data-table]")).toHaveCount(0);
+  await expect(page.getByRole("status").filter({ hasText: "I found no projects that match your search." })).toHaveCount(1);
+
+  // Escape empties the field and shows every project again.
+  await field.press("Escape");
+  await expect(field).toHaveValue("");
+  await expect(main.locator("[data-lead]")).toHaveText("Showing 1–20 of 93 projects");
+  await expect(page).toHaveURL(/\/projects$/);
 });
 
 test("All projects' skeleton rows and cards are as tall as its rows and cards, so the page does not jump when they arrive", async ({ page }) => {

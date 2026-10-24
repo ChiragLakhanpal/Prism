@@ -1,0 +1,423 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "status": "Closed"
+  },
+  "lead": {
+    "kind": "closed",
+    "closing_date": "2018-12-31",
+    "moves": 0,
+    "commitment": "160.0",
+    "disbursed": "121.6",
+    "canceled": "30.7",
+    "disbursed_as_of": "2026-09-30"
+  },
+  "dates": [
+    {
+      "key": "approval_date",
+      "value": "2013-10-29",
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    },
+    {
+      "key": "closing_date",
+      "value": "2018-12-31",
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    }
+  ],
+  "history": {
+    "known": true,
+    "rows": []
+  },
+  "money": [
+    {
+      "key": "commitment",
+      "value": "160.0",
+      "loans": [
+        {
+          "loan_number": "IDA53100",
+          "value": "160.0"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P130164/IDA53100"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P130164/IDA53100",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 1
+      }
+    },
+    {
+      "key": "disbursed",
+      "value": "121.6",
+      "loans": [
+        {
+          "loan_number": "IDA53100",
+          "value": "121.6"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P130164/IDA53100"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P130164/IDA53100",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 1
+      }
+    },
+    {
+      "key": "canceled",
+      "value": "30.7",
+      "loans": [
+        {
+          "loan_number": "IDA53100",
+          "value": "30.7"
+        }
+      ],
+      "loan_ids": [
+        "strata.gold.loan:P130164/IDA53100"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.loan:P130164/IDA53100",
+        "kind": "loans",
+        "date": "2026-09-30",
+        "loans": 1
+      }
+    }
+  ],
+  "ratings": [
+    {
+      "key": "pdo",
+      "value": "Moderately Unsatisfactory",
+      "source": {
+        "evidence_id": "strata.gold.passage:30730274/v1/s3",
+        "kind": "isr",
+        "date": "2018-12-28",
+        "sequence": 13
+      }
+    },
+    {
+      "key": "implementation",
+      "value": "Moderately Unsatisfactory",
+      "source": {
+        "evidence_id": "strata.gold.passage:30730274/v1/s3",
+        "kind": "isr",
+        "date": "2018-12-28",
+        "sequence": 13
+      }
+    },
+    {
+      "key": "procurement",
+      "value": "Moderately Satisfactory",
+      "source": {
+        "evidence_id": "strata.gold.project_isr_rating:P130164/27",
+        "kind": "projects_api_ratings",
+        "date": "2018-12-28"
+      }
+    },
+    {
+      "key": "ieg_outcome",
+      "value": "Moderately Unsatisfactory",
+      "source": {
+        "evidence_id": "strata.gold.ieg_rating:P130164/ICRR/2020",
+        "kind": "ieg_ratings",
+        "date": "2020-06-30",
+        "fiscal_year": 2020
+      }
+    },
+    {
+      "key": "ieg_bank_performance",
+      "value": "Moderately Unsatisfactory",
+      "source": {
+        "evidence_id": "strata.gold.ieg_rating:P130164/ICRR/2020",
+        "kind": "ieg_ratings",
+        "date": "2020-06-30",
+        "fiscal_year": 2020
+      }
+    },
+    {
+      "key": "ea_category",
+      "value": "B",
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    }
+  ],
+  "who": [
+    {
+      "key": "region",
+      "value": "South Asia",
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    },
+    {
+      "key": "sectors",
+      "value": "Transportation",
+      "values": [
+        "Rural and Inter-Urban Roads: 97%",
+        "Public Administration - Transportation: 3%"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    },
+    {
+      "key": "agencies",
+      "value": null,
+      "values": [
+        "Rajasthan State Public Works Department"
+      ],
+      "source": {
+        "evidence_id": "strata.gold.project:P130164",
+        "kind": "projects_api",
+        "date": "2023-08-01"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "strata.gold.project:P130164",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project:P130164",
+        "public_from": "2023-08-01",
+        "reference": "P130164",
+        "source": {
+          "source_key": "projects_api",
+          "project_id": "P130164",
+          "document_date": "2023-08-01"
+        },
+        "fields": [
+          {
+            "key": "project_name",
+            "value": "Rajasthan Road Sector Modernization Project",
+            "kind": "text"
+          },
+          {
+            "key": "country",
+            "value": "India",
+            "kind": "text"
+          },
+          {
+            "key": "status",
+            "value": "Closed",
+            "kind": "text"
+          },
+          {
+            "key": "approval_date",
+            "value": "2013-10-29",
+            "kind": "date"
+          },
+          {
+            "key": "closing_date",
+            "value": "2018-12-31",
+            "kind": "date"
+          },
+          {
+            "key": "region",
+            "value": "South Asia",
+            "kind": "text"
+          },
+          {
+            "key": "implementing_agency",
+            "value": "Rajasthan State Public Works Department",
+            "kind": "text"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.loan:P130164/IDA53100",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.loan:P130164/IDA53100",
+        "public_from": "2026-09-30",
+        "reference": "IDA53100",
+        "source": {
+          "source_key": "loans",
+          "project_id": "P130164",
+          "document_date": "2026-09-30"
+        },
+        "fields": [
+          {
+            "key": "original_principal_usd",
+            "value": "160000000.00",
+            "kind": "usd"
+          },
+          {
+            "key": "disbursed_usd",
+            "value": "121630912.89",
+            "kind": "usd"
+          },
+          {
+            "key": "cancelled_usd",
+            "value": "30696577.26",
+            "kind": "usd"
+          },
+          {
+            "key": "snapshot",
+            "value": "2026-09-30",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.passage:30730274/v1/s3",
+      "kind": "passage",
+      "tool": null,
+      "stratum": "How",
+      "short_name": "ISR",
+      "row": {
+        "evidence_id": "strata.gold.passage:30730274/v1/s3",
+        "public_from": "2018-12-28",
+        "source": {
+          "document_type": "Implementation Status and Results Report",
+          "project_id": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "document_id": "30730274",
+          "document_date": "2018-12-28",
+          "report_number": "ISR33718",
+          "version": 1,
+          "section_path": "Overall Ratings",
+          "paragraph": "s3",
+          "paragraph_numbered": false,
+          "pdf_page": 1,
+          "pdf_pages": 6,
+          "pdf_url": "http://documents.worldbank.org/curated/en/767181546013001577/pdf/Disclosable-Version-of-the-ISR-Rajasthan-Road-Sector-Modernization-Project-P130164-Sequence-No-13.pdf",
+          "doc_key": "isr-2018-12-28",
+          "notice_id": null,
+          "notice_url": null
+        },
+        "passage_id": "30730274/v1/s3",
+        "document_id": "30730274",
+        "document_type": "Implementation Status and Results Report",
+        "project_id": "P130164",
+        "version": 1,
+        "section_path": "Overall Ratings",
+        "paragraph": "s3",
+        "paragraph_numbered": false,
+        "part": 1,
+        "parts": 1,
+        "pdf_page": 1,
+        "last_pdf_page": 1,
+        "printed_page": "1 of 6",
+        "language": "en",
+        "parse_route": "A",
+        "kind": "paragraph",
+        "route": "published_text",
+        "scanned": false,
+        "table_title": null,
+        "table_row": null,
+        "cells": null,
+        "notice_id": null,
+        "header": "ISR, P130164, India, roads, Overall Ratings, p.1",
+        "text": "Name Previous Rating Current Rating Progress towards achievement of PDO Moderately Unsatisfactory Moderately Unsatisfactory Overall Implementation Progress (IP) Moderately Unsatisfactory Moderately Unsatisfactory Overall Risk Rating Substantial Substantial"
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.project_isr_rating:P130164/27",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project_isr_rating:P130164/27",
+        "public_from": "2018-12-28",
+        "reference": "P130164",
+        "source": {
+          "source_key": "projects_api_ratings",
+          "project_id": "P130164",
+          "document_date": "2018-12-28"
+        },
+        "fields": [
+          {
+            "key": "rating_name",
+            "value": "Procurement",
+            "kind": "text"
+          },
+          {
+            "key": "value",
+            "value": "Moderately Satisfactory",
+            "kind": "text"
+          },
+          {
+            "key": "isr_date",
+            "value": "2018-12-28",
+            "kind": "date"
+          }
+        ]
+      },
+      "highlights": []
+    },
+    {
+      "id": "strata.gold.ieg_rating:P130164/ICRR/2020",
+      "kind": "record",
+      "tool": null,
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.ieg_rating:P130164/ICRR/2020",
+        "public_from": "2020-06-30",
+        "reference": "P130164",
+        "source": {
+          "source_key": "ieg_ratings",
+          "project_id": "P130164",
+          "document_date": "2020-06-30"
+        },
+        "fields": [
+          {
+            "key": "evaluation_type",
+            "value": "ICRR",
+            "kind": "text"
+          },
+          {
+            "key": "evaluation_fy",
+            "value": "2020",
+            "kind": "text"
+          },
+          {
+            "key": "outcome",
+            "value": "Moderately Unsatisfactory",
+            "kind": "text"
+          },
+          {
+            "key": "bank_performance",
+            "value": "Moderately Unsatisfactory",
+            "kind": "text"
+          }
+        ]
+      },
+      "highlights": []
+    }
+  ]
+}

@@ -26,6 +26,7 @@
     "actual_to_estimate_ratio": "2.0"
   },
   "counts": null,
+  "baseline": null,
   "abstention": {
     "reason": "version_not_found",
     "plan_date": "2026-10-10",
