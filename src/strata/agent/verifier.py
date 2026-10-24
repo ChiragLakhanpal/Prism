@@ -116,7 +116,8 @@ YEARS = range(1900, 2101)
 # DESIGN.md section 7 writes one to nine in words, and a model may write any number so. Words joined by a
 # space or a hyphen make one number: "forty-five", "three hundred and twenty-eight", "a dozen". "One" alone
 # is a number ("one bid", "one of 37") except where it stands for a thing named before: after a word in
-# PRONOUN_BEFORE ("no one", "each one"), or before "another" or "of the" with no count after it.
+# PRONOUN_BEFORE ("no one", "each one"), or before "another" or "of the" with no count after it, unless a
+# word in ONLY comes first ("only one of the firms" is a count).
 SMALL = {"zero": 0} | {word: value for value, word in enumerate((
     "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
     "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"), 1)}
@@ -130,7 +131,14 @@ WORD = re.compile(r"[A-Za-z]+")
 COUNT_AFTER_ONE = re.compile(r" (?:of|in) (?:the )?(?:\d|(?:" + "|".join(SMALL) + r")\b)", re.I)
 PRONOUN_BEFORE = {"no", "any", "each", "every", "this", "that", "which", "the"}
 PRONOUN_AFTER = re.compile(r" (?:another|of (?:the|its|their|these|those))\b", re.I)
-TIME_BEFORE_HALF = {"first", "second"}  # "the first half of the year" is a time, not an amount
+ONLY = {"only", "just"}
+# "The first half" and "the first half of the year" are times, not amounts; "the first half of the
+# packages" is an amount.
+TIME_BEFORE_HALF = {"first", "second"}
+HALF_OF = re.compile(r" of\b", re.I)
+HALF_OF_A_TIME = re.compile(
+    r" of (?:the )?(?:(?:fiscal |calendar )?year|month|week|quarter|period|decade|FY ?\d{2,4}|fiscal \d{4}|\d{4})\b",
+    re.I)
 
 
 def _word_value(words: list[str]) -> Decimal:
@@ -155,11 +163,16 @@ def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
     def gap(i: int) -> str:
         return text[tokens[i].end():tokens[i + 1].start()] if i + 1 < len(tokens) else ""
 
+    def half_is_a_time(i: int) -> bool:
+        after_half = tokens[i].end()
+        return i > 0 and lower[i - 1] in TIME_BEFORE_HALF and (
+            not HALF_OF.match(text, after_half) or bool(HALF_OF_A_TIME.match(text, after_half)))
+
     found, i = [], 0
     while i < len(tokens):
         word, after = lower[i], lower[i + 1] if i + 1 < len(tokens) else ""
         if word in VAGUE:
-            if not (word == "half" and i > 0 and lower[i - 1] in TIME_BEFORE_HALF):
+            if not (word == "half" and half_is_a_time(i)):
                 found.append((tokens[i].start(), tokens[i].end(), word))
         elif word in ("a", "an") and gap(i) == " " and after in FRACTIONS:
             found.append((tokens[i].start(), tokens[i + 1].end(), f"a {after}"))
@@ -176,7 +189,7 @@ def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
                     break
             pronoun = j == i and word == "one" and not COUNT_AFTER_ONE.match(text, tokens[i].end()) and (
                 (i > 0 and gap(i - 1) == " " and lower[i - 1] in PRONOUN_BEFORE)
-                or PRONOUN_AFTER.match(text, tokens[i].end()))
+                or (PRONOUN_AFTER.match(text, tokens[i].end()) and not (i > 0 and lower[i - 1] in ONLY)))
             if not pronoun:
                 found.append((tokens[i].start(), tokens[j].end(), _word_value(lower[i:j + 1])))
             i = j

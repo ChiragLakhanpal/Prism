@@ -392,8 +392,10 @@ def test_a_fiscal_year_is_a_number_a_record_must_hold():
 
 def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
     """DESIGN.md section 7 writes one to nine in words, so "six" is checked like 6, and "zero" like 0. "One"
-    is a number too ("one bid"), except where it stands for a thing named before ("no one", "each one",
-    "one of the firms" with no count after it). "Half" after "first" or "second" is a time, not an amount."""
+    is a number too ("one bid", "only one of the firms"), except where it stands for a thing named before
+    ("no one", "each one", "one of the firms" with no count after it). "Half" after "first" or "second" is a
+    time when nothing follows it or a time does ("the first half of the year"), and an amount when things
+    do ("the first half of the packages")."""
     def claim(sentence):
         return {"sentence": sentence, "kind": "summary", "evidence_ids": [], "numbers": [], "dates": [], "quote": None}
 
@@ -402,16 +404,21 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         claim("One lesson was about estimates."), claim("Only one bid was received for the package."),
         claim("One firm bid for it."), claim("Zero bids came in."), claim("No one said why."),
         claim("Each one was signed late."), claim("The works started in the first half of the year."),
-        claim("The contractors' bids came late, and the World Bank's review followed.")),
+        claim("The contractors' bids came late, and the World Bank's review followed."),
+        claim("Only one of the firms bid."), claim("The first half of the packages were late."),
+        claim("Just one of its packages was signed."), claim("The second half of FY2019 was slow."),
+        claim("The works slowed in the second half.")),
         no_engine))))
 
     assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
         [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")],
         [("number_not_in_records", "One")], [("number_not_in_records", "one")], [("number_not_in_records", "One")],
-        [("number_not_in_records", "Zero")]]
+        [("number_not_in_records", "Zero")], [("number_not_in_records", "one")], [("number_not_in_records", "half")],
+        [("number_not_in_records", "one")], [("number_not_in_records", "FY2019")]]
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
         "No one said why.", "Each one was signed late.", "The works started in the first half of the year.",
-        "The contractors' bids came late, and the World Bank's review followed."]
+        "The contractors' bids came late, and the World Bank's review followed.",
+        "The works slowed in the second half."]
     # Apostrophes are not quote marks, so that sentence quotes nothing.
     assert of(parsed, "checks")[0]["quotes"] == {"total": 0, "found": 0}
 
