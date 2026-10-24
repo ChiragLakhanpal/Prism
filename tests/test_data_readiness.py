@@ -162,6 +162,10 @@ def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_
     # The measure counts an activity once in each latest version that lists it (ticket 08's verifier, F3).
     # Design r3 N2: when every entry falls short, the sentence says so rather than compare 46 with 46.
     assert held == "None of the 46 activity entries in the latest plan versions has a first listing I could confirm."
+    # Design r4 P3: in that form the 46 is also what falls short, so it opens its measure as the
+    # missing records and says what they lack.
+    [whole] = [segment for segment in plan_check["holds_back"][0] if "number" in segment]
+    assert (whole["number"], whole["role"], whole["lack"]) == (46, "missing", "a first listing I could confirm")
 
 
 def registry_text(segments):
@@ -283,7 +287,10 @@ def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_
 
     assert [row["id"] for row in result["sources"]] == ["projects", "plans"]  # in registry order
     assert (result["filter"]["shown"], result["filter"]["total"]) == (2, 13)
-    assert result["headline"]["text"].startswith("Two sources are behind the plan check.")
+    # Review r4 P3: when every entry falls short, the headline's gap says so rather than "46 of 46".
+    assert result["headline"]["text"] == (
+        "Two sources are behind the plan check. The biggest gap is the 46 activity entries in the latest plan "
+        "versions, none of which has a first listing I could confirm.")
     assert all(gap["row_id"] in ("plans", "projects") for gap in result["gaps"])
     assert [kind["kind"] for kind in result["kinds"]] == ["plan_check"]
     assert "body pages" not in result["headline"]["text"]
@@ -292,6 +299,19 @@ def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_
     assert [row["id"] for row in one["sources"]] == ["plans"]
     assert one["filter"]["shown"] == 1
     assert one["headline"]["text"].startswith("One source is behind the plan check.")
+
+
+def test_a_kind_s_count_spells_step_out_only_where_the_headline_above_it_does_not(engine):
+    """Design r4 P1: DESIGN.md section 7, rule 10 spells an abbreviation out once per screen. The full
+    view's headline names the contracts that lack a STEP reference, spelled out; the plan check's view
+    names no STEP gap, so its count is the first STEP there."""
+    full = readiness(engine)
+    assert "Systematic Tracking of Exchanges in Procurement (STEP)" in full["headline"]["text"]
+    assert [kind["spell_out"] for kind in full["kinds"]] == [False, False]
+
+    plan_check = readiness(engine, sources="documents,projects", from_tool="check_plan")
+    assert "(STEP)" not in plan_check["headline"]["text"]
+    assert [kind["spell_out"] for kind in plan_check["kinds"]] == [True]
 
 
 def test_a_filtered_view_counts_the_rows_it_shows(engine):

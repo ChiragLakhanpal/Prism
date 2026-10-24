@@ -297,20 +297,26 @@ class Page:
             return False
         return Decimal(row["count"]) / Decimal(row["denominator"]) < Decimal(str(self.value(threshold)))
 
-    def shortfall(self, index: int, column: ReadinessColumn) -> dict:
+    def shortfall(self, index: int, column: ReadinessColumn, form: str) -> dict:
+        """A shortfall's slots. In the All and Only forms the whole is also what falls short, so its
+        number opens the measure as the missing records and says what they lack."""
         row = self.measures.rows[index]
+        whole_missing = form in ("All", "Only")
         return {"missing": number(row["denominator"] - row["count"], index, column.noun, "missing", column.noun_one,
                                   column.lack),
-                "total": number(row["denominator"], index, column.noun, noun_one=column.noun_one),
+                "total": number(row["denominator"], index, column.noun, "missing" if whole_missing else None,
+                                column.noun_one, column.lack if whole_missing else None),
                 "noun": column.noun_one if row["denominator"] == 1 and column.noun_one else column.noun,
                 "lack": column.lack or ""}
 
-    def shortfall_form(self, index: int) -> str:
+    def shortfall_form(self, index: int, template: str) -> str:
         """Which form of a shortfall's words agrees with its numbers: Only when the one record falls
-        short, All when every record does, One when one of several does, else the plain form."""
+        short, All when every record does, One when one of several does, else the plain form. A form
+        is used only when both the phrase and the sentence have it, so the two always agree."""
         row = self.measures.rows[index]
         missing, total = row["denominator"] - row["count"], row["denominator"]
-        return "Only" if missing == total == 1 else "All" if missing == total else "One" if missing == 1 else ""
+        form = "Only" if missing == total == 1 else "All" if missing == total else "One" if missing == 1 else ""
+        return form if all(template + form in words()[kind] for kind in ("gap", "holds")) else ""
 
     def late_days(self, source: Source, schedule: str, as_of: dt.date | None) -> int | None:
         if as_of is None or schedule in ("frozen", AS_PUBLISHED):
@@ -346,9 +352,10 @@ class Page:
                      slots={"sourceNoun": row.noun}, **base)
         elif name in SHARES and self.short(index, SHARES[name]):
             cell["status"] = "partial"
-            self.gap(id=f"{row.id}/{name}", type=name, status="partial",
-                     words="linked" if name == "linked" else "readWell", slots=self.shortfall(index, column),
-                     form=self.shortfall_form(index), **base)
+            template = "linked" if name == "linked" else "readWell"
+            form = self.shortfall_form(index, template)
+            self.gap(id=f"{row.id}/{name}", type=name, status="partial", words=template,
+                     slots=self.shortfall(index, column, form), form=form, **base)
         elif name == "fresh":
             late = self.late_days(source, schedule, _date(measured["as_of"]))
             if late is not None:
@@ -369,9 +376,10 @@ class Page:
         for check in row.checks:
             index = self.row_ref(source, check)
             if index is not None and self.short(index, "check_min_share"):
+                form = self.shortfall_form(index, "check")
                 self.gap(id=f"{row.id}/{check.measure}", type="check", status="partial", row_id=row.id,
                          source_key=source.key, column=None, measure=check.measure, words="check",
-                         slots=self.shortfall(index, check), form=self.shortfall_form(index))
+                         slots=self.shortfall(index, check, form), form=form)
 
     def scope(self, source: Source, row: ReadinessRow, cells: dict) -> dict:
         if source.scope == EVERY_COUNTRY:
@@ -611,6 +619,11 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
         first = (_filtered_sentence(len(in_view), nouns[from_key]) if filtered else _kinds_sentence(kinds))
         segments = [*first, {"text": " "}, *_gaps_sentence(ranked)]
         headline = {"segments": segments, "text": text_of(segments)}
+    # STEP is spelled out once per screen (DESIGN.md section 7, rule 10): a kind's count spells it
+    # out unless the headline above it already has.
+    spell_out = headline is None or words()["stepSpelled"] not in headline["text"]
+    for kind in kinds:
+        kind["spell_out"] = spell_out
 
     # The plan pages the layout parser could not read belong with the plans' row: none to list
     # (None) when that row is out of view.

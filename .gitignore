@@ -16,6 +16,7 @@ web/dist-gallery/
 web/screenshots/
 web/test-results/
 web/playwright-report/
+*.tsbuildinfo
 
 # Local data and caches
 data/out/*.duckdb

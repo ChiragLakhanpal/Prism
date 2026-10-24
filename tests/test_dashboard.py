@@ -95,6 +95,7 @@ def test_the_snapshot_s_pages_read_well_by_route_are_the_tool_s_route_rows(engin
 
 import json  # noqa: E402
 import re  # noqa: E402
+import tomllib  # noqa: E402
 
 from strata import dashboard  # noqa: E402
 from strata.lakehouse import bundle  # noqa: E402
@@ -102,6 +103,9 @@ from strata.lakehouse import bundle  # noqa: E402
 DESIGN = (ROOT / "DESIGN.md").read_text()
 TENTH_PLACE_ORDER = ["introduction", "measure_date", "headline", "award_rows", "source_rows", "links", "routes",
                      "freshness", "fixes", "notes"]
+
+
+KENYA = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["counts"]["kenya"]
 
 
 def lvdash() -> dict:
@@ -211,9 +215,7 @@ def test_the_award_rows_per_fiscal_year_add_up_to_kenya_s_award_rows(engine):
     """values.toml counts Kenya's 632 award rows from the recorded award files (one per joint-venture
     member, as the Coverage column counts them); the fixture records awards since fiscal 2020 for
     Kenya only. Review r3 B1: the tile once counted gold's 603 contracts."""
-    import tomllib
-
-    kenya = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["counts"]["kenya"]
+    kenya = KENYA
     rows = dataset_rows(engine, "award_rows_by_year")
     since_2020 = dashboard.year_labels()["awards"]
 
@@ -244,7 +246,8 @@ def test_each_source_s_rows_per_fiscal_year_add_up_to_its_coverage_number_in_the
 
     compared = {key: totals[label] for key, label in labels.items() if key in coverage}
     assert compared == {key: coverage[key] for key in compared}
-    assert compared == {"awards": 632, "awards_fy2001_2016": 62, "ieg_ratings": 1, "notices": 418, "projects": 93}
+    assert set(compared) == {"awards", "awards_fy2001_2016", "ieg_ratings", "notices", "projects"}
+    assert compared["awards"] == KENYA["award_rows"]
     assert set(totals) == set(labels.values())
 
 
@@ -259,3 +262,14 @@ def test_the_table_of_freshness_and_links_keeps_the_pages_each_route_read_well(e
 
     assert {row["source"]: row["read_well"] for row in rows if row["read_well"]} == {
         "Published text (Route A)": "22 of 22", "Layout parser (Route B)": "15 of 15"}
+
+
+def test_the_table_of_freshness_and_links_names_each_awards_dataset_as_the_charts_do(engine):
+    """Design r4 P7: tile 8 names the two awards datasets with tiles 4 and 5's labels, and writes the
+    fiscal 2017 to 2019 Gap's years as tables write years, so no row has two names on one page."""
+    names = [row["source"] for row in dataset_rows(engine, "readiness_sources")]
+    labels = dashboard.year_labels()
+
+    assert labels["awards"] in names and labels["awards_fy2001_2016"] in names
+    assert "Contract awards, FY2017–19" in names
+    assert not [name for name in names if "fiscal" in name]

@@ -1839,8 +1839,8 @@
         "linked": {
           "measure": "step_rows_with_reference",
           "row": 45,
-          "counts": "plan rows in STEP's format with an Activity Reference No.",
-          "counts_one": "plan row in STEP's format with an Activity Reference No.",
+          "counts": "plan rows in STEP's format with an Activity Reference No.",
+          "counts_one": "plan row in STEP's format with an Activity Reference No.",
           "noun": "plan rows in STEP's format",
           "noun_one": "plan row in STEP's format",
           "status": null,
@@ -1880,8 +1880,8 @@
             "row": 47,
             "noun": "activity entries in the latest plan versions",
             "noun_one": "activity entry in the latest plan versions",
-            "role": null,
-            "lack": null
+            "role": "missing",
+            "lack": "a first listing I could confirm"
           },
           {
             "text": " "
@@ -1899,7 +1899,8 @@
             "text": "."
           }
         ]
-      ]
+      ],
+      "spell_out": true
     }
   ],
   "gaps": [
@@ -1924,24 +1925,13 @@
           "lack": "a first listing I could confirm"
         },
         {
-          "text": " of "
-        },
-        {
-          "number": 46,
-          "row": 47,
-          "noun": "activity entries in the latest plan versions",
-          "noun_one": "activity entry in the latest plan versions",
-          "role": null,
-          "lack": null
-        },
-        {
           "text": " "
         },
         {
           "text": "activity entries in the latest plan versions"
         },
         {
-          "text": " that lack "
+          "text": ", none of which has "
         },
         {
           "text": "a first listing I could confirm"
@@ -2021,24 +2011,13 @@
         "lack": "a first listing I could confirm"
       },
       {
-        "text": " of "
-      },
-      {
-        "number": 46,
-        "row": 47,
-        "noun": "activity entries in the latest plan versions",
-        "noun_one": "activity entry in the latest plan versions",
-        "role": null,
-        "lack": null
-      },
-      {
         "text": " "
       },
       {
         "text": "activity entries in the latest plan versions"
       },
       {
-        "text": " that lack "
+        "text": ", none of which has "
       },
       {
         "text": "a first listing I could confirm"
@@ -2047,7 +2026,7 @@
         "text": "."
       }
     ],
-    "text": "Two sources are behind the plan check. The biggest gap is the 46 of 46 activity entries in the latest plan versions that lack a first listing I could confirm."
+    "text": "Two sources are behind the plan check. The biggest gap is the 46 activity entries in the latest plan versions, none of which has a first listing I could confirm."
   },
   "headline_abstention": null,
   "parse_failures": [],

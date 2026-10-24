@@ -80,7 +80,13 @@ test("every kind of question in config/tools.toml has its words in the copy file
   const tools = readFileSync(fileURLToPath(new URL("../../config/tools.toml", import.meta.url)), "utf8");
   const kinds = [...tools.matchAll(/^\[tools\.(\w+)\.readiness\]\s*\nkind = "(\w+)"/gm)].map(([, tool, kind]) => ({ tool, kind }));
   expect(kinds.length).toBeGreaterThan(0);
+  // Review r4 P5: a block written in another order fails here instead of being skipped.
+  expect(kinds.length, "every [tools.*.readiness] block starts with its kind line").toBe(
+    [...tools.matchAll(/^\[tools\.\w+\.readiness\]/gm)].length,
+  );
   const words = copy.dataReadiness;
+  // A count that spells STEP out has a form for one as well.
+  expect(Object.keys(words.kinds.countsSpelledOne)).toEqual(Object.keys(words.kinds.countsSpelled));
   for (const { tool, kind } of kinds) {
     expect(words.kinds.names[kind], `copy.dataReadiness.kinds.names.${kind}`).toBeTruthy();
     expect(words.kinds.counts[kind], `copy.dataReadiness.kinds.counts.${kind}`).toBeTruthy();

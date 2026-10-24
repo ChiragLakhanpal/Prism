@@ -71,7 +71,10 @@ def rows(result: dict, run_id: str, measured_on: dt.date, written_at: dt.datetim
             add("gap", position, label=label("gapLabel", label=row["label"], fromYear=row["first_fiscal_year"],
                                              toYear=str(row["last_fiscal_year"])[2:]), text=row["note"], status="gap")
             continue
-        name = label("sourceLabel", label=row["label"], covers=row["covers"]) if row.get("covers") else row["label"]
+        # An awards dataset keeps the name tiles 4 and 5 give it, so no row has two names on one page.
+        name = (say["years"][row["id"]] if row["id"] in AWARD_ROWS
+                else label("sourceLabel", label=row["label"], covers=row["covers"]) if row.get("covers")
+                else row["label"])
         cells = row["cells"]
         fresh, linked = cells["fresh"], cells["linked"]
         fresh_row = measures[fresh["row"]] if fresh.get("row") is not None else None

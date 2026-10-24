@@ -571,11 +571,15 @@ export const galleryCopy = {
         } },
       ],
       kinds: [
-        { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, holds_back: [
+        { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, spell_out: false, holds_back: [
           [{ text: "Of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts, " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " lack a STEP reference." }],
           [{ text: "I list one more gap under Sources." }],
         ] },
-        { kind: "document_search", tool: "search_passages", status: "ready", ready_for: 11, holds_back: [[{ text: "Nothing I measured holds it back." }]] },
+        { kind: "document_search", tool: "search_passages", status: "ready", ready_for: 11, spell_out: false, holds_back: [[{ text: "Nothing I measured holds it back." }]] },
+      ],
+      gaps: [
+        { id: "sample/linked", type: "linked", status: "partial", row_id: "sample", source_key: "sample", column: "linked", projects: 12, phrase: [{ text: "the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts that lack a STEP reference" }] },
+        { id: "sample_gap", type: "published", status: "gap", row_id: "sample", source_key: "sample", column: null, projects: null, phrase: [{ text: "the sample awards for fiscal 2017 to 2019, which no World Bank dataset publishes" }] },
       ],
       fixes: [
         { rank: 1, gap: "sample/linked", projects: 12, row: 2, projects_row: 4, projects_from: "measure", sentence: [{ text: "Find a STEP reference for the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " sample contracts that lack one." }] },

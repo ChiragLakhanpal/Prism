@@ -544,11 +544,11 @@
                     "type": "categorical",
                     "mappings": [
                       {
-                        "value": "Awards since FY2020",
+                        "value": "Contract awards, since FY2020",
                         "color": "#106ca1"
                       },
                       {
-                        "value": "Awards, FY2001–16",
+                        "value": "Contract awards, FY2001–16",
                         "color": "#b65f0c"
                       },
                       {
@@ -563,7 +563,7 @@
                 "showTitle": true,
                 "title": "Contract-award rows per fiscal year, by dataset",
                 "showDescription": true,
-                "description": "Rows per fiscal year, counted as the Coverage column in Strata counts them: one row for each joint-venture member. A missing bar means no rows."
+                "description": "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows."
               },
               "mark": {
                 "colors": [
@@ -638,7 +638,7 @@
                 "showTitle": true,
                 "title": "Rows per fiscal year, by source",
                 "showDescription": true,
-                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. It is the table for the chart of contract-award rows."
+                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows."
               }
             }
           },

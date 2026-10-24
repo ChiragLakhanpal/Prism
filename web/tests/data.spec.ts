@@ -340,6 +340,11 @@ test("What you can ask shows each kind of question with what it is ready for and
     "None of the 46 activity entries in the latest plan versions has a first listing I could confirm.",
   );
   await expect(kinds.locator("[data-cell='plan_check:readyFor'] [data-badge=partial]")).toHaveText("Partial");
+  // The headline above already spells STEP out, so the count words it as the Procurement Plans row does.
+  await expect(kinds.locator("[data-cell='plan_check:readyFor']")).toContainText(
+    "activity entries in the latest plan versions with rows in STEP's format",
+  );
+  await expect(kinds.locator("[data-cell='plan_check:readyFor']")).not.toContainText("Systematic Tracking");
 });
 
 test("the fixes end the page, ranked by the projects each would add evidence to", async ({ page }) => {
@@ -351,6 +356,22 @@ test("the fixes end the page, ranked by the projects each would add evidence to"
   await expect(fixes).toHaveCount(answer.fixes.length);
   await expect(page.locator("[data-fixes] > p").first()).toHaveText("Ranked by how many projects each fix would add evidence to.");
   await expect(fixes.first()).toContainText("Would add evidence to two projects.");
+});
+
+// Design r4 P4: a source can fall short with no fix in the registry, so the card never says that
+// nothing needs one; it says nothing falls short only when no gap is in view.
+test("with no fix to rank, the fixes card says nothing falls short only when nothing does", async ({ page }) => {
+  const answer = await json("data-readiness-filtered.json");
+  await mockShell(page);
+  let body = { ...answer, fixes: [] };
+  await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) }));
+  await open(page, "/data?sources=awards,notices&from=find_comparables");
+  expect(answer.gaps.length).toBeGreaterThan(0);
+  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("I don't have a fix to suggest for these sources.");
+
+  body = { ...answer, fixes: [], gaps: [] };
+  await page.reload();
+  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("Nothing I measured falls short, so there are no fixes to rank.");
 });
 
 test("opened from a coverage line, it shows only the sources behind it; Show all sources restores the table and Back returns", async ({ page }) => {

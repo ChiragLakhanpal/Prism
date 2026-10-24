@@ -9,6 +9,8 @@
 // each definition keeps one home.
 
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
+// STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
+const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
 export const copy = {
   appName: "Strata",
@@ -611,20 +613,24 @@ export const copy = {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
       } as Record<string, string>,
-      // The plan check's count spells STEP out, because it is the first STEP on every view that shows
-      // the plan check (DESIGN.md section 7, rule 10).
+      // The plan check's count words STEP's format as the Procurement Plans row does.
       counts: {
-        plan_check:
-          "activity entries in the latest plan versions with rows in the format of Systematic Tracking of " +
-          "Exchanges in Procurement (STEP)",
+        plan_check: "activity entries in the latest plan versions with rows in STEP's format",
         document_search: "passages you can search",
       } as Record<string, string>,
       // The same, for a count of one.
       countsOne: {
-        plan_check:
-          "activity entry in the latest plan versions with rows in the format of Systematic Tracking of " +
-          "Exchanges in Procurement (STEP)",
+        plan_check: "activity entry in the latest plan versions with rows in STEP's format",
         document_search: "passage you can search",
+      } as Record<string, string>,
+      // A count that names STEP first on its view spells it out, when the tool marks its kind
+      // spell_out: the plan check's view, and a view whose headline it leaves out (DESIGN.md
+      // section 7, rule 10).
+      countsSpelled: {
+        plan_check: `activity entries in the latest plan versions with rows in the format of ${STEP_SPELLED}`,
+      } as Record<string, string>,
+      countsSpelledOne: {
+        plan_check: `activity entry in the latest plan versions with rows in the format of ${STEP_SPELLED}`,
       } as Record<string, string>,
     },
     sources: {
@@ -691,8 +697,10 @@ export const copy = {
       oneProject: "Would add evidence to {count} project.",
       projectsNoun: "projects",
       projectsNounOne: "project",
+      // With no fix to rank: the first only when nothing in view falls short, and the second when
+      // something does but the registry lists no fix for it.
       none: "Nothing I measured falls short, so there are no fixes to rank.",
-      noneHere: "None of these sources needs a fix.",
+      noneKnown: "I don't have a fix to suggest for these sources.",
     },
     loading: {
       slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",
@@ -807,14 +815,17 @@ export const copy = {
       more: "I list {n} more gaps under Sources.",
       nothingHolds: "Nothing I measured holds it back.",
       // The gap phrases, by what kind of gap it is. A shortfall has a form for one record short
-      // (One) and for the only record, which falls short (Only); the tool falls back to the plain form.
+      // (One), for every record short (All) and for the only record, which falls short (Only); the
+      // tool uses a form only when holds has it too, and otherwise the plain form.
       gap: {
         published: "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
         linked: "the {missing} of {total} {noun} that lack {lack}",
         linkedOne: "the {missing} of {total} {noun} that lacks {lack}",
+        linkedAll: "the {total} {noun}, none of which has {lack}",
         linkedOnly: "the {total} {noun} that lacks {lack}",
         check: "the {missing} of {total} {noun} that lack {lack}",
         checkOne: "the {missing} of {total} {noun} that lacks {lack}",
+        checkAll: "the {total} {noun}, none of which has {lack}",
         checkOnly: "the {total} {noun} that lacks {lack}",
         readWell: "the {missing} of {total} {noun} I couldn't read without errors",
         late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
@@ -822,8 +833,7 @@ export const copy = {
         declared: "the {sourceNoun}, which cover {note}",
         noRows: "the {sourceNoun}, of which I hold no rows yet",
       },
-      // The same gaps as full sentences, under "What holds it back", filled from the same slots, with
-      // a form for every record short (All) as well.
+      // The same gaps as full sentences, under "What holds it back", filled from the same slots.
       holds: {
         published: "No World Bank dataset publishes the {sourceNoun} for fiscal {fromYear} to {toYear}.",
         linked: "Of {total} {noun}, {missing} lack {lack}.",
@@ -840,6 +850,9 @@ export const copy = {
         declared: "The {sourceNoun} cover {note}.",
         noRows: "I hold no rows of the {sourceNoun} yet.",
       },
+      // STEP spelled out (DESIGN.md section 7, rule 10). A kind's count spells STEP out only when the
+      // headline above it doesn't already hold these words (kinds.countsSpelled).
+      stepSpelled: STEP_SPELLED,
       // What a late source's count of days counts, in its tooltip.
       daysLate: "days late",
       dayLate: "day late",
@@ -885,8 +898,9 @@ export const copy = {
         headlineColumn: "Headline",
         awardRows: "Contract-award rows per fiscal year, by dataset",
         awardRowsAbout:
-          "Rows per fiscal year, counted as the Coverage column in Strata counts them: one row for each " +
-          "joint-venture member. A missing bar means no rows.",
+          "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts " +
+          "them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for " +
+          "each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows.",
         fiscalYear: "Fiscal year",
         rows: "Rows",
         dataset: "Dataset",
@@ -894,8 +908,9 @@ export const copy = {
         sourceRowsAbout:
           "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the " +
           "Independent Evaluation Group (IEG) ratings, with exact counts. Each source's rows are counted as its " +
-          "Coverage column in Strata counts them, so its years add up to that number on the same date. It is the " +
-          "table for the chart of contract-award rows.",
+          "Coverage column in Strata counts them, so its years add up to that number on the same date. The award " +
+          "notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of " +
+          "contract-award rows.",
         source: "Source",
         links: "Share of rows that link, by link",
         // {fewest} is config/thresholds.toml's data_readiness.fewest_for_a_percentage, filled in when
@@ -939,10 +954,11 @@ export const copy = {
         } as Record<string, string>,
         // The rows of the chart and the table of rows per fiscal year, in their order: each source by
         // its key in config/sources.toml, and a known gap by its id. The snapshot counts each source's
-        // rows as its Coverage cell counts them (strata.dashboard.snapshot).
+        // rows as its Coverage cell counts them (strata.dashboard.snapshot), and the table of freshness
+        // and links names the awards datasets with these same labels.
         years: {
-          awards: "Awards since FY2020",
-          awards_fy2001_2016: "Awards, FY2001–16",
+          awards: "Contract awards, since FY2020",
+          awards_fy2001_2016: "Contract awards, FY2001–16",
           fy2017_2019: "Award notices, FY2017–19",
           notices: "Procurement notices",
           projects: "Projects",

@@ -58,6 +58,27 @@ def _counted(source: Source) -> tuple[str, str, str]:
     return table, key, counted
 
 
+def _counted_pages(counted: str) -> str:
+    """The bronze pages whose records count, each with its request without paging."""
+    return f"""counted_pages AS (
+  SELECT page_hash, {QUERY} AS query
+  FROM {counted}
+  WHERE source = :source
+)"""  # sql-lint: names only, the table is current_pages or api_pages (_counted)
+
+
+def _records(source: Source, year: str | None = None) -> str:
+    """coverage_rows's count, written once: the records held, each counted once in each request it
+    came back in, read from the counted_pages CTE. With a year column, the same count per fiscal year,
+    so the years add up to the measure."""
+    table, key, _ = _counted(source)
+    by_year = f"s.{year} AS fiscal_year, " if year else ""
+    group = f"\nGROUP BY s.{year}" if year else ""
+    return f"""SELECT {by_year}count(DISTINCT concat_ws('|', p.query, {key})) AS records
+FROM {table} AS s
+JOIN counted_pages AS p ON p.page_hash = s.page_hash{group}"""  # sql-lint: names only, from the silver transform
+
+
 def coverage_rows_by_year(source: Source) -> str | None:
     """coverage_rows for the source as a whole, split by fiscal year: the same records, each counted
     once in each request it came back in, so a source's years add up to its measure (the dashboard's
@@ -67,46 +88,26 @@ def coverage_rows_by_year(source: Source) -> str | None:
     year = getattr(silver.transform(source), "FISCAL_YEAR", None)
     if year is None:
         return None
-    table, key, counted = _counted(source)
-    return f"""
-WITH counted_pages AS (
-  SELECT page_hash, {QUERY} AS query
-  FROM {counted}
-  WHERE source = :source
-)
-SELECT s.{year} AS fiscal_year, count(DISTINCT concat_ws('|', p.query, {key})) AS records
-FROM {table} AS s
-JOIN counted_pages AS p ON p.page_hash = s.page_hash
-GROUP BY s.{year}
-"""  # sql-lint: names only, the table and columns come from the source's silver transform
+    _, _, counted = _counted(source)
+    return f"WITH {_counted_pages(counted)}\n{_records(source, year)}\n"  # sql-lint: names only
 
 
 def _source_query(source: Source) -> str:
     """The three measures every paged source has, for the source as a whole."""
-    table, key, counted = _counted(source)
+    _, _, counted = _counted(source)
     return f"""
 WITH pages AS (
   SELECT page_hash, {QUERY} AS query, reported_total, fetched_at, newest_record_on
   FROM strata.bronze.api_pages
   WHERE source = :source
 ),
-counted_pages AS (
-  SELECT page_hash, {QUERY} AS query
-  FROM {counted}
-  WHERE source = :source
-),
+{_counted_pages(counted)},
 reported AS (
   SELECT sum(total) AS total
   FROM (SELECT query, max_by(reported_total, fetched_at) AS total FROM pages GROUP BY query) AS per_query
 ),
 held AS (
-  SELECT sum(records) AS records
-  FROM (
-    SELECT p.query, count(DISTINCT concat_ws('|', {key})) AS records
-    FROM {table} AS s
-    JOIN counted_pages AS p ON p.page_hash = s.page_hash
-    GROUP BY p.query
-  ) AS per_query
+  {_records(source)}
 ),
 fresh AS (
   SELECT CAST(max(fetched_at) AS DATE) AS fetched_on, max(newest_record_on) AS newest

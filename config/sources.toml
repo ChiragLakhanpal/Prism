@@ -45,6 +45,8 @@
 #                     counts), lack (for a share: what a row that falls short lacks) and, for
 #                     coverage, years (the measure that counts its fiscal years). counts_one and
 #                     noun_one are their singular forms, for a count or a denominator of one. A
+#                     STEP field name keeps a no-break space (\u00A0) where a narrow cell must not
+#                     split it, as in Activity Reference\u00A0No. A
 #                     paged source with no read_well shows "Published as a table", and a row with
 #                     no fresh measure but a schedule shows the schedule. checks lists more
 #                     measures whose shortfall holds answers back, in the same shape. routes lists a
@@ -428,7 +430,7 @@ id = "cpia"
 label = "Country Policy and Institutional Assessment (CPIA) scores"
 noun = "CPIA scores"
 coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries are borrowers I hold", counts_one = "country is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+linked = { measure = "linked_country", counts = "countries and groups with scores are borrowers I hold", counts_one = "country or group with scores is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 [[sources.cpia.declared]]
@@ -460,7 +462,7 @@ id = "wgi"
 label = "Worldwide Governance Indicators (WGI) scores"
 noun = "WGI scores"
 coverage = { measure = "coverage_rows", counts = "scores held", counts_one = "score held", noun = "scores", noun_one = "score", counted_in = "strata.silver.indicators", years = "coverage_years" }
-linked = { measure = "linked_country", counts = "countries are borrowers I hold", counts_one = "country is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
+linked = { measure = "linked_country", counts = "countries and groups with scores are borrowers I hold", counts_one = "country or group with scores is a borrower I hold", noun = "countries and groups", noun_one = "country or group", lack = "a borrower record I hold", counted_in = "strata.gold.governance_score" }
 fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", counted_in = "strata.bronze.api_pages" }
 
 # ── Documents ────────────────────────────────────────────────────────────
@@ -496,7 +498,7 @@ noun = "Procurement Plans"
 stratum = "How"
 schedule = "as published"
 coverage = { measure = "plan_versions_read", counts = "plan versions read", counts_one = "plan version read", noun = "plan versions listed", noun_one = "plan version listed", counted_in = "strata.silver.plan_versions" }
-linked = { measure = "step_rows_with_reference", counts = "plan rows in STEP's format with an Activity Reference No.", counts_one = "plan row in STEP's format with an Activity Reference No.", noun = "plan rows in STEP's format", noun_one = "plan row in STEP's format", lack = "an Activity Reference No.", counted_in = "strata.silver.plan_rows" }
+linked = { measure = "step_rows_with_reference", counts = "plan rows in STEP's format with an Activity Reference\u00A0No.", counts_one = "plan row in STEP's format with an Activity Reference\u00A0No.", noun = "plan rows in STEP's format", noun_one = "plan row in STEP's format", lack = "an Activity Reference\u00A0No.", counted_in = "strata.silver.plan_rows" }
 read_well = { measure = "latest_activities_with_step_rows", counts = "activity entries in the latest plan versions with rows in STEP's format", counts_one = "activity entry in the latest plan versions with rows in STEP's format", noun = "activity entries in the latest plan versions", noun_one = "activity entry in the latest plan versions", counted_in = "strata.silver.plan_rows" }
 checks = [
   { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activity entries in the latest plan versions whose confirmed first listing was read", noun = "activity entries in the latest plan versions", noun_one = "activity entry in the latest plan versions", lack = "a first listing I could confirm", counted_in = "strata.silver.plan_listings" },

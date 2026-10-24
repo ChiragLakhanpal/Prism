@@ -213,7 +213,10 @@ function sourceRows(result: Readiness, measures: Measures): ReadinessRow[] {
 function kindRows(kinds: Kind[], measures: Measures): ReadinessRow[] {
   return kinds.map((kind) => {
     const ready = kind.ready_for !== null ? measures.rows[kind.ready_for] : null;
-    const noun: Noun = { many: words.kinds.counts[kind.kind] ?? "", one: words.kinds.countsOne[kind.kind] };
+    const spelled = kind.spell_out && kind.kind in words.kinds.countsSpelled;
+    const noun: Noun = spelled
+      ? { many: words.kinds.countsSpelled[kind.kind], one: words.kinds.countsSpelledOne[kind.kind] }
+      : { many: words.kinds.counts[kind.kind] ?? "", one: words.kinds.countsOne[kind.kind] };
     return {
       id: kind.kind,
       header: words.kinds.names[kind.kind] ?? kind.kind,
@@ -362,7 +365,7 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
   );
 }
 
-function Fixes({ fixes, measures, filtered }: { fixes: Fix[]; measures: Measures; filtered: boolean }) {
+function Fixes({ fixes, measures, shortfalls }: { fixes: Fix[]; measures: Measures; shortfalls: boolean }) {
   return (
     <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 md:p-6">
       <h2 id="data-fixes" className="text-title text-ink-heading">
@@ -370,7 +373,7 @@ function Fixes({ fixes, measures, filtered }: { fixes: Fix[]; measures: Measures
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{words.fixes.caption}</p>
       {fixes.length === 0 ? (
-        <p className="mt-3 text-body">{filtered ? words.fixes.noneHere : words.fixes.none}</p>
+        <p className="mt-3 text-body">{shortfalls ? words.fixes.noneKnown : words.fixes.none}</p>
       ) : (
         <ol className="mt-3 flex flex-col gap-3">
           {fixes.map((fix) => (
@@ -456,7 +459,7 @@ function Tables({ result }: { result: Readiness }) {
       </div>
       <Failures result={result} />
       <div className="mt-12">
-        <Fixes fixes={result.fixes} measures={measures} filtered={result.filter.sources !== null} />
+        <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} />
       </div>
     </>
   );

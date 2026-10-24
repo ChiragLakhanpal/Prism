@@ -73,7 +73,15 @@ export type SourceRow =
     }
   | { type: "gap"; id: string; source_key: string; label: string; first_fiscal_year: number; last_fiscal_year: number; note: string };
 
-export type Kind = { kind: string; tool: string; status: "ready" | "partial" | "gap"; ready_for: number | null; holds_back: Segment[][] };
+// spell_out: the headline above doesn't spell STEP out, so the kind's count must (copy's countsSpelled).
+export type Kind = {
+  kind: string;
+  tool: string;
+  status: "ready" | "partial" | "gap";
+  ready_for: number | null;
+  holds_back: Segment[][];
+  spell_out: boolean;
+};
 
 // row is the fix measure's result row; projects_row is the measure that counted its projects, or null
 // when they are the measure's own projects that fall short.
@@ -97,6 +105,8 @@ export type Readiness = {
   filter: { sources: string[] | null; unknown: number; from: string | null; shown: number; total: number };
   sources: SourceRow[];
   kinds: Kind[];
+  // The gaps in view, biggest first; the page reads only whether there are any.
+  gaps: { id: string; type: string; status: "partial" | "gap"; row_id: string; source_key: string; column: string | null; projects: number | null; phrase: Segment[] }[];
   fixes: Fix[];
   routes: { measure: string; label: string; noun: string; row: number }[];
   headline: { segments: Segment[]; text: string } | null;

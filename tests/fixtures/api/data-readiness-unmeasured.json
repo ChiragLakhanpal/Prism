@@ -2196,8 +2196,8 @@
         "linked": {
           "measure": "linked_country",
           "row": 38,
-          "counts": "countries are borrowers I hold",
-          "counts_one": "country is a borrower I hold",
+          "counts": "countries and groups with scores are borrowers I hold",
+          "counts_one": "country or group with scores is a borrower I hold",
           "noun": "countries and groups",
           "noun_one": "country or group",
           "status": null,
@@ -2245,8 +2245,8 @@
         "linked": {
           "measure": "linked_country",
           "row": null,
-          "counts": "countries are borrowers I hold",
-          "counts_one": "country is a borrower I hold",
+          "counts": "countries and groups with scores are borrowers I hold",
+          "counts_one": "country or group with scores is a borrower I hold",
           "noun": "countries and groups",
           "noun_one": "country or group",
           "status": null,
@@ -2294,8 +2294,8 @@
         "linked": {
           "measure": "step_rows_with_reference",
           "row": 41,
-          "counts": "plan rows in STEP's format with an Activity Reference No.",
-          "counts_one": "plan row in STEP's format with an Activity Reference No.",
+          "counts": "plan rows in STEP's format with an Activity Reference No.",
+          "counts_one": "plan row in STEP's format with an Activity Reference No.",
           "noun": "plan rows in STEP's format",
           "noun_one": "plan row in STEP's format",
           "status": null,
@@ -2391,8 +2391,8 @@
             "row": 43,
             "noun": "activity entries in the latest plan versions",
             "noun_one": "activity entry in the latest plan versions",
-            "role": null,
-            "lack": null
+            "role": "missing",
+            "lack": "a first listing I could confirm"
           },
           {
             "text": " "
@@ -2410,7 +2410,8 @@
             "text": "."
           }
         ]
-      ]
+      ],
+      "spell_out": true
     },
     {
       "kind": "document_search",
@@ -2451,7 +2452,8 @@
             "text": " without errors."
           }
         ]
-      ]
+      ],
+      "spell_out": true
     }
   ],
   "gaps": [
@@ -2595,24 +2597,13 @@
           "lack": "a first listing I could confirm"
         },
         {
-          "text": " of "
-        },
-        {
-          "number": 46,
-          "row": 43,
-          "noun": "activity entries in the latest plan versions",
-          "noun_one": "activity entry in the latest plan versions",
-          "role": null,
-          "lack": null
-        },
-        {
           "text": " "
         },
         {
           "text": "activity entries in the latest plan versions"
         },
         {
-          "text": " that lack "
+          "text": ", none of which has "
         },
         {
           "text": "a first listing I could confirm"
@@ -2704,8 +2695,8 @@
           "row": 18,
           "noun": "loans",
           "noun_one": "loan",
-          "role": null,
-          "lack": null
+          "role": "missing",
+          "lack": "a project record I hold"
         },
         {
           "text": " "
@@ -2738,8 +2729,8 @@
           "row": 26,
           "noun": "loans",
           "noun_one": "loan",
-          "role": null,
-          "lack": null
+          "role": "missing",
+          "lack": "a project record I hold"
         },
         {
           "text": " "
