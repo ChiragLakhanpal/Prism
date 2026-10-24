@@ -308,8 +308,10 @@ export function ProjectPage({ pid }: { pid: string }) {
         <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
         <p className="mt-2 max-w-prose text-body text-ink">{plans.purpose}</p>
       </div>
-      {/* Three columns read best at the prose width, so the version tables keep to columns 1 to 8. */}
-      <div className="col-span-12 mt-6 lg:col-span-8">{tab}</div>
+      {/* Three columns read best at the prose width, so the version tables keep to columns 1 to 8
+          from 1200 px, DESIGN.md's breakpoint for tables. Below it the eight columns are narrower
+          than a table's 640 px, so the tables take all twelve and no column scrolls out of view. */}
+      <div className="col-span-12 mt-6 xl:col-span-8">{tab}</div>
     </div>
   );
 }

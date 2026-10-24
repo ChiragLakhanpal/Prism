@@ -195,6 +195,33 @@ test("a project with no plans says so, and a project with no record is not found
   await expect(trail.locator("[aria-current=page]")).toHaveText("Project P999999");
 });
 
+// The tables a reader can see that scroll sideways inside their frame, which hides a column.
+const scrollingTables = (page: Page) =>
+  page.locator("[data-table-view=table], [data-view=table]").evaluateAll((frames) =>
+    frames
+      .filter((frame) => frame.getClientRects().length > 0 && frame.scrollWidth > frame.clientWidth)
+      .map((frame) => frame.closest("[data-agency]")?.getAttribute("data-agency") ?? frame.getAttribute("data-view") ?? "table"),
+  );
+
+test("from 1024 to 1200 px every table fits its frame, so no column hides behind a sideways scroll", async ({ page }) => {
+  const cases: [string, Record<string, Answer>][] = [
+    ["/projects", await projects()],
+    ["/projects/P156634", await p156634()],
+    ["/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09", {
+      "/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09": { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    }],
+  ];
+  for (const [path, api] of cases) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, path, api, 1024);
+    await expect(page.locator("[data-projects-page=ready], [data-project-page=ready], [data-check-plan-page=ready]")).toBeVisible();
+    for (const width of [1024, 1100, 1199, 1200]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await scrollingTables(page), `${path} at ${width} px`).toEqual([]);
+    }
+  }
+});
+
 test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440 and 390 px, and they reflow at 320 px", async ({ page }) => {
   // The populated pages hold every component these pages use; the no-plans and not-found states
   // are an empty-state card and a heading, which the gallery's axe run covers.
