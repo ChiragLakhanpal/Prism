@@ -235,7 +235,7 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
   );
 }
 
-function DocumentsSkeleton() {
+export function DocumentsSkeleton() {
   return (
     <div aria-hidden="true" data-documents-skeleton>
       <SkeletonLine className="text-caption" width="w-40" />
@@ -286,48 +286,17 @@ function DocumentsSkeleton() {
   );
 }
 
-export function DocumentsTab({ pid }: { pid: string }) {
-  const [load, retry] = useLoad<DocumentList>(`/api/projects/${encodeURIComponent(pid)}/documents`);
+// The populated list: the count line, the grouped table from 768 px and the groups as cards below it,
+// the note on documents not read, and the source line.
+export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const id = useId();
-  const columns = (children: ReactNode) => (
-    <div className="layout-grid" data-documents={load.status}>
-      <div className="col-span-12 @xl/page:col-span-7">
-        <h2 className="sr-only">{words.heading}</h2>
-        <p className="max-w-prose text-body text-ink-muted">{words.purpose}</p>
-        <div className="mt-6">{children}</div>
-      </div>
-    </div>
-  );
-
-  if (load.status === "loading") {
-    return columns(
-      <>
-        <LoadingLabel />
-        <DocumentsSkeleton />
-        <p role="status" className="sr-only">
-          {words.loading}
-        </p>
-      </>,
-    );
-  }
-  if (load.status === "error") {
-    return columns(
-      <EightColumns>
-        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-      </EightColumns>,
-    );
-  }
-  const data = load.data;
-  if (data.groups.length === 0) {
-    return columns(<EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data?sources=documents", text: words.emptyLink }} />);
-  }
   const toggle = (type: string) => setOpen((now) => ({ ...now, [type]: !now[type] }));
   // The rows the list shows: each group's folded rows, or all of them once it is open.
   const shownRows = data.groups.reduce((sum, group) => sum + (open[group.type] ? group.count : group.shown_count), 0);
   const name = data.project.display_name ?? pid;
   const unread = data.groups.some((group) => group.documents.some((document) => !document.read));
-  return columns(
+  return (
     <>
       <p className="text-caption text-ink-muted tabular-nums" data-documents-count>
         {shownRows === data.total ? copy.table.showingAll(whole(data.total), words.noun) : words.showing(whole(shownRows), whole(data.total))}
@@ -360,6 +329,41 @@ export function DocumentsTab({ pid }: { pid: string }) {
         </p>
       )}
       <Source className="mt-2">{data.documents_through ? <Fill template={words.source} slots={{ date: formatDate(data.documents_through) }} /> : words.sourceUndated}</Source>
-    </>,
+    </>
+  );
+}
+
+export function DocumentsTab({ pid }: { pid: string }) {
+  const [load, retry] = useLoad<DocumentList>(`/api/projects/${encodeURIComponent(pid)}/documents`);
+  let body: ReactNode;
+  if (load.status === "loading") {
+    body = (
+      <>
+        <LoadingLabel />
+        <DocumentsSkeleton />
+        <p role="status" className="sr-only">
+          {words.loading}
+        </p>
+      </>
+    );
+  } else if (load.status === "error") {
+    body = (
+      <EightColumns>
+        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      </EightColumns>
+    );
+  } else if (load.data.groups.length === 0) {
+    body = <EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data?sources=documents", text: words.emptyLink }} />;
+  } else {
+    body = <DocumentsList data={load.data} pid={pid} />;
+  }
+  return (
+    <div className="layout-grid" data-documents={load.status}>
+      <div className="col-span-12 @xl/page:col-span-7">
+        <h2 className="sr-only">{words.heading}</h2>
+        <p className="max-w-prose text-body text-ink-muted">{words.purpose}</p>
+        <div className="mt-6">{body}</div>
+      </div>
+    </div>
   );
 }

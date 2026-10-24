@@ -64,7 +64,7 @@ test("All projects shows 20 projects a page with the range it shows, sets projec
   await pages.getByRole("link", { name: "Next page" }).click();
 
   await expect(page).toHaveURL(/\/projects\?page=2$/);
-  const countLine = main.locator("[data-lead]");
+  const countLine = main.locator("[data-page-lead]");
   await expect(countLine).toHaveText("Showing 21–40 of 93 projects");
   await expect(countLine).toBeFocused();
   await expect(table.first().getByRole("link")).toHaveText("P167814");
@@ -91,7 +91,7 @@ test("the list search filters on the server as you type, by name, project ID or 
 
   await field.pressSequentially("india");
 
-  await expect(main.locator("[data-lead]")).toHaveText("Showing 1 project");
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing 1 project");
   await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();
   // One request for the word, sent once typing stopped, and the address keeps the search in place.
@@ -110,7 +110,7 @@ test("the list search filters on the server as you type, by name, project ID or 
   // Escape empties the field and shows every project again.
   await field.press("Escape");
   await expect(field).toHaveValue("");
-  await expect(main.locator("[data-lead]")).toHaveText("Showing 1–20 of 93 projects");
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 93 projects");
   await expect(page).toHaveURL(/\/projects$/);
 });
 

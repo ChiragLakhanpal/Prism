@@ -12,12 +12,12 @@
 // States: loading (the h1 names the project for a screen reader, and bars stand in for the line and the
 // agency line, while the tab row is real), populated, a project Strata has no record of, a service that
 // didn't answer, and an account that can't read Strata's tables. Each tab draws its own states.
-import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { Button } from "../components/Button";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
+import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";
 import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Tabs } from "../components/Tabs";
@@ -46,64 +46,6 @@ export function readParams(search: string, keys: string[] = ["view"]): string {
   }
   const rest = kept.toString();
   return rest ? `?${rest}` : "";
-}
-
-// The agencies keep to two lines. When the names need more, "Show all agencies" follows them; it shows
-// only while the two lines hide a name, measured again whenever the line's width changes. Two agency
-// names hold commas, so the names are set apart with semicolons.
-function AgencyLine({ names }: { names: string[] }) {
-  const id = useId();
-  const line = useRef<HTMLParagraphElement>(null);
-  const [open, setOpen] = useState(false);
-  const [hides, setHides] = useState(false);
-  useLayoutEffect(() => {
-    const element = line.current;
-    if (!element || open) return;
-    const measure = () => setHides(element.scrollHeight > element.clientHeight + 1);
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [open]);
-  if (names.length === 0) return <p className="mt-2 max-w-prose text-body text-ink-muted">{words.noAgency}</p>;
-  return (
-    <div className="mt-2" data-agency-line>
-      <p ref={line} id={id} className={open ? "max-w-prose text-body text-ink-muted" : "line-clamp-2 max-w-prose text-body text-ink-muted"}>
-        <Fill template={names.length > 1 ? words.agenciesLine : words.agencyLine} slots={{ agencies: names.join(words.agencyJoin) }} />
-      </p>
-      {(hides || open) && (
-        // 4 px above the button keep its focus ring off the agencies' second line.
-        <div className="mt-1">
-          <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
-            {open ? words.fewerAgencies : words.allAgencies}
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// The h1's one line. Each " · item" keeps together, so a dot never ends a line and an item never splits:
-// the line breaks only at the space before a dot, or inside the project's name.
-function HeaderLine({ project }: { project: Page["project"] }) {
-  const status = project.status ? (words.statusInline[project.status] ?? project.status) : null;
-  const item = (content: ReactNode) => (
-    <>
-      {" "}
-      <span className="whitespace-nowrap text-ink-muted">
-        {words.dot}
-        {content}
-      </span>
-    </>
-  );
-  return (
-    <>
-      <span className="text-ink-heading">{project.display_name ?? project.project_name}</span>
-      {item(<ProjectId pid={project.project_id} />)}
-      {project.country && item(project.country)}
-      {status && item(status)}
-    </>
-  );
 }
 
 export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
@@ -194,7 +136,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         <Breadcrumb trail={[projectsCrumb, { text: current }]} />
         <h1 ref={title} tabIndex={-1} data-project-header className="mt-4 text-h1 text-ink-heading focus:outline-none">
           {data ? (
-            <HeaderLine project={data.project} />
+            <ProjectHeaderLine project={data.project} />
           ) : (
             // A route change focuses this h1, so it names the project while a bar stands in for its line.
             <>

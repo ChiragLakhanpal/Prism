@@ -165,14 +165,64 @@ const PLAN_SHOTS: Shot[] = [
   planShot("check-plan--320", plan, { widths: [320] }),
 ];
 
+// Ticket 21's project hub, as the 21 brief's section 15 lists it: the project frame, Summary, Procurement,
+// Check a plan's change list and baseline panel, Documents, the source view and All projects. Each state
+// the fixture holds is the server's own answer; a state it cannot reach, such as a project with no ratings
+// or a long version list, is a recorded answer with one value changed, so it still shows real rows.
+const HUB_API: Shot["api"] = {
+  "/api/projects/P130164": { recorded: "project-p130164.json" },
+  "/api/projects/P130164/summary": { recorded: "summary-p130164.json" },
+  "/api/projects/P130164/documents": { recorded: "documents-p130164.json" },
+  "/api/projects/P156634": { recorded: "project-p156634.json" },
+  "/api/projects/P156634/summary": { recorded: "summary-p156634.json" },
+  "/api/projects/P156634/packages": { recorded: "packages-p156634.json" },
+  "/api/projects/P156634/packages?page=2": { recorded: "packages-p156634-page-2.json" },
+  "/api/projects/P156634/packages?q=boreholes": { recorded: "packages-p156634-boreholes.json" },
+  "/api/projects/P156634/packages?q=atlantis": { recorded: "packages-p156634-no-match.json" },
+  [`${PLAN_API}/changes`]: { recorded: "changes-nwwda-2026-10-09.json" },
+  "/api/projects/P156634/procurement/northern-water-works-development-agency/2020-12-07/changes": { recorded: "changes-nwwda-2020-12-07.json" },
+  "/api/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30": { recorded: "check-plan-p156634-ministry-2020-04-30.json" },
+  "/api/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30/changes": { recorded: "changes-ministry-2020-04-30.json" },
+  "/api/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21": { recorded: "check-plan-p156634-nwwda-2025-07-21-baseline.json" },
+  "/api/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21/changes": { status: 404, body: '{"code":"unknown_plan"}' },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=23&para=54": { recorded: "source-icr-p130164-23-54.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=23": { recorded: "source-icr-p130164-23.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=22&para=54": { recorded: "source-icr-p130164-moved.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=23&para=999": { recorded: "source-icr-p130164-no-para.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=80": { recorded: "source-icr-p130164-page-range.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=66": { recorded: "source-icr-p130164-page-range.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=5": { recorded: "source-icr-p130164-page-unread.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=49": { recorded: "source-icr-p130164-page-empty.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=2": { recorded: "source-icr-p130164-front-matter.json" },
+  "/api/projects/P130164/documents/icr-2019-10-10?page=23&asof=2019-10-01": { recorded: "source-icr-p130164-not-public.json" },
+  "/api/projects/P130164/documents/icr-review-2023-05-04?page=1": { recorded: "source-icr-review-p130164-reissue.json" },
+  "/api/projects/P130164/documents/isr": { recorded: "source-p130164-ambiguous.json" },
+  "/api/projects/P130164/documents/not-a-document": { recorded: "source-p130164-not-found.json" },
+  "/api/projects/P130164/documents/30152361": { recorded: "source-p130164-doc-unread.json" },
+  "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+  "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+};
+const hubShot = (name: string, path: string, rest: Partial<Shot> = {}, answers: Shot["api"] = {}): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...HUB_API, [PLAN_API]: { recorded: PLAN_FILE }, ...answers } });
+const SOURCE = "/projects/P130164/documents/icr-2019-10-10";
+const summaryWithout = (edit: (body: Record<string, any>) => void) => ({ body: derived("summary-p130164.json", edit) });
+const longVersions = derived("project-p156634-baseline.json", (body) => {
+  const nwwda = body.agencies[0];
+  for (const [index, date] of ["2019-06-14", "2019-01-10"].entries()) {
+    nwwda.versions.push({ ...nwwda.versions[4], document_id: `older-${index}`, plan_date: date, disclosed_on: date, is_latest: false, is_baseline: false, shown: false });
+  }
+  Object.assign(nwwda, { version_count: 7, shown_count: 5 });
+});
+
 const PROJECT_SHOTS: Shot[] = [
-  planShot("project", { recorded: "project-p156634.json" }, {}, "/projects/P156634"),
-  planShot("project--loading", { recorded: "project-p156634.json" }, { pending: ["/api/projects/P156634"] }, "/projects/P156634"),
-  planShot("project--agencies-open", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: click("main dl button") }, "/projects/P156634"),
+  // Ticket 21: a project's address opens its Summary, so the plan versions are on /procurement.
+  hubShot("project", "/projects/P156634/procurement"),
+  hubShot("project--loading", "/projects/P156634/procurement", { pending: ["/api/projects/P156634"] }),
+  hubShot("project--agencies-open", "/projects/P156634/procurement", { widths: [1440, 390], act: click("[data-agency-line] button") }),
   planShot("project--no-plans", { recorded: "project-p130164.json" }, {}, "/projects/P130164/procurement", "/api/projects/P130164"),
   planShot("project--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects/P156634"),
   planShot("project--not-found", { status: 404, body: '{"code":"unknown_project"}' }, {}, "/projects/P999999"),
-  planShot("project--focus-version", { recorded: "project-p156634.json" }, { widths: [1440, 390], act: focus("[data-agency] a:visible") }, "/projects/P156634"),
+  hubShot("project--focus-version", "/projects/P156634/procurement", { widths: [1440, 390], act: focus("[data-agency] a:visible") }),
   planShot("projects", { recorded: "projects.json" }, {}, "/projects"),
   planShot("projects--loading", { recorded: "projects.json" }, { pending: ["/api/projects"] }, "/projects"),
   // Ticket 21: pages of 20, the list search, its answer and no match.
@@ -183,6 +233,78 @@ const PROJECT_SHOTS: Shot[] = [
   planShot("projects--focus-next", { recorded: "projects.json" }, { widths: [1440, 390], act: focus("[data-pagination] a:visible >> nth=-1") }, "/projects"),
   planShot("projects--empty", { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' }, {}, "/projects"),
   planShot("projects--error", { status: 503, body: SERVICE_DOWN }, {}, "/projects"),
+];
+
+const HUB_SHOTS: Shot[] = [
+  // The frame and the Summary.
+  hubShot("summary", "/projects/P130164"),
+  hubShot("summary--loading", "/projects/P130164", { pending: ["/api/projects/P130164/summary"] }),
+  hubShot("summary--frame-loading", "/projects/P130164", { pending: ["/api/projects/P130164"] }),
+  hubShot("summary--active", "/projects/P156634"),
+  hubShot("summary--history-unknown", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => Object.assign(body, { history: { known: false, rows: [] }, lead: { ...body.lead, moves: null } })) }),
+  hubShot("summary--no-ratings", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.ratings = [])) }),
+  hubShot("summary--value-missing", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.dates[0].value = null)) }),
+  hubShot("summary--error", "/projects/P130164", {}, { "/api/projects/P130164/summary": { status: 503, body: SERVICE_DOWN } }),
+  hubShot("summary--permission", "/projects/P130164", {}, { "/api/projects/P130164/summary": { status: 403, body: '{"code":"permission"}' } }),
+  hubShot("summary--header-error", "/projects/P130164", {}, { "/api/projects/P130164": { status: 503, body: SERVICE_DOWN } }),
+  hubShot("summary--focus-tab", "/projects/P130164", { widths: [1440, 390], act: focus("nav[aria-label='Project sections'] a >> nth=1") }),
+  hubShot("summary--hover-tab", "/projects/P130164", { widths: [1440], act: hover("nav[aria-label='Project sections'] a >> nth=2") }),
+  hubShot("summary--marker-focused", "/projects/P130164", { widths: [1440], act: focus("[data-fact=closing_date] [data-citation]") }),
+  hubShot("summary--drawer-record", "/projects/P130164", { widths: [1440], full: false, act: click("[data-fact=commitment] [data-citation]") }),
+  hubShot("summary--320", "/projects/P130164", { widths: [320] }),
+  // Procurement.
+  hubShot("procurement", "/projects/P156634/procurement"),
+  hubShot("procurement--baseline-mark", "/projects/P156634/procurement", {}, { "/api/projects/P156634": { recorded: "project-p156634-baseline.json" } }),
+  hubShot("procurement--versions-folded", "/projects/P156634/procurement", { widths: [1440, 390] }, { "/api/projects/P156634": { body: longVersions } }),
+  hubShot("procurement--versions-open", "/projects/P156634/procurement", { widths: [1440, 390], full: true, act: click("[data-agency] button[aria-expanded=false]") }, { "/api/projects/P156634": { body: longVersions } }),
+  hubShot("procurement--loading", "/projects/P156634/procurement", { pending: ["/api/projects/P156634"] }),
+  hubShot("procurement--packages-searched", "/projects/P156634/procurement?packages_q=boreholes"),
+  hubShot("procurement--packages-no-match", "/projects/P156634/procurement?packages_q=atlantis"),
+  hubShot("procurement--packages-page-2", "/projects/P156634/procurement?packages_page=2"),
+  hubShot("procurement--packages-error", "/projects/P156634/procurement", {}, { "/api/projects/P156634/packages": { status: 503, body: SERVICE_DOWN } }),
+  hubShot("procurement--packages-loading", "/projects/P156634/procurement", { pending: ["/api/projects/P156634/packages"] }),
+  // Check a plan: the change line, the change list and the baseline panel.
+  hubShot("check-plan--change-list", `${PLAN}#changes`),
+  hubShot("check-plan--added-redated", "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30#changes"),
+  hubShot("check-plan--earliest", "/projects/P156634/procurement/northern-water-works-development-agency/2020-12-07", {}, {
+    "/api/projects/P156634/procurement/northern-water-works-development-agency/2020-12-07": { body: derived(PLAN_FILE, (body) => (body.plan.plan_date = "2020-12-07")) },
+  }),
+  hubShot("check-plan--baseline-none", PLAN),
+  hubShot("check-plan--baseline-another", PLAN, {}, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
+  hubShot("check-plan--baseline-this", "/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21"),
+  hubShot("check-plan--baseline-confirm", PLAN, { act: click("[data-baseline] button[data-button=secondary]") }, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
+  hubShot("check-plan--baseline-saving", PLAN, { act: click("[data-baseline] button") }, { [`${PLAN_API.replace(/\/2026-10-09$/, "")}/baseline`]: { status: 503, body: SERVICE_DOWN } }),
+  hubShot("check-plan--baseline-piu", `${PLAN}?view=piu`, {}, { [`${PLAN_API}?view=piu`]: { body: derived("check-plan-p156634-nwwda-2026-10-09-baseline.json", (body) => (body.baseline.saved_by = null)) } }),
+  hubShot("check-plan--baseline-delay-num", PLAN, { widths: [1440, 390], act: focus("[data-baseline-delay] button[data-num]:visible") }, { [PLAN_API]: { recorded: "check-plan-p156634-nwwda-2026-10-09-baseline.json" } }),
+  // Documents.
+  hubShot("documents", "/projects/P130164/documents"),
+  hubShot("documents--loading", "/projects/P130164/documents", { pending: ["/api/projects/P130164/documents"] }),
+  hubShot("documents--group-open", "/projects/P130164/documents", { full: true, act: click("[data-documents] button[aria-expanded=false]:visible") }),
+  hubShot("documents--term-open", "/projects/P130164/documents", { widths: [1440], act: click("[data-documents] [data-term]") }),
+  hubShot("documents--empty", "/projects/P130164/documents", {}, { "/api/projects/P130164/documents": { body: derived("documents-p130164.json", (body) => Object.assign(body, { groups: [], total: 0, shown_total: 0 })) } }),
+  hubShot("documents--error", "/projects/P130164/documents", {}, { "/api/projects/P130164/documents": { status: 503, body: SERVICE_DOWN } }),
+  // The source view.
+  hubShot("source", `${SOURCE}?page=23&para=54`),
+  hubShot("source--loading", `${SOURCE}?page=23&para=54`, { pending: [`/api${SOURCE}`] }),
+  hubShot("source--no-para-asked", `${SOURCE}?page=23`),
+  hubShot("source--moved", `${SOURCE}?page=22&para=54`),
+  hubShot("source--no-para", `${SOURCE}?page=23&para=999`),
+  hubShot("source--page-range", `${SOURCE}?page=80`),
+  hubShot("source--page-unread", `${SOURCE}?page=5`),
+  hubShot("source--page-empty", `${SOURCE}?page=49`),
+  hubShot("source--front-matter", `${SOURCE}?page=2`),
+  hubShot("source--doc-unread", "/projects/P130164/documents/30152361"),
+  hubShot("source--not-found", "/projects/P130164/documents/not-a-document"),
+  hubShot("source--ambiguous", "/projects/P130164/documents/isr"),
+  hubShot("source--as-of", `${SOURCE}?page=23&asof=2019-10-01`),
+  hubShot("source--reissue", "/projects/P130164/documents/icr-review-2023-05-04?page=1"),
+  hubShot("source--error", `${SOURCE}?page=23&para=54`, {}, { [`/api${SOURCE}?page=23&para=54`]: { status: 503, body: SERVICE_DOWN } }),
+  hubShot("source--focus-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440, 390], act: focus("[data-page-bar] a:visible >> nth=-1") }),
+  hubShot("source--hover-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440], act: hover("[data-page-bar] a:visible >> nth=-1") }),
+  hubShot("source--320", `${SOURCE}?page=23&para=54`, { widths: [320] }),
+  // The drawer's link to the source view, focused, then where it lands.
+  hubShot("drawer--open-at-page", `/projects/P130164?evidence=${encodeURIComponent("strata.gold.passage:31525018/v1/54")}`, { widths: [1440, 390], full: false, act: focus("[data-open-at-page]") }),
+  hubShot("drawer--landed", `/projects/P130164?evidence=${encodeURIComponent("strata.gold.passage:31525018/v1/54")}`, { widths: [1440, 390], act: click("[data-open-at-page]") }),
 ];
 
 // Ticket 14: the one box, the answer panel and the evidence drawer, as the 14 brief's section 11 lists
@@ -665,6 +787,7 @@ export const SHOTS: Shot[] = [
   // lists (section 10), with /api answered from the recordings.
   ...PLAN_SHOTS,
   ...PROJECT_SHOTS,
+  ...HUB_SHOTS,
   ...ANSWER_SHOTS,
   ...DRAFT_SHOTS,
   ...PACKAGE_SHOTS,

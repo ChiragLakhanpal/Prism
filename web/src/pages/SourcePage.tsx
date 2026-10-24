@@ -91,7 +91,7 @@ function heading(document: Doc): string {
 }
 
 // The page bar: Previous page, "Page n of m" (which takes focus after a move), Go to page, Next page.
-function PageBar({
+export function PageBar({
   pid,
   doc,
   page,
@@ -129,7 +129,7 @@ function PageBar({
       </TextLink>
       {full ? (
         <>
-          <p ref={positionRef} tabIndex={-1} data-lead className="text-caption text-ink-muted tabular-nums focus:outline-none">
+          <p ref={positionRef} tabIndex={-1} data-page-lead className="text-caption text-ink-muted tabular-nums focus:outline-none">
             {words.pages.position(whole(page), whole(last))}
           </p>
           <form onSubmit={go} className="order-last flex w-full items-center gap-3 @md/page:order-none @md/page:w-auto">
@@ -187,7 +187,7 @@ function Highlighted({ caption, children, blockRef }: { caption: ReactNode; chil
   );
 }
 
-function Passages({ answer, blockRef }: { answer: SourcePageAnswer; blockRef: React.Ref<HTMLDivElement> }) {
+export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; blockRef: React.Ref<HTMLDivElement> }) {
   const passages = answer.passages ?? [];
   const highlight = answer.highlight;
   let section: string | null = null;

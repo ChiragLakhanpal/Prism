@@ -82,6 +82,13 @@ test("switching tabs keeps the header in place and focus on the tab, says which 
   await expect(page).toHaveURL(/\/projects\/P130164$/);
 });
 
+test("arriving at a project page from All projects focuses its h1, as any route change does", async ({ page }) => {
+  await open(page, "/projects?q=india", 1440, { "/api/projects?q=india": { body: await recorded("projects-india.json") } });
+  await main(page).locator("[data-table-view=table]").getByRole("link", { name: "P130164" }).click();
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  await expect(main(page).getByRole("heading", { level: 1 })).toBeFocused();
+});
+
 // ── The Summary ─────────────────────────────────────────────────────────
 
 test("P130164's Summary renders from records with no request to a route that calls a model, and every value has a source line", async ({ page }) => {
@@ -379,7 +386,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   const unrecorded = await open(page, "/projects/P156634/procurement", 1440, await p156634());
   const packages = page.locator("[data-packages=ready]");
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
-  await expect(packages.locator("[data-lead]")).toHaveText("Showing 1–20 of 46 packages");
+  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
   await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#KE-NWWDA-229129-CW-RFB`);
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
@@ -387,7 +394,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
 
   await packages.getByRole("link", { name: "Next page" }).click();
   await expect(page).toHaveURL(/packages_page=2$/);
-  await expect(page.locator("[data-packages] [data-lead]")).toHaveText("Showing 21–40 of 46 packages");
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21–40 of 46 packages");
 
   // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });

@@ -139,7 +139,7 @@ export function Table({
   // A new page of rows is on its way, such as while a search waits for its answer: the rows stay, dimmed,
   // marked busy, and this sentence takes the count line's place (the 21 brief, section 8.1).
   busy?: ReactNode;
-  // The count line takes focus after Previous page or Next page (data-lead, App.tsx), so the new range is read.
+  // The count line takes focus after Previous page or Next page (data-page-lead, App.tsx), so the new range is read.
   countLead?: boolean;
 }) {
   const ownTitleId = useId();
@@ -217,7 +217,7 @@ export function Table({
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
-              <p id={countId} data-numbers data-lead={countLead || undefined} tabIndex={countLead ? -1 : undefined} className="focus:outline-none">
+              <p id={countId} data-numbers data-page-lead={countLead || undefined} tabIndex={countLead ? -1 : undefined} className="focus:outline-none">
                 {busy ?? countText(count)}
               </p>
               {cardsNote && (

@@ -17,11 +17,23 @@ export function projectHref(pid: string): string {
   return `/projects/${pid}`;
 }
 
-export function ProjectId({ pid, className }: { pid: string; className?: string }) {
+export function ProjectId({ pid, className, current: shown }: {
+  pid: string;
+  className?: string;
+  // The gallery shows the current state on a page that is not the project's.
+  current?: boolean;
+}) {
   const here = useStore(address);
-  const current = here.pathname === projectHref(pid);
+  const current = shown ?? here.pathname === projectHref(pid);
   return (
-    <TextLink href={projectHref(pid)} aria-current={current ? "page" : undefined} data-project-id={pid} className={cx("font-mono font-medium whitespace-nowrap", className)}>
+    // In small type the link's own box can fall under 24 px, so an ::after 2 px over it above and below pads
+    // its hit area to WCAG 2.5.8's 24 px without changing the line, as the citation marker's does.
+    <TextLink
+      href={projectHref(pid)}
+      aria-current={current ? "page" : undefined}
+      data-project-id={pid}
+      className={cx("relative font-mono font-medium whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']", className)}
+    >
       {pid}
     </TextLink>
   );

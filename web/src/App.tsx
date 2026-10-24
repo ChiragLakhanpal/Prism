@@ -160,10 +160,15 @@ export function App() {
   // a change to any other part of the address, such as ?asof=, is one.
   const route = routeOf(here);
   const lastRoute = useRef(route);
+  const lastPath = useRef(here.pathname);
   const section = useRef(match.section);
   useEffect(() => {
     const moved = lastRoute.current !== route;
     lastRoute.current = route;
+    // A move that keeps the page and changes only its query, such as Next page on All projects or in a
+    // document (ticket 21), focuses the page's own lead for that, so the new range is read.
+    const samePage = lastPath.current === here.pathname;
+    lastPath.current = here.pathname;
     const within = section.current !== undefined && section.current === match.section;
     section.current = match.section;
     if (!moved || here.moves === 0 || here.quiet) return;
@@ -172,8 +177,9 @@ export function App() {
     // Back to a page with the evidence drawer open, such as from the source view the drawer's "Open at
     // page" opened (ticket 21): the drawer's heading takes focus, where the person was.
     const drawerHeading = evidenceIn(here.search) ? document.querySelector<HTMLElement>("[data-evidence-drawer] h2") : null;
+    const pageLead = samePage ? document.querySelector<HTMLElement>("main [data-page-lead]") : null;
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
-    (drawerHeading ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    (drawerHeading ?? pageLead ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
     retryStamp();
   }, [route, here.moves]);
 

@@ -99,6 +99,10 @@ _Avoid_: Time to award (award comes before signature)
 The gap between a date in the procurement plan, as first published, and the date the step actually happened.
 _Avoid_: Slippage
 
+**Baseline**:
+The version of an implementing agency's Procurement Plan that World Bank staff saved as the plan agreed at negotiations. Later checks of that agency's plans also give the delay from the baseline's planned dates, beside the delay from the first published planned date; the baseline never changes a signal.
+_Avoid_: Original plan (the first published version is a different thing)
+
 **Rebidding**:
 Inviting bids again after a procurement process was canceled or all bids were rejected.
 _Avoid_: Re-bid, re-tender

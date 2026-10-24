@@ -14,7 +14,7 @@
 // populated, a value missing from its record, a source not loaded for this project (the closing date
 // history), no ratings yet, a project before the Environmental and Social Framework, pipeline or
 // dropped, a service that didn't answer, and an account that can't read Strata's tables.
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { CitationMarker } from "../../components/CitationMarker";
 import { EvidenceCard } from "../../components/EvidenceCard";
 import { FactTable, type FactRow } from "../../components/FactTable";
@@ -232,67 +232,46 @@ function History({ summary, numbers, events }: { summary: Summary; numbers: Map<
 // The skeleton's rows: as many as a populated P130164 summary has in each table.
 const LOADING_ROWS = { dates: 3, money: 3, ratings: 4, who: 3 };
 
-export function SummaryTab({ pid }: { pid: string }) {
-  const [load, retry] = useLoad<Summary>(`/api/projects/${encodeURIComponent(pid)}/summary`);
-  const lead = useRef<HTMLDivElement>(null);
-  const data = load.status === "ready" ? load.data : null;
+const head = (key: keyof typeof words.col) => words.col[key];
 
-  // Each source the summary cites is known to the evidence drawer at once, so a marker opens it with no request.
-  useEffect(() => {
-    if (data) for (const event of data.sources) remember(event);
-  }, [data]);
-
-  const heading = <h2 className="sr-only">{words.heading}</h2>;
-  const columns = (children: ReactNode) => (
-    <div className="layout-grid" data-summary={load.status}>
-      <div className="col-span-12 @xl/page:col-span-7">{children}</div>
-    </div>
+// While the summary loads: two bars for the lead and one for the caption, then the four groups' real titles
+// and table heads over skeleton rows as many as P130164's, so nothing moves when the facts arrive.
+export function SummarySkeleton() {
+  const group = (key: keyof typeof LOADING_ROWS, value: keyof typeof words.col, numeric = false) => (
+    <FactTable
+      title={words.group[key]}
+      caption={words.group[key]}
+      labelHeader={head("label")}
+      valueHeader={head(value)}
+      sourceHeader={head("source")}
+      rows={[]}
+      numeric={numeric}
+      loadingRows={LOADING_ROWS[key]}
+    />
   );
+  return (
+    <>
+      <div aria-hidden="true">
+        <SkeletonLine className="text-h3" width="w-[65ch] max-w-full" />
+        <SkeletonLine className="text-h3" width="w-[45ch] max-w-[70%]" />
+        <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
+      </div>
+      <p role="status" className="sr-only">
+        {words.loading}
+      </p>
+      <div className="mt-8 flex flex-col gap-12">
+        {group("dates", "date")}
+        {group("money", "money", true)}
+        {group("ratings", "rating")}
+        {group("who", "detail")}
+      </div>
+    </>
+  );
+}
 
-  if (load.status === "error") {
-    return columns(
-      <>
-        {heading}
-        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-      </>,
-    );
-  }
-
-  const head = (key: keyof typeof words.col) => words.col[key];
-  if (!data) {
-    const group = (key: keyof typeof LOADING_ROWS, value: keyof typeof words.col, numeric = false) => (
-      <FactTable
-        title={words.group[key]}
-        caption={words.group[key]}
-        labelHeader={head("label")}
-        valueHeader={head(value)}
-        sourceHeader={head("source")}
-        rows={[]}
-        numeric={numeric}
-        loadingRows={LOADING_ROWS[key]}
-      />
-    );
-    return columns(
-      <>
-        {heading}
-        <div aria-hidden="true">
-          <SkeletonLine className="text-h3" width="w-[65ch] max-w-full" />
-          <SkeletonLine className="text-h3" width="w-[45ch] max-w-[70%]" />
-          <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
-        </div>
-        <p role="status" className="sr-only">
-          {words.loading}
-        </p>
-        <div className="mt-8 flex flex-col gap-12">
-          {group("dates", "date")}
-          {group("money", "money", true)}
-          {group("ratings", "rating")}
-          {group("who", "detail")}
-        </div>
-      </>,
-    );
-  }
-
+// The populated summary: the lead, its caption and the four fact tables.
+export function SummaryFacts({ summary }: { summary: Summary }) {
+  const data = summary;
   const name = data.project.display_name ?? data.project.project_name;
   const numbers = numberSources(data);
   const events = Object.fromEntries(data.sources.map((event) => [event.id, event]));
@@ -309,16 +288,12 @@ export function SummaryTab({ pid }: { pid: string }) {
     return [fact];
   });
   const whoValue = (fact: Fact) => (fact.key === "sectors" || fact.key === "agencies" || fact.key === "agency" ? <Lines values={fact.values ?? []} /> : text(fact));
-
-  return columns(
+  return (
     <>
-      {heading}
-      <div ref={lead}>
-        <Lead summary={data} />
-        <p className="mt-2 text-caption text-ink-muted" data-made-by>
-          <Fill template={words.madeBy} slots={{ as_of_date: <Num date={data.as_of} /> }} />
-        </p>
-      </div>
+      <Lead summary={data} />
+      <p className="mt-2 text-caption text-ink-muted" data-made-by>
+        <Fill template={words.madeBy} slots={{ as_of_date: <Num date={data.as_of} /> }} />
+      </p>
       <div className="mt-8 flex flex-col gap-12">
         <div>
           <FactTable
@@ -366,6 +341,31 @@ export function SummaryTab({ pid }: { pid: string }) {
           rows={factRows(who, numbers, events, whoValue)}
         />
       </div>
-    </>,
+    </>
+  );
+}
+
+export function SummaryTab({ pid }: { pid: string }) {
+  const [load, retry] = useLoad<Summary>(`/api/projects/${encodeURIComponent(pid)}/summary`);
+  const data = load.status === "ready" ? load.data : null;
+
+  // Each source the summary cites is known to the evidence drawer at once, so a marker opens it with no request.
+  useEffect(() => {
+    if (data) for (const event of data.sources) remember(event);
+  }, [data]);
+
+  return (
+    <div className="layout-grid" data-summary={load.status}>
+      <div className="col-span-12 @xl/page:col-span-7">
+        <h2 className="sr-only">{words.heading}</h2>
+        {load.status === "error" ? (
+          <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        ) : data ? (
+          <SummaryFacts summary={data} />
+        ) : (
+          <SummarySkeleton />
+        )}
+      </div>
+    </div>
   );
 }
