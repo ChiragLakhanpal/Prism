@@ -39,8 +39,11 @@ TABLES = {
 
 # The projects API's field for a project's overall risk rating under the Environmental and Social
 # Framework (ESF), which a project approved since October 2018 has in place of an Environmental
-# Assessment Category. No recorded record holds it, so the name waits for a live check (ticket 21).
+# Assessment Category. No recorded record holds it. A live check on October 24, 2026 confirmed the
+# name and found the rating written as a letter (H, S, M or L in the 500 newest projects), so silver
+# keeps the ESF's word for each letter, and keeps any other value word for word (ticket 21).
 ESF_RISK = "esrc_ovrl_risk_rate"
+ESF_RISK_WORDS = {"H": "High", "S": "Substantial", "M": "Moderate", "L": "Low"}
 
 # The columns that tell one of the source's records from another (strata.lakehouse.readiness).
 RECORD_KEY = ("project_id",)
@@ -94,6 +97,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         ratings += _isr_ratings(project_id, record.get("isr_ratings"), page_hash, fetched_at, fetched)
         shares += [(project_id, *sector, page_hash, fetched_at, public) for sector in _sectors(record.get("major_sectors"))]
         category, risk = clean.text(record.get("envassesmentcategorycode")), clean.text(record.get(ESF_RISK))
+        risk = ESF_RISK_WORDS.get(risk.upper(), risk) if risk else risk
         if category or risk:
             environment.append((project_id, category, risk, page_hash, fetched_at, public))
     return {"strata.silver.projects": projects, "strata.silver.project_loans": loans,

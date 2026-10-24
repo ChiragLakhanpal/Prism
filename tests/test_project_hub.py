@@ -139,7 +139,7 @@ def test_a_record_fetched_with_the_projects_endpoint_s_fields_gives_the_same_sil
 
     recorded = Path(__file__).parents[1] / "data" / "fixture" / "recorded" / "api" / "projects" / "P130164.json"
     full = json.loads(recorded.read_text())["response"]
-    full["projects"]["P000009"] = {**full["projects"]["P130164"], "id": "P000009", ESF_FIELD: "Substantial"}
+    full["projects"]["P000009"] = {**full["projects"]["P130164"], "id": "P000009", ESF_FIELD: "S"}
     asked = parse_qs(urlsplit(load_sources()["projects"].endpoint).query)["fl"][0].split(",")
     fetched = {"projects": {pid: {field: value for field, value in record.items() if field in asked}
                             for pid, record in full["projects"].items()}}
@@ -152,20 +152,26 @@ def test_silver_keeps_a_project_s_risk_rating_under_the_environmental_and_social
     """Seam 1: a project approved under the Environmental and Social Framework (ESF) has an overall
     environmental and social risk rating in its record, and often no Environmental Assessment Category.
     No recorded project has one (P130164 and P156634 predate the ESF, and the Kenya list was fetched
-    without the field), so these records are written by hand, in the API's shape."""
+    without the field), so these records are written by hand, in the API's shape. The API gives the rating
+    as a letter: on October 24, 2026, the 500 newest projects held H, S, M or L there (or nothing), and
+    silver keeps the ESF's word for it, so the Summary never shows a bare letter."""
     from strata.lakehouse.silver import projects as silver_projects
 
     at = dt.datetime(2026, 10, 23, tzinfo=dt.UTC)
     body = {"projects": {
-        "P000009": {"id": "P000009", "boardapprovaldate": "2021-06-15T00:00:00Z", ESF_FIELD: "Substantial"},
+        "P000009": {"id": "P000009", "boardapprovaldate": "2021-06-15T00:00:00Z", ESF_FIELD: "S"},
         "P000008": {"id": "P000008", "boardapprovaldate": "2015-06-15T00:00:00Z", "envassesmentcategorycode": "A"},
         "P000007": {"id": "P000007", "boardapprovaldate": "2015-06-15T00:00:00Z"},
+        "P000006": {"id": "P000006", "boardapprovaldate": "2024-03-01T00:00:00Z", ESF_FIELD: "H"},
+        "P000005": {"id": "P000005", "boardapprovaldate": "2024-03-01T00:00:00Z", ESF_FIELD: "M"},
+        "P000004": {"id": "P000004", "boardapprovaldate": "2024-03-01T00:00:00Z", ESF_FIELD: "L"},
     }}
 
     rows = silver_projects.parse(body, "page", at)["strata.silver.project_environment"]
 
     assert [(pid, category, risk) for pid, category, risk, *_ in rows] == [
-        ("P000009", None, "Substantial"), ("P000008", "A", None)]
+        ("P000009", None, "Substantial"), ("P000008", "A", None), ("P000006", None, "High"),
+        ("P000005", None, "Moderate"), ("P000004", None, "Low")]
 
 
 def facts(summary):

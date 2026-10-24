@@ -4,7 +4,8 @@
 -- (ticket 21). A project's Summary shows the risk rating, or the category when the record has no rating.
 --
 -- ea_category   the category, word for word, such as B; empty when the record gives none
--- esf_risk      the risk rating, word for word, such as Substantial; empty when the record gives none
+-- esf_risk      the risk rating as the ESF words it (High, Substantial, Moderate or Low), from the API's
+--               letter (H, S, M or L); any other value word for word; empty when the record gives none
 -- public_from   as silver.projects gives the record (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.project_environment (
   project_id STRING NOT NULL,
