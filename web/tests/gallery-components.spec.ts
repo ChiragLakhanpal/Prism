@@ -748,3 +748,26 @@ for (const [how, handle] of Object.entries(HANDLE)) {
     expect(await strip.evaluate((row) => row.scrollLeft), how).toBe(left);
   });
 }
+
+test("the Plan check page shows the plan check at the page's full width, so its columns fit as they do on Check a plan", async ({ page }) => {
+  await page.goto("/gallery/plan-check");
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const table = page.locator("[data-state-section=ready] [data-view=table]");
+    await expect(table).toBeVisible();
+    // The frame's margin is 72 px from 1024 px, so the page's 12 columns are the width less 144 px.
+    expect(Math.round((await table.boundingBox())!.width), `${width} px`).toBe(width - 144);
+    // No cell's text runs past its content box.
+    const overflow = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("[data-view=table] th, [data-view=table] td")).flatMap((cell) => {
+        if (cell.getClientRects().length === 0) return [];
+        const right = cell.getBoundingClientRect().right - parseFloat(getComputedStyle(cell).paddingRight) + 0.5;
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        return Array.from(range.getClientRects()).some((rect) => rect.right > right) ? [cell.textContent ?? ""] : [];
+      }),
+    );
+    expect(overflow, `${width} px`).toEqual([]);
+  }
+});

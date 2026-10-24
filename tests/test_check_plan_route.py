@@ -89,6 +89,18 @@ def test_the_plan_check_route_returns_the_tools_result_for_the_viewer(fixture_ap
     assert "token-for-ana-only" not in response.text
 
 
+@pytest.mark.parametrize("path, name", [
+    ("/api/projects/P156634/procurement/wajir-water-and-sewerage-company", "check-plan-p156634-wajir-no-plan.json"),
+    (f"{NWWDA_PLAN}/2026-10-10", "check-plan-p156634-nwwda-2026-10-10-not-found.json"),
+])
+def test_the_screens_recorded_abstentions_are_what_the_route_answers(fixture_app, path, name):
+    # The Check a plan screen's empty states: an agency with no plan, and a version it never published.
+    response = get(fixture_app, f"{path}?asof=2026-10-22", ANA)
+
+    assert response.status_code == 200
+    assert response.json() == json.loads((RECORDED / name).read_text())
+
+
 def test_the_route_without_a_version_checks_the_agencys_latest_plan(fixture_app):
     response = get(fixture_app, f"{NWWDA_PLAN}?asof=2026-10-22", ANA)
 

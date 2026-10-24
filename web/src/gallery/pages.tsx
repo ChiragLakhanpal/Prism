@@ -18,6 +18,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Answer } from "../components/Answer";
+import { Breadcrumb } from "../components/Breadcrumb";
+import { CheckPill } from "../components/CheckPill";
+import { Fill } from "../components/Fill";
+import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { Alert } from "../components/Alert";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/BoxBand";
 import { Button } from "../components/Button";
@@ -49,6 +53,9 @@ export type GalleryPage = {
   slug: keyof typeof galleryCopy.pages;
   // The tab the frame selects on this page.
   current?: Section;
+  // A component that sizes itself to the page's 12 columns, as the plan check's table does, takes
+  // them all here too, so the gallery shows it as it ships.
+  wide?: boolean;
   sections: { id: string; title: string; body: ReactNode }[];
 };
 
@@ -135,6 +142,24 @@ const passage: Passage = {
 };
 
 const mono = (text: string) => <span className="font-mono">{text}</span>;
+
+// The Plan check page's sample, from the gallery's copy, and its partial check: one activity whose
+// plan gives no planned date gets a data note, and the counts say so.
+const pc = sample.planCheck;
+const planSample = pc.result as unknown as CheckedPlan;
+const partialSample: CheckedPlan = {
+  ...planSample,
+  counts: { ...planSample.counts, ...pc.partialCounts },
+  rows: planSample.rows.map((row) =>
+    row.activity_reference_no === pc.partialRef ? { ...row, marks: [pc.partialMark as unknown as CheckedPlan["rows"][number]["marks"][number]] } : row,
+  ),
+};
+const planTrail = [
+  { text: copy.breadcrumb.projects, href: "#projects" },
+  { text: <Fill template={copy.breadcrumb.project} slots={{ name: pc.crumbProject, pid: mono(planSample.plan.project_id) }} />, href: "#project" },
+  { text: copy.breadcrumb.procurement, href: "#procurement" },
+  { text: pc.crumbPlan },
+];
 
 // The Table page's sample: four activities, three of them late, as its title says.
 const columns: Column[] = sample.tableHeaders.map((header, index) => ({
@@ -303,15 +328,15 @@ export const PAGES: GalleryPage[] = [
           <div className="max-w-[54rem]">
             <PageHeader
               level={2}
-              title={<WithIds template={copy.pages.project.title} values={{ pid: sample.pcode }} />}
-              purpose={copy.pages.project.purpose}
+              title={<WithIds template={copy.pages.activity.title} values={{ stepRef: sample.tableRows[0][0] }} />}
+              purpose={copy.pages.activity.purpose}
             />
             <EmptyState
               level={3}
               className="mt-6 lg:mt-8"
-              title={<WithIds template={copy.pages.project.emptyTitle} values={{ pid: sample.pcode }} />}
-              body={copy.pages.project.emptyBody}
-              link={{ href: "#projects", text: copy.pages.project.link }}
+              title={<WithIds whole template={copy.pages.activity.emptyTitle} values={{ stepRef: sample.tableRows[0][0] }} />}
+              body={copy.pages.activity.emptyBody}
+              link={{ href: "#project", text: <WithIds template={copy.pages.activity.link} values={{ pid: sample.pcode }} /> }}
             />
           </div>
         ),
@@ -371,6 +396,16 @@ export const PAGES: GalleryPage[] = [
               {sample.ghost}
             </Button>
           </Panel>
+        ),
+      },
+      {
+        // DESIGN.md section 5: on the page background a ghost button hovers to tint.
+        id: "on-page",
+        title: t.onPage,
+        body: (
+          <Button variant="ghost" flush onPage icon={ChevronDown}>
+            {sample.ghost}
+          </Button>
         ),
       },
       {
@@ -854,6 +889,46 @@ export const PAGES: GalleryPage[] = [
           </Panel>
         ),
       },
+    ],
+  },
+  {
+    // Ticket 10's Check a plan (web/src/components/PlanCheck.tsx). The page's own states, with
+    // the real plan, are captured from the production build (web/capture/shots.ts).
+    slug: "plan-check",
+    current: "projects",
+    wide: true,
+    sections: [
+      { id: "breadcrumb", title: t.breadcrumb, body: <Breadcrumb trail={planTrail} /> },
+      {
+        id: "pill",
+        title: t.pill,
+        body: (
+          <Inline>
+            {checkPill(planSample)}
+            <CheckPill>{copy.checkPlan.pillPartial(String(pc.pillPartial.checked), String(pc.pillPartial.total))}</CheckPill>
+          </Inline>
+        ),
+      },
+      {
+        id: "ready",
+        title: t.planReady,
+        body: (
+          <>
+            <PlanCheckHeader
+              level={2}
+              sticky={false}
+              agency={planSample.plan.implementing_agency}
+              plan={planSubtitle(planSample.plan.plan_date)}
+              pill={checkPill(planSample)}
+            />
+            <PlanCheck result={planSample} />
+          </>
+        ),
+      },
+      { id: "open", title: t.planOpen, body: <PlanCheck result={planSample} defaultOpen /> },
+      { id: "partial", title: t.planPartial, body: <PlanCheck result={partialSample} /> },
+      { id: "loading", title: s.loading, body: <PlanCheckSkeleton /> },
+      { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
   {

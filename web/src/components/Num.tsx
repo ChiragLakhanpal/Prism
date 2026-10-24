@@ -18,7 +18,7 @@ import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 
 export type NumValue =
   | { value: number; options?: NumberOptions }
-  | { count: number }
+  | { count: number; capital?: boolean }
   | { year: number }
   | { date: string; style?: DateStyle }
   | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" };
@@ -34,18 +34,21 @@ export type NumCheck = {
 
 export function numText(num: NumValue): string {
   if ("value" in num) return formatNumber(num.value, num.options);
-  if ("count" in num) return formatCount(num.count);
+  if ("count" in num) return formatCount(num.count, { capital: num.capital });
   if ("year" in num) return formatYear(num.year);
   if ("date" in num) return formatDate(num.date, { style: num.style });
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
 }
 
+// A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
+const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence") === "sentence";
+
 export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
   const text = numText(num as NumValue);
   if (!check) {
     return (
-      <span data-num className={cx("tabular-nums", className)}>
+      <span data-num className={cx("tabular-nums", sentenceDate(num as NumValue) && "whitespace-nowrap", className)}>
         {text}
       </span>
     );

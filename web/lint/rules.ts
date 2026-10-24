@@ -92,6 +92,8 @@ export const NON_COPY_PROPS = new Set([
   "htmlFor",
   // Table's breakpoint for cards: "md" or "lg".
   "cardsBelow",
+  // EightColumns' breakpoint: "lg" or "xl".
+  "breakpoint",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
 ]);

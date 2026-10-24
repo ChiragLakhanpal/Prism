@@ -69,14 +69,32 @@ export function formatNumber(value: number, options: NumberOptions = {}): string
   return grouped(decimals ?? defaultDecimals(value)).format(value);
 }
 
+// Section 7, rule 11: in a sentence a large amount reads "12.5 million" or "2 billion" (the
+// sentence writes the "US$" before it), with one decimal below 100 and a trailing ".0" dropped.
+// Below a million it is written in full. A STEP amount a reader looks up in STEP keeps its cents
+// instead (formatNumber with decimals: 2).
+export function formatAmountText(value: number): string {
+  const size = Math.abs(value);
+  // It rounds before it chooses: from 999.5 million an amount reads "1,000 million" rounded, so it
+  // takes billions' rule and reads "1 billion".
+  const unit = size >= 999_500_000 ? { size: 1e9, words: copy.num.billion } : size >= 1e6 ? { size: 1e6, words: copy.num.million } : null;
+  if (!unit) return formatNumber(value, { compact: false });
+  const mantissa = value / unit.size;
+  return unit.words(grouped(Math.abs(mantissa) < 100 ? 1 : 0).format(mantissa).replace(/\.0$/, ""));
+}
+
 // Years have no comma.
 export function formatYear(year: number): string {
   return String(year);
 }
 
-// Section 7, rule 12: one to nine in words, numerals from 10.
-export function formatCount(count: number): string {
-  if (Number.isInteger(count) && count >= 1 && count <= 9) return copy.num.words[count - 1];
+// Section 7, rule 12: one to nine in words, numerals from 10. A word that starts a sentence takes
+// a capital ("One needs a look").
+export function formatCount(count: number, options: { capital?: boolean } = {}): string {
+  if (Number.isInteger(count) && count >= 1 && count <= 9) {
+    const word = copy.num.words[count - 1];
+    return options.capital ? word.charAt(0).toUpperCase() + word.slice(1) : word;
+  }
   return grouped(defaultDecimals(count)).format(count);
 }
 

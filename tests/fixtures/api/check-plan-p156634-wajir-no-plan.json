@@ -1,0 +1,56 @@
+{
+  "tool": "check_plan",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "plan": null,
+  "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "status": "Active",
+    "closing_date": "2026-10-31",
+    "record_date": "2024-04-24",
+    "days_to_close": 9
+  },
+  "checks_run": [],
+  "thresholds": {
+    "completion_passed_min_estimated_usd": "1000000.00",
+    "days_before_closing": 90,
+    "actual_to_estimate_ratio": "2.0"
+  },
+  "counts": null,
+  "abstention": {
+    "reason": "no_plan_from_agency",
+    "implementing_agency": "wajir-water-and-sewerage-company",
+    "agency_name": "Wajir Water and Sewerage Company",
+    "agencies": [
+      {
+        "implementing_agency": "Coast Water Services Board",
+        "agency_id": "coast-water-services-board",
+        "latest_plan_date": "2026-08-17"
+      },
+      {
+        "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+        "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+        "latest_plan_date": "2025-03-19"
+      },
+      {
+        "implementing_agency": "Ministry of Water and Irrigation",
+        "agency_id": "ministry-of-water-and-irrigation",
+        "latest_plan_date": "2020-04-30"
+      },
+      {
+        "implementing_agency": "Northern Water Works Development Agency",
+        "agency_id": "northern-water-works-development-agency",
+        "latest_plan_date": "2026-10-09"
+      }
+    ]
+  }
+}
