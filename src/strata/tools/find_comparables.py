@@ -49,7 +49,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_sources, load_tools
-from strata.estimates.past_range import QUARTERS, Observation, months, quantile_dots, quartiles
+from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
 from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
 
@@ -345,10 +345,23 @@ def _past_range(rows: list[dict]) -> dict:
 
 
 def _quantile_dots(rows: list[dict], count: int) -> list[dict]:
+    """The quantile dots, each with the packages it stands for (ticket 15: a dot opens the evidence drawer at
+    them), their count, how many are still open, and their shortest and longest months. Packages on the same
+    day are taken in STEP reference order."""
     observations = [Observation(row["days"], not row["still_open"]) for row in rows]
     last = max(row["days"] for row in rows)  # a dot the curve never reaches sits at the last follow-up
-    return [{"k": k, "days": day if day is not None else last, "months": _as_float(months(day if day is not None else last)),
-             "reached": day is not None} for k, day in quantile_dots(observations, count)]
+    ordered = sorted(rows, key=lambda row: (row["days"], row["step_reference"]))
+    members = dot_packages([Observation(row["days"], not row["still_open"]) for row in ordered], count)
+    dots = []
+    for (k, day), indexes in zip(quantile_dots(observations, count), members):
+        standing = [ordered[index] for index in indexes]
+        dots.append({"k": k, "days": day if day is not None else last,
+                     "months": _as_float(months(day if day is not None else last)), "reached": day is not None,
+                     "step_references": [row["step_reference"] for row in standing], "count": len(standing),
+                     "still_open": sum(1 for row in standing if row["still_open"]),
+                     "low_months": min(row["months"] for row in standing),
+                     "high_months": max(row["months"] for row in standing)})
+    return dots
 
 
 def _record(row: dict | None, money: tuple[str, ...] = (), days: tuple[str, ...] = ()) -> dict | None:

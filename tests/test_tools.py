@@ -234,7 +234,13 @@ def past_range(result, question) -> dict[str, list]:
     """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
     the agent cites them by, the packages still open, the canceled ones it left out, the packages
     signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
-    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one."""
+    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
+    A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
+    one stands for."""
+    if "last_dot" in question["expected"]:
+        dots = result["quantile_dots"] or []
+        return {"quantile_dots": [len(dots)], "last_dot": sorted(dots[-1]["step_references"]) if dots else [],
+                "last_dot_still_open": [dots[-1]["still_open"]] if dots else []}
     found = {
         "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
         "cited_as": [result["summary"]["evidence_id"]],

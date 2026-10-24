@@ -326,7 +326,9 @@ Packages still open are kept as not signed yet (censored), so the range does not
 The past range is Kaplan-Meier: the months by which a quarter, half, three quarters and 8 in 10 of the \
 comparables were signed. Below {past_range.min_comparables} comparables it gives no range and no share and \
 abstains, and still returns every comparable. Above {past_range.quantile_dots_above} it also gives \
-{past_range.quantile_dots} quantile dots. The plan's own months, from its planned notice date to its planned \
+{past_range.quantile_dots} quantile dots, each an equal share of the curve, with the STEP references of the \
+comparables it stands for, how many there are, how many are still open, and their shortest and longest months. \
+The plan's own months, from its planned notice date to its planned \
 signing date, come back with how many comparables were signed within them. The past range, the count signed \
 within the plan's months, the numbers each "in 10" phrase states and the coverage counts also come back in the \
 result's summary, which you cite for them. In it, frequencies.q80 holds the numbers "8 in 10" states. \

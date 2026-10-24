@@ -2437,121 +2437,340 @@
       "k": 1,
       "days": 34,
       "months": 1.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-370761-GO-RFB",
+        "KE-TAVEVO-202752-GO-RFB",
+        "KE-WAJWASCO-372776-CW-RFB",
+        "KE-WAJWASCO-183994-GO-RFB",
+        "KE-WAJWASCO-356671-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 0.2,
+      "high_months": 1.5
     },
     {
       "k": 2,
       "days": 64,
       "months": 2.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-172346-GO-RFB",
+        "KE-MOWASCO-231719-GO-RFB",
+        "KE-TAVEVO-172327-GO-RFB",
+        "KE-TAVEVO-82746-GO-RFB",
+        "KE-TAVEVO-82752-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 1.8,
+      "high_months": 2.1
     },
     {
       "k": 3,
       "days": 70,
       "months": 2.3,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-172331-GO-RFB",
+        "KE-WASREB-229657-GO-RFB",
+        "KE-GAWASCO-174464-GO-RFB",
+        "KE-KWAWASCO-358910-GO-RFQ",
+        "KE-MAWASCO-149045-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 2.3,
+      "high_months": 2.4
     },
     {
       "k": 4,
       "days": 82,
       "months": 2.7,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-KWAWASCO-188520-GO-RFB",
+        "KE-TAVEVO-235685-GO-RFB",
+        "KE-TAVEVO-449427-CW-RFB",
+        "KE-WSTF-234306-GO-RFB",
+        "KE-MOWASCO-307292-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 2.5,
+      "high_months": 2.8
     },
     {
       "k": 5,
       "days": 85,
       "months": 2.8,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MOWASCO-307349-GO-RFB",
+        "KE-MOWASCO-307378-GO-RFB",
+        "KE-WAJWASCO-456993-CW-RFB",
+        "KE-KWAWASCO-126395-GO-RFB",
+        "KE-TAVEVO-239746-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 2.8,
+      "high_months": 2.8
     },
     {
       "k": 6,
       "days": 89,
       "months": 2.9,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-GAWASCO-111742-CW-RFB",
+        "KE-GAWASCO-436012-CW-RFB",
+        "KE-KWAWASCO-157940-GO-RFB",
+        "KE-KWAWASCO-201675-CW-RFB",
+        "KE-KWAWASCO-203571-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 2.9,
+      "high_months": 2.9
     },
     {
       "k": 7,
       "days": 93,
       "months": 3.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-170154-CW-RFB",
+        "KE-KWAWASCO-157936-GO-RFB",
+        "KE-TAVEVO-175703-CW-RFB",
+        "KE-WAJWASCO-205491-CW-RFB",
+        "KE-KWAWASCO-203572-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 2.9,
+      "high_months": 3.2
     },
     {
       "k": 8,
       "days": 104,
       "months": 3.4,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MOWASCO-113723-CW-RFB",
+        "KE-TAVEVO-451075-CW-RFB",
+        "KE-MAWASCO-177965-GO-RFB",
+        "KE-MAWASCO-177966-GO-RFB",
+        "KE-GAWASCO-67417-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 3.3,
+      "high_months": 3.4
     },
     {
       "k": 9,
       "days": 105,
       "months": 3.4,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-KIMAWASCO-481608-GO-RFB",
+        "KE-MAWASCO-69894-GO-RFB",
+        "KE-MOWASCO-228804-CW-RFB",
+        "KE-GAWASCO-54771-CW-RFB",
+        "KE-WAJWASCO-226565-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 3.4,
+      "high_months": 3.5
     },
     {
       "k": 10,
       "days": 108,
       "months": 3.5,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MAWASCO-38020-GO-RFB",
+        "KE-MAWASCO-70004-GO-RFB",
+        "KE-NWWDA-229129-CW-RFB",
+        "KE-WAJWASCO-80839-GO-RFQ",
+        "KE-WAJWASCO-225067-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 3.5,
+      "high_months": 3.6
     },
     {
       "k": 11,
       "days": 119,
       "months": 3.9,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-338455-CW-RFB",
+        "KE-CWSB-233052-CW-RFB",
+        "KE-GAWASCO-266383-CW-RFB",
+        "KE-WAJWASCO-220077-CW-RFB"
+      ],
+      "count": 4,
+      "still_open": 0,
+      "low_months": 3.7,
+      "high_months": 3.9
     },
     {
       "k": 12,
       "days": 125,
       "months": 4.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-WAJWASCO-22231-GO-RFB",
+        "KE-WAJWASCO-144915-GO-RFB",
+        "KE-MAWASCO-236802-CW-RFB",
+        "KE-TAVEVO-151330-CW-RFB",
+        "KE-KIMAWASCO-76105-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 3.9,
+      "high_months": 4.5
     },
     {
       "k": 13,
       "days": 155,
       "months": 5.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MAWASCO-236797-CW-RFB",
+        "KE-WSTF-430295-GO-RFB-ELDOWAS",
+        "KE-TAVEVO-82742-GO-RFB",
+        "KE-WAJWASCO-30745-GO-RFB",
+        "KE-MAWASCO-178688-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 4.6,
+      "high_months": 5.1
     },
     {
       "k": 14,
       "days": 175,
       "months": 5.7,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-TAVEVO-466579-GO-RFB",
+        "KE-TAVEVO-82743-GO-RFB",
+        "KE-KWAWASCO-74578-GO-RFB",
+        "KE-GAWASCO-174461-GO-RFB",
+        "KE-KIMAWASCO-130411-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 5.3,
+      "high_months": 6.0
     },
     {
       "k": 15,
       "days": 191,
       "months": 6.3,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-WSTF-430943-GO-RFB-NCWSC01",
+        "KE-KWAWASCO-74600-GO-RFQ",
+        "KE-KWAWASCO-74587-GO-RFQ",
+        "KE-MAWASCO-149056-CW-RFB",
+        "KE-KIMAWASCO-416959-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 6.1,
+      "high_months": 6.7
     },
     {
       "k": 16,
       "days": 213,
       "months": 7.0,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-GAWASCO-54761-CW-RFB",
+        "KE-GAWASCO-54759-CW-RFB",
+        "KE-GAWASCO-54763-CW-RFB",
+        "KE-GAWASCO-54775-CW-RFB",
+        "KE-WSTF-430946-GO-RFB-NCWSC02"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 6.8,
+      "high_months": 7.1
     },
     {
       "k": 17,
       "days": 235,
       "months": 7.7,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MAWASCO-156444-CW-RFB",
+        "KE-WAJWASCO-264933-GO-RFB",
+        "KE-MOWASCO-307384-GO-RFB",
+        "KE-CWSB-232660-CW-RFB",
+        "KE-TAVEVO-151304-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 7.2,
+      "high_months": 8.3
     },
     {
       "k": 18,
       "days": 277,
       "months": 9.1,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-KWAWASCO-206973-CW-RFB",
+        "KE-KWAWASCO-203531-CW-RFB",
+        "KE-KWAWASCO-203535-CW-RFB",
+        "KE-CWSB-150896-CW-RFB",
+        "KE-KIMAWASCO-141042-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 8.6,
+      "high_months": 9.5
     },
     {
       "k": 19,
       "days": 408,
       "months": 13.4,
-      "reached": true
+      "reached": true,
+      "step_references": [
+        "KE-MAWASCO-69899-CW-RFB",
+        "KE-KIMAWASCO-50050-GO-RFB",
+        "KE-KIMAWASCO-158691-CW-RFB",
+        "KE-KIMAWASCO-142995-CW-RFB",
+        "KE-WAJWASCO-26664-CW-RFB"
+      ],
+      "count": 5,
+      "still_open": 0,
+      "low_months": 10.0,
+      "high_months": 17.4
     },
     {
       "k": 20,
       "days": 2660,
       "months": 87.4,
-      "reached": false
+      "reached": false,
+      "step_references": [
+        "KE-MOWI-47509-CW-RFB",
+        "KE-MOWASCO-285253-GO-RFB",
+        "KE-WASREB-187622-GO-RFB",
+        "KE-WAJWASCO-154021-GO-RFB",
+        "KE-KWAWASCO-63985-GO-RFB"
+      ],
+      "count": 5,
+      "still_open": 4,
+      "low_months": 17.7,
+      "high_months": 87.4
     }
   ],
   "thresholds": {

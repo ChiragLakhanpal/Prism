@@ -98,6 +98,32 @@ questions:
       With no plan row there is no plan, so nothing is counted within one. The summary's evidence id has no
       STEP reference before the as-of date, and the criteria the call gave after it.
 
+  # Ticket 15: a quantile dot opens the evidence drawer at the packages it stands for, so the tool names them.
+  # This question asks only about the dots.
+  - id: find-comparables-ke-nwwda-541055-last-dot
+    kind: estimates
+    tool: find_comparables
+    question: >-
+      As of October 22, 2026, with the category left open, which of KE-NWWDA-541055-CW-RFB's comparable
+      packages does the last dot of the past range stand for, and how many of them are still open?
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      category: any
+      as_of: "2026-10-22"
+    expected:
+      quantile_dots: [20]
+      last_dot: [KE-KWAWASCO-63985-GO-RFB, KE-MOWASCO-285253-GO-RFB, KE-MOWI-47509-CW-RFB,
+                 KE-WAJWASCO-154021-GO-RFB, KE-WASREB-187622-GO-RFB]
+      last_dot_still_open: [4]
+    source: >-
+      Leaving the category open adds Kenya's goods packages under Request for Bids, which makes more than 60
+      comparables and so 20 quantile dots. Four goods packages were still open long after the last signing
+      (KE-MOWI-47509-CW-RFB, 539 days), and the curve never reaches 39 in 40, so the last dot stands for
+      the share Kaplan-Meier leaves them and the last signed package's share just before it. The same
+      worked example is in tests/test_find_comparables.py; the rule for a dot's packages, worked by hand
+      for the 49 default comparables, is in tests/ground_truth/values.toml ([past_range]
+      quantile_dot_packages).
+
   - id: search-passages-icr-rebidding
     kind: documents
     tool: search_passages
