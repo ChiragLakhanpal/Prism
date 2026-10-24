@@ -841,8 +841,11 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
     const sentence = page.locator("main p", { hasText: "No package in Strata has the reference" });
     await expect(sentence.locator(".font-mono").first()).toHaveText(long);
 
+    await page.evaluate(() => document.fonts.ready);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
-    // The sentence's lines as the reader sees them, one string per line.
+    // The sentence's lines as the reader sees them, one string per line. A character's top depends on
+    // its font, so the full stop in Open Sans and a mono digit on one line can sit a pixel apart: a
+    // character joins the line whose top is within 6 px of its own.
     const lines = await sentence.evaluate((p) => {
       const rows = new Map<number, string>();
       const walker = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
@@ -853,7 +856,7 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
           range.setEnd(node, i + 1);
           const rect = range.getBoundingClientRect();
           if (rect.width === 0) continue;
-          const top = Math.round(rect.top);
+          const top = [...rows.keys()].find((line) => Math.abs(line - rect.top) < 6) ?? rect.top;
           rows.set(top, (rows.get(top) ?? "") + range.toString());
         }
       }
@@ -882,8 +885,8 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
   expect((await county.locator(".font-mono").nth(1).evaluate((el) => el.getClientRects().length))).toBe(1);
 });
 
-// Ticket 16's Data readiness page answers an empty sources= or from= with a server error, so a
-// coverage line's link names the sources behind it and the tool, and never sends an empty value.
+// A coverage line's link names the sources behind it and the tool, and never sends an empty value.
+// Data readiness now reads an empty value as left out (ticket 16's V1), but the link does not rely on that.
 test("each coverage line's link names the sources behind it and find_comparables, and never sends an empty parameter", async ({ page }) => {
   const answers: [string, Answer][] = [
     ["populated", { body: await recorded("comparables-ke-nwwda-541055.json") }],
@@ -1051,6 +1054,26 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
   await section(page).getByRole("button", { name: "Show the table" }).click();
   await expect(section(page).locator("[data-table-view=cards]")).toBeVisible();
   await expect(section(page).locator("[data-table-view=table]")).toBeHidden();
+});
+
+// At a browser zoom such as 110 percent, the page area beside the drawer can be a fraction of a pixel
+// under 768 px. The sentence's place reads the same exact width the container queries read.
+test("a page area a fraction of a pixel under 768 px puts the sentence first, as the header and facts lay out narrow", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  await page.locator("[data-page-column]").evaluate((column) => {
+    column.style.flex = "none";
+    column.style.width = "767.6px";
+  });
+  await expect(page.locator("[data-package-header]")).not.toHaveCSS("position", "sticky");
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const summary = document.querySelector("[data-summary]")!;
+        return Boolean(summary.compareDocumentPosition(document.querySelector("[data-chart-figure]")!) & Node.DOCUMENT_POSITION_FOLLOWING);
+      }),
+    )
+    .toBe(true);
 });
 
 // DESIGN.md section 5, Tables: the past range's table needs about 750 px with one line per cell,

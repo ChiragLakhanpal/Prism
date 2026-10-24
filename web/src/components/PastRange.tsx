@@ -53,14 +53,15 @@ export type PastRangeState =
 // Whether the page area is narrower than 48rem, the width @md/page: starts at. It measures the page
 // column around the element (the app's and the gallery's Frame both have one), or the window where
 // there is none. The first guess is the window's, and the page column's width replaces it before the
-// first paint, so the summary never moves on screen.
+// first paint, so the summary never moves on screen. It reads the exact width, as the container
+// queries do, since clientWidth rounds and a page area beside the drawer has fractions of a pixel.
 function usePageNarrow(element: RefObject<HTMLElement | null>): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(width < 48rem)").matches);
   useLayoutEffect(() => {
     const column = element.current?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
     const update = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      setNarrow(column.clientWidth < 48 * rem);
+      setNarrow(column.getBoundingClientRect().width < 48 * rem);
     };
     update();
     const observer = new ResizeObserver(update);
