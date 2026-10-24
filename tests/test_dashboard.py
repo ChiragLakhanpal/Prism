@@ -179,10 +179,12 @@ def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_va
 
 def test_every_dataset_runs_on_the_fixture_on_the_day_it_was_measured(engine):
     """The routes chart charts a route only from the thresholds file's fewest rows for a percentage
-    (DESIGN.md section 7, rule 15); the fixture's routes read 22 and 15 pages, so it has no bar."""
+    (DESIGN.md section 7, rule 15): the fixture's plan routes read 24 and 27 pages, so they have no bar,
+    and its report routes read hundreds (ticket 18), so they do."""
     for name in dashboard.DATASETS:
-        rows = dataset_rows(engine, name)
-        assert rows if name != "readiness_routes" else rows == [], name
+        assert dataset_rows(engine, name), name
+    assert [row["route"] for row in dataset_rows(engine, "readiness_routes")] == [
+        "Report pages, published text (Route A)", "Report pages, layout parser (Route B)"]
 
 
 def test_a_route_or_a_link_is_charted_only_from_enough_rows_for_a_percentage(empty_catalog_copy):
@@ -249,7 +251,13 @@ def test_each_source_s_rows_per_fiscal_year_add_up_to_its_coverage_number_in_the
     assert compared == {key: coverage[key] for key in compared}
     assert set(compared) == {"awards", "awards_fy2001_2016", "ieg_ratings", "notices", "projects"}
     assert compared["awards"] == KENYA["award_rows"]
-    assert set(totals) == set(labels.values())
+    # Ticket 18: after the sources, the documents read of each type, by fiscal year of disclosure, add up
+    # to the documents the reports' Coverage cell counts.
+    documents = {label: total for label, total in totals.items() if label.endswith(", documents read")}
+    assert set(totals) == set(labels.values()) | set(documents)
+    assert "Project Appraisal Document, documents read" in documents
+    [reports] = [row for row in page["sources"] if row["id"] == "reports"]
+    assert sum(documents.values()) == page["rows"][reports["cells"]["coverage"]["row"]]["count"]
 
 
 def test_a_date_before_the_first_snapshot_shows_no_headline(engine):
@@ -262,7 +270,8 @@ def test_the_table_of_freshness_and_links_keeps_the_pages_each_route_read_well(e
     rows = dataset_rows(engine, "readiness_sources")
 
     assert {row["source"]: row["read_well"] for row in rows if row["read_well"]} == {
-        "Published text (Route A)": "22 of 22", "Layout parser (Route B)": "15 of 15"}
+        "Published text (Route A)": "24 of 24", "Layout parser (Route B)": "27 of 27",
+        "Report pages, published text (Route A)": "511 of 511", "Report pages, layout parser (Route B)": "97 of 121"}
 
 
 def test_the_table_of_freshness_and_links_names_each_awards_dataset_as_the_charts_do(engine):

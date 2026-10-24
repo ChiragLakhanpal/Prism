@@ -97,14 +97,16 @@ def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_d
     assert signed["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
 
 
-def measured(engine, run_id: str | None = None) -> dict:
-    """Each data readiness measure of a plan run (the latest when run_id is None), as (count, denominator).
-    The nightly job writes its own sources' measures to the same table, and the passage reader writes the
-    documents source's too, so a plan run is one that strata.ops.parse_runs records."""
+def measured(engine, run_id: str | None = None, subject: str = "P156634") -> dict:
+    """Each data readiness measure of a plan run for the project (the latest when run_id is None), as
+    (count, denominator). The nightly job writes its own sources' measures to the same table, and the
+    passage reader writes the documents source's too, so a plan run is one that measured the plan
+    versions it read. The fixture's plan reader also reads the stress shelf's plan, for P161305."""
     found = rows(engine, """
         SELECT run_id, measure, count, denominator FROM strata.ops.data_readiness WHERE source = 'documents'
-          AND run_id IN (SELECT run_id FROM strata.ops.parse_runs)
-        ORDER BY measured_at""")
+          AND subject = :subject
+          AND run_id IN (SELECT run_id FROM strata.ops.data_readiness WHERE measure = 'plan_versions_read')
+        ORDER BY measured_at""", subject=subject)
     run_id = run_id or found[-1]["run_id"]
     return {r["measure"]: (r["count"], r["denominator"]) for r in found if r["run_id"] == run_id}
 
@@ -481,7 +483,7 @@ def test_the_live_layout_parser_sends_one_page_to_ai_parse_document_and_reads_it
             return Result(("parsed",), ((json.dumps(AI_PARSE_DOCUMENT),),))
 
     parser = AiParseDocument(Warehouse(), upload=uploaded.__setitem__, fetch=lambda url: pdf.getvalue())
-    tables = parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 3))
+    tables = parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 3)).tables
     reading = step.plan_rows([(3, tables)])
 
     path = "/Volumes/strata/bronze/files/layout/40132287/page-3.pdf"
@@ -519,3 +521,23 @@ def test_a_page_ai_parse_document_answers_with_nothing_fails_as_that_one_page():
         parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 1))
     with pytest.raises(ParseFailed, match="could not cut page 2"):
         parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 2))
+
+
+@pytest.mark.parametrize("rejoin", [False, True], ids=["as-the-pdf-gives-them", "rejoined"])
+def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_flag_rejoins_them(fresh, rejoin):
+    """Parked decision 8 (tickets 08, 10 and 18): a STEP cell wraps "Exploratory" as "Explor" then
+    "atory". config/models.toml's [layout] rejoin_split_words, false until the user decides, joins
+    such a word; the plan's own words are values.toml's."""
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import plans
+    from strata.reader.documents import RecordedDocuments
+    from strata.reader.layout import RecordedLayout
+
+    manifest = fmt.load_manifest()
+    plans.run(fresh, RecordedDocuments(manifest), RecordedLayout(manifest, rejoin_split_words=rejoin), "P156634")
+
+    [found] = rows(fresh, DEMO_ROWS + " AND r.activity_reference_no = :reference", agency=NWWDA, plan_date=DEMO_PLAN,
+                   reference="KE-NWWDA-229129-CW-RFB")
+    expected = next(row for row in GROUND_TRUTH["plan_row"] if row["reference"] == "KE-NWWDA-229129-CW-RFB")
+    assert (found["description"] == expected["description"]) is rejoin
+    assert squash(found["description"]) == squash(expected["description"])

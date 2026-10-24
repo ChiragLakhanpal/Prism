@@ -55,6 +55,23 @@ questions:
       cases had to go through rebidding" (tests/ground_truth/values.toml, icr-para-54). No passage
       the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out.
 
+  - id: search-passages-similar-experience
+    kind: documents
+    tool: search_passages
+    question: >-
+      Which procurement notices ask consultants for experience on similar work?
+    arguments:
+      query: similar experience
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:OP00118817/v1/s5, strata.gold.passage:OP00128730/v1/s6]
+      left_out: []
+    source: >-
+      Ticket 18 indexed notices' scope and qualification text as passages. The two Requests for
+      Expression of Interest in tests/ground_truth/values.toml ([stress_shelf.similar_experience]) ask
+      for "experience on similar projects" and "experience with similar successful assignments", each
+      in one section of its notice.
+
   - id: data-readiness-kenya-awards
     kind: sql
     tool: data_readiness_for

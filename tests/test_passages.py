@@ -76,14 +76,20 @@ TEN_FIELDS = ("project_id", "document_type", "version", "public_from", "section_
               "printed_page", "language", "parse_route")
 
 
-def test_every_passage_has_all_ten_fields_filled(db):
-    passages = rows(db, f"SELECT passage_id, {', '.join(TEN_FIELDS)} FROM strata.silver.passages")
+def test_every_paragraph_has_all_ten_fields_filled(db):
+    """A paragraph keeps the ten fields, from either route. A table row or summary has no printed page,
+    and a notice's text has no page at all, so they are checked by their own tests below."""
+    passages = rows(db, f"SELECT passage_id, kind, {', '.join(TEN_FIELDS)} FROM strata.silver.passages")
+    paragraphs = [p for p in passages if p["kind"] == "paragraph"]
 
-    assert len(passages) > 0
-    empty = [(p["passage_id"], name) for p in passages for name in TEN_FIELDS if p[name] in (None, "")]
+    assert len(paragraphs) > 0
+    empty = [(p["passage_id"], name) for p in paragraphs for name in TEN_FIELDS if p[name] in (None, "")
+             and not (name == "printed_page" and p["parse_route"] == "B")]  # a scan's foot number can be unreadable
     assert empty == []
-    assert {p["parse_route"] for p in passages} == {"A"}
-    assert {p["language"] for p in passages} == {"en"}  # the documents API lists each of them in English
+    assert {p["parse_route"] for p in passages} == {"A", "B"}
+    assert {p["kind"] for p in passages} == {"paragraph", "table_row", "table_summary", "notice_text"}
+    # The documents API lists each of them in English but one, the stress shelf's report in French.
+    assert {p["language"] for p in passages} == {"en", "fr"}
 
 
 REPORTS = """
@@ -92,12 +98,17 @@ FROM strata.silver.documents AS d
 """
 
 
-def test_the_fixture_run_reads_twenty_documents_through_route_a_and_routes_a_scan_to_route_b(db):
+def test_the_fixture_run_reads_every_recorded_report_of_the_slice_and_routes_the_scan_to_route_b(db):
+    """Ticket 11 read the first twenty documents; ticket 18 reads the whole slice, which in the fixture is
+    every report recorded for P130164, P156634 and P127203: 37 whose text Route A reads, and one scan."""
     documents = rows(db, REPORTS)
     read = [d for d in documents if d["text_paged"]]
     dated = {(d["project_id"], d["document_type"], d["document_date"]) for d in read}
+    recorded = sorted((ROOT / "data" / "fixture" / "recorded" / "documents").glob("*/*.pages.txt"))
+    reports = [path for path in recorded if not path.name.startswith("procurement-plan")]
 
-    assert len(read) == 20  # the ticket: twenty documents, text-based (Route A)
+    assert len(documents) == len(reports) == 38
+    assert len(read) == 37
     for key, document_type in [("icr-date", ICR), ("icr-review-date", "Implementation Completion Report Review"),
                                ("icr-review-reissue-date", "Implementation Completion Report Review"),
                                ("isr-7-date", "Implementation Status and Results Report"),
@@ -148,7 +159,8 @@ WHERE newest = 1
 
 
 def test_the_data_readiness_rule_keeps_the_plan_readers_and_the_passage_readers_measures_for_one_project(db):
-    plan_runs = {row["run_id"] for row in rows(db, "SELECT run_id FROM strata.ops.parse_runs")}
+    plan_runs = {row["run_id"] for row in rows(db, "SELECT run_id FROM strata.ops.data_readiness "
+                                                   "WHERE measure = 'plan_versions_read'")}
 
     latest = rows(db, LATEST_PER_MEASURE, subject="P156634")
 
@@ -200,8 +212,8 @@ def test_strata_ops_shows_the_documents_read_the_passages_linked_to_a_project_an
 
 def test_strata_ops_counts_the_documents_that_had_contact_details_taken_out_of_the_documents_fetched(db):
     """Each PAD's data sheet prints a contact (PAD_CONTACTS), and no other document fetched does. The
-    run fetched P130164's ICR, two ICR Reviews, 13 ISRs and its PAD, and P156634's PAD and three ISRs."""
-    for project_id, documents in (("P130164", 17), ("P156634", 4)):
+    run fetched P130164's ICR, two ICR Reviews, 13 ISRs and its PAD, and P156634's PAD and 19 ISRs."""
+    for project_id, documents in (("P130164", 17), ("P156634", 20)):
         removed = measured(db, project_id)["contact_details_removed"]
 
         assert (removed["kind"], removed["count"], removed["denominator"]) == ("stripped", 1, documents)

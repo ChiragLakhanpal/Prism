@@ -50,9 +50,10 @@ import { DefinitionWindow, Term } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import type { Section } from "../components/TopNav";
 import { copy } from "../copy";
-import type { Readiness, ReadinessState, RegistryState } from "../lib/dataPages";
+import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
+import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { galleryCopy } from "./copy";
 
 const s = galleryCopy.states;
@@ -1115,7 +1116,7 @@ function readinessSections(): GalleryPage["sections"] {
   const words = galleryCopy.readiness;
   const result = words.result as unknown as Readiness;
   const ready = (changes: Partial<Readiness>): ReadinessState => ({ status: "ready", result: { ...result, ...changes } });
-  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes } };
+  const known: RegistryState = { status: "ready", registry: { datasets: [], collections: [], readiness_rows: words.rows, known_gaps: 1, kinds: words.kinds, fixes: words.fixes, shelf: words.shelf.entries.length } };
   const states: [string, string, ReadinessState, boolean?][] = [
     ["ready", words.sections.ready, ready({})],
     [
@@ -1126,6 +1127,8 @@ function readinessSections(): GalleryPage["sections"] {
         sources: result.sources.slice(0, 3),
         kinds: [],
         fixes: result.fixes.slice(0, 1),
+        // None of the hardest documents is on these sources, so the section is left out.
+        stress_shelf: [],
         headline: { text: words.filteredHeadline, segments: [{ text: words.filteredHeadline }] },
       }),
     ],
@@ -1155,9 +1158,48 @@ function readinessSections(): GalleryPage["sections"] {
     ["permission", words.sections.permission, { status: "error", reason: "permission" }],
     ["error", words.sections.error, { status: "error", reason: "other" }],
   ];
-  return states.map(([id, title, state, slow]) => ({
-    id,
-    title,
-    body: <ReadinessView state={state} known={known} slow={slow} />,
-  }));
+  // The hardest documents' own states (the 18 brief, section 5): the section alone, from the sample
+  // with one change each, and the two views that need the rest of the page.
+  const shelf = words.shelf;
+  const entries = result.stress_shelf;
+  const changed = (changes: Record<number, Partial<ShelfEntry>>): ShelfEntry[] =>
+    entries.map((entry, index) => ({ ...entry, ...(changes[index] ?? {}) }));
+  const shelfOnly: [string, string, ShelfEntry[]][] = [
+    ["shelf-over-limit", shelf.sections.overLimit, changed({ 4: shelf.overLimit as unknown as ShelfEntry })],
+    [
+      "shelf-abstentions",
+      shelf.sections.abstentions,
+      changed({
+        0: shelf.noHandCount as Partial<ShelfEntry>,
+        1: shelf.noDocument as Partial<ShelfEntry>,
+        2: shelf.stopped as Partial<ShelfEntry>,
+        3: { state: "not_read", document: null, parser_row: null, outcome_row: null, status: null },
+      }),
+    ],
+    [
+      "shelf-empty",
+      shelf.sections.empty,
+      entries.map((entry) => ({ ...entry, state: "not_read", document: null, parser_row: null, outcome_row: null, longest_row: null, status: null, measured_on: null })),
+    ],
+  ];
+  const twoGaps = ready({
+    kinds: result.kinds.map((kind) => (kind.kind === "document_search" ? { ...kind, holds_back: [shelf.twoGaps as unknown as Segment[]] } : kind)),
+    stress_shelf: changed({ 1: { status: "gap", unreadable: true } }),
+  });
+  const filtered = ready({
+    filter: { sources: ["papers"], unknown: 0, from: "check_plan", shown: 1, total: 4 },
+    sources: result.sources.slice(3, 4),
+    kinds: result.kinds.slice(0, 1),
+    stress_shelf: entries.slice(2, 3),
+  });
+  return [
+    ...states.map(([id, title, state, slow]) => ({
+      id,
+      title,
+      body: <ReadinessView state={state} known={known} slow={slow} />,
+    })),
+    ...shelfOnly.map(([id, title, stress_shelf]) => ({ id, title, body: <HardestDocuments result={{ ...result, stress_shelf }} /> })),
+    { id: "shelf-two-gaps", title: shelf.sections.twoGaps, body: <ReadinessView state={twoGaps} known={known} /> },
+    { id: "shelf-filtered", title: shelf.sections.filtered, body: <ReadinessView state={filtered} known={known} /> },
+  ];
 }

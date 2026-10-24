@@ -151,7 +151,7 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   // A limit the source declares sits on its own line, under what the number counts.
   await expect(cell(page, "cpia:coverage")).toContainText("264scores heldIDA countries onlyin 21 fiscal years");
   // A share breaks only after its comma: its count and its frequency each stay on one line.
-  await expect(cell(page, "reports:coverage").locator("[data-num] .whitespace-nowrap")).toHaveText(["20 of 21,", "more than 9 in 10"]);
+  await expect(cell(page, "reports:read_well").locator("[data-num] .whitespace-nowrap")).toHaveText(["608 of 632,", "96%"]);
   // CPIA and WGI scores are a source's own values; no score of Strata's rates a source.
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
@@ -233,9 +233,10 @@ test("at 390 px each table's source line keeps its date on one line", async ({ p
   await open(page, "/data", 390);
 
   const dates = page.locator("[data-readiness-table] [data-source] [data-num]");
-  await expect(dates).toHaveCount(2);
+  // Three tables: What you can ask, Sources, and the hardest documents (ticket 18).
+  await expect(dates).toHaveCount(3);
   await expect(dates.first()).toHaveText("Oct 23, 2026");
-  expect(await dates.evaluateAll((all) => all.map((date) => date.getClientRects().length))).toEqual([1, 1]);
+  expect(await dates.evaluateAll((all) => all.map((date) => date.getClientRects().length))).toEqual([1, 1, 1]);
 });
 
 test("each column head holds its definition, and its label opens the full definition", async ({ page }) => {
@@ -323,12 +324,12 @@ test("every number's tooltip names what it counts, and its window shows the numb
       hasText: "75 of 603 contracts lack a reference from Systematic Tracking of Exchanges in Procurement (STEP). Measured Oct 23, 2026.",
     }),
   ).toBeVisible();
-  // A shortfall of pages I couldn't read lacks nothing the registry names, so its tooltip says
-  // what went wrong with them, as its sentence does (critique r6).
-  const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^30$/ });
+  // The reports' check names what its pages lack, so its tooltip says so, as its sentence does
+  // (critique r6; ticket 18 made paragraph numbers a check of the reports' row).
+  const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^59$/ });
   await unread.focus();
   await expect(
-    page.getByRole("tooltip").filter({ hasText: "30 of 175 body pages I couldn't read without errors. Measured Oct 23, 2026." }),
+    page.getByRole("tooltip").filter({ hasText: "59 of 250 body pages lack paragraph numbers I could find. Measured Oct 23, 2026." }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
 
@@ -384,7 +385,7 @@ test("opened from the plan check, it shows only the rows the plan check reads, a
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the plan check.");
   await expect(page.locator("[data-headline]")).not.toContainText("body pages");
   await expect(table(page, "sources").locator("tbody tr")).toHaveCount(2);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 13 sources.");
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 14 sources.");
   // The headline names no STEP gap here, so the first STEP, in What you can ask, is spelled out.
   await expect(table(page, "kinds").locator("[data-cell='plan_check:readyFor']")).toContainText(
     "rows in the format of Systematic Tracking of Exchanges in Procurement (STEP)",
@@ -397,12 +398,12 @@ test("the plan check's first-listing number opens a window named for that check,
   await mockData(page, { file: "data-readiness-plan-check.json" });
   await open(page, "/data?sources=documents,projects&from=check_plan");
 
-  const number = page.locator("[data-headline] [data-num]", { hasText: /^46$/ });
+  const number = page.locator("[data-headline] [data-num]", { hasText: /^258$/ });
   await number.focus();
   await number.press("Enter");
   const window = page.getByRole("dialog", { name: "First listing confirmed" });
   await expect(window).toContainText("trace back to the plan version that first listed them");
-  await expect(window).toContainText("Missing46");
+  await expect(window).toContainText("Missing258");
   await expect(window).not.toContainText("Coverage");
   await expect(window).not.toContainText("fiscal years");
 });
@@ -445,6 +446,9 @@ for (const [name, path, answer] of SWEPT) {
     for (let index = 0; index < count; index += 1) {
       const number = numbers.nth(index);
       const key = `${await number.getAttribute("data-source")}/${await number.getAttribute("data-measure")}`;
+      // The hardest documents' numbers come from the shelf's outcomes, not a registry; web/tests/shelf.spec.ts
+      // checks their windows.
+      if (key.startsWith("documents/stress_shelf_")) continue;
       const placement = placed.get(key);
       expect(placement, `number ${index} counts ${key}, which no registry places`).toBeTruthy();
       const measure = key.slice(key.indexOf("/") + 1);
@@ -469,7 +473,7 @@ test("at 320 px a window's table name breaks only after a dot", async ({ page })
   await mockData(page, { file: "data-readiness-plan-check.json" });
   await open(page, "/data?sources=documents,projects&from=check_plan", 320);
 
-  await page.locator("[data-headline] [data-num]", { hasText: /^46$/ }).click();
+  await page.locator("[data-headline] [data-num]", { hasText: /^258$/ }).click();
   const name = page.getByRole("dialog", { name: "First listing confirmed" }).locator(".font-mono");
   await expect(name).toHaveText("strata.silver.plan_listings");
   // The last character of every line but the last, from the top of each character's box.
@@ -498,7 +502,7 @@ test("What you can ask shows each kind of question with what it is ready for and
   const kinds = table(page, "kinds");
   await expect(kinds.locator("tbody th")).toHaveText(["Checking a plan against its own dates", "What project documents say"]);
   await expect(kinds.locator("[data-cell='plan_check:holds']")).toContainText(
-    "None of the 46 activity entries in the latest plan versions has a first listing I could confirm.",
+    "None of the 258 activity entries in the latest plan versions has a first listing I could confirm.",
   );
   await expect(kinds.locator("[data-cell='plan_check:readyFor'] [data-badge=partial]")).toHaveText("Partial");
   // The headline above already spells STEP out, so the count words it as the Procurement Plans row does.
@@ -516,7 +520,7 @@ test("the fixes end the page, ranked by the projects each would add evidence to"
   const fixes = page.locator("[data-fixes] li");
   await expect(fixes).toHaveCount(answer.fixes.length);
   await expect(page.locator("[data-fixes] > p").first()).toHaveText("Ranked by how many projects each fix would add evidence to.");
-  await expect(fixes.first()).toContainText("Would add evidence to two projects.");
+  await expect(fixes.first()).toContainText("Would add evidence to three projects.");
 });
 
 // Design r4 P4: a source can fall short with no fix in the registry, so the card never says that
@@ -550,7 +554,7 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the past range.");
   const rows = table(page, "sources").locator("tbody tr");
   await expect(rows).toHaveCount(3);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 13 sources.");
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 14 sources.");
 
   await page.getByRole("link", { name: "Show all sources" }).click();
   await expect(page).toHaveURL(/\/data$/);
@@ -658,7 +662,7 @@ test("a source with no measures leaves the headline out, and its row says it is 
 
   await expect(page.locator("[data-headline]")).toHaveText(
     // One to nine in words, as in any sentence (DESIGN.md section 7, rule 12; design r5 P4).
-    "I'm not giving a headline: one of the 13 sources below has no measures yet. Its row says so.",
+    "I'm not giving a headline: one of the 14 sources below has no measures yet. Its row says so.",
   );
   // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
   await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");

@@ -418,3 +418,26 @@ def test_each_similar_experience_quote_is_one_paragraph_of_its_notice():
     case = SHELF["similar_experience"]
     for notice in case["notices"]:
         assert word_for_word(notice["quote"], str(resolve(case["record"], notice["at"]))), notice["notice"]
+
+
+def test_each_slice_project_is_in_the_recorded_file_with_its_approval_date_and_largest_sector():
+    case = SHELF["slice_projects"]
+    projects = resolve(case["record"], "projects")
+    assert len(case["projects"]) == case["count"]
+    for listed in case["projects"]:
+        project = projects[listed["project"]]
+        shares = {}
+        for major in project.get("major_sectors") or []:
+            sector = major["major_sector"]
+            shares[sector["major_sector_code"]] = sum(float(s["sector_percent"]) for s in sector.get("sectors") or [])
+        assert project["boardapprovaldate"][:10] == listed["approved"].isoformat(), listed["project"]
+        assert max(shares, key=shares.get) == listed["largest"], listed["project"]
+        approved = listed["approved"]
+        assert 2012 <= (approved.year + 1 if approved.month >= 7 else approved.year) <= 2025
+
+
+def test_the_pad_disclosure_date_is_in_its_fiscal_year():
+    case = SHELF["pad_disclosed"]
+    assert resolve(case["record"], case["at"]) == case["value"]
+    disclosed = datetime.date.fromisoformat(case["value"][:10])
+    assert (disclosed.year + 1 if disclosed.month >= 7 else disclosed.year) == case["fiscal_year"]

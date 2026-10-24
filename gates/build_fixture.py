@@ -10,8 +10,9 @@ It builds four things, with no network:
   (each API response as JSON), `recorded.documents` (each document's published text) and
   `recorded.pages` (the text of each PDF page, numbered from 1). The `recorded` schema is the
   fixture's copy of the sources, not a catalog layer.
-- The demo project's Procurement Plans as STEP rows. The plan reader (src/strata/lakehouse/plans.py)
-  runs over the recorded plans with the offline document source and layout parser, and fills
+- The Procurement Plans of the demo project and of the stress shelf's plan (config/slice.toml) as STEP
+  rows. The plan reader (src/strata/lakehouse/plans.py) runs over the recorded plans with the offline
+  document source and layout parser, and fills
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
   plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
   adds it to the nightly job.
@@ -52,6 +53,10 @@ ROOT = Path(__file__).resolve().parents[1]
 RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readiness measures carry
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
+# The projects whose Procurement Plans the plan reader reads in the fixture: the demo plan's, then the
+# stress shelf's plan's (ticket 18). The other projects' plans are not recorded.
+PLAN_PROJECTS = tuple(dict.fromkeys([DEMO, *(item.project_id for item in load_slice().stress_shelf
+                                            if item.kind == "large_plan" and item.project_id)]))
 # The fixture's runs read pages recorded on October 23, 2026, and take their measures that morning,
 # at 05:00 in Washington, when the nightly job starts. Every run of the build takes them at the same
 # times, so a page or a test pinned to that day reads the same measures whatever day the gate runs.
@@ -101,9 +106,10 @@ def load_recorded(con, manifest):
                 con.execute("INSERT INTO recorded.documents VALUES (?, ?, ?)", [source.file, file.source, file.body])
 
 
-def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
+def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_PROJECTS):
     """Build the database at out from the table definitions and a loaded manifest (by default,
-    sources.toml), then read the Procurement Plans of the project plans_for (none when it is None)."""
+    sources.toml), then read the Procurement Plans of the projects plans_for names (a project ID or
+    several; none when it is None)."""
     manifest = manifest or fmt.load_manifest()
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
@@ -114,8 +120,8 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=DEMO):
         with DuckDBEngine.open(building) as engine:
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
             load_recorded(engine.connection, manifest)
-            if plans_for:
-                plans.run_on_fixture(engine, plans_for, manifest=manifest, clock=clock)
+            for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
+                plans.run_on_fixture(engine, project_id, manifest=manifest, clock=clock)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)

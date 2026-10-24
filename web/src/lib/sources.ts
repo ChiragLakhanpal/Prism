@@ -20,6 +20,15 @@ export type PassageFields = {
   text: string;
   lang: string | null;
   pdfUrl: string | null;
+  // Ticket 18: what the passage is (a paragraph, a table row, a table's summary or a notice's text),
+  // whether the layout parser read it from a scanned page, its table and row, and its notice.
+  kind: "paragraph" | "table_row" | "table_summary" | "notice_text";
+  scanned: boolean;
+  tableTitle: string | null;
+  tableRow: number | null;
+  cells: [string, string][];
+  noticeId: string | null;
+  noticeUrl: string | null;
 };
 
 // Where in its document a passage sits: a numbered paragraph ("54", or an item such as 10.b), or else
@@ -58,6 +67,13 @@ export function passageFields(evidence: EvidenceEvent): PassageFields {
     text: String(row.text ?? ""),
     lang: (row.language ?? null) as string | null,
     pdfUrl: (source.pdf_url ?? null) as string | null,
+    kind: (row.kind ?? "paragraph") as PassageFields["kind"],
+    scanned: Boolean(row.scanned),
+    tableTitle: (row.table_title ?? null) as string | null,
+    tableRow: (row.table_row ?? null) as number | null,
+    cells: (row.cells ?? []) as [string, string][],
+    noticeId: (row.notice_id ?? source.notice_id ?? null) as string | null,
+    noticeUrl: (source.notice_url ?? null) as string | null,
   };
 }
 

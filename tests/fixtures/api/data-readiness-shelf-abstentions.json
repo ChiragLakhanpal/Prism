@@ -1,0 +1,3786 @@
+{
+  "tool": "data_readiness_for",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards"
+      },
+      "source_key": "awards",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 632,
+      "denominator": 632,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards"
+      },
+      "source_key": "awards",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 8,
+      "denominator": 8,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/linked_step_reference",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "linked_step_reference",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards",
+      "measure": "linked_step_reference",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 528,
+      "denominator": 603,
+      "share_percent": 88,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "awards",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards_fy2001_2016/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards_fy2001_2016",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards_fy2001_2016"
+      },
+      "source_key": "awards_fy2001_2016",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 62,
+      "denominator": 62,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards_fy2001_2016/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards_fy2001_2016",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards_fy2001_2016"
+      },
+      "source_key": "awards_fy2001_2016",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 5,
+      "denominator": 5,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards_fy2001_2016/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards_fy2001_2016",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards_fy2001_2016",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 7,
+      "denominator": 62,
+      "share_percent": 11,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards_fy2001_2016/all/fresh_newest_record",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards_fy2001_2016",
+        "measure": "fresh_newest_record",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "awards_fy2001_2016",
+      "measure": "fresh_newest_record",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2016-06-10",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ieg_ratings/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ieg_ratings",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.ieg_ratings"
+      },
+      "source_key": "ieg_ratings",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 1,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ieg_ratings/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ieg_ratings",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.ieg_ratings"
+      },
+      "source_key": "ieg_ratings",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 1,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ieg_ratings/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ieg_ratings",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.ieg_rating"
+      },
+      "source_key": "ieg_ratings",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 1,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ieg_ratings/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ieg_ratings",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "ieg_ratings",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credits/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credits",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loans"
+      },
+      "source_key": "ida_credits",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 3,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credits/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credits",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loans"
+      },
+      "source_key": "ida_credits",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 4,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credits/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credits",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.loan"
+      },
+      "source_key": "ida_credits",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 3,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credits/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credits",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "ida_credits",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loans/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loans",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loans"
+      },
+      "source_key": "ibrd_loans",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 1,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loans/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loans",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loans"
+      },
+      "source_key": "ibrd_loans",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 1,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loans/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loans",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.loan"
+      },
+      "source_key": "ibrd_loans",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 0,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loans/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loans",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "ibrd_loans",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credit_history/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credit_history",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ida_credit_history",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 384,
+      "denominator": 384,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credit_history/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credit_history",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ida_credit_history",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 14,
+      "denominator": 14,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credit_history/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credit_history",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ida_credit_history",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 3,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ida_credit_history/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ida_credit_history",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "ida_credit_history",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loan_history/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loan_history",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ibrd_loan_history",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 88,
+      "denominator": 88,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loan_history/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loan_history",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ibrd_loan_history",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 9,
+      "denominator": 9,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loan_history/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loan_history",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.loan_history"
+      },
+      "source_key": "ibrd_loan_history",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 0,
+      "denominator": 1,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:ibrd_loan_history/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "ibrd_loan_history",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "ibrd_loan_history",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:notices/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "notices",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.notices"
+      },
+      "source_key": "notices",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 418,
+      "denominator": 418,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:notices/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "notices",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.notices"
+      },
+      "source_key": "notices",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 15,
+      "denominator": 15,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:notices/all/linked_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "notices",
+        "measure": "linked_project",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.notice"
+      },
+      "source_key": "notices",
+      "measure": "linked_project",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 418,
+      "denominator": 418,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:notices/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "notices",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "notices",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:projects/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "projects",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.projects"
+      },
+      "source_key": "projects",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 94,
+      "denominator": 94,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:projects/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "projects",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.projects"
+      },
+      "source_key": "projects",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 14,
+      "denominator": 14,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:projects/all/linked_sector",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "projects",
+        "measure": "linked_sector",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.project"
+      },
+      "source_key": "projects",
+      "measure": "linked_sector",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 92,
+      "denominator": 93,
+      "share_percent": 99,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:projects/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "projects",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "projects",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-24",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:cpia/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "cpia",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.indicators"
+      },
+      "source_key": "cpia",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 264,
+      "denominator": 264,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:cpia/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "cpia",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.indicators"
+      },
+      "source_key": "cpia",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 21,
+      "denominator": 21,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:cpia/all/linked_country",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "cpia",
+        "measure": "linked_country",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.governance_score"
+      },
+      "source_key": "cpia",
+      "measure": "linked_country",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 2,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:cpia/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "cpia",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "cpia",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:wgi/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "wgi",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.indicators"
+      },
+      "source_key": "wgi",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 108,
+      "denominator": 108,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:wgi/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "wgi",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.indicators"
+      },
+      "source_key": "wgi",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 27,
+      "denominator": 30,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": 9,
+      "in_ten_exact": true,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:wgi/all/linked_country",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "wgi",
+        "measure": "linked_country",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.governance_score"
+      },
+      "source_key": "wgi",
+      "measure": "linked_country",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 2,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:wgi/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "wgi",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "wgi",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/plan_versions_read",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "plan_versions_read",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.plan_versions"
+      },
+      "source_key": "documents",
+      "measure": "plan_versions_read",
+      "kind": "coverage",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 12,
+      "denominator": 394,
+      "share_percent": 3,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/step_rows_with_reference",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "step_rows_with_reference",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.plan_rows"
+      },
+      "source_key": "documents",
+      "measure": "step_rows_with_reference",
+      "kind": "linked",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 300,
+      "denominator": 300,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/latest_activities_with_step_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "latest_activities_with_step_rows",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.plan_rows"
+      },
+      "source_key": "documents",
+      "measure": "latest_activities_with_step_rows",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 258,
+      "denominator": 258,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_a",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_a",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_a",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 24,
+      "denominator": 24,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/pages_read_route_b",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "pages_read_route_b",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.layout_pages"
+      },
+      "source_key": "documents",
+      "measure": "pages_read_route_b",
+      "kind": "read_well",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 27,
+      "denominator": 27,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P156634+P161305/latest_activities_with_confirmed_first_listing_read",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "latest_activities_with_confirmed_first_listing_read",
+        "subjects": [
+          "P156634",
+          "P161305"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.plan_listings"
+      },
+      "source_key": "documents",
+      "measure": "latest_activities_with_confirmed_first_listing_read",
+      "kind": "coverage",
+      "subjects": [
+        "P156634",
+        "P161305"
+      ],
+      "count": 0,
+      "denominator": 258,
+      "share_percent": 0,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "plans-P156634-20261023T090000000000",
+        "plans-P161305-20261023T090000018000"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/documents_read",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "documents_read",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.documents"
+      },
+      "source_key": "documents",
+      "measure": "documents_read",
+      "kind": "coverage",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 38,
+      "denominator": 38,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/all/slice_projects",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "slice_projects",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.project"
+      },
+      "source_key": "documents",
+      "measure": "slice_projects",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 17,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/passages_linked_to_project",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "passages_linked_to_project",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.passage"
+      },
+      "source_key": "documents",
+      "measure": "passages_linked_to_project",
+      "kind": "linked",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 1377,
+      "denominator": 1377,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/document_pages_read_well",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "document_pages_read_well",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.document_page_routes"
+      },
+      "source_key": "documents",
+      "measure": "document_pages_read_well",
+      "kind": "read_well",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 608,
+      "denominator": 632,
+      "share_percent": 96,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/document_pages_read_route_a",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "document_pages_read_route_a",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_pages"
+      },
+      "source_key": "documents",
+      "measure": "document_pages_read_route_a",
+      "kind": "read_well",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 511,
+      "denominator": 511,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/document_pages_read_route_b",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "document_pages_read_route_b",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.layout_pages"
+      },
+      "source_key": "documents",
+      "measure": "document_pages_read_route_b",
+      "kind": "read_well",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 97,
+      "denominator": 121,
+      "share_percent": 80,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/documents_fresh",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "documents_fresh",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.document_texts"
+      },
+      "source_key": "documents",
+      "measure": "documents_fresh",
+      "kind": "fresh",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": "2026-06-30",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/document_pages_paragraph_numbering_found",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "document_pages_paragraph_numbering_found",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.passages"
+      },
+      "source_key": "documents",
+      "measure": "document_pages_paragraph_numbering_found",
+      "kind": "read_well",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 191,
+      "denominator": 250,
+      "share_percent": 76,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P130164+P156634/notice_text_passages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "notice_text_passages",
+        "subjects": [
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.passages"
+      },
+      "source_key": "documents",
+      "measure": "notice_text_passages",
+      "kind": "coverage",
+      "subjects": [
+        "P130164",
+        "P156634"
+      ],
+      "count": 798,
+      "denominator": 798,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P130164+P156634/notice_text_linked",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "notice_text_linked",
+        "subjects": [
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.passage"
+      },
+      "source_key": "documents",
+      "measure": "notice_text_linked",
+      "kind": "linked",
+      "subjects": [
+        "P130164",
+        "P156634"
+      ],
+      "count": 798,
+      "denominator": 798,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/projects_with_contracts_lacking_step_reference",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "projects_with_contracts_lacking_step_reference",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards",
+      "measure": "projects_with_contracts_lacking_step_reference",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 3,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_projects_in_local_currency",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "gap_years_projects_in_local_currency",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards",
+      "measure": "gap_years_projects_in_local_currency",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 2,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/p130164_pad/stress_shelf_parser_pages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_parser_pages",
+        "subjects": [
+          "18381488"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_parser_pages",
+      "kind": "read_well",
+      "subjects": [
+        "18381488"
+      ],
+      "count": 100,
+      "denominator": 100,
+      "share_percent": 100,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/p130164_pad/stress_shelf_scan_annex",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_scan_annex",
+        "subjects": [
+          "18381488"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_scan_annex",
+      "kind": "read_well",
+      "subjects": [
+        "18381488"
+      ],
+      "count": 8,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/longest_pad/stress_shelf_longest_pages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_longest_pages",
+        "subjects": [
+          "longest_pad"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_longest_pages",
+      "kind": "read_well",
+      "subjects": [
+        "longest_pad"
+      ],
+      "count": 103,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/long_plan/stress_shelf_parser_pages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_parser_pages",
+        "subjects": [
+          "40129238"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_parser_pages",
+      "kind": "read_well",
+      "subjects": [
+        "40129238"
+      ],
+      "count": 12,
+      "denominator": 14,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/long_plan/stress_shelf_read_pages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_read_pages",
+        "subjects": [
+          "40129238"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_read_pages",
+      "kind": "read_well",
+      "subjects": [
+        "40129238"
+      ],
+      "count": 6,
+      "denominator": 14,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.stress_shelf:fixture/over_parser_limit/stress_shelf_longest_pages",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.stress_shelf",
+        "source_key": "documents",
+        "measure": "stress_shelf_longest_pages",
+        "subjects": [
+          "over_parser_limit"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.ops.stress_shelf"
+      },
+      "source_key": "documents",
+      "measure": "stress_shelf_longest_pages",
+      "kind": "read_well",
+      "subjects": [
+        "over_parser_limit"
+      ],
+      "count": 103,
+      "denominator": null,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:documents/P127203+P130164+P156634/passages_embedded",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "passages_embedded",
+        "subjects": [
+          "P127203",
+          "P130164",
+          "P156634"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.passage"
+      },
+      "source_key": "documents",
+      "measure": "passages_embedded",
+      "kind": "coverage",
+      "subjects": [
+        "P127203",
+        "P130164",
+        "P156634"
+      ],
+      "count": 2175,
+      "denominator": 2175,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_contracts_in_local_currency",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "gap_years_contracts_in_local_currency",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards",
+      "measure": "gap_years_contracts_in_local_currency",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 7,
+      "denominator": 7,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    }
+  ],
+  "coverage": {
+    "matched": 14,
+    "used": 14,
+    "not_used": []
+  },
+  "abstention": null,
+  "filter": {
+    "sources": null,
+    "unknown": 0,
+    "from": null,
+    "shown": 14,
+    "total": 14
+  },
+  "sources": [
+    {
+      "type": "measured",
+      "id": "awards",
+      "source_key": "awards",
+      "label": "Contract awards",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": "since fiscal 2020",
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 0,
+          "counts": "award rows held",
+          "counts_one": "award row held",
+          "noun": "award rows",
+          "noun_one": "award row",
+          "status": null,
+          "note": null,
+          "years_row": 1
+        },
+        "linked": {
+          "measure": "linked_step_reference",
+          "row": 2,
+          "counts": "contracts carry a STEP reference",
+          "counts_one": "contract carries a STEP reference",
+          "noun": "contracts",
+          "noun_one": "contract",
+          "status": "partial",
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 3,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "daily",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "gap",
+      "id": "fy2017_2019",
+      "source_key": "awards",
+      "label": "Contract awards",
+      "first_fiscal_year": 2017,
+      "last_fiscal_year": 2019,
+      "note": "No World Bank dataset publishes contract awards for these years. Award notices cover most of them, in local currency."
+    },
+    {
+      "type": "measured",
+      "id": "awards_fy2001_2016",
+      "source_key": "awards_fy2001_2016",
+      "label": "Contract awards",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": "fiscal 2001–16",
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 4,
+          "counts": "award rows held",
+          "counts_one": "award row held",
+          "noun": "award rows",
+          "noun_one": "award row",
+          "status": "partial",
+          "note": "prior-review contracts only",
+          "years_row": 5
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 6,
+          "counts": "contracts have their project record",
+          "counts_one": "contract has its project record",
+          "noun": "contracts",
+          "noun_one": "contract",
+          "status": "partial",
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_newest_record",
+          "row": 7,
+          "counts": "newest signing date",
+          "counts_one": null,
+          "noun": "contracts",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "frozen",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "ieg_ratings",
+      "source_key": "ieg_ratings",
+      "label": "Independent Evaluation Group (IEG) ratings",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 8,
+          "counts": "ratings held",
+          "counts_one": "rating held",
+          "noun": "ratings",
+          "noun_one": "rating",
+          "status": null,
+          "note": null,
+          "years_row": 9
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 10,
+          "counts": "ratings have their project record",
+          "counts_one": "rating has its project record",
+          "noun": "ratings",
+          "noun_one": "rating",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 11,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "monthly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "ida_credits",
+      "source_key": "ida_credits",
+      "label": "International Development Association (IDA) credits and grants",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 12,
+          "counts": "credits held",
+          "counts_one": "credit held",
+          "noun": "credits",
+          "noun_one": "credit",
+          "status": null,
+          "note": null,
+          "years_row": 13
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 14,
+          "counts": "credits have their project record",
+          "counts_one": "credit has its project record",
+          "noun": "credits",
+          "noun_one": "credit",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 15,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "monthly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "ibrd_loans",
+      "source_key": "ibrd_loans",
+      "label": "International Bank for Reconstruction and Development (IBRD) loans",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 16,
+          "counts": "loans held",
+          "counts_one": "loan held",
+          "noun": "loans",
+          "noun_one": "loan",
+          "status": null,
+          "note": null,
+          "years_row": 17
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 18,
+          "counts": "loans have their project record",
+          "counts_one": "loan has its project record",
+          "noun": "loans",
+          "noun_one": "loan",
+          "status": "partial",
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 19,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "monthly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "ida_credit_history",
+      "source_key": "ida_credit_history",
+      "label": "IDA credit history",
+      "stratum": "What",
+      "scope": {
+        "kind": "countries",
+        "names": [
+          "Kenya",
+          "Bangladesh",
+          "Vietnam",
+          "Pakistan"
+        ]
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 20,
+          "counts": "monthly records held",
+          "counts_one": "monthly record held",
+          "noun": "monthly records",
+          "noun_one": "monthly record",
+          "status": null,
+          "note": null,
+          "years_row": 21
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 22,
+          "counts": "credits have their project record",
+          "counts_one": "credit has its project record",
+          "noun": "credits",
+          "noun_one": "credit",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 23,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "monthly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "ibrd_loan_history",
+      "source_key": "ibrd_loan_history",
+      "label": "IBRD loan history",
+      "stratum": "What",
+      "scope": {
+        "kind": "countries",
+        "names": [
+          "Kenya",
+          "Bangladesh",
+          "Vietnam",
+          "Pakistan"
+        ]
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 24,
+          "counts": "monthly records held",
+          "counts_one": "monthly record held",
+          "noun": "monthly records",
+          "noun_one": "monthly record",
+          "status": null,
+          "note": null,
+          "years_row": 25
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 26,
+          "counts": "loans have their project record",
+          "counts_one": "loan has its project record",
+          "noun": "loans",
+          "noun_one": "loan",
+          "status": "partial",
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 27,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "monthly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "notices",
+      "source_key": "notices",
+      "label": "Procurement notices",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 28,
+          "counts": "notices held",
+          "counts_one": "notice held",
+          "noun": "notices",
+          "noun_one": "notice",
+          "status": null,
+          "note": null,
+          "years_row": 29
+        },
+        "linked": {
+          "measure": "linked_project",
+          "row": 30,
+          "counts": "notices have their project record",
+          "counts_one": "notice has its project record",
+          "noun": "notices",
+          "noun_one": "notice",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 31,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "daily",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "projects",
+      "source_key": "projects",
+      "label": "Projects",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 32,
+          "counts": "projects held",
+          "counts_one": "project held",
+          "noun": "projects",
+          "noun_one": "project",
+          "status": null,
+          "note": null,
+          "years_row": 33
+        },
+        "linked": {
+          "measure": "linked_sector",
+          "row": 34,
+          "counts": "projects map to one sector",
+          "counts_one": "project maps to one sector",
+          "noun": "projects",
+          "noun_one": "project",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 35,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "daily",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "cpia",
+      "source_key": "cpia",
+      "label": "Country Policy and Institutional Assessment (CPIA) scores",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 36,
+          "counts": "scores held",
+          "counts_one": "score held",
+          "noun": "scores",
+          "noun_one": "score",
+          "status": "partial",
+          "note": "IDA countries only",
+          "years_row": 37
+        },
+        "linked": {
+          "measure": "linked_country",
+          "row": 38,
+          "counts": "countries and groups with scores are borrowers I hold",
+          "counts_one": "country or group with scores is a borrower I hold",
+          "noun": "countries and groups",
+          "noun_one": "country or group",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 39,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "yearly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "wgi",
+      "source_key": "wgi",
+      "label": "Worldwide Governance Indicators (WGI) scores",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 40,
+          "counts": "scores held",
+          "counts_one": "score held",
+          "noun": "scores",
+          "noun_one": "score",
+          "status": null,
+          "note": null,
+          "years_row": 41
+        },
+        "linked": {
+          "measure": "linked_country",
+          "row": 42,
+          "counts": "countries and groups with scores are borrowers I hold",
+          "counts_one": "country or group with scores is a borrower I hold",
+          "noun": "countries and groups",
+          "noun_one": "country or group",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 43,
+          "counts": "last fetched",
+          "counts_one": null,
+          "noun": "fetches",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "yearly",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "plans",
+      "source_key": "documents",
+      "label": "Procurement Plans",
+      "stratum": "How",
+      "scope": {
+        "kind": "projects",
+        "count": 2
+      },
+      "covers": null,
+      "cells": {
+        "coverage": {
+          "measure": "plan_versions_read",
+          "row": 44,
+          "counts": "plan versions read",
+          "counts_one": "plan version read",
+          "noun": "plan versions listed",
+          "noun_one": "plan version listed",
+          "status": null,
+          "note": null
+        },
+        "linked": {
+          "measure": "step_rows_with_reference",
+          "row": 45,
+          "counts": "plan rows in STEP's format with an Activity Reference No.",
+          "counts_one": "plan row in STEP's format with an Activity Reference No.",
+          "noun": "plan rows in STEP's format",
+          "noun_one": "plan row in STEP's format",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "measure": "latest_activities_with_step_rows",
+          "row": 46,
+          "counts": "activity entries in the latest plan versions with rows in STEP's format",
+          "counts_one": "activity entry in the latest plan versions with rows in STEP's format",
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "status": null,
+          "note": null,
+          "routes": [
+            {
+              "route": "published_text",
+              "row": 47
+            },
+            {
+              "route": "layout_parser",
+              "row": 48
+            }
+          ]
+        },
+        "fresh": {
+          "measure": null,
+          "row": null,
+          "schedule": "as published"
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "reports",
+      "source_key": "documents",
+      "label": "Project reports",
+      "stratum": "Why",
+      "scope": {
+        "kind": "slice",
+        "sectors": [
+          "water",
+          "transport"
+        ],
+        "countries": [
+          "Kenya",
+          "Bangladesh",
+          "Vietnam",
+          "Pakistan"
+        ],
+        "first_fiscal_year": 2012,
+        "last_fiscal_year": 2025
+      },
+      "covers": "their appraisal, status and completion reports",
+      "cells": {
+        "coverage": {
+          "measure": "documents_read",
+          "row": 50,
+          "counts": "documents",
+          "counts_one": "document",
+          "noun": "documents",
+          "noun_one": "document",
+          "status": null,
+          "note": null,
+          "projects_row": 51
+        },
+        "linked": {
+          "measure": "passages_linked_to_project",
+          "row": 52,
+          "counts": "passages with their project record",
+          "counts_one": "passage with its project record",
+          "noun": "passages",
+          "noun_one": "passage",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "measure": "document_pages_read_well",
+          "row": 53,
+          "counts": "pages read well",
+          "counts_one": "page read well",
+          "noun": "report pages",
+          "noun_one": "report page",
+          "status": null,
+          "note": null,
+          "routes": [
+            {
+              "route": "published_text",
+              "row": 54
+            },
+            {
+              "route": "layout_parser",
+              "row": 55
+            }
+          ]
+        },
+        "fresh": {
+          "measure": "documents_fresh",
+          "row": 56,
+          "counts": "newest report",
+          "counts_one": null,
+          "noun": "reports",
+          "noun_one": null,
+          "status": null,
+          "note": null,
+          "schedule": "as published",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "measured",
+      "id": "notice_text",
+      "source_key": "documents",
+      "label": "Procurement notices' text",
+      "stratum": "What",
+      "scope": {
+        "kind": "slice",
+        "sectors": [
+          "water",
+          "transport"
+        ],
+        "countries": [
+          "Kenya",
+          "Bangladesh",
+          "Vietnam",
+          "Pakistan"
+        ],
+        "first_fiscal_year": 2012,
+        "last_fiscal_year": 2025
+      },
+      "covers": "scope and qualification text",
+      "cells": {
+        "coverage": {
+          "measure": "notice_text_passages",
+          "row": 58,
+          "counts": "sections of notices' text",
+          "counts_one": "section of a notice's text",
+          "noun": "sections of notices' text",
+          "noun_one": "section of a notice's text",
+          "status": null,
+          "note": null
+        },
+        "linked": {
+          "measure": "notice_text_linked",
+          "row": 59,
+          "counts": "sections with their project record",
+          "counts_one": "section with its project record",
+          "noun": "sections of notices' text",
+          "noun_one": "section of a notice's text",
+          "status": null,
+          "note": null
+        },
+        "read_well": {
+          "published_as_text": true
+        },
+        "fresh": {
+          "measure": null,
+          "row": null,
+          "schedule": "as published"
+        }
+      }
+    }
+  ],
+  "kinds": [
+    {
+      "kind": "plan_check",
+      "tool": "check_plan",
+      "status": "partial",
+      "ready_for": 46,
+      "holds_back": [
+        [
+          {
+            "text": "None of the "
+          },
+          {
+            "number": 258,
+            "row": 49,
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": "missing",
+            "lack": "a first listing I could confirm"
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "activity entries in the latest plan versions"
+          },
+          {
+            "text": " has "
+          },
+          {
+            "text": "a first listing I could confirm"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": false
+    },
+    {
+      "kind": "document_search",
+      "tool": "search_passages",
+      "status": "partial",
+      "ready_for": 68,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 250,
+            "row": 57,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "body pages"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 59,
+            "row": 57,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": "missing",
+            "lack": "paragraph numbers I could find"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "paragraph numbers I could find"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": false
+    }
+  ],
+  "gaps": [
+    {
+      "id": "reports/document_pages_paragraph_numbering_found",
+      "type": "check",
+      "status": "partial",
+      "row_id": "reports",
+      "source_key": "documents",
+      "column": null,
+      "projects": 3,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 59,
+          "row": 57,
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": "missing",
+          "lack": "paragraph numbers I could find"
+        },
+        {
+          "text": " of "
+        },
+        {
+          "number": 250,
+          "row": 57,
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": null,
+          "lack": null
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "body pages"
+        },
+        {
+          "text": " that lack "
+        },
+        {
+          "text": "paragraph numbers I could find"
+        }
+      ]
+    },
+    {
+      "id": "awards/linked",
+      "type": "linked",
+      "status": "partial",
+      "row_id": "awards",
+      "source_key": "awards",
+      "column": "linked",
+      "projects": 2,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 75,
+          "row": 2,
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing",
+          "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+        },
+        {
+          "text": " of "
+        },
+        {
+          "number": 603,
+          "row": 2,
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": null,
+          "lack": null
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "contracts"
+        },
+        {
+          "text": " that lack "
+        },
+        {
+          "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+        }
+      ]
+    },
+    {
+      "id": "fy2017_2019",
+      "type": "published",
+      "status": "gap",
+      "row_id": "awards",
+      "source_key": "awards",
+      "column": null,
+      "projects": 2,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "text": "contract awards"
+        },
+        {
+          "text": " for fiscal "
+        },
+        {
+          "text": "2017"
+        },
+        {
+          "text": " to "
+        },
+        {
+          "text": "2019"
+        },
+        {
+          "text": ", which no World Bank dataset publishes"
+        }
+      ]
+    },
+    {
+      "id": "plans/latest_activities_with_confirmed_first_listing_read",
+      "type": "check",
+      "status": "partial",
+      "row_id": "plans",
+      "source_key": "documents",
+      "column": null,
+      "projects": 2,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 258,
+          "row": 49,
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "role": "missing",
+          "lack": "a first listing I could confirm"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "activity entries in the latest plan versions"
+        },
+        {
+          "text": ", none of which has "
+        },
+        {
+          "text": "a first listing I could confirm"
+        }
+      ]
+    },
+    {
+      "id": "awards_fy2001_2016/coverage/declared",
+      "type": "declared",
+      "status": "partial",
+      "row_id": "awards_fy2001_2016",
+      "source_key": "awards_fy2001_2016",
+      "column": "coverage",
+      "projects": null,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "text": "contract awards for fiscal 2001 to 2016"
+        },
+        {
+          "text": ", which cover "
+        },
+        {
+          "text": "prior-review contracts only"
+        }
+      ]
+    },
+    {
+      "id": "awards_fy2001_2016/linked",
+      "type": "linked",
+      "status": "partial",
+      "row_id": "awards_fy2001_2016",
+      "source_key": "awards_fy2001_2016",
+      "column": "linked",
+      "projects": null,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 55,
+          "row": 6,
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing",
+          "lack": "a project record I hold"
+        },
+        {
+          "text": " of "
+        },
+        {
+          "number": 62,
+          "row": 6,
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": null,
+          "lack": null
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "contracts"
+        },
+        {
+          "text": " that lack "
+        },
+        {
+          "text": "a project record I hold"
+        }
+      ]
+    },
+    {
+      "id": "ibrd_loans/linked",
+      "type": "linked",
+      "status": "partial",
+      "row_id": "ibrd_loans",
+      "source_key": "ibrd_loans",
+      "column": "linked",
+      "projects": null,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 1,
+          "row": 18,
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": "missing",
+          "lack": "a project record I hold"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "loan"
+        },
+        {
+          "text": " that lacks "
+        },
+        {
+          "text": "a project record I hold"
+        }
+      ]
+    },
+    {
+      "id": "ibrd_loan_history/linked",
+      "type": "linked",
+      "status": "partial",
+      "row_id": "ibrd_loan_history",
+      "source_key": "ibrd_loan_history",
+      "column": "linked",
+      "projects": null,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 1,
+          "row": 26,
+          "noun": "loans",
+          "noun_one": "loan",
+          "role": "missing",
+          "lack": "a project record I hold"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "loan"
+        },
+        {
+          "text": " that lacks "
+        },
+        {
+          "text": "a project record I hold"
+        }
+      ]
+    },
+    {
+      "id": "cpia/coverage/declared",
+      "type": "declared",
+      "status": "partial",
+      "row_id": "cpia",
+      "source_key": "cpia",
+      "column": "coverage",
+      "projects": null,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "text": "CPIA scores"
+        },
+        {
+          "text": ", which cover "
+        },
+        {
+          "text": "IDA countries only"
+        }
+      ]
+    }
+  ],
+  "fixes": [
+    {
+      "rank": 1,
+      "gap": "reports/document_pages_paragraph_numbering_found",
+      "projects": 3,
+      "row": 57,
+      "projects_row": null,
+      "projects_from": "subjects",
+      "sentence": [
+        {
+          "text": "Use the layout parser on the "
+        },
+        {
+          "number": 59,
+          "row": 57,
+          "noun": "body pages",
+          "noun_one": "body page",
+          "role": "missing",
+          "lack": "paragraph numbers I could find"
+        },
+        {
+          "text": " body pages where I found no paragraph numbers, so each passage keeps its number."
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "gap": "awards/linked",
+      "projects": 2,
+      "row": 2,
+      "projects_row": 60,
+      "projects_from": "measure",
+      "sentence": [
+        {
+          "text": "Find a STEP reference for the "
+        },
+        {
+          "number": 75,
+          "row": 2,
+          "noun": "contracts",
+          "noun_one": "contract",
+          "role": "missing",
+          "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+        },
+        {
+          "text": " contracts that lack one, so each joins its package and its notices."
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "gap": "fy2017_2019",
+      "projects": 2,
+      "row": 69,
+      "projects_row": 61,
+      "projects_from": "measure",
+      "sentence": [
+        {
+          "text": "Convert the "
+        },
+        {
+          "number": 7,
+          "row": 69,
+          "noun": "contracts in local currency",
+          "noun_one": null,
+          "role": null,
+          "lack": null
+        },
+        {
+          "text": " contracts in award notices for fiscal "
+        },
+        {
+          "text": "2017"
+        },
+        {
+          "text": " to "
+        },
+        {
+          "text": "2019"
+        },
+        {
+          "text": " from local currency to US dollars, so they can be compared with the awards datasets."
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "gap": "plans/latest_activities_with_confirmed_first_listing_read",
+      "projects": 2,
+      "row": 49,
+      "projects_row": null,
+      "projects_from": "subjects",
+      "sentence": [
+        {
+          "text": "Read the older plan versions named in each project's document list, so I can confirm the first listing of each of the "
+        },
+        {
+          "number": 258,
+          "row": 49,
+          "noun": "activity entries in the latest plan versions",
+          "noun_one": "activity entry in the latest plan versions",
+          "role": "missing",
+          "lack": "a first listing I could confirm"
+        },
+        {
+          "text": " activity entries."
+        }
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "measure": "pages_read_route_a",
+      "label": "Published text (Route A)",
+      "noun": "plan pages with published text",
+      "row": 47
+    },
+    {
+      "measure": "pages_read_route_b",
+      "label": "Layout parser (Route B)",
+      "noun": "plan table pages",
+      "row": 48
+    },
+    {
+      "measure": "document_pages_read_route_a",
+      "label": "Report pages, published text (Route A)",
+      "noun": "report pages of published text",
+      "row": 54
+    },
+    {
+      "measure": "document_pages_read_route_b",
+      "label": "Report pages, layout parser (Route B)",
+      "noun": "report pages sent to the layout parser",
+      "row": 55
+    }
+  ],
+  "headline": {
+    "segments": [
+      {
+        "text": "I can answer each of the "
+      },
+      {
+        "number": 2,
+        "row": null,
+        "noun": null,
+        "noun_one": null,
+        "role": null,
+        "lack": null
+      },
+      {
+        "text": " kinds of question below in part."
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "The biggest gaps are "
+      },
+      {
+        "text": "the "
+      },
+      {
+        "number": 59,
+        "row": 57,
+        "noun": "body pages",
+        "noun_one": "body page",
+        "role": "missing",
+        "lack": "paragraph numbers I could find"
+      },
+      {
+        "text": " of "
+      },
+      {
+        "number": 250,
+        "row": 57,
+        "noun": "body pages",
+        "noun_one": "body page",
+        "role": null,
+        "lack": null
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "body pages"
+      },
+      {
+        "text": " that lack "
+      },
+      {
+        "text": "paragraph numbers I could find"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "text": "the "
+      },
+      {
+        "number": 75,
+        "row": 2,
+        "noun": "contracts",
+        "noun_one": "contract",
+        "role": "missing",
+        "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+      },
+      {
+        "text": " of "
+      },
+      {
+        "number": 603,
+        "row": 2,
+        "noun": "contracts",
+        "noun_one": "contract",
+        "role": null,
+        "lack": null
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "contracts"
+      },
+      {
+        "text": " that lack "
+      },
+      {
+        "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+      },
+      {
+        "text": "."
+      }
+    ],
+    "text": "I can answer each of the two kinds of question below in part. The biggest gaps are the 59 of 250 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
+  },
+  "headline_abstention": null,
+  "parse_failures": [],
+  "measured": {
+    "first": "2026-10-23",
+    "last": "2026-10-23"
+  },
+  "stress_shelf": [
+    {
+      "key": "p130164_pad",
+      "kind": "scan_annex",
+      "position": 1,
+      "row_id": "reports",
+      "state": "read",
+      "project_id": "P130164",
+      "document": {
+        "document_id": "18381488",
+        "project_id": "P130164",
+        "project_name": "Rajasthan Road Sector Modernization Project",
+        "document_type": "Project Appraisal Document",
+        "document_date": "2013-10-01",
+        "pdf_pages": 100,
+        "pdf_url": "http://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf",
+        "language": "en"
+      },
+      "part": "risk_annex",
+      "language": null,
+      "hard_page": 65,
+      "parser_row": 62,
+      "outcome_row": 63,
+      "read_pages_row": null,
+      "longest_row": null,
+      "status": null,
+      "unreadable": false,
+      "denominator_from": null,
+      "counted_on": null,
+      "parts": null,
+      "parser": "recorded words (pdftotext -bbox)",
+      "parser_limit_pages": 500,
+      "daily_page_cap": 500,
+      "measured_on": "2026-10-23"
+    },
+    {
+      "key": "longest_pad",
+      "kind": "longest_pad",
+      "position": 2,
+      "row_id": "reports",
+      "state": "no_document",
+      "project_id": null,
+      "document": null,
+      "part": null,
+      "language": null,
+      "hard_page": null,
+      "parser_row": null,
+      "outcome_row": null,
+      "read_pages_row": null,
+      "longest_row": 64,
+      "status": null,
+      "unreadable": false,
+      "denominator_from": null,
+      "counted_on": null,
+      "parts": null,
+      "parser": "recorded words (pdftotext -bbox)",
+      "parser_limit_pages": 500,
+      "daily_page_cap": 500,
+      "measured_on": "2026-10-23"
+    },
+    {
+      "key": "long_plan",
+      "kind": "large_plan",
+      "position": 3,
+      "row_id": "plans",
+      "state": "stopped_at_cap",
+      "project_id": "P161305",
+      "document": {
+        "document_id": "40129238",
+        "project_id": "P161305",
+        "project_name": "Horn of Africa Gateway Development Project",
+        "document_type": "Procurement Plan",
+        "document_date": "2026-09-24",
+        "pdf_pages": 14,
+        "pdf_url": "https://documents.worldbank.org/curated/en/099092426095539747/pdf/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.pdf",
+        "language": "en"
+      },
+      "part": null,
+      "language": null,
+      "hard_page": 3,
+      "parser_row": 65,
+      "outcome_row": null,
+      "read_pages_row": 66,
+      "longest_row": null,
+      "status": null,
+      "unreadable": false,
+      "denominator_from": "text_references",
+      "counted_on": null,
+      "parts": null,
+      "parser": "recorded words (pdftotext -bbox)",
+      "parser_limit_pages": 500,
+      "daily_page_cap": 30,
+      "measured_on": "2026-10-23"
+    },
+    {
+      "key": "french_report",
+      "kind": "other_language",
+      "position": 4,
+      "row_id": "reports",
+      "state": "not_read",
+      "project_id": "P127203",
+      "document": null,
+      "part": null,
+      "language": "fr",
+      "hard_page": null,
+      "parser_row": null,
+      "outcome_row": null,
+      "read_pages_row": null,
+      "longest_row": null,
+      "status": null,
+      "unreadable": false,
+      "denominator_from": null,
+      "counted_on": null,
+      "parts": null,
+      "parser": null,
+      "parser_limit_pages": null,
+      "daily_page_cap": null,
+      "measured_on": null
+    },
+    {
+      "key": "over_parser_limit",
+      "kind": "over_parser_limit",
+      "position": 5,
+      "row_id": "reports",
+      "state": "no_document",
+      "project_id": null,
+      "document": null,
+      "part": null,
+      "language": null,
+      "hard_page": null,
+      "parser_row": null,
+      "outcome_row": null,
+      "read_pages_row": null,
+      "longest_row": 67,
+      "status": null,
+      "unreadable": false,
+      "denominator_from": null,
+      "counted_on": null,
+      "parts": null,
+      "parser": "recorded words (pdftotext -bbox)",
+      "parser_limit_pages": 500,
+      "daily_page_cap": 500,
+      "measured_on": "2026-10-23"
+    }
+  ]
+}

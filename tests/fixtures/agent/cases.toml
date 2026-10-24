@@ -231,10 +231,12 @@ scope = "P130164"
 as_of = 2026-10-23
 recording = "p130164-rebidding"
 
+# Each search names its document type, as the agent does when it wants one report's table: P130164's
+# PAD (read from its scan since ticket 18) prints the same indicators in its results framework.
 [[cases.plant_rounds]]
 calls = [
-  { name = "search_passages", arguments = { query = "share of rural population with access to an all-season road end target", project_id = "P130164", as_of = "2026-10-23" } },
-  { name = "search_passages", arguments = { query = "PDO indicators rural population all-season road baseline end target", project_id = "P130164", as_of = "2026-10-23" } },
+  { name = "search_passages", arguments = { query = "share of rural population with access to an all-season road end target", project_id = "P130164", document_type = "ISR", as_of = "2026-10-23" } },
+  { name = "search_passages", arguments = { query = "PDO indicators rural population all-season road baseline end target", project_id = "P130164", document_type = "ICR", as_of = "2026-10-23" } },
 ]
 
 [[cases.plant_claims]]
@@ -244,3 +246,23 @@ evidence_ids = ["strata.gold.passage:19095337/v1/s4", "strata.gold.passage:31525
 numbers = ["67.00", "67.00", "80.00"]
 dates = []
 quote = { text = "Percentage Value 67.00 67.00 80.00", passage_id = "strata.gold.passage:19095337/v1/s4" }
+
+[[cases]]
+id = "p130164-number-from-a-table-summary"
+says = """The agent finds the PAD's risk annex, a table read from the scan by the layout parser, and states how many \
+risks it rated from the table's summary. The summary is Strata's own words about the table, not its rows, so the \
+verifier removes that sentence and says the number came only from the summary (ticket 18)."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "risks rated in the operational risk assessment framework", project_id = "P130164", document_type = "PAD", as_of = "2026-10-23" } }]
+
+[[cases.plant_claims]]
+sentence = "The appraisal document's risk annex rated 8 risks."
+kind = "summary"
+evidence_ids = ["strata.gold.passage:18381488/v1/table65"]
+numbers = ["8"]
+dates = []

@@ -22,6 +22,12 @@ sectors = ["water", "transport"]
 # The page shows the run's count, never this one.
 planned_projects = 128
 
+# The notice types whose text holds scope and qualification text, which the document run reads into
+# passages so criteria can be compared (spec, "Reading documents"), word for word as STEP writes them.
+# A Contract Award notice says who won, not what was asked, so it is left out.
+notice_types = ["Invitation for Bids", "Request for Expression of Interest", "Invitation for Prequalification",
+                "General Procurement Notice"]
+
 # Each country with its ISO 3166 codes: two letters for the projects API, three for the indicators.
 [[countries]]
 name = "Kenya"

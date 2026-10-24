@@ -116,8 +116,9 @@
       "origin": "the World Bank's Documents & Reports"
     }
   ],
-  "readiness_rows": 13,
+  "readiness_rows": 14,
   "kinds": 2,
   "known_gaps": 1,
-  "fixes": 4
+  "fixes": 4,
+  "shelf": 5
 }

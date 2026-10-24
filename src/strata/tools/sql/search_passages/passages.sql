@@ -21,9 +21,16 @@ SELECT
   p.printed_page,
   p.language,
   p.parse_route,
+  p.kind,
+  p.scanned,
+  p.table_title,
+  p.table_row,
+  p.cells,
   p.header,
   p.text,
   p.pdf_url,
+  p.doc_key,
+  p.notice_url,
   p.attack_detected,
   p.public_from
 FROM strata.gold.passage AS p

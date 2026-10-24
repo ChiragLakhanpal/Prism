@@ -4,7 +4,10 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 (ADR 0003, the turn's Facts). Each claim is checked against them:
 
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
-   rounding, or sits inside the words it quotes from a cited passage that is not a table summary.
+   rounding, or sits inside the words it quotes from a cited passage that is not a table summary. A
+   table's summary passage is Strata's own words about the table, so a number it alone holds, quoted
+   or not, is removed with a reason of its own (number_only_in_table_summary): the table's rows back
+   numbers, its summary never does.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
    still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
    (ID_SHAPES); so is a number written in words ("forty-five", "zero", or "one" unless it stands for a
@@ -42,15 +45,15 @@ from typing import Any
 from strata.agent.claims import Claim
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
-from strata.reader.passages import TABLE_SUMMARY
+from strata.reader.passages import NOTICE_TEXT, TABLE_SUMMARY
 from strata.reader.templates import template_for
 
 CHECKS_RUN = (1, 2, 3)
 # Reason codes. web/src/copy.ts holds one sentence for each, under removed.reasons.
-NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE = (
+NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY = (
     "number_not_in_records", "date_not_in_records", "id_not_returned", "no_source", "quote_not_on_page",
-    "quote_not_in_sentence")
-REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE)
+    "quote_not_in_sentence", "number_only_in_table_summary")
+REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY)
 MUST_CITE = ("record", "quote", "advice")
 
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -430,6 +433,16 @@ def _is_passage(row: Mapping | None) -> bool:
     return row is not None and "passage_id" in row and isinstance(row.get("text"), str)
 
 
+def _summary(row: Mapping | None) -> bool:
+    """Whether a cited row is a table's summary passage, which Strata wrote and which backs no number."""
+    return _is_passage(row) and row.get("kind") == TABLE_SUMMARY
+
+
+def _holds_number(text: str, mention: Mention) -> bool:
+    """Whether a passage's text writes the number the sentence states."""
+    return any(isinstance(found.value, Decimal) and found.value == mention.value for found in mentions(text))
+
+
 def _values(row: Mapping | None) -> tuple[set, set]:
     """The numbers and dates a cited row backs. A passage backs its dates and no number."""
     numbers, days = row_values(row)
@@ -483,7 +496,7 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
         passage = facts.get(quote.evidence_id)
         if _is_passage(passage):
             span = find_quote(quote.text, passage["text"])
-            backs = span is not None and passage.get("parse_route") != TABLE_SUMMARY
+            backs = span is not None and not _summary(passage)
         if span is None and facts.came_back(quote.evidence_id):
             reasons.append(Reason(3, NOT_ON_PAGE, quote.evidence_id))
     spans = []  # each run of quoted words: where it is in the sentence, and the evidence id that holds it
@@ -514,9 +527,14 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
             found = inside
         checked[mention.kind].append((mention, found))
         # A number inside quoted words that are not on the page, or whose page did not come back, gets no
-        # reason of its own: the quote's or the id's reason explains it.
+        # reason of its own: the quote's or the id's reason explains it. A number only a cited table
+        # summary holds says so, since the summary is Strata's words, not the table's rows.
         if found is None and not (inside is None and explained):
-            reasons.append(Reason(1, NUMBER if mention.kind == "number" else DATE, mention.text))
+            only_summary = mention.kind == "number" and any(
+                _summary(facts.get(evidence)) and _holds_number(facts.get(evidence)["text"], mention)
+                for evidence in returned)
+            reasons.append(Reason(1, ONLY_IN_SUMMARY if only_summary else NUMBER if mention.kind == "number" else DATE,
+                                  mention.text))
     quoted = bool(spans) or quote is not None
     # A quote counts as on its page only when its page was checked: a quote whose passage did not come
     # back this turn was compared with nothing, so the check line may not count it.
@@ -537,6 +555,8 @@ def labels(row: Mapping | None) -> dict:
     document's short name, from the reader's templates. A record is in the What stratum and has none."""
     if not _is_passage(row):
         return {"stratum": "What", "short_name": None}
+    if row.get("kind") == NOTICE_TEXT:  # a notice is a record, though search returns its text as a passage
+        return {"stratum": "What", "short_name": "Notice"}
     template = template_for(str(row.get("document_type") or ""))
     return {"stratum": template.stratum if template else None, "short_name": template.short_name if template else None}
 

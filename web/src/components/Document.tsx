@@ -120,3 +120,23 @@ export function Document({ state }: { state: DocumentState }) {
     </article>
   );
 }
+
+// Where a notice's contact details were removed at ingestion ("[contact removed]", ticket 07's
+// marker), the drawer says so in muted words; it never shows the raw marker.
+const CONTACT_MARKER = "[contact removed]";
+
+export function withoutMarkers(parts: ReactNode[]): ReactNode[] {
+  return parts.flatMap((part, at) => {
+    if (typeof part !== "string" || !part.includes(CONTACT_MARKER)) return [part];
+    return part.split(CONTACT_MARKER).flatMap((piece, index) =>
+      index === 0
+        ? [piece]
+        : [
+            <span key={`${at}-${index}`} className="text-ink-muted">
+              {copy.evidence.contactRemoved}
+            </span>,
+            piece,
+          ],
+    );
+  });
+}

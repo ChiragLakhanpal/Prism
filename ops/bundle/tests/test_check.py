@@ -5,6 +5,7 @@ Fakes stand in for the workspace. Their job runs the real tasks on DuckDB, and t
 DuckDB, so the checks read real rows. docs/workspace-catchup.md runs each check for real.
 """
 
+import functools
 import re
 import shutil
 import sys
@@ -98,10 +99,12 @@ def test_a_run_that_did_not_succeed_fails(capsys):
 
 # ── The sample query on both engines ─────────────────────────────────────
 
+@functools.cache
 def deployed_warehouse():
     """A SQL warehouse after the deploy, the live plan run, one run of the nightly job and the live
     passage run: DuckDB with the catalog's tables built and filled, here from the recorded plans,
-    pages and documents."""
+    pages and documents. The tests only read it, so each worker builds it once: since ticket 18 the
+    passage run reads the whole document slice, and a build takes a few seconds."""
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)

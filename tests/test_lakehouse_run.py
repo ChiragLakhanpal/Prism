@@ -205,7 +205,8 @@ def text_values(engine):
 # contact's name, and the project's reports use the title as an ordinary word ("headed by the Chief
 # Engineer"), so it is no contact detail in a report's text. Every other table is still checked for it.
 JOB_TITLES = {"Chief Engineer"}
-REPORT_TEXT = ("bronze.document_texts.", "bronze.document_pages.", "silver.passages.", "gold.passage.")
+REPORT_TEXT = ("bronze.document_texts.", "bronze.document_pages.", "bronze.layout_pages.", "silver.passages.",
+               "gold.passage.")
 
 
 def recorded_contacts():

@@ -138,6 +138,7 @@ class ReadinessColumn:
     years: str | None = None  # for coverage: the measure that counts its fiscal years
     counts_one: str | None = None  # counts in the singular, for a count or a denominator of one
     noun_one: str | None = None  # noun in the singular, likewise
+    projects: str | None = None  # for a document collection's coverage: the measure that counts its projects
 
 
 @dataclass(frozen=True)
@@ -166,6 +167,7 @@ class ReadinessRow:
     fresh: ReadinessColumn | None = None
     checks: tuple[ReadinessColumn, ...] = ()  # more measures that hold answers back when they fall short
     routes: tuple[ReadinessRoute, ...] = ()  # the reading routes of a paged reader, for the dashboard
+    published_as: str | None = None  # "text": a row whose records arrive as text, with nothing to read well
 
 
 @dataclass(frozen=True)
@@ -309,10 +311,11 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
 
 def _column(path: Path, where: str, table) -> ReadinessColumn:
     entry = _Entry(path, where, table)
-    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one"})
+    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one", "projects"})
     return ReadinessColumn(entry.text("measure"), entry.text("counts"), entry.text("noun"), entry.text("counted_in"),
                            entry.text("lack", required=False), entry.text("years", required=False),
-                           entry.text("counts_one", required=False), entry.text("noun_one", required=False))
+                           entry.text("counts_one", required=False), entry.text("noun_one", required=False),
+                           entry.text("projects", required=False))
 
 
 def _route(path: Path, where: str, table) -> ReadinessRoute:
@@ -330,13 +333,19 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     rows = []
     for row in _tables(path, table, "readiness"):
         row.where = f"sources.{key}.{row.where}"
-        row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", "routes", *READINESS_COLUMNS})
+        row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", "routes", "published_as",
+                  *READINESS_COLUMNS})
         row_stratum = row.text("stratum", required=False) or stratum
         if row_stratum not in STRATA:
             row._fail("stratum", f"must be one of {', '.join(STRATA)}, here or on the source")
         schedule = row.text("schedule", required=False)
         if schedule not in (None, AS_PUBLISHED):
             row._fail("schedule", f'can only be "{AS_PUBLISHED}"; leave it out to use the source\'s cadence')
+        published_as = row.text("published_as", required=False)
+        if published_as not in (None, "text"):
+            row._fail("published_as", 'can only be "text": a row whose records arrive as text')
+        if published_as and "read_well" in row.table:
+            row._fail("read_well", "is not needed: a row published as text has nothing to read well")
         columns = {name: _column(path, f"{row.where}.{name}", row.table[name])
                    for name in READINESS_COLUMNS if name in row.table}
         checks, routes = row.table.get("checks", []), row.table.get("routes", [])
@@ -348,7 +357,8 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
                                  checks=tuple(_column(path, f"{row.where}.checks[{n}]", check)
                                               for n, check in enumerate(checks, 1)),
                                  routes=tuple(_route(path, f"{row.where}.routes[{n}]", route)
-                                              for n, route in enumerate(routes, 1))))
+                                              for n, route in enumerate(routes, 1)),
+                                 published_as=published_as))
     fields["readiness"] = tuple(rows)
     gaps = []
     for gap in _tables(path, table, "known_gaps"):
@@ -488,6 +498,7 @@ class Slice:
     demo_plan: DemoPlan
     stress_shelf: tuple[ShelfItem, ...]
     planned_projects: int | None = None  # docs/PLAN.md section 3's planning figure, never shown as a finding
+    notice_types: tuple[str, ...] = ()  # the notice types whose scope and qualification text become passages
 
     @property
     def fiscal_years(self) -> range:
@@ -541,7 +552,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     data = _read(path)
     top = _Entry(path, "the file", data)
     top.only({"first_fiscal_year", "last_fiscal_year", "sectors", "countries", "showcase", "demo_plan",
-              "stress_shelf", "planned_projects"})
+              "stress_shelf", "planned_projects", "notice_types"})
 
     countries = []
     for entry in _tables(path, data, "countries"):
@@ -587,6 +598,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
                            plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date")),
         stress_shelf=tuple(shelf),
         planned_projects=top.integer("planned_projects", required=False),
+        notice_types=top.texts("notice_types"),
     )
 
 
@@ -695,8 +707,15 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
 def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
     """The name of the layout parser that reads table pages on the workspace (Route B)."""
     entry = _Entry(path, "layout", _read(path).get("layout"))
-    entry.only({"parser"})
+    entry.only({"parser", "rejoin_split_words"})
     return entry.text("parser")
+
+
+def load_rejoin_split_words(path: Path = CONFIG_DIR / "models.toml") -> bool:
+    """Whether the offline layout parser joins a word a table cell wrapped at its edge (parked decision)."""
+    entry = _Entry(path, "layout", _read(path).get("layout"))
+    entry.only({"parser", "rejoin_split_words"})
+    return entry.boolean("rejoin_split_words") if "rejoin_split_words" in entry.table else False
 
 
 @dataclass(frozen=True)

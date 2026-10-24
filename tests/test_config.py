@@ -246,7 +246,8 @@ def test_a_source_is_one_entry_in_the_registry(tmp_path):
 
 def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_as_plans_and_reports():
     """The 16 brief, section 5.1: one row per source, in the registry's order, What before How
-    before Why. The documents source holds two readers' measures, so it shows as two rows."""
+    before Why. The documents source holds two readers' measures, so it shows as two rows, and a third
+    for the notices' text the passage reader reads (ticket 18), which arrives as text."""
     sources = config.load_sources()
 
     assert all(source.readiness for source in sources.values())
@@ -254,7 +255,9 @@ def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_a
     assert (awards.label, awards.linked.measure, awards.fresh.measure) == (
         "Contract awards", "linked_step_reference", "fresh_fetched")
     assert awards.read_well is None  # STEP publishes awards as a table, so nothing needs reading
-    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [("plans", "How"), ("reports", "Why")]
+    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [
+        ("plans", "How"), ("reports", "Why"), ("notice_text", "What")]
+    assert sources["documents"].readiness[2].published_as == "text"
     ids = [row.id for source in sources.values() for row in source.readiness]
     assert len(ids) == len(set(ids))
 

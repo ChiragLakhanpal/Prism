@@ -19,10 +19,12 @@ ticket 40 applies each view's rules, every view gets the World Bank staff result
 from __future__ import annotations
 
 import datetime as dt
+import json
 from importlib import resources
 
 from strata.config import load_slice
 from strata.knowledge.search import Filters, searcher_for
+from strata.reader.passages import NOTICE_TEXT, ROUTE_B
 from strata.reader.templates import template_for
 from strata.tools.registry import Call
 
@@ -52,9 +54,17 @@ def _row(found: dict, rank: int, score: float) -> dict:
     return {**passage_row(found), "rank": rank, "score": score}
 
 
+def _cells(value) -> list[list[str]] | None:
+    """A table row's cells, [[column head, value], ...], from the JSON silver keeps."""
+    return None if value is None or value == "" else json.loads(value)
+
+
 def passage_row(found: dict) -> dict:
     """One passage in the registry's row shape, without a search's rank. Values arrive typed from DuckDB
-    and as text from the SQL warehouse, so each is read once here."""
+    and as text from the SQL warehouse, so each is read once here. A notice's text has its notice's id
+    and its page on the World Bank's site; a table row has its table, its row and its cells."""
+    kind = found["kind"]
+    notice = kind == NOTICE_TEXT
     return {
         "evidence_id": f"{TABLE}:{found['passage_id']}",
         "public_from": _iso(found["public_from"]),
@@ -74,6 +84,9 @@ def passage_row(found: dict) -> dict:
             "pdf_page": _int(found["pdf_page"]),
             "pdf_pages": _int(found["pdf_pages"]),
             "pdf_url": found["pdf_url"],
+            "doc_key": found["doc_key"],
+            "notice_id": str(found["document_id"]) if notice else None,
+            "notice_url": found["notice_url"],
         },
         "passage_id": found["passage_id"],
         "document_id": str(found["document_id"]),
@@ -90,6 +103,13 @@ def passage_row(found: dict) -> dict:
         "printed_page": found["printed_page"],
         "language": found["language"],
         "parse_route": found["parse_route"],
+        "kind": kind,
+        "route": "layout_parser" if found["parse_route"] == ROUTE_B else "published_text",
+        "scanned": _boolean(found["scanned"]),
+        "table_title": found["table_title"],
+        "table_row": _int(found["table_row"]),
+        "cells": _cells(found["cells"]),
+        "notice_id": str(found["document_id"]) if notice else None,
         "header": found["header"],
         "text": found["text"],
     }

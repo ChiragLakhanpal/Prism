@@ -49,6 +49,9 @@ from strata.tools.registry import Call, ToolContractError
 
 ALL = "all"  # the subject of a source's measure for every country
 PLANS = "plans"  # the readiness row of the plan reader, whose layout parser's failures the page lists
+REPORTS = "reports"  # the readiness row of the passage reader's reports
+SHELF_TABLE = "strata.ops.stress_shelf"
+SHELF_LINK = "#hardest-documents"  # the section "The hardest documents I read" on the page
 PROJECT = re.compile(r"P\d{6}")
 SHARES = {"linked": "linked_min_share", "read_well": "read_well_min_share"}
 TABLE = "strata.ops.data_readiness"
@@ -122,8 +125,11 @@ def fill(template: str, slots: dict) -> Segments:
 
 
 def text_of(segments: Segments) -> str:
-    """Segments as plain text, with each number written as Num writes it in a sentence."""
-    return "".join(segment["text"] if "text" in segment else _count_text(segment["number"]) for segment in segments)
+    """Segments as plain text, with each number written as Num writes it in a sentence. A link segment
+    gives its words, and a mono segment, such as a project ID, its text."""
+    return "".join(segment["text"] if "text" in segment else segment["link"] if "link" in segment
+                   else segment["mono"] if "mono" in segment else _count_text(segment["number"])
+                   for segment in segments)
 
 
 def _joined(parts: list[Segments]) -> Segments:
@@ -333,6 +339,8 @@ class Page:
         column: ReadinessColumn | None = getattr(row, name)
         declared = [limit for limit in source.declared if limit.row == row.id and limit.column == name]
         if column is None:
+            if name == "read_well" and row.published_as == "text":
+                return {"published_as_text": True}
             if name == "read_well" and source.paged:
                 return {"published_as_table": True}
             # No measure, and none to wait for; a row whose documents arrive as published says so.
@@ -343,6 +351,15 @@ class Page:
                 "noun": column.noun, "noun_one": column.noun_one, "status": None, "note": None}
         if name == "coverage" and column.years:
             cell["years_row"] = self.row_ref(source, ReadinessColumn(column.years, "", "", column.counted_in))
+        if name == "coverage" and column.projects:
+            # A document collection's projects: those the slice criteria selected at run time.
+            cell["projects_row"] = self.row_ref(source, ReadinessColumn(column.projects, "", "", "strata.gold.project"))
+        if name == "read_well" and row.routes:
+            # The share across both routes, and each route's part of it for the window: the published
+            # text, then the layout parser (config/sources.toml lists them in that order).
+            cell["routes"] = [{"route": route, "row": self.shared(self.measures.use(source.key, found.measure,
+                                                                                    found.counted_in))}
+                              for route, found in zip(("published_text", "layout_parser"), row.routes)]
         if name == "fresh":
             cell["schedule"] = schedule
             cell["late_days"] = None
@@ -386,6 +403,15 @@ class Page:
                          slots=self.shortfall(index, check, form), form=form)
 
     def scope(self, source: Source, row: ReadinessRow, cells: dict) -> dict:
+        # A document collection, and notices' text, cover the slice (config/slice.toml): its sectors, its
+        # countries and its fiscal years (the 18 brief, section 6.1). The slice file holds no counts.
+        if row.published_as == "text" or any(getattr(row, name) is not None and getattr(row, name).projects
+                                             for name in READINESS_COLUMNS):
+            from strata.config import load_slice
+
+            chosen = load_slice()
+            return {"kind": "slice", "sectors": list(chosen.sectors), "countries": [c.name for c in chosen.countries],
+                    "first_fiscal_year": chosen.first_fiscal_year, "last_fiscal_year": chosen.last_fiscal_year}
         if source.scope == EVERY_COUNTRY:
             return {"kind": "every_country"}
         if source.scope == SLICE_COUNTRIES:
@@ -484,7 +510,118 @@ class Page:
         return out
 
 
-def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | None) -> list[dict]:
+# ── The stress shelf ─────────────────────────────────────────────────────
+
+def _shelf_row(page: Page, found: dict, measure: str, count: int | None, denominator: int | None) -> int:
+    """A result row for one number of a shelf outcome, so the page can put it in Num and open its window."""
+    measured_on = _date(found["measured_on"]).isoformat()
+    subjects = [str(found["document_id"] or found["shelf_key"])]
+    page.measures.rows.append({
+        "evidence_id": f"{SHELF_TABLE}:{found['run_id']}/{found['shelf_key']}/{measure}",
+        "public_from": _date(found["public_from"]).isoformat(),
+        "source": {"table": SHELF_TABLE, "source_key": "documents", "measure": measure, "subjects": subjects,
+                   "measured_on": measured_on, "counted_in": SHELF_TABLE},
+        "source_key": "documents",
+        "measure": measure,
+        "kind": "read_well",
+        "subjects": subjects,
+        "count": count,
+        "denominator": denominator,
+        **share(None, None, 0, 0),
+        "as_of": None,
+        "measured_on": measured_on,
+        "run_ids": [found["run_id"]],
+    })
+    return page.shared(len(page.measures.rows) - 1)
+
+
+def _shelf_status(found: dict, threshold: Decimal) -> str | None:
+    """The badge, from the thresholds file as Read well's: Gap when nothing was recovered or the part was
+    recorded as unreadable, Partial under the read-well share, and none otherwise or with nothing to
+    check against."""
+    if found["state"] != "read" or found["count"] in (None, ""):
+        return None
+    count, denominator = int(found["count"]), _whole(found["denominator"])
+    if _boolean(found["unreadable"]) or count == 0:
+        return "gap"
+    if denominator and Decimal(count) / Decimal(denominator) < threshold:
+        return "partial"
+    return None
+
+
+def _boolean(value) -> bool:
+    return value if isinstance(value, bool) else str(value).lower() == "true"
+
+
+def shelf(page: Page, in_view: set[str], filtered: bool) -> tuple[list[dict], dict[str, list[dict]]]:
+    """The stress shelf in the slice file's order, each entry with its latest outcome on or before the
+    as-of date, or not read yet; and, by readiness row, the entries whose outcome is a Gap. A filtered
+    view keeps only the entries on its rows: a Procurement Plan's on the plans' row, a report's on the
+    reports' row."""
+    from strata.config import load_slice
+
+    outcomes = {row["shelf_key"]: row for row in _rows(page.call, "stress_shelf.sql", as_of=page.call.as_of)}
+    threshold = Decimal(str(page.value("read_well_min_share")))
+    entries, gaps = [], {}
+    for position, item in enumerate(load_slice().stress_shelf, 1):
+        row_id = PLANS if item.kind == "large_plan" else REPORTS
+        if filtered and row_id not in in_view:
+            continue
+        found = outcomes.get(item.key)
+        entry = {"key": item.key, "kind": item.kind, "position": position, "row_id": row_id,
+                 "state": "not_read" if found is None else found["state"], "project_id": item.project_id,
+                 "document": None, "part": item.part, "language": item.language, "hard_page": None,
+                 "parser_row": None, "outcome_row": None, "read_pages_row": None, "longest_row": None,
+                 "status": None, "unreadable": False, "denominator_from": None, "counted_on": None, "parts": None,
+                 "parser": None, "parser_limit_pages": None, "daily_page_cap": None, "measured_on": None}
+        if found is not None:
+            entry |= {"parser": found["parser"], "parser_limit_pages": _whole(found["parser_limit_pages"]),
+                      "daily_page_cap": _whole(found["daily_page_cap"]),
+                      "measured_on": _iso(_date(found["measured_on"])), "unreadable": _boolean(found["unreadable"])}
+            if found["document_id"]:
+                entry["document"] = {"document_id": str(found["document_id"]), "project_id": found["project_id"],
+                                     "project_name": found["project_name"], "document_type": found["document_type"],
+                                     "document_date": _iso(_date(found["document_date"])),
+                                     "pdf_pages": _whole(found["pdf_pages"]), "pdf_url": found["pdf_url"],
+                                     "language": found["language"]}
+                entry["project_id"] = found["project_id"]
+            if found["state"] in ("read", "stopped_at_cap"):
+                entry |= {"hard_page": _whole(found["hard_page"]), "parts": _whole(found["parts"]),
+                          "denominator_from": found["denominator_from"],
+                          "counted_on": _iso(_date(found["counted_on"])),
+                          "parser_row": _shelf_row(page, found, "stress_shelf_parser_pages",
+                                                   _whole(found["parser_pages"]), _whole(found["pdf_pages"]))}
+            if found["state"] == "read":
+                entry["outcome_row"] = _shelf_row(page, found, f"stress_shelf_{item.kind}", _whole(found["count"]),
+                                                  _whole(found["denominator"]))
+                entry["status"] = _shelf_status(found, threshold)
+            elif found["state"] == "stopped_at_cap":
+                entry["read_pages_row"] = _shelf_row(page, found, "stress_shelf_read_pages",
+                                                     _whole(found["read_pages"]), _whole(found["pdf_pages"]))
+            elif found["state"] == "no_document" and found["longest_pages"] not in (None, ""):
+                entry["longest_row"] = _shelf_row(page, found, "stress_shelf_longest_pages",
+                                                  _whole(found["longest_pages"]), None)
+        if entry["status"] == "gap":
+            gaps.setdefault(row_id, []).append(entry)
+        entries.append(entry)
+    return entries, gaps
+
+
+def _shelf_sentence(gapped: list[dict]) -> Segments:
+    """One more sentence under "What holds it back" for the shelf's Gap outcomes on a kind's rows."""
+    first = gapped[0]
+    parts = words()["shelfParts"]
+    part = parts.get(first["part"] or "") or parts.get(first["kind"], "")
+    slots = {"part": part, "docType": first["document"]["document_type"],
+             "pid": [{"mono": first["document"]["project_id"]}],
+             "link": [{"link": words()["shelfLink"], "href": SHELF_LINK}]}
+    if len(gapped) == 1:
+        return fill(words()["shelfGapOne"], slots)
+    return fill(words()["shelfGapMany"], slots | {"count": number(len(gapped))})
+
+
+def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | None,
+           shelf_gaps: dict[str, list[dict]] | None = None) -> list[dict]:
     """Each kind of question in view, with its status from every gap in the rows it draws on, even
     rows a filtered view leaves out, so a kind is never called ready because its gaps are hidden.
     Opened from a tool that answers a kind, the view shows that kind alone."""
@@ -517,7 +654,11 @@ def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | No
         else:
             status = "partial" if mine else "ready"
         held = [found.holds for found in mine[:2]]
-        more = len(mine) - len(held)
+        # A hard document whose part I couldn't read: after the top two, outside their ranking.
+        gapped = [entry for row in kind.draws_on for entry in (shelf_gaps or {}).get(row, [])]
+        if gapped:
+            held.append(_shelf_sentence(gapped))
+        more = len(mine) - len(mine[:2])
         if more == 1:
             held.append([{"text": words()["moreOne"]}])
         elif more > 1:
@@ -586,7 +727,7 @@ def _in_view(sources: dict[str, Source], keys: list[str], from_tool: str | None)
 def _empty(filter_: dict, abstention: dict, matched: int) -> dict:
     return {"rows": [], "coverage": {"matched": matched, "used": 0, "not_used": []}, "abstention": abstention,
             "filter": filter_, "sources": [], "kinds": [], "gaps": [], "fixes": [], "routes": [], "headline": None,
-            "headline_abstention": None, "parse_failures": None, "measured": None}
+            "headline_abstention": None, "parse_failures": None, "measured": None, "stress_shelf": []}
 
 
 def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | None = None) -> dict:
@@ -621,7 +762,8 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
     rows = [row for row in every_row
             if (first_rows[row["source_key"]] if row["type"] == "gap" else row["id"]) in in_view]
     ranked = [found for found in every_gap if found.row_id in in_view]
-    kinds = _kinds(page, every_gap, in_view, from_tool if filtered else None)
+    stress_shelf, shelf_gaps = shelf(page, in_view, filtered)
+    kinds = _kinds(page, every_gap, in_view, from_tool if filtered else None, shelf_gaps)
     fixes = page.fixes(ranked)
     routes = page.routes(in_view)
     unmeasured = [row["id"] for row in rows if row["type"] == "unmeasured"]
@@ -662,12 +804,16 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
         "headline_abstention": abstained,
         "parse_failures": failures,
         "measured": {"first": _iso(min(days)), "last": _iso(max(days))} if days else None,
+        "stress_shelf": stress_shelf,
     }
 
 
 def registry_page() -> dict:
     """What the Sources and licenses page lists, and how many rows and fixes the Data readiness page's
-    skeleton holds, from the source and tool registries alone: it never waits for the warehouse."""
+    skeleton holds, from the source and tool registries and the slice file alone: it never waits for
+    the warehouse."""
+    from strata.config import load_slice
+
     sources = load_sources()
     return {
         "datasets": [{"key": key, "dataset_name": source.dataset_name, "data_source": source.attribution.data_source,
@@ -680,4 +826,5 @@ def registry_page() -> dict:
         "kinds": sum(1 for tool in load_tools().values() if tool.readiness),
         "known_gaps": sum(len(source.known_gaps) for source in sources.values()),
         "fixes": sum(len(source.fixes) for source in sources.values()),
+        "shelf": len(load_slice().stress_shelf),
     }

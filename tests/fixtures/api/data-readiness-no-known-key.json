@@ -16,7 +16,7 @@
     "unknown": 1,
     "from": "unknown",
     "shown": 0,
-    "total": 13
+    "total": 14
   },
   "sources": [],
   "kinds": [],
@@ -26,5 +26,6 @@
   "headline": null,
   "headline_abstention": null,
   "parse_failures": null,
-  "measured": null
+  "measured": null,
+  "stress_shelf": []
 }
