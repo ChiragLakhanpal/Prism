@@ -192,7 +192,7 @@ export function ProjectPage({ pid }: { pid: string }) {
     return (
       <div className="layout-grid" data-project-page="not-found">
         <div className="col-span-12 md:col-span-8">
-          <Breadcrumb trail={[{ text: copy.breadcrumb.projects }]} />
+          <Breadcrumb trail={[projectsCrumb, { text: <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} /> }]} />
           <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
             <Fill template={words.notFoundTitle} slots={{ pid: idText }} />
           </h1>

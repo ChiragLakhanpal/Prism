@@ -161,18 +161,25 @@ test("a project with no plans says so, and a project with no record is not found
   await open(page, "/projects/P999999", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("I don't have a project with the ID P999999.");
   await expect(page.getByRole("main").getByRole("link", { name: "All projects" })).toHaveAttribute("href", "/projects");
+  // You are not on Projects, so the trail links to it and names the ID you asked for.
+  const trail = page.getByRole("navigation", { name: "Breadcrumb" });
+  await expect(trail.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects");
+  await expect(trail.locator("[aria-current=page]")).toHaveText("Project P999999");
 });
 
-test("axe finds no WCAG 2.2 AA violations on All projects and a project's page, which reflow at 320 px", async ({ page }) => {
+test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440, 1024 and 390 px, and they reflow at 320 px", async ({ page }) => {
   const cases: [string, Record<string, Answer>][] = [
     ["/projects", await projects()],
     ["/projects/P156634", await p156634()],
     ["/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } }],
     ["/projects/P999999", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } }],
   ];
+  // Each page loads once and is resized through the widths, which keeps the axe runs quick.
   for (const [path, api] of cases) {
-    for (const width of [1440, 390]) {
-      await open(page, path, api, width);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, path, api);
+    for (const width of [1440, 1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
       await expect(page.locator("[data-projects-page=ready], [data-project-page=ready], [data-project-page=not-found]")).toBeVisible();
       expect(await axe(page), `${path} at ${width} px`).toEqual([]);
     }

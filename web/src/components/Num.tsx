@@ -41,11 +41,14 @@ export function numText(num: NumValue): string {
   return num.show === "count" ? ratio.count : ratio.text;
 }
 
+// A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
+const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence") === "sentence";
+
 export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
   const text = numText(num as NumValue);
   if (!check) {
     return (
-      <span data-num className={cx("tabular-nums", className)}>
+      <span data-num className={cx("tabular-nums", sentenceDate(num as NumValue) && "whitespace-nowrap", className)}>
         {text}
       </span>
     );

@@ -245,10 +245,10 @@ function Method({ result }: { result: CheckedPlan }) {
   );
 }
 
-function Definition({ result }: { result: CheckedPlan }) {
+function Definition({ result, triggerClassName }: { result: CheckedPlan; triggerClassName?: string }) {
   const limits = result.thresholds;
   return (
-    <DefinitionWindow label={words.columns.found} title={words.columns.found}>
+    <DefinitionWindow label={words.columns.found} title={words.columns.found} triggerClassName={triggerClassName}>
       <Fill
         template={words.foundDefinition}
         slots={{
@@ -290,7 +290,16 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
   onToggle: () => void;
 }) {
   return (
-    <Button variant="ghost" flush aria-expanded={open} aria-controls={controls} aria-describedby={describedBy} onClick={onToggle}>
+    // On the fold's page background the ghost hover (tint-hover) barely shows, so it hovers to tint.
+    <Button
+      variant="ghost"
+      flush
+      className="hover:bg-tint!"
+      aria-expanded={open}
+      aria-controls={controls}
+      aria-describedby={describedBy}
+      onClick={onToggle}
+    >
       {open ? words.fold.hide(count) : words.fold.show(count)}
     </Button>
   );
@@ -312,10 +321,12 @@ const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolea
 ];
 const CELL = "px-2 py-3 xl:px-3";
 
-function TableRow({ row, result, fresh }: { row: Activity; result: CheckedPlan; fresh?: boolean }) {
+// A row or card a link's hash names keeps the selected row's tint after focus moves on
+// (DESIGN.md: tint, Selected row).
+function TableRow({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
   const ref = row.activity_reference_no;
   return (
-    <tr id={ref} className={cx("border-t border-line align-top", fresh && "animate-fade-in")}>
+    <tr id={ref} data-named={named || undefined} className={cx("border-t border-line align-top", named && "bg-tint", fresh && "animate-fade-in")}>
       <th scope="row" tabIndex={-1} data-activity={ref} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
@@ -345,7 +356,7 @@ function TableRow({ row, result, fresh }: { row: Activity; result: CheckedPlan; 
 // An activity card below 1024 px: the badges and the reference as its heading, so a screen reader's
 // list of headings says "Needs a look KE-NWWDA-541055-CW-RFB"; then the Description, the reasons, a
 // hairline and the four STEP fields.
-function ActivityCard({ row, result, fresh }: { row: Activity; result: CheckedPlan; fresh?: boolean }) {
+function ActivityCard({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
   const ref = row.activity_reference_no;
   const field = (label: ReactNode, value: ReactNode, wide?: boolean) => (
     <div className={cx("flex min-w-0 flex-col justify-end", wide && "col-span-full")}>
@@ -354,7 +365,7 @@ function ActivityCard({ row, result, fresh }: { row: Activity; result: CheckedPl
     </div>
   );
   return (
-    <li className={cx("rounded-md border border-line bg-surface p-4", fresh && "animate-fade-in")}>
+    <li className={cx("rounded-md border border-line p-4", named ? "bg-tint" : "bg-surface", fresh && "animate-fade-in")}>
       <article>
         <h3 className="flex flex-col items-start gap-2 text-small">
           {row.marks.map((mark) => (
@@ -454,6 +465,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
   const cardSentenceId = useId();
   const [open, setOpen] = useState(defaultOpen);
   const [opened, setOpened] = useState(false);
+  const [named, setNamed] = useState<string | null>(null);
 
   const ordered = result.rows
     .map((row, index) => ({ row, index }))
@@ -475,6 +487,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
     const follow = () => {
       const ref = hashReference();
       if (!ref || !result.rows.some((row) => row.activity_reference_no === ref)) return;
+      setNamed(ref);
       if (unmarkedRows.some((row) => row.activity_reference_no === ref)) setOpen(true);
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
@@ -493,16 +506,23 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
   return (
     <section aria-labelledby={findingId} data-plan-check>
       <Prose className="mt-6">
-        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none">
           <Finding result={result} />
         </h2>
         <div className="mt-2">
           <Method result={result} />
         </div>
       </Prose>
-      <p className="mt-4 text-caption text-ink-muted" data-count-line data-numbers>
-        {countLine}
-      </p>
+      {/* Below 1024 px the cards have no column heads, so the definition of the marks sits at the
+          right end of the count line's row. */}
+      <div className="mt-4 flex items-baseline justify-between gap-4 text-caption">
+        <p className="text-ink-muted" data-count-line data-numbers>
+          {countLine}
+        </p>
+        <div className={VIEW.cards}>
+          <Definition result={result} triggerClassName="inline-flex min-h-6 items-center" />
+        </div>
+      </div>
 
       {/* The frame clips its corners, so a row header a link focuses draws its ring inside. */}
       <div data-view="table" className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
@@ -523,7 +543,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           </thead>
           <tbody>
             {ordered.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} />
+              <TableRow key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} />
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
@@ -538,7 +558,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           </tbody>
           <tbody id={foldId} hidden={!open}>
             {unmarkedRows.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} />
+              <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} />
             ))}
           </tbody>
         </table>
@@ -547,7 +567,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
       <div data-view="cards" className={cx("mt-2", VIEW.cards)}>
         <ul aria-labelledby={findingId} className="flex flex-col gap-3">
           {ordered.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} />
+            <ActivityCard key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} />
           ))}
           {unmarked > 0 && (
             <li className="rounded-md border border-line bg-page p-4" data-fold>
@@ -560,7 +580,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
         </ul>
         <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
           {unmarkedRows.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} />
+            <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} />
           ))}
         </ul>
       </div>

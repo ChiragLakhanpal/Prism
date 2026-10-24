@@ -417,9 +417,9 @@ export const galleryCopy = {
             method: "Request for Quotations",
             market_approach: "Limited - National",
             estimated_amount_usd: "120000.00",
-            actual_amount_usd: "300000.00",
+            actual_amount_usd: "360000.00",
             process_status: "Signed",
-            marks: [{ mark: "watch", reasons: [{ code: "signed_late_over_estimate", mark: "watch", signed_on: "2025-03-14", actual_amount_usd: "300000.00", estimated_amount_usd: "120000.00", ratio: 3, ratio_exact: "2.50", days_late: 41, planned_signing_on: "2025-02-01", planned_signing_plan_date: "2024-11-20", evidence_ids: ["sample-2"] }] }],
+            marks: [{ mark: "watch", reasons: [{ code: "signed_late_over_estimate", mark: "watch", signed_on: "2025-03-14", actual_amount_usd: "360000.00", estimated_amount_usd: "120000.00", ratio: 3, ratio_exact: "3.00", days_late: 41, planned_signing_on: "2025-02-01", planned_signing_plan_date: "2024-11-20", evidence_ids: ["sample-2"] }] }],
           },
           {
             evidence_id: "sample-3",

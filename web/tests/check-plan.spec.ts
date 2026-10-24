@@ -94,6 +94,9 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await openPlan(page);
   const show = view(page, "table").getByRole("button", { name: "Show them" });
   await expect(show).toHaveAttribute("aria-expanded", "false");
+  // On the fold row's page background, the ghost button hovers to tint, so it answers the pointer.
+  await show.hover();
+  await expect.poll(() => show.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(233, 247, 253)");
 
   await show.click();
 
@@ -132,6 +135,9 @@ test("each reason is built from the copy file's sentence and the tool's values, 
   await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText(
     "Planned completion July 31, 2026 passed with no signed contract. The project closes October 31, 2026.",
   );
+  // A date in a sentence never breaks across lines.
+  const date = row("KE-NWWDA-541055-CW-RFB").locator("[data-num]").filter({ hasText: "October 31, 2026" });
+  expect(await date.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
   await expect(row("KE-NWWDA-229129-CW-RFB")).toContainText(
     "Signed January 3, 2022, 186 days after its planned date, at US$1,245,092.76, about 4 times its estimate.",
   );
@@ -259,6 +265,28 @@ test("a link whose hash names a folded activity opens the fold and focuses that 
   const target = view(page, "table").locator('[data-activity="KE-NWWDA-207796-CS-INDV"]');
   await expect(target).toBeFocused();
   await expect(view(page, "table").getByRole("button", { name: "Hide them" })).toBeVisible();
+  // The named row keeps the selected row's tint after focus moves on (DESIGN.md: tint, Selected row).
+  await page.keyboard.press("Tab");
+  expect(await view(page, "table").locator('tr[id="KE-NWWDA-207796-CS-INDV"]').evaluate((row) => getComputedStyle(row).backgroundColor)).toBe(
+    "rgb(233, 247, 253)",
+  );
+});
+
+test("below 1024 px a link whose hash names a folded activity opens the fold and focuses that activity's card", async ({ page }) => {
+  await openPlan(page, 390, undefined, `${PLAN}#KE-NWWDA-207796-CS-INDV`);
+
+  await expect(view(page, "cards").locator('[data-activity="KE-NWWDA-207796-CS-INDV"]')).toBeFocused();
+  await expect(view(page, "cards").getByRole("button", { name: "Hide them" })).toBeVisible();
+});
+
+test("below 1024 px the count line's row opens the What Strata found definition, since the cards have no column heads", async ({ page }) => {
+  await openPlan(page, 390);
+  const term = page.getByRole("button", { name: "What Strata found" });
+  await expect(term).toHaveCount(1);
+
+  await term.click();
+
+  await expect(page.getByRole("dialog", { name: "What Strata found" })).toContainText("It gives a reason to look, never a finding.");
 });
 
 test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
