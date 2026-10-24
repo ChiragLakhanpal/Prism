@@ -304,9 +304,11 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
       const inner = await rect(page, "[data-box-band] [data-scope-chip]");
       expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
       expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
-      // Room for about ten characters of a question.
+      // Room for about ten characters of a question, and for the whole placeholder on a package page.
       const field = await rect(page, "[data-box-band] input");
       expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
+      const cut = await page.locator("[data-box-band] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
+      expect(cut, `${width} px: the placeholder is cut`).toBe(false);
       // The "/" hint, where a keyboard is assumed, stays at the end of the text field's row.
       const hint = page.locator("[data-box-band] kbd");
       if (await hint.isVisible()) {
@@ -336,11 +338,27 @@ test("a reference wider than its row breaks after a hyphen inside the chip, and 
     // At 768 px "Within" comes first, and the reference fits on the chip's next line whole.
     if (!wider) expect(lines, `${width} px`).toEqual([LONG_REF]);
     else expect(lines.length, `${width} px: ${lines.join(" | ")}`).toBeGreaterThan(1);
+    // A chip that fills its row sits as far from the box's right edge as from its left.
+    if (wider) {
+      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+      const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+      expect(Math.round(chip.x - outer.x), `${width} px: the chip's left inset`).toBe(5);
+      expect(Math.round(outer.x + outer.width - (chip.x + chip.width)), `${width} px: the chip's right inset`).toBe(5);
+    }
     for (const [index, line] of lines.entries()) {
       expect(line.startsWith("-"), `${width} px, line ${index + 1}: ${lines.join(" | ")}`).toBe(false);
       if (index > 0) expect(lines[index - 1].endsWith("-"), `${width} px: ${lines.join(" | ")}`).toBe(true);
     }
   }
+});
+
+test("a press on the empty part of the chip's row puts the cursor in the text field, as a press on the field would", async ({ page }) => {
+  await openPackage(page, "KE-NWWDA-541055-CW-RFB", 390);
+  const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+  const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+  expect(await page.locator("[data-box-band] form > [data-focus-ring]").evaluate((el) => getComputedStyle(el).cursor)).toBe("text");
+  await page.mouse.click(outer.x + outer.width - 24, chip.y + chip.height / 2);
+  await expect(page.locator("[data-box-band] input")).toBeFocused();
 });
 
 test("a P-code's chip and a STEP reference's chip on a wide screen sit on one row with the text, in a 44 px box", async ({ page }) => {

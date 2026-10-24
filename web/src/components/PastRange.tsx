@@ -22,6 +22,7 @@ import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
+import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
@@ -205,13 +206,11 @@ export const planCheckHref = (pkg: { project_id: string; step_reference: string;
   `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
 
 // Data readiness, showing only the sources behind the answer and naming the tool that wrote the line.
-// An empty value is left out, never sent: ticket 16's page answers sources= or from= with an error.
-const readinessHref = (result: ComparablesResult) => {
-  const query = new URLSearchParams();
-  if (result.sources.length > 0) query.set("sources", result.sources.map((source) => source.key).join(","));
-  query.set("from", result.tool);
-  return `/data?${query.toString().replaceAll("%2C", ",")}`;
-};
+const readinessHref = (result: ComparablesResult) =>
+  dataReadinessHref(
+    result.sources.map((source) => source.key),
+    result.tool,
+  );
 
 // The criteria the tool used, as phrases: the fields compared, and the others in a second sentence.
 function criteriaParts(result: ComparablesResult, form: "note" | "empty") {

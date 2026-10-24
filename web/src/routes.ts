@@ -40,9 +40,12 @@ export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow:
 
 // Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
 // the answer, by their source registry keys, and the tool that wrote the line, such as
-// find_comparables, which the page turns into words from the copy file.
+// find_comparables, which the page turns into words from the copy file. An empty list is left out,
+// never sent as an empty sources=.
 export function dataReadinessHref(sources: string[], from: string): string {
-  const query = new URLSearchParams({ sources: sources.join(","), from });
+  const query = new URLSearchParams();
+  if (sources.length > 0) query.set("sources", sources.join(","));
+  query.set("from", from);
   return `${DATA_HREF.data}?${query.toString().replaceAll("%2C", ",")}`;
 }
 

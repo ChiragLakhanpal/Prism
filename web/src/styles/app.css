@@ -44,6 +44,8 @@
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
+  /* The one box: half its 44 px height, a pill on one row that keeps its corners when a chip wraps it to two. */
+  --radius-box: 22px;
 
   /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's
      default font size; 1rem is 16 px. Color is set by the component, not the step. */

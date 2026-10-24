@@ -2,7 +2,7 @@
 // over its STEP reference, sticky from a page area of 768 px, and the package's facts as a definition list in STEP's
 // field names, word for word, which are the defaults find_comparables started from. A missing value
 // reads "Not in the plan row". "In the plan" links back to the plan check with this row in view.
-import { Fragment, type ReactNode, type RefObject } from "react";
+import { type ReactNode, type RefObject } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
 import { cx } from "../lib/cx";
@@ -16,23 +16,6 @@ import { TextLink } from "./TextLink";
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
-// A reference inside a sentence, with the punctuation after it, in one inline box: it moves to the
-// next line whole with its full stop when it fits there (DESIGN.md section 3, an ID stays readable as
-// one ID), and when it is wider than the line, breaks after a hyphen like any ID. Only a part with no
-// hyphen that is wider than the line breaks inside, so the page never scrolls sideways. One with a
-// county's name has a box for each word, so it breaks at its space first.
-export function inlineMono(text: string, after = "") {
-  const parts = text.split(" ");
-  return parts.map((part, index) => (
-    <Fragment key={index}>
-      {index > 0 && " "}
-      <span className="inline-block max-w-full wrap-anywhere">
-        <span className="font-mono font-medium">{part}</span>
-        {index === parts.length - 1 && after}
-      </span>
-    </Fragment>
-  ));
-}
 
 export function PackageHeader({
   title,

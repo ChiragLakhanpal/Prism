@@ -237,6 +237,7 @@ fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "
           "parse_failures", "measured"]
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
+
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan and returns their past \
 range: how long each took from its specific procurement notice to its signed contract. It reads notices and \

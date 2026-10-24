@@ -7,11 +7,12 @@
 // list under it says what Enter will do, laid over the page so the band never grows. Its options
 // come from the intent rules (web/src/lib/intents.ts, through IntentBox.tsx); this file draws them.
 // On a project or package page the box holds a removable scope chip.
-import { Fragment, useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import { CircleX, Search, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
 import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
 
@@ -38,15 +39,14 @@ export type BoxOption = {
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
 // button. Below 768 px it shows the ID only. A STEP reference is far longer than a P-code, so when the
 // chip and a text field you can type in do not fit on one line, the chip takes a row of its own above
-// the text (OneBox wraps). A reference wider than that row stays whole and readable as one ID: each
-// part between spaces moves to the next line whole when it fits there, and breaks after a hyphen when
-// it is wider than the line, as the package workspace's own references do. On one line the chip is the
+// the text (OneBox wraps). A reference wider than that row stays whole and readable as one ID
+// (MonoWords): each part between spaces moves to the next line whole when it fits there, and breaks
+// after a hyphen when it is wider than the line, as the package workspace's own references do. On one line the chip is the
 // 32 px pill it always was; on more it is a box with the same 16 px corners.
 //
 // Its -mr-3 and the text field's ml-3 cancel out on one line, leaving the box's 8 px gap after the
 // chip; when the text field wraps under the chip, its ml-3 lines its text up with the reference's.
 function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void }) {
-  const parts = scope.split(" ");
   return (
     <span
       data-scope-chip
@@ -54,12 +54,7 @@ function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void })
     >
       <span className="min-w-0 py-1 text-small">
         <span className="mr-2 hidden text-ink-muted md:inline">{copy.box.chipWithin}</span>
-        {parts.map((part, index) => (
-          <Fragment key={index}>
-            {index > 0 && " "}
-            <span className="inline-block max-w-full align-top font-mono wrap-anywhere text-ink">{part}</span>
-          </Fragment>
-        ))}
+        <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
       <button
@@ -163,13 +158,22 @@ export function OneBox({
           {copy.box.scoped(scope)}
         </span>
       )}
-      {/* One row is a 44 px pill: its 22 px corners are half its height. When a long scope chip pushes the
-          text field to a second row, the corners stay 22 px, so the chip's own corner stays clear of them. */}
+      {/* One row is a 44 px pill: its 22 px corners (rounded-box) are half its height. When a long scope chip
+          pushes the text field to a second row, the corners stay 22 px, so the chip's own corner stays clear
+          of them. With a chip the box keeps 4 px on each side, so a chip that fills its row sits 5 px from
+          both edges, and the text group's own 12 px margin keeps the text row's 16 px on the right.
+          A press on the box's empty part, such as the rest of the chip's row, acts as a press on the field. */}
       <div
         data-focus-ring
+        onPointerDown={(event) => {
+          if (event.target !== event.currentTarget) return;
+          event.preventDefault();
+          input.current?.focus();
+          onPointerDown?.();
+        }}
         className={cx(
-          "flex min-h-11 flex-wrap items-center gap-x-2 rounded-[22px] border border-line-strong bg-surface pr-4 transition-paint duration-150",
-          scope ? "pl-1" : "pl-4",
+          "flex min-h-11 cursor-text flex-wrap items-center gap-x-2 rounded-box border border-line-strong bg-surface transition-paint duration-150",
+          scope ? "px-1" : "px-4",
           "hover:border-ink has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2",
           "has-[input:focus-visible]:outline-focus has-[input:focus-visible]:outline-solid",
         )}
@@ -180,9 +184,11 @@ export function OneBox({
           <Search aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
         )}
         {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. The
-            field keeps room for about ten characters of a question, beside the chip or under it. */}
-        <div className={cx("flex flex-1 items-center gap-2", scope ? "ml-3" : "min-w-0")}>
-          <div className={cx("relative flex-1", scope ? "min-w-24" : "min-w-0")}>
+            field keeps room for about ten characters of a question beside a P-code's chip, and on a package
+            page for its whole placeholder (176 px), so "Ask about this package" is never cut; when there is
+            less, the field goes under the chip. */}
+        <div className={cx("flex flex-1 items-center gap-2", scope ? "mx-3" : "min-w-0")}>
+          <div className={cx("relative flex-1", !scope ? "min-w-0" : scopeKind === "package" ? "min-w-44" : "min-w-24")}>
             <input
               ref={input}
               id={inputId}
@@ -216,7 +222,9 @@ export function OneBox({
               className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
             >
               {placeholder ? (
-                <span className="truncate">{placeholder}</span>
+                <span className="truncate" data-placeholder>
+                  {placeholder}
+                </span>
               ) : (
                 <>
                   <span className="truncate md:hidden">{copy.box.placeholderNarrow}</span>
