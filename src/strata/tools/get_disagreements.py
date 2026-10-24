@@ -9,12 +9,15 @@ A subject is a project, with its packages, or one package by its STEP reference.
 
 - one row per disagreement, with both sides in the order they were written. A side keeps its source's own
   field name and value word for word, its quote and page when it was read from a report, its date, its
-  evidence tier and the evidence id a claim cites. The row names the side Strata leans on and the id of the
-  ladder's rule that decided (config/evidence_ladder.toml; brief 23 keys each rule's sentence by it), and
-  under if_you_keep the value you would treat as true if you kept the other side. The screens and the
-  agent write the rule's sentence and the what-changes line from these values, never a model. When the two
-  sides describe a named moment, such as the mid-term review, each side gives how many whole months after
-  it the side was made.
+  evidence tier and the evidence id a claim cites; a side that rests on a passage also gives the paragraph
+  as the report numbers it and its document's key in the source view's address. The row names the side
+  Strata leans on and the id of the ladder's rule that decided (config/evidence_ladder.toml), and under
+  if_you_keep the value you would treat as true if you kept the other side. The tool returns ids and
+  values, never a sentence, as check_plan returns reason codes: the screens write the rule's sentence
+  (web/src/copy.ts, disagreement.rule, keyed by the rule id), each side's "written when" line
+  (disagreement.written, keyed by its evidence tier) and the what-changes line from these values, never a
+  model. When the two sides describe a named moment, such as the mid-term review, each side gives how many
+  whole months after it the side was made.
 - trajectories: for each series of ratings of successive periods, such as one ISR after another, its
   ratings in order and its runs of equal ratings. A trajectory is never a disagreement.
 - rejected: how many assertions read from the project's reports the run left out, by reason, such as a

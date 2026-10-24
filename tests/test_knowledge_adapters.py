@@ -353,3 +353,122 @@ def test_the_live_judge_needs_its_keys_and_uses_the_role_the_model_file_names():
 
     assert from_environment({}) is None
     assert judge.name == load_models()[load_supplier_matching().judge_role].deployment == load_models()["draft"].deployment
+
+
+# ── The batch model (ticket 20; proposed lessons reuse it) ───────────────
+
+class BatchService:
+    """A stand-in for Azure OpenAI's v1 files and batches operations: it keeps each request, takes the
+    upload, says the batch is running `polls` times, then completed, and serves the output file."""
+
+    def __init__(self, output_lines: list[dict], polls: int = 1, status: str = "completed"):
+        self.output, self.polls, self.status, self.requests = output_lines, polls, status, []
+
+    def __call__(self, method, url, headers, body, content_type):
+        self.requests.append((method, url, headers, body, content_type))
+        path = url.split("/openai/v1", 1)[1]
+        if (method, path) == ("POST", "/files"):
+            return json.dumps({"id": "file-not-a-real-input", "purpose": "batch"}).encode()
+        if (method, path) == ("POST", "/batches"):
+            return json.dumps({"id": "batch-not-a-real-id", "status": "validating"}).encode()
+        if (method, path) == ("GET", "/batches/batch-not-a-real-id"):
+            self.polls -= 1
+            done = self.polls < 0
+            return json.dumps({"id": "batch-not-a-real-id", "status": self.status if done else "in_progress",
+                               "output_file_id": "file-not-a-real-output" if done and self.status == "completed"
+                               else None}).encode()
+        if (method, path) == ("GET", "/files/file-not-a-real-output/content"):
+            return "".join(json.dumps(line) + "\n" for line in self.output).encode()
+        raise AssertionError(f"unexpected call {method} {path}")
+
+
+def recorded_lines() -> list[dict]:
+    return json.loads((FIXTURES / "azure" / "batch_assertions.json").read_text())["lines"]
+
+
+def live_batch(service, **waits):
+    from strata.knowledge.batch import AzureOpenAIBatch
+
+    slept = []
+    model = AzureOpenAIBatch("https://wb-strata.openai.azure.com/openai/v1", "not-a-real-key", "gpt-5.4-nano",
+                             transport=service, sleep=slept.append, **waits)
+    return model, slept
+
+
+def test_the_live_batch_uploads_one_jsonl_file_waits_for_the_batch_and_reads_each_answer_by_its_custom_id():
+    from strata.knowledge.batch import Request
+
+    error_line = {"id": "batch_req_not-a-real-id-9", "custom_id": "assertions:2/v1",
+                  "response": {"status_code": 429, "body": {}}, "error": None}
+    service = BatchService([recorded_lines()[0], error_line], polls=2)
+    model, slept = live_batch(service, poll_seconds=60)
+
+    answers = model.answer([Request("assertions:31525018/v1", "the rules", {"passages": []}),
+                            Request("assertions:2/v1", "the rules", {"passages": []})])
+
+    by_id = {answer.custom_id: answer for answer in answers}
+    assert json.loads(by_id["assertions:31525018/v1"].content)["assertions"][0]["passage_id"] == "31525018/v1/44"
+    assert (by_id["assertions:2/v1"].content, by_id["assertions:2/v1"].error) == (None, "status 429")
+    assert slept == [60, 60, 60]  # while it validated, then twice while it ran
+    method, url, headers, body, content_type = service.requests[0]
+    assert (method, url, headers) == ("POST", "https://wb-strata.openai.azure.com/openai/v1/files",
+                                      {"api-key": "not-a-real-key"})
+    assert content_type.startswith("multipart/form-data; boundary=") and b'name="purpose"\r\n\r\nbatch' in body
+    lines = [json.loads(line) for line in body.split(b"application/jsonl\r\n\r\n")[1].split(b"\r\n--")[0].splitlines()]
+    assert [(line["custom_id"], line["method"], line["url"]) for line in lines] == [
+        ("assertions:31525018/v1", "POST", "/chat/completions"), ("assertions:2/v1", "POST", "/chat/completions")]
+    assert lines[0]["body"]["model"] == "gpt-5.4-nano"
+    assert lines[0]["body"]["response_format"] == {"type": "json_object"}
+    assert [message["role"] for message in lines[0]["body"]["messages"]] == ["system", "user"]
+    assert json.loads(service.requests[1][3]) == {"input_file_id": "file-not-a-real-input",
+                                                  "endpoint": "/chat/completions", "completion_window": "24h"}
+
+
+def test_a_batch_still_running_when_the_run_stops_waiting_is_asked_about_again_later():
+    from strata.knowledge.batch import BatchPending, Request
+
+    model, slept = live_batch(BatchService([], polls=10), wait_seconds=120, poll_seconds=60)
+
+    with pytest.raises(BatchPending, match="still in_progress after 120 seconds"):
+        model.answer([Request("assertions:1/v1", "the rules", {})])
+    assert slept == [60, 60]
+
+
+def test_a_batch_that_ends_without_an_output_file_stops_the_run():
+    from strata.knowledge.batch import BatchError, Request
+
+    model, _ = live_batch(BatchService([], polls=0, status="failed"))
+
+    with pytest.raises(BatchError, match="ended failed with no output file"):
+        model.answer([Request("assertions:1/v1", "the rules", {})])
+
+
+def test_the_live_batch_needs_its_keys_and_uses_the_batch_roles_deployment():
+    from strata.config import load_models
+    from strata.knowledge.batch import from_environment
+
+    model = from_environment({"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/v1",
+                              "AZURE_OPENAI_API_KEY": "not-a-real-key"})
+
+    assert from_environment({}) is None
+    assert model.deployment == load_models()["batch"].deployment
+
+
+def test_a_new_recording_keeps_the_planted_assertion_so_the_gate_still_proves_the_rejection():
+    """ops/assertions/batch_live.py --record writes the live answers over the hand-written ones. The planted
+    assertion, whose quote is not on its page, is kept in the answer it was planted in."""
+    from strata.knowledge.batch import recording
+
+    held = json.loads((FIXTURES / "azure" / "batch_assertions.json").read_text())
+    live = [{"custom_id": "assertions:31525018/v1", "response": {"status_code": 200, "body": {"choices": [
+        {"message": {"content": json.dumps({"assertions": [{"passage_id": "31525018/v1/78", "quote": "live"}]})}}]}},
+             "error": None}]
+
+    written = recording(live, held, recorded_on="2026-10-24")
+
+    assert written["recorded"] == "2026-10-24"
+    [line] = written["lines"]
+    content = json.loads(line["response"]["body"]["choices"][0]["message"]["content"])
+    assert [item["quote"] for item in content["assertions"]] == [
+        "live", "the overall outcome is rated Moderately Satisfactory"]
+    assert "planted" in content["assertions"][1]

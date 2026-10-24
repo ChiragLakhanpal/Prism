@@ -12,6 +12,8 @@ a custom_id. Assertions (strata.knowledge.assertions) use it now; proposed lesso
 - RecordedBatch, offline. It answers each request with the line a recording holds for its custom_id
   (tests/fixtures/azure/batch_assertions.json), in the Batch API's output-line shape, so the gate runs the
   same reading code as the live run. A request the recording does not hold gets no answer.
+  ops/assertions/batch_live.py --record writes the recording from a live batch with recording(), which
+  keeps the assertion planted by hand, so the gate still proves the quote check rejects it.
 
 from_environment() gives the live model when AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY are set, and
 None otherwise; with no model, the run reads no assertions from text.
@@ -125,6 +127,44 @@ class RecordedBatch:
         return read_lines([self.lines[request.custom_id] for request in requests if request.custom_id in self.lines])
 
 
+RECORDED_ABOUT = ("The batch role's answers (config/models.toml, on Global Batch) to the assertion requests for "
+                  "P130164's ICR and its two ICR Reviews, as lines of the Batch API's output file, keyed by "
+                  "custom_id, recorded by ops/assertions/batch_live.py --record. One assertion, marked planted, was "
+                  "written by hand with a quote that is not on its page, so the gate proves the check rejects it; "
+                  "each new recording keeps it.")
+
+
+def _planted(line: dict) -> list[dict]:
+    """The assertions planted by hand in one line of a recording."""
+    try:
+        content = line["response"]["body"]["choices"][0]["message"]["content"]
+        return [item for item in json.loads(content or "{}").get("assertions", []) if "planted" in item]
+    except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+        return []
+
+
+def recording(lines: list[dict], held: dict, recorded_on: str) -> dict:
+    """A new recording of a batch's output lines, with each assertion planted in the recording held kept in
+    the answer to the same request, after the model's own."""
+    planted = {line["custom_id"]: _planted(line) for line in held.get("lines", [])}
+    answered = {line.get("custom_id") for line in lines}
+    missing = [custom_id for custom_id, items in planted.items() if items and custom_id not in answered]
+    if missing:
+        raise BatchError(f"The batch gave no answer to {', '.join(missing)}, which holds the planted assertion. "
+                         f"Nothing was written.")
+    written = []
+    for line in lines:
+        keep = planted.get(line.get("custom_id")) or []
+        if keep:
+            line = json.loads(json.dumps(line))  # a copy, so the batch's own line is left as it came
+            message = line["response"]["body"]["choices"][0]["message"]
+            content = json.loads(message["content"] or "{}")
+            content["assertions"] = list(content.get("assertions") or []) + keep
+            message["content"] = json.dumps(content, ensure_ascii=False)
+        written.append(line)
+    return {"about": RECORDED_ABOUT, "recorded": recorded_on, "lines": written}
+
+
 # ── Live ─────────────────────────────────────────────────────────────────
 
 # (method, url, headers, body, content type) -> the answer's bytes
@@ -175,6 +215,10 @@ class AzureOpenAIBatch:
             raise BatchError(f"Azure OpenAI's answer to {method} {path} is not JSON.") from error
 
     def answer(self, requests: list[Request]) -> list[Answer]:
+        return read_lines(self.output_lines(requests))
+
+    def output_lines(self, requests: list[Request]) -> list[dict]:
+        """The batch's output file, one line per request it answered, as the Batch API wrote it."""
         if not requests:
             return []
         lines = "\n".join(json.dumps(request_line(request, self.deployment), ensure_ascii=False)
@@ -195,7 +239,7 @@ class AzureOpenAIBatch:
             raise BatchError(f"Batch {batch.get('id')} ended {batch['status']} with no output file.")
         output = self.transport("GET", f"{self.base}/files/{batch['output_file_id']}/content", self.headers, None,
                                 None).decode()
-        return read_lines([json.loads(line) for line in output.splitlines() if line.strip()])
+        return [json.loads(line) for line in output.splitlines() if line.strip()]
 
 
 def from_environment(environ: Mapping[str, str] = os.environ) -> AzureOpenAIBatch | None:

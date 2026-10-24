@@ -172,7 +172,8 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The live plan run on the workspace | `ops/plans/run_live.py` |
 | The live passage run on the workspace, which also makes and syncs the AI Search index, and the live check that asks `search_passages` its benchmark question through AI Search | `ops/documents/run_live.py` and `ops/documents/search_live.py` |
 | The live check that asks the judge role's deployment about the fixture's uncertain supplier pairs | `ops/suppliers/judge_live.py` |
-| The knowledge model: the sector words, the embedding and Prompt Shields adapters, hybrid search (AI Search live, the fixture search offline), and suppliers resolved on STEP supplier IDs first and names second (`suppliers/`). Lessons, links and assertions come later | `src/strata/knowledge/` |
+| The knowledge model: the sector words, the embedding and Prompt Shields adapters, hybrid search (AI Search live, the fixture search offline), suppliers resolved on STEP supplier IDs first and names second (`suppliers/`), the batch model's adapter (`batch.py`, Global Batch live, a recording offline), and assertions and the disagreements between them, each decided by the evidence ladder (`assertions.py`). Lessons and links come later | `src/strata/knowledge/` |
+| The live assertion run on the workspace, which also checks `get_disagreements`' benchmark question, and the command that records the batch answers the gate replays (`--record`) | `ops/assertions/batch_live.py` |
 | The tool registry: one entry per tool, with its parameters (always an optional `as_of` date), adapter, benchmark question and result shape. Adding a tool is one entry plus its adapter | `config/tools.toml` |
 | The registry at work (the agent's tool list, calling a tool by name, the tool contract) and the tools, with their SQL: `check_plan` and `search_passages` | `src/strata/tools/` |
 | Which engine runs a viewer's queries in the server | `src/strata/server/engines.py` |
@@ -186,7 +187,8 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The draft writers' scripted cases, replayed by the scripted writer, and the recorded answers the draft screens play | `tests/fixtures/agent/writers.toml` and `tests/fixtures/api/drafts-*` (written by `uv run --frozen python tests/record_drafts_api.py`) |
 | The estimates: comparables, models and the replay harness | `src/strata/estimates/` (later) |
 | The registry and config files for the change drill: the source registry, the slice file, the sector taxonomy, the model file, the thresholds file, the tool registry and the agent registry, each read by one function in `src/strata/config.py` | `config/` |
-| The rest of the change drill's config files: the evidence ladder and the package form | `config/` (later) |
+| The evidence ladder: the rules that choose the assertion Strata leans on when two disagree (outcome judgments, then moments, then the two ties), the evidence tiers, and the attributes an assertion can be about with their rating scales, read by `load_ladder`. Reordering a rule is a change to this file only | `config/evidence_ladder.toml` |
+| The rest of the change drill's config files: the package form | `config/` (later) |
 | The benchmark file, with one question per tool so far. Ticket 33 adds the runner and the other kinds of question | `evals/benchmark.yaml` |
 | The shield set: five real passages with rule-like sentences that must reach the agent without a Prompt Shields refusal | `evals/shield_passages.toml` |
 | The other evaluation sets | `evals/` (later) |
