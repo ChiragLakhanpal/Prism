@@ -17,3 +17,7 @@ Read first: docs/PLAN.md sections 2 (shared workspace limits), 11 and 16; docs/a
 - [ ] A run forced to fail midway, then rerun, finishes with no duplicate rows.
 - [ ] The job never runs more than five tasks at once, and its window does not overlap fairshare's.
 - [ ] No draft's content changes during the run; only its was-and-now marker is set.
+
+## Comments
+
+- October 24, 2026, orchestrator: the gate's time is drifting up. By hand on build/strata it took about 30 seconds after ticket 51, 55 to 66 seconds after tickets 14, 16 and 19 landed, and 86 to 105 seconds on reviewers' runs while four tickets built at once. The web lane sets the total now: tickets 10, 12, 14 and 16 added Playwright specs that take 13 to 53 seconds each on one worker, mostly axe runs. CLAUDE.md rule 6 caps the gate at two minutes, and `.githooks/pre-commit` enforces it. Before the nightly job's own checks add more, bring the gate back under 60 seconds by hand: run the Playwright specs on more workers or shard them across two lanes that need nothing from each other, keep the fixture build and the python tests where they are, and record the new lane times in `gates/steps.toml`'s comments, README's gate section and `docs/agents/areas/ops.md`. Report the gate's time alone and under load. If this does not fit the ticket, say so in the report and the orchestrator opens a ticket for it.
