@@ -93,8 +93,8 @@ quote = { text = "108 of 328 works contracts had to be bid again", passage_id = 
 [[cases]]
 id = "p130164-quote-marks-and-quote-disagree"
 says = """The agent's quote marks and its quotes disagree three ways: quote marks around words that are not on \
-the page, a quote the sentence never shows in quote marks, and quote marks with no quote, in English and in \
-French. The verifier removes all four sentences."""
+the page, a quote the sentence never shows in quote marks, and quote marks with no quote, in English with \
+double and single quote marks, straight and curly, and in French. The verifier removes all six sentences."""
 question = "Why were works contracts in P130164 advertised again?"
 scope = "P130164"
 as_of = 2026-10-23
@@ -118,6 +118,20 @@ quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "s
 
 [[cases.plant_claims]]
 sentence = "The ICR called the delay \"avoidable\"."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases.plant_claims]]
+sentence = "The ICR called the delay 'avoidable'."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases.plant_claims]]
+sentence = "The ICR called the works \u2018late and costly\u2019."
 kind = "record"
 evidence_ids = ["strata.gold.passage:31525018/v1/54"]
 numbers = []

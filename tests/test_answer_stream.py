@@ -177,6 +177,8 @@ def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_p
         ("In 108 districts the works ran late.",
          [("quote_not_in_sentence", ICR_54), ("number_not_in_records", "108")]),
         ('The ICR called the delay "avoidable".', [("quote_not_on_page", None)]),
+        ("The ICR called the delay 'avoidable'.", [("quote_not_on_page", None)]),
+        ("The ICR called the works \u2018late and costly\u2019.", [("quote_not_on_page", None)]),
         ("Le rapport dit que les contrats sont \u00ab jamais revus \u00bb.", [("quote_not_on_page", None)]),
     ]
     assert copy_reasons()["quote_not_in_sentence"] == {
@@ -184,8 +186,8 @@ def test_the_words_a_sentence_puts_in_quote_marks_are_the_words_checked_on_the_p
         "joined": "it cited a quote but did not show the quoted words"}
     checks = of(parsed, "checks")[0]
     # The base answer quotes twice, both on their pages; each planted sentence quotes, and none is found.
-    assert checks["quotes"] == {"total": 6, "found": 2}
-    assert checks["sentences"] == {"written": 7, "kept": 3, "removed": 4}
+    assert checks["quotes"] == {"total": 8, "found": 2}
+    assert checks["sentences"] == {"written": 9, "kept": 3, "removed": 6}
 
 
 def test_a_quote_cut_from_inside_a_number_is_not_on_its_page(ask_case):
@@ -399,7 +401,8 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         claim("Six works contracts were bid again."), claim("It was one of 37 packages."),
         claim("One lesson was about estimates."), claim("Only one bid was received for the package."),
         claim("One firm bid for it."), claim("Zero bids came in."), claim("No one said why."),
-        claim("Each one was signed late."), claim("The works started in the first half of the year.")),
+        claim("Each one was signed late."), claim("The works started in the first half of the year."),
+        claim("The contractors' bids came late, and the World Bank's review followed.")),
         no_engine))))
 
     assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
@@ -407,7 +410,10 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         [("number_not_in_records", "One")], [("number_not_in_records", "one")], [("number_not_in_records", "One")],
         [("number_not_in_records", "Zero")]]
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
-        "No one said why.", "Each one was signed late.", "The works started in the first half of the year."]
+        "No one said why.", "Each one was signed late.", "The works started in the first half of the year.",
+        "The contractors' bids came late, and the World Bank's review followed."]
+    # Apostrophes are not quote marks, so that sentence quotes nothing.
+    assert of(parsed, "checks")[0]["quotes"] == {"total": 0, "found": 0}
 
 
 def claim(sentence, **fields):

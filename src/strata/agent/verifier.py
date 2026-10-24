@@ -316,14 +316,16 @@ def _normalized(text: str) -> tuple[str, list[int]]:
 
 
 # The words a sentence puts in quote marks. The agent is told to use straight double ones in every language;
-# curly ones count too, and so do the « » French writes, without the spaces inside them.
-QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d|\u00ab\s*([^\u00bb]+?)\s*\u00bb')
+# curly ones count too, and so do the « » French writes, without the spaces inside them, and single ones,
+# straight or curly, as British English writes them. A single mark inside or at the end of a word is an
+# apostrophe ("the contractors' bids", "the World Bank's review"), so it neither opens nor closes a quote.
+QUOTED = re.compile(r'"([^"]+)"|\u201c([^\u201d]+)\u201d|\u00ab\s*([^\u00bb]+?)\s*\u00bb'
+                    r"|(?<![\w'\u2019])\u2018(.+?)\u2019(?!\w)|(?<![\w'\u2019])'(.+?)'(?!\w)")
 
 
 def quoted_spans(sentence: str) -> list[tuple[int, int]]:
     """Where each run of quoted words sits in the sentence, inside its quote marks."""
-    return [next(match.span(group) for group in (1, 2, 3) if match.group(group) is not None)
-            for match in QUOTED.finditer(sentence)]
+    return [match.span(match.lastindex) for match in QUOTED.finditer(sentence)]
 
 
 def find_quote(quote: str, text: str) -> tuple[int, int] | None:
