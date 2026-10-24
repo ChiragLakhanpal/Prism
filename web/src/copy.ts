@@ -979,6 +979,7 @@ export const copy = {
       isr: "ISR {sequence}, {date}",
       isrUnnumbered: "ISR of {date}",
       projects_api_ratings: "Projects API, ISR of {date}",
+      icr: "ICR, {date}",
       ieg_ratings: "IEG ratings, {date}",
     } as Record<string, string>,
     // A citation marker's name: "Source 1: World Bank projects API, record of August 1, 2023".
@@ -989,6 +990,7 @@ export const copy = {
       isr: "Implementation Status and Results Report {sequence}, {date}",
       isrUnnumbered: "Implementation Status and Results Report of {date}",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}",
+      icr: "Implementation Completion and Results Report, {date}",
       ieg_ratings: "Independent Evaluation Group ratings, {date}",
     } as Record<string, string>,
     // The commitment's tooltip: each loan or credit, then the total the route summed.

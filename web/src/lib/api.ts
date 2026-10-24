@@ -160,7 +160,7 @@ export type PlanChanges = {
 // the evidence drawer shows it (src/strata/server/summary.py).
 export type FactSource = {
   evidence_id: string | null;
-  kind: "projects_api" | "loans" | "loan_history" | "isr" | "projects_api_ratings" | "ieg_ratings";
+  kind: "projects_api" | "loans" | "loan_history" | "isr" | "projects_api_ratings" | "icr" | "ieg_ratings";
   date: string | null;
   sequence?: number | null;
   fiscal_year?: number | null;

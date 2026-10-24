@@ -195,15 +195,17 @@ record = "api/credits/P156634-P130164.json"
 at = "data[credit_number=IDA53100].cancelled_amount_us_"
 
 [[value]]
-id = "isr-13-rating"
-says = "ISR 13, of December 28, 2018, the last ISR, rated progress towards the PDO Moderately Unsatisfactory."
+id = "icr-outcome-p130164"
+says = "The ICR rated P130164's overall outcome Moderately Unsatisfactory (paragraph 45), the rating a project's Summary shows beside IEG's."
 value = "Moderately Unsatisfactory"
-quote = "Progress towards achievement of PDO Moderately Unsatisfactory Moderately Unsatisfactory"
-document = "documents/P130164/isr-13-2018-12-28"
-document_type = "Implementation Status and Results Report"
+quote = "45. Based on the ratings for PDOs’ Relevance, Efficacy, and Efficiency, the overall outcome is rated Moderately Unsatisfactory (Table 4)."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
 project = "P130164"
-date = 2018-12-28
-pdf_page = 1
+date = 2019-10-10
+section = "II.D"
+paragraph = 45
+pdf_page = 21
 
 [[value]]
 id = "icr-disclosed"

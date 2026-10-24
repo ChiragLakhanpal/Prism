@@ -86,6 +86,12 @@ def test_the_ground_truth_lists_every_value_the_spec_names():
     assert not missing, f"values.toml has no entry for {missing}"
 
 
+def test_each_value_has_an_id_of_its_own():
+    # A test reads a value by its id, so a second entry with the same id would never be read.
+    ids = [value["id"] for value in VALUES]
+    assert sorted({i for i in ids if ids.count(i) > 1}) == []
+
+
 @pytest.mark.parametrize("value", VALUES, ids=lambda value: value["id"])
 def test_each_value_names_its_source(value):
     assert value.get("says") and "value" in value and value.get("quote")

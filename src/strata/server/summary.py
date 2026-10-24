@@ -11,9 +11,11 @@ evidence drawer shows it, so a citation marker opens at once:
 - money: the commitment, disbursed and canceled amounts summed over the project's loans and credits
   (gold.loan), in US$ millions to one decimal, each a column the route works out;
 - ratings: the latest ISR's ratings as its own overall ratings table prints them (silver.isr_ratings,
-  cited to that table's passage), the projects API's latest Procurement rating, IEG's outcome and
-  World Bank performance ratings (gold.ieg_rating), and the overall risk rating under the Environmental and
-  Social Framework, or the Environmental Assessment Category of a project that has none;
+  cited to that table's passage), the projects API's latest Procurement rating, the outcome rating in the
+  ICR, as the nightly job read it from the ICR's text with its quote on the page (gold.assertion, cited to
+  that passage), IEG's outcome and World Bank performance ratings (gold.ieg_rating), and the overall risk
+  rating under the Environmental and Social Framework, or the Environmental Assessment Category of a
+  project that has none;
 - who: the region, the project's one sector in Strata's taxonomy with the projects API's sectors and
   their shares, and the implementing agencies.
 
@@ -43,6 +45,8 @@ MILLION, TENTH = Decimal(1_000_000), Decimal("0.1")
 ISR_RATINGS = {"Progress towards achievement of PDO": "pdo", "Overall Implementation Progress (IP)": "implementation"}
 PROCUREMENT = "27"  # the projects API's code for the Procurement rating
 ICR_REVIEW = "ICRR"  # IEG's evaluation type for an ICR Review
+# The ICR's own outcome rating: the assertion about the whole project that the ICR's text makes.
+ICR_OUTCOME = {"subject_kind": "project", "attribute": "outcome", "evidence_tier": "icr"}
 LEADS = {"Pipeline": "pipeline", "Dropped": "dropped"}
 SECTOR_YEAR = re.compile(r"^FY\d{2} - ")  # the projects API's taxonomy year before each sector's name
 
@@ -210,6 +214,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     ieg = _rows(engine, "ieg", project_id=project_id, as_of=as_of)
     sectors = _rows(engine, "sectors", project_id=project_id, as_of=as_of)
     environment = _rows(engine, "environment", project_id=project_id, as_of=as_of)
+    icr = _rows(engine, "icr_rating", project_id=project_id, as_of=as_of, **ICR_OUTCOME)
 
     sources = _Sources()
     project_event = _project_record(record, as_of)
@@ -259,7 +264,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         if current and record["total_commitment_usd"] is not None:
             money.append(_fact("commitment", millions(_money(record["total_commitment_usd"])), record_source))
 
-    # Ratings, in the order they were written: the ISR, then IEG, then the risk category.
+    # Ratings, in the order they were written: the ISR, then the ICR, then IEG, then the risk rating.
     ratings = []
     latest_isr = [row for row in isr if row["document_id"] == isr[0]["document_id"]] if isr else []
     for row in latest_isr:
@@ -275,6 +280,10 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         if row["rating_code"] == PROCUREMENT:
             ratings.append(_fact("procurement", row["value"], sources.cite(
                 _api_rating_record(project_id, row), kind="projects_api_ratings", date=_iso(row["isr_date"]))))
+    if icr:
+        event = evidence_routes.read(engine, icr[0]["evidence_id"], as_of)
+        ratings.append(_fact("icr_outcome", icr[0]["value"], sources.cite(
+            event, kind="icr", date=_iso(icr[0]["made_at"]))))
     review = next((row for row in ieg if row["evaluation_type"] == ICR_REVIEW), None)
     if review:
         source = sources.cite(_ieg_record(project_id, review), kind="ieg_ratings", date=_iso(review["public_from"]),

@@ -207,7 +207,13 @@ def test_p130164_s_summary_gives_every_value_with_its_source_in_one_small_answer
                                "disbursed": "121.6", "canceled": "30.7", "disbursed_as_of": "2026-09-30"}
     assert found["pdo"]["value"] == ground_truth("isr-13-rating")
     assert found["pdo"]["source"]["evidence_id"] == "strata.gold.passage:30730274/v1/s3"
+    # The ICR's own outcome rating, from its paragraph 45, sits before IEG's, in the order they were written.
+    assert found["icr_outcome"]["value"] == ground_truth("icr-outcome-p130164")
+    assert found["icr_outcome"]["source"] == {"evidence_id": "strata.gold.passage:31525018/v1/45", "kind": "icr",
+                                              "date": str(ground_truth("icr-date"))}
     assert found["ieg_outcome"]["value"] == ground_truth("ieg-outcome-p130164")
+    assert [fact["key"] for fact in summary["ratings"]] == [
+        "pdo", "implementation", "procurement", "icr_outcome", "ieg_outcome", "ieg_bank_performance", "ea_category"]
     assert found["ea_category"]["value"] == "B"
     assert found["region"]["value"] == "South Asia"
     assert found["agencies"]["values"] == [ground_truth("project-p130164-agency")]
@@ -234,6 +240,12 @@ def test_a_project_s_summary_as_of_a_date_uses_only_what_was_public_then(hub):
     assert found["original_closing_date"]["value"] == original
     assert found["closing_date"]["value"] == moved  # the record of today was not public then, so the history's
     assert get(hub, "/api/projects/P999999/summary").status_code == 404
+
+    # The ICR's outcome rating shows from the day the ICR was disclosed (values.toml, icr-disclosed).
+    disclosed = ground_truth("icr-disclosed")
+    for day, shown in ((disclosed - dt.timedelta(days=1), False), (disclosed, True)):
+        ratings = get(hub, f"/api/projects/P130164/summary?asof={day}").json()["ratings"]
+        assert ("icr_outcome" in {fact["key"] for fact in ratings}) == shown, day
 
 
 def test_a_project_with_a_risk_rating_under_the_esf_shows_it_in_place_of_its_environmental_assessment_category(

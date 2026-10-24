@@ -133,6 +133,18 @@ test("P130164's Summary renders from records with no request to a route that cal
     "The project record has no risk rating under the Environmental and Social Framework (ESF), so I show its Environmental Assessment Category.",
   );
   await expect(summary.locator("[data-fact=sectors]")).toContainText("Rural and Inter-Urban Roads: 97%");
+  // The ICR's own outcome rating sits before IEG's, cited to the ICR's paragraph 45, which its marker opens.
+  const icr = summary.locator("[data-fact=icr_outcome]");
+  await expect(icr.getByRole("rowheader")).toHaveText("Outcome, in the Implementation Completion and Results Report (ICR)");
+  await expect(icr.getByRole("cell").first()).toHaveText("Moderately Unsatisfactory");
+  await expect(icr.locator("[data-fact-source]")).toHaveText(/^ICR, Oct 10, 2019⁠\[\d\]$/);
+  await expect(icr.locator("[data-citation]")).toHaveAccessibleName(/^Source \d: Implementation Completion and Results Report, October 10, 2019$/);
+  const order = await summary.locator("[data-fact]").evaluateAll((rows) => rows.map((row) => row.getAttribute("data-fact")));
+  expect(order.indexOf("icr_outcome")).toBe(order.indexOf("ieg_outcome") - 1);
+  await icr.locator("[data-citation]").click();
+  await expect(page.getByRole("dialog")).toContainText("the overall outcome is rated Moderately Unsatisfactory");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   // A source cited again keeps its number, like a footnote: every projects API fact is source 1.
   await expect(summary.locator("[data-fact=region] [data-citation]")).toHaveText("[1]");
   await expect(summary.locator("[data-fact=closing_date] [data-citation]")).toHaveAccessibleName("Source 1: World Bank projects API, record of August 1, 2023");

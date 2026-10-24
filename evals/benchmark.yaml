@@ -35,7 +35,8 @@ questions:
       with_a_signal: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
       # The activities whose reasons also give the delay from a saved baseline (ticket 21). The fixture
       # holds no baseline, so none does; tests/test_project_hub.py saves the plan of July 21, 2025 as the
-      # baseline and checks that KE-NWWDA-229129-CW-RFB's signing was then 186 days after its baseline date.
+      # baseline, with KE-NWWDA-229129-CW-RFB's signing re-dated to August 1, 2021 in it, and checks that
+      # the signing was then 155 days after its baseline date and still 186 after its first published one.
       baseline_delays: []
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
