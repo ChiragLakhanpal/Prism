@@ -574,6 +574,8 @@ Then run these in the workspace's SQL editor:
 
 It worked if the job run exits 0 with its line "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That shows serverless installed `splink==5.0.0` for `bronze_to_gold`. The first query must return rows for both `step_supplier_id` and `name`, and the second must return rows. Until ticket 43 passes `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` to `bronze_to_gold`, every pair in the uncertain middle reads route `person` with `no_model`. That is expected, and step 5 checks the model.
 
+**Ran on October 24, 2026 (orchestrator):** the job's third run (556837544068999) and fifth run (882867588506257) ran `bronze_to_gold` with `splink==5.0.0` on environment version 4 (ticket 04's step 2 has the story). `strata.silver.supplier_resolution` by `resolved_on`: step_supplier_id 69,912, name 49,182, individual_consultant 38,146, unmatched 71,216, no_name 15. `strata.ops.supplier_pairs` by route and reason: auto_merge 83,689, kept_apart 103,699, person with no_model 277,042, person with two_step_supplier_ids 33. The uncertain middle reads `person` with `no_model`, as expected until ticket 43. Passed. The ALTER TABLE lines were not needed (the catalog was first made today), and ticket 19's step 4 records the judge recording.
+
 If step 1 ran the ALTER TABLE lines, finish them now:
 
     ALTER TABLE strata.gold.contract_supplier ALTER COLUMN contract_id SET NOT NULL
