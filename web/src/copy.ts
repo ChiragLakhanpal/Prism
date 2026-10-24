@@ -701,7 +701,39 @@ export const copy = {
       // something does but the registry lists no fix for it.
       none: "Nothing I measured falls short, so there are no fixes to rank.",
       noneKnown: "I don't have a fix to suggest for these sources.",
+      noneKnownOne: "I don't have a fix to suggest for this source.",
     },
+    // The window a number opens, by its measure, for each measure that fills no column of the
+    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml). A
+    // number from a column's measure opens that column's window instead. web/tests/lint.spec.ts
+    // fails when a check or a fix's own measure has no entry here.
+    measureWindows: {
+      latest_activities_with_confirmed_first_listing_read: {
+        title: "First listing confirmed",
+        definition:
+          "How many activity entries in the latest plan versions I could trace back to the plan version that first " +
+          "listed them, where I also read that version's table in STEP's format. I confirm a first listing only " +
+          "when I have read every older or undated plan version in the project's document list.",
+      },
+      projects_with_contracts_lacking_step_reference: {
+        title: "Projects with contracts that lack a STEP reference",
+        definition:
+          "How many projects have at least one contract with no STEP reference, out of every project with a " +
+          "contract I hold from this source.",
+      },
+      gap_years_contracts_in_local_currency: {
+        title: "Award-notice contracts in local currency",
+        definition:
+          "How many contracts built from award notices, for the fiscal years no awards dataset covers, have their " +
+          "amount in local currency, out of every contract built from those notices.",
+      },
+      gap_years_projects_in_local_currency: {
+        title: "Projects with award-notice contracts in local currency",
+        definition:
+          "How many projects have a contract built from award notices, for the fiscal years no awards dataset " +
+          "covers, whose amount is in local currency, out of the projects of every contract built from those notices.",
+      },
+    } as Record<string, { title: string; definition: string }>,
     loading: {
       slow: "I'm still loading the measures. The database may be starting up, which can take up to a minute.",
     },

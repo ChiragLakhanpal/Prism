@@ -95,6 +95,45 @@ test("every kind of question in config/tools.toml has its words in the copy file
   }
 });
 
+type Registry = {
+  sources: Record<
+    string,
+    {
+      readiness?: (Record<string, unknown> & { checks?: { measure: string }[] })[];
+      fixes?: { measure: string; projects?: string }[];
+    }
+  >;
+};
+
+test("every measure in config/sources.toml that fills no column has its own window words in the copy file", async () => {
+  // Design r5 B1: a check's number opened Coverage's window. A check, or a fix's measure that no
+  // column shows, has words of its own in copy.dataReadiness.measureWindows, so a new one can never
+  // fall back to a column's name and definition.
+  const { copy } = await import("../src/copy.ts");
+  const path = fileURLToPath(new URL("../../config/sources.toml", import.meta.url));
+  // Python's tomllib reads the registry as the server does; the web app has no TOML reader.
+  const read = spawnSync("python3", ["-c", "import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], 'rb')), default=str))", path], {
+    encoding: "utf8",
+  });
+  expect(read.status, read.stderr).toBe(0);
+  const registry = JSON.parse(read.stdout) as Registry;
+  const columns = ["coverage", "linked", "read_well", "fresh"];
+  const needed: string[] = [];
+  for (const source of Object.values(registry.sources)) {
+    const rows = source.readiness ?? [];
+    const shown = new Set(rows.flatMap((row) => columns.map((column) => (row[column] as { measure?: string } | undefined)?.measure)));
+    needed.push(...rows.flatMap((row) => (row.checks ?? []).map((check) => check.measure)));
+    for (const fix of source.fixes ?? []) {
+      if (!shown.has(fix.measure)) needed.push(fix.measure);
+      if (fix.projects) needed.push(fix.projects);
+    }
+  }
+  expect(needed).toContain("latest_activities_with_confirmed_first_listing_read");
+  const words = copy.dataReadiness.measureWindows;
+  const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
+  expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+});
+
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {
   const failed = lint({ copy: "export const copy = {\n  done: (n: number) => `I flagged ${n} rows.`,\n};\n" });
   expect(failed.code).toBe(1);

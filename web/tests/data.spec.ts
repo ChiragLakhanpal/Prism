@@ -283,10 +283,14 @@ test("every number's tooltip names what it counts, and its window shows the numb
   await expect(window).toContainText("Counted528");
   await page.keyboard.press("Escape");
 
-  // A fix's project count opens only a window whose Counted is that count and which names its table,
-  // or none at all.
+  // A fix's project count opens only a window named for the measure that counted it (design r5 P1),
+  // whose Counted is that count and which names its table, or none at all.
   const answer = await json("data-readiness.json");
   const inWords = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+  const titles: Record<string, string> = {
+    projects_with_contracts_lacking_step_reference: "Projects with contracts that lack a STEP reference",
+    gap_years_projects_in_local_currency: "Projects with award-notice contracts in local currency",
+  };
   for (const [index, fix] of answer.fixes.entries()) {
     const projects = page.locator("[data-fixes] li").nth(index).locator("p.text-small [data-num]");
     if (fix.projects_row === null) {
@@ -305,8 +309,10 @@ test("every number's tooltip names what it counts, and its window shows the numb
         page.getByRole("tooltip").filter({ hasText: `${counted.count} of ${counted.denominator} projects. Measured Oct 23, 2026.` }),
       ).toBeVisible();
       await projects.click();
-      await expect(page.getByRole("dialog")).toContainText(`Counted${fix.projects}`);
-      await expect(page.getByRole("dialog")).toContainText("Counted instrata.gold.contract");
+      const opened = page.getByRole("dialog", { name: titles[counted.measure] });
+      await expect(opened).toContainText(`Counted${fix.projects}`);
+      await expect(opened).toContainText("Counted instrata.gold.contract");
+      await expect(opened).not.toContainText("Fixes that would unlock the most");
       await page.keyboard.press("Escape");
     }
     await page.keyboard.press("Escape");
@@ -328,6 +334,22 @@ test("opened from the plan check, it shows only the rows the plan check reads, a
   await expect(table(page, "kinds").locator("[data-cell='plan_check:readyFor']")).toContainText(
     "rows in the format of Systematic Tracking of Exchanges in Procurement (STEP)",
   );
+});
+
+// Design r5 B1: the first-listing check fills no column, so its window names the check itself and
+// never borrows Coverage's title and definition.
+test("the plan check's first-listing number opens a window named for that check, not for Coverage", async ({ page }) => {
+  await mockData(page, { file: "data-readiness-plan-check.json" });
+  await open(page, "/data?sources=documents,projects&from=check_plan");
+
+  const number = page.locator("[data-headline] [data-num]", { hasText: /^46$/ });
+  await number.focus();
+  await number.press("Enter");
+  const window = page.getByRole("dialog", { name: "First listing confirmed" });
+  await expect(window).toContainText("trace back to the plan version that first listed them");
+  await expect(window).toContainText("Missing46");
+  await expect(window).not.toContainText("Coverage");
+  await expect(window).not.toContainText("fiscal years");
 });
 
 test("What you can ask shows each kind of question with what it is ready for and what holds it back", async ({ page }) => {

@@ -13,7 +13,8 @@ import type { Column, MeasureRow, Segment } from "../../lib/dataPages";
 
 const words = copy.dataReadiness;
 
-// The window's name and definition for a measure, by the column it fills.
+// The window's name and definition for a measure, by the column it fills, when the copy file's
+// measureWindows has no words of its own for that measure.
 const KIND_COLUMN: Record<string, Column> = { coverage: "coverage", linked: "linked", read_well: "read_well", fresh: "fresh" };
 
 export type Measures = { rows: MeasureRow[]; asOf: string };
@@ -39,6 +40,10 @@ function measureWindow(row: MeasureRow, column: Column | null, asOf: string, cli
       ? [{ label: words.number.countedIn, value: <span className="font-mono">{row.source.counted_in}</span> }]
       : []),
   ];
+  // A measure that fills no column, such as a check or a fix's own measure, has its own words, so
+  // its window never borrows a column's name and definition (design review r5 B1).
+  const own = words.measureWindows[row.measure];
+  if (own) return { title: own.title, definition: own.definition, rows };
   if (column === null) return { title: words.fixes.title, definition: words.fixes.caption, rows };
   return { title: words.sources.columns[column].label, definition: words.sources.definitions[column], rows };
 }
