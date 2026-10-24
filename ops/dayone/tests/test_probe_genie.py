@@ -1,6 +1,5 @@
 """The Genie probe (test 5): the conversation API answers, and it answers as the token's user."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import dayone  # noqa: E402
 import probe_genie  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 
 
 class FakeGenie:
@@ -39,7 +37,8 @@ class FakeGenie:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text("DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\n"
                                         "DATABRICKS_TOKEN='dapi-x'\nGENIE_SPACE_ID='01f0abc'\n")
     return tmp_path

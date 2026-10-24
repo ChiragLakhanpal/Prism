@@ -19,7 +19,6 @@ from dayone import Outcome, SetupError  # noqa: E402
 
 from strata.config import load_models  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 # Each role's deployment, from the model file, so swapping a model there needs no change here.
 NAME = {role: model.deployment for role, model in load_models().items()}
 
@@ -71,7 +70,8 @@ class FakeAzure:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     shutil.copy(REPO / ".env.example", tmp_path / "probe.env")
     return tmp_path
 
