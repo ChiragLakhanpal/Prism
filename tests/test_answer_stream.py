@@ -351,19 +351,25 @@ def test_a_fiscal_year_is_a_number_a_record_must_hold():
 
 
 def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
-    """DESIGN.md section 7 writes one to nine in words, so "six" is checked like 6. "One" is checked only
-    as a count ("one of 37"), because it is also a pronoun ("one lesson")."""
+    """DESIGN.md section 7 writes one to nine in words, so "six" is checked like 6, and "zero" like 0. "One"
+    is a number too ("one bid"), except where it stands for a thing named before ("no one", "each one",
+    "one of the firms" with no count after it). "Half" after "first" or "second" is a time, not an amount."""
     def claim(sentence):
         return {"sentence": sentence, "kind": "summary", "evidence_ids": [], "numbers": [], "dates": [], "quote": None}
 
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
         claim("Six works contracts were bid again."), claim("It was one of 37 packages."),
-        claim("One lesson was about estimates."), claim("No one said why.")), no_engine))))
+        claim("One lesson was about estimates."), claim("Only one bid was received for the package."),
+        claim("One firm bid for it."), claim("Zero bids came in."), claim("No one said why."),
+        claim("Each one was signed late."), claim("The works started in the first half of the year.")),
+        no_engine))))
 
     assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
-        [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")]]
+        [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")],
+        [("number_not_in_records", "One")], [("number_not_in_records", "one")], [("number_not_in_records", "One")],
+        [("number_not_in_records", "Zero")]]
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
-        "One lesson was about estimates.", "No one said why."]
+        "No one said why.", "Each one was signed late.", "The works started in the first half of the year."]
 
 
 def claim(sentence, **fields):

@@ -7,8 +7,8 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    rounding, or sits inside the words it quotes from a cited passage that is not a table summary.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
    still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
-   (ID_SHAPES); so is a number written in words ("forty-five", or "one" as a count), and an amount no
-   row holds as written ("half"). A passage backs only its dates, such as its report's date: its text
+   (ID_SHAPES); so is a number written in words ("forty-five", "zero", or "one" unless it stands for a
+   thing named before), and an amount no row holds as written ("half"). A passage backs only its dates, such as its report's date: its text
    is never a value, and its page, paragraph and version numbers say where it is, not what the report
    counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
@@ -109,8 +109,9 @@ FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
 # DESIGN.md section 7 writes one to nine in words, and a model may write any number so. Words joined by a
 # space or a hyphen make one number: "forty-five", "three hundred and twenty-eight", "a dozen". "One" alone
-# is also a pronoun ("one lesson", "no one"), so it is a number only as a count: "one of 37", "one in 10".
-SMALL = {word: value for value, word in enumerate((
+# is a number ("one bid", "one of 37") except where it stands for a thing named before: after a word in
+# PRONOUN_BEFORE ("no one", "each one"), or before "another" or "of the" with no count after it.
+SMALL = {"zero": 0} | {word: value for value, word in enumerate((
     "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen",
     "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"), 1)}
 SMALL |= {word: value for value, word in zip(range(20, 100, 10), (
@@ -121,6 +122,9 @@ VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens"}
 FRACTIONS = {"third", "quarter"}  # as "a third" or "a quarter"
 WORD = re.compile(r"[A-Za-z]+")
 COUNT_AFTER_ONE = re.compile(r" (?:of|in) (?:the )?(?:\d|(?:" + "|".join(SMALL) + r")\b)", re.I)
+PRONOUN_BEFORE = {"no", "any", "each", "every", "this", "that", "which", "the"}
+PRONOUN_AFTER = re.compile(r" (?:another|of (?:the|its|their|these|those))\b", re.I)
+TIME_BEFORE_HALF = {"first", "second"}  # "the first half of the year" is a time, not an amount
 
 
 def _word_value(words: list[str]) -> Decimal:
@@ -149,7 +153,8 @@ def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
     while i < len(tokens):
         word, after = lower[i], lower[i + 1] if i + 1 < len(tokens) else ""
         if word in VAGUE:
-            found.append((tokens[i].start(), tokens[i].end(), word))
+            if not (word == "half" and i > 0 and lower[i - 1] in TIME_BEFORE_HALF):
+                found.append((tokens[i].start(), tokens[i].end(), word))
         elif word in ("a", "an") and gap(i) == " " and after in FRACTIONS:
             found.append((tokens[i].start(), tokens[i + 1].end(), f"a {after}"))
             i += 1
@@ -163,8 +168,10 @@ def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
                     j += 2
                 else:
                     break
-            alone_one = j == i and word == "one"
-            if not alone_one or COUNT_AFTER_ONE.match(text, tokens[i].end()):
+            pronoun = j == i and word == "one" and not COUNT_AFTER_ONE.match(text, tokens[i].end()) and (
+                (i > 0 and gap(i - 1) == " " and lower[i - 1] in PRONOUN_BEFORE)
+                or PRONOUN_AFTER.match(text, tokens[i].end()))
+            if not pronoun:
                 found.append((tokens[i].start(), tokens[j].end(), _word_value(lower[i:j + 1])))
             i = j
         i += 1
