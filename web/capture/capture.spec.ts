@@ -26,7 +26,14 @@ for (const shot of SHOTS) {
       await page.locator("main").waitFor();
       await page.evaluate(() => document.fonts.ready);
       if (shot.act) await shot.act(page);
-      await page.screenshot({ path: `${OUT}/${shot.name}--${width}.png`, fullPage: shot.full ?? !shot.act, animations: "disabled" });
+      const full = shot.full ?? !shot.act;
+      // A whole page is shot in a window as tall as the page, so a sticky bar sits at the page's end
+      // instead of being painted over the middle; a shot of the first screen shows it stuck.
+      if (full) {
+        const height = await page.evaluate(() => document.documentElement.scrollHeight);
+        await page.setViewportSize({ width, height: Math.max(900, height) });
+      }
+      await page.screenshot({ path: `${OUT}/${shot.name}--${width}.png`, fullPage: full, animations: "disabled" });
     });
   }
 }

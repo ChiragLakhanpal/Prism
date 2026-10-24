@@ -282,8 +282,13 @@ test("in Draft, Export to Word is held with its reason, Mark as checked is the o
 
 test("opening a source counts it in the bar and the Sources list at once, and the evidence drawer opens beside the notes", async ({ page }) => {
   const asked = await openDraft(page);
-  const closed = (await page.locator("[data-document-column]").boundingBox())!;
-  const before = [Math.round(closed.x), Math.round(closed.width)];
+  // Where the column sits on the page (not in the window, which scrolls to the marker), and how wide it is.
+  const place = () =>
+    page.locator("[data-document-column]").evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return [Math.round(box.x), Math.round(box.top + window.scrollY), Math.round(box.width)];
+    });
+  const before = await place();
 
   await notes(page).locator("[data-citation='2']").first().click();
 
@@ -296,7 +301,7 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   const column = await page.locator("[data-document-column]").boundingBox();
   const drawer = await page.getByRole("dialog").boundingBox();
   expect(column!.x + column!.width).toBeLessThanOrEqual(drawer!.x);
-  expect([Math.round(column!.x), Math.round(column!.width)]).toEqual(before);
+  expect(await place()).toEqual(before);
 });
 
 test("Mark as checked saves, moves the state on and makes Export to Word the solid button, with focus on it", async ({ page }) => {
@@ -497,6 +502,24 @@ test("Discard's label starts on the bar text's left edge", async ({ page }) => {
     return range.getBoundingClientRect().x;
   });
   expect(Math.abs(label - text)).toBeLessThanOrEqual(1);
+});
+
+test("the loading skeleton puts the table where the loaded draft puts it", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await serve(page, {});
+  const body = await recorded("drafts-review-notes-draft.json");
+  await page.route("**/api/drafts/draft-0001", async (route) => {
+    await held;
+    await route.fulfill({ contentType: "application/json", body });
+  });
+  await page.goto(DRAFT);
+  const top = (selector: string) => page.locator(selector).evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  const loading = await top("[data-draft-page=loading] table");
+  release();
+  const loaded = await top("[data-draft-notes] table");
+  expect(Math.abs(loaded - loading)).toBeLessThanOrEqual(12);
 });
 
 test("the notes are a table on a wide column, and cards below 560 px of column, as at 390 px or beside the drawer at 1024 px", async ({ page }) => {

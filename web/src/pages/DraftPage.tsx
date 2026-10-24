@@ -526,25 +526,23 @@ function DraftSkeleton() {
         <nav aria-hidden="true" className="text-caption">
           <SkeletonLine width="w-[200px] max-w-full" />
         </nav>
+        {/* The h1, the subtitle and the stepper, which the subtitle's length puts on a line of its own. */}
         <div className="mt-4 border-b border-line py-4">
-          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-            <div className="min-w-0">
-              <h1 tabIndex={-1} className="text-h1 focus:outline-none">
-                <span className="sr-only">{copy.pages.draft.title}</span>
-                <SkeletonLine width="w-[200px] max-w-full" />
-              </h1>
-              <SkeletonLine className="mt-2 text-body" width="w-[280px] max-w-full" />
-            </div>
-            <SkeletonLine className="text-small @lg/page:mt-2" width="w-[300px] max-w-full" />
-          </div>
+          <h1 tabIndex={-1} className="text-h1 focus:outline-none">
+            <span className="sr-only">{copy.pages.draft.title}</span>
+            <SkeletonLine width="w-[200px] max-w-full" />
+          </h1>
+          <SkeletonLine className="mt-2 text-body" width="w-[280px] max-w-full" />
+          <SkeletonLine className="mt-2 text-small @lg/page:mt-4" width="w-[300px] max-w-full" />
         </div>
         <div className="mt-6 max-w-[72ch]">
           <SkeletonText className="text-title" widths={["w-full", "w-2/5"]} />
           <SkeletonText className="mt-2 text-body" widths={["w-full", "w-4/5"]} />
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
-          <Skeleton className="h-14 w-full" radius="rounded-sm" />
-          <Skeleton className="h-12 w-full" radius="rounded-sm" />
+          {/* The check line, four lines of small text in its box, and the one-line removed box. */}
+          <Skeleton className="h-24 w-full" radius="rounded-sm" />
+          <Skeleton className="h-11 w-full" radius="rounded-sm" />
         </div>
         <div className="mt-4 flex h-11 items-center">
           <Skeleton className="h-4 w-56" />

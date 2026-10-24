@@ -133,6 +133,7 @@
   [data-page-column] > main:has([data-document-column]) { --layout-margin: 72px; --layout-gutter: 32px; }
   main:has([data-document-column]) > .layout {
     margin-inline: max(0px, (100vw - var(--layout-max)) / 2 - var(--layout-margin)) 0;
+    padding-top: calc(var(--spacing) * 10);
   }
   [data-document-column] {
     width: calc((min(100vw - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));

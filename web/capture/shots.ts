@@ -333,6 +333,10 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--writing-reload", { recorded: DRAFT_FILE }, { full: true }, "/drafts/new?kind=review_notes&pid=P156634&agency=northern-water-works-development-agency&version=2026-10-09"),
   draftShot("draft--loading", { recorded: DRAFT_FILE }, { pending: [DRAFT_API] }),
   draftShot("draft", { recorded: DRAFT_FILE }),
+  // The first screen at 900 px tall, with the bar stuck to the window's bottom, and the page scrolled
+  // with the header stuck to its top.
+  draftShot("draft--first-screen", { recorded: DRAFT_FILE }, { full: false }),
+  draftShot("draft--scrolled", { recorded: DRAFT_FILE }, { full: false, act: (page) => page.evaluate(() => window.scrollTo(0, 700)) }),
   draftShot("draft--saving", { recorded: DRAFT_FILE }, { pending: ["/api/drafts/draft-0001/check"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
   draftShot("draft--checked", { recorded: "drafts-review-notes-checked.json" }),
   draftShot("draft--exporting", { recorded: "drafts-review-notes-checked.json" }, { pending: ["/api/drafts/draft-0001/export"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
