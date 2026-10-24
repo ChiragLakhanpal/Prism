@@ -17,6 +17,7 @@ import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { OneBox, type BoxOption } from "./BoxBand";
 import { Fill } from "./Fill";
+import { RETURNING } from "./Popover";
 
 const LOOKUP_DELAY_MS = 150;
 const ICONS = { project: FolderOpen, loan: FolderOpen, activity: Table2 };
@@ -177,6 +178,7 @@ export function IntentBox({
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    event.currentTarget.removeAttribute(RETURNING);
     const listShown = open && value.trim().length > 0 && options.length > 0;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       if (!value.trim()) return;
@@ -229,7 +231,12 @@ export function IntentBox({
         onRemoveScope={removeChip}
         onChoose={(index) => void choose(index)}
         onKeyDown={onKeyDown}
-        onFocusChange={(focused) => setOpen(focused && value.trim().length > 0)}
+        onFocusChange={(focused) => {
+          // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key.
+          const given = input.current?.hasAttribute(RETURNING) ?? false;
+          if (!focused) input.current?.removeAttribute(RETURNING);
+          setOpen(focused && !given && value.trim().length > 0);
+        }}
       />
       <p role="status" className="sr-only">
         {said}

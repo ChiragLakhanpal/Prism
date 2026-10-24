@@ -31,6 +31,7 @@ import type { NotChecked, Removed } from "./Checks";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
+import { RETURNING } from "./Popover";
 import type { Step } from "./Steps";
 import { TextLink } from "./TextLink";
 
@@ -371,9 +372,13 @@ export function AnswerPanel({
     if (remember && run.phase === "done") void loadVisited(Object.keys(run.evidence));
   }, [run.phase, run.serial]);
 
+  // Focus goes back to the box, where the question still is, but its list stays shut over the page
+  // you return to until you press Down or type (the 14 brief, section 6.4).
   const close = () => {
     closeAnswer();
-    document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]")?.focus();
+    const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");
+    box?.setAttribute(RETURNING, "");
+    box?.focus();
   };
 
   return (

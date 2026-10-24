@@ -412,7 +412,7 @@ test("a date written before the numbers in a sentence is checkable too", async (
   await expect(panel(page).locator("[data-sentence-text='2'] [data-num]")).toHaveText(["October 10, 2019", "108", "328"]);
 });
 
-test("Close the answer closes the panel and its drawer, and returns focus to the box", async ({ page }) => {
+test("Close the answer closes the panel and its drawer, and returns focus to the box without opening its list", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
@@ -425,6 +425,16 @@ test("Close the answer closes the panel and its drawer, and returns focus to the
   await expect(drawer(page)).toHaveCount(0);
   expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
   await expect(box(page)).toBeFocused();
+  // The question is still in the box, but its list stays shut over the page you return to (the 14
+  // brief, section 6.4), until you press Down or type.
+  await expect(box(page)).toHaveValue(QUESTION);
+  await expect(box(page)).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("ArrowDown");
+  await expect(box(page)).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(box(page)).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.type("?");
+  await expect(box(page)).toHaveAttribute("aria-expanded", "true");
 });
 
 // CLAUDE.md rule 2: a drawer opened from the old answer must never pair the new answer's sentence
