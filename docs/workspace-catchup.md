@@ -637,6 +637,8 @@ Run this in the workspace's SQL editor:
 
 It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeeds. If it does list `notice_url`, stop and tell the orchestrator before step 2. CLAUDE.md rule 5 changes a table only through `CREATE OR REPLACE`, and the guard blocks a statement that removes a column, so taking it out needs its own reviewed step.
 
+**Ran on October 24, 2026 (orchestrator):** `DESCRIBE strata.gold.passage` lists 42 columns and no `notice_url`. The catalog was first created today, and every deploy came from 2cef566 or later, after a8d605c, so the five tables this merge added were made with their new columns. Passed.
+
 ## Ticket 18, step 2 of 5: read the document slice on the warehouse
 
 The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, a token or a service principal, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. At 08:24 on October 24, `.env` held the host, the warehouse and the AI Search endpoint, but no Databricks token and no Azure OpenAI keys, and day-one test 7 had just failed. It is the same command as ticket 11's step 1.
