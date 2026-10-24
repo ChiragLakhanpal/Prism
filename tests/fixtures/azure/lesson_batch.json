@@ -1,0 +1,67 @@
+{
+ "about": "Two lines of the output file of Azure OpenAI's Batch API for the lesson extractor (src/strata/knowledge/lessons/propose.py), one for P130164's ICR of October 10, 2019 and one for its ICR Review of May 4, 2023, each a chat completion from the batch role's deployment. They are written by hand in the shape the Batch API documents, because the gate's machine has no key, and their token counts are zero because no model ran. The ICR's answer proposes three lessons: paragraph 54's and paragraph 55's, whose quotes are on PDF page 23, and one from paragraph 78 that cites page 23 though its words are on page 27, so the quote check rejects it. The ICR Review's answer proposes IEG's lesson in section 12 and restates ICR paragraph 54 in section 10.b. Every other document the run sends gets no recorded answer and fails with not_recorded. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "model": "gpt-5.4-nano",
+ "outputs": [
+  {
+   "id": "batch_req_not-a-real-id-1",
+   "custom_id": "31525018/v1",
+   "response": {
+    "status_code": 200,
+    "request_id": "not-a-real-request-1",
+    "body": {
+     "id": "chatcmpl-not-a-real-id-1",
+     "object": "chat.completion",
+     "created": 1792750000,
+     "model": "gpt-5.4-nano",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "{\"lessons\": [{\"passage_id\": \"31525018/v1/54\", \"page\": 23, \"statement\": \"Base works estimates on market rates to avoid rebidding\", \"quote\": \"108 of 328 cases had to go through rebidding.\", \"risk_factors\": [\"cost_estimates\"], \"stage\": \"procurement_planning\", \"kind\": \"did_not_work\"}, {\"passage_id\": \"31525018/v1/55\", \"page\": 23, \"statement\": \"Get land and forest permits before awarding works contracts\", \"quote\": \"forest and other administrative clearances should have been in place prior to awarding contracts\", \"risk_factors\": [\"permits_before_award\"], \"stage\": \"contract_award\", \"kind\": \"did_not_work\"}, {\"passage_id\": \"31525018/v1/78\", \"page\": 23, \"statement\": \"Change a project's scope when the mid-term review finds long delays\", \"quote\": \"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\", \"risk_factors\": [\"contract_management\"], \"stage\": \"contract_management\", \"kind\": \"did_not_work\"}], \"restatements\": []}"
+       },
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   },
+   "error": null
+  },
+  {
+   "id": "batch_req_not-a-real-id-2",
+   "custom_id": "34056616/v2",
+   "response": {
+    "status_code": 200,
+    "request_id": "not-a-real-request-2",
+    "body": {
+     "id": "chatcmpl-not-a-real-id-2",
+     "object": "chat.completion",
+     "created": 1792750000,
+     "model": "gpt-5.4-nano",
+     "choices": [
+      {
+       "index": 0,
+       "message": {
+        "role": "assistant",
+        "content": "{\"lessons\": [{\"passage_id\": \"34056616/v2/12\", \"page\": 14, \"statement\": \"Put forest and other permits in place before awarding contracts\", \"quote\": \"forest and other administrative clearances need to be in place prior to awarding contracts\", \"risk_factors\": [\"permits_before_award\"], \"stage\": \"contract_award\", \"kind\": \"did_not_work\"}], \"restatements\": [{\"icr_paragraph\": \"54\", \"passage_id\": \"34056616/v2/10.b\", \"page\": 13, \"quote\": \"The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).\"}]}"
+       },
+       "finish_reason": "stop"
+      }
+     ],
+     "usage": {
+      "prompt_tokens": 0,
+      "completion_tokens": 0,
+      "total_tokens": 0
+     }
+    }
+   },
+   "error": null
+  }
+ ]
+}

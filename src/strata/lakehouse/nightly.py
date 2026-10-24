@@ -8,8 +8,11 @@ Three tasks have their work (tickets 07 and 17): fetch_by_watermark fetches each
 config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
 countries as each entry says, bronze_to_gold builds silver and gold from bronze, and
 measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
-The rest do nothing yet, so each records zero rows changed; ticket 43 gives them their work, and
-adds the plan reader (strata.lakehouse.plans), which fetches the documents source itself.
+Ticket 29 gives propose_lessons its work (strata.knowledge.lessons.propose): the batch model proposes
+lessons from the evaluation reports the passage reader holds, and those whose quotes pass the check
+wait in the review queue. The rest do nothing yet, so each records zero rows changed; ticket 43 gives
+them their work, and adds the plan reader (strata.lakehouse.plans), which fetches the documents source
+itself, and the passage reader, whose passages propose_lessons reads.
 
 The fetch is the one step that differs between the workspace and this computer. On Databricks,
 main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
@@ -104,6 +107,17 @@ def _bronze_to_gold(run: Run) -> int:
     return added + gold.build(run.engine)
 
 
+def _propose_lessons(run: Run) -> int:
+    """Lessons proposed from the evaluation reports the passage reader holds (ticket 29). Only a run that
+    fetches from the live APIs sends them to the live batch model; any other run replays its recorded
+    answers. On Databricks the job passes no Azure OpenAI keys until ticket 43 wires its tasks, so until then
+    the task proposes nothing and changes no rows."""
+    from strata.knowledge.lessons import batch, propose
+
+    model = batch.from_environment() if run.fetch is fetch_live else batch.RecordedBatch()
+    return 0 if model is None else propose.run(run.engine, model, run.run_id, run.clock)
+
+
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
     pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
@@ -123,7 +137,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "parse_and_embed": _nothing_yet,
     "sync_index": _nothing_yet,
     "relink": _nothing_yet,
-    "propose_lessons": _nothing_yet,
+    "propose_lessons": _propose_lessons,
     "detect_disagreements": _nothing_yet,
     "score": _nothing_yet,
     "measure_data_readiness": _measure_data_readiness,
