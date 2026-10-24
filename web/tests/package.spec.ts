@@ -4,7 +4,7 @@
 // computed once with lifelines and checked with statsmodels, and the words are the 12 brief's, copied
 // here so the test checks the screen against an independent source.
 import AxeBuilder from "@axe-core/playwright";
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
@@ -1128,14 +1128,37 @@ test("a page area a fraction of a pixel under 768 px puts the sentence first, as
 
 // DESIGN.md section 5, Tables: the past range's table needs about 776 px with one line per cell. From a
 // page area of 1200 px the workspace keeps to columns 1 to 8, so the table has less room from 1200 to
-// about 1415 px than at 1024 px. So it reads its own width: its rows when its frame has 49rem, and cards
-// below that. At 1440 px the drawer leaves an 864 px page area, and at 1920 px a 1320 px one; an 834 px
-// window is an iPad held upright.
+// about 1411 px than at 1024 px. So it reads its own width: its rows when its frame has 49rem, and cards
+// below that. 1416 px is about the narrowest window that shows the table. At 1440 px the drawer leaves an
+// 864 px page area, and at 1920 px a 1320 px one; an 834 px window is an iPad held upright.
+//
+// WCAG 1.4.12, Text Spacing: with a reader's letter spacing of 0.12em, word spacing of 0.16em, line
+// height of 1.5 and paragraph spacing of 2em, a cell's text may wrap but must not run into the next
+// column.
+const TEXT_SPACING =
+  "* { letter-spacing: 0.12em !important; word-spacing: 0.16em !important; line-height: 1.5 !important; } p { margin-bottom: 2em !important; }";
+
+// The cells in a table frame whose text runs past their own right edge, and how far the frame scrolls
+// sideways.
+async function spillOf(frame: Locator) {
+  return frame.evaluate((element) => ({
+    scroll: element.scrollWidth - element.clientWidth,
+    cells: [...element.querySelectorAll("tbody td, tbody th")]
+      .filter((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        return Math.max(...[...range.getClientRects()].map((r) => r.right)) > cell.getBoundingClientRect().right + 0.5;
+      })
+      .map((cell) => cell.textContent),
+  }));
+}
+
 test("the past range's table shows its rows where its frame has 49rem, every cell's text inside its cell, and cards where it has less", async ({ page }) => {
   const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables;
   const withoutSpace = body.rows.filter((row) => !row.step_reference.includes(" ")).length;
   for (const [width, evidence, view] of [
     [1024, false, "table"],
+    [1416, false, "table"],
     [1440, false, "table"],
     [1600, false, "table"],
     [1200, false, "cards"],
@@ -1156,31 +1179,31 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     if (view === "cards") continue;
 
     // No cell's text runs past its cell, and the frame does not scroll sideways.
-    const spill = await table.evaluate((frame) => ({
-      scroll: frame.scrollWidth - frame.clientWidth,
-      cells: [...frame.querySelectorAll("tbody td, tbody th")]
-        .filter((cell) => {
+    expect(await spillOf(table), where).toEqual({ scroll: 0, cells: [] });
+
+    // Each cell's text and the lines it sits on, counted by their tops.
+    const lines = (selector: string) =>
+      table.locator(selector).evaluateAll((cells) =>
+        cells.map((cell) => {
           const range = document.createRange();
           range.selectNodeContents(cell);
-          return Math.max(...[...range.getClientRects()].map((r) => r.right)) > cell.getBoundingClientRect().right + 0.5;
-        })
-        .map((cell) => cell.textContent),
-    }));
-    expect(spill, where).toEqual({ scroll: 0, cells: [] });
-
-    // Each row's reference and the lines its text sits on, counted by their tops. A reference without a
-    // space keeps to one line.
-    const references = await table.locator("tbody th").evaluateAll((cells) =>
-      cells.map((cell) => {
-        const range = document.createRange();
-        range.selectNodeContents(cell);
-        const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
-        return [cell.textContent!, new Set(tops).size] as const;
-      }),
-    );
-    const spaceless = references.filter(([reference]) => !reference.includes(" "));
+          const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
+          return [cell.textContent!, new Set(tops).size] as const;
+        }),
+      );
+    // A reference without a space keeps to one line.
+    const spaceless = (await lines("tbody th")).filter(([reference]) => !reference.includes(" "));
     expect(spaceless, where).toHaveLength(withoutSpace);
-    expect(spaceless.filter(([, lines]) => lines !== 1), where).toEqual([]);
+    expect(spaceless.filter(([, count]) => count !== 1), where).toEqual([]);
+    // So does each date, in the Notice and Signed columns.
+    const dates = await lines("tbody td:nth-child(3), tbody td:nth-child(4)");
+    expect(dates.length, where).toBe(2 * body.rows.length);
+    expect(dates.filter(([, count]) => count !== 1), `${where}: dates on more than one line`).toEqual([]);
+
+    // With WCAG 1.4.12's text spacing, a cell's text may wrap, but none runs into the next column.
+    const spacing = await page.addStyleTag({ content: TEXT_SPACING });
+    expect(await spillOf(table), `${where}, with text spacing`).toEqual({ scroll: 0, cells: [] });
+    await spacing.evaluate((style) => (style as HTMLStyleElement).remove());
   }
 });
 

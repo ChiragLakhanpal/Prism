@@ -800,16 +800,17 @@ function ComparablesTable({
   const paged = total > result.thresholds.quantile_dots_above;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
-  // With one line per cell the six columns need about 776 px. From a page area of 1200 px the workspace
-  // keeps to columns 1 to 8, which leaves the table less room there than at 1024 px. So the table reads
-  // its own width: it shows when its frame has 49rem and cards below that (cardsBelow="fit", DESIGN.md
-  // section 5, Tables), which is from a page area of 1024 to 1199 px and from about 1416 px. There a
-  // STEP reference keeps to one line, and the Months head's definition to two.
+  // With one line per cell the six columns need about 776 px, so the table shows when its frame has
+  // 49rem and cards below that (cardsBelow="fit", DESIGN.md section 5, Tables). That is from a page area
+  // of about 930 to 1199 px and from about 1411 px. There a STEP reference keeps to one line, a date fits
+  // its 7rem column, and the Months head's definition takes three lines. No cell is kept from wrapping,
+  // so with WCAG 1.4.12's text spacing a reference breaks after a hyphen and a date at its space, and no
+  // text runs into the next column.
   const columns: Column[] = [
     { key: "package", header: t.columns.package, width: "w-[15.25rem]" },
     { key: "country", header: t.columns.country, short: true, width: "w-[5.5rem]" },
-    { key: "notice", header: t.columns.notice, short: true },
-    { key: "signed", header: t.columns.signed, short: true },
+    { key: "notice", header: t.columns.notice, short: true, width: "w-[7rem]" },
+    { key: "signed", header: t.columns.signed, short: true, width: "w-[7rem]" },
     {
       key: "months",
       header: (
@@ -828,16 +829,11 @@ function ComparablesTable({
     id: row.step_reference,
     cells: {
       // A reference with a county's name breaks at its spaces first (MonoWords); one with no spaces
-      // keeps to one line in the table, which shows when its frame has 49rem.
-      package: (
-        <MonoWords
-          text={row.step_reference}
-          className={cx(!row.step_reference.includes(" ") && "@min-[49rem]/table:whitespace-nowrap @min-[49rem]/table:wrap-normal")}
-        />
-      ),
+      // keeps to one line in the table, where its column fits it.
+      package: <MonoWords text={row.step_reference} />,
       country: row.country_name ?? copy.notInRecord,
-      notice: <span className="@min-[49rem]/table:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
-      signed: row.signed_on ? <span className="@min-[49rem]/table:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
+      notice: tableDate(row.notice_date),
+      signed: row.signed_on ? tableDate(row.signed_on) : t.stillOpen,
       months: months1(row.months),
       within: plan === null ? null : row.still_open ? (row.months <= plan ? t.notYet : t.no) : row.months <= plan ? t.yes : t.no,
     },
