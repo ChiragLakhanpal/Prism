@@ -529,18 +529,21 @@ export function RangeChart({
   const readoutWidth = Math.max(...lineWidths, showPlanWord ? (widths.plan ?? 0) : 0);
   // The knob is 12 px wide and its focus ring sits 2 px out and is 2 px thick, so it ends 10 px from the
   // line; the readout starts 4 px past that. Its halo's box reaches 3 px past its letters, so the
-  // letters stay that far inside the plot (EDGE).
+  // letters stay that far inside the plot (EDGE). Where it fits on neither side, the halo's margin goes
+  // before the gap to the ring: a surface halo on the surface cannot be seen past the edge anyway.
   const GAP = 14;
   const EDGE = 3;
+  let edge = EDGE;
   let onRight = planX !== null && planX <= PAD + 0.55 * (width - 2 * PAD);
   if (planX !== null) {
     const fitsRight = planX + GAP + readoutWidth + EDGE <= width;
     const fitsLeft = planX - GAP - readoutWidth - EDGE >= 0;
+    if (!fitsRight && !fitsLeft) edge = 0;
     if (onRight && !fitsRight) onRight = fitsLeft ? false : width - planX >= planX;
     else if (!onRight && !fitsLeft) onRight = fitsRight ? true : width - planX >= planX;
   }
   const readoutX =
-    planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth - EDGE) : clamp(planX - GAP, readoutWidth + EDGE, width);
+    planX === null ? 0 : onRight ? clamp(planX + GAP, 0, width - readoutWidth - edge) : clamp(planX - GAP, readoutWidth + edge, width);
   // Its last line's descenders stay clear of the middle tick, which starts 4 px into the lane.
   const readoutLine1 = rowA + type.s;
   const readoutStep = type.s + 3;

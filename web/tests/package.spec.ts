@@ -235,9 +235,17 @@ test("at phone widths the readout never crosses the knob, wherever the line sits
       for (const label of await page.locator("[data-readout], [data-readout-plan]").all()) {
         const box = (await label.boundingBox())!;
         expect(overlap(box, knob), `${width} px, ${months} months: "${await label.textContent()}"`).toBe(false);
+        // The letters stay inside the chart. Their 3 px surface halo may pass its edge where the readout
+        // fits on neither side of the line, as at 320 px and 9 months: the halo's margin goes before the
+        // gap to the knob's focus ring.
         const chart = (await page.locator("[data-range-chart]").boundingBox())!;
-        expect(box.x, `${width} px, ${months} months`).toBeGreaterThanOrEqual(chart.x - 0.5);
-        expect(box.x + box.width, `${width} px, ${months} months`).toBeLessThanOrEqual(chart.x + chart.width + 0.5);
+        const letters = await label.evaluate((text) => {
+          const svg = (text as SVGGraphicsElement).ownerSVGElement!.getBoundingClientRect();
+          const fill = (text as SVGGraphicsElement).getBBox();
+          return { left: svg.left + fill.x, right: svg.left + fill.x + fill.width };
+        });
+        expect(letters.left, `${width} px, ${months} months`).toBeGreaterThanOrEqual(chart.x - 0.5);
+        expect(letters.right, `${width} px, ${months} months`).toBeLessThanOrEqual(chart.x + chart.width + 0.5);
       }
     }
   }
@@ -353,29 +361,35 @@ test("from 768 px the reset button sits on the input's row with its focus ring 8
 });
 
 // The readout sits beside the knob in row B, so it keeps clear of the knob's focus ring, on either side
-// of the line: right of it at the plan's 1.5 months, and left of it at 14 months.
+// of the line: right of it at the plan's 1.5 months, and left of it at 14 months. At 320 px with the
+// plan at 9 months the readout fits on neither side, so it takes the right, the side with more room,
+// and gives up its halo's margin at the plot's edge before its gap to the ring.
 test("the plan's readout keeps at least 3 px clear of the slider's focus ring, on either side of the line", async ({ page }) => {
-  for (const width of [1440, 390]) {
-    for (const months of [null, "14"]) {
-      const where = `${width} px, ${months ?? "the plan's 1.5"} months`;
-      await openPackage(page, { width });
-      await ready(page);
-      if (months) await page.getByRole("textbox", { name: "Planned months" }).fill(months);
-      await page.getByRole("slider").focus();
-      const gaps = await page.evaluate(() => {
-        const knob = document.activeElement as HTMLElement;
-        const style = getComputedStyle(knob);
-        const ring = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth);
-        const box = knob.getBoundingClientRect();
-        return [...document.querySelectorAll("[data-chart-drawing] :is([data-readout], [data-readout-plan])")].map((text) => {
-          const label = text.getBoundingClientRect();
-          return [label.left >= box.right ? "right" : "left", label.left >= box.right ? label.left - (box.right + ring) : box.left - ring - label.right] as const;
-        });
+  for (const [width, months, side] of [
+    [1440, null, "right"],
+    [1440, "14", "left"],
+    [390, null, "right"],
+    [390, "14", "left"],
+    [320, "9", "right"],
+  ] as const) {
+    const where = `${width} px, ${months ?? "the plan's 1.5"} months`;
+    await openPackage(page, { width });
+    await ready(page);
+    if (months) await page.getByRole("textbox", { name: "Planned months" }).fill(months);
+    await page.getByRole("slider").focus();
+    const gaps = await page.evaluate(() => {
+      const knob = document.activeElement as HTMLElement;
+      const style = getComputedStyle(knob);
+      const ring = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth);
+      const box = knob.getBoundingClientRect();
+      return [...document.querySelectorAll("[data-chart-drawing] :is([data-readout], [data-readout-plan])")].map((text) => {
+        const label = text.getBoundingClientRect();
+        return [label.left >= box.right ? "right" : "left", label.left >= box.right ? label.left - (box.right + ring) : box.left - ring - label.right] as const;
       });
-      expect(gaps.length, where).toBeGreaterThan(0);
-      expect(gaps.map(([side]) => side), where).toContain(months ? "left" : "right");
-      for (const [, gap] of gaps) expect(gap, where).toBeGreaterThanOrEqual(3);
-    }
+    });
+    expect(gaps.length, where).toBeGreaterThan(0);
+    expect(gaps.map(([found]) => found), where).toContain(side);
+    for (const [, gap] of gaps) expect(gap, where).toBeGreaterThanOrEqual(3);
   }
 });
 
