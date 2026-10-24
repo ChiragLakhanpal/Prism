@@ -19,6 +19,7 @@ from collections.abc import Callable
 from functools import cache
 from pathlib import Path
 
+from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
 from strata.tools import search_passages
 
@@ -50,8 +51,10 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date) -> dict | None:
     if reader is None or not key or "," in key:
         return None
     found = reader(engine, key, as_of)
-    return None if found is None else {"id": evidence_id, "kind": found["kind"], "tool": None, "row": found["row"],
-                                       "highlights": []}
+    if found is None:
+        return None
+    return {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), "row": found["row"],
+            "highlights": []}
 
 
 def _close(engine) -> None:

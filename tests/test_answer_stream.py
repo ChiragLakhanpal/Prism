@@ -113,6 +113,15 @@ def test_the_p130164_question_streams_steps_then_an_answer_citing_icr_paragraph_
     assert kinds[-1] == "done"
 
 
+def test_each_evidence_event_names_its_stratum_and_its_document_s_short_name(ask_case):
+    """The evidence card's eyebrow ("Why · evaluation") and the drawer's source switcher ("ICR ¶54") read
+    them from the stream, so the browser never decides which stratum a document belongs to."""
+    parsed, _ = ask_case("p130164-rebidding")
+
+    assert [(evidence["id"], evidence["stratum"], evidence["short_name"]) for evidence in of(parsed, "evidence")] == [
+        (ICR_54, "Why", "ICR"), ("strata.gold.passage:31525018/v1/55", "Why", "ICR")]
+
+
 def test_a_number_no_record_holds_is_removed_with_the_copy_files_reason(ask_case):
     parsed, _ = ask_case("p130164-number-with-no-record")
 

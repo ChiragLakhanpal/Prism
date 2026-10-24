@@ -24,6 +24,10 @@
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
   token cannot read strata gets 403 with the code permission and no rows.
+- GET /api/lookup/loan?q= and GET /api/lookup/activity?q= are the one box's lookups, as the viewer and as
+  of ?asof=: the project a loan number finances, and the latest published Procurement Plan that lists a
+  STEP reference (src/strata/server/lookup.py). One that finds nothing gets 404 with the code
+  unknown_loan or unknown_activity.
 - GET /api/evidence?id= gives one source by its evidence id, as the viewer and as of ?asof=, in the shape
   the answer stream's evidence event carries, for an evidence drawer opened from a link; an id no source
   has, or one not public by then, gets 404 with the code unknown_evidence (src/strata/server/evidence.py).
@@ -67,7 +71,7 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
-from strata.server import engines, evidence, projects, tracing
+from strata.server import engines, evidence, lookup, projects, tracing
 from strata.server.evidence import OpenedLog
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
@@ -274,13 +278,31 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
                                        "plan_date": version}, viewer, view, asof)
 
+    def as_of_for(asof: dt.date | None) -> dt.date:
+        """The page's as-of date, never later than today (ADR 0002)."""
+        return min(asof, registry.today()) if asof else registry.today()
+
+    @app.get("/api/lookup/loan")
+    def look_up_loan(q: str = Query(min_length=1, max_length=64), asof: dt.date | None = None,
+                     viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = lookup.loan(engine, q, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_loan"}, status_code=404)
+        return read_for(f"loan {q}", viewer, read)
+
+    @app.get("/api/lookup/activity")
+    def look_up_activity(q: str = Query(min_length=1, max_length=128), asof: dt.date | None = None,
+                         viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = lookup.activity(engine, q, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_activity"}, status_code=404)
+        return read_for(f"activity {q}", viewer, read)
+
     @app.get("/api/evidence")
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
                       viewer: Viewer = Depends(current_viewer)):
-        as_of = min(asof, registry.today()) if asof else registry.today()
-
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of)
+            found = evidence.read(engine, evidence_id, as_of_for(asof))
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 
