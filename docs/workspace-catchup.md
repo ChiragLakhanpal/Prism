@@ -586,3 +586,71 @@ Then run this in the workspace's SQL editor:
     SELECT DISTINCT model FROM strata.ops.supplier_pairs WHERE decided_by = 'model' OR review_reason = 'model_unsure'
 
 It worked if the job run exits 0 and at least one row names `gpt-5.4`, the draft role's deployment in `config/models.toml`. If the query returns no rows and the middle pairs still read `no_model`, the task did not get the Azure OpenAI keys.
+
+## Ticket 18, step 1 of 5: check that strata.gold.passage has no notice_url column
+
+The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs the Databricks keys in `.env`. Run it before step 2. The branch added a `notice_url` column to `strata.gold.passage` in commit d089fb6 and took it out in 73e1afe, so the gold query no longer writes it. No live run reached the workspace while the keys were missing, so the column should not be there.
+
+Run this in the workspace's SQL editor:
+
+    DESCRIBE strata.gold.passage
+
+It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeeds. If it does list `notice_url`, stop and tell the orchestrator before step 2. CLAUDE.md rule 5 changes a table only through `CREATE OR REPLACE`, and the guard blocks a statement that removes a column, so taking it out needs its own reviewed step.
+
+## Ticket 18, step 2 of 5: read the document slice on the warehouse
+
+The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, a token or a service principal, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. At 08:24 on October 24, `.env` held the host, the warehouse and the AI Search endpoint, but no Databricks token and no Azure OpenAI keys, and day-one test 7 had just failed. It is the same command as ticket 11's step 1.
+
+Run it after step 1, and after ticket 04's steps 1 and 2: the deploy makes the tables, and the nightly job fills `strata.gold.project`, which the slice is chosen from. The deploy must come from a8d605c or later. This merge adds `strata.ops.stress_shelf`, `strata.ops.documents_read` and `strata.silver.isr_ratings`, adds columns to `strata.bronze.layout_pages`, `strata.silver.document_page_routes`, `strata.silver.documents`, `strata.silver.passages` and `strata.gold.passage`, and adds the dashboard's tiles 5 and 7. If a deploy from an earlier commit already made those five tables, `CREATE TABLE IF NOT EXISTS` left them as they were. In that case stop and tell the orchestrator, because no one has written the changes for them yet.
+
+Run this from the main checkout:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+
+It worked if it exits 0, its first line starts "Run <run id> counted N projects in the slice", it prints five "stress shelf" lines, and its last line says the index `strata.gold.passage_index` "holds N of the N passages in strata.gold.passage and is ready", with both numbers the same. Exit 1 means the index did not catch up within 30 minutes; run it again. Then run these in the SQL editor with that run id:
+
+    SELECT shelf_key, state, document_id, count, denominator, parts, longest_pages FROM strata.ops.stress_shelf WHERE run_id = '<run id>'
+    SELECT measure, subject, count, denominator, detail FROM strata.ops.data_readiness WHERE run_id = '<run id>' AND measure IN ('slice_projects', 'slice_projects_read', 'documents_read_projects')
+    SELECT document_type, fiscal_year, documents, pdf_pages FROM strata.ops.documents_read WHERE run_id = '<run id>' ORDER BY document_type, fiscal_year
+
+The first query must return five rows. Its `over_parser_limit` row must be either `no_document` with the live slice's longest page count, or `read` with `parts` above 1 and `count` equal to `denominator` (criterion 6, live half). On the fixture it read `no_document` with 103 pages. The second must return `slice_projects`, `slice_projects_read` and one `documents_read_projects` row per project. The third must list Project Paper rows. The run's summary line must also say "Prompt Shields scanned N new passage texts and text-embedding-3-large embedded N", which covers the Prompt Shields scan and the embeddings of the new passages (Project Papers, PPARs and notice text).
+
+## Ticket 18, step 3 of 5: a second run the same day parses nothing
+
+The merger parked this step on October 24, 2026, after merge commit a8d605c. Run it right after step 2, on the same day. It needs the same keys as step 2.
+
+Run this from the main checkout again:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+
+Then run these in the SQL editor, the first with the new run id:
+
+    SELECT project_id, parser, pages_parsed, pages_failed FROM strata.ops.parse_runs WHERE run_id = '<new run id>'
+    SELECT to_date(started_at) AS day, sum(pages_parsed + pages_failed) AS pages_tried, max(daily_page_cap) AS cap FROM strata.ops.parse_runs GROUP BY to_date(started_at) ORDER BY day
+
+It worked if every row of the first query shows `pages_parsed` 0 and `pages_failed` 0, the run's summary line says it embedded 0 passages, and every day in the second query has `pages_tried` at or under `cap`, which is `ingestion.daily_page_cap` in `config/thresholds.toml` (500 today) across both readers (criterion 2, live half). A page the layout parser failed on is tried again the next day and counts against that day's cap; ticket 18's first parked decision asks whether to keep that.
+
+## Ticket 18, step 4 of 5: the slice's project count on DuckDB and on the SQL warehouse
+
+The merger parked this step on October 24, 2026, after merge commit a8d605c. Run it after step 2. It needs the Databricks keys in `.env`. It is the same command as ticket 04's step 3, and one run after step 2 serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it exits 0 and `slice_projects.sql` agrees on both engines (criterion 1, live half). Then read the live count and its difference from PLAN.md's 128:
+
+    SELECT count, detail FROM strata.ops.data_readiness WHERE measure = 'slice_projects' ORDER BY measured_at DESC LIMIT 1
+
+On the fixture the detail reads 17 projects ("Kenya 17, Bangladesh 0, Vietnam 0, Pakistan 0"), 111 fewer than 128. The PM copies the live detail sentence into `docs/STATUS.md`.
+
+## Ticket 18, step 5 of 5: "similar experience" finds the notices through AI Search
+
+The merger parked this step on October 24, 2026, after merge commit a8d605c. Run it after step 2, once the index holds every passage. It needs `DATABRICKS_TOKEN` to be a person's token, because the tool acts as the viewer, plus `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`.
+
+The builder named `ops/documents/search_live.py` for this step. That script asks only ticket 11's question (`search-passages-icr-rebidding`) and has no option for another one. So run it once as it is, then ask ticket 18's benchmark question through the same code. Run both from the main checkout:
+
+    uv run --script ops/documents/search_live.py --env-file .env
+    uv run --frozen python -c "import sys; sys.path.insert(0, 'ops/documents'); import search_live; search_live.QUESTION = 'search-passages-similar-experience'; sys.exit(search_live.main(['--env-file', '.env']))"
+
+It worked if the first ends "1 of the 1 expected passages are in the top three." (the new passages did not push paragraph 54 out), and the second lists `strata.gold.passage:OP00118817/v1/s5` and `strata.gold.passage:OP00128730/v1/s6`, each with its notice id, and ends "2 of the 2 expected passages are in the top three." (criterion 8, live half). Both must start "search_passages ranked with AI Search". Exit 2 means it could not ask, and the line it prints says why.

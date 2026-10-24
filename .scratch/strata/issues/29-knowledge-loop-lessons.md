@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 5 (Lessons) and 11 (Lesson governance); the bl
 
 **Blocked by:** 14 (Ask from the one box: the answer panel and the evidence drawer); 18 (The document slice, the page router's Route B and the stress shelf)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md sections 5 (Lessons) and 11 (Lesson governance); the bl
 - [ ] get_lessons ordering is unchanged when usage counts change, proving it ranks by fit and evidence only, and each lesson carries its Regulations edition.
 - [ ] The quarterly job writes a 10% sample of decisions assigned to another region.
 - [ ] The queue follows the Lessons wireframe's "Waiting for review (3) · reviewers only" tab and DESIGN.md section 5; reviewer actions use plain verbs ("Recommend", "Reject, with a reason", "Add to the library"), never a DESIGN.md section 7 rule 19 word; states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/29-knowledge-loop-lessons, as soon as ticket 18 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

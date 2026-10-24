@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 5 (Assertions and disagreements); ADR 0002; the
 
 **Blocked by:** 18 (The document slice, the page router's Route B and the stress shelf)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** no
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 5 (Assertions and disagreements); ADR 0002; the
 - [ ] The May 4, 2023 re-issue of the ICR Review replaces the March 27, 2020 version for current answers.
 - [ ] An extracted assertion whose quote is not on its cited page is rejected and counted.
 - [ ] Every assertion has subject, attribute, value, period, made-at date, public_from, source document and passage, and evidence tier, checked by a schema test.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/20-assertions-disagreements-evidence-ladder, as soon as ticket 18 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

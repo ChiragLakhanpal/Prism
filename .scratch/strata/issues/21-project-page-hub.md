@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 8; DESIGN.md sections 5 and 10; the blueprint's
 
 **Blocked by:** 10 (Check a plan, on screen, for the NWWDA plan); 18 (The document slice, the page router's Route B and the stress shelf)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md section 8; DESIGN.md sections 5 and 10; the blueprint's
 - [ ] After "Save as the baseline" on a plan check, a later check of the same plan reports delay against the baseline and against the first published planned date, each labeled.
 - [ ] A Playwright sweep of every route finds no P-code that is not a link to its project page.
 - [ ] Tabs, tables and source lines follow DESIGN.md section 5; loading, empty and error states are captured at 1440, 1024 and 390 px; the Summary loads within its budget on a throttled 3G profile; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/21-project-page-hub, as soon as ticket 18 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
