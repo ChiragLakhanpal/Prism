@@ -78,7 +78,7 @@ function Panel({ children }: { children: ReactNode }) {
 
 function SampleBox({ text }: { text: string }) {
   const [value, setValue] = useState(text);
-  return <OneBox value={value} onChange={setValue} below={copy.box.notReady} shortcut={false} />;
+  return <OneBox value={value} onChange={setValue} shortcut={false} />;
 }
 
 const date = (iso: string, style: "short" | "sentence" | "table" = "sentence") =>

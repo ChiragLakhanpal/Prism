@@ -165,12 +165,39 @@ export const copy = {
   },
 
   // The white band under the bar: the one box and the data-freshness stamp.
+  // The one box (the 14 brief, section 5.1). The placeholder names only what the box can do now;
+  // ticket 15 adds "describe a package" back. {id}, {pcode}, {loan} and {step_ref} show in Roboto Mono.
   box: {
-    label: "Search a project, check a plan, describe a package, or ask",
-    placeholderWide: "Search a project, check a plan, describe a package, or ask",
-    placeholderMedium: "Search a project, check a plan, or ask",
-    placeholderNarrow: "Search a project, or ask",
-    notReady: "I can't open projects or answer questions from this box yet.",
+    label: "Open a project or package, or ask a question",
+    placeholderWide: "Open a project or package, or ask a question",
+    placeholderNarrow: "Open a project, or ask",
+    placeholderProject: "Ask about this project",
+    placeholderPackage: "Ask about this package",
+    hint: "Type a project ID such as P130164, a STEP reference, a loan number, or a question.",
+    listName: "What Enter will do",
+    enter: "Enter",
+    option: {
+      project: "Open {pcode}",
+      projectLine: (name: string, country: string | null) => (country ? `${name}, ${country}` : name),
+      loan: "Open the project for {loan}",
+      loanLine: "{pcode}, {name}",
+      activity: "Show {step_ref} in its plan",
+      activityLine: (agency: string, date: string) => `In the ${agency} plan of ${date}, {pcode}`,
+      ask: "Ask this",
+      askWithin: "Within {id}",
+      askAcross: "Across all projects",
+      lookingUp: "Looking up {id}",
+    },
+    notFound: {
+      project: "I have no project {id}.",
+      loan: "I have no loan or credit {id} in the records.",
+      activity: "I have no activity {id} in a published plan.",
+    },
+    lookupFailed: "I couldn't look up {id} just now. You can still ask about it.",
+    chipWithin: "Within",
+    chipRemove: (id: string) => `Remove the scope ${id}`,
+    scoped: (id: string) => `Questions you ask here cover ${id} only.`,
+    scopeRemoved: "The scope is removed. Questions now cover all projects.",
   },
   stamp: {
     loading: "Reading the data date",
@@ -210,6 +237,8 @@ export const copy = {
       plural(total, `${matched} of ${totalText} number matches records`, `${matched} of ${totalText} numbers match records`),
     quotes: (found: string, total: number, totalText: string) =>
       plural(total, `${found} of ${totalText} quote is on its page`, `${found} of ${totalText} quotes are on their pages`),
+    dates: (matched: string, total: number, totalText: string) =>
+      plural(total, `${matched} of ${totalText} date matches records`, `${matched} of ${totalText} dates match records`),
     sourcesOnly: "every source I cite came back from this search",
     notCheckedJoin: ", or ",
     clauseJoin: "; ",
@@ -281,12 +310,86 @@ export const copy = {
     showOne: "Show the step I took",
     hide: "Hide the steps",
     answerId: "Answer ID",
+    // Each step's line while it runs, which the live region says once, and once it is done (the 14
+    // brief, section 5.2). Tool steps are keyed by the tool registry's name (config/tools.toml), so a
+    // new tool needs two lines here. Counts are words from one to nine (DESIGN.md section 7).
+    read: { running: "I'm reading your question.", done: "I read your question." },
+    tools: {
+      search_passages: {
+        running: (scope: string | null) => (scope ? `I'm searching the documents for ${scope}.` : "I'm searching the documents."),
+        done: (count: number, countText: string, scope: string | null) =>
+          `I found ${count === 0 ? "no" : countText} ${count === 1 ? "passage" : "passages"}${scope ? ` for ${scope}` : ""}.`,
+      },
+      check_plan: {
+        running: () => "I'm checking the plan.",
+        done: (count: number, countText: string) => `I checked ${countText} ${count === 1 ? "activity" : "activities"} in the plan.`,
+      },
+      find_comparables: {
+        running: () => "I'm finding comparable packages.",
+        done: (count: number, countText: string) => `I found ${countText} comparable ${count === 1 ? "package" : "packages"}.`,
+      },
+      ask_genie: {
+        running: () => "I'm looking through the records.",
+        done: (count: number, countText: string) => `I found ${countText} matching ${count === 1 ? "record" : "records"}.`,
+      },
+      get_lessons: {
+        running: () => "I'm looking for lessons.",
+        done: (count: number, countText: string) => `I found ${countText} ${count === 1 ? "lesson" : "lessons"}.`,
+      },
+    },
+    otherTool: { running: (tool: string) => `I'm using ${tool}.`, done: (tool: string) => `I used ${tool}.` },
+    write: {
+      running: "I'm writing the answer.",
+      done: (count: number, countText: string) =>
+        count === 0 ? "I wrote no sentences." : `I wrote ${countText} ${count === 1 ? "sentence" : "sentences"}.`,
+      // A step still to come, listed in ink-muted so the block keeps its height (02's round 7 critique).
+      todo: "To do: write the answer.",
+    },
+    check: {
+      running: "I'm checking each number and quote against the sources.",
+      done: "I checked each number and quote against the sources.",
+      doneCounted: (numbers: string, quotes: string, removed: string) => `I checked ${numbers} and ${quotes}, and removed ${removed}.`,
+      numbers: (count: number, countText: string) => (count === 1 ? "one number" : `${countText} numbers`),
+      quotes: (count: number, countText: string) => (count === 1 ? "one quote" : `${countText} quotes`),
+      removed: (count: number, countText: string) => (count === 0 ? "none" : count === 1 ? "one sentence" : `${countText} sentences`),
+      todo: "To do: check each number and quote against the sources.",
+    },
   },
   answer: {
     inShort: "In short",
     // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
+    readyRemoved: (count: number, countText: string) =>
+      count === 1
+        ? "The answer is ready. I removed one sentence that failed a check."
+        : `The answer is ready. I removed ${countText} sentences that failed a check.`,
     tryAgain: "Try again",
+    // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
+    panel: "Answer",
+    close: "Close the answer",
+    askedWithin: "Asked within {id}",
+    askedAcross: "Asked across all projects",
+    askedAsOf: (date: string) => `, as of ${date}`,
+    askedPreview: (view: string) => `, in a preview of the ${view} view`,
+    askedEnd: ".",
+    previewViews: { piu: "implementing agency", public: "public" },
+    // Every sentence the agent wrote failed a check (the 14 brief, section 5.7).
+    nothingSurvived: (count: number, countText: string) =>
+      count === 1
+        ? "I don't have an answer I can support with a source. I wrote one sentence, and it failed a check."
+        : `I don't have an answer I can support with a source. I wrote ${countText} sentences, and each one failed a check.`,
+    // The agent found nothing to cite (section 5.6).
+    emptyScoped: "I found nothing in the records or documents for {id} that answers this. You can ask the same question across all projects.",
+    emptyUnscoped: "I found nothing in the records or documents that answers this. {link} shows which sources and years I have read so far.",
+    emptyLink: "Data readiness",
+    askAcross: "Ask across all projects",
+    // A refusal is an answer, not an error (section 5.8). Ticket 24 adds the refusal list's own lines.
+    refusedContentFilter: "I can't answer this as written, because a content filter stopped it. Try asking it in different words.",
+    refusalNote: "{link} lists what I don't do, and why.",
+    refusalLink: "How Strata works",
+    // The stream ended before its done event (section 5.9).
+    dropped: "The connection dropped before the answer was ready.",
+    stillInBox: "Your question is still in the box.",
     // Why an answer stopped, keyed by the code its stream's error event carries (ERROR_CODES in
     // src/strata/harness/turn.py). A test fails when a code has no sentence here.
     errors: {
@@ -319,6 +422,56 @@ export const copy = {
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
     missing: "I have no source with this ID, so the link may be incomplete.",
+  },
+
+  // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
+  // stratum and its document's short name come from the answer stream.
+  evidence: {
+    eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
+    // The heading names the source, not the claim, so a drawer opened from a link still reads.
+    title: "{project}, paragraph {para}",
+    titleSection: "{project}, section {section}",
+    recordTitle: "{kind} {reference}",
+    // The heading when no source could be shown.
+    untitled: "Source",
+    visited: "You have opened this source.",
+    // The excerpt sits in straight quotes, as the paragraph's own words.
+    quoteOpen: '"',
+    quoteClose: '"',
+    close: "Close the source",
+    fromAnswer: "From the answer",
+    switcher: "Sources for this sentence",
+    tab: (short: string, para: string) => `${short} ¶${para}`,
+    tabName: (short: string, para: string) => `${short} paragraph ${para}`,
+    // The meta line, word for word as the ticket writes it: "Implementation Completion and Results
+    // Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 ·
+    // PDF page 23 of 66". The project ID shows in Roboto Mono.
+    meta: {
+      project: "{project} ({pcode})",
+      section: (section: string) => `Section ${section}`,
+      para: (para: string) => `¶${para}`,
+      page: (page: string, pages: string) => `PDF page ${page} of ${pages}`,
+      pageOnly: (page: string) => `PDF page ${page}`,
+      join: " · ",
+    },
+    noHighlight: "The sentence sums up this paragraph, so no words are highlighted.",
+    whole: "The whole paragraph, word for word.",
+    preview: "This is a preview, so I'm not recording the sources you open.",
+    // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
+    // 2019, paragraph 54".
+    markerSource: (docType: string, date: string, para: string) => `${docType}, ${date}, paragraph ${para}`,
+    markerSourceSection: (docType: string, date: string, section: string) => `${docType}, ${date}, section ${section}`,
+    markerRecord: (kind: string, reference: string) => `${kind} ${reference}`,
+    // A number in a sentence says which source the verifier matched it to.
+    numTooltip: (para: string, docKind: string, pcode: string) => `Matches paragraph ${para} of the ${docKind} for ${pcode}.`,
+    numTooltipRecord: (kind: string, reference: string) => `Matches the ${kind} record ${reference}.`,
+    // What a number's tooltip calls each kind of document, by its short name.
+    docKinds: {
+      ICR: "completion report",
+      "ICR Review": "review of the completion report",
+      PAD: "appraisal document",
+      ISR: "status report",
+    } as Record<string, string>,
   },
 
   // Tables (DESIGN.md section 5): a title sentence, a count line and a source line.

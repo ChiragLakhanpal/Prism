@@ -27,7 +27,8 @@ export function DocumentSource({
   pcode: string;
   // Already written by Num or formatDate, such as "June 30, 2021".
   date: string;
-  para: number;
+  // A paragraph number, or an item such as 10.b in an ICR Review.
+  para: number | string;
   page: number;
   className?: string;
 }) {

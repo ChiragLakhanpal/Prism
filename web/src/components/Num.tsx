@@ -21,7 +21,10 @@ export type NumValue =
   | { count: number; capital?: boolean }
   | { year: number }
   | { date: string; style?: DateStyle }
-  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" };
+  | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
+  // A number or date as a checked answer sentence wrote it: the verifier matched it to a record at
+  // that rounding, so it is shown as written (ticket 14).
+  | { written: string };
 
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
@@ -33,6 +36,7 @@ export type NumCheck = {
 };
 
 export function numText(num: NumValue): string {
+  if ("written" in num) return num.written;
   if ("value" in num) return formatNumber(num.value, num.options);
   if ("count" in num) return formatCount(num.count, { capital: num.capital });
   if ("year" in num) return formatYear(num.year);

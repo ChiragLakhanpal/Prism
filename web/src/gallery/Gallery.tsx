@@ -24,7 +24,7 @@ export function LogoSlot() {
 
 function Box() {
   const [value, setValue] = useState("");
-  return <OneBox value={value} onChange={setValue} below={copy.box.notReady} />;
+  return <OneBox value={value} onChange={setValue} />;
 }
 
 export function GalleryFrame({
