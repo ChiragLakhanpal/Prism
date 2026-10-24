@@ -122,6 +122,33 @@ def test_the_2023_reissue_of_the_icr_review_replaces_the_2020_version_for_curren
     assert [row["attribute"] for row in between["rows"]] == ["pdo_progress"]
 
 
+def test_a_disagreement_with_the_replaced_2020_icr_review_is_left_out_of_current_answers_and_counted(
+        fixture_db, tmp_path):
+    """Criterion 6 with the rule doing the work: the March 27, 2020 ICR Review agrees with every other source,
+    so on a copy of the fixture its outcome rating is made to differ. As of a date between the two versions it
+    disagrees with the ICR and with IEG's dataset row; from May 4, 2023, when the re-issue under the same report
+    number became public, those disagreements are left out and the coverage line counts them."""
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+    outcome_2020 = "strata.gold.passage:31906731/v1/6.a#P130164/outcome"
+
+    with DuckDBEngine.open(copy) as engine:
+        engine.run("UPDATE strata.gold.assertion SET value = :rating, judgment = :judgment "
+                   "WHERE assertion_id = :assertion_id",
+                   {"rating": "Moderately Satisfactory", "judgment": "satisfactory", "assertion_id": outcome_2020})
+        assertions.redetect(engine, ["P130164"], config.load_ladder())
+        between = get_disagreements(engine, subject_id="P130164", attribute="outcome", as_of="2022-01-01")
+        today = get_disagreements(engine, subject_id="P130164", attribute="outcome", as_of="2026-10-23")
+
+    assert len(between["rows"]) == 2
+    assert all(outcome_2020 in {side["assertion_id"] for side in row["sides"]} for row in between["rows"])
+    assert between["coverage"]["not_used"] == []
+    assert today["rows"] == []
+    [not_used] = today["coverage"]["not_used"]
+    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 2)
+    assert sorted(not_used["evidence_ids"]) == sorted(row["evidence_id"] for row in between["rows"])
+
+
 @pytest.mark.parametrize("old, new, rule", [
     ('tiers = ["ieg", "icr", "isr", "pad"]', 'tiers = ["ieg", "isr", "icr", "pad"]', "outcome"),
     ('class = "judgment"', 'class = "moment"', "moment"),
@@ -198,6 +225,9 @@ def test_a_tie_between_records_goes_to_the_more_specific_source(engine):
         assert row["subject_kind"] == "package"
     plan_side = next(side for side in next(iter(found.values()))["sides"] if side["form"] == "plan_row")
     assert plan_side["evidence_id"].startswith("strata.silver.plan_rows:") and plan_side["made_at"] == "2026-10-09"
+    # The earlier plan versions dated the signing the same way, and a later version replaced each of them.
+    [not_used] = result["coverage"]["not_used"]
+    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 4)
 
 
 def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engine):
@@ -228,14 +258,16 @@ def copy_keys(group: str) -> set[str]:
     return set(re.findall(r"^ {6}(\w+):", words, flags=re.MULTILINE))
 
 
-def test_every_rule_and_tier_the_ladder_can_return_has_its_words_in_the_copy_file():
-    """The tool returns the ladder's rule id and each side's evidence tier, never a sentence (as check_plan
-    returns reason codes); the copy file says them (brief 23, section 7.5). Reordering the ladder changes
-    which id comes back and needs no copy change; a new rule or tier needs its words."""
+def test_every_rule_tier_and_reason_the_tool_can_return_has_its_words_in_the_copy_file():
+    """The tool returns the ladder's rule id, each side's evidence tier and its coverage line's reason codes,
+    never a sentence (as check_plan returns reason codes); the copy file says them (brief 23, section 7.5;
+    ticket 09's one copy sentence per reason code). Reordering the ladder changes which id comes back and
+    needs no copy change; a new rule, tier or reason needs its words."""
     ladder = config.load_ladder()
 
     assert {rule.id for rule in ladder.rules} | set(ladder.ties) <= copy_keys("rule")
     assert set(ladder.tiers) <= copy_keys("written")
+    assert set(config.load_tools()["get_disagreements"].result.reasons) <= copy_keys("reasons")
 
 
 def test_the_rejected_assertion_is_counted_for_the_project(engine):
