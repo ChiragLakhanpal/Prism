@@ -124,7 +124,9 @@ schedule_days = { daily = 1, weekly = 7, monthly = 31, quarterly = 92, yearly = 
 # Supplier matching: when a pair merges, goes to the model or goes to a person (ticket 19). A STEP
 # supplier ID decides first; only a row with no ID is matched by name (docs/PLAN.md section 5). Each
 # candidate pair gets Splink's match probability from the name-matching model in config/models.toml's
-# [supplier_matching], and these values route it. strata.knowledge.suppliers.resolve reads them.
+# [supplier_matching], and these values route it. strata.knowledge.suppliers.resolve reads them, and
+# strata.knowledge.suppliers.quality and the labeling tool (src/strata/server/suppliers.py) read the
+# precision target and the labeled-pair counts.
 [supplier_matching]
 # A pair below this probability is not kept as a candidate at all. Source: none yet; a starting
 # value for the owner to confirm. It keeps the weak pairs a person may still label.

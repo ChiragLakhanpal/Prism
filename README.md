@@ -167,7 +167,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The passage reader: the first documents into numbered passages, Prompt Shields' results, vectors and `strata.gold.passage`, with data readiness measures | `src/strata/lakehouse/passages.py` (`uv run --frozen python -m strata.lakehouse.passages` runs it on the fixture) |
 | The live plan run on the workspace | `ops/plans/run_live.py` |
 | The live passage run on the workspace, which also makes and syncs the AI Search index, and the live check that asks `search_passages` its benchmark question through AI Search | `ops/documents/run_live.py` and `ops/documents/search_live.py` |
-| The knowledge model: the sector words, the embedding and Prompt Shields adapters, and hybrid search (AI Search live, the fixture search offline). Lessons, links and assertions come later | `src/strata/knowledge/` |
+| The knowledge model: the sector words, the embedding and Prompt Shields adapters, hybrid search (AI Search live, the fixture search offline), and suppliers resolved on STEP supplier IDs first and names second (`suppliers/`). Lessons, links and assertions come later | `src/strata/knowledge/` |
 | The tool registry: one entry per tool, with its parameters (always an optional `as_of` date), adapter, benchmark question and result shape. Adding a tool is one entry plus its adapter | `config/tools.toml` |
 | The registry at work (the agent's tool list, calling a tool by name, the tool contract) and the tools, with their SQL: `check_plan` and `search_passages` | `src/strata/tools/` |
 | Which engine runs a viewer's queries in the server | `src/strata/server/engines.py` |

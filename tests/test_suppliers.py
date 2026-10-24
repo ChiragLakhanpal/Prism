@@ -589,3 +589,15 @@ def test_the_live_judge_check_asks_about_the_fixtures_uncertain_pairs_and_writes
     printed = capsys.readouterr().out
     # The thresholds send three fixture pairs to the model: CHINA RAILWAY and the two INTERCONTINENTAL pairs.
     assert len(asked) == 3 and VALUES["fy2001-china-railway"]["value"] in printed
+
+
+def test_the_nightly_jobs_serverless_environment_installs_the_splink_that_pyproject_pins():
+    """bronze_to_gold runs name matching with Splink on serverless compute, which installs only what the
+    job's environment lists, so the job lists the same pin as pyproject.toml."""
+    from strata.lakehouse import bundle
+
+    pinned = next(dependency for dependency in tomllib.loads((ROOT / "pyproject.toml").read_text())["project"][
+        "dependencies"] if dependency.startswith("splink"))
+    [environment] = bundle.load().resources("jobs")["nightly"]["environments"]
+
+    assert pinned in environment["spec"].get("dependencies", [])
