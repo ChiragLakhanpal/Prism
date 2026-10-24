@@ -40,8 +40,8 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 
 // Skeleton rows as tall, on average, as the rows they stand for, measured on the fixture's page at
 // 1440 and 1024 px, and below 768 px a card's body as tall as a real card's.
-const ROW_HEIGHT = { kinds: "h-32 xl:h-29", sources: "h-[7.625rem] xl:h-27" } as const;
-const CARD_HEIGHT = { kinds: "h-64", sources: "h-[15.75rem]" } as const;
+const ROW_HEIGHT = { kinds: "h-40 xl:h-35", sources: "h-[7.875rem] xl:h-[6.9375rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[17.375rem]", sources: "h-[16rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";
@@ -163,7 +163,15 @@ export function ReadinessTable({
           <li key={index} aria-hidden="true" className="rounded-md border border-line bg-surface p-4">
             <SkeletonLine width="w-3/5" className="text-title" />
             {skeletonRows === "sources" && <SkeletonLine width="w-2/5" className="text-caption" />}
-            <div className={cx("mt-3", CARD_HEIGHT[skeletonRows])} />
+            {/* The real card's shape: each column's label over its value, in the same grid. */}
+            <div className={cx("mt-3 grid content-start gap-x-4 gap-y-3", numberGrid ? "grid-cols-2" : "grid-cols-1", CARD_HEIGHT[skeletonRows])}>
+              {columns.map((column) => (
+                <div key={column.key} className={cx("flex flex-col gap-1", (!column.numeric || !numberGrid) && "col-span-full")}>
+                  <SkeletonLine width="w-1/2" className="text-caption" />
+                  <SkeletonLine width="w-3/4" className="text-small" />
+                </div>
+              ))}
+            </div>
           </li>
         ))}
         {rows.map((row) => (

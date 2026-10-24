@@ -147,6 +147,10 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   await expect(cell(page, "awards:read_well")).toHaveText("Published as a table");
   // The registry gives the plans no freshness measure; their versions arrive as published.
   await expect(cell(page, "plans:fresh")).toHaveText("As published");
+  // A limit the source declares sits on its own line, under what the number counts.
+  await expect(cell(page, "cpia:coverage")).toContainText("264scores heldIDA countries onlyin 21 fiscal years");
+  // A share breaks only after its comma: its count and its frequency each stay on one line.
+  await expect(cell(page, "reports:coverage").locator("[data-num] .whitespace-nowrap")).toHaveText(["20 of 21,", "more than 9 in 10"]);
   // CPIA and WGI scores are a source's own values; no score of Strata's rates a source.
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
@@ -227,26 +231,45 @@ test("every number's tooltip names what it counts, and its window shows the numb
     expect(said, `number ${index}`).not.toMatch(/^[\d,]+ ?\./);
   }
 
-  // The headline's 75 is a shortfall: its window shows it above the measure's own numbers.
-  await page.locator("[data-headline] [data-num]", { hasText: /^75$/ }).click();
+  // The headline's 75 is a shortfall: its tooltip names what the 75 lack, and its window shows it
+  // above the measure's own numbers.
+  const shortfall = page.locator("[data-headline] [data-num]", { hasText: /^75$/ });
+  await shortfall.focus();
+  await expect(
+    page.getByRole("tooltip").filter({
+      hasText: "75 of 603 contracts lack a reference from Systematic Tracking of Exchanges in Procurement (STEP). Measured Oct 23, 2026.",
+    }),
+  ).toBeVisible();
+  await shortfall.click();
   const window = page.getByRole("dialog", { name: "Linked" });
-  await expect(window).toContainText("Falling short75");
+  await expect(window).toContainText("Missing75");
   await expect(window).toContainText("Counted528");
   await page.keyboard.press("Escape");
 
-  // A fix's project count opens only a window whose Counted is that count, or none at all.
+  // A fix's project count opens only a window whose Counted is that count and which names its table,
+  // or none at all.
   const answer = await json("data-readiness.json");
+  const inWords = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
   for (const [index, fix] of answer.fixes.entries()) {
     const projects = page.locator("[data-fixes] li").nth(index).locator("p.text-small [data-num]");
     if (fix.projects_row === null) {
       await expect(projects).not.toHaveAttribute("aria-haspopup", "dialog");
       await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
       await projects.hover();
-      const said = fix.projects === 1 ? "project has" : "projects have";
-      await expect(page.getByRole("tooltip").filter({ hasText: `${fix.projects} ${said} rows behind this gap. Measured Oct 23, 2026.` })).toBeVisible();
+      const said = `${inWords[fix.projects - 1]} ${fix.projects === 1 ? "project" : "projects"}`;
+      await expect(
+        page.getByRole("tooltip").filter({ hasText: `The records behind this gap come from ${said}. Measured Oct 23, 2026.` }),
+      ).toBeVisible();
     } else {
+      const counted = answer.rows[fix.projects_row];
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+      await projects.hover();
+      await expect(
+        page.getByRole("tooltip").filter({ hasText: `${counted.count} of ${counted.denominator} projects. Measured Oct 23, 2026.` }),
+      ).toBeVisible();
       await projects.click();
       await expect(page.getByRole("dialog")).toContainText(`Counted${fix.projects}`);
+      await expect(page.getByRole("dialog")).toContainText("Counted instrata.gold.contract");
       await page.keyboard.press("Escape");
     }
     await page.keyboard.press("Escape");
@@ -264,6 +287,10 @@ test("opened from the plan check, it shows only the rows the plan check reads, a
   await expect(page.locator("[data-headline]")).not.toContainText("body pages");
   await expect(table(page, "sources").locator("tbody tr")).toHaveCount(2);
   await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 13 sources.");
+  // The headline names no STEP gap here, so the first STEP, in What you can ask, is spelled out.
+  await expect(table(page, "kinds").locator("[data-cell='plan_check:readyFor']")).toContainText(
+    "rows in the format of Systematic Tracking of Exchanges in Procurement (STEP)",
+  );
 });
 
 test("What you can ask shows each kind of question with what it is ready for and what holds it back", async ({ page }) => {
@@ -273,7 +300,7 @@ test("What you can ask shows each kind of question with what it is ready for and
   const kinds = table(page, "kinds");
   await expect(kinds.locator("tbody th")).toHaveText(["Checking a plan against its own dates", "What project documents say"]);
   await expect(kinds.locator("[data-cell='plan_check:holds']")).toContainText(
-    "Of 46 activity entries in the latest plan versions, 46 lack a first listing I could confirm.",
+    "None of the 46 activity entries in the latest plan versions has a first listing I could confirm.",
   );
   await expect(kinds.locator("[data-cell='plan_check:readyFor'] [data-badge=partial]")).toHaveText("Partial");
 });
@@ -407,6 +434,8 @@ test("a source with no measures leaves the headline out, and its row says it is 
   await expect(page.locator("[data-headline]")).toHaveText(
     "I'm not giving a headline: 1 of the 13 sources below has no measures yet. Its row says so.",
   );
+  // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
+  await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");
   await expect(cell(page, "wgi:span")).toHaveText("Not measured yet. The next data run measures it.");
 });
 

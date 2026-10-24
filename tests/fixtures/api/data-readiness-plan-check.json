@@ -1634,7 +1634,7 @@
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.contract"
       },
       "source_key": "awards",
       "measure": "projects_with_contracts_lacking_step_reference",
@@ -1665,7 +1665,7 @@
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.contract"
       },
       "source_key": "awards",
       "measure": "gap_years_projects_in_local_currency",
@@ -1873,14 +1873,15 @@
       "holds_back": [
         [
           {
-            "text": "Of "
+            "text": "None of the "
           },
           {
             "number": 46,
             "row": 47,
             "noun": "activity entries in the latest plan versions",
             "noun_one": "activity entry in the latest plan versions",
-            "role": null
+            "role": null,
+            "lack": null
           },
           {
             "text": " "
@@ -1889,17 +1890,7 @@
             "text": "activity entries in the latest plan versions"
           },
           {
-            "text": ", "
-          },
-          {
-            "number": 46,
-            "row": 47,
-            "noun": "activity entries in the latest plan versions",
-            "noun_one": "activity entry in the latest plan versions",
-            "role": "missing"
-          },
-          {
-            "text": " lack "
+            "text": " has "
           },
           {
             "text": "a first listing I could confirm"
@@ -1929,7 +1920,8 @@
           "row": 47,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
-          "role": "missing"
+          "role": "missing",
+          "lack": "a first listing I could confirm"
         },
         {
           "text": " of "
@@ -1939,7 +1931,8 @@
           "row": 47,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
-          "role": null
+          "role": null,
+          "lack": null
         },
         {
           "text": " "
@@ -1973,7 +1966,8 @@
           "row": 47,
           "noun": "activity entries in the latest plan versions",
           "noun_one": "activity entry in the latest plan versions",
-          "role": "missing"
+          "role": "missing",
+          "lack": "a first listing I could confirm"
         },
         {
           "text": " activity entries."
@@ -2023,7 +2017,8 @@
         "row": 47,
         "noun": "activity entries in the latest plan versions",
         "noun_one": "activity entry in the latest plan versions",
-        "role": "missing"
+        "role": "missing",
+        "lack": "a first listing I could confirm"
       },
       {
         "text": " of "
@@ -2033,7 +2028,8 @@
         "row": 47,
         "noun": "activity entries in the latest plan versions",
         "noun_one": "activity entry in the latest plan versions",
-        "role": null
+        "role": null,
+        "lack": null
       },
       {
         "text": " "

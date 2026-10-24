@@ -63,7 +63,9 @@
 #                     measure, and projects, the measure that counts the projects the fix would add
 #                     evidence to. Without projects, they are the measure's subjects (project IDs)
 #                     that fall short. gap names the known gap a fix closes. noun is what measure
-#                     counts, for its numbers' tooltips, when no column of the source shows it.
+#                     counts, for its numbers' tooltips, when no column of the source shows it, and
+#                     counted_in the table it counts. projects_counted_in is the table the projects
+#                     measure counts, so each number's window names its table.
 #   [[sources.<key>.collections]]
 #                     for the documents source: each collection's name, publisher and origin
 #
@@ -138,6 +140,7 @@ note = "No World Bank dataset publishes contract awards for these years. Award n
 [[sources.awards.fixes]]
 measure = "linked_step_reference"
 projects = "projects_with_contracts_lacking_step_reference"
+projects_counted_in = "strata.gold.contract"
 sentence = "Find a STEP reference for the {missing} contracts that lack one, so each joins its package and its notices."
 
 [[sources.awards.fixes]]
@@ -145,6 +148,8 @@ gap = "fy2017_2019"
 measure = "gap_years_contracts_in_local_currency"
 projects = "gap_years_projects_in_local_currency"
 noun = "contracts in local currency"
+counted_in = "strata.gold.contract"
+projects_counted_in = "strata.gold.contract"
 sentence = "Convert the {count} contracts in award notices for fiscal {fromYear} to {toYear} from local currency to US dollars, so they can be compared with the awards datasets."
 
 [sources.awards_fy2001_2016]

@@ -9,7 +9,15 @@ import { createStore } from "./store";
 // it is neither that row's count nor its denominator, what it is (a shortfall, or days late).
 export type Segment =
   | { text: string }
-  | { number: number; row: number | null; noun: string | null; noun_one?: string | null; role?: "missing" | "days" | null };
+  | {
+      number: number;
+      row: number | null;
+      noun: string | null;
+      noun_one?: string | null;
+      role?: "missing" | "days" | null;
+      // For a shortfall: what its records lack, so its tooltip can name them.
+      lack?: string | null;
+    };
 
 export type MeasureRow = {
   evidence_id: string;

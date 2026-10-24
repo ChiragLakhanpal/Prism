@@ -129,7 +129,9 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
           />
         )}
       </span>
-      <Qualifier>{cell.note ?? (one && cell.counts_one ? cell.counts_one : cell.counts)}</Qualifier>
+      <Qualifier>{one && cell.counts_one ? cell.counts_one : cell.counts}</Qualifier>
+      {/* A limit the source declares sits on its own line, so the number keeps its unit. */}
+      {cell.note && <Qualifier>{cell.note}</Qualifier>}
       {years && years.count !== null && years.denominator !== null && cell.years_row !== null && cell.years_row !== undefined && (
         <Qualifier>
           <Template
@@ -226,7 +228,7 @@ function kindRows(kinds: Kind[], measures: Measures): ReadinessRow[] {
           <div className="flex flex-col gap-1">
             {kind.holds_back.map((sentence, index) => (
               <p key={index}>
-                <Sentence segments={sentence} measures={measures} />
+                <Sentence segments={sentence} measures={measures} about={words.number.moreGaps} />
               </p>
             ))}
           </div>
@@ -287,12 +289,17 @@ const KIND_COLUMNS: ReadinessColumn[] = [
 function Provenance({ result }: { result: Readiness }) {
   if (!result.measured) return null;
   const { first, last } = result.measured;
+  // Under a headline Strata doesn't give, the caption says when the measures were taken, and no "this".
+  const built = result.headline !== null;
   return (
     <p className="mt-2 text-caption text-ink-muted" data-numbers>
       {first === last ? (
-        <Template text={words.provenance} values={{ date: day(last, result.as_of) }} />
+        <Template text={built ? words.provenance : words.provenanceAbstained} values={{ date: day(last, result.as_of) }} />
       ) : (
-        <Template text={words.provenanceRange} values={{ from: day(first, result.as_of), to: day(last, result.as_of) }} />
+        <Template
+          text={built ? words.provenanceRange : words.provenanceAbstainedRange}
+          values={{ from: day(first, result.as_of), to: day(last, result.as_of) }}
+        />
       )}
     </p>
   );
@@ -326,10 +333,20 @@ const PROJECTS: Noun = { many: words.fixes.projectsNoun, one: words.fixes.projec
 // measure's projects that fall short, it has no row of its own, so it has a tooltip and no window.
 function projectCount(fix: Fix, measures: Measures): ReactNode {
   if (fix.projects_row !== null) {
-    return <MeasureValue measures={measures} index={fix.projects_row} value={{ count: fix.projects }} noun={PROJECTS} windowColumn={null} />;
+    return (
+      <MeasureValue
+        measures={measures}
+        index={fix.projects_row}
+        value={{ count: fix.projects }}
+        noun={PROJECTS}
+        tooltipKind="ratio"
+        windowColumn={null}
+      />
+    );
   }
   const date = numText({ date: measures.rows[fix.row].measured_on, style: "table", today: measures.asOf });
-  const count = numText({ value: fix.projects, options: { compact: false } });
+  // In words from one to nine, as in any sentence (DESIGN.md section 7, rule 12).
+  const count = numText({ count: fix.projects });
   return (
     <MeasureNum
       value={{ count: fix.projects }}
@@ -604,7 +621,9 @@ function render(
             <ol className="mt-3 flex flex-col gap-3">
               {Array.from({ length: fixes }, (_, index) => (
                 <li key={index}>
-                  <SkeletonLine className="text-body" width="w-4/5" />
+                  {/* A fix runs one line from 768 px and about four below, as on the fixture's page. */}
+                  <SkeletonLine className="hidden text-body md:flex" width="w-4/5" />
+                  <SkeletonText className="text-body md:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
                   <SkeletonLine className="text-small" width="w-1/3" />
                 </li>
               ))}

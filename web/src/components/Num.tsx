@@ -47,12 +47,31 @@ export function numText(num: NumValue): string {
   return num.show === "count" ? ratio.count : ratio.text;
 }
 
+// A number as Num and MeasureNum show it. A share keeps its count and its frequency each on one
+// line, so "20 of 21, more than 9 in 10" can break only after the comma. Anything else is its text.
+export function numBody(num: NumValue): ReactNode {
+  return written(num, numText(num));
+}
+
+function written(num: NumValue, text: string): ReactNode {
+  if (!("share" in num)) return text;
+  const { frequency } = formatToolShare(num.share, { style: num.style });
+  if (!frequency || !text.endsWith(frequency)) return text;
+  return (
+    <>
+      <span className="whitespace-nowrap">{text.slice(0, text.length - frequency.length).trimEnd()}</span>{" "}
+      <span className="whitespace-nowrap">{frequency}</span>
+    </>
+  );
+}
+
 export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
   const text = numText(num as NumValue);
+  const body = written(num as NumValue, text);
   if (!check) {
     return (
       <span data-num className={cx("tabular-nums", className)}>
-        {text}
+        {body}
       </span>
     );
   }
@@ -70,7 +89,7 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
             className,
           )}
         >
-          {text}
+          {body}
         </button>
       }
     >

@@ -357,6 +357,9 @@ export const copy = {
     },
     provenance: "I built this from the measures below, taken {date}. No model wrote it.",
     provenanceRange: "I built this from the measures below, taken {from} to {to}. No model wrote it.",
+    // Under a headline Strata doesn't give, where "this" would point at nothing.
+    provenanceAbstained: "I took the measures below on {date}.",
+    provenanceAbstainedRange: "I took the measures below from {from} to {to}.",
     // The source line under each table.
     sourceLine: "Strata's data readiness measures, taken {date}.",
     kinds: {
@@ -378,13 +381,19 @@ export const copy = {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
       } as Record<string, string>,
+      // The plan check's count spells STEP out, because it is the first STEP on every view that shows
+      // the plan check (DESIGN.md section 7, rule 10).
       counts: {
-        plan_check: "activity entries in the latest plan versions with rows in STEP's format",
+        plan_check:
+          "activity entries in the latest plan versions with rows in the format of Systematic Tracking of " +
+          "Exchanges in Procurement (STEP)",
         document_search: "passages you can search",
       } as Record<string, string>,
       // The same, for a count of one.
       countsOne: {
-        plan_check: "activity entry in the latest plan versions with rows in STEP's format",
+        plan_check:
+          "activity entry in the latest plan versions with rows in the format of Systematic Tracking of " +
+          "Exchanges in Procurement (STEP)",
         document_search: "passage you can search",
       } as Record<string, string>,
     },
@@ -483,13 +492,19 @@ export const copy = {
       ratio: (part: string, whole: string, noun: string, date: string) => `${part} of ${whole} ${noun}. Measured ${date}.`,
       count: (count: string, noun: string, date: string) => `${count} ${noun}. Measured ${date}.`,
       day: (day: string, date: string) => `The latest data are from ${day}. Measured ${date}.`,
+      // A shortfall: how many of the whole lack what the gap names.
+      missing: (part: string, whole: string, noun: string, lack: string, date: string) =>
+        `${part} of ${whole} ${noun} lack ${lack}. Measured ${date}.`,
+      missingOne: (part: string, whole: string, noun: string, lack: string, date: string) =>
+        `${part} of ${whole} ${noun} lacks ${lack}. Measured ${date}.`,
       kinds: "Counted from the table of what you can ask, below.",
-      sources: "Counted from the sources this link names.",
+      sources: "Counted from the rows of the Sources table below.",
+      moreGaps: "Counted from the gaps listed under Sources, below.",
       // A fix's project count that no measure counted: the projects whose rows fall short.
-      projects: (count: string, date: string) => `${count} projects have rows behind this gap. Measured ${date}.`,
-      projectsOne: (count: string, date: string) => `${count} project has rows behind this gap. Measured ${date}.`,
+      projects: (count: string, date: string) => `The records behind this gap come from ${count} projects. Measured ${date}.`,
+      projectsOne: (count: string, date: string) => `The records behind this gap come from ${count} project. Measured ${date}.`,
       // A number the reader clicked that is neither the measure's count nor its denominator.
-      missing: "Falling short",
+      missingLabel: "Missing",
       days: "Days late",
       numerator: "Counted",
       denominator: "Out of",
@@ -538,6 +553,8 @@ export const copy = {
     server: {
       kinds: "Of the {kindCount} kinds of question below, I can answer {clauses}.",
       kindsAllFull: "I can answer all {kindCount} kinds of question below in full.",
+      kindsAllPartial: "I can answer each of the {kindCount} kinds of question below in part.",
+      kindsAllGap: "I can't answer any of the {kindCount} kinds of question below yet.",
       kindsOne: "I can answer the one kind of question below {clause}.",
       clauseFull: "{n} in full",
       clausePart: "{n} in part",
@@ -557,22 +574,34 @@ export const copy = {
       moreOne: "I list one more gap under Sources.",
       more: "I list {n} more gaps under Sources.",
       nothingHolds: "Nothing I measured holds it back.",
-      // The gap phrases, by what kind of gap it is.
+      // The gap phrases, by what kind of gap it is. A shortfall has a form for one record short
+      // (One) and for the only record, which falls short (Only); the tool falls back to the plain form.
       gap: {
         published: "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
         linked: "the {missing} of {total} {noun} that lack {lack}",
+        linkedOne: "the {missing} of {total} {noun} that lacks {lack}",
+        linkedOnly: "the {total} {noun} that lacks {lack}",
         check: "the {missing} of {total} {noun} that lack {lack}",
+        checkOne: "the {missing} of {total} {noun} that lacks {lack}",
+        checkOnly: "the {total} {noun} that lacks {lack}",
         readWell: "the {missing} of {total} {noun} I couldn't read without errors",
         late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
         lateOneDay: "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
         declared: "the {sourceNoun}, which cover {note}",
         noRows: "the {sourceNoun}, of which I hold no rows yet",
       },
-      // The same gaps as full sentences, under "What holds it back", filled from the same slots.
+      // The same gaps as full sentences, under "What holds it back", filled from the same slots, with
+      // a form for every record short (All) as well.
       holds: {
         published: "No World Bank dataset publishes the {sourceNoun} for fiscal {fromYear} to {toYear}.",
         linked: "Of {total} {noun}, {missing} lack {lack}.",
+        linkedOne: "Of {total} {noun}, {missing} lacks {lack}.",
+        linkedAll: "None of the {total} {noun} has {lack}.",
+        linkedOnly: "The {total} {noun} lacks {lack}.",
         check: "Of {total} {noun}, {missing} lack {lack}.",
+        checkOne: "Of {total} {noun}, {missing} lacks {lack}.",
+        checkAll: "None of the {total} {noun} has {lack}.",
+        checkOnly: "The {total} {noun} lacks {lack}.",
         readWell: "I couldn't read {missing} of {total} {noun} without errors.",
         late: "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
         lateOneDay: "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
@@ -587,6 +616,7 @@ export const copy = {
       fromNouns: {
         find_comparables: "the past range",
         check_plan: "the plan check",
+        search_passages: "the document search",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },

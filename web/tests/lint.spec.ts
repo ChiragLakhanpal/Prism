@@ -2,7 +2,7 @@
 // same command the gate runs, web/lint/run.ts, on files it writes, and checks that the
 // command fails on the mistake and passes once the mistake is gone.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -71,6 +71,22 @@ test("the copy lint checks the words the source registry puts on the Data readin
 test("the server's copy of the Data readiness sentences says what the copy file says", async () => {
   const { serverCopyIsCurrent } = await import("../lint/server-copy.ts");
   expect(serverCopyIsCurrent(), "run node web/lint/server-copy.ts --write").toBe(true);
+});
+
+test("every kind of question in config/tools.toml has its words in the copy file, and its tool a coverage-line noun", async () => {
+  // Review r3 P6: adding a kind is one entry in config/tools.toml, and a kind with no words here would
+  // leave its numbers saying nothing about what they count.
+  const { copy } = await import("../src/copy.ts");
+  const tools = readFileSync(fileURLToPath(new URL("../../config/tools.toml", import.meta.url)), "utf8");
+  const kinds = [...tools.matchAll(/^\[tools\.(\w+)\.readiness\]\s*\nkind = "(\w+)"/gm)].map(([, tool, kind]) => ({ tool, kind }));
+  expect(kinds.length).toBeGreaterThan(0);
+  const words = copy.dataReadiness;
+  for (const { tool, kind } of kinds) {
+    expect(words.kinds.names[kind], `copy.dataReadiness.kinds.names.${kind}`).toBeTruthy();
+    expect(words.kinds.counts[kind], `copy.dataReadiness.kinds.counts.${kind}`).toBeTruthy();
+    expect(words.kinds.countsOne[kind], `copy.dataReadiness.kinds.countsOne.${kind}`).toBeTruthy();
+    expect((words.server.fromNouns as Record<string, string>)[tool], `copy.dataReadiness.server.fromNouns.${tool}`).toBeTruthy();
+  }
 });
 
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {

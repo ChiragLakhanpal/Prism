@@ -23,7 +23,7 @@ export type Noun = { many: string; one?: string | null };
 
 // A number that opened a window and is not one of the measure's own numbers: a shortfall or days late.
 export type Role = "missing" | "days";
-const ROLE_LABEL: Record<Role, string> = { missing: words.number.missing, days: words.number.days };
+const ROLE_LABEL: Record<Role, string> = { missing: words.number.missingLabel, days: words.number.days };
 
 function measureWindow(row: MeasureRow, column: Column | null, asOf: string, clicked: { role: Role; value: number } | null): Measure {
   const day = (iso: string) => numText({ date: iso, style: "table", today: asOf });
@@ -45,19 +45,25 @@ function measureWindow(row: MeasureRow, column: Column | null, asOf: string, cli
 
 function said(noun: Noun | null, n: number): string {
   if (!noun?.many) {
-    // Every number says what it counts (design review B1); a missing noun is a gap in the registry.
-    if (import.meta.env.DEV) throw new Error("A data readiness number has no noun to say what it counts.");
+    // Every number says what it counts (design review B1); a missing noun is a gap in the registry
+    // or the copy file, which web/tests/lint.spec.ts catches. The page still renders.
+    if (import.meta.env.DEV) console.error("A data readiness number has no noun to say what it counts.");
     return "";
   }
   return n === 1 && noun.one ? noun.one : noun.many;
 }
 
-export type TooltipKind = "ratio" | "count" | "day";
+export type TooltipKind = "ratio" | "count" | "day" | "missing";
 
-function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number): string {
+function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number, lack?: string | null): string {
   const measured = numText({ date: row.measured_on, style: "table", today: asOf });
   const n = (value: number) => numText({ value, options: { compact: false } });
   if (kind === "day" && row.as_of) return words.number.day(numText({ date: row.as_of, style: "table", today: asOf }), measured);
+  // A shortfall names what its records lack: "75 of 603 contracts lack a STEP reference."
+  if (kind === "missing" && lack && count !== undefined && row.denominator !== null) {
+    const says = count === 1 ? words.number.missingOne : words.number.missing;
+    return says(n(count), n(row.denominator), said(noun, row.denominator), lack, measured);
+  }
   if (kind === "ratio" && row.count !== null && row.denominator !== null) {
     return words.number.ratio(n(row.count), n(row.denominator), said(noun, row.denominator), measured);
   }
@@ -74,6 +80,7 @@ export function MeasureValue({
   windowColumn,
   tooltipKind = "count",
   role,
+  lack,
   className,
 }: {
   measures: Measures;
@@ -83,6 +90,7 @@ export function MeasureValue({
   windowColumn?: Column | null;
   tooltipKind?: TooltipKind;
   role?: Role | null;
+  lack?: string | null;
   className?: string;
 }) {
   const row = measures.rows[index];
@@ -92,7 +100,7 @@ export function MeasureValue({
     <MeasureNum
       value={value}
       className={className}
-      tooltip={tooltip(row, noun, measures.asOf, tooltipKind, count)}
+      tooltip={tooltip(row, noun, measures.asOf, role === "missing" && lack ? "missing" : tooltipKind, count, lack)}
       measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null)}
     />
   );
@@ -117,6 +125,7 @@ export function Sentence({ segments, measures, about }: { segments: Segment[]; m
             value={{ count: segment.number }}
             noun={segment.noun ? { many: segment.noun, one: segment.noun_one } : null}
             role={segment.role}
+            lack={segment.lack}
           />
         );
       })}

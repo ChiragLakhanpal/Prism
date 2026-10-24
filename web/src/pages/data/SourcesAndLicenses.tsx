@@ -21,13 +21,18 @@ const LEGAL = "https://www.worldbank.org/en/about/legal";
 export function SourcesAndLicenses() {
   const state = useStore(registry);
   useEffect(() => readRegistry(), []);
+  const empty = state.status === "ready" && state.registry.datasets.length === 0;
 
   return (
     <div data-sources-page={state.status} className="flex max-w-prose flex-col">
-      <p tabIndex={-1} data-lead className="text-body outline-none">
-        {words.lead}
-      </p>
-      <section aria-labelledby="data-datasets" className="mt-12">
+      {/* With no datasets, the empty-state card stands alone, and takes the lead's focus, rather than
+          sit under "Here is every dataset". */}
+      {!empty && (
+        <p tabIndex={-1} data-lead className="mb-12 text-body outline-none">
+          {words.lead}
+        </p>
+      )}
+      <section aria-labelledby="data-datasets">
         <h2 id="data-datasets" className="text-title text-ink-heading">
           {words.datasets}
         </h2>
@@ -51,8 +56,10 @@ export function SourcesAndLicenses() {
             {words.failed}
           </Alert>
         )}
-        {state.status === "ready" && state.registry.datasets.length === 0 && (
-          <EmptyState level={3} className="mt-3" title={words.empty} body={words.emptyBody} />
+        {empty && (
+          <div tabIndex={-1} data-lead className="mt-3 outline-none">
+            <EmptyState level={3} title={words.empty} body={words.emptyBody} />
+          </div>
         )}
         {state.status === "ready" && state.registry.datasets.length > 0 && (
           <>

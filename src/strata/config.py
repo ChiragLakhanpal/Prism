@@ -200,6 +200,8 @@ class Fix:
     projects: str | None = None
     gap: str | None = None  # the known gap it closes, by id; otherwise it closes measure's shortfall
     noun: str | None = None  # what measure counts, when no column of the source shows that measure
+    counted_in: str | None = None  # the table measure counts, when no column of the source shows it
+    projects_counted_in: str | None = None  # the table the projects measure counts
 
 
 @dataclass(frozen=True)
@@ -369,7 +371,7 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     fixes = []
     for fix in _tables(path, table, "fixes"):
         fix.where = f"sources.{key}.{fix.where}"
-        fix.only({"sentence", "measure", "projects", "gap", "noun"})
+        fix.only({"sentence", "measure", "projects", "gap", "noun", "counted_in", "projects_counted_in"})
         gap_id = fix.text("gap", required=False)
         if gap_id is not None and gap_id not in {gap.id for gap in gaps}:
             fix._fail("gap", "must name one of this source's known gaps by its id")
@@ -378,7 +380,10 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
         noun = fix.text("noun", required=False)
         if noun is None and fix.text("measure") not in shown:
             fix._fail("noun", "must say what its measure counts, because no column of this source shows that measure")
-        fixes.append(Fix(fix.text("sentence"), fix.text("measure"), fix.text("projects", required=False), gap_id, noun))
+        if fix.text("projects_counted_in", required=False) and not fix.text("projects", required=False):
+            fix._fail("projects_counted_in", "names the table of the projects measure, so it needs projects")
+        fixes.append(Fix(fix.text("sentence"), fix.text("measure"), fix.text("projects", required=False), gap_id, noun,
+                         fix.text("counted_in", required=False), fix.text("projects_counted_in", required=False)))
     fields["fixes"] = tuple(fixes)
     collections = []
     for collection in _tables(path, table, "collections"):

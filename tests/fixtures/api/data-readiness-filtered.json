@@ -1634,7 +1634,7 @@
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.contract"
       },
       "source_key": "awards",
       "measure": "projects_with_contracts_lacking_step_reference",
@@ -1665,7 +1665,7 @@
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.contract"
       },
       "source_key": "awards",
       "measure": "gap_years_projects_in_local_currency",
@@ -1696,7 +1696,7 @@
           "all"
         ],
         "measured_on": "2026-10-23",
-        "counted_in": null
+        "counted_in": "strata.gold.contract"
       },
       "source_key": "awards",
       "measure": "gap_years_contracts_in_local_currency",
@@ -1861,7 +1861,8 @@
           "row": 2,
           "noun": "contracts",
           "noun_one": "contract",
-          "role": "missing"
+          "role": "missing",
+          "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
         },
         {
           "text": " of "
@@ -1871,7 +1872,8 @@
           "row": 2,
           "noun": "contracts",
           "noun_one": "contract",
-          "role": null
+          "role": null,
+          "lack": null
         },
         {
           "text": " "
@@ -1937,7 +1939,8 @@
           "row": 2,
           "noun": "contracts",
           "noun_one": "contract",
-          "role": "missing"
+          "role": "missing",
+          "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
         },
         {
           "text": " contracts that lack one, so each joins its package and its notices."
@@ -1960,7 +1963,8 @@
           "row": 54,
           "noun": "contracts in local currency",
           "noun_one": null,
-          "role": null
+          "role": null,
+          "lack": null
         },
         {
           "text": " contracts in award notices for fiscal "
@@ -2009,7 +2013,8 @@
         "row": 2,
         "noun": "contracts",
         "noun_one": "contract",
-        "role": "missing"
+        "role": "missing",
+        "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
       },
       {
         "text": " of "
@@ -2019,7 +2024,8 @@
         "row": 2,
         "noun": "contracts",
         "noun_one": "contract",
-        "role": null
+        "role": null,
+        "lack": null
       },
       {
         "text": " "

@@ -160,7 +160,8 @@ def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_
     assert result["rows"][plan_check["ready_for"]]["count"] == 46
     held = registry_text(plan_check["holds_back"][0])
     # The measure counts an activity once in each latest version that lists it (ticket 08's verifier, F3).
-    assert held == "Of 46 activity entries in the latest plan versions, 46 lack a first listing I could confirm."
+    # Design r3 N2: when every entry falls short, the sentence says so rather than compare 46 with 46.
+    assert held == "None of the 46 activity entries in the latest plan versions has a first listing I could confirm."
 
 
 def registry_text(segments):
@@ -175,13 +176,24 @@ def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_rea
     registry order."""
     result = readiness(engine)
 
+    # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part".
     assert result["headline"]["text"] == (
-        "Of the two kinds of question below, I can answer two in part. The biggest gaps are the 75 of 603 "
+        "I can answer each of the two kinds of question below in part. The biggest gaps are the 75 of 603 "
         "contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP) and the "
         "contract awards for fiscal 2017 to 2019, which no World Bank dataset publishes.")
-    statuses = [kind["status"] for kind in result["kinds"]]
-    numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:2]
-    assert numbers == [len(statuses), statuses.count("partial")]
+    numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:1]
+    assert numbers == [len(result["kinds"])]
+
+
+def test_the_headline_s_first_clause_counts_each_status_only_when_the_kinds_differ():
+    """Design r3 N1. A catalog where every kind is a Gap needs all 13 sources measured, so the sentence
+    is checked on its own here."""
+    from strata.tools.data_readiness_for import _kinds_sentence
+
+    assert registry_text(_kinds_sentence([{"status": "gap"}, {"status": "gap"}])) == (
+        "I can't answer any of the two kinds of question below yet.")
+    assert registry_text(_kinds_sentence([{"status": "ready"}, {"status": "partial"}, {"status": "gap"}])) == (
+        "Of the three kinds of question below, I can answer one in full, one in part and one not at all.")
 
 
 def test_the_fixes_are_ranked_by_the_projects_each_would_add_evidence_to(engine):
@@ -215,6 +227,28 @@ def test_every_number_with_a_row_says_what_it_counts_and_a_fix_s_projects_open_o
     [awards_fix] = [fix for fix in result["fixes"] if fix["gap"] == "awards/linked"]
     [missing] = [segment for segment in awards_fix["sentence"] if segment.get("role") == "missing"]
     assert (missing["number"], missing["noun"]) == (KENYA["contracts"] - KENYA["with_step_reference"], "contracts")
+
+
+def test_a_fix_s_numbers_name_the_table_they_were_counted_in(engine):
+    """Design r3 N4: a fix's window names its table, as every other measure window does. Both awards
+    fixes count contracts and their projects in gold."""
+    result = readiness(engine)
+    fixes = {fix["gap"]: fix for fix in result["fixes"]}
+
+    for gap in ("awards/linked", "fy2017_2019"):
+        fix = fixes[gap]
+        assert result["rows"][fix["row"]]["source"]["counted_in"] == "strata.gold.contract", gap
+        assert result["rows"][fix["projects_row"]]["source"]["counted_in"] == "strata.gold.contract", gap
+
+
+def test_a_shortfall_says_what_its_records_lack_so_its_tooltip_can_name_them(engine):
+    """Design r3, low polish: the headline's 75 says these are the contracts that lack a reference."""
+    result = readiness(engine)
+
+    [missing] = [segment for segment in result["headline"]["segments"] if segment.get("role") == "missing"]
+    assert (missing["number"], missing["lack"]) == (
+        KENYA["contracts"] - KENYA["with_step_reference"],
+        "a reference from Systematic Tracking of Exchanges in Procurement (STEP)")
 
 
 def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_shares(engine):
@@ -284,6 +318,15 @@ def test_a_link_that_names_no_known_source_abstains(engine):
 
     assert result["abstention"] == {"reason": "unknown_sources"}
     assert result["rows"] == [] and result["filter"]["unknown"] == 2
+
+
+def test_a_link_whose_sources_its_tool_never_draws_on_abstains_rather_than_show_no_sources(engine):
+    """Review r3 P1: the plan check draws on neither awards row, so a hand-edited link for the awards
+    from the plan check shows "I couldn't find the sources this link names", never "0 sources"."""
+    result = readiness(engine, sources="awards", from_tool="check_plan")
+
+    assert result["abstention"] == {"reason": "unknown_sources"}
+    assert result["headline"] is None and result["sources"] == []
 
 
 def test_a_date_before_the_first_measure_abstains_and_says_when_the_measures_start(engine):
@@ -423,6 +466,23 @@ def test_a_measure_whose_latest_row_is_zero_of_zero_shows_without_a_status(writt
 
     linked = cell(call_on(path, sources="awards"), "awards", "linked")
     assert linked["status"] is None
+
+
+def test_a_shortfall_of_one_agrees_with_its_verb(written):
+    """Review r3 P2: the agent reads the gap phrases, so one contract "lacks", never "lack"."""
+    result = call_on(written(*awards(linked=(8, 9))), sources="awards")
+
+    assert ("The biggest gaps are the one of nine contracts that lacks a reference from Systematic Tracking of "
+            "Exchanges in Procurement (STEP) and ") in registry_text(result["headline"]["segments"])
+
+
+def test_a_shortfall_of_the_only_record_names_it_in_the_singular(engine):
+    """Review r3 P2: the fixture holds one IBRD loan, and it lacks a project record, so the gap is
+    "the one loan that lacks", never "the one of one loans that lack"."""
+    result = readiness(engine, sources="ibrd_loans")
+
+    assert [registry_text(gap["phrase"]) for gap in result["gaps"]] == [
+        "the one loan that lacks a project record I hold"]
 
 
 def test_the_plan_pages_the_layout_parser_could_not_read_are_listed(written):

@@ -8,7 +8,7 @@
 import { useId, useRef, useState, type ReactNode } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { cx } from "../lib/cx";
-import { numText, type NumValue } from "./Num";
+import { numBody, type NumValue } from "./Num";
 import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 import { DEFINITION_WINDOW, DefinitionContent, type DefinitionRows } from "./Term";
 
@@ -45,7 +45,7 @@ export function MeasureNum({
         className,
       )}
     >
-      {numText(value)}
+      {numBody(value)}
     </button>
   );
   if (!measure) return <Tooltip trigger={trigger}>{tooltip}</Tooltip>;

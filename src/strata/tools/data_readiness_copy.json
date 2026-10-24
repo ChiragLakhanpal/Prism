@@ -1,6 +1,8 @@
 {
   "kinds": "Of the {kindCount} kinds of question below, I can answer {clauses}.",
   "kindsAllFull": "I can answer all {kindCount} kinds of question below in full.",
+  "kindsAllPartial": "I can answer each of the {kindCount} kinds of question below in part.",
+  "kindsAllGap": "I can't answer any of the {kindCount} kinds of question below yet.",
   "kindsOne": "I can answer the one kind of question below {clause}.",
   "clauseFull": "{n} in full",
   "clausePart": "{n} in part",
@@ -22,7 +24,11 @@
   "gap": {
     "published": "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
     "linked": "the {missing} of {total} {noun} that lack {lack}",
+    "linkedOne": "the {missing} of {total} {noun} that lacks {lack}",
+    "linkedOnly": "the {total} {noun} that lacks {lack}",
     "check": "the {missing} of {total} {noun} that lack {lack}",
+    "checkOne": "the {missing} of {total} {noun} that lacks {lack}",
+    "checkOnly": "the {total} {noun} that lacks {lack}",
     "readWell": "the {missing} of {total} {noun} I couldn't read without errors",
     "late": "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
     "lateOneDay": "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
@@ -32,7 +38,13 @@
   "holds": {
     "published": "No World Bank dataset publishes the {sourceNoun} for fiscal {fromYear} to {toYear}.",
     "linked": "Of {total} {noun}, {missing} lack {lack}.",
+    "linkedOne": "Of {total} {noun}, {missing} lacks {lack}.",
+    "linkedAll": "None of the {total} {noun} has {lack}.",
+    "linkedOnly": "The {total} {noun} lacks {lack}.",
     "check": "Of {total} {noun}, {missing} lack {lack}.",
+    "checkOne": "Of {total} {noun}, {missing} lacks {lack}.",
+    "checkAll": "None of the {total} {noun} has {lack}.",
+    "checkOnly": "The {total} {noun} lacks {lack}.",
     "readWell": "I couldn't read {missing} of {total} {noun} without errors.",
     "late": "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
     "lateOneDay": "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
@@ -44,6 +56,7 @@
   "fromNouns": {
     "find_comparables": "the past range",
     "check_plan": "the plan check",
+    "search_passages": "the document search",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },
