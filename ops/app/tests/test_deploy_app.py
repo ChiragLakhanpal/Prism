@@ -101,7 +101,7 @@ def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_
     assert scopes == ["sql"]
 
 
-def test_the_app_s_own_principal_may_write_usage_events_and_nothing_more(tmp_path, capsys):
+def test_the_app_s_own_principal_may_write_usage_events_and_agent_runs_and_nothing_more(tmp_path, capsys):
     workspace = FakeWorkspace()
 
     deploy(workspace, tmp_path, capsys)
@@ -110,6 +110,7 @@ def test_the_app_s_own_principal_may_write_usage_events_and_nothing_more(tmp_pat
         f"GRANT USE CATALOG ON CATALOG strata TO `{PRINCIPAL}`",
         f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.usage_events TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.agent_runs TO `{PRINCIPAL}`",
     ]
 
 

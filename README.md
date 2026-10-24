@@ -111,10 +111,10 @@ It takes these steps, in order:
 3. It gives the app the SQL warehouse, the Application Insights secret and each viewer's SQL token.
 4. It uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`.
 5. It deploys the app and waits for it.
-6. It lets the app's own service principal write usage events.
+6. It lets the app's own service principal write usage events and agent runs.
 7. It prints the app's address.
 
-Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the server can't write usage events.
+Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the server can't write usage events or agent runs.
 
 Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
 
