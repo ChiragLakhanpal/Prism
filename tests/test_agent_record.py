@@ -128,3 +128,51 @@ def test_the_recording_command_re_records_each_writer_case_from_the_rows_its_wor
         True, {"name": "strata-review-notes-writer", "version": "3"}, recording["question"])
     for case in cases.values():
         assert ScriptedAgent(case).responses
+
+
+class LiveReader:
+    """Reads each sentence as its recording does, except that the ticket's sentence now guesses three lots, and
+    keeps the message each call was given."""
+
+    name, version = "strata-package-reader", "2"
+
+    def __init__(self, recordings):
+        self.recordings, self.asked = recordings, []
+
+    def respond(self, items, previous_response_id):
+        message = json.loads(items[0]["content"])
+        self.asked.append(message)
+        answer = copy.deepcopy(next(r for r in self.recordings if r["question"] == message["sentence"])["responses"][0])
+        content = answer["output"][0]["content"][0]
+        read = json.loads(content["text"])
+        if "lots" in read.get("fields", {}):
+            read["fields"]["lots"]["value"] = 3
+        content["text"] = json.dumps(read)
+        return {**answer, "usage": {"total_tokens": 300}}
+
+
+def test_the_recording_command_re_records_each_package_reader_case_from_the_message_the_workflow_sends(copied, fixture_db):
+    """Ticket 15's package reader cases (packages.toml): the live reader is sent each sentence with the package
+    form's fields, as the plan-a-package workflow sends it, and the diff shows what it read differently."""
+    cases = load_cases(copied / "packages.toml")
+    recordings = [json.loads((copied / "recorded" / f"{case.recording}.json").read_text()) for case in cases.values()]
+    reader = LiveReader(recordings)
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    report = record.record_packages(cases, lambda: reader, engine_for, Viewer(name="the env file's token"),
+                                    today=dt.date(2026, 10, 24))
+
+    assert sorted(case for done in report for case in done.cases) == sorted(cases)
+    assert {message["sentence"] for message in reader.asked} == {case.question for case in cases.values()}
+    assert {field["key"] for field in reader.asked[0]["fields"]} >= {"category", "description", "lots", "country"}
+    assert "plan_months" not in {field["key"] for field in reader.asked[0]["fields"]}
+    text = record.report_text(report, copied.parent)
+    assert any(line.startswith("+") and '\\"lots\\": {\\"value\\": 3' in line for line in text.splitlines())
+    written = json.loads((copied / "recorded" / "package-rural-roads-kenya.json").read_text())
+    assert (written["recorded"], written["agent"]) == (True, {"name": "strata-package-reader", "version": "2"})
+    for case in cases.values():
+        assert ScriptedAgent(case).responses
