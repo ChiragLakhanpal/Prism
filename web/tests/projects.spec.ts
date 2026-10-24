@@ -301,6 +301,20 @@ test("from 1024 to 1200 px every table fits its frame, so no column hides behind
   }
 });
 
+test("below 768 px a card's short values sit side by side: a version's Disclosed and Activities, a project's Country and Status", async ({ page }) => {
+  // The tops of the visible first card's fields, which share a row when they sit side by side.
+  const fieldTops = (selector: string) =>
+    page.locator(selector).first().locator("dl > div").evaluateAll((fields) => fields.map((field) => Math.round(field.getBoundingClientRect().top)));
+  await open(page, "/projects/P156634", await p156634(), 390);
+  const disclosedAndActivities = await fieldTops("[data-agency=northern-water-works-development-agency] [data-table-view=cards] > li");
+  expect(new Set(disclosedAndActivities).size).toBe(1);
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, "/projects", await projects(), 390);
+  const countryAndStatus = await fieldTops("[data-table-view=cards] > li");
+  expect(new Set(countryAndStatus).size).toBe(1);
+});
+
 test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440 and 390 px, and they reflow at 320 px", async ({ page }) => {
   // The populated pages hold every component these pages use. The tests above run axe at 390 px on
   // each other state: loading, empty, no plans, not found, the service error and the permission error.

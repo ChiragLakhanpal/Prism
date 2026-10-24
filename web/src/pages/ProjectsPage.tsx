@@ -23,8 +23,8 @@ export const PAGE_SIZE = 50;
 
 const columns: Column[] = [
   { key: "project", header: words.columns.project, width: "w-3/5" },
-  { key: "country", header: words.columns.country },
-  { key: "status", header: words.columns.status },
+  { key: "country", header: words.columns.country, short: true },
+  { key: "status", header: words.columns.status, short: true },
 ];
 
 const blank = <span className="text-ink-muted">{copy.notInRecord}</span>;

@@ -29,7 +29,7 @@ const plans = copy.procurement;
 
 const columns: Column[] = [
   { key: "version", header: plans.columns.version, width: "w-1/2" },
-  { key: "disclosed", header: plans.columns.disclosed },
+  { key: "disclosed", header: plans.columns.disclosed, short: true },
   { key: "activities", header: plans.columns.activities, numeric: true },
 ];
 

@@ -5,8 +5,8 @@
 // screen leaves, such as ticket 10's plan check, sets cardsBelow="lg" and becomes cards below
 // 1024 px instead. In a card each column's head sits above its value, and
 // every value starts at one left edge: text runs the card's full width, and two or more
-// numbers share a grid of 120 px columns, so they sit side by side (the 10 brief's activity
-// card).
+// numbers and short values share a grid of 120 px columns, so they sit side by side (the 10
+// brief's activity card).
 //
 // States, each saying only what is true in it:
 // - Ready: the title, the count line, the rows and the source line. A ready table has rows;
@@ -36,6 +36,9 @@ export type Column = {
   // The column's share of the table, as a width class such as "w-2/5". Columns without one
   // share what is left. Fixed widths keep the columns still while the rows load.
   width?: string;
+  // A short value, such as a date, a country or a status, which shares a card's grid with the
+  // numbers instead of taking the card's full width.
+  short?: boolean;
 };
 
 export type Row = { id: string; cells: Record<string, ReactNode> };
@@ -69,13 +72,14 @@ export const CARD_BREAKPOINTS = SHOW;
 
 const n = (value: number) => formatNumber(value, { compact: false });
 
-// A card's fields: a grid of 120 px columns that numbers share, with text, or a number with no
-// other number beside it, across the full row. Each field sits at the foot of its grid row, as
-// the table's heads sit at the foot of the header, so a head that wraps to two lines keeps its
-// value level with its neighbor's.
+// A card's fields: a grid of 120 px columns that numbers and short values share, with longer
+// text, or a number with nothing beside it, across the full row. Each field sits at the foot of
+// its grid row, as the table's heads sit at the foot of the header, so a head that wraps to two
+// lines keeps its value level with its neighbor's.
 const CARD_FIELDS = "mt-2 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2";
+const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) =>
-  cx("flex min-w-0 flex-col justify-end", !(column.numeric && shared) && "col-span-full");
+  cx("flex min-w-0 flex-col justify-end", !(sharesGrid(column) && shared) && "col-span-full");
 
 function countText({ noun, one, total, from, to }: Count): string {
   if (total === 1 && one) return copy.table.showingOne(one);
@@ -148,8 +152,8 @@ export function Table({
   const align = (column: Column) => (column.numeric ? "text-right" : "text-left");
   const cardHeading = `h${level + 1}`;
   const fields = columns.filter((column) => column.key !== rowHeader);
-  // Numbers share the card's grid only when there are two or more of them.
-  const shared = fields.filter((column) => column.numeric).length > 1;
+  // Numbers and short values share the card's grid only when there are two or more of them.
+  const shared = fields.filter(sharesGrid).length > 1;
 
   return (
     // The named, focusable scroll region below is the table's one landmark, so this section
