@@ -8,14 +8,14 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
    still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
    (ID_SHAPES); so is a number written in words ("forty-five", "zero", or "one" unless it stands for a
-   thing named before), and an amount no row holds as written ("half"). A passage backs only its dates, such as its report's date: its text
-   is never a value, and its page, paragraph and version numbers say where it is, not what the report
-   counted, so a number from a passage must be quoted.
+   thing named before), and an amount no row holds as written ("half"). A passage backs only its
+   dates, such as its report's date: its text is never a value, and its page, paragraph and version
+   numbers say where it is, not what the report counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
    must cite at least one.
 3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation and
-   whether a quote mark is curly or straight, and starts and ends where the page's words do: "10" is not
-   a quote from "108 of 328".
+   whether a quote mark is curly or straight, and starts and ends where the page's words and numbers
+   do: "10" is not a quote from "108 of 328", nor "334 km" from "2,334 km".
    The quote checked is the one the person reads: the words in the sentence's quote marks must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
@@ -99,12 +99,16 @@ ID_SHAPES = (
     r"\bstrata\.\w+\.\w+:[^\s,;()\"]*[^\s,;()\".]",  # an evidence id, strata.gold.passage:31525018/v1/54
     r"\b\d+/v\d+/[\w.]*\w",  # a passage id, 31525018/v1/54
     r"\bP\d{6}\b",  # a project, P130164
-    # A credit, loan or trust fund with four digits or more: IDA-60290, IBRD 8541, TF0A1234 or IDA 51030KE.
-    # "IBRD 45 contracts" is a count.
-    r"\b(?:IDA|IBRD|TF)[- ]?[A-Z0-9]{0,2}\d{4,}[A-Z]{0,2}\b",
+    # A credit, loan or trust fund with four digits or more: IDA-60290, IBRD 8541, TF0A1234, IDA 51030KE,
+    # or as STEP writes it, IDA / 60300 or IDA \u2013 6030 KE. "IBRD 45 contracts" is a count, and a year
+    # alone after it, as in "the IDA 2019 funds", is a year.
+    r"\b(?:IDA|IBRD|TF)\s*[-/\u2013]?\s*(?!(?:19|20)\d\d\b)[A-Z0-9]{0,2}\d{4,}[A-Z]{0,2}\b",
     # A STEP reference has three parts or more: KE-NWWDA-541062-CW-RFQ, NWWDA-WSDP-03-2019-2020 or
     # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read.
     r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
+    # A bid or contract reference written with slashes, with three parts or more: KE/TAVEVO/82755/GO/RFQ or
+    # KALRO/HQTS/053/23-24. It starts with a letter, so 2019/20 is two numbers.
+    r"\b[A-Z][A-Z0-9.]*(?:/[A-Z0-9.\-]+){2,}\b",
     r"\bCOVID-19\b",
     r"\b(?:[IVX]+|\d+)\.[A-Za-z]\b",  # a section label, III.B or 10.b
 )
