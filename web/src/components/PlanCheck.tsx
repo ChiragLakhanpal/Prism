@@ -631,15 +631,23 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   return (
     <div aria-hidden="true" data-plan-skeleton>
       <EightColumns prose className="mt-6">
-        {/* The finding's count words are buttons whose 2 px padding makes its line 4 px taller,
-            and the method sentence takes three lines at the prose width. */}
+        {/* The finding's count words are buttons whose 2 px padding makes a line 4 px taller.
+            The finding takes two lines below 768 px, both with a count word, and at the eight
+            columns' 1024 to 1199 px, where the second line has none. It takes one line at the full
+            width from 768 px and from 1200 px. The method sentence takes five lines below 768 px
+            and three from it. */}
         <div className="py-0.5">
-          <SkeletonLine className="text-title" width="w-[70%]" />
+          <SkeletonText className="gap-1 text-title md:hidden lg:flex lg:gap-0 xl:hidden" widths={["w-full", "w-2/5"]} />
+          <SkeletonLine className="hidden text-title md:flex lg:hidden xl:flex" width="w-[70%]" />
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
-        <SkeletonText className="mt-2 text-body" widths={["w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 text-body md:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 hidden text-body md:flex" widths={["w-full", "w-full", "w-2/5"]} />
       </EightColumns>
-      <SkeletonLine className="mt-4 text-caption" width="w-40" />
+      {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
+      <div className="mt-4 flex min-h-6 items-center lg:block lg:min-h-0">
+        <SkeletonLine className="text-caption" width="w-40" />
+      </div>
       <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
         <table className="w-full table-fixed border-collapse text-small">
           <thead className="bg-surface-2">

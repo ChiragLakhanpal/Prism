@@ -9,7 +9,7 @@ import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { PageHeader } from "../components/PageHeader";
-import { Skeleton, SkeletonLine } from "../components/Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { Table, type Column, type Row } from "../components/Table";
 import { TextLink } from "../components/TextLink";
@@ -29,14 +29,16 @@ const columns: Column[] = [
 
 const blank = <span className="text-ink-muted">{copy.notInRecord}</span>;
 
-// While the list loads, each Project cell holds a bar for the ID link and one for the name, so a
-// skeleton row is as tall as a project's row (the link's 4 px padding is pulled up by -mt-1).
+// While the list loads, each Project cell holds a bar for the ID link and bars for the name, so a
+// skeleton row is as tall as a project's row (the link's 4 px padding is pulled up by -mt-1). Most
+// names take two lines below 1200 px and one from it.
 const PROJECT_SKELETON = (
   <>
     <span aria-hidden="true" className="-mt-1 flex h-7 items-center">
       <Skeleton className="h-[1em] w-16" />
     </span>
-    <SkeletonLine className="text-small" width="w-3/5" />
+    <SkeletonText className="text-small xl:hidden" widths={["w-full", "w-2/5"]} />
+    <SkeletonLine className="hidden text-small xl:flex" width="w-3/5" />
   </>
 );
 
@@ -64,7 +66,7 @@ export function ProjectsPage() {
           count={{ noun: words.noun, total: 0 }}
           columns={columns}
           rowHeader="project"
-          state={{ status: "loading", rows: 8, header: PROJECT_SKELETON }}
+          state={{ status: "loading", rows: 8, header: PROJECT_SKELETON, shortTitle: true }}
         />
         <p role="status" className="sr-only">
           {words.loading}

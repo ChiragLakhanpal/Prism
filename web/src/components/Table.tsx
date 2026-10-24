@@ -14,7 +14,7 @@
 // - Loading: skeleton lines where the title, count and source lines go, and skeleton rows under
 //   the real column heads. The columns have fixed widths and each skeleton line is one line
 //   tall, so nothing moves when the rows arrive. Below 768 px the title's skeleton holds two
-//   lines, because a finding sentence wraps there.
+//   lines, because a finding sentence wraps there, unless the title is a short name.
 // - Empty: only an empty-state card that says, in the first person, what will appear.
 // - Error: only an error alert, with "Try again" when the caller can ask again.
 // A finding, a count or a source line never sits over rows that are not there.
@@ -44,7 +44,9 @@ export type TableState =
   | { status: "ready"; rows: Row[] }
   // header: the row header cell's skeleton when that cell holds more than one line, such as a
   // project ID over its name, so each skeleton row is as tall as the row it stands for.
-  | { status: "loading"; rows: number; header?: ReactNode }
+  // shortTitle: the title is a name that fits one line at every width, such as "All projects",
+  // so its skeleton is one line below 768 px too.
+  | { status: "loading"; rows: number; header?: ReactNode; shortTitle?: boolean }
   | { status: "empty"; title: ReactNode; body: ReactNode; link?: { href: string; text: ReactNode } }
   | { status: "error"; message: ReactNode; onRetry?: () => void };
 
@@ -156,10 +158,16 @@ export function Table({
       {loading ? (
         <>
           <LoadingLabel />
-          <SkeletonText className="text-title md:hidden" widths={["w-full", "w-3/5"]} />
-          <div className="hidden md:block">
-            <SkeletonLine className="text-title" width="w-3/5" />
-          </div>
+          {state.shortTitle ? (
+            <SkeletonLine className="text-title" width="w-2/5" />
+          ) : (
+            <>
+              <SkeletonText className="text-title md:hidden" widths={["w-full", "w-3/5"]} />
+              <div className="hidden md:block">
+                <SkeletonLine className="text-title" width="w-3/5" />
+              </div>
+            </>
+          )}
           {count && <SkeletonLine className="text-caption" width="w-1/5" />}
         </>
       ) : (

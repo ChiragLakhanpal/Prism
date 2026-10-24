@@ -15,7 +15,7 @@ import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedPlan } from "../components/PlanCheck";
-import { Skeleton, SkeletonLine } from "../components/Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
 import { formatCount, formatDate } from "../lib/format";
@@ -109,9 +109,11 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       <>
         <PlanCheckHeader
           agency={
+            // An agency's name takes two lines below 768 px and one from it, as most do.
             <>
               <span className="sr-only">{words.status.checking}</span>
-              <SkeletonLine width="w-3/5 max-w-[560px]" />
+              <SkeletonText className="md:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden md:flex" width="w-3/5 max-w-[560px]" />
             </>
           }
           plan={<SkeletonLine width="w-60" />}

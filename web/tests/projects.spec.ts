@@ -50,7 +50,7 @@ test("All projects lists 50 projects whose IDs link to their pages, and Show 50 
   expect(unrecorded).toEqual([]);
 });
 
-test("All projects' skeleton rows are as tall as its rows, so the page does not jump when they arrive", async ({ page }) => {
+test("All projects' skeleton rows and cards are as tall as its rows and cards, so the page does not jump when they arrive", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
   let release!: () => void;
@@ -61,18 +61,33 @@ test("All projects' skeleton rows are as tall as its rows, so the page does not 
   });
   await page.goto("/projects");
   await page.evaluate(() => document.fonts.ready);
-  const firstRow = page.locator("[data-table-view=table] tbody tr").first();
-  const height = () => firstRow.evaluate((row) => row.getBoundingClientRect().height);
+  // The first row from 768 px, the first card below it: its top on the page and its height. Most
+  // project names take two lines below 1200 px and one from it.
+  const widths = [1440, 1024, 390];
+  const measure = async () => {
+    const sizes: Record<number, { top: number; height: number }> = {};
+    for (const width of widths) {
+      await page.setViewportSize({ width, height: 900 });
+      const first = page.locator(width < 768 ? "[data-table-view=cards] > li" : "[data-table-view=table] tbody tr").first();
+      sizes[width] = await first.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return { top: Math.round(box.top + window.scrollY), height: Math.round(box.height) };
+      });
+    }
+    return sizes;
+  };
   await expect(page.locator("[data-projects-page=loading]")).toBeVisible();
-  const loading = await height();
-  await page.setViewportSize({ width: 390, height: 900 });
+  const loading = await measure();
   expect(await axe(page), "loading at 390 px").toEqual([]);
-  await page.setViewportSize({ width: 1440, height: 900 });
 
   release();
   await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
 
-  expect(Math.abs((await height()) - loading)).toBeLessThanOrEqual(1);
+  const ready = await measure();
+  for (const width of widths) {
+    expect(Math.abs(ready[width].top - loading[width].top), `top at ${width} px`).toBeLessThanOrEqual(1);
+    expect(Math.abs(ready[width].height - loading[width].height), `height at ${width} px`).toBeLessThanOrEqual(1);
+  }
 });
 
 test("All projects says when it holds no records, and when the data service didn't answer", async ({ page }) => {

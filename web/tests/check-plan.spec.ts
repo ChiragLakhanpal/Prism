@@ -435,6 +435,37 @@ test("while the check loads, skeletons hold its places and a status says so", as
   expect(Math.abs(header.table - still - (await top("[data-view=table] thead")))).toBeLessThanOrEqual(1);
 });
 
+test("at 1024 and 390 px the skeleton is as tall as the header, finding and method above the rows, so the rows stay put", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await page.goto(PLAN);
+  await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  // The rows' top: the table's head from 1024 px, the first card below it.
+  const rowsTop = async (table: string, cards: string) => {
+    const tops: Record<number, number> = {};
+    for (const width of [1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      const first = page.locator(width < 1024 ? `${cards} li` : `${table} thead`).first();
+      tops[width] = await first.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+    }
+    return tops;
+  };
+  const loading = await rowsTop("[data-plan-skeleton]", "[data-plan-skeleton]");
+
+  release();
+  await expect(page.locator("[data-plan-check]")).toBeVisible();
+
+  const ready = await rowsTop("[data-view=table]", "[data-view=cards]");
+  for (const width of [1024, 390]) expect(Math.abs(ready[width] - loading[width]), `${width} px`).toBeLessThanOrEqual(2);
+});
+
 test("opening a plan from the Procurement tab keeps focus on the page's h1 while the check loads and after it arrives", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockApi(page, {
