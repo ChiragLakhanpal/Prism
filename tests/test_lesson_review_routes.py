@@ -220,3 +220,14 @@ def test_any_lesson_reviewer_can_ask_for_a_re_check_once_while_one_is_open(app):
     assert (refused.status_code, refused.json()["code"]) == (403, "not_a_reviewer")
     [card] = call(app, "GET", "/api/lessons", ANA).json()["lessons"]
     assert card["rechecking_since"] == TODAY.isoformat()
+
+
+# ── The screens' recorded answers ────────────────────────────────────────
+
+def test_the_screens_recorded_lesson_answers_are_what_the_routes_answer(fixture_db, tmp_path):
+    """tests/record_lessons_api.py writes the answers the Lessons screens' tests and the gallery serve, from one
+    story on the fixture; the routes must still answer with them word for word."""
+    from record_lessons_api import answers
+
+    for name, text in answers(tmp_path).items():
+        assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), f"{name} is out of date"

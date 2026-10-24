@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "body": {
+    "code": "own_project",
+    "values": {
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "pid": "P130164"
+    }
+  }
+}

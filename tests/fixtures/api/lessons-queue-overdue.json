@@ -1,0 +1,203 @@
+{
+  "as_of": "2027-01-04",
+  "limit_days": 10,
+  "regions": [
+    "South Asia"
+  ],
+  "waiting": 1,
+  "lead": [
+    {
+      "text": "Nothing is waiting for you. "
+    },
+    {
+      "number": 1,
+      "capital": true
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "lesson"
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "is"
+    },
+    {
+      "text": " with other reviewers."
+    },
+    {
+      "text": " "
+    },
+    {
+      "number": 1,
+      "capital": true
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "has"
+    },
+    {
+      "text": " passed "
+    },
+    {
+      "text": "its"
+    },
+    {
+      "text": " "
+    },
+    {
+      "number": 10
+    },
+    {
+      "text": " business days."
+    }
+  ],
+  "check": {
+    "window_days": 30,
+    "proposed": 0,
+    "dropped": 0,
+    "segments": [
+      {
+        "text": "Every lesson here has a quote I found word for word on the page it cites. In the last "
+      },
+      {
+        "number": 30
+      },
+      {
+        "text": " days, every lesson I proposed passed that check."
+      }
+    ],
+    "readiness": {
+      "sources": [
+        "documents"
+      ],
+      "from": "get_lessons"
+    }
+  },
+  "groups": {
+    "you": [],
+    "others": [
+      {
+        "item_id": "recheck-7f57783926",
+        "kind": "recheck",
+        "stage": "decision",
+        "group": "others",
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "source": {
+          "evidence_id": "strata.gold.passage:31525018/v1/55",
+          "passage_id": "31525018/v1/55",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "55"
+          },
+          "page": 23,
+          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "restated_by_ieg": false
+        },
+        "region": "South Asia",
+        "project": {
+          "pid": "P130164",
+          "name": "Rajasthan Road Sector Modernization Project",
+          "country": "India",
+          "sector": "Transportation"
+        },
+        "ieg_status": "ieg_lesson",
+        "review_date": null,
+        "may_repeat": false,
+        "clock": {
+          "day": 10,
+          "limit_days": 10,
+          "start_on": "2026-10-28",
+          "due_on": "2026-11-10",
+          "overdue_days": 39,
+          "last_day": false
+        },
+        "recommendation": {
+          "name": "Asha Raman",
+          "role": "accredited procurement specialist",
+          "phrase": "change",
+          "on": "2026-10-28",
+          "reason": "The lesson holds, and current market rates is what the new rules ask for.",
+          "region": "South Asia",
+          "repeat_of": null,
+          "change": {
+            "statement": "Base works cost estimates on current market rates to avoid rebidding",
+            "risk_factors": [
+              "permits_before_award"
+            ],
+            "stage": "contract_award",
+            "kind": "did_not_work"
+          }
+        },
+        "origin": {
+          "kind": "asked",
+          "name": "Wanjiru Kamau",
+          "on": "2026-10-28",
+          "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared.",
+          "region": null
+        },
+        "decided": null,
+        "can": {
+          "act": null,
+          "reason_code": "not_a_lead",
+          "values": {}
+        }
+      }
+    ]
+  },
+  "decided": {
+    "window_days": 90,
+    "total": 3,
+    "page": 1,
+    "pages": 1,
+    "from": 1,
+    "to": 3,
+    "rows": [
+      {
+        "item_id": "new-64ec0401e3",
+        "kind": "new",
+        "statement": "Get land and forest permits before awarding works contracts",
+        "pid": "P130164",
+        "project_name": "Rajasthan Road Sector Modernization Project",
+        "outcome": "merged",
+        "version": 2,
+        "decided_on": "2026-10-27",
+        "days_from_publication": 2551
+      },
+      {
+        "item_id": "new-cfdf000a46",
+        "kind": "new",
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "pid": "P130164",
+        "project_name": "Rajasthan Road Sector Modernization Project",
+        "outcome": "added",
+        "version": 1,
+        "decided_on": "2026-10-27",
+        "days_from_publication": 1272
+      },
+      {
+        "item_id": "new-e903b07ad1",
+        "kind": "new",
+        "statement": "Base works estimates on market rates to avoid rebidding",
+        "pid": "P130164",
+        "project_name": "Rajasthan Road Sector Modernization Project",
+        "outcome": "added",
+        "version": 1,
+        "decided_on": "2026-10-27",
+        "days_from_publication": 2551
+      }
+    ]
+  }
+}

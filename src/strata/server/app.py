@@ -194,7 +194,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                writers: Callable[[str], object | None] | None = None, access: Access | None = None,
                kinds: DraftKinds | None = None, today: Callable[[], dt.date] = registry.today,
                now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
-               new_draft_id: Callable[[], str] = new_draft_id, lessons: LessonReview | None = None) -> FastAPI:
+               new_draft_id: Callable[[], str] = new_draft_id, lessons: LessonReview | None = None,
+               lesson_writer: Callable[[], object | None] = lambda: None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -206,7 +207,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     sources each viewer opened in the evidence drawer; without it, nothing is recorded. supplier_log
     keeps the decisions and labels people give candidate pairs of supplier name matching; without it,
     none is recorded. lessons is the lesson review (strata.knowledge.lessons.review) with its roles file and
-    clock; without it, config/roles.toml and today. web_dist is
+    clock; without it, config/roles.toml and today. lesson_writer gives the lesson review writer agent, whose note on
+    an item the review page's "Try again" writes again; without it, there is none. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
 
@@ -494,6 +496,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/lessons/review/{item_id}")
     def lesson_review_item(item_id: str, viewer: Viewer = Depends(current_viewer)):
         return lesson_read(f"lesson review item {item_id}", viewer, lambda engine: lessons.item(engine, viewer, item_id))
+
+    @app.post("/api/lessons/review/{item_id}/summary")
+    def rewrite_lesson_summary(item_id: str, viewer: Viewer = Depends(current_viewer)):
+        return lesson_write(f"the summary of {item_id}", viewer,
+                            lambda engine: lessons.rewrite(engine, viewer, item_id, lesson_writer()))
 
     @app.post("/api/lessons/review/{item_id}/{verb}")
     def lesson_review_act(item_id: str, verb: Literal["recommend", "decide", "cross-check"], body: LessonActRequest,

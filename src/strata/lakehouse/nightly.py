@@ -108,14 +108,27 @@ def _bronze_to_gold(run: Run) -> int:
 
 
 def _propose_lessons(run: Run) -> int:
-    """Lessons proposed from the evaluation reports the passage reader holds (ticket 29). Only a run that
-    fetches from the live APIs sends them to the live batch model; any other run replays its recorded
-    answers. On Databricks the job passes no Azure OpenAI keys until ticket 43 wires its tasks, so until then
+    """Lessons proposed from the evaluation reports the passage reader holds, then the lesson review writer's
+    note on each open item of the review queue (ticket 29). Only a run that fetches from the live APIs sends
+    them to the live batch model and the live writer; any other run replays their recorded answers. On
+    Databricks the job passes no Azure OpenAI or Foundry keys until ticket 43 wires its tasks, so until then
     the task proposes nothing and changes no rows."""
-    from strata.knowledge.lessons import batch, propose
+    import os
 
-    model = batch.from_environment() if run.fetch is fetch_live else batch.RecordedBatch()
-    return 0 if model is None else propose.run(run.engine, model, run.run_id, run.clock)
+    from strata.agent.runner import lesson_writer_from_environment
+    from strata.config import load_thresholds
+    from strata.knowledge.lessons import batch, propose, writer
+
+    if run.fetch is not fetch_live:
+        return propose.run_on_fixture(run.engine, run.run_id, run.clock)
+    model = batch.from_environment()
+    changed = 0 if model is None else propose.run(run.engine, model, run.run_id, run.clock)
+    # The review-proposed-lessons workflow, with the live lesson review writer when the job can reach Foundry.
+    agent = lesson_writer_from_environment(os.environ)()
+    if agent is not None:
+        most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
+        changed += writer.run(run.engine, lambda item, subject: agent, run.clock, most)
+    return changed
 
 
 def _measure_data_readiness(run: Run) -> int:

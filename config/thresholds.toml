@@ -210,6 +210,9 @@ likely_repeats_max = 3
 # design brief, section 3.2 (brief 23's reason field and the lesson editor).
 reason_max_chars = 500
 statement_max_chars = 80
+# get_lessons returns at most this many lessons, best first. Source: none; a starting value for the owner
+# to confirm, as many lessons as one page of the library shows and more.
+get_lessons_max_results = 20
 # Lesson cards on one page of the library, and decisions on one page of the decided table. Source:
 # DESIGN.md section 5 (eight cards to a group at most) and the 29 design brief, section 2.4.
 library_page_size = 8

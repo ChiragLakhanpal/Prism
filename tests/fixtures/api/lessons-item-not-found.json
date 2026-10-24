@@ -1,0 +1,9 @@
+{
+  "status": 404,
+  "body": {
+    "code": "unknown_item",
+    "values": {
+      "item_id": "new-0000000000"
+    }
+  }
+}

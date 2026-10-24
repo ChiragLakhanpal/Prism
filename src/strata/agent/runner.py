@@ -42,6 +42,17 @@ def writers_from_environment(environ: Mapping[str, str]) -> Callable[[str], Foun
     return writer
 
 
+def lesson_writer_from_environment(environ: Mapping[str, str]) -> Callable[[], FoundryAgent | None]:
+    """The lesson review writer (config/agents.toml, lesson_review_writer), as the app's own principal, or
+    None when the environment names no Foundry project (ticket 29)."""
+    values = {key: environ.get(key, "").strip() for key in NEEDS}
+    if not all(values.values()):
+        return lambda: None
+    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
+                        FOUNDRY_SCOPE)
+    return lambda: FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], load_agent("lesson_review_writer"), token)
+
+
 def from_environment(environ: Mapping[str, str], engine_for: EngineFor | None) -> Runner | None:
     values = {key: environ.get(key, "").strip() for key in NEEDS}
     if engine_for is None or not all(values.values()):

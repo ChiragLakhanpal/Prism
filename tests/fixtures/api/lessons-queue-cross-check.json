@@ -1,0 +1,119 @@
+{
+  "as_of": "2027-01-04",
+  "limit_days": 10,
+  "regions": [
+    "Eastern and Southern Africa"
+  ],
+  "waiting": 1,
+  "lead": [
+    {
+      "number": 1,
+      "capital": true
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "lesson"
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "is"
+    },
+    {
+      "text": " waiting for you."
+    }
+  ],
+  "check": {
+    "window_days": 30,
+    "proposed": 0,
+    "dropped": 0,
+    "segments": [
+      {
+        "text": "Every lesson here has a quote I found word for word on the page it cites. In the last "
+      },
+      {
+        "number": 30
+      },
+      {
+        "text": " days, every lesson I proposed passed that check."
+      }
+    ],
+    "readiness": {
+      "sources": [
+        "documents"
+      ],
+      "from": "get_lessons"
+    }
+  },
+  "groups": {
+    "you": [
+      {
+        "item_id": "cross-e0d9a6a06a",
+        "kind": "cross_check",
+        "stage": "cross_check",
+        "group": "you",
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "source": {
+          "evidence_id": "strata.gold.passage:31525018/v1/55",
+          "passage_id": "31525018/v1/55",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "55"
+          },
+          "page": 23,
+          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "restated_by_ieg": false
+        },
+        "region": "Eastern and Southern Africa",
+        "project": {
+          "pid": "P130164",
+          "name": "Rajasthan Road Sector Modernization Project",
+          "country": "India",
+          "sector": "Transportation"
+        },
+        "ieg_status": "ieg_lesson",
+        "review_date": null,
+        "may_repeat": false,
+        "clock": {
+          "day": null,
+          "limit_days": null,
+          "start_on": "2027-01-04",
+          "due_on": "2027-01-15",
+          "overdue_days": 0,
+          "last_day": false
+        },
+        "recommendation": null,
+        "origin": null,
+        "decided": {
+          "region": "South Asia",
+          "on": "2026-10-27"
+        },
+        "can": {
+          "act": "cross_check",
+          "reason_code": null,
+          "values": {}
+        }
+      }
+    ],
+    "others": []
+  },
+  "decided": {
+    "window_days": 90,
+    "total": 0,
+    "page": 1,
+    "pages": 1,
+    "from": 0,
+    "to": 0,
+    "rows": []
+  }
+}

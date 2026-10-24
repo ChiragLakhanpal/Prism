@@ -6,6 +6,8 @@
 // - src/strata/drafts/copy.json: a draft's exported files (copy.draft.files), with the source lines,
 //   the check line and the removed sentences' reasons they repeat, which the draft runtime reads
 //   (ticket 35).
+// - src/strata/knowledge/lessons/copy.json: the review queue's sentences (copy.lessons.server), whose count
+//   words and forms the lesson review chooses on the server (ticket 29).
 //
 // The lint lane fails when a JSON file is out of date (web/lint/run.ts), and this command writes them
 // again:
@@ -20,6 +22,7 @@ const at = (path: string) => fileURLToPath(new URL(`../../${path}`, import.meta.
 
 export const SERVER_COPY_FILE = at("src/strata/tools/data_readiness_copy.json");
 export const DRAFTS_COPY_FILE = at("src/strata/drafts/copy.json");
+export const LESSONS_COPY_FILE = at("src/strata/knowledge/lessons/copy.json");
 
 const json = (words: unknown) => `${JSON.stringify(words, null, 2)}\n`;
 
@@ -50,10 +53,15 @@ export function draftsCopy(): string {
   });
 }
 
+export function lessonsCopy(): string {
+  return json(copy.lessons.server);
+}
+
 // Each JSON file, and the words it must hold.
 export const SERVER_COPIES: { file: string; words: () => string; from: string }[] = [
   { file: SERVER_COPY_FILE, words: serverCopy, from: "copy.dataReadiness.server" },
   { file: DRAFTS_COPY_FILE, words: draftsCopy, from: "copy.draft.files" },
+  { file: LESSONS_COPY_FILE, words: lessonsCopy, from: "copy.lessons.server" },
 ];
 
 function isCurrent(file: string, words: () => string): boolean {

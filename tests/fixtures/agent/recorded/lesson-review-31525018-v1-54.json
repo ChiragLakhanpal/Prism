@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-lesson-review-writer through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It summarizes the evidence for the lesson from ICR P130164 paragraph 54 in three sentences. The third states a delay of two years that neither passage holds, so the verifier removes it. Replace it with a recording when the live writer first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Summarize the evidence for the proposed lesson from 31525018/v1/54, and name the current lessons it may repeat.",
+ "scope": "P130164",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-lesson-review-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_lesson_review_31525018_v1_54_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_lesson_review_31525018_v1_54_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"summary\": [{\"sentence\": \"The ICR said that \\\"108 of 328 cases had to go through rebidding.\\\"\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/54\"], \"numbers\": [\"108\", \"328\"], \"dates\": [], \"quote\": {\"text\": \"108 of 328 cases had to go through rebidding.\", \"passage_id\": \"31525018/v1/54\"}}, {\"sentence\": \"IEG's ICR Review said the same: \\\"The works contract estimates were not based on market rate.\\\"\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:34056616/v2/10.b\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"The works contract estimates were not based on market rate.\", \"passage_id\": \"34056616/v2/10.b\"}}, {\"sentence\": \"The rebidding delayed the road works by two years.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/54\"], \"numbers\": [\"two\"], \"dates\": [], \"quote\": null}], \"repeats\": []}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

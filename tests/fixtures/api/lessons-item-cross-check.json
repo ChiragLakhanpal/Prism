@@ -1,0 +1,247 @@
+{
+  "item_id": "cross-e0d9a6a06a",
+  "kind": "cross_check",
+  "stage": "cross_check",
+  "group": "you",
+  "statement": "Put forest and other permits in place before awarding contracts",
+  "source": {
+    "evidence_id": "strata.gold.passage:31525018/v1/55",
+    "passage_id": "31525018/v1/55",
+    "role": "source",
+    "doc_type": "Implementation Completion and Results Report",
+    "doc_short": "ICR",
+    "pid": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "date": "2019-10-10",
+    "report_number": "ICR4803",
+    "locator": {
+      "kind": "paragraph",
+      "text": "55"
+    },
+    "page": 23,
+    "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+    "restated_by_ieg": false
+  },
+  "region": "Eastern and Southern Africa",
+  "project": {
+    "pid": "P130164",
+    "name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "sector": "Transportation"
+  },
+  "ieg_status": "ieg_lesson",
+  "review_date": null,
+  "may_repeat": false,
+  "clock": {
+    "day": null,
+    "limit_days": null,
+    "start_on": "2027-01-04",
+    "due_on": "2027-01-15",
+    "overdue_days": 0,
+    "last_day": false
+  },
+  "recommendation": null,
+  "origin": null,
+  "decided": {
+    "region": "South Asia",
+    "on": "2026-10-27"
+  },
+  "can": {
+    "act": "cross_check",
+    "reason_code": null,
+    "values": {}
+  },
+  "read_only": false,
+  "evidence": [
+    {
+      "evidence_id": "strata.gold.passage:31525018/v1/55",
+      "passage_id": "31525018/v1/55",
+      "role": "source",
+      "doc_type": "Implementation Completion and Results Report",
+      "doc_short": "ICR",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "date": "2019-10-10",
+      "report_number": "ICR4803",
+      "locator": {
+        "kind": "paragraph",
+        "text": "55"
+      },
+      "page": 23,
+      "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+      "restated_by_ieg": false,
+      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+      "highlight": [
+        72,
+        168
+      ],
+      "language": "en"
+    },
+    {
+      "evidence_id": "strata.gold.passage:34056616/v2/12",
+      "passage_id": "34056616/v2/12",
+      "role": "source",
+      "doc_type": "Implementation Completion Report Review",
+      "doc_short": "ICR Review",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "date": "2023-05-04",
+      "report_number": "ICRR0021929",
+      "locator": {
+        "kind": "section",
+        "text": "12"
+      },
+      "page": 14,
+      "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+      "restated_by_ieg": true,
+      "text": "12. Lessons The ICR provided the following lessons (presented here with some minor modifications):  Lack of full endorsement of programs by the key decision makers at preparation can negatively affect project outcomes. The introduction of new systems required endorsement from relevant stakeholders early on during implementation process to ensure ownership. For example, full operationalization of the Road Asset Management System (RAMS) did not occur by project closure because of the lack of buy-in from the Finance Department and the Public Works Department.  The implementation of efficient business processes is likely to benefit from additional preliminary studies. Sound preparation before project approval with studies carried out to showcase the relevance of proposed activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management System), is best practice. In-depth upstream discussions/workshops with the client – in particular the finance and technical departments, should also be considered for most projects.  The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) for the donated land is difficult, so clear guidelines need to be developed. Some commendable work was done in the project to make sure that the land ownership was legally transferred. This knowledge can be replicated in future projects in Rajasthan or possibly other states in India. IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
+      "highlight": [
+        1555,
+        1645
+      ],
+      "language": "en"
+    }
+  ],
+  "ieg_note": null,
+  "tags": {
+    "risk_factors": [
+      {
+        "key": "permits_before_award",
+        "label": "Land, forest and other permits not in place before award"
+      }
+    ],
+    "stage": {
+      "key": "contract_award",
+      "label": "Contract award"
+    },
+    "kind": {
+      "key": "did_not_work",
+      "label": "What didn't work"
+    },
+    "edition": {
+      "key": "guidelines_2011",
+      "name": "the World Bank's Procurement Guidelines of January 2011"
+    },
+    "sector": "Transportation"
+  },
+  "lesson": {
+    "lesson_id": "lesson-cfdf000a46",
+    "version": 2
+  },
+  "summary": {
+    "status": "writing"
+  },
+  "repeats": [],
+  "history": [
+    {
+      "event": "proposed",
+      "on": "2026-10-23",
+      "doc_short": "ICR Review",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "published_on": "2023-05-04"
+    },
+    {
+      "event": "recommended",
+      "on": "2026-10-27",
+      "name": "Asha Raman",
+      "role": "accredited procurement specialist",
+      "region": "South Asia",
+      "outcome": "add",
+      "reason": "IEG wrote this lesson itself, in its review of the ICR.",
+      "changes": []
+    },
+    {
+      "event": "decided",
+      "on": "2026-10-27",
+      "name": "Omar Haddad",
+      "role": "lead procurement specialist",
+      "region": "South Asia",
+      "outcome": "add",
+      "reason": "It is IEG's own lesson, and the ICR's paragraph 55 says the same.",
+      "changes": [],
+      "version": 1,
+      "target": null
+    }
+  ],
+  "outcome": null,
+  "lists": {
+    "risk_factors": [
+      {
+        "key": "cost_estimates",
+        "label": "Cost estimates out of line with market prices"
+      },
+      {
+        "key": "permits_before_award",
+        "label": "Land, forest and other permits not in place before award"
+      },
+      {
+        "key": "procurement_capacity",
+        "label": "Too little procurement capacity in the implementing agency"
+      },
+      {
+        "key": "coordination",
+        "label": "Weak coordination between agencies"
+      },
+      {
+        "key": "market_response",
+        "label": "Few bids or a weak market response"
+      },
+      {
+        "key": "designs_and_specifications",
+        "label": "Incomplete designs or specifications"
+      },
+      {
+        "key": "evaluation_delays",
+        "label": "Slow bid evaluation or award"
+      },
+      {
+        "key": "contractor_performance",
+        "label": "Poor contractor performance"
+      },
+      {
+        "key": "contract_management",
+        "label": "Weak contract management"
+      }
+    ],
+    "stages": [
+      {
+        "key": "procurement_planning",
+        "label": "Procurement planning"
+      },
+      {
+        "key": "tender_design",
+        "label": "Tender design and packaging"
+      },
+      {
+        "key": "bidding_and_evaluation",
+        "label": "Bidding and evaluation"
+      },
+      {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      {
+        "key": "contract_management",
+        "label": "Contract management"
+      }
+    ],
+    "kinds": [
+      {
+        "key": "worked",
+        "label": "What worked"
+      },
+      {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      }
+    ]
+  },
+  "limits": {
+    "reason_max_chars": 500,
+    "statement_max_chars": 80,
+    "sample_percent": 10,
+    "summary_poll_seconds": 15,
+    "summary_poll_minutes": 10
+  }
+}

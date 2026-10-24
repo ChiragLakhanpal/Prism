@@ -23,7 +23,7 @@ A run:
 4. Writes the lessons verified measure to strata.ops.data_readiness for each project: the proposals that
    passed, out of every proposal.
 
-The review-proposed-lessons workflow then writes each new item's summary (strata.knowledge.lessons.writer).
+The review-proposed-lessons workflow then writes each open item's summary (strata.knowledge.lessons.writer).
 """
 
 from __future__ import annotations
@@ -367,5 +367,10 @@ RECORDED_BATCH = Path(__file__).resolve().parents[4] / "tests" / "fixtures" / "a
 
 
 def run_on_fixture(engine: Engine, run_id: str, clock: Callable[[], dt.datetime], path: Path = RECORDED_BATCH) -> int:
-    """The task on the fixture database, with the batch model's recorded answers."""
-    return run(engine, RecordedBatch(path), run_id, clock)
+    """The task on the fixture database, with the batch model's recorded answers, then the review-proposed-lessons
+    workflow with the lesson review writer's recorded answers."""
+    from strata.knowledge.lessons import writer
+
+    changed = run(engine, RecordedBatch(path), run_id, clock)
+    most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
+    return changed + writer.run(engine, writer.recorded_agent_for(), clock, most)

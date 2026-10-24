@@ -138,5 +138,6 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
                       supplier_log=SupplierLog(the_app) if the_app else None,
                       lessons=LessonReview(load_roles()),
+                      lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

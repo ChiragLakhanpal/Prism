@@ -46,13 +46,15 @@ def test_the_roles_file_names_the_two_lesson_reviewer_groups_and_what_each_may_d
 
 
 def test_the_fixture_roles_name_the_reviewers_the_tests_need():
-    """The 29 brief, section 13: an accredited procurement specialist for South Asia, two leads for South
-    Asia (one works on P130164), a reviewer for another region, and nobody else."""
+    """The 29 brief, section 13: an accredited procurement specialist for South Asia, leads for South Asia
+    (one works on P130164, and two do not, so a lesson one of them recommended has a lead left to decide it),
+    a reviewer for another region, and nobody else."""
     roles = config.load_roles(ROLES_FIXTURE)
 
     south_asia = [person for person in roles.people if "South Asia" in person.regions]
     assert sorted(person.role(roles) for person in south_asia) == [
-        "accredited procurement specialist", "lead procurement specialist", "lead procurement specialist"]
+        "accredited procurement specialist", "lead procurement specialist", "lead procurement specialist",
+        "lead procurement specialist"]
     assert [person.name for person in south_asia if "P130164" in person.projects] != []
     elsewhere = [person for person in roles.people if "South Asia" not in person.regions]
     assert [person.regions for person in elsewhere] == [("Eastern and Southern Africa",)]

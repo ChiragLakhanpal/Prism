@@ -1,0 +1,153 @@
+{
+  "as_of": "2026-10-28",
+  "page": 1,
+  "pages": 1,
+  "page_size": 8,
+  "total": 2,
+  "from": 1,
+  "to": 2,
+  "can_recheck": true,
+  "waiting": 1,
+  "lessons": [
+    {
+      "lesson_id": "lesson-e903b07ad1",
+      "version": 1,
+      "statement": "Base works estimates on market rates to avoid rebidding",
+      "risk_factors": [
+        {
+          "key": "cost_estimates",
+          "label": "Cost estimates out of line with market prices"
+        }
+      ],
+      "stage": {
+        "key": "procurement_planning",
+        "label": "Procurement planning"
+      },
+      "kind": {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      },
+      "edition": {
+        "key": "guidelines_2011",
+        "name": "the World Bank's Procurement Guidelines of January 2011"
+      },
+      "sector": "Transportation",
+      "pid": "P130164",
+      "ieg_status": "restated",
+      "review_date": null,
+      "decided_on": "2026-10-27",
+      "state": "current",
+      "rechecking_since": null,
+      "region": "South Asia",
+      "quote": "108 of 328 cases had to go through rebidding.",
+      "evidence": [
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/54",
+          "passage_id": "31525018/v1/54",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "54"
+          },
+          "page": 23,
+          "quote": "108 of 328 cases had to go through rebidding.",
+          "restated_by_ieg": false
+        },
+        {
+          "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+          "passage_id": "34056616/v2/10.b",
+          "role": "restatement",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
+          "locator": {
+            "kind": "section",
+            "text": "10.b"
+          },
+          "page": 13,
+          "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+          "restated_by_ieg": true
+        }
+      ]
+    },
+    {
+      "lesson_id": "lesson-cfdf000a46",
+      "version": 2,
+      "statement": "Put forest and other permits in place before awarding contracts",
+      "risk_factors": [
+        {
+          "key": "permits_before_award",
+          "label": "Land, forest and other permits not in place before award"
+        }
+      ],
+      "stage": {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      "kind": {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      },
+      "edition": {
+        "key": "guidelines_2011",
+        "name": "the World Bank's Procurement Guidelines of January 2011"
+      },
+      "sector": "Transportation",
+      "pid": "P130164",
+      "ieg_status": "ieg_lesson",
+      "review_date": null,
+      "decided_on": "2026-10-27",
+      "state": "rechecking",
+      "rechecking_since": "2026-10-28",
+      "region": "South Asia",
+      "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+      "evidence": [
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/55",
+          "passage_id": "31525018/v1/55",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "55"
+          },
+          "page": 23,
+          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "restated_by_ieg": false
+        },
+        {
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
+          "role": "source",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
+          "locator": {
+            "kind": "section",
+            "text": "12"
+          },
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true
+        }
+      ]
+    }
+  ]
+}

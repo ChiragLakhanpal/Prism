@@ -177,7 +177,7 @@ def test_each_tool_that_answers_a_kind_of_question_names_it_and_the_readiness_ro
     tools = config.load_tools()
 
     kinds = {name: tool.readiness.kind for name, tool in tools.items() if tool.readiness}
-    assert kinds == {"check_plan": "plan_check", "search_passages": "document_search"}
+    assert kinds == {"check_plan": "plan_check", "search_passages": "document_search", "get_lessons": "lessons"}
     for name in kinds:
         readiness = tools[name].readiness
         assert set(readiness.draws_on) <= rows, name
@@ -219,7 +219,18 @@ def readiness_answer(result, question) -> dict[str, list]:
     return {key: found.get(key) for key in question["expected"]}
 
 
-ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer}
+def lessons_answer(result, question) -> dict[str, list]:
+    """get_lessons' answer: the first lesson, the evidence ids it rests on and IEG's part in them, and the
+    editions of the rules the lessons' projects followed."""
+    rows = result["rows"]
+    return {"first": [rows[0]["statement"]] if rows else [],
+            "first_evidence": [source["evidence_id"] for source in rows[0]["evidence"]] if rows else [],
+            "first_ieg_status": [rows[0]["ieg_status"]] if rows else [],
+            "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
+
+
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
+           "get_lessons": lessons_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -228,7 +239,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] == "data_readiness_for":
+    if question["tool"] in ("data_readiness_for", "get_lessons"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
@@ -241,32 +252,51 @@ def test_each_tool_with_a_benchmark_question_has_a_way_to_read_its_answer():
     assert {question["tool"] for question in tool_questions()} <= set(ANSWERS)
 
 
-def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine):
+@pytest.fixture(scope="module")
+def library(fixture_db, tmp_path_factory):
+    """The fixture with its three proposed lessons decided, for a question that needs decided lessons: the
+    library holds a lesson only after two people decide it (tests/lesson_scenario.py)."""
+    import lesson_scenario as scenario
+
+    database = scenario.copy_of(fixture_db, tmp_path_factory.mktemp("benchmark-library"))
+    for passage in (scenario.REBIDDING, scenario.PERMITS, scenario.IEG_LESSON):
+        scenario.decide(database, passage, dt.date(2026, 10, 27))
+    with DuckDBEngine.open(database, read_only=True) as opened:
+        yield opened
+
+
+def engine_for(question, engine, library):
+    return library if question.get("needs") == "decided_lessons" else engine
+
+
+def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):
     for question in tool_questions():
-        result = registry.call(question["tool"], question["arguments"], registry.Context(engine=engine, viewer=ANA))
+        result = registry.call(question["tool"], question["arguments"],
+                               registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert answered(result, question) == expected(question)
 
 
-def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, monkeypatch):
+def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, monkeypatch):
     """The benchmark question's date stands in for today, so the expected answer still holds."""
     for question in tool_questions():
         today = dt.date.fromisoformat(question["arguments"]["as_of"])
         monkeypatch.setattr(registry, "today", lambda: today)
         arguments = {name: given for name, given in question["arguments"].items() if name != "as_of"}
 
-        result = registry.call(question["tool"], arguments, registry.Context(engine=engine, viewer=ANA))
+        result = registry.call(question["tool"], arguments,
+                               registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert result["as_of"] == today.isoformat()
         assert answered(result, question) == expected(question)
 
 
 @pytest.mark.parametrize("view", ["piu", "public"])
-def test_each_tool_answers_under_each_view(engine, view):
+def test_each_tool_answers_under_each_view(engine, library, view):
     """Until ticket 40 applies each view's rules, every view gets the World Bank staff result."""
     for question in tool_questions():
         result = registry.call(question["tool"], question["arguments"],
-                               registry.Context(engine=engine, viewer=ANA, view=view))
+                               registry.Context(engine=engine_for(question, engine, library), viewer=ANA, view=view))
 
         assert result["view"] == view
         assert answered(result, question) == expected(question)

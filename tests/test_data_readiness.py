@@ -153,13 +153,14 @@ def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_
     """The plan check reads plans whose confirmed first listing was read for none of the activities of
     the latest versions: the demo plan project's 46 (ticket 08's verifier) and the 212 of the stress
     shelf's plan (values.toml, stress_shelf.long_plan); document search reads reports in which some body
-    pages show no paragraph numbers."""
+    pages show no paragraph numbers; lessons read the same reports (ticket 29)."""
     long_plan = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]["long_plan"]
     latest = 46 + long_plan["activity_references"]
     result = readiness(engine)
 
     kinds = {kind["kind"]: kind for kind in result["kinds"]}
-    assert {name: kind["status"] for name, kind in kinds.items()} == {"plan_check": "partial", "document_search": "partial"}
+    assert {name: kind["status"] for name, kind in kinds.items()} == {"plan_check": "partial", "document_search": "partial",
+                                                                         "lessons": "partial"}
     plan_check = kinds["plan_check"]
     assert result["rows"][plan_check["ready_for"]]["count"] == latest
     held = registry_text(plan_check["holds_back"][0])
@@ -189,7 +190,7 @@ def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_rea
 
     # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part".
     assert result["headline"]["text"] == (
-        f"I can answer each of the two kinds of question below in part. The biggest gaps are the {pages - found} "
+        f"I can answer each of the three kinds of question below in part. The biggest gaps are the {pages - found} "
         f"of {pages} body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a "
         "reference from Systematic Tracking of Exchanges in Procurement (STEP).")
     numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:1]
@@ -357,7 +358,7 @@ def test_a_kind_s_count_spells_step_out_only_where_the_headline_above_it_does_no
     names no STEP gap, so its count is the first STEP there."""
     full = readiness(engine)
     assert "Systematic Tracking of Exchanges in Procurement (STEP)" in full["headline"]["text"]
-    assert [kind["spell_out"] for kind in full["kinds"]] == [False, False]
+    assert [kind["spell_out"] for kind in full["kinds"]] == [False, False, False]
 
     plan_check = readiness(engine, sources="documents,projects", from_tool="check_plan")
     assert "(STEP)" not in plan_check["headline"]["text"]

@@ -35,6 +35,7 @@ from strata.dbx import Viewer
 from strata.knowledge.lessons.propose import IEG_TYPES, PASSED, item_id
 from strata.lakehouse.engine import Engine
 from strata.reader.templates import template_for
+from strata.tools.data_readiness_for import fill
 
 PAGE = "lesson_review"  # the roles file's name for the review pages
 STAGE_FOR = {"recommend": "recommendation", "decide": "decision", "cross_check": "cross_check"}
@@ -99,6 +100,12 @@ def _json(value, default):
         return json.loads(value) if value else default
     except ValueError:
         return default
+
+
+@cache
+def lesson_words() -> dict:
+    """copy.lessons.server in web/src/copy.ts, as web/lint/server-copy.ts copied it."""
+    return json.loads((resources.files("strata.knowledge.lessons") / "copy.json").read_text())
 
 
 # ── The business-day clock ───────────────────────────────────────────────
@@ -188,6 +195,9 @@ class Store:
         for row in _rows(engine, "proposal_evidence"):
             self.evidence.setdefault(row["proposal_id"], []).append(row)
         self.projects = {row["project_id"]: row for row in _rows(engine, "lesson_projects", types=",".join(IEG_TYPES))}
+        self.notes: dict[str, dict] = {}  # the lesson review writer's newest note on each item
+        for row in _rows(engine, "review_notes"):
+            self.notes[row["item_id"]] = row
 
     def act(self, item: dict, verb: str) -> dict | None:
         found = [act for act in self.acts.get(item["item_id"], []) if act["act"] == verb]
@@ -216,6 +226,19 @@ class Store:
     def open_recheck(self, lesson_id: str) -> dict | None:
         return next((item for item in self.items.values() if item["kind"] == "recheck"
                      and item["lesson_id"] == lesson_id and self.stage(item) != "decided"), None)
+
+    def note(self, item: dict) -> dict | None:
+        """The writer's newest note on the item, its content read from JSON, or None while it is still writing."""
+        found = self.notes.get(item["item_id"])
+        if found is None:
+            return None
+        return {"status": found["status"], **(_json(found["content"], {}) or {})}
+
+    def repeats(self, item: dict) -> list[dict]:
+        """The current lessons the writer named as likely repeats of the item, with its kept sentences."""
+        note = self.note(item) or {}
+        return [repeat for repeat in note.get("repeats") or []
+                if (self.latest(repeat["lesson_id"]) or {}).get("state") == "current"]
 
     def lesson_of(self, item: dict) -> str | None:
         """The lesson an item is about: a re-check's or cross-check's own, or the one a new lesson became."""
@@ -357,7 +380,8 @@ class LessonReview:
 
     def subject(self, store: Store, item: dict) -> dict:
         """What an item is about: its statement, tags, evidence rows and project, at the version it concerns."""
-        if item["kind"] == "new":
+        if item["kind"] == "new" or (item["kind"] == "cross_check" and not item["lesson_id"]):
+            # A new lesson, or the cross-check of a decision that rejected one: the proposal itself.
             proposal = store.proposals.get(item["proposal_id"]) or {}
             rows = self._proposal_evidence(store, [item["proposal_id"]])
             return {"statement": proposal.get("statement"), "row": proposal, "evidence": rows,
@@ -415,7 +439,8 @@ class LessonReview:
             "source": self.evidence_row(store,first) if first else None, "region": item["region"],
             "project": {"pid": subject["project_id"], "name": project.get("project_name"),
                         "country": project.get("country_name"), "sector": project.get("sector_name")},
-            **self.ieg(store,subject["evidence"], subject["project_id"]), "may_repeat": False,
+            **self.ieg(store,subject["evidence"], subject["project_id"]),
+            "may_repeat": item["kind"] == "new" and bool(store.repeats(item)),
             "clock": self.clock(store, item), "recommendation": self._act(store.act(item, "recommend")),
             "origin": origin, "decided": decided, "can": can,
         }
@@ -447,14 +472,62 @@ class LessonReview:
         pages = max(1, -(-len(decided) // size))
         page = min(max(page, 1), pages)
         shown = decided[(page - 1) * size: page * size]
+        groups = {group: sorted((row for row in rows if row["group"] == group),
+                                key=lambda row: ((row["clock"] or {}).get("start_on") or "", row["item_id"]))
+                  for group in ("you", "others")}
         return {
             "as_of": self.today().isoformat(), "limit_days": int(self.value("business_days")),
             "regions": list(person.regions), "waiting": len(rows),
-            "groups": {group: [row for row in rows if row["group"] == group] for group in ("you", "others")},
+            "lead": self.lead(groups) if rows else None, "check": self.quote_check(store),
+            "groups": groups,
             "decided": {"window_days": int(self.value("decided_window_days")), "total": len(decided), "page": page,
                         "pages": pages, "from": (page - 1) * size + 1 if shown else 0,
                         "to": (page - 1) * size + len(shown), "rows": shown},
         }
+
+    def lead(self, groups: dict[str, list[dict]]) -> list[dict]:
+        """The queue's lead sentence as segments (the 29 brief, section 5.3): how many items wait for you and for
+        other reviewers, then how much of its limit the oldest has used, or how many are overdue. The server
+        chooses each count's form, and each number is a segment the page writes with Num, as ticket 16's
+        headline does (strata.tools.data_readiness_for.fill)."""
+        words, forms = lesson_words()["lead"], lesson_words()["forms"]
+        you, others = len(groups["you"]), len(groups["others"])
+        limit = int(self.value("business_days"))
+
+        def form(name: str, count: int) -> str:
+            return forms[name]["one" if count == 1 else "many"]
+
+        slots = {"you": {"number": you, "capital": True}, "lessonsYou": form("lesson", you), "beYou": form("be", you),
+                 "others": {"number": others, "capital": you == 0}, "lessonsOthers": form("lesson", others),
+                 "beOthers": form("be", others), "limit": {"number": limit}}
+        template = words["both"] if you and others else words["youOnly"] if you else words["othersOnly"]
+        segments = fill(template, slots)
+        rows = groups["you"] + groups["others"]
+        overdue = sum(1 for row in rows if (row["clock"] or {}).get("overdue_days"))
+        if overdue:
+            segments += fill(words["overdue"], {"overdue": {"number": overdue, "capital": True},
+                                                "have": form("have", overdue), "itsTheir": form("itsTheir", overdue),
+                                                "limit": {"number": limit}})
+        else:
+            days = [row["clock"]["day"] for row in rows if row["clock"] and row["clock"].get("day")]
+            if days:
+                segments += fill(words["oldest"], {"day": {"number": max(days)}, "limit": {"number": limit}})
+        return segments
+
+    def quote_check(self, store: Store) -> dict:
+        """How many proposed lessons the quote check dropped in the last quote_check_window_days days, as a
+        sentence in segments, and the Data readiness page's sources for its link (the 29 brief, section 5.3)."""
+        window = int(self.value("quote_check_window_days"))
+        since = self.today() - dt.timedelta(days=window)
+        recent = [row for row in store.proposals.values() if (_date(row["proposed_on"]) or since) >= since]
+        dropped = sum(1 for row in recent if row["quote_check"] != PASSED)
+        words, forms = lesson_words()["check"], lesson_words()["forms"]
+        many = "one" if dropped == 1 else "many"
+        segments = (fill(words["dropped"], {"days": {"number": window}, "dropped": {"number": dropped},
+                                            "lessons": forms["lesson"][many], "itsTheir": forms["itsTheir"][many]})
+                    if dropped else fill(words["none"], {"days": {"number": window}}))
+        return {"window_days": window, "proposed": len(recent), "dropped": dropped, "segments": segments,
+                "readiness": {"sources": ["documents"], "from": "get_lessons"}}
 
     def _decided(self, store: Store, person: Person) -> list[dict]:
         """The decisions of the last decided_window_days days in the viewer's regions, newest first."""
@@ -505,7 +578,8 @@ class LessonReview:
                         else None,
             "tags": {**tags, "sector": project.get("sector_name")},
             "lesson": {"lesson_id": subject["lesson_id"], "version": subject["version"]},
-            "summary": None, "repeats": [], "history": self.history(store, item),
+            "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item),
+            "history": self.history(store, item),
             "outcome": self.outcome(store, item), "lists": self.lists.as_dict(),
             "limits": {"reason_max_chars": int(self.value("reason_max_chars")),
                        "statement_max_chars": int(self.value("statement_max_chars")),
@@ -513,6 +587,25 @@ class LessonReview:
                        "summary_poll_seconds": int(self.value("summary_poll_seconds")),
                        "summary_poll_minutes": int(self.value("summary_poll_minutes"))},
         }
+
+    def summary(self, store: Store, item: dict) -> dict:
+        """The writer's verified summary of the evidence (the 29 brief, section 5.7): writing until its note
+        is stored; then ready, nothing_to_add, nothing_survived or failed, with the kept sentences, the
+        evidence they cite, the verifier's counts and the removed sentences."""
+        note = store.note(item)
+        if note is None:
+            return {"status": "writing"}
+        return {"status": note["status"], "sentences": note.get("sentences", []), "evidence": note.get("evidence", {}),
+                "checks": note.get("checks"),
+                "removed": note.get("removed", [])}
+
+    def likely_repeats(self, store: Store, item: dict) -> list[dict]:
+        """Each current lesson the writer said the item may repeat, as a compact card with the writer's kept
+        sentences about it. New lessons only (the 29 brief, section 5.8)."""
+        if item["kind"] != "new":
+            return []
+        return [{**self.card(store, repeat["lesson_id"]), "sentences": repeat["sentences"]}
+                for repeat in store.repeats(item)]
 
     def history(self, store: Store, item: dict) -> list[dict]:
         """What happened to the item, in order, each event in the past tense."""
@@ -607,6 +700,7 @@ class LessonReview:
             **self.ieg(store,evidence, latest["project_id"]), "decided_on": _iso(latest["decided_on"]),
             "state": "rechecking" if recheck else "current",
             "rechecking_since": _iso(recheck["entered_on"]) if recheck else None,
+            "region": project.get("region"),
             "quote": first["quote"] if first else None,
             "evidence": [self.evidence_row(store,row) for row in evidence],
         }
@@ -687,13 +781,21 @@ class LessonReview:
         elif verb == "cross_check" and outcome == "disagree":
             self._disagreed(engine, store, item, person, reason, now)
         store = self._load(engine)
-        return {"item": self.detail(store, store.items[item["item_id"]], person), "waiting": self._waiting(store, person)}
+        return {"item": self.detail(store, store.items[item["item_id"]], person), "waiting": self._waiting(store, person),
+                "next_item_id": self.next_for(store, person, item["item_id"])}
+
+    def next_for(self, store: Store, person: Person, done: str) -> str | None:
+        """The oldest other item waiting for this reviewer to act, for "Open the next lesson waiting for you"."""
+        waiting = [item for item in store.items.values() if item["item_id"] != done and item["region"] in person.regions
+                   and self.can(store, item, person)["act"]]
+        waiting.sort(key=lambda item: (_iso(item["entered_on"]) or "", item["item_id"]))
+        return waiting[0]["item_id"] if waiting else None
 
     def repeats_of(self, store: Store, item: dict) -> list[str]:
         """The current lessons the lesson review writer named as likely repeats of a new lesson: the only
-        lessons a lead may merge it into (the 29 brief, section 4.2). The writer arrives with ticket 29's
-        workflow; until it has written for an item, there are none."""
-        return []
+        lessons a lead may merge it into (the 29 brief, section 4.2). Until it has written for an item, there
+        are none."""
+        return [repeat["lesson_id"] for repeat in store.repeats(item)]
 
     def _version_row(self, base: dict, **fields) -> tuple:
         row = {**{column: base.get(column) for column in VERSION_COLUMNS}, **fields}
@@ -771,6 +873,23 @@ class LessonReview:
                "public_from": now.date()}
         engine.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
 
+    def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent) -> dict:
+        """The review page's "Try again": the lesson review writer writes its note on one open item again, as
+        the viewer, and the page gets the item with the new note. Any lesson reviewer may ask."""
+        from strata.knowledge.lessons import writer
+
+        person = self._require(viewer)
+        store = self._load(engine)
+        item = store.items.get(wanted)
+        if item is None:
+            raise Refused(404, "unknown_item", {"item_id": wanted})
+        if agent is None:
+            raise Refused(503, "no_agent")
+        writer.write_one(engine, store, item, self.subject(store, item), agent, self.now(),
+                         int(self.value("likely_repeats_max")))
+        store = self._load(engine)
+        return {"item": self.detail(store, store.items[item["item_id"]], person)}
+
     def recheck(self, engine: Engine, viewer: Viewer, lesson_id: str, reason: str) -> dict:
         """Ask for a re-check of a current lesson, as any lesson reviewer, once while none is open."""
         person = self._require(viewer)
@@ -786,7 +905,7 @@ class LessonReview:
             raise Refused(409, "recheck_open", {"on": _iso(open_item["entered_on"])})
         region = (store.projects.get(latest["project_id"]) or {}).get("region") or person.regions[0]
         now = self.now()
-        row = {"item_id": item_id("recheck", f"{lesson_id}|{uuid.uuid4().hex}"), "kind": "recheck",
+        row = {"item_id": item_id("recheck", f"{lesson_id}|{person.email}|{now.isoformat()}"), "kind": "recheck",
                "proposal_id": None, "lesson_id": lesson_id, "version": _int(latest["version"]),
                "decided_item_id": None, "project_id": latest["project_id"], "region": region,
                "decided_region": None, "origin": "asked", "origin_by": person.email, "origin_by_name": person.name,

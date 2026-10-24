@@ -6,6 +6,8 @@
 # - Leela Iyer decides lessons for South Asia and works on P130164, the showcase project, so she can
 #   never recommend or decide on a lesson from it.
 # - Omar Haddad decides lessons for South Asia and works on no project there.
+# - Priya Nair decides lessons for South Asia too and works on no project there, so a lesson Omar
+#   recommended still has a lead who may decide it.
 # - Wanjiru Kamau reviews lessons for Eastern and Southern Africa, the other region, which receives
 #   South Asia's cross-checks. She works on P156634.
 # Anyone else, such as ana.example@worldbank.org in the other tests, is not a lesson reviewer.
@@ -39,6 +41,13 @@ projects = ["P130164"]
 [[people]]
 email = "omar.haddad@worldbank.example"
 name = "Omar Haddad"
+groups = ["lead_procurement_specialist"]
+regions = ["South Asia"]
+projects = []
+
+[[people]]
+email = "priya.nair@worldbank.example"
+name = "Priya Nair"
 groups = ["lead_procurement_specialist"]
 regions = ["South Asia"]
 projects = []
