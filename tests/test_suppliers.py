@@ -111,3 +111,63 @@ def test_an_awarded_bidder_written_without_an_id_keeps_its_name(fixture):
 
     assert [(b["name"], b["step_supplier_id"], b["individual_consultant"]) for b in found] == [
         (case["value"], None, False)]
+
+
+# ── Name matching, on plain rows ─────────────────────────────────────────
+# The matching function takes plain rows and returns plain rows, so the nightly task calls it the
+# same way on DuckDB and on Databricks (spec, "Data and the lakehouse run"). These rows are written
+# by hand, because the fixture holds few rows without an ID.
+
+def record(key, name, country, projects=("P000001",), has_id=False, group=None):
+    from strata.knowledge.suppliers.matching import Record
+
+    return Record(key=key, name=name, country=country, projects=tuple(projects), has_id=has_id,
+                  group=group if group is not None or has_id else key.split("/")[0])
+
+
+def match(*records):
+    from strata.config import load_supplier_matching
+    from strata.knowledge.suppliers.matching import candidate_pairs
+
+    return candidate_pairs(list(records), load_supplier_matching(), floor=0.01)
+
+
+def test_a_row_with_a_step_supplier_id_never_enters_name_matching():
+    """Two suppliers with IDs are never compared by name, however alike their names. Only the row with no
+    ID is matched, and it may join either of them."""
+    pairs = match(record("1001211", "CHINA INTERNATIONAL WATER AND ELECTRIC CORPORATION", "China", has_id=True),
+                  record("534460", "China International Water & Electric Corporation", "China", has_id=True),
+                  record("1513001/1", "CHINA INTERNATIONAL WATER & ELECTRIC CORP.", "China"))
+
+    assert sorted((pair.left, pair.right) for pair in pairs) == [("1513001/1", "1001211"), ("1513001/1", "534460")]
+
+
+def test_names_are_compared_without_legal_forms_accents_or_punctuation():
+    pairs = match(record("1/1", "M/S Société Générale d'Études S.A.", "France"),
+                  record("2/1", "SOCIETE GENERALE D ETUDES", "France"),
+                  record("3/1", "ROAD & BRIDGE WORKS (K) PVT. LTD.", "Kenya"),
+                  record("4/1", "Road and Bridge Works K Private Limited", "Kenya"))
+
+    assert sorted((pair.left, pair.right, pair.name_level) for pair in pairs) == [
+        ("1/1", "2/1", "same_name"), ("3/1", "4/1", "same_name")]
+
+
+def test_rows_are_compared_only_within_one_country():
+    assert match(record("1/1", "EGIS INTERNATIONAL", "France"), record("2/1", "EGIS INTERNATIONAL", "Kenya")) == []
+
+
+def test_the_members_of_one_joint_venture_row_are_never_paired_with_each_other():
+    pairs = match(record("1536431/1", "ECORYS NEDERLAND B.V.", "India"),
+                  record("1536431/2", "ECORYS INDIA PVT. LTD.", "India"))
+
+    assert pairs == []
+
+
+def test_a_project_in_common_makes_the_same_name_likelier_to_be_one_supplier():
+    shared = match(record("1/1", "LANDMARK HOLDINGS LIMITED", "Kenya", ["P124109"]),
+                   record("2/1", "LANDMARK HOLDINGS LTD", "Kenya", ["P124109"]))
+    apart = match(record("1/1", "LANDMARK HOLDINGS LIMITED", "Kenya", ["P124109"]),
+                  record("2/1", "LANDMARK HOLDINGS LTD", "Kenya", ["P156634"]))
+
+    assert shared[0].probability > apart[0].probability
+    assert (shared[0].projects_level, apart[0].projects_level) == ("shared", "none_shared")
