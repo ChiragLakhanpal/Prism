@@ -65,6 +65,19 @@ def test_a_content_filter_refusal_is_its_own_error_and_any_other_failure_says_th
     assert (filtered.value.code, unavailable.value.code) == ("content_filter", "agent_unavailable")
 
 
+def test_a_token_microsoft_entra_id_would_not_give_says_the_agent_is_unavailable():
+    def no_token():
+        raise FoundryError(None, "Microsoft Entra ID gave no token: the network is off.")
+
+    def call(method, url, headers, body):
+        raise AssertionError("Nothing is sent without a token.")
+
+    with pytest.raises(AgentError) as unavailable:
+        FoundryAgent(ENDPOINT, SPEC, no_token, call=call, traceparent=lambda: None).respond([], None)
+
+    assert unavailable.value.code == "agent_unavailable"
+
+
 def test_the_app_answers_through_the_foundry_agent_only_when_its_environment_names_one():
     from strata.agent.runner import from_environment
 

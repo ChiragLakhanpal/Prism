@@ -208,12 +208,12 @@ class FoundryAgent:
         body = {"agent": {"type": "agent_reference", "name": self.name}, "input": items}
         if previous_response_id:
             body["previous_response_id"] = previous_response_id
-        headers = {"Authorization": f"Bearer {self.token()}"}
-        if parent := self.traceparent():
-            headers["traceparent"] = parent
         try:
+            headers = {"Authorization": f"Bearer {self.token()}"}
+            if parent := self.traceparent():
+                headers["traceparent"] = parent
             reply = self.call("POST", self.url, headers, body)
-        except FoundryError as error:
+        except FoundryError as error:  # the token, the network or Foundry's own answer
             raise AgentError("content_filter" if error.status == 400 and _filtered(error.detail)
                              else "agent_unavailable", str(error)) from error
         if (reply.get("incomplete_details") or {}).get("reason") == "content_filter":
