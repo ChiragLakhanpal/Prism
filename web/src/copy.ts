@@ -243,6 +243,35 @@ export const copy = {
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
     others: "The others:",
     item: (sentence: string, reason: string) => `"${sentence}" ${reason}`,
+    // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
+    // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
+    // lacks either.
+    reasons: {
+      number_not_in_records: {
+        item: "No record supports this number.",
+        joined: "no record supports that number",
+      },
+      date_not_in_records: {
+        item: "No record supports this date.",
+        joined: "no record supports that date",
+      },
+      id_not_returned: {
+        item: "It cited a source I did not retrieve for this question.",
+        joined: "it cited a source I did not retrieve for this question",
+      },
+      no_source: {
+        item: "It cited no source.",
+        joined: "it cited no source",
+      },
+      quote_not_on_page: {
+        item: "The quote is not on the page it cites.",
+        joined: "the quote is not on the page it cited",
+      },
+      quote_not_in_sentence: {
+        item: "It cited a quote but did not show the quoted words.",
+        joined: "it cited a quote but did not show the quoted words",
+      },
+    },
   },
 
   // Steps while an answer is built, and the answer itself.
@@ -258,6 +287,16 @@ export const copy = {
     // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
     tryAgain: "Try again",
+    // Why an answer stopped, keyed by the code its stream's error event carries (ERROR_CODES in
+    // src/strata/harness/turn.py). A test fails when a code has no sentence here.
+    errors: {
+      no_agent: "I can't answer questions yet, because the model that writes my answers isn't connected.",
+      agent_unavailable: "I can't reach the model that writes my answers right now; try again in a few minutes.",
+      content_filter: "A safety filter stopped this answer, so I can't show it; try asking in other words.",
+      agent_output: "I wrote an answer I couldn't check, so I'm not showing it; try asking again.",
+      data_service: "I can't reach the data right now, so I can't answer; try again in a few minutes.",
+      internal: "Something went wrong on my side, so I can't answer; try again, and if it happens again, share the answer ID.",
+    },
   },
 
   // Term and DefinitionWindow.

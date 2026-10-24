@@ -1,0 +1,41 @@
+# Real passages that hold rule-like sentences, which must reach the agent as tool results without a
+# Prompt Shields refusal (spec, "Security and privacy": Prompt Shields' false refusals on rule-like report
+# text are avoided by keeping rules in instructions and data in messages, and a test set of real passages
+# guards it).
+#
+# Each passage is named by its evidence id, with the rule-like sentence it holds, word for word. The gate
+# checks that search_passages returns each one first on the fixture database when asked for its own
+# sentence, and that the sentence is in its text. On the workspace, ops/agent/shields_live.py sends each
+# tool result to the live Foundry agent and fails on any content filter or Prompt Shields refusal:
+#
+#     uv run --script ops/agent/shields_live.py --env-file .env
+
+[[passages]]
+evidence_id = "strata.gold.passage:31525018/v1/71"
+project_id = "P130164"
+source = "ICR of October 10, 2019, paragraph 71, PDF pages 25 to 26"
+sentence = "The GOR shall ensure that proper resolution is found, even if the project is closed."
+
+[[passages]]
+evidence_id = "strata.gold.passage:31525018/v1/86"
+project_id = "P130164"
+source = "ICR of October 10, 2019, paragraph 86, PDF page 28"
+sentence = "Implementing new management standards and business procedures to generate increased efficiency must be adapted based on the network characteristics."
+
+[[passages]]
+evidence_id = "strata.gold.passage:27348420/v1/annex3.51"
+project_id = "P156634"
+source = "PAD, Annex 3, paragraph 51, PDF page 79"
+sentence = "The procurement plan shall set forth those contracts which shall be subject to the World Bank’s prior review."
+
+[[passages]]
+evidence_id = "strata.gold.passage:27348420/v1/annex3.52"
+project_id = "P156634"
+source = "PAD, Annex 3, paragraph 52, PDF page 80"
+sentence = "Missions in the first 18 months shall include a World Bank procurement specialist or a specialized consultant."
+
+[[passages]]
+evidence_id = "strata.gold.passage:27348420/v1/annex2.46"
+project_id = "P156634"
+source = "PAD, Annex 2, paragraph 46, PDF page 57"
+sentence = "The WSPs must meet the following criteria: (a) Legal status: The WSP should hold a valid license."

@@ -1,0 +1,20 @@
+{
+ "about": "An answer of the Foundry project's Responses API when a content filter or Prompt Shields stops a request: HTTP 400 with the code content_filter. It is written by hand in the shape Azure OpenAI documents, because the gate's machine has no key. Replace it with a recorded answer when ops/agent/shields_live.py first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "status": 400,
+ "response": {
+  "error": {
+   "code": "content_filter",
+   "message": "The response was filtered due to the prompt triggering Azure OpenAI's content management policy.",
+   "param": "prompt",
+   "type": null,
+   "innererror": {
+    "code": "ResponsibleAIPolicyViolation",
+    "content_filter_result": {
+     "jailbreak": {"filtered": true, "detected": true},
+     "indirect_attack": {"filtered": false, "detected": false}
+    }
+   }
+  }
+ }
+}

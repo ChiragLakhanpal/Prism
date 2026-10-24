@@ -1,0 +1,51 @@
+{
+ "about": "Two answers of the Foundry agent strata-orchestrator through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first asks check_plan for a plan version that was not yet public on the as-of date, and the second gives the claims as JSON. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634.",
+ "scope": "P156634",
+ "as_of": "2026-10-01",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p156634_not_public_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p156634_not_public_1",
+     "call_id": "call_p156634_not_public_1",
+     "name": "check_plan",
+     "status": "completed",
+     "arguments": "{\"project_id\": \"P156634\", \"implementing_agency\": \"Northern Water Works Development Agency\", \"plan_date\": \"2026-10-09\", \"as_of\": \"2026-10-01\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p156634_not_public_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p156634_not_public_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [{\"sentence\": \"That version of the plan was not yet public on the date you chose, so I did not check it.\", \"kind\": \"summary\", \"evidence_ids\": [], \"numbers\": [], \"dates\": [], \"quote\": null}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

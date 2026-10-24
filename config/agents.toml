@@ -1,0 +1,48 @@
+# The agent registry: each Foundry prompt agent Strata runs, and the guardrail it runs under.
+#
+# This is the one place an agent is defined (CLAUDE.md rule 9). Its rules are its instructions file, in
+# src/strata/agent/instructions/, versioned with the code. The sync builds the agent's definition in
+# Foundry from this entry, that file, the model file (config/models.toml) and the tool registry
+# (config/tools.toml), and makes the Foundry agent match it:
+#
+#     uv run --script ops/agent/sync.py --env-file .env
+#
+# Run it after any change to an agent's instructions, its model, a tool or the guardrail. With --check it
+# only reports the difference. strata.agent.definition.load_agent() reads this file.
+#
+# [agents.<key>]
+#   name          the agent's name in the Foundry project
+#   role          the role in config/models.toml whose deployment it runs on
+#   instructions  its instructions file, in src/strata/agent/instructions/. The sync adds a section that
+#                 lists the tool registry's tools, and fills in each value of config/thresholds.toml it
+#                 names in braces, such as {agent.tool_rounds}.
+#   guardrail     the key of its guardrail below
+#   description   what it does, as Foundry's list of agents shows it
+#
+# [guardrails.<key>], the content filters and Prompt Shields the agent runs under, kept as an RAI policy
+# on the Foundry resource (ops/dayone/dayone.toml names it, foundry_resource):
+#   name             the policy's name
+#   base_policy      the policy it starts from
+#   severity         the lowest severity of hate, sexual, violence and self-harm content that is blocked,
+#                    in the question and in the answer: Low, Medium or High
+#   prompt_shields   true blocks a prompt attack in the question and an indirect attack in a tool's result.
+#                    Passages that hold rule-like sentences must still pass (evals/shield_passages.toml).
+#
+# [foundry], the API versions the sync, the answer loop and the recording command call.
+
+[agents.orchestrator]
+name = "strata-orchestrator"
+role = "agent"
+instructions = "orchestrator.md"
+guardrail = "strata"
+description = "Answers a question about World Bank-financed procurement with claims cited to the rows and passages its tools return."
+
+[guardrails.strata]
+name = "strata-guardrail"
+base_policy = "Microsoft.DefaultV2"
+severity = "Medium"
+prompt_shields = true
+
+[foundry]
+api_version = "2025-11-15-preview"
+rai_policy_api_version = "2024-10-01"

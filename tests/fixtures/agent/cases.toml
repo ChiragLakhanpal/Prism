@@ -1,0 +1,204 @@
+# The scripted cases: questions the scripted agent answers offline from recorded model outputs (spec,
+# seam 3, and "Model outputs are recorded, not called, in the offline gate").
+#
+# Each case names a recording in recorded/<recording>.json: the Foundry agent's answers through the
+# Responses API, in order, for the case's question, scope and as-of date. Several cases can share one
+# recording. The recording command re-records every recording from the live agent and prints the
+# difference, so a re-recording is reviewed in the diff:
+#
+#     uv run --script ops/agent/record.py --env-file .env
+#
+# A case can also plant what a model might get wrong, so the verifier's checks can be shown to work.
+# Plants are applied when the case is replayed, never written into the recording, so they survive a
+# re-recording:
+#
+#   [[cases.plant_rounds]]   a round of tool calls the agent asks for after its recorded rounds, before
+#                            its answer. Each has calls, a list of {name, arguments}.
+#   [[cases.plant_claims]]   a claim added to the end of the agent's answer, in the claims' own shape:
+#                            sentence, kind, evidence_ids, numbers, dates and quote ({text, passage_id}).
+#
+# The tests in tests/test_answer_stream.py replay each case on the fixture database and say what it
+# must show.
+
+[[cases]]
+id = "p130164-rebidding"
+says = "The answer cites ICR P130164 paragraph 54 and states 108 of 328, and every check passes."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases]]
+id = "p130164-number-with-no-record"
+says = "The agent adds a number no record holds. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "Bids were usually opened within 45 days."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["45"]
+dates = []
+
+[[cases]]
+id = "p130164-source-not-returned"
+says = "The agent cites ICR paragraph 71, which no tool returned this turn. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "Some works started before the forest department gave its permission."
+kind = "summary"
+evidence_ids = ["strata.gold.passage:31525018/v1/71"]
+numbers = []
+dates = []
+
+[[cases]]
+id = "p130164-page-number-as-a-number"
+says = """The agent states paragraph 54's page and paragraph numbers as if the report counted something with them. A passage's \
+place in its report is not a value, so the verifier removes that sentence."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "In 23 districts, 54 works contracts were bid again."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["23", "54"]
+dates = []
+
+[[cases]]
+id = "p130164-misquote"
+says = "The agent quotes paragraph 54 in words that are not on its page. The verifier removes that sentence."
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The report puts it plainly: \"108 of 328 works contracts had to be bid again\"."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["108", "328"]
+dates = []
+quote = { text = "108 of 328 works contracts had to be bid again", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases]]
+id = "p130164-quote-marks-and-quote-disagree"
+says = """The agent's quote marks and its quotes disagree three ways: quote marks around words that are not on \
+the page, a quote the sentence never shows in quote marks, and quote marks with no quote, in English with \
+double and single quote marks, straight and curly, and in French. The verifier removes all six sentences."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The report said \"the estimates were sound and no contract was bid again\"."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "In 108 districts the works ran late."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["108"]
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "The ICR called the delay \"avoidable\"."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases.plant_claims]]
+sentence = "The ICR called the delay 'avoidable'."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases.plant_claims]]
+sentence = "The ICR called the works \u2018late and costly\u2019."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases.plant_claims]]
+sentence = "Le rapport dit que les contrats sont « jamais revus »."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases]]
+id = "p130164-quote-cut-from-a-number"
+says = """The agent quotes "10" from paragraph 54, which says 108 of 328. A quote cut from inside a number is not \
+word for word, so the verifier removes the sentence whether its quote holds only "10" or the full words."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The ICR said \"10\" works contracts were bid again."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["10"]
+dates = []
+quote = { text = "10", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases.plant_claims]]
+sentence = "The ICR said \"10\" works contracts were bid again."
+kind = "quote"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["10"]
+dates = []
+quote = { text = "108 of 328 cases had to go through rebidding", passage_id = "strata.gold.passage:31525018/v1/54" }
+
+[[cases]]
+id = "p156634-plan-not-yet-public"
+says = """The agent asks check_plan for the October 9, 2026 plan as of October 1, 2026. The tool abstains, \
+and the agent gets no date after October 1, 2026 in what comes back."""
+question = "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-01
+recording = "p156634-plan-not-yet-public"
+
+[[cases]]
+id = "p130164-fourth-round"
+says = """The agent asks for a fourth round of tool calls, which never runs, then cites ICR paragraph 88, which \
+only that round would have found. The answer keeps what the first three rounds support."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "forest land clearances before awarding works contracts", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "ICR Review procurement rebidding", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_rounds]]
+calls = [{ name = "search_passages", arguments = { query = "land acquisition delays", project_id = "P130164", as_of = "2026-10-23" } }]
+
+[[cases.plant_claims]]
+sentence = "Land for the roads was mostly donated, and recording those donations took time."
+kind = "summary"
+evidence_ids = ["strata.gold.passage:31525018/v1/88"]
+numbers = []
+dates = []
