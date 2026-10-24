@@ -18,7 +18,13 @@ const FINDING = "2 of 49 comparable packages, fewer than 1 in 10, were signed wi
 type Answer = { status?: number; body: string };
 type Comparables = { rows: { step_reference: string; months: number; still_open: boolean }[]; [key: string]: unknown };
 
-async function openPackage(page: Page, options: { width?: number; comparables?: Answer | null; pkg?: Answer | null; ref?: string } = {}) {
+// A source the evidence drawer opens: ICR paragraph 54 of P130164, as the answer panel cites it.
+const ICR_54 = "strata.gold.passage:31525018/v1/54";
+
+async function openPackage(
+  page: Page,
+  options: { width?: number; comparables?: Answer | null; pkg?: Answer | null; ref?: string; evidence?: boolean } = {},
+) {
   const { width = 1440, ref = REF } = options;
   await page.setViewportSize({ width, height: 900 });
   const api = `/api/packages/${ref}`;
@@ -30,11 +36,15 @@ async function openPackage(page: Page, options: { width?: number; comparables?: 
   };
   if (options.pkg !== null) answers[api] = options.pkg ?? { body: await recorded(pkgFile) };
   if (options.comparables !== null) answers[`${api}/comparables`] = options.comparables ?? { body: await recorded(comparablesFile) };
+  if (options.evidence) {
+    answers["/api/evidence"] = { body: await recorded("evidence-icr-p130164-54.json") };
+    answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };
+  }
   await mockApi(page, answers);
   // A path left out never answers, so the page stays loading.
   if (options.pkg === null) await page.route(`**${api}`, () => new Promise(() => {}));
   if (options.comparables === null) await page.route(`**${api}/comparables`, () => new Promise(() => {}));
-  await page.goto(`/packages/${encodeURIComponent(ref)}`);
+  await page.goto(`/packages/${encodeURIComponent(ref)}${options.evidence ? `?evidence=${encodeURIComponent(ICR_54)}` : ""}`);
 }
 
 const section = (page: Page) => page.locator("[data-past-range]");
@@ -1006,6 +1016,41 @@ test("below 768 px the section's sentence leads the chart in the page's order, s
     return summary.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING;
   });
   expect(order).toBeTruthy();
+});
+
+// DESIGN.md section 4: under the band a page lays out by the page area's width, because the
+// evidence drawer narrows it. At 1024 px the drawer takes 410 px and leaves a 614 px page area, so
+// the workspace shows what a 614 px window shows: a header that does not stick, facts in two
+// columns, the sentence before the chart, the reset button in the helper's place and the table as cards.
+test("at 1024 px with the evidence drawer open, the workspace lays out as its page area is wide, not the window", async ({ page }) => {
+  await openPackage(page, { width: 1024, evidence: true });
+  await ready(page);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(614);
+
+  const layout = await page.evaluate(() => {
+    const summary = document.querySelector("[data-summary]")!;
+    const chart = document.querySelector("[data-chart-figure]")!;
+    return {
+      summaryFirst: Boolean(summary.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING),
+      header: getComputedStyle(document.querySelector("[data-package-header]")!).position,
+      factColumns: getComputedStyle(document.querySelector("[data-package-facts]")!).gridTemplateColumns.split(" ").length,
+      scrollPadding: document.documentElement.style.scrollPaddingTop,
+      resets: [...document.querySelectorAll("[data-plan-reset]")].map((el) => getComputedStyle(el).display),
+      scrollWidth: document.documentElement.scrollWidth,
+    };
+  });
+  expect(layout.summaryFirst).toBe(true);
+  expect(layout.header).not.toBe("sticky");
+  expect(layout.scrollPadding).toBe("");
+  expect(layout.factColumns).toBe(2);
+  // The input row's button is display: none; the helper's place keeps the other.
+  expect(layout.resets).toEqual(["none", "block"]);
+  expect(layout.scrollWidth).toBeLessThanOrEqual(1024);
+
+  await section(page).getByRole("button", { name: "Show the table" }).click();
+  await expect(section(page).locator("[data-table-view=cards]")).toBeVisible();
+  await expect(section(page).locator("[data-table-view=table]")).toBeHidden();
 });
 
 test("a plan row with no planned dates has no plan line until you type months", async ({ page }) => {

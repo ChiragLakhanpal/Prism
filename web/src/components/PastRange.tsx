@@ -12,7 +12,11 @@
 // column count the returned rows signed within the line's months; the title states the finding at
 // the plan row's own months, as the tool counted it. Below 768 px the summary comes before the chart
 // in the page's order, so the sentence leads and focus never jumps.
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
+//
+// Every width here is the page area's, not the window's, since the evidence drawer narrows it
+// (DESIGN.md section 4): the classes are container queries on the page column (@md/page:, @lg/page:),
+// and the summary's place follows the page column's width too.
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
@@ -44,20 +48,27 @@ export type PastRangeState =
   | { status: "error"; error: ApiError | null; retrying: boolean; attempt: number; onRetry: () => void }
   | { status: "ready"; result: ComparablesResult };
 
-function useNarrow(): boolean {
-  const query = "(width < 48rem)";
-  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia(query).matches);
-  useEffect(() => {
-    const list = window.matchMedia(query);
-    const update = () => setNarrow(list.matches);
+// Whether the page area is narrower than 48rem, the width @md/page: starts at. It measures the page
+// column around the element (the app's and the gallery's Frame both have one), or the window where
+// there is none. The first guess is the window's, and the page column's width replaces it before the
+// first paint, so the summary never moves on screen.
+function usePageNarrow(element: RefObject<HTMLElement | null>): boolean {
+  const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(width < 48rem)").matches);
+  useLayoutEffect(() => {
+    const column = element.current?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
+    const update = () => {
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      setNarrow(column.clientWidth < 48 * rem);
+    };
     update();
-    list.addEventListener("change", update);
-    return () => list.removeEventListener("change", update);
-  }, []);
+    const observer = new ResizeObserver(update);
+    observer.observe(column);
+    return () => observer.disconnect();
+  }, [element]);
   return narrow;
 }
 
-function useWidth<T extends HTMLElement>(): [Ref<T>, number] {
+function useWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
   const element = useRef<T>(null);
   const [width, setWidth] = useState(0);
   useLayoutEffect(() => {
@@ -81,7 +92,7 @@ export function PastRange({ state, headingRef }: { state: PastRangeState; headin
       aria-labelledby={headingId}
       aria-busy={loading || undefined}
       data-past-range={state.status === "ready" ? kind(state.result) : state.status}
-      className="rounded-md border border-line bg-surface p-4 md:p-6"
+      className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
     >
       <p className="text-label text-ink-muted uppercase">{words.eyebrow}</p>
       <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-h2 text-ink-heading focus:outline-none">
@@ -345,7 +356,7 @@ function Populated({ result }: { result: ComparablesResult }) {
   const [tableOpen, setTableOpen] = useState(abstained);
   const [page, setPage] = useState(0);
   const [measure, width] = useWidth<HTMLDivElement>();
-  const narrow = useNarrow();
+  const narrow = usePageNarrow(measure);
   const inputRef = useRef<HTMLInputElement>(null);
   const captionRef = useRef<HTMLSpanElement>(null);
   const axisTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -743,14 +754,14 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {resetButton("hidden md:inline", false)}
+        {resetButton("hidden @md/page:inline", false)}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
       <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
         {invalid && w.invalid(whole(maxMonths))}
       </p>
-      <div className="grid md:block">
-      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible md:visible")}>
+      <div className="grid @md/page:block">
+      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible @md/page:visible")}>
         {notice && signing ? (
           // Plain plan values, so they carry no popover (ticket 10's rule); the months worked out from them do.
           <Fill template={w.helper} slots={{ notice: <Num date={notice} />, signing: <Num date={signing} /> }} />
@@ -760,7 +771,7 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
-      {resetButton("col-start-1 row-start-1 self-start md:hidden", true)}
+      {resetButton("col-start-1 row-start-1 self-start @md/page:hidden", true)}
       </div>
     </div>
   );
@@ -787,10 +798,10 @@ function ComparablesTable({
   const paged = total > result.thresholds.quantile_dots_above;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
-  // From 1024 px a STEP reference keeps to one line, and the Months head's definition to two lines.
+  // From a page area of 1024 px a STEP reference keeps to one line, and the Months head's definition to two lines.
   const columns: Column[] = [
-    { key: "package", header: t.columns.package, width: "w-[30%] lg:w-[15.25rem]" },
-    { key: "country", header: t.columns.country, short: true, width: "lg:w-[5.5rem]" },
+    { key: "package", header: t.columns.package, width: "w-[30%] @lg/page:w-[15.25rem]" },
+    { key: "country", header: t.columns.country, short: true, width: "@lg/page:w-[5.5rem]" },
     { key: "notice", header: t.columns.notice, short: true },
     { key: "signed", header: t.columns.signed, short: true },
     {
@@ -810,15 +821,15 @@ function ComparablesTable({
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
     cells: {
-      // A reference with no spaces keeps to one line from 1024 px; one with a county's name wraps at its spaces.
+      // A reference with no spaces keeps to one line from a page area of 1024 px; one with a county's name wraps at its spaces.
       package: (
-        <span className={cx("font-mono wrap-anywhere", !row.step_reference.includes(" ") && "lg:whitespace-nowrap lg:wrap-normal")}>
+        <span className={cx("font-mono wrap-anywhere", !row.step_reference.includes(" ") && "@lg/page:whitespace-nowrap @lg/page:wrap-normal")}>
           {row.step_reference}
         </span>
       ),
       country: row.country_name ?? copy.notInRecord,
-      notice: <span className="lg:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
-      signed: row.signed_on ? <span className="lg:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
+      notice: <span className="@lg/page:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
+      signed: row.signed_on ? <span className="@lg/page:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
       months: months1(row.months),
       within: plan === null ? null : row.still_open ? (row.months <= plan ? t.notYet : t.no) : row.months <= plan ? t.yes : t.no,
     },
@@ -866,30 +877,30 @@ function PastRangeSkeleton() {
   // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
     <div ref={measure} aria-hidden="true" className="mt-4" data-past-range-skeleton>
-      <SkeletonText className="pb-2 md:hidden" widths={lines(3)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
-      <SkeletonText className="hidden pb-2 md:flex" widths={lines(2)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
-      <SkeletonText className="mt-2 pb-2 text-body md:hidden" widths={lines(7, "w-2/5")} />
-      <SkeletonText className="mt-2 md:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
-      <SkeletonLine className="mt-2 hidden md:flex" width="w-4/5" style={{ fontSize: type.m }} />
+      <SkeletonText className="pb-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
+      <SkeletonText className="hidden pb-2 @md/page:flex" widths={lines(2)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
+      <SkeletonText className="mt-2 pb-2 text-body @md/page:hidden" widths={lines(7, "w-2/5")} />
+      <SkeletonText className="mt-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
+      <SkeletonLine className="mt-2 hidden @md/page:flex" width="w-4/5" style={{ fontSize: type.m }} />
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SkeletonLine className="text-small" width="w-28" />
         <Skeleton className="h-11 w-[88px] rounded-md" />
       </div>
       <span className="mt-1 block min-h-[1.5em] text-caption" />
       {/* Below 768 px the helper's place holds the reset button too, so it is at least 44 px tall. */}
-      <SkeletonText className="min-h-11 text-caption md:hidden" widths={lines(2)} />
-      <SkeletonLine className="hidden text-caption md:flex" width="w-3/5" />
+      <SkeletonText className="min-h-11 text-caption @md/page:hidden" widths={lines(2)} />
+      <SkeletonLine className="hidden text-caption @md/page:flex" width="w-3/5" />
       <div className="mt-4" style={{ height: CHART_HEIGHT }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
-      <SkeletonText className="mt-4 hidden pb-2 text-body md:flex" widths={lines(3, "w-2/5")} />
+      <SkeletonText className="mt-4 hidden pb-2 text-body @md/page:flex" widths={lines(3, "w-2/5")} />
       <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
-        <SkeletonText className="md:hidden" widths={lines(3)} />
-        <SkeletonText className="hidden md:flex" widths={lines(2)} />
-        <SkeletonText className="pb-2 text-small md:hidden" widths={lines(6)} />
-        <SkeletonText className="hidden pb-2 text-small md:flex" widths={lines(2)} />
-        <SkeletonText className="md:hidden" widths={lines(4)} />
-        <SkeletonText className="hidden md:flex" widths={lines(2)} />
+        <SkeletonText className="@md/page:hidden" widths={lines(3)} />
+        <SkeletonText className="hidden @md/page:flex" widths={lines(2)} />
+        <SkeletonText className="pb-2 text-small @md/page:hidden" widths={lines(6)} />
+        <SkeletonText className="hidden pb-2 text-small @md/page:flex" widths={lines(2)} />
+        <SkeletonText className="@md/page:hidden" widths={lines(4)} />
+        <SkeletonText className="hidden @md/page:flex" widths={lines(2)} />
       </div>
       <span className="mt-4 block h-11" />
     </div>

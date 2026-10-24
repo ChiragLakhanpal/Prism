@@ -7,7 +7,9 @@
 // One narrative column: columns 1 to 8 of the grid from 1200 px, leaving the right side for the
 // evidence drawer that ticket 15 opens, and all 12 below that. The header (the package's
 // Description as the h1 and its STEP reference) sticks from 768 px, and the page keeps scroll
-// padding at its height plus 16 px, so a focused dot or link is never hidden under it. Later tickets
+// padding at its height plus 16 px, so a focused dot or link is never hidden under it. Every width
+// on this page is the page area's, not the window's, since the evidence drawer narrows it (DESIGN.md
+// section 4): its breakpoints are container queries on the page column (@md/page:). Later tickets
 // add sections below section 1 in the PPSD's order.
 import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
@@ -59,8 +61,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
               <span className="sr-only">{stepRef}</span>
               {/* A Description takes four lines or so below 768 px, and two above, since most STEP
                   descriptions are longer than one line of the h1. */}
-              <SkeletonText className="md:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
-              <SkeletonText className="hidden md:flex" widths={["w-full", "w-2/5"]} />
+              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
+              <SkeletonText className="hidden @md/page:flex" widths={["w-full", "w-2/5"]} />
             </>
           }
           reference={<SkeletonLine width="w-48" />}
@@ -137,7 +139,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     <EightColumns breakpoint="xl">
       <div data-package-page={load.status}>
         {/* Below 768 px the trail shows its parent, the project, whose name takes two lines; it holds them while loading. */}
-        <div className={load.status === "loading" ? "min-h-[2lh] text-caption md:min-h-0" : undefined}>
+        <div className={load.status === "loading" ? "min-h-[2lh] text-caption @md/page:min-h-0" : undefined}>
           <Breadcrumb trail={crumbs} />
         </div>
         <div className="mt-4">{body}</div>
