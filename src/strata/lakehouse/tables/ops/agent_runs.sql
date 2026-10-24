@@ -11,7 +11,9 @@
 -- view                           staff, piu or public
 -- language                       the language the answer was asked in: en, fr, es or pt
 -- status                         answered, or failed
--- error_code                     why a failed run stopped, as its error event says
+-- error_code                     why a failed run stopped: a code from ERROR_CODES as its error event
+--                                says, stopped when the viewer left before the done event, or
+--                                no_answer when the runner ended with no claims
 -- agent, agent_version           the Foundry agent that answered, and its version when known
 -- tool_rounds                    rounds of tool calls that ran, at most agent.tool_rounds
 -- tool_calls                     JSON: each call with its round, tool, arguments, rows and abstention,

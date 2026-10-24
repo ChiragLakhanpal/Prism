@@ -268,8 +268,8 @@ export const copy = {
         joined: "the quote is not on the page it cited",
       },
       quote_not_in_sentence: {
-        item: "It cited a quote that the sentence does not show.",
-        joined: "it cited a quote that the sentence did not show",
+        item: "It cited a quote but did not show the quoted words.",
+        joined: "it cited a quote but did not show the quoted words",
       },
     },
   },
