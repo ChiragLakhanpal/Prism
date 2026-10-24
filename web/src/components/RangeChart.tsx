@@ -385,6 +385,8 @@ export function RangeChart({
   const onWrapperKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== "Escape" || drag) return;
     if (shown !== null) {
+      // A dot waiting for its 100 ms rest doesn't take the tooltip back after Escape.
+      clearTimeout(restTimer.current);
       setDismissed(shown);
       event.preventDefault();
     }
@@ -395,7 +397,9 @@ export function RangeChart({
   useEffect(() => {
     if (hovered === null) return;
     const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") setDismissed(hovered);
+      if (event.key !== "Escape") return;
+      clearTimeout(restTimer.current);
+      setDismissed(hovered);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

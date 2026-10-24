@@ -537,6 +537,14 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
     await page.mouse.move(above.x, above.y, { steps: 4 });
     await page.waitForTimeout(150);
     await expect(tip, `${width} px, resting on the dot above`).toContainText(await name(column[column.length - 2]));
+
+    // Escape pressed before that rest is over hides the tooltip, and no dot takes it after.
+    await page.mouse.move(from.x, from.y, { steps: 4 });
+    await expect(tip).toContainText(await name(bottom));
+    await page.mouse.move(above.x, above.y, { steps: 4 });
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    await expect(tip, `${width} px, after Escape`).toHaveCount(0);
   }
 });
 
