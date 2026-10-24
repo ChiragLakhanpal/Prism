@@ -79,7 +79,7 @@ Run this command from the main checkout, and then run it a second time:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Since ticket 13 merged, it also lists `strata.ops.agent_runs` as new, where each answer's run is logged. Since ticket 14 merged, it also lists `strata.ops.evidence_opened` as new, where the App records which sources each viewer opened. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
+It worked if both runs exit 0. The first run lists the catalog, the four schemas, `strata.bronze.files`, `strata.ops.pipeline_runs`, the grants and the job as new. Since ticket 08 merged, it also lists that ticket's 13 tables in `strata.bronze`, `strata.silver` and `strata.ops` as new. Since ticket 07 merged, it also lists that ticket's 13 tables as new: `strata.bronze.api_pages`, `strata.silver.awards`, `strata.silver.notices` (with its `fiscal_year` column), `strata.silver.projects`, `strata.silver.project_loans`, and the eight gold tables `strata.gold.country`, `project`, `project_loan`, `package`, `notice`, `contract`, `contract_supplier` and `supplier`. The line "Each of these exists now" also names the view `strata.silver.awards_current`, and `strata.ops.data_readiness` is created with ticket 07's `as_of` and `detail` columns. Since ticket 17 merged, it also lists that ticket's 12 tables as new: `strata.silver.awards_fy2001_2016`, `ieg_ratings`, `loans`, `loan_history`, `indicators` and `project_isr_ratings`, `strata.gold.ieg_rating`, `loan`, `project_closing_date`, `governance_score` and `project_isr_rating`, and `strata.ops.table_sizes`. It also creates `strata.gold.contract` keyed by `contract_id`, with `wb_contract_number` allowed to be empty, `strata.silver.awards` with `market_approach`, `strata.silver.notices` and `strata.gold.notice` with `contract_fiscal_year`, and `strata.silver.projects` and `strata.gold.project` with `major_sector_code`, `sector` and `sector_name`. Since ticket 13 merged, it also lists `strata.ops.agent_runs` as new, where each answer's run is logged. Since ticket 14 merged, it also lists `strata.ops.evidence_opened` as new, where the App records which sources each viewer opened. Since ticket 19 merged, it also lists that ticket's six tables as new (`strata.silver.notice_bidders` and `supplier_resolution`, and `strata.ops.supplier_pairs`, `supplier_review_decisions`, `supplier_pair_labels` and `supplier_match_quality`) and creates the view `strata.ops.supplier_review_list`. Ticket 19's step 1 below gives the three ALTER TABLE lines for `strata.gold.contract_supplier` and `strata.gold.supplier` when an earlier deploy made them. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so if an earlier deploy already made one of these tables, add its missing columns with `ALTER TABLE ... ADD COLUMNS` before the job runs. The second run prints "No changes.". Each run also prints "fairshare's catalog lists the same before and after the deploy: ..." (criteria 1 and 7). If fairshare's catalog has another name, add `--fairshare-catalog <name>`.
 
 ## Ticket 04, step 2 of 4: run the nightly job by hand
 
@@ -502,3 +502,87 @@ Run this in the workspace's SQL editor:
     SELECT viewer_id, evidence_id, times_opened FROM strata.ops.evidence_opened WHERE evidence_id = 'strata.gold.passage:31525018/v1/54'
 
 It worked if it returns one row for your user id with `times_opened` 1 (criterion 5, live write). Then press Escape to close the drawer, click [1] again and run the query again. It must still return one row for you, now with `times_opened` 2. This proves the MERGE runs on Delta as the App's own service principal. If the first query returns no row, check that the deploy's step 6 ran ("Letting the app's own service principal write usage events, agent runs and opened sources to strata.ops."), and that the address has no `?view=`, because a preview of another view records nothing.
+
+## Ticket 19, step 1 of 5: deploy the bundle with the supplier tables
+
+The merger parked this step on October 24, 2026, after merge commit a7bcc99. It needs the Databricks keys in `.env`. Ticket 04's step 1 runs the same deploy. Run it again here if that deploy came from a commit before a7bcc99, because the supplier tables arrived in this merge.
+
+If an earlier deploy already made `strata.gold.contract_supplier` and `strata.gold.supplier`, change them first in the workspace's SQL editor. `CREATE TABLE IF NOT EXISTS` leaves a table that exists as it is, so the deploy will not add these columns or drop the NOT NULL:
+
+    ALTER TABLE strata.gold.contract_supplier ADD COLUMNS (contract_id STRING)
+    ALTER TABLE strata.gold.contract_supplier ALTER COLUMN wb_contract_number DROP NOT NULL
+    ALTER TABLE strata.gold.supplier ADD COLUMNS (resolved_on STRING)
+
+Delta adds a new column to a table that holds rows as nullable. Step 2 sets NOT NULL on `contract_id` and `resolved_on` once the nightly job has filled them.
+
+Then run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if it exits 0 and lists these six tables as new: `strata.silver.notice_bidders`, `strata.silver.supplier_resolution`, `strata.ops.supplier_pairs`, `strata.ops.supplier_review_decisions` (with `left_name` and `right_name`), `strata.ops.supplier_pair_labels` and `strata.ops.supplier_match_quality`. The line "Each of these exists now" must also name the view `strata.ops.supplier_review_list`. Then `SHOW CREATE TABLE strata.gold.contract_supplier` must show `contract_id` and no NOT NULL on `wb_contract_number`, and `SHOW CREATE TABLE strata.gold.supplier` must show `resolved_on`.
+
+## Ticket 19, step 2 of 5: one nightly run resolves the suppliers on Databricks
+
+The merger parked this step on October 24, 2026, after merge commit a7bcc99. Run it after step 1. It needs the Databricks keys in `.env`. Ticket 04's step 2 runs the same command, and one run after step 1 covers both.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+Then run these in the workspace's SQL editor:
+
+    SELECT resolved_on, count(*) AS n FROM strata.silver.supplier_resolution GROUP BY resolved_on
+    SELECT route, review_reason, count(*) AS n FROM strata.ops.supplier_pairs GROUP BY route, review_reason
+
+It worked if the job run exits 0 with its line "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That shows serverless installed `splink==5.0.0` for `bronze_to_gold`. The first query must return rows for both `step_supplier_id` and `name`, and the second must return rows. Until ticket 43 passes `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` to `bronze_to_gold`, every pair in the uncertain middle reads route `person` with `no_model`. That is expected, and step 5 checks the model.
+
+If step 1 ran the ALTER TABLE lines, finish them now:
+
+    ALTER TABLE strata.gold.contract_supplier ALTER COLUMN contract_id SET NOT NULL
+    ALTER TABLE strata.gold.supplier ALTER COLUMN resolved_on SET NOT NULL
+
+Both must succeed. The job's MERGE fills `resolved_on` on every supplier it keeps and writes `contract_id` on every contract_supplier row it keeps, so a failure here means a row the job did not rewrite. Do not delete rows to make it pass; tell the orchestrator.
+
+## Ticket 19, step 3 of 5: a reviewer's decision through the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit a7bcc99. Run it after step 2, because the review list shows the pairs of the latest run, and after ticket 09's step 1 (user authorization). It needs the Databricks keys in `.env`. The App deploy grants the App's own service principal SELECT on `strata.ops.supplier_pairs`, and SELECT and MODIFY on `strata.ops.supplier_review_decisions` and `strata.ops.supplier_pair_labels`. Ticket 06's step 1 runs the same deploy. Run it again here if that deploy came from a commit before a7bcc99.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Sign in to the App in a browser and open `<App url>/api/suppliers/review`. Pick one pair and copy its `pair_id`. Decide it from the two names, countries and contracts shown, because the next nightly run applies your decision. Then, in the same tab, open the browser's console and run this, with `merge` or `no_merge` as you decided and a reason in your own words:
+
+    await (await fetch("/api/suppliers/review", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({pair_id: "<that pair>", decision: "no_merge", reason: "<why>"})})).json()
+
+It worked if the POST answers `{"recorded": true}`. Then run this in the workspace's SQL editor:
+
+    SELECT reviewer, decision, left_name, right_name FROM strata.ops.supplier_review_decisions WHERE pair_id = '<that pair>'
+
+It must return one row whose reviewer is your user id, as `<App url>/api/me` shows it, with your decision and the pair's two names (criterion 4, live half). A 401 `no_identity` means the App got no forwarded viewer, so check ticket 09's step 1. A 503 `not_recorded` means the App has no service principal of its own.
+
+## Ticket 19, step 4 of 5: the live judge on the fixture's uncertain pairs
+
+The merger parked this step on October 24, 2026, after merge commit a7bcc99. It needs `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`, and the fixture database at `data/out/fixture.duckdb`, which the gate builds. It writes nothing to any database.
+
+Run this from the main checkout, then review the diff and run the gate:
+
+    uv run --frozen python ops/suppliers/judge_live.py --env-file .env --record
+    git diff tests/fixtures/azure/supplier_judge.json
+    .githooks/pre-commit
+
+The builder's note gave `uv run --script` for the first line. The script has no inline dependencies and imports Strata, so it runs in the project's environment, as its docstring says. It worked if it exits 0 and prints three judged pairs, each with the deployment's merge or no merge, and `tests/fixtures/azure/supplier_judge.json` then says `"recorded": true` (criterion 3, live half). The gate must then pass, because the adapter test replays the new recording. If it passes, commit the recording on a branch. Exit 1 means the model gave no judgement in the asked-for shape. Exit 2 means it could not ask, and the line it prints says why.
+
+## Ticket 19, step 5 of 5: the nightly job asks the draft role's deployment
+
+The merger parked this step on October 24, 2026, after merge commit a7bcc99. Run it after steps 1 and 2, and only after ticket 43 passes `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` to the `bronze_to_gold` task. Until then the job has no model to ask.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+Then run this in the workspace's SQL editor:
+
+    SELECT DISTINCT model FROM strata.ops.supplier_pairs WHERE decided_by = 'model' OR review_reason = 'model_unsure'
+
+It worked if the job run exits 0 and at least one row names `gpt-5.4`, the draft role's deployment in `config/models.toml`. If the query returns no rows and the middle pairs still read `no_model`, the task did not get the Azure OpenAI keys.
