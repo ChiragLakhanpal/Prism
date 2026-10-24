@@ -1,0 +1,432 @@
+{
+  "item_id": "new-64ec0401e3",
+  "kind": "new",
+  "stage": "decision",
+  "group": "you",
+  "statement": "Get land and forest permits before awarding works contracts",
+  "source": {
+    "evidence_id": "strata.gold.passage:31525018/v1/55",
+    "passage_id": "31525018/v1/55",
+    "role": "source",
+    "doc_type": "Implementation Completion and Results Report",
+    "doc_short": "ICR",
+    "pid": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "date": "2019-10-10",
+    "report_number": "ICR4803",
+    "locator": {
+      "kind": "paragraph",
+      "text": "55"
+    },
+    "page": 23,
+    "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+    "restated_by_ieg": false,
+    "highlight": [
+      72,
+      168
+    ]
+  },
+  "region": "South Asia",
+  "project": {
+    "pid": "P130164",
+    "name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "sector": "Transportation"
+  },
+  "ieg_status": "not_restated",
+  "review_date": "2023-05-04",
+  "may_repeat": true,
+  "clock": {
+    "day": 3,
+    "limit_days": 10,
+    "start_on": "2026-10-23",
+    "due_on": "2026-11-05",
+    "overdue_days": 0,
+    "last_day": false
+  },
+  "recommendation": {
+    "name": "Omar Haddad",
+    "role": "lead procurement specialist",
+    "phrase": "repeat",
+    "on": "2026-10-27",
+    "reason": "It gives the same advice as IEG's lesson.",
+    "region": "South Asia",
+    "repeat_of": "lesson-cfdf000a46",
+    "change": null
+  },
+  "origin": null,
+  "decided": null,
+  "can": {
+    "act": "decide",
+    "reason_code": null,
+    "values": {}
+  },
+  "read_only": false,
+  "evidence": [
+    {
+      "evidence_id": "strata.gold.passage:31525018/v1/55",
+      "passage_id": "31525018/v1/55",
+      "role": "source",
+      "doc_type": "Implementation Completion and Results Report",
+      "doc_short": "ICR",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "date": "2019-10-10",
+      "report_number": "ICR4803",
+      "locator": {
+        "kind": "paragraph",
+        "text": "55"
+      },
+      "page": 23,
+      "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+      "restated_by_ieg": false,
+      "highlight": [
+        72,
+        168
+      ],
+      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+      "language": "en",
+      "excerpt": {
+        "text": "To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+        "highlight": [
+          68,
+          164
+        ],
+        "starts_inside": false,
+        "ends_inside": false
+      }
+    }
+  ],
+  "ieg_note": {
+    "kind": "alone",
+    "review_date": "2023-05-04"
+  },
+  "tags": {
+    "risk_factors": [
+      {
+        "key": "permits_before_award",
+        "label": "Land, forest and other permits not in place before award"
+      }
+    ],
+    "stage": {
+      "key": "contract_award",
+      "label": "Contract award"
+    },
+    "kind": {
+      "key": "did_not_work",
+      "label": "What didn't work"
+    },
+    "edition": {
+      "key": "guidelines_2011",
+      "name": "the World Bank's Procurement Guidelines of January 2011",
+      "short": "Procurement Guidelines, January 2011"
+    },
+    "sector": "Transportation"
+  },
+  "lesson": {
+    "lesson_id": null,
+    "version": null,
+    "next_version": null
+  },
+  "summary": {
+    "status": "ready",
+    "sentences": [
+      {
+        "index": 0,
+        "text": "The ICR said that \"Some of the road works were dropped\" because the permits were not in place.",
+        "kind": "quote",
+        "evidence_ids": [
+          "strata.gold.passage:31525018/v1/55"
+        ],
+        "numbers": [],
+        "dates": [],
+        "quote": {
+          "text": "Some of the road works were dropped",
+          "evidence_id": "strata.gold.passage:31525018/v1/55"
+        }
+      }
+    ],
+    "evidence": {
+      "strata.gold.passage:31525018/v1/55": {
+        "id": "strata.gold.passage:31525018/v1/55",
+        "kind": "passage",
+        "tool": "lesson_review",
+        "stratum": "Why",
+        "short_name": "ICR",
+        "row": {
+          "passage_id": "31525018/v1/55",
+          "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+          "kind": "paragraph",
+          "language": "en",
+          "document_type": "Implementation Completion and Results Report",
+          "project_id": "P130164",
+          "paragraph": "55",
+          "pdf_page": 23,
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "document_date": "2019-10-10",
+            "report_number": "ICR4803",
+            "paragraph": "55",
+            "pdf_page": 23
+          }
+        },
+        "highlights": [
+          {
+            "sentence": 0,
+            "start": 170,
+            "end": 205
+          }
+        ]
+      },
+      "strata.ops.lesson_versions:lesson-cfdf000a46/v1": {
+        "id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "lesson_id": "lesson-cfdf000a46",
+          "version": 1,
+          "statement": "Put forest and other permits in place before awarding contracts",
+          "decided_on": "2026-10-27"
+        },
+        "highlights": []
+      },
+      "strata.gold.passage:34056616/v2/12": {
+        "id": "strata.gold.passage:34056616/v2/12",
+        "kind": "passage",
+        "tool": "lesson_review",
+        "stratum": "Why",
+        "short_name": "ICR Review",
+        "row": {
+          "passage_id": "34056616/v2/12",
+          "text": "12. Lessons The ICR provided the following lessons (presented here with some minor modifications):  Lack of full endorsement of programs by the key decision makers at preparation can negatively affect project outcomes. The introduction of new systems required endorsement from relevant stakeholders early on during implementation process to ensure ownership. For example, full operationalization of the Road Asset Management System (RAMS) did not occur by project closure because of the lack of buy-in from the Finance Department and the Public Works Department.  The implementation of efficient business processes is likely to benefit from additional preliminary studies. Sound preparation before project approval with studies carried out to showcase the relevance of proposed activities to achieve specific outcomes (such as the need to develop a proper Road Asset Management System), is best practice. In-depth upstream discussions/workshops with the client – in particular the finance and technical departments, should also be considered for most projects.  The mutation process (that is the actual transfer of the land title ownership and not just of the land use or destination) for the donated land is difficult, so clear guidelines need to be developed. Some commendable work was done in the project to make sure that the land ownership was legally transferred. This knowledge can be replicated in future projects in Rajasthan or possibly other states in India. IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts. The project experience shows that some of the road works were dropped due to forest clearance issues.",
+          "kind": "paragraph",
+          "language": "en",
+          "document_type": "Implementation Completion Report Review",
+          "project_id": "P130164",
+          "paragraph": "12",
+          "pdf_page": 14,
+          "source": {
+            "document_type": "Implementation Completion Report Review",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "document_date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "paragraph": "12",
+            "pdf_page": 14
+          }
+        },
+        "highlights": []
+      }
+    },
+    "checks": {
+      "checks_run": [
+        1,
+        2,
+        3
+      ],
+      "sentences": {
+        "written": 2,
+        "kept": 2,
+        "removed": 0
+      },
+      "numbers": {
+        "total": 0,
+        "matched": 0
+      },
+      "dates": {
+        "total": 0,
+        "matched": 0
+      },
+      "quotes": {
+        "total": 1,
+        "found": 1
+      },
+      "sources": {
+        "total": 3,
+        "returned": 3
+      },
+      "tools": [
+        "lesson_review"
+      ]
+    },
+    "removed": []
+  },
+  "repeats": [
+    {
+      "lesson_id": "lesson-cfdf000a46",
+      "version": 1,
+      "statement": "Put forest and other permits in place before awarding contracts",
+      "risk_factors": [
+        {
+          "key": "permits_before_award",
+          "label": "Land, forest and other permits not in place before award"
+        }
+      ],
+      "stage": {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      "kind": {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      },
+      "edition": {
+        "key": "guidelines_2011",
+        "name": "the World Bank's Procurement Guidelines of January 2011",
+        "short": "Procurement Guidelines, January 2011"
+      },
+      "sector": "Transportation",
+      "pid": "P130164",
+      "ieg_status": "ieg_lesson",
+      "review_date": null,
+      "decided_on": "2026-10-27",
+      "state": "current",
+      "rechecking_since": null,
+      "region": "South Asia",
+      "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+      "evidence": [
+        {
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
+          "role": "source",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
+          "locator": {
+            "kind": "section",
+            "text": "12"
+          },
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
+        }
+      ],
+      "sentences": [
+        {
+          "index": 1,
+          "text": "IEG's own lesson in its ICR Review said the same about permits before contracts are awarded.",
+          "kind": "summary",
+          "evidence_ids": [
+            "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+            "strata.gold.passage:34056616/v2/12"
+          ],
+          "numbers": [],
+          "dates": [],
+          "quote": null
+        }
+      ],
+      "next_version": 2
+    }
+  ],
+  "history": [
+    {
+      "event": "proposed",
+      "on": "2026-10-23",
+      "doc_short": "ICR",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "published_on": "2019-11-02"
+    },
+    {
+      "event": "recommended",
+      "on": "2026-10-27",
+      "name": "Omar Haddad",
+      "role": "lead procurement specialist",
+      "region": "South Asia",
+      "outcome": "repeat",
+      "reason": "It gives the same advice as IEG's lesson.",
+      "changes": []
+    }
+  ],
+  "outcome": null,
+  "lists": {
+    "risk_factors": [
+      {
+        "key": "cost_estimates",
+        "label": "Cost estimates out of line with market prices"
+      },
+      {
+        "key": "permits_before_award",
+        "label": "Land, forest and other permits not in place before award"
+      },
+      {
+        "key": "procurement_capacity",
+        "label": "Too little procurement capacity in the implementing agency"
+      },
+      {
+        "key": "coordination",
+        "label": "Weak coordination between agencies"
+      },
+      {
+        "key": "market_response",
+        "label": "Few bids or a weak market response"
+      },
+      {
+        "key": "designs_and_specifications",
+        "label": "Incomplete designs or specifications"
+      },
+      {
+        "key": "evaluation_delays",
+        "label": "Slow bid evaluation or award"
+      },
+      {
+        "key": "contractor_performance",
+        "label": "Poor contractor performance"
+      },
+      {
+        "key": "contract_management",
+        "label": "Weak contract management"
+      }
+    ],
+    "stages": [
+      {
+        "key": "procurement_planning",
+        "label": "Procurement planning"
+      },
+      {
+        "key": "tender_design",
+        "label": "Tender design and packaging"
+      },
+      {
+        "key": "bidding_and_evaluation",
+        "label": "Bidding and evaluation"
+      },
+      {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      {
+        "key": "contract_management",
+        "label": "Contract management"
+      }
+    ],
+    "kinds": [
+      {
+        "key": "worked",
+        "label": "What worked"
+      },
+      {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      }
+    ]
+  },
+  "limits": {
+    "reason_max_chars": 500,
+    "statement_max_chars": 80,
+    "sample_percent": 10,
+    "summary_poll_seconds": 15,
+    "summary_poll_minutes": 10
+  }
+}

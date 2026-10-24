@@ -120,6 +120,8 @@ export const NON_COPY_PROPS = new Set([
   "textAnchor",
   "fill",
   "d",
+  // NoteSentences' type size: "small" in a draft, "body" in a lesson review's summary (ticket 29).
+  "textSize",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

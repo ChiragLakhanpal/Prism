@@ -6,7 +6,7 @@
 // whole paragraph in the evidence drawer.
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { excerpt, highlightsFor, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
+import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
 import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -25,8 +25,11 @@ export function SourceNumber({ n }: { n: number }) {
 }
 
 // A record's reference moves to the next line whole when it fits there, and breaks after its hyphens
-// only when it does not (DESIGN.md section 5, Page header; PageHeader.tsx's WithIds).
+// only when it does not (DESIGN.md section 5, Page header; PageHeader.tsx's WithIds). A lesson is titled by
+// its statement, in the title font: its id is Strata's own and means nothing to a reader.
 export function sourceTitle(evidence: EvidenceEvent) {
+  const lesson = lessonOf(evidence);
+  if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {
     const reference = <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
     return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference }} />;
@@ -60,6 +63,20 @@ export function sourceTitle(evidence: EvidenceEvent) {
 export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEvent; className?: string }) {
   const source = recordSource(evidence);
   const words = copy.evidence;
+  // "Source: Strata's lesson library, version 1, decided on October 27, 2026."
+  const lesson = lessonOf(evidence);
+  if (lesson) {
+    const version = <Num value={lesson.version} />;
+    return (
+      <Source className={className}>
+        {lesson.decidedOn ? (
+          <Fill template={words.lessonSource} slots={{ version, date: <Num date={lesson.decidedOn} /> }} />
+        ) : (
+          <Fill template={words.lessonSourceUndated} slots={{ version }} />
+        )}
+      </Source>
+    );
+  }
   const date = source.date ? <Num date={source.date} /> : null;
   const pid = <span className="font-mono">{source.pcode}</span>;
   return (
@@ -76,6 +93,7 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
 export function eyebrow(evidence: EvidenceEvent): string {
   // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
   if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
+  if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
   const stratum = evidence.kind === "record" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }

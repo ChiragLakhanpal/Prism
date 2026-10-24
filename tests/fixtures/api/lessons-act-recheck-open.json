@@ -1,0 +1,9 @@
+{
+  "status": 409,
+  "body": {
+    "code": "recheck_open",
+    "values": {
+      "on": "2026-10-28"
+    }
+  }
+}

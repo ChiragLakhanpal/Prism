@@ -1,8 +1,11 @@
-# The roles file: who sees what Strata keeps for a team (spec, "Ten single places": the roles file sits
-# beside the registries). strata.config.load_roles() reads it, and one server helper,
-# src/strata/server/access.py, applies it to every read of a draft (and later of an upload or a
-# package made from one), so there is one access rule (the 38 design brief, section 11). Tickets 29, 38
-# and 40 add reviewer groups, implementing agency teams and the [views] rules here.
+# The roles file: who sees what Strata keeps for a team, and who reviews lessons (spec, "Ten single
+# places": the roles file sits beside the registries). strata.config.load_roles() reads it. One server
+# helper, src/strata/server/access.py, applies its teams to every read of a draft (and later of an upload
+# or a package made from one), so there is one access rule (the 38 design brief, section 11). The lesson
+# review (src/strata/knowledge/lessons/review.py) applies its groups and people to the Lessons pages.
+# Later tickets add to it: query judges and passage reviewers (ticket 32), implementing agency teams
+# (ticket 38), a [views] section (ticket 40), the reviewing panel's group (ticket 41), each team's
+# working language (ticket 42) and an operators group (ticket 45).
 #
 # [teams.<key>], one team of World Bank staff that shares its drafts:
 #   name     the team's name
@@ -13,7 +16,46 @@
 # when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the
 # author was on their team. Changing who shares drafts is one line here, or a change of group membership
 # in the workspace, and it never hides anyone's own drafts from them.
+#
+# [groups.<key>], one reviewer group (ticket 29):
+#   workspace_group  the group's name in the Databricks workspace. Its members get no write access to
+#                    the review tables: the app writes every act as its own service principal and
+#                    names the person in the row. The names below wait for the workspace
+#                    (docs/workspace-catchup.md).
+#   role             what its members are called on reviewer pages, such as "lead procurement specialist"
+#   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review
+#   acts             what its members may do there: recommend, decide or cross_check a lesson
+#
+# [[people]], one per person in any reviewer group:
+#   email     the email the Databricks App forwards for them
+#   name      their name, shown only on reviewer-only pages (the 29 design brief, section 4.1)
+#   groups    the keys of the reviewer groups they belong to
+#   regions   the regions whose lessons they review, written word for word as strata.gold.project.region
+#             writes them, such as "South Asia" or "Eastern and Southern Africa"
+#   projects  the projects they work on, by project ID. They never recommend or decide on a lesson
+#             from one of these (recusal, docs/PLAN.md section 11).
+#
+# Lesson governance (docs/PLAN.md section 11): an accredited procurement specialist recommends, and a
+# lead procurement specialist decides, by delegation from the region's accredited practice manager.
+# A lead may also recommend, and then a different lead decides. Either may cross-check another
+# region's decisions when the quarterly job assigns them.
+#
+# The people are left out until the owner names them (a parked decision), so until then no one is a
+# lesson reviewer and the review queue stays hidden. tests/fixtures/roles.toml lists the made-up
+# reviewers the offline tests use.
 
 [teams.kenya-water]
 name = "Kenya water and sanitation"
 groups = ["strata-team-kenya-water"]
+
+[groups.accredited_procurement_specialist]
+workspace_group = "strata-accredited-procurement-specialists"
+role = "accredited procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "cross_check"]
+
+[groups.lead_procurement_specialist]
+workspace_group = "strata-lead-procurement-specialists"
+role = "lead procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "decide", "cross_check"]

@@ -1,0 +1,31 @@
+{
+  "lead": {
+    "both": "{you} {lessonsYou} {beYou} waiting for you, and {others} {beOthers} with other reviewers.",
+    "youOnly": "{you} {lessonsYou} {beYou} waiting for you.",
+    "othersOnly": "Nothing is waiting for you. {others} {lessonsOthers} {beOthers} with other reviewers.",
+    "oldest": " The oldest has used {day} of its {limit} business days.",
+    "overdue": " {overdue} {have} passed {itsTheir} {limit} business days."
+  },
+  "check": {
+    "dropped": "Every lesson here has a quote I found word for word on the page it cites. In the last {days} days I dropped {dropped} proposed {lessons} whose quote was not on {itsTheir} cited page.",
+    "none": "Every lesson here has a quote I found word for word on the page it cites. In the last {days} days, every lesson I proposed passed that check."
+  },
+  "forms": {
+    "lesson": {
+      "one": "lesson",
+      "many": "lessons"
+    },
+    "be": {
+      "one": "is",
+      "many": "are"
+    },
+    "have": {
+      "one": "has",
+      "many": "have"
+    },
+    "itsTheir": {
+      "one": "its",
+      "many": "their"
+    }
+  }
+}

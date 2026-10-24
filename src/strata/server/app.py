@@ -55,6 +55,18 @@
   the latest run found (404 unknown_pair), and is made as the app's own service principal; without it,
   nothing is recorded (503 not_recorded). No roles file names reviewers yet, so any signed-in viewer
   may decide.
+- The Lessons tab (ticket 29; src/strata/knowledge/lessons/review.py). GET /api/lessons/me says which
+  Lessons pages the viewer may open (tabs), from the roles file, and how many items wait in their regions.
+  GET /api/lessons?page= is the library: current lessons and those being re-checked, eight a page, newest
+  decision first, naming roles and never people. GET /api/lessons/review?page= is the review queue and
+  GET /api/lessons/review/{item_id} one item's review page; both answer 403 not_a_reviewer to anyone the
+  roles file does not name as a lesson reviewer. POST /api/lessons/review/{item_id}/recommend, /decide and
+  /cross-check record a reviewer's act, and POST /api/lessons/{lesson_id}/recheck asks for a re-check; each
+  is refused with a reason code (same_person, own_project, not_a_lead, other_region, same_region, stale,
+  recheck_open). Every read is the viewer's, with their own token; every act is written as the app's own
+  service principal, with the viewer the Databricks App forwarded recorded as the actor, so no reviewer
+  needs write access to the review record outside the app. Without the app's own identity, nothing is
+  recorded (503 not_recorded).
 - Every other address outside /api gets the built web app, when create_app is given one.
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
@@ -88,6 +100,7 @@ from strata.agent.verifier import answer_events, verify
 from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.knowledge.lessons.review import LessonReview, Refused
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
@@ -142,6 +155,22 @@ class LabelRequest(BaseModel):
     label: Literal["merge", "no_merge"]
 
 
+class LessonActRequest(BaseModel):
+    """A recommendation, decision or cross-check on a queue item. The person is the forwarded viewer, never a
+    field here; the server checks every value again."""
+
+    expected_stage: str = Field(min_length=1, max_length=32)  # the stage the person saw
+    outcome: str | None = Field(default=None, max_length=32)
+    repeat_of: str | None = Field(default=None, max_length=128)
+    change: dict | None = None  # the lesson editor's statement and tags
+    reason: str | None = Field(default=None, max_length=4000)
+    agree: bool | None = None  # a cross-check's answer
+
+
+class RecheckRequest(BaseModel):
+    reason: str = Field(max_length=4000)
+
+
 def current_viewer(request: Request) -> Viewer:
     return viewer_from_headers(request.headers)
 
@@ -174,7 +203,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                writers: Callable[[str], object | None] | None = None, access: Access | None = None,
                kinds: DraftKinds | None = None, today: Callable[[], dt.date] = registry.today,
                now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
-               new_draft_id: Callable[[], str] = new_draft_id) -> FastAPI:
+               new_draft_id: Callable[[], str] = new_draft_id, lessons: LessonReview | None = None,
+               lesson_writer: Callable[[], object | None] = lambda: None,
+               lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -185,7 +216,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     server log only. trace_ids reads the request's trace ids while its span is open. opened keeps the
     sources each viewer opened in the evidence drawer; without it, nothing is recorded. supplier_log
     keeps the decisions and labels people give candidate pairs of supplier name matching; without it,
-    none is recorded. web_dist is
+    none is recorded. lessons is the lesson review (strata.knowledge.lessons.review) with its roles file and
+    clock; without it, config/roles.toml and today. lesson_writer gives the lesson review writer agent, whose note on
+    an item the review page's "Try again" writes again; without it, there is none. lesson_record opens the
+    engine that writes the lesson review record as the app's own service principal; without it, no act is
+    recorded. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
 
@@ -197,6 +232,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
+    lessons = lessons or LessonReview(load_roles())
     web = web_dist.resolve() if web_dist is not None else None
 
     def web_file(path: str) -> Path | None:
@@ -461,6 +497,72 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.post("/api/suppliers/labels")
     def label_supplier_pair(body: LabelRequest, viewer: Viewer = Depends(current_viewer)):
         return write_about_a_pair(viewer, lambda log_, labeler: log_.label(body.pair_id, body.label, labeler))
+
+    # ── Lessons (ticket 29): the library, the review queue and the reviewers' acts ──
+
+    def lesson_read(what: str, viewer: Viewer, read: Callable[[Engine], object]):
+        """A Lessons read as the viewer, or the refusal the review gives: not_a_reviewer, unknown_item."""
+        def run(engine: Engine):
+            try:
+                return read(engine)
+            except Refused as refusal:
+                return refusal_response(refusal)
+        return read_for(what, viewer, run)
+
+    def refusal_response(refusal: Refused) -> JSONResponse:
+        return JSONResponse(refusal.body(), status_code=refusal.status, headers={"Cache-Control": "no-store"})
+
+    def lesson_write(what: str, viewer: Viewer, write: Callable[[Engine, Engine], dict]):
+        """A reviewer's act: read as the viewer, and written as the app's own service principal with the viewer
+        recorded as the actor, so the review record holds only acts the server allowed. Or why not."""
+        if not viewer.email:
+            return refused(401, "no_identity")
+        if lesson_record is None:
+            return refused(503, "not_recorded")
+
+        def run(engine: Engine):
+            record = lesson_record()
+            try:
+                return JSONResponse(write(engine, record), headers={"Cache-Control": "no-store"})
+            except Refused as refusal:
+                return refusal_response(refusal)
+            finally:
+                close = getattr(record, "close", None)
+                if callable(close):
+                    close()
+        return read_for(what, viewer, run)
+
+    @app.get("/api/lessons/me")
+    def lessons_me(viewer: Viewer = Depends(current_viewer)):
+        return lesson_read("the viewer's lesson tabs", viewer, lambda engine: lessons.me(engine, viewer))
+
+    @app.get("/api/lessons")
+    def lesson_library(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
+        return lesson_read("the lesson library", viewer, lambda engine: lessons.library(engine, viewer, page))
+
+    @app.get("/api/lessons/review")
+    def lesson_queue(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
+        return lesson_read("the lesson review queue", viewer, lambda engine: lessons.queue(engine, viewer, page))
+
+    @app.get("/api/lessons/review/{item_id}")
+    def lesson_review_item(item_id: str, viewer: Viewer = Depends(current_viewer)):
+        return lesson_read(f"lesson review item {item_id}", viewer, lambda engine: lessons.item(engine, viewer, item_id))
+
+    @app.post("/api/lessons/review/{item_id}/summary")
+    def rewrite_lesson_summary(item_id: str, viewer: Viewer = Depends(current_viewer)):
+        return lesson_write(f"the summary of {item_id}", viewer,
+                            lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record))
+
+    @app.post("/api/lessons/review/{item_id}/{verb}")
+    def lesson_review_act(item_id: str, verb: Literal["recommend", "decide", "cross-check"], body: LessonActRequest,
+                          viewer: Viewer = Depends(current_viewer)):
+        return lesson_write(f"a {verb} on {item_id}", viewer, lambda engine, record: lessons.act(
+            engine, viewer, item_id, verb.replace("-", "_"), body.model_dump(), record))
+
+    @app.post("/api/lessons/{lesson_id}/recheck")
+    def ask_for_a_recheck(lesson_id: str, body: RecheckRequest, viewer: Viewer = Depends(current_viewer)):
+        return lesson_write(f"a re-check of {lesson_id}", viewer,
+                            lambda engine, record: lessons.recheck(engine, viewer, lesson_id, body.reason, record))
 
     @app.get("/api/health")
     def health() -> dict:

@@ -248,6 +248,67 @@ fields = ["filter", "sources", "kinds", "gaps", "fixes", "routes", "headline", "
 reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
 
+[tools.get_lessons]
+description = """Returns the lessons in Strata's library: procurement lessons from Implementation Completion \
+and Results Reports (ICRs), ICR Reviews and Project Performance Assessment Reports (PPARs), each quoted word \
+for word with its page, that an accredited procurement specialist recommended and a different lead \
+procurement specialist decided. Each lesson is at its current version, with its statement, its risk factors, \
+stage and kind from fixed lists, the evidence ids of the passages its quotes are in, the edition of the \
+procurement rules its project followed, and ieg_status: ieg_lesson when IEG wrote it, restated when IEG's \
+review restated an ICR's lesson, not_restated when IEG's review is out and did not restate it, and awaiting \
+when IEG has not reviewed the project yet. Lessons are ranked by fit to your query, then by the strength of \
+their evidence, never by how often they were used; fit is the share of your query's words the lesson holds. \
+Cite a lesson by its evidence id and its version, and quote only its quotes, word for word."""
+adapter = "strata.tools.get_lessons:get_lessons"
+benchmark = "get-lessons-cost-estimates"
+sources = ["documents", "projects"]
+
+[tools.get_lessons.readiness]
+kind = "lessons"
+ready_for = { row = "reports", measure = "lessons_verified", counted_in = "strata.silver.lesson_proposals" }
+draws_on = ["reports", "projects"]
+
+[[tools.get_lessons.parameters]]
+name = "query"
+type = "string"
+required = false
+description = "What the lessons should be about, in words, such as works estimates market rates rebidding. Leave it out to rank by evidence alone."
+
+[[tools.get_lessons.parameters]]
+name = "risk_factor"
+type = "string"
+required = false
+description = "Only lessons tagged with this risk factor, by its key in the lesson lists, such as cost_estimates or permits_before_award."
+
+[[tools.get_lessons.parameters]]
+name = "stage"
+type = "string"
+required = false
+description = "Only lessons about this stage of procurement, by its key, such as procurement_planning or contract_award."
+
+[[tools.get_lessons.parameters]]
+name = "limit"
+type = "integer"
+required = false
+description = "How many lessons to return, from 1 to {lesson_review.get_lessons_max_results}. Leave it out for all of them, up to that many."
+
+[[tools.get_lessons.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only lesson versions decided on or before this date, with evidence from documents public \
+by then. Leave it out for today."""
+
+[tools.get_lessons.result]
+row = """One lesson at its current version: its statement, tags, edition, IEG's part in its evidence and each \
+quote it rests on, with its fit to the query and its rank."""
+row_fields = ["evidence_id", "public_from", "source", "lesson_id", "version", "statement", "risk_factors", "stage",
+              "kind", "edition", "ieg_status", "review_date", "evidence", "project", "decided_on", "fit", "rank"]
+source_fields = ["table", "lesson_id", "version", "decided_on", "project_id", "project_name"]
+fields = ["query", "filters", "ranking"]
+reasons = ["retired", "filtered_out", "ranked_below_limit"]
+abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
+
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan and returns their past \
 range: how long each took from its specific procurement notice to its signed contract. It reads notices and \

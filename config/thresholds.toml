@@ -219,3 +219,46 @@ interval_z = 1.959964
 # which is not two claims that cannot both be true. Source: ticket 20's review, round 2 (P2); 0.1
 # percent is a value for the owner to confirm, and 0 compares amounts exactly.
 amount_tolerance_share = 0.001
+
+# Lesson review (ticket 29; docs/PLAN.md section 11, "Lesson governance"). strata.knowledge.lessons reads
+# them, and the review routes return the ones a screen states, so no number is typed in code.
+[lesson_review]
+# A proposed lesson, or a re-check, must be decided within this many business days of entering the
+# queue, the recommendation and the decision together. Day 1 is the day it enters. Source: spec story
+# 91 and docs/PLAN.md section 11 ("decided within 10 business days").
+business_days = 10
+# The World Bank holidays the clock skips, besides Saturdays and Sundays, as dates such as 2026-12-25.
+# Source: none yet. The World Bank's holiday calendar could not be cited offline, so the list is empty
+# until the owner gives it (a parked decision), and the clock skips weekends only.
+holidays = []
+# A cross-check is due this many business days after the quarterly job assigns it. Source: none; the
+# same limit as a decision, a starting value for the owner to confirm.
+cross_check_business_days = 10
+# Each quarter, this share of the quarter's decisions goes to reviewers in another region to
+# cross-check, at least one when there was any decision. Source: spec story 94 and docs/PLAN.md
+# section 11 ("a quarterly 10% cross-check by another region").
+cross_check_share = 0.1
+# Waiting for review lists the decisions of the last this many days, with days from publication to
+# decision, the knowledge loop's leading indicator. Source: the 29 design brief, section 5.3.
+decided_window_days = 90
+# Waiting for review says how many proposed lessons the quote check dropped in the last this many
+# days. Source: the 29 design brief, section 5.3.
+quote_check_window_days = 30
+# The lesson review writer names at most this many current lessons a proposed lesson may repeat, and a
+# lead can merge it only into one of them. Source: the 29 design brief, section 4.2.
+likely_repeats_max = 3
+# A reviewer's reason, and a lesson's statement, are at most this many characters. Source: the 29
+# design brief, section 3.2 (brief 23's reason field and the lesson editor).
+reason_max_chars = 500
+statement_max_chars = 80
+# get_lessons returns at most this many lessons, best first. Source: none; a starting value for the owner
+# to confirm, as many lessons as one page of the library shows and more.
+get_lessons_max_results = 20
+# Lesson cards on one page of the library, and decisions on one page of the decided table. Source:
+# DESIGN.md section 5 (eight cards to a group at most) and the 29 design brief, section 2.4.
+library_page_size = 8
+decided_page_size = 20
+# While the writer's summary is still being written, the review page asks for it this often, for at
+# most this long. Source: the 29 design brief, section 5.7.
+summary_poll_seconds = 15
+summary_poll_minutes = 10

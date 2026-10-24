@@ -1,0 +1,424 @@
+{
+  "item_id": "new-e903b07ad1",
+  "kind": "new",
+  "stage": "decision",
+  "group": "you",
+  "statement": "Base works estimates on market rates to avoid rebidding",
+  "source": {
+    "evidence_id": "strata.gold.passage:31525018/v1/54",
+    "passage_id": "31525018/v1/54",
+    "role": "source",
+    "doc_type": "Implementation Completion and Results Report",
+    "doc_short": "ICR",
+    "pid": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "date": "2019-10-10",
+    "report_number": "ICR4803",
+    "locator": {
+      "kind": "paragraph",
+      "text": "54"
+    },
+    "page": 23,
+    "quote": "108 of 328 cases had to go through rebidding.",
+    "restated_by_ieg": false,
+    "highlight": [
+      149,
+      194
+    ]
+  },
+  "region": "South Asia",
+  "project": {
+    "pid": "P130164",
+    "name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "sector": "Transportation"
+  },
+  "ieg_status": "restated",
+  "review_date": null,
+  "may_repeat": false,
+  "clock": {
+    "day": 3,
+    "limit_days": 10,
+    "start_on": "2026-10-23",
+    "due_on": "2026-11-05",
+    "overdue_days": 0,
+    "last_day": false
+  },
+  "recommendation": {
+    "name": "Asha Raman",
+    "role": "accredited procurement specialist",
+    "phrase": "add",
+    "on": "2026-10-27",
+    "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
+    "region": "South Asia",
+    "repeat_of": null,
+    "change": null
+  },
+  "origin": null,
+  "decided": null,
+  "can": {
+    "act": "decide",
+    "reason_code": null,
+    "values": {}
+  },
+  "read_only": false,
+  "evidence": [
+    {
+      "evidence_id": "strata.gold.passage:31525018/v1/54",
+      "passage_id": "31525018/v1/54",
+      "role": "source",
+      "doc_type": "Implementation Completion and Results Report",
+      "doc_short": "ICR",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "date": "2019-10-10",
+      "report_number": "ICR4803",
+      "locator": {
+        "kind": "paragraph",
+        "text": "54"
+      },
+      "page": 23,
+      "quote": "108 of 328 cases had to go through rebidding.",
+      "restated_by_ieg": false,
+      "highlight": [
+        149,
+        194
+      ],
+      "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+      "language": "en",
+      "excerpt": {
+        "text": "Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+        "highlight": [
+          145,
+          190
+        ],
+        "starts_inside": false,
+        "ends_inside": false
+      }
+    },
+    {
+      "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+      "passage_id": "34056616/v2/10.b",
+      "role": "restatement",
+      "doc_type": "Implementation Completion Report Review",
+      "doc_short": "ICR Review",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "date": "2023-05-04",
+      "report_number": "ICRR0021929",
+      "locator": {
+        "kind": "section",
+        "text": "10.b"
+      },
+      "page": 13,
+      "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+      "restated_by_ieg": true,
+      "highlight": [
+        812,
+        960
+      ],
+      "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+      "language": "en",
+      "excerpt": {
+        "text": "Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+        "highlight": [
+          220,
+          368
+        ],
+        "starts_inside": true,
+        "ends_inside": false
+      }
+    }
+  ],
+  "ieg_note": null,
+  "tags": {
+    "risk_factors": [
+      {
+        "key": "cost_estimates",
+        "label": "Cost estimates out of line with market prices"
+      }
+    ],
+    "stage": {
+      "key": "procurement_planning",
+      "label": "Procurement planning"
+    },
+    "kind": {
+      "key": "did_not_work",
+      "label": "What didn't work"
+    },
+    "edition": {
+      "key": "guidelines_2011",
+      "name": "the World Bank's Procurement Guidelines of January 2011",
+      "short": "Procurement Guidelines, January 2011"
+    },
+    "sector": "Transportation"
+  },
+  "lesson": {
+    "lesson_id": null,
+    "version": null,
+    "next_version": null
+  },
+  "summary": {
+    "status": "ready",
+    "sentences": [
+      {
+        "index": 0,
+        "text": "The ICR said that \"108 of 328 cases had to go through rebidding.\"",
+        "kind": "quote",
+        "evidence_ids": [
+          "strata.gold.passage:31525018/v1/54"
+        ],
+        "numbers": [
+          {
+            "text": "108",
+            "evidence_id": "strata.gold.passage:31525018/v1/54"
+          },
+          {
+            "text": "328",
+            "evidence_id": "strata.gold.passage:31525018/v1/54"
+          }
+        ],
+        "dates": [],
+        "quote": {
+          "text": "108 of 328 cases had to go through rebidding.",
+          "evidence_id": "strata.gold.passage:31525018/v1/54"
+        }
+      },
+      {
+        "index": 1,
+        "text": "IEG's ICR Review said the same: \"The works contract estimates were not based on market rate.\"",
+        "kind": "quote",
+        "evidence_ids": [
+          "strata.gold.passage:34056616/v2/10.b"
+        ],
+        "numbers": [],
+        "dates": [],
+        "quote": {
+          "text": "The works contract estimates were not based on market rate.",
+          "evidence_id": "strata.gold.passage:34056616/v2/10.b"
+        }
+      }
+    ],
+    "evidence": {
+      "strata.gold.passage:31525018/v1/54": {
+        "id": "strata.gold.passage:31525018/v1/54",
+        "kind": "passage",
+        "tool": "lesson_review",
+        "stratum": "Why",
+        "short_name": "ICR",
+        "row": {
+          "passage_id": "31525018/v1/54",
+          "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+          "kind": "paragraph",
+          "language": "en",
+          "document_type": "Implementation Completion and Results Report",
+          "project_id": "P130164",
+          "paragraph": "54",
+          "pdf_page": 23,
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "document_date": "2019-10-10",
+            "report_number": "ICR4803",
+            "paragraph": "54",
+            "pdf_page": 23
+          }
+        },
+        "highlights": [
+          {
+            "sentence": 0,
+            "start": 149,
+            "end": 194
+          }
+        ]
+      },
+      "strata.gold.passage:34056616/v2/10.b": {
+        "id": "strata.gold.passage:34056616/v2/10.b",
+        "kind": "passage",
+        "tool": "lesson_review",
+        "stratum": "Why",
+        "short_name": "ICR Review",
+        "row": {
+          "passage_id": "34056616/v2/10.b",
+          "text": "b. Fiduciary Compliance Financial Management (FM): The ICR reports (para 73) that all audit reports were submitted, and the main concern raised in the reports was the lack of dedicated staff and financial management experts to handle financial management related issues. Procurement: A procurement and contract management manual was prepared for the project (ICR para 72). Training on procurement was provided to procurement staff in all districts. There was lack of capacity in the Public Works Department to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment (ICR para 53). The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+          "kind": "paragraph",
+          "language": "en",
+          "document_type": "Implementation Completion Report Review",
+          "project_id": "P130164",
+          "paragraph": "10.b",
+          "pdf_page": 13,
+          "source": {
+            "document_type": "Implementation Completion Report Review",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "document_date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "paragraph": "10.b",
+            "pdf_page": 13
+          }
+        },
+        "highlights": [
+          {
+            "sentence": 1,
+            "start": 812,
+            "end": 871
+          }
+        ]
+      }
+    },
+    "checks": {
+      "checks_run": [
+        1,
+        2,
+        3
+      ],
+      "sentences": {
+        "written": 3,
+        "kept": 2,
+        "removed": 1
+      },
+      "numbers": {
+        "total": 3,
+        "matched": 2
+      },
+      "dates": {
+        "total": 0,
+        "matched": 0
+      },
+      "quotes": {
+        "total": 2,
+        "found": 2
+      },
+      "sources": {
+        "total": 2,
+        "returned": 2
+      },
+      "tools": [
+        "lesson_review"
+      ]
+    },
+    "removed": [
+      {
+        "index": 2,
+        "sentence": "The rebidding delayed the road works by two years.",
+        "reason": "number_not_in_records",
+        "reasons": [
+          {
+            "check": 1,
+            "code": "number_not_in_records",
+            "text": "two"
+          }
+        ],
+        "repeat_of": null
+      }
+    ]
+  },
+  "repeats": [],
+  "history": [
+    {
+      "event": "proposed",
+      "on": "2026-10-23",
+      "doc_short": "ICR",
+      "pid": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "published_on": "2019-11-02"
+    },
+    {
+      "event": "restatement",
+      "on": "2026-10-23",
+      "review_date": "2023-05-04",
+      "doc_short": "ICR Review"
+    },
+    {
+      "event": "recommended",
+      "on": "2026-10-27",
+      "name": "Asha Raman",
+      "role": "accredited procurement specialist",
+      "region": "South Asia",
+      "outcome": "add",
+      "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
+      "changes": []
+    }
+  ],
+  "outcome": null,
+  "lists": {
+    "risk_factors": [
+      {
+        "key": "cost_estimates",
+        "label": "Cost estimates out of line with market prices"
+      },
+      {
+        "key": "permits_before_award",
+        "label": "Land, forest and other permits not in place before award"
+      },
+      {
+        "key": "procurement_capacity",
+        "label": "Too little procurement capacity in the implementing agency"
+      },
+      {
+        "key": "coordination",
+        "label": "Weak coordination between agencies"
+      },
+      {
+        "key": "market_response",
+        "label": "Few bids or a weak market response"
+      },
+      {
+        "key": "designs_and_specifications",
+        "label": "Incomplete designs or specifications"
+      },
+      {
+        "key": "evaluation_delays",
+        "label": "Slow bid evaluation or award"
+      },
+      {
+        "key": "contractor_performance",
+        "label": "Poor contractor performance"
+      },
+      {
+        "key": "contract_management",
+        "label": "Weak contract management"
+      }
+    ],
+    "stages": [
+      {
+        "key": "procurement_planning",
+        "label": "Procurement planning"
+      },
+      {
+        "key": "tender_design",
+        "label": "Tender design and packaging"
+      },
+      {
+        "key": "bidding_and_evaluation",
+        "label": "Bidding and evaluation"
+      },
+      {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      {
+        "key": "contract_management",
+        "label": "Contract management"
+      }
+    ],
+    "kinds": [
+      {
+        "key": "worked",
+        "label": "What worked"
+      },
+      {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      }
+    ]
+  },
+  "limits": {
+    "reason_max_chars": 500,
+    "statement_max_chars": 80,
+    "sample_percent": 10,
+    "summary_poll_seconds": 15,
+    "summary_poll_minutes": 10
+  }
+}

@@ -1,0 +1,29 @@
+# The lesson review writer's cases: what the scripted writer answers offline for each new lesson in the
+# fixture's review queue (ticket 29; spec, seam 3, and "Model outputs are recorded, not called, in the
+# offline gate"), in the shape of cases.toml. strata.knowledge.lessons.writer finds a case by the passage the
+# proposed lesson cites, so the case for 31525018/v1/54 is lesson-review-31525018-v1-54. Each case names its
+# recording in recorded/<recording>.json.
+
+[[cases]]
+id = "lesson-review-31525018-v1-54"
+says = """It summarizes the evidence for the lesson from ICR P130164 paragraph 54 in three sentences. The third states a delay of two years that neither passage holds, so the verifier removes it."""
+question = "Summarize the evidence for the proposed lesson from 31525018/v1/54, and name the current lessons it may repeat."
+scope = "P130164"
+as_of = 2026-10-23
+recording = "lesson-review-31525018-v1-54"
+
+[[cases]]
+id = "lesson-review-31525018-v1-55"
+says = """It summarizes the evidence for the lesson from ICR P130164 paragraph 55, and names IEG's own lesson from section 12 of the ICR Review as a likely repeat. The repeat counts only once that lesson is in the library."""
+question = "Summarize the evidence for the proposed lesson from 31525018/v1/55, and name the current lessons it may repeat."
+scope = "P130164"
+as_of = 2026-10-23
+recording = "lesson-review-31525018-v1-55"
+
+[[cases]]
+id = "lesson-review-34056616-v2-12"
+says = """It summarizes the evidence for IEG's lesson in section 12 of the ICR Review, and names the ICR's lesson from paragraph 55 as a likely repeat. The repeat counts only once that lesson is in the library."""
+question = "Summarize the evidence for the proposed lesson from 34056616/v2/12, and name the current lessons it may repeat."
+scope = "P130164"
+as_of = 2026-10-23
+recording = "lesson-review-34056616-v2-12"
