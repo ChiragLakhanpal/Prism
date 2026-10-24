@@ -1093,42 +1093,62 @@ test("a page area a fraction of a pixel under 768 px puts the sentence first, as
     .toBe(true);
 });
 
-// DESIGN.md section 5, Tables: the past range's table needs about 750 px with one line per cell,
-// more than a 768 px page area leaves, so it shows cards below a page area of 1024 px, as the plan
-// check does. At 1440 px the drawer leaves 864 px; an 834 px window is an iPad held upright.
-test("below a page area of 1024 px the past range's table shows cards, beside the evidence drawer or not", async ({ page }) => {
-  for (const [width, evidence] of [
-    [1440, true],
-    [834, false],
+// DESIGN.md section 5, Tables: the past range's table needs about 776 px with one line per cell. From a
+// page area of 1200 px the workspace keeps to columns 1 to 8, so the table has less room from 1200 to
+// about 1415 px than at 1024 px. So it reads its own width: its rows when its frame has 49rem, and cards
+// below that. At 1440 px the drawer leaves an 864 px page area, and at 1920 px a 1320 px one; an 834 px
+// window is an iPad held upright.
+test("the past range's table shows its rows where its frame has 49rem, every cell's text inside its cell, and cards where it has less", async ({ page }) => {
+  const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables;
+  const withoutSpace = body.rows.filter((row) => !row.step_reference.includes(" ")).length;
+  for (const [width, evidence, view] of [
+    [1024, false, "table"],
+    [1440, false, "table"],
+    [1600, false, "table"],
+    [1200, false, "cards"],
+    [1280, false, "cards"],
+    [1366, false, "cards"],
+    [1920, true, "cards"],
+    [1440, true, "cards"],
+    [834, false, "cards"],
   ] as const) {
+    const where = `${width} px${evidence ? " beside the drawer" : ""}`;
     await openPackage(page, { width, evidence });
     await ready(page);
     await section(page).getByRole("button", { name: "Show the table" }).click();
-    await expect(section(page).locator("[data-table-view=cards]"), `${width} px`).toBeVisible();
-    await expect(section(page).locator("[data-table-view=table]"), `${width} px`).toBeHidden();
+    const table = section(page).locator("[data-table-view=table]");
+    const cards = section(page).locator("[data-table-view=cards]");
+    await expect(view === "table" ? table : cards, where).toBeVisible();
+    await expect(view === "table" ? cards : table, where).toBeHidden();
+    if (view === "cards") continue;
+
+    // No cell's text runs past its cell, and the frame does not scroll sideways.
+    const spill = await table.evaluate((frame) => ({
+      scroll: frame.scrollWidth - frame.clientWidth,
+      cells: [...frame.querySelectorAll("tbody td, tbody th")]
+        .filter((cell) => {
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          return Math.max(...[...range.getClientRects()].map((r) => r.right)) > cell.getBoundingClientRect().right + 0.5;
+        })
+        .map((cell) => cell.textContent),
+    }));
+    expect(spill, where).toEqual({ scroll: 0, cells: [] });
+
+    // Each row's reference and the lines its text sits on, counted by their tops. A reference without a
+    // space keeps to one line.
+    const references = await table.locator("tbody th").evaluateAll((cells) =>
+      cells.map((cell) => {
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
+        return [cell.textContent!, new Set(tops).size] as const;
+      }),
+    );
+    const spaceless = references.filter(([reference]) => !reference.includes(" "));
+    expect(spaceless, where).toHaveLength(withoutSpace);
+    expect(spaceless.filter(([, lines]) => lines !== 1), where).toEqual([]);
   }
-});
-
-test("from a page area of 1024 px the past range's table shows its rows, with each reference without a space on one line", async ({ page }) => {
-  await openPackage(page, { width: 1024 });
-  await ready(page);
-  await section(page).getByRole("button", { name: "Show the table" }).click();
-  const table = section(page).locator("[data-table-view=table]");
-  await expect(table).toBeVisible();
-  await expect(section(page).locator("[data-table-view=cards]")).toBeHidden();
-
-  // Each row's reference and the lines its text sits on, counted by their tops.
-  const references = await table.locator("tbody th").evaluateAll((cells) =>
-    cells.map((cell) => {
-      const range = document.createRange();
-      range.selectNodeContents(cell);
-      const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
-      return [cell.textContent!, new Set(tops).size] as const;
-    }),
-  );
-  const spaceless = references.filter(([reference]) => !reference.includes(" "));
-  expect(spaceless).toHaveLength(46);
-  expect(spaceless.filter(([, lines]) => lines !== 1)).toEqual([]);
 });
 
 // DESIGN.md section 5, Reference words: a reference with a county's name breaks at its spaces first,
@@ -1169,6 +1189,7 @@ test("a reference with a county's name breaks only at its spaces, in a dot's det
 
   for (const [width, view, selector] of [
     [1024, "table", "tbody th"],
+    [1440, "table", "tbody th"],
     [320, "cards", "li > :first-child"],
   ] as const) {
     await openPackage(page, { width });

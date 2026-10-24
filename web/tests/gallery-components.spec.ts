@@ -314,6 +314,27 @@ test("a table turns into cards below 768 px, or below 1024 px with cardsBelow lg
   }
 });
 
+// The past range's table keeps to columns 1 to 8 from 1200 px, where its frame is narrower than at
+// 1024 px, so it reads its own width: cards while its frame is under 49rem (784 px), whatever the page area.
+test("with cardsBelow fit a table turns into cards while its own frame is under 49rem", async ({ page }) => {
+  await page.goto("/gallery/table");
+  const section = page.locator("[data-state-section=cards-below-fit]");
+  await expect(section.locator("[data-table=ready]")).toBeVisible();
+  const seen = new Set<string>();
+  for (const width of [390, 1024, 1180, 1280, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    const { frame, shown } = await section.locator("[data-table=ready]").evaluate((table) => ({
+      frame: table.getBoundingClientRect().width,
+      shown: [...table.querySelectorAll<HTMLElement>("[data-table-view]")]
+        .filter((view) => getComputedStyle(view).display !== "none")
+        .map((view) => view.dataset.tableView),
+    }));
+    expect(shown, `${width} px, a frame of ${frame} px`).toEqual([frame >= 784 ? "table" : "cards"]);
+    seen.add(shown[0]!);
+  }
+  expect([...seen].sort()).toEqual(["cards", "table"]);
+});
+
 test("the steps toggle lines up with the answer's text, and its fill and focus ring stay inside the card", async ({ page }) => {
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });

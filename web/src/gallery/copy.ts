@@ -189,6 +189,7 @@ export const galleryCopy = {
     tabs: "Tabs on a light surface",
     tabsLater: "Tabs with a later one selected",
     cardsBelowLg: "Cards below 1024 px, for a table with wide columns",
+    cardsBelowFit: "Cards while the table's own frame is under 784 px, for a wide table that may keep to columns 1 to 8",
     card: "Card",
     emptyState: "Empty state",
     signals: "Signals",

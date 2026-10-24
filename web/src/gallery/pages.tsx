@@ -1158,6 +1158,14 @@ export const PAGES: GalleryPage[] = [
         body: <Table {...tableProps} cardsBelow="lg" state={{ status: "ready", rows }} />,
       },
       {
+        // The past range's table keeps to columns 1 to 8 from 1200 px, where its frame is narrower than
+        // at 1024 px, so it reads its own width: cards while its frame is under 49rem. Here it takes the
+        // gallery's full width, so the cards show below a window of 1200 px and the rows from there.
+        id: "cards-below-fit",
+        title: t.cardsBelowFit,
+        body: <Table {...tableProps} cardsBelow="fit" state={{ status: "ready", rows }} />,
+      },
+      {
         id: "empty",
         title: s.empty,
         body: <Table {...tableProps} state={{ status: "empty", title: sample.tableEmptyTitle, body: sample.tableEmptyBody }} />,

@@ -364,7 +364,9 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--focus-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
   packageShot("package--focus-slider", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[role=slider]") }),
   packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
-  packageShot("package--table-open", comparables(COMPARABLES), { widths: wideAndNarrow, full: true, act: click("[data-past-range] button[aria-controls][aria-expanded]") }),
+  // 1280 px is a page area where the workspace keeps to columns 1 to 8 and the table's frame is under
+  // 49rem, so the table shows as cards there (DESIGN.md section 5, Tables).
+  packageShot("package--table-open", comparables(COMPARABLES), { widths: [1440, 1280, 390], full: true, act: click("[data-past-range] button[aria-controls][aria-expanded]") }),
   packageShot("package--320", comparables(COMPARABLES), { widths: [320] }),
   // Round 1's fixes: months typed into a row with no plan dates, the last dot's tooltip opened first,
   // and the quantile dot past the axis, pinned at the plot's edge.

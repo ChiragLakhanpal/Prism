@@ -15,7 +15,8 @@
 //
 // Every width here is the page area's, not the window's, since the evidence drawer narrows it
 // (DESIGN.md section 4): the classes are container queries on the page column (@md/page:, @lg/page:),
-// and the summary's place follows the page column's width too.
+// and the summary's place follows the page column's width too. The one exception is the table twin,
+// which reads its own frame's width (@min-[49rem]/table:), as the comment at its columns says.
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
@@ -799,9 +800,11 @@ function ComparablesTable({
   const paged = total > result.thresholds.quantile_dots_above;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
-  // With one line per cell the six columns need about 750 px, more than a 768 px page area leaves, so
-  // the table shows from a page area of 1024 px and cards below that (cardsBelow="lg", DESIGN.md
-  // section 5, Tables). There a STEP reference keeps to one line, and the Months head's definition to two.
+  // With one line per cell the six columns need about 776 px. From a page area of 1200 px the workspace
+  // keeps to columns 1 to 8, which leaves the table less room there than at 1024 px. So the table reads
+  // its own width: it shows when its frame has 49rem and cards below that (cardsBelow="fit", DESIGN.md
+  // section 5, Tables), which is from a page area of 1024 to 1199 px and from about 1416 px. There a
+  // STEP reference keeps to one line, and the Months head's definition to two.
   const columns: Column[] = [
     { key: "package", header: t.columns.package, width: "w-[15.25rem]" },
     { key: "country", header: t.columns.country, short: true, width: "w-[5.5rem]" },
@@ -825,16 +828,16 @@ function ComparablesTable({
     id: row.step_reference,
     cells: {
       // A reference with a county's name breaks at its spaces first (MonoWords); one with no spaces
-      // keeps to one line in the table, which shows from a page area of 1024 px.
+      // keeps to one line in the table, which shows when its frame has 49rem.
       package: (
         <MonoWords
           text={row.step_reference}
-          className={cx(!row.step_reference.includes(" ") && "@lg/page:whitespace-nowrap @lg/page:wrap-normal")}
+          className={cx(!row.step_reference.includes(" ") && "@min-[49rem]/table:whitespace-nowrap @min-[49rem]/table:wrap-normal")}
         />
       ),
       country: row.country_name ?? copy.notInRecord,
-      notice: <span className="@lg/page:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
-      signed: row.signed_on ? <span className="@lg/page:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
+      notice: <span className="@min-[49rem]/table:whitespace-nowrap">{tableDate(row.notice_date)}</span>,
+      signed: row.signed_on ? <span className="@min-[49rem]/table:whitespace-nowrap">{tableDate(row.signed_on)}</span> : t.stillOpen,
       months: months1(row.months),
       within: plan === null ? null : row.still_open ? (row.months <= plan ? t.notYet : t.no) : row.months <= plan ? t.yes : t.no,
     },
@@ -851,7 +854,7 @@ function ComparablesTable({
         count={{ noun: t.noun, one: t.nounOne, total, from: from + 1, to: from + shown.length }}
         columns={columns}
         rowHeader="package"
-        cardsBelow="lg"
+        cardsBelow="fit"
         cardsNote={t.columns.monthsCards}
         state={{ status: "ready", rows: tableRows }}
         source={<SourceLine result={result} />}
