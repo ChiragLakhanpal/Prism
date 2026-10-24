@@ -3,8 +3,9 @@
 -- written as plain SQL apart from the document run's own code, beside the count the run recorded in
 -- strata.ops.data_readiness (measure slice_projects). The 17 are tests/ground_truth/values.toml's
 -- [stress_shelf.slice_projects], read from the recorded projects file. On the warehouse the count is the
--- live slice's, and the measure's detail says how it differs from docs/PLAN.md's 128 and why.
--- engines: duckdb, databricks
+-- live slice's, so this file runs on DuckDB only; after the live document run, the same two numbers
+-- must agree on the warehouse, and the measure's detail says how they differ from docs/PLAN.md's 128.
+-- engines: duckdb
 -- param: countries = KE,BD,VN,PK
 -- param: sectors = water,transport
 -- param: first = 2012
