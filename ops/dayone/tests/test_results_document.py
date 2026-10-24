@@ -3,6 +3,7 @@
 Expected questions come from PLAN.md itself, not from the code that writes the document.
 """
 
+import datetime as dt
 import re
 import shutil
 import subprocess
@@ -50,21 +51,132 @@ def test_the_document_lists_the_ten_day_one_tests_from_the_plan():
             assert fields.get(name), f"test {number} has a blank {name}"
 
 
-def test_before_the_wizard_runs_each_test_waits_with_the_command_that_fills_it():
-    text = RESULTS.read_text()
-    for number, fields in sorted(dayone.read_results(RESULTS).items()):
-        if not number.startswith("test-"):
+def waiting_problems(config, folder):
+    """Why the template that config renders is not ready for the wizard, one sentence each; none when it is.
+
+    The template is written to folder, so the committed document is free to hold the wizard's results.
+    """
+    rendered = folder / "day-one-results.md"
+    rendered.write_text(dayone.render_document(config))
+    text = rendered.read_text()
+    problems = []
+    for block_id, fields in sorted(dayone.read_results(rendered).items()):
+        if not block_id.startswith("test-"):
             continue
-        assert fields["Status"] == "not run"
-        assert "Not run yet" in fields["Result"] and "wizard" in fields["Result"]
-        assert fields["Chosen path"].startswith("Default")
-        command = re.search(r"Command: `([^`]+)`", section_of(text, number.removeprefix("test-")))
-        assert command, f"{number} names no command"
+        number = block_id.removeprefix("test-")
+        if fields["Status"] != "not run":
+            problems.append(f"Test {number} starts with the status {fields['Status']}, not \"not run\".")
+        if not ("Not run yet" in fields["Result"] and "wizard" in fields["Result"]):
+            problems.append(f"Test {number}'s result does not say it waits for the wizard.")
+        if not fields["Chosen path"].startswith("Default"):
+            problems.append(f"Test {number} does not start on its default path.")
+        if not re.search(r"Command: `([^`]+)`", section_of(text, number)):
+            problems.append(f"Test {number} names no command.")
+    return problems
+
+
+def test_before_the_wizard_runs_each_test_waits_with_the_command_that_fills_it(tmp_path):
+    assert waiting_problems(dayone.load_config(), tmp_path) == []
+
+
+def split_at_blocks(text):
+    """The document cut at its marked blocks: the text between them, and each block as (id, its text)."""
+    between, blocks, start = [], [], 0
+    for match in dayone.BLOCK.finditer(text):
+        between.append(text[start:match.start()])
+        blocks.append((match["id"], match[0]))
+        start = match.end()
+    return between + [text[start:]], blocks
+
+
+def is_long_date(text):
+    """True for a date the way dayone.long_date writes it, such as October 24, 2026."""
+    try:
+        dt.datetime.strptime(text, "%B %d, %Y")
+    except (TypeError, ValueError):
+        return False
+    return True
+
+
+def recorded_problems(block_id, fields, template):
+    """Why one block that differs from the template is not a result the wizard or a probe recorded.
+
+    A recorded test keeps the template's fields in order and fills them: a status, a result, at least
+    one Evidence line that is not the template's "None yet" line, a chosen path and the day it ran.
+    A probe that could not get ready records "not run" the same way, with its evidence and its day.
+    """
+    if list(fields) != list(template):
+        return [f"its fields are {', '.join(fields)}, not {', '.join(template)}."]
+    if not block_id.startswith("test-"):
+        return ["it differs from the template, and nothing records results in it."]
+    problems = []
+    if fields["Status"] not in dayone.STATUSES:
+        problems.append(f"its Status, \"{fields['Status']}\", is not one of {', '.join(dayone.STATUSES)}.")
+    for name in ("Result", "Chosen path"):
+        if not fields[name]:
+            problems.append(f"its {name} is blank.")
+    evidence = fields["Evidence"] if isinstance(fields["Evidence"], list) else []
+    if not [line for line in evidence if line.strip() and line not in template["Evidence"]]:
+        problems.append("it has no Evidence line.")
+    if not is_long_date(fields["Last run"]):
+        problems.append(f"its Last run, \"{fields['Last run']}\", is not a date.")
+    return problems
+
+
+def document_problems(text, config):
+    """Why a results document is not the template that config renders plus recorded results; none when it is.
+
+    The text outside the marked blocks must be exactly the rendering's, so it never drifts from dayone.toml.
+    Each block is either the rendering's text or a result the wizard or a probe recorded.
+    """
+    template = dayone.render_document(config)
+    between, blocks = split_at_blocks(text)
+    template_between, template_blocks = split_at_blocks(template)
+    ids, template_ids = [i for i, _ in blocks], [i for i, _ in template_blocks]
+    if ids != template_ids:
+        return [f"The document's blocks are {', '.join(ids)}, but dayone.toml renders {', '.join(template_ids)}."]
+    problems = []
+    for after, mine, theirs in zip(["the start", *ids], between, template_between):
+        if mine != theirs:
+            line = next(a for a, b in zip(mine.splitlines() + [""], theirs.splitlines() + [""]) if a != b)
+            problems.append(f"After {after}, the text differs from what dayone.toml renders, at: {line!r}")
+    fields, template_fields = dayone.parse_blocks(text), dayone.parse_blocks(template)
+    for (block_id, mine), (_, theirs) in zip(blocks, template_blocks):
+        if block_id == "summary":
+            if mine != dayone.block("summary", dayone.summary_table(config, fields)):
+                problems.append("Block summary: the table does not match the test blocks below it.")
+        elif mine != theirs:
+            found = recorded_problems(block_id, fields[block_id], template_fields[block_id])
+            problems += [f"Block {block_id}: {problem}" for problem in found]
+    return problems
 
 
 def test_the_committed_document_matches_what_the_settings_file_describes():
-    """Until the wizard runs, the document is exactly what dayone.toml renders, so the two never drift."""
-    assert RESULTS.read_text() == dayone.render_document(dayone.load_config())
+    """The committed document is the template dayone.toml renders, plus any results the wizard or a probe recorded."""
+    assert document_problems(RESULTS.read_text(), dayone.load_config()) == []
+
+
+def fresh_template(tmp_path):
+    results = tmp_path / "results.md"
+    results.write_text(dayone.render_document(dayone.load_config()))
+    return results
+
+
+def test_a_recorded_result_needs_an_evidence_line_and_a_dated_last_run(tmp_path):
+    config, results = dayone.load_config(), fresh_template(tmp_path)
+    day = dt.date(2026, 10, 24)
+    dayone.record_test(results, 4, dayone.Outcome("passed", "The hybrid query returned 3 passages.",
+                                                  ["Endpoint strata-search is ONLINE."]), day)
+    recorded = results.read_text()
+    assert document_problems(recorded, config) == []
+
+    no_evidence = recorded.replace("  - Endpoint strata-search is ONLINE.\n", "")
+    assert document_problems(no_evidence, config) == ["Block test-4: it has no Evidence line."]
+    undated = recorded.replace("- Last run: October 24, 2026", "- Last run: never")
+    assert document_problems(undated, config) == ["Block test-4: its Last run, \"never\", is not a date."]
+
+    dayone.record_test(results, 4, dayone.Outcome("passed", "It worked."), day)
+    assert document_problems(results.read_text(), config) == ["Block test-4: it has no Evidence line."]
 
 
 def test_the_document_says_to_run_the_wizard_first_and_dates_the_pay_as_you_go_step():
