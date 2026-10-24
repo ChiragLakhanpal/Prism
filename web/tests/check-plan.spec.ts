@@ -304,6 +304,30 @@ test("while the check loads, skeletons hold its places and a status says so", as
   await expect(page.getByRole("status").filter({ hasText: "Checked nine activities." })).toHaveCount(1);
 });
 
+test("opening a plan from the Procurement tab keeps focus on the page's h1 while the check loads and after it arrives", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+  });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await page.goto("/projects/P156634");
+  await page.locator("[data-agency=northern-water-works-development-agency] [data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
+  const h1 = page.getByRole("main").getByRole("heading", { level: 1 });
+  await expect(h1).toBeFocused();
+
+  release();
+
+  await expect(h1).toHaveText("Northern Water Works Development Agency");
+  await expect(h1).toBeFocused();
+});
+
 test("an agency with no plan says so and links to the project's plans", async ({ page }) => {
   await openPlan(page, 1440, { body: await recorded("check-plan-p156634-wajir-no-plan.json") }, "/projects/P156634/procurement/wajir-water-and-sewerage-company");
 
@@ -353,29 +377,43 @@ test("an account that can't read Strata's tables is told what to ask for, with n
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
 });
 
-test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px, folded and open, and the page reflows at 320 px", async ({ page }) => {
+// Each state loads once and is resized through the three widths, which keeps the axe runs quick.
+async function axeAtEveryWidth(page: Page, label: string, ready: () => Promise<void>) {
   for (const width of [1440, 1024, 390]) {
-    await openPlan(page, width);
-    await expect(page.locator("[data-plan-check]")).toBeVisible();
-    expect(await axe(page), `${width} px`).toEqual([]);
-    await page.locator("[data-fold] button:visible").click();
-    expect(await axe(page), `${width} px, open`).toEqual([]);
+    await page.setViewportSize({ width, height: 900 });
+    await ready();
+    expect(await axe(page), `${label} at ${width} px`).toEqual([]);
   }
+}
+
+test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px, folded and open, and the page reflows at 320 px", async ({ page }) => {
+  await openPlan(page);
+  const check = page.locator("[data-plan-check]");
+  await axeAtEveryWidth(page, "folded", () => expect(check).toBeVisible());
+  await page.locator("[data-fold] button:visible").click();
+  await axeAtEveryWidth(page, "open", () => expect(check).toBeVisible());
   await page.setViewportSize({ width: 320, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
-test("axe finds no violations in the loading, empty and error states", async ({ page }) => {
+test("axe finds no violations in the loading, empty and error states at 1440, 1024 and 390 px", async ({ page }) => {
+  // Loading: the check never arrives.
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  await page.route(`**${API}`, () => new Promise(() => {}));
+  await page.goto(PLAN);
+  // The project's crumb is a link before its name arrives, so it reads the project's ID.
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Project P156634" })).toHaveAttribute("href", "/projects/P156634");
+  await axeAtEveryWidth(page, "loading", () => expect(page.locator("[data-check-plan-page=loading]")).toBeVisible());
+
   const states: [string, Answer, string?][] = [
     ["empty", { body: await recorded("check-plan-p156634-wajir-no-plan.json") }, "/projects/P156634/procurement/wajir-water-and-sewerage-company"],
     ["error", { status: 503, body: '{"code": "data_service", "trace_id": "0af7651916cd43dd8448eb211c80319c"}' }],
     ["permission", { status: 403, body: '{"code": "permission"}' }],
   ];
   for (const [name, answer, path] of states) {
-    for (const width of [1440, 390]) {
-      await openPlan(page, width, answer, path);
-      await expect(page.locator(`[data-check-plan-page=${name === "empty" ? "ready" : "error"}]`)).toBeVisible();
-      expect(await axe(page), `${name} at ${width} px`).toEqual([]);
-    }
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await openPlan(page, 1440, answer, path);
+    const ready = page.locator(`[data-check-plan-page=${name === "empty" ? "ready" : "error"}]`);
+    await axeAtEveryWidth(page, name, () => expect(ready).toBeVisible());
   }
 });

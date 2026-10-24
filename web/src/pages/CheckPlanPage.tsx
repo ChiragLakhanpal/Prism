@@ -14,7 +14,7 @@ import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedPlan } from "../components/PlanCheck";
-import { Skeleton } from "../components/Skeleton";
+import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
 import { formatCount, formatDate } from "../lib/format";
@@ -83,17 +83,29 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   let body: ReactNode;
   let crumbs: Crumb[];
   if (load.status === "loading") {
-    crumbs = trail(<Skeleton className="inline-block h-[1em] w-[200px] align-middle" />, versionCrumb ?? words.agencyUnknown);
+    // The project's name is not known yet, so its link reads "Project P156634" to a screen reader.
+    const loadingName = (
+      <>
+        <span className="sr-only">{unnamed}</span>
+        <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
+      </>
+    );
+    crumbs = trail(loadingName, versionCrumb ?? words.agencyUnknown);
+    // Every state renders PlanCheckHeader first, so React keeps the one h1 that a route change
+    // focused, and focus stays on it when the check arrives (DESIGN.md section 5, Page header).
     body = (
       <>
-        <div className="border-b border-line py-4">
-          <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">
-            <span className="sr-only">{words.status.checking}</span>
-            <Skeleton className="h-[1.2em] w-3/5 max-w-[560px]" />
-          </h1>
-          <Skeleton className="mt-2 h-4 w-60" />
-          <Skeleton className="mt-3 h-[30px] w-[170px] rounded-pill" />
-        </div>
+        <PlanCheckHeader
+          agency={
+            <>
+              <span className="sr-only">{words.status.checking}</span>
+              <SkeletonLine width="w-3/5 max-w-[560px]" />
+            </>
+          }
+          plan={<SkeletonLine width="w-60" />}
+          pill={<Skeleton className="h-[30px] w-[170px] rounded-pill" />}
+          sticky={false}
+        />
         <PlanCheckSkeleton slow={load.slow} />
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
