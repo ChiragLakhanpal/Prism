@@ -439,3 +439,42 @@ Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEM
     <App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
 
 It worked if the deploy exits 0 with its last line `Strata is running at https://...`, and on the page the pill reads "9 activities checked", the h2 reads "One needs a look and two are worth watching; three have data notes." and the count line reads "Showing 6 of 9 activities" (criterion 8, the first half of P1's exit criterion). Three things change with the date. The Watch for KE-NWWDA-541062-CW-RFQ says "N days before the project closes", and N counts down to October 31, 2026. After that date, the closing-date reasons change their wording. The App's as-of date is today's date in UTC.
+
+## Ticket 16, step 1 of 4: deploy the Strata dashboard with the bundle
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. It needs the Databricks keys in `.env`, including `DATABRICKS_WAREHOUSE_ID`, because the dashboard's queries run on that SQL warehouse. Ticket 04's step 1 runs the same command. Run it again here if that deploy came from a commit before 69e97c8, because the dashboard and its snapshot table arrived in this merge.
+
+Run this from the main checkout, and then run it a second time:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if both runs exit 0. The first run prints "The dashboard Strata is new." and lists `strata.ops.readiness_snapshot` as a new table. The second run prints "No changes." Then open the dashboard Strata in the workspace. Its first page must be Data readiness (criterion 6, deploy half). The page stays empty until the nightly job has run once after this deploy, because the job's readiness task writes the snapshot it reads. So run ticket 04's step 2 next: `uv run --script ops/bundle/check.py job-run --env-file .env`.
+
+## Ticket 16, step 2 of 4: the Data readiness page's awards row against a direct query
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after step 1 and after the nightly job has run (ticket 04's step 2). It needs the Databricks keys in `.env`.
+
+Run these from the main checkout, one after the other:
+
+    uv run --script ops/bundle/check.py readiness --env-file .env
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if the first command exits 0 and prints "The Data readiness page's awards row matches a direct query on strata.ops.data_readiness:", then two lines that each show the same numbers on the page and in the query: "award rows held: N on the page, N in the query" and "contracts with a STEP reference: A of B on the page, A of B in the query". It then prints Kenya's own measures on one line, "Kenya's own measures, for comparison: ...". On the fixture these were 632 award rows and 528 of 603 contracts with a STEP reference. On the workspace the page's awards row counts every country, so expect larger numbers there and Kenya's on the last line. The second command must print `true` for `kenya_step_reference_link_rate.sql` (criterion 1, workspace half). Exit 1 from the first command means the page and the query differ, and the two lines show by how much.
+
+## Ticket 16, step 3 of 4: the plans' link measure is written with the kind linked
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after the next live plan run, which is ticket 08's step 1 (`uv run --script ops/plans/run_live.py --env-file .env`).
+
+Run this in the workspace's SQL editor:
+
+    SELECT subject, kind, count, denominator, measured_at FROM strata.ops.data_readiness WHERE source = 'documents' AND measure = 'step_rows_with_reference' ORDER BY measured_at DESC LIMIT 5
+
+It worked if the newest row for each project carries kind `linked`. Rows written before this merge keep `read_well`, and that is not a failure: the page reads only the newest row for each source, subject and measure, by `measured_at`, so the new run corrects what it shows with no backfill.
+
+## Ticket 16, step 4 of 4: the dashboard's Data readiness page beside /data on the same date
+
+The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after steps 1 to 3 and after the App is deployed from 69e97c8 or later with `uv run --script ops/app/deploy_app.py --env-file .env` (ticket 06's step 1).
+
+Open the App's `/data` page and note its measure date. Then open the dashboard Strata, go to its Data readiness page and set its date to that measure date.
+
+It worked if both show the same headline sentence, the same fixes in the same order with the same project counts, the same link counts, and the same status (Partial or Gap) for each source (criterion 6). If live data make the Procurement Plans' link the biggest gap, check that the headline spells STEP out before it uses the short form, and that no sentence ends in two periods ("lack an Activity Reference No.."). Design review round 8's P1 says the second one can happen only on live data.

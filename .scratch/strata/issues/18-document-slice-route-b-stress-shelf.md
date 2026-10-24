@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's "How documents and re
 
 **Blocked by:** 11 (The first 20 documents read into numbered passages and made searchable); 16 (Data readiness: the page and the first dashboard page); 17 (Every structured source, for every country, kept as published)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** yes
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's "How documents and re
 - [ ] Through the answer contract, a scripted claim whose number rests only on a table summary passage is removed.
 - [ ] A search for "similar experience" returns notice passages with their notice ids.
 - [ ] The Data readiness page gains a stress-shelf table of five rows, each with its outcome, numbers first, a badge only for Partial or Gap, and an "Open at page" link, per DESIGN.md section 5's Readiness tables and the Data readiness wireframe; it is captured at 1440, 1024 and 390 px and passes axe.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/18-document-slice-route-b-stress-shelf, as soon as ticket 16 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
