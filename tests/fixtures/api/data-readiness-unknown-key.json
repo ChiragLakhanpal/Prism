@@ -1,0 +1,473 @@
+{
+  "tool": "data_readiness_for",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/coverage_rows",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "coverage_rows",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards"
+      },
+      "source_key": "awards",
+      "measure": "coverage_rows",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 632,
+      "denominator": 632,
+      "share_percent": 100,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/coverage_years",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "coverage_years",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.awards"
+      },
+      "source_key": "awards",
+      "measure": "coverage_years",
+      "kind": "coverage",
+      "subjects": [
+        "all"
+      ],
+      "count": 8,
+      "denominator": 8,
+      "share_percent": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/linked_step_reference",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "linked_step_reference",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.gold.contract"
+      },
+      "source_key": "awards",
+      "measure": "linked_step_reference",
+      "kind": "linked",
+      "subjects": [
+        "all"
+      ],
+      "count": 528,
+      "denominator": 603,
+      "share_percent": 88,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/fresh_fetched",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "fresh_fetched",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.bronze.api_pages"
+      },
+      "source_key": "awards",
+      "measure": "fresh_fetched",
+      "kind": "fresh",
+      "subjects": [
+        "all"
+      ],
+      "count": null,
+      "denominator": null,
+      "share_percent": null,
+      "as_of": "2026-10-23",
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/projects_with_contracts_lacking_step_reference",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "projects_with_contracts_lacking_step_reference",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": null
+      },
+      "source_key": "awards",
+      "measure": "projects_with_contracts_lacking_step_reference",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 3,
+      "share_percent": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_projects_in_local_currency",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "gap_years_projects_in_local_currency",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": null
+      },
+      "source_key": "awards",
+      "measure": "gap_years_projects_in_local_currency",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 2,
+      "denominator": 2,
+      "share_percent": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
+      "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_contracts_in_local_currency",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "awards",
+        "measure": "gap_years_contracts_in_local_currency",
+        "subjects": [
+          "all"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": null
+      },
+      "source_key": "awards",
+      "measure": "gap_years_contracts_in_local_currency",
+      "kind": "fix",
+      "subjects": [
+        "all"
+      ],
+      "count": 7,
+      "denominator": 7,
+      "share_percent": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    }
+  ],
+  "coverage": {
+    "matched": 1,
+    "used": 1,
+    "not_used": [
+      {
+        "reason": "unknown_source",
+        "keys": 1
+      }
+    ]
+  },
+  "abstention": null,
+  "filter": {
+    "sources": [
+      "awards"
+    ],
+    "unknown": 1,
+    "from": "find_comparables",
+    "total": 13
+  },
+  "sources": [
+    {
+      "type": "measured",
+      "id": "awards",
+      "source_key": "awards",
+      "label": "Contract awards",
+      "stratum": "What",
+      "scope": {
+        "kind": "every_country"
+      },
+      "covers": "since fiscal 2020",
+      "cells": {
+        "coverage": {
+          "measure": "coverage_rows",
+          "row": 0,
+          "counts": "award rows held",
+          "noun": "award rows",
+          "status": null,
+          "note": null,
+          "years_row": 1
+        },
+        "linked": {
+          "measure": "linked_step_reference",
+          "row": 2,
+          "counts": "carry a STEP reference",
+          "noun": "contracts",
+          "status": "partial",
+          "note": null
+        },
+        "read_well": {
+          "published_as_table": true
+        },
+        "fresh": {
+          "measure": "fresh_fetched",
+          "row": 3,
+          "counts": "last fetched",
+          "noun": "fetches",
+          "status": null,
+          "note": null,
+          "schedule": "daily",
+          "late_days": null
+        }
+      }
+    },
+    {
+      "type": "gap",
+      "id": "fy2017_2019",
+      "source_key": "awards",
+      "label": "Contract awards",
+      "first_fiscal_year": 2017,
+      "last_fiscal_year": 2019,
+      "note": "No World Bank dataset publishes contract awards for these years. Award notices cover most of them, in local currency."
+    }
+  ],
+  "kinds": [],
+  "gaps": [
+    {
+      "id": "awards/linked",
+      "type": "linked",
+      "status": "partial",
+      "row_id": "awards",
+      "source_key": "awards",
+      "column": "linked",
+      "projects": 2,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "number": 75,
+          "row": 2,
+          "noun": "contracts"
+        },
+        {
+          "text": " of "
+        },
+        {
+          "number": 603,
+          "row": 2,
+          "noun": "contracts"
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "contracts"
+        },
+        {
+          "text": " that lack "
+        },
+        {
+          "text": "a STEP reference"
+        }
+      ]
+    },
+    {
+      "id": "fy2017_2019",
+      "type": "published",
+      "status": "gap",
+      "row_id": "awards",
+      "source_key": "awards",
+      "column": null,
+      "projects": 2,
+      "phrase": [
+        {
+          "text": "the "
+        },
+        {
+          "text": "contract awards"
+        },
+        {
+          "text": " for fiscal "
+        },
+        {
+          "text": "2017"
+        },
+        {
+          "text": " to "
+        },
+        {
+          "text": "2019"
+        },
+        {
+          "text": ", which no World Bank dataset publishes"
+        }
+      ]
+    }
+  ],
+  "fixes": [
+    {
+      "rank": 1,
+      "gap": "awards/linked",
+      "projects": 2,
+      "projects_row": 4,
+      "projects_from": "measure",
+      "sentence": [
+        {
+          "text": "Find a STEP reference for the "
+        },
+        {
+          "number": 75,
+          "row": 2,
+          "noun": null
+        },
+        {
+          "text": " contract awards that lack one, so each joins its package and its notices."
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "gap": "fy2017_2019",
+      "projects": 2,
+      "projects_row": 5,
+      "projects_from": "measure",
+      "sentence": [
+        {
+          "text": "Convert the "
+        },
+        {
+          "number": 7,
+          "row": 6,
+          "noun": null
+        },
+        {
+          "text": " contracts from award notices for fiscal 2017 to 2019 from local currency to US dollars, so they compare with the awards datasets."
+        }
+      ]
+    }
+  ],
+  "headline": {
+    "segments": [
+      {
+        "text": "One source is behind "
+      },
+      {
+        "text": "the past range"
+      },
+      {
+        "text": "."
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "The biggest gaps are "
+      },
+      {
+        "text": "the "
+      },
+      {
+        "number": 75,
+        "row": 2,
+        "noun": "contracts"
+      },
+      {
+        "text": " of "
+      },
+      {
+        "number": 603,
+        "row": 2,
+        "noun": "contracts"
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "contracts"
+      },
+      {
+        "text": " that lack "
+      },
+      {
+        "text": "a STEP reference"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "text": "the "
+      },
+      {
+        "text": "contract awards"
+      },
+      {
+        "text": " for fiscal "
+      },
+      {
+        "text": "2017"
+      },
+      {
+        "text": " to "
+      },
+      {
+        "text": "2019"
+      },
+      {
+        "text": ", which no World Bank dataset publishes"
+      },
+      {
+        "text": "."
+      }
+    ],
+    "text": "One source is behind the past range. The biggest gaps are the 75 of 603 contracts that lack a STEP reference and the contract awards for fiscal 2017 to 2019, which no World Bank dataset publishes."
+  },
+  "headline_abstention": null,
+  "parse_failures": [],
+  "measured": {
+    "first": "2026-10-23",
+    "last": "2026-10-23"
+  }
+}

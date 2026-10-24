@@ -1,0 +1,29 @@
+{
+  "tool": "data_readiness_for",
+  "as_of": "2026-10-01",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 13,
+    "used": 0,
+    "not_used": []
+  },
+  "abstention": {
+    "reason": "before_first_measure",
+    "first_measured_on": "2026-10-23"
+  },
+  "filter": {
+    "sources": null,
+    "unknown": 0,
+    "from": null,
+    "total": 13
+  },
+  "sources": [],
+  "kinds": [],
+  "gaps": [],
+  "fixes": [],
+  "headline": null,
+  "headline_abstention": null,
+  "parse_failures": [],
+  "measured": null
+}

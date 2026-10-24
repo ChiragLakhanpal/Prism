@@ -470,6 +470,8 @@ limitations = ["The published text scrambles Procurement Plan tables, so only so
 
 # The documents source shows as two rows: the plan reader's Procurement Plans and the passage
 # reader's reports. Each reader writes its own measures for each project (strata.ops.data_readiness).
+# The plan measures count an activity once in each latest plan version that lists it, and one
+# activity can sit in two agencies' latest plans, so their words say "activity entries".
 [[sources.documents.readiness]]
 id = "plans"
 label = "Procurement Plans"
@@ -477,9 +479,9 @@ noun = "Procurement Plans"
 stratum = "How"
 coverage = { measure = "plan_versions_read", counts = "plan versions read", noun = "plan versions listed", counted_in = "strata.silver.plan_versions" }
 linked = { measure = "step_rows_with_reference", counts = "STEP rows with an Activity Reference No.", noun = "STEP rows", lack = "an Activity Reference No.", counted_in = "strata.silver.plan_rows" }
-read_well = { measure = "latest_activities_with_step_rows", counts = "activities with STEP rows, counted per latest plan version", noun = "activities, counted per latest plan version", counted_in = "strata.silver.plan_rows" }
+read_well = { measure = "latest_activities_with_step_rows", counts = "activity entries in the latest plan versions with STEP rows", noun = "activity entries in the latest plan versions", counted_in = "strata.silver.plan_rows" }
 checks = [
-  { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activities whose confirmed first listing was read, counted per latest plan version", noun = "activities, counted per latest plan version", lack = "a confirmed first listing I read", counted_in = "strata.silver.plan_listings" },
+  { measure = "latest_activities_with_confirmed_first_listing_read", counts = "activity entries in the latest plan versions whose confirmed first listing was read", noun = "activity entries in the latest plan versions", lack = "a confirmed first listing I read", counted_in = "strata.silver.plan_listings" },
 ]
 
 [[sources.documents.readiness]]

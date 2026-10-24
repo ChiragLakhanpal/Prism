@@ -201,7 +201,15 @@ def in_top_three(result, question) -> dict[str, list[str]]:
             "left_out": sorted(left_out)}
 
 
-ANSWERS = {"check_plan": marked, "search_passages": in_top_three}
+def link_rate_and_gaps(result, question) -> dict[str, list]:
+    """data_readiness_for's answer: the awards row's STEP-reference measure, and the known gaps shown."""
+    [awards] = [row for row in result["sources"] if row["id"] == "awards"]
+    linked = result["rows"][awards["cells"]["linked"]["row"]]
+    return {"linked_step_reference": [linked["count"], linked["denominator"]],
+            "known_gaps": [row["id"] for row in result["sources"] if row["type"] == "gap"]}
+
+
+ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": link_rate_and_gaps}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -210,6 +218,8 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
+    if question["tool"] == "data_readiness_for":
+        return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
 

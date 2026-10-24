@@ -11,7 +11,7 @@ import { footerSentence } from "./design-md";
 
 const RUN = fileURLToPath(new URL("../lint/run.ts", import.meta.url));
 
-function lint(files: { copy?: string; component?: string }) {
+function lint(files: { copy?: string; component?: string; registry?: string }) {
   const dir = mkdtempSync(join(tmpdir(), "strata-lint-"));
   const args = [RUN];
   if (files.copy !== undefined) {
@@ -21,6 +21,10 @@ function lint(files: { copy?: string; component?: string }) {
   if (files.component !== undefined) {
     writeFileSync(join(dir, "Thing.tsx"), files.component);
     args.push("--component", join(dir, "Thing.tsx"));
+  }
+  if (files.registry !== undefined) {
+    writeFileSync(join(dir, "sources.toml"), files.registry);
+    args.push("--registry", join(dir, "sources.toml"));
   }
   const done = spawnSync("node", args, { encoding: "utf8" });
   return { code: done.status, output: done.stdout + done.stderr };
@@ -50,6 +54,24 @@ for (const [name, wrong, right, reason] of MISTAKES) {
     expect(passed.code).toBe(0);
   });
 }
+
+test("the copy lint checks the words the source registry puts on the Data readiness page, and not its addresses", () => {
+  const entry = (note: string) =>
+    `[sources.cpia]\nendpoint = "https://api.worldbank.org/v2/clear"\n# I flag nothing here.\n\n` +
+    `[[sources.cpia.declared]]\ncolumn = "coverage"\nnote = "${note}"\n`;
+  const failed = lint({ registry: entry("IDA countries only, as flagged by IDA") });
+  expect(failed.code, failed.output).toBe(1);
+  expect(failed.output).toMatch(/sources\.toml:7: "IDA countries only, as flagged by IDA" uses "flagged"/);
+
+  const passed = lint({ registry: entry("IDA countries only") });
+  expect(passed.output).toBe("");
+  expect(passed.code).toBe(0);
+});
+
+test("the server's copy of the Data readiness sentences says what the copy file says", async () => {
+  const { serverCopyIsCurrent } = await import("../lint/server-copy.ts");
+  expect(serverCopyIsCurrent(), "run node web/lint/server-copy.ts --write").toBe(true);
+});
 
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {
   const failed = lint({ copy: "export const copy = {\n  done: (n: number) => `I flagged ${n} rows.`,\n};\n" });

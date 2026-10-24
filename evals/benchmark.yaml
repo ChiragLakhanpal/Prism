@@ -54,3 +54,22 @@ questions:
       The ticket's query and its known answer: ICR P130164 paragraph 54, on PDF page 23, "108 of 328
       cases had to go through rebidding" (tests/ground_truth/values.toml, icr-para-54). No passage
       the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out.
+
+  - id: data-readiness-kenya-awards
+    kind: sql
+    tool: data_readiness_for
+    question: >-
+      As of October 23, 2026, how many of the contract awards since fiscal 2020 carry a STEP
+      reference, and which fiscal years of contract awards does no World Bank dataset publish?
+    arguments:
+      sources: awards
+      as_of: "2026-10-23"
+    expected:
+      linked_step_reference: [528, 603]
+      known_gaps: [fy2017_2019]
+    ground_truth: tests/ground_truth/kenya_step_reference_link_rate.sql
+    source: >-
+      Kenya's 603 contracts and the 528 of them that carry a STEP reference, counted from the recorded
+      award files apart from Strata's code (tests/ground_truth/values.toml, counts.kenya). The fixture
+      records awards for Kenya only, so the awards source's row for every country holds Kenya's. The
+      gap is PLAN.md section 3's: neither awards dataset covers fiscal 2017 to 2019.

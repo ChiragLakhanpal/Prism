@@ -290,6 +290,72 @@ export const copy = {
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
   },
 
+  // The Data readiness page (the 16 design brief). Every number on it comes from the
+  // data_readiness_for tool, and the page computes none.
+  dataReadiness: {
+    // The sentences the tool builds on the server: the headline, the gaps and what holds each kind
+    // of question back. src/strata/tools/data_readiness_for.py fills each {slot} from the measures
+    // and reads these words from src/strata/tools/data_readiness_copy.json, which
+    // `node web/lint/server-copy.ts --write` writes from this object. The lint lane fails when that
+    // file is out of date, so the words have one home. No model writes these sentences.
+    server: {
+      kinds: "Of the {kindCount} kinds of question below, I can answer {clauses}.",
+      kindsAllFull: "I can answer all {kindCount} kinds of question below in full.",
+      kindsOne: "I can answer the one kind of question below {clause}.",
+      clauseFull: "{n} in full",
+      clausePart: "{n} in part",
+      clauseNone: "{n} not at all",
+      oneFull: "in full",
+      onePart: "in part",
+      oneNone: "not at all",
+      clauseJoin: ", ",
+      clauseLastJoin: " and ",
+      gapsTwo: "The biggest gaps are {gap1} and {gap2}.",
+      gapsOne: "The biggest gap is {gap1}.",
+      gapsNone: "Nothing I measured holds these answers back.",
+      filteredOne: "One source is behind {fromNoun}.",
+      filteredFew: "{SourceCount} sources are behind {fromNoun}.",
+      filteredMany: "The {sourceCount} sources below are behind {fromNoun}.",
+      // What holds a kind of question back: its top two gaps, each as a sentence, then how many more.
+      moreOne: "I list one more gap under Sources.",
+      more: "I list {n} more gaps under Sources.",
+      nothingHolds: "Nothing I measured holds it back.",
+      // The gap phrases, by what kind of gap it is.
+      gap: {
+        published: "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
+        linked: "the {missing} of {total} {noun} that lack {lack}",
+        check: "the {missing} of {total} {noun} that lack {lack}",
+        readWell: "the {missing} of {total} {noun} I couldn't read without errors",
+        late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
+        lateOneDay: "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
+        declared: "the {sourceNoun}, which cover {note}",
+        noRows: "the {sourceNoun}, of which I hold no rows yet",
+      },
+      // The coverage line a reader opened the page from, by the tool that wrote it. The page never
+      // shows words from its address.
+      fromNouns: {
+        find_comparables: "the past range",
+        check_plan: "the plan check",
+        ask: "the answer",
+        unknown: "the coverage line you opened",
+      },
+      // How often each source updates, as its registry cadence or a readiness row's schedule says.
+      schedules: {
+        daily: "daily",
+        weekly: "weekly",
+        monthly: "monthly",
+        quarterly: "quarterly",
+        yearly: "yearly",
+        frozen: "frozen",
+        "as published": "as published",
+      },
+      months: [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+      ],
+    },
+  },
+
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts
   // decides which one a number gets.
   num: {

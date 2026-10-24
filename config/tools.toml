@@ -182,3 +182,48 @@ source_fields = ["document_type", "project_id", "project_name", "document_id", "
 fields = ["query", "filters", "search"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
+
+[tools.data_readiness_for]
+description = """Says how fit each data source is to support answers, from Strata's data readiness \
+measures: for each source, how many rows it holds and over how many fiscal years (coverage), how many \
+link to projects, notices or STEP references (linked), how many pages were read without losing their \
+paragraph numbers or table rows (read well), and when it was last fetched against how often it updates \
+(fresh). It names the known gaps no dataset fills, such as the contract awards for fiscal 2017 to 2019, \
+says which kinds of question each source is ready for and what holds them back, and ranks the fixes by \
+how many projects each would add evidence to. Every number is the latest measure, as of the date. Name \
+sources to see only the ones behind an answer. It gives no composite score."""
+adapter = "strata.tools.data_readiness_for:data_readiness_for"
+benchmark = "data-readiness-kenya-awards"
+sources = ["awards", "awards_fy2001_2016", "ieg_ratings", "ida_credits", "ibrd_loans", "ida_credit_history",
+           "ibrd_loan_history", "notices", "projects", "cpia", "wgi", "documents"]
+
+[[tools.data_readiness_for.parameters]]
+name = "sources"
+type = "string"
+required = false
+description = """The source registry's keys of the sources to show, separated by commas, such as \
+awards,notices. Leave it out for every source."""
+
+[[tools.data_readiness_for.parameters]]
+name = "from_tool"
+type = "string"
+required = false
+description = """The tool whose coverage line named the sources, such as find_comparables, so the \
+headline can say which answer they are behind. Leave it out when you name no sources."""
+
+[[tools.data_readiness_for.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only measures taken on or before this date, and judge freshness as of it. Leave it out for today."
+
+[tools.data_readiness_for.result]
+row = """One measure behind the page: its latest count and denominator, or its date, for the source \
+as a whole or summed over the projects it was measured for, with its share when it has enough rows."""
+row_fields = ["evidence_id", "public_from", "source", "source_key", "measure", "kind", "subjects", "count",
+              "denominator", "share_percent", "as_of", "measured_on", "run_ids"]
+source_fields = ["table", "source_key", "measure", "subjects", "measured_on", "counted_in"]
+fields = ["filter", "sources", "kinds", "gaps", "fixes", "headline", "headline_abstention", "parse_failures",
+          "measured"]
+reasons = ["not_measured", "unknown_source"]
+abstentions = ["no_measures", "before_first_measure", "unknown_sources"]

@@ -12,6 +12,12 @@
 - POST /api/ask takes a question and streams a run's events as text/event-stream, then a
   final done event with the run id. A run that breaks ends with an error event whose
   details stay in the server log.
+- GET /api/data/readiness runs the tool registry's data_readiness_for as the viewer, for every
+  source or for ?sources= (registry keys, separated by commas) from the coverage line of ?from=, as
+  of ?asof=. It answers like the stamp when it cannot: 401, 403 with the code permission, 504 with
+  the seconds it waited, and 502.
+- GET /api/data/sources lists each dataset's attribution and the document collections, and counts
+  the Data readiness page's rows, from the registries alone, so it answers with the warehouse down.
 - GET /api/projects/{project_id}/procurement/{agency_id}[/{version}] checks one implementing
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
@@ -36,7 +42,7 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
 from pydantic import BaseModel, Field
@@ -50,6 +56,7 @@ from strata.server import engines, tracing
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
+from strata.tools.data_readiness_for import registry_page
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
@@ -80,8 +87,8 @@ def request_reference() -> str:
     return tracing.trace_id(trace.get_current_span()) or uuid.uuid4().hex
 
 
-def refused(status: int, code: str) -> JSONResponse:
-    return JSONResponse({"code": code}, status_code=status, headers={"Cache-Control": "no-store"})
+def refused(status: int, code: str, **details) -> JSONResponse:
+    return JSONResponse({"code": code, **details}, status_code=status, headers={"Cache-Control": "no-store"})
 
 
 def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
@@ -154,7 +161,8 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
         with engine_for(viewer) as engine:
             return read(engine)
 
-    async def as_viewer(viewer: Viewer, read: Callable[[Engine], object], answer: Callable[[object], dict]):
+    async def as_viewer(viewer: Viewer, read: Callable[[Engine], object], answer: Callable[[object], dict],
+                        say_timeout: bool = False):
         """One read as the viewer, within the stamp's timeout, or the reason it could not run."""
         if not viewer.token:
             return refused(401, "no_identity")
@@ -163,7 +171,7 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
         try:
             value = await asyncio.wait_for(asyncio.to_thread(read_as, viewer, read), timeout)
         except TimeoutError:
-            return refused(504, "timeout")
+            return refused(504, "timeout", **({"timeout_seconds": timeout} if say_timeout else {}))
         except PermissionDenied:
             log.warning("The warehouse refused %s.", viewer.email or viewer.user_id)
             return refused(403, "permission")
@@ -205,6 +213,19 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
                            view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
                                        "plan_date": version}, viewer, view, asof)
+
+    @app.get("/api/data/readiness")
+    async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
+                             asof: dt.date | None = None, view: str = "staff",
+                             viewer: Viewer = Depends(current_viewer)):
+        arguments = {"sources": sources, "from_tool": from_tool}
+        return await as_viewer(viewer, lambda engine: registry.call(
+            "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof)),
+            lambda result: result, say_timeout=True)
+
+    @app.get("/api/data/sources")
+    def data_sources() -> dict:
+        return registry_page()
 
     @app.get("/api/health")
     def health() -> dict:
