@@ -255,7 +255,6 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.keyboard.press("Tab");
 
   await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await page.waitForTimeout(200);
   await expect(page.getByRole("tooltip")).toContainText("The activities I counted:KE-NWWDA-541055-CW-RFB");
 });
 
@@ -395,6 +394,8 @@ test("while the check loads, skeletons hold its places and a status says so", as
     await held;
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
   });
+  // The page's clock runs fast through the two seconds before "Still checking this plan.".
+  await page.clock.install();
   await page.goto(PLAN);
 
   await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
@@ -407,7 +408,8 @@ test("while the check loads, skeletons hold its places and a status says so", as
     "Process status",
     "What Strata found",
   ]);
-  await expect(page.getByText("Still checking this plan.")).toBeVisible({ timeout: 5000 });
+  await page.clock.fastForward(2000);
+  await expect(page.getByText("Still checking this plan.")).toBeVisible();
   // The header's skeleton has the populated header's shape, with the pill's bar on the right, so
   // the table under it does not move when the rows arrive (the 10 brief, section 7).
   await page.evaluate(() => document.fonts.ready);
@@ -527,20 +529,21 @@ test("an account that can't read Strata's tables is told what to ask for, with n
 });
 
 // Each state loads once and is resized through the three widths, which keeps the axe runs quick.
-async function axeAtEveryWidth(page: Page, label: string, ready: () => Promise<void>) {
-  for (const width of [1440, 1024, 390]) {
+async function axeAtEveryWidth(page: Page, label: string, ready: () => Promise<void>, widths = [1440, 1024, 390]) {
+  for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
     await ready();
     expect(await axe(page), `${label} at ${width} px`).toEqual([]);
   }
 }
 
-test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px, folded and open, and the page reflows at 320 px", async ({ page }) => {
+test("axe finds no WCAG 2.2 AA violations at 1440, 1024 and 390 px with the fold closed and at 1440 and 390 px with it open, and the page reflows at 320 px", async ({ page }) => {
   await openPlan(page);
   const check = page.locator("[data-plan-check]");
   await axeAtEveryWidth(page, "folded", () => expect(check).toBeVisible());
+  // The open fold adds rows of the same shape, so two widths cover it: the table and the cards.
   await page.locator("[data-fold] button:visible").click();
-  await axeAtEveryWidth(page, "open", () => expect(check).toBeVisible());
+  await axeAtEveryWidth(page, "open", () => expect(check).toBeVisible(), [1440, 390]);
   await page.setViewportSize({ width: 320, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
@@ -554,10 +557,10 @@ test("axe finds no violations in the loading, empty and error states at 1440, 10
   await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Project P156634" })).toHaveAttribute("href", "/projects/P156634");
   await axeAtEveryWidth(page, "loading", () => expect(page.locator("[data-check-plan-page=loading]")).toBeVisible());
 
+  // The permission error is the service error's frame without its button, so the service error covers it.
   const states: [string, Answer, string?][] = [
     ["empty", { body: await recorded("check-plan-p156634-wajir-no-plan.json") }, "/projects/P156634/procurement/wajir-water-and-sewerage-company"],
     ["error", { status: 503, body: '{"code": "data_service", "trace_id": "0af7651916cd43dd8448eb211c80319c"}' }],
-    ["permission", { status: 403, body: '{"code": "permission"}' }],
   ];
   for (const [name, answer, path] of states) {
     await page.unrouteAll({ behavior: "ignoreErrors" });

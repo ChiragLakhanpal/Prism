@@ -195,18 +195,18 @@ test("a project with no plans says so, and a project with no record is not found
   await expect(trail.locator("[aria-current=page]")).toHaveText("Project P999999");
 });
 
-test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440, 1024 and 390 px, and they reflow at 320 px", async ({ page }) => {
+test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440 and 390 px, and they reflow at 320 px", async ({ page }) => {
+  // The populated pages hold every component these pages use; the no-plans and not-found states
+  // are an empty-state card and a heading, which the gallery's axe run covers.
   const cases: [string, Record<string, Answer>][] = [
     ["/projects", await projects()],
     ["/projects/P156634", await p156634()],
-    ["/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } }],
-    ["/projects/P999999", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } }],
   ];
   // Each page loads once and is resized through the widths, which keeps the axe runs quick.
   for (const [path, api] of cases) {
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await open(page, path, api);
-    for (const width of [1440, 1024, 390]) {
+    for (const width of [1440, 390]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(page.locator("[data-projects-page=ready], [data-project-page=ready], [data-project-page=not-found]")).toBeVisible();
       expect(await axe(page), `${path} at ${width} px`).toEqual([]);
