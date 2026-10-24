@@ -287,6 +287,16 @@ export const copy = {
     // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
     tryAgain: "Try again",
+    // Why an answer stopped, keyed by the code its stream's error event carries (ERROR_CODES in
+    // src/strata/harness/turn.py). A test fails when a code has no sentence here.
+    errors: {
+      no_agent: "I can't answer questions yet, because the model that writes my answers isn't connected.",
+      agent_unavailable: "I can't reach the model that writes my answers right now; try again in a few minutes.",
+      content_filter: "A safety filter stopped this answer, so I can't show it; try asking in other words.",
+      agent_output: "I wrote an answer I couldn't check, so I'm not showing it; try asking again.",
+      data_service: "I can't reach the data right now, so I can't answer; try again in a few minutes.",
+      internal: "Something went wrong on my side, so I can't answer; try again, and if it happens again, share the answer ID.",
+    },
   },
 
   // Term and DefinitionWindow.

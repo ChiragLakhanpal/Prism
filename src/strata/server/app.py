@@ -53,8 +53,8 @@ from strata.agent.verifier import answer_events, verify
 from strata.config import load_thresholds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.harness.aio import HEARTBEAT, with_heartbeats
-from strata.harness.turn import (Event, RunError, Runner, Scope, TraceIds, Turn, new_run_id as random_run_id,
-                                 no_agent)
+from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
+                                 new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.server import engines, tracing
 from strata.server.usage import UsageEvent, UsageLog
@@ -288,8 +288,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     yield frame(item)
         except RunError as error:
             log.warning("Run %s could not answer (%s): %s", turn.run_id, error.code, error)
-            error_code = error.code
-            yield frame(Event("error", {"code": error.code}))
+            error_code = error.code if error.code in ERROR_CODES else "internal"
+            yield frame(Event("error", {"code": error_code}))
         except Exception:
             log.exception("Run %s failed.", turn.run_id)
             error_code = "internal"

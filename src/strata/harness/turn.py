@@ -65,8 +65,14 @@ class Turn:
     trace: TraceIds | None = None
 
 
+# Every code an answer stream's error event can carry. web/src/copy.ts has one sentence for each, under
+# answer.errors; a test fails when one is missing, and the stream sends any other code as internal.
+ERROR_CODES = ("no_agent", "agent_unavailable", "content_filter", "agent_output", "data_service", "internal")
+
+
 class RunError(Exception):
-    """A run that cannot answer, with a code the page has a sentence for. Its details stay in the log."""
+    """A run that cannot answer, with a code the page has a sentence for (ERROR_CODES). Its details stay
+    in the log."""
 
     def __init__(self, code: str, detail: str = ""):
         super().__init__(detail or code)

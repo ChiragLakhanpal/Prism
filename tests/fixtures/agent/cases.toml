@@ -52,7 +52,7 @@ as_of = 2026-10-23
 recording = "p130164-rebidding"
 
 [[cases.plant_claims]]
-sentence = "Some works started before their forest clearance came through."
+sentence = "Some works started before the forest department gave its permission."
 kind = "summary"
 evidence_ids = ["strata.gold.passage:31525018/v1/71"]
 numbers = []

@@ -38,7 +38,8 @@ def run_row(turn: Turn, verdict: Verdict | None, error_code: str | None, started
     trace = turn.trace
     return {
         "run_id": turn.run_id, "viewer_id": turn.viewer.user_id, "question": turn.question, "scope": turn.scope.chip,
-        "as_of": turn.notes.as_of or turn.scope.as_of or finished_at.date(), "view": turn.scope.view,
+        "as_of": min(turn.notes.as_of or turn.scope.as_of or finished_at.date(), finished_at.date()),
+        "view": turn.scope.view,
         "language": turn.scope.language, "status": "failed" if error_code else "answered", "error_code": error_code,
         "agent": turn.notes.agent, "agent_version": turn.notes.agent_version, "tool_rounds": turn.notes.tool_rounds,
         "tool_calls": json.dumps(turn.notes.tool_calls, ensure_ascii=False, default=str),

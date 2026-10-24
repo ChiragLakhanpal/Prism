@@ -30,7 +30,7 @@ from typing import Any, Protocol
 from strata.agent.claims import ClaimsError, parse_claims
 from strata.config import Thresholds, Tool, load_thresholds
 from strata.harness.turn import Event, RunError, Runner, Turn
-from strata.lakehouse.engine import PermissionDenied
+from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.server.engines import EngineFor
 from strata.tools import registry
 
@@ -49,7 +49,8 @@ class Agent(Protocol):
 
 
 class AgentError(RunError):
-    """The agent did not answer: unavailable, refused by a content filter, or no claims."""
+    """The agent did not answer: unavailable, refused by a content filter, no claims, or the data service
+    failed during a tool call."""
 
 
 def output_text(response: Mapping) -> str:
@@ -122,6 +123,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         except PermissionDenied:
             note["error"] = "permission"
             return {"error": "permission"}, note
+        except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
+            raise AgentError("data_service", str(error)) from error
         for row in result["rows"]:
             turn.facts.record(row["evidence_id"], row, tool=name)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
@@ -131,12 +134,13 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         agent = agent_for(turn)
         turn.notes.agent, turn.notes.agent_version = agent.name, agent.version
         as_of = turn.notes.as_of = min(turn.scope.as_of or today(), today())
-        message ={"question": turn.question, "scope": turn.scope.chip, "as_of": as_of.isoformat(),
+        message = {"question": turn.question, "scope": turn.scope.chip, "as_of": as_of.isoformat(),
                    "view": turn.scope.view, "language": turn.scope.language}
         items = [{"role": "user", "content": json.dumps(message, ensure_ascii=False)}]
         previous, refusals, step = None, 0, 0
         while True:
             response = await asyncio.to_thread(agent.respond, items, previous)
+            turn.notes.agent_version = agent.version or turn.notes.agent_version  # Foundry names it in a response
             previous = response.get("id")
             turn.notes.response_ids.append(previous)
             calls = function_calls(response)

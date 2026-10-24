@@ -21,9 +21,9 @@ from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
 from strata.agent.scripted import ScriptedAgent, load_cases, stream_text
 from strata.config import load_tools
-from strata.harness.turn import Event, TraceIds
+from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.passages import TABLE_SUMMARY
 from strata.server.app import create_app
 from strata.tools.check_plan import check_plan
@@ -142,7 +142,7 @@ def test_a_sentence_citing_a_source_no_tool_returned_this_turn_is_removed(ask_ca
 
     removed = of(parsed, "removed")
     assert [(item["sentence"], item["reason"]) for item in removed] == [
-        ("Some works started before their forest clearance came through.", "id_not_returned")]
+        ("Some works started before the forest department gave its permission.", "id_not_returned")]
     assert removed[0]["reasons"][0]["text"] == "strata.gold.passage:31525018/v1/71"
     assert copy_reasons()["id_not_returned"]["item"] == "It cited a source I did not retrieve for this question."
     assert "strata.gold.passage:31525018/v1/71" not in [evidence["id"] for evidence in of(parsed, "evidence")]
@@ -409,7 +409,8 @@ class CallsThenAnswers:
             return {"id": "resp_1", "output": [
                 {"type": "function_call", "call_id": f"call_{number}", "name": name, "arguments": json.dumps(arguments)}
                 for number, (name, arguments) in enumerate(self.calls, 1)]}
-        return Answers(*self.answer([json.loads(item["output"]) for item in items])).respond(items, previous_response_id)
+        claims = self.answer([json.loads(item["output"]) for item in items])
+        return Answers(*claims).respond(items, previous_response_id)
 
 
 def with_adapter(name, adapter):
@@ -483,6 +484,45 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
     assert removed_reasons(parsed) == [[("number_not_in_records", "Thirty-seven")], [("quote_not_on_page", None)]]
 
 
+def logged_runs(ops_db):
+    with DuckDBEngine.open(ops_db, read_only=True) as engine:
+        result = engine.run("SELECT * FROM strata.ops.agent_runs")
+    return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
+
+
+def test_the_run_names_the_agent_version_that_answered(ops_db):
+    """The Foundry agent learns its version from its first response, so the run reads it afterwards."""
+    class Versioned(Answers):
+        def respond(self, items, previous_response_id):
+            self.version = "7"
+            return super().respond(items, previous_response_id)
+
+    ask_with(create_app(runner=answer_runner(lambda turn: Versioned(claim("No one said why.")), no_engine),
+                        runs=RunLog(lambda: DuckDBEngine.open(ops_db))))
+
+    assert [run["agent_version"] for run in logged_runs(ops_db)] == ["7"]
+
+
+def test_a_run_that_never_reached_its_tools_logs_no_as_of_date_after_its_own_day(ops_db):
+    ask_with(create_app(runs=RunLog(lambda: DuckDBEngine.open(ops_db))), asof="2027-03-01")
+
+    [run] = logged_runs(ops_db)
+    assert (run["error_code"], run["as_of"]) == ("no_agent", run["finished_at"].date())
+
+
+def test_a_data_service_that_fails_during_a_tool_call_ends_the_answer_with_its_own_error():
+    @contextmanager
+    def down(viewer):
+        raise EngineError("The SQL warehouse did not answer in time.")
+        yield
+
+    agent = CallsThenAnswers([("search_passages", {"query": "rebidding", "as_of": "2026-10-23"})], lambda outputs: [])
+
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: agent, down), new_run_id=lambda: "run-0004")))
+
+    assert parsed[-2:] == [("error", {"code": "data_service"}), ("done", {"run_id": "run-0004"})]
+
+
 def test_a_run_log_that_cannot_write_leaves_the_answer_as_it_was(ask_case, tmp_path):
     parsed, _ = ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(tmp_path / "no-tables.duckdb")))
 
@@ -495,11 +535,11 @@ def no_engine(viewer):
     yield
 
 
-def ask_with(app, question="Why were works contracts in P130164 advertised again?"):
+def ask_with(app, question="Why were works contracts in P130164 advertised again?", **body):
     async def go():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
-            return await client.post("/api/ask", headers=ANA, json={"question": question})
+            return await client.post("/api/ask", headers=ANA, json={"question": question, **body})
     return asyncio.run(go()).text
 
 
@@ -519,6 +559,36 @@ def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():
     sentences = copy_reasons()
     assert [code for code in REASONS if not (sentences.get(code) or {}).get("item")
             or not sentences[code].get("joined")] == []
+
+
+def test_every_error_the_answer_stream_can_send_has_its_sentence_in_the_copy_file():
+    from strata.harness.turn import ERROR_CODES
+
+    sentences = copy_errors()
+    assert [code for code in ERROR_CODES if not sentences.get(code)] == []
+    # Each code a run raises by name is one the stream may send.
+    source = Path(__file__).resolve().parents[1] / "src" / "strata"
+    raised = {code for path in source.rglob("*.py")
+              for code in re.findall(r'(?:AgentError|RunError)\(\s*"(\w+)"', path.read_text())}
+    assert raised and raised - set(ERROR_CODES) == set()
+
+
+def test_an_error_code_the_copy_file_has_no_sentence_for_goes_out_as_internal():
+    async def runner(turn):
+        raise RunError("made_up_code", "No sentence anywhere says this.")
+        yield
+
+    parsed = events(ask_with(create_app(runner=runner, new_run_id=lambda: "run-0005")))
+
+    assert parsed == [("error", {"code": "internal"}), ("done", {"run_id": "run-0005"})]
+
+
+def copy_errors():
+    """The answer's error sentences, read from the copy file (web/src/copy.ts, answer.errors)."""
+    text = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_text()
+    answer = re.search(r"\n  answer: \{(.*?)\n  \},", text, re.S).group(1)
+    errors = re.search(r"errors: \{(.*?)\n    \}", answer, re.S).group(1)
+    return dict(re.findall(r'(\w+):\s*"([^"]*)"', errors))
 
 
 def copy_reasons():
