@@ -8,7 +8,7 @@
 // The header sticks from 1024 px, so the page keeps scroll-padding-top at its height plus 8 px and a
 // focused control is never hidden under it (DESIGN.md section 10). A visually hidden status says
 // "Checking this plan." and then "Checked nine activities.".
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
@@ -26,35 +26,11 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
 const whole = (value: number) => formatNumber(value, { compact: false });
-
-// From a page area of 1024 px the header sticks; keep focused elements 8 px clear of it. The page area
-// narrows when the evidence drawer opens, so the header's own position says whether it sticks. The same
-// padding goes to --sticky-top, which shifts the scroll margin of the draft action in the header (app.css),
-// so Shift+Tab into the header does not scroll the page.
-function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: boolean) {
-  useEffect(() => {
-    const element = header.current;
-    if (!element || !active) return;
-    const root = document.documentElement;
-    const update = () => {
-      const padding = getComputedStyle(element).position === "sticky" ? `${element.offsetHeight + 8}px` : "";
-      root.style.scrollPaddingTop = padding;
-      root.style.setProperty("--sticky-top", padding);
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-      root.style.scrollPaddingTop = "";
-      root.style.removeProperty("--sticky-top");
-    };
-  }, [header, active]);
-}
 
 // How long the populated page waits for the existing-draft lookup once the plan check is ready to draw. A
 // notice that arrived after the page was drawn would push it down, so a later answer is dropped for this
@@ -114,7 +90,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const lookup = useExistingDraft(pid, agencyId, version, !preview, ready?.plan.plan_date ?? null);
   const waiting = ready !== null && !lookup.settled;
   const checked = waiting ? null : ready;
-  useScrollPadding(header, Boolean(checked));
+  useScrollPadding(header, Boolean(checked), { gap: 8 });
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.

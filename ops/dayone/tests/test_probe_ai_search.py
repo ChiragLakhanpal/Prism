@@ -1,6 +1,5 @@
 """The AI Search probe (test 4): an endpoint, a hybrid index of passages, and one hybrid query."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -15,7 +14,6 @@ from dayone import ProbeError, SetupError  # noqa: E402
 
 from strata.config import load_models  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 
 
 class FakeSearch:
@@ -48,7 +46,8 @@ class FakeSearch:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text("DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\n"
                                         "DATABRICKS_TOKEN='dapi-x'\nDATABRICKS_WAREHOUSE_ID='wh1'\n"
                                         "AI_SEARCH_ENDPOINT='strata-search'\n")

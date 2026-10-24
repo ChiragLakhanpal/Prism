@@ -9,6 +9,10 @@ strata.config.load_tools() reads it. This module does three things with those de
 - call() runs a tool by name. It checks the arguments against the tool's parameters, settles
   the as-of date (the earlier of the call's and the page's, else today), runs the adapter with
   the viewer's engine, and wraps the result in the envelope every tool shares.
+- A tool that declares summary_fields gets one more citable record, its summary: those fields,
+  with an evidence id that names the tool, its arguments and the as-of date. The derived figures in
+  them, such as a past range or a count, can then be cited and checked like a row's values
+  (CLAUDE.md rule 1; spec, "a derived figure the agent needs is returned as a column").
 - It then checks the result against seam 2's contract and the tool's declared shape: every row
   has an evidence id, a public date on or before the as-of date and a source line, and every
   reason code and abstention reason is one the file lists. A tool that breaks the contract raises
@@ -23,6 +27,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote
 
 from strata.config import Thresholds, Tool, ToolParameter, load_thresholds, load_tools
 from strata.dbx import Viewer
@@ -166,21 +171,45 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     as_of = min(asked) if asked else today()
     output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
+    if tool.result.summary_fields:
+        result["summary"] = summary(tool, bound, result)
     check_contract(tool, result)
     return result
+
+
+def summary_id(tool: Tool, bound: Mapping[str, Any], as_of: str) -> str:
+    """The summary's evidence id: the tool, its required arguments, the as-of date, then any other
+    argument the call set, so two calls with different criteria in one turn are two records.
+    strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?review_type=Prior"""
+    def text(value: Any) -> str:
+        return quote(value.isoformat() if isinstance(value, dt.date) else str(value), safe="-_.~")
+
+    key = "/".join(text(bound[parameter.name]) for parameter in tool.parameters if parameter.required)
+    others = "&".join(f"{parameter.name}={text(bound[parameter.name])}" for parameter in tool.parameters
+                      if not parameter.required and parameter.name in bound)
+    return f"strata.tools.{tool.name}:{key}@{as_of}" + (f"?{others}" if others else "")
+
+
+def summary(tool: Tool, bound: Mapping[str, Any], result: Mapping[str, Any]) -> dict:
+    """The tool's derived figures as one record: public on the as-of date, with a source line that names
+    the tool and the sources it read."""
+    return {"evidence_id": summary_id(tool, bound, result["as_of"]), "public_from": result["as_of"],
+            "source": {"tool": tool.name, "sources": list(tool.sources)},
+            **{field: result[field] for field in tool.result.summary_fields}}
 
 
 # ── Seam 2's contract ────────────────────────────────────────────────────
 
 def check_contract(tool: Tool, result: dict) -> None:
-    """Every result has the shared envelope and the tool's own fields; every row is cited, dated on or
-    before the as-of date, and has its source line. An abstention gives a reason and no rows. Each
+    """Every result has the shared envelope and the tool's own fields; every row, and the summary when
+    the tool declares one, is cited, dated on or before the as-of date, and has its source line. An abstention gives a reason and no rows, unless the
+    registry lists it under abstentions_with_rows, such as too few comparables for a range. Each
     reason code, in a row's marks or in the coverage line, and each abstention reason is one the
     registry lists, so the screens' copy has a sentence for it."""
     def broken(what: str):
         raise ToolContractError(f"{tool.name} broke the tool contract: {what}.")
 
-    expected = set(ENVELOPE) | set(tool.result.fields)
+    expected = set(ENVELOPE) | set(tool.result.fields) | ({"summary"} if tool.result.summary_fields else set())
     if set(result) != expected:
         broken(f"its result has {sorted(result)}, not {sorted(expected)}")
     coverage = result["coverage"]
@@ -195,8 +224,18 @@ def check_contract(tool: Tool, result: dict) -> None:
         broken("an abstention must give its reason")
     if abstention is not None and abstention["reason"] not in tool.result.abstentions:
         broken(f"it abstained for {abstention['reason']!r}, which its result's abstentions do not list")
-    if abstention is not None and result["rows"]:
+    if abstention is not None and result["rows"] and abstention["reason"] not in tool.result.abstentions_with_rows:
         broken("it abstained and still returned rows")
+    if tool.result.summary_fields:
+        record = result["summary"]
+        if set(record) != {"evidence_id", "public_from", "source", *tool.result.summary_fields}:
+            broken(f"its summary has {sorted(record)}, not the declared {sorted(tool.result.summary_fields)}")
+        if not str(record["evidence_id"]).startswith(f"strata.tools.{tool.name}:"):
+            broken(f"its summary's evidence id {record['evidence_id']!r} does not name the tool")
+        if not record["public_from"] or record["public_from"] > result["as_of"]:
+            broken(f"its summary is public from {record['public_from']}, after the as-of date {result['as_of']}")
+        if not isinstance(record["source"], dict) or not record["source"].get("tool"):
+            broken("its summary has no source line naming the tool")
     for row in result["rows"]:
         if set(row) != set(tool.result.row_fields):
             broken(f"a row has {sorted(row)}, not the declared {sorted(tool.result.row_fields)}")

@@ -861,6 +861,8 @@ class ToolResult:
     fields: tuple[str, ...]
     reasons: tuple[str, ...] = ()  # the codes a reason in a row's marks may have
     abstentions: tuple[str, ...] = ()  # the reasons the tool may give for returning no rows
+    abstentions_with_rows: tuple[str, ...] = ()  # the abstentions that still come with rows
+    summary_fields: tuple[str, ...] = ()  # the derived figures returned as one citable record, the summary
 
 
 @dataclass(frozen=True)
@@ -958,9 +960,18 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
         raise ConfigError(f"In {path.name}, tools.{name} has no result shape. Add a [tools.{name}.result] table "
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
-    entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions"})
+    entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions", "abstentions_with_rows",
+                "summary_fields"})
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
-                        entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"))
+                        entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"),
+                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"))
+    # A summary carries the tool's own fields, and the coverage line's counts, which every result has.
+    strays = [field for field in result.summary_fields if field not in (*result.fields, "coverage")]
+    if strays:
+        entry._fail("summary_fields", f"names {', '.join(strays)}, which fields does not list")
+    unlisted = [reason for reason in result.abstentions_with_rows if reason not in result.abstentions]
+    if unlisted:
+        entry._fail("abstentions_with_rows", f"names {', '.join(unlisted)}, which abstentions does not list")
     missing = [field for field in ROW_CONTRACT if field not in result.row_fields]
     if missing:
         entry._fail("row_fields", f"must include {', '.join(ROW_CONTRACT)}, so every row can be cited and dated; "

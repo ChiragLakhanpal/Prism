@@ -32,17 +32,25 @@ THRESHOLD = re.compile(r"\{([a-z_]+(?:\.[a-z_]+)+)\}")
 def instructions(spec: AgentSpec, folder: Path = INSTRUCTIONS, tools: dict[str, Tool] | None = None,
                  thresholds: Thresholds | None = None) -> str:
     """The agent's instructions: its file, with each threshold it names filled in, then one section that
-    lists every tool in the registry with its description."""
+    lists every tool in the registry with its description. When a tool returns a summary record, the
+    section says the agent may cite it."""
     limits = thresholds or load_thresholds()
+    registered = tools if tools is not None else load_tools()
     text = (folder / spec.instructions).read_text().rstrip()
     text = THRESHOLD.sub(lambda match: str(limits.value(match.group(1))), text)
-    offered = agent_tools(spec, tools, limits)
+    offered = agent_tools(spec, registered, limits)
     if not offered:  # a writer with no tools writes from the facts in its message
         return text + "\n"
     listed = [f"### {tool['name']}\n\n{tool['description']}" for tool in offered]
-    return "\n\n".join([text, "## Your tools", "Each tool is read-only and runs as the person who asked. "
-                        "Its result has rows, each with its evidence_id, public_from date and source line, a "
-                        "coverage line and, when it gives no rows, an abstention with its reason.", *listed]) + "\n"
+    lead = ("Each tool is read-only and runs as the person who asked. Its result has rows, each with its "
+            "evidence_id, public_from date and source line, a coverage line and, when it gives no rows, an "
+            "abstention with its reason.")
+    names = {tool["name"] for tool in offered}
+    if any(tool.result.summary_fields for tool in registered.values() if tool.name in names):
+        lead += (" A tool may also return a summary: one record with its own evidence_id that holds figures "
+                 "worked out from the rows, such as a past range or a count. Cite the summary for those "
+                 "figures, as you cite a row.")
+    return "\n\n".join([text, "## Your tools", lead, *listed]) + "\n"
 
 
 def agent_tools(spec: AgentSpec, tools: dict[str, Tool] | None = None, thresholds: Thresholds | None = None) -> list[dict]:

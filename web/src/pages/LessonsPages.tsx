@@ -99,7 +99,9 @@ export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: "library" 
         <p role="status" className="clip-visually">
           {announced}
         </p>
-        <div className={reviewer ? "mt-6 @md/page:mt-8" : "mt-8"}>{children}</div>
+        {/* Until the viewer's roles return, only the h1 and the purpose show, so the sub-tab row never pushes
+            the content down (the 29 brief, section 5.1). */}
+        {me.status !== "loading" && <div className={reviewer ? "mt-6 @md/page:mt-8" : "mt-8"}>{children}</div>}
       </div>
     </DocumentColumn>
   );

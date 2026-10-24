@@ -59,11 +59,11 @@ const WIDE = [1440, 1024];
 const NARROW = [390];
 
 // The app's routes, as the 06 design brief lists them, and both not-found pages. All projects, a
-// project's page and Check a plan have their own shots below (ticket 10).
+// project's page and Check a plan have their own shots below (ticket 10), and so does the package
+// workspace (ticket 12).
 const ROUTES: [string, string][] = [
   ["home", "/"],
   ["packages", "/packages"],
-  ["package", "/packages/KE-NWWDA-541055-CW-RFB"],
   ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["document", "/projects/P130164/documents/icr?page=23&para=54"],
   ["lessons", "/lessons"],
@@ -601,6 +601,123 @@ const LESSON_SHOTS: Shot[] = [
   review("320", REB, "lessons-item-decide.json", { widths: [320] }),
 ];
 
+// Ticket 12: the package workspace for KE-NWWDA-541055-CW-RFB, in every state the 12 brief lists, with
+// its two /api reads answered from the recordings. A state the fixture cannot reach, such as a plan row
+// with no planned dates, is the recorded answer with one value changed, so it still shows real rows.
+const PACKAGE = "/packages/KE-NWWDA-541055-CW-RFB";
+const PACKAGE_API = "/api/packages/KE-NWWDA-541055-CW-RFB";
+const COMPARABLES_API = `${PACKAGE_API}/comparables`;
+const COMPARABLES = "comparables-ke-nwwda-541055.json";
+const comparables = (name: string): Answer => ({ recorded: name });
+const noPlanDates = derived(COMPARABLES, (body) => {
+  body.plan = null;
+  body.frequencies.plan = null;
+  body.package.planned_notice_on = null;
+  body.package.planned_signing_on = null;
+});
+function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = {}, pkg: Answer | null = { recorded: "package-ke-nwwda-541055.json" }, path = PACKAGE): Shot {
+  const api = `/api${path}`;
+  const answers: Record<string, Answer> = { ...app(name, path).api };
+  if (pkg) answers[api] = pkg;
+  if (answer) answers[`${api}/comparables`] = answer;
+  const pending = [...(pkg ? [] : [api]), ...(answer ? [] : [`${api}/comparables`]), ...(rest.pending ?? [])];
+  return app(name, path, {}, { ...rest, api: answers, pending });
+}
+const wideAndNarrow = [1440, 390];
+// The chart's dots answer the pointer by distance, so the mouse goes to the dot's centre.
+const hoverDot = (index: number) => async (page: Page) => {
+  const dot = page.locator(`[data-dot-target='${index}']`);
+  await dot.scrollIntoViewIfNeeded();
+  const box = (await dot.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(250);
+};
+
+// The bottom dot of the tallest column at this width, hovered, then the pointer moved straight up onto
+// its tooltip, 2 px every 16 ms, over the dots stacked above it.
+const crossToTip = async (page: Page) => {
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  const from = await page.evaluate(() => {
+    const columns = new Map<number, DOMRect[]>();
+    document.querySelectorAll<HTMLElement>("[data-dot-target]").forEach((dot) => {
+      const box = dot.getBoundingClientRect();
+      const x = Math.round(box.x + box.width / 2);
+      columns.set(x, [...(columns.get(x) ?? []), box]);
+    });
+    const bottom = [...columns.values()].sort((a, b) => b.length - a.length)[0].sort((a, b) => b.y - a.y)[0];
+    return { x: bottom.x + bottom.width / 2, y: bottom.y + bottom.height / 2 };
+  });
+  await page.mouse.move(from.x, from.y);
+  await page.waitForTimeout(100);
+  const box = (await page.locator("[data-dot-tooltip]").boundingBox())!;
+  const to = { x: Math.min(Math.max(from.x, box.x + 4), box.x + box.width - 4), y: box.y + box.height - 2 };
+  const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
+  for (let step = 1; step <= steps; step += 1) {
+    await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+    await page.waitForTimeout(16);
+  }
+  await page.waitForTimeout(400);
+};
+const focusReset = async (page: Page) => {
+  await page.locator("[data-plan-control] input").fill("6");
+  await page.locator("[data-plan-reset] button:visible").focus();
+  await page.waitForTimeout(250);
+};
+
+const PACKAGE_SHOTS: Shot[] = [
+  packageShot("package", comparables(COMPARABLES)),
+  packageShot("package--loading", null, {}, null),
+  packageShot("package--section-loading", null),
+  packageShot("package--no-plan-dates", { body: noPlanDates }),
+  packageShot("package--quantile-dots", comparables("comparables-ke-nwwda-541055-any-category.json")),
+  packageShot("package--abstention", comparables("comparables-ke-nwwda-541055-prior.json")),
+  packageShot("package--no-match", comparables("comparables-ke-nwwda-541055-india.json")),
+  packageShot("package--none-measurable", comparables("comparables-ke-nwwda-541055-non-consulting.json")),
+  packageShot(
+    "package--not-measurable",
+    comparables("comparables-ke-nwwda-541062.json"),
+    {},
+    { recorded: "package-ke-nwwda-541062.json" },
+    "/packages/KE-NWWDA-541062-CW-RFQ",
+  ),
+  packageShot("package--section-error", { status: 503, body: SERVICE_DOWN }),
+  packageShot("package--error", null, {}, { status: 503, body: SERVICE_DOWN }),
+  packageShot("package--not-found", null, {}, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-000000-CW-RFB"),
+  packageShot("package--moved", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),
+  packageShot("package--hover-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(20) }),
+  packageShot("package--focus-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
+  packageShot("package--focus-slider", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[role=slider]") }),
+  packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
+  // 1280 px is a page area where the workspace keeps to columns 1 to 8 and the table's frame is under
+  // 49rem, so the table shows as cards there (DESIGN.md section 5, Tables).
+  packageShot("package--table-open", comparables(COMPARABLES), { widths: [1440, 1280, 390], full: true, act: click("[data-past-range] button[aria-controls][aria-expanded]") }),
+  packageShot("package--320", comparables(COMPARABLES), { widths: [320] }),
+  // Round 1's fixes: months typed into a row with no plan dates, the last dot's tooltip opened first,
+  // and the quantile dot past the axis, pinned at the plot's edge.
+  packageShot("package--no-plan-typed", { body: noPlanDates }, { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),
+  packageShot("package--hover-last-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(48) }),
+  packageShot("package--quantile-last-dot", comparables("comparables-ke-nwwda-541055-any-category.json"), { widths: wideAndNarrow, act: hoverDot(19) }),
+  packageShot("package--moved-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "9") }),
+  // Round 2's fixes: the plan just past the 8-in-10 point, where its label moves or sits on its knockout,
+  // and a bad number at 320 px, whose one-line error moves nothing.
+  packageShot("package--plan-10", comparables(COMPARABLES), { widths: [1440, 390, 320], act: type("[data-plan-control] input", "10") }),
+  packageShot("package--invalid-320", comparables(COMPARABLES), { widths: [320], act: type("[data-plan-control] input", "abc") }),
+  // Round 3's fixes: the pointer on a buried dot's tooltip after crossing the dots above it, the reset
+  // button's focus ring clear of "months" in the input's row, and a long reference on the not-found page.
+  packageShot("package--crossed-to-tip", comparables(COMPARABLES), { widths: [1440, 1024, 390, 320], act: crossToTip }),
+  packageShot("package--focus-reset", comparables(COMPARABLES), { widths: [1440, 1024, 390], act: focusReset }),
+  packageShot("package--not-found-long", null, { widths: [320] }, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC"),
+  // Round 10's fix: the plan mid-axis on a chart just over 400 px wide, where one line of the readout
+  // does not fit beside it, so the readout takes the copy's two lines.
+  packageShot("package--moved-496", comparables(COMPARABLES), {
+    widths: [496],
+    act: async (page) => {
+      await type("[data-plan-control] input", "9")(page);
+      await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    },
+  }),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -745,4 +862,5 @@ export const SHOTS: Shot[] = [
   ...ANSWER_SHOTS,
   ...DRAFT_SHOTS,
   ...LESSON_SHOTS,
+  ...PACKAGE_SHOTS,
 ];

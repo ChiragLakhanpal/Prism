@@ -1,6 +1,5 @@
 """The PAD probe (test 3): ai_parse_document reads every page of a PAD of 120 pages or more."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import dayone  # noqa: E402
 import probe_parse_pad  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 PAD = {"project": "P160009", "url": "https://documents.worldbank.org/curated/en/212451501293669530/pdf/x.pdf",
        "pages": 131, "data": b"%PDF-1.4 fake"}
 
@@ -43,7 +41,8 @@ class FakeWorkspace:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text("DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\n"
                                         "DATABRICKS_TOKEN='dapi-x'\nDATABRICKS_WAREHOUSE_ID='wh1'\n")
     return tmp_path

@@ -17,6 +17,17 @@ async function axe(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
+// Moved from web/tests/routes.spec.ts when the package workspace replaced the last placeholder page
+// whose empty state named a STEP reference; the gallery's page header sample keeps that empty state.
+test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
+  await page.goto("/gallery/pages");
+  for (const width of [390, 768, 1024, 1279]) {
+    await page.setViewportSize({ width, height: 900 });
+    const id = page.locator("[data-state-section=header] [data-empty-state] h3").getByText("KE-SAMPLE-000001-CW-RFB");
+    expect(await id.evaluate((el) => el.getClientRects().length), `${width} px`).toBe(1);
+  }
+});
+
 const badge = (page: Page, text: string) => page.locator("[data-badge]", { hasText: new RegExp(`^${text}$`) });
 
 test("the status badge shows Needs a look, Watch and No signals, each with its own icon shape and its word", async ({ page }) => {
@@ -301,6 +312,27 @@ test("a table turns into cards below 768 px, or below 1024 px with cardsBelow lg
     expect(await shown("ready"), `default at ${width} px`).toEqual([md]);
     expect(await shown("cards-below-lg"), `lg at ${width} px`).toEqual([lg]);
   }
+});
+
+// The past range's table keeps to columns 1 to 8 from 1200 px, where its frame is narrower than at
+// 1024 px, so it reads its own width: cards while its frame is under 49rem (784 px), whatever the page area.
+test("with cardsBelow fit a table turns into cards while its own frame is under 49rem", async ({ page }) => {
+  await page.goto("/gallery/table");
+  const section = page.locator("[data-state-section=cards-below-fit]");
+  await expect(section.locator("[data-table=ready]")).toBeVisible();
+  const seen = new Set<string>();
+  for (const width of [390, 1024, 1180, 1280, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    const { frame, shown } = await section.locator("[data-table=ready]").evaluate((table) => ({
+      frame: table.getBoundingClientRect().width,
+      shown: [...table.querySelectorAll<HTMLElement>("[data-table-view]")]
+        .filter((view) => getComputedStyle(view).display !== "none")
+        .map((view) => view.dataset.tableView),
+    }));
+    expect(shown, `${width} px, a frame of ${frame} px`).toEqual([frame >= 784 ? "table" : "cards"]);
+    seen.add(shown[0]!);
+  }
+  expect([...seen].sort()).toEqual(["cards", "table"]);
 });
 
 test("the steps toggle lines up with the answer's text, and its fill and focus ring stay inside the card", async ({ page }) => {

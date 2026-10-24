@@ -39,9 +39,13 @@
   --color-warning-bg: #fef3d7;  --color-warning: #473201;  --color-warning-icon: #896001;
   --color-error-bg: #fdf2f2;  --color-error: #9d161d;  --color-error-icon: #c91c25;
   --color-neutral-bg: #e7edf3;  --color-neutral: #3d4c5c;
+  --color-chart-text: #111111;  --color-chart-text-subtle: #666666;  --color-chart-cat1-text: #106ca1;
+  --color-chart-grey200: #ced4de;  --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
+  /* The one box: half its 44 px height, a pill on one row that keeps its corners when a chip wraps it to two. */
+  --radius-box: 22px;
 
   /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's
      default font size; 1rem is 16 px. Color is set by the component, not the step. */
@@ -66,10 +70,14 @@
   --spacing: 0.25rem;
   --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
   --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
-  /* The same four breakpoints as container sizes. The page column is a size container (ticket 14),
-     so a page lays out by the page area's width, which the evidence drawer narrows: its classes use
-     @md/page:, @lg/page: and @xl/page: where the bar and the band use md:, lg: and xl:. */
+  /* The same four breakpoints as container sizes, and one for a table's own frame. The page column
+     is a size container (ticket 14), so a page lays out by the page area's width, which the evidence
+     drawer narrows: its classes use @md/page:, @lg/page: and @xl/page: where the bar and the band use
+     md:, lg: and xl:. */
   --container-md: 48rem;  --container-lg: 64rem;  --container-xl: 75rem;  --container-2xl: 87.5rem;
+  /* A table's own frame, for Table's cardsBelow="fit" (DESIGN.md section 5, Tables): the past
+     range's six columns need about 776 px with one line per cell. */
+  --container-table-fit: 49rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 

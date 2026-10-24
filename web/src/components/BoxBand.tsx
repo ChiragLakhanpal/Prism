@@ -12,6 +12,7 @@ import { CircleX, Search, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
 import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
 
@@ -36,19 +37,35 @@ export type BoxOption = {
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
-// button. Below 768 px it shows the ID only.
+// button. Below 768 px it shows the ID only. A STEP reference is far longer than a P-code, so when the
+// chip and a text field you can type in do not fit on one line, the chip takes a row of its own above
+// the text (OneBox wraps). A reference wider than that row stays whole and readable as one ID
+// (MonoWords): each part between spaces moves to the next line whole when it fits there, and breaks
+// after a hyphen when it is wider than the line, as the package workspace's own references do. On
+// one line the chip is the 32 px pill it always was; on more it is a box with the same 16 px corners.
+// It keeps the pointer's own cursor (cursor-auto), so its ID shows the text cursor only where you
+// can select it, and a press on it does not put the cursor in the text field.
+//
+// Its -mr-3 and the text group's left margin (mx-3) cancel out on one line, leaving the box's 8 px
+// gap after the chip; when the text field wraps under the chip, that margin lines its text up with
+// the reference's.
 function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void }) {
   return (
-    <span data-scope-chip className="flex h-8 shrink-0 items-center gap-2 rounded-pill border border-line-strong bg-surface pr-1 pl-3">
-      <span className="hidden text-small text-ink-muted md:inline">{copy.box.chipWithin}</span>
-      <span className="font-mono text-small text-ink">{scope}</span>
+    <span
+      data-scope-chip
+      className="my-1 -mr-3 flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
+    >
+      <span className="min-w-0 py-1 text-small">
+        <span className="mr-2 hidden text-ink-muted md:inline">{copy.box.chipWithin}</span>
+        <MonoWords text={scope} className="align-top text-ink" />
+      </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
       <button
         type="button"
         data-focus-ring
         aria-label={copy.box.chipRemove(scope)}
         onClick={onRemove}
-        className="flex size-6 items-center justify-center rounded-pill text-ink-muted transition-paint duration-150 hover:bg-tint-hover hover:text-ink"
+        className="flex size-6 shrink-0 items-center justify-center rounded-pill text-ink-muted transition-paint duration-150 hover:bg-tint-hover hover:text-ink"
       >
         <X aria-hidden="true" className="size-4" />
       </button>
@@ -144,11 +161,23 @@ export function OneBox({
           {copy.box.scoped(scope)}
         </span>
       )}
+      {/* One row is a 44 px pill: its 22 px corners (rounded-box) are half its height. When a long scope chip
+          pushes the text field to a second row, the corners stay 22 px, so the chip's own corner stays clear
+          of them. With a chip the box keeps 4 px on each side, so a chip that fills its row sits 5 px from
+          both edges, and the text group's own 12 px margin keeps the text row's 16 px on the right.
+          The box shows the text cursor, so a press anywhere in it outside the field, a button or the chip,
+          such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on the field. */}
       <div
         data-focus-ring
+        onPointerDown={(event) => {
+          if ((event.target as Element).closest("input, button, [data-scope-chip]")) return;
+          event.preventDefault();
+          input.current?.focus();
+          onPointerDown?.();
+        }}
         className={cx(
-          "flex h-11 items-center gap-2 rounded-pill border border-line-strong bg-surface pr-4 transition-paint duration-150",
-          scope ? "pl-1" : "pl-4",
+          "flex min-h-11 cursor-text flex-wrap items-center gap-x-2 rounded-box border border-line-strong bg-surface transition-paint duration-150",
+          scope ? "px-1" : "px-4",
           "hover:border-ink has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2",
           "has-[input:focus-visible]:outline-focus has-[input:focus-visible]:outline-solid",
         )}
@@ -158,58 +187,66 @@ export function OneBox({
         ) : (
           <Search aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
         )}
-        <div className="relative min-w-0 flex-1">
-          <input
-            ref={input}
-            id={inputId}
-            type="text"
-            role="combobox"
-            value={value}
-            placeholder=" "
-            autoComplete="off"
-            spellCheck={false}
-            aria-autocomplete="list"
-            aria-expanded={showList}
-            aria-controls={listId}
-            aria-activedescendant={showList ? optionId(active) : undefined}
-            aria-keyshortcuts={shortcut ? "/" : undefined}
-            aria-describedby={described}
-            onChange={(event) => onChange(event.target.value)}
-            onFocus={() => {
-              setFocused(true);
-              onFocusChange?.(true);
-            }}
-            onBlur={() => {
-              setFocused(false);
-              onFocusChange?.(false);
-            }}
-            onKeyDown={onKeyDown}
-            onPointerDown={onPointerDown}
-            className="peer h-10 w-full bg-transparent text-body text-ink focus-visible:outline-none"
-          />
-          <span
+        {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. The
+            field keeps room for about ten characters of a question beside a P-code's chip, and on a package
+            page for its whole placeholder (176 px), so "Ask about this package" is never cut; when there is
+            less, the field goes under the chip. */}
+        <div className={cx("flex flex-1 items-center gap-2", scope ? "mx-3" : "min-w-0")}>
+          <div className={cx("relative flex-1", !scope ? "min-w-0" : scopeKind === "package" ? "min-w-44" : "min-w-24")}>
+            <input
+              ref={input}
+              id={inputId}
+              type="text"
+              role="combobox"
+              value={value}
+              placeholder=" "
+              autoComplete="off"
+              spellCheck={false}
+              aria-autocomplete="list"
+              aria-expanded={showList}
+              aria-controls={listId}
+              aria-activedescendant={showList ? optionId(active) : undefined}
+              aria-keyshortcuts={shortcut ? "/" : undefined}
+              aria-describedby={described}
+              onChange={(event) => onChange(event.target.value)}
+              onFocus={() => {
+                setFocused(true);
+                onFocusChange?.(true);
+              }}
+              onBlur={() => {
+                setFocused(false);
+                onFocusChange?.(false);
+              }}
+              onKeyDown={onKeyDown}
+              onPointerDown={onPointerDown}
+              className="peer h-10 w-full bg-transparent text-body text-ink focus-visible:outline-none"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
+            >
+              {placeholder ? (
+                <span className="truncate" data-placeholder>
+                  {placeholder}
+                </span>
+              ) : (
+                <>
+                  <span className="truncate md:hidden">{copy.box.placeholderNarrow}</span>
+                  <span className="hidden truncate md:inline">{copy.box.placeholderWide}</span>
+                </>
+              )}
+            </span>
+          </div>
+          <kbd
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
-          >
-            {placeholder ? (
-              <span className="truncate">{placeholder}</span>
-            ) : (
-              <>
-                <span className="truncate md:hidden">{copy.box.placeholderNarrow}</span>
-                <span className="hidden truncate md:inline">{copy.box.placeholderWide}</span>
-              </>
+            className={cx(
+              "hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted [@media(hover:none)]:hidden",
+              !focused && value.length === 0 && "lg:inline",
             )}
-          </span>
+          >
+            /
+          </kbd>
         </div>
-        <kbd
-          aria-hidden="true"
-          className={cx(
-            "hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted [@media(hover:none)]:hidden",
-            !focused && value.length === 0 && "lg:inline",
-          )}
-        >
-          /
-        </kbd>
       </div>
       {(showHint || showList || showNotes) && (
         <div

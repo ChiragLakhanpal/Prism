@@ -104,7 +104,8 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
     assert [tool["name"] for tool in listed] == list(tools)
     for tool in listed:
         assert tool["type"] == "function"
-        assert tool["description"] == tools[tool["name"]].description
+        # The registry's description, with each value of the thresholds file it names in braces filled in.
+        assert tool["description"] == registry._filled(tools[tool["name"]].description, config.load_thresholds())
         assert tool["parameters"]["properties"]["as_of"] == {
             "type": "string", "format": "date", "description": tools[tool["name"]].parameter("as_of").description}
         assert "as_of" not in tool["parameters"]["required"]
@@ -229,8 +230,28 @@ def lessons_answer(result, question) -> dict[str, list]:
             "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
 
 
+def past_range(result, question) -> dict[str, list]:
+    """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
+    the agent cites them by, the packages still open, the canceled ones it left out, the packages
+    signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
+    with the plan's."""
+    plan_months = result["plan"]["months"]
+    return {
+        "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
+        "cited_as": [result["summary"]["evidence_id"]],
+        "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
+        "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                    if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
+        "signed_within_plan": sorted(row["step_reference"] for row in result["rows"]
+                                     if not row["still_open"] and row["months"] <= plan_months),
+        "eight_in_ten": result["summary"]["frequencies"]["q80"],
+        "plan_in_ten": result["summary"]["frequencies"]["plan"]["states"],
+        "plan_in_ten_words": [result["summary"]["frequencies"]["plan"]["words"]],
+    }
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
-           "get_lessons": lessons_answer}
+           "find_comparables": past_range, "get_lessons": lessons_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:

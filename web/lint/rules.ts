@@ -91,6 +91,8 @@ export const NON_COPY_PROPS = new Set([
   "term",
   "rowHeader",
   "autoComplete",
+  // The keyboard a phone shows for a field, such as "decimal".
+  "inputMode",
   "scope",
   "live",
   "show",
@@ -113,6 +115,11 @@ export const NON_COPY_PROPS = new Set([
   "skeletonRows",
   // The one box's scope chip: "project" or "package", which picks the placeholder.
   "scopeKind",
+  // SVG settings in the range chart: a text's alignment ("start", "end"), a paint ("none") and a
+  // path's drawing commands, such as the chevron after a dot past the axis ("M 10 4 L 13 7").
+  "textAnchor",
+  "fill",
+  "d",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,
