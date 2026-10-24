@@ -28,10 +28,9 @@ from strata.agent.loop import AgentError
 from strata.agent.runs import RunLog
 from strata.agent.scripted import PACKAGE_CASES, ScriptedAgent, load_cases
 from strata import appstate
-from strata.config import load_thresholds
+from strata.config import load_package_form, load_thresholds
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
-from strata.packages.form import load_form
 from strata.packages.store import PackageStore
 from strata.server.app import create_app
 
@@ -123,10 +122,10 @@ def planning(fixture_db, state_db, ops_db, clock):
     def ops():
         return DuckDBEngine.open(ops_db)
 
-    def make(case: str = "package-rural-roads-kenya", reader=None, thresholds=None, form=None):
+    def make(case: str = "package-rural-roads-kenya", reader=None, thresholds=None, form=None, engine_for=None):
         cases = load_cases(PACKAGE_CASES)
         numbers = iter(range(1, 100))
-        return create_app(engine_for=reading, packages=PackageStore(state), runs=RunLog(ops),
+        return create_app(engine_for=engine_for or reading, packages=PackageStore(state), runs=RunLog(ops),
                           package_reader=reader or (lambda: ScriptedAgent(cases[case])),
                           package_thresholds=thresholds, package_form=form, today=lambda: TODAY, now=clock,
                           new_package_id=lambda: f"pkg-{next(numbers):012d}", new_run_id=lambda: "run-0001")
@@ -181,7 +180,11 @@ def test_the_computed_note_reads_its_rules_and_its_source_from_the_thresholds_fi
     assert (review["category"], review["threshold_usd"], review["risk_rating"]) == ("Works", 10_000_000, "High")
     assert (market["country"], market["category"], market["threshold_usd"]) == ("KE", "Works", 15_000_000)
     file = load_thresholds()
-    assert (review["source"], review["as_of"]) == (file.value("review.source"), file.value("review.as_of").isoformat())
+    assert review["source"] == file.value("review.source")
+    assert market["source"] == file.value("market_approach.source")
+    # The values are the blueprint's, not yet checked against the World Bank's tables, so the file gives no date
+    # and the note claims none (review round 2, P4).
+    assert (review["as_of"], market["as_of"]) == (None, None)
 
 
 def test_raising_the_prior_review_threshold_in_the_file_makes_the_review_type_chip_post_with_no_code_change(planning, tmp_path):
@@ -208,9 +211,9 @@ def test_a_field_added_to_the_schema_is_a_chip_in_its_group_and_removing_it_remo
     lots = schema[schema.index('[[fields]]\nkey = "lots"'):schema.index('[[fields]]\nkey = "country"')]
     without.write_text(schema.replace(lots, ""))
 
-    app = planning(form=load_form(added))
+    app = planning(form=load_package_form(added))
     _, with_field = plan(app)
-    _, without_lots = plan(planning(form=load_form(without)))
+    _, without_lots = plan(planning(form=load_package_form(without)))
 
     assert [field["key"] for field in with_field["fields"] if field["group"] == "how"][-1] == "high_sea_sh_risk"
     page = call(app, "GET", f"/api/planned-packages/{with_field['package_id']}", ANA).json()
@@ -322,6 +325,58 @@ def test_the_number_of_lots_never_changes_the_review_type(planning):
     assert many["changed"] == []
 
 
+def test_a_change_that_leaves_no_threshold_empties_the_computed_field_and_says_so(planning):
+    """The thresholds file gives Kenya a market approach threshold for works only, so goods in Kenya get none: the
+    chip asks for one, and the note says why it emptied (review round 2, P18)."""
+    app = planning()
+    _, package = plan(app)
+
+    goods = change(app, package["package_id"], "category", "set", "Goods").json()["package"]
+
+    market = next(field for field in goods["fields"] if field["key"] == "market_approach")
+    assert (market["value"], market["provenance"]) == (None, None)
+    assert {"field": "market_approach", "from": "Open - International", "to": None, "cause": "category"} in goods["changed"]
+
+
+def test_two_changes_at_once_both_stay_saved(planning, fixture_db):
+    """A second change that arrives while the first one is still being made starts from the first one's save, so
+    neither is lost (review round 2, P1). The country's change reads the World Bank's country list as the viewer,
+    which takes a while on the App; the description's change needs no read."""
+    import threading
+    import time
+
+    slow = threading.Event()
+
+    @contextmanager
+    def reading(viewer):
+        if slow.is_set():
+            time.sleep(0.4)
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = planning(engine_for=reading)
+    _, package = plan(app)
+    slow.set()
+    path = f"/api/planned-packages/{package['package_id']}"
+
+    async def both():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            async def second():
+                await asyncio.sleep(0.1)
+                return await client.post(path, headers=ANA, json={"field": "description", "action": "set", "value": "Feeder roads"})
+            return await asyncio.gather(
+                client.post(path, headers=ANA, json={"field": "country", "action": "set", "value": "IN"}), second())
+
+    answers = asyncio.run(both())
+    slow.clear()
+
+    assert [answer.status_code for answer in answers] == [200, 200]
+    now = call(app, "GET", path, ANA).json()["package"]
+    values = {field["key"]: field["value"] for field in now["fields"]}
+    assert (values["country"], values["description"]) == ("IN", "Feeder roads")
+
+
 def test_keeping_the_guess_makes_it_yours_and_leaves_no_guess_to_check(planning):
     app = planning()
     _, package = plan(app)
@@ -410,6 +465,19 @@ def test_a_comparable_still_open_opens_with_its_notice_and_no_contract(planning)
     assert (row["notice"]["notice_id"], row["still_open"], row["contract"], row["award_notice"]) == (
         "OP00471871", True, None, None)
     assert row["project_id"] == "P170941"
+    # The months run to the as-of date, which the drawer names beside the date the records run through, so the
+    # sentence can be checked (design review round 2, F2).
+    assert (row["counted_to"], row["canceled"]) == ("2026-10-22", False)
+
+
+def test_a_canceled_package_opened_by_its_link_says_it_was_left_out_as_canceled(planning):
+    """find_comparables leaves a canceled package out (config/thresholds.toml's canceled_as_still_open is false), so
+    the drawer must not count it as still open. tests/ground_truth/values.toml: KE-KIMAWASCO-149448-CW-RFB is one of
+    the three canceled packages."""
+    opened = call(planning(), "GET", "/api/evidence?id=strata.gold.package:KE-KIMAWASCO-149448-CW-RFB&asof=2026-10-22", ANA)
+
+    row = opened.json()["row"]
+    assert (row["canceled"], row["process_status"]) == (True, "Canceled")
 
 
 def test_a_package_no_record_holds_by_the_as_of_date_is_not_found(planning):
@@ -461,3 +529,49 @@ def test_the_comparables_route_runs_find_comparables_for_criteria_with_no_step_r
     assert (body["tool"], body["as_of"], body["criteria"]["notice_to"]) == ("find_comparables", "2026-10-22", "2026-10-22")
     assert len(body["rows"]) == 49
     assert body["summary"]["evidence_id"].startswith("strata.tools.find_comparables:@2026-10-22?")
+
+
+def test_a_size_that_is_no_finite_number_is_refused_on_both_comparables_routes(planning):
+    """float() reads inf and nan, which no JSON answer can hold (review round 2, P3)."""
+    app = planning()
+    for path in ("/api/comparables?category=Works&country=KE", "/api/packages/KE-NWWDA-541055-CW-RFB/comparables?asof=2026-10-22"):
+        for value in ("1e400", "nan", "inf"):
+            refused = call(app, "GET", f"{path}&size_from_usd={value}", ANA)
+            assert (refused.status_code, refused.json()["code"]) == (422, "bad_request"), (path, value)
+            assert refused.json()["detail"] == "size_from_usd must be a number."
+
+
+def test_the_packages_tab_lists_your_packages_when_the_warehouse_refuses_you(planning, fixture_db):
+    """A person's own packages come from the app state store, so a warehouse that refuses the viewer leaves their
+    packages listed, with no country names (review round 2, P9)."""
+    from strata.lakehouse.engine import PermissionDenied
+
+    refusing = {"on": False}
+
+    @contextmanager
+    def reading(viewer):
+        if refusing["on"]:
+            raise PermissionDenied("The warehouse refused this viewer.")
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = planning(engine_for=reading)
+    _, package = plan(app)
+    refusing["on"] = True
+
+    listed = call(app, "GET", "/api/planned-packages", ANA)
+
+    assert listed.status_code == 200
+    rows = listed.json()["rows"]
+    assert [(row["package_id"], row["country_name"]) for row in rows] == [(package["package_id"], None)]
+
+
+def test_the_form_tells_the_workspace_its_limits(planning):
+    """The longest plan, the most lots and the longest description are each defined once, in the server, and the
+    workspace reads them from the form it is handed (review round 2, P14; CLAUDE.md rule 4)."""
+    app = planning()
+    _, package = plan(app)
+
+    form = call(app, "GET", f"/api/planned-packages/{package['package_id']}", ANA).json()["form"]
+
+    assert (form["max_months"], form["max_count"], form["text_limit"]) == (60.0, 99, 200)

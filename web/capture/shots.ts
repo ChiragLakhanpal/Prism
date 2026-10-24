@@ -734,6 +734,7 @@ const PLANNED_API = "/api/planned-packages/pkg-000000000001";
 const PLANNED_FILE = "planned-package-rural-roads.json";
 const MOWI = "strata.gold.package:KE-MOWI-47509-CW-RFB";
 const ICTA = "strata.gold.package:KE-ICTA-571738-CW-RFB";
+const KIMAWASCO = "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB";
 const read = (name: string) => JSON.parse(readFileSync(new URL(name, RECORDED), "utf8"));
 // A change's recorded package as the package's page reads it, with the schema.
 const changed = (name: string): Answer => ({ body: JSON.stringify({ ...read(PLANNED_FILE), package: read(name).package }) });
@@ -774,7 +775,7 @@ const typeInEditor = (text: string, enter = false) => async (page: Page) => {
 const saveFails = async (page: Page) => {
   await page.route(`**${PLANNED_API}`, (route) =>
     route.request().method() === "POST" ? route.fulfill({ status: 503, contentType: "application/json", body: SERVICE_DOWN }) : route.fallback());
-  await openChip("lots", click("[data-chip-editor] [data-button=secondary]"))(page);
+  await openChip("lots", typeInEditor("3", true))(page);
   await page.waitForTimeout(400);
 };
 // A chip that picks the comparables changed, with find_comparables still running.
@@ -822,6 +823,8 @@ const PLANNED_SHOTS: Shot[] = [
   plannedShot("planned--guess-kept", changed("planned-package-change-keep-lots.json")),
   plannedShot("planned--set-by-you", changed("planned-package-change-review-post.json")),
   plannedShot("planned--recomputed", changed("planned-package-change-amount.json")),
+  // Goods in Kenya: no market approach threshold, so the chip asks for one and the note says why it emptied.
+  plannedShot("planned--emptied", changed("planned-package-change-category-goods.json"), { full: false }),
   plannedShot("planned--dividing", { recorded: "planned-package-dividing.json" }, {}, "/packages/pkg-000000000003", "/api/planned-packages/pkg-000000000003"),
   plannedShot("planned--missing", { recorded: "planned-package-yourself.json" }, {}, "/packages/pkg-000000000002", "/api/planned-packages/pkg-000000000002"),
   // Section 1: the chart with a plan and without one, updating, abstention, none found, none measurable, error.
@@ -835,7 +838,8 @@ const PLANNED_SHOTS: Shot[] = [
   plannedShot("planned--save-failed", undefined, { full: true, act: saveFails }),
   // Each kind of chip editor: a popover from 768 px, a bottom sheet below.
   plannedShot("planned--editor-computed", undefined, { full: false, act: openChip("review_type") }),
-  plannedShot("planned--editor-set-it-yourself", undefined, { full: false, act: openChip("review_type", click("[data-chip-editor] [data-button=ghost]")) }),
+  // By its words: below 768 px the sheet's close is the first ghost button.
+  plannedShot("planned--editor-set-it-yourself", undefined, { full: false, act: openChip("review_type", click("[data-chip-editor] button:has-text('Set it yourself')")) }),
   plannedShot("planned--editor-method-old-name", undefined, { full: false, act: openChip("method", typeInEditor("ICB")) }),
   plannedShot("planned--editor-amount", undefined, { full: false, act: openChip("estimated_amount_usd", typeInEditor("12m")) }),
   plannedShot("planned--editor-amount-error", undefined, { full: false, act: openChip("estimated_amount_usd", typeInEditor("about fifteen", true)) }),
@@ -852,7 +856,9 @@ const PLANNED_SHOTS: Shot[] = [
   // button focused. At 390 px it is the full-screen sheet.
   plannedShot("planned--drawer-signed", changed("planned-package-change-plan.json"), { full: false }, evidenceAt(MOWI)),
   plannedShot("planned--drawer-still-open", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { recorded: "evidence-package-ke-icta-571738.json" } } }, evidenceAt(ICTA)),
-  plannedShot("planned--drawer-loading", changed("planned-package-change-plan.json"), { full: false, pending: ["/api/evidence"] }, evidenceAt(MOWI)),
+  plannedShot("planned--drawer-canceled", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { recorded: "evidence-package-ke-kimawasco-149448.json" } } }, evidenceAt(KIMAWASCO)),
+  // The drawer reads /api/evidence?id=..., which a route for the bare path does not match.
+  plannedShot("planned--drawer-loading", changed("planned-package-change-plan.json"), { full: false, pending: ["/api/evidence?id=**"] }, evidenceAt(MOWI)),
   plannedShot("planned--drawer-error", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { status: 503, body: SERVICE_DOWN } } }, evidenceAt(MOWI)),
   plannedShot("planned--drawer-from-dot", changed("planned-package-change-plan.json"), { full: false, widths: WIDE, act: then(focus("[data-dot-target='0']"), async (page) => {
     await page.keyboard.press("Enter");

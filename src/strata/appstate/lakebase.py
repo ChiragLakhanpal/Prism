@@ -21,7 +21,7 @@ from collections.abc import Callable, Mapping
 from threading import Lock
 from typing import Any
 
-from strata.lakehouse.engine import EngineError, Params, PermissionDenied, Result, _names
+from strata.lakehouse.engine import EngineError, Params, PermissionDenied, Result, check_names
 
 # Postgres's SQLSTATE for a missing privilege.
 INSUFFICIENT_PRIVILEGE = "42501"
@@ -85,10 +85,10 @@ class LakebaseEngine:
             raise _failure(error) from error
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
-        _names(table, columns)
+        check_names(table, columns)
         if not rows:
             return 0
-        statement = for_postgres(  # sql-lint: names only, checked by _names
+        statement = for_postgres(  # sql-lint: names only, checked by check_names
             f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(':' + column for column in columns)})")
         try:
             with self.connection.cursor() as cursor:
@@ -100,7 +100,7 @@ class LakebaseEngine:
         return len(rows)
 
     def table_bytes(self, table: str) -> int:
-        _names(table, ())
+        check_names(table, ())
         # psycopg sends a text value untyped, so Postgres reads the name as the table it names.
         found = self.run("SELECT pg_total_relation_size(:table) AS size", {"table": table.removeprefix("strata.")})
         return int(found.rows[0][0] or 0)

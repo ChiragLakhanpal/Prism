@@ -93,7 +93,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
@@ -109,7 +109,7 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
-from strata.packages.form import Form, load_form
+from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
 from strata.server import drafts as draft_routes
 from strata.server import engines, evidence, lookup, projects, suppliers, tracing
@@ -212,7 +212,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
                new_draft_id: Callable[[], str] = new_draft_id, packages: PackageStore | None = None,
                package_reader: Callable[[], object | None] | None = None, package_thresholds=None,
-               package_form: Form | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
+               package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
                new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
                lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
@@ -376,32 +376,37 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"project {project_id}", viewer, read)
 
-    def checked(result, viewer: Viewer, view: str, latest: bool):
+    def checked(result, viewer: Viewer, view: str, latest: bool, background: BackgroundTasks):
         """A plan check the viewer opened, recorded for their Packages tab (ticket 15) as the app's own service
-        principal. A preview records nothing, and a failed write changes nothing the viewer sees."""
+        principal, after the answer is sent, so a slow or absent Lakebase never holds Check a plan. A preview
+        records nothing, and a failed write changes nothing the viewer sees."""
         if packages is None or not isinstance(result, dict) or result.get("abstention") or view != STAFF \
                 or not viewer.user_id or not result.get("plan"):
             return result
-        plan = result["plan"]
-        try:
-            packages.record_plan_check(viewer.user_id, plan["project_id"], plan["agency_id"],
-                                       plan.get("implementing_agency"), dt.date.fromisoformat(plan["plan_date"]),
-                                       latest, (result.get("counts") or {}).get("checked"), now())
-        except Exception:  # the warehouse, the network or a token: none of them may change the page
-            log.exception("I could not record that %s opened the plan check of %s.", viewer.user_id, plan["document_id"])
+        plan, at = result["plan"], now()
+
+        def record():
+            try:
+                packages.record_plan_check(viewer.user_id, plan["project_id"], plan["agency_id"],
+                                           plan.get("implementing_agency"), dt.date.fromisoformat(plan["plan_date"]),
+                                           latest, (result.get("counts") or {}).get("checked"), at)
+            except Exception:  # the warehouse, the network or a token: none of them may change the page
+                log.exception("I could not record that %s opened the plan check of %s.", viewer.user_id, plan["document_id"])
+        background.add_task(record)
         return result
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
-    def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",
-                          viewer: Viewer = Depends(current_viewer)):
+    def check_latest_plan(project_id: str, agency_id: str, background: BackgroundTasks, asof: dt.date | None = None,
+                          view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return checked(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
-                                viewer, view, asof), viewer, view, latest=True)
+                                viewer, view, asof), viewer, view, latest=True, background=background)
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}")
-    def check_plan_version(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
-                           view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+    def check_plan_version(project_id: str, agency_id: str, version: dt.date, background: BackgroundTasks,
+                           asof: dt.date | None = None, view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         return checked(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
-                                               "plan_date": version}, viewer, view, asof), viewer, view, latest=False)
+                                               "plan_date": version}, viewer, view, asof), viewer, view, latest=False,
+                       background=background)
 
     @app.get("/api/data/readiness")
     async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
@@ -467,7 +472,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             heartbeat_seconds=heartbeat_seconds)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
-                              form=package_form or load_form(), thresholds=package_thresholds or thresholds,
+                              form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
@@ -487,19 +492,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def comparables(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
                     viewer: Viewer = Depends(current_viewer)):
         # The criteria come from the query as the tool's own parameter names; the registry checks them.
-        criteria = {name: value for name, value in request.query_params.items() if name not in ("asof", "view")}
-        for name in ("size_from_usd", "size_to_usd"):
-            if name in criteria:
-                try:
-                    criteria[name] = float(criteria[name])
-                except ValueError:
-                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a number."}, status_code=422)
-        for name in ("notice_from", "notice_to"):
-            if name in criteria:
-                try:
-                    criteria[name] = dt.date.fromisoformat(criteria[name])
-                except ValueError:
-                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
         return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):

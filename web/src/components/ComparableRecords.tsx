@@ -37,11 +37,13 @@ function datasetLine(dataset: Dataset | undefined): string {
 }
 
 // A record's fields under their source's names, in a two-column list, amounts in STEP's form with cents.
+// Two fields to a row, each seated at the bottom of its row, as the Tables cards seat theirs (DESIGN.md section 5),
+// so when one label wraps to two lines, as "Submission Deadline Date" does, the two values still line up.
 function Fields({ fields }: { fields: { label: string; value: ReactNode; numeric?: boolean; wide?: boolean }[] }) {
   return (
     <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
       {fields.map((field) => (
-        <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
+        <div key={field.label} className={cx("min-w-0 self-end", field.wide && "col-span-full", field.numeric && "text-right")}>
           <dt className="text-caption text-ink-muted">{field.label}</dt>
           <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "tabular-nums")}>{field.value}</dd>
         </div>
@@ -147,7 +149,7 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
   ];
   const datasets = (row.datasets ?? {}) as { notices?: Dataset; awards?: Dataset };
   return (
-    <div data-comparable={row.still_open ? "open" : "signed"} className="flex flex-col gap-4">
+    <div data-comparable={row.canceled ? "canceled" : row.still_open ? "open" : "signed"} className="flex flex-col gap-4">
       {given(row.description) && <p className="text-body text-ink">{String(row.description)}</p>}
       <p data-meta-line className="text-caption text-ink-muted">
         <Fill
@@ -168,8 +170,13 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </p>
       <p className="text-body text-ink" data-finding>
-        {row.still_open ? (
-          <Fill template={words.findingOpen} slots={{ months, notice, through: <Num date={String(row.records_through)} /> }} />
+        {row.canceled ? (
+          words.findingCanceled
+        ) : row.still_open ? (
+          <Fill
+            template={words.findingOpen}
+            slots={{ months, notice, counted: <Num date={String(row.counted_to)} />, through: <Num date={String(row.records_through)} /> }}
+          />
         ) : (
           <Fill template={words.findingSigned} slots={{ months, notice, signed: <Num date={String(row.signed_on)} /> }} />
         )}

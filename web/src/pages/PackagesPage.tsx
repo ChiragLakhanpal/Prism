@@ -35,7 +35,7 @@ function rowOf(row: PlannedRow): Row {
           </span>
         ),
         type: words.typePackage,
-        country: row.country_name ?? copy.notInRecord,
+        country: row.country_name ?? words.noCountry,
         project: row.project_id ? <TextLink href={`/projects/${row.project_id}`}>{mono(row.project_id)}</TextLink> : words.noProject,
         last: <Num date={row.last_worked_on.slice(0, 10)} style="table" />,
       },
@@ -129,10 +129,12 @@ export function PackagesPage({ search }: { search: string }) {
   return <PackagesTab preview={view === "piu"} />;
 }
 
+// At least a screen tall in every state, so the footer never rises into view when a short answer, such as
+// the empty or error state, replaces the loading rows (design review round 2, F9).
 function PackagesTab({ preview }: { preview: boolean }) {
   const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
   return (
-    <div className="layout-grid" data-packages-page={load.status}>
+    <div className="layout-grid min-h-svh" data-packages-page={load.status}>
       <div className="col-span-12">
         <PageHeader title={copy.pages.packages.title} purpose={words.purpose} />
         <div className="mt-4 flex flex-col gap-3 @md/page:flex-row @md/page:flex-wrap @md/page:items-center">

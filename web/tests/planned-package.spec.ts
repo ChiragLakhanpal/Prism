@@ -142,9 +142,16 @@ test("while I read the sentence the page says each step, then becomes the saved 
   await expect(page.locator("main h1")).toBeFocused();
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Not saved yet");
   await expect(card(page).locator("[data-you-wrote]")).toHaveText(`You wrote: "${SENTENCE}"`);
-  // Only the step in progress is listed while nothing has come back, in the present tense.
-  await expect(card(page).locator("[data-step]")).toHaveText(["Reading your sentence"]);
+  // The step in progress is in the present tense, and the steps still to come are listed as to do, so the list
+  // holds its height with words rather than empty space (critique round 2).
+  await expect(card(page).locator("[data-step]")).toHaveText([
+    "Reading your sentence",
+    "To do: compute review type and market approach from the thresholds.",
+    "To do: save the package.",
+    "To do: find comparable packages.",
+  ]);
   await expect(card(page).locator("[data-step=running]")).toHaveCount(1);
+  await expect(card(page).locator("[data-step=todo]")).toHaveCount(3);
 
   release();
   await expect(page).toHaveURL(PACKAGE);
@@ -292,7 +299,34 @@ test("the computed note states the rules with the thresholds file's values and i
       "In Kenya, plans send works of US$15 million or more to international bidding.",
   );
   await expect(note).toContainText("I assumed the implementing agency's procurement risk is High, because I don't know it yet.");
-  await expect(note).toContainText("Source: The World Bank's procurement prior review thresholds for investment project financing, as of October 24, 2026.");
+  // The thresholds are the blueprint's until the owner checks them against the World Bank's tables, so the source
+  // line says so and gives no date (review round 2, P4).
+  await expect(note).toContainText(
+    "Source: Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds. " +
+      "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya.",
+  );
+  // "US$" and its amount are one checkable number, so they never split across lines (review round 2, P13).
+  await expect(note.locator("p[data-numbers] [data-num]").first()).toHaveText("US$10 million");
+
+  // A computed chip's editor states its rule after where the value came from (the 15 brief, section 7.6).
+  await chip(page, "review_type").click();
+  await expect(page.getByRole("dialog", { name: "Review type" })).toContainText(
+    "I computed this from the thresholds. Works of US$10 million or more go to prior review.",
+  );
+});
+
+test("the number of lots editor holds the number alone, with its unit beside it, and commits it as it is", async ({ page }) => {
+  await openPackage(page);
+  const sent = await changes(page);
+
+  await chip(page, "lots").click();
+  const editor = page.getByRole("dialog", { name: "Number of lots" });
+  await expect(editor.getByRole("textbox")).toHaveValue("2");
+  await expect(editor).toContainText("lots");
+  await page.keyboard.press("Enter");
+
+  await expect.poll(() => sent).toEqual([{ field: "lots", action: "set", value: 2 }]);
+  await expect(page.locator("[data-editor-error]")).toHaveCount(0);
 });
 
 test("typing ICB into the method chip stores Request for Bids with an open international market approach", async ({ page }) => {
@@ -363,6 +397,23 @@ test("changing a chip that picks the comparables reruns find_comparables and red
   expect(await page.locator("[data-no-chart] h3").evaluate((reason) =>
     Boolean(reason.compareDocumentPosition(document.querySelector("[data-more]")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
   await expect(live(page)).toHaveText("Updated. 27 past packages matched this one, but I can't measure how long any of them took.");
+});
+
+test("a change made while the last one is still saving waits for it, so the server changes the latest save", async ({ page }) => {
+  await openPackage(page);
+  const sent = await changes(page, 600);
+
+  await chip(page, "description").click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("Rural feeder roads");
+  await page.keyboard.press("Enter");
+  await chip(page, "lots").click();
+  await page.getByRole("dialog", { name: "Number of lots" }).getByRole("button", { name: "Keep 2 lots" }).click();
+
+  // Both chips show their new values at once, but the second save goes out only after the first answered.
+  await expect(chip(page, "lots")).toHaveText("2 lots");
+  expect(sent.map((body) => body.field)).toEqual(["description"]);
+  await expect.poll(() => sent.map((body) => body.field)).toEqual(["description", "lots"]);
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
 });
 
 test("with no plan yet, section 1 names its comparables and asks for the plan before it shows the range", async ({ page }) => {
@@ -496,6 +547,41 @@ test("a click on a dot opens its package's records in the evidence drawer, and c
   await expect(page.locator("[data-opened-ring]")).toHaveCount(0);
 });
 
+test("a still-open package's records name the day its months ran to, and a canceled one says I left it out", async ({ page }) => {
+  const ICTA = "KE-ICTA-571738-CW-RFB";
+  const KIMAWASCO = "KE-KIMAWASCO-149448-CW-RFB";
+  await openPackage(page, {
+    path: `${PACKAGE}?evidence=${encodeURIComponent(`strata.gold.package:${ICTA}`)}`,
+    answers: {
+      [`/api/evidence?id=${encodeURIComponent(`strata.gold.package:${ICTA}`)}`]: { body: await recorded("evidence-package-ke-icta-571738.json") },
+      [`/api/evidence?id=${encodeURIComponent(`strata.gold.package:${KIMAWASCO}`)}`]: { body: await recorded("evidence-package-ke-kimawasco-149448.json") },
+      "GET /api/evidence/opened": { body: '{"opened":[]}' },
+    },
+  });
+  const records = (ref: string) => page.getByRole("dialog", { name: `Records for comparable package ${ref}` });
+
+  // tests/ground_truth/values.toml: notice OP00471871 of September 29, 2026; the page's as-of is October 23.
+  await expect(records(ICTA).locator("[data-finding]")).toHaveText(
+    "I count this package as still open after 0.8 months, from its notice on September 29, 2026 to October 23, 2026. " +
+      "The records I hold run through October 13, 2026 and show no signed contract.",
+  );
+
+  await page.goto(`${PACKAGE}?evidence=${encodeURIComponent(`strata.gold.package:${KIMAWASCO}`)}`);
+  await expect(records(KIMAWASCO).locator("[data-finding]")).toHaveText(
+    "This package was canceled before a contract was signed, so I left it out of the comparables.",
+  );
+});
+
+test("a comparable package whose records could not load is still titled by its reference", async ({ page }) => {
+  await openPackage(page, {
+    path: `${PACKAGE}?evidence=${encodeURIComponent(`strata.gold.package:${MOWI}`)}`,
+    answers: { "GET /api/evidence": { status: 503, body: '{"code":"data_service","trace_id":"t-1"}' } },
+  });
+
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(MOWI);
+  await expect(drawer(page)).toContainText("I couldn't load this package's records just now. Try again in a moment.");
+});
+
 test("Enter on the focused dot opens its records, and Escape closes the drawer and gives focus back to the dot", async ({ page }) => {
   await openChart(page);
   const dots = page.locator("[data-dot-target]");
@@ -514,6 +600,33 @@ test("Enter on the focused dot opens its records, and Escape closes the drawer a
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);
   await expect(dot(page, MOWI)).toBeFocused();
+});
+
+test("on a touch screen a tapped dot's Open its records opens the sheet, and closing it gives focus back to the dot, even from outside the page", async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await serve(page, {
+    "GET /api/planned-packages/pkg-000000000001": { body: await recorded("planned-package-rural-roads.json") },
+    "GET /api/evidence": { body: await recorded("evidence-package-ke-mowi-47509.json") },
+    "GET /api/evidence/opened": { body: '{"opened":[]}' },
+  });
+  await page.goto(PACKAGE);
+  await page.getByRole("button", { name: "Show it without a plan" }).tap();
+  const target = dot(page, MOWI);
+  await target.scrollIntoViewIfNeeded();
+  const box = (await target.boundingBox())!;
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+  await page.locator("[data-open-records]").tap();
+  await expect(drawer(page)).toHaveAttribute("data-evidence-drawer", "sheet");
+  await expect(drawer(page).getByRole("heading").first()).toBeFocused();
+
+  // A Tab past the sheet's last link reaches the browser, not the page (design review round 2, F7): focus is on
+  // the page's body when Escape closes the sheet, and it still goes back to the dot.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("Escape");
+  await expect(drawer(page)).toHaveCount(0);
+  await expect(target).toBeFocused();
+  await context.close();
 });
 
 test("when a rerun has redrawn the dot that opened the records away, closing them gives focus to section 1's heading", async ({ page }) => {
@@ -573,6 +686,8 @@ test("a quantile dot opens the drawer at the packages it stands for, each opens 
   await expect(list).toBeVisible();
   await expect(list.getByRole("heading").first()).toBeFocused();
   await expect(list.getByRole("heading").first()).toHaveText("Five comparable packages");
+  // A list of packages is no record, so its eyebrow names only the stratum.
+  await expect(list.locator("[data-drawer-header] p").first()).toHaveText("What");
   await expect(list).toContainText(
     "This dot stands for five of 103 comparable packages, the ones signed or still open 17.7 to 87.4 months after their notices.",
   );
@@ -632,6 +747,12 @@ test("a saved package reopens with the same chips, and the Packages tab lists it
   await expect(plan).toContainText("Nine activities checked.");
   await expect(plan).toContainText("Plan check");
   await expect(plan).toContainText("Kenya");
+  // A project ID is set in Roboto Mono (DESIGN.md section 3), and a package with no country yet says so plainly,
+  // with no hint of a gap in the records (review round 2, P17 and F10).
+  expect(await plan.getByRole("link", { name: "P156634" }).evaluate((link) => getComputedStyle(link.querySelector("span") ?? link).fontFamily)).toMatch(/^"?Roboto Mono/);
+  const unset = table.locator("tbody tr").nth(1);
+  await expect(unset.locator("td").nth(1)).toHaveText("None yet");
+  await expect(unset).not.toContainText("Not in the record");
   const mine = table.locator("tbody tr").nth(2);
   await expect(mine).toContainText("No STEP reference yet. One guess to check.");
   await mine.getByRole("link", { name: "Rural roads, Kenya" }).click();

@@ -450,6 +450,8 @@
         "market_approach": "Direct"
       }
     },
-    "max_months": 60.0
+    "max_months": 60.0,
+    "max_count": 99,
+    "text_limit": 200
   }
 }

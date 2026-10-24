@@ -101,7 +101,9 @@ export function eyebrow(evidence: EvidenceEvent): string {
   // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
   if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
   if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
-  const stratum = evidence.kind === "record" || evidence.kind === "package" || evidence.kind === "dot" ? "What" : (evidence.stratum ?? "Why");
+  // A quantile dot's list of packages is no record, so it names only its stratum.
+  if (evidence.kind === "dot") return copy.evidence.package.dot.eyebrow;
+  const stratum = evidence.kind === "record" || evidence.kind === "package" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }
 

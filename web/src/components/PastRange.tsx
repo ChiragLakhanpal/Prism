@@ -103,6 +103,7 @@ export function PastRange({
   busy = false,
   lead,
   more,
+  quiet = false,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -120,6 +121,9 @@ export function PastRange({
   // Where find_comparables gave no range, how to compare with more, after the sentence that says why
   // (ticket 15, brief 7.7).
   more?: ReactNode;
+  // The page says what is happening in its own live region, such as the planned package's steps and
+  // reruns, so the section's own loading status stays silent and nothing is heard twice.
+  quiet?: boolean;
 }) {
   const headingId = useId();
   const loading = state.status === "loading";
@@ -166,8 +170,7 @@ export function PastRange({
         </div>
       )}
       {!body && result && <Ready result={result} open={open} planned={planned} more={more} />}
-      {/* The page that gives a status line says what is happening itself, in its own live region. */}
-      {loading && !status && (
+      {loading && !quiet && (
         <p role="status" className="sr-only">
           {words.loading}
         </p>

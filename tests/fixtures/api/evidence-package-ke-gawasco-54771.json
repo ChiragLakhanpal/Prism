@@ -25,6 +25,8 @@
     "days": 106,
     "months": 3.5,
     "rank": null,
+    "counted_to": null,
+    "canceled": false,
     "description": "Dadaab Pipeline Extension",
     "project_name": "Water and Sanitation Development Project",
     "method": "Request for Bids",

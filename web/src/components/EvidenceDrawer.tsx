@@ -475,7 +475,16 @@ export function EvidenceDrawerView({
             {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
-              {evidence ? sourceTitle(evidence) : data.status === "loading" ? <LoadingLabel /> : copy.evidence.untitled}
+              {evidence ? (
+                sourceTitle(evidence)
+              ) : data.status === "loading" ? (
+                <LoadingLabel />
+              ) : comparableRef ? (
+                // A comparable package that could not load is still titled by its STEP reference (brief 7.8).
+                <span className="font-mono">{comparableRef}</span>
+              ) : (
+                copy.evidence.untitled
+              )}
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
           </div>
@@ -623,7 +632,11 @@ export function EvidenceDrawer({
     const element = panel.current;
     return () => {
       if (evidenceIn(window.location.search) !== null) return;
-      onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
+      // Focus on the page's body counts as inside: a Tab past the sheet's last link reaches the browser, and
+      // closing from there would otherwise leave focus nowhere (ticket 15's design review, round 2, F7).
+      const active = document.activeElement;
+      const lost = active === null || active === document.body;
+      onClosedRef.current(Boolean(element && (lost || element.contains(active))));
     };
   }, []);
 

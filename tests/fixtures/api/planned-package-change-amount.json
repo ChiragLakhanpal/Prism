@@ -91,15 +91,15 @@
         "country": "KE",
         "category": "Works",
         "threshold_usd": 15000000,
-        "source": "The World Bank's thresholds for procurement approaches and methods by country",
-        "as_of": "2026-10-24"
+        "source": "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya",
+        "as_of": null
       },
       "review": {
         "category": "Works",
         "threshold_usd": 10000000,
         "risk_rating": "High",
-        "source": "The World Bank's procurement prior review thresholds for investment project financing",
-        "as_of": "2026-10-24"
+        "source": "Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds",
+        "as_of": null
       }
     },
     "changed": [

@@ -1,8 +1,8 @@
-"""The package form schema (config/package_form.toml; spec, "Ten single places", item 7).
+"""Values for the package form schema (config/package_form.toml; spec, "Ten single places", item 7).
 
-load_form() reads the schema once: its groups, in the card's order, and its fields, each with its group, kind,
-source (typed, computed or guessed), STEP field name and the find_comparables parameter it sets, if any.
-Nothing else in Strata names a field, so adding an entry to the file adds a chip and removing one removes it.
+strata.config.load_package_form() reads the schema, as every registry is read: its groups, in the card's order,
+and its fields, each with its group, kind, source (typed, computed or guessed), STEP field name and the
+find_comparables parameter it sets, if any. payload() hands it to the package workspace with the limits below.
 
 value() is the one check a value passes before it is kept, whether the package reader or the person gave
 it: a choice is one of its options (an old method name, such as ICB, maps to the Procurement Regulations'
@@ -13,17 +13,15 @@ in the World Bank's country list; an amount, a count and a plan's months are num
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from pathlib import Path
 
-from strata.config import CONFIG_DIR, ConfigError, _read
+from strata.config import FormField, PackageForm
 from strata.lakehouse import clean
 
-KINDS = ("choice", "text", "amount", "count", "country", "months")
-SOURCES = ("typed", "computed", "guessed")
-RULES = ("review", "market_approach")
-FIELD_KEYS = {"key", "group", "kind", "source", "label", "add_label", "step_field", "picks", "default", "options",
-              "rule", "optional", "asked", "unit", "unit_one", "aliases"}
+# The schema's own types, by their short names here.
+Field = FormField
+Form = PackageForm
+# The limits a person's values must keep, each defined once here and handed to the package workspace in the
+# form's payload, so the browser checks the same ones (CLAUDE.md rule 4).
 TEXT_LIMIT = 200
 MAX_COUNT = 99
 
@@ -32,118 +30,16 @@ class Invalid(ValueError):
     """A value a field does not take."""
 
 
-@dataclass(frozen=True)
-class Option:
-    value: str
-    label: str
-
-
-@dataclass(frozen=True)
-class Group:
-    key: str
-    label: str
-    name: str
-
-
-@dataclass(frozen=True)
-class Field:
-    key: str
-    group: str
-    kind: str
-    source: str
-    label: str
-    add_label: str
-    step_field: str | None = None
-    picks: str | None = None
-    default: str | None = None
-    options: tuple[Option, ...] = ()
-    rule: str | None = None
-    optional: bool = False
-    asked: bool = True
-    unit: str | None = None
-    unit_one: str | None = None
-    aliases: bool = False
-
-    def as_dict(self) -> dict:
-        return {"key": self.key, "group": self.group, "kind": self.kind, "source": self.source, "label": self.label,
-                "add_label": self.add_label, "step_field": self.step_field, "picks": self.picks,
-                "default": self.default, "options": [{"value": o.value, "label": o.label} for o in self.options],
-                "rule": self.rule, "optional": self.optional, "unit": self.unit, "unit_one": self.unit_one,
-                "aliases": self.aliases}
-
-
-@dataclass(frozen=True)
-class Form:
-    groups: tuple[Group, ...]
-    fields: tuple[Field, ...]
-
-    def field(self, key: str) -> Field:
-        for field in self.fields:
-            if field.key == key:
-                return field
-        raise KeyError(key)
-
-    def has(self, key: str) -> bool:
-        return any(field.key == key for field in self.fields)
-
-    def payload(self, countries: list[dict], max_months: float) -> dict:
-        """The schema as the package workspace reads it, with the World Bank's country list, the old method
-        names a method chip takes, and the longest plan a person can type."""
-        return {"groups": [{"key": g.key, "label": g.label, "name": g.name} for g in self.groups],
-                "fields": [field.as_dict() for field in self.fields],
-                "countries": countries,
-                "aliases": {name: {"method": method.name, "market_approach": method.market_approach}
-                            for name, method in clean.OLD_METHODS.items()},
-                "max_months": max_months}
-
-
-def load_form(path: Path = CONFIG_DIR / "package_form.toml") -> Form:
-    """The package form schema, checked: each field in a group the file defines, with a kind, a source and, for a
-    computed field, a rule the thresholds file has."""
-    data = _read(path)
-    def fail(where: str, need: str):
-        raise ConfigError(f"In {path.name}, {where} {need}.")
-
-    groups = []
-    for key, table in (data.get("groups") or {}).items():
-        if not isinstance(table, dict) or not table.get("label") or not table.get("name"):
-            fail(f"groups.{key}", "needs a label and a name")
-        groups.append(Group(key, str(table["label"]), str(table["name"])))
-    if not groups:
-        fail("the file", "needs [groups]")
-    group_keys = {group.key for group in groups}
-    fields, seen = [], set()
-    for number, table in enumerate(data.get("fields") or [], 1):
-        where = f"field {number} ({table.get('key', 'no key')})"
-        unknown = set(table) - FIELD_KEYS
-        if unknown:
-            fail(where, f"has keys it does not take: {', '.join(sorted(unknown))}")
-        for name in ("key", "group", "kind", "source", "label", "add_label"):
-            if not isinstance(table.get(name), str) or not table[name].strip():
-                fail(where, f"needs {name}")
-        if table["key"] in seen:
-            fail(where, "repeats a key")
-        seen.add(table["key"])
-        if table["group"] not in group_keys:
-            fail(where, f"names the group {table['group']}, which [groups] does not define")
-        if table["kind"] not in KINDS:
-            fail(where, f"has the kind {table['kind']}; the kinds are {', '.join(KINDS)}")
-        if table["source"] not in SOURCES:
-            fail(where, f"has the source {table['source']}; the sources are {', '.join(SOURCES)}")
-        options = tuple(Option(str(o["value"]), str(o["label"])) for o in table.get("options") or [])
-        if table["kind"] == "choice" and not options:
-            fail(where, "is a choice with no options")
-        if table["source"] == "computed" and table.get("rule") not in RULES:
-            fail(where, f"is computed, so it needs a rule: {', '.join(RULES)}")
-        if table.get("default") is not None and options and table["default"] not in {o.value for o in options}:
-            fail(where, "has a default that is not one of its options")
-        fields.append(Field(
-            key=table["key"], group=table["group"], kind=table["kind"], source=table["source"], label=table["label"],
-            add_label=table["add_label"], step_field=table.get("step_field"), picks=table.get("picks"),
-            default=table.get("default"), options=options, rule=table.get("rule"),
-            optional=bool(table.get("optional", False)), asked=bool(table.get("asked", table["source"] != "computed")),
-            unit=table.get("unit"), unit_one=table.get("unit_one"), aliases=bool(table.get("aliases", False))))
-    return Form(tuple(groups), tuple(fields))
+def payload(form: PackageForm, countries: list[dict], max_months: float) -> dict:
+    """The schema as the package workspace reads it, with the World Bank's country list, the old method names a
+    method chip takes, and the limits a person's values must keep: the longest plan, the most lots and the
+    longest description."""
+    return {"groups": [{"key": g.key, "label": g.label, "name": g.name} for g in form.groups],
+            "fields": [field.as_dict() for field in form.fields],
+            "countries": countries,
+            "aliases": {name: {"method": method.name, "market_approach": method.market_approach}
+                        for name, method in clean.OLD_METHODS.items()},
+            "max_months": max_months, "max_count": MAX_COUNT, "text_limit": TEXT_LIMIT}
 
 
 # ── Values ───────────────────────────────────────────────────────────────

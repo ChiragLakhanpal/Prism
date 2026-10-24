@@ -4,6 +4,7 @@
 // captured from the app (web/capture/shots.ts).
 import rural from "../../../tests/fixtures/api/planned-package-rural-roads.json";
 import amount from "../../../tests/fixtures/api/planned-package-change-amount.json";
+import goods from "../../../tests/fixtures/api/planned-package-change-category-goods.json";
 import reviewPost from "../../../tests/fixtures/api/planned-package-change-review-post.json";
 import planned from "../../../tests/fixtures/api/planned-package-change-plan.json";
 import dividing from "../../../tests/fixtures/api/planned-package-dividing.json";
@@ -12,10 +13,11 @@ import comparables from "../../../tests/fixtures/api/comparables-planned-works-r
 import dots from "../../../tests/fixtures/api/comparables-ke-nwwda-541055-any-category.json";
 import signed from "../../../tests/fixtures/api/evidence-package-ke-mowi-47509.json";
 import stillOpen from "../../../tests/fixtures/api/evidence-package-ke-icta-571738.json";
+import canceled from "../../../tests/fixtures/api/evidence-package-ke-kimawasco-149448.json";
 import list from "../../../tests/fixtures/api/planned-packages-list.json";
 import emptyList from "../../../tests/fixtures/api/planned-packages-empty.json";
 import { useId, type ReactNode } from "react";
-import { ChipGroups, ChipSkeletons, CardTop, ComputedNote, CriterionChip, RefusalAlert } from "../components/Criteria";
+import { ChipGroups, ChipSkeletons, CardTop, ComputedNote, CriterionChip, RefusalAlert, ruleSentence } from "../components/Criteria";
 import { EditorBody } from "../components/ChipEditor";
 import { ComparableDotList, ComparableRecords } from "../components/ComparableRecords";
 import { POPOVER } from "../components/Popover";
@@ -34,6 +36,7 @@ const ps = galleryCopy.plannedStates;
 const FORM = rural.form as unknown as PackageForm;
 const RURAL = rural.package as unknown as PlannedPackage;
 const AMOUNT = amount.package as unknown as PlannedPackage;
+const GOODS = goods.package as unknown as PlannedPackage;
 const REVIEW_POST = reviewPost.package as unknown as PlannedPackage;
 const PLANNED = planned.package as unknown as PlannedPackage;
 const DIVIDING = dividing.package as unknown as PlannedPackage;
@@ -68,11 +71,11 @@ function Chip({ pkg, target, open = false }: { pkg: PlannedPackage; target: Form
 }
 
 // The "What I understood" card as the workspace draws it, with chips that open nothing here.
-function UnderstoodCard({ pkg }: { pkg: PlannedPackage }) {
+function UnderstoodCard({ pkg, preview = false }: { pkg: PlannedPackage; preview?: boolean }) {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId={headingId} />
+      <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId={headingId} preview={preview} />
       {pkg.refusal === "dividing" && <RefusalAlert />}
       <div className="mt-4">
         <ChipGroups form={FORM} chip={(target) => <Chip key={target.key} pkg={pkg} target={target} />} />
@@ -95,6 +98,8 @@ function ReadingCard() {
           steps={[
             { key: "read", running: steps.read.running, done: steps.read.done, state: "done" },
             { key: "compute", running: steps.compute.running, done: steps.compute.done, state: "running" },
+            { key: "save", running: steps.save.running, done: steps.save.todo, state: "todo" },
+            { key: "compare", running: steps.compare.running, done: steps.compare.todo, state: "todo" },
           ]}
         />
       </div>
@@ -110,7 +115,16 @@ function Editor({ pkg, target, preview = false }: { pkg: PlannedPackage; target:
   const headingId = useId();
   return (
     <div role="group" aria-labelledby={headingId} className={cx(POPOVER, "w-[min(320px,calc(100vw-32px))] p-4")}>
-      <EditorBody field={target} value={valueOf(pkg, target.key)} form={FORM} approximate={pkg.approximate} preview={preview} headingId={headingId} onCommit={nothing} />
+      <EditorBody
+        field={target}
+        value={valueOf(pkg, target.key)}
+        form={FORM}
+        approximate={pkg.approximate}
+        preview={preview}
+        headingId={headingId}
+        rule={target.source === "computed" ? ruleSentence(target, pkg, FORM) : null}
+        onCommit={nothing}
+      />
     </div>
   );
 }
@@ -177,6 +191,16 @@ export function packagesPage(): GalleryPage {
             <Labeled label={ps.recomputed}>
               <Column>
                 <UnderstoodCard pkg={AMOUNT} />
+              </Column>
+            </Labeled>
+            <Labeled label={ps.emptied}>
+              <Column>
+                <UnderstoodCard pkg={GOODS} />
+              </Column>
+            </Labeled>
+            <Labeled label={ps.cardPreview}>
+              <Column>
+                <UnderstoodCard pkg={RURAL} preview />
               </Column>
             </Labeled>
             <Labeled label={ps.setByYou}>
@@ -296,6 +320,11 @@ export function packagesPage(): GalleryPage {
             <Labeled label={ps.stillOpen}>
               <div className="max-w-[36rem]">
                 <ComparableRecords evidence={stillOpen as unknown as EvidenceEvent} />
+              </div>
+            </Labeled>
+            <Labeled label={ps.canceled}>
+              <div className="max-w-[36rem]">
+                <ComparableRecords evidence={canceled as unknown as EvidenceEvent} />
               </div>
             </Labeled>
             <Labeled label={ps.dotSigned}>

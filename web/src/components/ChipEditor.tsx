@@ -29,10 +29,13 @@ export function parseAmount(raw: string): number | null {
   return amount > 0 ? amount : null;
 }
 
+// The field's text as the editor opens: a number alone, with its unit beside the field, so "Use this" commits the
+// value as it is.
 function initialText(field: FormField, value: string | number | null, form: PackageForm): string {
   if (value === null) return "";
   if (field.kind === "amount") return formatNumber(Number(value), { compact: false });
   if (field.kind === "months") return monthsText(Number(value));
+  if (field.kind === "count") return String(value);
   if (field.kind === "choice" || field.kind === "country") return "";
   return valueText(field, value, form);
 }
@@ -58,12 +61,13 @@ function optionsFor(field: FormField, form: PackageForm, typed: string): Option[
   return listed;
 }
 
-function provenanceLine(field: FormField, value: FieldValue, form: PackageForm): ReactNode {
+// Where the value came from; a computed value adds its rule, as the note states it (the 15 brief, section 7.6).
+function provenanceLine(field: FormField, value: FieldValue, form: PackageForm, rule: ReactNode): ReactNode {
   if (value.value === null) return words.empty;
   if (value.provenance === "sentence") return words.fromSentence;
   if (value.provenance === "default") return words.fromDefault;
   if (value.provenance === "guess") return words.fromGuess;
-  if (value.provenance === "computed") return words.fromComputed;
+  if (value.provenance === "computed") return rule ? <>{words.fromComputed} {rule}</> : words.fromComputed;
   return field.source === "computed" && value.computed !== null
     ? `${words.fromYou} ${words.thresholdsGive(valueText(field, value.computed, form))}`
     : words.fromYou;
@@ -76,6 +80,7 @@ export function EditorBody({
   approximate,
   preview,
   headingId,
+  rule = null,
   onCommit,
 }: {
   field: FormField;
@@ -84,6 +89,8 @@ export function EditorBody({
   approximate: boolean;
   preview: boolean;
   headingId: string;
+  // A computed field's rule sentence, for its provenance line.
+  rule?: ReactNode;
   onCommit: (change: Change) => void;
 }) {
   const [text, setText] = useState(() => initialText(field, value.value, form));
@@ -114,7 +121,7 @@ export function EditorBody({
     }
     if (field.kind === "count") {
       const count = Number(raw);
-      if (!/^\d+$/.test(raw) || count < 1 || count > 99) return setError(words.errors.count);
+      if (!/^\d+$/.test(raw) || count < 1 || count > form.max_count) return setError(words.errors.count(formatNumber(form.max_count, { compact: false })));
       return onCommit({ field: field.key, action: "set", value: count });
     }
     if (!raw) return setError(words.errors.text);
@@ -140,7 +147,7 @@ export function EditorBody({
       <h2 id={headingId} className="text-body font-bold text-ink-heading">
         {field.label}
       </h2>
-      <p className="text-caption text-ink">{provenanceLine(field, value, form)}</p>
+      <p className="text-caption text-ink">{provenanceLine(field, value, form, rule)}</p>
       {step && field.step_field && <p className="text-caption text-ink-muted">{words.stepLine(field.step_field, step)}</p>}
       {preview ? (
         <p className="text-caption text-ink-muted">{copy.packageWorkspace.preview}</p>
@@ -239,6 +246,7 @@ export function EditorBody({
                   aria-describedby={[error && errorId, field.kind === "amount" && amount !== null && readBackId].filter(Boolean).join(" ") || undefined}
                   aria-invalid={error ? true : undefined}
                   value={text}
+                  maxLength={field.kind === "text" ? form.text_limit : undefined}
                   onChange={(event) => {
                     setText(event.target.value);
                     setError(null);
@@ -251,6 +259,9 @@ export function EditorBody({
                   )}
                 />
                 {field.kind === "months" && <span className="text-small text-ink">{words.unit}</span>}
+                {field.kind === "count" && (field.unit || field.unit_one) && (
+                  <span className="text-small text-ink">{(Number(text) === 1 ? field.unit_one : field.unit) ?? field.unit}</span>
+                )}
               </div>
               {field.kind === "amount" && amount !== null && !error && (
                 <p id={readBackId} className="text-caption text-ink-muted" data-read-back>
@@ -302,6 +313,10 @@ export function EditorBody({
 // there until it closes, and Escape closes it.
 export function EditorSheet({ labelledBy, onClose, children }: { labelledBy: string; onClose: () => void; children: ReactNode }) {
   const panel = useRef<HTMLDivElement>(null);
+  // The page hands a new onClose on each of its renders, such as when a save answers; the sheet reads the
+  // latest one, so a render never moves focus back to the sheet's first control.
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     const element = panel.current;
     const first = element?.querySelector<HTMLElement>("input, button:not([data-sheet-close])");
@@ -310,7 +325,7 @@ export function EditorSheet({ labelledBy, onClose, children }: { labelledBy: str
       if (event.key === "Escape") {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        close.current();
       }
       if (event.key !== "Tab" || !element) return;
       const focusable = [...element.querySelectorAll<HTMLElement>("button, input, [tabindex='0']")].filter((one) => !one.hasAttribute("disabled"));
@@ -332,9 +347,9 @@ export function EditorSheet({ labelledBy, onClose, children }: { labelledBy: str
       document.removeEventListener("keydown", onKey, true);
       root.style.overflow = before;
     };
-  }, [onClose]);
+  }, []);
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-scrim" onClick={(event) => event.target === event.currentTarget && onClose()}>
+    <div className="fixed inset-0 z-50 flex flex-col justify-end bg-scrim" onClick={(event) => event.target === event.currentTarget && close.current()}>
       <div
         ref={panel}
         role="dialog"

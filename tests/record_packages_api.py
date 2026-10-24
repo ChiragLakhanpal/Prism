@@ -13,7 +13,7 @@ recorded from that same first save, so every change answer belongs to the packag
 plans a package and sets its criteria herself, plans one whose sentence asks for lots to stay under prior
 review, and tries a sentence with no package in it and a reader that does not answer. The comparables for
 Kenya's works under Request for Bids and under Request for Quotations, the evidence drawer's view of three
-comparables, and the Packages tab, Ana's and an empty one, are recorded too.
+comparables and of one canceled package, and the Packages tab, Ana's and an empty one, are recorded too.
 """
 
 import asyncio
@@ -58,13 +58,16 @@ CHANGES = {
     "planned-package-change-review-post.json": {"field": "review_type", "action": "set", "value": "Post"},
     "planned-package-change-description.json": {"field": "description", "action": "set", "value": "Rural feeder roads"},
     "planned-package-change-plan.json": {"field": "plan_months", "action": "set", "value": 6, "plan_before_range": True},
+    # Goods in Kenya: the thresholds file gives no market approach threshold, so market approach empties.
+    "planned-package-change-category-goods.json": {"field": "category", "action": "set", "value": "Goods"},
 }
 # Three comparables of Kenya's works under Request for Bids: signed with a contract award, still open, and
-# signed only in its award notice (tests/ground_truth/values.toml).
+# signed only in its award notice; and one that was canceled (tests/ground_truth/values.toml).
 EVIDENCE = {
     "evidence-package-ke-mowi-47509.json": "strata.gold.package:KE-MOWI-47509-CW-RFB",
     "evidence-package-ke-icta-571738.json": "strata.gold.package:KE-ICTA-571738-CW-RFB",
     "evidence-package-ke-gawasco-54771.json": "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+    "evidence-package-ke-kimawasco-149448.json": "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
 }
 
 

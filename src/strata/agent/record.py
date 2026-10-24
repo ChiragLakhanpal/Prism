@@ -113,10 +113,10 @@ def _record_package(case: Case, agent: Agent, engine_for: EngineFor, viewer: Vie
     with the package form's fields, as the plan-a-package workflow sends it (ticket 15). It writes no sentence
     a person reads, so no verifier counts go with it."""
     from strata.packages import reader
-    from strata.packages.form import load_form
+    from strata.config import load_package_form
 
     keeper = Keeper(agent)
-    message = reader.message(case.question, load_form())
+    message = reader.message(case.question, load_package_form())
     keeper.respond([{"role": "user", "content": json.dumps(message, ensure_ascii=False)}], None)
     recording = {"about": ABOUT_READER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
                  "scope": case.scope, "as_of": case.as_of.isoformat(),

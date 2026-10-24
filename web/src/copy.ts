@@ -616,8 +616,11 @@ export const copy = {
       eyebrow: "What · record",
       meta: "{project} ({pcode})",
       findingSigned: "This package took {months} months from its notice on {notice} to its signed contract on {signed}.",
+      // A still-open package's months run to the page's as-of date ({counted}), which can be later than the
+      // records' last date ({through}), so the sentence names both (design review round 2, F2).
       findingOpen:
-        "This package had no signed contract {months} months after its notice on {notice}. I count it as still open, using records through {through}.",
+        "I count this package as still open after {months} months, from its notice on {notice} to {counted}. The records I hold run through {through} and show no signed contract.",
+      findingCanceled: "This package was canceled before a contract was signed, so I left it out of the comparables.",
       whyHeading: "Why I compared it",
       why: {
         method: "Method",
@@ -657,6 +660,7 @@ export const copy = {
       // A quantile dot's packages (the 15 brief, section 7.8): the drawer lists the packages the dot stands
       // for, as find_comparables names them, and each opens its records, with a way back to the list.
       dot: {
+        eyebrow: "What",
         region: (count: string, k: string) => `The ${count} comparable packages dot ${k} stands for`,
         regionOne: (k: string) => `The one comparable package dot ${k} stands for`,
         title: (count: string) => `${count} comparable packages`,
@@ -1367,7 +1371,7 @@ export const copy = {
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
       // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
-      helperPlanned: "The line shows your plan, the same months as your plan chip. Moving it changes your plan.",
+      helperPlanned: "The line shows your plan, the same months as Your plan above. Moving the line changes your plan.",
       helperPlannedNone: "Type your plan's months, or add your plan in the How group, to see it as a line.",
       invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
@@ -1563,24 +1567,32 @@ export const copy = {
       changed: (field: string, from: string, to: string, cause: string) =>
         `${field} changed from ${from} to ${to} because the ${cause} changed.`,
       intro: "I computed review type and market approach from the thresholds.",
-      review: "{category} of US${threshold} or more go to prior review.",
-      market: "In {country}, plans send {category} of US${threshold} or more to international bidding.",
+      // {threshold} is written with its "US$", so the two never split across lines.
+      review: "{category} of {threshold} or more go to prior review.",
+      market: "In {country}, plans send {category} of {threshold} or more to international bidding.",
+      threshold: (amount: string) => `US$${amount}`,
+      // A computed value the thresholds no longer give, after the change named.
+      emptied: (field: string, cause: string) => `${field} is now empty, because the thresholds give no value for the new ${cause}.`,
       assumed: (rating: string) => `I assumed the implementing agency's procurement risk is ${rating}, because I don't know it yet.`,
       youSet: (field: string, value: string, computed: string) => `You set ${field} to ${value}. The thresholds give ${computed}.`,
       source: "{source}, as of {date}.",
+      // A source the owner has not yet checked against a dated table.
+      sourceUndated: "{source}.",
       // A threshold's tooltip names its entry in the thresholds file and its source.
       thresholdTip: (entry: string, source: string) => `From ${entry} in Strata's thresholds file. ${source}.`,
-      noRule: "I can compute review type and market approach once the category, the estimated amount and the country are set.",
+      noRule: "I can compute review type and market approach once you add the category, the estimated amount and the country.",
     },
     refusal: "I don't suggest dividing a package to stay under a review threshold, so I computed review type from the whole package.",
+    // Each reading step, in progress, done, and still to come (listed in ink-muted, as the answer's steps are).
     steps: {
-      read: { running: "Reading your sentence", done: "I read your sentence." },
+      read: { running: "Reading your sentence", done: "I read your sentence.", todo: "To do: read your sentence." },
       compute: {
         running: "Computing review type and market approach from the thresholds",
         done: "I computed review type and market approach from the thresholds.",
+        todo: "To do: compute review type and market approach from the thresholds.",
       },
-      save: { running: "Saving the package", done: "I saved the package." },
-      compare: { running: "Finding comparable packages", done: "I found the comparable packages." },
+      save: { running: "Saving the package", done: "I saved the package.", todo: "To do: save the package." },
+      compare: { running: "Finding comparable packages", done: "I found the comparable packages.", todo: "To do: find comparable packages." },
     },
     readDone: (count: string, guesses: string) => `I read ${count} criteria from your sentence. ${guesses}`.trim(),
     noPackageTitle: "I couldn't find a package in that sentence.",
@@ -1633,7 +1645,7 @@ export const copy = {
       errors: {
         amount: "I couldn't read that amount. Type a number in US dollars, such as 15 million.",
         months: (max: string) => `Type a number of months, from 0.5 to ${max}.`,
-        count: "Type a whole number from 1 to 99.",
+        count: (max: string) => `Type a whole number from 1 to ${max}.`,
         country: "I don't have that country in the World Bank's list. Choose one from the list.",
         text: "Type a few words about what is being bought.",
         choice: "Choose one of the options.",
@@ -1645,6 +1657,7 @@ export const copy = {
       set: (label: string, value: string) => `${label} set to ${value}.`,
       removed: (label: string) => `${label} removed.`,
       recomputed: (field: string, from: string, to: string) => `${field} changed from ${from} to ${to}, computed from the thresholds.`,
+      emptied: (field: string, cause: string) => `${field} is now empty, because the thresholds give no value for the new ${cause}.`,
       kept: (label: string, value: string) => `${label} kept as ${value}.`,
       // After a rerun, with section 1's title as it reads now: the finding, or the sentence that says why
       // there is no range.
@@ -1679,8 +1692,10 @@ export const copy = {
     checkPlan: "Check a plan",
     planPackage: "Plan a package",
     previewOff: "Checking and planning are off in a preview.",
+    // Zero is "no", never "0" (DESIGN.md section 7, rule 12).
     title: (packages: number, packageWords: string, plans: number, planWords: string) =>
-      `You have ${packageWords} ${packages === 1 ? "package" : "packages"} in progress and ${planWords} checked ${plans === 1 ? "plan" : "plans"}.`,
+      `You have ${packages === 0 ? "no" : packageWords} ${packages === 1 ? "package" : "packages"} in progress and ` +
+      `${plans === 0 ? "no" : planWords} checked ${plans === 1 ? "plan" : "plans"}.`,
     noun: "packages and plans",
     nounOne: "package or plan",
     columns: {
@@ -1697,6 +1712,8 @@ export const copy = {
     typePackage: "Package",
     typePlan: "Plan check",
     noProject: "None yet",
+    // A package you are planning has no country until you set one, which is no gap in the records.
+    noCountry: "None yet",
     source: "your packages and plan checks, saved in Strata.",
     emptyTitle: "You have no packages or checked plans yet.",
     emptyBody: "Use Check a plan or Plan a package above to start one.",

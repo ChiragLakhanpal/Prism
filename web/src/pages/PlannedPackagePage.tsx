@@ -15,12 +15,13 @@
 // with the box in plan mode.
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
+import { CircleX } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { EditorBody, EditorSheet } from "../components/ChipEditor";
-import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, valueText } from "../components/Criteria";
+import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
@@ -146,7 +147,11 @@ export function SavedStamp({ saving, preview, onRetry }: { saving: Saving; previ
   useEffect(() => setNow(Date.now()), [saving]);
   return (
     <p data-saved-stamp={preview ? "preview" : saving.status} className={cx("flex flex-wrap items-center gap-2 text-caption", saving.status === "failed" ? "text-error" : "text-ink-muted")}>
-      <span>{stampText(saving, now, preview)}</span>
+      {/* The icon sits in the text's line, so the stamp keeps the reference line's baseline. */}
+      <span>
+        {saving.status === "failed" && !preview && <CircleX aria-hidden="true" className="mr-1 inline size-4 align-[-3px]" />}
+        {stampText(saving, now, preview)}
+      </span>
       {saving.status === "failed" && onRetry && !preview && (
         <Button variant="ghost" flush onClick={onRetry} className="h-6">
           {words.stamp.tryAgain}
@@ -197,22 +202,26 @@ function Header({
 }
 
 const crumbs = (title: ReactNode) => [{ text: words.breadcrumbPackages, href: "/packages" }, { text: title }];
+// A package not read yet, or not found: the trail ends at "Packages", since there is no title to name.
+const packagesOnly = [{ text: words.breadcrumbPackages, href: "/packages" }];
 
 // ── Reading the sentence ─────────────────────────────────────────────────
 
-// The steps so far: each one done, then the one in progress, which is the next one not done while the stream
-// is open, even before its own event comes. Steps still to come are left out, and the list holds their height.
+// Every step: each one done, then the one in progress, which is the next one not done while the stream is open,
+// even before its own event comes, then the steps still to come, as "To do: ..." in ink-muted.
 function readingSteps(current: Planning): Step[] {
   const s = words.steps;
   const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
   const order: (keyof typeof s)[] = current.read ? ["read", "compute", "save", "compare"] : ["save", "compare"];
-  const shown: Step[] = [];
-  for (const id of order) {
-    const done = by[id]?.status === "done";
-    shown.push({ key: id, running: s[id].running, done: s[id].done, state: done ? "done" : "running" });
-    if (!done) break;
-  }
-  return shown;
+  let running = false;
+  return order.map((id) => {
+    if (by[id]?.status === "done" && !running) return { key: id, running: s[id].running, done: s[id].done, state: "done" };
+    if (!running) {
+      running = true;
+      return { key: id, running: s[id].running, done: s[id].done, state: "running" };
+    }
+    return { key: id, running: s[id].running, done: s[id].todo, state: "todo" };
+  });
 }
 
 function ReadingPage() {
@@ -302,7 +311,7 @@ function ReadingPage() {
         </section>
         {!failed && current.phase !== "no_package" && (
           <div className="mt-6 @lg/page:mt-8">
-            <PastRange state={{ status: "loading" }} />
+            <PastRange state={{ status: "loading" }} quiet />
           </div>
         )}
       </div>
@@ -322,16 +331,22 @@ const queryKey = (pkg: PlannedPackage) => (pkg.comparables_query ? JSON.stringif
 
 // The package as it looks the moment a change is made, before the server answers (the 15 brief: a chip shows
 // its new value within 100 ms). The server's answer replaces it.
+// An old method name such as ICB, only for a field that takes them: typed as a description, it is just words.
+function aliasOf(form: PackageForm, change: Change) {
+  if (change.action !== "set" || !form.fields.find((one) => one.key === change.field)?.aliases) return undefined;
+  return form.aliases[String(change.value ?? "").trim().replace(/\s+/g, " ").toUpperCase()];
+}
+
 function applied(pkg: PlannedPackage, form: PackageForm, change: Change): PlannedPackage {
   const fields = pkg.fields.map((value): FieldValue => {
     if (value.key !== change.field) return value;
     if (change.action === "remove") return { ...value, value: null, provenance: null };
     if (change.action === "keep") return { ...value, provenance: "you" };
     if (change.action === "use_computed") return { ...value, value: value.computed, provenance: "computed" };
-    const alias = form.aliases[String(change.value ?? "").trim().toUpperCase()];
+    const alias = aliasOf(form, change);
     return { ...value, value: alias ? alias.method : (change.value ?? null), provenance: "you" };
   });
-  const alias = change.action === "set" ? form.aliases[String(change.value ?? "").trim().toUpperCase()] : undefined;
+  const alias = aliasOf(form, change);
   const withAlias = alias?.market_approach
     ? fields.map((value) => (value.key === "market_approach" ? { ...value, value: alias.market_approach, provenance: "you" as const } : value))
     : fields;
@@ -372,8 +387,8 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
     if (page.error?.status === 404) {
       return (
         <DocumentColumn>
-          <div data-planned-package="not-found">
-            <Breadcrumb trail={crumbs(words.titleNew)} held />
+          <div data-planned-package="not-found" className="min-h-svh">
+            <Breadcrumb trail={packagesOnly} held />
             <h1 tabIndex={-1} className="sr-only">
               {copy.pages.plannedPackage.title}
             </h1>
@@ -384,7 +399,7 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
     }
     return (
       <DocumentColumn>
-        <div data-planned-package="error">
+        <div data-planned-package="error" className="min-h-svh">
           <h1 tabIndex={-1} className="sr-only">
             {copy.pages.plannedPackage.title}
           </h1>
@@ -409,8 +424,8 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
 function LoadingPackage() {
   return (
     <DocumentColumn>
-      <div data-planned-package="loading" aria-busy="true">
-        <Breadcrumb trail={crumbs(words.titleNew)} held />
+      <div data-planned-package="loading" aria-busy="true" className="min-h-svh">
+        <Breadcrumb trail={crumbs(<SkeletonLine width="w-32" />)} held />
         <div className="mt-4">
           <Header title={<><span className="sr-only">{words.loading}</span><SkeletonLine className="text-h1" width="w-2/5" /></>} stamp={null} loading />
         </div>
@@ -470,8 +485,11 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
     return () => window.removeEventListener("beforeunload", onLeave);
   }, [saving.status]);
 
+  // The criteria section 1 last asked find_comparables about, so a save that changes them reruns it.
+  const fetched = useRef(queryKey(initial.package));
   const fetchComparables = useCallback((target: PlannedPackage, quiet = false) => {
     request.current?.abort();
+    fetched.current = queryKey(target);
     if (!target.comparables_query) {
       setSection({ status: "none" });
       setUpdating(false);
@@ -543,28 +561,47 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
 
   const field = (key: string) => form.fields.find((one) => one.key === key)!;
 
-  const send = (change: Change, before: PlannedPackage) => {
+  // Saves go out one after another, each once the one before it has answered, so the server always changes
+  // the latest save and no change is lost to one made a moment before it (review round 2, P1).
+  // The changes still waiting are drawn on top of each answer, so a chip never flips back while its own save waits.
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const lastSaved = useRef(initial.package);
+  const waiting = useRef<Change[]>([]);
+  const send = (change: Change) => {
     setSaving({ status: "saving" });
-    savePackage(before.package_id, change).then(
-      ({ package: saved }) => {
-        setPkg(saved);
-        setFailedChange(null);
-        setSaving({ status: "saved", at: saved.saved_at });
-        if (saved.changed.length > 0) {
-          const said = saved.changed.map((one) =>
-            words.announce.recomputed(field(one.field)?.label ?? one.field, valueText(field(one.field), one.from, form), valueText(field(one.field), one.to, form)),
-          );
-          setAnnounce((now) => [now, ...said].filter(Boolean).join(" "));
-        }
-        if (queryKey(saved) !== queryKey(before)) fetchComparables(saved);
-        else setUpdating(false);
-      },
-      () => {
-        setFailedChange(change);
-        setSaving({ status: "failed" });
-        setUpdating(false);
-        setAnnounce(words.saveFailed);
-      },
+    waiting.current.push(change);
+    queue.current = queue.current.then(() =>
+      savePackage(lastSaved.current.package_id, change).then(
+        ({ package: saved }) => {
+          lastSaved.current = saved;
+          waiting.current = waiting.current.filter((one) => one !== change);
+          setPkg(waiting.current.reduce((shown, next) => applied(shown, form, next), saved));
+          if (waiting.current.length > 0) return;
+          setFailedChange(null);
+          setSaving({ status: "saved", at: saved.saved_at });
+          if (saved.changed.length > 0) {
+            // What a recompute changed replaces what was said, so nothing is heard twice.
+            const said = saved.changed.map((one) => {
+              const target = field(one.field);
+              const label = target?.label ?? one.field;
+              const cause = (field(one.cause)?.label ?? one.cause).toLowerCase();
+              return one.to === null
+                ? words.announce.emptied(label, cause)
+                : words.announce.recomputed(label, valueText(target, one.from, form), valueText(target, one.to, form));
+            });
+            setAnnounce(said.join(" "));
+          }
+          if (queryKey(saved) !== fetched.current) fetchComparables(saved);
+          else setUpdating(false);
+        },
+        () => {
+          waiting.current = waiting.current.filter((one) => one !== change);
+          setFailedChange(change);
+          setSaving({ status: "failed" });
+          setUpdating(false);
+          setAnnounce(words.saveFailed);
+        },
+      ),
     );
   };
 
@@ -587,7 +624,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
       setUpdating(true);
       setAnnounce(words.announce.setPicks(label, shown));
     } else setAnnounce(words.announce.set(label, shown));
-    send(change, pkg);
+    send(change);
   };
 
   // The plan chip and the plan line are one value: a move of the line shows in the chip at once and saves
@@ -596,7 +633,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
     if (preview) return;
     setPkg((now) => applied(now, form, { field: "plan_months", action: "set", value: months }));
     clearTimeout(planTimer.current);
-    planTimer.current = setTimeout(() => send({ field: "plan_months", action: "set", value: months, plan_before_range: false }, pkg), PLAN_SAVE_AFTER_MS);
+    planTimer.current = setTimeout(() => send({ field: "plan_months", action: "set", value: months, plan_before_range: false }), PLAN_SAVE_AFTER_MS);
   };
   useEffect(() => () => clearTimeout(planTimer.current), []);
 
@@ -612,6 +649,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         approximate={pkg.approximate}
         preview={preview}
         headingId={editorHeading}
+        rule={target.source === "computed" ? ruleSentence(target, pkg, form) : null}
         onCommit={commit}
       />
     );
@@ -737,7 +775,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             headerRef={header}
             headingRef={heading}
             title={title}
-            stamp={<SavedStamp saving={saving} preview={preview} onRetry={failedChange ? () => send(failedChange, pkg) : undefined} />}
+            stamp={<SavedStamp saving={saving} preview={preview} onRetry={failedChange ? () => send(failedChange) : undefined} />}
           />
         </div>
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
@@ -760,6 +798,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             busy={updating}
             lead={lead}
             more={more}
+            quiet
           />
         </div>
         <p role="status" className="sr-only" data-workspace-live>
@@ -865,7 +904,8 @@ export function PlanPrompt({
         <Button variant={showRangeVariant} onClick={show} held={preview}>
           {words.section.showRange}
         </Button>
-        <Button variant="ghost" onClick={onWithout}>
+        {/* Flush, so its label keeps to the text's edge when the buttons stack (DESIGN.md section 5, Buttons). */}
+        <Button variant="ghost" flush onClick={onWithout}>
           {words.section.showWithout}
         </Button>
       </div>

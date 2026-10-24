@@ -177,6 +177,30 @@ export function ChipSkeletons({ form }: { form: PackageForm | null }) {
 
 const lower = (text: string) => text.charAt(0).toLowerCase() + text.slice(1);
 
+// A computed field's rule as the note's second line states it, in plain text with its threshold, for the chip
+// editor's provenance (the 15 brief, section 7.6): "Works of US$10 million or more go to prior review."
+export function ruleSentence(field: FormField, pkg: PlannedPackage, form: PackageForm): ReactNode {
+  const n = words.note;
+  const named = (key: string, value: string) => {
+    const found = form.fields.find((one) => one.key === key);
+    return found ? valueText(found, value, form) : value;
+  };
+  if (field.rule === "review" && pkg.rules.review) {
+    const rule = pkg.rules.review;
+    return <Fill template={n.review} slots={{ category: named("category", rule.category), threshold: n.threshold(formatAmountText(rule.threshold_usd)) }} />;
+  }
+  if (field.rule === "market_approach" && pkg.rules.market_approach) {
+    const rule = pkg.rules.market_approach;
+    return (
+      <Fill
+        template={n.market}
+        slots={{ country: named("country", rule.country), category: lower(named("category", rule.category)), threshold: n.threshold(formatAmountText(rule.threshold_usd)) }}
+      />
+    );
+  }
+  return null;
+}
+
 // The computed note under the chips (the 15 brief, section 7.4), in its order: what a recompute changed, the
 // rules and their thresholds from the thresholds file, the risk rating assumed, each computed field the person
 // set themselves, then the source line.
@@ -193,8 +217,10 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
     const found = field("category");
     return found ? valueText(found, value, form) : value;
   };
+  // The amount is written with its "US$", so the two never split across lines and the check's underline
+  // covers both.
   const threshold = (amount: number, entry: string, source: string) => (
-    <Num written={formatAmountText(amount)} check={{ tooltip: n.thresholdTip(entry, source) }} inCaption />
+    <Num written={n.threshold(formatAmountText(amount))} check={{ tooltip: n.thresholdTip(entry, source) }} inCaption />
   );
   const yours = pkg.fields.filter((value) => field(value.key)?.source === "computed" && value.provenance === "you" && value.computed !== null);
   const sources = [review, market].filter((rule): rule is NonNullable<typeof rule> => Boolean(rule));
@@ -202,8 +228,10 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
     <div className="mt-4 flex flex-col gap-1 text-caption text-ink-muted" data-computed-note>
       {pkg.changed.map((change) => (
         <p key={change.field} data-recomputed className="text-ink">
-          {n.changed(field(change.field)?.label ?? change.field, text(change.field, change.from), text(change.field, change.to),
-            lower(field(change.cause)?.label ?? change.cause))}
+          {change.to === null
+            ? n.emptied(field(change.field)?.label ?? change.field, lower(field(change.cause)?.label ?? change.cause))
+            : n.changed(field(change.field)?.label ?? change.field, text(change.field, change.from), text(change.field, change.to),
+                lower(field(change.cause)?.label ?? change.cause))}
         </p>
       ))}
       {review || market ? (
@@ -245,7 +273,11 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
           {sources.map((rule, index) => (
             <span key={index}>
               {index > 0 && " "}
-              <Fill template={n.source} slots={{ source: rule.source, date: <Num date={rule.as_of} /> }} />
+              {rule.as_of ? (
+                <Fill template={n.source} slots={{ source: rule.source, date: <Num date={rule.as_of} /> }} />
+              ) : (
+                <Fill template={n.sourceUndated} slots={{ source: rule.source }} />
+              )}
             </span>
           ))}
         </Source>

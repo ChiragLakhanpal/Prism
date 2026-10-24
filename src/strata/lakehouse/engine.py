@@ -99,7 +99,7 @@ TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
 COLUMN_NAME = re.compile(r"[a-z][a-z0-9_]*")
 
 
-def _names(table: str, columns: tuple[str, ...]) -> None:
+def check_names(table: str, columns: tuple[str, ...]) -> None:
     """insert_rows puts names, never values, into SQL text, so it takes only plain three-part names."""
     if not TABLE_NAME.fullmatch(table) or not all(COLUMN_NAME.fullmatch(column) for column in columns):
         raise EngineError(f"insert_rows takes a three-part table name and plain column names, not {table} "
@@ -167,7 +167,7 @@ class DuckDBEngine:
         return Result(tuple(column[0] for column in cursor.description), tuple(cursor.fetchall()))
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 500) -> int:
-        _names(table, columns)
+        check_names(table, columns)
         rows = list(rows)
         for start in range(0, len(rows), chunk):
             part = rows[start:start + chunk]
@@ -182,7 +182,7 @@ class DuckDBEngine:
     def table_bytes(self, table: str) -> int:
         """The bytes of the database file's blocks that hold the table, after a checkpoint writes
         everything to the file. An in-memory database holds no blocks, so it gives 0."""
-        _names(table, ())
+        check_names(table, ())
         try:
             self.connection.execute("CHECKPOINT strata")
         except Exception:  # noqa: BLE001 - a read-only database has nothing to write
@@ -208,7 +208,7 @@ class DuckDBEngine:
 
 def _delta_bytes(engine, table: str) -> int:
     """DESCRIBE DETAIL's sizeInBytes for a Delta table on Databricks."""
-    _names(table, ())
+    check_names(table, ())
     result = engine.run(f"DESCRIBE DETAIL {table}")  # sql-lint: names only, the table name is checked above
     return int(dict(zip(result.columns, result.rows[0], strict=True))["sizeInBytes"])
 
@@ -229,7 +229,7 @@ class SparkEngine:
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple]) -> int:
         """A DataFrame typed by the table's own columns, appended by name."""
-        _names(table, columns)
+        check_names(table, columns)
         rows = list(rows)
         if rows:
             schema = self.spark.table(table).select(*columns).schema
@@ -375,7 +375,7 @@ class WarehouseEngine:
         characters, because the Statement Execution API refuses parameters over 1,048,576 characters
         in all. A page of layout elements can run to 50,000 characters, so 100 such rows would not fit.
         """
-        _names(table, columns)
+        check_names(table, columns)
         rows = list(rows)
         for row in rows:
             size = _characters(row)

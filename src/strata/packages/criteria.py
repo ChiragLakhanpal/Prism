@@ -62,7 +62,8 @@ def recompute(form: Form, criteria: Criteria, thresholds: Thresholds, cause: str
         result = compute.compute(field.rule, thresholds, criteria.plain())
         before, after = criteria.get(field.key), result.value if result else None
         _set(criteria, field.key, after, COMPUTED)
-        if cause is not None and before is not None and after is not None and before != after:
+        # A value that changed, or that emptied because the thresholds give none now, is said, with its cause.
+        if cause is not None and before is not None and before != after:
             changed.append({"field": field.key, "from": before, "to": after, "cause": cause})
     return changed
 

@@ -38,7 +38,10 @@ export type PackageForm = {
   countries: { code: string; name: string }[];
   // Old method names by their upper-case spelling, and what each is now (strata.lakehouse.clean).
   aliases: Record<string, { method: string; market_approach: string | null }>;
+  // The limits a person's values must keep, each defined once in the server (src/strata/packages/form.py).
   max_months: number;
+  max_count: number;
+  text_limit: number;
 };
 
 export type FieldValue = {
@@ -50,8 +53,9 @@ export type FieldValue = {
   computed: string | null;
 };
 
-export type ReviewRule = { category: string; threshold_usd: number; risk_rating: string; source: string; as_of: string };
-export type MarketRule = { country: string; category: string; threshold_usd: number; source: string; as_of: string };
+// A rule's source, and the date of the table it was checked against, which is null until the owner checks it.
+export type ReviewRule = { category: string; threshold_usd: number; risk_rating: string; source: string; as_of: string | null };
+export type MarketRule = { country: string; category: string; threshold_usd: number; source: string; as_of: string | null };
 
 export type PlannedPackage = {
   package_id: string;
@@ -63,7 +67,8 @@ export type PlannedPackage = {
   fields: FieldValue[];
   guesses: number;
   rules: { review?: ReviewRule; market_approach?: MarketRule };
-  changed: { field: string; from: string; to: string; cause: string }[];
+  // A computed value a change recomputed: to is null when the thresholds give no value any more.
+  changed: { field: string; from: string; to: string | null; cause: string }[];
   refusal: "dividing" | null;
   approximate: boolean;
   comparables_query: Record<string, string> | null;

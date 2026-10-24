@@ -48,7 +48,7 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
-from strata.config import load_sources, load_tools
+from strata.config import load_sources, load_thresholds, load_tools
 from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
 from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
@@ -398,7 +398,8 @@ def read_comparable(engine, step_reference: str, as_of: dt.date) -> dict | None:
     """One comparable package as the evidence drawer shows it: its procurement cycle time, counted as
     find_comparables counts it, its specific procurement notice and its contract award (or the award notice
     that gives its signing date), each as public on the as-of date, or None when no package has the
-    reference by then."""
+    reference by then. A still-open package's months run to the as-of date (counted_to); a canceled one that
+    find_comparables leaves out says so (canceled), as _select's rule decides."""
     found = _rows(engine, "candidates.sql", as_of=as_of, only=step_reference.strip(), step_reference="",
                   country=None, method=None, category=None, notice_from=dt.date(1900, 1, 1), notice_to=as_of)
     if not found or found[0]["notice_date"] is None:
@@ -420,7 +421,10 @@ def read_comparable(engine, step_reference: str, as_of: dt.date) -> dict | None:
     named = _rows(engine, "project.sql", project_id=candidate["project_id"])
     through = _rows(engine, "records_through.sql", as_of=as_of)
     amount = _money(candidate["amount_usd"])
+    left_out = not load_thresholds().value("past_range.canceled_as_still_open")
     return {**row,
+            "counted_to": _iso(as_of) if row["still_open"] else None,
+            "canceled": left_out and row["still_open"] and candidate["process_status"] == "Canceled",
             "evidence_id": f"strata.gold.package:{candidate['step_reference']}",
             "description": (notice or {}).get("bid_description"),
             "project_name": named[0]["project_name"] if named else None,
