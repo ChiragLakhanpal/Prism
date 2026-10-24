@@ -442,11 +442,13 @@ def as_table_summaries(call, **arguments):
 
 
 def with_two_envelopes(call, **arguments):
-    """check_plan, with KE-NWWDA-541062-CW-RFQ's market approach set to STEP's Single Stage - Two Envelope."""
+    """check_plan, with KE-NWWDA-541062-CW-RFQ's market approach set to STEP's Single Stage - Two Envelope,
+    and its description to one that names a number of items, as "Supply of Two Airside Fire Tenders" does."""
     result = check_plan(call, **arguments)
     for row in result["rows"]:
         if row["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ":
             row["market_approach"] = "Single Stage - Two Envelope"
+            row["description"] = "Supply of Two Airside Fire Tenders"
     return result
 
 
@@ -477,7 +479,8 @@ def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
 
 def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fixture_db):
     """"Two" in STEP's market approach "Single Stage - Two Envelope" is a name, not a count, whether or not
-    the sentence quotes it. Words quoted from a record's text value must still be in it word for word."""
+    the sentence quotes it. A number word in lower case is a count even when a value holds it beside the
+    same word ("of Two"). Words quoted from a record's text value must still be in it word for word."""
     def answer(outputs):
         [cited] = [row["evidence_id"] for row in outputs[0]["rows"]
                    if row["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ"]
@@ -485,6 +488,7 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
             'Its market approach was "Single Stage - Two Envelope".',
             "It went to market as Single Stage - Two Envelope.",
             "Thirty-seven firms bid for it.",
+            "Only a total of two firms bid.",
             'The plan called it "Equipping of boreholes, Lot 9".',
             'Its STEP reference held "1".')]
 
@@ -498,7 +502,8 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
         'Its market approach was "Single Stage - Two Envelope".', "It went to market as Single Stage - Two Envelope."]
     # KE-NWWDA-541062-CW-RFQ holds a 1 only inside 541062, so a quoted "1" is not on the record.
     assert removed_reasons(parsed) == [
-        [("number_not_in_records", "Thirty-seven")], [("quote_not_on_page", None)], [("quote_not_on_page", None)]]
+        [("number_not_in_records", "Thirty-seven")], [("number_not_in_records", "two")], [("quote_not_on_page", None)],
+        [("quote_not_on_page", None)]]
 
 
 def logged_runs(ops_db):

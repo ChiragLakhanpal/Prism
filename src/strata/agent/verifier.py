@@ -401,21 +401,27 @@ def _texts(row: Any) -> list[str]:
     return [row] if isinstance(row, str) else []
 
 
-def _plain_words(text: str) -> str:
-    return " ".join(re.sub(r"[\s\-\u2013\u2014]+", " ", text.lower()).split())
+def _name_words(text: str) -> str:
+    """The text's words with each run of spaces, hyphens and dashes as one space, as written."""
+    return " ".join(re.sub(r"[\s\-\u2013\u2014]+", " ", text).split())
 
 
 def _in_a_value(mention: Mention, sentence: str, texts: list[str]) -> bool:
-    """A number word that is part of a text value of a cited row, such as "Two" in STEP's market approach
-    "Single Stage - Two Envelope": a name, not a count."""
+    """A number word that is part of a name in a text value of a cited row, such as "Two" in STEP's market
+    approach "Single Stage - Two Envelope": a name, not a count. It starts with a capital and is not the
+    sentence's first word, and with a neighbouring word that also starts with a capital, it stands in the
+    value as written, case for case and as whole words. So "a total of two firms" is a count even when a
+    value holds "Supply of Two Airside Fire Tenders"."""
     if mention.start is None or not isinstance(mention.value, Decimal) or any(ch.isdigit() for ch in mention.text):
         return False
-    after = re.match(r"[\s-]+([A-Za-z]+)", sentence[mention.end:])
-    before = re.search(r"([A-Za-z]+)[\s-]+$", sentence[:mention.start])
+    if not mention.text[0].isupper() or not re.search(r"[A-Za-z]", sentence[:mention.start]):
+        return False
+    after = re.match(r"[\s-]+([A-Z][A-Za-z]*)", sentence[mention.end:])
+    before = re.search(r"([A-Z][A-Za-z]*)[\s-]+$", sentence[:mention.start])
     phrases = [f"{mention.text} {after[1]}"] if after else []
     phrases += [f"{before[1]} {mention.text}"] if before else []
-    values = [_plain_words(text) for text in texts]
-    return any(re.search(rf"\b{re.escape(_plain_words(phrase))}\b", value) for phrase in phrases for value in values)
+    values = [_name_words(text) for text in texts]
+    return any(re.search(rf"\b{re.escape(_name_words(phrase))}\b", value) for phrase in phrases for value in values)
 
 
 def check(index: int, claim: Claim, facts: Facts) -> Checked:
