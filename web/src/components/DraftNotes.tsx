@@ -37,6 +37,7 @@ export function NoteSentences({
   numbers,
   opened,
   open,
+  textSize = "small",
 }: {
   sentences: SentenceEvent[];
   evidence: Record<string, EvidenceEvent>;
@@ -45,11 +46,13 @@ export function NoteSentences({
   // The sources this viewer opened since the draft was saved: their markers take the visited look.
   opened: ReadonlySet<string>;
   open: OpenSource;
+  // A draft's notes are small; a lesson review's summary is body text, like the states around it.
+  textSize?: "small" | "body";
 }) {
   const show = (id: string, sentence: number, marker: HTMLElement | null) =>
     openEvidence(id, { serial: null, sentence, marker, runId: null });
   return (
-    <p className="max-w-[72ch] text-small text-ink" data-note>
+    <p className={cx("max-w-[72ch] text-ink", textSize === "body" ? "text-body" : "text-small")} data-note>
       {sentences.map((sentence, index) => {
         const active = open.id !== null && open.sentence === sentence.index && sentence.evidence_ids.includes(open.id);
         return (

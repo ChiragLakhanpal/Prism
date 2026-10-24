@@ -710,6 +710,66 @@ section = "4"
 paragraph = "4"
 pdf_page = 5
 
+# The ICR Review restates the ICR's rebidding lesson (ICR para 54) in section 10.b, Other Issues,
+# Fiduciary Compliance, the Procurement paragraph, on PDF page 13 of both versions (ticket 29). The
+# lesson's evidence takes it from the version current when the lesson was proposed, once for the report
+# number ICRR0021929.
+[[value]]
+id = "icr-review-2020-restates-para-54"
+says = "The March 27, 2020 ICR Review restates ICR paragraph 54: one-third of the contracts were rebid."
+value = "ICR para 54"
+quote = "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54)."
+document = "documents/P130164/icr-review-2020-03-27"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2020-03-27
+section = "10"
+paragraph = "10.b"
+pdf_page = 13
+
+[[value]]
+id = "icr-review-2023-restates-para-54"
+says = "The May 4, 2023 re-issue restates ICR paragraph 54 in the same words."
+value = "ICR para 54"
+quote = "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54)."
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+section = "10"
+paragraph = "10.b"
+pdf_page = 13
+
+# IEG's own lesson in section 12 of the ICR Review, Lessons, on PDF page 14, which says again what ICR
+# paragraph 55 says. Its apostrophe is curly (U+2019).
+[[value]]
+id = "icr-review-2023-ieg-lesson"
+says = "IEG's lesson in the May 4, 2023 ICR Review: clearances need to be in place before contracts are awarded."
+value = "forest and other administrative clearances need to be in place prior to awarding contracts"
+quote = "IEG’s Lesson: To avoid cost and time overruns and contract administration issues, forest and other administrative clearances need to be in place prior to awarding contracts."
+document = "documents/P130164/icr-review-2023-05-04"
+document_type = "Implementation Completion Report Review"
+project = "P130164"
+date = 2023-05-04
+section = "12"
+paragraph = "12"
+pdf_page = 14
+
+# P130164's PAD names the procurement rules the project followed: the January 2011 Guidelines, never a
+# later edition of the Procurement Regulations (config/editions.toml, guidelines_2011).
+[[value]]
+id = "pad-procurement-guidelines"
+says = "P130164's PAD says its goods, works and non-consulting services follow the Guidelines of January 2011."
+value = "Guidelines: Procurement under IBRD Loans and IDA Credits"
+quote = "Section I of the \"Guidelines: Procurement under IBRD Loans and IDA Credits\" (dated January 2011)."
+document = "documents/P130164/pad-2013-10-01"
+document_type = "Project Appraisal Document"
+project = "P130164"
+date = 2013-10-01
+section = "Annex 3.B"
+paragraph = "annex3.21"
+pdf_page = 49
+
 [[value]]
 id = "ieg-outcome-p130164"
 says = "IEG rated P130164's outcome Moderately Unsatisfactory."

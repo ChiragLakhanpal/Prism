@@ -132,6 +132,22 @@ _Avoid_: Draft lesson, candidate (in user-facing copy)
 **Lesson version**:
 One numbered state of a lesson. Drafts cite a lesson at a version, so nothing in a draft changes without its author.
 
+**Lesson reviewer**:
+An accredited or lead procurement specialist the roles file names for one or more regions. An accredited specialist recommends; a different lead decides, and nobody acts on their own project.
+_Avoid_: Approver, moderator, editor
+
+**Re-check**:
+A second review of a lesson already in the library, which ends with the lesson kept, changed or retired. Any lesson reviewer can ask for one, with a reason.
+_Avoid_: Appeal, revision request, undo
+
+**Cross-check**:
+A sample of each quarter's lesson decisions, read by reviewers in another region, who agree or disagree. A disagreement starts a re-check where the lesson was decided.
+_Avoid_: Audit, second review, spot check (in user-facing copy)
+
+**Edition (of the procurement rules)**:
+The version of the World Bank's procurement rules a project followed, such as the January 2011 Guidelines or a numbered edition of the Procurement Regulations, read from its appraisal document.
+_Avoid_: Policy version, ruleset
+
 **Signal**:
 A fixed check on public records that gives a reason to look, never a finding.
 _Avoid_: Flag, red flag (an integrity term), alert, risk score

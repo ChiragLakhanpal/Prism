@@ -15,6 +15,7 @@ type Answer = { status?: number; body: string };
 
 const NWWDA = "/projects/P156634/procurement/northern-water-works-development-agency";
 const PACKAGE = "/packages/KE-NWWDA-541055-CW-RFB";
+const LESSON_ITEM = "new-e903b07ad1";
 
 async function everyRecording(): Promise<Record<string, Answer>> {
   const file = async (name: string) => ({ body: await recorded(name) });
@@ -35,6 +36,10 @@ async function everyRecording(): Promise<Record<string, Answer>> {
     [`/api${PACKAGE}/comparables`]: await file("comparables-ke-nwwda-541055.json"),
     "/api/data/readiness": await file("data-readiness.json"),
     "/api/data/sources": await file("data-sources.json"),
+    "/api/lessons/me": await file("lessons-me-reviewer.json"),
+    "/api/lessons": await file("lessons-library-reviewer.json"),
+    "/api/lessons/review": await file("lessons-queue.json"),
+    [`/api/lessons/review/${LESSON_ITEM}`]: await file("lessons-item-recommend.json"),
   };
 }
 
@@ -63,7 +68,9 @@ async function offenders(page: Page): Promise<string[]> {
 const ROUTES: [string, string][] = [
   ["/", "main h1"],
   ["/packages", "main h1"],
-  ["/lessons", "main h1"],
+  ["/lessons", "[data-library=ready]"],
+  ["/lessons/review", "[data-queue=ready]"],
+  [`/lessons/review/${LESSON_ITEM}`, `[data-review-page="${LESSON_ITEM}"]`],
   ["/projects", "[data-projects-page=ready]"],
   ["/projects?q=india", "[data-projects-page=ready]"],
   ["/projects/P130164", "[data-summary=ready]"],

@@ -70,6 +70,10 @@ def job_run(workspace, run_id: str | None) -> int:
         print(f"Starting the job {job} and waiting for it to finish.")
         run_id, state, page = workspace.run_job(job)
         print(f"Run {run_id}: {page}")
+        if state.startswith("still "):
+            print(f"The run is {state}. When it ends, check its rows with: uv run --script ops/bundle/check.py "
+                  f"job-run --env-file .env --run-id {run_id}")
+            return 1
         if state != "SUCCESS":
             print(f"The run ended {state}, so it did not finish every task. Open the run's page to see why.")
             return 1

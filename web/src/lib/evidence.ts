@@ -23,8 +23,18 @@ export const openedAt = createStore<Record<string, number>>({});
 // drawer opened from a link has none. The serial keeps a later answer's sentence from being paired
 // with a source an earlier answer opened (CLAUDE.md rule 2). The marker's top in the window when it was
 // clicked lets a draft put the marker back where the reader saw it after the notes reflow; a switch between
-// a sentence's sources has none, since nothing reflows.
-export type Origin = { id: string; serial: number | null; sentence: number | null; marker: HTMLElement | null; runId: string | null; top: number | null };
+// a sentence's sources has none, since nothing reflows. A lesson's evidence card or Source chip, which is
+// no answer's sentence, gives the quote's place in the passage itself (highlight, from the server), so the
+// drawer opens with the quote it showed highlighted (the 29 brief, section 8).
+export type Origin = {
+  id: string;
+  serial: number | null;
+  sentence: number | null;
+  marker: HTMLElement | null;
+  runId: string | null;
+  top: number | null;
+  highlight?: [number, number] | null;
+};
 export const origin = createStore<Origin | null>(null);
 
 // Whether this session pushed the open drawer's history entry, so closing can go back to the page.

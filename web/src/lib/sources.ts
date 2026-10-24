@@ -97,6 +97,21 @@ export function recordReference(evidence: EvidenceEvent): string {
   return String(row.activity_reference_no ?? row.reference ?? evidence.id.split(":").slice(1).join(":"));
 }
 
+// A lesson in Strata's library (get_lessons and the lesson review writer cite it by version): its
+// statement, version and decision date, from the row the tool returned. Null for any other source.
+export const LESSON_TABLE = "strata.ops.lesson_versions";
+export type LessonRecord = { statement: string; version: number; decidedOn: string | null };
+
+export function lessonOf(evidence: EvidenceEvent): LessonRecord | null {
+  if (evidence.kind !== "record" || evidence.id.split(":")[0] !== LESSON_TABLE) return null;
+  const row = evidence.row;
+  return {
+    statement: String(row.statement ?? ""),
+    version: Number(row.version ?? 0),
+    decidedOn: (row.decided_on ?? null) as string | null,
+  };
+}
+
 // What kind of record a What citation names ("Activity", "Contract"), by the table before the colon
 // in its evidence id, so a contract a later tool cites is never called an activity.
 export function recordKind(evidence: EvidenceEvent): string {

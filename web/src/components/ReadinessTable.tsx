@@ -49,8 +49,8 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // again once its document rows changed, and again once the reports' Coverage gained its pilot projects
 // line and its scope caption the hardest documents' projects (design review r2). Below 768 px a card
 // stands a little taller than a real one, so the cards also hold the place of the source line under
-// them, which wraps there.
-const ROW_HEIGHT = { kinds: "h-[7.875rem] xl:h-[7.3125rem]", sources: "h-[8.4rem] xl:h-[7.2675rem]", shelf: "h-[8.3375rem] xl:h-[6.4625rem]" } as const;
+// them, which wraps there. The kinds' rows were measured again once lessons joined them (ticket 29).
+const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.4rem] xl:h-[7.2675rem]", shelf: "h-[8.3375rem] xl:h-[6.4625rem]" } as const;
 const CARD_HEIGHT = { kinds: "h-[16.75rem]", sources: "h-[16.36rem]", shelf: "h-[21.1rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.

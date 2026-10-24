@@ -1,0 +1,272 @@
+{
+  "as_of": "2026-10-27",
+  "limit_days": 10,
+  "regions": [
+    "South Asia"
+  ],
+  "waiting": 3,
+  "lead": [
+    {
+      "number": 3,
+      "capital": true
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "lessons"
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "are"
+    },
+    {
+      "text": " waiting for you."
+    },
+    {
+      "text": " The oldest has used "
+    },
+    {
+      "number": 3
+    },
+    {
+      "text": " of its "
+    },
+    {
+      "number": 10
+    },
+    {
+      "text": " business days."
+    }
+  ],
+  "check": {
+    "window_days": 30,
+    "proposed": 4,
+    "dropped": 1,
+    "segments": [
+      {
+        "text": "Every lesson here has a quote I found word for word on the page it cites. In the last "
+      },
+      {
+        "number": 30
+      },
+      {
+        "text": " days I dropped "
+      },
+      {
+        "number": 1
+      },
+      {
+        "text": " proposed "
+      },
+      {
+        "text": "lesson"
+      },
+      {
+        "text": " whose quote was not on "
+      },
+      {
+        "text": "its"
+      },
+      {
+        "text": " cited page."
+      }
+    ],
+    "readiness": {
+      "sources": [
+        "documents"
+      ],
+      "from": "get_lessons"
+    }
+  },
+  "groups": {
+    "you": [
+      {
+        "item_id": "new-64ec0401e3",
+        "kind": "new",
+        "stage": "recommendation",
+        "group": "you",
+        "statement": "Get land and forest permits before awarding works contracts",
+        "source": {
+          "evidence_id": "strata.gold.passage:31525018/v1/55",
+          "passage_id": "31525018/v1/55",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "55"
+          },
+          "page": 23,
+          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "restated_by_ieg": false,
+          "highlight": [
+            72,
+            168
+          ]
+        },
+        "region": "South Asia",
+        "project": {
+          "pid": "P130164",
+          "name": "Rajasthan Road Sector Modernization Project",
+          "country": "India",
+          "sector": "Transportation"
+        },
+        "ieg_status": "not_restated",
+        "review_date": "2023-05-04",
+        "may_repeat": false,
+        "clock": {
+          "day": 3,
+          "limit_days": 10,
+          "start_on": "2026-10-23",
+          "due_on": "2026-11-05",
+          "overdue_days": 0,
+          "last_day": false
+        },
+        "recommendation": null,
+        "origin": null,
+        "decided": null,
+        "can": {
+          "act": "recommend",
+          "reason_code": null,
+          "values": {}
+        }
+      },
+      {
+        "item_id": "new-cfdf000a46",
+        "kind": "new",
+        "stage": "recommendation",
+        "group": "you",
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "source": {
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
+          "role": "source",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
+          "locator": {
+            "kind": "section",
+            "text": "12"
+          },
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
+        },
+        "region": "South Asia",
+        "project": {
+          "pid": "P130164",
+          "name": "Rajasthan Road Sector Modernization Project",
+          "country": "India",
+          "sector": "Transportation"
+        },
+        "ieg_status": "ieg_lesson",
+        "review_date": null,
+        "may_repeat": false,
+        "clock": {
+          "day": 3,
+          "limit_days": 10,
+          "start_on": "2026-10-23",
+          "due_on": "2026-11-05",
+          "overdue_days": 0,
+          "last_day": false
+        },
+        "recommendation": null,
+        "origin": null,
+        "decided": null,
+        "can": {
+          "act": "recommend",
+          "reason_code": null,
+          "values": {}
+        }
+      },
+      {
+        "item_id": "new-e903b07ad1",
+        "kind": "new",
+        "stage": "decision",
+        "group": "you",
+        "statement": "Base works estimates on market rates to avoid rebidding",
+        "source": {
+          "evidence_id": "strata.gold.passage:31525018/v1/54",
+          "passage_id": "31525018/v1/54",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "54"
+          },
+          "page": 23,
+          "quote": "108 of 328 cases had to go through rebidding.",
+          "restated_by_ieg": false,
+          "highlight": [
+            149,
+            194
+          ]
+        },
+        "region": "South Asia",
+        "project": {
+          "pid": "P130164",
+          "name": "Rajasthan Road Sector Modernization Project",
+          "country": "India",
+          "sector": "Transportation"
+        },
+        "ieg_status": "restated",
+        "review_date": null,
+        "may_repeat": false,
+        "clock": {
+          "day": 3,
+          "limit_days": 10,
+          "start_on": "2026-10-23",
+          "due_on": "2026-11-05",
+          "overdue_days": 0,
+          "last_day": false
+        },
+        "recommendation": {
+          "name": "Asha Raman",
+          "role": "accredited procurement specialist",
+          "phrase": "add",
+          "on": "2026-10-27",
+          "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
+          "region": "South Asia",
+          "repeat_of": null,
+          "change": null
+        },
+        "origin": null,
+        "decided": null,
+        "can": {
+          "act": "decide",
+          "reason_code": null,
+          "values": {}
+        }
+      }
+    ],
+    "others": []
+  },
+  "decided": {
+    "window_days": 90,
+    "total": 0,
+    "page": 1,
+    "pages": 1,
+    "from": 0,
+    "to": 0,
+    "rows": []
+  }
+}

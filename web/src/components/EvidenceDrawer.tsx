@@ -13,7 +13,7 @@ import { copy } from "../copy";
 import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { formatDate } from "../lib/format";
+import { formatDate, formatNumber } from "../lib/format";
 import {
   closeEvidence,
   evidenceIn,
@@ -25,7 +25,7 @@ import {
   takeFocusRequest,
   type Origin,
 } from "../lib/evidence";
-import { highlightsFor, passageFields, placeOf, recordReference } from "../lib/sources";
+import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
@@ -191,11 +191,12 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
   );
 }
 
-function PassageView({ evidence, sentence, fromAnswer }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean }) {
+// given: the quote's place when no answer's sentence opened the drawer, such as a lesson's evidence card.
+function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean; given?: [number, number][] | null }) {
   const fields = passageFields(evidence);
   const place = placeOf(fields);
   const section = place.kind === "section";
-  const ranges = highlightsFor(evidence, sentence);
+  const ranges = given ?? highlightsFor(evidence, sentence);
   const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
   // Ticket 21: "Open at page N" opens the in-app source view at the page, in the same tab, with the
   // paragraph highlighted, or the passage when it has no paragraph number. The PDF link lives there.
@@ -286,14 +287,15 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   if (given(row.process_status)) fields.push({ label: columns.status, value: String(row.process_status), wide: true });
   return (
     <div className="flex flex-col gap-4 rounded-md border border-line p-4">
-      <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
+      {/* A lesson has no STEP fields: its statement is the drawer's title, so only its source line shows. */}
+      {fields.length > 0 && <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
         {fields.map((field) => (
           <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "text-right")}>
             <dt className="text-caption text-ink-muted">{field.label}</dt>
             <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "text-right tabular-nums")}>{field.value}</dd>
           </div>
         ))}
-      </dl>
+      </dl>}
       <RecordSourceLine evidence={evidence} />
     </div>
   );
@@ -319,6 +321,8 @@ function SourceSwitcher({
   const label = (id: string): ReactNode => {
     const evidence = run.evidence[id];
     if (!evidence) return id;
+    const lesson = lessonOf(evidence);
+    if (lesson) return copy.evidence.switcherLesson(formatNumber(lesson.version, { compact: false }));
     if (evidence.kind === "record") return recordReference(evidence);
     const fields = passageFields(evidence);
     const place = placeOf(fields);
@@ -523,7 +527,14 @@ export function EvidenceDrawerView({
                 {copy.document.failed}
               </Alert>
             )}
-            {evidence?.kind === "passage" && <PassageView evidence={evidence} sentence={claim ? claim.index : null} fromAnswer={Boolean(claim)} />}
+            {evidence?.kind === "passage" && (
+              <PassageView
+                evidence={evidence}
+                sentence={claim ? claim.index : null}
+                fromAnswer={Boolean(claim)}
+                given={!claim && from?.id === id && from.highlight ? [from.highlight] : null}
+              />
+            )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
           </div>
           {preview && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}

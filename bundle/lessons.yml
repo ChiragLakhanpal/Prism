@@ -1,0 +1,30 @@
+# The quarterly lesson cross-check (ticket 29; docs/PLAN.md section 11, "a quarterly 10% cross-check by
+# another region").
+#
+# On the second day of each quarter it runs src/strata/knowledge/lessons/cross_check_task.py on serverless
+# compute, which draws a tenth of each region's lesson decisions from the quarter before, at least one, and
+# assigns each to the lesson reviewers of another region (strata.knowledge.lessons.cross_check). Its rows go
+# to strata.ops.lesson_review_items, where Lessons > Waiting for review lists them. It runs at 06:00 in
+# Washington, inside the nightly job's window and before review hours, and takes seconds.
+
+resources:
+  jobs:
+    lesson_cross_check:
+      name: strata lesson cross-check
+      description: Each quarter, assigns a sample of each region's lesson decisions to another region to cross-check.
+      schedule:
+        quartz_cron_expression: "0 0 6 2 1,4,7,10 ?"
+        timezone_id: America/New_York
+        pause_status: ${var.nightly_pause_status}
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+      tasks:
+        - task_key: cross_check
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/knowledge/lessons/cross_check_task.py
+            parameters: [--src, "${workspace.file_path}/src"]

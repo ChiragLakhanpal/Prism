@@ -70,6 +70,7 @@
     "find_comparables": "the past range",
     "check_plan": "the plan check",
     "search_passages": "the document search",
+    "get_lessons": "the quote check on proposed lessons",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },

@@ -12,6 +12,11 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
+// The Lessons tab's purpose, which the library and Waiting for review share under the same h1.
+const LESSONS_PURPOSE =
+  "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
+  "procurement specialist decides which lessons enter the library.";
+
 export const copy = {
   appName: "Strata",
   skipLink: "Skip to main content",
@@ -86,13 +91,22 @@ export const copy = {
     },
     lessons: {
       title: "Lessons",
-      purpose:
-        "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
-        "procurement specialist decides which lessons enter the library.",
+      purpose: LESSONS_PURPOSE,
       emptyTitle: "There are no lessons in the library yet.",
       emptyBody:
         "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
       link: "Go to Data",
+    },
+    // Lessons > Waiting for review and one item's review page (ticket 29): the frame keeps the Lessons h1.
+    lessonsQueue: {
+      title: "Lessons",
+      documentTitle: "Waiting for review, Lessons",
+      purpose: LESSONS_PURPOSE,
+    },
+    lessonReview: {
+      title: "Waiting for review",
+      documentTitle: "Waiting for review, Lessons",
+      purpose: "One lesson waiting for review, with its evidence, its history and your part in deciding it.",
     },
     drafts: {
       title: "Drafts",
@@ -500,6 +514,7 @@ export const copy = {
       "strata.silver.plan_rows": "Activity",
       "strata.gold.contract": "Contract",
       "strata.gold.package": "Package",
+      "strata.ops.lesson_versions": "Lesson",
     } as Record<string, string>,
     recordKindOther: "Record",
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
@@ -542,6 +557,14 @@ export const copy = {
       value: "Value",
       isr_date: "ISR date",
     } as Record<string, string>,
+    // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
+    // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
+    // other permits in place before awarding contracts").
+    lessonEyebrow: "What · lesson",
+    lessonSource: "Strata's lesson library, version {version}, decided on {date}.",
+    lessonSourceUndated: "Strata's lesson library, version {version}.",
+    markerLesson: (version: string, statement: string) => `Lesson, version ${version}, ${statement}`,
+    switcherLesson: (version: string) => `Lesson, version ${version}`,
     // The record view's fields keep STEP's own names; the description's is STEP's "Description".
     recordDescription: "Description",
     // The record view's source line, as the plan check writes a plan's: "Source: Procurement Plan,
@@ -733,14 +756,16 @@ export const copy = {
   listSearch: {
     empty: "Empty the search box",
   },
-  // Pagination (the 21 brief, section 10): Previous page and Next page are links, because they change the
-  // address. Below 480 px the words shorten on screen, and their names stay whole.
+  // Pagination (the 21 brief, section 10; built first by ticket 29): links that move a list a page at a
+  // time, because they change the address. The source view's page links shorten on screen below 360 px,
+  // and their names stay whole.
   pagination: {
+    label: "Pages",
     previous: "Previous page",
     next: "Next page",
     previousShort: "Previous",
     nextShort: "Next",
-    position: (page: string, pages: string) => `Page ${page} of ${pages}`,
+    page: "Page {page} of {pages}",
   },
 
   // A project's page (the 10 and 21 briefs): the header's one line, the agency line and the tabs.
@@ -1934,16 +1959,19 @@ export const copy = {
       names: {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
+        lessons: "Lessons from completion reports",
       } as Record<string, string>,
       // The plan check's count words STEP's format as the Procurement Plans row does.
       counts: {
         plan_check: "activity entries in the latest plan versions with rows in STEP's format",
         document_search: "passages you can search",
+        lessons: "proposed lessons with their quote found on the page they cite",
       } as Record<string, string>,
       // The same, for a count of one.
       countsOne: {
         plan_check: "activity entry in the latest plan versions with rows in STEP's format",
         document_search: "passage you can search",
+        lessons: "proposed lesson with its quote found on the page it cites",
       } as Record<string, string>,
       // A count that names STEP first on its view spells it out, when the tool marks its kind
       // spell_out: the plan check's view, and a view whose headline it leaves out (DESIGN.md
@@ -2199,6 +2227,14 @@ export const copy = {
     // number from a column's measure opens that column's window instead. web/tests/lint.spec.ts
     // fails when a check or a fix's own measure has no entry here.
     measureWindows: {
+      // The quote check on proposed lessons (ticket 29), which Lessons > Waiting for review links to.
+      lessons_verified: {
+        title: "Proposed lessons with their quote found",
+        definition:
+          "How many of the lessons I proposed from completion reports and their reviews had their quote word for " +
+          "word on the page and in the passage they cite, out of every lesson I proposed. I drop the others and " +
+          "never change a quote to make it fit.",
+      },
       latest_activities_with_confirmed_first_listing_read: {
         title: "First listing confirmed",
         definition:
@@ -2444,6 +2480,7 @@ export const copy = {
         find_comparables: "the past range",
         check_plan: "the plan check",
         search_passages: "the document search",
+        get_lessons: "the quote check on proposed lessons",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },
@@ -2560,6 +2597,428 @@ export const copy = {
         linkLabel: "{label}: {counts}",
         // A link's counts in the table of freshness and link counts, in numerals, as tables write them.
         linkedCount: "{count} of {denominator}",
+      },
+    },
+  },
+
+  // The Lessons pages (ticket 29; the 29 design brief, section 5): the library of lesson cards, the review
+  // queue only lesson reviewers see, and the review page for one item. Lesson statements, quotes and
+  // reasons are data from the server, never words here. Templates' {slots} are filled with values the
+  // server returns, each number by Num, so the browser counts nothing.
+  lessons: {
+    // Spells out ICR, IEG and PPAR once on each Lessons screen (DESIGN.md section 7, rule 10).
+    sourcesNote:
+      "Lessons come from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and Project " +
+      "Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG).",
+    tabs: {
+      label: "Lesson pages",
+      library: "Lessons",
+      queue: "Waiting for review ({waiting})",
+      showingLibrary: "Showing Lessons.",
+      showingQueue: "Showing Waiting for review.",
+    },
+    queueTitle: "Waiting for review",
+    // The kinds, stages and risk factors come from config/lessons.toml with the server's answers.
+    kinds: { new: "New lesson", recheck: "Re-check", cross_check: "Cross-check" } as Record<string, string>,
+    // The evidence badges (DESIGN.md section 5, Status badge), by the server's ieg_status.
+    badges: {
+      restated: "Restated by IEG",
+      ieg_lesson: "IEG's lesson",
+      awaiting: "Awaiting IEG review",
+      not_restated: "Rests on the ICR alone",
+      mayRepeat: "May repeat a lesson",
+      overdue: "Overdue",
+      rechecking: "Being re-checked",
+    },
+    // The library (section 5.2).
+    library: {
+      loading: "Loading the library.",
+      // The count line in a table's form (copy.table): numerals and no closing period.
+      countAll: "Showing all {total} lessons in the library, newest first",
+      countBoth: "Showing both lessons in the library, newest first",
+      countOne: "Showing 1 lesson in the library",
+      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first",
+      reviewerLink: "Go to Waiting for review",
+      outOfRangeTitle: "There is no page {page} in the library.",
+      outOfRangeBody: "The library has {pages} pages.",
+      outOfRangeBodyOne: "The library has one page.",
+      firstPage: "Go to the first page",
+      error: "I couldn't load the library because the data service didn't answer.",
+      permission:
+        "Your account can't read Strata's tables, so I can't show the library. Ask your workspace admin for read " +
+        "access to the strata catalog.",
+      list: "Lessons in the library",
+    },
+    card: {
+      eyebrow: "{kind} · {stage}",
+      quote: '"{quote}"',
+      decided: "A lead procurement specialist decided version {version} on {date}, after an accredited procurement specialist recommended it.",
+      rules: "Its projects followed {edition}.",
+      rulesUnknown: "I couldn't tell which rules the project followed.",
+      rechecking: "Reviewers started a re-check on {date}.",
+      compactDecided: "Version {version}, decided on {date}.",
+      sources: "Sources",
+      moreSources: "Show {count} more sources",
+      moreSource: "Show one more source",
+      fewerSources: "Show fewer sources",
+      // A source chip's words: "ICR ¶54", "ICR Review 10.b", and its accessible name.
+      chipParagraph: "{doc} ¶{para}",
+      chipSection: "{doc} {section}",
+      // A chip's accessible name is its own words, then these, so it reads "ICR ¶54, opens the source: ...".
+      chipNameJoin: ", ",
+      chipNameParagraph: "opens the source: {doc} for {pid}, paragraph {para}, page {page}",
+      chipNameSection: "opens the source: {doc} for {pid}, section {section}, page {page}",
+      // One source in a source line: "ICR, P130164, October 10, 2019, paragraph 54, page 23".
+      sourceParagraph: "{doc}, {pid}, {date}, paragraph {para}, page {page}",
+      sourceSection: "{doc}, {pid}, {date}, section {section}, page {page}",
+      sourceJoin: "; ",
+      sourceEnd: ".",
+      tags: "Tags",
+    },
+    recheck: {
+      button: "Ask for a re-check",
+      label: "Why should reviewers re-check this lesson?",
+      helper:
+        "Your reason and your name go to the lesson reviewers for {region}. The lesson stays in the library while " +
+        "they re-check it.",
+      submit: "Ask for a re-check",
+      cancel: "Cancel",
+      empty: "Write a reason, so the reviewers know what to look at.",
+      saving: "Saving",
+      saved: "You asked for a re-check on {date}.",
+      announced: "Saved. The re-check is now in the review queue for {region}.",
+      open: "Someone already asked for a re-check of this lesson on {date}.",
+      failed: "I couldn't ask for a re-check just now. Your text is still here.",
+      tryAgain: "Try again",
+    },
+    // Waiting for review (section 5.3).
+    queue: {
+      purpose:
+        "I propose lessons from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and " +
+        "Project Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG). An accredited " +
+        "procurement specialist recommends each lesson, and a different lead procurement specialist decides within " +
+        "{limit} business days. This page lists lessons for {regions}, and only lesson reviewers can open it.",
+      checkLink: "See this measure on Data readiness",
+      groups: { you: "Waiting for you", others: "With other reviewers" } as Record<string, string>,
+      order: "Oldest first.",
+      loading: "Loading the review queue.",
+      emptyTitle: "I have no lessons waiting for review.",
+      emptyBody:
+        "When a new ICR, ICR Review or PPAR comes in, the lessons I propose from it wait here for a recommendation " +
+        "and a decision.",
+      emptyLink: "Go to Lessons",
+      error: "I couldn't load the review queue because the data service didn't answer.",
+      permission:
+        "Your account can't read Strata's tables, so I can't show the review queue. Ask your workspace admin for " +
+        "read access to the strata catalog.",
+      noAccessTitle: "I show this page only to lesson reviewers.",
+      noAccessBody:
+        "Lesson reviewers are the accredited and lead procurement specialists named for each region. Your account " +
+        "isn't one of them, so the lessons waiting for review stay hidden from you.",
+      noAccessLink: "Go to Lessons",
+      decidedTitle: "Decided in the last {days} days",
+      decidedNone: "No lesson was decided in the last {days} days.",
+      // The count line's noun: "Showing 1–20 of 34 decisions, newest first" (copy.table).
+      decidedNoun: "decisions, newest first",
+      decidedNounOne: "decision, newest first",
+      decidedCaption: "Lessons decided in the last {days} days",
+      decidedSource: "Strata's lesson review records.",
+      columns: { lesson: "Lesson", outcome: "Outcome", decided: "Decided", days: "Days from publication" },
+      daysDefinition: "report public to decision",
+      // Cards have no column heads, so the days' definition ends the count line's row once.
+      daysCards: "Days from publication run from the day the report became public to the decision.",
+      recheckDays: "Re-check",
+      project: "{name} ({pid})",
+      outcomes: {
+        added: "Added as version 1",
+        merged: "Added as evidence",
+        rejected: "Rejected",
+        kept: "Kept at version {version}",
+        changed: "Changed to version {version}",
+        retired_wrong: "Retired as wrong",
+        retired_outdated: "Retired as out of date",
+      } as Record<string, string>,
+    },
+    // A queue row (section 5.4), and the same status and clock lines on the review page.
+    row: {
+      statusYou: {
+        recommendation: "{kind} · needs your recommendation",
+        decision: "{kind} · needs your decision",
+        cross_check: "{kind} · needs your cross-check",
+      } as Record<string, string>,
+      statusOthers: {
+        recommendation: "{kind} · needs a recommendation",
+        decision: "{kind} · needs a decision",
+        cross_check: "{kind} · needs a cross-check",
+      } as Record<string, string>,
+      statusDecided: "{kind} · decided",
+      sourceIcr: "From the ICR for {name} ({pid}), paragraph {para}, page {page}. {region}.",
+      sourceIcrReview: "From IEG's ICR Review for {name} ({pid}), section {section}, page {page}. {region}.",
+      sourcePpar: "From IEG's PPAR for {name} ({pid}), paragraph {para}, page {page}. {region}.",
+      sourceCrossCheck: "A lead in {region} decided this on {date}.",
+      clock: "Day {day} of {limit} business days, due {due}.",
+      clockLastDay: "Day {limit} of {limit} business days, due today.",
+      clockOverdue: "Due {due}, {days} business days ago.",
+      clockOverdueOne: "Due {due}, one business day ago.",
+      clockCrossCheck: "Due {due}.",
+      clockTooltip: "Business days since {start}. Weekends and World Bank holidays don't count.",
+      nextRecommend: "Waiting for an accredited procurement specialist to recommend it.",
+      nextDecide: "{name} recommended {phrase} on {date}.",
+      nextAsked: "{name} asked for a re-check on {date}.",
+      nextCrossCheck: "{name} in {region} disagreed with the decision on {date}, so a re-check started.",
+      nextEdition: "I started a re-check on {date} because {edition} took effect.",
+      phrases: {
+        add: "adding it",
+        repeat: "adding it as evidence to another lesson",
+        reject: "rejecting it",
+        keep: "keeping it as it is",
+        change: "changing it",
+        retire_wrong: "retiring it",
+        retire_outdated: "retiring it",
+      } as Record<string, string>,
+      // Why you can't act (section 5.4), by the server's reason code.
+      whyNot: {
+        same_person: "You recommended it, so a different lead decides.",
+        own_project: "You work on {name} ({pid}), so another reviewer takes this one.",
+        not_a_lead: "Only a lead procurement specialist can decide it.",
+        no_lead_free: "No lead for {region} can decide it, because each one works on {name} ({pid}).",
+        same_region: "Reviewers outside {region} cross-check this decision.",
+        other_region: "Lesson reviewers for {region} recommend and decide this lesson.",
+      } as Record<string, string>,
+    },
+    // The review page (sections 5.5 to 5.13).
+    review: {
+      breadcrumbBack: "Waiting for review",
+      loading: "Loading this lesson.",
+      notFoundTitle: "I have no lesson review with the ID {id}.",
+      notFoundBody: "Check the link, or find the lesson in Waiting for review.",
+      notFoundLink: "Go to Waiting for review",
+      error: "I couldn't load this lesson because the data service didn't answer.",
+      permission:
+        "Your account can't read Strata's tables, so I can't show this lesson. Ask your workspace admin for read " +
+        "access to the strata catalog.",
+      pageTitle: "{statement}, Waiting for review",
+      clockRegion: "{clock} {region}.",
+      decidedOn: "Decided on {date}, {days} days after the report became public.",
+      decidedOnRecheck: "Decided on {date}.",
+      decidedTooltip: "Days from {published}, when the report became public, to the decision on {date}.",
+      evidenceTitle: "The evidence",
+      eyebrow: "Why · evaluation",
+      titleIcr: "Implementation Completion and Results Report, paragraph {para}",
+      titleIcrReview: "ICR Review, section {section}",
+      titlePpar: "Project Performance Assessment Report, paragraph {para}",
+      restatedCaption: "IEG's review of this ICR restated the lesson.",
+      checkedOnPage: "I found this quote word for word on page {page}.",
+      notCheckedLesson: "whether the lesson follows from it.",
+      awaitingNote: "IEG has not published its review of this ICR yet, so the lesson rests on the ICR alone.",
+      aloneNote: "I found no restatement of this lesson in IEG's ICR Review of {date}, so it rests on the ICR alone.",
+      tagsTitle: "How I tagged it",
+      tagsCaption: "I chose these from fixed lists when I proposed the lesson.",
+      tagsCaptionVersion: "These are the lesson's tags at version {version}.",
+      terms: {
+        risk_factors: "Risk factors",
+        stage: "Stage",
+        kind: "Kind",
+        rules: "Rules followed",
+        project: "Project",
+        sector: "Sector",
+      },
+      summaryTitle: "My summary of the evidence",
+      summaryWriting: "I'm still writing my summary. The quotes above are complete, so you can decide without it.",
+      summaryReady: "My summary is ready.",
+      summaryShow: "Show my summary",
+      summaryNothing: "I have nothing to add to the quotes above.",
+      summaryNoneSurvived: "I removed every sentence of my summary, because none passed my checks.",
+      summaryFailed:
+        "I couldn't write a summary of this evidence. The quotes above are complete, so you can still decide.",
+      summaryRewriting: "I'm writing my summary.",
+      summaryTryAgain: "Try again",
+      repeatsTitle: "This may repeat a lesson in the library",
+      repeatsNone: "I found no lesson in the library that this repeats.",
+      historyOpen: "What has happened so far",
+      historyDone: "What happened",
+      roles: {
+        accredited: "accredited procurement specialist",
+        lead: "lead procurement specialist",
+      },
+      history: {
+        proposed: "I proposed this lesson from the {doc} for {name} ({pid}). The report became public on {date}.",
+        restatement: "I attached IEG's restatement from its ICR Review of {date}.",
+        recommended: "{name}, {role}, recommended {phrase}.",
+        recommendedChange: "{name}, {role}, recommended changing it.",
+        decided: "{name}, lead procurement specialist, {phrase}.",
+        asked: "{name} asked for a re-check.",
+        edition: "I started a re-check because {edition} took effect for the lesson's projects.",
+        crossCheckStarted: "{name} disagreed with a decision in a cross-check, so a re-check started.",
+        agreed: "{name}, {region}, agreed with the decision.",
+        disagreed: "{name}, {region}, disagreed with the decision.",
+        reason: 'Reason: "{reason}"',
+        was: "Was: {value}",
+        now: "Now: {value}",
+        wordingChanged: "{name} changed the wording before adding it.",
+        merged: "Rested on {quotes} from {reports}.",
+        mergedNow: "Rests on {quotes} from {reports}.",
+        quotes: { one: "{count} quote", many: "{count} quotes" },
+        reports: { one: "{count} report", many: "{count} reports" },
+        decisions: {
+          add: "added it to the library as version 1",
+          repeat: 'added its quote as evidence to "{target}", which became version {version}',
+          reject: "rejected it",
+          keep: "kept it at version {version}",
+          change: "changed it, which became version {version}",
+          retire_wrong: "retired it because it was wrong",
+          retire_outdated: "retired it because it no longer applies",
+        } as Record<string, string>,
+      },
+      // When you can't act (section 5.11), by reason code: the same sentences as the row's, in full.
+      cannot: {
+        same_person: "You recommended this lesson, so a different lead procurement specialist decides it.",
+        own_project: "You work on {name} ({pid}), so you can't recommend or decide on this lesson.",
+        not_a_lead: "Only a lead procurement specialist can decide this lesson.",
+        same_region: "Reviewers outside {region} cross-check this decision.",
+        other_region: "Lesson reviewers for {region} recommend and decide this lesson.",
+        no_lead_free: "No lead for {region} can decide this lesson, because each one works on {name} ({pid}).",
+      } as Record<string, string>,
+    },
+    // The decision form (section 5.10), by the item's kind and the viewer's act.
+    form: {
+      recommendTitle: "Your recommendation",
+      decideTitle: "Your decision",
+      crossCheckTitle: "Your cross-check",
+      isNew: "Is this a new lesson?",
+      yesNew: "Yes, it is new",
+      repeats: 'No, it repeats "{statement}" (version {version})',
+      repeatFeedforward: 'If a lead agrees, I add its quote to "{statement}" as more evidence.',
+      whatShouldHappen: "What should happen to this lesson?",
+      keep: "Keep it as it is",
+      change: "Change its wording or tags",
+      retireWrong: "Retire it, because it was wrong",
+      retireOutdated: "Retire it, because it no longer applies",
+      agreeLegend: "Do you agree with the decision?",
+      agree: "Yes, I agree",
+      disagree: "No, I disagree",
+      crossCheckIntro:
+        "A lead in {region} decided this on {date}. Each quarter, reviewers outside a region check {percent} " +
+        "percent of its decisions, so regions decide alike.",
+      reasonLabel: "Your reason",
+      reasonHelperRecommend: "The lead reads your reason before deciding. It stays in the record with your name.",
+      reasonHelperDecide: "It stays in the record with your name, beside the recommendation.",
+      reasonHelperCrossCheck: "Optional if you agree. If you disagree, the reviewers for {region} read it, and a re-check starts.",
+      counter: "{count} characters left.",
+      counterOne: "One character left.",
+      editorToggle: "Change the wording or tags first",
+      editor: {
+        statement: "Lesson statement",
+        riskFactors: "Risk factors",
+        stage: "Stage",
+        kind: "Kind",
+        fixed: "Quotes and pages can't be changed. They are the record.",
+      },
+      recommendAdd: "Recommend adding it",
+      recommendReject: "Recommend rejecting it",
+      add: "Add to the library",
+      reject: "Reject, with a reason",
+      recommend: "Recommend",
+      saveDecision: "Save this decision",
+      saveCrossCheck: "Save the cross-check",
+      saving: "Saving",
+      feedforwardRecommend:
+        "Either way, a different lead procurement specialist decides next. Nothing enters the library until a lead " +
+        "decides.",
+      feedforwardAdd: "Adding it makes it version 1. From then on I can cite it in answers and drafts.",
+      feedforwardRepeat:
+        'Adding it puts its quote under "{statement}" as more evidence, and that lesson becomes version {version}.',
+      feedforwardRecheckRecommend:
+        "A different lead procurement specialist decides next. The lesson stays in the library while reviewers " +
+        "re-check it.",
+      feedforwardKeep: "The lesson stays at version {version}, and the re-check ends.",
+      feedforwardChange:
+        "I save your change as version {next}. Version {version} stays on record, and drafts that cite it keep " +
+        "citing it until their authors update them.",
+      feedforwardRetire: "I stop citing it in new answers. Older drafts that cite it can still open it.",
+      errors: {
+        noReasonRecommend: "Write your reason first. The lead reads it before deciding.",
+        noReasonDecide: "Write your reason first. It stays in the record with your name.",
+        noReasonCrossCheck: "Write your reason first. The reviewers for {region} read it.",
+        noChoiceNew: "Choose whether this lesson is new or repeats one in the library.",
+        noChoiceRecheck: "Choose what should happen to this lesson.",
+        noChoiceCrossCheck: "Choose whether you agree with the decision.",
+        statement: "Write the lesson in one sentence.",
+        statementLong: "Use at most {count} characters.",
+        riskFactors: "Choose at least one risk factor.",
+        stage: "Choose a stage.",
+        kind: "Choose a kind.",
+      },
+      failed: "I couldn't save your {act} just now. Your reason is still here.",
+      // A refusal says what failed here; the note under it says why.
+      refused: "I couldn't save your {act}.",
+      acts: { recommend: "recommendation", decide: "decision", cross_check: "cross-check" } as Record<string, string>,
+      tryAgain: "Try again",
+      staleLead: "While you had this lesson open, {name} {act} on {date}.",
+      staleActs: { recommend: "recommended it", decide: "made a decision", cross_check: "cross-checked it" } as Record<string, string>,
+      staleBody: "I didn't send your reason. You can copy it from the box below.",
+      staleReason: "Your reason, not sent",
+      lostRole: "Your account is no longer on the list of lesson reviewers, so I couldn't save this.",
+      nextItem: "Open the next lesson waiting for you",
+      backToQueue: "Back to Waiting for review",
+      seeInLibrary: "See it in the library",
+    },
+    // The outcome panel (section 5.12, after your act; 5.13, on a decided record).
+    outcome: {
+      recommended: { lead: "You recommended adding this lesson.", body: "A different lead procurement specialist decides next, by {date}." },
+      recommendedRepeat: { lead: 'You recommended adding this as evidence to "{target}".', body: "A different lead procurement specialist decides next, by {date}." },
+      recommendedReject: { lead: "You recommended rejecting this lesson.", body: "A different lead procurement specialist decides next, by {date}." },
+      recommendedRecheck: { lead: "You recommended {phrase}.", body: "A different lead procurement specialist decides next, by {date}." },
+      added: { lead: "You added this lesson to the library as version 1.", body: "From now on I can cite it in answers and drafts." },
+      merged: { lead: 'You added this quote to "{target}" as evidence.', body: "That lesson is now version {version}." },
+      rejected: { lead: "You rejected this lesson.", body: "It stays out of the library, and I keep it with both reasons in the record." },
+      kept: { lead: "You kept this lesson at version {version}.", body: "The re-check is over." },
+      changed: { lead: "You saved version {version} of this lesson.", body: "Version {previous} stays on record." },
+      retired_wrong: { lead: "You retired this lesson because it was wrong.", body: "I no longer cite it in new answers. Older drafts that cite it can still open it." },
+      retired_outdated: { lead: "You retired this lesson because it no longer applies.", body: "I no longer cite it in new answers. Older drafts that cite it can still open it." },
+      agree: { lead: "You agreed with this decision.", body: "I saved your cross-check." },
+      disagree: { lead: "You disagreed with this decision.", body: "A re-check is now waiting for the reviewers for {region}, with your reason." },
+      record: {
+        added: { lead: "Added to the library as version 1 on {date}.", body: "See the history for both reasons." },
+        merged: { lead: 'Added as evidence to "{target}" on {date}.', body: "That lesson became version {version}." },
+        rejected: { lead: "Rejected on {date}.", body: "It stays out of the library, with both reasons in the record." },
+        kept: { lead: "Kept at version {version} on {date}.", body: "See the history for both reasons." },
+        changed: { lead: "Changed to version {version} on {date}.", body: "See the history for both reasons." },
+        retired_wrong: { lead: "Retired because it was wrong, on {date}.", body: "See the history for both reasons." },
+        retired_outdated: { lead: "Retired because it no longer applies, on {date}.", body: "See the history for both reasons." },
+        agree: { lead: "A reviewer in {region} agreed with this decision on {date}.", body: "See the history for the reasons." },
+        disagree: { lead: "A reviewer in {region} disagreed with this decision on {date}.", body: "A re-check started in the region that decided." },
+      } as Record<string, { lead: string; body: string }>,
+    },
+    // Ticket 40's previews and as-of view (section 5.15): copy it can use when it lands.
+    preview: {
+      title: "You are previewing the {view} view, which has no review queue.",
+      body: "Implementing agency officers and the public see only the lessons in the library.",
+      asOf: "You are seeing this as of {date}, so you can't recommend or decide here.",
+    },
+    // The words the server writes into the queue's sentences (src/strata/knowledge/lessons/copy.json, written
+    // by web/lint/server-copy.ts), so it chooses each count's form and marks each number for Num.
+    server: {
+      lead: {
+        both: "{you} {lessonsYou} {beYou} waiting for you, and {others} {beOthers} with other reviewers.",
+        youOnly: "{you} {lessonsYou} {beYou} waiting for you.",
+        othersOnly: "Nothing is waiting for you. {others} {lessonsOthers} {beOthers} with other reviewers.",
+        oldest: " The oldest has used {day} of its {limit} business days.",
+        overdue: " {overdue} {have} passed {itsTheir} {limit} business days.",
+      },
+      check: {
+        dropped:
+          "Every lesson here has a quote I found word for word on the page it cites. In the last {days} days I " +
+          "dropped {dropped} proposed {lessons} whose quote was not on {itsTheir} cited page.",
+        none:
+          "Every lesson here has a quote I found word for word on the page it cites. In the last {days} days, every " +
+          "lesson I proposed passed that check.",
+      },
+      forms: {
+        lesson: { one: "lesson", many: "lessons" },
+        be: { one: "is", many: "are" },
+        have: { one: "has", many: "have" },
+        itsTheir: { one: "its", many: "their" },
       },
     },
   },

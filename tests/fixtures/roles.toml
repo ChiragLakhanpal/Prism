@@ -1,0 +1,60 @@
+# The roles file the offline tests use: config/roles.toml's groups, with people made up for the tests
+# (the 29 design brief, section 13). None of them is a real person. The emails use the reserved
+# example domain, so no one is ever written to.
+#
+# - Asha Raman recommends lessons for South Asia and works on no project there.
+# - Leela Iyer decides lessons for South Asia and works on P130164, the showcase project, so she can
+#   never recommend or decide on a lesson from it.
+# - Omar Haddad decides lessons for South Asia and works on no project there.
+# - Priya Nair decides lessons for South Asia too and works on no project there, so a lesson Omar
+#   recommended still has a lead who may decide it.
+# - Wanjiru Kamau reviews lessons for Eastern and Southern Africa, the other region, which receives
+#   South Asia's cross-checks. She works on P156634.
+# Anyone else, such as ana.example@worldbank.org in the other tests, is not a lesson reviewer.
+
+[groups.accredited_procurement_specialist]
+workspace_group = "strata-accredited-procurement-specialists"
+role = "accredited procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "cross_check"]
+
+[groups.lead_procurement_specialist]
+workspace_group = "strata-lead-procurement-specialists"
+role = "lead procurement specialist"
+pages = ["lesson_review"]
+acts = ["recommend", "decide", "cross_check"]
+
+[[people]]
+email = "asha.raman@worldbank.example"
+name = "Asha Raman"
+groups = ["accredited_procurement_specialist"]
+regions = ["South Asia"]
+projects = []
+
+[[people]]
+email = "leela.iyer@worldbank.example"
+name = "Leela Iyer"
+groups = ["lead_procurement_specialist"]
+regions = ["South Asia"]
+projects = ["P130164"]
+
+[[people]]
+email = "omar.haddad@worldbank.example"
+name = "Omar Haddad"
+groups = ["lead_procurement_specialist"]
+regions = ["South Asia"]
+projects = []
+
+[[people]]
+email = "priya.nair@worldbank.example"
+name = "Priya Nair"
+groups = ["lead_procurement_specialist"]
+regions = ["South Asia"]
+projects = []
+
+[[people]]
+email = "wanjiru.kamau@worldbank.example"
+name = "Wanjiru Kamau"
+groups = ["lead_procurement_specialist"]
+regions = ["Eastern and Southern Africa"]
+projects = ["P156634"]

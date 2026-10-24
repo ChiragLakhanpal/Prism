@@ -1854,6 +1854,37 @@
       ]
     },
     {
+      "evidence_id": "strata.ops.data_readiness:documents/P130164/lessons_verified",
+      "public_from": "2026-10-23",
+      "source": {
+        "table": "strata.ops.data_readiness",
+        "source_key": "documents",
+        "measure": "lessons_verified",
+        "subjects": [
+          "P130164"
+        ],
+        "measured_on": "2026-10-23",
+        "counted_in": "strata.silver.lesson_proposals"
+      },
+      "source_key": "documents",
+      "measure": "lessons_verified",
+      "kind": "verified",
+      "subjects": [
+        "P130164"
+      ],
+      "count": 3,
+      "denominator": 4,
+      "share_percent": null,
+      "share_bound": null,
+      "in_ten": null,
+      "in_ten_exact": null,
+      "as_of": null,
+      "measured_on": "2026-10-23",
+      "run_ids": [
+        "fixture"
+      ]
+    },
+    {
       "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_contracts_in_local_currency",
       "public_from": "2026-10-23",
       "source": {
@@ -2803,6 +2834,54 @@
         ]
       ],
       "spell_out": true
+    },
+    {
+      "kind": "lessons",
+      "tool": "get_lessons",
+      "status": "partial",
+      "ready_for": 58,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 264,
+            "row": 52,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "body pages"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 70,
+            "row": 52,
+            "noun": "body pages",
+            "noun_one": "body page",
+            "role": "missing",
+            "lack": "paragraph numbers I could find"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "paragraph numbers I could find"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": true
     }
   ],
   "gaps": [
@@ -3175,7 +3254,7 @@
       "rank": 3,
       "gap": "fy2017_2019",
       "projects": 2,
-      "row": 58,
+      "row": 59,
       "projects_row": 56,
       "projects_from": "measure",
       "sentence": [
@@ -3184,7 +3263,7 @@
         },
         {
           "number": 7,
-          "row": 58,
+          "row": 59,
           "noun": "contracts in local currency",
           "noun_one": null,
           "role": null,
@@ -3237,13 +3316,13 @@
       "measure": "pages_read_route_a",
       "label": "Plan pages, published text",
       "noun": "plan pages with published text",
-      "row": 59
+      "row": 60
     },
     {
       "measure": "pages_read_route_b",
       "label": "Plan pages, layout parser",
       "noun": "plan table pages",
-      "row": 60
+      "row": 61
     },
     {
       "measure": "document_pages_read_route_a",

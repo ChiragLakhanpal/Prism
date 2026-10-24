@@ -3,13 +3,30 @@
 // mark exceptions; the icon is hidden from screen readers because the word carries the state.
 //
 // Signals: Needs a look, Watch, No signals. Data readiness: Partial, Gap. Plan checks: Data
-// note. A dashed border marks the two that mean something is missing from the record.
+// note. A dashed border marks the ones that mean something is missing from the record. Lessons (ticket
+// 29): the four evidence badges (Restated by IEG, IEG's lesson, Awaiting IEG review, Rests on the ICR
+// alone), May repeat a lesson, Being re-checked, and Overdue, amber because a late decision is stale work.
 import { Circle, CircleDashed, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { STATES, type State } from "./state";
 
-export type BadgeKind = "needs-a-look" | "watch" | "no-signals" | "partial" | "gap" | "data-note";
+export type BadgeKind =
+  | "needs-a-look"
+  | "watch"
+  | "no-signals"
+  | "partial"
+  | "gap"
+  | "data-note"
+  | "restated"
+  | "ieg-lesson"
+  | "awaiting"
+  | "not-restated"
+  | "may-repeat"
+  | "rechecking"
+  | "overdue";
+
+const lessons = copy.lessons.badges;
 
 const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean; text: string }> = {
   "needs-a-look": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.needsALook },
@@ -18,14 +35,22 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   partial: { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.partial },
   gap: { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.gap },
   "data-note": { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.dataNote },
+  restated: { state: "info", Icon: Info, dashed: false, text: lessons.restated },
+  "ieg-lesson": { state: "info", Icon: Info, dashed: false, text: lessons.ieg_lesson },
+  awaiting: { state: "neutral", Icon: CircleDashed, dashed: true, text: lessons.awaiting },
+  "not-restated": { state: "neutral", Icon: CircleDashed, dashed: false, text: lessons.not_restated },
+  "may-repeat": { state: "info", Icon: Info, dashed: false, text: lessons.mayRepeat },
+  rechecking: { state: "info", Icon: Info, dashed: false, text: lessons.rechecking },
+  overdue: { state: "warning", Icon: TriangleAlert, dashed: false, text: lessons.overdue },
 };
 
-export function StatusBadge({ kind, className }: { kind: BadgeKind; className?: string }) {
+export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {
   const { state, Icon, dashed, text } = KINDS[kind];
   const look = STATES[state];
   return (
     <span
       data-badge={kind}
+      aria-describedby={describedBy}
       className={cx(
         "inline-flex items-center gap-1 rounded-pill border px-3 py-1 text-small font-semibold whitespace-nowrap",
         dashed ? "border-dashed" : "border-solid",

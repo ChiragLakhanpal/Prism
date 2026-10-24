@@ -22,8 +22,8 @@ import {
   type StepEvent,
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
-import { formatCount, formatDate } from "../lib/format";
-import { highlightsFor, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
+import { formatCount, formatDate, formatNumber } from "../lib/format";
+import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -127,6 +127,8 @@ export type Opened = { id: string | null; sentence: number | null };
 
 export function markerSource(evidence: EvidenceEvent | undefined, id: string): string {
   if (!evidence) return id;
+  const lesson = lessonOf(evidence);
+  if (lesson) return copy.evidence.markerLesson(formatNumber(lesson.version, { compact: false }), lesson.statement);
   if (evidence.kind === "record") return copy.evidence.markerRecord(recordKind(evidence), recordReference(evidence));
   const fields = passageFields(evidence);
   const place = placeOf(fields);
