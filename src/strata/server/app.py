@@ -12,6 +12,10 @@
 - POST /api/ask takes a question and streams a run's events as text/event-stream, then a
   final done event with the run id. A run that breaks ends with an error event whose
   details stay in the server log.
+- GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
+  gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
+  projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
+  unknown_project.
 - GET /api/projects/{project_id}/procurement/{agency_id}[/{version}] checks one implementing
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
