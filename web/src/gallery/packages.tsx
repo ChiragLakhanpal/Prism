@@ -9,6 +9,7 @@ import planned from "../../../tests/fixtures/api/planned-package-change-plan.jso
 import dividing from "../../../tests/fixtures/api/planned-package-dividing.json";
 import yourself from "../../../tests/fixtures/api/planned-package-yourself.json";
 import comparables from "../../../tests/fixtures/api/comparables-planned-works-rfb-ke.json";
+import dots from "../../../tests/fixtures/api/comparables-ke-nwwda-541055-any-category.json";
 import signed from "../../../tests/fixtures/api/evidence-package-ke-mowi-47509.json";
 import stillOpen from "../../../tests/fixtures/api/evidence-package-ke-icta-571738.json";
 import list from "../../../tests/fixtures/api/planned-packages-list.json";
@@ -16,14 +17,14 @@ import emptyList from "../../../tests/fixtures/api/planned-packages-empty.json";
 import { useId, type ReactNode } from "react";
 import { ChipGroups, ChipSkeletons, CardTop, ComputedNote, CriterionChip, RefusalAlert } from "../components/Criteria";
 import { EditorBody } from "../components/ChipEditor";
-import { ComparableRecords } from "../components/ComparableRecords";
+import { ComparableDotList, ComparableRecords } from "../components/ComparableRecords";
 import { POPOVER } from "../components/Popover";
 import { Steps } from "../components/Steps";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { ComparablesResult } from "../lib/api";
 import { cx } from "../lib/cx";
-import type { FieldValue, FormField, PackageForm, PlannedList, PlannedPackage } from "../lib/packages";
+import { dotList, type FieldValue, type FormField, type PackageForm, type PlannedList, type PlannedPackage } from "../lib/packages";
 import { PackagesList } from "../pages/PackagesPage";
 import { PlanPrompt, SavedStamp } from "../pages/PlannedPackagePage";
 import { galleryCopy } from "./copy";
@@ -38,6 +39,11 @@ const PLANNED = planned.package as unknown as PlannedPackage;
 const DIVIDING = dividing.package as unknown as PlannedPackage;
 const YOURSELF = yourself.package as unknown as PlannedPackage;
 const RESULT = comparables as unknown as ComparablesResult;
+// Ticket 12's comparables with the category left open: more than 60, so 20 quantile dots. The first stands for
+// signed packages only; the last, which the curve never reached, for the last signed and four still open.
+const DOTS = dots as unknown as ComparablesResult;
+const FIRST_DOT = dotList(DOTS, DOTS.quantile_dots![0]);
+const LAST_DOT = dotList(DOTS, DOTS.quantile_dots![19]);
 const nothing = () => undefined;
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {
@@ -290,6 +296,16 @@ export function packagesPage(): GalleryPage {
             <Labeled label={ps.stillOpen}>
               <div className="max-w-[36rem]">
                 <ComparableRecords evidence={stillOpen as unknown as EvidenceEvent} />
+              </div>
+            </Labeled>
+            <Labeled label={ps.dotSigned}>
+              <div className="max-w-[36rem]">
+                <ComparableDotList evidence={FIRST_DOT} />
+              </div>
+            </Labeled>
+            <Labeled label={ps.dotOpen}>
+              <div className="max-w-[36rem]">
+                <ComparableDotList evidence={LAST_DOT} />
               </div>
             </Labeled>
           </div>

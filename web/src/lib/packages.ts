@@ -3,9 +3,10 @@
 // the box's modes, and opening a comparable in the evidence drawer. Every value a chip shows comes from the
 // server; the browser only writes it in words, through the package form schema the server hands it.
 import { useCallback } from "react";
-import type { ComparablesResult, Comparable } from "./api";
+import type { EvidenceEvent } from "./answer";
+import type { ComparablesResult, Comparable, QuantileDot } from "./api";
 import { postJson } from "./api";
-import { evidenceIn, openEvidence } from "./evidence";
+import { closeEvidence, evidenceIn, known, openEvidence, origin, remember } from "./evidence";
 import { address } from "./router";
 import { streamEvents, StreamError } from "./sse";
 import { createStore, useStore } from "./store";
@@ -212,18 +213,70 @@ export function enterBoxMode(mode: "plan" | "check", text?: string) {
 // ── Opening a comparable in the evidence drawer ──────────────────────────
 
 export const COMPARABLE = "strata.gold.package:";
+// A quantile dot's list of the packages it stands for, by the dot's number. It is no source: the page that
+// draws the dots holds the list (rememberDots), so the drawer never asks the server for it.
+export const DOT = "comparables-dot:";
 
-export type OpenComparable = { onOpen: (row: Comparable, element: HTMLElement) => void; opened: string | null };
+export type OpenComparable = {
+  onOpen: (row: Comparable, element: HTMLElement) => void;
+  onOpenDot: (dot: QuantileDot, element: HTMLElement) => void;
+  // The opened mark's key: a package's STEP reference, or dot-{k} for a quantile dot whose list, or one of
+  // whose packages, the drawer shows.
+  opened: string | null;
+};
+
+export type DotEntry = { step_reference: string; evidence_id: string; months: number; still_open: boolean };
+
+// A quantile dot's list as the drawer shows it: the dot, the comparables' count, and each package it stands for
+// with its months, from the rows find_comparables returned with it.
+export function dotList(result: ComparablesResult, dot: QuantileDot): EvidenceEvent {
+  const rows = new Map(result.rows.map((row) => [row.step_reference, row]));
+  const entries: DotEntry[] = dot.step_references.flatMap((reference) => {
+    const row = rows.get(reference);
+    return row ? [{ step_reference: reference, evidence_id: row.evidence_id, months: row.months, still_open: row.still_open }] : [];
+  });
+  return {
+    id: `${DOT}${dot.k}`,
+    kind: "dot",
+    tool: "find_comparables",
+    stratum: "What",
+    short_name: null,
+    row: { ...dot, total: result.counts?.comparables ?? result.rows.length, entries },
+    highlights: [],
+  };
+}
+
+// Hold each quantile dot's list, so a dot opens its list at once and a link to a list reopens it once the dots
+// are drawn again. A rerun's dots replace the earlier ones.
+export function rememberDots(result: ComparablesResult) {
+  for (const dot of result.quantile_dots ?? []) remember(dotList(result, dot));
+}
+
+// The drawer open at a dot's list these comparables have no dots for, as from a link: close it, since no
+// list will come.
+export function forgetDotList() {
+  const id = evidenceIn(address.get().search);
+  if (id?.startsWith(DOT) && !known.get()[id]) closeEvidence();
+}
 
 // A dot or a table row opens its comparable package's records in the evidence drawer, through the address's
 // ?evidence= (ticket 14's parameter), and the drawer gives focus back to the element that opened it, or to
-// section 1's heading when a rerun has redrawn that element away.
+// section 1's heading when a rerun has redrawn that element away. A quantile dot opens the list of the
+// packages it stands for, and each of them opens its records from there (the 15 brief, section 6).
 export function useOpenComparable(): OpenComparable {
   const here = useStore(address);
+  const from = useStore(origin);
   const id = evidenceIn(here.search);
   const onOpen = useCallback((row: Comparable, element: HTMLElement) => {
-    const heading = element.closest("[data-past-range]")?.querySelector<HTMLElement>("h2") ?? null;
-    openEvidence(row.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: heading });
+    openEvidence(row.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: headingOf(element) });
   }, []);
-  return { onOpen, opened: id && id.startsWith(COMPARABLE) ? id.slice(COMPARABLE.length) : null };
+  const onOpenDot = useCallback((dot: QuantileDot, element: HTMLElement) => {
+    openEvidence(`${DOT}${dot.k}`, { serial: null, sentence: null, marker: element, runId: null, fallback: headingOf(element) });
+  }, []);
+  let opened: string | null = null;
+  if (id?.startsWith(DOT)) opened = `dot-${id.slice(DOT.length)}`;
+  else if (id?.startsWith(COMPARABLE)) opened = from?.list ? `dot-${from.list.id.slice(DOT.length)}` : id.slice(COMPARABLE.length);
+  return { onOpen, onOpenDot, opened };
 }
+
+const headingOf = (element: HTMLElement) => element.closest("[data-past-range]")?.querySelector<HTMLElement>("h2") ?? null;

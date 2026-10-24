@@ -21,7 +21,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
-import type { OpenComparable } from "../lib/packages";
+import { forgetDotList, rememberDots, type OpenComparable } from "../lib/packages";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { dataReadinessHref } from "../routes";
@@ -119,6 +119,14 @@ export function PastRange({
   const headingId = useId();
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
+  // Where a dot opens the drawer, each quantile dot's list is held for it (ticket 15). A link to a dot's list
+  // that these comparables have no dots for closes the drawer, rather than leave it waiting.
+  const canOpen = Boolean(open);
+  useEffect(() => {
+    if (!canOpen || !result) return;
+    if (result.quantile_dots) rememberDots(result);
+    else forgetDotList();
+  }, [canOpen, result]);
   return (
     <section
       aria-labelledby={headingId}
@@ -692,21 +700,24 @@ function Populated({ result, open: opening, planned }: { result: ComparablesResu
             axisLastLabel={c.axisLast(whole(axis.max))}
             alt={altParts.join(" ")}
             groupName={quantile ? c.groupDots(whole(total)) : c.group(whole(total))}
-            groupHelp={opening && !quantile ? c.groupHelpOpen : c.groupHelp}
+            groupHelp={opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp}
             sliderName={c.slider}
             valueText={valueText}
             onPlan={onPlan}
             onOpen={
-              opening && !quantile
+              opening
                 ? (key, element) => {
-                    const row = rows.find((one) => one.step_reference === key);
-                    if (row) opening.onOpen(row, element);
+                    // A quantile dot lists the packages it stands for; any other dot is one package.
+                    const dot = quantile?.find((one) => `dot-${one.k}` === key);
+                    const row = quantile ? undefined : rows.find((one) => one.step_reference === key);
+                    if (dot) opening.onOpenDot(dot, element);
+                    else if (row) opening.onOpen(row, element);
                   }
                 : undefined
             }
             opened={opening?.opened ?? null}
-            openHint={c.openHint}
-            openLabel={c.openRecords}
+            openHint={quantile ? c.openHintDots : c.openHint}
+            openLabel={quantile ? c.openDots : c.openRecords}
           />
         )}
         {width === 0 && <div style={{ height: CHART_HEIGHT }} />}

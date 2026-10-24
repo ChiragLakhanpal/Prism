@@ -789,6 +789,12 @@ const rerunning = async (page: Page) => {
 };
 const withoutPlan = click("[data-plan-prompt] [data-button=ghost]");
 const evidenceAt = (id: string) => `${PLANNED}?evidence=${encodeURIComponent(id)}`;
+// More than 60 comparables, so 20 quantile dots: no planned package's criteria match that many on the fixture,
+// so section 1 answers with ticket 12's comparables with the category left open, without its plan row's plan.
+const DOTS: Answer = (() => {
+  const body = read("comparables-ke-nwwda-541055-any-category.json");
+  return { body: JSON.stringify({ ...body, package: null, plan: null, frequencies: { ...body.frequencies, plan: null } }) };
+})();
 
 const PLANNED_SHOTS: Shot[] = [
   // The box: free text lists the plan option second, the Packages tab's buttons put it in plan or check mode,
@@ -853,6 +859,17 @@ const PLANNED_SHOTS: Shot[] = [
     await page.waitForTimeout(500);
   }) }),
   plannedShot("planned--focus-drawer-close", changed("planned-package-change-plan.json"), { full: false, act: focus("[data-evidence-drawer] [data-drawer-header] button") }, evidenceAt(MOWI)),
+  // A quantile dot's packages in the drawer: the last dot, which stands for the last signed package and four
+  // still open, then the signed one opened from that list, with the way back above its title.
+  plannedShot("planned--drawer-dot-list", changed("planned-package-change-plan.json"), { full: false, api: { "/api/comparables": DOTS } }, evidenceAt("comparables-dot:20")),
+  plannedShot("planned--drawer-dot-package", changed("planned-package-change-plan.json"), {
+    full: false,
+    api: { "/api/comparables": DOTS },
+    act: async (page) => {
+      await page.locator("[data-dot-entry='KE-MOWI-47509-CW-RFB']").click();
+      await page.waitForTimeout(500);
+    },
+  }, evidenceAt("comparables-dot:20")),
   // The page's other states.
   plannedShot("planned--not-found", { status: 404, recorded: "planned-package-not-found.json" }, {}, "/packages/pkg-00000000000a", "/api/planned-packages/pkg-00000000000a"),
   plannedShot("planned--error", { status: 503, body: SERVICE_DOWN }),

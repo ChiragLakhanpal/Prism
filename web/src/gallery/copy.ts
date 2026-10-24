@@ -384,6 +384,8 @@ export const galleryCopy = {
     records: "A comparable package's records in the evidence drawer",
     signed: "Signed: the notice, then the contract award",
     stillOpen: "Still open: the notice, then no contract award yet",
+    dotSigned: "A quantile dot's packages, all signed",
+    dotOpen: "A quantile dot's packages, some still open",
     list: "The Packages tab's list",
     listReady: "Packages in progress and a checked plan",
     listEmpty: "No packages or checked plans yet",

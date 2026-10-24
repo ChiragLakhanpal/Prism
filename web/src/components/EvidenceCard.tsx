@@ -7,6 +7,7 @@
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
+import { dotTitle } from "./ComparableRecords";
 import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -32,6 +33,8 @@ export function sourceTitle(evidence: EvidenceEvent) {
   if (evidence.kind === "package") {
     return <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
   }
+  // A quantile dot's packages are headed by how many there are (ticket 15).
+  if (evidence.kind === "dot") return dotTitle(evidence);
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {
@@ -98,7 +101,7 @@ export function eyebrow(evidence: EvidenceEvent): string {
   // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
   if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
   if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
-  const stratum = evidence.kind === "record" || evidence.kind === "package" ? "What" : (evidence.stratum ?? "Why");
+  const stratum = evidence.kind === "record" || evidence.kind === "package" || evidence.kind === "dot" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }
 

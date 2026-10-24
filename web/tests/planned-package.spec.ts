@@ -532,6 +532,68 @@ test("a row of the table twin opens the same records, and the row stays marked w
   await expect(row).toBeFocused();
 });
 
+// With more than 60 comparables the chart draws 20 quantile dots (ticket 12). No planned package's criteria match
+// more than 60 on the fixture, so the planned package is served ticket 12's answer with the category left open,
+// as a package with no plan row gets it: no plan, so no plan line or share of it.
+async function withoutPlanRow(name: string): Promise<Answer> {
+  const body = JSON.parse(await recorded(name));
+  return { body: JSON.stringify({ ...body, package: null, plan: null, frequencies: { ...body.frequencies, plan: null } }) };
+}
+
+test("a quantile dot opens the drawer at the packages it stands for, each opens its records, and Back returns to the list", async ({ page }) => {
+  await openPackage(page, {
+    answers: {
+      "/api/comparables?category=Works&country=KE&method=Request+for+Bids": await withoutPlanRow("comparables-ke-nwwda-541055-any-category.json"),
+      "GET /api/evidence": { body: await recorded("evidence-package-ke-mowi-47509.json") },
+      "GET /api/evidence/opened": { body: '{"opened":[]}' },
+    },
+  });
+  await page.getByRole("button", { name: "Show it without a plan" }).click();
+  const last = page.locator('[data-dot-target][aria-label^="Dot 20 of 20."]');
+  await last.focus();
+  await page.keyboard.press("Enter");
+
+  const list = page.getByRole("dialog", { name: "The five comparable packages dot 20 stands for" });
+  await expect(list).toBeVisible();
+  await expect(list.getByRole("heading").first()).toBeFocused();
+  await expect(list.getByRole("heading").first()).toHaveText("Five comparable packages");
+  await expect(list).toContainText(
+    "This dot stands for five of 103 comparable packages, the ones signed or still open 17.7 to 87.4 months after their notices.",
+  );
+  const entries = [
+    `${MOWI} 17.7 months`,
+    "KE-MOWASCO-285253-GO-RFB Still open after 52.9 months",
+    "KE-WASREB-187622-GO-RFB Still open after 73.6 months",
+    "KE-WAJWASCO-154021-GO-RFB Still open after 81.0 months",
+    "KE-KWAWASCO-63985-GO-RFB Still open after 87.4 months",
+  ];
+  await expect(list.getByRole("button", { name: /^KE-/ })).toHaveCount(entries.length);
+  for (const [index, name] of entries.entries()) await expect(list.getByRole("button", { name: /^KE-/ }).nth(index)).toHaveAccessibleName(name);
+  // The dot keeps its ring while its packages show, and the list is no source, so nothing is recorded.
+  await expect(page.locator("[data-opened-ring]")).toHaveCount(1);
+  expect(await axe(page)).toEqual([]);
+
+  await list.getByRole("button", { name: `${MOWI} 17.7 months` }).click();
+  await expect(drawer(page)).toBeVisible();
+  await expect(page).toHaveURL(`${PACKAGE}?evidence=${encodeURIComponent(`strata.gold.package:${MOWI}`)}`);
+  await expect(drawer(page).getByRole("heading").first()).toBeFocused();
+  await expect(page.locator("[data-opened-ring]")).toHaveCount(1);
+
+  await drawer(page).getByRole("button", { name: "Back to the five packages" }).click();
+  await expect(list).toBeVisible();
+  await expect(list.getByRole("button", { name: `${MOWI} 17.7 months` })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(list).toHaveCount(0);
+  await expect(last).toBeFocused();
+
+  // A link to a dot's list reopens it once the dots are drawn again.
+  await page.goto(`${PACKAGE}?evidence=${encodeURIComponent("comparables-dot:1")}`);
+  await page.getByRole("button", { name: "Show it without a plan" }).click();
+  await expect(page.getByRole("dialog", { name: "The five comparable packages dot 1 stands for" })).toContainText(
+    "This dot stands for five of 103 comparable packages, the ones that took 0.2 to 1.5 months.",
+  );
+});
+
 // ── Reopening, and the Packages tab ──────────────────────────────────────
 
 test("a saved package reopens with the same chips, and the Packages tab lists it with the person's checked plan", async ({ page }) => {

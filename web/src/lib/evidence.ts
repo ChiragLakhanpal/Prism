@@ -37,6 +37,10 @@ export type Origin = {
   top: number | null;
   fallback?: HTMLElement | null;
   highlight?: [number, number] | null;
+  // A package opened from a quantile dot's list names that list, so the drawer offers a way back to it; the
+  // list, shown again, names the package it came back from, which takes focus (ticket 15).
+  list?: { id: string; count: number } | null;
+  entry?: string | null;
 };
 export const origin = createStore<Origin | null>(null);
 

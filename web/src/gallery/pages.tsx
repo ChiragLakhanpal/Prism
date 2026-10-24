@@ -177,7 +177,21 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
       total > 60 && !options.abstain
         ? Array.from({ length: 20 }, (_, index) => {
             const reached = at((2 * index + 1) / 40);
-            return { k: index + 1, days: 0, months: reached ?? longest, reached: reached !== null };
+            // Every package holds an equal share here, so dot k stands for the packages whose share's middle
+            // falls in the k-th twentieth, as find_comparables gives it (ticket 15).
+            const standing = rows.filter((_, rank) => Math.min(Math.max(Math.ceil((20 * (2 * rank + 1)) / (2 * total)), 1), 20) === index + 1);
+            const months = standing.map((row) => row.months);
+            return {
+              k: index + 1,
+              days: 0,
+              months: reached ?? longest,
+              reached: reached !== null,
+              step_references: standing.map((row) => row.step_reference),
+              count: standing.length,
+              still_open: standing.filter((row) => row.still_open).length,
+              low_months: Math.min(...months),
+              high_months: Math.max(...months),
+            };
           })
         : null,
     thresholds: { min_comparables: 20, quantile_dots_above: 60, quantile_dots: 20, max_plan_months: 60, canceled_as_still_open: false },

@@ -6,12 +6,18 @@
 // open shows its notice and a neutral line in place of the contract. Each record ends with its source line,
 // whose dataset line is the source registry's attribution, and the notice links to its page on worldbank.org.
 // The server reads it all (GET /api/evidence?id=strata.gold.package:...); every number and date is a record's.
-import type { ReactNode } from "react";
+//
+// A quantile dot opens the drawer at the packages it stands for instead (ComparableDotList): a sentence with
+// how many, of how many, and their shortest and longest months, as find_comparables gave them, then one button
+// per package, which opens its records.
+import { useEffect, useRef, type ReactNode } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
+import type { QuantileDot } from "../lib/api";
 import { cx } from "../lib/cx";
-import { formatNumber } from "../lib/format";
+import { formatCount, formatNumber } from "../lib/format";
+import type { DotEntry } from "../lib/packages";
 import { ExternalLink } from "./ExternalLink";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -195,6 +201,81 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
       <p>
         <TextLink href={`/projects/${String(row.project_id)}`}>{words.projectLink}</TextLink>
       </p>
+    </div>
+  );
+}
+
+type DotRow = QuantileDot & { total: number; entries: DotEntry[] };
+
+const months1 = (value: number) => formatNumber(value, { decimals: 1, compact: false });
+
+// The drawer's title for a quantile dot's list: "Five comparable packages".
+export function dotTitle(evidence: EvidenceEvent): string {
+  const row = evidence.row as DotRow;
+  return row.count === 1 ? words.dot.titleOne : words.dot.title(formatCount(row.count, { capital: true }));
+}
+
+// The drawer's region name for it: "The five comparable packages dot 20 stands for".
+export function dotRegion(evidence: EvidenceEvent): string {
+  const row = evidence.row as DotRow;
+  const k = formatNumber(row.k, { compact: false });
+  return row.count === 1 ? words.dot.regionOne(k) : words.dot.region(formatCount(row.count), k);
+}
+
+// The packages a quantile dot stands for (the 15 brief, section 7.8). Coming back from one of them, its
+// button takes focus, so the person keeps their place in the list.
+export function ComparableDotList({
+  evidence,
+  focusEntry = null,
+  onOpen,
+}: {
+  evidence: EvidenceEvent;
+  focusEntry?: string | null;
+  onOpen?: (entry: DotEntry) => void;
+}) {
+  const row = evidence.row as DotRow;
+  const w = words.dot;
+  const total = formatNumber(row.total, { compact: false });
+  const low = months1(row.low_months);
+  const high = months1(row.high_months);
+  const sentence =
+    row.count === 1
+      ? row.still_open
+        ? w.sentenceOneOpen(total, high)
+        : w.sentenceOne(total, high)
+      : row.still_open
+        ? w.sentenceOpen(formatCount(row.count), total, low, high)
+        : low === high
+          ? w.sentenceSame(formatCount(row.count), total, low)
+          : w.sentence(formatCount(row.count), total, low, high);
+  const back = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (focusEntry) back.current?.focus();
+  }, [focusEntry]);
+  return (
+    <div data-dot-packages={row.k} className="flex flex-col gap-4">
+      <p className="text-body text-ink">{sentence}</p>
+      <ul className="flex flex-col divide-y divide-line border-y border-line">
+        {row.entries.map((entry) => {
+          const months = entry.still_open ? w.open(months1(entry.months)) : w.signed(months1(entry.months));
+          return (
+            <li key={entry.step_reference}>
+              <button
+                ref={entry.step_reference === focusEntry ? back : undefined}
+                type="button"
+                data-dot-entry={entry.step_reference}
+                onClick={() => onOpen?.(entry)}
+                className="flex min-h-11 w-full cursor-pointer flex-wrap items-baseline justify-between gap-x-4 px-2 py-2 text-left hover:bg-tint-hover"
+              >
+                <span className="min-w-0 font-mono text-small wrap-anywhere text-primary underline decoration-1 underline-offset-3">
+                  {entry.step_reference}
+                </span>
+                <span className="text-small text-ink-muted tabular-nums">{months}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

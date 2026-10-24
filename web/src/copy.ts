@@ -654,6 +654,28 @@ export const copy = {
       projectLink: "Open the project page",
       close: "Close the records",
       error: "I couldn't load this package's records just now. Try again in a moment.",
+      // A quantile dot's packages (the 15 brief, section 7.8): the drawer lists the packages the dot stands
+      // for, as find_comparables names them, and each opens its records, with a way back to the list.
+      dot: {
+        region: (count: string, k: string) => `The ${count} comparable packages dot ${k} stands for`,
+        regionOne: (k: string) => `The one comparable package dot ${k} stands for`,
+        title: (count: string) => `${count} comparable packages`,
+        titleOne: "One comparable package",
+        sentence: (count: string, total: string, low: string, high: string) =>
+          `This dot stands for ${count} of ${total} comparable packages, the ones that took ${low} to ${high} months.`,
+        sentenceSame: (count: string, total: string, months: string) =>
+          `This dot stands for ${count} of ${total} comparable packages, the ones that took ${months} months.`,
+        sentenceOpen: (count: string, total: string, low: string, high: string) =>
+          `This dot stands for ${count} of ${total} comparable packages, the ones signed or still open ${low} to ${high} months after their notices.`,
+        sentenceOne: (total: string, months: string) => `This dot stands for one of ${total} comparable packages, which took ${months} months.`,
+        sentenceOneOpen: (total: string, months: string) =>
+          `This dot stands for one of ${total} comparable packages, which was still open after ${months} months.`,
+        signed: (months: string) => `${months} months`,
+        open: (months: string) => `Still open after ${months} months`,
+        back: (count: string) => `Back to the ${count} packages`,
+        backOne: "Back to the dot's package",
+        close: "Close the list",
+      },
     },
     // The citation marker's name: "Source 1: Implementation Completion and Results Report, October 10,
     // 2019, paragraph 54".
@@ -1373,6 +1395,11 @@ export const copy = {
       groupHelpOpen: "Use the arrow keys to move between packages. Press Enter to open a package's records, or Escape to hide the details.",
       openHint: "Press Enter or click to open its records.",
       openRecords: "Open its records",
+      // Where a quantile dot lists the packages it stands for in the evidence drawer (ticket 15).
+      groupHelpOpenDots:
+        "Use the arrow keys to move between dots. Press Enter to list the packages a dot stands for, or Escape to hide the details.",
+      openHintDots: "Press Enter or click to list the packages it stands for.",
+      openDots: "List its packages",
       dotSigned: (ref: string, country: string, months: string, date: string, index: string, total: string) =>
         `${ref}, ${country}. Signed after ${months} months, on ${date}. Dot ${index} of ${total}.`,
       dotOpen: (ref: string, country: string, months: string, index: string, total: string) =>
