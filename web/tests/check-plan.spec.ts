@@ -36,6 +36,9 @@ async function openPlan(page: Page, width = 1440, answer?: Answer, path = PLAN) 
     [`/api${path.split("#")[0]}`]: answer ?? { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
   });
   await page.goto(path);
+  // The answer has drawn the page: a measure taken from here reads rows, cards or an alert, never
+  // the skeleton or nothing.
+  await expect(page.locator("[data-check-plan-page]:not([data-check-plan-page=loading])")).toBeVisible();
 }
 
 const view = (page: Page, name: "table" | "cards") => page.locator(`[data-view=${name}]`);
@@ -303,6 +306,7 @@ test("below 1024 px the count line's row opens the What Strata found definition,
 test("below 1024 px the activities are cards, each headed by its marks and its reference", async ({ page }) => {
   for (const width of [1023, 768, 390]) {
     await openPlan(page, width);
+    await expect(view(page, "cards")).toBeVisible();
     await expect(view(page, "table")).toBeHidden();
     expect(await refsIn(page, "cards"), `${width} px`).toEqual(MARKED);
   }
@@ -393,6 +397,7 @@ test("from 1024 to 1440 px each column fits its values: references and Market Ap
 test("at 1024 px the plan check is a table", async ({ page }) => {
   await openPlan(page, 1024);
 
+  await expect(view(page, "table")).toBeVisible();
   await expect(view(page, "cards")).toBeHidden();
   expect(await refsIn(page, "table")).toEqual(MARKED);
 });

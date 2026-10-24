@@ -17,6 +17,10 @@ async function open(page: Page, path: string, api: Record<string, Answer>, width
     ...api,
   });
   await page.goto(path);
+  // The answer has drawn the page: a measure taken from here reads rows, cards or an alert, never
+  // the skeleton or nothing.
+  const pages = ["data-projects-page", "data-project-page", "data-check-plan-page"];
+  await expect(page.locator(`:is(${pages.map((name) => `[${name}]`).join(", ")}):not(${pages.map((name) => `[${name}=loading]`).join(", ")})`)).toBeVisible();
   return unrecorded;
 }
 
@@ -303,15 +307,22 @@ test("from 1024 to 1200 px every table fits its frame, so no column hides behind
 
 test("below 768 px a card's short values sit side by side: a version's Disclosed and Activities, a project's Country and Status", async ({ page }) => {
   // The tops of the visible first card's fields, which share a row when they sit side by side.
-  const fieldTops = (selector: string) =>
-    page.locator(selector).first().locator("dl > div").evaluateAll((fields) => fields.map((field) => Math.round(field.getBoundingClientRect().top)));
+  const fieldTops = async (selector: string) => {
+    const card = page.locator(selector).first();
+    await expect(card).toBeVisible();
+    return card.locator("dl > div").evaluateAll((fields) => fields.map((field) => Math.round(field.getBoundingClientRect().top)));
+  };
   await open(page, "/projects/P156634", await p156634(), 390);
+  await expect(page.locator("[data-project-page=ready]")).toBeVisible();
   const disclosedAndActivities = await fieldTops("[data-agency=northern-water-works-development-agency] [data-table-view=cards] > li");
+  expect(disclosedAndActivities).toHaveLength(2);
   expect(new Set(disclosedAndActivities).size).toBe(1);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await open(page, "/projects", await projects(), 390);
+  await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
   const countryAndStatus = await fieldTops("[data-table-view=cards] > li");
+  expect(countryAndStatus).toHaveLength(2);
   expect(new Set(countryAndStatus).size).toBe(1);
 });
 
