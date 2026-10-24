@@ -23,7 +23,10 @@ resources:
       environments:
         - environment_key: default
           spec:
-            environment_version: "2"
+            # Version 4 ships numpy 2 and pyarrow 18. Splink 5.0.0 needs pyarrow 18 or later, and on
+            # version 2 (numpy 1.23) the pyarrow it pulls in cannot be imported, so every task failed
+            # on the first live run (October 24, 2026).
+            environment_version: "4"
             # bronze_to_gold matches supplier names with Splink, on DuckDB inside the task (ticket 19). The
             # pin is pyproject.toml's, and tests/test_suppliers.py keeps the two the same.
             dependencies: ["splink==5.0.0"]

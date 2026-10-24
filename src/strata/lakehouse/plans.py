@@ -49,7 +49,7 @@ from importlib import resources
 from strata.config import Thresholds, load_sources, load_thresholds
 from strata.lakehouse import contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
-from strata.lakehouse.engine import Engine, WarehouseEngine
+from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, tables_from_json, tables_to_json
@@ -169,6 +169,10 @@ def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: 
 class Fetching:
     fetched: int  # documents fetched into bronze
     with_contacts: int  # of those, the documents whose published text had contact details taken out
+    # Documents fetched but not kept, with the characters in each one's text: the SQL warehouse takes a
+    # statement's parameters up to about 1 MB, so a text past that cannot be written through it. Such a
+    # document counts as listed but not read, which leaves later first listings unconfirmed.
+    not_kept: tuple[tuple[str, int], ...] = ()
 
 
 def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
@@ -179,6 +183,7 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
         "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
     fetched = with_contacts = 0
+    not_kept: list[tuple[str, int]] = []
     for entry in entries:
         if entry.document_id in held:
             continue
@@ -189,16 +194,20 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
         body, count = contacts.strip_text(text.body)
         page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
         public = public_from(entry.disclosed_on, text.fetched_at.date())
-        insert(engine, "strata.bronze.document_texts",
-               ("document_id", "project_id", "url", "content_hash", "text", "fetched_at", "public_from"),
-               [(entry.document_id, project_id, entry.text_url, _sha(body), body, text.fetched_at, public)])
+        try:
+            insert(engine, "strata.bronze.document_texts",
+                   ("document_id", "project_id", "url", "content_hash", "text", "fetched_at", "public_from"),
+                   [(entry.document_id, project_id, entry.text_url, _sha(body), body, text.fetched_at, public)])
+        except RowTooLarge:
+            not_kept.append((entry.document_id, len(body)))
+            continue
         insert(engine, "strata.bronze.document_pages",
                ("document_id", "project_id", "pdf_page", "url", "page_hash", "text", "fetched_at", "public_from"),
                [(entry.document_id, project_id, number, entry.pdf_url, _sha(page), page, pages.fetched_at, public)
                 for number, page in enumerate(page_texts, 1)])
         fetched += 1
         with_contacts += count > 0
-    return Fetching(fetched, with_contacts)
+    return Fetching(fetched, with_contacts, tuple(not_kept))
 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───
@@ -537,6 +546,7 @@ class Report:
     versions_with_rows: int
     measures: list[Measure]
     unknown_columns: tuple[str, ...]  # STEP table columns the reader did not know, which it left out
+    not_kept: tuple[tuple[str, int], ...] = ()  # plans fetched but too large for the warehouse (Fetching.not_kept)
 
 
 def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: str, *,
@@ -550,7 +560,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
 
     fetch_listing(engine, documents, endpoint, project_id)
     listing = listed_plans(engine, project_id)
-    fetch_plans(engine, documents, project_id, listing.entries)
+    fetching = fetch_documents(engine, documents, project_id, listing.entries)
     versions = read_versions(engine, project_id, listing)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
@@ -559,7 +569,8 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     record_parse_run(engine, run_id, project_id, parsing, started, finished)
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
                        finished)
-    return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns)
+    return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns,
+                  fetching.not_kept)
 
 
 def run_on_fixture(engine: Engine, project_id: str | None = None, manifest=None, **options) -> Report:
@@ -593,6 +604,11 @@ def print_measures(report: Report) -> None:
         print(f"  {m.subject} {m.measure}: {m.count} of {m.denominator}")
     if report.unknown_columns:
         print(f"The STEP reader did not know these columns and left them out: {', '.join(report.unknown_columns)}.")
+    if report.not_kept:
+        listed = ", ".join(f"{document_id} ({characters:,} characters)" for document_id, characters in report.not_kept)
+        plans = "1 plan was" if len(report.not_kept) == 1 else f"{len(report.not_kept)} plans were"
+        print(f"{plans} fetched but not kept, because the SQL warehouse takes a statement's parameters only up "
+              f"to about 1 MB: {listed}. Each counts as listed but not read.")
 
 
 if __name__ == "__main__":

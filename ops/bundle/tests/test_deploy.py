@@ -78,7 +78,7 @@ class FakeWorkspace:
             return None
         import json
 
-        declared = bundle.load().resources("dashboards")["strata"]
+        declared = bundle.load().resources("dashboards")["strata_dashboard"]
         pages = json.loads((REPO / "bundle" / declared["file_path"]).read_text())["pages"]
         return {"name": name, "pages": [page["displayName"] for page in pages]}
 

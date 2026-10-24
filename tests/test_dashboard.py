@@ -122,7 +122,7 @@ def test_the_dashboard_file_says_what_its_definition_in_code_says():
 
 
 def test_the_bundle_deploys_the_dashboard_file_with_each_viewer_s_own_credentials():
-    declared = bundle.load().resources("dashboards")["strata"]
+    declared = bundle.load().resources("dashboards")["strata_dashboard"]
 
     assert (ROOT / "bundle" / declared["file_path"]).resolve() == dashboard.FILE
     assert declared["warehouse_id"] == "${var.warehouse_id}"

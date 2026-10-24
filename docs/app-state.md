@@ -27,9 +27,10 @@ Run it from the main checkout after the wizard:
 Only the probe changes this block.
 
 <!-- app-state:result -->
-- Status: not run
-- Chosen store: strata.ops, the spec's default, until the probe runs.
+- Status: run
+- Chosen store: Lakebase. strata.ops took 2,293 ms in the middle, over the budget of 1,000 ms, and Lakebase took 145 ms, within it.
 - Times:
-  - None yet. The command above fills them in.
-- Last run: never
+  - strata.ops: getting ready, with its first statement, took 2,197 ms. Of 10 tries at a write and a read, the middle time was 2,293 ms and the longest was 2,545 ms.
+  - Lakebase: getting ready, with its first statement, took 8,194 ms. Of 10 tries at a write and a read, the middle time was 145 ms and the longest was 375 ms.
+- Last run: October 24, 2026
 <!-- /app-state:result -->
