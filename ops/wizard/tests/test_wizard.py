@@ -17,7 +17,6 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[3]
 WIZARD = REPO / "ops" / "wizard" / "strata-setup.sh"
-RESULTS = REPO / "docs" / "day-one-results.md"
 sys.path.insert(0, str(REPO / "ops" / "dayone"))
 
 import dayone  # noqa: E402
@@ -100,7 +99,8 @@ def place(tmp_path):
                        ("env", FAKE_ENV)):
         (bin_dir / name).write_text(body)
         (bin_dir / name).chmod(0o755)
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # The wizard's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     return tmp_path
 
 

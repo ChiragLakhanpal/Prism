@@ -1,6 +1,5 @@
 """The Azure-from-a-job probe (test 2): a Databricks job reaches Foundry and Azure OpenAI."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import dayone  # noqa: E402
 import probe_azure_from_job  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 FOUNDRY = "https://wb-strata.services.ai.azure.com/api/projects/Strata"
 OPENAI = "https://wb-strata.openai.azure.com/openai/v1"
 
@@ -35,7 +33,8 @@ class FakeJob:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text(
         "DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\nDATABRICKS_TOKEN='dapi-x'\n"
         f"FOUNDRY_PROJECT_ENDPOINT='{FOUNDRY}'\nAZURE_OPENAI_ENDPOINT='{OPENAI}'\n"

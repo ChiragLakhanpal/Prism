@@ -1,6 +1,5 @@
 """The traces probe (test 10): a span the app sends shows up in Application Insights."""
 
-import shutil
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ import dayone  # noqa: E402
 import probe_traces  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
-RESULTS = REPO / "docs" / "day-one-results.md"
 APP = "https://strata-42.aws.databricksapps.com"
 
 
@@ -39,7 +37,8 @@ class FakeTraces:
 
 @pytest.fixture
 def place(tmp_path):
-    shutil.copy(RESULTS, tmp_path / "results.md")
+    # A probe's first run starts from the template, whatever results the committed document holds.
+    dayone.ensure_document(tmp_path / "results.md", dayone.load_config())
     (tmp_path / "probe.env").write_text(
         "DATABRICKS_HOST='https://dbc-1.cloud.databricks.com'\nDATABRICKS_TOKEN='dapi-x'\n"
         "APPLICATIONINSIGHTS_CONNECTION_STRING='InstrumentationKey=secret-ik;ApplicationId=app-0042'\n")
