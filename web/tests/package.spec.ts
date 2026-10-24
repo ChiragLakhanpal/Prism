@@ -223,6 +223,26 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   await expect(fourth).toBeFocused();
 });
 
+test("a dot shows its package on hover and Escape hides it, and a click on the axis row moves the plan line there", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const tip = page.locator("[data-dot-tooltip]");
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  const dot = (await page.locator("[data-dot-target='3']").boundingBox())!;
+
+  await page.mouse.move(dot.x + dot.width / 2, dot.y + dot.height / 2);
+  await expect(tip).toContainText("KE-WAJWASCO-372776-CW-RFB");
+  await expect(tip).toHaveAttribute("aria-hidden", "true");
+  await page.keyboard.press("Escape");
+  await expect(tip).toHaveCount(0);
+
+  // The axis row runs from 0 to 18 months across the plot, 8 px in from each side.
+  const box = (await page.locator("[data-range-chart]").boundingBox())!;
+  await page.mouse.click(box.x + 8 + ((box.width - 16) * 12) / 18, box.y + box.height - 12);
+  await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", "12");
+  await expect(readout(page)).toHaveText(`${await signedWithin(12)} of 49 signed within 12.0 months`);
+});
+
 test("above 60 comparables the lane draws 20 quantile dots, and the table still lists every package 20 at a time", async ({ page }) => {
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-any-category.json") } });
   await ready(page);

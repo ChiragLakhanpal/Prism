@@ -305,6 +305,17 @@ export function RangeChart({
     }
   };
 
+  // Escape hides a tooltip the pointer opened, wherever focus is (WCAG 1.4.13).
+  const hovered = focused === null && hover !== null && hover !== dismissed ? hover : null;
+  useEffect(() => {
+    if (hovered === null) return;
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") setDismissed(hovered);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [hovered]);
+
   // Escape during a drag puts the line back where the drag began, wherever focus is.
   useEffect(() => {
     if (!drag) return;
