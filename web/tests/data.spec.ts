@@ -6,6 +6,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
+import { dataReadinessHref } from "../src/routes";
 import { expect, mockShell, recorded, test } from "./mocked";
 
 type Answer = { status?: number; file: string };
@@ -227,6 +228,15 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(rows).toHaveCount((await json("data-readiness.json")).sources.length);
   await page.goBack();
   await expect(rows).toHaveCount(3);
+});
+
+test("a coverage line's link, built by dataReadinessHref, opens the page filtered to the sources behind it", async ({ page }) => {
+  const href = dataReadinessHref(["awards", "notices"], "find_comparables");
+  expect(href).toBe("/data?sources=awards,notices&from=find_comparables");
+  await mockData(page, byQuery);
+  await open(page, href);
+
+  await expect(page.locator("[data-readiness=filtered]")).toBeVisible();
 });
 
 test("a link's own words never reach the page, and keys the registry lacks are only counted", async ({ page }) => {

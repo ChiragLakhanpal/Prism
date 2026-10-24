@@ -16,13 +16,14 @@ You need the Databricks CLI 0.287.0 or later, because only the direct deployment
 
 It lists what the workspace holds, deploys the bundle, creates the tables, and prints what changed. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
 
-Then run these three checks, also from the main checkout:
+Then run these four checks, also from the main checkout:
 
     uv run --script ops/bundle/check.py job-run --env-file .env
     uv run --script ops/bundle/check.py same-rows --env-file .env
+    uv run --script ops/bundle/check.py readiness --env-file .env
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
-The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the two sample queries, `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
+The first runs the nightly job by hand and checks its rows in `strata.ops.pipeline_runs`. The second runs the two sample queries, `tests/ground_truth/showcase_fiscal_years.sql` and `tests/ground_truth/pipeline_runs_columns.sql`, on DuckDB and on the SQL warehouse and compares the rows. The third builds the Data readiness page on the SQL warehouse and checks that its awards row's rows held and STEP-reference link rate match a direct query on `strata.ops.data_readiness`. The fourth reads both nightly jobs and how long their recent runs took, and writes the result in the block below.
 
 Some things to know before the first deploy:
 

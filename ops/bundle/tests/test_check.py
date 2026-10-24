@@ -252,3 +252,29 @@ def test_a_schedule_that_is_not_daily_is_named_rather_than_guessed(capsys):
 
     assert code == 2
     assert "only schedules that run once a day" in out
+
+
+# ── readiness ────────────────────────────────────────────────────────────
+
+def fixture_warehouse():
+    """The SQL warehouse after the nightly job, the plan run and the passage run: the fixture database,
+    which the gate builds before this lane's tests."""
+    return DuckDBEngine.open(check.FIXTURE_DB, read_only=True)
+
+
+def test_the_data_readiness_page_s_award_rows_and_link_rate_match_a_direct_query(capsys):
+    """Ticket 16: on the workspace, a direct query on strata.ops matches the page's numbers."""
+    code, out = checked(["readiness"], FakeWorkspace(warehouse=fixture_warehouse()), capsys)
+
+    assert code == 0
+    assert "The Data readiness page's awards row matches a direct query on strata.ops.data_readiness:" in out
+    assert "  award rows held: 632 on the page, 632 in the query" in out
+    assert "  contracts with a STEP reference: 528 of 603 on the page, 528 of 603 in the query" in out
+    assert "Kenya's own measures, for comparison: 632 award rows; 528 of 603 contracts with a STEP reference." in out
+
+
+def test_a_page_with_no_measures_fails_the_readiness_check_and_says_why(capsys):
+    code, out = checked(["readiness"], FakeWorkspace(), capsys)
+
+    assert code == 1
+    assert "The Data readiness page has no awards row to compare: data_readiness_for answered no_measures." in out
