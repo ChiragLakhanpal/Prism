@@ -384,13 +384,16 @@ def test_the_run_writes_kenya_s_coverage_linked_and_fresh_measures_each_count_wi
 
 def test_each_measure_has_the_kind_the_spec_names(gold):
     """The spec's kinds: coverage (rows and years), linked, fresh, and the contact details removed,
-    which the dashboard's Governance page shows as personal data stripped."""
+    which the dashboard's Governance page shows as personal data stripped. The Data readiness page's
+    fixes add fix, for the projects each fix would add evidence to (ticket 16)."""
     kinds = dict(gold.run("SELECT DISTINCT measure, kind FROM strata.ops.data_readiness "
                           "WHERE run_id = 'fixture' AND subject = 'KE'").rows)
 
     assert kinds == {"coverage_rows": "coverage", "coverage_years": "coverage", "linked_step_reference": "linked",
                      "linked_notice": "linked", "linked_project": "linked", "linked_sector": "linked",
-                     "contact_details_removed": "stripped", "fresh_fetched": "fresh", "fresh_newest_record": "fresh"}
+                     "contact_details_removed": "stripped", "fresh_fetched": "fresh", "fresh_newest_record": "fresh",
+                     "projects_with_contracts_lacking_step_reference": "fix",
+                     "gap_years_contracts_in_local_currency": "fix", "gap_years_projects_in_local_currency": "fix"}
 
 
 def test_the_ground_truth_sql_expects_the_counts_values_toml_holds():

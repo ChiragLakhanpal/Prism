@@ -8,6 +8,15 @@
 --   linked_project         contracts whose project gold holds, of all contracts
 --   fresh_fetched          per country: the day of the last fetch, with the source's cadence
 --   fresh_newest_record    per country: the newest signing date fetched, with the source's cadence
+-- And what the Data readiness page's fixes would unlock (ticket 16; kind fix), per country and for
+-- every country:
+--   projects_with_contracts_lacking_step_reference  projects with a contract that carries no STEP
+--                          reference, of the projects with any contract
+--   gap_years_contracts_in_local_currency  contracts built from award notices for FY2017 to FY2019,
+--                          which neither awards dataset covers, whose amount is in local currency, of
+--                          every contract built from those notices
+--   gap_years_projects_in_local_currency   the projects of those contracts in local currency, of the
+--                          projects of every contract built from those notices
 -- The measures for every country's coverage_rows and freshness are written for every source at
 -- once (strata.lakehouse.readiness). Contracts here are the awards dataset's own (source awards).
 WITH held AS (
@@ -87,6 +96,37 @@ linked AS (
   SELECT 'all', count(*), count(step_reference), count(noticed_reference), count(held_project)
   FROM contracts
 ),
+projects_missing AS (
+  SELECT country_code AS subject,
+    count(DISTINCT CASE WHEN step_reference IS NULL THEN project_id END) AS lacking,
+    count(DISTINCT project_id) AS projects
+  FROM strata.gold.contract
+  WHERE source = 'awards' AND project_id IS NOT NULL AND country_code IS NOT NULL
+  GROUP BY country_code
+  UNION ALL
+  SELECT 'all', count(DISTINCT CASE WHEN step_reference IS NULL THEN project_id END), count(DISTINCT project_id)
+  FROM strata.gold.contract
+  WHERE source = 'awards' AND project_id IS NOT NULL
+),
+gap_year_contracts AS (
+  SELECT project_id, country_code, amount_basis = 'local currency, from award notices' AS in_local_currency
+  FROM strata.gold.contract
+  WHERE source = 'notices' AND fiscal_year BETWEEN 2017 AND 2019
+),
+gap_years AS (
+  SELECT country_code AS subject,
+    count(CASE WHEN in_local_currency THEN 1 END) AS local_contracts,
+    count(*) AS contracts,
+    count(DISTINCT CASE WHEN in_local_currency THEN project_id END) AS local_projects,
+    count(DISTINCT project_id) AS projects
+  FROM gap_year_contracts
+  WHERE country_code IS NOT NULL
+  GROUP BY country_code
+  UNION ALL
+  SELECT 'all', count(CASE WHEN in_local_currency THEN 1 END), count(*),
+    count(DISTINCT CASE WHEN in_local_currency THEN project_id END), count(DISTINCT project_id)
+  FROM gap_year_contracts
+),
 years AS (
   SELECT country_code AS subject, years_held, years_spanned FROM held
   UNION ALL
@@ -130,3 +170,21 @@ UNION ALL
 SELECT 'awards', country_code, 'fresh_newest_record', 'fresh', CAST(NULL AS BIGINT), CAST(NULL AS BIGINT), newest, :cadence
 FROM fresh
 WHERE country_code IS NOT NULL
+UNION ALL
+SELECT 'awards', subject, 'projects_with_contracts_lacking_step_reference', 'fix', CAST(lacking AS BIGINT),
+  CAST(projects AS BIGINT), CAST(NULL AS DATE),
+  'This counts the projects with a contract that carries no STEP reference, out of the projects with any contract.'
+FROM projects_missing
+WHERE projects > 0
+UNION ALL
+SELECT 'awards', subject, 'gap_years_contracts_in_local_currency', 'fix', CAST(local_contracts AS BIGINT),
+  CAST(contracts AS BIGINT), CAST(NULL AS DATE),
+  'This counts the contracts built from award notices for FY2017 to FY2019 whose amount is in local currency, out of every contract built from those notices.'
+FROM gap_years
+WHERE contracts > 0
+UNION ALL
+SELECT 'awards', subject, 'gap_years_projects_in_local_currency', 'fix', CAST(local_projects AS BIGINT),
+  CAST(projects AS BIGINT), CAST(NULL AS DATE),
+  'This counts the projects of the contracts built from award notices for FY2017 to FY2019 whose amount is in local currency, out of the projects of every contract built from those notices.'
+FROM gap_years
+WHERE contracts > 0

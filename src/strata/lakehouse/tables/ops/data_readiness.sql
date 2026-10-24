@@ -1,7 +1,8 @@
 -- The data readiness measures each run writes (GLOSSARY.md; spec, "Data readiness and the
 -- dashboard"). Each measure is a count with its denominator, or for a freshness measure a date;
 -- there is no composite score. The Data readiness page (ticket 16) reads, for each source, subject
--- and measure, the row from the latest run that wrote that measure. Three writers fill it: the
+-- and measure, the row from the latest run that wrote that measure: the newest measured_at, since
+-- as_of is set only on the freshness measures. It never sums or averages over runs. Three writers fill it: the
 -- nightly job, from one query per source in src/strata/lakehouse/readiness/, the plan reader
 -- (src/strata/lakehouse/plans.py) and the passage reader (src/strata/lakehouse/passages.py). The plan
 -- reader and the passage reader both write the documents source for a project, under different
@@ -16,8 +17,9 @@
 -- measure      what was counted, such as linked_step_reference, pages_read_route_b (the plan
 --              reader) or document_pages_route_b (the passage reader)
 -- kind         coverage, linked, read_well or fresh, or stripped for the contact details removed
---              (the dashboard's Governance page shows personal data stripped), or screened for what
---              Prompt Shields found in the passages
+--              (the dashboard's Governance page shows personal data stripped), screened for what
+--              Prompt Shields found in the passages, or fix for what a fix on the Data readiness
+--              page would unlock, such as the projects it would add evidence to
 -- count        how many; empty for a freshness measure
 -- denominator  out of how many; empty for a freshness measure
 -- as_of        for a freshness measure: the day of the last fetch, or of the newest record
