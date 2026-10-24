@@ -13,7 +13,7 @@ import type { ReactNode } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import { formatNumber } from "../lib/format";
-import { Num, numText } from "./Num";
+import { Num, numText, type NumCheck } from "./Num";
 import { TextLink } from "./TextLink";
 
 const n = (value: number) => formatNumber(value, { compact: false });
@@ -85,6 +85,7 @@ export function CoverageLine({
   noun,
   gap,
   href,
+  check,
 }: {
   part: number;
   whole: number;
@@ -94,10 +95,12 @@ export function CoverageLine({
   gap?: ReactNode;
   // Data readiness, filtered to the sources behind the line.
   href: string;
+  // What the counts count, for a reader who checks them.
+  check?: NumCheck;
 }) {
   return (
     <p data-coverage-line className="text-small text-ink">
-      {copy.coverage.basedOn} <Num part={part} whole={whole} show="count" /> {noun}
+      {copy.coverage.basedOn} <Num part={part} whole={whole} show="count" check={check} /> {noun}
       {gap ? (
         <>
           {copy.coverage.join}

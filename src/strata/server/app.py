@@ -41,6 +41,11 @@
   viewer and evidence id in strata.ops.evidence_opened, written as the app's own service principal. A
   preview of another view, or a request no one is signed in for, records nothing, and the answer says
   {"recorded": false}. GET /api/evidence/opened?id=...&id=... says which of those the viewer has opened.
+- GET /api/packages/{step_reference} gives the package workspace's header: the package as its newest
+  public Procurement Plan row states it, with that plan and its project, or 404 with the code
+  unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
+  tool registry for the workspace's section 1, with the tool's criteria as query parameters
+  (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer.
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -96,6 +101,7 @@ from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
 from strata.tools.data_readiness_for import registry_page
+from strata.tools.find_comparables import read_package
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
@@ -333,7 +339,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
                              asof: dt.date | None = None, view: str = "staff",
                              viewer: Viewer = Depends(current_viewer)):
-        arguments = {"sources": sources, "from_tool": from_tool}
+        # An empty value reads as left out, so a link that writes sources= or from= opens the page.
+        arguments = {"sources": sources or None, "from_tool": from_tool or None}
         return await as_viewer(viewer, lambda engine: registry.call(
             "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof)),
             lambda result: result, say_timeout=True)
@@ -390,6 +397,36 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds)
+
+    @app.get("/api/packages/{step_reference}")
+    def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        as_of = asof or registry.today()
+
+        def read(engine: Engine):
+            found = read_package(engine, step_reference, as_of)
+            if found is None:
+                return JSONResponse({"code": "unknown_package"}, status_code=404)
+            return {"as_of": as_of.isoformat(), "package": found}
+        return read_for(f"package {step_reference}", viewer, read)
+
+    @app.get("/api/packages/{step_reference}/comparables")
+    def comparables(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
+                    viewer: Viewer = Depends(current_viewer)):
+        # The criteria come from the query as the tool's own parameter names; the registry checks them.
+        criteria = {name: value for name, value in request.query_params.items() if name not in ("asof", "view")}
+        for name in ("size_from_usd", "size_to_usd"):
+            if name in criteria:
+                try:
+                    criteria[name] = float(criteria[name])
+                except ValueError:
+                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a number."}, status_code=422)
+        for name in ("notice_from", "notice_to"):
+            if name in criteria:
+                try:
+                    criteria[name] = dt.date.fromisoformat(criteria[name])
+                except ValueError:
+                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
+        return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):
         """A decision or a label on a candidate pair, recorded with the viewer's user id, or why it was not."""

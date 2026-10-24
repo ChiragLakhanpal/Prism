@@ -1,0 +1,162 @@
+{
+  "tool": "find_comparables",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 6,
+    "used": 0,
+    "not_used": [
+      {
+        "reason": "no_step_reference",
+        "count": 2,
+        "evidence_ids": [
+          "strata.gold.contract:1810568",
+          "strata.gold.contract:1814061"
+        ]
+      },
+      {
+        "reason": "no_notice",
+        "count": 4,
+        "evidence_ids": [
+          "strata.gold.package:KE-ICTA-414831-NC-RFB",
+          "strata.gold.package:KE-ICTA-443118-NC-RFB",
+          "strata.gold.package:KE-ICTA-458650-NC-RFB",
+          "strata.gold.package:KE-MOALF-478015-NC-RFB"
+        ]
+      }
+    ]
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+    "public_from": "2026-10-09",
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "1230000.00",
+    "process_status": "Pending Implementation",
+    "planned_notice_on": "2026-03-10",
+    "planned_signing_on": "2026-04-24",
+    "plan": {
+      "document_id": "40132287",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "disclosed_on": "2026-10-09",
+      "pdf_page": 3
+    }
+  },
+  "criteria": {
+    "method": "Request for Bids",
+    "category": "Non-consulting Services",
+    "market_approach": null,
+    "review_type": null,
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2026-10-09",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "country",
+      "notice_to"
+    ],
+    "country_name": "Kenya"
+  },
+  "counts": {
+    "comparables": 0,
+    "signed": 0,
+    "still_open": 0,
+    "canceled": 0,
+    "canceled_as_still_open": false
+  },
+  "past_range": null,
+  "plan": null,
+  "frequencies": null,
+  "quantile_dots": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "quantile_dots_above": 60,
+    "quantile_dots": 20,
+    "max_plan_months": 60,
+    "canceled_as_still_open": false
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "none_measurable",
+    "matched": 6
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22?category=Non-consulting%20Services",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "frequencies": null,
+    "counts": {
+      "comparables": 0,
+      "signed": 0,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 6,
+      "used": 0,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 2,
+          "evidence_ids": [
+            "strata.gold.contract:1810568",
+            "strata.gold.contract:1814061"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 4,
+          "evidence_ids": [
+            "strata.gold.package:KE-ICTA-414831-NC-RFB",
+            "strata.gold.package:KE-ICTA-443118-NC-RFB",
+            "strata.gold.package:KE-ICTA-458650-NC-RFB",
+            "strata.gold.package:KE-MOALF-478015-NC-RFB"
+          ]
+        }
+      ]
+    }
+  }
+}
