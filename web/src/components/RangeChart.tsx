@@ -6,8 +6,10 @@
 // hidden from assistive technology: the plan line is a role="slider" you drag, move with the arrow
 // keys or set by clicking the axis row, and the dots are one group with one tab stop and arrow keys
 // between them. A dot shows its package on hover or focus, and Escape hides that. While the pointer
-// crosses from its dot to the tooltip, inside the band between them, the tooltip keeps its dot even over
-// other dots, and moves to another dot only after the pointer rests on it for 100 ms.
+// moves toward the tooltip, inside the band from where it last was on its dot (8 px each side) to the
+// tooltip, the tooltip keeps its dot even over other dots, and shows another dot only after the pointer
+// rests on it for 100 ms. A pointer moving along the dots leaves that band at once, so the tooltip
+// follows it.
 //
 // The chart is 240 px tall in every state, in five rows: the lane label and its key (A), the plan's
 // readout (B), the lane with the middle half, the middle, the 8-in-10 line and the dots, the
@@ -45,6 +47,7 @@ const AXIS = 32;
 const PAD = 8;
 const MAX_LANE = 160;
 const HIT = 12; // a dot answers the pointer within 12 px of its centre
+const BAND = 8; // the band's half-width where it starts, at the pointer's last point on its dot
 const NEAR_LINE = 8; // a fine pointer can grab the plan line within 8 px of it
 const TIP_GAP = 8;
 
@@ -265,6 +268,8 @@ export function RangeChart({
   const [dismissed, setDismissed] = useState<number | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const restTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // The pointer's last point on the hovered dot, where the band toward its tooltip starts.
+  const apex = useRef<{ x: number; y: number } | null>(null);
   const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tipRef = useRef<HTMLDivElement>(null);
   const shown = focused ?? hover;
@@ -344,6 +349,7 @@ export function RangeChart({
     }
     const found = nearest(px, py);
     if (found !== null) {
+      apex.current = { x: px, y: py };
       setHover(found);
       setDismissed(null);
     } else if (event.pointerType !== "mouse") {
@@ -517,28 +523,33 @@ export function RangeChart({
   const underTip = tipFor ? dots.filter((dot) => dot.cx + HIT >= tipLeft && dot.cx - HIT <= tipLeft + tipBox.w).map((dot) => dot.cy) : [];
   const above = tipFor ? Math.min(tipFor.cy, ...underTip) - layout.r - TIP_GAP - tipBox.h : 0;
   const tipTop = tipFor ? (above >= -tipBox.room ? above : Math.max(tipFor.cy, ...underTip) + layout.r + TIP_GAP) : 0;
-  // The band between a hovered dot and its tooltip (the safe-zone pattern menus use): from the dot's
-  // hit width at its centre to the tooltip's near edge. Inside it the pointer is on its way to the
-  // tooltip, so the dots it crosses don't take the tooltip unless it rests on one.
+  // The band between a hovered dot and its tooltip (the safe-zone pattern menus use, as Floating UI's
+  // safePolygon starts where the pointer left its trigger): from the pointer's last point on its dot,
+  // 8 px to each side, to the tooltip's near edge. Inside it the pointer is on its way to the tooltip,
+  // so the dots it crosses don't take the tooltip unless it rests on one. A pointer moving sideways
+  // along the dots leaves it within 8 px.
   const tipAbove = tipFor !== null && tipTop < tipFor.cy;
   const inBand = (px: number, py: number) => {
     if (!tipFor || hover === null || focused !== null || tipFor.key !== dots[hover]?.key || tipBox.w === 0) return false;
+    const a = apex.current ?? { x: tipFor.cx, y: tipFor.cy };
     const nearY = tipAbove ? tipTop + tipBox.h : tipTop;
-    const span = nearY - tipFor.cy;
-    const t = (py - tipFor.cy) / span;
+    const span = nearY - a.y;
+    const t = (py - a.y) / span;
     if (!(span !== 0 && t >= 0 && t <= 1)) return false;
-    const left = tipFor.cx - HIT + t * (tipLeft - (tipFor.cx - HIT));
-    const right = tipFor.cx + HIT + t * (tipLeft + tipBox.w - (tipFor.cx + HIT));
+    const left = a.x - BAND + t * (tipLeft - (a.x - BAND));
+    const right = a.x + BAND + t * (tipLeft + tipBox.w - (a.x + BAND));
     return px >= left && px <= right;
   };
   // Where the mouse is now decides which dot's tooltip shows.
   function track(px: number, py: number) {
     const found = nearest(px, py);
     clearTimeout(restTimer.current);
+    if (found !== null && found === hover) apex.current = { x: px, y: py };
     if (inBand(px, py)) {
       clearTimeout(hideTimer.current);
       if (found !== null && found !== hover) {
         restTimer.current = setTimeout(() => {
+          apex.current = { x: px, y: py };
           setDismissed(null);
           setHover(found);
         }, 100);
@@ -548,6 +559,7 @@ export function RangeChart({
     if (found !== null) {
       clearTimeout(hideTimer.current);
       if (found !== hover) setDismissed(null);
+      apex.current = { x: px, y: py };
       setHover(found);
     } else if (hover !== null) {
       hideLater();

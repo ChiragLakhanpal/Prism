@@ -540,6 +540,96 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
   }
 });
 
+// Every dot's centre and reference in the viewport, and the lane's centre line, which the middle
+// half's band is centred on.
+async function swarmGeometry(page: Page) {
+  return page.evaluate(() => {
+    const band = document.querySelector("[data-band]")!.getBoundingClientRect();
+    const dots = [...document.querySelectorAll<HTMLElement>("[data-dot-target]")].map((dot) => {
+      const box = dot.getBoundingClientRect();
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2, name: dot.getAttribute("aria-label")!.split(",")[0] };
+    });
+    return { centre: band.y + band.height / 2, dots };
+  });
+}
+
+// The dot a pointer at (x, y) answers to: the nearest one within 12 px of it (DESIGN.md section 5).
+function within12(dots: { x: number; y: number; name: string }[], x: number, y: number) {
+  let best: (typeof dots)[number] | null = null;
+  let distance = 12;
+  for (const dot of dots) {
+    const d = Math.hypot(dot.x - x, dot.y - y);
+    if (d <= distance) [best, distance] = [dot, d];
+  }
+  return best;
+}
+
+const tooltipHeader = (page: Page) => page.evaluate(() => document.querySelector("[data-dot-tooltip] p")?.textContent ?? null);
+
+test("a pointer sweeping along the dots, above or below the lane's centre, shows the dot under it within 48 ms", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    const { centre, dots } = await swarmGeometry(page);
+    const start = Math.min(...dots.map((dot) => dot.x)) - 16;
+    const end = Math.max(...dots.map((dot) => dot.x)) + 16;
+
+    for (const dy of [-9, 9]) {
+      const y = centre + dy;
+      await page.mouse.move(start, y);
+      await expect(page.locator("[data-dot-tooltip]")).toHaveCount(0);
+      // Left to right, 3 px every 16 ms. Each reading comes 16 ms after its move; while the pointer is
+      // within 12 px of a dot, the tooltip may name another for at most three readings in a row.
+      let wrong = 0;
+      let longest = { steps: 0, at: "" };
+      for (let x = start; x <= end; x += 3) {
+        await page.mouse.move(x, y);
+        await page.waitForTimeout(16);
+        const under = within12(dots, x, y);
+        const shown = await tooltipHeader(page);
+        wrong = under === null || shown === under.name ? 0 : wrong + 1;
+        if (wrong > longest.steps) longest = { steps: wrong, at: `on ${under!.name}, the tooltip named ${shown}` };
+      }
+      expect.soft(longest.steps, `${width} px, ${dy} px from the lane's centre, ${longest.at}`).toBeLessThanOrEqual(3);
+    }
+  }
+});
+
+test("a pointer that takes a dot from below its centre keeps it on the way up to its tooltip", async ({ page }) => {
+  await openPackage(page, { width: 1024 });
+  await ready(page);
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  const { dots } = await swarmGeometry(page);
+  const tip = page.locator("[data-dot-tooltip]");
+  // Starts 3 px right of and 7 px below a dot, where the first 2 px up is nearer another dot.
+  const starts = dots
+    .map((dot) => ({ x: dot.x + 3, y: dot.y + 7 }))
+    .filter((s) => {
+      const first = within12(dots, s.x, s.y);
+      const next = within12(dots, s.x, s.y - 2);
+      return first !== null && next !== null && next !== first && first.y < s.y;
+    });
+  expect(starts.length).toBeGreaterThanOrEqual(1);
+
+  for (const from of starts) {
+    const taken = within12(dots, from.x, from.y)!.name;
+    await page.mouse.move(2, from.y + 60);
+    await expect(tip).toHaveCount(0);
+    await page.mouse.move(from.x, from.y);
+    await expect(tip).toContainText(taken);
+    const box = (await tip.boundingBox())!;
+    const to = { x: Math.min(Math.max(from.x, box.x + 4), box.x + box.width - 4), y: box.y + box.height - 2 };
+    const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
+    for (let step = 1; step <= steps; step++) {
+      await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(200);
+    await expect(tip, `from below ${taken}`).toContainText(taken);
+  }
+});
+
 test.describe("on a touch screen", () => {
   test.use({ hasTouch: true });
 
