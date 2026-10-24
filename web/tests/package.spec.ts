@@ -352,6 +352,33 @@ test("from 768 px the reset button sits on the input's row with its focus ring 8
   }
 });
 
+// The readout sits beside the knob in row B, so it keeps clear of the knob's focus ring, on either side
+// of the line: right of it at the plan's 1.5 months, and left of it at 14 months.
+test("the plan's readout keeps at least 3 px clear of the slider's focus ring, on either side of the line", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    for (const months of [null, "14"]) {
+      const where = `${width} px, ${months ?? "the plan's 1.5"} months`;
+      await openPackage(page, { width });
+      await ready(page);
+      if (months) await page.getByRole("textbox", { name: "Planned months" }).fill(months);
+      await page.getByRole("slider").focus();
+      const gaps = await page.evaluate(() => {
+        const knob = document.activeElement as HTMLElement;
+        const style = getComputedStyle(knob);
+        const ring = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth);
+        const box = knob.getBoundingClientRect();
+        return [...document.querySelectorAll("[data-chart-drawing] :is([data-readout], [data-readout-plan])")].map((text) => {
+          const label = text.getBoundingClientRect();
+          return [label.left >= box.right ? "right" : "left", label.left >= box.right ? label.left - (box.right + ring) : box.left - ring - label.right] as const;
+        });
+      });
+      expect(gaps.length, where).toBeGreaterThan(0);
+      expect(gaps.map(([side]) => side), where).toContain(months ? "left" : "right");
+      for (const [, gap] of gaps) expect(gap, where).toBeGreaterThanOrEqual(3);
+    }
+  }
+});
+
 test("moving the line or typing a bad number moves nothing else on the page", async ({ page }) => {
   for (const width of [320, 390, 1440]) {
     await openPackage(page, { width });
