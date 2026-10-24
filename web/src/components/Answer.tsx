@@ -12,7 +12,7 @@
 // Empty: nothing in the records or documents answers the question, said in the first person.
 // Refused: a request on the refusal list, answered in plain text with no alert.
 // Error: the steps done so far, an error alert and "Try again".
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState, type ClipboardEvent, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -42,11 +42,22 @@ export type AnswerState =
   | { status: "refused"; steps: Step[]; runId: string; message: ReactNode; note?: ReactNode }
   | { status: "error"; steps: Step[]; message: ReactNode; onRetry: () => void };
 
+// A copied answer reads "...rebidding". [1]", without the word joiners that keep each marker on its
+// sentence's line (CitationMarker.tsx), so a pasted sentence matches the one the verifier checked.
+function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
+  const text = window.getSelection()?.toString();
+  if (!text) return;
+  event.clipboardData.setData("text/plain", text.replace(/\u2060/g, ""));
+  event.preventDefault();
+}
+
 function InShort({ children }: { children: ReactNode }) {
   return (
     <>
       <h3 className="text-label text-ink-muted uppercase">{copy.answer.inShort}</h3>
-      <div data-in-short className="mt-2 max-w-prose text-body text-ink">{children}</div>
+      <div data-in-short onCopy={withoutWordJoiners} className="mt-2 max-w-prose text-body text-ink">
+        {children}
+      </div>
     </>
   );
 }
@@ -96,7 +107,7 @@ export function Answer({ state }: { state: AnswerState }) {
     case "streaming":
       return (
         <div data-answer="streaming" aria-busy="true">
-          <Steps steps={state.steps} stillWorking={state.stillWorking} reserveLines={6} announce={state.announce ?? true} />
+          <Steps steps={state.steps} stillWorking={state.stillWorking} reserveLines={4} announce={state.announce ?? true} />
           <LoadingLabel />
           {/* "In short", three lines of answer and the check line, each at its own size. */}
           <div className="mt-6 max-w-prose">

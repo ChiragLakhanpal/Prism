@@ -312,14 +312,14 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
 // too. What Strata found keeps the rest and stays the widest column. Cells are padded 8 px at the
 // sides from 1024 px and 12 px from 1200 px (CELL).
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean }[] = [
-  { key: "activity", header: words.columns.activity, width: "w-[25%] xl:w-[21.5%]" },
-  { key: "method", header: words.columns.method, width: "w-[16%] xl:w-[15%]" },
+  { key: "activity", header: words.columns.activity, width: "w-[25%] @xl/page:w-[21.5%]" },
+  { key: "method", header: words.columns.method, width: "w-[16%] @xl/page:w-[15%]" },
   { key: "review", header: words.columns.review, width: "w-[7.5%]" },
-  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] xl:w-[11%]", numeric: true },
-  { key: "status", header: words.columns.status, width: "w-[14%] xl:w-[12.5%]" },
-  { key: "found", header: null, width: "w-[26%] xl:w-[32.5%]" },
+  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] @xl/page:w-[11%]", numeric: true },
+  { key: "status", header: words.columns.status, width: "w-[14%] @xl/page:w-[12.5%]" },
+  { key: "found", header: null, width: "w-[26%] @xl/page:w-[32.5%]" },
 ];
-const CELL = "px-2 py-3 xl:px-3";
+const CELL = "px-2 py-3 @xl/page:px-3";
 
 // A row or card a link's hash names keeps the selected row's tint after focus moves on
 // (DESIGN.md: tint, Selected row).
@@ -424,15 +424,15 @@ export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, stic
   sticky?: boolean;
 }) {
   return (
-    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "lg:sticky lg:top-0 lg:z-10")}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10")}>
+      <div className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-start @lg/page:justify-between @lg/page:gap-6">
         {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
             is as wide as the name it stands for. */}
-        <div className="min-w-0 lg:flex-1">
+        <div className="min-w-0 @lg/page:flex-1">
           {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
-        {pill && <div className="shrink-0 lg:mt-0.5">{pill}</div>}
+        {pill && <div className="shrink-0 @lg/page:mt-0.5">{pill}</div>}
       </div>
     </div>
   );
@@ -547,7 +547,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
-                <td colSpan={COLUMNS.length} className="px-2 py-2 xl:px-3">
+                <td colSpan={COLUMNS.length} className="px-2 py-2 @xl/page:px-3">
                   <div className="flex flex-wrap items-center gap-x-4">
                     <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} />
                     <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
@@ -646,15 +646,15 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
             width from 768 px and from 1200 px. The method sentence takes five lines below 768 px
             and three from it. */}
         <div className="py-0.5">
-          <SkeletonText className="gap-1 text-title md:hidden lg:flex lg:gap-0 xl:hidden" widths={["w-full", "w-2/5"]} />
-          <SkeletonLine className="hidden text-title md:flex lg:hidden xl:flex" width="w-[70%]" />
+          <SkeletonText className="gap-1 text-title @md/page:hidden @lg/page:flex @lg/page:gap-0 @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+          <SkeletonLine className="hidden text-title @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
-        <SkeletonText className="mt-2 text-body md:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-        <SkeletonText className="mt-2 hidden text-body md:flex" widths={["w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
       </EightColumns>
       {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
-      <div className="mt-4 flex min-h-6 items-center lg:block lg:min-h-0">
+      <div className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">
         <SkeletonLine className="text-caption" width="w-40" />
       </div>
       <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>

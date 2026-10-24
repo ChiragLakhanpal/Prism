@@ -348,6 +348,37 @@ for (const width of [1440, 390]) {
   });
 }
 
+test("a copied answer keeps its markers as [1] and drops the word joiners that tie them to their sentences", async ({ page }) => {
+  await open(page);
+  await askFromTheBox(page);
+  await landed(page);
+
+  const copied = await page.evaluate(() => {
+    const block = document.querySelector("[data-in-short]")!;
+    const range = document.createRange();
+    range.selectNodeContents(block);
+    window.getSelection()!.removeAllRanges();
+    window.getSelection()!.addRange(range);
+    const data = new DataTransfer();
+    block.dispatchEvent(new ClipboardEvent("copy", { clipboardData: data, bubbles: true, cancelable: true }));
+    return data.getData("text/plain");
+  });
+
+  expect(copied).not.toContain("⁠");
+  expect(copied).toContain('cases had to go through rebidding".[1]');
+});
+
+test("the answer reflows at 320 px with nothing scrolling sideways", async ({ page }) => {
+  await open(page, { width: 320 });
+  await askFromTheBox(page);
+  await landed(page);
+
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  await marker(page, 1).click();
+  await expect(drawer(page)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
 // The client side of the stream, moved here from ticket 13's stream.spec.ts: the panel reads the
 // server's recorded stream as its events, in order, however the bytes arrive.
 

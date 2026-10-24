@@ -7,13 +7,22 @@
 // was opened from and a switcher for that sentence's other sources; the paragraph with the matching
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { ExternalLink, X } from "lucide-react";
 import { copy } from "../copy";
 import type { EvidenceEvent, Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { closeEvidence, known, openEvidence, origin as originStore, recordOpened, takeFocusRequest, focusRequests } from "../lib/evidence";
+import {
+  closeEvidence,
+  focusRequests,
+  known,
+  openEvidence,
+  origin as originStore,
+  recordOpened,
+  takeFocusRequest,
+  type Origin,
+} from "../lib/evidence";
 import { highlightsFor, passageFields, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
@@ -139,16 +148,34 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
 
 // The sources of the sentence the drawer was opened from: one pill-shaped tab each. Left and Right move
 // between them, Home and End jump to the ends, and selection follows focus.
-function SourceSwitcher({ ids, current, run, onChoose }: { ids: string[]; current: string; run: Run; onChoose: (id: string) => void }) {
+function SourceSwitcher({
+  ids,
+  current,
+  run,
+  panelId,
+  onChoose,
+}: {
+  ids: string[];
+  current: string;
+  run: Run;
+  panelId: string;
+  onChoose: (id: string) => void;
+}) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const index = ids.indexOf(current);
-  const label = (id: string) => {
+  const label = (id: string): ReactNode => {
     const evidence = run.evidence[id];
-    if (!evidence) return { shown: id, name: id };
-    if (evidence.kind === "record") return { shown: recordReference(evidence), name: recordReference(evidence) };
+    if (!evidence) return id;
+    if (evidence.kind === "record") return recordReference(evidence);
     const fields = passageFields(evidence);
-    const short = evidence.short_name ?? fields.docType;
-    return { shown: copy.evidence.tab(short, fields.para), name: copy.evidence.tabName(short, fields.para) };
+    return (
+      <>
+        {evidence.short_name ?? fields.docType}{" "}
+        <span aria-hidden="true">{copy.evidence.paraMark}</span>
+        <span className="sr-only">{copy.evidence.paraSpoken}</span>
+        {fields.para}
+      </>
+    );
   };
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
     const moves: Record<string, number> = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: ids.length - 1 };
@@ -162,7 +189,6 @@ function SourceSwitcher({ ids, current, run, onChoose }: { ids: string[]; curren
     <div role="tablist" aria-label={copy.evidence.switcher} className="flex flex-wrap gap-2">
       {ids.map((id, at) => {
         const selected = id === current;
-        const { shown, name } = label(id);
         return (
           <button
             key={id}
@@ -171,10 +197,9 @@ function SourceSwitcher({ ids, current, run, onChoose }: { ids: string[]; curren
             }}
             type="button"
             role="tab"
-            id={`evidence-tab-${at}`}
+            id={`${panelId}-tab-${at}`}
             aria-selected={selected}
-            aria-controls="evidence-passage"
-            aria-label={name}
+            aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             onClick={() => onChoose(id)}
             onKeyDown={onKeyDown}
@@ -183,7 +208,7 @@ function SourceSwitcher({ ids, current, run, onChoose }: { ids: string[]; curren
               selected ? "bg-tint shadow-[inset_0_0_0_1px_var(--color-primary)]" : "bg-surface hover:bg-tint-hover",
             )}
           >
-            {shown}
+            {label(id)}
           </button>
         );
       })}
@@ -191,123 +216,84 @@ function SourceSwitcher({ ids, current, run, onChoose }: { ids: string[]; curren
   );
 }
 
-export function EvidenceDrawer({
+// The drawer as it looks, for a source in any state. The design gallery draws it as it is; the page
+// draws it through EvidenceDrawer, which reads, records and moves focus.
+export function EvidenceDrawerView({
   id,
+  data,
   run,
+  from,
   narrow,
   preview,
-  asOf,
-  onClosed,
+  dialogId = "evidence-drawer",
+  sample = false,
+  panelRef,
+  headingRef,
+  onClose,
+  onChoose,
 }: {
   id: string;
+  data: DrawerData;
   // The answer on the page, if the drawer was opened from it.
   run: Run | null;
+  // The marker or number that opened it, if it was opened from the answer.
+  from: Origin | null;
   // Below 768 px the drawer is a modal sheet.
   narrow: boolean;
   // A preview of another view records nothing, and the drawer says so.
   preview: boolean;
-  asOf: string | null;
-  // Called as the drawer closes, with where focus should go back to, if anywhere.
-  onClosed: (returnFocus: boolean) => void;
+  dialogId?: string;
+  // A design gallery sample: as wide as its frame, and not held in view.
+  sample?: boolean;
+  panelRef?: RefObject<HTMLDivElement | null>;
+  headingRef?: RefObject<HTMLHeadingElement | null>;
+  onClose: () => void;
+  // A switcher tab chose another source of the same sentence.
+  onChoose: (id: string) => void;
 }) {
-  const data = useEvidence(id, asOf);
-  const from = useStore(originStore);
-  const requests = useStore(focusRequests);
   const headingId = useId();
-  const panel = useRef<HTMLDivElement>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
+  const passageId = useId();
   const [scrolled, setScrolled] = useState(false);
-  const onClosedRef = useRef(onClosed);
-  onClosedRef.current = onClosed;
 
   // The sentence it was opened from, while that answer is still on the page.
-  const claimFrom = from && from.id === id && from.sentence !== null && run ? run.sentences.find((sentence) => sentence.index === from.sentence) : undefined;
-  const claim = claimFrom && run ? claimFrom : undefined;
+  const claim = from && from.id === id && from.sentence !== null && run ? run.sentences.find((sentence) => sentence.index === from.sentence) : undefined;
   const numbering = new Map<string, number>();
   for (const sentence of run?.sentences ?? []) for (const evidenceId of sentence.evidence_ids) if (!numbering.has(evidenceId)) numbering.set(evidenceId, numbering.size + 1);
-
-  // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
-  useEffect(() => {
-    recordOpened(id, from?.runId ?? run?.runId ?? null);
-    // The source is recorded when it changes, not when the answer does.
-  }, [id]);
-
-  // Focus moves to the heading when a marker, a number or a link opened on a phone asked for it.
-  useEffect(() => {
-    if (takeFocusRequest() || (narrow && !from)) heading.current?.focus();
-  }, [requests, id]);
-
-  // The first highlight sits in the middle of the view.
-  useEffect(() => {
-    const container = panel.current;
-    const mark = container?.querySelector("mark");
-    if (!container || !mark) return;
-    const offset = mark.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
-    container.scrollTop = Math.max(0, offset - container.clientHeight / 2);
-  }, [id, data.status]);
-
-  // Closed by any route, Back included: say whether focus was inside, so it can go back to the marker.
-  useLayoutEffect(() => {
-    const element = panel.current;
-    return () => onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
-  }, []);
-
-  // A sheet holds the page still behind it.
-  useEffect(() => {
-    if (!narrow) return;
-    const root = document.documentElement;
-    const before = root.style.overflow;
-    root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = before;
-    };
-  }, [narrow]);
-
-  // Escape closes the drawer, after the box, its list and any evidence card have had theirs.
-  useEffect(() => {
-    const onKey = (event: globalThis.KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      event.preventDefault();
-      closeEvidence();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
   const evidence = data.status === "ready" ? data.evidence : null;
   const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
 
   return (
     <div
       role="dialog"
-      id="evidence-drawer"
+      id={dialogId}
       aria-modal={narrow}
       aria-labelledby={headingId}
       data-evidence-drawer={narrow ? "sheet" : "drawer"}
       className={cx(
         "bg-surface",
-        narrow ? "fixed inset-0 z-50 animate-sheet-in" : "w-[clamp(400px,40vw,600px)] shrink-0 self-stretch border-l border-line",
+        sample
+          ? "w-full"
+          : narrow
+            ? "fixed inset-0 z-50 animate-sheet-in"
+            : "w-[clamp(400px,40vw,600px)] shrink-0 self-stretch border-l border-line",
       )}
     >
       <div
-        ref={panel}
+        ref={panelRef}
         onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
-        className={cx("overflow-y-auto", narrow ? "h-dvh" : "sticky top-0 max-h-dvh")}
+        className={cx(!sample && "overflow-y-auto", !sample && (narrow ? "h-dvh" : "sticky top-0 max-h-dvh"))}
         style={narrow ? { paddingBottom: "env(safe-area-inset-bottom)" } : undefined}
       >
-        <div className={cx("sticky top-0 z-10 flex items-start gap-4 bg-surface px-6 pt-6 pb-4", scrolled ? "border-b border-line" : "border-b border-transparent")}>
+        <div className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}>
           <div className="min-w-0 flex-1">
-            {evidence ? (
-              <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>
-            ) : (
-              <SkeletonLine className="text-label" width="w-1/3" />
-            )}
-            <h2 ref={heading} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-anywhere text-ink-heading focus:outline-none">
+            {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
+            {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
+            <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? sourceTitle(evidence) : data.status === "loading" ? <LoadingLabel /> : copy.evidence.untitled}
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
           </div>
-          <Button variant="ghost" icon={X} iconOnly onClick={closeEvidence} className="-mt-2 -mr-2">
+          <Button variant="ghost" icon={X} iconOnly onClick={onClose} className="-mt-2 -mr-2">
             {copy.evidence.close}
           </Button>
         </div>
@@ -325,15 +311,15 @@ export function EvidenceDrawer({
               </p>
             </div>
           )}
-          {switcherIds && run && from && (
-            <SourceSwitcher
-              ids={switcherIds}
-              current={id}
-              run={run}
-              onChoose={(next) => openEvidence(next, { sentence: from.sentence, marker: from.marker, runId: from.runId }, { replace: true, focus: false })}
-            />
+          {switcherIds && run && (
+            <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
-          <div id="evidence-passage" role={switcherIds ? "tabpanel" : undefined} className="flex flex-col gap-4">
+          <div
+            id={passageId}
+            role={switcherIds ? "tabpanel" : undefined}
+            aria-labelledby={switcherIds ? `${passageId}-tab-${switcherIds.indexOf(id)}` : undefined}
+            className="flex flex-col gap-4"
+          >
             {data.status === "loading" && (
               <div aria-busy="true" className="rounded-md border border-line">
                 <Skeleton className="h-8 w-full rounded-b-none" />
@@ -361,5 +347,96 @@ export function EvidenceDrawer({
         </div>
       </div>
     </div>
+  );
+}
+
+export function EvidenceDrawer({
+  id,
+  run,
+  narrow,
+  preview,
+  asOf,
+  onClosed,
+}: {
+  id: string;
+  // The answer on the page, if the drawer was opened from it.
+  run: Run | null;
+  narrow: boolean;
+  preview: boolean;
+  asOf: string | null;
+  // Called as the drawer closes, with whether focus was inside it, so it can go back to the marker.
+  onClosed: (returnFocus: boolean) => void;
+}) {
+  const data = useEvidence(id, asOf);
+  const from = useStore(originStore);
+  const requests = useStore(focusRequests);
+  const panel = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const onClosedRef = useRef(onClosed);
+  onClosedRef.current = onClosed;
+
+  // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
+  useEffect(() => {
+    recordOpened(id, from?.runId ?? run?.runId ?? null);
+    // The source is recorded when it changes, not when the answer does.
+  }, [id]);
+
+  // Focus moves to the heading when a marker or a number asked for it, or when a link opens the sheet.
+  useEffect(() => {
+    if (takeFocusRequest() || (narrow && !from)) heading.current?.focus();
+  }, [requests, id]);
+
+  // The first highlight sits in the middle of the view.
+  useEffect(() => {
+    const container = panel.current;
+    const mark = container?.querySelector("mark");
+    if (!container || !mark) return;
+    const offset = mark.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+    container.scrollTop = Math.max(0, offset - container.clientHeight / 2);
+  }, [id, data.status]);
+
+  // Closed by any route, Back included: say whether focus was inside.
+  useLayoutEffect(() => {
+    const element = panel.current;
+    return () => onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
+  }, []);
+
+  // A sheet holds the page still behind it.
+  useEffect(() => {
+    if (!narrow) return;
+    const root = document.documentElement;
+    const before = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = before;
+    };
+  }, [narrow]);
+
+  // Escape closes the drawer, after the box, its list and any evidence card have had theirs.
+  useEffect(() => {
+    const onKey = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      closeEvidence();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <EvidenceDrawerView
+      id={id}
+      data={data}
+      run={run}
+      from={from}
+      narrow={narrow}
+      preview={preview}
+      panelRef={panel}
+      headingRef={heading}
+      onClose={closeEvidence}
+      onChoose={(next) =>
+        from && openEvidence(next, { sentence: from.sentence, marker: from.marker, runId: from.runId }, { replace: true, focus: false })
+      }
+    />
   );
 }

@@ -441,8 +441,9 @@ export const copy = {
     close: "Close the source",
     fromAnswer: "From the answer",
     switcher: "Sources for this sentence",
-    tab: (short: string, para: string) => `${short} ¶${para}`,
-    tabName: (short: string, para: string) => `${short} paragraph ${para}`,
+    // A switcher tab reads "ICR ¶54", and a screen reader hears "ICR paragraph 54".
+    paraMark: "¶",
+    paraSpoken: "paragraph ",
     // The meta line, word for word as the ticket writes it: "Implementation Completion and Results
     // Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 ·
     // PDF page 23 of 66". The project ID shows in Roboto Mono.

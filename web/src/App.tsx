@@ -184,14 +184,14 @@ export function App() {
         )
       }
     >
-      <div className="layout layout-grid pt-6 md:pt-8 lg:pt-10">
+      <div className="layout layout-grid pt-6 @md/page:pt-8 @lg/page:pt-10">
         {shown && (
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 @lg/page:col-span-8">
             <AnswerPanel run={shown} opened={{ id: evidenceId, sentence: from && from.id === evidenceId ? from.sentence : null }} visited={seen} />
           </div>
         )}
         {slot.length > 0 && (
-          <div className="col-span-12 mb-6 flex flex-col gap-2 md:col-span-8">
+          <div className="col-span-12 mb-6 flex flex-col gap-2 @md/page:col-span-8">
             {slot.map((alert) => (
               <Alert key={alert.text} state={alert.state} live={alert.state === "error" ? "alert" : undefined}>
                 {alert.text}

@@ -20,7 +20,8 @@ export function Steps({
   steps: Step[];
   // No event has come for 30 seconds.
   stillWorking?: boolean;
-  // Lines of height to hold while streaming, so the answer does not jump (six in the panel).
+  // Lines of height to hold while streaming, so the answer does not jump: four in the panel, for
+  // reading the question, one tool, writing and checking. Each further tool adds a line.
   reserveLines?: number;
   // Announce the step in progress here. The answer panel announces steps in its own live region.
   announce?: boolean;

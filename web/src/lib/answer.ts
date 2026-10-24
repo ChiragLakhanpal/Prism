@@ -94,28 +94,52 @@ function update(id: number, change: (run: Run) => Run) {
   answer.set((run) => (run && run.serial === id ? change({ ...run, lastEventAt: Date.now() }) : run));
 }
 
-function apply(id: number, type: string, data: any) {
-  if (type === "step") {
-    update(id, (run) => {
+// One event of the stream, added to the run.
+export function withEvent(run: Run, type: string, data: any): Run {
+  switch (type) {
+    case "step": {
       const steps = run.steps.some((step) => step.id === data.id)
         ? run.steps.map((step) => (step.id === data.id ? (data as StepEvent) : step))
         : [...run.steps, data as StepEvent];
       return { ...run, steps };
-    });
-  } else if (type === "sentence") {
-    update(id, (run) => ({ ...run, sentences: [...run.sentences, data as SentenceEvent] }));
-  } else if (type === "evidence") {
-    remember(data as EvidenceEvent);
-    update(id, (run) => ({ ...run, evidence: { ...run.evidence, [data.id]: data as EvidenceEvent } }));
-  } else if (type === "checks") {
-    update(id, (run) => ({ ...run, checks: data as ChecksEvent }));
-  } else if (type === "removed") {
-    update(id, (run) => ({ ...run, removed: [...run.removed, data as RemovedEvent] }));
-  } else if (type === "error") {
-    update(id, (run) => ({ ...run, error: String(data.code ?? "internal") }));
-  } else if (type === "done") {
-    update(id, (run) => ({ ...run, runId: data.run_id ?? null, phase: run.error ? "failed" : "done" }));
+    }
+    case "sentence":
+      return { ...run, sentences: [...run.sentences, data as SentenceEvent] };
+    case "evidence":
+      return { ...run, evidence: { ...run.evidence, [data.id]: data as EvidenceEvent } };
+    case "checks":
+      return { ...run, checks: data as ChecksEvent };
+    case "removed":
+      return { ...run, removed: [...run.removed, data as RemovedEvent] };
+    case "error":
+      return { ...run, error: String(data.code ?? "internal") };
+    case "done":
+      return { ...run, runId: data.run_id ?? null, phase: run.error ? "failed" : "done" };
+    default:
+      return run;
   }
+}
+
+// A run before its first event.
+export function newRun(serialNumber: number, asked: Asked): Run {
+  return {
+    serial: serialNumber,
+    asked,
+    phase: "streaming",
+    steps: [],
+    sentences: [],
+    evidence: {},
+    checks: null,
+    removed: [],
+    error: null,
+    runId: null,
+    lastEventAt: Date.now(),
+  };
+}
+
+function apply(id: number, type: string, data: any) {
+  if (type === "evidence") remember(data as EvidenceEvent);
+  update(id, (run) => withEvent(run, type, data));
 }
 
 async function stream(id: number, asked: Asked, signal: AbortSignal) {
@@ -142,19 +166,7 @@ export function ask(asked: Asked) {
   stopping?.abort();
   stopping = new AbortController();
   serial += 1;
-  answer.set({
-    serial,
-    asked,
-    phase: "streaming",
-    steps: [],
-    sentences: [],
-    evidence: {},
-    checks: null,
-    removed: [],
-    error: null,
-    runId: null,
-    lastEventAt: Date.now(),
-  });
+  answer.set(newRun(serial, asked));
   void stream(serial, asked, stopping.signal);
 }
 

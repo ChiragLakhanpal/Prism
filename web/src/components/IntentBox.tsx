@@ -36,55 +36,12 @@ function foundLine(found: Found): ReactNode {
   return <Fill template={words.activityLine(found.agency, formatDate(found.planDate))} slots={{ pcode: mono(found.pcode) }} />;
 }
 
-export function IntentBox({
-  scope,
-  scopeKind,
-  onAsk,
-}: {
-  // The page's scope: a P-code on a project page, a STEP reference or package on a package page.
-  scope: string | null;
-  scopeKind: "project" | "package";
-  onAsk: (question: string, scope: string | null) => void;
-}) {
-  const [value, setValue] = useState("");
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(0);
-  const [lookups, setLookups] = useState<Record<string, Lookup>>({});
-  const [said, setSaid] = useState("");
-  const asked = useRef(new Map<string, Promise<Lookup>>());
-  const input = useRef<HTMLInputElement>(null);
-  const removed = useStore(removedScopes);
+export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent };
 
-  // A new page brings its own scope back, and says nothing about the last one.
-  useEffect(() => setSaid(""), [scope]);
-  const chip = scope && !removed.has(scope) ? scope : null;
-
+// What the box lists for this input, scope chip and lookups so far: the options, best first, what
+// choosing each does, and the lines under the list for an ID no record holds or a lookup that failed.
+export function boxList(value: string, chip: string | null, lookups: Record<string, Lookup>) {
   const { ids, askFirst } = intentsFor(value);
-
-  const lookupOf = (intent: Intent) => {
-    const key = intentKey(intent);
-    let promise = asked.current.get(key);
-    if (!promise) {
-      promise = lookUp(intent, new AbortController().signal);
-      asked.current.set(key, promise);
-      setLookups((now) => ({ ...now, [key]: { status: "pending" } }));
-      void promise.then((result) => {
-        // A lookup that failed may work next time.
-        if (result.status === "failed") asked.current.delete(key);
-        setLookups((now) => ({ ...now, [key]: result }));
-      });
-    }
-    return promise;
-  };
-
-  // Lookups wait until typing pauses, and only fill in the second line.
-  useEffect(() => {
-    if (ids.length === 0) return;
-    const timer = setTimeout(() => ids.forEach(lookupOf), LOOKUP_DELAY_MS);
-    return () => clearTimeout(timer);
-    // ids is derived from value.
-  }, [value]);
-
   const notes: ReactNode[] = [];
   const idOptions: { option: BoxOption; intent: Intent }[] = [];
   for (const intent of ids) {
@@ -117,7 +74,7 @@ export function IntentBox({
     label: copy.box.option.ask,
     line: chip ? <Fill template={copy.box.option.askWithin} slots={{ id: mono(chip) }} /> : copy.box.option.askAcross,
   };
-  const choices: ({ kind: "ask" } | { kind: "id"; intent: Intent })[] = [];
+  const choices: Choice[] = [];
   const options: BoxOption[] = [];
   const addAsk = () => {
     choices.push({ kind: "ask" });
@@ -129,6 +86,58 @@ export function IntentBox({
     options.push(option);
   }
   if (!askFirst) addAsk();
+  return { ids, options, choices, notes };
+}
+
+export function IntentBox({
+  scope,
+  scopeKind,
+  onAsk,
+}: {
+  // The page's scope: a P-code on a project page, a STEP reference or package on a package page.
+  scope: string | null;
+  scopeKind: "project" | "package";
+  onAsk: (question: string, scope: string | null) => void;
+}) {
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const [lookups, setLookups] = useState<Record<string, Lookup>>({});
+  const [said, setSaid] = useState("");
+  const asked = useRef(new Map<string, Promise<Lookup>>());
+  const input = useRef<HTMLInputElement>(null);
+  const removed = useStore(removedScopes);
+
+  // A new page brings its own scope back, and says nothing about the last one.
+  useEffect(() => setSaid(""), [scope]);
+  const chip = scope && !removed.has(scope) ? scope : null;
+
+  const { ids, options, choices, notes } = boxList(value, chip, lookups);
+
+  const lookupOf = (intent: Intent) => {
+    const key = intentKey(intent);
+    let promise = asked.current.get(key);
+    if (!promise) {
+      promise = lookUp(intent, new AbortController().signal);
+      asked.current.set(key, promise);
+      setLookups((now) => ({ ...now, [key]: { status: "pending" } }));
+      void promise.then((result) => {
+        // A lookup that failed may work next time.
+        if (result.status === "failed") asked.current.delete(key);
+        setLookups((now) => ({ ...now, [key]: result }));
+      });
+    }
+    return promise;
+  };
+
+  // Lookups wait until typing pauses, and only fill in the second line.
+  useEffect(() => {
+    if (ids.length === 0) return;
+    const timer = setTimeout(() => ids.forEach(lookupOf), LOOKUP_DELAY_MS);
+    return () => clearTimeout(timer);
+    // ids is derived from value.
+  }, [value]);
+
   const current = Math.min(active, options.length - 1);
 
   const go = (found: Found) => {

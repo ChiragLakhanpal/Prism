@@ -330,7 +330,18 @@ function AskedLine({ run }: { run: Run }) {
   );
 }
 
-export function AnswerPanel({ run, opened, visited }: { run: Run; opened: Opened; visited: ReadonlySet<string> }) {
+export function AnswerPanel({
+  run,
+  opened,
+  visited,
+  remember = true,
+}: {
+  run: Run;
+  opened: Opened;
+  visited: ReadonlySet<string>;
+  // Ask the server which sources this viewer opened before. The design gallery has no server.
+  remember?: boolean;
+}) {
   const [stillWorking, setStillWorking] = useState(false);
   useEffect(() => {
     if (run.phase !== "streaming") {
@@ -343,7 +354,7 @@ export function AnswerPanel({ run, opened, visited }: { run: Run; opened: Opened
 
   // When the answer lands, its markers learn which sources this viewer opened before.
   useEffect(() => {
-    if (run.phase === "done") void loadVisited(Object.keys(run.evidence));
+    if (remember && run.phase === "done") void loadVisited(Object.keys(run.evidence));
   }, [run.phase, run.serial]);
 
   const close = () => {
@@ -353,15 +364,20 @@ export function AnswerPanel({ run, opened, visited }: { run: Run; opened: Opened
 
   return (
     <section aria-label={copy.answer.panel} aria-busy={run.phase === "streaming"} data-answer-panel className="mb-8">
-      <div className="rounded-md border border-line bg-surface p-4 md:p-6 lg:p-8">
+      <div className="rounded-md border border-line bg-surface p-4 @md/page:p-6 @lg/page:p-8">
         <div className="flex items-start justify-between gap-4">
-          <h2 className="min-w-0 text-title wrap-anywhere text-ink-heading">{run.asked.question}</h2>
-          <Button variant="ghost" icon={X} onClick={close} className="hidden -mt-2 -mr-2 md:inline-flex">
-            {copy.answer.close}
-          </Button>
-          <Button variant="ghost" icon={X} iconOnly onClick={close} className="-mt-2 -mr-2 md:hidden">
-            {copy.answer.close}
-          </Button>
+          <h2 className="min-w-0 text-title wrap-break-word text-ink-heading">{run.asked.question}</h2>
+          {/* "Close the answer" in words from a page area of 768 px; below it, a 44 px icon with the same name. */}
+          <div className="-mt-2 -mr-2 hidden shrink-0 @md/page:block">
+            <Button variant="ghost" icon={X} onClick={close}>
+              {copy.answer.close}
+            </Button>
+          </div>
+          <div className="-mt-2 -mr-2 shrink-0 @md/page:hidden">
+            <Button variant="ghost" icon={X} iconOnly onClick={close}>
+              {copy.answer.close}
+            </Button>
+          </div>
         </div>
         <AskedLine run={run} />
         <div className="mt-6">

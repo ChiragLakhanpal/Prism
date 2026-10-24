@@ -41,7 +41,7 @@ export function Frame({
       </header>
       <div className="flex flex-1 items-stretch">
         <div data-page-column inert={inertPage} className="@container/page flex min-w-0 flex-1 flex-col">
-          <main id="main" tabIndex={-1} className="flex-1 pb-12 focus-visible:outline-none md:pb-16">
+          <main id="main" tabIndex={-1} className="flex-1 pb-12 focus-visible:outline-none @md/page:pb-16">
             {children}
           </main>
           <Footer />

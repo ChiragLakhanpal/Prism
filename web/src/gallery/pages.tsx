@@ -1,7 +1,7 @@
 // The gallery's pages: one per group of components, each listing the states it can be in.
 // Hover and keyboard focus are real interactions, so the capture command (web/capture)
 // makes them happen and photographs them; everything else is shown here as it renders.
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   Check,
   ChevronDown,
@@ -18,6 +18,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Answer } from "../components/Answer";
+import { AnswerPanel } from "../components/AnswerPanel";
+import { EvidenceCard } from "../components/EvidenceCard";
+import { EvidenceDrawerView, type DrawerData } from "../components/EvidenceDrawer";
+import { boxList } from "../components/IntentBox";
+import { POPOVER } from "../components/Popover";
+import type { EvidenceEvent, Run } from "../lib/answer";
+import type { Lookup } from "../lib/intents";
+import { cx } from "../lib/cx";
+import { FAILED, ICR_54, ICR_54_ID, LOOKUPS, PENDING, planRecord, RUNS, STEP_REF, SWITCHER_RUN } from "./answers";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
@@ -275,6 +284,54 @@ const ICONS: Record<string, LucideIcon> = {
   "loader-circle": LoaderCircle,
   "file-down": FileDown,
 };
+
+// The one box as the band shows it for this input, with its list open.
+function BoxSample({ text, hint = false, scope = null, lookups = LOOKUPS }: { text: string; hint?: boolean; scope?: string | null; lookups?: Record<string, Lookup> }) {
+  const [value, setValue] = useState(text);
+  const { options, notes } = boxList(value, scope, lookups);
+  return (
+    <div className="min-h-[15rem] max-w-prose">
+      <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} focusedHint={hint} shortcut={false} />
+    </div>
+  );
+}
+
+const NOTHING_OPENED: ReadonlySet<string> = new Set();
+
+function PanelSample({ run }: { run: Run }) {
+  return <AnswerPanel run={run} opened={{ id: null, sentence: null }} visited={NOTHING_OPENED} remember={false} />;
+}
+
+// ICR P130164 paragraph 54 as the answer stream sent it, with the highlight for its first sentence.
+const ICR_54_SENT = RUNS.ready.evidence[ICR_54_ID];
+
+// A check_plan row, as an answer citing a record would send it.
+const PLAN_RECORD: EvidenceEvent = planRecord((pc.result as unknown as { rows: Record<string, unknown>[] }).rows[0]);
+
+// The drawer as a sample: opened from a sentence of an answer, or with its source in a given state.
+function DrawerSample({ id, run = null, sentence, data, preview = false }: { id: string; run?: Run | null; sentence?: number; data?: DrawerData; preview?: boolean }) {
+  const dialogId = useId();
+  const [current, setCurrent] = useState(id);
+  const evidence = run?.evidence[current];
+  const shown: DrawerData = data ?? (evidence ? { status: "ready", evidence } : { status: "missing" });
+  const from = sentence === undefined ? null : { id: current, sentence, marker: null, runId: run?.runId ?? null };
+  return (
+    <div className="max-w-[37.5rem] overflow-hidden rounded-md border border-line">
+      <EvidenceDrawerView
+        id={current}
+        data={shown}
+        run={run}
+        from={from}
+        narrow={false}
+        preview={preview}
+        dialogId={dialogId}
+        sample
+        onClose={() => {}}
+        onChoose={setCurrent}
+      />
+    </div>
+  );
+}
 
 export const PAGES: GalleryPage[] = [
   {
@@ -821,6 +878,71 @@ export const PAGES: GalleryPage[] = [
           </Panel>
         ),
       },
+    ],
+  },
+  {
+    // Ticket 14's one box: each sample is the band's box with the list it shows for that input, from
+    // the same intent rules and the lookups the server recorded.
+    slug: "box",
+    sections: [
+      { id: "hint", title: s.hint, body: <BoxSample text="" hint /> },
+      { id: "project", title: s.project, body: <BoxSample text={sample.boxProject} /> },
+      { id: "loan", title: s.loan, body: <BoxSample text={sample.boxLoan} /> },
+      { id: "loan-pending", title: s.loanPending, body: <BoxSample text="60290" /> },
+      { id: "activity", title: s.activity, body: <BoxSample text={STEP_REF} /> },
+      { id: "activity-pending", title: s.activityPending, body: <BoxSample text={STEP_REF} lookups={PENDING} /> },
+      { id: "question", title: s.question, body: <BoxSample text={sample.boxQuestion} /> },
+      { id: "question-with-id", title: s.questionWithId, body: <BoxSample text={sample.showcaseQuestion} /> },
+      { id: "not-found", title: s.notFound, body: <BoxSample text={sample.unknownProject} /> },
+      { id: "lookup-failed", title: s.lookupFailed, body: <BoxSample text={STEP_REF} lookups={FAILED} /> },
+      { id: "scoped", title: s.scoped, body: <BoxSample text={sample.boxQuestion} scope={sample.boxProject} /> },
+    ],
+  },
+  {
+    // Ticket 14's answer panel, playing the recorded answer streams (web/src/gallery/answers.ts).
+    slug: "answer-panel",
+    sections: [
+      { id: "streaming", title: s.streamingSteps, body: <PanelSample run={RUNS.streaming} /> },
+      { id: "ready", title: s.readyRemoved, body: <PanelSample run={RUNS.ready} /> },
+      { id: "all-checked", title: s.allChecked, body: <PanelSample run={RUNS.allChecked} /> },
+      { id: "unsupported", title: s.unsupported, body: <PanelSample run={RUNS.unsupported} /> },
+      { id: "empty-scoped", title: s.emptyScoped, body: <PanelSample run={RUNS.emptyScoped} /> },
+      { id: "empty-unscoped", title: s.emptyUnscoped, body: <PanelSample run={RUNS.emptyUnscoped} /> },
+      { id: "refused", title: s.refused, body: <PanelSample run={RUNS.refused} /> },
+      { id: "error", title: s.error, body: <PanelSample run={RUNS.error} /> },
+      { id: "dropped", title: s.dropped, body: <PanelSample run={RUNS.dropped} /> },
+      { id: "as-of", title: s.asOf, body: <PanelSample run={RUNS.asOf} /> },
+      { id: "preview", title: s.preview, body: <PanelSample run={RUNS.preview} /> },
+    ],
+  },
+  {
+    // Ticket 14's evidence card and drawer, at ICR P130164 paragraph 54 as the stream sent it.
+    slug: "evidence",
+    sections: [
+      {
+        id: "card",
+        title: s.card,
+        body: (
+          <div className="flex flex-col gap-6">
+            <div className={cx(POPOVER, "w-[min(22.5rem,calc(100vw-3.5rem))] px-3 py-2 text-small")}>
+              <EvidenceCard evidence={ICR_54_SENT} n={1} sentence={0} />
+            </div>
+            <Labeled label={s.cardVisited}>
+              <div className={cx(POPOVER, "w-[min(22.5rem,calc(100vw-3.5rem))] px-3 py-2 text-small")}>
+                <EvidenceCard evidence={ICR_54_SENT} n={1} sentence={0} visited />
+              </div>
+            </Labeled>
+          </div>
+        ),
+      },
+      { id: "from-answer", title: s.fromAnswer, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} /> },
+      { id: "switcher", title: s.switcher, body: <DrawerSample id={ICR_54_ID} run={SWITCHER_RUN} sentence={0} /> },
+      { id: "from-link", title: s.fromLink, body: <DrawerSample id={ICR_54_ID} data={{ status: "ready", evidence: ICR_54 }} /> },
+      { id: "record", title: s.record, body: <DrawerSample id={PLAN_RECORD.id} data={{ status: "ready", evidence: PLAN_RECORD }} /> },
+      { id: "loading", title: s.loading, body: <DrawerSample id={ICR_54_ID} data={{ status: "loading" }} /> },
+      { id: "failed", title: s.error, body: <DrawerSample id={ICR_54_ID} data={{ status: "failed", onRetry: () => {} }} /> },
+      { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },
+      { id: "preview", title: s.drawerPreview, body: <DrawerSample id={ICR_54_ID} run={RUNS.ready} sentence={0} preview /> },
     ],
   },
   {
