@@ -8,6 +8,7 @@ never from the code.
 """
 
 import datetime as dt
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -68,6 +69,12 @@ def test_isr_7_and_the_icrs_paragraph_78_come_back_as_one_disagreement_leaning_o
     assert (paragraph["made_at"], paragraph["public_from"]) == (value("icr-date").isoformat(),
                                                                 value("icr-disclosed").isoformat())
     assert (paragraph["evidence_tier"], paragraph["judgment"]) == ("icr", "unsatisfactory")
+    # What the card names each side by and links it to: the paragraph as the report numbers it, and the
+    # document's key in the source view's address (ticket 21). An ISR numbers no paragraphs.
+    para = TRUTH["icr-para-78"]
+    assert (paragraph["paragraph"], paragraph["paragraph_numbered"]) == (str(para["paragraph"]), True)
+    assert paragraph["doc_key"] == para["document"].rsplit("/", 1)[1]
+    assert (isr_7["paragraph_numbered"], isr_7["doc_key"]) == (False, f"isr-{value('isr-7-date').isoformat()}")
     assert row["if_you_keep"] == {"assertion_id": ISR_7, "attribute": "pdo_progress", "value": value("isr-7-rating"),
                                   "value_form": "rating", "judgment": "satisfactory",
                                   "field_name": "Progress towards achievement of PDO", "period_event": "mid_term_review"}
@@ -178,6 +185,28 @@ def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engi
     assert (row["lean_assertion_id"], row["rule_id"]) == (notice["assertion_id"], "tieRecent")
     assert notice["evidence_id"] == "strata.gold.notice:OP00216847"
     assert row["sides"][0]["evidence_id"] == "strata.gold.contract:1729599"
+    assert (notice["paragraph"], notice["doc_key"]) == (None, None)  # a record has no paragraph
+
+
+# ── The words the screens write from the result ─────────────────────────
+
+def copy_keys(group: str) -> set[str]:
+    """The keys of one group under copy.disagreement in the screens' copy file (web/src/copy.ts)."""
+    text = (ROOT / "web" / "src" / "copy.ts").read_text()
+    words = text[text.index("\n  disagreement: {"):]
+    words = words[words.index(f"\n    {group}: {{"):]
+    words = words[:words.index("\n    },")]
+    return set(re.findall(r"^ {6}(\w+):", words, flags=re.MULTILINE))
+
+
+def test_every_rule_and_tier_the_ladder_can_return_has_its_words_in_the_copy_file():
+    """The tool returns the ladder's rule id and each side's evidence tier, never a sentence (as check_plan
+    returns reason codes); the copy file says them (brief 23, section 7.5). Reordering the ladder changes
+    which id comes back and needs no copy change; a new rule or tier needs its words."""
+    ladder = config.load_ladder()
+
+    assert {rule.id for rule in ladder.rules} | set(ladder.ties) <= copy_keys("rule")
+    assert set(ladder.tiers) <= copy_keys("written")
 
 
 def test_the_rejected_assertion_is_counted_for_the_project(engine):

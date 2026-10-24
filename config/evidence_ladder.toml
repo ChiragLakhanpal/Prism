@@ -41,28 +41,24 @@ at_the_moment = ["record"]
 order = ["tieSpecific", "tieRecent"]
 specificity = [["rating_field", "contract_record", "award_notice"], ["narrative", "plan_row"]]
 
-# The evidence tiers, one for each of brief 23's "written when" labels: how independent and how
-# retrospective a source is. A report's tier comes from its document type in the documents API; every
-# record (a contract, a notice, a plan row) is in the record tier. The IEG ratings dataset repeats the
-# ratings of IEG's own evaluations, so its rows are in the ieg tier.
-[tiers.pad]
-written = "at appraisal"
+# The evidence tiers: how independent and how retrospective a source is. There is one for each of brief
+# 23's "written when" labels, whose words are in the screens' copy file (web/src/copy.ts,
+# disagreement.written, keyed by the tier). A report's tier comes from its document type in the documents
+# API; every record (a contract, a notice, a plan row) is in the record tier. The IEG ratings dataset
+# repeats the ratings of IEG's own evaluations, so its rows are in the ieg tier.
+[tiers.pad]  # written at appraisal
 document_types = ["Project Appraisal Document"]
 
-[tiers.isr]
-written = "during the project"
+[tiers.isr]  # written during the project
 document_types = ["Implementation Status and Results Report"]
 
-[tiers.icr]
-written = "after the project closed"
+[tiers.icr]  # written after the project closed
 document_types = ["Implementation Completion and Results Report"]
 
-[tiers.ieg]
-written = "by IEG after the project closed"
+[tiers.ieg]  # written by IEG after the project closed
 document_types = ["Implementation Completion Report Review", "Project Performance Assessment Report"]
 
-[tiers.record]
-written = "on its own date"
+[tiers.record]  # recorded on its own date
 document_types = []
 
 # What an assertion can be about. Each attribute has:

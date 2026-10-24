@@ -33,11 +33,13 @@ import datetime as dt
 from importlib import resources
 
 from strata.config import load_ladder
-from strata.knowledge.assertions import CONTRACT_SIGNING, REPORT_PERIOD, WHOLE_PROJECT, Assertion, from_row, overlap, typed
+from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERIOD, WHOLE_PROJECT, Assertion, from_row,
+                                        overlap, typed)
 from strata.tools.registry import Call
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
+PASSAGE_FIELDS = ("paragraph", "paragraph_numbered", "printed_page", "doc_key")
 
 
 def _sql(name: str) -> str:
@@ -62,7 +64,12 @@ def months_between(start: dt.date, end: dt.date) -> int:
     return (end.year - start.year) * 12 + end.month - start.month - (1 if end.day < start.day else 0)
 
 
-def _side(assertion: Assertion, moment: dt.date | None) -> dict:
+def _boolean(value) -> bool | None:
+    """A boolean from DuckDB or from the warehouse's text."""
+    return None if value is None else value if isinstance(value, bool) else str(value).lower() == "true"
+
+
+def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
     return {
         "assertion_id": assertion.assertion_id,
         "evidence_id": assertion.evidence_id,
@@ -76,6 +83,13 @@ def _side(assertion: Assertion, moment: dt.date | None) -> dict:
         "sequence": assertion.sequence,
         "passage_id": assertion.passage_id,
         "pdf_page": assertion.pdf_page,
+        # For a side that rests on a passage: the paragraph as the report numbers it (or Strata's own count,
+        # s4, when paragraph_numbered is false, as in an ISR), its printed page, and the document's key in
+        # the source view's address (/projects/:pid/documents/:doc_key). Empty for a record.
+        "paragraph": passage.get("paragraph"),
+        "paragraph_numbered": _boolean(passage.get("paragraph_numbered")),
+        "printed_page": passage.get("printed_page"),
+        "doc_key": passage.get("doc_key"),
         "field_name": assertion.field_name,
         "value": assertion.value,
         "value_form": assertion.value_form,
@@ -90,7 +104,7 @@ def _side(assertion: Assertion, moment: dt.date | None) -> dict:
     }
 
 
-def _row(found: dict, sides: tuple[Assertion, Assertion]) -> dict:
+def _row(found: dict, sides: tuple[Assertion, Assertion], passages: dict[str, dict]) -> dict:
     first, second = sides
     start, end = typed("period_start", found["period_start"]), typed("period_end", found["period_end"])
     moment = start if start == end and found["period_event"] not in NOT_A_MOMENT else None
@@ -108,7 +122,8 @@ def _row(found: dict, sides: tuple[Assertion, Assertion]) -> dict:
         "attribute": found["attribute"],
         "attribute_kind": first.attribute_kind,
         "period": {"event": found["period_event"], "start": _iso(start), "end": _iso(end)},
-        "sides": [_side(first, moment), _side(second, moment)],
+        "sides": [_side(first, moment, passages[first.assertion_id]),
+                  _side(second, moment, passages[second.assertion_id])],
         "lean_assertion_id": leaned,
         "other_assertion_id": other.assertion_id if other else None,
         "rule_id": found["rule_id"],
@@ -168,9 +183,10 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     if attribute is not None and attribute not in load_ladder().attributes:
         return {**empty, "subject": subject, "abstention": {"reason": "unknown_attribute", "attribute": attribute}}
 
-    assertions = [from_row(row)
-                  for row in _rows(call, "assertions.sql", as_of=call.as_of, **common)]
+    held = _rows(call, "assertions.sql", as_of=call.as_of, passages=f"{PASSAGES}:", **common)
+    assertions = [from_row(row) for row in held]
     by_id = {assertion.assertion_id: assertion for assertion in assertions}
+    passages = {row["assertion_id"]: {key: row[key] for key in PASSAGE_FIELDS} for row in held}
     current = [assertion for assertion in assertions if _current(assertion, call.as_of)
                and (attribute is None or assertion.attribute == attribute)]
     reasons = [{"reason": row["reason"], "count": int(row["rejected"])}
@@ -180,7 +196,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     found = [row for row in _rows(call, "disagreements.sql", as_of=call.as_of, **common)
              if attribute is None or row["attribute"] == attribute]
     replaced = [row for row in found if (day := typed("replaced_on", row["replaced_on"])) and day <= call.as_of]
-    rows = [_row(row, (by_id[row["first_assertion_id"]], by_id[row["second_assertion_id"]]))
+    rows = [_row(row, (by_id[row["first_assertion_id"]], by_id[row["second_assertion_id"]]), passages)
             for row in found if row not in replaced]
     not_used = [{"reason": "replaced_by_later_version", "count": len(replaced),
                  "evidence_ids": [f"{TABLE}:{row['disagreement_id']}" for row in replaced]}] if replaced else []

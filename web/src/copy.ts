@@ -591,6 +591,30 @@ export const copy = {
     } as Record<string, string>,
   },
 
+  // The words a disagreement card writes from what get_disagreements returns (ticket 20; the 23 brief,
+  // section 7.5). The tool returns ids and values, never a sentence, as check_plan returns reason codes.
+  // Templates whose {slots} the card fills: {lean} and {other} are the two sides' short names.
+  disagreement: {
+    // One sentence per rule id in config/evidence_ladder.toml, rules and ties alike. Reordering the
+    // ladder changes which id comes back, not these words. A test fails when an id lacks its sentence.
+    rule: {
+      outcome:
+        "For a judgment of how a project went, I lean on the report written later and more independently, here {lean}, " +
+        "and I keep {other} as the record of what was said at the time.",
+      moment: "For a fact about a moment, I lean on the record made at that moment, here {lean}.",
+      tieSpecific: "The two reports rank the same, so I lean on the more specific one, {lean}.",
+      tieRecent: "The two reports rank the same and are equally specific, so I lean on the more recent one, {lean}.",
+    },
+    // When a side's source was written, by its evidence tier (config/evidence_ladder.toml, [tiers]).
+    written: {
+      pad: "Written at appraisal",
+      isr: "Written during the project",
+      icr: "Written after the project closed",
+      ieg: "Written by IEG after the project closed",
+      record: "Recorded on this date",
+    },
+  },
+
   // Tables (DESIGN.md section 5): a title sentence, a count line and a source line.
   // The title, count and source lines show only with the rows. While the rows load, skeleton
   // lines hold their places; an empty or failed table shows only its own card or alert.

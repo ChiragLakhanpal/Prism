@@ -1168,8 +1168,10 @@ class LadderRule:
 
 @dataclass(frozen=True)
 class Tier:
+    """An evidence tier: the document types whose reports are in it. Its "written when" words are in the
+    screens' copy file (web/src/copy.ts, disagreement.written)."""
+
     key: str
-    written: str  # when a source of the tier was written, as brief 23's "written when" label says it
     document_types: tuple[str, ...]
 
 
@@ -1270,8 +1272,8 @@ def load_ladder(path: Path = CONFIG_DIR / "evidence_ladder.toml") -> Ladder:
     tiers = {}
     for key, table in (data.get("tiers") or {}).items():
         entry = _Entry(path, f"tiers.{key}", table)
-        entry.only({"written", "document_types"})
-        tiers[key] = Tier(key, entry.text("written"), entry.texts("document_types"))
+        entry.only({"document_types"})
+        tiers[key] = Tier(key, entry.texts("document_types"))
     if not tiers:
         raise ConfigError(f"{path.name} names no evidence tier. Add a [tiers.<name>] table for each one.")
     rules = tuple(_ladder_rule(path, entry, tiers) for entry in _tables(path, data, "rules"))
