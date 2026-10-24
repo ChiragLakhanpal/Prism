@@ -152,6 +152,7 @@ const PLAN_SHOTS: Shot[] = [
   planShot("check-plan--focus-show", plan, { widths: [1440, 390], act: focus("[data-fold] button:visible") }),
   planShot("check-plan--num-days-late", plan, { widths: [1440, 390], act: focus(":is([id='KE-NWWDA-229129-CW-RFB'], li:has([data-activity='KE-NWWDA-229129-CW-RFB'])) button[data-num]:visible") }),
   planShot("check-plan--definition", plan, { widths: [1440], act: click("[data-view=table] thead [data-term]") }),
+  planShot("check-plan--definition-cards", plan, { widths: [390], act: click("[data-plan-check] [data-term]:visible") }),
   planShot("check-plan--focus-breadcrumb", plan, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
   planShot("check-plan--deep-link", plan, {}, `${PLAN}#KE-NWWDA-207796-CS-INDV`),
   planShot("check-plan--320", plan, { widths: [320] }),
