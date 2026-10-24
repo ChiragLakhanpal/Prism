@@ -30,6 +30,10 @@ class FakeWorkspace:
         self.apps = {} if app is None else {"strata": dict(app)}
         self.uploaded, self.deployed, self.configured, self.statements, self.started = {}, [], [], [], []
         self.secrets = {}
+        self.databases = []
+
+    def app_state_database(self, instance):
+        self.databases.append(instance)
 
     def me(self):
         return "owner@example.org"
@@ -106,8 +110,30 @@ def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_
         {"name": "sql-warehouse", "sql_warehouse": {"id": "wh-1", "permission": "CAN_USE"}},
         {"name": "appinsights", "secret": {"scope": "strata", "key": "APPLICATIONINSIGHTS_CONNECTION_STRING",
                                            "permission": "READ"}},
+        # App state lives in Lakebase (ADR 0005): the database resource sets PGHOST, PGUSER and the rest for the
+        # server, and lets the app's own principal make its tables there.
+        {"name": "app-state", "database": {"instance_name": "strata-state", "database_name": "databricks_postgres",
+                                           "permission": "CAN_CONNECT_AND_CREATE"}},
     ]
     assert scopes == ["sql"]
+    assert workspace.databases == ["strata-state"]
+
+
+def test_without_lakebase_the_app_deploys_with_no_app_state_and_says_so(tmp_path, capsys):
+    """A workspace that cannot make or start the Lakebase instance still gets the app; planning a package
+    then says there is no data service."""
+    class NoLakebase(FakeWorkspace):
+        def app_state_database(self, instance):
+            raise RuntimeError("Lakebase is not enabled in this workspace")
+
+    workspace = NoLakebase()
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 0
+    [(_, _, resources, _)] = workspace.configured
+    assert [resource["name"] for resource in resources] == ["sql-warehouse", "appinsights"]
+    assert "Lakebase is not enabled in this workspace" in out and "no packages" in out
 
 
 def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file_has_them(tmp_path, capsys):
@@ -119,7 +145,7 @@ def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file
     assert code == 0
     assert workspace.secrets == {("strata", key): value for key, value in FOUNDRY.items()}
     [(_, _, resources, _)] = workspace.configured
-    assert resources[2:] == [
+    assert resources[3:] == [
         {"name": name, "secret": {"scope": "strata", "key": key, "permission": "READ"}}
         for name, key in (("foundry-endpoint", "FOUNDRY_PROJECT_ENDPOINT"), ("foundry-tenant", "FOUNDRY_TENANT_ID"),
                           ("foundry-client-id", "FOUNDRY_CLIENT_ID"), ("foundry-client-secret", "FOUNDRY_CLIENT_SECRET"))]
@@ -149,7 +175,7 @@ def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_
     assert code == 0
     assert workspace.secrets == {}
     [(_, _, resources, _)] = workspace.configured
-    assert [resource["name"] for resource in resources] == ["sql-warehouse", "appinsights"]
+    assert [resource["name"] for resource in resources] == ["sql-warehouse", "appinsights", "app-state"]
     started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
     assert [entry["name"] for entry in started["env"] if entry["name"].startswith("FOUNDRY_")] == []
     assert started["command"] == ["python", "-m", "strata.server"]

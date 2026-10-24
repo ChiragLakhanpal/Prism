@@ -1,8 +1,10 @@
 -- One row for each package a person started planning from a sentence (ticket 15), saved only once the
 -- package reader read the sentence (or the person chose to set the criteria themselves), so a failed
--- model call leaves nothing here. The plan-a-package workflow (src/strata/packages) writes it as the app's
--- own service principal, and every read shows a package only to the person who made it. Its criteria are
--- its latest row in strata.ops.planned_package_saves. Nothing deletes a package.
+-- model call leaves nothing here. It is app state, so it lives in Lakebase (ADR 0005), in the app state
+-- database's schema app; src/strata/appstate says how the app reaches it. The plan-a-package workflow
+-- (src/strata/packages) writes it as the app's own service principal, and every read shows a package only
+-- to the person who made it. Its criteria are its latest row in strata.app.planned_package_saves.
+-- Nothing deletes a package.
 --
 -- Packages render as they are today, so no read filters them by public_from.
 --
@@ -14,7 +16,7 @@
 --              criteria themselves
 -- created_at   when it was first saved, in UTC
 -- public_from  the day it was first saved, in UTC (ADR 0002)
-CREATE TABLE IF NOT EXISTS strata.ops.planned_packages (
+CREATE TABLE IF NOT EXISTS strata.app.planned_packages (
   package_id STRING NOT NULL,
   author_id STRING NOT NULL,
   author_name STRING,

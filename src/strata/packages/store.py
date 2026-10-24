@@ -1,10 +1,11 @@
-"""Where planned packages and opened plan checks are kept: strata.ops, written as the app's own service principal
-(ticket 15), as the drafts are.
+"""Where planned packages and opened plan checks are kept: the app state store, Lakebase on the App (ADR 0005;
+src/strata/appstate), written as the app's own service principal (ticket 15).
 
-A package is one row in strata.ops.planned_packages and one row in strata.ops.planned_package_saves for each
+A package is one row in strata.app.planned_packages and one row in strata.app.planned_package_saves for each
 save; its latest save is the package now. Nothing is updated or deleted (CLAUDE.md rule 5). The store holds no
-access rule: the package routes show a package only to the person who made it. Values arrive typed from
-DuckDB and as text from the SQL warehouse, so each is read once here.
+access rule: the package routes show a package only to the person who made it. The first use makes the
+tables, unless they exist, so the app needs only its database. Values arrive typed from DuckDB and Postgres,
+and as text from an engine that answers in text, so each is read once here.
 """
 
 from __future__ import annotations
@@ -16,7 +17,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cache
 from importlib import resources
+from threading import Lock
 
+from strata import appstate
 from strata.drafts.store import moment
 from strata.lakehouse.engine import Engine
 
@@ -76,15 +79,23 @@ class PlanCheck:
 
 
 class PackageStore:
-    """The planned packages in strata.ops. engine() opens the engine that reads and writes them: the app's own."""
+    """The planned packages in the app state store. engine() opens the engine that reads and writes them: the
+    app's own."""
 
     def __init__(self, engine: Callable[[], Engine]):
         self.engine = engine
+        self._built = False
+        self._building = Lock()
 
     @contextmanager
     def _open(self) -> Iterator[Engine]:
         engine = self.engine()
         try:
+            if not self._built:
+                with self._building:
+                    if not self._built:
+                        appstate.build(engine)
+                        self._built = True
             yield engine
         finally:
             close = getattr(engine, "close", None)
@@ -106,16 +117,16 @@ class PackageStore:
                save_id: str, criteria: dict, at: dt.datetime) -> None:
         """Save a new package with its first criteria."""
         with self._open() as engine:
-            engine.insert_rows("strata.ops.planned_packages", PACKAGE_COLUMNS, [(
+            engine.insert_rows("strata.app.planned_packages", PACKAGE_COLUMNS, [(
                 package_id, author_id, author_name, sentence, run_id, at, at.date())])
-            engine.insert_rows("strata.ops.planned_package_saves", SAVE_COLUMNS, [(
+            engine.insert_rows("strata.app.planned_package_saves", SAVE_COLUMNS, [(
                 package_id, save_id, json.dumps(criteria, ensure_ascii=False), None, None, at, at.date())])
 
     def save(self, package_id: str, save_id: str, criteria: dict, plan_months: float | None,
              plan_before_range: bool | None, at: dt.datetime) -> None:
         """Keep the package's criteria after a change, as a new save."""
         with self._open() as engine:
-            engine.insert_rows("strata.ops.planned_package_saves", SAVE_COLUMNS, [(
+            engine.insert_rows("strata.app.planned_package_saves", SAVE_COLUMNS, [(
                 package_id, save_id, json.dumps(criteria, ensure_ascii=False), plan_months, plan_before_range, at,
                 at.date())])
 
@@ -131,7 +142,7 @@ class PackageStore:
     def record_plan_check(self, viewer_id: str, project_id: str, agency_id: str, implementing_agency: str | None,
                           plan_date: dt.date, latest: bool, activities: int | None, at: dt.datetime) -> None:
         with self._open() as engine:
-            engine.insert_rows("strata.ops.plan_checks_opened", PLAN_CHECK_COLUMNS, [(
+            engine.insert_rows("strata.app.plan_checks_opened", PLAN_CHECK_COLUMNS, [(
                 viewer_id, project_id, agency_id, implementing_agency, plan_date, latest, activities, at, at.date())])
 
     def plan_checks(self, viewer_id: str) -> list[PlanCheck]:

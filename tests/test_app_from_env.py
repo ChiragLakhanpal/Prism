@@ -70,6 +70,10 @@ def fake_workspace():
                 return self.answer({"statement_id": "s-2", "status": {"state": "SUCCEEDED"},
                                     "manifest": {"schema": {"columns": [{"name": "draft_id", "position": 0}]}},
                                     "result": {"data_array": []}})
+            if "strata.gold.country" in statement["statement"]:  # the package workspace's country list
+                return self.answer({"statement_id": "s-3", "status": {"state": "SUCCEEDED"}, "manifest": {"schema": {
+                    "columns": [{"name": "country_code", "position": 0}, {"name": "country_name", "position": 1}]}},
+                    "result": {"data_array": [["KE", "Kenya"]]}})
             return self.answer({"statement_id": "s-1", "status": {"state": "SUCCEEDED"},
                                 "manifest": {"schema": {"columns": [{"name": "data_through", "position": 0}]}},
                                 "result": {"data_array": [["2026-10-21"]]}})
@@ -202,3 +206,86 @@ def test_a_page_address_never_reaches_a_file_outside_the_web_app(tmp_path):
     [response] = serve(app_from_env({"STRATA_WEB_DIST": str(web)}), [("/%2e%2e/secret.txt", {})])
 
     assert "not for viewers" not in response.text
+
+
+def plan_and_list(app, body):
+    async def go():
+        async with app.router.lifespan_context(app):
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                planned = await client.post("/api/planned-packages", headers=ANA, json=body)
+                listed = await client.get("/api/planned-packages", headers=ANA)
+                return planned, listed
+    return asyncio.run(go())
+
+
+def test_on_this_computer_packages_are_kept_in_the_app_state_file(fixture_db, tmp_path):
+    """STRATA_APP_STATE_FILE keeps the packages a person plans (ticket 15), in the app state tables. With no
+    Foundry project named, reading a sentence says there is no reader, and setting the criteria yourself works."""
+    app = app_from_env({"STRATA_DATABASE_FILE": str(fixture_db), "STRATA_APP_STATE_FILE": str(tmp_path / "state.duckdb"),
+                        "STRATA_WEB_DIST": str(tmp_path)})
+
+    read, _ = plan_and_list(app, {"sentence": "rural roads, Kenya, about US$15 million"})
+    yourself, listed = plan_and_list(app, {"sentence": "rural roads, Kenya, about US$15 million", "read": False})
+
+    assert "event: error" in read.text and '"no_reader"' in read.text
+    assert "event: package" in yourself.text
+    assert [row["type"] for row in listed.json()["rows"]] == ["package"]
+
+
+def test_on_the_app_a_package_is_saved_in_lakebase_signed_in_as_the_app_with_its_own_token(monkeypatch):
+    """App state lives in Lakebase (ADR 0005). The app's database resource names the database, and the app signs
+    in as its own service principal with its own token; the viewer's token never reaches Lakebase."""
+    from strata.appstate import lakebase
+
+    connections = []
+
+    class Cursor:
+        description = None
+
+        def __init__(self, connection):
+            self.connection = connection
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def execute(self, sql, params=None):
+            self.connection.statements.append((sql, params))
+
+        def executemany(self, sql, params):
+            self.connection.statements.append((sql, list(params)))
+
+        def fetchall(self):
+            return []
+
+    class Connection:
+        closed = broken = False
+
+        def __init__(self, settings):
+            self.settings, self.statements = settings, []
+
+        def cursor(self):
+            return Cursor(self)
+
+        def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(lakebase, "_psycopg_connect", lambda **settings: connections.append(Connection(settings)) or connections[-1])
+    with fake_workspace() as (host, calls):
+        app = app_from_env({"DATABRICKS_HOST": host, "DATABRICKS_WAREHOUSE_ID": "wh-1",
+                            "DATABRICKS_CLIENT_ID": "strata-app", "DATABRICKS_CLIENT_SECRET": "not-a-real-key",
+                            "PGHOST": "instance-1.database.cloud.databricks.com", "PGPORT": "5432",
+                            "PGDATABASE": "databricks_postgres", "PGUSER": "strata-app", "PGSSLMODE": "require"})
+
+        planned, _ = plan_and_list(app, {"sentence": "rural roads, Kenya, about US$15 million", "read": False})
+
+    assert "event: package" in planned.text
+    assert {connection.settings["password"] for connection in connections} == {"app-not-real"}
+    assert {connection.settings["user"] for connection in connections} == {"strata-app"}
+    statements = [sql for connection in connections for sql, _ in connection.statements]
+    assert any(sql.startswith("INSERT INTO app.planned_packages") for sql in statements)
+    params = json.dumps([params for connection in connections for _, params in connection.statements], default=str)
+    assert "4021@1984" in params and "token-for-ana-only" not in params

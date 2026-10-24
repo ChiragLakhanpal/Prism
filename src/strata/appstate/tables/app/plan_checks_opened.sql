@@ -1,7 +1,8 @@
 -- One row each time a viewer opened a plan check (ticket 15): Check a plan answered for one implementing
 -- agency's Procurement Plan version. The Packages tab lists the plans a person checked beside the packages
--- they are planning, by when they last opened each. The server writes it as the app's own service
--- principal; a preview of another view writes nothing.
+-- they are planning, by when they last opened each. It is app state, read each time the Packages tab
+-- opens, so it lives in Lakebase with the packages (ADR 0005), not in strata.ops with the logs. The
+-- server writes it as the app's own service principal; a preview of another view writes nothing.
 --
 -- viewer_id            the user id the Databricks App forwarded
 -- project_id           the plan's project
@@ -13,7 +14,7 @@
 -- activities           how many activities the check covered
 -- opened_at            when the viewer opened it, in UTC
 -- public_from          the day they opened it, in UTC (ADR 0002)
-CREATE TABLE IF NOT EXISTS strata.ops.plan_checks_opened (
+CREATE TABLE IF NOT EXISTS strata.app.plan_checks_opened (
   viewer_id STRING NOT NULL,
   project_id STRING NOT NULL,
   agency_id STRING NOT NULL,

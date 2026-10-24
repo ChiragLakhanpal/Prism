@@ -42,6 +42,18 @@ def writers_from_environment(environ: Mapping[str, str]) -> Callable[[str], Foun
     return writer
 
 
+def agent_from_environment(environ: Mapping[str, str], key: str) -> Callable[[], FoundryAgent | None]:
+    """One Foundry agent by its key in config/agents.toml, such as the package reader (ticket 15), as the app's
+    own principal, or None when the environment names no Foundry project."""
+    values = {name: environ.get(name, "").strip() for name in NEEDS}
+    if not all(values.values()):
+        return lambda: None
+    spec = load_agent(key)
+    token = entra_token(values["FOUNDRY_TENANT_ID"], values["FOUNDRY_CLIENT_ID"], values["FOUNDRY_CLIENT_SECRET"],
+                        FOUNDRY_SCOPE)
+    return lambda: FoundryAgent(values["FOUNDRY_PROJECT_ENDPOINT"], spec, token)
+
+
 def from_environment(environ: Mapping[str, str], engine_for: EngineFor | None) -> Runner | None:
     values = {key: environ.get(key, "").strip() for key in NEEDS}
     if engine_for is None or not all(values.values()):

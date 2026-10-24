@@ -32,7 +32,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from strata.agent.loop import AgentError  # noqa: E402
 from strata.agent.scripted import PACKAGE_CASES, ScriptedAgent, load_cases  # noqa: E402
-from strata.lakehouse import catalog  # noqa: E402
+from strata import appstate  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.packages.store import PackageStore  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
@@ -79,7 +79,7 @@ def answers(folder: Path) -> dict[str, str]:
     """Every recorded answer, by its file name, as the text the file holds."""
     state_db = folder / "state.duckdb"
     with DuckDBEngine.open(state_db) as engine:
-        catalog.build(engine)
+        appstate.build(engine)
     at = [dt.datetime(2026, 10, 23, 14, 0, tzinfo=dt.UTC)]
     cases = load_cases(PACKAGE_CASES)
     reading_case = ["package-rural-roads-kenya"]

@@ -16,12 +16,19 @@ reads only the environment it is given:
   keeps no usage events, records no opened sources, decisions or labels and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
   opened sources and the drafts instead.
+- PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
+  resource: app state lives there (ADR 0005; src/strata/appstate), starting with the packages a person
+  plans and the plan checks they open (ticket 15). The app signs in as its own service principal, with the
+  token its client id and secret get. Without a database, on this computer, STRATA_APP_STATE_FILE keeps
+  packages too; without either, planning a package says there is no data service.
 - DATABRICKS_HOST also gives the one access rule (src/strata/server/access.py) each viewer's workspace
   groups, read from the SCIM API with their own token, which config/roles.toml turns into a team.
 - FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET (the app's
   four foundry-* secret resources, which ops/app/deploy_app.py sets): /api/ask answers through the
   Foundry agent, and each draft kind's writer is its Foundry writer agent (src/strata/agent/runner.py).
-  Without them, /api/ask says there is no agent, and drafting says there is no writer.
+  Without them, /api/ask says there is no agent, drafting says there is no writer, and planning a package
+  from a sentence says there is no reader. The package reader is the agent config/agents.toml names
+  package_reader.
 - APPLICATIONINSIGHTS_CONNECTION_STRING (the app's appinsights secret resource): traces go to
   Application Insights (src/strata/server/tracing.py).
 - STRATA_WEB_DIST: the built web app to serve, by default web/dist when it exists.
@@ -46,9 +53,11 @@ from fastapi import FastAPI
 
 from strata.agent import runner as agent_runner
 from strata.agent.runs import RunLog
+from strata.appstate import lakebase
 from strata.config import load_roles, load_thresholds
 from strata.drafts.store import DraftStore
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
+from strata.packages.store import PackageStore
 from strata.server import engines, tracing
 from strata.server.access import Access, NoGroups, WorkspaceGroups
 from strata.server.app import create_app
@@ -117,6 +126,15 @@ def _app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     return lambda: DuckDBEngine.open(path)
 
 
+def _app_state(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
+    """Lakebase, as the app's database resource names it, signed in with the app's own token (ADR 0005)."""
+    host = environ.get("DATABRICKS_HOST", "").strip()
+    client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
+    if not (host and client_id and secret):
+        return None
+    return lakebase.from_environment(environ, app_token(host, client_id, secret))
+
+
 def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     environ = os.environ if environ is None else environ
     thresholds = load_thresholds()
@@ -124,7 +142,9 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
     engine_for = engines.from_environment(environ, timeout_seconds=timeout)
     the_app = _the_app_s_engine(environ)
-    state = the_app or _app_state_file(environ)
+    state_file = _app_state_file(environ) if not the_app else None
+    state = the_app or state_file
+    app_state = _app_state(environ) or state_file
     host = environ.get("DATABRICKS_HOST", "").strip()
     return create_app(engine_for=engine_for, runner=agent_runner.from_environment(environ, engine_for),
                       stamp_timeout_seconds=timeout,
@@ -132,6 +152,8 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       runs=RunLog(the_app) if the_app else None,
                       opened=OpenedLog(state) if state else None,
                       drafts=DraftStore(state) if state else None,
+                      packages=PackageStore(app_state) if app_state else None,
+                      package_reader=agent_runner.agent_from_environment(environ, "package_reader"),
                       writers=agent_runner.writers_from_environment(environ),
                       access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
                       supplier_log=SupplierLog(the_app) if the_app else None,

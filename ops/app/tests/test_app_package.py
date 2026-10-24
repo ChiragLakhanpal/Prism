@@ -68,11 +68,15 @@ def test_the_lean_requirements_pin_each_package_at_its_uv_lock_version_and_leave
     # App never resolves a newer Starlette or pydantic on its own.
     assert {name: pins.get(name) for name in closure(pins, lock)} == {
         name: lock[name]["version"] for name in closure(pins, lock)}
-    # The only pin uv.lock does not hold is the tracing package, which the app imports only with a
-    # connection string, at the version the day-one probe app sends its trace with.
-    assert [name for name in pins if name not in lock] == ["azure-monitor-opentelemetry"]
+    # The pins uv.lock does not hold: the tracing package, which the app imports only with a connection
+    # string, at the version the day-one probe app sends its trace with, and Postgres's driver, which the
+    # app imports only with a Lakebase database (ADR 0005), at the version the Lakebase probe timed it with.
+    assert [name for name in pins if name not in lock] == ["azure-monitor-opentelemetry", "psycopg", "psycopg-binary"]
     probe = (REPO / "ops" / "dayone" / "workspace" / "probe_app" / "requirements.txt").read_text()
     assert f"azure-monitor-opentelemetry=={pins['azure-monitor-opentelemetry']}" in probe
+    lakebase_probe = (REPO / "ops" / "app" / "probe_lakebase.py").read_text()
+    assert pins["psycopg"] == pins["psycopg-binary"]
+    assert f'"psycopg[binary]=={pins["psycopg"]}"' in lakebase_probe
 
 
 BLOCKER = """

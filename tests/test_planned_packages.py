@@ -3,7 +3,8 @@
 POST /api/planned-packages streams the plan-a-package workflow: the package reader (the drafting model, one
 structured call, replayed here from tests/fixtures/agent/packages.toml) reads the sentence into the package
 form schema's fields, review type and market approach are computed from the thresholds file, the package
-is saved in strata.ops for the person who made it, and find_comparables runs on the criteria that pick the
+is saved in the app state store (Lakebase on the App, ADR 0005; a DuckDB file here) for the person who made it,
+and find_comparables runs on the criteria that pick the
 comparables. GET and POST /api/planned-packages/{id} read and change a saved package; GET
 /api/planned-packages lists the viewer's packages and the plans they checked, for the Packages tab.
 
@@ -26,6 +27,7 @@ import pytest
 from strata.agent.loop import AgentError
 from strata.agent.runs import RunLog
 from strata.agent.scripted import PACKAGE_CASES, ScriptedAgent, load_cases
+from strata import appstate
 from strata.config import load_thresholds
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
@@ -75,18 +77,29 @@ def events(text: str) -> list[tuple[str, dict]]:
 
 
 @pytest.fixture(scope="module")
-def empty_state(tmp_path_factory):
-    """App state with the catalog's tables and no rows, built once: making every table takes about a second."""
-    path = tmp_path_factory.mktemp("state") / "empty.duckdb"
+def empty_ops(tmp_path_factory):
+    """strata.ops with the catalog's tables and no rows, for the run log, built once: making every table takes
+    about a second."""
+    path = tmp_path_factory.mktemp("ops") / "empty.duckdb"
     with DuckDBEngine.open(path) as engine:
         catalog.build(engine)
     return path
 
 
 @pytest.fixture
-def state_db(tmp_path, empty_state):
+def state_db(tmp_path):
+    """The app state store with only its own tables (src/strata/appstate), as Lakebase holds them on the App:
+    no strata.ops table is there, so a package written anywhere else fails."""
     path = tmp_path / "state.duckdb"
-    shutil.copyfile(empty_state, path)
+    with DuckDBEngine.open(path) as engine:
+        appstate.build(engine)
+    return path
+
+
+@pytest.fixture
+def ops_db(tmp_path, empty_ops):
+    path = tmp_path / "ops.duckdb"
+    shutil.copyfile(empty_ops, path)
     return path
 
 
@@ -96,8 +109,9 @@ def clock():
 
 
 @pytest.fixture
-def planning(fixture_db, state_db, clock):
-    """The app with the fixture database, app state in a DuckDB file, and the scripted package reader."""
+def planning(fixture_db, state_db, ops_db, clock):
+    """The app with the fixture database, app state in a DuckDB file, runs in strata.ops in another, and the
+    scripted package reader."""
     @contextmanager
     def reading(viewer):
         with DuckDBEngine.open(fixture_db, read_only=True) as engine:
@@ -106,10 +120,13 @@ def planning(fixture_db, state_db, clock):
     def state():
         return DuckDBEngine.open(state_db)
 
+    def ops():
+        return DuckDBEngine.open(ops_db)
+
     def make(case: str = "package-rural-roads-kenya", reader=None, thresholds=None, form=None):
         cases = load_cases(PACKAGE_CASES)
         numbers = iter(range(1, 100))
-        return create_app(engine_for=reading, packages=PackageStore(state), runs=RunLog(state),
+        return create_app(engine_for=reading, packages=PackageStore(state), runs=RunLog(ops),
                           package_reader=reader or (lambda: ScriptedAgent(cases[case])),
                           package_thresholds=thresholds, package_form=form, today=lambda: TODAY, now=clock,
                           new_package_id=lambda: f"pkg-{next(numbers):012d}", new_run_id=lambda: "run-0001")
