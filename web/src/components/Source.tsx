@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import type { Place } from "../lib/sources";
+import { ProjectId } from "./ProjectId";
 
 export function Source({ children, className }: { children: ReactNode; className?: string }) {
   return (
@@ -39,7 +40,7 @@ export function DocumentSource({
   return (
     <Source className={className}>
       {words.before}
-      <span className="font-mono">{pcode}</span>
+      <ProjectId pid={pcode} />
       {words.after}
     </Source>
   );

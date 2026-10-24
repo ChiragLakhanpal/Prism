@@ -4,22 +4,14 @@
 //
 // linkProjectIds is the one helper for text Strata does not write itself, such as a passage, an answer
 // sentence or a STEP description: it wraps every P and six digits in a ProjectId and changes no words.
-// The Playwright sweep in web/tests/hub.spec.ts finds any P-code on any route that is not such a link,
-// outside the places PROJECT_ID_EXEMPT names.
+// The Playwright sweep in web/tests/sweep.spec.ts finds any P-code on any route that is not such a link,
+// outside the places PROJECT_ID_EXEMPT (web/src/lib/projectId.ts) names.
 import { Fragment, type ReactNode } from "react";
 import { cx } from "../lib/cx";
+import { PROJECT_ID } from "../lib/projectId";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { TextLink } from "./TextLink";
-
-// A P-code where it stands alone in text: P and six digits.
-export const PROJECT_ID = /\bP\d{6}\b/g;
-
-// The places the sweep leaves out, in one list (the 21 brief, section 9): text a person types (form
-// fields), the one box's scope chip, whose only action is to remove it, and visually hidden text that
-// repeats a link already on screen. The page's <title> is outside the body, so the sweep never reads it.
-// Briefs 37 and 41 add theirs here.
-export const PROJECT_ID_EXEMPT = ["input", "textarea", "[data-scope-chip]", ".sr-only", "[data-project-id-exempt]"];
 
 export function projectHref(pid: string): string {
   return `/projects/${pid}`;
@@ -33,6 +25,12 @@ export function ProjectId({ pid, className }: { pid: string; className?: string 
       {pid}
     </TextLink>
   );
+}
+
+// An ID Strata writes, such as a scope: a P-code as a ProjectId link, anything else, such as a STEP
+// reference, in Roboto Mono as it stands.
+export function IdText({ id }: { id: string }) {
+  return /^P\d{6}$/.test(id) ? <ProjectId pid={id} /> : <span className="font-mono">{id}</span>;
 }
 
 // Text with each P-code in it as a ProjectId.

@@ -169,8 +169,11 @@ export function App() {
     if (!moved || here.moves === 0 || here.quiet) return;
     removedScopes.set(new Set());
     window.scrollTo(0, 0);
+    // Back to a page with the evidence drawer open, such as from the source view the drawer's "Open at
+    // page" opened (ticket 21): the drawer's heading takes focus, where the person was.
+    const drawerHeading = evidenceIn(here.search) ? document.querySelector<HTMLElement>("[data-evidence-drawer] h2") : null;
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
-    (lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    (drawerHeading ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
     retryStamp();
   }, [route, here.moves]);
 

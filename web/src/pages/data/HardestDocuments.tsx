@@ -8,6 +8,7 @@
 // against, the parser that read it and the table it counted. The page computes nothing (CLAUDE.md rule 1).
 // A row with no document to show spans one note across its last three cells, with no badge and no link.
 import type { ReactNode } from "react";
+import { ProjectId } from "../../components/ProjectId";
 import { TextLink } from "../../components/TextLink";
 import { sourcePageHref } from "../../lib/documents";
 import { Num } from "../../components/Num";
@@ -93,14 +94,14 @@ function documentCell(entry: ShelfEntry, asOf: string): { header: ReactNode; cap
         rule && entry.state === "no_document" ? null : rule ? (
           words.chosenLater
         ) : entry.project_id ? (
-          <span className="font-mono">{entry.project_id}</span>
+          <ProjectId pid={entry.project_id} />
         ) : null,
     };
   }
   const project = (
     <Template
       text={words.project}
-      values={{ project: <span className="wrap-anywhere">{document.project_name ?? document.project_id}</span>, pid: <span className="font-mono">{document.project_id}</span> }}
+      values={{ project: <span className="wrap-anywhere">{document.project_name ?? document.project_id}</span>, pid: <ProjectId pid={document.project_id} /> }}
     />
   );
   const dated =

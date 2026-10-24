@@ -8,35 +8,12 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
+import { askFromTheBox, landed, marker, panel } from "./answer-page";
+import { hubApi } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
-
-export async function hubApi(): Promise<Record<string, Answer>> {
-  const file = async (name: string) => ({ body: await recorded(name) });
-  return {
-    "/api/me": await file("me.json"),
-    "/api/freshness": await file("freshness.json"),
-    "/api/projects/P130164": await file("project-p130164.json"),
-    "/api/projects/P130164/summary": await file("summary-p130164.json"),
-    "/api/projects/P130164/documents": await file("documents-p130164.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=23&para=54": await file("source-icr-p130164-23-54.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=23": await file("source-icr-p130164-23.json"),
-    "/api/projects/P130164/documents/icr?page=23&para=54": await file("source-icr-p130164-short.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=22&para=54": await file("source-icr-p130164-moved.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=23&para=999": await file("source-icr-p130164-no-para.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=80": await file("source-icr-p130164-page-range.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=66": await file("source-icr-p130164-page-range.json"),
-    "/api/projects/P130164/documents/icr-2019-10-10?page=5": await file("source-icr-p130164-page-unread.json"),
-    "/api/projects/P130164/documents/icr-review-2023-05-04?page=1": await file("source-icr-review-p130164-reissue.json"),
-    "/api/projects/P130164/documents/isr": await file("source-p130164-ambiguous.json"),
-    "/api/projects/P130164/documents/not-a-document": await file("source-p130164-not-found.json"),
-    "/api/projects/P130164/documents/30152361": await file("source-p130164-doc-unread.json"),
-    "/api/evidence": await file("evidence-icr-p130164-54.json"),
-    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
-  };
-}
 
 async function open(page: Page, path: string, width = 1440, extra: Record<string, Answer> = {}) {
   await page.setViewportSize({ width, height: 900 });
@@ -251,6 +228,22 @@ test("the drawer's Open at page 23 lands on the source view with paragraph 54 hi
 
   await page.goBack();
   await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 54");
+});
+
+test("Back from the source view restores the page with its answer and the drawer, with focus on the drawer's heading", async ({ page }) => {
+  await open(page, "/projects/P130164", 1440, { "/api/ask": { body: await recorded("ask-p130164-removed-number.sse") } });
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  await askFromTheBox(page);
+  await landed(page);
+  await marker(page, 1).click();
+  await page.getByRole("dialog").getByRole("link", { name: "Open at page 23", exact: true }).click();
+  await expect(page.locator("[data-highlighted]")).toBeFocused();
+  await expect(panel(page)).toHaveCount(0);
+
+  await page.goBack();
+
+  await expect(panel(page)).toBeVisible();
+  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toBeFocused();
 });
 
 test("the source view corrects a short address, a paragraph on another page, a missing paragraph and a page past the last, with a note", async ({ page }) => {
@@ -534,4 +527,93 @@ test("the implementing agency view reads the baseline without its saver and offe
   await open(page, `${NWWDA}/2026-10-09?view=public`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09?view=public`]: { body: JSON.stringify(open_) } });
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
   await expect(page.getByRole("region", { name: "Baseline for delay" })).toHaveCount(0);
+});
+
+// ── The Summary's budget on a throttled 3G profile ──────────────────────
+
+// The throttled profile the screen tests use: Chrome's Fast 3G, 562.5 ms of latency, 1.44 Mbps down and
+// 675 kbps up. The app's own files go through the browser's network emulation; the recorded /api answers
+// are served by the test, so each waits the profile's latency and its size at the profile's speed.
+const FAST_3G = { latency: 562.5, download: (1.44 * 1024 * 1024) / 8, upload: (675 * 1024) / 8 };
+
+async function throttle(page: Page) {
+  const session = await page.context().newCDPSession(page);
+  await session.send("Network.enable");
+  await session.send("Network.emulateNetworkConditions", {
+    offline: false,
+    latency: FAST_3G.latency,
+    downloadThroughput: FAST_3G.download,
+    uploadThroughput: FAST_3G.upload,
+  });
+  const api = await hubApi();
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    const answer = api[url.pathname];
+    if (!answer) return route.fallback();
+    await new Promise((resolve) => setTimeout(resolve, FAST_3G.latency + (answer.body.length / FAST_3G.download) * 1000));
+    return route.fulfill({ status: 200, contentType: "application/json", body: answer.body });
+  });
+}
+
+test("the Summary is one request of at most 15 KB, populated within 2 s from another tab and 5 s cold on the throttled 3G profile", async ({ page }) => {
+  // One request, small enough for a slow link.
+  expect(Buffer.byteLength(await recorded("summary-p130164.json"))).toBeLessThanOrEqual(15 * 1024);
+
+  await open(page, "/projects/P130164/procurement");
+  await expect(page.locator("[data-procurement-tab=ready]")).toBeVisible();
+  await throttle(page);
+  const started = Date.now();
+  await tabs(page).first().click();
+  await expect(page.locator("[data-summary=ready]")).toBeVisible({ timeout: 10_000 });
+  const fromTab = Date.now() - started;
+  expect(fromTab, "from another tab, in ms").toBeLessThanOrEqual(2000);
+
+  // Cold: a new page, with nothing cached.
+  const cold = await page.context().newPage();
+  await mockApi(cold, await hubApi());
+  await throttle(cold);
+  const coldStart = Date.now();
+  await cold.goto("/projects/P130164");
+  await expect(cold.locator("[data-summary=ready]")).toBeVisible({ timeout: 15_000 });
+  const coldTime = Date.now() - coldStart;
+  test.info().annotations.push({ type: "timing", description: `from another tab ${fromTab} ms, cold ${coldTime} ms` });
+  expect(coldTime, "cold, in ms").toBeLessThanOrEqual(5000);
+});
+
+test("axe finds no WCAG 2.2 AA violations on Check a plan's change list and baseline panel, and in the hub's loading and error states", async ({ page }) => {
+  // Check a plan with the Ministry's change list (added and re-dated) and the baseline panel, at three widths.
+  await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
+  await expect(page.locator("[data-changes]")).toBeVisible();
+  for (const width of [1440, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await axe(page), `change list at ${width} px`).toEqual([]);
+  }
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth), "change list at 320 px").toBeLessThanOrEqual(320);
+
+  // The baseline panel with another plan saved, and its replace confirm.
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, `${NWWDA}/2026-10-09`, 390, { ...(await p156634()), [`/api${NWWDA}/2026-10-09`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json") } });
+  await page.getByRole("button", { name: "Make this plan the baseline" }).click();
+  expect(await axe(page), "baseline confirm at 390 px").toEqual([]);
+
+  // The Summary, Documents and source view while they load and when the data service doesn't answer.
+  const down = { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' };
+  for (const [path, api, ready] of [
+    ["/projects/P130164", "/api/projects/P130164/summary", "[data-summary=error]"],
+    ["/projects/P130164/documents", "/api/projects/P130164/documents", "[data-documents=error]"],
+    ["/projects/P130164/documents/icr-2019-10-10?page=23", "/api/projects/P130164/documents/icr-2019-10-10?page=23", "[data-source-page=error]"],
+  ] as const) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, path, 390, { [api]: down });
+    await expect(page.locator(ready)).toBeVisible();
+    await expect(page.getByRole("alert")).toBeVisible();
+    expect(await axe(page), `${path} error at 390 px`).toEqual([]);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await mockApi(page, await hubApi());
+    await page.route(`**${api.split("?")[0]}*`, () => new Promise(() => {}));
+    await page.goto(path);
+    await expect(page.locator(ready.replace("error", "loading"))).toBeVisible();
+    expect(await axe(page), `${path} loading at 390 px`).toEqual([]);
+  }
 });

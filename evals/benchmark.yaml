@@ -33,6 +33,10 @@ questions:
       # The activities with a signal (needs a look or watch), which the result's counts.signal counts
       # and "Draft review notes (3 rows)" drafts a note on (ticket 35).
       with_a_signal: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      # The activities whose reasons also give the delay from a saved baseline (ticket 21). The fixture
+      # holds no baseline, so none does; tests/test_project_hub.py saves the plan of July 21, 2025 as the
+      # baseline and checks that KE-NWWDA-229129-CW-RFB's signing was then 186 days after its baseline date.
+      baseline_delays: []
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities

@@ -25,7 +25,7 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
 import { MethodText } from "../components/PlanCheck";
-import { ProjectId } from "../components/ProjectId";
+import { linkProjectIds, ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -199,7 +199,7 @@ function Passages({ answer, blockRef }: { answer: SourcePageAnswer; blockRef: Re
         const id = passage.numbered ? `para-${passage.paragraph}` : `passage-${passage.passage_id}`;
         const text = (
           <p id={id} lang={passage.language ?? undefined} className="text-body wrap-anywhere text-ink" data-passage-id={passage.passage_id}>
-            {passage.text}
+            {linkProjectIds(passage.text)}
           </p>
         );
         const marked = highlight?.passage_id === passage.passage_id;

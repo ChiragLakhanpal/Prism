@@ -161,7 +161,7 @@ test("a row with nothing to show spans one note across its last three cells, wit
   await expect(span("french_report")).toHaveText("Not read yet. The next document run reads it.");
   for (const key of ["longest_pad", "long_plan", "french_report"]) {
     await expect(span(key)).toHaveAttribute("colspan", "3");
-    await expect(row(page, 1440, key).getByRole("link")).toHaveCount(0);
+    await expect(row(page, 1440, key).getByRole("link", { name: /^Open at page/ })).toHaveCount(0);
   }
   await expect(visible(page, 1440).getByText(/^(Partial|Gap)$/)).toHaveCount(0);
   expect(await violations(page)).toEqual([]);

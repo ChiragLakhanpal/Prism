@@ -74,7 +74,7 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
     );
   }
   const date = source.date ? <Num date={source.date} /> : null;
-  const pid = <span className="font-mono">{source.pcode}</span>;
+  const pid = <ProjectId pid={source.pcode} />;
   return (
     <Source className={className}>
       {source.agency && source.page && date ? (
