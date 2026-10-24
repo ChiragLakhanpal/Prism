@@ -8,8 +8,12 @@ reads only the environment it is given:
   STRATA_DATABASE_FILE names a DuckDB file, such as the gate's fixture database, to read instead
   (src/strata/server/engines.py decides).
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
-  service principal: usage events are written to strata.ops.usage_events with its token.
-  Without them, the server keeps no usage events.
+  service principal: usage events are written to strata.ops.usage_events, and each answer
+  stream's run to strata.ops.agent_runs, with its token. Without them, the server keeps no usage
+  events, and runs go to the server log only.
+- FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET: /api/ask
+  answers through the Foundry agent (src/strata/agent/runner.py). Without them, it says there is
+  no agent.
 - APPLICATIONINSIGHTS_CONNECTION_STRING (the app's appinsights secret resource): traces go to
   Application Insights (src/strata/server/tracing.py).
 - STRATA_WEB_DIST: the built web app to serve, by default web/dist when it exists.
@@ -27,13 +31,15 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 from fastapi import FastAPI
 
+from strata.agent import runner as agent_runner
+from strata.agent.runs import RunLog
 from strata.config import load_thresholds
-from strata.lakehouse.engine import EngineError, Transport, WarehouseEngine, base_url, http_transport
+from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.server import engines, tracing
 from strata.server.app import create_app
 from strata.server.usage import UsageLog
@@ -75,13 +81,14 @@ def as_the_app(host: str, client_id: str, client_secret: str) -> Transport:
     return lambda method, path, body: http_transport(host, token())(method, path, body)
 
 
-def _usage(environ: Mapping[str, str], flush_seconds: float) -> UsageLog | None:
+def _the_app_s_engine(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
+    """The SQL warehouse as the app's own service principal, for the rows the app writes itself."""
     host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
     client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
     if not (host and warehouse and client_id and secret):
         return None
     transport = as_the_app(host, client_id, secret)
-    return UsageLog(lambda: WarehouseEngine(warehouse, transport), flush_seconds)
+    return lambda: WarehouseEngine(warehouse, transport)
 
 
 def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
@@ -89,8 +96,11 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
-    return create_app(engine_for=engines.from_environment(environ, timeout_seconds=timeout),
+    engine_for = engines.from_environment(environ, timeout_seconds=timeout)
+    the_app = _the_app_s_engine(environ)
+    return create_app(engine_for=engine_for, runner=agent_runner.from_environment(environ, engine_for),
                       stamp_timeout_seconds=timeout,
-                      usage=_usage(environ, thresholds.value("app.usage_flush_seconds")),
+                      usage=UsageLog(the_app, thresholds.value("app.usage_flush_seconds")) if the_app else None,
+                      runs=RunLog(the_app) if the_app else None,
                       tracer_provider=tracing.from_env(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

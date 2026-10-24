@@ -35,7 +35,6 @@ import asyncio
 import datetime as dt
 import json
 import logging
-import os
 import threading
 import uuid
 from collections.abc import AsyncIterator, Callable
@@ -48,7 +47,6 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
-from strata.agent import runner as agent_runner
 from strata.agent import traces
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import answer_events, verify
@@ -110,8 +108,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
-    runner answers /api/ask; without it, the Foundry agent the environment names does
-    (src/strata/agent/runner.py), or no agent. usage receives one event per request, and
+    runner answers /api/ask; without it, the stream says there is no agent (app_from_env in
+    src/strata/server/settings.py gives it the Foundry agent its environment names). usage receives one event per request, and
     tracer_provider (the process's global one when None) one span. runs writes each answer stream's
     run to strata.ops.agent_runs; without it, runs go to the server log only. trace_ids reads the
     request's trace ids while its span is open. web_dist is the built web app: its files are served
@@ -119,7 +117,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     page or the not-found page.
     """
     engine_for = engine_for or engines.from_environment()
-    runner = runner or agent_runner.from_environment(os.environ, engine_for) or no_agent
+    runner = runner or no_agent
     web = web_dist.resolve() if web_dist is not None else None
 
     def web_file(path: str) -> Path | None:
