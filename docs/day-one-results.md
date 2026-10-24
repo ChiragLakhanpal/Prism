@@ -24,10 +24,10 @@ Each probe also runs alone, with the command under its test. Every probe writes 
 | 3 | ai_parse_document on a long PAD | not run | Default |
 | 4 | An AI Search endpoint and a hybrid index | not run | Default |
 | 5 | The Genie conversation API as the token's user | not run | Default |
-| 6 | An outside email joins the workspace and opens the app | not run | Default |
+| 6 | An outside email joins the workspace and opens the app | waiting | Default |
 | 7 | A personal access token or a service principal | failed | Undecided |
 | 8 | The four models within the subscription's quota | passed | Default |
-| 9 | Foundry evaluations after an Entra sign-in | not run | Default |
+| 9 | Foundry evaluations after an Entra sign-in | passed | Default |
 | 10 | Traces from the app in Application Insights | not run | Default |
 <!-- /dayone:summary -->
 
@@ -39,8 +39,8 @@ The free Azure credit of about US$197 ends on November 10, 2026. The subscriptio
 - Step: Move the Azure subscription from the free credit to pay-as-you-go.
 - Deadline: Before November 10, 2026, when the free credit ends.
 - Who: The subscription owner (the user)
-- Status: Not done yet.
-- Last updated: never
+- Status: The subscription showed pay-as-you-go on October 24, 2026.
+- Last updated: October 24, 2026
 <!-- /dayone:payg -->
 
 ## Azure caps and budget
@@ -50,12 +50,15 @@ Budgets only send email, so hard caps stop the spend: a tokens-per-minute limit 
 Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
 
 <!-- dayone:caps -->
-- Status: not checked
+- Status: not capped
 - Deployments:
-  - None checked yet. The command above fills this in.
-- Budget: Not checked yet.
-- Subscription offer: Not checked yet.
-- Last checked: never
+  - gpt-5.4-mini: 500,000 tokens per minute, as Global Standard. That is above the cap of 100,000 in dayone.toml.
+  - gpt-5.4: 125,000 tokens per minute, as Global Standard. That is above the cap of 30,000 in dayone.toml.
+  - gpt-5.4-nano: 2,500,000 enqueued tokens, as Global Standard. A Global Standard deployment has no tokens-per-minute limit, so Azure caps the tokens it holds in the queue instead. That is above the cap of 2,000,000 in dayone.toml.
+  - text-embedding-3-large: 500,000 tokens per minute, as Global Standard. That is above the cap of 150,000 in dayone.toml.
+- Budget: The subscription has no budget, so nobody hears about spend.
+- Subscription offer: Azure subscription 1 is on pay-as-you-go (quota ID PayAsYouGo_2014-09-01, spending limit Off).
+- Last checked: October 24, 2026
 <!-- /dayone:caps -->
 
 ## The ten tests
@@ -160,12 +163,12 @@ An outside email can join the workspace and open the app.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-6 -->
-- Status: not run
-- Result: Not run yet, because it needs the wizard first.
+- Status: waiting
+- Result: An outside email joined the workspace. The app is not deployed yet, so that person could not open it.
 - Evidence:
-  - None yet. The command above fills it.
-- Chosen path: Default, until a result says otherwise. Reviewers join the workspace and open the Databricks App.
-- Last run: never
+  - The probes deploy a small app named strata. Run the wizard again after them to finish this test.
+- Chosen path: Default, until the rest of this test runs. Reviewers join the workspace and open the Databricks App.
+- Last run: October 24, 2026
 <!-- /dayone:test-6 -->
 
 ### Test 7. A personal access token or a service principal
@@ -197,9 +200,12 @@ Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
 
 <!-- dayone:test-8 -->
 - Status: passed
-- Result: All four models deployed within the subscription's quota.
+- Result: Every deployment with a cap in dayone.toml exists and finished deploying.
 - Evidence:
-  - az cognitiveservices account deployment list returned gpt-5.4-mini (GlobalStandard), gpt-5.4 (GlobalStandard), gpt-5.4-nano (GlobalStandard), text-embedding-3-large (GlobalStandard).
+  - gpt-5.4-mini: 500,000 tokens per minute, as Global Standard. That is above the cap of 100,000 in dayone.toml.
+  - gpt-5.4: 125,000 tokens per minute, as Global Standard. That is above the cap of 30,000 in dayone.toml.
+  - gpt-5.4-nano: 2,500,000 enqueued tokens, as Global Standard. A Global Standard deployment has no tokens-per-minute limit, so Azure caps the tokens it holds in the queue instead. That is above the cap of 2,000,000 in dayone.toml.
+  - text-embedding-3-large: 500,000 tokens per minute, as Global Standard. That is above the cap of 150,000 in dayone.toml.
 - Chosen path: Default. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
 - Last run: October 24, 2026
 <!-- /dayone:test-8 -->
@@ -214,12 +220,12 @@ Foundry evaluations run after an Entra sign-in.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-9 -->
-- Status: not run
-- Result: Not run yet, because it needs the wizard first.
+- Status: passed
+- Result: A Foundry evaluation ran after an Entra sign-in and returned scores.
 - Evidence:
-  - None yet. The command above fills it.
-- Chosen path: Default, until a result says otherwise. Foundry runs the evaluations: groundedness, relevance, task adherence and tool use.
-- Last run: never
+  - Evaluation: https://ai.azure.com/nextgen/r/ACfuFirFSVyem53VMfBRGg,WorldBank-demo,,wb-strata,Strata/build/evaluations/eval_18b902f1929147a38b271d27e1da7176/run/evalrun_1ed31c81295f43f7822432da8e12672c?tid=08fda299-c7b4-4235-a795-3837cac06b4c
+- Chosen path: Default. Foundry runs the evaluations: groundedness, relevance, task adherence and tool use.
+- Last run: October 24, 2026
 <!-- /dayone:test-9 -->
 
 ### Test 10. Traces from the app in Application Insights
