@@ -10,6 +10,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads six of them:
                      and load_search() its [search] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
+- load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
+                     (strata.agent.definition builds the agent's definition from it)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -575,3 +577,61 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
     if not result.source_fields:
         entry._fail("source_fields", "must name the fields of each row's source line")
     return result
+
+
+# ── The agent registry ───────────────────────────────────────────────────
+
+SEVERITIES = ("Low", "Medium", "High")
+
+
+@dataclass(frozen=True)
+class Guardrail:
+    """The content filters and Prompt Shields an agent runs under, kept as an RAI policy in Azure."""
+
+    key: str
+    name: str
+    base_policy: str
+    severity: str
+    prompt_shields: bool
+
+
+@dataclass(frozen=True)
+class AgentSpec:
+    """One Foundry prompt agent: its name, the model role it runs on, its instructions file and guardrail,
+    and the Foundry API versions the app calls it with."""
+
+    key: str
+    name: str
+    role: str
+    instructions: str
+    description: str
+    guardrail: Guardrail
+    api_version: str
+    rai_policy_api_version: str
+
+
+def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
+    """One agent of the agent registry, with its guardrail and the Foundry API versions."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"agents", "guardrails", "foundry"})
+    agents, guardrails = data.get("agents", {}), data.get("guardrails", {})
+    if key not in agents:
+        raise ConfigError(f"{path.name} has no agent {key}. It has {', '.join(agents) or 'none'}.")
+    entry = _Entry(path, f"agents.{key}", agents[key])
+    entry.only({"name", "role", "instructions", "guardrail", "description"})
+    role = entry.text("role")
+    if role not in ROLES:
+        entry._fail("role", f"must be one of the model file's roles: {', '.join(ROLES)}")
+    rail_key = entry.text("guardrail")
+    if rail_key not in guardrails:
+        entry._fail("guardrail", f"names {rail_key}, which [guardrails] does not define")
+    rail = _Entry(path, f"guardrails.{rail_key}", guardrails[rail_key])
+    rail.only({"name", "base_policy", "severity", "prompt_shields"})
+    if rail.text("severity") not in SEVERITIES:
+        rail._fail("severity", f"must be one of {', '.join(SEVERITIES)}")
+    foundry = _Entry(path, "foundry", data.get("foundry"))
+    foundry.only({"api_version", "rai_policy_api_version"})
+    return AgentSpec(key, entry.text("name"), role, entry.text("instructions"), entry.text("description"),
+                     Guardrail(rail_key, rail.text("name"), rail.text("base_policy"), rail.text("severity"),
+                               rail.boolean("prompt_shields")),
+                     foundry.text("api_version"), foundry.text("rai_policy_api_version"))

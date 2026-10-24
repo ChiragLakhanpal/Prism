@@ -9,9 +9,13 @@
   401 with no forwarded identity, 403 with the code permission when the warehouse refuses the
   viewer, 504 when the warehouse takes longer than the thresholds file's
   app.stamp_timeout_seconds, and 502 when it fails, with the details only in the server log.
-- POST /api/ask takes a question and streams a run's events as text/event-stream, then a
-  final done event with the run id. A run that breaks ends with an error event whose
-  details stay in the server log.
+- POST /api/ask takes a question, with the page's scope chip, as-of date, view and language, and
+  streams a run's events as text/event-stream: steps, then the answer's sentences with their
+  evidence ids, the evidence they cite, the check counts and the removed sentences, then a final
+  done event with the run id and its trace ids. The verifier runs here, in the stream, on every
+  answer the runner hands over, so no runner can send a sentence the checks did not see. A run that
+  breaks ends with an error event whose details stay in the server log. Each run is written to
+  strata.ops.agent_runs (src/strata/agent/runs.py).
 - GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
@@ -35,20 +39,26 @@ import asyncio
 import datetime as dt
 import json
 import logging
+import threading
 import uuid
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from opentelemetry import trace
 from pydantic import BaseModel, Field
 
+from strata.agent import traces
+from strata.agent.runs import RunLog, run_row
+from strata.agent.verifier import answer_events, verify
 from strata.config import load_thresholds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.harness.aio import HEARTBEAT, with_heartbeats
-from strata.harness.turn import Event, Runner, Turn, new_run_id as random_run_id, no_agent
+from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
+                                 new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.server import engines, projects, tracing
 from strata.server.usage import UsageEvent, UsageLog
@@ -58,6 +68,8 @@ from strata.tools import registry
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+# Only the verifier writes these, from the claims a runner hands over.
+ANSWER_EVENTS = {"sentence", "evidence", "disagreement", "checks", "removed", "done"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
@@ -68,6 +80,10 @@ IMMUTABLE = "public, max-age=31536000, immutable"
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
+    scope: str | None = Field(default=None, max_length=64)  # the page's scope chip: a P-code or STEP reference
+    asof: dt.date | None = None
+    view: Literal["staff", "piu", "public"] = "staff"
+    lang: Literal["en", "fr", "es", "pt"] = "en"
 
 
 def current_viewer(request: Request) -> Viewer:
@@ -88,18 +104,24 @@ def refused(status: int, code: str) -> JSONResponse:
     return JSONResponse({"code": code}, status_code=status, headers={"Cache-Control": "no-store"})
 
 
-def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
+def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None,
                stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
-               tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None) -> FastAPI:
+               tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None,
+               runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
-    usage receives one event per request, and tracer_provider (the process's global one when None)
-    one span. web_dist is the built web app: its files are served as they are, and every other
-    address outside /api gets its index.html, whose router shows the page or the not-found page.
+    runner answers /api/ask; without it, the stream says there is no agent (app_from_env in
+    src/strata/server/settings.py gives it the Foundry agent its environment names). usage
+    receives one event per request, and tracer_provider (the process's global one when None) one
+    span. runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the
+    server log only. trace_ids reads the request's trace ids while its span is open. web_dist is
+    the built web app: its files are served as they are, and every other address outside /api gets
+    its index.html, whose router shows the page or the not-found page.
     """
     engine_for = engine_for or engines.from_environment()
+    runner = runner or no_agent
     web = web_dist.resolve() if web_dist is not None else None
 
     def web_file(path: str) -> Path | None:
@@ -255,17 +277,57 @@ def create_app(runner: Runner = no_agent, heartbeat_seconds: float = 15.0,
 
     @app.post("/api/ask")
     async def ask(body: AskRequest, viewer: Viewer = Depends(current_viewer)) -> StreamingResponse:
-        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id())
+        scope = Scope(chip=body.scope.strip().upper() if body.scope and body.scope.strip() else None,
+                      as_of=body.asof, view=body.view, language=body.lang)
+        turn = Turn(question=body.question, viewer=viewer, run_id=new_run_id(), scope=scope, trace=trace_ids())
         return StreamingResponse(stream(turn), media_type="text/event-stream", headers=STREAM_HEADERS)
 
     async def stream(turn: Turn) -> AsyncIterator[str]:
+        """The run's events, then its row in the run log, even when the viewer leaves part way."""
+        started, outcome = dt.datetime.now(dt.UTC), {"verdict": None, "error_code": "stopped"}
+        try:
+            async for chunk in run_events(turn, outcome):
+                yield chunk
+        finally:
+            row = run_row(turn, outcome["verdict"], outcome["error_code"], started, dt.datetime.now(dt.UTC))
+            log.info("Run %s ended: %s.", turn.run_id, row["error_code"] or row["status"])
+            if runs is not None:  # its own thread, so a dropped connection cannot stop the write
+                writer = threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}")
+                writer.start()
+                await asyncio.to_thread(writer.join, 60)
+
+    async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
+        verdict, error_code = None, None
         try:
             async for item in with_heartbeats(runner(turn), heartbeat_seconds):
-                yield KEEP_ALIVE if item is HEARTBEAT else frame(item)
+                if item is HEARTBEAT:
+                    yield KEEP_ALIVE
+                elif item.type == "claims":  # the verifier, with its own step, then the answer's events
+                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "running"}))
+                    verdict = verify(item.data["claims"], turn.facts)
+                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "done",
+                                               "removed": len(verdict.removed)}))
+                    ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
+                    for event in answer_events(verdict, turn.facts, ran):
+                        yield frame(event)
+                elif item.type in ANSWER_EVENTS:
+                    raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")
+                else:
+                    error_code = item.data.get("code") if item.type == "error" else error_code
+                    yield frame(item)
+        except RunError as error:
+            log.warning("Run %s could not answer (%s): %s", turn.run_id, error.code, error)
+            error_code = error.code if error.code in ERROR_CODES else "internal"
+            yield frame(Event("error", {"code": error_code}))
         except Exception:
             log.exception("Run %s failed.", turn.run_id)
+            error_code = "internal"
             yield frame(Event("error", {"code": "internal"}))
-        yield frame(Event("done", {"run_id": turn.run_id}))
+        done = {"run_id": turn.run_id}
+        if turn.trace is not None and (turn.trace.application_insights or turn.trace.mlflow):
+            done["trace_ids"] = {"application_insights": turn.trace.application_insights, "mlflow": turn.trace.mlflow}
+        outcome.update(verdict=verdict, error_code=error_code or (None if verdict else "no_answer"))
+        yield frame(Event("done", done))
 
     if web is not None:
         @app.get("/{address:path}", include_in_schema=False)

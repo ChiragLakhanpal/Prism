@@ -39,6 +39,12 @@ max_results = 20
 # Source: none yet; a starting value for the owner to confirm.
 search_depth = 2
 
+# The answer loop (src/strata/agent/loop.py). The agent gets at most this many rounds of tool results
+# for one question; a tool call it asks for after that is not run, and it answers from what it has.
+# Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").
+[agent]
+tool_rounds = 3
+
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the
 # plan check answers 503. Source: the 06 design brief ("Error (timeout
