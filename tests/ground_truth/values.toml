@@ -1420,6 +1420,15 @@ record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1663748&supplier_id=477806].supplier_id"
 
 [[value]]
+id = "award-supplier-written-null"
+says = "The awards since FY2020 write contract 1800527 for P176758's supplier as the word null, with supplier_id 0 and supplier_country null: no supplier is named and no STEP supplier ID is given."
+value = "null"
+contract = "1800527"
+quote = "null"
+record = "api/awards/P176758-P170941.json"
+at = "data[wb_contract_number=1800527].supplier"
+
+[[value]]
 id = "notice-icb-code"
 says = "Notice OP00034393, a Kenya Invitation for Bids of September 14, 2015 for the Nairobi bulk water supply, gives its method's code as ICB, an old name that silver maps to Request for Bids, Open - International."
 value = "ICB"

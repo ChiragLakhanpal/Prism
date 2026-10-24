@@ -173,7 +173,18 @@ def contract_member(gold, value):
     assert member["public_from"] == member["contract_signing_date"]
 
 
+def no_supplier_written_null(gold, value):
+    """A supplier the awards write as the word null, with supplier_id 0, is no supplier: the contract has
+    none, and no supplier is named null or keyed 0 (ticket 19)."""
+    contract = one(gold, "SELECT supplier_id, supplier_count FROM strata.gold.contract WHERE contract_id = :number",
+                   number=value["contract"])
+    named = gold.run("SELECT count(*) FROM strata.gold.supplier WHERE lower(name) = :word OR supplier_id = '0' "
+                     "OR lower(country) = :word", {"word": value["value"]}).rows
+    assert contract["supplier_id"] is None and named == ((0,),)
+
+
 CHECKS = {
+    "award-supplier-written-null": no_supplier_written_null,
     "notice-losai-no-id": awarded_bidder_without_an_id,
     "notice-losai-391987": awarded_bidder,
     "award-losai-477806": contract_member,

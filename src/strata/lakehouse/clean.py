@@ -31,12 +31,25 @@ from dataclasses import dataclass
 
 # ── Text and amounts ─────────────────────────────────────────────────────
 
+# How a source writes an empty field in words: the awards since FY2020 write the word null for a
+# supplier and a country they do not give.
+NOT_GIVEN = frozenset({"null"})
+
+
 def text(value) -> str | None:
-    """A field's text with its spacing made single, or None when it is empty. A list is joined with commas."""
+    """A field's text with its spacing made single, or None when it is empty or says it is (NOT_GIVEN). A
+    list is joined with commas."""
     if isinstance(value, list):
         value = ",".join(str(item) for item in value)
     written = " ".join(str(value).split()) if value is not None else ""
-    return written or None
+    return None if written.lower() in NOT_GIVEN else written or None
+
+
+def supplier_id(value) -> str | None:
+    """A STEP supplier ID, or None when the field is empty or 0, which the awards write for a row that
+    names no supplier (ticket 19), so no supplier is keyed 0."""
+    written = text(value)
+    return None if written in (None, "0") else written
 
 
 def amount(value) -> decimal.Decimal | None:
