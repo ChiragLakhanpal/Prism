@@ -6,8 +6,9 @@
 # gives the other seven theirs. The fetch reaches the World Bank's public APIs. The tasks form one chain,
 # so the job never runs more than one task at a time, well inside the workspace's limit of five.
 #
-# The window, 05:00 to 07:30 in Washington, and the reasons for it are in bundle/README.md. The job
-# stops at 07:30 at the latest (timeout_seconds), half an hour before review hours start at 08:00.
+# The window, 03:00 to 05:30 in Washington, and the reasons for it are in bundle/README.md. The job
+# stops at 05:30 at the latest (timeout_seconds), ninety minutes before fairshare's job starts at
+# 06:00 in Chicago and two and a half hours before review hours start at 08:00.
 
 resources:
   jobs:
@@ -15,7 +16,7 @@ resources:
       name: strata nightly
       description: Strata's nightly run. Each task records its run in strata.ops.pipeline_runs.
       schedule:
-        quartz_cron_expression: "0 0 5 * * ?"
+        quartz_cron_expression: "0 0 3 * * ?"
         timezone_id: America/New_York
         pause_status: ${var.nightly_pause_status}
       max_concurrent_runs: 1

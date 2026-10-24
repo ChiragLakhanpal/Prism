@@ -123,6 +123,8 @@ Run this from the main checkout:
 
 If the name of fairshare's job does not contain "fairshare", add `--fairshare-job <name>`. It worked if the command exits 0 and the `bundle:schedules` block in `bundle/README.md` records both jobs with "- Overlap: none" (criterion 3). Then commit `bundle/README.md` on `build/strata`. If the check finds that the two windows meet, change the hour in `bundle/nightly.yml` and run step 1 again.
 
+**Ran on October 24, 2026 (orchestrator):** the first run exited 1: fairshare's job runs daily at 06:00 America/Chicago (longest of 19 runs 21 minutes) and Strata's at 05:00 America/New_York with a 150-minute stop, so the two met on 366 of 366 days. The hour in `bundle/nightly.yml` moved to 03:00 (02:00 does not exist on the night the clocks go forward), the deploy was run again ("Updated jobs.nightly"), and the second run exited 0 with "Overlap: none. With these durations the two jobs share no minute on any day from October 24, 2026 to October 24, 2027, and the same holds if Strata's job runs to its limit." `bundle/README.md`'s window section, `bundle/nightly.yml`'s comment and `tests/test_nightly.py`'s window tests now say 03:00 to 05:30; the evening-hour test runs 18:00 to 22:00 (four hours from 23:00 end at 04:00 on the night the clocks go forward) and a new test checks fairshare's window itself. Passed.
+
 ## Ticket 08, step 1 of 2: read P156634's Procurement Plans on the warehouse
 
 **First run on October 24, 2026 (orchestrator):** it stopped with "Parameterized query's parameters are too large: the combined size of parameters is 4911047, exceeding the limit of 1048576 characters." The warehouse engine sent 100 layout pages in one INSERT. `WarehouseEngine.insert_rows` now also splits a chunk when its values pass 900,000 characters (`tests/test_engine.py`). The pages parsed before the stop stayed in bronze, and the second run is recorded below when it finishes.
@@ -164,6 +166,8 @@ Run this query in the workspace's SQL editor, on the SQL warehouse:
 Since ticket 17 merged, the job asks for these three sources for every country at once, and such a page has no `country_code`, so the query no longer filters on Kenya. Kenya's records come in those pages.
 
 It worked if it returns three rows, `awards`, `notices` and `projects`, each with one page or more (criterion 8).
+
+**Ran on October 24, 2026 (orchestrator):** three rows: awards 296, notices 253, projects 283. Passed.
 
 ## Ticket 07, step 2 of 3: the link rate in strata.ops equals a direct count over gold
 
@@ -383,6 +387,8 @@ Run this in the workspace's SQL editor:
     SELECT closing_date, previous_closing_date, reported_on FROM strata.gold.project_closing_date WHERE project_id = 'P156634' AND previous_closing_date IS NOT NULL AND reported_on >= DATE '2022-01-01' ORDER BY reported_on
 
 It worked if it returns three rows: 2024-04-30 after 2022-10-31, reported 2022-11-30; 2025-10-31 after 2024-04-30, reported 2024-04-30; and 2026-10-31 after 2025-10-31, reported 2025-11-30 (criterion 4). These match the fixture's loan history for both credits, IDA60290 and IDA60300. If the history now reports a newer month with another closing date, a fourth row after 2025-11-30 is not a failure.
+
+**Ran on October 24, 2026 (orchestrator):** exactly the three rows: 2024-04-30 after 2022-10-31 reported 2022-11-30; 2025-10-31 after 2024-04-30 reported 2024-04-30; 2026-10-31 after 2025-10-31 reported 2025-11-30. Passed.
 
 ## Ticket 17, step 3 of 3: a second night adds no pages it should not, and every count still holds
 
