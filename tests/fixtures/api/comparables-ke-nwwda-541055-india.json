@@ -61,6 +61,7 @@
   },
   "past_range": null,
   "plan": null,
+  "frequencies": null,
   "quantile_dots": null,
   "thresholds": {
     "min_comparables": 20,
@@ -106,6 +107,7 @@
     },
     "past_range": null,
     "plan": null,
+    "frequencies": null,
     "counts": {
       "comparables": 0,
       "signed": 0,

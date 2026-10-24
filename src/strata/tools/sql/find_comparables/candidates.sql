@@ -14,7 +14,8 @@
 -- as-of date that lists the package. Market Approach falls back to what the contract or the notice
 -- says, which only an old method name such as ICB gives. Review type comes from its contracts first,
 -- because that is what happened, and the signed amount in US dollars from its contracts only. A
--- criterion left open is a null parameter.
+-- criterion left open is a null parameter, and one that is set matches whatever its case, because the
+-- agent writes it.
 WITH listed AS (
   SELECT r.activity_reference_no AS step_reference, r.process_status, r.market_approach, r.review_type
   FROM strata.silver.plan_rows AS r
@@ -84,9 +85,9 @@ packages AS (
   LEFT JOIN strata.gold.country AS c ON c.country_code = p.country_code
   WHERE p.public_from <= :as_of
     AND p.step_reference <> :step_reference
-    AND (CAST(:country AS STRING) IS NULL OR p.country_code = :country)
-    AND (CAST(:method AS STRING) IS NULL OR p.procurement_method = :method)
-    AND (CAST(:category AS STRING) IS NULL OR p.procurement_category = :category)
+    AND (CAST(:country AS STRING) IS NULL OR upper(p.country_code) = upper(:country))
+    AND (CAST(:method AS STRING) IS NULL OR lower(p.procurement_method) = lower(:method))
+    AND (CAST(:category AS STRING) IS NULL OR lower(p.procurement_category) = lower(:category))
 )
 SELECT *
 FROM packages

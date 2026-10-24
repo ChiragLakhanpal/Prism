@@ -27,6 +27,26 @@ def test_the_agents_tools_and_the_tool_section_of_its_instructions_come_from_the
     assert definition["model"] == "gpt-5.4-mini"  # config/models.toml, the agent role
 
 
+def test_the_instructions_name_the_summary_record_wherever_a_tool_returns_one():
+    """A tool that declares summary_fields returns its derived figures, such as a past range, as one citable
+    record. The agent must be told it may cite it, or it leaves those figures out or cites rows that hold
+    them only by chance (CLAUDE.md rules 1 and 2)."""
+    from strata.config import load_tools
+
+    summarized = [name for name, tool in load_tools().items() if tool.result.summary_fields]
+    instructions = agent_definition(load_agent("orchestrator"), guardrail_id="local/strata-guardrail")[
+        "definition"]["instructions"]
+    rules, tools_section = instructions.split("## Your tools", 1)
+
+    assert summarized == ["find_comparables"]
+    assert "Cite the summary for those figures, as you cite a row." in tools_section
+    assert "the evidence_id of each row, summary or passage the sentence rests on" in rules
+    assert "If a figure you need is not a value in a row or a summary, leave it out." in rules
+    for name in summarized:
+        described = tools_section.split(f"### {name}", 1)[1].split("\n### ", 1)[0]
+        assert "summary, which you cite for them" in described
+
+
 def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_person_reads():
     """The agent's sentences reach the page, and the copy lint reads only the copy file, so the agent is
     told DESIGN.md section 7's rules itself: rule 19's words, read here from DESIGN.md, and rules 3, 4,

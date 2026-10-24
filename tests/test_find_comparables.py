@@ -121,7 +121,8 @@ def test_the_narrower_criteria_give_no_range_and_no_share_and_return_every_compa
     # The three canceled packages have no contract, but their plan rows state Post, so none matches Prior.
     canceled = {package_id(c["reference"]) for c in COMPARABLES if "canceled_in" in c}
     assert canceled.isdisjoint(evidence for entry in result["coverage"]["not_used"] for evidence in entry["evidence_ids"])
-    assert (result["coverage"]["matched"], result["coverage"]["used"]) == (13, 7)
+    assert (result["coverage"]["matched"], result["coverage"]["used"]) == (
+        criteria["narrower_count"] + len(no_review), criteria["narrower_count"])
 
 
 def test_the_coverage_line_states_the_counts_a_direct_count_over_the_fixture_gives(engine):
@@ -147,6 +148,18 @@ def test_adding_a_criterion_never_lets_more_packages_match(engine):
     assert both["coverage"]["matched"] <= size["coverage"]["matched"]
     # A contract with no STEP reference is held to every criterion too: each signed for more than US$1.
     assert left_out(both, "no_step_reference") == left_out(size, "no_step_reference") == []
+
+
+def test_a_criterion_matches_whatever_its_case_because_the_agent_writes_the_arguments_itself(engine):
+    """"post", "works", "open - national" and "ke" are STEP's Post, Works, Open - National and KE. A
+    criterion read case for case would match nothing, and a wrong "nothing matched" has no number for the
+    verifier to catch."""
+    def seen(result):
+        return result["coverage"], [row["step_reference"] for row in result["rows"]]
+
+    assert seen(find(engine, review_type="post")) == seen(find(engine, review_type="Post"))
+    assert seen(find(engine, market_approach="open - national")) == seen(find(engine, market_approach="Open - National"))
+    assert seen(find(engine, category="works", method="request for bids", country="ke")) == seen(find(engine))
 
 
 def test_a_canceled_package_is_named_as_canceled_and_counted_only_where_the_coverage_line_names_it(engine):
@@ -232,9 +245,22 @@ def test_the_derived_figures_come_back_as_one_citable_summary_record(engine, tmp
 
     path = tmp_path / "tools.toml"
     path.write_text((ROOT / "config" / "tools.toml").read_text().replace(
-        'summary_fields = ["past_range", "plan", "counts", "coverage"]', 'summary_fields = ["past_range", "ranges"]'))
+        'summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]',
+        'summary_fields = ["past_range", "ranges"]'))
     with pytest.raises(config.ConfigError, match="ranges, which fields does not list"):
         config.load_tools(path)
+
+
+def test_the_numbers_each_frequency_phrase_states_come_back_so_the_agent_can_cite_them(engine):
+    """"8 in 10 were signed within 9.1 months" states 8 and 10, and "2 of 49, fewer than 1 in 10" states
+    1 and 10, so the tool returns them (CLAUDE.md rule 1). Below the floor there is no frequency at all."""
+    result = find(engine)
+    prior = find(engine, review_type=TRUTH["comparables"]["narrower_review_type"])
+
+    # 2 of 49 rounds to 0 in 10, which the screen writes as "fewer than 1 in 10".
+    assert result["frequencies"] == {"q80": [8, 10], "plan": [1, 10]}
+    assert result["summary"]["frequencies"] == result["frequencies"]
+    assert prior["frequencies"] is None
 
 
 def block(text: str, *keys: str) -> str:
@@ -268,7 +294,7 @@ def top_level_keys(body: str) -> set[str]:
 def test_the_screen_s_copy_file_has_a_phrase_for_every_reason_and_the_abstention_s_sentence():
     """A reason code added to the registry without its phrase would leave a gap in the coverage line."""
     copy = (ROOT / "web" / "src" / "copy.ts").read_text()
-    past_range = block(copy[copy.index("\n  pastRange: {"):], "pastRange")
+    past_range = block(copy, "pastRange")
 
     phrases = top_level_keys(block(past_range, "reasons"))
 

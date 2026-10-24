@@ -428,6 +428,20 @@ def claim(sentence, **fields):
             **fields}
 
 
+def test_the_middle_half_and_the_middle_one_name_parts_of_a_past_range_not_amounts():
+    """Strata's own words for a past range (web/src/copy.ts, pastRange): "the middle half" is the band
+    between the quarter and three-quarter points, and "the middle one" is the package at the middle, so
+    neither is an amount a row must hold. "Half of the packages" and "one bid" still are."""
+    parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
+        claim("The middle half of these packages took a while."), claim("The middle one took longer."),
+        claim("Half of the packages were late."), claim("Only one bid came in for the middle half.")),
+        no_engine))))
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "Half")], [("number_not_in_records", "one")]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        "The middle half of these packages took a while.", "The middle one took longer."]
+
+
 def removed_reasons(parsed):
     return [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")]
 
@@ -600,10 +614,12 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
         [("quote_not_on_page", None)]]
 
 
-def test_a_past_range_the_agent_states_is_backed_by_find_comparables_summary_record(fixture_db):
-    """The past range, the plan's count and the comparables' count are derived figures, so find_comparables
-    returns them as one citable record beside its rows (CLAUDE.md rule 1). A sentence citing it keeps the
-    numbers it holds, and loses one it does not. The values are tests/ground_truth/values.toml's past_range."""
+def test_a_past_range_the_agent_states_in_strata_s_words_is_backed_by_find_comparables_summary_record(fixture_db):
+    """The past range, the plan's count, the numbers its frequency phrases state and the comparables' count
+    are derived figures, so find_comparables returns them as one citable record beside its rows (CLAUDE.md
+    rule 1). The agent can then say what the screen says (web/src/copy.ts, pastRange's title and summary)
+    citing only that record, and a number the record does not hold is still removed. The values are
+    tests/ground_truth/values.toml's past_range."""
     import tomllib
 
     truth = tomllib.loads((Path(__file__).parent / "ground_truth" / "values.toml").read_text())["past_range"]
@@ -611,18 +627,24 @@ def test_a_past_range_the_agent_states_is_backed_by_find_comparables_summary_rec
 
     def answer(outputs):
         summary = outputs[0]["summary"]["evidence_id"]
-        return [claim(f"Comparable packages took {low} to {truth['q75_months']} months from notice to signature, "
-                      f"and {within} of {truth['comparables']} were signed within the plan's {truth['plan_months']} "
-                      f"months.", kind="record", evidence_ids=[summary])
-                for low in (truth["q25_months"], 3.4)]
+        sentences = [
+            f"The middle half of these packages took {truth['q25_months']} to {truth['q75_months']} months, and the "
+            f"middle one took {truth['q50_months']}.",
+            f"8 in 10 were signed within {truth['q80_months']} months.",
+            f"{within} of {truth['comparables']} comparable packages, fewer than 1 in 10, were signed within the "
+            f"plan's {truth['plan_months']} months.",
+            f"The middle half of these packages took 3.4 to {truth['q75_months']} months, and the middle one took "
+            f"{truth['q50_months']}.",
+        ]
+        return [claim(sentence, kind="record", evidence_ids=[summary]) for sentence in sentences]
 
     agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
                              answer)
 
     parsed = ask_with_tools(fixture_db, agent, load_tools())
 
-    [kept] = of(parsed, "sentence")
-    assert kept["text"].startswith(f"Comparable packages took {truth['q25_months']} to")
+    assert [sentence["text"].split(" ")[:3] for sentence in of(parsed, "sentence")] == [
+        ["The", "middle", "half"], ["8", "in", "10"], [str(within), "of", str(truth["comparables"])]]
     assert removed_reasons(parsed) == [[("number_not_in_records", "3.4")]]
     [evidence] = of(parsed, "evidence")
     assert evidence["id"] == "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"

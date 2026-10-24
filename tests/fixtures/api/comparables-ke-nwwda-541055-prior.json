@@ -238,6 +238,7 @@
     "within": 0,
     "in10": null
   },
+  "frequencies": null,
   "quantile_dots": null,
   "thresholds": {
     "min_comparables": 20,
@@ -292,6 +293,7 @@
       "within": 0,
       "in10": null
     },
+    "frequencies": null,
     "counts": {
       "comparables": 7,
       "signed": 7,

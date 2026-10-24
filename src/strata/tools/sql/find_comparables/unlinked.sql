@@ -13,8 +13,8 @@ FROM strata.gold.contract
 WHERE step_reference IS NULL
   AND source <> 'notices'
   AND public_from <= :as_of
-  AND (CAST(:country AS STRING) IS NULL OR country_code = :country)
-  AND (CAST(:method AS STRING) IS NULL OR procurement_method = :method)
-  AND (CAST(:category AS STRING) IS NULL OR procurement_category = :category)
+  AND (CAST(:country AS STRING) IS NULL OR upper(country_code) = upper(:country))
+  AND (CAST(:method AS STRING) IS NULL OR lower(procurement_method) = lower(:method))
+  AND (CAST(:category AS STRING) IS NULL OR lower(procurement_category) = lower(:category))
   AND contract_signing_date BETWEEN CAST(:notice_from AS DATE) AND CAST(:notice_to AS DATE)
 ORDER BY contract_id

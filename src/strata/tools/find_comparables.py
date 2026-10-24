@@ -13,7 +13,7 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   row: its Method, its category (the plan table it sits in) and its project's country, with notices
   from period_from to the plan's date. Market approach, review type and size band stay open unless
   given, because a package still open has no review type or signed amount in any record. "any"
-  leaves a criterion open.
+  leaves a criterion open. A criterion matches whatever its case, since the agent writes it.
 - A package with a Method in no_notice_methods, or a Market Approach that starts with a word in
   no_notice_market_approaches, has no specific procurement notice, so the tool abstains
   (no_public_notice).
@@ -30,6 +30,10 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
 - The plan's months run from the plan row's planned notice date to its planned signing date. The
   result gives how many comparables were signed within them, and, from min_comparables up, about how
   many in 10, so the screen states counts and never works one out.
+- From min_comparables up, frequencies holds the two numbers each frequency phrase states, so the agent
+  can cite them like any value: [8, 10] for "8 in 10 were signed within", and for the plan's share
+  [about N, 10], with N at least 1 and at most 9, because the screen writes "fewer than 1 in 10" and
+  "more than 9 in 10" at the ends. With none or all signed within the plan, it names no share.
 
 Every number is at its rounding here: days are whole, and months have one decimal. The rows come
 shortest first, by months and then STEP reference, which is the order the chart's dots and its table
@@ -44,7 +48,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_sources, load_tools
-from strata.estimates.past_range import Observation, months, quantile_dots, quartiles
+from strata.estimates.past_range import QUARTERS, Observation, months, quantile_dots, quartiles
 from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
 
@@ -189,7 +193,13 @@ def _no_notice(package: dict, limits: Limits) -> dict | None:
 
 # ── The comparables ──────────────────────────────────────────────────────
 
-def _known(candidate: dict, criteria: dict) -> dict[str, bool | None]:
+def _same(value: str, wanted: str) -> bool:
+    """Whether a record's value is the criterion, whatever the case, since the agent writes the criteria
+    itself: "post" is STEP's Post."""
+    return value.strip().casefold() == wanted.strip().casefold()
+
+
+def _meets_each(candidate: dict, criteria: dict) -> dict[str, bool | None]:
     """For each criterion the SQL could not apply and the call set, whether the candidate meets it:
     True or False when its records give a value, None when they give none. Each is keyed by the reason
     the coverage line gives when the value is missing."""
@@ -197,11 +207,11 @@ def _known(candidate: dict, criteria: dict) -> dict[str, bool | None]:
     if criteria["review_type"] is not None:
         # The contract's review type first, because it is what happened; then the plan row's.
         review_type = candidate.get("review_type") or candidate.get("plan_review_type")
-        found["no_review_type"] = None if review_type is None else review_type == criteria["review_type"]
+        found["no_review_type"] = None if review_type is None else _same(review_type, criteria["review_type"])
     if criteria["market_approach"] is not None:
         approach = (candidate.get("plan_market_approach") or candidate.get("contract_market_approach")
                     or candidate.get("notice_market_approach") or candidate.get("market_approach"))
-        found["no_market_approach"] = None if approach is None else approach == criteria["market_approach"]
+        found["no_market_approach"] = None if approach is None else _same(approach, criteria["market_approach"])
     if criteria["size_from_usd"] is not None or criteria["size_to_usd"] is not None:
         amount = _money(candidate["amount_usd"])
         low, high = criteria["size_from_usd"], criteria["size_to_usd"]
@@ -215,7 +225,7 @@ def _matches(candidate: dict, criteria: dict) -> tuple[bool, str | None]:
     when it has no value for one of them. It is checked against every criterion first: a known value
     that differs leaves it out of the match, even when another criterion has no value. Of the criteria
     with no value, the reason given is the first in the coverage line's order."""
-    found = _known(candidate, criteria)
+    found = _meets_each(candidate, criteria)
     if any(meets is False for meets in found.values()):
         return False, None
     return True, next((reason for reason in REASONS if reason in found and found[reason] is None), None)
@@ -307,6 +317,15 @@ def _plan(package: dict, rows: list[dict], ranged: bool) -> dict | None:
             "within": within, "in10": int(in10) if in10 is not None else None}
 
 
+def _frequencies(plan: dict | None, total: int) -> dict:
+    """The numbers each frequency phrase states: "8 in 10 were signed within", and the plan's "about N in
+    10", "fewer than 1 in 10" or "more than 9 in 10"."""
+    share = None
+    if plan is not None and plan["in10"] is not None and 0 < plan["within"] < total:
+        share = [min(max(plan["in10"], 1), 9), 10]
+    return {"q80": [int(QUARTERS["q80"] * 10), 10], "plan": share}
+
+
 def _past_range(rows: list[dict]) -> dict:
     observations = [Observation(row["days"], not row["still_open"]) for row in rows]
     days = quartiles(observations)
@@ -335,7 +354,8 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
     limits = Limits.read(call)
     package = read_package(call.engine, step_reference, call.as_of)
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "package": package,
-             "criteria": None, "counts": None, "past_range": None, "plan": None, "quantile_dots": None,
+             "criteria": None, "counts": None, "past_range": None, "plan": None, "frequencies": None,
+             "quantile_dots": None,
              "thresholds": limits.as_values(), "sources": _sources(), "records_through": None}
     if package is None:
         return {**empty, "abstention": {"reason": "unknown_package", "step_reference": step_reference.strip()}}
@@ -375,5 +395,6 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
                 "abstention": {"reason": "too_few_comparables", "count": len(rows),
                                "min_comparables": limits.min_comparables}}
     dots = _quantile_dots(rows, limits.quantile_dots) if len(rows) > limits.quantile_dots_above else None
-    return {**found, "rows": rows, "plan": _plan(package, rows, ranged=True), "past_range": _past_range(rows),
-            "quantile_dots": dots, "abstention": None}
+    plan = _plan(package, rows, ranged=True)
+    return {**found, "rows": rows, "plan": plan, "frequencies": _frequencies(plan, len(rows)),
+            "past_range": _past_range(rows), "quantile_dots": dots, "abstention": None}

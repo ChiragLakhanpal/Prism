@@ -186,7 +186,9 @@ The past range is Kaplan-Meier: the months by which a quarter, half, three quart
 comparables were signed. Below {past_range.min_comparables} comparables it gives no range and no share and \
 abstains, and still returns every comparable. Above {past_range.quantile_dots_above} it also gives \
 {past_range.quantile_dots} quantile dots. The plan's own months, from its planned notice date to its planned \
-signing date, come back with how many comparables were signed within them."""
+signing date, come back with how many comparables were signed within them. The past range, the count signed \
+within the plan's months, the numbers each "in 10" phrase states and the coverage counts also come back in the \
+result's summary, which you cite for them."""
 adapter = "strata.tools.find_comparables:find_comparables"
 benchmark = "find-comparables-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
@@ -267,14 +269,15 @@ months from notice to signature, or so far."""
 row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_code", "country_name",
               "notice_id", "notice_date", "signed_on", "still_open", "days", "months", "rank"]
 source_fields = ["project_id", "notice_id", "contract_id", "award_notice_id", "signed_in"]
-fields = ["package", "criteria", "counts", "past_range", "plan", "quantile_dots", "thresholds", "sources",
-          "records_through"]
+fields = ["package", "criteria", "counts", "past_range", "plan", "frequencies", "quantile_dots", "thresholds",
+          "sources", "records_through"]
 reasons = ["no_step_reference", "no_notice", "canceled", "signed_before_notice", "no_review_type",
            "no_market_approach", "no_amount"]
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables"]
 # An abstention listed here comes with rows: below the floor the tool gives no range, but still
 # returns every comparable (the spec: "it returns every comparable and an abstention").
 abstentions_with_rows = ["too_few_comparables"]
-# The past range, the plan's count, the counts and the coverage line are derived figures, so they come
-# back as one citable record too (spec, "a derived figure the agent needs is returned as a column").
-summary_fields = ["past_range", "plan", "counts", "coverage"]
+# The past range, the plan's count, the numbers its frequency phrases state ("8 in 10"), the counts and
+# the coverage line are derived figures, so they come back as one citable record too (spec, "a derived
+# figure the agent needs is returned as a column").
+summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]

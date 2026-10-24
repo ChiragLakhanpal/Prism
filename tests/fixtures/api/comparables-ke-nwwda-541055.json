@@ -1195,6 +1195,16 @@
     "within": 2,
     "in10": 0
   },
+  "frequencies": {
+    "q80": [
+      8,
+      10
+    ],
+    "plan": [
+      1,
+      10
+    ]
+  },
   "quantile_dots": null,
   "thresholds": {
     "min_comparables": 20,
@@ -1255,6 +1265,16 @@
       "plan_date": "2026-10-09",
       "within": 2,
       "in10": 0
+    },
+    "frequencies": {
+      "q80": [
+        8,
+        10
+      ],
+      "plan": [
+        1,
+        10
+      ]
     },
     "counts": {
       "comparables": 49,
