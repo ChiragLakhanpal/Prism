@@ -8,6 +8,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { footerSentence } from "./design-md";
+import { placements, readRegistry, type SourceRegistry } from "./registries";
 
 const RUN = fileURLToPath(new URL("../lint/run.ts", import.meta.url));
 
@@ -95,59 +96,17 @@ test("every kind of question in config/tools.toml has its words in the copy file
   }
 });
 
-type Registry = {
-  sources: Record<
-    string,
-    {
-      readiness?: (Record<string, unknown> & { id: string; label: string; covers?: string; checks?: { measure: string }[] })[];
-      fixes?: { measure: string; projects?: string }[];
-    }
-  >;
-};
-
-type Tools = { tools: Record<string, { readiness?: { ready_for: { row: string; measure: string } } }> };
-
-// Python's tomllib reads a registry as the server does; the web app has no TOML reader.
-function readRegistry<T>(name: string): T {
-  const path = fileURLToPath(new URL(`../../config/${name}`, import.meta.url));
-  const read = spawnSync("python3", ["-c", "import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], 'rb')), default=str))", path], {
-    encoding: "utf8",
-  });
-  expect(read.status, read.stderr).toBe(0);
-  return JSON.parse(read.stdout) as T;
-}
-
 test("every measure a number on /data can open that fills no column has its own window words in the copy file", async () => {
   // Design r5 B1 and review r7 B1: a check's number, and then a kind's Ready for number, opened
   // Coverage's window. Every measure the page can show comes from one of three places: a column, a
   // check or a fix in config/sources.toml, or a kind's Ready for in config/tools.toml. Each one that
   // no column of its row shows has words of its own in copy.dataReadiness.measureWindows, so a new
-  // one can never fall back to a column's name and definition.
+  // one can never fall back to a column's name and definition, and each names its table.
   const { copy } = await import("../src/copy.ts");
-  const registry = readRegistry<Registry>("sources.toml");
-  const columns = ["coverage", "linked", "read_well", "fresh"];
-  const needed: string[] = [];
-  const columnMeasures = new Set<string>();
-  const rowColumns = new Map<string, Set<string>>();
-  for (const source of Object.values(registry.sources)) {
-    const rows = source.readiness ?? [];
-    for (const row of rows) {
-      const filled = columns.flatMap((column) => {
-        const given = row[column] as { measure?: string; years?: string } | undefined;
-        return [given?.measure, given?.years].filter((measure): measure is string => Boolean(measure));
-      });
-      rowColumns.set(row.id, new Set(filled));
-      for (const measure of filled) columnMeasures.add(measure);
-    }
-    const shown = new Set(rows.flatMap((row) => [...(rowColumns.get(row.id) ?? [])]));
-    needed.push(...rows.flatMap((row) => (row.checks ?? []).map((check) => check.measure)));
-    for (const fix of source.fixes ?? []) {
-      if (!shown.has(fix.measure)) needed.push(fix.measure);
-      if (fix.projects) needed.push(fix.projects);
-    }
-  }
-  const readyFor = Object.values(readRegistry<Tools>("tools.toml").tools).flatMap((tool) => (tool.readiness ? [tool.readiness.ready_for] : []));
-  for (const { row, measure } of readyFor) if (!rowColumns.get(row)?.has(measure)) needed.push(measure);
+  const { placed, conflicts } = placements();
+  expect(conflicts, "a measure's window is chosen by its name, so each is placed one way").toEqual([]);
+  const measureOf = (key: string) => key.slice(key.indexOf("/") + 1);
+  const needed = [...placed].filter(([, placement]) => placement.column === null).map(([key]) => measureOf(key));
   // Each place adds at least one, so a reader that silently found none can't pass.
   expect(needed).toContain("latest_activities_with_confirmed_first_listing_read");
   expect(needed).toContain("gap_years_projects_in_local_currency");
@@ -155,8 +114,10 @@ test("every measure a number on /data can open that fills no column has its own 
   const words = copy.dataReadiness.measureWindows;
   const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
   expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+  expect([...placed].filter(([, placement]) => !placement.table).map(([key]) => key), "every window names its table").toEqual([]);
   // Review r6 P3: the words are keyed by measure name alone, and a column's measure names repeat
   // across sources, so words for one would retitle every cell of that column that counts it.
+  const columnMeasures = new Set([...placed].filter(([, placement]) => placement.column !== null).map(([key]) => measureOf(key)));
   expect(columnMeasures).toContain("linked_project");
   expect(
     Object.keys(words).filter((measure) => columnMeasures.has(measure)),
@@ -164,7 +125,7 @@ test("every measure a number on /data can open that fills no column has its own 
   ).toEqual([]);
   // Review r7 P3: fix 1's window names the awards dataset by the registry's label and years, so the
   // two can't drift apart.
-  const awards = registry.sources.awards.readiness?.[0];
+  const awards = readRegistry<SourceRegistry>("sources.toml").sources.awards.readiness?.[0];
   expect(words.projects_with_contracts_lacking_step_reference.definition).toContain(`${awards?.label} ${awards?.covers}`);
 });
 

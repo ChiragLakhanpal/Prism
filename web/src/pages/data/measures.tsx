@@ -56,10 +56,11 @@ function measureWindow(row: MeasureRow, column: Column | null, asOf: string, cli
   ];
   // A measure that fills no column, such as a check or a fix's own measure, has its own words, so
   // its window never borrows a column's name and definition (design review r5 B1).
+  const counted = { source: row.source_key, measure: row.measure };
   const own = words.measureWindows[row.measure];
-  if (own) return { title: own.title, definition: own.definition, rows };
-  if (column === null) return { title: words.fixes.title, definition: words.fixes.caption, rows };
-  return { title: words.sources.columns[column].label, definition: words.sources.definitions[column], rows };
+  if (own) return { title: own.title, definition: own.definition, rows, counted };
+  if (column === null) return { title: words.fixes.title, definition: words.fixes.caption, rows, counted };
+  return { title: words.sources.columns[column].label, definition: words.sources.definitions[column], rows, counted };
 }
 
 function said(noun: Noun | null, n: number): string {

@@ -12,7 +12,9 @@ import { numBody, type NumValue } from "./Num";
 import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 import { DEFINITION_WINDOW, DefinitionContent, type DefinitionRows } from "./Term";
 
-export type Measure = { title: ReactNode; definition: ReactNode; rows: DefinitionRows };
+// counted names the measure behind the window, by its source and its name in strata.ops.data_readiness,
+// on the number as data-source and data-measure, so a test can check each window against the registries.
+export type Measure = { title: ReactNode; definition: ReactNode; rows: DefinitionRows; counted?: { source: string; measure: string } };
 
 export function MeasureNum({
   value,
@@ -34,6 +36,8 @@ export function MeasureNum({
       ref={button}
       type="button"
       data-num
+      data-source={measure?.counted?.source}
+      data-measure={measure?.counted?.measure}
       aria-haspopup={measure ? "dialog" : undefined}
       aria-expanded={measure ? open : undefined}
       onClick={() => measure && setOpen((was) => !was)}

@@ -8,6 +8,7 @@ import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
 import { expect, mockShell, recorded, test } from "./mocked";
+import { placements } from "./registries";
 
 type Answer = { status?: number; file: string };
 
@@ -418,6 +419,49 @@ test("the document search's Ready for number opens a window named for the passag
   await expect(window).not.toContainText("fiscal years");
   await expect(window.locator(".font-mono")).toHaveText("strata.gold.passage");
 });
+
+// Review r7: three rounds each found a number whose window named another measure. This opens every
+// number's window on each view and checks it against the registries, not the page's own choice: a
+// measure a column of its row shows opens that column's window, any other opens its own words, and
+// every window names the table the registry says the measure was counted in.
+const SWEPT: [string, string, Answer][] = [
+  ["the full page", "/data", FULL],
+  ["the plan check's view", "/data?sources=documents,projects&from=check_plan", { file: "data-readiness-plan-check.json" }],
+  ["the past range's view", "/data?sources=awards,notices&from=find_comparables", { file: "data-readiness-filtered.json" }],
+];
+for (const [name, path, answer] of SWEPT) {
+  test(`on ${name}, every number's window is named for the measure it counted, with its definition and its table`, async ({ page }) => {
+    const { copy } = await import("../src/copy.ts");
+    const words = copy.dataReadiness;
+    const { placed } = placements();
+    await mockData(page, answer);
+    await open(page, path);
+    await expect(page.locator("[data-readiness=ready], [data-readiness=filtered]")).toBeVisible();
+
+    // The cards below 768 px repeat the table's numbers and are hidden at this width.
+    const numbers = page.locator("main button[data-num][aria-haspopup=dialog]").filter({ visible: true });
+    const count = await numbers.count();
+    expect(count).toBeGreaterThan(10);
+    for (let index = 0; index < count; index += 1) {
+      const number = numbers.nth(index);
+      const key = `${await number.getAttribute("data-source")}/${await number.getAttribute("data-measure")}`;
+      const placement = placed.get(key);
+      expect(placement, `number ${index} counts ${key}, which no registry places`).toBeTruthy();
+      const measure = key.slice(key.indexOf("/") + 1);
+      const want = placement?.column
+        ? { title: words.sources.columns[placement.column].label, definition: words.sources.definitions[placement.column] }
+        : words.measureWindows[measure];
+      expect(want, `number ${index} counts ${key}, which fills no column and has no window words`).toBeTruthy();
+      await number.click();
+      const window = page.getByRole("dialog");
+      await expect(window.getByRole("heading"), `number ${index}, ${key}`).toHaveText(want!.title);
+      await expect(window, `number ${index}, ${key}`).toContainText(want!.definition);
+      await expect(window.locator(".font-mono"), `number ${index}, ${key}`).toHaveText(placement?.table ?? "");
+      await page.keyboard.press("Escape");
+      await expect(window).toBeHidden();
+    }
+  });
+}
 
 // Design r6 P4: the table name is what a reader copies or searches for, so at 320 px it breaks
 // only after a dot ("strata.silver." then "plan_listings"), never inside a word.
