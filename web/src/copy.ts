@@ -746,6 +746,9 @@ export const copy = {
     abstain: {
       unmeasured: "I'm not giving a headline: {count} of the {total} sources below have no measures yet. Their rows say so.",
       unmeasuredOne: "I'm not giving a headline: {count} of the {total} sources below has no measures yet. Its row says so.",
+      // When no source in view has measures: the second when the view holds one source.
+      unmeasuredAll: "I'm not giving a headline: none of the sources below has measures yet. Their rows say so.",
+      unmeasuredAllOne: "I'm not giving a headline: the source below has no measures yet. Its row says so.",
       beforeFirst: "I have no measures taken on or before {asked}. I took my first measures on {first}.",
       showToday: "Show today's measures",
     },

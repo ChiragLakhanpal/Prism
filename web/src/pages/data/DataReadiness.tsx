@@ -295,6 +295,18 @@ const KIND_COLUMNS: ReadinessColumn[] = [
 
 // ── The page ─────────────────────────────────────────────────────────────
 
+// No headline while a source in view has no measures. Both counts are of the sources in view, so a
+// filtered view's total is small, and each is written in words up to nine (review r6 P2).
+function Abstention({ unmeasured, sources }: { unmeasured: number; sources: number }) {
+  if (unmeasured === sources) return <>{sources === 1 ? words.abstain.unmeasuredAllOne : words.abstain.unmeasuredAll}</>;
+  return (
+    <Template
+      text={unmeasured === 1 ? words.abstain.unmeasuredOne : words.abstain.unmeasured}
+      values={{ count: <Num count={unmeasured} />, total: <Num count={sources} /> }}
+    />
+  );
+}
+
 function Provenance({ result }: { result: Readiness }) {
   if (!result.measured) return null;
   const { first, last } = result.measured;
@@ -726,10 +738,7 @@ function render(
           </p>
         ) : result.headline_abstention ? (
           <p className="text-title text-pretty text-ink-heading md:text-h3" data-headline>
-            <Template
-              text={result.headline_abstention.unmeasured === 1 ? words.abstain.unmeasuredOne : words.abstain.unmeasured}
-              values={{ count: <Num count={result.headline_abstention.unmeasured} />, total: <Num value={result.headline_abstention.sources} /> }}
-            />
+            <Abstention unmeasured={result.headline_abstention.unmeasured} sources={result.headline_abstention.sources} />
           </p>
         ) : null}
         <Provenance result={result} />

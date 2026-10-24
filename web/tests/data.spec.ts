@@ -546,6 +546,27 @@ test("a source with no measures leaves the headline out, and its row says it is 
   // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
   await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");
   await expect(cell(page, "wgi:span")).toHaveText("Not measured yet. The next data run measures it.");
+
+  // Review r6 P2: a filtered view abstains out of the sources in view, so the total is small too,
+  // and is written in words, as is a view in which no source, or the only one, has measures.
+  const answer = await json("data-readiness-unmeasured.json");
+  const abstaining = (unmeasured: number, sources: number) => ({
+    ...answer,
+    filter: { ...answer.filter, shown: sources },
+    headline_abstention: { reason: "unmeasured", unmeasured, sources },
+  });
+  let body = abstaining(1, 2);
+  await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) }));
+  await page.reload();
+  await expect(page.locator("[data-headline]")).toHaveText(
+    "I'm not giving a headline: one of the two sources below has no measures yet. Its row says so.",
+  );
+  body = abstaining(2, 2);
+  await page.reload();
+  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline: none of the sources below has measures yet. Their rows say so.");
+  body = abstaining(1, 1);
+  await page.reload();
+  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline: the source below has no measures yet. Its row says so.");
 });
 
 test("a date before the first measure says when the measures start and links to today's", async ({ page }) => {
