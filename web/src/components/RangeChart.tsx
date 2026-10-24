@@ -11,10 +11,11 @@
 // rests on it for 100 ms. A pointer moving along the dots leaves that band at once, so the tooltip
 // follows it.
 //
-// The chart is 240 px tall in every state, in five rows: the lane label and its key (A), the plan's
-// readout (B), the lane with the middle half, the middle, the 8-in-10 line and the dots, the
-// statistics' labels (C), and the axis. A swarm too tall for the lane makes the lane taller in 16 px
-// steps before the first paint, and never after. Each dot's centre is exactly its months, and dots
+// The chart is 240 px tall, in five rows: the lane label and its key (A), the plan's readout (B), the
+// lane with the middle half, the middle, the 8-in-10 line and the dots, the statistics' labels (C), and
+// the axis. From 400 px wide, a readout that takes two lines makes row B, and the chart, 16 px taller.
+// A swarm too tall for the lane makes the lane taller in 16 px steps before the first paint, and never
+// after. A reader's text spacing can make rows A, B and C taller too. Each dot's centre is exactly its months, and dots
 // that would overlap move up or down from the lane's centre in a fixed order, so the same data always
 // draws the same picture and no dot sits on the wrong side of the plan line the readout counts against.
 //
@@ -41,6 +42,9 @@ export type RangeMark = {
 export type RangeStats = { q25: number | null; q50: number | null; q75: number | null; q80: number | null };
 
 export type PlanMove = "drag" | "drag-end" | "key" | "axis";
+
+// The widest readout for plans from `from` months up to the next band's: one line, and the copy's two.
+export type ReadoutBand = { from: number; one: string; lines: [string, string] };
 
 const ROW_A = 24;
 const ROW_C = 40;
@@ -175,22 +179,34 @@ function breakFor(breaks: Break[] | undefined, whole: number, room: number): Bre
 }
 const lineWidth = (one: Break | null, whole: number) => (one ? Math.max(one.before, one.after) : whole);
 
-// A text filled into lines no wider than the room: each line takes words while they fit, and the next
-// starts after the last space that fits. It returns the spaces where lines end, counted from the first
-// space, so a text with the same words and other digits can break at the same ones.
+// A text filled into as few lines as fit the room, with the lines as even as they can be, so no word is
+// left alone on the last one. Filling each line with words while they fit gives the fewest lines; the
+// narrowest room that still gives that many evens them out. It returns the spaces where lines end,
+// counted from the first space, so a text with the same words and other digits can break at the same ones.
 function wrapAt(breaks: Break[] | undefined, whole: number, room: number): number[] {
   if (!breaks?.length) return [];
-  const ends: number[] = [];
   // The width of the text up to and including space i, or 0 before the first word.
   const upTo = (i: number) => (i < 0 ? 0 : whole - breaks[i].after);
-  let from = -1;
-  while (whole - upTo(from) > room && from < breaks.length - 1) {
-    let end = from + 1;
-    for (let i = from + 1; i < breaks.length; i++) if (breaks[i].before - upTo(from) <= room) end = i;
-    ends.push(end);
-    from = end;
+  const fill = (width: number) => {
+    const ends: number[] = [];
+    let from = -1;
+    while (whole - upTo(from) > width && from < breaks.length - 1) {
+      let end = from + 1;
+      for (let i = from + 1; i < breaks.length; i++) if (breaks[i].before - upTo(from) <= width) end = i;
+      ends.push(end);
+      from = end;
+    }
+    return ends;
+  };
+  const fewest = fill(room).length;
+  let low = 0;
+  let high = room;
+  for (let step = 0; step < 16; step++) {
+    const middle = (low + high) / 2;
+    if (fill(middle).length <= fewest) high = middle;
+    else low = middle;
   }
-  return ends;
+  return fill(high);
 }
 
 // A text cut into lines at the spaces wrapAt chose.
@@ -248,7 +264,6 @@ export function RangeChart({
   readout,
   readoutLines,
   readoutWidest,
-  readoutWidestLines,
   keySigned,
   keyHollow,
   keyLead = false,
@@ -279,10 +294,10 @@ export function RangeChart({
   // signed" over "within 1.5 months", for a chart where one line does not fit beside the line.
   readout: string | null;
   readoutLines: [string, string] | null;
-  // The widest readout the line can reach, every package signed by the axis's last month, as one line
-  // and as two. The readout's lines are chosen from it, so they stay the same while the line moves.
-  readoutWidest: string;
-  readoutWidestLines: [string, string];
+  // The widest readout the line can reach from each band's months to the next band's, as one line and
+  // as the copy's two: every package signed, by the band's last month. The readout's lines are chosen
+  // from them, so row B stays the same while the line moves.
+  readoutWidest: ReadoutBand[];
   // The key: the signed count beside a filled dot and the open count beside a hollow one. With
   // keyLead, the key is words alone, with no glyphs: a lead, "Each dot is 1 in 20 of the 103 packages.",
   // then the open count, because quantile dots do not draw open packages one by one.
@@ -313,9 +328,10 @@ export function RangeChart({
   const r0 = big ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
   const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
+  const widestKeys = readoutWidest.map((_, index) => [`widest${index}`, `widest${index}-0`, `widest${index}-1`] as const);
   const { widths, boxes, breaks, ref } = useTextWidths(
-    ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, "widest", "widest0", "widest1", "middle", "in10", "tickLast", "tickPrev"],
-    ["keySigned", "middle", "widest"],
+    ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, ...widestKeys.flat(), "middle", "in10", "tickLast", "tickPrev"],
+    ["keySigned", "middle", ...widestKeys.map(([one]) => one)],
   );
   // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
   // chart, its hollow half takes a line of its own, and row A grows by that line before the first paint.
@@ -343,24 +359,37 @@ export function RangeChart({
   const hollowY = keyWraps ? signedLines * lineGap : 0;
 
   // Row B: the readout, beside the plan line and never across it. Its lines are chosen once for the
-  // chart's width, from the widest readout the line can reach, so they fit on the roomier side of the
-  // line wherever it sits, and row B never changes while the line moves. That side always has half the
-  // chart, less the gap to the knob's focus ring and the halo's margin (room). The readout is one line
-  // where one line fits there, from 400 px wide; otherwise it is the copy's two lines; and where a copy
-  // line is still too wide, as with WCAG 1.4.12's text spacing at 320 px, its words fill as many lines
-  // as they need. "Plan" sits on a line above them at the plan row's own months. Row B holds it with up
-  // to two lines of the readout, and grows by a line for each line past that.
+  // chart's width, from the widest readout the line can reach in each band of months (readoutWidest),
+  // so they fit on the roomier side of the line wherever it sits, and row B never changes while the line
+  // moves. A band's least room is on the roomier side of the line where the line sits nearest the middle
+  // of the plot. The readout is one line where one line fits there, from 400 px wide; otherwise it is
+  // the copy's two lines; and where a copy line is still too wide, as with WCAG 1.4.12's text spacing at
+  // 320 px, its words fill as many lines as they need. "Plan" sits on a line above them at the plan
+  // row's own months. Row B holds it with up to two lines of the readout, and grows by a line for each
+  // line past that.
   //
   // The knob is 12 px wide and its focus ring sits 2 px out and is 2 px thick, so it ends 10 px from the
   // line; the readout starts 4 px past that (GAP). Its halo's box reaches 3 px past its letters, so the
-  // letters stay that far inside the plot (EDGE).
+  // letters stay that far inside the chart where they can (EDGE). The room leaves that margin out: a
+  // surface halo on the surface cannot be seen past the chart's edge anyway.
   const GAP = 14;
   const EDGE = 3;
   const readoutStep = type.s + 3;
-  const room = width / 2 - GAP - EDGE;
-  const copyFits = (widths.widest0 ?? 0) <= room && (widths.widest1 ?? 0) <= room;
-  const readoutEnds = !narrow && (widths.widest ?? 0) <= room ? null : copyFits ? "copy" : wrapAt(breaks.widest, widths.widest ?? 0, room);
-  const readoutRows = readoutEnds === null ? 1 : readoutEnds === "copy" ? 2 : readoutEnds.length + 1;
+  const bands = readoutWidest.map((band, index) => {
+    const [one, first, second] = widestKeys[index];
+    const next = readoutWidest[index + 1]?.from ?? axisMax;
+    const nearest = x(clamp(axisMax / 2, Math.max(band.from, 0.5), Math.min(next, axisMax)));
+    return {
+      from: band.from,
+      room: Math.max(nearest, width - nearest) - GAP,
+      one: widths[one] ?? 0,
+      copy: Math.max(widths[first] ?? 0, widths[second] ?? 0),
+      breaks: breaks[one],
+    };
+  });
+  const readoutKind = !narrow && bands.every((band) => band.one <= band.room) ? "one" : bands.every((band) => band.copy <= band.room) ? "copy" : "wrap";
+  const bandEnds = bands.map((band) => (readoutKind === "wrap" ? wrapAt(band.breaks, band.one, band.room) : []));
+  const readoutRows = readoutKind === "one" ? 1 : readoutKind === "copy" ? 2 : Math.max(1, ...bandEnds.map((ends) => ends.length + 1));
   const rowB = (readoutRows >= 2 ? 48 : 32) + Math.max(0, readoutRows + (ownPlan !== null ? 1 : 0) - 3) * readoutStep;
   const laneTop = rowA + rowB;
   const laneBottom = laneTop + layout.lane;
@@ -588,14 +617,15 @@ export function RangeChart({
   // the halo's margin goes before the gap to the ring: a surface halo on the surface cannot be seen past
   // the edge anyway.
   const showPlanWord = plan !== null && ownPlan !== null && plan === ownPlan;
+  const band = plan === null ? 0 : bands.reduce((found, one, index) => (plan >= one.from ? index : found), 0);
   const lines =
     readout === null
       ? []
-      : readoutEnds === null
+      : readoutKind === "one"
         ? [readout]
-        : readoutEnds === "copy"
+        : readoutKind === "copy"
           ? (readoutLines ?? [readout])
-          : splitAt(readout, readoutEnds);
+          : splitAt(readout, bandEnds[band] ?? []);
   const readoutWidth = Math.max(0, ...lines.map((_, index) => widths[READOUT_LINES[index]] ?? 0), showPlanWord ? (widths.plan ?? 0) : 0);
   let edge = EDGE;
   let onRight = planX !== null && planX <= PAD + 0.55 * (width - 2 * PAD);
@@ -616,7 +646,7 @@ export function RangeChart({
   // when it fits. Each moves off the plan line when it would cross it, if it can clear the line by 6 px;
   // where it cannot, its knockout stops the line around it.
   const middleWidth = lineWidth(middleBreak, widths.middle ?? 0);
-  let middleX =stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
+  let middleX = stats?.q50 != null ? clamp(x(stats.q50) - middleWidth / 2, PAD, plotRight - middleWidth) : 0;
   if (stats?.q50 != null && planX !== null && middleX - 3 < planX && planX < middleX + middleWidth + 3) {
     const tick = x(stats.q50);
     const options = [planX + 6, planX - 6 - middleWidth].filter((start) => start >= PAD && start + middleWidth <= plotRight);
@@ -624,8 +654,9 @@ export function RangeChart({
   }
   const in10Width = widths.in10 ?? 0;
   const q80x = stats?.q80 != null ? x(stats.q80) : 0;
-  // Where it fits on neither side of its line, as with WCAG 1.4.12's text spacing at 320 px, it starts
-  // at the chart's left edge, over its knockout.
+  // Left of its line, it starts no further left than the chart's left edge. That happens where it fits
+  // on neither side, as with WCAG 1.4.12's text spacing at 320 px, and where it moves off the plan line
+  // near the left of a narrow chart.
   const in10Start = (right: boolean) => (right ? q80x + 4 : Math.max(0, q80x - 4 - in10Width));
   let in10Right = q80x + 4 + in10Width <= plotRight;
   if (stats?.q80 != null && planX !== null) {
@@ -898,13 +929,15 @@ export function RangeChart({
 
       </svg>
 
-      {/* The widest readout, drawn hidden in the readout's type so its lines can be chosen from it. */}
+      {/* The widest readouts, drawn hidden in the readout's type so its lines can be chosen from them. */}
       <svg aria-hidden="true" width={0} height={0} className="pointer-events-none absolute top-0 left-0 overflow-hidden" style={{ visibility: "hidden" }}>
-        {([["widest", readoutWidest], ["widest0", readoutWidestLines[0]], ["widest1", readoutWidestLines[1]]] as const).map(([key, text]) => (
-          <text key={key} ref={ref(key)} fontSize={type.s} className="tabular-nums">
-            {text}
-          </text>
-        ))}
+        {readoutWidest.flatMap((widest, index) =>
+          [widest.one, ...widest.lines].map((text, part) => (
+            <text key={widestKeys[index][part]} ref={ref(widestKeys[index][part])} fontSize={type.s} className="tabular-nums">
+              {text}
+            </text>
+          )),
+        )}
       </svg>
 
       {/* The plan line as a slider: dragged by its knob or within 8 px of the line, moved by the arrow

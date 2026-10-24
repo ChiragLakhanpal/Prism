@@ -233,6 +233,14 @@ test("at narrow widths the readout never crosses the knob, wherever the line sit
     for (const months of ["1.5", "6", "9", "14"]) {
       await input.fill(months);
       await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      // Under 400 px wide, the readout is the copy's two lines wherever the line sits.
+      if (width < 400) {
+        const within = await signedWithin(Number(months));
+        expect(await page.locator("[data-readout] text").allTextContents(), `${width} px, ${months} months`).toEqual([
+          `${within} of 49 signed`,
+          `within ${Number(months).toFixed(1)} months`,
+        ]);
+      }
       const knob = (await page.getByRole("slider").boundingBox())!;
       for (const label of await page.locator("[data-readout], [data-readout-plan]").all()) {
         const box = (await label.boundingBox())!;
@@ -1270,6 +1278,76 @@ test("with WCAG 1.4.12's text spacing at 320 px, every fact stays in its column 
       };
     });
     expect(labels, state).toEqual({ outside: [], over: [] });
+  }
+});
+
+// WCAG 1.4.12 with the plan line anywhere on the axis. The readout's lines are chosen once for the
+// chart's width (DESIGN.md section 6, the range chart), so at every half month its letters stay 3 px
+// clear of the knob's focus ring, never span the line and stay inside the chart, and the chart keeps its
+// height. One answer is derived with the plan row's own months mid-axis, where "Plan" adds a line above
+// the readout; it serves this geometry check only, and no count is read from it.
+test("with WCAG 1.4.12's text spacing, the readout keeps clear of the knob at every half month, and the chart keeps its height", async ({ page }) => {
+  await page.addInitScript((css) => {
+    document.addEventListener("DOMContentLoaded", () => {
+      const style = document.createElement("style");
+      style.textContent = css;
+      document.head.append(style);
+    });
+  }, TEXT_SPACING);
+  const midAxis = await derived("comparables-ke-nwwda-541055.json", (body) => {
+    (body.plan as { months: number }).months = 9;
+  });
+  const prior = { body: await recorded("comparables-ke-nwwda-541055-prior.json") };
+  const quantile = { body: await recorded("comparables-ke-nwwda-541055-any-category.json") };
+  for (const [where, options] of [
+    ["320 px", { width: 320 }],
+    ["360 px", { width: 360 }],
+    ["560 px", { width: 560 }],
+    ["1024 px beside the drawer", { width: 1024, evidence: true }],
+    ["320 px in the abstention state", { width: 320, comparables: prior }],
+    ["320 px in the quantile state", { width: 320, comparables: quantile }],
+    ["320 px with the plan row's months mid-axis", { width: 320, comparables: midAxis }],
+  ] as const) {
+    await openPackage(page, options);
+    await ready(page);
+    await page.evaluate(() => document.fonts.ready);
+    const problems = await page.locator("[data-range-chart]").evaluate(async (chart) => {
+      const knob = chart.querySelector<HTMLElement>("[data-plan-knob]")!;
+      knob.focus();
+      const ring = parseFloat(getComputedStyle(knob).outlineOffset) + parseFloat(getComputedStyle(knob).outlineWidth);
+      const press = async (key: string) => {
+        knob.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      };
+      await press("Home");
+      const height = chart.getBoundingClientRect().height;
+      const found: string[] = [];
+      for (;;) {
+        const months = knob.getAttribute("aria-valuenow");
+        const svg = chart.querySelector("[data-chart-drawing]")!.getBoundingClientRect();
+        const box = knob.getBoundingClientRect();
+        const lineX = svg.left + Number(chart.querySelector("[data-plan-line] line")!.getAttribute("x1"));
+        for (const text of chart.querySelectorAll<SVGTextElement>("text[data-readout], [data-readout] text, [data-readout-plan]")) {
+          const fill = text.getBBox();
+          const left = svg.left + fill.x;
+          const right = left + fill.width;
+          const top = svg.top + fill.y;
+          const bottom = top + fill.height;
+          const clear = left >= box.right + ring + 3 || right <= box.left - ring - 3 || top >= box.bottom + ring + 3 || bottom <= box.top - ring - 3;
+          if (!clear) found.push(`${months} months: "${text.textContent}" within 3 px of the knob's ring`);
+          if (left < lineX && right > lineX) found.push(`${months} months: "${text.textContent}" across the line`);
+          if (left < svg.left - 0.5 || right > svg.right + 0.5) found.push(`${months} months: "${text.textContent}" outside the chart`);
+        }
+        // A readout that wraps keeps its words together: no line holds one word alone.
+        const lines = [...chart.querySelectorAll("[data-readout] text")].map((text) => text.textContent!);
+        if (lines.length > 2 && lines.some((line) => !line.includes(" "))) found.push(`${months} months: a word alone in ${JSON.stringify(lines)}`);
+        if (Math.abs(chart.getBoundingClientRect().height - height) > 0.5) found.push(`${months} months: the chart's height changed`);
+        if (Number(months) >= Number(knob.getAttribute("aria-valuemax"))) break;
+        await press("ArrowRight");
+      }
+      return found;
+    });
+    expect.soft(problems, where).toEqual([]);
   }
 });
 

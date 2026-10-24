@@ -881,7 +881,7 @@ export const copy = {
       keyOpenDots: (count: string) => `${count} still open.`,
       plan: "Plan",
       readout: (within: string, total: string, months: string) => `${within} of ${total} signed within ${months} months`,
-      // The same readout as two lines, for a chart under 400 px wide.
+      // The same readout as two lines, for a chart where one line does not fit beside a plan line in its middle.
       readoutCount: (within: string, total: string) => `${within} of ${total} signed`,
       readoutWithin: (months: string) => `within ${months} months`,
       middle: (q25: string, q75: string, q50: string) => `Middle half ${q25} to ${q75}, middle ${q50}`,
