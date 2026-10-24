@@ -93,6 +93,14 @@ def test_a_run_that_skipped_a_task_fails(capsys):
     assert "refresh_drafts has no row" in out
 
 
+def test_a_run_still_going_when_the_wait_ends_says_how_to_check_it_later(capsys):
+    code, out = checked(["job-run"], FakeWorkspace(state="still running after 160 minutes"), capsys)
+
+    assert code == 1
+    assert "The run is still running after 160 minutes." in out
+    assert "job-run --env-file .env --run-id 880001" in out
+
+
 def test_a_run_that_did_not_succeed_fails(capsys):
     code, out = checked(["job-run"], FakeWorkspace(state="FAILED"), capsys)
 
