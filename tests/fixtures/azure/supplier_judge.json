@@ -1,0 +1,19 @@
+{
+ "about": "An answer of Azure OpenAI's chat completions (the v1 endpoint) from the judge role's deployment, asked whether two supplier rows name the same supplier, with response_format json_object. It is written by hand in the shape the operation documents, because the gate's machine has no key. Replace it with a recorded answer when ops/suppliers/judge_live.py first runs (docs/workspace-catchup.md).",
+ "recorded": false,
+ "response": {
+  "id": "chatcmpl-not-a-real-id",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"decision\": \"merge\", \"confidence\": 0.93, \"reason\": \"The names differ only in punctuation and the legal form, in the same country.\"}"
+    }
+   }
+  ]
+ }
+}

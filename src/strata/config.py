@@ -7,7 +7,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads six of them:
 - load_slice()       config/slice.toml, the slice file
 - load_sectors()     config/sectors.toml, the one sector taxonomy
 - load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table,
-                     and load_search() its [search] table)
+                     load_search() its [search] table, and load_supplier_matching() its
+                     [supplier_matching] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 - load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
@@ -615,7 +616,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -654,6 +655,59 @@ def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
     entry = _Entry(path, "search", _read(path).get("search"))
     entry.only({"index", "reranker", "rerank_columns"})
     return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"))
+
+
+@dataclass(frozen=True)
+class Level:
+    """One level of a name-matching comparison: how often rows of one supplier (m) and of different
+    suppliers (u) fall in it."""
+
+    name: str
+    m: float
+    u: float
+
+
+@dataclass(frozen=True)
+class SupplierMatching:
+    """The name-matching model for suppliers with no STEP supplier ID (ticket 19)."""
+
+    judge_role: str  # the model role whose deployment decides the uncertain middle
+    prior: float  # how likely two rows from one country are one supplier before their names are compared
+    comparisons: dict[str, tuple[Level, ...]]  # each comparison's levels, most alike first
+
+
+def load_supplier_matching(path: Path = CONFIG_DIR / "models.toml") -> SupplierMatching:
+    """The model file's [supplier_matching] table. Each comparison's m values add up to 1, and so do its u
+    values; the levels' names are checked against their rules by strata.knowledge.suppliers.matching."""
+    entry = _Entry(path, "supplier_matching", _read(path).get("supplier_matching"))
+    table = entry.table
+    judge_role = entry.text("judge_role")
+    if judge_role not in ROLES:
+        entry._fail("judge_role", f"must be one of the model file's roles: {', '.join(ROLES)}")
+    prior = table.get("prior")
+    if not isinstance(prior, (int, float)) or not 0 < prior < 1:
+        entry._fail("prior", "must be a number between 0 and 1")
+    comparisons = {}
+    for name, levels in table.items():
+        if name in ("judge_role", "prior"):
+            continue
+        where = _Entry(path, f"supplier_matching.{name}", levels)
+        read = []
+        for level, values in levels.items():
+            level_entry = _Entry(path, f"supplier_matching.{name}.{level}", values)
+            level_entry.only({"m", "u"})
+            m, u = values.get("m"), values.get("u")
+            if not all(isinstance(value, (int, float)) and 0 < value < 1 for value in (m, u)):
+                level_entry._fail("m", "and u must each be a number between 0 and 1")
+            read.append(Level(level, float(m), float(u)))
+        for column in ("m", "u"):
+            total = sum(getattr(level, column) for level in read)
+            if abs(total - 1) > 1e-9:
+                where._fail(column, f"values must add up to 1, and they add up to {total:g}")
+        comparisons[name] = tuple(read)
+    if not comparisons:
+        entry._fail("name", "is missing. The model needs at least one comparison")
+    return SupplierMatching(judge_role, float(prior), comparisons)
 
 
 # ── The thresholds file ──────────────────────────────────────────────────
