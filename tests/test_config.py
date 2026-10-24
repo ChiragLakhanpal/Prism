@@ -172,7 +172,14 @@ cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "awards"
 stratum = "What"
-known_gaps = ["Awards for FY2017 to FY2019 are in neither dataset."]
+
+[[sources.awards_copy.known_gaps]]
+id = "copy_gap"
+label = "Contract awards"
+noun = "contract awards"
+first_fiscal_year = 2017
+last_fiscal_year = 2019
+note = "No World Bank dataset publishes contract awards for these years."
 """
 
 
@@ -185,7 +192,59 @@ def test_a_source_is_one_entry_in_the_registry(tmp_path):
     assert awards.dataset_id == "DS00005"
     assert awards.cadence == "daily"
     assert (awards.api, awards.page_size, awards.ignore_keys) == ("finances_one", 1000, ("as_of_date",))
-    assert awards.known_gaps == ("Awards for FY2017 to FY2019 are in neither dataset.",)
+    assert [(gap.first_fiscal_year, gap.last_fiscal_year) for gap in awards.known_gaps] == [(2017, 2019)]
+
+
+# ── What the Data readiness page reads from the registry (ticket 16) ─────
+
+def test_every_source_says_how_its_data_readiness_shows_and_the_documents_show_as_plans_and_reports():
+    """The 16 brief, section 5.1: one row per source, in the registry's order, What before How
+    before Why. The documents source holds two readers' measures, so it shows as two rows."""
+    sources = config.load_sources()
+
+    assert all(source.readiness for source in sources.values())
+    awards = sources["awards"].readiness[0]
+    assert (awards.label, awards.linked.measure, awards.fresh.measure) == (
+        "Contract awards", "linked_step_reference", "fresh_fetched")
+    assert awards.read_well is None  # STEP publishes awards as a table, so nothing needs reading
+    assert [(row.id, row.stratum) for row in sources["documents"].readiness] == [("plans", "How"), ("reports", "Why")]
+    ids = [row.id for source in sources.values() for row in source.readiness]
+    assert len(ids) == len(set(ids))
+
+
+def test_the_registry_declares_the_fiscal_2017_to_2019_awards_as_a_known_gap():
+    """The ticket: no dataset publishes contract awards for fiscal 2017 to 2019 (PLAN.md section 3)."""
+    gaps = config.load_sources()["awards"].known_gaps
+
+    assert [(gap.first_fiscal_year, gap.last_fiscal_year) for gap in gaps] == [(2017, 2019)]
+    assert gaps[0].note.startswith("No World Bank dataset publishes contract awards for these years.")
+
+
+def test_each_dataset_names_its_data_source_and_the_day_its_name_was_checked_against_the_catalog():
+    """PLAN.md section 18 asks for the exact dataset names on the attribution page."""
+    sources = config.load_sources()
+
+    datasets = {key: source.attribution for key, source in sources.items() if source.attribution}
+    assert set(datasets) == set(sources) - {"documents"}
+    assert datasets["awards"].data_source == "Systematic Tracking of Exchanges in Procurement (STEP)"
+    assert all(isinstance(found.name_checked, dt.date) for found in datasets.values())
+    assert all(found.catalog_url.startswith("https://") for found in datasets.values())
+    assert [collection.name for collection in sources["documents"].collections][0] == "Procurement Plans"
+
+
+def test_a_data_readiness_column_with_a_key_the_registry_does_not_know_is_refused(tmp_path):
+    path = copy("sources.toml", tmp_path, 'linked = { measure = "linked_step_reference"',
+                'linked = { mesure = "linked_step_reference"')
+
+    with pytest.raises(ConfigError, match=r"sources\.awards\.readiness\[1\]\.linked has keys I do not know: mesure"):
+        config.load_sources(path)
+
+
+def test_a_fix_names_the_measure_whose_numbers_fill_its_sentence(tmp_path):
+    fixes = config.load_sources()["awards"].fixes
+
+    assert {fix.measure for fix in fixes} >= {"linked_step_reference"}
+    assert all("{" in fix.sentence for fix in fixes)
 
 
 def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):

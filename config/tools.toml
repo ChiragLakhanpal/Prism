@@ -32,6 +32,13 @@
 #                  not used, may have. The screens' copy writes one sentence per code, so a code is
 #                  renamed here, in the tool and in the copy together.
 #   abstentions    every reason the tool may give for returning no rows, for the same reason
+#
+# [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
+# readiness page lists each such kind under "What you can ask" (ticket 16):
+#   kind           its key in web/src/copy.ts's dataReadiness.kinds, which holds its words
+#   ready_for      the measure whose count goes in its "Ready for" cell: the readiness row's id
+#                  (config/sources.toml) and the measure's name
+#   draws_on       the readiness rows whose gaps hold its answers back
 
 [tools.check_plan]
 description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
@@ -46,6 +53,11 @@ prior-review queue, complaints, contract amendments or contract management repor
 adapter = "strata.tools.check_plan:check_plan"
 benchmark = "check-plan-nwwda-2026-10-09"
 sources = ["documents", "projects"]
+
+[tools.check_plan.readiness]
+kind = "plan_check"
+ready_for = { row = "plans", measure = "latest_activities_with_step_rows" }
+draws_on = ["plans", "projects"]
 
 [[tools.check_plan.parameters]]
 name = "project_id"
@@ -98,6 +110,11 @@ is left out, and the coverage line says how many. Quote a passage only word for 
 adapter = "strata.tools.search_passages:search_passages"
 benchmark = "search-passages-icr-rebidding"
 sources = ["documents", "projects"]
+
+[tools.search_passages.readiness]
+kind = "document_search"
+ready_for = { row = "reports", measure = "passages_embedded" }
+draws_on = ["reports", "projects"]
 
 [[tools.search_passages.parameters]]
 name = "query"

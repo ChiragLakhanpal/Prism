@@ -117,6 +117,91 @@ STRATA = ("What", "How", "Why")
 APIS = ("finances_one", "search", "indicators")
 EVERY_COUNTRY, SLICE_COUNTRIES = "every country", "slice countries"
 SCOPES = (EVERY_COUNTRY, SLICE_COUNTRIES)
+# The schedule a readiness row can give in place of its source's cadence: documents arrive when
+# their authors publish them, so their freshness is the newest document's date and never late.
+AS_PUBLISHED = "as published"
+# The four columns of the Data readiness page's Sources table (the 16 brief, section 5.1).
+READINESS_COLUMNS = ("coverage", "linked", "read_well", "fresh")
+
+
+@dataclass(frozen=True)
+class ReadinessColumn:
+    """The measure one cell of the Sources table shows, and the words around its number."""
+
+    measure: str  # the measure in strata.ops.data_readiness, for this source
+    counts: str  # what the number counts, shown under it, such as "carry a STEP reference"
+    noun: str  # one counted thing, in the plural, for the number's tooltip and the gap sentence
+    counted_in: str  # the table the measure counts, by its three-part name
+    lack: str | None = None  # for a share: what a row that falls short lacks, for the gap sentence
+    years: str | None = None  # for coverage: the measure that counts its fiscal years
+
+
+@dataclass(frozen=True)
+class ReadinessRow:
+    """One row of the Sources table: a source, or one reader's part of the documents source."""
+
+    id: str
+    label: str
+    noun: str  # the source's records in the plural, for the gap sentences, such as "CPIA scores"
+    stratum: str
+    covers: str | None = None  # what the rows span, after the scope, such as "since fiscal 2020"
+    schedule: str | None = None  # "as published", in place of the source's cadence
+    coverage: ReadinessColumn | None = None
+    linked: ReadinessColumn | None = None
+    read_well: ReadinessColumn | None = None
+    fresh: ReadinessColumn | None = None
+    checks: tuple[ReadinessColumn, ...] = ()  # more measures that hold answers back when they fall short
+
+
+@dataclass(frozen=True)
+class KnownGap:
+    """Fiscal years of a source that no dataset publishes, shown as a Gap row under the source."""
+
+    id: str
+    label: str
+    noun: str
+    first_fiscal_year: int
+    last_fiscal_year: int
+    note: str
+
+
+@dataclass(frozen=True)
+class DeclaredLimit:
+    """A limit the source states about itself, which makes one cell Partial with this note."""
+
+    row: str
+    column: str
+    note: str
+
+
+@dataclass(frozen=True)
+class Fix:
+    """What would close a gap: a sentence whose numbers come from measure, ranked by the projects
+    it would add evidence to. projects names the measure that counts them; without it, they are
+    the measure's subjects, which are project IDs, that fall short."""
+
+    sentence: str
+    measure: str
+    projects: str | None = None
+    gap: str | None = None  # the known gap it closes, by id; otherwise it closes measure's shortfall
+
+
+@dataclass(frozen=True)
+class Attribution:
+    """How the World Bank credits a dataset: "The World Bank: {dataset_name}: {data_source}."."""
+
+    data_source: str
+    catalog_url: str
+    name_checked: dt.date  # the day dataset_name was checked against the catalog (PLAN.md section 18)
+
+
+@dataclass(frozen=True)
+class Collection:
+    """A collection of documents the documents source reads, for the Sources and licenses page."""
+
+    name: str
+    publisher: str
+    origin: str
 
 
 @dataclass(frozen=True)
@@ -147,10 +232,16 @@ class Source:
     resource_id: str | None = None
     stratum: str | None = None
     ignore_keys: tuple[str, ...] = ()
-    known_gaps: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
     countries: tuple[Country, ...] = ()
+    # How the Data readiness page and the Sources and licenses page show the source (ticket 16).
+    readiness: tuple[ReadinessRow, ...] = ()
+    known_gaps: tuple[KnownGap, ...] = ()
+    declared: tuple[DeclaredLimit, ...] = ()
+    fixes: tuple[Fix, ...] = ()
+    attribution: Attribution | None = None
+    collections: tuple[Collection, ...] = ()
 
     @property
     def paged(self) -> bool:
@@ -161,7 +252,9 @@ class Source:
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
 SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter")
-SOURCE_LISTS = ("ignore_keys", "known_gaps", "limitations", "indicators")
+SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
+SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
+SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
 
 
 def load_sources(path: Path = CONFIG_DIR / "sources.toml",
@@ -173,7 +266,8 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
     sources = {}
     for key, table in data.get("sources", {}).items():
         entry = _Entry(path, f"sources.{key}", table)
-        entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS))
+        entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS + SOURCE_ATTRIBUTION
+                       + SOURCE_PAGE))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
         fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL}
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
@@ -185,8 +279,83 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
             fields |= _paging(entry, table, fields)
             if fields["scope"] == SLICE_COUNTRIES:
                 fields["countries"] = load_slice(slice_path).countries
+        fields |= _page(path, key, entry, table, fields["stratum"])
         sources[key] = Source(key=key, **fields)
+    ids = [row.id for source in sources.values() for row in source.readiness]
+    twice = sorted({row for row in ids if ids.count(row) > 1})
+    if twice:
+        raise ConfigError(f"In {path.name}, more than one readiness row has the id {', '.join(twice)}. "
+                          "Give each row its own id.")
     return sources
+
+
+def _column(path: Path, where: str, table) -> ReadinessColumn:
+    entry = _Entry(path, where, table)
+    entry.only({"measure", "counts", "noun", "counted_in", "lack", "years"})
+    return ReadinessColumn(entry.text("measure"), entry.text("counts"), entry.text("noun"), entry.text("counted_in"),
+                           entry.text("lack", required=False), entry.text("years", required=False))
+
+
+def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None) -> dict:
+    """What the Data readiness page and the Sources and licenses page read about a source."""
+    fields: dict = {}
+    if any(name in table for name in SOURCE_ATTRIBUTION):
+        fields["attribution"] = Attribution(entry.text("data_source"), entry.text("catalog_url"),
+                                            entry.date("name_checked"))
+    rows = []
+    for row in _tables(path, table, "readiness"):
+        row.where = f"sources.{key}.{row.where}"
+        row.only({"id", "label", "noun", "stratum", "covers", "schedule", "checks", *READINESS_COLUMNS})
+        row_stratum = row.text("stratum", required=False) or stratum
+        if row_stratum not in STRATA:
+            row._fail("stratum", f"must be one of {', '.join(STRATA)}, here or on the source")
+        schedule = row.text("schedule", required=False)
+        if schedule not in (None, AS_PUBLISHED):
+            row._fail("schedule", f'can only be "{AS_PUBLISHED}"; leave it out to use the source\'s cadence')
+        columns = {name: _column(path, f"{row.where}.{name}", row.table[name])
+                   for name in READINESS_COLUMNS if name in row.table}
+        checks = row.table.get("checks", [])
+        if not isinstance(checks, list):
+            row._fail("checks", "must be a list of inline tables")
+        rows.append(ReadinessRow(row.text("id"), row.text("label"), row.text("noun"), row_stratum,
+                                 row.text("covers", required=False), schedule, **columns,
+                                 checks=tuple(_column(path, f"{row.where}.checks[{n}]", check)
+                                              for n, check in enumerate(checks, 1))))
+    fields["readiness"] = tuple(rows)
+    gaps = []
+    for gap in _tables(path, table, "known_gaps"):
+        gap.where = f"sources.{key}.{gap.where}"
+        gap.only({"id", "label", "noun", "first_fiscal_year", "last_fiscal_year", "note"})
+        gaps.append(KnownGap(gap.text("id"), gap.text("label"), gap.text("noun"), gap.integer("first_fiscal_year"),
+                             gap.integer("last_fiscal_year"), gap.text("note")))
+    fields["known_gaps"] = tuple(gaps)
+    declared = []
+    for limit in _tables(path, table, "declared"):
+        limit.where = f"sources.{key}.{limit.where}"
+        limit.only({"row", "column", "note"})
+        row_id = limit.text("row", required=False) or (rows[0].id if rows else None)
+        if row_id not in {row.id for row in rows}:
+            limit._fail("row", "must name one of this source's readiness rows")
+        if limit.text("column") not in READINESS_COLUMNS:
+            limit._fail("column", f"must be one of {', '.join(READINESS_COLUMNS)}")
+        declared.append(DeclaredLimit(row_id, limit.text("column"), limit.text("note")))
+    fields["declared"] = tuple(declared)
+    fixes = []
+    for fix in _tables(path, table, "fixes"):
+        fix.where = f"sources.{key}.{fix.where}"
+        fix.only({"sentence", "measure", "projects", "gap"})
+        gap_id = fix.text("gap", required=False)
+        if gap_id is not None and gap_id not in {gap.id for gap in gaps}:
+            fix._fail("gap", "must name one of this source's known gaps by its id")
+        fixes.append(Fix(fix.text("sentence"), fix.text("measure"), fix.text("projects", required=False), gap_id))
+    fields["fixes"] = tuple(fixes)
+    collections = []
+    for collection in _tables(path, table, "collections"):
+        collection.where = f"sources.{key}.{collection.where}"
+        collection.only({"name", "publisher", "origin"})
+        collections.append(Collection(collection.text("name"), collection.text("publisher"), collection.text("origin")))
+    fields["collections"] = tuple(collections)
+    return fields
 
 
 def _paging(entry: _Entry, table: dict, fields: dict) -> dict:
@@ -501,6 +670,19 @@ class ToolResult:
 
 
 @dataclass(frozen=True)
+class ToolReadiness:
+    """The kind of question a tool answers, as the Data readiness page's "What you can ask" shows it:
+    its words are copy.ts's dataReadiness.kinds[kind], the number in its "Ready for" cell is
+    ready_for_measure in the readiness row ready_for_row, and what holds it back comes from the rows
+    it draws on (config/sources.toml, [[sources.<key>.readiness]])."""
+
+    kind: str
+    ready_for_row: str
+    ready_for_measure: str
+    draws_on: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class Tool:
     """One tool, defined once: what it does, what it takes, what runs it and what it returns."""
 
@@ -511,6 +693,7 @@ class Tool:
     sources: tuple[str, ...]
     parameters: tuple[ToolParameter, ...]
     result: ToolResult
+    readiness: ToolReadiness | None = None
 
     def parameter(self, name: str) -> ToolParameter:
         found = [parameter for parameter in self.parameters if parameter.name == name]
@@ -529,14 +712,27 @@ def load_tools(path: Path = CONFIG_DIR / "tools.toml") -> dict[str, Tool]:
             raise ConfigError(f"In {path.name}, the tool name {name!r} must be lower case letters, digits and _.")
         entry = _Entry(path, f"tools.{name}", table)
         parameters, result = _tool_parameters(path, name, table), _tool_result(path, name, table)
-        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result"})
+        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result", "readiness"})
         adapter = entry.text("adapter")
         if not ADAPTER.fullmatch(adapter):
             entry._fail("adapter", f"must name a function as module:function, such as strata.tools.{name}:{name}")
         tools[name] = Tool(name=name, description=entry.text("description"), adapter=adapter,
                            benchmark=entry.text("benchmark"), sources=entry.texts("sources"),
-                           parameters=parameters, result=result)
+                           parameters=parameters, result=result, readiness=_tool_readiness(path, name, table))
     return tools
+
+
+def _tool_readiness(path: Path, name: str, table: dict) -> ToolReadiness | None:
+    if "readiness" not in table:
+        return None
+    entry = _Entry(path, f"tools.{name}.readiness", table["readiness"])
+    entry.only({"kind", "ready_for", "draws_on"})
+    ready_for = _Entry(path, f"tools.{name}.readiness.ready_for", entry.table.get("ready_for"))
+    ready_for.only({"row", "measure"})
+    draws_on = entry.texts("draws_on")
+    if ready_for.text("row") not in draws_on:
+        ready_for._fail("row", "must be one of the rows in draws_on")
+    return ToolReadiness(entry.text("kind"), ready_for.text("row"), ready_for.text("measure"), draws_on)
 
 
 def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter, ...]:
