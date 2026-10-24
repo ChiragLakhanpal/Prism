@@ -33,7 +33,7 @@ import re
 from functools import cache
 from pathlib import Path
 
-from strata.config import load_slice
+from strata.config import load_project_page, load_slice
 from strata.lakehouse.clean import public_from
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.passages import select
@@ -42,20 +42,14 @@ from strata.tools.check_plan import agency_id
 
 SQL = Path(__file__).resolve().parent / "sql" / "documents"
 # The documents API's type for each group, in the order a project produces its documents.
-TYPES = {
-    "Project Appraisal Document": "pad",
-    "Project Paper": "project_paper",
-    "Implementation Status and Results Report": "isr",
-    "Procurement Plan": "procurement_plan",
-    "Implementation Completion and Results Report": "icr",
-    "Implementation Completion Report Review": "icr_review",
-    "Project Performance Assessment Report": "ppar",
-}
+# The documents API's type for each group, in project-cycle order, and the groups re-issued under one
+# report number, the later replacing the earlier: config/project_page.toml (CLAUDE.md rule 9).
+PAGE = load_project_page()
+TYPES = PAGE.document_groups
 ORDER = [*TYPES.values(), "other"]
 # A group's documents as an address names them by type alone: /documents/icr.
 SLUGS = {group.replace("_", "-"): group for group in TYPES.values()}
-# Reports the World Bank re-issues under the same report number, the later replacing the earlier.
-REISSUED = {"icr", "icr_review", "ppar"}
+REISSUED = PAGE.reissued
 LANGUAGES = {"English": "en", "French": "fr", "Spanish": "es", "Portuguese": "pt"}
 
 

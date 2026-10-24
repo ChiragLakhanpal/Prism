@@ -77,7 +77,9 @@ export function BaselinePanel({
   const save = (date: string) => putJson<{ baseline: Baseline | null }>(address, { plan_date: date });
   const remove = () => deleteJson<{ baseline: null }>(address);
 
-  // Runs one write, reads the check again, then shows the message; a failure says why, and nothing changed.
+  // Runs one write, reads the check again, then shows the message. A failure says why, and the check is read
+  // again anyway, so the panel's sentence says what the baseline is now (the server writes in an order that a
+  // failure part way leaves safe).
   const run = (action: Action, write: () => Promise<unknown>, after: () => Mode) => {
     const attempt = async () => {
       setMode({ kind: "busy", action });
@@ -87,6 +89,7 @@ export function BaselinePanel({
         focusAfter.current = "status";
         setMode(after());
       } catch (error) {
+        await refresh().catch(() => undefined);
         focusAfter.current = "status";
         setMode(error instanceof ApiError && error.status === 403 ? { kind: "permission" } : { kind: "failed", again: attempt });
       }

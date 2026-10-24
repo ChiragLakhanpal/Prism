@@ -722,6 +722,32 @@ test("after Save as the baseline, a check reports delay against the baseline and
   await expect(signed.locator("[data-baseline-delay]")).toHaveCount(0);
 });
 
+test("a write that fails reads the check again, so the panel says what the baseline is now, and offers Try again", async ({ page }) => {
+  // The 21 review, round 2, item 3: the server writes in an order a failure leaves safe, and the panel reads
+  // the baseline again rather than claiming nothing changed.
+  const check = `/api${NWWDA}/2026-10-09`;
+  let reads = 0;
+  await open(page, `${NWWDA}/2026-10-09`, 1440, await p156634());
+  await page.route(`**${check}`, async (route) => {
+    reads += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json") });
+  });
+  await page.route(`**/api${NWWDA}/baseline`, (route) => route.fulfill({ status: 503, contentType: "application/json", body: '{"code":"data_service"}' }));
+  await page.reload();
+  const panel = page.getByRole("region", { name: "Baseline for delay" });
+  await expect(panel.getByRole("status")).toContainText("The baseline is the plan of July 21, 2025");
+  const before = reads;
+
+  await panel.getByRole("button", { name: "Make this plan the baseline" }).click();
+  await panel.getByRole("button", { name: "Replace the baseline" }).click();
+
+  await expect(panel.getByRole("alert")).toContainText("I couldn't make that change because the data service didn't answer.");
+  await expect(panel.getByRole("alert").getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(panel).not.toContainText("Nothing changed");
+  expect(reads).toBe(before + 1);
+  await expect(panel.getByRole("status")).toContainText("The baseline is the plan of July 21, 2025");
+});
+
 test("a later plan's check names the saved baseline and who saved it, gives both delays, and asks in place before replacing it", async ({ page }) => {
   await open(page, `${NWWDA}/2026-10-09`, 1440, {
     ...(await p156634()),

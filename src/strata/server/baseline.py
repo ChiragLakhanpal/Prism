@@ -8,7 +8,9 @@ one place it is read). Saving copies the version's planned dates into strata.ops
 because the plan reader rebuilds silver.plan_steps on every run. Saving another version replaces the
 baseline, and removing it deletes it, each with a DELETE that names the project and the agency
 (CLAUDE.md rule 5). Each write runs as the viewer, with bound parameters and three-part names, in
-sql/baseline/.
+sql/baseline/. The writes go in an order that a failure part way leaves safe: a save adds the new steps,
+then merges the baseline's one row, and only then deletes the earlier save's steps; a removal deletes the
+row before its steps. check_plan reads only the steps of the save the row names.
 
 Only a version the layout parser read can be a baseline, since a baseline is its planned dates. The
 routes refuse a write from a preview of another view, or from no one signed in, before this module runs.
@@ -40,7 +42,8 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
 
 
 def _remove(engine: Engine, project_id: str, agency: str) -> None:
-    for name in ("remove_steps", "remove"):
+    # The row first, so a failure before the steps leave shows no baseline rather than one with no dates.
+    for name in ("remove", "remove_steps"):
         engine.run(_query(name), {"project_id": project_id, "agency_id": agency})
 
 
@@ -54,13 +57,12 @@ def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewe
     if not found:
         return None
     version = found[-1]
-    _remove(engine, project_id, agency)
     values = {"project_id": project_id, "agency_id": agency, "document_id": version["document_id"],
-              "public_from": today}
-    engine.run(_query("save"), {**values, "implementing_agency": version["implementing_agency"],
-                                "plan_date": plan_date, "saved_by": viewer.user_id, "saved_by_name": viewer.name,
-                                "saved_at": now})
+              "public_from": today, "saved_at": now}
     engine.run(_query("save_steps"), values)
+    engine.run(_query("save"), {**values, "implementing_agency": version["implementing_agency"],
+                                "plan_date": plan_date, "saved_by": viewer.user_id, "saved_by_name": viewer.name})
+    engine.run(_query("remove_older_steps"), {"project_id": project_id, "agency_id": agency, "saved_at": now})
     saved = read_baseline(engine, project_id, agency, today, "staff")
     return saved.record if saved else None
 

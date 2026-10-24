@@ -15,6 +15,7 @@ LEFT JOIN strata.ops.plan_baseline_steps AS s
   ON s.project_id = b.project_id
   AND s.agency_id = b.agency_id
   AND s.document_id = b.document_id
+  AND s.saved_at = b.saved_at
   AND s.step IN ('Signed Contract', 'Contract Completion')
 WHERE b.project_id = :project_id
   AND b.agency_id = :agency_id

@@ -7,6 +7,7 @@ tests/ground_truth/values.toml, never worked out the way the routes work them ou
 
 import asyncio
 import datetime as dt
+import itertools
 import shutil
 from contextlib import contextmanager
 
@@ -679,6 +680,66 @@ def test_removing_the_baseline_leaves_delay_from_the_first_published_date_alone(
     check = get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-23").json()
     assert check["baseline"] is None
     assert "baseline" not in reasons(check)["KE-NWWDA-229129-CW-RFB"]
+
+
+class FailsOn:
+    """The engine, except that a statement holding these words fails as a warehouse that stops answering does."""
+
+    def __init__(self, engine, words):
+        self.engine, self.words = engine, words
+
+    def run(self, sql, params=None):
+        if self.words in sql:
+            from strata.lakehouse.engine import EngineError
+            raise EngineError("The warehouse did not answer.")
+        return self.engine.run(sql, params)
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+@pytest.mark.parametrize("words", ["INSERT INTO strata.ops.plan_baseline_steps", "MERGE INTO strata.ops.plan_baselines"])
+def test_a_save_that_fails_part_way_leaves_the_baseline_it_replaced_whole(writable, fixture_db, tmp_path, words):
+    # The 21 review, round 2, item 3: the new steps go in first, the baseline's one row is merged, and only
+    # then do the old steps leave, so a write that fails part way changes nothing a check reads.
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
+    database = tmp_path / "fixture.duckdb"
+
+    @contextmanager
+    def failing(_viewer):
+        with DuckDBEngine.open(database) as engine:
+            yield FailsOn(engine, words)
+    failed = call(create_app(engine_for=failing, now=lambda: SAVED_AT), "PUT", f"{NWWDA}/baseline",
+                  body={"plan_date": "2026-03-05"})
+
+    assert failed.status_code == 503
+    check = get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-23").json()
+    assert check["baseline"]["plan_date"] == "2025-07-21"
+    assert reasons(check)["KE-NWWDA-229129-CW-RFB"]["baseline"]["days"] == 155
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        rows = engine.run("SELECT count(*) FROM strata.ops.plan_baselines WHERE project_id = :pid", {"pid": "P156634"})
+    assert rows.rows == ((1,),)
+
+
+def test_saving_again_keeps_one_row_for_the_agency_and_only_the_saved_version_s_steps(writable, tmp_path):
+    database = tmp_path / "fixture.duckdb"
+    ticks = itertools.count()
+
+    @contextmanager
+    def engine_for(_viewer):
+        with DuckDBEngine.open(database) as engine:
+            yield engine
+    # Each save a minute after the last, as people save.
+    app = create_app(engine_for=engine_for, now=lambda: SAVED_AT + dt.timedelta(minutes=next(ticks)))
+    for day in ("2025-07-21", "2026-03-05", "2025-07-21"):
+        assert call(app, "PUT", f"{NWWDA}/baseline", body={"plan_date": day}).status_code == 200
+
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        baselines = engine.run("SELECT plan_date FROM strata.ops.plan_baselines WHERE project_id = :pid", {"pid": "P156634"})
+        documents = engine.run("SELECT DISTINCT document_id FROM strata.ops.plan_baseline_steps WHERE project_id = :pid",
+                               {"pid": "P156634"})
+    assert [str(row[0]) for row in baselines.rows] == ["2025-07-21"]
+    assert documents.rows == (("40031468",),)
 
 
 def test_only_a_signed_in_viewer_in_the_staff_view_can_save_a_read_version_as_the_baseline(writable):

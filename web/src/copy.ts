@@ -1249,7 +1249,8 @@ export const copy = {
     // Undo saves that plan again, so the saver is now the person who pressed Undo (the 21 review, round 2).
     undone: "I undid that change. The baseline is the plan of {date}, now saved by you.",
     undoneNone: "I undid that change. No plan from this agency is saved as the baseline.",
-    failed: "I couldn't save the baseline because the data service didn't answer. Nothing changed.",
+    // After a failed write the panel reads the check again, so the sentence above it says what holds now.
+    failed: "I couldn't make that change because the data service didn't answer.",
     tryAgain: "Try again",
     permission:
       "Your account can't save to Strata's tables, so I can't save the baseline. Ask your workspace admin for write " +

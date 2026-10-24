@@ -609,3 +609,45 @@ def test_reordering_the_outcome_tiers_in_a_copy_of_the_ladder_is_read_from_its_p
                 'tiers = ["ieg", "isr", "icr", "pad"]')
 
     assert config.load_ladder(path).rules[0].tiers == ("ieg", "isr", "icr", "pad")
+
+
+# ── The project page's lists (ticket 21) ─────────────────────────────────
+
+def test_the_project_page_registry_gives_document_groups_in_project_cycle_order_and_the_summary_s_ratings():
+    from strata.config import load_project_page
+
+    page = load_project_page()
+
+    # The documents API's own type names (data/fixture/recorded/api/documents/P130164.json, docty).
+    assert page.document_groups["Implementation Completion Report Review"] == "icr_review"
+    assert list(page.document_groups.values()) == ["pad", "project_paper", "isr", "procurement_plan", "icr",
+                                                   "icr_review", "ppar"]
+    assert page.reissued == frozenset({"icr", "icr_review", "ppar"})
+    assert page.isr_ratings == {"Progress towards achievement of PDO": "pdo",
+                                "Overall Implementation Progress (IP)": "implementation"}
+    assert page.procurement_rating_code == "27"
+
+
+def test_the_project_page_registry_names_a_repeated_group(tmp_path):
+    from strata.config import ConfigError, load_project_page
+
+    path = tmp_path / "project_page.toml"
+    path.write_text("""
+[documents]
+reissued = ["icr"]
+[[documents.groups]]
+type = "Implementation Completion and Results Report"
+group = "icr"
+[[documents.groups]]
+type = "ICR"
+group = "icr"
+[summary]
+procurement_rating_code = "27"
+[[summary.isr_ratings]]
+name = "Overall Implementation Progress (IP)"
+key = "implementation"
+""")
+
+    with pytest.raises(ConfigError, match="repeats 'icr'"):
+        load_project_page(path)
+

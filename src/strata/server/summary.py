@@ -36,14 +36,18 @@ from decimal import ROUND_HALF_UP, Decimal
 from functools import cache
 from pathlib import Path
 
+from strata.config import load_project_page
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
 from strata.tools.check_plan import implementing_agencies, record_date, record_is_current
 
 SQL = Path(__file__).resolve().parent / "sql" / "summary"
 MILLION, TENTH = Decimal(1_000_000), Decimal("0.1")
-ISR_RATINGS = {"Progress towards achievement of PDO": "pdo", "Overall Implementation Progress (IP)": "implementation"}
-PROCUREMENT = "27"  # the projects API's code for the Procurement rating
+# The ISR ratings the Summary shows, in order, and the projects API's Procurement rating code:
+# config/project_page.toml (CLAUDE.md rule 9).
+PAGE = load_project_page()
+ISR_RATINGS = PAGE.isr_ratings
+PROCUREMENT = PAGE.procurement_rating_code
 ICR_REVIEW = "ICRR"  # IEG's evaluation type for an ICR Review
 # The ICR's own outcome rating: the assertion about the whole project that the ICR's text makes.
 ICR_OUTCOME = {"subject_kind": "project", "attribute": "outcome", "evidence_tier": "icr"}
