@@ -11,13 +11,13 @@
 import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
+import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, type CheckedPlan } from "../components/PlanCheck";
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { copy } from "../copy";
 import type { CheckPlanResult } from "../lib/api";
-import { cx } from "../lib/cx";
 import { formatCount, formatDate } from "../lib/format";
 import { useLoad } from "../lib/load";
 
@@ -43,15 +43,6 @@ function useScrollPadding(header: RefObject<HTMLDivElement | null>, active: bool
       document.documentElement.style.scrollPaddingTop = "";
     };
   }, [header, active]);
-}
-
-// Alerts and empty states hold columns 1 to 8 from 1024 px, as on every other page.
-function EightColumns({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cx("layout-grid", className)}>
-      <div className="col-span-12 lg:col-span-8">{children}</div>
-    </div>
-  );
 }
 
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {

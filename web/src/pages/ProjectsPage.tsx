@@ -2,9 +2,10 @@
 // the order the route gives (active ones first, then by name). Each project ID links to its page.
 // The first 50 rows show; "Show 50 more" adds the next 50 and moves focus to the first new row's
 // link. Search arrives with ticket 21 and Following with ticket 37.
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { EmptyState } from "../components/Card";
 import { Button } from "../components/Button";
+import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { PageHeader } from "../components/PageHeader";
@@ -38,15 +39,6 @@ const PROJECT_SKELETON = (
     <SkeletonLine className="text-small" width="w-3/5" />
   </>
 );
-
-// The alert and the empty state hold columns 1 to 8 from 1024 px, as on every other page.
-function EightColumns({ children }: { children: ReactNode }) {
-  return (
-    <div className="layout-grid">
-      <div className="col-span-12 lg:col-span-8">{children}</div>
-    </div>
-  );
-}
 
 export function ProjectsPage() {
   const [load, retry] = useLoad<ProjectList>("/api/projects");

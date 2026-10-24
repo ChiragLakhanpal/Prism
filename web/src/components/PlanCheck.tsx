@@ -20,6 +20,7 @@ import { cx } from "../lib/cx";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
+import { EightColumns } from "./EightColumns";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
@@ -443,15 +444,6 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
-// Prose spans columns 1 to 8 from 1024 px, capped at 72 characters, and the full width below.
-function Prose({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div className={cx("layout-grid", className)}>
-      <div className="col-span-12 max-w-[72ch] lg:col-span-8">{children}</div>
-    </div>
-  );
-}
-
 export function PlanCheck({ result, findingRef, defaultOpen = false }: {
   result: CheckedPlan;
   findingRef?: Ref<HTMLHeadingElement>;
@@ -505,14 +497,14 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
 
   return (
     <section aria-labelledby={findingId} data-plan-check>
-      <Prose className="mt-6">
+      <EightColumns prose className="mt-6">
         <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none">
           <Finding result={result} />
         </h2>
         <div className="mt-2">
           <Method result={result} />
         </div>
-      </Prose>
+      </EightColumns>
       {/* Below 1024 px the cards have no column heads, so the definition of the marks sits at the
           right end of the count line's row. */}
       <div className="mt-4 flex items-baseline justify-between gap-4 text-caption">
@@ -585,12 +577,12 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
         </ul>
       </div>
 
-      <Prose className="mt-2">
+      <EightColumns prose className="mt-2">
         <PlanSource result={result} />
         <p className="mt-6 text-small text-ink-muted" data-not-visible>
           {words.notVisible}
         </p>
-      </Prose>
+      </EightColumns>
     </section>
   );
 }
@@ -639,7 +631,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   const rows = [0, 1, 2, 3, 4];
   return (
     <div aria-hidden="true" data-plan-skeleton>
-      <Prose className="mt-6">
+      <EightColumns prose className="mt-6">
         {/* The finding's count words are buttons whose 2 px padding makes its line 4 px taller,
             and the method sentence takes three lines at the prose width. */}
         <div className="py-0.5">
@@ -647,7 +639,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
         <SkeletonText className="mt-2 text-body" widths={["w-full", "w-full", "w-2/5"]} />
-      </Prose>
+      </EightColumns>
       <SkeletonLine className="mt-4 text-caption" width="w-40" />
       <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
         <table className="w-full table-fixed border-collapse text-small">

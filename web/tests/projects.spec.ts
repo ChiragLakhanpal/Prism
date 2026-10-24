@@ -65,6 +65,9 @@ test("All projects' skeleton rows are as tall as its rows, so the page does not 
   const height = () => firstRow.evaluate((row) => row.getBoundingClientRect().height);
   await expect(page.locator("[data-projects-page=loading]")).toBeVisible();
   const loading = await height();
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "loading at 390 px").toEqual([]);
+  await page.setViewportSize({ width: 1440, height: 900 });
 
   release();
   await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
@@ -77,12 +80,16 @@ test("All projects says when it holds no records, and when the data service didn
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
   await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
   expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(853);
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "empty at 390 px").toEqual([]);
 
   await open(page, "/projects", { "/api/projects": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
   await expect(page.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // At 1440 px the alert holds columns 1 to 8, as on every other page.
   expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(853);
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "error at 390 px").toEqual([]);
 });
 
 test("a project's page shows its header, one Procurement tab, and each agency's plan versions newest first", async ({ page }) => {
@@ -125,30 +132,61 @@ test("a project's page shows its header, one Procurement tab, and each agency's 
   await expect(page).toHaveURL(/\/projects\/P156634\/procurement\/northern-water-works-development-agency\/2026-10-09$/);
 });
 
-test("the project page's section tabs stay where they are when the project arrives, at 1440 and 390 px", async ({ page }) => {
+// Opens a project's page with its read held until release() is called.
+async function holdProject(page: Page, pid: string, file: string) {
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route("**/api/projects/P156634", async (route) => {
+  await page.route(`**/api/projects/${pid}`, async (route) => {
     await held;
-    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("project-p156634.json") });
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded(file) });
   });
-  await page.goto("/projects/P156634");
+  await page.goto(`/projects/${pid}`);
   await expect(page.locator("[data-project-page=loading]")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+  return release;
+}
+
+// The section tabs' top at each width, measured on the page as it stands.
+async function tabTops(page: Page, widths: number[]) {
   const tabs = page.getByRole("navigation", { name: "Project sections" });
-  const top = () => tabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
-  const loading = { 1440: await top(), 390: 0 };
-  await page.setViewportSize({ width: 390, height: 900 });
-  loading[390] = await top();
+  const tops: Record<number, number> = {};
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    tops[width] = await tabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  }
+  return tops;
+}
+
+test("while a project loads, its h1 and last crumb name it, and its section tabs stay where they are when it arrives", async ({ page }) => {
+  const widths = [1440, 1024, 390];
+  const release = await holdProject(page, "P156634", "project-p156634.json");
+  // A route change focuses the h1, so it names the project while the bars stand in for its name.
+  await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Project P156634");
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]")).toHaveText("Project P156634");
+  const loading = await tabTops(page, widths);
+  expect(await axe(page), "loading at 390 px").toEqual([]);
 
   release();
   await expect(page.locator("[data-project-page=ready]")).toBeVisible();
 
-  expect(Math.abs((await top()) - loading[390]), "390 px").toBeLessThanOrEqual(1);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  expect(Math.abs((await top()) - loading[1440]), "1440 px").toBeLessThanOrEqual(1);
+  const ready = await tabTops(page, widths);
+  for (const width of widths) expect(Math.abs(ready[width] - loading[width]), `${width} px`).toBeLessThanOrEqual(1);
+});
+
+test("a project whose agencies fit on one line moves its tabs up when it arrives, never down", async ({ page }) => {
+  // The skeleton keeps the place of two lines of agencies and "Show all agencies", which a project
+  // with one agency does not need (DESIGN.md section 5, Project header).
+  const widths = [1440, 390];
+  const release = await holdProject(page, "P130164", "project-p130164.json");
+  const loading = await tabTops(page, widths);
+
+  release();
+  await expect(page.locator("[data-project-page=ready]")).toBeVisible();
+
+  const ready = await tabTops(page, widths);
+  for (const width of widths) expect(ready[width], `${width} px`).toBeLessThanOrEqual(loading[width] + 1);
 });
 
 test("a long list of implementing agencies keeps to two lines until you show them all", async ({ page }) => {
@@ -173,6 +211,25 @@ test("a long list of implementing agencies keeps to two lines until you show the
   await expect(page.getByRole("button", { name: "Show all agencies" })).toHaveCount(0);
 });
 
+test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
+  const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
+  await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), 1100);
+  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project's Procurement Plans because the data service didn't answer.");
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  // From 1024 px the alert holds columns 1 to 8, as on every other page: at 1100 px, 8 columns of
+  // 50.33 px and 7 gutters of 32 px.
+  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(627);
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "error at 390 px").toEqual([]);
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, "/projects/P156634", api({ status: 403, body: '{"code":"permission"}' }), 390);
+  await expect(page.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show this project.");
+  await expect(page.getByText("Ask your workspace admin for read access to the strata catalog.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
+  expect(await axe(page), "permission at 390 px").toEqual([]);
+});
+
 test("an agency's count line states the route's count of its versions", async ({ page }) => {
   const body = JSON.parse(await recorded("project-p156634.json"));
   body.agencies[0].version_count = 7;
@@ -185,6 +242,8 @@ test("a project with no plans says so, and a project with no record is not found
   await open(page, "/projects/P130164/procurement", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization Project");
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have a Procurement Plan for this project yet.");
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "no plans at 390 px").toEqual([]);
 
   await open(page, "/projects/P999999", { "/api/projects/P999999": { status: 404, body: '{"code":"unknown_project"}' } });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("I don't have a project with the ID P999999.");
@@ -193,6 +252,8 @@ test("a project with no plans says so, and a project with no record is not found
   const trail = page.getByRole("navigation", { name: "Breadcrumb" });
   await expect(trail.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects");
   await expect(trail.locator("[aria-current=page]")).toHaveText("Project P999999");
+  await page.setViewportSize({ width: 390, height: 900 });
+  expect(await axe(page), "not found at 390 px").toEqual([]);
 });
 
 // The tables a reader can see that scroll sideways inside their frame, which hides a column.
@@ -223,8 +284,8 @@ test("from 1024 to 1200 px every table fits its frame, so no column hides behind
 });
 
 test("axe finds no WCAG 2.2 AA violations on All projects and a project's page at 1440 and 390 px, and they reflow at 320 px", async ({ page }) => {
-  // The populated pages hold every component these pages use; the no-plans and not-found states
-  // are an empty-state card and a heading, which the gallery's axe run covers.
+  // The populated pages hold every component these pages use. The tests above run axe at 390 px on
+  // each other state: loading, empty, no plans, not found, the service error and the permission error.
   const cases: [string, Record<string, Answer>][] = [
     ["/projects", await projects()],
     ["/projects/P156634", await p156634()],

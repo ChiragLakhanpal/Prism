@@ -11,6 +11,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
+import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
@@ -75,7 +76,8 @@ function Agencies({ names }: { names: string[] }) {
         {names.join(words.agencyJoin)}
       </dd>
       {(hides || open) && (
-        <dd>
+        // 4 px above the button keep its focus ring off the agencies' second line.
+        <dd className="mt-1">
           <Button variant="ghost" flush aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             {open ? words.fewerAgencies : words.allAgencies}
           </Button>
@@ -97,7 +99,7 @@ const LOADING_PAIRS: Pair[] = [
     value: (
       <>
         <SkeletonText className="text-small" widths={["w-full", "w-3/5"]} />
-        <span className="flex h-11 items-center text-small">
+        <span className="mt-1 flex h-11 items-center text-small">
           <Skeleton className="h-[1em] w-32" />
         </span>
       </>
@@ -201,7 +203,13 @@ export function ProjectPage({ pid }: { pid: string }) {
   const current = data ? (
     <Fill template={copy.breadcrumb.project} slots={{ name: data.project.project_name, pid: idText }} />
   ) : load.status === "loading" ? (
-    <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
+    // The bar stands in for the name; a screen reader hears the project's ID.
+    <>
+      <span className="sr-only">
+        <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />
+      </span>
+      <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
+    </>
   ) : (
     <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />
   );
@@ -245,39 +253,47 @@ export function ProjectPage({ pid }: { pid: string }) {
       />
     ) : null;
 
+  // Three columns read best at the prose width, so the version tables keep to columns 1 to 8 from
+  // 1200 px (EightColumns breakpoint="xl"); the alert and the empty state do from 1024 px.
   let tab: ReactNode;
   if (load.status === "loading") {
     tab = (
-      <>
+      <EightColumns breakpoint="xl">
         <Table title="" level={3} count={{ noun: plans.noun, total: 0 }} columns={columns} rowHeader="version" state={{ status: "loading", rows: 3 }} />
         <p role="status" className="sr-only">
           {words.loading}
         </p>
-      </>
+      </EightColumns>
     );
   } else if (load.status === "error") {
     tab = (
-      <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      <EightColumns>
+        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      </EightColumns>
     );
   } else if (load.data.agencies.every((agency) => agency.version_count === 0)) {
     tab = (
-      <EmptyState
-        level={3}
-        title={plans.projectEmptyTitle}
-        body={plans.projectEmptyBody}
-        link={{ href: "/data", text: plans.projectEmptyLink }}
-      />
+      <EightColumns>
+        <EmptyState
+          level={3}
+          title={plans.projectEmptyTitle}
+          body={plans.projectEmptyBody}
+          link={{ href: "/data", text: plans.projectEmptyLink }}
+        />
+      </EightColumns>
     );
   } else {
     const withPlans = load.data.agencies.filter((agency) => agency.version_count > 0);
     const without = load.data.agencies.filter((agency) => agency.version_count === 0);
     tab = (
-      <div className="flex flex-col gap-10">
-        {(without.length > 1 ? withPlans : load.data.agencies).map((agency) => (
-          <AgencyPlans key={agency.agency_id} agency={agency} pid={pid} through={load.data.documents_through} />
-        ))}
-        {without.length > 1 && <OtherAgencies agencies={without} />}
-      </div>
+      <EightColumns breakpoint="xl">
+        <div className="flex flex-col gap-10">
+          {(without.length > 1 ? withPlans : load.data.agencies).map((agency) => (
+            <AgencyPlans key={agency.agency_id} agency={agency} pid={pid} through={load.data.documents_through} />
+          ))}
+          {without.length > 1 && <OtherAgencies agencies={without} />}
+        </div>
+      </EightColumns>
     );
   }
 
@@ -289,10 +305,14 @@ export function ProjectPage({ pid }: { pid: string }) {
           {project ? (
             project.project_name
           ) : load.status === "loading" ? (
-            // A project's name takes one line from 768 px and two below it, as most names do.
+            // A route change focuses this h1, so it names the project while the bars stand in for
+            // its name. Most names take two lines below 1200 px and one from it.
             <>
-              <SkeletonText className="md:hidden" widths={["w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden md:flex" width="w-3/5" />
+              <span className="sr-only">
+                <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
+              </span>
+              <SkeletonText className="xl:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden xl:flex" width="w-3/5" />
             </>
           ) : (
             <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
@@ -308,10 +328,7 @@ export function ProjectPage({ pid }: { pid: string }) {
         <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
         <p className="mt-2 max-w-prose text-body text-ink">{plans.purpose}</p>
       </div>
-      {/* Three columns read best at the prose width, so the version tables keep to columns 1 to 8
-          from 1200 px, DESIGN.md's breakpoint for tables. Below it the eight columns are narrower
-          than a table's 640 px, so the tables take all twelve and no column scrolls out of view. */}
-      <div className="col-span-12 mt-6 xl:col-span-8">{tab}</div>
+      <div className="col-span-12 mt-6">{tab}</div>
     </div>
   );
 }
