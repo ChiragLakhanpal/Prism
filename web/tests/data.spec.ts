@@ -375,6 +375,34 @@ test("the plan check's first-listing number opens a window named for that check,
   await expect(window).not.toContainText("fiscal years");
 });
 
+// Design r6 P4: the table name is what a reader copies or searches for, so at 320 px it breaks
+// only after a dot ("strata.silver." then "plan_listings"), never inside a word.
+test("at 320 px a window's table name breaks only after a dot", async ({ page }) => {
+  await mockData(page, { file: "data-readiness-plan-check.json" });
+  await open(page, "/data?sources=documents,projects&from=check_plan", 320);
+
+  await page.locator("[data-headline] [data-num]", { hasText: /^46$/ }).click();
+  const name = page.getByRole("dialog", { name: "First listing confirmed" }).locator(".font-mono");
+  await expect(name).toHaveText("strata.silver.plan_listings");
+  // The last character of every line but the last, from the top of each character's box.
+  const lineEnds = await name.evaluate((element) => {
+    const boxes: { char: string; top: number }[] = [];
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent ?? "";
+      for (let i = 0; i < text.length; i++) {
+        const range = document.createRange();
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        boxes.push({ char: text[i], top: Math.round(range.getBoundingClientRect().top) });
+      }
+    }
+    return boxes.filter((box, i) => i + 1 < boxes.length && boxes[i + 1].top > box.top).map((box) => box.char);
+  });
+  expect(lineEnds.length, "the name is wider than the window's cell at 320 px").toBeGreaterThan(0);
+  expect(lineEnds).toEqual(lineEnds.map(() => "."));
+});
+
 test("What you can ask shows each kind of question with what it is ready for and what holds it back", async ({ page }) => {
   await mockData(page, FULL);
   await open(page);

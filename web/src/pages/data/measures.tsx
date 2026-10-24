@@ -26,6 +26,22 @@ export type Noun = { many: string; one?: string | null };
 export type Role = "missing" | "days";
 const ROLE_LABEL: Record<Role, string> = { missing: words.number.missingLabel, days: words.number.days };
 
+// A table's three-part name, which a narrow window breaks only after a dot ("strata.silver." then
+// "plan_listings"), so the name a reader copies or searches for never splits inside a word. A part
+// too wide for the cell on its own still breaks, rather than spill out of the window.
+function TableName({ name }: { name: string }) {
+  return (
+    <span className="font-mono wrap-break-word">
+      {name.split(/(?<=\.)/).map((part, index) => (
+        <Fragment key={index}>
+          {part}
+          <wbr />
+        </Fragment>
+      ))}
+    </span>
+  );
+}
+
 function measureWindow(row: MeasureRow, column: Column | null, asOf: string, clicked: { role: Role; value: number } | null): Measure {
   const day = (iso: string) => numText({ date: iso, style: "table", today: asOf });
   const rows = [
@@ -36,9 +52,7 @@ function measureWindow(row: MeasureRow, column: Column | null, asOf: string, cli
       : []),
     ...(row.as_of ? [{ label: words.number.latest, value: day(row.as_of) }] : []),
     { label: words.number.measured, value: day(row.measured_on) },
-    ...(row.source.counted_in
-      ? [{ label: words.number.countedIn, value: <span className="font-mono">{row.source.counted_in}</span> }]
-      : []),
+    ...(row.source.counted_in ? [{ label: words.number.countedIn, value: <TableName name={row.source.counted_in} /> }] : []),
   ];
   // A measure that fills no column, such as a check or a fix's own measure, has its own words, so
   // its window never borrows a column's name and definition (design review r5 B1).

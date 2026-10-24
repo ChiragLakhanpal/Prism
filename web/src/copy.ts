@@ -712,26 +712,30 @@ export const copy = {
         title: "First listing confirmed",
         definition:
           "How many activity entries in the latest plan versions I could trace back to the plan version that first " +
-          "listed them, and then read in that version's table. I confirm a first listing only when I have read " +
-          "every older or undated plan version in the project's document list.",
+          "listed them. I count an entry only when I also read that version's whole table. I confirm a first " +
+          "listing only when I have read every older or undated plan version in the project's document list.",
       },
+      // Three datasets share the name Contract awards, so this one names its years, as the dashboard
+      // does; the measure counts only that dataset (design review r6 P2).
       projects_with_contracts_lacking_step_reference: {
         title: "Projects with contracts that lack a STEP reference",
         definition:
-          "How many projects have at least one contract with no STEP reference, out of every project with a " +
-          "contract in the Contract awards source.",
+          "How many projects have at least one contract with no STEP reference. I count them out of every project " +
+          "with a contract in Contract awards since fiscal 2020.",
       },
+      // The fiscal years stay in the registry's known gap, so these name no years (CLAUDE.md rule 9).
       gap_years_contracts_in_local_currency: {
         title: "Award-notice contracts in local currency",
         definition:
-          "How many contracts built from award notices, for the fiscal years no awards dataset covers, have their " +
-          "amount in local currency, out of every contract built from those notices.",
+          "How many of the contracts I built from award notices have their amount in local currency. I build " +
+          "these contracts only for the fiscal years that no awards dataset covers.",
       },
       gap_years_projects_in_local_currency: {
         title: "Projects with award-notice contracts in local currency",
         definition:
-          "How many projects have a contract built from award notices, for the fiscal years no awards dataset " +
-          "covers, whose amount is in local currency, out of the projects of every contract built from those notices.",
+          "How many projects have a contract with its amount in local currency, among the contracts I built from " +
+          "award notices. I count them out of every project with a contract I built from those notices. I build " +
+          "these contracts only for the fiscal years that no awards dataset covers.",
       },
     } as Record<string, { title: string; definition: string }>,
     loading: {

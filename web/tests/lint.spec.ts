@@ -119,9 +119,11 @@ test("every measure in config/sources.toml that fills no column has its own wind
   const registry = JSON.parse(read.stdout) as Registry;
   const columns = ["coverage", "linked", "read_well", "fresh"];
   const needed: string[] = [];
+  const columnMeasures = new Set<string>();
   for (const source of Object.values(registry.sources)) {
     const rows = source.readiness ?? [];
     const shown = new Set(rows.flatMap((row) => columns.map((column) => (row[column] as { measure?: string } | undefined)?.measure)));
+    for (const measure of shown) if (measure) columnMeasures.add(measure);
     needed.push(...rows.flatMap((row) => (row.checks ?? []).map((check) => check.measure)));
     for (const fix of source.fixes ?? []) {
       if (!shown.has(fix.measure)) needed.push(fix.measure);
@@ -132,6 +134,13 @@ test("every measure in config/sources.toml that fills no column has its own wind
   const words = copy.dataReadiness.measureWindows;
   const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
   expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+  // Review r6 P3: the words are keyed by measure name alone, and a column's measure names repeat
+  // across sources, so words for one would retitle every cell of that column that counts it.
+  expect(columnMeasures).toContain("linked_project");
+  expect(
+    Object.keys(words).filter((measure) => columnMeasures.has(measure)),
+    "a column's number opens the column's window",
+  ).toEqual([]);
 });
 
 test("the copy lint finds a banned word in a template's text and in any form of the word", () => {
