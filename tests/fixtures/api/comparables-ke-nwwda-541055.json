@@ -1200,10 +1200,13 @@
       8,
       10
     ],
-    "plan": [
-      1,
-      10
-    ]
+    "plan": {
+      "words": "fewer_than",
+      "states": [
+        1,
+        10
+      ]
+    }
   },
   "quantile_dots": null,
   "thresholds": {
@@ -1271,10 +1274,13 @@
         8,
         10
       ],
-      "plan": [
-        1,
-        10
-      ]
+      "plan": {
+        "words": "fewer_than",
+        "states": [
+          1,
+          10
+        ]
+      }
     },
     "counts": {
       "comparables": 49,

@@ -251,16 +251,30 @@ def test_the_derived_figures_come_back_as_one_citable_summary_record(engine, tmp
         config.load_tools(path)
 
 
-def test_the_numbers_each_frequency_phrase_states_come_back_so_the_agent_can_cite_them(engine):
+def test_the_numbers_each_frequency_phrase_states_come_back_with_its_words_so_the_agent_can_cite_them(engine):
     """"8 in 10 were signed within 9.1 months" states 8 and 10, and "2 of 49, fewer than 1 in 10" states
-    1 and 10, so the tool returns them (CLAUDE.md rule 1). Below the floor there is no frequency at all."""
+    1 and 10, so the tool returns them (CLAUDE.md rule 1). The plan's share also says which words go
+    with its numbers, because "about 1 in 10" and "fewer than 1 in 10" state the same two. Below the
+    floor there is no frequency at all."""
     result = find(engine)
     prior = find(engine, review_type=TRUTH["comparables"]["narrower_review_type"])
 
     # 2 of 49 rounds to 0 in 10, which the screen writes as "fewer than 1 in 10".
-    assert result["frequencies"] == {"q80": [8, 10], "plan": [1, 10]}
+    assert result["frequencies"] == {"q80": [8, 10], "plan": {"words": "fewer_than", "states": [1, 10]}}
     assert result["summary"]["frequencies"] == result["frequencies"]
     assert prior["frequencies"] is None
+
+
+def test_the_plan_s_share_says_about_when_it_rounds_to_between_1_and_9_in_10(engine):
+    """With review type Post, values.toml's 36 signed Post comparables hold both packages signed within
+    the plan's 1.5 months. 2 of 36 is 0.56 in 10, which rounds to about 1 in 10."""
+    post = [c["reference"] for c in COMPARABLES if c.get("review_type") == "Post"]
+    within = [reference for reference in post if reference in PAST_RANGE["signed_within_plan"]]
+
+    result = find(engine, review_type="Post")
+
+    assert (result["counts"]["comparables"], result["plan"]["within"]) == (len(post), len(within)) == (36, 2)
+    assert result["frequencies"]["plan"] == {"words": "about", "states": [1, 10]}
 
 
 def block(text: str, *keys: str) -> str:

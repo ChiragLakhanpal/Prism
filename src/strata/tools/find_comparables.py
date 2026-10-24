@@ -31,9 +31,10 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   result gives how many comparables were signed within them, and, from min_comparables up, about how
   many in 10, so the screen states counts and never works one out.
 - From min_comparables up, frequencies holds the two numbers each frequency phrase states, so the agent
-  can cite them like any value: [8, 10] for "8 in 10 were signed within", and for the plan's share
-  [about N, 10], with N at least 1 and at most 9, because the screen writes "fewer than 1 in 10" and
-  "more than 9 in 10" at the ends. With none or all signed within the plan, it names no share.
+  can cite them like any value: [8, 10] for "8 in 10 were signed within", or none when the curve never
+  reached 8 in 10. The plan's share gives its words with its numbers, as the screen writes them:
+  fewer_than with [1, 10] when it rounds to 0 in 10, more_than with [9, 10] when it rounds to 10 in 10,
+  and about with [N, 10] otherwise. With none or all signed within the plan, it names no share.
 
 Every number is at its rounding here: days are whole, and months have one decimal. The rows come
 shortest first, by months and then STEP reference, which is the order the chart's dots and its table
@@ -317,13 +318,17 @@ def _plan(package: dict, rows: list[dict], ranged: bool) -> dict | None:
             "within": within, "in10": int(in10) if in10 is not None else None}
 
 
-def _frequencies(plan: dict | None, total: int) -> dict:
+def _frequencies(plan: dict | None, past_range: dict, total: int) -> dict:
     """The numbers each frequency phrase states: "8 in 10 were signed within", and the plan's "about N in
-    10", "fewer than 1 in 10" or "more than 9 in 10"."""
+    10", "fewer than 1 in 10" or "more than 9 in 10" with the words that go with them, by the rule the
+    screen's title uses (web/src/components/PastRange.tsx)."""
     share = None
     if plan is not None and plan["in10"] is not None and 0 < plan["within"] < total:
-        share = [min(max(plan["in10"], 1), 9), 10]
-    return {"q80": [int(QUARTERS["q80"] * 10), 10], "plan": share}
+        in10 = plan["in10"]
+        words = "fewer_than" if in10 == 0 else "more_than" if in10 == 10 else "about"
+        share = {"words": words, "states": [min(max(in10, 1), 9), 10]}
+    q80 = [int(QUARTERS["q80"] * 10), 10] if past_range["q80"] is not None else None
+    return {"q80": q80, "plan": share}
 
 
 def _past_range(rows: list[dict]) -> dict:
@@ -395,6 +400,6 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
                 "abstention": {"reason": "too_few_comparables", "count": len(rows),
                                "min_comparables": limits.min_comparables}}
     dots = _quantile_dots(rows, limits.quantile_dots) if len(rows) > limits.quantile_dots_above else None
-    plan = _plan(package, rows, ranged=True)
-    return {**found, "rows": rows, "plan": plan, "frequencies": _frequencies(plan, len(rows)),
-            "past_range": _past_range(rows), "quantile_dots": dots, "abstention": None}
+    plan, past_range = _plan(package, rows, ranged=True), _past_range(rows)
+    return {**found, "rows": rows, "plan": plan, "frequencies": _frequencies(plan, past_range, len(rows)),
+            "past_range": past_range, "quantile_dots": dots, "abstention": None}

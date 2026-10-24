@@ -38,13 +38,25 @@ def test_the_instructions_name_the_summary_record_wherever_a_tool_returns_one():
         "definition"]["instructions"]
     rules, tools_section = instructions.split("## Your tools", 1)
 
-    assert summarized == ["find_comparables"]
+    assert "find_comparables" in summarized
     assert "Cite the summary for those figures, as you cite a row." in tools_section
     assert "the evidence_id of each row, summary or passage the sentence rests on" in rules
     assert "If a figure you need is not a value in a row or a summary, leave it out." in rules
     for name in summarized:
         described = tools_section.split(f"### {name}", 1)[1].split("\n### ", 1)[0]
         assert "summary, which you cite for them" in described
+
+
+def test_the_agent_is_told_which_words_go_with_the_plan_s_share():
+    """"About 1 in 10" and "fewer than 1 in 10" state the same numbers, so find_comparables returns the words
+    with them, and its description tells the agent what each code says (CLAUDE.md rule 1)."""
+    instructions = agent_definition(load_agent("orchestrator"), guardrail_id="local/strata-guardrail")[
+        "definition"]["instructions"]
+    described = instructions.split("### find_comparables", 1)[1].split("\n### ", 1)[0]
+
+    for code, phrase in (("fewer_than", "fewer than 1 in 10"), ("about", "about N in 10"),
+                         ("more_than", "more than 9 in 10")):
+        assert f'{code} for "{phrase}"' in described
 
 
 def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_person_reads():

@@ -52,17 +52,20 @@ questions:
                    KE-UASIN GISHU COUNTY-571338-CW-RFB]
       canceled_left_out: [KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB, KE-KIMAWASCO-377450-CW-RFB]
       signed_within_plan: [KE-WAJWASCO-356671-CW-RFB, KE-WAJWASCO-372776-CW-RFB]
-      # The numbers "8 in 10 were signed within" and "2 of 49, fewer than 1 in 10" state.
+      # The numbers "8 in 10 were signed within" and "2 of 49, fewer than 1 in 10" state, and the words
+      # that go with the plan's.
       eight_in_ten: [8, 10]
       plan_in_ten: [1, 10]
+      plan_in_ten_words: [fewer_than]
     ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
       The comparables and their Kaplan-Meier quantiles in tests/ground_truth/values.toml ([[comparable]]
       and [past_range]): the middle half, the middle and the 8-in-10 point in months, computed once
       with lifelines and checked with statsmodels, the four packages still open, the three canceled
       ones left out, and the two signed within the plan's 1.5 months, which round to fewer than 1 in
-      10. The past range and the numbers its "in 10" phrases state come back in the result's summary
-      record, which an answer cites by the evidence id in cited_as.
+      10. The past range and the numbers its "in 10" phrases state, with the words that go with the
+      plan's, come back in the result's summary record, which an answer cites by the evidence id in
+      cited_as.
 
   - id: search-passages-icr-rebidding
     kind: documents

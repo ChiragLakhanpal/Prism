@@ -188,7 +188,9 @@ abstains, and still returns every comparable. Above {past_range.quantile_dots_ab
 {past_range.quantile_dots} quantile dots. The plan's own months, from its planned notice date to its planned \
 signing date, come back with how many comparables were signed within them. The past range, the count signed \
 within the plan's months, the numbers each "in 10" phrase states and the coverage counts also come back in the \
-result's summary, which you cite for them."""
+result's summary, which you cite for them. In it, frequencies.q80 holds the numbers "8 in 10" states. \
+frequencies.plan says which words go with its numbers: fewer_than for "fewer than 1 in 10", about for "about N \
+in 10" and more_than for "more than 9 in 10"."""
 adapter = "strata.tools.find_comparables:find_comparables"
 benchmark = "find-comparables-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
