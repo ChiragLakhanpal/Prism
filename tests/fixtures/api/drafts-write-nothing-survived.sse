@@ -1,0 +1,24 @@
+event: step
+data: {"id": "read", "kind": "read", "status": "running"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "done", "plan_date": "2026-10-09"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running", "count": 3}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "notes": 3, "sentences": 3}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "checks_run": [1, 2, 3], "written": 3, "removed": 3}
+
+event: nothing_survived
+data: {"removed": [{"index": 0, "sentence": "The plan lists this activity as Pending Implementation.", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFQ"}], "key": "KE-NWWDA-541055-CW-RFB"}, {"index": 1, "sentence": "The contract was signed after its planned signing date.", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFQ"}], "key": "KE-NWWDA-229129-CW-RFB"}, {"index": 2, "sentence": "The plan lists this activity as Pending Implementation.", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFB"}], "key": "KE-NWWDA-541062-CW-RFQ"}], "checks": {"checks_run": [1, 2, 3], "sentences": {"written": 3, "kept": 0, "removed": 3}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 3, "returned": 0}, "tools": ["check_plan"]}}
+
+event: done
+data: {"run_id": "run-0005"}
+

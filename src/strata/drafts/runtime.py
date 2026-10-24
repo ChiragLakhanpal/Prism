@@ -204,7 +204,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
         log.warning("The writer of run %s answered in a shape I can't read: %s", writing.run_id, error)
         raise WriteError("agent_output") from error
     claimed = [key for key, note in written.items() if note.get("claims")]
-    yield step("write", "done", notes=len(claimed), sentences=sum(len(written[key]["claims"]) for key in claimed))
+    wrote = {"notes": len(claimed), "sentences": sum(len(written[key]["claims"]) for key in claimed)}
+    yield step("write", "done", **wrote)
 
     yield step("check", "running")
     content, verdict = compose(module, facts, written)
@@ -218,8 +219,9 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
 
     yield step("save", "running")
     draft_id = new_draft_id()
-    content |= {"kind": writing.kind.key, "writer": {"agent": writing.agent, "version": writing.agent_version,
-                                                      "run_id": writing.run_id}}
+    # What the writer wrote, for the steps the draft page lists ("I wrote six sentences in three notes.").
+    content |= {"kind": writing.kind.key, "written": wrote,
+                "writer": {"agent": writing.agent, "version": writing.agent_version, "run_id": writing.run_id}}
     record = NewDraft(draft_id, writing.kind.key, writing.team_key, writing.viewer.user_id, writing.viewer.name,
                       writing.idempotency_key, content["subject"].get("project_id"), module.subject_key(facts),
                       content, now())
@@ -290,6 +292,7 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "discarded": _who(state, viewer) if state.state == "discarded" else None,
         "subject": saved.content["subject"],
         "counts": {"signal": saved.content["subject"].get("signal"), "written": written_notes(saved)},
+        "written": saved.content.get("written"),
         "notes": saved.content["notes"],
         "evidence": saved.content["evidence"],
         "checks": saved.content["checks"],

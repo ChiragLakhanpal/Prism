@@ -110,6 +110,22 @@ def test_the_evidence_pack_lists_every_source_and_whether_its_author_opened_it_a
     assert draft["export"]["opened"] == 1 and draft["export"]["sources"] == 3
 
 
+def test_an_evidence_pack_row_with_a_comma_a_quote_and_a_line_break_reads_back_cell_for_cell():
+    """Moved from the web app's export test (ticket 35): the server writes the CSV now. A reason a person
+    gives for keeping another source (ticket 23) is free text, so it may hold any of these."""
+    from strata.drafts.files import pack_csv
+
+    reason = 'The ICR says "108 of 328", and\nthe ISR agrees'
+    row = {"number": 1, "evidence_id": ROW_OF[MARKED[0]], "source": SOURCE_LINE, "cited_in": MARKED[:2], "opened": True,
+           "last_opened_at": "2026-10-23T14:02:00Z", "kept_another": True, "reason": reason}
+
+    written = pack_csv([row]).decode()
+
+    assert written.endswith("\r\n") and "\r\n" in written.split("Reason", 1)[1]
+    assert list(csv.reader(io.StringIO(written)))[1] == [
+        "1", ROW_OF[MARKED[0]], SOURCE_LINE, f"{MARKED[0]}, {MARKED[1]}", "Yes", "October 23, 2026, 14:02 UTC", "Yes", reason]
+
+
 def test_the_files_go_to_the_author_s_team_and_no_one_else(exported):
     app, draft_id, _ = exported
 

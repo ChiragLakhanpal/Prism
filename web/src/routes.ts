@@ -5,7 +5,8 @@
 //
 // Ticket 10 adds a project's Procurement tab (/projects/:pid/procurement, which /projects/:pid shows
 // until ticket 21 adds Summary) and Check a plan (/projects/:pid/procurement/:agencyId/:version, or
-// with no version for the agency's latest plan; :version is the plan's ISO date).
+// with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 35 adds the
+// Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId.
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
 
@@ -80,6 +81,10 @@ export function matchRoute(pathname: string): Match {
   if (first === "packages" && parts.length === 2) return page("package", "packages", { id: second });
   if (first === "lessons" && parts.length === 1) return page("lessons", "lessons");
   if (first === "drafts" && parts.length === 1) return page("drafts", "drafts");
+  // Ticket 35: writing a draft (/drafts/new?kind=...), and a draft by its id. PLAN.md section 8 does not
+  // list these two routes; "new" is never a draft's id.
+  if (first === "drafts" && parts.length === 2 && second === "new") return page("draftNew", "drafts");
+  if (first === "drafts" && parts.length === 2) return page("draft", "drafts", { id: second });
   if (first === "data" && parts.length === 1) return page("data", "data");
   if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataSources) return page("dataSources", "data");
   if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataHow) return page("dataHow", "data");

@@ -6,7 +6,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import { footerSentence } from "./design-md";
-import { expect, mockShell, test } from "./mocked";
+import { expect, mockApi, mockShell, recorded, test } from "./mocked";
 
 type Route = {
   path: string;
@@ -15,6 +15,8 @@ type Route = {
   tab?: string;
   empty?: { title: string; body: string; link?: [string, string] };
   link?: [string, string];
+  // /api answers the page reads beyond the shell's, such as the Drafts tab's list (ticket 35).
+  api?: Record<string, string>;
 };
 
 const DATA_LINK: [string, string] = ["Go to Data", "/data"];
@@ -100,6 +102,8 @@ export const ROUTES: Route[] = [
       body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
       link: ["Go to Packages", "/packages"],
     },
+    // Ticket 35 built the Drafts tab: with no drafts, it shows brief 06's empty-state card.
+    api: { "/api/drafts": '{"groups":{"to_check":[],"checked":[],"exported":[]},"counts":{"to_check":0,"checked":0,"exported":0},"discarded":[],"discarded_count":0,"total":0}' },
   },
 ];
 
@@ -134,7 +138,11 @@ async function open(page: Page, path: string, width = 1440) {
 
 for (const route of [...ROUTES, ...NOT_FOUND]) {
   test(`${route.path} states its title and purpose, shows what will appear there, and carries the footer`, async ({ page }) => {
-    const unrecorded = await mockShell(page);
+    const unrecorded = await mockApi(page, {
+      "/api/me": { body: await recorded("me.json") },
+      "/api/freshness": { body: await recorded("freshness.json") },
+      ...Object.fromEntries(Object.entries(route.api ?? {}).map(([path, body]) => [path, { body }])),
+    });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(route.path);
 

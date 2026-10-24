@@ -10,8 +10,13 @@ import { TextLink } from "./TextLink";
 
 export type Crumb = { text: ReactNode; href?: string };
 
-export function Breadcrumb({ trail }: { trail: Crumb[] }) {
-  const parent = [...trail].reverse().find((crumb) => crumb.href);
+export function Breadcrumb({ trail, back }: {
+  trail: Crumb[];
+  // The step the link back goes to below 768 px, when it is not the last one with a link, such as
+  // "Drafts" on a draft's page (the 35 brief, section 3.6).
+  back?: Crumb;
+}) {
+  const parent = back ?? [...trail].reverse().find((crumb) => crumb.href);
   return (
     <nav aria-label={copy.breadcrumb.label} data-breadcrumb className="text-caption text-ink-muted">
       <ol className="hidden flex-wrap items-center gap-x-2 @md/page:flex">

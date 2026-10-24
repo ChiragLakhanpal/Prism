@@ -54,6 +54,7 @@ import type { Readiness, ReadinessState, RegistryState } from "../lib/dataPages"
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { galleryCopy } from "./copy";
+import { draftsPage } from "./drafts";
 
 const s = galleryCopy.states;
 const t = galleryCopy.sections;
@@ -1086,6 +1087,7 @@ export const PAGES: GalleryPage[] = [
       { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
+  draftsPage(planSample),
   {
     slug: "icons",
     sections: [

@@ -23,6 +23,7 @@ import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
 import { answer, ask, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
+import { draftScope } from "./lib/drafts";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -44,7 +45,9 @@ async function readViewer() {
 
 // The page's scope for the box's chip: a project's P-code on its pages, a package's STEP reference
 // (or its id until it has one) on a package's.
-function scopeOf(match: Match): { scope: string | null; kind: "project" | "package" } {
+function scopeOf(match: Match, draftProject: string | null): { scope: string | null; kind: "project" | "package" } {
+  // A draft's page carries the draft's project once the draft has loaded (the 35 brief, section 11).
+  if (match.key === "draft" || match.key === "draftNew") return { scope: draftProject, kind: "project" };
   if (match.key === "package") return { scope: match.values.id ?? null, kind: "package" };
   if (match.key === "activity") return { scope: match.values.stepRef ?? null, kind: "package" };
   if (match.key === "project" || match.key === "checkPlan") return { scope: match.values.pid ?? null, kind: "project" };
@@ -83,16 +86,20 @@ function returnFocus() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
+const DRAFT_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew"]);
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, appliesAsOf: boolean): { state: "error" | "info"; text: string }[] {
+function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: string): { state: "error" | "info"; text: string }[] {
   const params = new URLSearchParams(search);
   const found: { state: "error" | "info"; text: string }[] = [];
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
   if (problem === "no_identity") found.push({ state: "error", text: copy.alerts.noIdentity });
   const view = params.get("view");
-  if (view !== null && view !== "staff") found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
+  // The draft pages apply the implementing agency and public previews themselves (ticket 35): they show
+  // what each preview holds, so the alert that says the page shows the staff view would be untrue there.
+  const appliesView = (view === "piu" || view === "public") && DRAFT_PAGES.has(page);
+  if (view !== null && view !== "staff" && !appliesView) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
   if (asOf !== null && !appliesAsOf) {
     found.push({ state: "info", text: isDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
@@ -109,7 +116,8 @@ export function App() {
   const from = useStore(origin);
   const narrow = useNarrow();
   const match = matchRoute(here.pathname);
-  const { scope, kind } = scopeOf(match);
+  const draftProject = useStore(draftScope);
+  const { scope, kind } = scopeOf(match, draftProject);
   const params = new URLSearchParams(here.search);
   const evidenceId = evidenceIn(here.search);
   const asOf = params.get("asof");
@@ -155,7 +163,7 @@ export function App() {
     lastRoute.current = route;
     const within = section.current !== undefined && section.current === match.section;
     section.current = match.section;
-    if (!moved || here.moves === 0) return;
+    if (!moved || here.moves === 0 || here.quiet) return;
     removedScopes.set(new Set());
     window.scrollTo(0, 0);
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
@@ -175,7 +183,7 @@ export function App() {
 
   // The Data readiness page applies an as-of date itself (data_readiness_for takes one), so the
   // alert that says the page shows today's data does not show there.
-  const slot = alerts(problem, here.search, match.key === "data");
+  const slot = alerts(problem, here.search, match.key === "data", match.key);
   return (
     <Frame
       nav={

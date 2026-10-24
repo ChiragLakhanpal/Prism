@@ -449,11 +449,15 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
-export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, sticky = true }: {
+export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
   plan?: ReactNode;
   pill?: ReactNode;
+  // Ticket 35's slot to the right of the pill: "Draft review notes (3 rows)", with its feedforward
+  // caption right-aligned on the subtitle's line. Below 1024 px they follow the pill, 8 px apart.
+  action?: ReactNode;
+  feedforward?: ReactNode;
   headerRef?: Ref<HTMLDivElement>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
@@ -468,7 +472,15 @@ export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, stic
           {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
-        {pill && <div className="shrink-0 @lg/page:mt-0.5">{pill}</div>}
+        {(pill || action) && (
+          <div className="flex shrink-0 flex-col items-start gap-2 @lg/page:items-end">
+            <div className="flex flex-col items-start gap-2 @lg/page:flex-row @lg/page:items-center @lg/page:gap-3">
+              {pill && <div className="@lg/page:mt-0.5">{pill}</div>}
+              {action}
+            </div>
+            {feedforward}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -14,6 +14,9 @@ export const PARAM = "evidence";
 
 export const known = createStore<Record<string, EvidenceEvent>>({});
 export const visited = createStore<ReadonlySet<string>>(new Set());
+// When this page last showed each source in the drawer, in milliseconds, so a draft can count a source
+// opened since it loaded at once, with no request (the 35 brief, section 4.5).
+export const openedAt = createStore<Record<string, number>>({});
 
 // Where the open drawer came from: the answer (its run's serial, web/src/lib/answer.ts), the sentence
 // whose marker opened it, and that marker, for the claim block, the switcher and focus on close. A
@@ -77,6 +80,7 @@ let recorded: string | null = null;
 // Record that the viewer opened a source: once now, and once more if the write fails.
 export function recordOpened(id: string, runId: string | null) {
   markVisited(id);
+  openedAt.set((all) => ({ ...all, [id]: Date.now() }));
   if (id === recorded) return;
   recorded = id;
   const params = new URLSearchParams(address.get().search);

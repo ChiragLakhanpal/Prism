@@ -1,0 +1,30 @@
+event: step
+data: {"id": "read", "kind": "read", "status": "running"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "done", "plan_date": "2026-10-09"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running", "count": 3}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "notes": 3, "sentences": 6}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "checks_run": [1, 2, 3], "written": 6, "removed": 0}
+
+event: step
+data: {"id": "save", "kind": "save", "status": "running"}
+
+event: step
+data: {"id": "save", "kind": "save", "status": "done"}
+
+event: draft
+data: {"draft_id": "draft-0001"}
+
+event: done
+data: {"run_id": "run-0001"}
+

@@ -3,14 +3,17 @@
 // person, what the page can't show yet and what will appear there. The not-found pages have no card: their purpose
 // already says what to do, and their one link follows it.
 //
-// All projects, a project's page and Check a plan (ticket 10) and the Data tab's three pages
-// (ticket 16) are built, so they render their own pages.
+// All projects, a project's page and Check a plan (ticket 10), the Data tab's three pages (ticket 16)
+// and the Drafts tab's pages (ticket 35) are built, so they render their own pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
 import { CheckPlanPage } from "./pages/CheckPlanPage";
 import { DataPage } from "./pages/data/DataPage";
+import { DraftNewPage } from "./pages/DraftNewPage";
+import { DraftPage } from "./pages/DraftPage";
+import { DraftsPage } from "./pages/DraftsPage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import type { Match } from "./routes";
@@ -21,6 +24,9 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "project") return <ProjectPage pid={pid} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
   if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
+  if (match.key === "drafts") return <DraftsPage search={search} />;
+  if (match.key === "draftNew") return <DraftNewPage search={search} />;
+  if (match.key === "draft") return <DraftPage draftId={match.values.id} search={search} />;
   return (
     <div className="layout-grid">
       <div className="col-span-12 @md/page:col-span-8">

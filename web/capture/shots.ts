@@ -277,6 +277,107 @@ const ANSWER_SHOTS: Shot[] = [
   }),
 ];
 
+// Ticket 35: Check a plan's draft action, the writing page, a draft's page and the Drafts tab, in the
+// states the 35 brief's section 12 lists. The answers are the server's own, recorded on the fixture by
+// tests/record_drafts_api.py; a state no recording holds is a recording with one value changed.
+const DRAFT = "/drafts/draft-0001";
+const DRAFT_API = "/api/drafts/draft-0001";
+const DRAFT_FILE = "drafts-review-notes-draft.json";
+const draftWith = (edit: (body: Record<string, any>) => void, name = DRAFT_FILE) => derived(name, edit);
+const OPENED: Answer = { body: '{"recorded":true}' };
+const EXISTING: Answer = { recorded: "drafts-existing.json" };
+const NO_EXISTING: Answer = { body: '{"draft":null}' };
+// The read a draft page makes: /api/drafts/:draftId for /drafts/:draftId.
+const draftRead = (path: string) => `/api${path.split("?")[0]}`;
+const draftShot = (name: string, answer: Answer, rest: Partial<Shot> = {}, path = DRAFT): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, [draftRead(path)]: answer, "/api/evidence/opened": OPENED, ...rest.api } });
+// Check a plan with the existing-draft lookup answered.
+const planWithDraft = (name: string, existing: Answer, rest: Partial<Shot> = {}, body: Answer = plan, path = PLAN): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, PLAN).api, [PLAN_API]: body, "/api/drafts/existing": existing, ...rest.api } });
+// The writing page, reached from Check a plan's button, with the stream it answers with.
+const writingShot = (name: string, stream: Answer, rest: Partial<Shot> = {}): Shot =>
+  planWithDraft(name, NO_EXISTING, {
+    full: true,
+    ...rest,
+    api: { "/api/drafts": stream, [DRAFT_API]: { recorded: DRAFT_FILE }, "/api/evidence/opened": OPENED, ...rest.api },
+    act: async (page) => {
+      await page.locator("[data-draft-action]:visible").first().click();
+      await page.waitForTimeout(rest.pending ? 300 : 900);
+    },
+  });
+const noSignals = derived(PLAN_FILE, (body) => {
+  for (const row of body.rows) row.marks = row.marks.filter((mark: { mark: string }) => mark.mark === "data_note");
+  Object.assign(body.counts, { needs_a_look: 0, watch: 0, signal: 0, marked: 3, unmarked: 6 });
+});
+const filesMissing = draftWith((body) => {
+  body.export.files = [];
+  body.export.files_available = false;
+}, "drafts-review-notes-exported.json");
+const failingAct: Shot["api"] = { "/api/drafts/draft-0001/check": { status: 503, body: SERVICE_DOWN } };
+const MARKER = "[data-draft-notes] [data-view]:visible [data-citation='1']";
+const LAST_MARKER = "[data-draft-notes] [data-view]:visible [data-citation='3']";
+
+const DRAFT_SHOTS: Shot[] = [
+  planWithDraft("draft--plan-action", NO_EXISTING),
+  planWithDraft("draft--plan-none", NO_EXISTING, {}, { body: noSignals }),
+  planWithDraft("draft--plan-existing", EXISTING),
+  planWithDraft("draft--plan-asof", NO_EXISTING, {}, plan, `${PLAN}?asof=2026-10-01`),
+  writingShot("draft--writing", { recorded: "drafts-write-review-notes.sse" }, { pending: ["/api/drafts"] }),
+  writingShot("draft--writing-error", { recorded: "drafts-write-agent-unavailable.sse" }),
+  writingShot("draft--writing-nothing", { recorded: "drafts-write-nothing-survived.sse" }),
+  draftShot("draft--writing-reload", { recorded: DRAFT_FILE }, { full: true }, "/drafts/new?kind=review_notes&pid=P156634&agency=northern-water-works-development-agency&version=2026-10-09"),
+  draftShot("draft--loading", { recorded: DRAFT_FILE }, { pending: [DRAFT_API] }),
+  draftShot("draft", { recorded: DRAFT_FILE }),
+  draftShot("draft--saving", { recorded: DRAFT_FILE }, { pending: ["/api/drafts/draft-0001/check"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
+  draftShot("draft--checked", { recorded: "drafts-review-notes-checked.json" }),
+  draftShot("draft--exporting", { recorded: "drafts-review-notes-checked.json" }, { pending: ["/api/drafts/draft-0001/export"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
+  draftShot("draft--exported", { recorded: "drafts-review-notes-checked.json" }, {
+    full: true,
+    api: { "/api/drafts/draft-0001/export": { recorded: "drafts-review-notes-exported.json" } },
+    act: click("[data-draft-bar] [data-button=primary]"),
+  }),
+  draftShot("draft--exported-revisit", { recorded: "drafts-review-notes-exported.json" }),
+  draftShot("draft--exported-files-missing", { body: filesMissing }),
+  draftShot("draft--partial", { recorded: "drafts-review-notes-partial.json" }, {}, "/drafts/draft-0002"),
+  draftShot("draft--refused", { recorded: "drafts-review-notes-refused.json" }, {}, "/drafts/draft-0003"),
+  draftShot("draft--teammate", { recorded: "drafts-review-notes-teammate.json" }),
+  draftShot("draft--discarded", { recorded: "drafts-review-notes-discarded.json" }, {}, "/drafts/draft-0004"),
+  draftShot("draft--action-failed", { recorded: DRAFT_FILE }, { full: true, api: failingAct, act: click("[data-draft-bar] [data-button=primary]") }),
+  draftShot("draft--conflict", { recorded: "drafts-review-notes-checked.json" }, {
+    full: true,
+    api: { "/api/drafts/draft-0001/check": { status: 409, body: '{"code":"stale","error":"stale","state":"checked"}' } },
+    act: async (page) => {
+      // The page loaded the draft as it was, then another tab checked it.
+      await page.route("**/api/drafts/draft-0001", (route) => route.fulfill({ contentType: "application/json", body: readFileSync(new URL(DRAFT_FILE, RECORDED), "utf8") }), { times: 1 });
+      await page.reload();
+      await page.locator("[data-draft-bar] [data-button=primary]").first().click();
+      await page.waitForTimeout(400);
+    },
+  }),
+  draftShot("draft--not-found", { status: 404, body: '{"code":"unknown_draft"}' }, {}, "/drafts/draft-9999"),
+  draftShot("draft--error", { status: 503, body: SERVICE_DOWN }),
+  draftShot("draft--preview-piu", { recorded: DRAFT_FILE }, {}, `${DRAFT}?view=piu`),
+  draftShot("draft--preview-public", { recorded: DRAFT_FILE }, {}, `${DRAFT}?view=public`),
+  draftShot("draft--hover-check", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: hover("[data-draft-bar] [data-button=primary]") }),
+  draftShot("draft--focus-check", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus("[data-draft-bar] [data-button=primary]") }),
+  draftShot("draft--focus-held-export", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus("[data-draft-bar] [data-held]") }),
+  draftShot("draft--focus-discard", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus("[data-draft-bar] [data-button=ghost]") }),
+  draftShot("draft--focus-last-marker", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: focus(LAST_MARKER) }),
+  draftShot("draft--drawer", { recorded: DRAFT_FILE }, { widths: [1440, 1024], act: click(MARKER) }),
+  draftShot("draft--lede-num", { recorded: DRAFT_FILE }, { widths: [1440, 390], act: hover("[data-lede] [data-num]") }),
+  draftShot("draft--focus-restore", { recorded: "drafts-review-notes-discarded.json" }, { widths: [1440, 390], act: focus("[data-discarded-notice] button") }, "/drafts/draft-0004"),
+  draftShot("draft--focus-file", { recorded: "drafts-review-notes-exported.json" }, { widths: [1440, 390], act: focus("[data-export-success] a") }),
+  draftShot("draft--320", { recorded: DRAFT_FILE }, { widths: [320] }),
+  draftShot("drafts-tab", { recorded: "drafts-list.json" }, { api: { "/api/drafts": { recorded: "drafts-list.json" } } }, "/drafts"),
+  draftShot("drafts-tab--teammate", { recorded: "drafts-list-teammate.json" }, { api: { "/api/drafts": { recorded: "drafts-list-teammate.json" } } }, "/drafts"),
+  draftShot("drafts-tab--loading", { recorded: "drafts-list.json" }, { pending: ["/api/drafts"] }, "/drafts"),
+  draftShot("drafts-tab--empty", { recorded: "drafts-list-empty.json" }, { api: { "/api/drafts": { recorded: "drafts-list-empty.json" } } }, "/drafts"),
+  draftShot("drafts-tab--discarded-open", { recorded: "drafts-list.json" }, { full: true, api: { "/api/drafts": { recorded: "drafts-list.json" } }, act: click("[data-discarded-fold] button") }, "/drafts"),
+  draftShot("drafts-tab--error", { recorded: "drafts-list.json" }, { api: { "/api/drafts": { status: 503, body: SERVICE_DOWN } } }, "/drafts"),
+  draftShot("drafts-tab--preview-piu", { recorded: "drafts-list.json" }, {}, "/drafts?view=piu"),
+  draftShot("drafts-tab--preview-public", { recorded: "drafts-list.json" }, {}, "/drafts?view=public"),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -402,4 +503,5 @@ export const SHOTS: Shot[] = [
   ...PLAN_SHOTS,
   ...PROJECT_SHOTS,
   ...ANSWER_SHOTS,
+  ...DRAFT_SHOTS,
 ];

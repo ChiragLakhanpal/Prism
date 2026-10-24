@@ -126,6 +126,15 @@ def draft_review_notes(app, headers=ANA, key="key-1", **extra) -> tuple[list, st
     return sent, made[0] if made else None
 
 
+def test_the_screens_recorded_draft_answers_are_what_the_routes_answer(fixture_db, tmp_path):
+    """tests/record_drafts_api.py writes the answers the draft screens' tests serve, from one story on the
+    fixture; the routes must still answer with them word for word."""
+    from record_drafts_api import answers
+
+    for name, text in answers(tmp_path).items():
+        assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), f"{name} is out of date"
+
+
 # ── Writing the draft ────────────────────────────────────────────────────
 
 def test_draft_review_notes_writes_a_note_on_each_activity_with_a_signal_each_citing_its_plan_row(drafting):

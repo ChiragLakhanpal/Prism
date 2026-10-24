@@ -109,6 +109,16 @@ export const copy = {
         "to check.",
       link: "Go to Packages",
     },
+    // A draft's page and the page that writes one (ticket 35). Each names itself in the browser tab with
+    // its kind's title once the draft loads, such as "Review notes on the ... plan of Oct 9, 2026".
+    draft: {
+      title: "Draft",
+      purpose: "I wrote this draft for you to check. Only its author can mark it as checked or export it.",
+    },
+    draftNew: {
+      title: "Review notes",
+      purpose: "I'm writing review notes for you to check. I save the draft when I finish.",
+    },
     // The Data tab's three pages share one title and purpose, and each names itself in the browser
     // tab (the 16 design brief, section 2).
     data: {
@@ -896,11 +906,8 @@ export const copy = {
       doneSuffix: ", done",
       discarded: (date: string) => `Discarded on ${date}`,
     },
-    steps: {
-      show: (count: string) => `Show the ${count} steps I took`,
-      hide: "Hide the steps",
-      id: "Draft ID {id}",
-    },
+    // Under the steps I took, before the draft's ID in Roboto Mono.
+    idLabel: "Draft ID",
     // Sources (section 5.4).
     sources: {
       title: "Sources",
