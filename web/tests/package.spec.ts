@@ -818,6 +818,8 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await expect(readout(page)).toHaveText("0 of 7 signed within 1.5 months");
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("[data-comparables-table] table tbody tr")).toHaveCount(7);
+  // DESIGN.md section 7, rule 12: one to nine in words, in the caption as in the title.
+  await expect(page.locator("[data-comparables-table] [data-table-caption]")).toHaveText("All seven comparable packages, shortest first.");
   // With none still open, the text alternative names only the signed ones.
   await expect(page.locator("[data-chart-alt]")).toHaveText(
     "Dot chart of seven comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +

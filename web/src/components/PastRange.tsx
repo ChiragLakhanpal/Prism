@@ -847,7 +847,7 @@ function ComparablesTable({
       <Table
         title={
           <span ref={captionRef} tabIndex={-1} className="focus:outline-none" data-table-caption>
-            {total === 1 ? t.captionOne : t.caption(whole(total))}
+            {total === 1 ? t.captionOne : t.caption(spelled(total))}
           </span>
         }
         level={4}
