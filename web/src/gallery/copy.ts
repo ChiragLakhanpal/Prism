@@ -433,7 +433,7 @@ export const galleryCopy = {
         abstention: null,
         checks_run: ["own_dates", "estimate", "closing_date"],
         thresholds: { completion_passed_min_estimated_usd: "1000000.00", days_before_closing: 90, actual_to_estimate_ratio: "2.0" },
-        counts: { activities: 5, checked: 5, not_fully_checked: 0, needs_a_look: 1, watch: 1, data_note: 1, marked: 3, unmarked: 2 },
+        counts: { activities: 5, checked: 5, not_fully_checked: 0, needs_a_look: 1, watch: 1, data_note: 1, signal: 2, marked: 3, unmarked: 2 },
         plan: {
           document_id: "sample-plan",
           project_id: "P000000",

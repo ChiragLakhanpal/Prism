@@ -21,8 +21,9 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
   gives no planned completion date or no estimate (the activity then counts as not fully checked).
 
 The counts give every number the Check a plan screen states about the whole plan: the activities,
-how many were checked fully and how many not, how many carry each mark, and how many carry any
-mark or none, so the screen never counts rows itself.
+how many were checked fully and how many not, how many carry each mark, how many carry a signal
+(needs a look or watch, the rows a draft of review notes covers), and how many carry any mark or
+none, so the screen never counts rows itself.
 
 Every number a reason states is a value here, at its rounding: days are whole numbers, amounts
 are text with two decimals, and the ratio is given exactly to two decimals and as the whole
@@ -47,6 +48,7 @@ from strata.tools.registry import Call
 CONTRACT_STATUSES = ("Signed", "Completed")  # STEP's Process Status once a contract is signed
 PENDING_STATUSES = ("Pending Implementation", "Under Implementation", "Under Review", "Draft")
 CHECKS = ("own_dates", "estimate", "closing_date")  # what the screen's method sentence names
+SIGNALS = ("needs_a_look", "watch")  # the marks that are signals; a data note describes the record
 CENTS, WHOLE = Decimal("0.01"), Decimal("1")
 
 
@@ -367,6 +369,7 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
         "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
                    "not_fully_checked": len(partly),
                    "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
+                   "signal": sum(1 for row in activities if any(m["mark"] in SIGNALS for m in row["marks"])),
                    "marked": sum(1 for row in activities if row["marks"]),
                    "unmarked": sum(1 for row in activities if not row["marks"])},
     }

@@ -144,6 +144,8 @@ export type CheckPlanResult = {
     needs_a_look: number;
     watch: number;
     data_note: number;
+    // The activities with a signal (needs a look or watch): the rows a draft of review notes covers.
+    signal: number;
     marked: number;
     unmarked: number;
   } | null;
