@@ -277,6 +277,8 @@ test("the statistics' labels and their knockouts stop above the axis, so the axi
     for (const width of [1440, 1024, 390]) {
       await openPackage(page, { width, comparables: { body: await recorded(comparables) } });
       await ready(page);
+      // Both answers draw the middle's and the 8-in-10 point's knockouts, so the check below has two to read.
+      await expect(page.locator("[data-chart-drawing] [data-knockout]"), `${comparables} at ${width} px`).toHaveCount(2);
       const overlaps = await page.evaluate(() => {
         // The axis is a 1 px line, so its stroke starts half a pixel above its y.
         const axis = document.querySelector("[data-chart-drawing] [data-axis]")!.getBoundingClientRect().top - 0.5;
@@ -894,12 +896,14 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
   await openPackage(page, { width: 320, ref: "KE-MIGORI COUNTY-532367-CW-RFB", pkg: { status: 404, body: '{"code":"unknown_package"}' } });
   const county = page.locator("main p", { hasText: "No package in Strata has the reference" });
   await expect(county).toContainText("reference KE-MIGORI COUNTY-532367-CW-RFB. Check");
-  const tops = await county.evaluate((p) =>
-    [...p.querySelectorAll(".font-mono")].map((part) => [part.textContent, Math.round(part.getBoundingClientRect().top)]),
+  // The reference's two parts, leaving out the Roboto Mono space between them.
+  const parts = county.locator(".font-mono", { hasText: /\S/ });
+  const tops = await parts.evaluateAll((elements) =>
+    elements.map((part) => [part.textContent, Math.round(part.getBoundingClientRect().top)]),
   );
   expect(tops).toHaveLength(2);
   expect(tops[1][1]).toBeGreaterThan(tops[0][1] as number);
-  expect((await county.locator(".font-mono").nth(1).evaluate((el) => el.getClientRects().length))).toBe(1);
+  expect(await parts.nth(1).evaluate((el) => el.getClientRects().length)).toBe(1);
 });
 
 // A coverage line's link names the sources behind it and the tool, and never sends an empty value.
@@ -1152,20 +1156,37 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
 });
 
 // DESIGN.md section 5, Reference words: a reference with a county's name breaks at its spaces first,
-// as the scope chip and the not-found sentence break it. Each Roboto Mono part keeps to one line.
+// as the scope chip and the not-found sentence break it. Each Roboto Mono part keeps to one line, and
+// the space between two parts on one line is a Roboto Mono space too, one character wide.
 async function countyParts(page: Page, selector: string) {
   return page.locator(selector).evaluateAll((elements) =>
     elements
       .filter((element) => element.textContent!.includes("COUNTY"))
       .map((element) => {
-        const mono = element.matches(".font-mono") ? [element] : [...element.querySelectorAll(".font-mono")];
+        const mono = element.matches(".font-mono")
+          ? [element]
+          : [...element.querySelectorAll(".font-mono")].filter((part) => part.textContent!.trim() !== "");
         const parts = mono.map((part) => {
           const range = document.createRange();
           range.selectNodeContents(part);
-          const tops = [...range.getClientRects()].filter((r) => r.width > 0).map((r) => Math.round(r.top));
-          return [part.textContent!, new Set(tops).size] as const;
+          const boxes = [...range.getClientRects()].filter((r) => r.width > 0);
+          const tops = boxes.map((r) => Math.round(r.top));
+          const width = boxes.reduce((sum, r) => sum + r.width, 0);
+          return {
+            text: part.textContent!,
+            lines: new Set(tops).size,
+            top: tops[0],
+            left: boxes[0].left,
+            right: boxes[boxes.length - 1].right,
+            // One Roboto Mono character, from the part's own width.
+            character: width / part.textContent!.length,
+          };
         });
-        return { reference: element.textContent!.trim(), parts };
+        // The space between each two parts that share a line, beside one character of the part before it.
+        const spaces = parts.slice(1).flatMap((part, index) =>
+          parts[index].top === part.top ? [{ space: part.left - parts[index].right, character: parts[index].character }] : [],
+        );
+        return { reference: element.textContent!.trim(), parts: parts.map(({ text, lines }) => [text, lines] as const), spaces };
       }),
   );
 }
@@ -1173,10 +1194,12 @@ async function countyParts(page: Page, selector: string) {
 test("a reference with a county's name breaks only at its spaces, in a dot's details, the table and the cards", async ({ page }) => {
   const whole = (found: Awaited<ReturnType<typeof countyParts>>, where: string) => {
     expect(found.length, where).toBeGreaterThan(0);
-    for (const { reference, parts } of found) {
+    for (const { reference, parts, spaces } of found) {
       expect(parts.map(([part]) => part).join(" "), where).toBe(reference);
       expect(parts.filter(([, lines]) => lines !== 1), `${where}: ${reference}`).toEqual([]);
+      for (const { space, character } of spaces) expect(Math.abs(space - character), `${where}: ${reference}, a space of ${space} px`).toBeLessThanOrEqual(0.5);
     }
+    return found.flatMap(({ spaces }) => spaces).length;
   };
 
   // The shortest comparable, the first dot, is KE-MIGORI COUNTY-532367-CW-RFB.
@@ -1190,6 +1213,7 @@ test("a reference with a county's name breaks only at its spaces, in a dot's det
   for (const [width, view, selector] of [
     [1024, "table", "tbody th"],
     [1440, "table", "tbody th"],
+    [390, "cards", "li > :first-child"],
     [320, "cards", "li > :first-child"],
   ] as const) {
     await openPackage(page, { width });
@@ -1202,7 +1226,9 @@ test("a reference with a county's name breaks only at its spaces, in a dot's det
       "KE-UASIN GISHU COUNTY-571338-CW-RFB",
       "KE-KAJIADO COUNTY-567787-CW-RFB",
     ]);
-    whole(found, `${width} px, the ${view}`);
+    const spaces = whole(found, `${width} px, the ${view}`);
+    // At 390 px a card's heading holds a shorter county reference on one line, so a space is measured there.
+    if (width === 390) expect(spaces, "390 px, the cards").toBeGreaterThan(0);
   }
 });
 
