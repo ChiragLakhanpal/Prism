@@ -383,6 +383,15 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--crossed-to-tip", comparables(COMPARABLES), { widths: [1440, 1024, 390, 320], act: crossToTip }),
   packageShot("package--focus-reset", comparables(COMPARABLES), { widths: [1440, 1024, 390], act: focusReset }),
   packageShot("package--not-found-long", null, { widths: [320] }, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC"),
+  // Round 10's fix: the plan mid-axis on a chart just over 400 px wide, where one line of the readout
+  // does not fit beside it, so the readout takes the copy's two lines.
+  packageShot("package--moved-496", comparables(COMPARABLES), {
+    widths: [496],
+    act: async (page) => {
+      await type("[data-plan-control] input", "9")(page);
+      await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    },
+  }),
 ];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
