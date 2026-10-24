@@ -41,9 +41,9 @@ type Pair = { label: ReactNode; value: ReactNode; wide?: boolean };
 
 function Pairs({ pairs, hidden }: { pairs: Pair[]; hidden?: boolean }) {
   return (
-    <dl aria-hidden={hidden || undefined} className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 md:flex md:flex-wrap">
+    <dl aria-hidden={hidden || undefined} className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 @md/page:flex @md/page:flex-wrap">
       {pairs.map((pair, index) => (
-        <div key={index} className={pair.wide ? "col-span-2 min-w-0 md:basis-full" : undefined}>
+        <div key={index} className={pair.wide ? "col-span-2 min-w-0 @md/page:basis-full" : undefined}>
           <dt className="text-caption text-ink-muted">{pair.label}</dt>
           {pair.value}
         </div>
@@ -217,7 +217,7 @@ export function ProjectPage({ pid }: { pid: string }) {
   if (notFound) {
     return (
       <div className="layout-grid" data-project-page="not-found">
-        <div className="col-span-12 md:col-span-8">
+        <div className="col-span-12 @md/page:col-span-8">
           <Breadcrumb trail={[projectsCrumb, { text: <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} /> }]} />
           <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
             <Fill template={words.notFoundTitle} slots={{ pid: idText }} />
@@ -299,7 +299,7 @@ export function ProjectPage({ pid }: { pid: string }) {
 
   return (
     <div className="layout-grid" data-project-page={load.status}>
-      <div className="col-span-12 md:col-span-8">
+      <div className="col-span-12 @md/page:col-span-8">
         <Breadcrumb trail={[projectsCrumb, { text: current }]} />
         <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
           {project ? (
@@ -311,8 +311,8 @@ export function ProjectPage({ pid }: { pid: string }) {
               <span className="sr-only">
                 <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
               </span>
-              <SkeletonText className="xl:hidden" widths={["w-full", "w-3/5"]} />
-              <SkeletonLine className="hidden xl:flex" width="w-3/5" />
+              <SkeletonText className="@xl/page:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonLine className="hidden @xl/page:flex" width="w-3/5" />
             </>
           ) : (
             <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
@@ -324,7 +324,7 @@ export function ProjectPage({ pid }: { pid: string }) {
       <div className="col-span-12 mt-6">
         <Tabs label={words.sections} tabs={[{ key: "procurement", label: words.tab.procurement, href: `/projects/${pid}/procurement`, current: true }]} />
       </div>
-      <div className="col-span-12 mt-6 md:col-span-8">
+      <div className="col-span-12 mt-6 @md/page:col-span-8">
         <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
         <p className="mt-2 max-w-prose text-body text-ink">{plans.purpose}</p>
       </div>

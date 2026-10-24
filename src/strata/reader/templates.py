@@ -7,6 +7,9 @@ takes documents. Teaching the reader a new type is one entry here.
 A template says:
 
 - short_name   the name a passage's header uses, such as ICR (docs/PLAN.md section 5)
+- stratum      the stratum its passages belong to (GLOSSARY.md): Why for the narrative documents that
+               explain design choices and outcomes, How for the operational ones. The evidence card's
+               eyebrow names it.
 - body_start   the heading that starts the body. The pages before it hold the cover, the
                abbreviations and the contents, and give no passages. In a report with a data sheet,
                the pages from data_sheet to the body hold its tables, which go to Route B.
@@ -39,6 +42,7 @@ ROMAN = r"(?:I|II|III|IV|V|VI|VII|VIII|IX|X)"
 class Template:
     document_type: str
     short_name: str
+    stratum: str
     body_start: re.Pattern
     levels: tuple[re.Pattern, ...] = ()
     annex: re.Pattern | None = None
@@ -69,6 +73,7 @@ NUMBERED = re.compile(r"^\s*(\d{1,3})\.\s+(\S.*)$")
 ICR = Template(
     document_type="Implementation Completion and Results Report",
     short_name="ICR",
+    stratum="Why",
     body_start=_heading("I", UPPER_WORDS),
     levels=(_heading(ROMAN, UPPER_WORDS), _heading("[A-H]", UPPER_WORDS)),
     annex=re.compile(r"^\s*ANNEX\s+(\d+)\.\s+\S.*$"),
@@ -80,6 +85,7 @@ ICR = Template(
 ICR_REVIEW = Template(
     document_type="Implementation Completion Report Review",
     short_name="ICR Review",
+    stratum="Why",
     body_start=re.compile(r"^\s*(1)\.\s+Project Data\s*$"),
     paragraph=re.compile(r"^\s*(\d{1,2})\.\s+([A-Z][A-Za-z,&/()' -]*[A-Za-z)?])\s*$"),
     items=re.compile(r"^\s*([a-h])\.\s*([A-Z].*)$"),
@@ -88,6 +94,7 @@ ICR_REVIEW = Template(
 PAD = Template(
     document_type="Project Appraisal Document",
     short_name="PAD",
+    stratum="Why",
     body_start=_heading("I", UPPER_WORDS),
     levels=(_heading(ROMAN, UPPER_WORDS), _heading("[A-H]", TITLE_WORDS)),
     annex=re.compile(r"^\s*Annex\s+(\d+):\s+\S.*$"),
@@ -101,6 +108,7 @@ PAD = Template(
 ISR = Template(
     document_type="Implementation Status and Results Report",
     short_name="ISR",
+    stratum="How",
     body_start=re.compile(r"^\s*(Key Dates|1\.\s+OBJECTIVE)\s*$"),
     headings=("Key Dates", "Project Development Objectives", "Components", "Overall Ratings",
               "Implementation Status and Key Decisions", "Risks", "Results",

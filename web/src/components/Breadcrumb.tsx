@@ -14,7 +14,7 @@ export function Breadcrumb({ trail }: { trail: Crumb[] }) {
   const parent = [...trail].reverse().find((crumb) => crumb.href);
   return (
     <nav aria-label={copy.breadcrumb.label} data-breadcrumb className="text-caption text-ink-muted">
-      <ol className="hidden flex-wrap items-center gap-x-2 md:flex">
+      <ol className="hidden flex-wrap items-center gap-x-2 @md/page:flex">
         {trail.map((crumb, index) => (
           <li key={index} className="flex min-w-0 items-center gap-2">
             {index > 0 && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-line-strong" />}
@@ -31,7 +31,7 @@ export function Breadcrumb({ trail }: { trail: Crumb[] }) {
         ))}
       </ol>
       {parent?.href && (
-        <p className="md:hidden">
+        <p className="@md/page:hidden">
           <TextLink href={parent.href} className="inline-flex min-h-6 items-center gap-1">
             <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
             <span>{parent.text}</span>

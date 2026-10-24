@@ -11,8 +11,9 @@
 // Every number comes from the tool: the counts, the days, the ratio and the amounts. The screen
 // writes them (web/src/lib/format.ts) and counts nothing. Marked rows come first, by their strongest
 // mark, then in the order check_plan returns them. Each row and each card names its STEP reference
-// in data-activity, and an address whose hash names a reference opens the fold if it must, scrolls
-// that activity into view and focuses it (ticket 14 links to plan rows this way).
+// in data-activity, and an address whose hash names a reference opens the fold if it must, brings
+// that activity into view with nothing cut at the top edge, and focuses it (ticket 14 links to plan
+// rows this way).
 import { createElement, useEffect, useId, useState, type ReactNode, type Ref } from "react";
 import { copy } from "../copy";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
@@ -176,18 +177,24 @@ const blank = <span className="text-ink-muted">{copy.notInPlan}</span>;
 
 // "Request for Bids ·" then "Open - National": the dot is tied to the Method with a no-break space,
 // and the Market Approach moves to the next line whole when it fits there, so no line starts with
-// the dot or with STEP's own dash.
-function methodText(row: Activity): ReactNode {
-  if (!row.method) return blank;
-  return row.market_approach ? (
+// the dot or with STEP's own dash. The evidence drawer's record view writes them the same way.
+export function MethodText({ method, approach }: { method: string; approach?: string | null }) {
+  return approach ? (
     <>
-      {row.method}
+      {method}
       {words.methodDot}{" "}
-      <span className="inline-block max-w-full">{row.market_approach}</span>
+      <span data-market-approach className="inline-block max-w-full">
+        {approach}
+      </span>
     </>
   ) : (
-    row.method
+    method
   );
+}
+
+function methodText(row: Activity): ReactNode {
+  if (!row.method) return blank;
+  return <MethodText method={row.method} approach={row.market_approach} />;
 }
 
 // The rows a mark's count word counts, for its tooltip.
@@ -312,14 +319,14 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
 // too. What Strata found keeps the rest and stays the widest column. Cells are padded 8 px at the
 // sides from 1024 px and 12 px from 1200 px (CELL).
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean }[] = [
-  { key: "activity", header: words.columns.activity, width: "w-[25%] xl:w-[21.5%]" },
-  { key: "method", header: words.columns.method, width: "w-[16%] xl:w-[15%]" },
+  { key: "activity", header: words.columns.activity, width: "w-[25%] @xl/page:w-[21.5%]" },
+  { key: "method", header: words.columns.method, width: "w-[16%] @xl/page:w-[15%]" },
   { key: "review", header: words.columns.review, width: "w-[7.5%]" },
-  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] xl:w-[11%]", numeric: true },
-  { key: "status", header: words.columns.status, width: "w-[14%] xl:w-[12.5%]" },
-  { key: "found", header: null, width: "w-[26%] xl:w-[32.5%]" },
+  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] @xl/page:w-[11%]", numeric: true },
+  { key: "status", header: words.columns.status, width: "w-[14%] @xl/page:w-[12.5%]" },
+  { key: "found", header: null, width: "w-[26%] @xl/page:w-[32.5%]" },
 ];
-const CELL = "px-2 py-3 xl:px-3";
+const CELL = "px-2 py-3 @xl/page:px-3";
 
 // A row or card a link's hash names keeps the selected row's tint after focus moves on
 // (DESIGN.md: tint, Selected row).
@@ -413,6 +420,35 @@ function visibleActivity(ref: string): HTMLElement | null {
   return found[0] ?? null;
 }
 
+// The space left above a named activity when the page lands on it: the cards' own gap, so the line
+// above a card lands just past the edge instead of leaving a sliver of it in view.
+const LANDING_GAP = 12;
+
+// Brings a named activity into view without cutting the box band or the page's title at the top
+// edge: the page from its top when the activity fits on the first screen, or else the activity just
+// under the sticky header. The activity is its whole row or card, badges included, not only the
+// reference that takes focus. The band and the title are each shown whole when the activity still
+// fits under them, and otherwise scrolled away whole.
+function bringIntoView(target: HTMLElement) {
+  const place = (element: Element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
+  };
+  const row = place(target.closest("tr, li") ?? target);
+  const header = document.querySelector<HTMLElement>("[data-plan-header]");
+  const stuck = header && getComputedStyle(header).position === "sticky" ? header.offsetHeight : 0;
+  const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
+  let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
+  // A title inside the sticky header stays in view whatever the page does.
+  const parts = [document.querySelector("[data-box-band]"), stuck ? null : document.querySelector("main h1")];
+  for (const part of parts) {
+    if (!part) continue;
+    const { top: partTop, bottom: partBottom } = place(part);
+    if (top > partTop && top < partBottom) top = fits(partTop) ? partTop : partBottom;
+  }
+  window.scrollTo({ top: Math.max(0, top) });
+}
+
 export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, sticky = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
@@ -424,15 +460,15 @@ export function PlanCheckHeader({ agency, plan, pill, headerRef, level = 1, stic
   sticky?: boolean;
 }) {
   return (
-    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "lg:sticky lg:top-0 lg:z-10")}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10")}>
+      <div className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-start @lg/page:justify-between @lg/page:gap-6">
         {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
             is as wide as the name it stands for. */}
-        <div className="min-w-0 lg:flex-1">
+        <div className="min-w-0 @lg/page:flex-1">
           {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
-        {pill && <div className="shrink-0 lg:mt-0.5">{pill}</div>}
+        {pill && <div className="shrink-0 @lg/page:mt-0.5">{pill}</div>}
       </div>
     </div>
   );
@@ -491,8 +527,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
       if (unmarkedRows.some((row) => row.activity_reference_no === ref)) setOpen(true);
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
-        target?.scrollIntoView({ block: "center" });
-        target?.focus({ preventScroll: true });
+        if (!target) return;
+        bringIntoView(target);
+        target.focus({ preventScroll: true });
       });
     };
     follow();
@@ -547,7 +584,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
-                <td colSpan={COLUMNS.length} className="px-2 py-2 xl:px-3">
+                <td colSpan={COLUMNS.length} className="px-2 py-2 @xl/page:px-3">
                   <div className="flex flex-wrap items-center gap-x-4">
                     <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} />
                     <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
@@ -640,21 +677,19 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   return (
     <div aria-hidden="true" data-plan-skeleton>
       <EightColumns prose className="mt-6">
-        {/* The finding's count words are buttons whose 2 px padding makes a line 4 px taller.
-            The finding takes two lines below 768 px, both with a count word, and at the eight
-            columns' 1024 to 1199 px, where the second line has none. It takes one line at the full
-            width from 768 px and from 1200 px. The method sentence takes five lines below 768 px
-            and three from it. */}
-        <div className="py-0.5">
-          <SkeletonText className="gap-1 text-title md:hidden lg:flex lg:gap-0 xl:hidden" widths={["w-full", "w-2/5"]} />
-          <SkeletonLine className="hidden text-title md:flex lg:hidden xl:flex" width="w-[70%]" />
+        {/* The finding takes two lines below 768 px and at the eight columns' 1024 to 1199 px, and
+            one line at the full width from 768 px and from 1200 px. Its count words keep to the
+            line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
+        <div>
+          <SkeletonText className="text-title @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+          <SkeletonLine className="hidden text-title @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
-        <SkeletonText className="mt-2 text-body md:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-        <SkeletonText className="mt-2 hidden text-body md:flex" widths={["w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
+        <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
       </EightColumns>
       {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
-      <div className="mt-4 flex min-h-6 items-center lg:block lg:min-h-0">
+      <div className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">
         <SkeletonLine className="text-caption" width="w-40" />
       </div>
       <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>

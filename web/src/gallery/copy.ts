@@ -60,6 +60,21 @@ export const galleryCopy = {
       purpose:
         "This page shows the body of a cited answer in each of its states. In each sample, the sentences, the table, the check line and the steps count the same things.",
     },
+    box: {
+      title: "The one box",
+      purpose:
+        "As you type, the box lists what Enter will do. An ID opens its page, and anything else offers Ask this. On a project or package page it holds a scope chip you can remove.",
+    },
+    "answer-panel": {
+      title: "Answer panel",
+      purpose:
+        "The answer to a question asked from the box, in the page under the band. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
+    },
+    evidence: {
+      title: "Evidence card and drawer",
+      purpose:
+        "A marker's hover or focus shows the evidence card. A click opens the drawer beside the page, at the whole paragraph with the matching words highlighted. Below 768 px the drawer fills the screen.",
+    },
     document: {
       title: "Document passage",
       purpose: "A passage is one numbered paragraph, word for word, with the matching words highlighted.",
@@ -114,6 +129,39 @@ export const galleryCopy = {
     withGap: "With a gap",
     withoutGap: "With nothing missing",
     french: "A passage in French",
+    hint: "Focused and empty: the hint",
+    project: "A project ID",
+    loan: "A loan number",
+    loanPending: "A bare number, before its lookup finds a loan",
+    activity: "A STEP reference",
+    activityPending: "A STEP reference, while it is looked up",
+    question: "A question",
+    questionWithId: "A question that holds a project ID",
+    notFound: "An ID no record holds",
+    lookupFailed: "A lookup that failed",
+    scoped: "On a project page, with its scope chip",
+    streamingSteps: "Streaming: two steps done, one running, one to do",
+    allChecked: "Ready, with every check passed",
+    readyRemoved: "Ready, with one sentence removed",
+    unsupported: "Every sentence failed a check",
+    emptyScoped: "Nothing found, within a project",
+    emptyUnscoped: "Nothing found, across all projects",
+    dropped: "The connection dropped",
+    asOf: "Asked as of a date",
+    preview: "Asked from a page whose address asks for the public view",
+    card: "Evidence card",
+    cardVisited: "Evidence card, for a source opened before",
+    fromAnswer: "Opened from the answer",
+    switcher: "A sentence with two sources",
+    switcherSection: "A sentence quoting an ISR section and citing an ICR annex",
+    fromLink: "Opened from a link",
+    section: "An ISR section, which has no paragraph number",
+    cardSection: "Evidence card, for a quote from an ISR section",
+    cardRecord: "Evidence card, for a record",
+    record: "A record",
+    unknown: "An ID no source has",
+    unknownAsOf: "An ID no source has as of the address's date",
+    drawerPreview: "In a preview",
   },
 
   notes: {
@@ -212,6 +260,13 @@ export const galleryCopy = {
   },
 
   sample: {
+    // The questions the recorded answer streams answer (tests/fixtures/agent/cases.toml).
+    showcaseQuestion: "Why were works contracts in P130164 advertised again?",
+    bridgesQuestion: "Which firms built the bridges in P130164?",
+    boxQuestion: "Why were works contracts advertised again?",
+    unknownProject: "P999999",
+    boxProject: "P130164",
+    boxLoan: "IDA-60290",
     primary: "Mark as checked",
     secondary: "Export to Word",
     ghost: "Show them",

@@ -660,3 +660,26 @@ test("axe finds no violations in the loading state at 1440, 1024 and 390 px, and
     await axeAtEveryWidth(page, name, () => expect(ready).toBeVisible(), [1440, 390]);
   }
 });
+
+// The 14 brief, section 2.5: the page lays out by the page area's width, so the evidence drawer
+// narrows Check a plan without breaking it. At 1024 px the drawer takes 410 px and leaves a 614 px
+// page area, which shows the activity cards, as a 614 px window would.
+test("at 1024 px with the evidence drawer open, the plan check shows its cards and nothing scrolls sideways", async ({ page }) => {
+  const ICR_54 = "strata.gold.passage:31525018/v1/54";
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [API]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    "/api/evidence": { body: await recorded("evidence-icr-p130164-54.json") },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+  });
+  await page.goto(`${PLAN}?evidence=${encodeURIComponent(ICR_54)}`);
+  await expect(page.locator("[data-check-plan-page]:not([data-check-plan-page=loading])")).toBeVisible();
+  await expect(page.getByRole("dialog")).toBeVisible();
+
+  expect(await widthOf(page, "[data-page-column]")).toBe(614);
+  await expect(view(page, "cards")).toBeVisible();
+  await expect(view(page, "table")).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
+});

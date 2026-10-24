@@ -122,6 +122,27 @@ def test_on_the_app_each_answer_stream_s_run_is_logged_with_the_app_s_own_token(
     assert "4021@1984" in runs[0][1] and "token-for-ana-only" not in runs[0][1]
 
 
+def test_on_the_app_an_opened_source_is_recorded_with_the_app_s_own_token():
+    """A source a viewer opens in the evidence drawer goes to strata.ops.evidence_opened (ticket 14), written
+    by the app as itself, with the viewer's user id and never their token."""
+    with fake_workspace() as (host, calls):
+        app = app_from_env({"DATABRICKS_HOST": host, "DATABRICKS_WAREHOUSE_ID": "wh-1",
+                            "DATABRICKS_CLIENT_ID": "strata-app", "DATABRICKS_CLIENT_SECRET": "not-a-real-key"})
+
+        async def open_source():
+            async with app.router.lifespan_context(app):
+                transport = httpx.ASGITransport(app=app)
+                async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                    return await client.post("/api/evidence/opened", headers=ANA, json={
+                        "evidence_id": "strata.gold.passage:31525018/v1/54", "route": "/projects/P130164"})
+
+        answer = asyncio.run(open_source())
+
+    assert answer.json() == {"recorded": True}
+    writes = [auth for kind, auth, text in calls if kind == "statement" and "strata.ops.evidence_opened" in text]
+    assert writes == ["Bearer app-not-real"]
+
+
 def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_built_web_app(fixture_db, tmp_path):
     (tmp_path / "assets").mkdir()
     (tmp_path / "index.html").write_text("<!doctype html><title>Strata</title>")

@@ -1,0 +1,24 @@
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "search_passages", "project_id": "P130164", "status": "running"}
+
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "search_passages", "project_id": "P130164", "status": "done", "count": 10, "abstention": null, "error": null}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "count": 0}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "removed": 0}
+
+event: checks
+data: {"checks_run": [1, 2, 3], "sentences": {"written": 0, "kept": 0, "removed": 0}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 0, "returned": 0}, "tools": ["search_passages"]}
+
+event: done
+data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}
+

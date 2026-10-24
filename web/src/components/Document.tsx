@@ -8,6 +8,7 @@
 // missing (no source has this ID).
 import type { ReactNode } from "react";
 import { copy } from "../copy";
+import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
@@ -16,9 +17,9 @@ import { TextLink } from "./TextLink";
 
 // Matched words: the highlight fill, with the start and end said aloud, because most screen
 // readers do not announce a <mark>.
-export function Highlight({ children }: { children: ReactNode }) {
+export function Highlight({ children, settle = false }: { children: ReactNode; settle?: boolean }) {
   return (
-    <mark className="bg-highlight text-ink [box-decoration-break:clone]">
+    <mark className={cx("bg-highlight text-ink [box-decoration-break:clone]", settle && "animate-settle")}>
       <span className="sr-only">{copy.document.highlightStarts} </span>
       {children}
       <span className="sr-only"> {copy.document.highlightEnds}</span>
@@ -26,13 +27,18 @@ export function Highlight({ children }: { children: ReactNode }) {
   );
 }
 
-// The paragraph with the given character ranges highlighted.
-export function highlighted(text: string, ranges: [number, number][] = []): ReactNode[] {
+// The paragraph with the given character ranges highlighted. In the evidence drawer the highlight
+// settles in once, after the drawer's content (settle).
+export function highlighted(text: string, ranges: [number, number][] = [], settle = false): ReactNode[] {
   const parts: ReactNode[] = [];
   let at = 0;
   for (const [start, end] of [...ranges].sort((a, b) => a[0] - b[0])) {
     if (start > at) parts.push(text.slice(at, start));
-    parts.push(<Highlight key={start}>{text.slice(Math.max(start, at), end)}</Highlight>);
+    parts.push(
+      <Highlight key={start} settle={settle}>
+        {text.slice(Math.max(start, at), end)}
+      </Highlight>,
+    );
     at = Math.max(at, end);
   }
   if (at < text.length) parts.push(text.slice(at));
@@ -102,7 +108,7 @@ export function Document({ state }: { state: DocumentState }) {
         docType={passage.docType}
         pcode={passage.pcode}
         date={passage.date}
-        para={passage.para}
+        place={{ kind: "paragraph", text: String(passage.para) }}
         page={passage.page}
       />
       <p className="mt-2 text-small">

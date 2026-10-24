@@ -48,8 +48,13 @@ def _boolean(value) -> bool:
 
 
 def _row(found: dict, rank: int, score: float) -> dict:
-    """One passage in the registry's row shape. Values arrive typed from DuckDB and as text from the
-    SQL warehouse, so each is read once here."""
+    """One ranked passage in the registry's row shape."""
+    return {**passage_row(found), "rank": rank, "score": score}
+
+
+def passage_row(found: dict) -> dict:
+    """One passage in the registry's row shape, without a search's rank. Values arrive typed from DuckDB
+    and as text from the SQL warehouse, so each is read once here."""
     return {
         "evidence_id": f"{TABLE}:{found['passage_id']}",
         "public_from": _iso(found["public_from"]),
@@ -87,9 +92,16 @@ def _row(found: dict, rank: int, score: float) -> dict:
         "parse_route": found["parse_route"],
         "header": found["header"],
         "text": found["text"],
-        "rank": rank,
-        "score": score,
     }
+
+
+def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
+    """One passage by its id, read as the viewer, where it was public on the as-of date and not yet
+    replaced by a re-issue of its report then (ADR 0002), or None. The evidence drawer opens it from a
+    link, with no search behind it."""
+    result = engine.run(_sql("passages.sql"), {"ids": passage_id, "as_of": as_of})
+    rows = [dict(zip(result.columns, row)) for row in result.rows]
+    return passage_row(rows[0]) if rows else None
 
 
 def search_passages(call: Call, query: str, project_id: str | None = None, document_type: str | None = None,

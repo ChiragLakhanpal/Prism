@@ -103,6 +103,8 @@ export const NON_COPY_PROPS = new Set([
   "tooltipKind",
   "windowColumn",
   "skeletonRows",
+  // The one box's scope chip: "project" or "package", which picks the placeholder.
+  "scopeKind",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

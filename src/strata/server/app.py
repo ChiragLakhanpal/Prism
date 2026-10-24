@@ -30,6 +30,17 @@
   agency's Procurement Plan, its latest version or the one dated version, through the tool
   registry's check_plan, as the viewer. It takes the page's ?asof= and ?view=. A viewer whose
   token cannot read strata gets 403 with the code permission and no rows.
+- GET /api/lookup/loan?q= and GET /api/lookup/activity?q= are the one box's lookups, as the viewer and as
+  of ?asof=: the project a loan number finances, and the latest published Procurement Plan that lists a
+  STEP reference (src/strata/server/lookup.py). One that finds nothing gets 404 with the code
+  unknown_loan or unknown_activity.
+- GET /api/evidence?id= gives one source by its evidence id, as the viewer and as of ?asof=, in the shape
+  the answer stream's evidence event carries, for an evidence drawer opened from a link; an id no source
+  has, or one not public by then, gets 404 with the code unknown_evidence (src/strata/server/evidence.py).
+- POST /api/evidence/opened records that the viewer opened a source in the evidence drawer, one row per
+  viewer and evidence id in strata.ops.evidence_opened, written as the app's own service principal. A
+  preview of another view, or a request no one is signed in for, records nothing, and the answer says
+  {"recorded": false}. GET /api/evidence/opened?id=...&id=... says which of those the viewer has opened.
 - Every other address outside /api gets the built web app, when create_app is given one.
 
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
@@ -66,7 +77,8 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
-from strata.server import engines, projects, tracing
+from strata.server import engines, evidence, lookup, projects, tracing
+from strata.server.evidence import OpenedLog
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
@@ -93,6 +105,13 @@ class AskRequest(BaseModel):
     lang: Literal["en", "fr", "es", "pt"] = "en"
 
 
+class OpenedRequest(BaseModel):
+    evidence_id: str = Field(min_length=1, max_length=512)
+    run_id: str | None = Field(default=None, max_length=128)  # the answer it was opened from, if any
+    route: str | None = Field(default=None, max_length=512)  # the page it was opened on
+    view: Literal["staff", "piu", "public"] = "staff"
+
+
 def current_viewer(request: Request) -> Viewer:
     return viewer_from_headers(request.headers)
 
@@ -115,7 +134,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_run_id: Callable[[], str] = random_run_id, engine_for: engines.EngineFor | None = None,
                stamp_timeout_seconds: float | None = None, usage: UsageLog | None = None,
                tracer_provider: trace.TracerProvider | None = None, web_dist: Path | None = None,
-               runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current) -> FastAPI:
+               runs: RunLog | None = None, trace_ids: Callable[[], TraceIds] = traces.current,
+               opened: OpenedLog | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -123,7 +143,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     src/strata/server/settings.py gives it the Foundry agent its environment names). usage
     receives one event per request, and tracer_provider (the process's global one when None) one
     span. runs writes each answer stream's run to strata.ops.agent_runs; without it, runs go to the
-    server log only. trace_ids reads the request's trace ids while its span is open. web_dist is
+    server log only. trace_ids reads the request's trace ids while its span is open. opened keeps the
+    sources each viewer opened in the evidence drawer; without it, nothing is recorded. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
     """
@@ -277,6 +298,49 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/data/sources")
     def data_sources() -> dict:
         return registry_page()
+
+    def as_of_for(asof: dt.date | None) -> dt.date:
+        """The page's as-of date, never later than today (ADR 0002)."""
+        return min(asof, registry.today()) if asof else registry.today()
+
+    @app.get("/api/lookup/loan")
+    def look_up_loan(q: str = Query(min_length=1, max_length=64), asof: dt.date | None = None,
+                     viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = lookup.loan(engine, q, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_loan"}, status_code=404)
+        return read_for(f"loan {q}", viewer, read)
+
+    @app.get("/api/lookup/activity")
+    def look_up_activity(q: str = Query(min_length=1, max_length=128), asof: dt.date | None = None,
+                         viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = lookup.activity(engine, q, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_activity"}, status_code=404)
+        return read_for(f"activity {q}", viewer, read)
+
+    @app.get("/api/evidence")
+    def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
+                      viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = evidence.read(engine, evidence_id, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
+        return read_for(f"evidence {evidence_id}", viewer, read)
+
+    @app.post("/api/evidence/opened")
+    def record_opened(body: OpenedRequest, viewer: Viewer = Depends(current_viewer)) -> dict:
+        # A preview can only take things away: someone looking through another view is not checking
+        # sources as themselves, so nothing is recorded (the 14 brief, section 5.10).
+        if opened is None or body.view != STAFF or not viewer.user_id:
+            return {"recorded": False}
+        return {"recorded": opened.record(viewer.user_id, body.evidence_id, body.run_id, body.route)}
+
+    @app.get("/api/evidence/opened")
+    def opened_sources(evidence_ids: list[str] = Query(default=[], alias="id", max_length=200),
+                       viewer: Viewer = Depends(current_viewer)) -> dict:
+        if opened is None or not viewer.user_id:
+            return {"opened": []}
+        return {"opened": opened.opened(viewer.user_id, evidence_ids)}
 
     @app.get("/api/health")
     def health() -> dict:
