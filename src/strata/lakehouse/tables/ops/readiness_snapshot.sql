@@ -17,7 +17,8 @@
 -- days_late      for a source that is late: how many days; otherwise empty
 -- count          for a source, a link or a route: the measure's count
 -- denominator    and its denominator
--- share_percent  the whole percent, only from data_readiness.fewest_for_a_share rows
+-- share_percent  the whole percent, as data_readiness_for rounds it, only from
+--                data_readiness.fewest_for_a_percentage rows
 -- projects       for a fix: the projects it would add evidence to
 -- written_at     when, in UTC
 -- public_from    the day it was written, in UTC (ADR 0002)

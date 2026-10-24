@@ -35,3 +35,14 @@ test("the gallery's address in the production build shows the app's not-found pa
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Page not found");
   await expect(page.locator("[data-gallery-root]")).toHaveCount(0);
 });
+
+// React Refresh adds `if (!window.$RefreshReg$) throw ...` to each module in development, so a
+// module that declares its own top-level window or document makes scripts/dev render a blank app,
+// while the built app the other tests serve works (ticket 16's critique, round 2).
+test("no module declares a top-level window or document, which would blank the app under scripts/dev", () => {
+  const src = fileURLToPath(new URL("../src/", import.meta.url));
+  const shadowing = filesIn(src)
+    .filter((file) => /\.tsx?$/.test(file))
+    .filter((file) => /^(?:export\s+)?(?:function|const|let|var|class)\s+(?:window|document)\b/m.test(readFileSync(file, "utf8")));
+  expect(shadowing).toEqual([]);
+});
