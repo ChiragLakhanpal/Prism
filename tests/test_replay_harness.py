@@ -148,3 +148,60 @@ def test_the_backtest_for_2021_stores_the_known_scores_of_the_hand_made_set(tmp_
     assert (year["misses_early"], year["misses_late"]) == (0, KNOWN["n"] - KNOWN["m"])
     assert year["middle_total"] == year["eight_in_ten_total"] == KNOWN["n"]
     assert year["training_through"] == KNOWN["cutoff"].isoformat()
+
+
+# ── Leakage ──────────────────────────────────────────────────────────────
+
+def publish_after_the_cutoff(engine):
+    """Rows that became public after January 1, 2021, each of which would change a feature or a label
+    if the backtest read it: a plan version that re-lists every package as much larger, Prior review,
+    open internationally and prequalified, with a first listing of its own planned 400 days long; CPIA
+    and WGI scores for Kenya; and a second notice for a training package."""
+    later = dt.date(2021, 2, 1)
+    insert(engine, "strata.silver.plan_versions", [plan_version(LATER_VERSION, later)])
+    references = [reference for reference, _, _ in training_packages() + packages_advertised_in_2021()]
+    insert(engine, "strata.silver.plan_rows", [
+        plan_row(LATER_VERSION, later, reference, amount="50000000.00", review="Prior", approach="Open - International",
+                 prequalification="Y") for reference in references])
+    insert(engine, "strata.silver.plan_step_delays",
+           [step for reference in references for step in first_listing(LATER_VERSION, later, reference, planned_days=400)])
+    insert(engine, "strata.gold.governance_score", [
+        {"country_code": "KE", "indicator_id": code, "year": 2020, "value": value, "public_from": dt.date(2021, 1, 2)}
+        for code, value in (("GOV_WGI_GE.EST", -0.4), ("IQ.CPA.IRAI.XQ", 3.4))])
+    insert(engine, "strata.gold.notice", [{
+        "notice_id": "N-KE-T80-again", "notice_type": "Invitation for Bids", "notice_date": dt.date(2021, 1, 20),
+        "project_id": PROJECT, "country_code": "KE", "step_reference": training_packages()[-1][0],
+        "procurement_category": "Works", "procurement_method": "Request for Bids", "public_from": dt.date(2021, 1, 20)}])
+
+
+def test_rows_made_public_after_the_cutoff_change_none_of_the_scores(tmp_path):
+    engine = hand_made(tmp_path)
+    publish_after_the_cutoff(engine)
+
+    run_2021(engine)
+
+    year = backtest.stored_years(engine)[2021]
+    assert {score: year[score] for score in KNOWN_SCORES} == {score: KNOWN[score] for score in KNOWN_SCORES}
+    # The model learned from the plan as it stood before the cutoff: one size and one planned duration.
+    assert year["feature_ranges"] == harness.as_json({"estimated_amount_usd": [1000000.0, 1000000.0],
+                                                      "planned_days": [120, 120]})
+
+
+class ReadsEveryContract:
+    """A scorer that forgets to limit its query to the date it was frozen at."""
+
+    name, model = "careless_scorer", None
+
+    def score(self, replay):
+        replay.inputs.rows("SELECT contract_id, public_from FROM strata.gold.contract")
+        return harness.Scored([])
+
+
+def test_the_harness_refuses_a_row_a_scorer_reads_from_after_its_cutoff(tmp_path):
+    engine = hand_made(tmp_path)
+    window = harness.Window(KNOWN["cutoff"], KNOWN["outcomes_through"], "test_year", "2021")
+
+    with pytest.raises(harness.LeakageError, match="frozen at 2021-01-01"):
+        harness.replay(engine, ReadsEveryContract(), window, OfflineTracker(), "run-1",
+                       dt.datetime(2026, 10, 24, tzinfo=dt.UTC))
+    assert harness.latest_run(engine, ReadsEveryContract.name) is None

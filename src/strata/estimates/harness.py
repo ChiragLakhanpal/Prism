@@ -93,7 +93,8 @@ class Reader:
     def rows(self, sql: str, **params) -> list[dict]:
         if "as_of" in params:
             raise ValueError("The reader sets :as_of itself, to the date it was frozen at.")
-        result = self.engine.run(sql, {**params, "as_of": self.as_of})
+        bound = {**params, "as_of": self.as_of} if ":as_of" in sql else params
+        result = self.engine.run(sql, bound)
         return self.checked([dict(zip(result.columns, row)) for row in result.rows])
 
     def checked(self, rows: list[dict]) -> list[dict]:
