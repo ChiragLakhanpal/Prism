@@ -723,8 +723,8 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "rebidding",
-                                         "judge"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "what_if",
+                                         "rebidding", "judge"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -884,6 +884,40 @@ def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateS
     _Entry(path, f"time_estimate.{learner}", settings)
     return TimeEstimateSettings(learner, registered, entry.text("experiment"), tuple(sorted(years)), every,
                                 entry.texts("governance_indicators"), entry.texts("range_checked"), dict(settings))
+
+
+@dataclass(frozen=True)
+class Lever:
+    """One what-if lever (ticket 26): a part of a procurement approach that "Compare with" can change."""
+
+    key: str  # market_approach, lots or prequalification: which record gives a comparable's value
+    feature: str | None  # the model's feature it sets, or None when the model reads no such feature
+    values: tuple[str, ...]  # the values the score task scores, in STEP's words; empty for a lever not scored
+
+
+# The levers whose comparables' values Strata can read from the records (strata.tools.estimate_time).
+LEVERS = ("market_approach", "lots", "prequalification")
+
+
+def load_what_if(path: Path = CONFIG_DIR / "models.toml") -> tuple[Lever, ...]:
+    """The model file's [what_if] table: the levers in "Compare with"'s order."""
+    entry = _Entry(path, "what_if", _read(path).get("what_if"))
+    order = entry.texts("levers")
+    entry.only({"levers", *order})
+    found = []
+    for key in order:
+        if key not in LEVERS:
+            entry._fail("levers", f"names {key}, which no record gives: use {', '.join(LEVERS)}")
+        lever = _Entry(path, f"what_if.{key}", entry.table.get(key))
+        lever.only({"feature", "values"})
+        feature = lever.table.get("feature", "")
+        if not isinstance(feature, str):
+            lever._fail("feature", "must be the model's feature name, or empty text for none")
+        values = lever.texts("values")
+        if feature and not values:
+            lever._fail("values", "must list the values the score task scores")
+        found.append(Lever(key, feature or None, values))
+    return tuple(found)
 
 
 @dataclass(frozen=True)

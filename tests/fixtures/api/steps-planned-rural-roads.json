@@ -2,81 +2,374 @@
   "tool": "estimate_time",
   "as_of": "2026-10-28",
   "view": "staff",
-  "rows": [],
+  "rows": [
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/-@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": true,
+      "market_approach": null,
+      "prequalification": null,
+      "review_type": null,
+      "q25": 2.3,
+      "q50": 3.0,
+      "q75": 5.2,
+      "q80": 5.7,
+      "days": {
+        "q25": 70,
+        "q50": 92,
+        "q75": 157,
+        "q80": 173
+      },
+      "abstention": null
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/N@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": null,
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/Y@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": null,
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/-@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": null,
+      "review_type": null,
+      "q25": 2.3,
+      "q50": 3.0,
+      "q75": 5.2,
+      "q80": 5.7,
+      "days": {
+        "q25": 70,
+        "q50": 92,
+        "q75": 157,
+        "q80": 173
+      },
+      "abstention": null
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/N@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/Y@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/-@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": null,
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/N@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/Y@2026-10-28",
+      "public_from": "2026-10-28",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    }
+  ],
   "coverage": {
-    "matched": 49,
-    "used": 7,
+    "matched": 9,
+    "used": 2,
     "not_used": [
       {
-        "reason": "no_plan_dates",
-        "count": 42,
+        "reason": "value_not_learned",
+        "count": 7,
         "evidence_ids": [
-          "strata.gold.package:KE-CWSB-150896-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-266383-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-436012-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54759-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54761-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54763-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54775-CW-RFB",
-          "strata.gold.package:KE-ICTA-571738-CW-RFB",
-          "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-201675-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203531-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203535-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203571-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-206973-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-149056-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-156444-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-178688-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-236797-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-236802-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-69899-CW-RFB",
-          "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
-          "strata.gold.package:KE-MOWASCO-113723-CW-RFB",
-          "strata.gold.package:KE-MOWASCO-228804-CW-RFB",
-          "strata.gold.package:KE-MOWI-47509-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-151304-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-151330-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-170154-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-175703-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-338455-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-449427-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-451075-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-466579-GO-RFB",
-          "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-205491-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-220077-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-226565-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-26664-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-356671-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-372776-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-456993-CW-RFB"
+          "strata.tools.estimate_time:described/-/N@2026-10-28",
+          "strata.tools.estimate_time:described/-/Y@2026-10-28",
+          "strata.tools.estimate_time:described/Open - National/N@2026-10-28",
+          "strata.tools.estimate_time:described/Open - National/Y@2026-10-28",
+          "strata.tools.estimate_time:described/Open - International/-@2026-10-28",
+          "strata.tools.estimate_time:described/Open - International/N@2026-10-28",
+          "strata.tools.estimate_time:described/Open - International/Y@2026-10-28"
         ]
       }
     ]
   },
-  "package": null,
-  "sources": [
+  "package": {
+    "step_reference": null,
+    "described": {
+      "market_approach": null,
+      "prequalification": null,
+      "lots": null,
+      "review_type": null,
+      "estimated_amount_usd": null,
+      "category": "Works",
+      "method": "Request for Bids",
+      "country_code": "KE"
+    }
+  },
+  "comparables": {
+    "n": 49,
+    "signed": 45,
+    "still_open": 4
+  },
+  "estimate": {
+    "q25": 2.3,
+    "q50": 3.0,
+    "q75": 5.2,
+    "q80": 5.7,
+    "days": {
+      "q25": 70,
+      "q50": 92,
+      "q75": 157,
+      "q80": 173
+    },
+    "model": "strata.gold.time_estimate",
+    "model_version": 1,
+    "model_alias": "champion",
+    "training_through": "2026-10-23",
+    "scored_on": "2026-10-28",
+    "scored": "request"
+  },
+  "difference": {
+    "middle_diff_months": 1.4,
+    "direction": "earlier",
+    "reasons": []
+  },
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
     {
-      "key": "notices",
-      "dataset_name": "Procurement Notices"
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
     },
     {
-      "key": "awards",
-      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
     },
     {
-      "key": "documents",
-      "dataset_name": "Documents & Reports: Documents API"
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
     },
     {
-      "key": "projects",
-      "dataset_name": "World Bank Projects & Operations"
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
     }
   ],
-  "records_through": "2026-10-13",
+  "plan_dates": {
+    "middle": {
+      "months": 3.0,
+      "ran_longer": 0,
+      "total": 0,
+      "in10": null
+    },
+    "eight_in_ten": {
+      "months": 5.7,
+      "ran_longer": 0,
+      "total": 0,
+      "in10": null
+    },
+    "default": "eight_in_ten"
+  },
+  "comparisons": [],
+  "options": {
+    "approaches": [
+      {
+        "market_approach": "Open - National",
+        "lots": 1,
+        "prequalification": "N",
+        "k": 3,
+        "matching_ids": [
+          "KE-CWSB-232660-CW-RFB",
+          "KE-CWSB-233052-CW-RFB",
+          "KE-NWWDA-229129-CW-RFB"
+        ],
+        "is_as_described": false,
+        "estimate": null,
+        "abstention": {
+          "reason": "too_few_in_subgroup",
+          "k": 3,
+          "n": 49,
+          "min_subgroup": 20
+        }
+      }
+    ],
+    "count": 1,
+    "recorded": 3,
+    "ruled_out": 0,
+    "unrecorded": 46,
+    "n": 49,
+    "review_type": null
+  },
+  "axis_max_months": 5.7,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
   "step_dates": {
     "min_comparables": 20,
     "middle_in10": 5,
@@ -403,6 +696,25 @@
       ]
     }
   },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
   "abstention": null,
   "summary": {
     "evidence_id": "strata.tools.estimate_time:@2026-10-28?method=Request%20for%20Bids&category=Works&country=KE",
@@ -414,6 +726,106 @@
         "awards",
         "documents",
         "projects"
+      ]
+    },
+    "estimate": {
+      "q25": 2.3,
+      "q50": 3.0,
+      "q75": 5.2,
+      "q80": 5.7,
+      "days": {
+        "q25": 70,
+        "q50": 92,
+        "q75": 157,
+        "q80": 173
+      },
+      "model": "strata.gold.time_estimate",
+      "model_version": 1,
+      "model_alias": "champion",
+      "training_through": "2026-10-23",
+      "scored_on": "2026-10-28",
+      "scored": "request"
+    },
+    "difference": {
+      "middle_diff_months": 1.4,
+      "direction": "earlier",
+      "reasons": []
+    },
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": {
+      "middle": {
+        "months": 3.0,
+        "ran_longer": 0,
+        "total": 0,
+        "in10": null
+      },
+      "eight_in_ten": {
+        "months": 5.7,
+        "ran_longer": 0,
+        "total": 0,
+        "in10": null
+      },
+      "default": "eight_in_ten"
+    },
+    "comparisons": [],
+    "options": {
+      "approaches": [
+        {
+          "market_approach": "Open - National",
+          "lots": 1,
+          "prequalification": "N",
+          "k": 3,
+          "matching_ids": [
+            "KE-CWSB-232660-CW-RFB",
+            "KE-CWSB-233052-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ],
+          "is_as_described": false,
+          "estimate": null,
+          "abstention": {
+            "reason": "too_few_in_subgroup",
+            "k": 3,
+            "n": 49,
+            "min_subgroup": 20
+          }
+        }
+      ],
+      "count": 1,
+      "recorded": 3,
+      "ruled_out": 0,
+      "unrecorded": 46,
+      "n": 49,
+      "review_type": null
+    },
+    "comparables": {
+      "n": 49,
+      "signed": 45,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 9,
+      "used": 2,
+      "not_used": [
+        {
+          "reason": "value_not_learned",
+          "count": 7,
+          "evidence_ids": [
+            "strata.tools.estimate_time:described/-/N@2026-10-28",
+            "strata.tools.estimate_time:described/-/Y@2026-10-28",
+            "strata.tools.estimate_time:described/Open - National/N@2026-10-28",
+            "strata.tools.estimate_time:described/Open - National/Y@2026-10-28",
+            "strata.tools.estimate_time:described/Open - International/-@2026-10-28",
+            "strata.tools.estimate_time:described/Open - International/N@2026-10-28",
+            "strata.tools.estimate_time:described/Open - International/Y@2026-10-28"
+          ]
+        }
       ]
     },
     "step_dates": {

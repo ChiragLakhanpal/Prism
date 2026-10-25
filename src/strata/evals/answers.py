@@ -172,23 +172,33 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
-def step_dates_answer(result, question) -> dict[str, list]:
-    """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
-    the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
-    tool counts as undated, and one named comparable's delay at the signed contract. For a STEP reference the tool
-    does not know there are no step dates, so it found none of them."""
+def estimate_time_answer(result, question) -> dict[str, list]:
+    """estimate_time's answer, from the summary record the agent cites it by. The time estimate (ticket 26): why it
+    gives no time estimate, and for which feature; how many comparable packages it counted; and why there is no
+    track record, if there is none. The planned dates for each step (ticket 27): the method family, the basis, the
+    steps that got a cautious date, how many steps the tool counts as undated, and one named comparable's delay at
+    the signed contract. Section 4's counts: the comparable packages whose records give their whole approach, those
+    of them the thresholds rule out for this package, and those whose records don't give it. For a STEP reference
+    the tool does not know there are no step dates, so it found none of them."""
+    abstention = result["abstention"] or {}
+    track = result["summary"]["track_record"] or {}
+    options = result["summary"]["options"] or {}
+    found = {"abstention": [abstention.get("reason")], "feature": [abstention.get("feature")],
+             "comparables": [result["summary"]["comparables"]["n"]], "cited_as": [result["summary"]["evidence_id"]],
+             "track_record": [(track.get("abstention") or {}).get("reason")],
+             "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]]}
     steps = result["summary"]["step_dates"]
     if steps is None:
-        return {key: None for key in question["expected"]}
+        return found
     signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
     named = {reference for reference, _ in question["expected"].get("signed_delay", [])}
-    return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
+    return {**found, "family": [steps["family"]], "basis": [steps["basis"]],
+            "step_comparables": [steps["coverage"]["total"]],
             "dated_steps": [entry["step_key"] for entry in steps["steps"]
                             if entry["cautious"] and entry["cautious"]["planned_date"]],
             "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
-                             if entry["step_reference"] in named],
-            "cited_as": [result["summary"]["evidence_id"]]}
+                             if entry["step_reference"] in named]}
 
 
 def cost_answer(result, question) -> dict[str, list]:
@@ -269,7 +279,7 @@ def genie_answer(result, question) -> dict[str, list]:
 ANSWERS = {"ask_genie": genie_answer, "check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "agency_track_record": track_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
+           "get_lessons": lessons_answer, "estimate_time": estimate_time_answer, "compare_cost_estimates": cost_answer,
            "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
            "rebidding_risk": rebidding_answer,
            "project_records": lambda result, question: {

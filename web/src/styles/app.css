@@ -281,6 +281,17 @@
   }
 }
 
+/* The range chart answers a comparison the person pressed (the 26 brief, section 5.4; DESIGN.md section 6):
+   lane 2's bar, notch, connector and end cap slide to the comparison over 160 ms, and lane 1's dots recolour
+   and resize over 120 ms. Nothing moves on load or on a rerun, since a new chart draws new elements, and the
+   rule below stops it all under reduced motion. */
+[data-lane2-move] {
+  transition: x 160ms ease-out, width 160ms ease-out;
+}
+[data-dot-mark] {
+  transition: r 120ms ease-out, fill 120ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

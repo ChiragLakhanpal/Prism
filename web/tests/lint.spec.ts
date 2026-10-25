@@ -88,6 +88,45 @@ test("the copy lint refuses causal wording on the contract trail, the Connection
   expect(passed.output).toBe("");
 });
 
+test("the copy lint refuses caused, split and splitting in the time estimate's what-ifs, and asks them to say went with", () => {
+  // Ticket 26's acceptance line: the copy lint finds "went with" and never "caused", "split" or "splitting" there.
+  const scoped = (text: string) =>
+    `export const copy = {\n  whatIf: {\n    line: ${JSON.stringify(text)},\n  },\n  other: {\n    line: ${JSON.stringify(text)},\n  },\n} as const;\n`;
+  for (const [wrong, word] of [
+    ["Prequalification caused shorter times.", "caused"],
+    ["With 3 lots you split the package.", "split"],
+    ["Splitting the package went with longer times.", "Splitting"],
+  ]) {
+    const failed = lint({ copy: scoped(wrong) });
+    expect(failed.code, failed.output).toBe(1);
+    expect(failed.output).toContain(`copy.ts:3: "${wrong}" uses "${word}". A what-if says comparable packages "went with" an approach`);
+    // Outside the what-if blocks only rule 19 applies, which already bans "splitting" everywhere.
+    expect(failed.output).not.toContain(`copy.ts:6: "${wrong}" uses "${word}". A what-if`);
+  }
+  const silent = lint({ copy: scoped("Comparable packages took longer with prequalification.") });
+  expect(silent.code, silent.output).toBe(1);
+  expect(silent.output).toContain('the whatIf block never says "went with"');
+  const passed = lint({ copy: scoped("Twelve comparable packages went with prequalification.") });
+  expect(passed.output).toBe("");
+});
+
+test("every block the what-if wording rule names is in the copy file, and the what-ifs say went with", async () => {
+  const { copyStrings, scopedRanges } = await import("../lint/source.ts");
+  const { WHAT_IF_SCOPES } = await import("../lint/rules.ts");
+  const file = fileURLToPath(new URL("../src/copy.ts", import.meta.url));
+  const source = readFileSync(file, "utf8");
+  const ranges = scopedRanges(source, file, WHAT_IF_SCOPES);
+  expect(ranges).toHaveLength(WHAT_IF_SCOPES.length);
+  // Every string in those blocks as the lint reads it, the ones inside count functions included.
+  const words = copyStrings(source, file)
+    .filter((found) => ranges.some(([start, end]) => found.offset >= start && found.offset < end))
+    .map((found) => found.text)
+    .join("\n");
+  expect(words).toContain("went with");
+  expect(words).toContain("{rest} of the {n} comparable packages don't record");
+  expect(words).not.toMatch(/\b(?:caused|split|splitting)\b/i);
+});
+
 test("every block the causal-wording rule names is in the copy file", async () => {
   const { scopedRanges } = await import("../lint/source.ts");
   const { CAUSAL_SCOPES } = await import("../lint/rules.ts");

@@ -61,8 +61,9 @@ def no_pages(source, engine):
     return ()
 
 
-# The tasks that have their work so far (tickets 07, 20, 22 and 28); ticket 43 gives the rest theirs. score counts
-# the rebidding labels on every run, and scores packages only with a champion from the live MLflow.
+# The tasks that have their work so far (tickets 07, 20, 22, 26 and 28); ticket 43 gives the rest theirs. score
+# scores every package's time estimate and counts the rebidding labels on every run, and scores rebidding only with a
+# champion from the live MLflow.
 WORKING = {"fetch_by_watermark", "bronze_to_gold", "relink", "detect_disagreements", "score", "measure_data_readiness"}
 
 

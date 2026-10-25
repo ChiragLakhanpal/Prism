@@ -1,7 +1,7 @@
 // The copy lint: the words DESIGN.md section 7 and GLOSSARY.md say Strata never writes.
 // It checks one string at a time and returns a plain sentence for each problem it finds.
 import { readFileSync } from "node:fs";
-import { CAUSAL_WORDS, FIXED_TERMS, GLOSSARY_AVOID, REGION_CODES } from "./rules.ts";
+import { CAUSAL_WORDS, FIXED_TERMS, GLOSSARY_AVOID, REGION_CODES, WHAT_IF_WORDS } from "./rules.ts";
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
 
@@ -69,6 +69,16 @@ export function causalChecker(): CopyChecker {
   return (text) =>
     [...text.matchAll(pattern)].map(
       (match) => `uses "${match[0]}", which says a cause. DESIGN.md section 7, rule 32 says a link is written "appeared together".`,
+    );
+}
+
+// A what-if says "went with", never a cause or a split (ticket 26): the words of WHAT_IF_WORDS, in the time
+// estimate's copy blocks.
+export function whatIfChecker(): CopyChecker {
+  const pattern = new RegExp(`\\b(?:${WHAT_IF_WORDS.map(escape).join("|")})\\b`, "gi");
+  return (text) =>
+    [...text.matchAll(pattern)].map(
+      (match) => `uses "${match[0]}". A what-if says comparable packages "went with" an approach (the 26 brief, section 7.4).`,
     );
 }
 
