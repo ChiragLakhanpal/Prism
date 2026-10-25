@@ -706,6 +706,20 @@ text_url = "https://documents.worldbank.org/curated/en/310191631508626407/text/H
 pdf_url = "https://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf"
 about = "The completion report for P127203 in French, July 29, 2021 (ICR4990): the stress shelf's report in another language. Documents API id 33407968."
 
+# The Procurement Plan template's textual part in French (ticket 42): "Plan de passation de marchés (Partie
+# Textuelle)", with its blanks ([Nom du pays], [Insérer la date]) unfilled, as Documents & Reports publishes it under
+# P161329 on May 6, 2022, before that plan's STEP tables. The World Bank's procurement framework page lists the
+# template in English only, so this is the French text the fixture records (a parked decision). The source
+# registry lists it among the document collections, in French (config/sources.toml).
+
+[[source]]
+file = "documents/guidance/procurement-plan-template-fr-2022-05-06"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099015005072256172/text/P1613290827c6b00b0840d07b54b5ec0a80.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099015005072256172/pdf/P1613290827c6b00b0840d07b54b5ec0a80.pdf"
+about = "The textual part of the Procurement Plan template in French, Plan de passation de marchés (Partie Textuelle), with its blanks unfilled, as published under P161329 on May 6, 2022 (Documents API id 33812168), before that plan's STEP tables (ticket 42)."
+
 # The PPSD templates and guidance (ticket 36). The template registry (config/ppsd_templates.toml)
 # copies each risk table's column names from the two templates, and config/thresholds.toml's
 # [ppsd_table_i] copies the guidance's Table I.

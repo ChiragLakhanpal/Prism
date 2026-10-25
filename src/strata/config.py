@@ -244,6 +244,8 @@ class Collection:
     name: str
     publisher: str
     origin: str
+    # The language its name is written in, when it is not English (ticket 42): the page sets it as the name's lang.
+    language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -442,8 +444,12 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     collections = []
     for collection in _tables(path, table, "collections"):
         collection.where = f"sources.{key}.{collection.where}"
-        collection.only({"name", "publisher", "origin"})
-        collections.append(Collection(collection.text("name"), collection.text("publisher"), collection.text("origin")))
+        collection.only({"name", "publisher", "origin", "language"})
+        language = collection.text("language", required=False)
+        if language is not None and language not in {entry.code for entry in load_languages().languages}:
+            collection._fail("language", f"names {language!r}, which config/languages.toml does not list")
+        collections.append(Collection(collection.text("name"), collection.text("publisher"), collection.text("origin"),
+                                      language))
     fields["collections"] = tuple(collections)
     return fields
 

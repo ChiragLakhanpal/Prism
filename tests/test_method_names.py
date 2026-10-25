@@ -78,3 +78,18 @@ def test_each_name_the_registry_reads_from_a_source_is_written_there(entry):
         text = (RECORDED / entry.source).read_text()
     plain = clean.method_key(" ".join(text.split()))
     assert clean.method_key(entry.written) in plain
+
+
+def test_the_procurement_plan_template_in_french_is_a_registered_source_under_its_own_title():
+    """The source registry lists the French template among the document collections, under the title the recorded
+    template prints on its first page, in French (values.toml, plan-template-fr-title)."""
+    from strata.config import load_sources
+    from strata.tools.data_readiness_for import registry_page
+
+    title = VALUES["plan-template-fr-title"]
+    [french] = [found for found in load_sources()["documents"].collections if found.language == "fr"]
+    assert clean.method_key(french.name) == clean.method_key(title["value"])
+    page = fmt.pages(RECORDED / f"{title['document']}.pages.txt")[title["pdf_page"] - 1]
+    assert french.name.upper() in page.upper()
+    assert {"name": french.name, "publisher": french.publisher, "origin": french.origin, "language": "fr"} in (
+        registry_page()["collections"])

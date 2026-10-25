@@ -188,3 +188,15 @@ test("review notes written in French say so under their method, and every note i
   expect(await page.evaluate(() => document.documentElement.lang)).toBe("en");
   expect(await axe(page)).toEqual([]);
 });
+
+test("Sources and licenses lists the Procurement Plan template in French under its French title, in French", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/data/sources": { body: await recorded("data-sources.json") } });
+  await page.goto("/data/sources");
+
+  const title = page.locator("main li [lang=fr]");
+  await expect(title).toHaveText("Plan de passation de marchés (Partie Textuelle)");
+  await expect(page.locator("main li").filter({ has: page.locator("[lang=fr]") })).toHaveText(
+    "Plan de passation de marchés (Partie Textuelle), published by the World Bank, as the Procurement Plan template in French, from the World Bank's Documents & Reports.",
+  );
+});

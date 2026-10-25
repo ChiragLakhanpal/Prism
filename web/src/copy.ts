@@ -4873,6 +4873,8 @@ export const copy = {
       attribution: { before: "The World Bank: ", after: (source: string, license: string) => `: ${source}. License: ${license}.` },
       documents: "Documents and rules",
       collection: (name: string, publisher: string, origin: string) => `${name}, published by ${publisher}, from ${origin}.`,
+      // The same line with the name as a slot, for a name in another language that keeps its lang (ticket 42).
+      collectionNamed: "{name}, published by {publisher}, from {origin}.",
       authorizes: {
         before: "The World Bank Group authorizes the use of this material subject to the terms and conditions on its website, ",
         link: "Legal",
