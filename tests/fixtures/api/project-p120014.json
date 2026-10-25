@@ -1,0 +1,45 @@
+{
+  "as_of": "2026-10-22",
+  "project": {
+    "project_id": "P120014",
+    "project_name": "KE Electricity Modernization Project",
+    "display_name": "KE Electricity Modernization",
+    "country": "Kenya",
+    "status": "Closed",
+    "implementing_agencies": [
+      "Kenya Power and Lighting Company (KPLC)",
+      "Ministry of Energy and Petroleum",
+      "Rural Electrification and Renewable Energy Corporation"
+    ]
+  },
+  "agencies": [
+    {
+      "implementing_agency": "Kenya Power and Lighting Company (KPLC)",
+      "agency_id": "kenya-power-and-lighting-company-kplc",
+      "versions": [],
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
+    },
+    {
+      "implementing_agency": "Ministry of Energy and Petroleum",
+      "agency_id": "ministry-of-energy-and-petroleum",
+      "versions": [],
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
+    },
+    {
+      "implementing_agency": "Rural Electrification and Renewable Energy Corporation",
+      "agency_id": "rural-electrification-and-renewable-energy-corporation",
+      "versions": [],
+      "baseline": null,
+      "changes": null,
+      "version_count": 0,
+      "shown_count": 0
+    }
+  ],
+  "documents_through": null
+}

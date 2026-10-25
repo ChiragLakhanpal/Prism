@@ -22,7 +22,8 @@ import { DecisionForm, LessonEditor, ReasonField, currentChange, validChange } f
 import { EvidenceCard } from "../components/EvidenceCard";
 import { EvidenceDrawerView } from "../components/EvidenceDrawer";
 import { LessonCard } from "../components/LessonCard";
-import { EvidenceBadge, Pagination, SourceChip, Tag } from "../components/LessonParts";
+import { EvidenceBadge, SourceChip, Tag } from "../components/LessonParts";
+import { Pagination } from "../components/Pagination";
 import { HistoryList, OutcomePanel, QueueRow } from "../components/LessonReview";
 import { StatusBadge } from "../components/StatusBadge";
 import { copy } from "../copy";

@@ -128,6 +128,6 @@
       "joined": "it failed a check"
     }
   },
-  "notVisible": "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP.",
+  "notVisible": "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
   "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
 }

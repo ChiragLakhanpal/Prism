@@ -33,13 +33,15 @@ import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { RETURNING } from "./Popover";
 import type { Step } from "./Steps";
+import { IdText, linkProjectIds } from "./ProjectId";
 import { TextLink } from "./TextLink";
 
 export const ANNOUNCE_GAP_MS = 500;
 const STILL_WORKING_MS = 30_000;
 export const DRAWER_ID = "evidence-drawer";
 
-const mono = (text: string) => <span className="font-mono">{text}</span>;
+// An ID in a line Strata writes: a P-code links to its project page (ticket 21), anything else is in mono.
+const mono = (text: string) => <IdText id={text} />;
 
 // ── Steps ──────────────────────────────────────────────────────────────
 
@@ -413,7 +415,7 @@ export function AnswerPanel({
   // Focus goes back to the box, where the question still is, but its list stays shut over the page
   // you return to until you press Down, type or click in it (the 14 brief, section 6.4).
   const close = () => {
-    closeAnswer();
+    closeAnswer(run);
     const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");
     box?.setAttribute(RETURNING, "");
     box?.focus();
@@ -426,7 +428,7 @@ export function AnswerPanel({
             button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-title wrap-break-word text-ink-heading">{run.asked.question}</h2>
+            <h2 className="text-title wrap-break-word text-ink-heading">{linkProjectIds(run.asked.question)}</h2>
             <AskedLine run={run} />
           </div>
           {/* "Close the answer" in words from a page area of 768 px; below it, a 44 px icon with the same name. */}

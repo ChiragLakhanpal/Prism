@@ -1,0 +1,66 @@
+# The project page's lists (ticket 21; the 21 design brief, sections 3 and 6): the groups its Documents
+# tab sorts a project's documents into, and the ratings its Summary shows.
+#
+# This is the one place these lists are defined (CLAUDE.md rule 9). strata.config.load_project_page()
+# reads it, and src/strata/server/documents.py and summary.py use it. Each group and rating key also
+# needs its words in web/src/copy.ts (copy.documents.group and copy.summary.label), and a new group needs
+# its name for one document in copy.documents.name.
+#
+# [documents]
+#   groups     one [[documents.groups]] table per group, in the order a project produces its documents:
+#              type is the documents API's document type, word for word (docty), and group is the key
+#              the Documents tab and the source view's addresses use. Any other type falls under
+#              "other", which comes last.
+#   reissued   the groups whose reports the World Bank re-issues under the same report number, the later
+#              replacing the earlier, so the Documents tab shows them as one row.
+#
+# [summary]
+#   isr_ratings              one [[summary.isr_ratings]] table per ISR rating the Summary shows, in this
+#                            order: name is the rating as the ISR's overall ratings table prints it, and
+#                            key its row on the Summary.
+#   procurement_rating_code  the projects API's code for the Procurement rating.
+#
+# Source: the documents and projects APIs' records in data/fixture/recorded (docty, the ISRs' overall
+# ratings tables and the projects API's rating codes).
+
+[documents]
+reissued = ["icr", "icr_review", "ppar"]
+
+[[documents.groups]]
+type = "Project Appraisal Document"
+group = "pad"
+
+[[documents.groups]]
+type = "Project Paper"
+group = "project_paper"
+
+[[documents.groups]]
+type = "Implementation Status and Results Report"
+group = "isr"
+
+[[documents.groups]]
+type = "Procurement Plan"
+group = "procurement_plan"
+
+[[documents.groups]]
+type = "Implementation Completion and Results Report"
+group = "icr"
+
+[[documents.groups]]
+type = "Implementation Completion Report Review"
+group = "icr_review"
+
+[[documents.groups]]
+type = "Project Performance Assessment Report"
+group = "ppar"
+
+[summary]
+procurement_rating_code = "27"
+
+[[summary.isr_ratings]]
+name = "Progress towards achievement of PDO"
+key = "pdo"
+
+[[summary.isr_ratings]]
+name = "Overall Implementation Progress (IP)"
+key = "implementation"

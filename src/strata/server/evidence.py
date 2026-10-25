@@ -23,6 +23,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
+from strata.server import baseline, summary
 from strata.tools import find_comparables, search_passages
 
 log = logging.getLogger("strata.server.evidence")
@@ -46,10 +47,14 @@ def _comparable(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return None if row is None else {"kind": "package", "row": row}
 
 
-# The reader for each kind of evidence id, by the table its id names before the colon.
+# The reader for each kind of evidence id, by the table its id names before the colon: a passage, a
+# comparable package from the range chart (ticket 15), each record a project's Summary cites, and an
+# agency's baseline, which check_plan's baseline reasons cite (ticket 21).
 READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     search_passages.TABLE: _passage,
     "strata.gold.package": _comparable,
+    **summary.RECORD_READERS,
+    baseline.TABLE: baseline.read_record,
 }
 
 

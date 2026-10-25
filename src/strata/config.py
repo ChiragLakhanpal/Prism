@@ -1597,6 +1597,43 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
     return Editions(tuple(editions))
 
 
+# ── The project page's lists (ticket 21) ─────────────────────────────────
+
+@dataclass(frozen=True)
+class ProjectPage:
+    """The project page's lists: the documents API's type for each Documents group, in project-cycle
+    order; the groups re-issued under one report number; and the Summary's ISR ratings and the projects
+    API's Procurement rating code."""
+    document_groups: dict[str, str]
+    reissued: frozenset[str]
+    isr_ratings: dict[str, str]
+    procurement_rating_code: str
+
+
+def load_project_page(path: Path = CONFIG_DIR / "project_page.toml") -> ProjectPage:
+    """The project page's lists, in file order, which is the order the page shows them in."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"documents", "summary"})
+    documents = _Entry(path, "documents", data.get("documents", {}))
+    documents.only({"groups", "reissued"})
+    groups: dict[str, str] = {}
+    for entry in _tables(path, documents.table, "groups"):
+        entry.only({"type", "group"})
+        kind, group = entry.text("type"), entry.text("group")
+        if group in groups.values() or group == "other":
+            entry._fail("group", f"repeats {group!r}. Each group is listed once, and other is kept for the rest")
+        groups[kind] = group
+    reissued = frozenset(documents.texts("reissued"))
+    if not reissued <= set(groups.values()):
+        documents._fail("reissued", "may name only the groups listed under [[documents.groups]]")
+    summary = _Entry(path, "summary", data.get("summary", {}))
+    summary.only({"isr_ratings", "procurement_rating_code"})
+    ratings: dict[str, str] = {}
+    for entry in _tables(path, summary.table, "isr_ratings"):
+        entry.only({"name", "key"})
+        ratings[entry.text("name")] = entry.text("key")
+    return ProjectPage(groups, reissued, ratings, summary.text("procurement_rating_code"))
+
 # ── The package form schema (ticket 15) ──────────────────────────────────
 
 PACKAGE_FORM_KINDS = ("choice", "text", "amount", "count", "country", "months")

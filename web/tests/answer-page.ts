@@ -34,6 +34,8 @@ export async function open(
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P130164": { body: await recorded("project-p130164.json") },
+    // Ticket 21: /projects/P130164 is the project's Summary.
+    "/api/projects/P130164/summary": { body: await recorded("summary-p130164.json") },
     "/api/ask": { status, body: status === 200 ? await recorded(stream) : '{"detail":"no"}' },
     "/api/evidence": { body: await recorded(evidence) },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },

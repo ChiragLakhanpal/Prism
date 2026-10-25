@@ -1,0 +1,87 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "display_name": "Rajasthan Road Sector Modernization"
+  },
+  "asked": {
+    "page": 65,
+    "para": null,
+    "passage": null
+  },
+  "document": {
+    "document_id": "18381488",
+    "doc_key": "pad-2013-10-01",
+    "type": "pad",
+    "document_type": "Project Appraisal Document",
+    "document_date": "2013-10-01",
+    "disclosed_on": "2013-11-06",
+    "pdf_pages": 100,
+    "pdf_url": "http://documents.worldbank.org/curated/en/836241468260649073/pdf/815940PAD0Box30official0use0only090.pdf",
+    "language": "en",
+    "sequence": null,
+    "agency": null,
+    "replaces": null,
+    "replaced_by": null
+  },
+  "canonical": null,
+  "state": "page",
+  "page": 65,
+  "correction": null,
+  "highlight": null,
+  "page_state": "read",
+  "passages": [],
+  "tables": [
+    {
+      "title": "Annex 4 - Operational Risk Assessment Framework (ORAF)",
+      "rows": [
+        {
+          "passage_id": "18381488/v1/table65.1",
+          "row": 1,
+          "cells": [
+            [
+              "Risk",
+              "Stakeholder Risk"
+            ],
+            [
+              "Rating",
+              "Low"
+            ],
+            [
+              "Risk Description",
+              "participation (a)o ac k ofpom mniti e' iweather project implementation."
+            ],
+            [
+              "Risk Management",
+              "and political support for providing all-(a) There is already strong public demand road access to the habitations not covered under PMGSY which will be supported under the project. Resp: Status: Stage: Recurrent: Due Date: Frequency: Client Not Yet Due Both _ (b) Awareness of the project will be built-up through active stakeholders' consultations and a project website. Resp: Status: Stage: Recurrent: Due Date: Frequency: Client Not Yet Due Both"
+            ]
+          ]
+        },
+        {
+          "passage_id": "18381488/v1/table65.2",
+          "row": 2,
+          "cells": [
+            [
+              "Risk",
+              "Capacity"
+            ],
+            [
+              "Rating",
+              "Low"
+            ],
+            [
+              "Risk Description",
+              "poor quality of engineering designs, and (a) Risk of (sopoor qupervisnay ot eangneeing dsig, mand poor supervision and contract management which may and lead to cost and the quality of construction impact impate qatocsd (b) Design of upgradation and maintenance works especially on rural roads may not meet value for money objectives (c) Inconsistent application of fiduciary processes due to lack of familiarity of the PWD staff with the agreed procedures. (d) Inadequate in-house capacities to implement the technical assistance program."
+            ],
+            [
+              "Risk Management",
+              "under the Bank funded Rural Roads Project (a) PWD has shown good performance and Rajasthan is one of the good performing states under PMGSY. The mitigating factors include: fatr.icue Independent review of all engineering designs and the quality of construction * Implementation of customized training programs of PWD engineers and contractors to further enhance their engineering skills for project preparation and execution * Capacity building of PWD's training and quality control units Resp: Status: Stage: Recurrent: Due Date: Frequency: Client Not Yet Due Both (b) The ERRs for the rural roads funded under the RRP and PMGSY Rural Roads Projects were quite satisfactory due to the relatively low cost of construction in Rajasthan. The proposed rural roads will be designed using least-cost engineering solutions and would encourage the use of locally available materials and mainstreaming of existing technologies Resp: Status: Stage: Recurrent: Due Date: Frequency: Client Not Yet Due Both (c) PWD staff is familiar with the Bank's fiduciary and safeguard requirements through implementation of the RRP and PMGSY Rural Roads Project. Further training of PWD staff will be organized on procurement, financial management, and management of social and environment issues. The project will use an e-procurement system to procure all civil works contracts. Resp: Status: Stage: Recurrent: Due Date: Frequency: Client Not Yet Due Both _ (d) Additional support of experienced personnel and consultants will be provided for implementation of the technical assistance program. Resp: Status: Stage: Recurrent: Due Date: Frequency: Client In Progress Both"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "plan_rows": [],
+  "page_text": null
+}

@@ -191,6 +191,9 @@ def marked(result, question) -> dict[str, list[str]]:
     for mark in ("needs_a_look", "watch", "data_note"):
         found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
     found["with_a_signal"] = sorted(ref for ref, given in marks(result).items() if {"needs_a_look", "watch"} & set(given))
+    # Ticket 21: the activities whose reasons give a delay from the saved baseline as well.
+    found["baseline_delays"] = sorted(row["activity_reference_no"] for row in result["rows"]
+                                      if any("baseline" in reason for mark in row["marks"] for reason in mark["reasons"]))
     return found
 
 

@@ -1,0 +1,112 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "display_name": "Rajasthan Road Sector Modernization"
+  },
+  "asked": {
+    "page": 23,
+    "para": "999",
+    "passage": null
+  },
+  "document": {
+    "document_id": "31525018",
+    "doc_key": "icr-2019-10-10",
+    "type": "icr",
+    "document_type": "Implementation Completion and Results Report",
+    "document_date": "2019-10-10",
+    "disclosed_on": "2019-11-02",
+    "pdf_pages": 66,
+    "pdf_url": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+    "language": "en",
+    "sequence": null,
+    "agency": null,
+    "replaces": null,
+    "replaced_by": null
+  },
+  "canonical": null,
+  "state": "page",
+  "page": 23,
+  "correction": {
+    "kind": "no_para",
+    "para": "999",
+    "page": 23
+  },
+  "highlight": null,
+  "page_state": "read",
+  "passages": [
+    {
+      "passage_id": "31525018/v1/50",
+      "section_path": "III.A",
+      "paragraph": "50",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "50. The Capacity and Governance risk ratings were identified as Moderate during project preparation. Considering the initial ambitious project scope (covering both rural roads and highways), these ratings might have been identified as Substantial with additional mitigation measures to strengthen the Client’s capacity.",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/51",
+      "section_path": "III.A",
+      "paragraph": "51",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "51. The M&E framework was lacking some indicators, not allowing to quantitatively validate the achievement of important outcomes, such as the actual condition of project roads at project closure or the impact of implemented rural road safety measures on fatalities. This can be explained in part because of the lack of proper methodology or existing data system for the state to collect this level of information, which prevented the project team from integrating these indicators in the M&E framework.",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/52",
+      "section_path": "III.B",
+      "paragraph": "52",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "52. The implementation of some activities was subject to the creation of working groups or task forces responsible for said activities. Yet, a stronger leadership may have been required for some of these tasks to guarantee timely implementation. For example, the Road Sector Modernization Task Force leads might not have been fully inclined to pursue the recommendations provided under this activity.",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/53",
+      "section_path": "III.B",
+      "paragraph": "53",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "53. As regards procurement, procurement officials for all districts received procurement trainings which helped to some extent in expediting execution and ensuring compliance. Yet, general capacity issues did slow down the implementation of key activities. There was a lack of expertise available in the PWD to procure specialized equipment for the Police, Transport, and Medical Departments. Moreover, the coordination and collaboration with relevant departments was missing which led to the non-execution of a critical contract related to the deployment and installation of road safety equipment.",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/54",
+      "section_path": "III.B",
+      "paragraph": "54",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/55",
+      "section_path": "III.B",
+      "paragraph": "55",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below).",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "31525018/v1/56",
+      "section_path": "III.B",
+      "paragraph": "56",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "56. The critical environmental safeguard issue, which was the need for forest clearance for 26 roads (around 3 percent of total project roads), affected project performance. In total, 26 roads under the project were passing through forest areas. Stage 1 forest clearances for 13 roads (category C3) had been received, and 2 roads had already moved to Stage 2 clearances by the closure of the project, the remaining are being processed as of now. Civil works for 8 roads (category C1) were completed without completing the forest clearance process, which remains a non-compliance under the Government of India and World Bank’s safeguards requirements. As of October 2019, the Borrower has reported that Stage 1 clearance for one road has been received, the remaining roads are still under process. For the 7 roads (category C2) which had not started due to impending clearances, Stage 1 clearance for 4 roads has been processed, one road is under process, and the pending two roads have been de-sanctioned. PWD is in the process of getting all relevant clearances, depositing the compensatory afforestation funds and implementing compensatory tree planting works. The state of Rajasthan assured that all forest clearances would be completed in the coming months.",
+      "from_page_before": false
+    }
+  ],
+  "tables": [],
+  "plan_rows": [],
+  "page_text": null
+}

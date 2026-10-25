@@ -12,6 +12,7 @@ import { LoadError } from "../components/LoadError";
 import { PageHeader } from "../components/PageHeader";
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
+import { ProjectId } from "../components/ProjectId";
 import { copy } from "../copy";
 import type { DraftGroup, DraftList, DraftRow as Row } from "../lib/drafts";
 import { draftHref, storeFailed } from "../lib/drafts";
@@ -55,7 +56,7 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
         {kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
       </TextLink>
       <p className="mt-1 text-small text-ink-muted">
-        <Fill template={words.project} slots={{ name: subject.project_name, pid: <span className="font-mono">{subject.project_id}</span> }} />{" "}
+        <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />{" "}
         {row.state !== "discarded" && <>{kind.rowNotes(row.notes, formatCount(row.notes, { capital: true }))} </>}
         {lineTwo(row)}
       </p>

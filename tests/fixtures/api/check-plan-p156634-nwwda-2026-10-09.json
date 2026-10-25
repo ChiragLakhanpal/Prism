@@ -402,7 +402,8 @@
     "status": "Active",
     "closing_date": "2026-10-31",
     "record_date": "2024-04-24",
-    "days_to_close": 9
+    "days_to_close": 9,
+    "display_name": "Water and Sanitation Development"
   },
   "checks_run": [
     "own_dates",
@@ -414,6 +415,7 @@
     "days_before_closing": 90,
     "actual_to_estimate_ratio": "2.0"
   },
+  "baseline": null,
   "counts": {
     "activities": 9,
     "checked": 9,

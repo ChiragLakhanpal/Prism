@@ -393,7 +393,7 @@ fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", 
 # times larger, so the endpoint names the fields that silver reads. It sends project_abstract anyway.
 [sources.projects]
 dataset_name = "World Bank Projects & Operations"
-endpoint = "https://search.worldbank.org/api/v3/projects?format=json&fl=id,project_name,countrycode,countryshortname,regionname,status,boardapprovaldate,closingdate,impagency,borrower,sectorcode,major_sector_name,major_sectors,curr_total_commitment,totalamt,public_disclosure_date,proj_last_upd_date,loan_transactions,isr_ratings"
+endpoint = "https://search.worldbank.org/api/v3/projects?format=json&fl=id,project_name,countrycode,countryshortname,regionname,status,boardapprovaldate,closingdate,impagency,borrower,sectorcode,major_sector_name,major_sectors,curr_total_commitment,totalamt,public_disclosure_date,proj_last_upd_date,loan_transactions,isr_ratings,envassesmentcategorycode,esrc_ovrl_risk_rate"
 api = "search"
 records = "projects"
 scope = "every country"

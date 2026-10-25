@@ -79,6 +79,10 @@ export type Run = {
 };
 
 export const answer = createStore<Run | null>(null);
+// Ticket 21: the last finished answer asked on each other history entry, kept for the session, so Back to
+// a page shows its answer again even after a question was asked somewhere else, such as on the source view
+// a citation opened.
+export const earlier = createStore<Record<string, Run>>({});
 
 // The scope chips removed on the page you are on: by the box's remove button or Backspace, or by
 // "Ask across all projects" in an empty answer. A new page brings its chip back.
@@ -181,6 +185,10 @@ function leave() {
 // Ask a question: the panel opens at once with its first step, and the stream fills it. A drawer
 // the old answer opened closes with it.
 export function ask(asked: Asked) {
+  const before = answer.get();
+  if (before && before.phase !== "streaming" && before.asked.key !== asked.key) {
+    earlier.set((kept) => ({ ...kept, [before.asked.key]: before }));
+  }
   leave();
   stopping = new AbortController();
   serial += 1;
@@ -194,8 +202,20 @@ export function askAgain() {
   if (run) ask(run.asked);
 }
 
-// "Close the answer": stop a stream in progress, and close the panel and the drawer it opened.
-export function closeAnswer() {
+// "Close the answer": stop a stream in progress, and close the panel and the drawer it opened. An answer
+// kept from an earlier page (ticket 21) closes on its own, and the current one stays.
+export function closeAnswer(shown: Run | null = answer.get()) {
+  if (shown) {
+    earlier.set((kept) => {
+      const { [shown.asked.key]: _left, ...rest } = kept;
+      return rest;
+    });
+  }
+  const current = answer.get();
+  if (shown && current && shown.serial !== current.serial) {
+    closeDrawerOf(shown.serial);
+    return;
+  }
   leave();
   stopping = null;
   answer.set(null);
