@@ -92,3 +92,20 @@ workspace_group = "strata-query-judges"
 role = "query judge"
 pages = ["judging"]
 acts = []
+
+# The estimates loop (ticket 44; docs/PLAN.md section 11): its owner is the model owner, co-signed by the lead. A
+# challenger becomes the time estimate's champion only with a sign-off from a member of the model_owner group and
+# one from a different person in the lead group (src/strata/estimates/promotion.py), beside its backtest win, its
+# shadow-quarter win and its coverage for each edition. The model owner opens no reviewer page.
+[groups.model_owner]
+workspace_group = "strata-model-owners"
+role = "model owner"
+pages = []
+acts = []
+
+# [model_sign_off], the two groups whose members sign off a challenger:
+#   model_owner  the group whose members are the model owner
+#   lead         the group whose members co-sign as the lead
+[model_sign_off]
+model_owner = "model_owner"
+lead = "lead_procurement_specialist"

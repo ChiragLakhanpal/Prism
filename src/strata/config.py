@@ -35,7 +35,8 @@ from __future__ import annotations
 import datetime as dt
 import re
 import tomllib
-from dataclasses import dataclass
+from collections.abc import Iterable
+from dataclasses import dataclass, field
 from pathlib import Path
 
 CONFIG_DIR = Path(__file__).resolve().parents[2] / "config"
@@ -1518,6 +1519,14 @@ class Roles:
     # The workspace groups whose members have the World Bank staff role (ticket 37): they may open Following and
     # follow projects. A roles file with no [staff] section names no one.
     staff: tuple[str, ...] = ()
+    # The groups whose members sign off a challenger model, by role: model_owner and lead (ticket 44). A roles file
+    # with no [model_sign_off] section names no one, so no challenger can be promoted.
+    model_sign_off: dict[str, str] = field(default_factory=dict)
+
+    def signs_off_as(self, email: str | None, role: str) -> bool:
+        """Whether this person may sign off a challenger in this role: they are in the role's group."""
+        person, group = self.person(email), self.model_sign_off.get(role)
+        return person is not None and group is not None and group in person.groups
 
     def person(self, email: str | None) -> Person | None:
         """The person with this email, ignoring case, or None for anyone the file does not list."""
@@ -1531,7 +1540,7 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
     groups and the people in them."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff"})
+    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff", "model_sign_off"})
     staff: tuple[str, ...] = ()
     if "staff" in data:
         entry = _Entry(path, "staff", data["staff"])
@@ -1582,7 +1591,18 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
             if not PROJECT_ID.fullmatch(project):
                 entry._fail("projects", f"must be a project ID, P followed by six digits, not {project!r}")
         people.append(Person(email, entry.text("name"), named, regions, projects))
-    return Roles(tuple(teams), groups, tuple(people), staff)
+    sign_off = {}
+    if "model_sign_off" in data:
+        entry = _Entry(path, "model_sign_off", data["model_sign_off"])
+        entry.only({"model_owner", "lead"})
+        for role in ("model_owner", "lead"):
+            key = entry.text(role)
+            if key not in groups:
+                entry._fail(role, f"names the group {key}, which [groups] does not define")
+            sign_off[role] = key
+        if sign_off["model_owner"] == sign_off["lead"]:
+            entry._fail("lead", "names the model owner's group. The lead co-signs, so name another group")
+    return Roles(tuple(teams), groups, tuple(people), staff, sign_off)
 
 
 # ── The evidence ladder ──────────────────────────────────────────────────
@@ -1994,6 +2014,11 @@ class Editions:
 
     def get(self, key: str | None) -> Edition | None:
         return next((edition for edition in self.editions if edition.key == key), None)
+
+    def followed(self, pad_texts: Iterable[str]) -> Edition | None:
+        """The edition a project followed: the one the first of its PAD's passages, in order, names, or None. A lesson
+        takes its project's (ticket 29), and the backtest counts each edition's packages by it (ticket 44)."""
+        return next((found for found in (self.named_in(text) for text in pad_texts) if found), None)
 
 
 def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:

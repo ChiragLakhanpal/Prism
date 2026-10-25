@@ -476,6 +476,30 @@ def months_to_watch(engine: Engine, today: dt.date) -> list[dt.date]:
     return found[-MOST_MONTHS:]
 
 
+def retrain_due(engine: Engine, today: dt.date, thresholds: Thresholds | None = None) -> str | None:
+    """Why the time estimate should be retrained today, or None: quarterly, when no version was registered in the
+    last estimates_loop.retrain_every_months, or trigger, when the watch raised a retrain after the newest version."""
+    from strata.config import load_time_estimate
+    from strata.tools.project_signals import months_after
+
+    every = int((thresholds or load_thresholds()).value("estimates_loop.retrain_every_months"))
+    found = _rows(engine, "last_retrain", model=load_time_estimate().registered_model, as_of=today)[0]
+    registered, raised = found["registered_at"], found["raised_at"]
+    if registered is None:
+        return None  # nothing trained yet: the first backtest registers the champion (ticket 25)
+    registered, raised = _moment(registered), _moment(raised) if raised is not None else None
+    if raised is not None and raised > registered:
+        return "trigger"
+    return "quarterly" if months_after(registered.date(), every) <= today else None
+
+
+def _moment(value) -> dt.datetime:
+    """A stored time in UTC: DuckDB gives it without a zone, the SQL warehouse as text."""
+    if not isinstance(value, dt.datetime):
+        value = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    return value if value.tzinfo else value.replace(tzinfo=dt.UTC)
+
+
 def run(engine: Engine, run_id: str, now: dt.datetime, **options) -> int:
     """The nightly score task's watch: every month not watched yet, in order. A rerun on the same day watches
     nothing again. Returns the rows written."""

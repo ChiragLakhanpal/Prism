@@ -198,6 +198,22 @@ def test_the_nightly_watch_measures_each_month_once_and_catches_up_on_months_it_
         (SEP, "nightly-1"), (OCT, "nightly-3"), (dt.date(2026, 11, 30), "nightly-3"), (dt.date(2026, 12, 31), "nightly-3")]
 
 
+def test_a_retrain_is_due_each_quarter_and_after_a_raised_trigger(seeded):
+    with DuckDBEngine.open(seeded) as engine:
+        # The champion was registered on January 2, 2026.
+        in_march = watch.retrain_due(engine, dt.date(2026, 3, 31))
+        in_april = watch.retrain_due(engine, dt.date(2026, 4, 2))
+        seed_errors(engine, SEP, "watch-sep", 3.4, 3.0)
+        insert(engine, "strata.gold.time_estimate_model", [{
+            "model": MODEL, "version": 2, "alias": "challenger", "training_through": dt.date(2026, 9, 1),
+            "booster_json": "{}", "state_json": "{}", "mlflow_run_id": None,
+            "registered_at": dt.datetime(2026, 9, 1, tzinfo=dt.UTC), "public_from": dt.date(2026, 9, 1)}])
+        after_the_retrain = watch.retrain_due(engine, dt.date(2026, 9, 30))
+        watch.decide(engine, SEP, "watch-sep", at(SEP))
+        after_a_trigger = watch.retrain_due(engine, at(SEP).date())
+    assert (in_march, in_april, after_the_retrain, after_a_trigger) == (None, "quarterly", None, "trigger")
+
+
 def test_coverage_under_20_finished_packages_raises_nothing(seeded):
     with DuckDBEngine.open(seeded) as engine:
         notices = [dt.date(2025, 12, 1) + n * DAY for n in range(19)]

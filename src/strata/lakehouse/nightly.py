@@ -225,16 +225,38 @@ def _score(run: Run) -> int:
     fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
     strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37).
 
-    Then the estimates loop (ticket 44): the monthly watch of each whole month not watched yet, which marks plan rows
-    dated near a date Strata offered, measures plan accuracy and rolling coverage and raises the retrains they call
-    for (strata.estimates.watch)."""
-    from strata.estimates import rebidding, scoring, watch
+    Then the estimates loop (ticket 44): every package scored in shadow with the challenger, when one newer than the
+    champion is kept (strata.estimates.promotion, which no tool reads); the monthly watch of each whole month not
+    watched yet, which marks plan rows dated near a date Strata offered, measures plan accuracy and rolling coverage
+    and raises the retrains they call for (strata.estimates.watch); and, on a run that fetches from the live APIs,
+    the retrain itself when one is due, quarterly or after a raised trigger, which registers a challenger."""
+    from strata.estimates import promotion, rebidding, scoring, watch
 
     changed = scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
     changed += rebidding.record_label_counts(run.engine, run.run_id, run.clock)
+    changed += promotion.score_in_shadow(run.engine, run.run_id, run.clock())
     if run.fetch is fetch_live:
         changed += _score_packages(run) + _replay_signals(run)
-    return changed + watch.run(run.engine, run.run_id, run.clock())
+    changed += watch.run(run.engine, run.run_id, run.clock())
+    if run.fetch is fetch_live:
+        changed += _retrain(run)
+    return changed
+
+
+def _retrain(run: Run) -> int:
+    """Ticket 25's backtest, which trains the time estimate and registers it as the challenger while a champion holds
+    the alias, when the watch says a retrain is due (strata.estimates.watch.retrain_due). Returns the rows it stored
+    in strata.ops.evaluation_result."""
+    from strata.config import load_time_estimate
+    from strata.estimates import backtest, harness, watch
+
+    now = run.clock()
+    if watch.retrain_due(run.engine, now.astimezone(dt.UTC).date()) is None:
+        return 0
+    tracker = _tracker(load_time_estimate().experiment)
+    if tracker is None:
+        return 0
+    return len(harness.run_rows(run.engine, backtest.run(run.engine, tracker, ran_at=now).run_id))
 
 
 def _tracker(experiment: str):
