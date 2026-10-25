@@ -102,7 +102,8 @@ class FakeWorkspace:
     """Strata's app, stopped or running, whose health route answers after a number of tries once it runs; the SQL
     warehouse as the fixture database or a copy; the stand-in agent; and the examples' seed command."""
 
-    def __init__(self, live_db, running=False, source=None, health_after=1, healthy=True, agent=None, seeded=(0, "")):
+    def __init__(self, live_db, running=False, source=None, health_after=1, healthy=True, agent=None, seeded=(0, ""),
+                 listing_error=None):
         app = command().deploy_app
         self.apps = {"strata": {"description": app.DESCRIPTION, "running": running,
                                 "source": source or f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}",
@@ -114,6 +115,7 @@ class FakeWorkspace:
         self.judge = stand_in_agent.Agrees()
         self.agent = agent
         self.seeded = seeded
+        self.listing_error = listing_error
 
     def app(self, name):
         found = self.apps.get(name)
@@ -146,6 +148,8 @@ class FakeWorkspace:
         return self.seeded
 
     def snapshot(self):
+        if self.listing_error:
+            raise RuntimeError(self.listing_error)
         return {("apps", name): dict(app) for name, app in self.apps.items()}
 
 
@@ -356,13 +360,13 @@ def test_home_s_seeds_run_and_the_october_9_plan_falls_outside_a_seven_day_windo
 
 @pytest.fixture(scope="module")
 def failing_run(tmp_path_factory, fixture_db):
-    """Genie answers slower than the limit, the agent cites a passage no tool returned, and the fixture was recorded
-    before the awards dataset showed KE-NWWDA-541055-CW-RFB's contract."""
+    """Genie answers slower than the limit, the agent cites a passage no tool returned, the workspace cannot be
+    listed, and the fixture was recorded before the awards dataset showed KE-NWWDA-541055-CW-RFB's contract."""
     folder = tmp_path_factory.mktemp("failing")
     recorded = copy_of(fixture_db, folder, "DELETE FROM strata.gold.contract WHERE contract_id = '1903781'")
     smoke = QUESTIONS[DEMO.smoke_question]
     agent = stand_in_agent.StandIn("search_passages", smoke["arguments"], cite_ids=["strata.gold.passage:99999999/v1/1"])
-    workspace = FakeWorkspace(fixture_db, agent=agent)
+    workspace = FakeWorkspace(fixture_db, agent=agent, listing_error="PERMISSION_DENIED on strata.ops")
     return run(workspace, write_env(folder), recorded, thresholds=with_values(demo_ready={"genie_first_call_seconds": 0.5}))
 
 
@@ -370,7 +374,9 @@ def test_a_failed_smoke_question_and_a_slow_genie_exit_with_an_error_naming_each
     code, out = failing_run
 
     assert code == 1
-    assert out.rstrip().splitlines()[-1] == "Strata is not ready for the demo. These steps failed: Genie and the smoke question."
+    assert out.rstrip().splitlines()[-1] == ("Strata is not ready for the demo. These steps failed: Genie, the smoke "
+                                             "question and the workspace listing.")
+    assert "I could not list the workspace: RuntimeError: PERMISSION_DENIED on strata.ops" in out
     assert "The next Genie call took 1 second, longer than the 0.5-second limit" in out
     assert f"Its kept sentences do not cite {QUESTIONS[DEMO.smoke_question]['cites'][0]}." in out
     assert "The verifier removed one sentence (id_not_returned)." in out

@@ -65,7 +65,7 @@ class LiveDemo:
         gate = full_gate()
         self.env, self.env_path, self.config = env, env_path, dayone.load_config()
         # The tools read these from the environment, as the App's app.yaml gives them (ops/evals/full_gate.py).
-        os.environ.update({key: env[key] for key in gate.TOOL_SETTINGS if env.get(key)})
+        self.tool_settings = {key: env[key] for key in gate.TOOL_SETTINGS if env.get(key)}
         self.listing = LiveWorkspace(env)
         self.w = self.listing.w
         me = self.w.current_user.me()
@@ -73,13 +73,20 @@ class LiveDemo:
         self.viewer = Viewer(email=me.user_name, name=me.display_name or me.user_name, user_id=str(me.id),
                              token=env["DATABRICKS_TOKEN"])
         self.agents = gate.agent_live()
-        self.engine_for = self.agents.warehouse_engine_for(env)
+        self.warehouse_for = self.agents.warehouse_engine_for(env)
         self.spec = load_agent("orchestrator")
         self.judge = judge.from_environment(env)
+
+    def engine_for(self, viewer):
+        """The SQL warehouse as the env file's token, with the tools' settings in the environment again: ticket 03's
+        workspace client and the app's sign-in clear every DATABRICKS_ variable each time they run."""
+        os.environ.update(self.tool_settings)
+        return self.warehouse_for(viewer)
 
     # ── The answer contract ──
 
     def agent_for(self, turn):
+        os.environ.update(self.tool_settings)
         return self.agents.foundry_agent(self.env, self.spec)
 
     # ── The app ──

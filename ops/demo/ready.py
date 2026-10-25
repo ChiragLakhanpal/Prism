@@ -525,9 +525,18 @@ def app_changes(before: dict, after: dict) -> list[str]:
     return lines
 
 
+def listing(workspace, say) -> dict | None:
+    try:
+        return workspace.snapshot()
+    except Exception as error:  # the warehouse or the API refused: the steps still run, and the summary says so
+        say(f"   I could not list the workspace: {type(error).__name__}: {one_line(error)}")
+        return None
+
+
 def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
-    say("I listed the workspace before I changed anything.")
-    before = workspace.snapshot()
+    before = listing(workspace, say)
+    if before is not None:
+        say("I listed the workspace before I changed anything.")
     kept: dict = {}
     outcomes = []
     steps = [("the app", lambda: app_step(workspace, setup, say)),
@@ -544,13 +553,21 @@ def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
             say(f"   {outcome.summary}")
         outcomes.append(outcome)
     say("6. What changed on the workspace.")
-    after = workspace.snapshot()
-    found = app_changes(before, after) + bundle_deploy.changes(
-        {key: value for key, value in before.items() if key[0] != "apps"},
-        {key: value for key, value in after.items() if key[0] != "apps"}, LISTED)
-    for line in found or ["No changes."]:
-        say(f"   {line}")
-    say("   Genie keeps the conversations I started, and the warehouse its query history. The listing leaves both out.")
+    after = listing(workspace, say)
+    if before is None or after is None:
+        outcomes.append(Outcome("the workspace listing", FAILED, "I could not list the workspace before and after the "
+                                                                 "steps, so I cannot say what changed."))
+    else:
+        found = app_changes(before, after) + bundle_deploy.changes(
+            {key: value for key, value in before.items() if key[0] != "apps"},
+            {key: value for key, value in after.items() if key[0] != "apps"}, LISTED)
+        for line in found or ["No changes."]:
+            say(f"   {line}")
+        say("   Genie keeps the conversations I started, and the warehouse its query history. The listing leaves both "
+            "out.")
+        counted = dayone.count_words(len(found), "change")
+        outcomes.append(Outcome("the workspace listing", PASSED,
+                                f"{counted[0].upper()}{counted[1:]}, listed above." if found else "No changes."))
     say("Summary:")
     for outcome in outcomes:
         say(f"   {outcome.step[0].upper()}{outcome.step[1:]}: {outcome.state}. {outcome.summary}")
