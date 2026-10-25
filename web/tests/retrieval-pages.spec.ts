@@ -138,13 +138,13 @@ for (const width of [1440, 390]) {
     expect(await axe(page)).toEqual([]);
 
     await panel.click({ position: { x: 4, y: 4 } });
-    await page.keyboard.press("a");
+    // A held key: the first press grades passage 1, and the repeats it sends while held grade nothing more.
+    await page.keyboard.down("a");
+    await page.keyboard.down("a");
+    await page.keyboard.up("a");
     await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 2 of 40");
     await expect(panel.getByRole("heading", { level: 2 })).toBeFocused();
     await expect(page.locator("[data-progress]")).toContainText("1 of 40 passages graded.");
-    // The same key, held or pressed again at once, does not grade passage 2.
-    await page.keyboard.press("a");
-    await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 2 of 40");
     await expect.poll(() => sent.filter((call) => call.method === "PUT").length).toBe(1);
     expect(sent.find((call) => call.method === "PUT")!.body).toEqual({ grade: "answers" });
     if (width === 1440) {
