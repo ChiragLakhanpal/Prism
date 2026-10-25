@@ -213,7 +213,7 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
   expect(looks[0]).toEqual(looks[1]);
   await expect(card).toContainText(
-    "For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78, and I keep ISR 7 as the record of the earlier view.",
+    "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
   );
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
   await expect(card).toContainText("You can keep ISR 7 instead from an answer or draft that rests on these two reports.");
@@ -263,6 +263,8 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   await expect(list).toHaveCount(14);
   await expect(list.first()).toContainText("Oct 1, 2013");
   await expect(list.first()).toContainText("Project Appraisal Document (PAD)");
+  // The list writes each run's rating in words, so its Note does not describe grey bands.
+  await expect(page.locator("[data-timeline-note]")).not.toContainText("grey bands");
   await expect(page.locator("[data-evidence-trail]")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(await axe(page)).toEqual([]);
@@ -340,6 +342,8 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
   await card.getByRole("button", { name: "Keep ISR 7 instead" }).click();
   const reason = card.getByRole("textbox", { name: "Why do you keep ISR 7?" });
   await expect(reason).toBeFocused();
+  // The row keeps your account's id, not your name.
+  await expect(card).toContainText("I save your reason with your account and this answer, and it goes into the evidence pack.");
   await card.getByRole("button", { name: "Keep ISR 7" }).click();
   await expect(reason).toHaveAttribute("aria-invalid", "true");
   await expect(card).toContainText("Write a reason, so the evidence pack says why you kept ISR 7.");
@@ -355,9 +359,39 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
       kept_assertion_id: "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
       reason: "The mission saw the works on site.",
       run_id: "run-0001",
+      view: "staff",
     },
   ]);
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
+
+  // Going back to Strata's choice that fails to save keeps the choice and says so to a screen reader too.
+  await page.route("**/api/disagreements/*/choices**", (route) =>
+    route.request().method() === "POST" ? route.fulfill({ status: 503, json: { code: "not_recorded" } }) : route.fulfill({ json: { choice: null } }),
+  );
+  await card.getByRole("button", { name: "Go back to Strata's choice" }).click();
+  await expect(card.locator("[aria-live=polite]")).toHaveText("I couldn't save that just now, so you still keep ISR 7.");
+  await expect(card.locator("[data-kept-line]")).toBeVisible();
+});
+
+test("the drawer says two reports disagree about each sentence the disagreement changes, not only the one its card follows", async ({ page }) => {
+  await openAnswer(page, { stream: "ask-p130164-isr-7-rating.sse", evidence: "evidence-isr-p130164-7-s4.json" });
+  // The recorded answer has one sentence. This one repeats it as a second sentence that the disagreement also
+  // changes, as a longer answer could.
+  const recordedStream = await recorded("ask-p130164-isr-7-rating.sse");
+  const block = recordedStream.split("\n\n").find((one) => one.startsWith("event: sentence"))!;
+  const stream = recordedStream
+    .replace(block, `${block}\n\n${block.replace('"index": 0', '"index": 1')}`)
+    .replace('"changes_sentence_ids": [0], "changes_count": 1', '"changes_sentence_ids": [0, 1], "changes_count": 2');
+  await page.route("**/api/ask", (route) => route.fulfill({ contentType: "text/event-stream", body: stream }));
+  await askFromTheBox(page);
+  await landed(page);
+
+  for (const sentence of [0, 1]) {
+    await panel(page).locator(`[data-citation][data-sentence="${sentence}"]`).first().click();
+    await expect(drawer(page).locator("[data-claim-line]")).toContainText("ISR 7 and ICR paragraph 78 disagree about this.");
+    await page.keyboard.press("Escape");
+  }
+  await expect(panel(page).getByRole("group", { name: /^Two reports disagree/ })).toContainText("That changes two sentences in this answer.");
 });
 
 test("when get_disagreements fails, the chart says it couldn't read the ratings, and the newest ISR keeps its mark", async ({ page }) => {
@@ -365,14 +399,20 @@ test("when get_disagreements fails, the chart says it couldn't read the ratings,
   await open(page, "/projects/P130164/timeline", 1440, { "/api/projects/P130164/timeline": { body: await recorded("timeline-p130164-failed.json") } });
 
   await expect(page.locator("[data-timeline-finding]")).toHaveText("I couldn't read this project's ISR ratings or check its reports for disagreements just now.");
-  await expect(page.locator("[data-timeline-card] [data-alert]")).toHaveText(
-    /^I couldn't read this project's ISR ratings or check its reports for disagreements just now, so the chart shows no rating bands and no dashed lines\./,
-  );
+  // The title says what failed; the alert says only what is missing until then, and fits the list as well as the chart.
+  await expect(page.locator("[data-timeline-card] [data-alert]")).toHaveText(/^Until I can read the ratings, the timeline shows no rating bands and no dashed lines\./);
+  // No dashed line is drawn, so the legend does not describe one.
+  await expect(page.locator("[data-timeline-subtitle]")).toHaveText("Each mark is a report, an event or a record.");
   await expect(chart(page).locator("[data-band-row]")).toHaveText("I couldn't read this project's ISR ratings just now.");
   await expect(chart(page).locator("svg[role=img]")).not.toHaveAccessibleName(/I have no ISR ratings/);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
   // ISR 13, December 28, 2018 (values.toml, isr-13-date): named without a rating it could not read.
   await expect(chart(page).getByRole("link", { name: /^ISR 13, December 28, 2018\. How lane\./ })).toHaveCount(1);
+  // Try again in the alert brings the chart back and takes you to it (the 23 brief, section 8.4).
+  await page.route("**/api/projects/P130164/timeline", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("timeline-p130164.json") }));
+  await page.locator("[data-timeline-card] [data-alert]").getByRole("button", { name: "Try again" }).click();
+  await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
+  await expect(page.locator("[data-timeline-card]")).toBeFocused();
 });
 
 test("the public preview of a project still under way hides its disagreements, and no alert says the page shows the staff view", async ({ page }) => {
@@ -381,6 +421,7 @@ test("the public preview of a project still under way hides its disagreements, a
     "/api/projects/P156634/timeline?view=public": { body: await recorded("timeline-p156634-public.json") },
   });
 
-  await expect(page.locator("[data-timeline-card]")).toContainText("I don't show disagreements on active projects in this view");
+  await expect(page.locator("[data-timeline-card]")).toContainText("I don't show disagreements on active projects in the public view");
+  await expect(page.locator("[data-timeline-subtitle]")).toHaveText("Each mark is a report, an event or a record.");
   await expect(page.locator("main [data-alert]")).toHaveCount(0);
 });

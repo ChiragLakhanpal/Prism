@@ -54,7 +54,7 @@ export type DisagreementItem = Base & {
 export type MarkItem = ReportItem | EventItem | RecordItem | GroupItem;
 export type Item = MarkItem | BandItem | DisagreementItem;
 
-export type Segment = { text: string } | { number: number; capital?: boolean } | { year: number };
+export type Segment = { text: string } | { number: number; capital?: boolean } | { year: number } | { date: string };
 
 export type Timeline = {
   project: { project_id: string; project_name: string; display_name: string; status: string | null };

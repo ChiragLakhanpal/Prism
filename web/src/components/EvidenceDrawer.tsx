@@ -583,7 +583,9 @@ export function EvidenceDrawerView({
   // A project timeline's views (ticket 23), and a disagreement of the answer that opened the drawer from its sentence.
   const timelineView = isTimelineView(evidence);
   const timelineId = /^(doc|ratings|contracts|disagreement):/.test(id);
-  const claimDisagreement = claim && run ? (run.disagreements.find((found) => found.after === claim.index) ?? null) : null;
+  // Every sentence the disagreement changes gets the line, not only the one its card follows.
+  const claimDisagreement =
+    claim && run ? (run.disagreements.find((found) => found.after === claim.index || found.changes_sentence_ids?.includes(claim.index)) ?? null) : null;
 
   return (
     <div

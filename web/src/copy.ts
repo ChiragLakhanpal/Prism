@@ -1170,7 +1170,7 @@ export const copy = {
         months === 1 ? "Written {months} month after the mid-term review of {date}." : "Written {months} months after the mid-term review of {date}.",
       sides: "The two reports, in the order they were written",
       kept: "You kept this",
-      // Appended to what changes, from the stream's changes_sentence_ids.
+      // Appended to what changes, from the stream's changes_count.
       changesAnswer: (count: number) =>
         count === 0 ? "That changes nothing in this answer." : count === 1 ? "That changes {n} sentence in this answer." : "That changes {n} sentences in this answer.",
       changesDraft: (count: number) =>
@@ -1180,8 +1180,9 @@ export const copy = {
         lineNoTarget: "You can keep {other} instead from an answer or draft that rests on these two reports.",
         button: "Keep {other} instead",
         label: "Why do you keep {other}?",
-        helperAnswer: "I save your reason with your name and this answer, and it goes into the evidence pack. I don't change the answer.",
-        helperDraft: "I save your reason with your name and this draft, and it goes into the evidence pack. I don't change the draft.",
+        // The row keeps the account's id, never a name or an email (strata.ops.disagreement_choices).
+        helperAnswer: "I save your reason with your account and this answer, and it goes into the evidence pack. I don't change the answer.",
+        helperDraft: "I save your reason with your account and this draft, and it goes into the evidence pack. I don't change the draft.",
         submit: "Keep {other}",
         cancel: "Cancel",
         saving: "Saving",
@@ -5461,6 +5462,8 @@ export const copy = {
     // The chart's subtitle, with each shape drawn before its word ({report}, {event} and {record} are the glyphs,
     // hidden from screen readers, so the words carry the meaning).
     subtitle: "Each mark is a {report} report, an {event} event or a {record} record. A dashed line joins two reports that disagree.",
+    // The same where no dashed line can be drawn: get_disagreements did not answer, or the view hides disagreements.
+    subtitleNoLines: "Each mark is a {report} report, an {event} event or a {record} record.",
     subtitleList: "Each item is a report, an event or a record, in date order.",
     lane: { why: "Why · evaluations", how: "How · operations", what: "What · records" } as Record<string, string>,
     // The lane's word inside an item's name and the table's Stratum column.
@@ -5587,6 +5590,8 @@ export const copy = {
       icr: "the ICR",
       icr_review: "the ICR Review",
       ppar: "the PPAR",
+      // A disagreement's side that rests on a contract's record (signed_on, signed_amount_usd), in the card's rule.
+      record: "the contract record",
       other: "the report",
     } as Record<string, string>,
     sides: "{side1} and {side2}",
@@ -5610,9 +5615,9 @@ export const copy = {
     abstentionCheck: "Counted by the disagreement check for this project.",
     // The title's count: where it came from, and that it opens the table.
     findingCheck: "Counted by the disagreement check for this project. Select it to show the table.",
-    failed:
-      "I couldn't read this project's ISR ratings or check its reports for disagreements just now, so the chart shows no rating bands and no dashed lines.",
-    hidden: "I don't show disagreements on active projects in this view, so a project still under way isn't prejudged.",
+    // Under the title, which already says what failed: what is missing until then, true of the chart and the list.
+    failed: "Until I can read the ratings, the timeline shows no rating bands and no dashed lines.",
+    hidden: "I don't show disagreements on active projects in the public view, so a project still under way isn't prejudged.",
     loading: "Loading the timeline.",
     stillLoading: "Still loading the timeline.",
     error: "I couldn't load this project's timeline because the data service didn't answer.",
@@ -5706,6 +5711,8 @@ export const copy = {
         ratingsFailed: "I couldn't read this project's ISR ratings just now.",
         line: "A dashed line joins {side1} and {side2}, which disagree.",
         noLines: "No reports disagree.",
+        // The page's as-of date, last, when the page asked for one: the drawn label is inside the image.
+        asOf: "It shows what was public on {date}.",
       },
       short: {
         pad: "the PAD",

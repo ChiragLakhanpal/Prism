@@ -162,7 +162,8 @@ def test_the_finding_and_the_alt_text_are_written_from_the_tool_s_values(p130164
     assert text_of(p130164["alt"]) == (
         "Timeline of P130164 from 2013 to 2023 in three lanes: four evaluations, four operations items and one record. "
         f"ISR ratings of progress went from {first} to {last} over 13 ISRs. "
-        "A dashed line joins ISR 7 and the ICR, which disagree. A dashed line joins the ICR and the ICR Review, which disagree.")
+        "A dashed line joins ISR 7 and the ICR, which disagree. A dashed line joins the ICR and the ICR Review, which disagree. "
+        "It shows what was public on October 23, 2026.")
     assert p130164["rejected"] == {"count": 1}
     assert p130164["disagreements"] == {"status": "ok", "count": 2}
 
@@ -179,6 +180,11 @@ def test_as_of_august_26_2016_the_timeline_shows_only_what_was_public_then(serve
     # The restructuring is dated only by the ICR, public in 2019.
     assert placed(body, kind="event", type="restructuring") == []
     assert [(band["first"], band["last"]) for band in placed(body, kind="band")] == [(1, 7)]
+    # The chart's name says which date it shows, since the drawn "As of" label is inside the image (round 2).
+    from strata.server.timeline import text_of
+
+    assert {"date": truth("isr-7-date")} in body["alt"]
+    assert text_of(body["alt"]).endswith(" It shows what was public on August 26, 2016.")
 
 
 def test_when_get_disagreements_fails_the_newest_isr_keeps_its_mark_and_no_sentence_says_strata_has_no_ratings(
@@ -364,6 +370,8 @@ def test_the_stream_names_the_sentences_a_disagreement_changes_so_the_card_takes
     # The answer that already shows both sides changes nothing if you keep either.
     (shows_both,) = disagreement_events("p130164-both-sides")
     assert (shows_both["changes_answer"], shows_both["changes_sentence_ids"]) == (False, [])
+    # The count the card says comes from the stream, not from the browser (CLAUDE.md rule 1).
+    assert (changes["changes_count"], shows_both["changes_count"]) == (1, 0)
     # The event carries what keeping a side needs: the disagreement's own id and each side's assertion id.
     assert changes["disagreement_id"] == changes["id"].removeprefix("strata.gold.disagreement:")
     assert all(side["assertion_id"] for side in changes["sides"])

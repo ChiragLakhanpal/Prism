@@ -133,10 +133,11 @@ export type DisagreementSide = {
 // order they were written.
 export type DisagreementEvent = {
   id: string;
-  // The id keeping a side posts to (POST /api/disagreements/{id}/choices), and the sentences keeping the other side
-  // would change (ticket 23): one shape for both cards.
+  // The id keeping a side posts to (POST /api/disagreements/{id}/choices), the sentences keeping the other side
+  // would change and how many they are, which the card says as it comes (ticket 23): one shape for both cards.
   disagreement_id?: string | null;
   changes_sentence_ids?: number[];
+  changes_count?: number;
   period_event?: string | null;
   after: number;
   changes_answer: boolean;

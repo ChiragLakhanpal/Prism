@@ -92,14 +92,15 @@ export function lineStates(data: Timeline, run: Run | null): Record<string, Line
   return states;
 }
 
-// The Note line: each abbreviation that appears, what the bands show and each code a band shows.
-function Note({ data, codes }: { data: Timeline; codes: string[] }) {
+// The Note line: each abbreviation that appears, what the bands show and each code a band shows. The list writes
+// each run's rating in words and draws no bands, so there the Note says nothing about them.
+function Note({ data, codes, chart }: { data: Timeline; codes: string[]; chart: boolean }) {
   const types = new Set(data.items.flatMap((item) => (item.kind === "report" ? [item.type] : [])));
   if (data.items.some((item) => item.kind === "band")) types.add("isr");
   const abbreviations = (["pad", "isr", "icr", "icr_review", "ppar"] as const).filter((type) => types.has(type)).map((type) => words.abbrev[type]);
   const banded = data.items.some((item) => item.kind === "band");
   const spelled = codes.map((rating) => words.codeNote(words.codes[rating] ?? rating, rating));
-  const parts = [...abbreviations, ...(banded ? [words.bands, ...spelled] : [])];
+  const parts = [...abbreviations, ...(banded && chart ? [words.bands, ...spelled] : [])];
   if (!parts.length) return null;
   return (
     <p data-timeline-note className="max-w-prose text-caption text-chart-text-subtle">
@@ -344,13 +345,18 @@ export function TimelineCard({
   const empty = (lane: Lane) => !data.items.some((item) => item.lane === lane);
   const lanesEmpty = Object.fromEntries(LANES.map((lane) => [lane, empty(lane)])) as Record<Lane, boolean>;
   return (
-    <figure aria-labelledby={titleId} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
+    // tabIndex -1: Try again in the disagreements alert brings you back to the chart (the 23 brief, section 8.4).
+    <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 focus:outline-none @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: chart ? (width > 700 ? 20 : 18) : 16 }}>
         <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable } : undefined} />
       </p>
-      <p className="mt-1 max-w-prose text-small text-chart-text-subtle">
+      <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
-          <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} />
+          <Fill
+            // No dashed line can be drawn when get_disagreements did not answer or the view hides disagreements.
+            template={data.disagreements.status === "ok" ? words.subtitle : words.subtitleNoLines}
+            slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }}
+          />
         ) : (
           words.subtitleList
         )}
@@ -379,7 +385,7 @@ export function TimelineCard({
         )}
       </div>
       <div className="mt-4 flex flex-col gap-2">
-        <Note data={data} codes={chart ? codes : []} />
+        <Note data={data} codes={chart ? codes : []} chart={chart} />
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} />}
         <SourceLine data={data} />
       </div>
@@ -401,6 +407,10 @@ export function TimelineTab({ pid }: { pid: string }) {
   const run = useStore(answer);
   const wide = useWide();
   const heading = useRef<HTMLHeadingElement>(null);
+  const section = useRef<HTMLElement>(null);
+  // Where Try again was pressed: the load error's (focus goes back to the heading) or the disagreements alert's,
+  // inside the chart card (focus goes to the chart card).
+  const retriedFrom = useRef<"page" | "card">("page");
   const openId = evidenceIn(here.search);
   const onOpen = (item: Item, element: HTMLElement) =>
     openEvidence(item.evidence_id, {
@@ -416,8 +426,15 @@ export function TimelineTab({ pid }: { pid: string }) {
     });
 
   useEffect(() => {
-    if (load.status === "ready" && load.afterRetry) heading.current?.focus();
+    if (load.status !== "ready" || !load.afterRetry) return;
+    const card = retriedFrom.current === "card" ? section.current?.querySelector<HTMLElement>("figure[data-timeline-card]") : null;
+    (card ?? heading.current)?.focus();
+    retriedFrom.current = "page";
   }, [load]);
+  const retryCard = () => {
+    retriedFrom.current = "card";
+    retry();
+  };
 
   let body: ReactNode;
   if (load.status === "loading") {
@@ -440,12 +457,12 @@ export function TimelineTab({ pid }: { pid: string }) {
   } else if (load.data.items.length === 0) {
     body = <EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />;
   } else {
-    body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retry} />;
+    body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />;
   }
   // The purpose asks you to select a mark only where there is one to select.
   const selectable = load.status === "loading" || (load.status === "ready" && load.data.items.length > 0);
   return (
-    <section data-timeline={load.status} className="@container/timeline">
+    <section ref={section} data-timeline={load.status} className="@container/timeline">
       <h2 ref={heading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {words.title}
       </h2>

@@ -953,13 +953,15 @@ def disagreement_event(found: Attached) -> Event:
 
     One shape carries what both cards read (tickets 23 and 24): after, the sentence the card follows;
     changes_answer, whether keeping the other side would change a sentence (the warning state); and
-    changes_sentence_ids, which sentences those are, so the card can say how many. disagreement_id is the id
+    changes_sentence_ids, which sentences those are, and changes_count, how many, which the card says as it comes
+    (CLAUDE.md rule 1: the browser counts nothing). disagreement_id is the id
     keeping a side posts to (POST /api/disagreements/ID/choices), with each side's assertion_id."""
     row = found.row
     leaned = row.get("lean_assertion_id")
     return Event("disagreement", {
         "id": row["evidence_id"], "disagreement_id": row.get("disagreement_id"), "after": found.after,
         "changes_answer": found.changes_answer, "changes_sentence_ids": list(found.changes),
+        "changes_count": len(found.changes),
         "attached_by_verifier": found.by_verifier, "attribute": row.get("attribute"), "rule_id": row.get("rule_id"),
         "period_event": (row.get("period") or {}).get("event"),
         "sides": [_side(side, leaned) for side in row.get("sides") or ()],

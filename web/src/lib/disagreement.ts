@@ -73,11 +73,18 @@ export function subjectOf(attribute: string | null, event: string | null): strin
   return at ? at.replace("{subject}", subject) : subject;
 }
 
+// "the ICR", "ISR 7": a side's report as a sentence names it, as the timeline does, never its paragraph, since the
+// rule is about which report Strata leans on.
+export function sideInSentence(side: SideData): string {
+  const short = copy.timeline.short;
+  return (short[typeOf(side)] ?? short.other).replace("{sequence}", String(side.sequence ?? ""));
+}
+
 export function ruleSentence(ruleId: string | null, sides: SideData[]): string {
   const lean = sides.find((side) => side.leaned);
   const other = sides.find((side) => !side.leaned);
   const rules = words.rule as Record<string, string>;
-  return (rules[ruleId ?? ""] ?? "").replace("{lean}", lean ? sideShort(lean) : "").replace("{other}", other ? sideShort(other) : "");
+  return (rules[ruleId ?? ""] ?? "").replace("{lean}", lean ? sideInSentence(lean) : "").replace("{other}", other ? sideInSentence(other) : "");
 }
 
 export function whatChanges(sides: SideData[], ifYouKeep: { field_name: string | null; value: string | null } | null): string | undefined {

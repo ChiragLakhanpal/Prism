@@ -382,7 +382,6 @@ function AnswerDisagreement({
   const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
   const id = found.disagreement_id ?? found.id.split(":").pop() ?? found.id;
   const view = run.asked.view;
-  const changed = found.changes_sentence_ids;
   return (
     <DisagreementCard
       warning={found.changes_answer}
@@ -392,7 +391,7 @@ function AnswerDisagreement({
       sides={cardSides}
       rule={ruleSentence(found.rule_id, sides)}
       whatChanges={whatChanges(sides, found.if_you_keep)}
-      changes={changed ? changesLine(changed.length, "answer") : undefined}
+      changes={found.changes_count != null ? changesLine(found.changes_count, "answer") : undefined}
       keep={
         lean && other && lean.assertion_id && other.assertion_id && run.runId
           ? {

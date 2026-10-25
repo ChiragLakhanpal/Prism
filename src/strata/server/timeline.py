@@ -129,6 +129,9 @@ def text_of(segments: list[dict]) -> str:
             return segment["text"]
         if "year" in segment:
             return str(segment["year"])
+        if "date" in segment:
+            day = dt.date.fromisoformat(segment["date"])
+            return f"{day:%B} {day.day}, {day.year}"
         count = segment["number"]
         word = words()["numberWords"][count - 1] if 1 <= count <= 9 else f"{count:,}"
         return word[:1].upper() + word[1:] if segment.get("capital") else word
@@ -321,11 +324,13 @@ def finding(ratings: dict | None, disagreements: list[dict], status: str) -> lis
 
 
 def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreements: list[dict],
-             status: str) -> list[dict]:
-    """The drawn layer's name (the 23 brief, section 4.11), counting every dated item, each contract on its own."""
+             status: str, asked: dt.date | None = None) -> list[dict]:
+    """The drawn layer's name (the 23 brief, section 4.11), counting every dated item, each contract on its own.
+    When the page asked for a date, it ends by naming it, since the drawn "As of" label is inside the image."""
     alt = words()["alt"]
+    as_of = [{"text": " "}, *fill(alt["asOf"], {"date": {"date": asked.isoformat()}})] if asked else []
     if not dated:
-        return fill(alt["empty"], {"pid": project_id})
+        return fill(alt["empty"], {"pid": project_id}) + as_of
     counts = {lane: sum(item["lane"] == lane for item in dated) for lane in LANES}
     years = sorted(int(item["date"][:4]) for item in dated)
     out = fill(alt["populated"], {
@@ -349,7 +354,7 @@ def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreem
         if not disagreements:
             out.append({"text": " "})
             out.extend(fill(alt["noLines"], {}))
-    return out
+    return out + as_of
 
 
 # ── The timeline ─────────────────────────────────────────────────────────
@@ -416,7 +421,7 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
         "counts": {lane: sum(item["lane"] == lane for item in dated) for lane in LANES},
         "finding": finding(ratings, disagreements, status),
-        "alt": alt_text(pid, dated, ratings, disagreements, status),
+        "alt": alt_text(pid, dated, ratings, disagreements, status, asked),
         "sources": ["documents", "notices", "awards"],
         # The data-freshness stamp's day, which the source line ends with ("through October 23, 2026").
         "data_through": _iso(data_through(engine)),

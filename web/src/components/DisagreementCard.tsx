@@ -13,7 +13,7 @@
 // While they sit side by side, each side keeps a 24 px tag row, so both claims start on one line.
 //
 // Ticket 24 placed the card in an answer; ticket 23 gives it this look and the keep action (KeepChoice): a person
-// keeps the other report with a required reason, stored with their name and the answer or draft for the evidence
+// keeps the other report with a required reason, stored with their account and the answer or draft for the evidence
 // pack, and can go back to Strata's choice. Neither rewrites the answer.
 import { createElement, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
@@ -21,6 +21,8 @@ import { ApiError, getJson, postJson } from "../lib/api";
 import type { SideData } from "../lib/disagreement";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
+import { address } from "../lib/router";
+import { viewOf } from "../lib/view";
 import { Button } from "./Button";
 import { ReasonField } from "./DecisionForm";
 import { Source } from "./Source";
@@ -245,7 +247,13 @@ function KeepChoice({
   }
 
   const save = async (kept: string, text: string) => {
-    const body = { kept_assertion_id: kept, reason: text, ...(target.runId ? { run_id: target.runId } : { draft_id: target.draftId }) };
+    // The page's view goes with the choice, so the server refuses a preview's choice as well as the page hiding it.
+    const body = {
+      kept_assertion_id: kept,
+      reason: text,
+      ...(target.runId ? { run_id: target.runId } : { draft_id: target.draftId }),
+      view: viewOf(address.get().search),
+    };
     return postJson<{ recorded: boolean; choice?: Choice }>(path, body);
   };
 
@@ -272,6 +280,7 @@ function KeepChoice({
 
   const goBack = async () => {
     setBackFailed(false);
+    setSaid("");
     try {
       const answer = await save(keep.leanAssertionId, "");
       if (!answer.recorded) throw new ApiError(503, path);
@@ -281,6 +290,8 @@ function KeepChoice({
       requestAnimationFrame(() => button.current?.focus());
     } catch {
       setBackFailed(true);
+      // The polite region says it too, so a screen reader hears that you still keep the other report.
+      setSaid(fill(words.keep.backFailed));
     }
   };
 
