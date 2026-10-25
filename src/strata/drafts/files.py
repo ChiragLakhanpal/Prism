@@ -29,6 +29,7 @@ from importlib import resources
 from xml.sax.saxutils import escape
 
 from strata.config import DraftKind
+from strata.drafts.holds import disagreement_key
 
 DOCX = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 PDF = "application/pdf"
@@ -356,7 +357,7 @@ def snapshot(draft: dict, say: Say) -> dict:
     reason its author gave for keeping another report on a disagreement it rests on (ticket 36)."""
     named = _cited_in(draft)
     kept = {choice["disagreement_id"]: choice for choice in draft.get("choices") or () if choice["kept"] == "other"}
-    sides = {side["evidence_id"]: found["id"] for found in draft.get("disagreements") or ()
+    sides = {side["evidence_id"]: disagreement_key(found) for found in draft.get("disagreements") or ()
              for side in found.get("sides") or () if not side.get("leaned")}
     return {"sources": [{
         "number": entry["number"], "evidence_id": entry["evidence_id"], "source": say.source(draft, entry["evidence_id"]),

@@ -15,7 +15,10 @@ too.
 
 The states the fixture cannot reach (the Long Form above Table I, a package with no cost estimate, a summary with no
 track record) are made up from the real answers, each named *-made-up-*.json and saying so in its made_up field. They
-are never served as findings: the screen tests use them for layout and states only.
+are never served as findings: the screen tests use them for layout and states only. A rows draft with a warning
+disagreement card is made up the same way, from the card check 6 attached to a recorded answer
+(ask-p130164-isr-7-rating.sse), and the server answers for it: its holds, keeping Strata's report through the card,
+and the draft after that.
 """
 
 import copy
@@ -29,6 +32,8 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 import ppsd_story as story_of  # noqa: E402
+from strata.drafts.store import DraftStore, NewDraft  # noqa: E402
+from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 OUT = ROOT / "tests" / "fixtures" / "api"
@@ -78,6 +83,41 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB) -> dict[str, str]:
     _, draft_id = story.summarize("project-paper-p156634-no-ppsd", "pp-2")
     get("drafts-pp-no-ppsd.json", f"/api/drafts/{draft_id}")
     get("drafts-list-ppsd.json", "/api/drafts")
+    found.update(with_a_card(story))
+    return found
+
+
+CARD_MADE_UP = ("Made up from a new rows draft: check 6's warning card on P130164's PDO progress, from "
+                "ask-p130164-isr-7-rating.sse, attached after the first sentence, for the hold and the card's choices.")
+
+
+def recorded_card() -> dict:
+    """The warning disagreement card check 6 attached to a recorded answer."""
+    text = (OUT / "ask-p130164-isr-7-rating.sse").read_text()
+    events = [data for kind, data in story_of.events(text) if kind == "disagreement" and data["changes_answer"]]
+    return {**events[0], "after": 0}
+
+
+def with_a_card(story) -> dict[str, str]:
+    """A new rows draft with a warning card, its holds as the server gives them, keeping Strata's report through the
+    card's own route (POST /api/disagreements/{id}/choices with the draft's id), and the draft after that."""
+    _, made = story.suggest("ppsd-rows-ke-nwwda-541055", "ppsd-4")
+    store = DraftStore(lambda: DuckDBEngine.open(story.state_db))
+    saved = store.get(made)
+    card = recorded_card()
+    content = copy.deepcopy(saved.content)
+    content["disagreements"] = [{**card, "key": content["notes"][0]["key"]}]
+    store.create(NewDraft("draft-0090", saved.kind, saved.team_key, saved.author_id, saved.author_name, None,
+                          saved.project_id, saved.subject, content, saved.created_at))
+    lean = next(side["assertion_id"] for side in card["sides"] if side["leaned"])
+    found = {}
+    shown = story.get("/api/drafts/draft-0090").json()
+    found["drafts-ppsd-made-up-disagreement.json"] = pretty({**shown, "made_up": CARD_MADE_UP})
+    found["disagreement-choice-lean.json"] = pretty(story.call(
+        "POST", f"/api/disagreements/{card['disagreement_id']}/choices",
+        json={"kept_assertion_id": lean, "reason": "", "draft_id": "draft-0090"}).json())
+    kept = story.get("/api/drafts/draft-0090").json()
+    found["drafts-ppsd-made-up-disagreement-kept.json"] = pretty({**kept, "made_up": CARD_MADE_UP})
     return found
 
 

@@ -37,8 +37,6 @@ EXPORT_COLUMNS = ("draft_id", "export_id", "exported_at", "actor_id", "actor_nam
                   "snapshot", "public_from")
 FILE_COLUMNS = ("draft_id", "export_id", "name", "media_type", "size_bytes", "content", "public_from")
 FIELD_COLUMNS = ("draft_id", "save_no", "row_key", "field", "value", "set_by_id", "set_by_name", "set_at", "public_from")
-CHOICE_COLUMNS = ("draft_id", "save_no", "disagreement_id", "kept", "reason", "set_by_id", "set_by_name", "set_at",
-                  "public_from")
 
 
 @cache
@@ -94,7 +92,8 @@ class FieldValue:
 
 @dataclass(frozen=True)
 class Choice:
-    """The report a draft's author kept on one disagreement card (ticket 36): lean or other, with a reason."""
+    """The report a draft's author kept on one disagreement card (ticket 36): lean or other, with the reason keeping
+    the other needs. Ticket 23's card records it in strata.ops.disagreement_choices with the draft's id."""
 
     kept: str
     reason: str | None
@@ -227,10 +226,15 @@ class DraftStore:
         for row in self._rows(engine, "fields", ids=ids):
             fields.setdefault(row["draft_id"], {})[(row["row_key"], row["field"])] = FieldValue(
                 row["value"], row["set_by_id"], row["set_by_name"], moment(row["set_at"]))
+        authors = {row["draft_id"]: (row["author_id"], row["author_name"]) for row in rows}
         choices: dict[str, dict] = {}
         for row in self._rows(engine, "choices", ids=ids):
+            author_id, author_name = authors.get(row["draft_id"], (None, None))
+            if row["viewer"] != author_id:
+                continue  # only the draft's author chooses for it
+            kept = "lean" if row["kept_assertion_id"] == row["leaned_assertion_id"] else "other"
             choices.setdefault(row["draft_id"], {})[row["disagreement_id"]] = Choice(
-                row["kept"], row["reason"], row["set_by_name"], moment(row["set_at"]))
+                kept, row["reason"] or None, author_name, moment(row["made_at"]))
         return [Saved(row["draft_id"], row["kind"], row["team_key"], row["author_id"], row["author_name"],
                       row["project_id"], row["subject"], json.loads(row["content"]), moment(row["created_at"]),
                       tuple(sorted(states.get(row["draft_id"], []), key=lambda step: step.step)),
@@ -295,14 +299,6 @@ class DraftStore:
         with self._open() as engine:
             return [{**row, "set_at": moment(row["set_at"])} for row in self._rows(engine, "field_history",
                                                                                     draft_id=draft_id)]
-
-    def set_choice(self, draft_id: str, disagreement_id: str, kept: str, reason: str | None, actor_id: str,
-                   actor_name: str | None, at: dt.datetime) -> None:
-        """Keep the report a draft's author kept on one disagreement card, as a new row (ticket 36)."""
-        with self._open() as engine:
-            saves = int(self._rows(engine, "choice_saves", draft_id=draft_id)[0]["saves"])
-            engine.insert_rows("strata.ops.draft_choices", CHOICE_COLUMNS, [(
-                draft_id, saves + 1, disagreement_id, kept, reason, actor_id, actor_name, at, at.date())])
 
     def file(self, draft_id: str, export_id: str, name: str) -> tuple[str, bytes] | None:
         with self._open() as engine:

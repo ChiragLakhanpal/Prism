@@ -27,6 +27,7 @@ import { IdText, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
+import { DraftDisagreements } from "../components/DraftDisagreements";
 import type { Step } from "../components/Steps";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -696,6 +697,19 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
               />
             </div>
           </>
+        )}
+        {/* The cards check 6 attached (ticket 36): a warning card holds export until its author keeps a report. */}
+        {(d.disagreements ?? []).length > 0 && (
+          <div className="mt-8">
+            <DraftDisagreements
+              draft={d}
+              choosing={editable}
+              preview={view === "piu" || view === "public"}
+              onChange={() => {
+                getJson<Draft>(`/api/drafts/${encodeURIComponent(d.draft_id)}`).then(replace, () => undefined);
+              }}
+            />
+          </div>
         )}
         {d.layout.sources_list && ppsd && (
           <div className="mt-8">

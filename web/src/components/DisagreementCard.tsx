@@ -60,6 +60,10 @@ export type KeepTarget = { disagreementId: string; runId: string | null; draftId
 export type Keep = {
   // The other report's short name: "ISR 7".
   other: string;
+  // On a draft's warning card (ticket 36; the 36 brief, 4.8): the leaned report's short name, for "Keep {lean}", which
+  // needs no reason, beside "Keep {other} instead". Either choice resolves the card, and the draft page reads the
+  // draft again after each, so its bar's hold line follows.
+  draftChoice?: { lean: string; onChange: () => void };
   otherAssertionId: string;
   leanAssertionId: string;
   // Null on the timeline and in a document view, where no answer or draft rests on the two reports.
@@ -101,7 +105,9 @@ export function DisagreementCard({
   initialBackFailed?: boolean;
   sample?: boolean;
 }) {
-  const [kept, setKept] = useState<string | null>(initialKept?.phase === "kept" ? (keep?.otherAssertionId ?? null) : null);
+  const [kept, setKept] = useState<string | null>(
+    initialKept?.phase === "kept" ? (keep?.otherAssertionId ?? null) : initialKept?.phase === "keptLean" ? (keep?.leanAssertionId ?? null) : null,
+  );
   return (
     <div
       role="group"
@@ -185,7 +191,9 @@ export type KeepState =
   | { phase: "open"; error?: boolean }
   | { phase: "saving" }
   | { phase: "failed" }
-  | { phase: "kept"; madeAt: string; reason: string };
+  | { phase: "kept"; madeAt: string; reason: string }
+  // On a draft, its author kept the report Strata leans on (ticket 36).
+  | { phase: "keptLean"; madeAt: string };
 
 // The text a person typed stays for the session, so reopening the form after Cancel restores it.
 const drafts = new Map<string, string>();
@@ -210,6 +218,10 @@ function KeepChoice({
   const target = keep.target;
   const key = target ? `${target.disagreementId}|${target.runId ?? ""}|${target.draftId ?? ""}` : "";
   const [state, setState] = useState<KeepState>(initial ?? { phase: "idle" });
+  // When the leaned report was kept on a draft, so Cancel on the other's reason form returns to that line.
+  const leanKept = useRef<string | null>(state.phase === "keptLean" ? state.madeAt : null);
+  if (state.phase === "keptLean") leanKept.current = state.madeAt;
+  if (state.phase === "kept") leanKept.current = null;
   const [reason, setReason] = useState(() => drafts.get(key) ?? initialReason);
   const [said, setSaid] = useState("");
   // Going back to Strata's choice failed: the kept choice stays, with a line that says so.
@@ -228,7 +240,13 @@ function KeepChoice({
     let live = true;
     getJson<{ choice: Choice | null }>(`${path}?${query}`).then(
       ({ choice }) => {
-        if (!live || !choice || !choice.kept_other) return;
+        if (!live || !choice) return;
+        if (!choice.kept_other) {
+          if (!keep.draftChoice) return;
+          setState({ phase: "keptLean", madeAt: choice.made_at });
+          onKept(choice.kept_assertion_id);
+          return;
+        }
         setState({ phase: "kept", madeAt: choice.made_at, reason: choice.reason ?? "" });
         onKept(choice.kept_assertion_id);
       },
@@ -272,6 +290,7 @@ function KeepChoice({
       setState({ phase: "kept", madeAt: answer.choice.made_at, reason: answer.choice.reason ?? text });
       onKept(keep.otherAssertionId);
       setSaid(fill(words.keep.saved));
+      keep.draftChoice?.onChange();
       requestAnimationFrame(() => keptLine.current?.focus());
     } catch {
       setState({ phase: "failed" });
@@ -284,8 +303,15 @@ function KeepChoice({
     try {
       const answer = await save(keep.leanAssertionId, "");
       if (!answer.recorded) throw new ApiError(503, path);
-      setState({ phase: "idle" });
-      onKept(null);
+      // On a draft, going back to Strata's choice keeps the leaned report, so the card stays resolved.
+      if (keep.draftChoice && answer.choice) {
+        setState({ phase: "keptLean", madeAt: answer.choice.made_at });
+        onKept(keep.leanAssertionId);
+        keep.draftChoice.onChange();
+      } else {
+        setState({ phase: "idle" });
+        onKept(null);
+      }
       setSaid(words.keep.wentBack);
       requestAnimationFrame(() => button.current?.focus());
     } catch {
@@ -295,8 +321,24 @@ function KeepChoice({
     }
   };
 
+  // "Keep {lean}" on a draft: no reason, saved at once.
+  const keepLean = async () => {
+    setSaid("");
+    try {
+      const answer = await save(keep.leanAssertionId, "");
+      if (!answer.recorded || !answer.choice) throw new ApiError(503, path);
+      setState({ phase: "keptLean", madeAt: answer.choice.made_at });
+      onKept(keep.leanAssertionId);
+      setSaid(words.keep.savedLean.replace("{lean}", keep.draftChoice?.lean ?? ""));
+      keep.draftChoice?.onChange();
+    } catch {
+      setState({ phase: "failed" });
+    }
+  };
+
+  // Cancel goes back to what the card showed before the form opened: the leaned report kept, on a draft, or nothing.
   const close = () => {
-    setState({ phase: "idle" });
+    setState(leanKept.current ? { phase: "keptLean", madeAt: leanKept.current } : { phase: "idle" });
     requestAnimationFrame(() => button.current?.focus());
   };
 
@@ -315,21 +357,32 @@ function KeepChoice({
         </>
       ) : (
         <>
-          <p className="text-small text-ink-muted">{fill(words.keep.line)}</p>
+          <p className="text-small text-ink-muted" data-keep-line>
+            {state.phase === "keptLean"
+              ? words.keep.keptLean.replace("{lean}", keep.draftChoice?.lean ?? "").replace("{date}", formatDate(state.madeAt.slice(0, 10)))
+              : fill(keep.draftChoice ? words.keep.lineDraft : words.keep.line)}
+          </p>
           {!open && (
-            <Button
-              ref={button}
-              variant="secondary"
-              className="mt-3"
-              aria-expanded={false}
-              aria-controls={formId}
-              onClick={() => {
-                setState({ phase: "open" });
-                requestAnimationFrame(() => field.current?.focus());
-              }}
-            >
-              {fill(words.keep.button)}
-            </Button>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {keep.draftChoice && state.phase !== "keptLean" && (
+                <Button variant="secondary" onClick={keepLean} data-keep-lean>
+                  {words.keep.lean.replace("{lean}", keep.draftChoice.lean)}
+                </Button>
+              )}
+              <Button
+                ref={button}
+                variant="secondary"
+                aria-expanded={false}
+                aria-controls={formId}
+                onClick={() => {
+                  setState({ phase: "open" });
+                  requestAnimationFrame(() => field.current?.focus());
+                }}
+                data-keep-other
+              >
+                {fill(words.keep.button)}
+              </Button>
+            </div>
           )}
         </>
       )}

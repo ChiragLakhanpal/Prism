@@ -20,7 +20,7 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { getJson } from "../lib/api";
 import { formatCount, formatDate } from "../lib/format";
-import { draftScope, newKey, preloaded, startWriting, stopped, stopWriting, writing as writingStore, type Draft, type Writing } from "../lib/drafts";
+import { PROJECT_PAPER_STOPPED, draftScope, newKey, preloaded, startWriting, stopped, stopWriting, writing as writingStore, type Draft, type Writing } from "../lib/drafts";
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
@@ -160,7 +160,7 @@ function WritingKindPage({ current, backHref }: { current: Writing; backHref: st
 
   const stop = () => {
     stopWriting();
-    stopped.set(backHref);
+    stopped.set(ppsdKind ? backHref : `${backHref}${PROJECT_PAPER_STOPPED}`);
     window.history.back();
   };
   const tryAgain = () => startWriting({ ...current.request, idempotency_key: newKey() }, null, [], undefined, { package: pkg, summaryPlan: plan });

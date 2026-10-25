@@ -100,16 +100,6 @@ class FormRequest(BaseModel):
     view: VIEWS = "staff"
 
 
-class ChoiceRequest(BaseModel):
-    """The report a draft's author keeps on a disagreement card: the one the draft rests on, or the other, which
-    needs a reason (brief 23's keep form; ticket 36)."""
-
-    disagreement_id: str = Field(min_length=1, max_length=512)
-    kept: Literal["lean", "other"]
-    reason: str | None = Field(default=None, max_length=500)
-    view: VIEWS = "staff"
-
-
 def frame(event: Event) -> str:
     return f"event: {event.type}\ndata: {json.dumps(event.data, ensure_ascii=False)}\n\n"
 
@@ -527,27 +517,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     def set_form(draft_id: str, body: FormRequest, viewer: Viewer = Depends(current_viewer)):
         """The risk table form the draft uses: the Short Form, or the Long Form where Table I offers it."""
         return set_value(viewer, draft_id, body.view, "", "form", body.form)
-
-    @app.put("/api/drafts/{draft_id}/choices")
-    def keep_report(draft_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
-        """The report the author keeps on one of the draft's disagreement cards. Keeping the other report needs a
-        reason, which the evidence pack records; going back to Strata's choice is a new choice of lean."""
-        if not viewer.user_id:
-            return refused(401, "no_identity")
-
-        def act():
-            saved = fillable(viewer, draft_id, body.view, "keep")
-            if isinstance(saved, JSONResponse):
-                return saved
-            if body.disagreement_id not in {found["id"] for found in saved.content.get("disagreements") or ()}:
-                return refused(404, "unknown_disagreement")
-            reason = (body.reason or "").strip() or None
-            if body.kept == "other" and not reason:
-                return refused(422, "reason_required")
-            store.set_choice(draft_id, body.disagreement_id, body.kept, reason if body.kept == "other" else None,
-                             viewer.user_id, viewer.name, now())
-            return shown(store.get(draft_id), viewer, body.view)
-        return guarded(f"a choice on draft {draft_id}", act)
 
     @app.get("/api/drafts/{draft_id}/files/{name}")
     def download(draft_id: str, name: str, viewer: Viewer = Depends(current_viewer)):

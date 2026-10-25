@@ -13,7 +13,6 @@ icr-review-2023-restates-para-54).
 """
 
 import copy
-import dataclasses
 import io
 import json
 import re
@@ -312,35 +311,58 @@ def test_the_drafts_tab_counts_the_owners_set(story):
     assert row["progress"] == {"total": 2, "owners_set": 1, "rated": 0, "form": "short", "rows": 2}
 
 
-def test_a_warning_disagreement_holds_export_of_every_kind_until_a_report_is_kept(database, tmp_path):
-    """Only once the draft page shows its cards (config/drafts.toml, cards_on_drafts): a warning card holds export, an
-    info card holds nothing, and keeping either report resolves it. The disagreement is made up on a real draft."""
-    kinds = dataclasses.replace(load_draft_kinds(), cards_on_drafts=True)
-    story = story_of.Story(database, tmp_path, kinds=kinds)
+# P130164's efficiency, on which the ICR's paragraph 44 and the ICR Review disagree (strata.gold.disagreement in the
+# fixture), and its PDO progress, a second disagreement for an info card.
+DISAGREEMENT, OTHER_DISAGREEMENT = "51ea6e6516c0ea63", "437378890475ef48"
+
+
+def test_a_warning_disagreement_holds_export_of_every_kind_until_its_author_keeps_a_report(database, tmp_path):
+    """A warning card holds export, an info card holds nothing, and keeping either report through the card's own
+    route (ticket 23's POST /api/disagreements/{id}/choices, with the draft's id) resolves it; a teammate's choice
+    does not. The cards are made up on a real draft; the disagreements are the fixture's."""
+    story = story_of.Story(database, tmp_path)
     story.select()
     draft_id = suggested(story)["draft_id"]
     store = DraftStore(lambda: DuckDBEngine.open(story.state_db))
     saved = store.get(draft_id)
     content = copy.deepcopy(saved.content)
-    content["disagreements"] = [{"id": "strata.gold.disagreement:made-up-1", "after": 0, "changes_answer": True,
-                                 "sides": []},
-                                {"id": "strata.gold.disagreement:made-up-2", "after": 1, "changes_answer": False,
-                                 "sides": []}]
+    content["disagreements"] = [
+        {"id": f"strata.gold.disagreement:{DISAGREEMENT}", "disagreement_id": DISAGREEMENT, "after": 0,
+         "changes_answer": True, "sides": []},
+        {"id": f"strata.gold.disagreement:{OTHER_DISAGREEMENT}", "disagreement_id": OTHER_DISAGREEMENT, "after": 1,
+         "changes_answer": False, "sides": []}]
     store.create(NewDraft("draft-0098", saved.kind, saved.team_key, saved.author_id, saved.author_name, None,
                           saved.project_id, saved.subject, content, saved.created_at))
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        lean, first, second = engine.run("SELECT lean_assertion_id, first_assertion_id, second_assertion_id "
+                                         "FROM strata.gold.disagreement WHERE disagreement_id = :id",
+                                         {"id": DISAGREEMENT}).rows[0]
+    other = second if lean == first else first
 
     held = story.get("/api/drafts/draft-0098").json()["holds"]
     assert [(hold["key"], hold["left"], hold["first_anchor"]) for hold in held][-1] == (
-        "disagreements", 1, "disagreement-strata.gold.disagreement:made-up-1")
-    keep = story.call("PUT", "/api/drafts/draft-0098/choices", json={"disagreement_id": "strata.gold.disagreement:made-up-1",
-                                                                      "kept": "other"})
-    assert (keep.status_code, keep.json()["code"]) == (422, "reason_required")
-    kept = story.call("PUT", "/api/drafts/draft-0098/choices",
-                      json={"disagreement_id": "strata.gold.disagreement:made-up-1", "kept": "lean"}).json()
+        "disagreements", 1, f"disagreement-{DISAGREEMENT}")
+
+    def keep(kept, reason="", headers=story_of.ANA):
+        return story.call("POST", f"/api/disagreements/{DISAGREEMENT}/choices", headers,
+                          json={"kept_assertion_id": kept, "reason": reason, "draft_id": "draft-0098"})
+
+    assert (keep(other).status_code, keep(other).json()["code"]) == (422, "reason_required")
+    assert keep(lean, headers=story_of.BEN).json()["recorded"] is True
+    assert "disagreements" in [hold["key"] for hold in story.get("/api/drafts/draft-0098").json()["holds"]]
+
+    assert keep(lean).json()["recorded"] is True
+    kept = story.get("/api/drafts/draft-0098").json()
     assert "disagreements" not in [hold["key"] for hold in kept["holds"]]
-    assert kept["choices"][0]["kept"] == "lean"
-    # As shipped, no card renders on a draft, so nothing holds (the 35 brief, 6.6).
-    assert load_draft_kinds().cards_on_drafts is False
+    assert [(choice["disagreement_id"], choice["kept"]) for choice in kept["choices"]] == [(DISAGREEMENT, "lean")]
+
+    assert keep(other, "The ICR Review read the same records later.").json()["recorded"] is True
+    kept = story.get("/api/drafts/draft-0098").json()
+    assert "disagreements" not in [hold["key"] for hold in kept["holds"]]
+    assert [(choice["kept"], choice["reason"]) for choice in kept["choices"]] == [
+        ("other", "The ICR Review read the same records later.")]
+    # Ticket 23's card renders on every draft page, so a warning card holds as shipped.
+    assert load_draft_kinds().cards_on_drafts is True
 
 
 # ── Criterion 5: the Word file's table and footnotes ─────

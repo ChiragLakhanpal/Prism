@@ -235,11 +235,9 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.follows TO `{PRINCIPAL}`",
         # Ticket 23: the side of a disagreement each person kept, with their reason, for the evidence pack.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.disagreement_choices TO `{PRINCIPAL}`",
-        # Ticket 36: the values people set on a draft's fields and the reports they kept, and their latest values.
+        # Ticket 36: the values people set on a draft's fields, and their latest values.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_fields TO `{PRINCIPAL}`",
-        f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_choices TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
-        f"GRANT SELECT ON TABLE strata.ops.draft_choices_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{PRINCIPAL}`",

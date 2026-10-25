@@ -30,6 +30,7 @@ from strata.lakehouse.engine import DuckDBEngine
 from strata.packages.store import PackageStore
 from strata.server.access import Access, StaticGroups
 from strata.server.app import create_app
+from strata.server.choices import ChoiceLog
 from strata.server.evidence import OpenedLog
 
 DECIDED, TODAY = dt.date(2026, 10, 27), dt.date(2026, 10, 28)
@@ -71,6 +72,7 @@ class Story:
         self.at = dt.datetime(2026, 10, 28, 9, 0, tzinfo=dt.UTC)
         ids = iter(f"draft-{number:04d}" for number in range(1, 100))
         runs = iter(f"run-{number:04d}" for number in range(1, 100))
+        choice_ids = iter(f"choice-{number:04d}" for number in range(1, 100))
 
         @contextmanager
         def reading(_viewer):
@@ -89,6 +91,7 @@ class Story:
             return DuckDBEngine.open(self.state_db)
 
         self.app = create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=self.clock),
+                              choices=ChoiceLog(state, now=self.clock, new_id=lambda: next(choice_ids)),
                               packages=PackageStore(state), writers=lambda kind: ScriptedAgent(self.cases[self.case]),
                               judge=Judge(), access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY,
                               now=self.clock, new_draft_id=lambda: next(ids), new_run_id=lambda: next(runs), kinds=kinds)

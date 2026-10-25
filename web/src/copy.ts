@@ -1225,6 +1225,12 @@ export const copy = {
         undo: "Go back to Strata's choice",
         preview: "This is a preview, so I don't record choices here.",
         saved: "Saved. You kept {other}, and your reason goes into the evidence pack.",
+        // A warning card on a draft (ticket 36; the 36 brief, 5.6): the author keeps one report before export.
+        lineDraft:
+          "Choose which report this draft keeps before you export it. Keeping {other} needs a reason, which goes into the evidence pack.",
+        lean: "Keep {lean}",
+        keptLean: "You kept {lean} on {date}.",
+        savedLean: "Saved. You kept {lean}.",
         wentBack: "Saved. You went back to Strata's choice. Your earlier reason stays in the record.",
       },
       loadFailed: "I couldn't load these two reports.",
@@ -2370,6 +2376,9 @@ export const copy = {
       bodyNoRows:
         "I draft it from this check and {agency}'s track record with its past packages. Your team has no checked PPSD rows " +
         "for this project's packages, so I leave the PPSD's risks out.",
+      // Before the count of checked PPSD rows has come, or when it could not be read.
+      bodyUnknown:
+        "I draft it from this check, {agency}'s track record with its past packages and any PPSD rows your team checked for this project's packages.",
       button: "Draft a Project Paper summary",
       feedforward: "The draft waits in Drafts for you to check. I send nothing.",
       existingYou: (date: string) => `You started a Project Paper summary on this plan on ${date}.`,
@@ -2391,6 +2400,11 @@ export const copy = {
   // Every count comes from the draft runtime or a tool; the browser counts nothing. Each kind of draft
   // (config/drafts.toml) has its words under kinds, by its key.
   draft: {
+    // The disagreement cards check 6 attached to a draft (ticket 36; the 36 brief, 4.8), above its Sources list.
+    disagreements: {
+      title: "Where two reports disagree",
+      lede: "A source this draft cites disagrees with another report. I kept the draft as I wrote it. Choose the report it keeps where a card asks you to.",
+    },
     kinds: {
       review_notes: {
         title: "Review notes",

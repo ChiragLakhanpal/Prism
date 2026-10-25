@@ -11,6 +11,7 @@ import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, r
 import { dotTitle } from "./ComparableRecords";
 import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
+import { fillText } from "./LessonParts";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
 import { DocumentSource, Source } from "./Source";
@@ -45,6 +46,14 @@ export function sourceTitle(evidence: EvidenceEvent) {
   if (evidence.kind === "steps" || evidence.kind === "steps-longest") return stepListTitle(evidence);
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
+  // A passage a lesson rests on, as get_lessons returns it inside its row (ticket 36): "ICR P130164 paragraph 54,
+  // page 23", as its marker names it.
+  const cited = lessonPassage(evidence);
+  if (cited) {
+    return cited.section
+      ? fillText(copy.ppsd.markerSection, { doc: cited.doc, section: cited.place })
+      : fillText(copy.ppsd.markerParagraph, { doc: cited.doc, pcode: cited.pid, para: cited.place, page: cited.page ?? "" });
+  }
   if (evidence.kind === "record") {
     const named = briefRecordTitle(evidence);
     if (named) return named;
@@ -113,6 +122,20 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
         ) : (
           <Fill template={words.lessonSourceUndated} slots={{ version }} />
         )}
+      </Source>
+    );
+  }
+  // A passage a lesson rests on (ticket 36), as the evidence pack and the Word footnote name it: "Implementation
+  // Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23."
+  const cited = lessonPassage(evidence);
+  if (cited) {
+    const place = fillText(cited.section ? words.passageSection : words.passageParagraph, { para: cited.place, section: cited.place });
+    return (
+      <Source className={className}>
+        <Fill
+          template={words.passageSource}
+          slots={{ doc: cited.type, pid: <ProjectId pid={cited.pid} />, date: cited.date ? <Num date={cited.date} /> : "", place, page: String(cited.page ?? "") }}
+        />
       </Source>
     );
   }
@@ -201,4 +224,22 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
       {visited && <p className="mt-1 text-caption text-ink-muted">{copy.evidence.visited}</p>}
     </div>
   );
+}
+
+// A passage a lesson rests on, as get_lessons returns it inside its row (ticket 36): a record whose row names its
+// passage and document. A Project Paper summary cites these from the PPSD rows it draws on. Null for any other source.
+export function lessonPassage(evidence: EvidenceEvent): {
+  doc: string; type: string; pid: string; date: string | null; place: string; section: boolean; page: number | null;
+} | null {
+  const row = evidence.row ?? {};
+  if (evidence.kind !== "record" || !row.passage_id || !row.document_type) return null;
+  return {
+    doc: String(row.doc_short ?? row.document_type),
+    type: String(row.document_type),
+    pid: String(row.project_id ?? ""),
+    date: (row.document_date ?? null) as string | null,
+    place: String(row.paragraph ?? ""),
+    section: row.locator === "section",
+    page: (row.page ?? row.pdf_page ?? null) as number | null,
+  };
 }

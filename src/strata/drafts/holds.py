@@ -27,7 +27,7 @@ class Draft:
     content: Mapping = field(default_factory=dict)
     # The latest value of each field a person set, by (row_key, field); the form is ("", "form").
     fields: Mapping = field(default_factory=dict)
-    # The report kept for each disagreement, by its id: "lean" or "other".
+    # The report its author kept on each disagreement, by the disagreement's id: "lean" or "other".
     choices: Mapping = field(default_factory=dict)
     # Whether the draft page shows disagreement cards, so a warning card can hold export (config/drafts.toml).
     cards_on_drafts: bool = False
@@ -65,13 +65,19 @@ def ratings(draft: Draft) -> Held | None:
     return ppsd_rows.missing(draft, "ratings")
 
 
+def disagreement_key(found: Mapping) -> str:
+    """The id a disagreement check 6 attached is kept by (strata.gold.disagreement's disagreement_id), which the card's
+    choices are recorded under (ticket 23's strata.ops.disagreement_choices) and the card's anchor names."""
+    return found.get("disagreement_id") or str(found["id"]).rsplit(":", 1)[-1]
+
+
 def disagreements(draft: Draft) -> Held | None:
-    """A warning disagreement card on the draft with no report kept yet. A warning card ("Two reports disagree")
-    changes a claim the draft makes; an info card changes nothing and holds nothing. Until the draft page shows
-    cards (ticket 23's card and keep form; cards_on_drafts in config/drafts.toml), no card renders and nothing
-    holds, as the 35 brief set."""
+    """A warning disagreement card on the draft whose author has kept neither report yet. A warning card ("Two
+    reports disagree") changes a claim the draft makes; an info card changes nothing and holds nothing. Keeping
+    either report on the card (ticket 23's keep action, with the draft's id) resolves it. With cards_on_drafts off
+    in config/drafts.toml, no card renders and nothing holds, as the 35 brief set."""
     if not draft.cards_on_drafts:
         return None
-    open_cards = [found["id"] for found in draft.content.get("disagreements") or ()
-                  if found.get("changes_answer") and found["id"] not in draft.choices]
+    open_cards = [disagreement_key(found) for found in draft.content.get("disagreements") or ()
+                  if found.get("changes_answer") and disagreement_key(found) not in draft.choices]
     return Held(len(open_cards), f"disagreement-{open_cards[0]}") if open_cards else None

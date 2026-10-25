@@ -136,7 +136,8 @@ copy = "disagreements"
 capability = "export"
 
 # Whether a draft's page shows the disagreement cards check 6 attaches, so a warning card holds export until its
-# author keeps one report. Ticket 23's card and keep form turn it on; until then no card renders and the
-# disagreements hold holds nothing (the 35 brief, 6.6). Only warning cards hold; an info card changes nothing.
+# author keeps one report with the card's keep action (ticket 23's, recorded in strata.ops.disagreement_choices with
+# the draft's id). Set false, no card renders and the disagreements hold holds nothing (the 35 brief, 6.6). Only
+# warning cards hold; an info card changes nothing.
 [disagreements]
-cards_on_drafts = false
+cards_on_drafts = true

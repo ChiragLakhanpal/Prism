@@ -27,6 +27,8 @@ import { copy } from "../copy";
 import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
 import { changed, changeList } from "../lib/changes";
 import { draftHref, newKey, startWriting, stopped, writingHref, type Existing, type ExistingDraft } from "../lib/drafts";
+import { ProjectPaperPanel } from "../components/ProjectPaperPanel";
+import { PROJECT_PAPER_STOPPED } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
@@ -390,6 +392,20 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             ) : undefined
           }
         />
+        {/* "Drafts from this check" (ticket 36): the Project Paper summary, at the end of the page. */}
+        <div className="mt-8">
+          <ProjectPaperPanel
+            plan={{
+              project_id: checked.plan.project_id,
+              project_name: checked.project.display_name ?? checked.project.project_name,
+              agency_id: checked.plan.agency_id,
+              implementing_agency: checked.plan.implementing_agency,
+              plan_date: checked.plan.plan_date,
+            }}
+            preview={preview}
+            asOf={asOf !== null}
+          />
+        </div>
       </>
     );
   } else {
@@ -508,7 +524,11 @@ function DraftNotices({ existing }: { existing: ExistingDraft | null }) {
   useEffect(() => stopped.set(null), []);
   const action = copy.checkPlan.draftAction;
   const notices: ReactNode[] = [];
-  if (stoppedHere) notices.push(<Alert key="stopped" state="info" live="status">{action.stopped}</Alert>);
+  if (stoppedHere) {
+    // Stop writing on the Project Paper summary (ticket 36) marks its way back with the kind.
+    const said = stoppedHere.endsWith(PROJECT_PAPER_STOPPED) ? copy.checkPlan.ppAction.stopped : action.stopped;
+    notices.push(<Alert key="stopped" state="info" live="status">{said}</Alert>);
+  }
   if (existing) {
     const date = formatDate(existing.created_at.slice(0, 10));
     notices.push(

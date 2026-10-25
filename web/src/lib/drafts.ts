@@ -1,7 +1,7 @@
 // Drafts in the browser (ticket 35): the shapes the draft routes answer with (src/strata/server/drafts.py),
 // the acts a draft's author takes, the writing stream, and what one page hands the next. Every count a
 // draft screen states comes from the server; nothing here counts sources, notes or citations.
-import type { ChecksEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
+import type { ChecksEvent, DisagreementEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
 import { ApiError, postJson, putJson } from "./api";
 import type { Activity, CheckPlanResult } from "./api";
 import { streamEvents, StreamError } from "./sse";
@@ -171,7 +171,7 @@ export type Draft = {
   ppsd?: PpsdView;
   footnotes?: Footnote[];
   summary?: SummaryView;
-  disagreements?: { id: string; changes_answer: boolean }[];
+  disagreements?: DisagreementEvent[];
   choices?: { disagreement_id: string; kept: "lean" | "other"; reason: string | null; at: string | null; by: string | null }[];
   // A state made up for layout only (tests/record_ppsd_api.py), never a finding.
   made_up?: string;
@@ -336,6 +336,9 @@ export const writing = createStore<Writing | null>(null);
 export const preloaded = createStore<Record<string, Draft>>({});
 // Check a plan's notice after "Stop writing", shown once.
 export const stopped = createStore<string | null>(null);
+// What the Project Paper summary's Stop writing adds to the plan check's address in that store, so the check's
+// notice names the summary (ticket 36).
+export const PROJECT_PAPER_STOPPED = "#project_paper";
 // The project a draft page is about, for the box's scope chip (App.tsx).
 export const draftScope = createStore<string | null>(null);
 
