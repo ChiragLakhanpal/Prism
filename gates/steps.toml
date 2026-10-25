@@ -97,11 +97,11 @@ lane = "sql"
 # folder, so neither lane serves files that the other lane is rebuilding. Each run starts workers
 # for a third of the processors, five on a 16-processor computer, so the browsers leave a third of
 # the processors to the other lanes; with half each, they starved the fixture build, and the gate
-# was no faster. The tests cost about 420 processor-seconds in all. Each half takes about 35 seconds
-# alone and about 55 to 62 beside the other lanes. Most of that time goes to opening a fresh page for
-# each test, loading the app into it, and the axe scans. So every spec scans through web/tests/axe.ts,
-# which costs about half of axe's default run, the gallery opens each page once for all the checks
-# of one width, and the tests ask vite preview for plain files instead of gzipped ones
+# was no faster. The tests cost about half of the gate's processor time. Each half takes about 35
+# seconds alone and 53 to 68 beside the other lanes. Most of that time goes to opening a fresh page
+# for each test, loading the app into it, and the axe scans. So every spec scans through
+# web/tests/axe.ts, which costs about half of axe's default run, the gallery opens each page once
+# for all the checks of one width, and the tests ask vite preview for plain files instead of gzipped ones
 # (web/playwright.config.ts). When a lane gets slow again, run the step's npm command with
 # `-- --reporter=json` and add up each spec file's durations, then look for tests that load the same
 # page in the same state at the same width, and check that view once. A third lane needs a third
