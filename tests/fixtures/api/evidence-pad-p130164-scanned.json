@@ -50,5 +50,91 @@
     "header": "PAD, P130164, India, roads, III.A, ¶23, p.20",
     "text": "23. Component A: Rural Connectivity Improvement (USD 197 million, including IDA credit USD 138 million; civil works): This component would support construction of about 2500 km rural roads to provide connectivity to about 1,300 revenue villages with population between 250 and 499 people in the areas of the state not covered by PMGSY and introduce good practices of cost effective low volume technologies. The roads will predominantly be built to a bitumen surface standard and will include all necessary bridges and cross drainage works to maintain year round connectivity. Contracts for civil works worth US$ 51 million have been already awarded, bids worth US$ 21 million is finalized for award, and contracts worth US$ 59 million are expected to be awarded soon."
   },
-  "highlights": []
+  "highlights": [],
+  "why": {
+    "reference": "1516228",
+    "record_noun": "contract",
+    "signed_on": "2013-05-31",
+    "href": null,
+    "step_reference": null,
+    "topics": [
+      {
+        "kind": "category",
+        "code": "Works"
+      },
+      {
+        "kind": "sector",
+        "code": "TI",
+        "name": "Rural and Inter-Urban Roads"
+      }
+    ],
+    "project_id": "P130164",
+    "project_state": "closed",
+    "document": {
+      "type": "Project Appraisal Document",
+      "short_name": "PAD",
+      "date": "2013-10-01"
+    },
+    "months": 4,
+    "direction": "after",
+    "components": [
+      {
+        "part": "project",
+        "matched": "P130164",
+        "points": "0.10"
+      },
+      {
+        "part": "sector",
+        "matched": "Rural and Inter-Urban Roads",
+        "points": "0.10"
+      },
+      {
+        "part": "time",
+        "matched": 4,
+        "points": "0.19"
+      },
+      {
+        "part": "text",
+        "matched": [
+          "construction",
+          "roads",
+          "connectivity",
+          "works",
+          "year"
+        ],
+        "points": "0.11"
+      },
+      {
+        "part": "mentions",
+        "matched": [
+          "civil works"
+        ],
+        "points": "0.20"
+      }
+    ],
+    "score": "0.70",
+    "threshold": "0.50",
+    "mentions": [
+      {
+        "kind": "category",
+        "code": "Works",
+        "text": "civil works",
+        "start": 104,
+        "end": 115
+      }
+    ],
+    "activity_href": null,
+    "others": [
+      {
+        "reference": "IN-RRSMP-7431-CW-RFB",
+        "record_noun": "award notice",
+        "signed_on": "2017-06-15",
+        "href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+        "step_reference": "IN-RRSMP-7431-CW-RFB"
+      }
+    ],
+    "others_count": 1,
+    "others_more": 0,
+    "connections_href": "/projects/P130164/connections"
+  }
 }

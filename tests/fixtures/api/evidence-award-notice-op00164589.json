@@ -1,0 +1,61 @@
+{
+  "id": "strata.gold.notice:OP00164589",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP00164589",
+    "notice_id": "OP00164589",
+    "record_kind": "award_notice",
+    "fields": [
+      {
+        "key": "notice_type",
+        "value": "Contract Award",
+        "kind": "text"
+      },
+      {
+        "key": "published",
+        "value": "2022-02-02",
+        "kind": "date"
+      },
+      {
+        "key": "bid_reference",
+        "value": "KE-NWWDA-229129-CW-RFB",
+        "kind": "text"
+      },
+      {
+        "key": "procurement_method",
+        "value": "Request for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "contract_signature_date",
+        "value": "2022-01-03",
+        "kind": "date"
+      },
+      {
+        "key": "signed_contract_price",
+        "value": "KES 61503269.60",
+        "kind": "text"
+      },
+      {
+        "key": "bid_description",
+        "value": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
+        "kind": "text"
+      }
+    ],
+    "public_from": "2022-02-02",
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+    "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00164589",
+    "source": {
+      "source_key": "award_notices",
+      "document_type": "Contract Award",
+      "project_id": "P156634",
+      "document_date": "2022-02-02"
+    }
+  },
+  "highlights": []
+}

@@ -131,8 +131,8 @@ from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
 from strata.server import feedback as feedback_routes
-from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
-                           tracing)
+from strata.server import (baseline, changes, documents, edges, engines, evidence, lookup, projects, summary,
+                           suppliers, tracing, trail)
 from strata.server import packages as package_routes
 from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
@@ -470,6 +470,21 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return read_for(f"the packages of {project_id}", viewer,
                         lambda engine: projects.packages(engine, project_id, as_of_for(asof), q.strip(), page, page_size))
 
+    @app.get("/api/projects/{project_id}/packages/{step_reference}")
+    def activity(project_id: str, step_reference: str, asof: dt.date | None = None,
+                 viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = trail.activity_trail(engine, project_id, step_reference, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_activity"}, status_code=404)
+        return read_for(f"the trail of {step_reference}", viewer, read)
+
+    @app.get("/api/projects/{project_id}/connections")
+    def connections(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = edges.neighbourhood(engine, project_id, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the connections of {project_id}", viewer, read)
+
     @app.get("/api/projects/{project_id}/documents")
     def project_documents(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
         def read(engine: Engine):
@@ -593,13 +608,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/evidence")
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
-                      view: Literal["staff", "piu", "public"] = STAFF, viewer: Viewer = Depends(current_viewer)):
+                      view: Literal["staff", "piu", "public"] = STAFF,
+                      step_ref: str | None = Query(None, max_length=128), viewer: Viewer = Depends(current_viewer)):
         # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
         if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
 
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of_for(asof))
+            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 

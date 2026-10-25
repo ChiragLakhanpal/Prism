@@ -1,0 +1,1504 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "scored_date": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "display_name": "Rajasthan Road Sector Modernization"
+  },
+  "packages": [
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "description": "Construction and Maintenance of Civil works in Bundi District under Cost Effective Technology (Package No. RJ-09-WB-RRSMP-CET-01)",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2017-06-15",
+      "date": "2017-06-15",
+      "href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:27490469/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27243340/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27853466/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/27"
+        },
+        {
+          "evidence_id": "strata.gold.passage:29794672/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:30730274/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:24589049/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:25814564/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/s69/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/18"
+        },
+        {
+          "evidence_id": "strata.gold.passage:23868309/v1/s5"
+        },
+        {
+          "evidence_id": "strata.gold.passage:30730274/v1/s6/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/23"
+        },
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/annex2.2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:19901331/v1/s3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/46"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27490469/v1/s8/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27853466/v1/s8/1"
+        }
+      ]
+    },
+    {
+      "step_reference": "IN-RRSMP-49210-CS-QCBS",
+      "description": "Consultancy Services to Develop and Implement a Sustainable Road Asset Management System, System Providing Consultant (SPC) in Rajasthan PWD (Package No. CF/RRSMP/16)",
+      "process_status": null,
+      "contracts": 0,
+      "first_signed_on": null,
+      "date": null,
+      "href": "/projects/P130164/packages/IN-RRSMP-49210-CS-QCBS",
+      "linked": []
+    },
+    {
+      "step_reference": "IN-RRSMP-6270-CS-QCBS",
+      "description": "Consultancy Services for Development of Sustainable Road Asset Management System (SPC)",
+      "process_status": null,
+      "contracts": 0,
+      "first_signed_on": null,
+      "date": null,
+      "href": "/projects/P130164/packages/IN-RRSMP-6270-CS-QCBS",
+      "linked": []
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "18381488",
+      "doc_key": "pad-2013-10-01",
+      "type": "pad",
+      "document_type": "Project Appraisal Document",
+      "document_date": "2013-10-01",
+      "short_name": "PAD",
+      "sequence": null,
+      "agency": null,
+      "href": "/projects/P130164/documents/pad-2013-10-01",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/23",
+          "passage_id": "18381488/v1/23",
+          "paragraph": "23",
+          "paragraph_numbered": true,
+          "section_path": "III.A",
+          "pdf_page": 20,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/annex2.2",
+          "passage_id": "18381488/v1/annex2.2",
+          "paragraph": "2",
+          "paragraph_numbered": true,
+          "section_path": "Annex 2",
+          "pdf_page": 37,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:18381488/v1/46",
+          "passage_id": "18381488/v1/46",
+          "paragraph": "46",
+          "paragraph_numbered": true,
+          "section_path": "IV.C",
+          "pdf_page": 25,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 9
+    },
+    {
+      "document_id": "19095337",
+      "doc_key": "isr-2014-02-22",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2014-02-22",
+      "short_name": "ISR",
+      "sequence": 1,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2014-02-22",
+      "chips": [],
+      "more_chips": 0
+    },
+    {
+      "document_id": "19901331",
+      "doc_key": "isr-2014-07-30",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2014-07-30",
+      "short_name": "ISR",
+      "sequence": 2,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2014-07-30",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:19901331/v1/s3",
+          "passage_id": "19901331/v1/s3",
+          "paragraph": "s3",
+          "paragraph_numbered": false,
+          "section_path": "Overall Ratings",
+          "pdf_page": 1,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "23868309",
+      "doc_key": "isr-2015-01-23",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2015-01-23",
+      "short_name": "ISR",
+      "sequence": 3,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2015-01-23",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:23868309/v1/s5",
+          "passage_id": "23868309/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "24589049",
+      "doc_key": "isr-2015-06-04",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2015-06-04",
+      "short_name": "ISR",
+      "sequence": 4,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2015-06-04",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:24589049/v1/s5",
+          "passage_id": "24589049/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "25481343",
+      "doc_key": "isr-2015-11-20",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2015-11-20",
+      "short_name": "ISR",
+      "sequence": 5,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2015-11-20",
+      "chips": [],
+      "more_chips": 0
+    },
+    {
+      "document_id": "25814564",
+      "doc_key": "isr-2016-01-21",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2016-01-21",
+      "short_name": "ISR",
+      "sequence": 6,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2016-01-21",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:25814564/v1/s5",
+          "passage_id": "25814564/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "26733307",
+      "doc_key": "isr-2016-08-26",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2016-08-26",
+      "short_name": "ISR",
+      "sequence": 7,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2016-08-26",
+      "chips": [],
+      "more_chips": 0
+    },
+    {
+      "document_id": "27243340",
+      "doc_key": "isr-2017-03-05",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2017-03-05",
+      "short_name": "ISR",
+      "sequence": 8,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2017-03-05",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:27243340/v1/s5",
+          "passage_id": "27243340/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "27490469",
+      "doc_key": "isr-2017-05-23",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2017-05-23",
+      "short_name": "ISR",
+      "sequence": 9,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2017-05-23",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:27490469/v1/s5",
+          "passage_id": "27490469/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:27490469/v1/s8/1",
+          "passage_id": "27490469/v1/s8/1",
+          "paragraph": "s8",
+          "paragraph_numbered": false,
+          "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "27853466",
+      "doc_key": "isr-2017-07-26",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2017-07-26",
+      "short_name": "ISR",
+      "sequence": 10,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2017-07-26",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:27853466/v1/s5",
+          "passage_id": "27853466/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:27853466/v1/s8/1",
+          "passage_id": "27853466/v1/s8/1",
+          "paragraph": "s8",
+          "paragraph_numbered": false,
+          "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "29280184",
+      "doc_key": "isr-2017-12-18",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2017-12-18",
+      "short_name": "ISR",
+      "sequence": 11,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2017-12-18",
+      "chips": [],
+      "more_chips": 0
+    },
+    {
+      "document_id": "29794672",
+      "doc_key": "isr-2018-04-10",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2018-04-10",
+      "short_name": "ISR",
+      "sequence": 12,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2018-04-10",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:29794672/v1/s5",
+          "passage_id": "29794672/v1/s5",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "30730274",
+      "doc_key": "isr-2018-12-28",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2018-12-28",
+      "short_name": "ISR",
+      "sequence": 13,
+      "agency": null,
+      "href": "/projects/P130164/documents/isr-2018-12-28",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:30730274/v1/s4",
+          "passage_id": "30730274/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:30730274/v1/s6/1",
+          "passage_id": "30730274/v1/s6/1",
+          "paragraph": "s6",
+          "paragraph_numbered": false,
+          "section_path": "Results",
+          "pdf_page": 2,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "31525018",
+      "doc_key": "icr-2019-10-10",
+      "type": "icr",
+      "document_type": "Implementation Completion and Results Report",
+      "document_date": "2019-10-10",
+      "short_name": "ICR",
+      "sequence": null,
+      "agency": null,
+      "href": "/projects/P130164/documents/icr-2019-10-10",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/27",
+          "passage_id": "31525018/v1/27",
+          "paragraph": "27",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 16,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/s69/1",
+          "passage_id": "31525018/v1/s69/1",
+          "paragraph": "s69",
+          "paragraph_numbered": false,
+          "section_path": "Annex 8",
+          "pdf_page": 64,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/18",
+          "passage_id": "31525018/v1/18",
+          "paragraph": "18",
+          "paragraph_numbered": true,
+          "section_path": "I.B",
+          "pdf_page": 14,
+          "label_extra": null,
+          "packages": [
+            "IN-RRSMP-7431-CW-RFB"
+          ],
+          "package_count": 1
+        }
+      ],
+      "more_chips": 26
+    },
+    {
+      "document_id": "34056616",
+      "doc_key": "icr-review-2023-05-04",
+      "type": "icr_review",
+      "document_type": "Implementation Completion Report Review",
+      "document_date": "2023-05-04",
+      "short_name": "ICR Review",
+      "sequence": null,
+      "agency": null,
+      "href": "/projects/P130164/documents/icr-review-2023-05-04",
+      "chips": [],
+      "more_chips": 0
+    }
+  ],
+  "edges": [
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:27490469/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:27243340/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:27853466/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:31525018/v1/27"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:29794672/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:30730274/v1/s4"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:24589049/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:25814564/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:31525018/v1/s69/1"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:31525018/v1/18"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:23868309/v1/s5"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:30730274/v1/s6/1"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:18381488/v1/23"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:18381488/v1/annex2.2"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:19901331/v1/s3"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:18381488/v1/46"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:27490469/v1/s8/1"
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.gold.passage:27853466/v1/s8/1"
+    }
+  ],
+  "more": [
+    {
+      "kind": "plans",
+      "count": 15,
+      "unread": 15
+    },
+    {
+      "kind": "documents",
+      "count": 30,
+      "unread": 30
+    }
+  ],
+  "lines": [
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "18381488",
+      "evidence_id": "strata.gold.passage:18381488/v1/23",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "19901331",
+      "evidence_id": "strata.gold.passage:19901331/v1/s3",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "23868309",
+      "evidence_id": "strata.gold.passage:23868309/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "24589049",
+      "evidence_id": "strata.gold.passage:24589049/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "25814564",
+      "evidence_id": "strata.gold.passage:25814564/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27243340",
+      "evidence_id": "strata.gold.passage:27243340/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27490469",
+      "evidence_id": "strata.gold.passage:27490469/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27853466",
+      "evidence_id": "strata.gold.passage:27853466/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "29794672",
+      "evidence_id": "strata.gold.passage:29794672/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "30730274",
+      "evidence_id": "strata.gold.passage:30730274/v1/s4",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "31525018",
+      "evidence_id": "strata.gold.passage:31525018/v1/27",
+      "at_rest": true
+    }
+  ],
+  "lines_hint": false,
+  "finding": {
+    "contracts": 7,
+    "paragraphs": 89,
+    "documents": 12,
+    "contract_items": [
+      "1536431",
+      "1516228",
+      "1529534",
+      "1536936",
+      "OP00044090",
+      "1535708",
+      "1508157"
+    ],
+    "paragraph_items": [
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "9",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "46",
+        "paragraph_numbered": true,
+        "section_path": "IV.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s68",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8.III"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "23",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "2",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2016-01-21",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "70",
+        "paragraph_numbered": true,
+        "section_path": "VI.F"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "63",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "1",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-05-23",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "32",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "VI.D"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s15",
+        "paragraph_numbered": false,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "8",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-03-05",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "III.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "37",
+        "paragraph_numbered": true,
+        "section_path": "IV.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "73",
+        "paragraph_numbered": true,
+        "section_path": "VI.F"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "7",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "3",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "68",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "20",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-03-05",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "21",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "41",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s27",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-05-23",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s58",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "60",
+        "paragraph_numbered": true,
+        "section_path": "VI.D"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "34",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "12",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s25",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s34",
+        "paragraph_numbered": false,
+        "section_path": "Annex 6.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s62",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8.II"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-07-26",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-07-26",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "8",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2018-04-10",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2018-12-28",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "52",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s39",
+        "paragraph_numbered": false,
+        "section_path": "Annex 6.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "25",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s26",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-01-23",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "10",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2014-07-30",
+        "paragraph": "s3",
+        "paragraph_numbered": false,
+        "section_path": "Overall Ratings"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-06-04",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2016-01-21",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s69",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "18",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "58",
+        "paragraph_numbered": true,
+        "section_path": "III.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "9",
+        "paragraph_numbered": true,
+        "section_path": "Annex 4"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2018-12-28",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "I.A"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "4",
+        "paragraph_numbered": true,
+        "section_path": "4"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "33",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "43",
+        "paragraph_numbered": true,
+        "section_path": "II.C"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "77",
+        "paragraph_numbered": true,
+        "section_path": "IV.C"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "1",
+        "paragraph_numbered": true,
+        "section_path": "Annex 4"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "7",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s51",
+        "paragraph_numbered": false,
+        "section_path": "Annex 4"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s64",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "I.A"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "2.d",
+        "paragraph_numbered": true,
+        "section_path": "2"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "11",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "15",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "17",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "26",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "28",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "45",
+        "paragraph_numbered": true,
+        "section_path": "II.D"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "56",
+        "paragraph_numbered": true,
+        "section_path": "III.B"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "74",
+        "paragraph_numbered": true,
+        "section_path": "IV.C"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "3",
+        "paragraph_numbered": true,
+        "section_path": "Annex 4"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "1",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s42",
+        "paragraph_numbered": false,
+        "section_path": "Annex 1.I"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "s61",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "5"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "10.a",
+        "paragraph_numbered": true,
+        "section_path": "10"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "54",
+        "paragraph_numbered": true,
+        "section_path": "III.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "Annex 6.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8.II.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "24",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "3",
+        "paragraph_numbered": true,
+        "section_path": "3"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "7",
+        "paragraph_numbered": true,
+        "section_path": "7"
+      }
+    ],
+    "document_items": [
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2016-01-21"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-05-23"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-03-05"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-07-26"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2018-04-10"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2018-12-28"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-01-23"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2014-07-30"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-06-04"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04"
+      }
+    ]
+  },
+  "shown": 19,
+  "total": 64,
+  "threshold": "0.50",
+  "coverage": {
+    "read": 16,
+    "total": 61,
+    "source_key": "documents"
+  }
+}

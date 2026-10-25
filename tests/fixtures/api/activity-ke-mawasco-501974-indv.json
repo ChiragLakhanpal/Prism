@@ -1,0 +1,163 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "activity": {
+    "step_reference": "KE-MAWASCO-501974-CS-INDV",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "description": "Hiring of Waste Water Sanitation Engineer",
+    "method": "Individual Consultant Selection",
+    "consultants": true,
+    "implementing_agency": null,
+    "href": "/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "signed",
+        "date": "2025-09-12",
+        "amount": "22317.34",
+        "currency": "USD",
+        "evidence_id": "strata.gold.contract:1862687",
+        "reference": "1862687",
+        "record_noun": "contract"
+      }
+    ],
+    "no_estimate": false,
+    "missing": "notice",
+    "bids": [],
+    "many_contracts": false,
+    "paragraphs": 1
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": false,
+      "joined_on": "key",
+      "reason": "not_read",
+      "records": []
+    },
+    {
+      "stage": "notice",
+      "found": false,
+      "joined_on": "key",
+      "reason": "none_found",
+      "records": [],
+      "method": "Individual Consultant Selection",
+      "market_approach": null
+    },
+    {
+      "stage": "bids",
+      "found": false,
+      "joined_on": "key",
+      "reason": "individual_consultant",
+      "records": []
+    },
+    {
+      "stage": "contract",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.contract:1862687",
+          "public_from": "2025-09-12",
+          "contract_id": "1862687",
+          "contract_reference": "1862687",
+          "step_reference": "KE-MAWASCO-501974-CS-INDV",
+          "signed_on": "2025-09-12",
+          "amount": "22317.34",
+          "currency": "USD",
+          "from_notice": false,
+          "record_noun": "contract",
+          "award_notice_id": null,
+          "description": "Hiring of Waste water Sanitation Engineer",
+          "supplier": {
+            "name": null,
+            "country": "Kenya",
+            "is_individual_consultant": true,
+            "is_joint_venture": false,
+            "members": []
+          },
+          "source": {
+            "source_key": "awards",
+            "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": null,
+            "document_type": "Contract award",
+            "project_id": "P156634",
+            "document_date": "2025-09-12"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "paragraphs",
+      "found": true,
+      "reason": null,
+      "joined_on": "together",
+      "records": [
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:31451672/v1/s4",
+          "public_from": "2019-10-02",
+          "passage_id": "31451672/v1/s4",
+          "contract_evidence_id": "strata.gold.contract:1862687",
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-02",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "printed_page": "1 of 7",
+          "doc_key": "isr-2019-10-02",
+          "language": "en",
+          "text": "Overall project implementation progress has been slow. However, efforts are been made to expedite implementation. In anticipation of receiving the funds, the counties and their water service providers (WSPs) have completed most of their preparatory activities—including establishment of Project Coordination Units (PCUs), opening of project accounts, and preparation of procurement plans. Adequate funds have been allocated in the Ministry of Water and Sanitation (MoWS) budget for financial year 2019/2020 for both the national and county-level implementing agencies (IAs) benefiting from components 1 and 2. In addition, the IAs have made good progress towards building a pipeline of implementable activities. Many have ready detailed designs and bidding documents for immediate interventions, although the pace of procurement has been slow owing to the uncertainty around the funds flow. Moreover, twelve IAs have initiated procurement of works, consultancy services, goods and non-consultancy services and some have awarded contracts (although no contracts can be signed until the funds expected under the project have been transferred to the WSPs). In addition, all the IAs have made good progress in the procurement of consulting firms to undertake design review and supervision of the immediate works contracts, and to prepare detailed designs for any additional identified medium and long-term interventions. IAs have received significant capacity building and training in financial management, procurement, and safeguards to ensure that once they receive funds, they can implement activities effectively. The MoWS is in an advanced stage of procuring the services of a consulting firm that will provide practical and regular technical assistance on procurement, engineering, safeguards, financial management, and monitoring, evaluation and performance assessment to ensure successful implementation of the project. This contract is expected to be signed soon. In addition, the County Participation Agreements (CPAs) and the Water Service Provider (WSP) Agreements were signed in June 2019, allowing disbursement to counties. Once the funds have been disbursed, implementation is expected to accelerate.",
+          "highlights": [
+            [
+              949,
+              969
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Consultant Services"
+            },
+            {
+              "kind": "sector",
+              "code": "WC",
+              "name": "Water Supply"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P156634",
+            "document_date": "2019-10-02",
+            "pdf_page": 1
+          },
+          "contract_reference": "1862687"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2019-10-02",
+          "count": 1,
+          "shown": 1
+        }
+      ],
+      "threshold": "0.50"
+    }
+  ]
+}
