@@ -359,6 +359,8 @@
     ],
     "count": 1,
     "recorded": 3,
+    "ruled_out": 0,
+    "unrecorded": 46,
     "n": 49,
     "review_type": null
   },
@@ -797,6 +799,8 @@
       ],
       "count": 1,
       "recorded": 3,
+      "ruled_out": 0,
+      "unrecorded": 46,
       "n": 49,
       "review_type": null
     },

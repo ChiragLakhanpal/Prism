@@ -517,7 +517,17 @@ export type EstimateResult = {
   test_years: TestYear[];
   plan_dates: { middle: PlanDatePoint; eight_in_ten: PlanDatePoint; default: PlanDateChoice } | null;
   comparisons: Comparison[];
-  options: { approaches: Approach[]; count: number; recorded: number; n: number; review_type: string | null } | null;
+  // Section 4's counts, each the tool's: those whose records give the whole approach, those of them the thresholds
+  // rule out for this package, and those whose records don't give it.
+  options: {
+    approaches: Approach[];
+    count: number;
+    recorded: number;
+    ruled_out: number;
+    unrecorded: number;
+    n: number;
+    review_type: string | null;
+  } | null;
   axis_max_months: number | null;
   thresholds: { min_comparables: number; min_subgroup: number; min_unseen_packages: number };
   sources: { key: string; dataset_name: string }[];

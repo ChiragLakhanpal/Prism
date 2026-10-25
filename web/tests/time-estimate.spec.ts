@@ -82,6 +82,8 @@ function addOptions(body: Json, rows: string[]) {
     ],
     count: 3,
     recorded: 43,
+    ruled_out: 0,
+    unrecorded: 5,
     n,
     review_type: "Post",
   };
@@ -275,6 +277,62 @@ test("section 4 opens on demand to at most three approaches, each counted out of
   expect(n).toBe(lane1);
   await expect(options).toContainText("Review type stays Post for every approach");
   await expect(options).not.toContainText(/\b(caused|split|splitting)\b/i);
+  // The count of those that record no whole approach is the tool's, not worked out in the browser.
+  await expect(options).toContainText(`Five of the ${n} comparable packages don't record their market approach, lots and qualification`);
+  await expect(options).not.toContainText("the thresholds rule out");
+});
+
+test("section 4 says when the thresholds rule out the whole approaches comparable packages recorded, never that none recorded one", async ({ page }) => {
+  // Ana's rural roads package, about US$15 million: the three comparable packages that record their whole approach
+  // went national, which the thresholds rule out for a Kenya works package that large (its recorded answer).
+  const planned = (await json("estimate-planned-rural-roads.json")).options;
+  expect([planned.approaches.length, planned.recorded, planned.ruled_out]).toEqual([0, 3, 3]);
+  const { answer } = await derivedEstimate((body) => {
+    body.options = planned;
+  });
+  await openWorkspace(page, { estimate: answer });
+  const options = page.locator("[data-approach-options]");
+  await expect(options).toContainText(
+    "The three comparable packages that record their market approach, lots and qualification went with approaches the thresholds rule out for this package, so I can't list approach options.",
+  );
+  await expect(options).not.toContainText("None of the");
+});
+
+test("with one approach left, section 4 counts the comparable packages whose approach the thresholds rule out apart from those that record none", async ({ page }) => {
+  const { answer, body } = await derivedEstimate((body, rows) => {
+    const n = body.comparables.n;
+    body.options = {
+      approaches: [{ market_approach: "Open - National", lots: 1, prequalification: "N", k: 2, matching_ids: rows.slice(0, 2), is_as_described: true, estimate: plus(body.estimate, 0), abstention: null }],
+      count: 1,
+      recorded: 3,
+      ruled_out: 1,
+      unrecorded: n - 3,
+      n,
+      review_type: "Post",
+    };
+  });
+  await openWorkspace(page, { estimate: answer });
+  const options = page.locator("[data-approach-options]");
+  await expect(options).toContainText(
+    `Two of the ${body.comparables.n} comparable packages went with open national, 1 lot, post-qualification. One went with an approach the thresholds rule out for this package, so I have no other approach to compare.`,
+  );
+  await expect(options).not.toContainText("The rest don't record");
+});
+
+test("with approaches to list, section 4 names those the thresholds allow and counts the comparable packages that went with one they rule out", async ({ page }) => {
+  const { answer, body } = await derivedEstimate((body, rows) => {
+    addOptions(body, rows);
+    Object.assign(body.options, { recorded: 45, ruled_out: 2, unrecorded: 3 });
+  });
+  await openWorkspace(page, { estimate: answer });
+  const options = page.locator("[data-approach-options]");
+  const n = body.comparables.n;
+  await expect(options).toContainText(
+    `Comparable packages went with three approaches the thresholds allow for this package. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`,
+  );
+  await options.getByRole("button", { name: "Show the options" }).click();
+  await expect(options).toContainText(`Two of the ${n} comparable packages went with approaches the thresholds rule out for this package, so I left those approaches out.`);
+  await expect(options).toContainText(`Three of the ${n} comparable packages don't record their market approach, lots and qualification`);
 });
 
 test("with fewer than 20 comparable packages lane 2 says so in the first person, with no bar, no comparison and no plan dates", async ({ page }) => {

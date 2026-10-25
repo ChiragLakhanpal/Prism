@@ -99,6 +99,8 @@
     "approaches": [],
     "count": 0,
     "recorded": 3,
+    "ruled_out": 3,
+    "unrecorded": 46,
     "n": 49,
     "review_type": "Prior"
   },
@@ -488,6 +490,8 @@
       "approaches": [],
       "count": 0,
       "recorded": 3,
+      "ruled_out": 3,
+      "unrecorded": 46,
       "n": 49,
       "review_type": "Prior"
     },

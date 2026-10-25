@@ -3229,15 +3229,32 @@ export const copy = {
     number: "4 ·",
     heading: "Procurement approach options",
     summary: "Comparable packages went with {count} approaches. The most common was {option1}, with {k1} of {n}.",
+    summaryAllowed:
+      "Comparable packages went with {count} approaches the thresholds allow for this package. The most common was {option1}, with {k1} of {n}.",
     summaryOne: "All {n} comparable packages went with {option1}, so I have no other approach to compare.",
     summaryOneRecorded:
       "{k1} of the {n} comparable packages went with {option1}. The rest don't record their whole approach, so I have no other approach to compare.",
+    summaryOneRuledOut: (ruled: number) =>
+      ruled === 1
+        ? "{k1} of the {n} comparable packages went with {option1}. {ruled} went with an approach the thresholds rule out for this package, so I have no other approach to compare."
+        : "{k1} of the {n} comparable packages went with {option1}. {ruled} went with approaches the thresholds rule out for this package, so I have no other approach to compare.",
     summaryNone: "None of the {n} comparable packages records its market approach, lots and qualification, so I can't list approach options.",
+    summaryRuledOut: (ruled: number) =>
+      ruled === 1
+        ? "The one comparable package that records its market approach, lots and qualification went with an approach the thresholds rule out for this package, so I can't list approach options."
+        : "The {ruled} comparable packages that record their market approach, lots and qualification went with approaches the thresholds rule out for this package, so I can't list approach options.",
     show: "Show the options",
     hide: "Hide the options",
     title: "{k1} of the {n} comparable packages went with {option1}, the most common approach.",
     count: (count: string) => `Showing ${count} approaches, the most common first.`,
-    unrecorded: "{rest} of the {n} comparable packages don't record their market approach, lots and qualification, so I can't say which approach they went with.",
+    unrecorded: (rest: number) =>
+      rest === 1
+        ? "{rest} of the {n} comparable packages doesn't record its market approach, lots and qualification, so I can't say which approach it went with."
+        : "{rest} of the {n} comparable packages don't record their market approach, lots and qualification, so I can't say which approach they went with.",
+    ruledOut: (ruled: number) =>
+      ruled === 1
+        ? "{ruled} of the {n} comparable packages went with an approach the thresholds rule out for this package, so I left that approach out."
+        : "{ruled} of the {n} comparable packages went with approaches the thresholds rule out for this package, so I left those approaches out.",
     columns: {
       approach: "Approach",
       wentWith: "Went with it",

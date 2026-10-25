@@ -291,6 +291,8 @@
     ],
     "count": 1,
     "recorded": 2,
+    "ruled_out": 0,
+    "unrecorded": 46,
     "n": 48,
     "review_type": "Post"
   },
@@ -784,6 +786,8 @@
       ],
       "count": 1,
       "recorded": 2,
+      "ruled_out": 0,
+      "unrecorded": 46,
       "n": 48,
       "review_type": "Post"
     },

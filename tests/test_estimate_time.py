@@ -284,6 +284,30 @@ def test_a_market_approach_the_thresholds_rule_out_for_the_package_is_never_offe
     assert all(approach["market_approach"] != "Open - National" for approach in ruled_out["options"]["approaches"])
 
 
+def test_section_4_counts_the_whole_approaches_the_thresholds_rule_out_apart_from_those_never_recorded(engine):
+    """Ana's rural roads package, about US$15 million in Kenya, as her sentence describes it (the package planned in
+    tests/record_estimate_api.py). Three of its 49 comparable packages record their market approach, lots and
+    qualification, all three Open - National, which the thresholds send to international bidding for a Kenya works
+    package that large. Section 4 lists no approach, and the tool counts why: three ruled out, and the other 46
+    record no whole approach, so the screen never says that none records one and never works out a count itself."""
+    result = planned(engine, described_amount_usd=15_000_000, described_market_approach="Open - International",
+                     described_review_type="Prior", described_prequalification="N", described_lots=2)
+
+    options = result["options"]
+    assert options["approaches"] == [] and options["count"] == 0
+    assert options["n"] == TRUTH["past_range"]["comparables"]
+    assert (options["recorded"], options["ruled_out"], options["unrecorded"]) == (3, 3, 46)
+
+
+def test_section_4_rules_out_nothing_for_a_package_the_thresholds_leave_free(engine):
+    """The demo package, US$1,230,000.00 in its plan, sits under Kenya's US$15 million line for works, so the same
+    three whole approaches stand and none is ruled out."""
+    options = estimate(engine, DEMO)["options"]
+
+    assert (options["recorded"], options["ruled_out"], options["unrecorded"]) == (3, 0, 46)
+    assert [(approach["market_approach"], approach["k"]) for approach in options["approaches"]] == [("Open - National", 3)]
+
+
 @pytest.fixture
 def went_international(fixture_db, tmp_path):
     """A copy of the fixture where a plan version public on October 1, 2026 lists 21 of KE-NWWDA-229129-CW-RFB's

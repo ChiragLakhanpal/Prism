@@ -569,7 +569,9 @@ approach, lots and qualification: for each, how many comparable packages went wi
 references, and the time estimate with that value, or why there is none, such as fewer than \
 {what_if.min_subgroup} that went with it. Review type is never changed, since it is computed from the whole \
 package's estimated amount. It gives up to three procurement approaches comparable packages went with, how many \
-went with each, and the time estimate with each. Say that comparable packages went with an approach, never \
+went with each, and the time estimate with each. It leaves out an approach the thresholds rule out for this \
+package, and counts the comparable packages that went with one, apart from those whose records don't give their \
+market approach, lots and qualification. Say that comparable packages went with an approach, never \
 that the approach made them faster or slower. Each \
 row is one stored combination of market approach and qualification with its range; the estimate, the \
 difference, the track record, the plan dates, the comparisons, the approaches and the counts also come back in \

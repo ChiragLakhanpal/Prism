@@ -192,13 +192,18 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
 
 function Notes({ comparables, estimate }: { comparables: ComparablesResult; estimate: EstimateResult }) {
   const options = estimate.options!;
-  const rest = options.n - options.recorded;
+  const n = <Num value={options.n} options={{ compact: false }} />;
   const sources = <Joined items={comparables.sources.map((source) => source.dataset_name)} />;
   return (
     <div className="flex flex-col gap-2 text-caption text-ink-muted">
-      {rest > 0 && (
+      {options.unrecorded > 0 && (
         <p>
-          <Fill template={words.unrecorded} slots={{ rest: <Num count={rest} capital />, n: <Num value={options.n} options={{ compact: false }} /> }} />
+          <Fill template={words.unrecorded(options.unrecorded)} slots={{ rest: <Num count={options.unrecorded} capital />, n }} />
+        </p>
+      )}
+      {options.ruled_out > 0 && (
+        <p>
+          <Fill template={words.ruledOut(options.ruled_out)} slots={{ ruled: <Num count={options.ruled_out} capital />, n }} />
         </p>
       )}
       {options.review_type && (
@@ -251,14 +256,26 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
     if (estimate.abstention?.reason === "too_few_comparables" || !options) {
       summary = n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: <Num count={n} /> }} />;
     } else if (options.approaches.length === 0) {
-      summary = <Fill template={words.summaryNone} slots={{ n: <Num value={n} options={{ compact: false }} /> }} />;
+      // No approach to list: none recorded a whole one, or the thresholds rule out every one recorded.
+      summary =
+        options.ruled_out > 0 ? (
+          <Fill template={words.summaryRuledOut(options.ruled_out)} slots={{ ruled: <Num count={options.ruled_out} /> }} />
+        ) : (
+          <Fill template={words.summaryNone} slots={{ n: <Num value={n} options={{ compact: false }} /> }} />
+        );
     } else if (options.count === 1) {
       const only = options.approaches[0];
-      const template = only.k === n ? words.summaryOne : words.summaryOneRecorded;
+      const template =
+        only.k === n ? words.summaryOne : options.ruled_out > 0 ? words.summaryOneRuledOut(options.ruled_out) : words.summaryOneRecorded;
       summary = (
         <Fill
           template={template}
-          slots={{ k1: <Num count={only.k} capital />, n: <Num value={n} options={{ compact: false }} />, option1: approachName(only, true) }}
+          slots={{
+            k1: <Num count={only.k} capital />,
+            n: <Num value={n} options={{ compact: false }} />,
+            option1: approachName(only, true),
+            ruled: <Num count={options.ruled_out} capital />,
+          }}
         />
       );
     } else {
@@ -266,7 +283,7 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
       shown = "ready";
       summary = (
         <Fill
-          template={words.summary}
+          template={options.ruled_out > 0 ? words.summaryAllowed : words.summary}
           slots={{
             count: <Num count={options.count} />,
             option1: approachName(first, true),

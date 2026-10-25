@@ -263,8 +263,8 @@ def _options(described: dict, went: dict[str, dict], cells: dict[tuple, dict], t
                    for reference, record in went.items()
                    if None not in (record["market_approach"], record["lots"], record["prequalification"])}
     whole_records = list(approach_of.values())
-    counts = Counter(approach for approach in whole_records
-                     if compute.allows(thresholds, values, "market_approach", approach[0]))
+    allowed = [approach for approach in whole_records if compute.allows(thresholds, values, "market_approach", approach[0])]
+    counts = Counter(allowed)
     ranked = sorted(counts.items(), key=lambda item: (-item[1], str(item[0])))
     own = (described["market_approach"], described["lots"], described["prequalification"])
     approaches = []
@@ -280,7 +280,10 @@ def _options(described: dict, went: dict[str, dict], cells: dict[tuple, dict], t
         approaches.append({"market_approach": approach, "lots": lots, "prequalification": qualification, "k": k,
                            "matching_ids": matching, "is_as_described": (approach, lots, qualification) == own,
                            "estimate": estimate, "abstention": abstention})
-    return {"approaches": approaches, "count": len(ranked), "recorded": len(whole_records), "n": n,
+    # Every count section 4's sentences give, so the screen works out none: those whose records give the whole
+    # approach, those of them the thresholds rule out for this package, and those whose records don't give it.
+    return {"approaches": approaches, "count": len(ranked), "recorded": len(whole_records),
+            "ruled_out": len(whole_records) - len(allowed), "unrecorded": n - len(whole_records), "n": n,
             "review_type": described["review_type"]}
 
 

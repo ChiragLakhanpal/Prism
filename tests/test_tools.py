@@ -298,9 +298,11 @@ def estimate_time_answer(result, question) -> dict[str, list]:
     gives no time estimate, and for which feature; how many comparable packages it counted; and why there is no
     track record, if there is none. The planned dates for each step (ticket 27): the method family, the basis, the
     steps that got a cautious date, how many steps the tool counts as undated, and one named comparable's delay at
-    the signed contract."""
+    the signed contract. Section 4's counts: the comparable packages whose records give their whole approach, those
+    of them the thresholds rule out for this package, and those whose records don't give it."""
     abstention = result["abstention"] or {}
     track = result["summary"]["track_record"] or {}
+    options = result["summary"]["options"] or {}
     steps = result["summary"]["step_dates"]
     signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
     named = {reference for reference, _ in question["expected"]["signed_delay"]}
@@ -312,7 +314,8 @@ def estimate_time_answer(result, question) -> dict[str, list]:
                             if entry["cautious"] and entry["cautious"]["planned_date"]],
             "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
-                             if entry["step_reference"] in named]}
+                             if entry["step_reference"] in named],
+            "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]]}
 
 
 def cost_answer(result, question) -> dict[str, list]:

@@ -200,6 +200,7 @@ questions:
       dated_steps: []
       undated_steps: [6]
       signed_delay: [[KE-NWWDA-229129-CW-RFB, 186]]
+      approach_counts: [[3, 0, 46]]
     ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
       The demo package's estimated amount, US$1,230,000.00, is on PDF page 3 of the October 9, 2026 plan
@@ -213,6 +214,10 @@ questions:
       package has 20 comparable packages whose plans recorded it, so each abstains in its own row, and the tool
       counts all six of the goods family's steps as undated (undated_n), which the screen's summary reads. The
       step delays' ground truth is tests/ground_truth/delay_from_first_published_planned_date.sql.
+      For section 4, three of the 49 have a market approach and qualification in a plan and contracts in the
+      awards dataset to count their lots, all three Open - National; the thresholds leave Kenya's works under
+      US$15 million free to go national (config/thresholds.toml, market_approach), so none is ruled out, and the
+      other 46 record no whole approach.
 
   - id: search-passages-icr-rebidding
     kind: documents
