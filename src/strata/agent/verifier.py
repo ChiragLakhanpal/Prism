@@ -72,8 +72,8 @@ from strata.harness.turn import Event
 from strata.reader.passages import NOTICE_TEXT, TABLE_SUMMARY
 from strata.reader.templates import template_for
 
-CHECKS_RUN = (1, 2, 3)  # what verify() runs: a draft's notes get checks 1 to 3 (ticket 35)
-ALL_CHECKS = (1, 2, 3, 4, 5, 6)  # what an answer gets (ticket 24)
+CHECKS_RUN = (1, 2, 3)  # what verify() runs; AnswerCheck adds checks 4 to 6
+ALL_CHECKS = (1, 2, 3, 4, 5, 6)  # what every answer and draft gets (ticket 24, src/strata/agent/answer_check.py)
 # Reason codes. web/src/copy.ts holds one sentence for each, under removed.reasons.
 NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY = (
     "number_not_in_records", "date_not_in_records", "id_not_returned", "no_source", "quote_not_on_page",
@@ -728,9 +728,11 @@ class AnswerCheck:
     check 6, once the stream has asked get_disagreements about the projects() the standing sentences cite;
     then check 4, once the judge has answered the questions(). verdict() gives the result."""
 
-    def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str]):
+    def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str],
+                 checked: Iterable[Checked] | None = None):
         self.facts = facts
-        self.sentences = {sentence.index: sentence for sentence in verify(claims, facts).sentences}
+        sentences = verify(claims, facts).sentences if checked is None else tuple(checked)
+        self.sentences = {sentence.index: sentence for sentence in sentences}
         # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
         self.disagreements: dict[str, Mapping] = {
             evidence: row for evidence, row in facts.returned_by(DISAGREEMENTS_TOOL) if row.get("sides")}
@@ -744,6 +746,12 @@ class AnswerCheck:
         for sentence in advice:
             if sentence not in cited:
                 self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
+
+    @classmethod
+    def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str]) -> AnswerCheck:
+        """The six checks on sentences that checks 1 to 3 already saw, each against its own evidence, as a draft's
+        notes are (src/strata/drafts/runtime.py): facts holds every row any of them may cite."""
+        return cls((), facts, backs_advice, checked=checked)
 
     def _fail(self, index: int, reason: Reason) -> None:
         sentence = self.sentences[index]

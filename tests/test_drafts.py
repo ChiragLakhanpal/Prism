@@ -24,8 +24,9 @@ import pytest
 
 from strata.agent.loop import AgentError
 from strata.agent.runs import RunLog
-from strata.agent.scripted import WRITER_CASES, ScriptedAgent, load_cases
+from strata.agent.scripted import WRITER_CASES, ScriptedAgent, ScriptedJudge, load_cases
 from strata.config import load_draft_kinds, load_roles
+from strata.drafts import files
 from strata.drafts.store import DraftStore
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine, PermissionDenied
@@ -110,13 +111,14 @@ def drafting(fixture_db, state_db, clock):
     def state():
         return DuckDBEngine.open(state_db)
 
-    def make(case: str = "review-notes-nwwda-2026-10-09", writer=None, groups=GROUPS, store=None):
+    def make(case: str = "review-notes-nwwda-2026-10-09", writer=None, groups=GROUPS, store=None, judge=None):
         written = load_cases(WRITER_CASES)[case]
         numbers = iter(range(1, 100))
         return create_app(engine_for=reading, drafts=store or DraftStore(state), opened=OpenedLog(state, now=clock),
                           writers=writer or (lambda kind: ScriptedAgent(written)), runs=RunLog(state),
                           access=Access(load_roles(), StaticGroups(groups)), today=lambda: TODAY, now=clock,
-                          new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001")
+                          new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001",
+                          judge=judge)
     return make
 
 
@@ -166,6 +168,55 @@ def test_draft_review_notes_writes_a_note_on_each_activity_with_a_signal_each_ci
     assert checks["sentences"]["kept"] == checks["sentences"]["written"] and checks["sentences"]["removed"] == 0
     assert draft["removed"] == []
     assert (draft["state"], draft["kind"], draft["author"]) == ("draft", "review_notes", {"name": "Ana Example", "you": True})
+    # The six checks ran on every sentence, as on an answer (ticket 24), and each sentence states a value its
+    # row holds, so checks 1 to 3 proved them all and no model was needed.
+    assert checks["checks_run"] == [1, 2, 3, 4, 5, 6]
+    assert (checks["judge"]["called"], checks["judge"]["proven"]) == (False, checks["sentences"]["written"])
+    assert [data["checks_run"] for kind, data in sent if kind == "step" and data["id"] == "check"
+            and data["status"] == "done"] == [[1, 2, 3, 4, 5, 6]]
+
+
+def test_a_note_sentence_its_row_does_not_support_and_advice_with_no_lesson_are_removed_after_one_judge_call(drafting):
+    """Checks 4 and 5 on a draft: the judge is asked once, about the one sentence checks 1 to 3 could not prove,
+    and says it does not follow; the advice cites only its plan row, which backs no advice, so check 5 removes it
+    before the judge sees it."""
+    case = load_cases(WRITER_CASES)["review-notes-checks-4-and-5"]
+    judge = ScriptedJudge(case)
+    app = drafting(case.id, judge=judge)
+
+    _, draft_id = draft_review_notes(app)
+
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+    assert [(item["key"], item["sentence"], item["reason"]) for item in draft["removed"]] == [
+        (MARKED[2], "The agency has stopped working on this activity.", "not_supported"),
+        (MARKED[2], "Ask the agency to publish a new planned signing date.", "advice_without_lesson_or_comparable")]
+    assert [[question.sentence for question in asked] for asked in judge.calls] == [
+        ["The agency has stopped working on this activity.", "The plan records no signed contract for this activity."]]
+    [note] = [note for note in draft["notes"] if note["activity_reference_no"] == MARKED[2]]
+    assert [sentence["text"] for sentence in note["sentences"]] == [
+        "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.",
+        "The plan records no signed contract for this activity."]
+    checks = draft["checks"]
+    assert checks["checks_run"] == [1, 2, 3, 4, 5, 6]
+    assert checks["advice"] == {"total": 1, "cited": 0}
+    assert (checks["judge"]["called"], checks["judge"]["judged"], checks["judge"]["followed"]) == (True, 2, 1)
+    # The evidence pack's check line, which the draft page writes word for word, says a model judged one sentence.
+    assert files.check_line(checks, load_draft_kinds().kinds["review_notes"]) == (
+        "Checked: 6 of 6 numbers match records; 4 of 4 dates match records. "
+        "Judged by a model: 1 of 1 sentence follows from its sources. "
+        "The other five needed no model, because their numbers and quotes matched. "
+        "Not checked: whether the plan's published records are complete, "
+        "or whether these notes are what you would tell the borrower.")
+
+
+def test_with_no_judge_connected_a_note_sentence_that_needs_one_is_removed_and_never_saved_unchecked(drafting):
+    app = drafting("review-notes-checks-4-and-5")
+
+    _, draft_id = draft_review_notes(app)
+
+    removed = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()["removed"]
+    assert [(item["sentence"], item["reason"]) for item in removed][0] == (
+        "The agency has stopped working on this activity.", "judge_unavailable")
 
 
 def test_the_same_request_sent_twice_saves_one_draft(drafting):

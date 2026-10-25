@@ -27,9 +27,9 @@ With --packages it re-records the package reader's cases in tests/fixtures/agent
 with the package form's fields, as the plan-a-package workflow sends it.
 
 With --judge it re-records the judge of the verifier's check 4 instead (ticket 24): it replays every scripted
-case in tests/fixtures/agent/cases.toml through the answer stream, with the tools on the SQL warehouse, and
-keeps the answer of config/models.toml's draft role for each case whose answer asks the judge, in
-tests/fixtures/agent/judged. Run it after the plain run, since the judge is asked about the recorded answers.
+case in tests/fixtures/agent/cases.toml through the answer stream, and every writer case in writers.toml through
+its draft workflow's six checks, with the tools on the SQL warehouse, and keeps the answer of config/models.toml's
+draft role for each case that asks the judge, in tests/fixtures/agent/judged. Run it after the plain run, since the judge is asked about the recorded answers.
 It also needs AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.
 
 It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env
@@ -72,7 +72,7 @@ def main(argv=None) -> int:
         viewer = Viewer(name="the env file's token", token=env["DATABRICKS_TOKEN"])
         if args.judge:
             live_judge = judge.from_environment(env)
-            done = record.record_judged(load_cases(), live_judge, warehouse_engine_for(env))
+            done = record.record_judged(load_cases() | load_cases(WRITER_CASES), live_judge, warehouse_engine_for(env))
         elif args.packages:
             spec = load_agent("package_reader")
             done = record.record_packages(load_cases(PACKAGE_CASES), lambda: foundry_agent(env, spec),

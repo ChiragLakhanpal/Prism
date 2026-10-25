@@ -270,7 +270,10 @@
     "checks_run": [
       1,
       2,
-      3
+      3,
+      4,
+      5,
+      6
     ],
     "sentences": {
       "written": 4,
@@ -293,11 +296,48 @@
       "total": 2,
       "returned": 2
     },
+    "shown": {
+      "numbers": {
+        "total": 5,
+        "matched": 5
+      },
+      "dates": {
+        "total": 4,
+        "matched": 4
+      },
+      "quotes": {
+        "total": 0,
+        "found": 0
+      },
+      "judged": 0,
+      "proven": 4
+    },
+    "judge": {
+      "called": false,
+      "responded": null,
+      "judged": 0,
+      "followed": 0,
+      "unjudged": 0,
+      "proven": 4
+    },
+    "advice": {
+      "total": 0,
+      "cited": 0
+    },
+    "disagreements": {
+      "disputed": 0,
+      "shown": 0,
+      "attached": 0
+    },
+    "lessons_cited": false,
+    "cited_tools": [
+      "check_plan"
+    ],
     "tools": [
       "check_plan"
     ]
   },
-  "checks_count": 3,
+  "checks_count": 6,
   "removed": [],
   "sources": [
     {

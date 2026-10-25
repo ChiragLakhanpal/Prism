@@ -101,10 +101,10 @@ from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
 
 from strata.agent import traces
-from strata.agent.judge import Judge, JudgeError
-from strata.agent.loop import remember
+from strata.agent.answer_check import Asker, SixChecks
+from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
-from strata.agent.verifier import ALL_CHECKS, AnswerCheck, Verdict, answer_events
+from strata.agent.verifier import ALL_CHECKS, Verdict, answer_events
 from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
@@ -126,15 +126,12 @@ from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
 from strata.tools.data_readiness_for import registry_page
 from strata.tools.find_comparables import read_package
-from strata.tools.search_passages import TABLE as PASSAGES, read_passage
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 # Only the verifier writes these, from the claims a runner hands over.
 ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done"}
-# The tool check 6 asks about each project the answer cites (config/tools.toml).
-DISAGREEMENTS = "get_disagreements"
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
@@ -286,7 +283,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     thresholds = load_thresholds()
     tools = load_tools()
-    backs_advice = [name for name, tool in tools.items() if tool.result.backs_advice]
+    six_checks = SixChecks(engine_for, judge, tools, thresholds)
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
     labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))
     tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
@@ -482,7 +479,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             access=access or Access(load_roles(), NoGroups()), writers=writers or (lambda kind: None),
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
-                            heartbeat_seconds=heartbeat_seconds)
+                            heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
                               form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
@@ -652,70 +649,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def as_of_of(turn: Turn) -> dt.date:
         return turn.notes.as_of or min(turn.scope.as_of or today(), today())
 
-    def disagreements_about(turn: Turn, project: str) -> list[dict] | None:
-        """Check 6's question about one project, as the viewer, with every row and side it returns kept in the
-        turn's evidence; None when it cannot be asked."""
-        if engine_for is None:
-            return None
-        try:
-            with engine_for(turn.viewer) as engine:
-                result = registry.call(DISAGREEMENTS, {"subject_id": project}, registry.Context(
-                    engine, turn.viewer, turn.scope.view, as_of_of(turn), thresholds), tools)
-        except (EngineError, registry.ToolError, registry.ToolContractError):
-            log.exception("Run %s could not ask %s about %s.", turn.run_id, DISAGREEMENTS, project)
-            return None
-        remember(turn.facts, DISAGREEMENTS, result, tools)
-        return result["rows"]
-
-    def whole_passages(turn: Turn, rows: list) -> None:
-        """Each side of a disagreement the answer shows, as its whole passage, so its marker opens the same
-        evidence card and drawer as a passage a search returned."""
-        wanted = [side["evidence_id"] for row in rows for side in row.get("sides") or ()
-                  if side["evidence_id"].startswith(f"{PASSAGES}:")
-                  and "source" not in (turn.facts.get(side["evidence_id"]) or {})]
-        if not wanted or engine_for is None:
-            return
-        try:
-            with engine_for(turn.viewer) as engine:
-                for evidence in wanted:
-                    whole = read_passage(engine, evidence.partition(":")[2], as_of_of(turn))
-                    if whole is not None:
-                        held = turn.facts.get(evidence)
-                        turn.facts.record(evidence, {**whole, "also": [held]} if held else whole,
-                                          tool=turn.facts.tool(evidence) or DISAGREEMENTS)
-        except EngineError:
-            log.exception("Run %s could not read the sides of a disagreement.", turn.run_id)
-
     async def verified(claims: list, turn: Turn) -> AsyncIterator[Event | Verdict]:
-        """The six checks on the claims, with the verifier's step and the two steps it may take inside it:
-        asking the judge, and getting the other side of a disagreement. Ends with the verdict."""
+        """The six checks on the claims (src/strata/agent/answer_check.py), inside the verifier's step, with the two
+        steps it may take inside it: getting the other side of a disagreement, and asking the judge. Ends with the
+        verdict."""
         yield Event("step", {"id": "check", "kind": "check", "status": "running"})
-        check = AnswerCheck(claims, turn.facts, backs_advice)
-        for project in check.projects():
-            check.disagreements_for(project, await asyncio.to_thread(disagreements_about, turn, project))
-        resting = check.resting()
-        if resting:
-            await asyncio.to_thread(whole_passages, turn, resting)
-        found = [row for row in resting if row["evidence_id"] in check.fetched]
-        if found:  # the agent left these out, and check 6 got them
-            step = {"id": "check-disagreement", "kind": "disagreement"}
-            yield Event("step", {**step, "status": "running"})
-            yield Event("step", {**step, "status": "done", "count": len(found)})
-        questions = check.questions()
-        if questions:
-            step = {"id": "check-judge", "kind": "judge", "count": len(questions)}
-            yield Event("step", {**step, "status": "running"})
-            try:
-                if judge is None:
-                    raise JudgeError("No judge is connected.")
-                judgements = await asyncio.to_thread(judge.judge, questions)
-            except JudgeError as error:
-                log.warning("Run %s: the judge did not answer (%s), so its sentences are removed.", turn.run_id,
-                            error)
-                judgements = None
-            check.judged(questions, judgements)
-            yield Event("step", {**step, "status": "done"})
-        verdict = check.verdict()
+        verdict = None
+        asker = Asker(turn.viewer, turn.scope.view, as_of_of(turn), turn.run_id)
+        async for item in six_checks.finish(six_checks.check(claims, turn.facts), turn.facts, asker):
+            if isinstance(item, Verdict):
+                verdict = item
+            else:
+                yield item
         yield Event("step", {"id": "check", "kind": "check", "status": "done", "removed": len(verdict.removed)})
         yield verdict
 

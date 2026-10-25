@@ -40,6 +40,7 @@ from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent.answer_check import SixChecks
 from strata.agent.runs import RunLog, run_row
 from strata.config import DraftKinds
 from strata.dbx import Viewer, viewer_from_headers
@@ -89,7 +90,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                writers: Callable[[str], object | None], kinds: DraftKinds, today: Callable[[], dt.date],
                now: Callable[[], dt.datetime], new_draft_id: Callable[[], str], new_run_id: Callable[[], str],
                runs: RunLog | None, trace_ids: Callable[[], TraceIds], reference: Callable[[], str],
-               heartbeat_seconds: float) -> None:
+               heartbeat_seconds: float, six_checks: SixChecks) -> None:
+    """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does."""
     running: set[tuple[str, str]] = set()  # (author, idempotency key) of the drafts being written now
     lock = threading.Lock()
 
@@ -176,7 +178,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     async def _events(writing: runtime.Writing, trace: TraceIds, outcome: dict) -> AsyncIterator[str]:
         error_code = None
         try:
-            events = runtime.write(writing, engine_for, writers, store, today(), now, new_draft_id)
+            events = runtime.write(writing, engine_for, writers, store, today(), now, new_draft_id, six_checks)
             async for item in with_heartbeats(events, heartbeat_seconds):
                 yield KEEP_ALIVE if item is HEARTBEAT else frame(item)
         except runtime.WriteError as error:

@@ -115,13 +115,12 @@ class AzureOpenAIJudge:
     def __init__(self, endpoint: str, key: str, deployment: str, post: Transport = http_post):
         self.url = f"{endpoint.rstrip('/')}/chat/completions"
         self.headers = {"api-key": key}
+        # It keeps no answer: the app's one judge serves every viewer, and the recording command keeps what it
+        # needs by wrapping the transport (src/strata/agent/record.py, JudgeKeeper).
         self.name, self.post = deployment, post
-        self.answers: list[dict] = []  # each response, for the recording command
 
     def judge(self, questions: list[Question]) -> list[Judgement]:
-        answer = self.post(self.url, self.headers, request_body(self.name, questions))
-        self.answers.append(answer)
-        return judgements(answer, questions)
+        return judgements(self.post(self.url, self.headers, request_body(self.name, questions)), questions)
 
 
 def from_environment(environ: Mapping[str, str] = os.environ) -> AzureOpenAIJudge | None:
