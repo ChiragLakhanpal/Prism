@@ -65,6 +65,7 @@ export function DefinitionWindow({
   children,
   rows,
   triggerClassName,
+  describedBy,
 }: {
   // The word or measure name in the text that opens the window.
   label: ReactNode;
@@ -74,13 +75,21 @@ export function DefinitionWindow({
   // A trigger that stands alone in small type, such as Check a plan's count line, keeps 24 px of
   // height with "inline-flex min-h-6 items-center" (WCAG 2.5.8).
   triggerClassName?: string;
+  // Words a screen reader hears with the trigger without opening the window, such as a step label's full STEP
+  // name (ticket 27: "In STEP: Bid Evaluation Report and Recommendation for Award").
+  describedBy?: string;
 }) {
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   return (
     <RadixPopover.Root>
       <RadixPopover.Trigger asChild>
-        <button type="button" data-term className={cx("inline cursor-pointer py-0.5 text-left", DOTTED_UNDERLINE, triggerClassName)}>
+        <button
+          type="button"
+          data-term
+          aria-describedby={describedBy}
+          className={cx("inline cursor-pointer py-0.5 text-left", DOTTED_UNDERLINE, triggerClassName)}
+        >
           {label}
         </button>
       </RadixPopover.Trigger>

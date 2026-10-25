@@ -71,6 +71,46 @@ function written(num: NumValue, text: string): ReactNode {
   );
 }
 
+// NumLines (ticket 27; DESIGN.md section 5, Num): one checkable number on two lines, such as a step's planned date
+// over the days it rests on ("Apr 1, 2027" over "28 days after the plan's date"). The lines are given already
+// written, each number in them through Num with no check of its own, so one tab stop, one dotted underline and one
+// tooltip cover both, and a click opens the rows behind them. The first line may be words instead of a number, as
+// "Not dated yet" is before a start date, with the second line's days still under it.
+export function NumLines({
+  first,
+  second,
+  check,
+  firstClassName,
+  secondClassName,
+}: {
+  first: ReactNode;
+  second: ReactNode;
+  check: NumCheck;
+  firstClassName?: string;
+  secondClassName?: string;
+}) {
+  return (
+    <Tooltip
+      trigger={
+        <button
+          type="button"
+          data-num
+          data-num-lines
+          tabIndex={check.tabStop === false ? -1 : undefined}
+          aria-label={check.name}
+          onClick={check.onOpen}
+          className="group inline-flex cursor-pointer flex-col items-start py-0.5 text-left tabular-nums"
+        >
+          <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", firstClassName)}>{first}</span>
+          <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", secondClassName)}>{second}</span>
+        </button>
+      }
+    >
+      {check.tooltip}
+    </Tooltip>
+  );
+}
+
 // A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
 const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence") === "sentence";
 

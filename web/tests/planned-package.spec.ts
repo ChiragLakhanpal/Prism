@@ -31,6 +31,10 @@ async function serve(page: Page, answers: Record<string, Answer>) {
       body: JSON.stringify({ ...JSON.parse(await recorded("risks-planned-rural-roads.json")), empty_reason: "missing_criteria", p: null, m: null }),
     },
     "/api/planned-packages/pkg-000000000003/risks": { body: await recorded("risks-planned-rural-roads.json") },
+    // Section 2, the planned date for each step (ticket 27).
+    "/api/planned-packages/pkg-000000000001/steps": { body: await recorded("steps-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000002/steps": { body: await recorded("steps-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000003/steps": { body: await recorded("steps-planned-rural-roads.json") },
   };
   const all = { ...base, ...answers };
   await page.route("**/api/**", async (route) => {

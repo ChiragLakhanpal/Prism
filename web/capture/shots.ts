@@ -110,6 +110,83 @@ const RISK_SHOTS: Shot[] = [
   riskShot("320", INDIA, { widths: [320], act: toRisks }),
 ];
 
+// Ticket 27: section 2 of the package workspace, the planned date for each STEP step. On the fixture every step
+// abstains, so the dated states are the server's answers on the hand-made set (tests/record_steps_api.py) for its
+// works package KE-HAND-900000-CW-RFB, and for a package from a sentence on the same set. The other states are in the
+// gallery (/gallery/steps), from the same answers.
+const STEPS_PATH = "/packages/KE-HAND-900000-CW-RFB";
+const STEPS_API = "/api/packages/KE-HAND-900000-CW-RFB";
+function stepShot(name: string, steps: Answer | null, rest: Partial<Shot> = {}): Shot {
+  const answers: Record<string, Answer> = {
+    ...app(name, STEPS_PATH).api,
+    [STEPS_API]: { recorded: "package-ke-hand-900000.json" },
+    [`${STEPS_API}/comparables`]: { recorded: "comparables-ke-hand-900000.json" },
+    [`${STEPS_API}/risks`]: { recorded: "risks-ke-hand-900000.json" },
+    [`${STEPS_API}/plan-dates`]: { recorded: "steps-plan-dates-saved.json" },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    ...rest.api,
+  };
+  if (steps) answers[`${STEPS_API}/steps`] = steps;
+  return app(`steps--${name}`, STEPS_PATH, {}, { full: true, ...rest, api: answers, pending: steps ? rest.pending : [`${STEPS_API}/steps`] });
+}
+const DATED_STEPS: Answer = { recorded: "steps-ke-hand-900000.json" };
+const SECTION_2 = "section#planned-dates";
+const toSteps = async (page: Page) => {
+  await page.locator(SECTION_2).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+};
+const openSteps = async (page: Page) => {
+  await page.locator(`${SECTION_2} [data-disclosure]`).click();
+  await toSteps(page);
+};
+const inOrder = (...acts: ((page: Page) => Promise<void>)[]) => async (page: Page) => {
+  for (const act of acts) await act(page);
+};
+const STEP_SHOTS: Shot[] = [
+  stepShot("collapsed", DATED_STEPS, { act: toSteps }),
+  stepShot("cautious", DATED_STEPS, { act: openSteps }),
+  stepShot("middle", DATED_STEPS, { act: inOrder(openSteps, click(`${SECTION_2} [data-segment=middle]`)) }),
+  stepShot("fixture", { recorded: "steps-ke-nwwda-541055.json" }, { act: openSteps }),
+  stepShot("abstain", { recorded: "steps-ke-hand-900000-few.json" }, { act: openSteps }),
+  stepShot("loading", null, { act: toSteps }),
+  stepShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toSteps }),
+  stepShot("count-drawer", DATED_STEPS, { widths: WIDE, act: inOrder(openSteps, click(`${SECTION_2} [data-step-row=contract_signed] td:last-child button`)) }),
+  stepShot("count-sheet", DATED_STEPS, { widths: NARROW, act: inOrder(openSteps, click(`${SECTION_2} [data-step-item=contract_signed] dd:last-child button`)) }),
+  stepShot("longest-drawer", DATED_STEPS, { widths: WIDE, act: click(`${SECTION_2} [data-section-summary] button`) }),
+  stepShot("hover-disclosure", DATED_STEPS, { full: false, widths: WIDE, act: hover(`${SECTION_2} [data-disclosure]`) }),
+  stepShot("focus-disclosure", DATED_STEPS, { full: false, act: focus(`${SECTION_2} [data-disclosure]`) }),
+  stepShot("focus-choice", DATED_STEPS, { full: false, act: inOrder(openSteps, focus(`${SECTION_2} input[type=radio]:checked`)) }),
+  stepShot("hover-choice", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, hover(`${SECTION_2} [data-segment=middle]`)) }),
+  stepShot("term-open", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`), async (page) => page.keyboard.press("Enter")) }),
+  stepShot("focus-date", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-num-lines]`)) }),
+  stepShot("focus-count", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] td:last-child button`)) }),
+  stepShot("320", DATED_STEPS, { widths: [320], act: openSteps }),
+  app("steps--sentence-undated", "/packages/pkg-000000000001", {}, {
+    full: true,
+    act: openSteps,
+    api: {
+      ...app("steps--sentence-undated", "/packages/pkg-000000000001").api,
+      "/api/planned-packages/pkg-000000000001": { recorded: "planned-package-hand-made.json" },
+      "/api/comparables": { recorded: "comparables-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/step-start": { recorded: "steps-planned-hand-made-dated.json" },
+    },
+  }),
+  app("steps--sentence-dated", "/packages/pkg-000000000001", {}, {
+    full: true,
+    act: inOrder(openSteps, type(`${SECTION_2} input[type=date]`, "2021-03-01"), click(`${SECTION_2} [data-commit-start]`)),
+    api: {
+      ...app("steps--sentence-dated", "/packages/pkg-000000000001").api,
+      "/api/planned-packages/pkg-000000000001": { recorded: "planned-package-hand-made.json" },
+      "/api/comparables": { recorded: "comparables-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/step-start": { recorded: "steps-planned-hand-made-dated.json" },
+    },
+  }),
+];
+
 const SIGNED_OUT = '{"email":null,"name":null,"signed_in":false,"has_token":false}';
 type Answer = { recorded?: string; body?: string; status?: number };
 
@@ -844,6 +921,8 @@ function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = 
   if (answer) answers[`${api}/comparables`] = answer;
   // Section 3 (ticket 30): the fixture's Kenya comparables reach no completion report.
   answers[`${api}/risks`] = { recorded: "risks-ke-nwwda-541055.json" };
+  // Section 2 (ticket 27): on the fixture every step abstains.
+  answers[`${api}/steps`] = { recorded: "steps-ke-nwwda-541055.json" };
   const pending = [...(pkg ? [] : [api]), ...(answer ? [] : [`${api}/comparables`]), ...(rest.pending ?? [])];
   return app(name, path, {}, { ...rest, api: answers, pending });
 }
@@ -966,6 +1045,8 @@ const PLANNED_ANSWERS: Shot["api"] = {
   "/api/projects/P156634": { recorded: "project-p156634.json" },
   // Section 3 (ticket 30): the rural roads package's Kenya comparables reach no completion report.
   "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-rural-roads.json" },
+  // Section 2 (ticket 27): the rural roads package asks for its first step's date.
+  "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-rural-roads.json" },
 };
 const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
@@ -1312,5 +1393,6 @@ export const SHOTS: Shot[] = [
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,
   ...PLANNED_SHOTS,
+  ...STEP_SHOTS,
   ...RISK_SHOTS,
 ];

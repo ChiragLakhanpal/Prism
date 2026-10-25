@@ -57,6 +57,7 @@ SENTENCE = {"sentence": "rural roads, Kenya, about US$15 million"}
 DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB"
 TARGET = f"/api/packages/{step_set.TARGET}"
 PLANNED = "/api/planned-packages/pkg-000000000001"
+FIXTURE_DAY, HAND_MADE_DAY = dt.date(2026, 10, 28), dt.date(2021, 1, 15)
 
 
 def app_on(database: Path, folder: Path, today: dt.date):
@@ -95,8 +96,9 @@ async def hand_made_story(app) -> dict[str, str]:
         async def get(path: str, **params) -> str:
             return pretty(await client.get(path, headers=ANA, params=params))
 
-        found["package-ke-hand-900000.json"] = await get(TARGET)
-        found["comparables-ke-hand-900000.json"] = await get(f"{TARGET}/comparables")
+        # The package's page and section 1 read as of the app's own day only when the address says so.
+        found["package-ke-hand-900000.json"] = await get(TARGET, asof=HAND_MADE_DAY.isoformat())
+        found["comparables-ke-hand-900000.json"] = await get(f"{TARGET}/comparables", asof=HAND_MADE_DAY.isoformat())
         found["risks-ke-hand-900000.json"] = await get(f"{TARGET}/risks")
         found["steps-ke-hand-900000.json"] = await get(f"{TARGET}/steps")
         found["steps-ke-hand-900000-few.json"] = await get(f"{TARGET}/steps", notice_to="2019-12-01")
@@ -126,9 +128,9 @@ def answers(folder: Path) -> dict[str, str]:
     hand_made, unrecorded = folder / "hand-made.duckdb", folder / "unrecorded.duckdb"
     step_set.build(hand_made).close()
     step_set.build(unrecorded, bidding_document_unrecorded=True).close()
-    found = asyncio.run(fixture_story(app_on(FIXTURE_DB, folder, dt.date(2026, 10, 28))))
-    found |= asyncio.run(hand_made_story(app_on(hand_made, folder, dt.date(2021, 1, 15))))
-    found |= asyncio.run(unrecorded_story(app_on(unrecorded, folder, dt.date(2021, 1, 15))))
+    found = asyncio.run(fixture_story(app_on(FIXTURE_DB, folder, FIXTURE_DAY)))
+    found |= asyncio.run(hand_made_story(app_on(hand_made, folder, HAND_MADE_DAY)))
+    found |= asyncio.run(unrecorded_story(app_on(unrecorded, folder, HAND_MADE_DAY)))
     return found
 
 

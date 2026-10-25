@@ -72,6 +72,7 @@
     "search_passages": "the document search",
     "get_lessons": "the quote check on proposed lessons",
     "package_risks": "the risks and what helped",
+    "estimate_time": "the planned dates for each step",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },

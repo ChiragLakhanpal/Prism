@@ -34,8 +34,9 @@ export type SentenceEvent = {
 export type EvidenceEvent = {
   id: string;
   // A quantile dot's packages (ticket 15) are no source: the page holds them, and the drawer lists them. So are
-  // the completion reports behind a risk's count and every report the risks section counted (ticket 30).
-  kind: "passage" | "record" | "package" | "dot" | "risk-reports" | "risk-reports-all";
+  // the completion reports behind a risk's count and every report the risks section counted (ticket 30), and the
+  // comparable packages behind a step's planned date or behind "ran longest" (ticket 27).
+  kind: "passage" | "record" | "package" | "dot" | "risk-reports" | "risk-reports-all" | "steps" | "steps-longest";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

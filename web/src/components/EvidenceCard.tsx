@@ -13,6 +13,7 @@ import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
 import { DocumentSource, Source } from "./Source";
+import { stepListTitle } from "./StepsDrawer";
 
 // A static pill with the marker's number, as the card and the drawer's claim block show it.
 export function SourceNumber({ n }: { n: number }) {
@@ -39,6 +40,8 @@ export function sourceTitle(evidence: EvidenceEvent) {
   // The risks section's lists of completion reports (ticket 30).
   if (evidence.kind === "risk-reports") return copy.packageRisks.drawer.reportsTitle;
   if (evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.allTitle;
+  // Section 2's lists: one step's comparable packages, and the packages behind "ran longest" (ticket 27).
+  if (evidence.kind === "steps" || evidence.kind === "steps-longest") return stepListTitle(evidence);
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {

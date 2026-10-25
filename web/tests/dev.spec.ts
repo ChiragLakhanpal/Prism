@@ -43,6 +43,7 @@ test("in the development build, a saved package opened by its address shows sect
     "/api/planned-packages/pkg-000000000001": { body: await recorded("planned-package-rural-roads.json") },
     "/api/comparables": { body: await recorded("comparables-planned-works-rfb-ke.json") },
     "/api/planned-packages/pkg-000000000001/risks": { body: await recorded("risks-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000001/steps": { body: await recorded("steps-planned-rural-roads.json") },
   });
 
   await page.goto("/packages/pkg-000000000001");
@@ -51,5 +52,7 @@ test("in the development build, a saved package opened by its address shows sect
   await expect(page.locator("[data-past-range]")).not.toHaveAttribute("aria-busy", "true");
   // Section 3 (ticket 30) reads its risks once StrictMode's second mount asks again, too.
   await expect(page.locator("section#risks")).toHaveAttribute("data-risks", "no_reports");
+  // Section 2 (ticket 27) reads its steps the same way.
+  await expect(page.locator("section#planned-dates")).toHaveAttribute("data-state", "duration");
   expect(unrecorded).toEqual([]);
 });

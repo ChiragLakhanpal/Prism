@@ -21,6 +21,7 @@ import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../compone
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { RisksSection } from "../components/RisksSection";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
+import { StepsSection } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { ComparablesResult, PackageResult } from "../lib/api";
@@ -135,6 +136,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         </div>
         <div className="mt-8">
           <PastRange state={sectionState} headingRef={sectionHeading} open={opening} />
+        </div>
+        {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <StepsSection packageKey={facts.step_reference} kind="step" />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria. */}
         <div className="mt-6 @lg/page:mt-8">
