@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 5 and 6; the blueprint's Package workspace wir
 
 **Blocked by:** 15 (Plan a package from a sentence); 29 (The knowledge loop: proposed lessons with verified quotes, the review queue and versions)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P2
 **Design review:** yes
@@ -22,3 +22,4 @@ Read first: docs/PLAN.md sections 5 and 6; the blueprint's Package workspace wir
 ## Comments
 
 - October 24, 2026, merger: ticket 29 landed on build/strata as merge commit 65293cd. This ticket still waits on ticket 15. A note from ticket 29's builder for when you link to Data readiness: `from=get_lessons` already belongs to the Lessons queue's quote-check link (`/data?sources=...&from=get_lessons`), and `web/src/copy.ts`' `dataReadiness.fromNouns.get_lessons` reads "the quote check on proposed lessons". If the risks table's coverage line links there with the same key, the page will name the quote check, not the risks table. Give the risks table its own `from` key and its own words in `fromNouns`, or reword the existing entry so it is true for both.
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/30-risks-and-what-helped, as soon as ticket 15 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

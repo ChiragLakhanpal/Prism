@@ -6,7 +6,7 @@ Read first: docs/assessment.md (Tender Design and Packaging); the blueprint's "W
 
 **Blocked by:** 15 (Plan a package from a sentence); 18 (The document slice, the page router's Route B and the stress shelf); 29 (The knowledge loop: proposed lessons with verified quotes, the review queue and versions)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/assessment.md (Tender Design and Packaging); the blueprint's "W
 - [ ] A request to judge a specific live tender's bids is refused in the first person from the copy file.
 - [ ] Collapsed, the section reads "optional. Paste your qualification criteria to compare them with N packages whose criteria are public." with N from the tool, under the eyebrow "Tender design", as in the Package workspace wireframe.
 - [ ] States are captured at 1440, 1024 and 390 px, follow DESIGN.md sections 5 and 7, and pass axe.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/31-check-your-criteria, as soon as ticket 15 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
