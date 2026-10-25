@@ -2275,6 +2275,26 @@ export const copy = {
       existingLink: "Open the draft",
       stopped: "I stopped writing the review notes and saved nothing.",
     },
+    // "Drafts from this check" at the end of the page (ticket 36; the 36 brief, section 5.7): the Project Paper
+    // summary, offered as a secondary action, saying before the click what it draws on.
+    ppAction: {
+      title: "Procurement summary for the Project Paper",
+      // {agency} is the agency's name; {rows} is the checked PPSD rows' count, a word from one to nine.
+      body: (rows: number) =>
+        rows === 1
+          ? "I draft it from this check, {agency}'s track record with its past packages and the one PPSD row your team checked for this project's packages."
+          : "I draft it from this check, {agency}'s track record with its past packages and the {rows} PPSD rows your team checked for this project's packages.",
+      bodyNoRows:
+        "I draft it from this check and {agency}'s track record with its past packages. Your team has no checked PPSD rows " +
+        "for this project's packages, so I leave the PPSD's risks out.",
+      button: "Draft a Project Paper summary",
+      feedforward: "The draft waits in Drafts for you to check. I send nothing.",
+      existingYou: (date: string) => `You started a Project Paper summary on this plan on ${date}.`,
+      existingTeammate: (author: string, date: string) => `${author} started a Project Paper summary on this plan on ${date}.`,
+      existingLink: "Open the draft",
+      asof: "I draft a Project Paper summary only from today's check, not from a past date.",
+      stopped: "I stopped writing the Project Paper summary and saved nothing.",
+    },
     // Each activity's link to its package workspace (the 12 brief). Its accessible name adds the
     // reference, so a list of links tells the activities apart.
     pastRangeLink: "See the past range",
@@ -2772,6 +2792,8 @@ export const copy = {
       // A mission brief's row names its project in its title, so line 2 gives the P-code and the country (ticket 37).
       projectCountry: "{pid}, {country}.",
       projectOnly: "{pid}.",
+      // Suggested PPSD rows on a package from a sentence, which has no project yet (ticket 36).
+      packageNoProject: "Package from a sentence, no STEP reference yet.",
       opened: (opened: string, total: string) => `You opened ${opened} of ${total} sources.`,
       empty: {
         to_check: "No drafts are waiting to be checked.",
@@ -2916,6 +2938,108 @@ export const copy = {
         fieldsForm: "Risk table form",
       },
     },
+  },
+
+  // Suggested PPSD rows' own words (ticket 36; the 36 brief, sections 5.3 to 5.5). The column names are never
+  // here: they come from the template registry (config/ppsd_templates.toml) through the draft, word for word.
+  ppsd: {
+    noReference: "No STEP reference yet.",
+    // The writing page's way back, and what it says after a reload (the 36 brief, section 5.2).
+    backToPackage: "Back to the package",
+    reloadBody: "If you reloaded this page while I was writing, I stopped and saved nothing. Start again from the package.",
+    // The form control and its captions. {amount} and {threshold} are US dollar amounts with their cents.
+    formLegend: "Risk table form",
+    formAvailable:
+      "This package's cost estimate of US${amount} is at or above US${threshold}, the lowest Table I threshold in the " +
+      "PPSD guidance for {category}, so you can use the Long Form. It adds four columns for you to fill.",
+    formBelow:
+      "I used the Short Form, because this package's cost estimate of US${amount} is below US${threshold}, the lowest " +
+      "Table I threshold in the PPSD guidance for {category}.",
+    formNoAmount:
+      "I used the Short Form, because this package has no cost estimate for me to compare with the PPSD guidance's Table I thresholds.",
+    // A STEP category as the captions write it.
+    categories: {
+      Works: "works",
+      Goods: "goods",
+      "Non-consulting Services": "non-consulting services",
+      "Consultant Services": "consultant services",
+    } as Record<string, string>,
+    // The progress line: its first sentence is bold.
+    progressCount: (set: string, total: string) => `${set} of ${total} risk owners set.`,
+    progressRated: (rated: string, total: string) => `${rated} of ${total} rows rated.`,
+    progressShort: "I wrote the descriptions and mitigations. Risk owners stay with you and the borrower.",
+    progressLong: "I wrote the descriptions and mitigations. Risk owners and ratings stay with you and the borrower.",
+    bandLabel: (risk: string) => `For you to fill: ${risk}`,
+    // The Sources list's first line of each footnote, and where it is cited.
+    inWord: "In Word: {text}",
+    citedIn: (column: string, risk: string) => `Cited in the ${column} for "${risk}".`,
+    // A marker that carries several sources: its accessible name lists them all (the 36 brief, 4.6).
+    markerName: (n: number, sources: string, opened: boolean) => `Source ${n}: ${sources}${opened ? ", opened" : ""}`,
+    markerJoin: ", and ",
+    markerParagraph: "{doc} {pcode} paragraph {para}, page {page}",
+    markerSection: "{doc} paragraph {section}",
+    markerCount: "count of comparable completion reports",
+    markerLesson: "the lesson it rests on",
+    // Announced in the page's one polite region (section 5.4).
+    ownerSet: (set: string, total: string) => `Owner set. ${set} of ${total} risk owners set.`,
+    ownerRemoved: (set: string, total: string) => `Owner removed. ${set} of ${total} risk owners set.`,
+    fieldSet: (field: string, risk: string) => `${field} set for "${risk}".`,
+    allOwners: (total: string) => `All ${total} risk owners are set. Mark the rows as checked to export them.`,
+    exportReady: "You can export the rows now.",
+    showingLong: (rated: string, total: string) => `Showing the Long Form. ${rated} of ${total} rows rated.`,
+    showingShort: "Showing the Short Form.",
+    formFailed: "I couldn't change the form just now.",
+  },
+
+  // Fill-in chips and their editors (ticket 36; the 36 brief, sections 4.3 and 5.4): fields only a person fills.
+  // The action keeps one name from the chip to the button to the announcement.
+  fill: {
+    ownerEmpty: "Set the owner",
+    ratingEmpty: "Set",
+    // A chip's accessible name: it holds the chip's own words (WCAG 2.5.3).
+    nameEmpty: (field: string, risk: string) => `Set the ${field} for ${risk}`,
+    nameOwnerEmpty: (risk: string) => `Set the owner for ${risk}`,
+    nameSet: (field: string, risk: string, value: string) => `${field} for ${risk}: ${value}. Change it.`,
+    editorRow: (risk: string) => `For the row on "${risk}".`,
+    ownerLabel: "Risk owner",
+    ownerHint: "Name the role or unit that will manage this risk, as the borrower's PPSD names it.",
+    counter: (left: string) => `${left} characters left.`,
+    ownerError: "Write the role or unit that will manage this risk.",
+    ownerSubmit: "Set the owner",
+    ownerRemove: "Remove the owner",
+    scoreLabel: "Score",
+    scoreHint: "The template defines it as {definition}. Type it as the borrower agrees it.",
+    scoreSubmit: "Set the score",
+    scoreError: (min: string, max: string) => `Type a whole number from ${min} to ${max}, as the template's score uses.`,
+    scoreRemove: "Remove the score",
+    ratingRemove: "Remove the rating",
+    stageRemove: "Remove the stage",
+    stageLabel: "Stage",
+    stageSubmit: "Set the stage",
+    stageError: "Write the stage of the procurement process.",
+    // A rating option: "4, High".
+    ratingOption: (value: number, label: string) => `${value}, ${label}`,
+    readOnlyEmpty: "Not set",
+    saveFailed: "I couldn't save this just now.",
+    tryAgain: "Try again",
+    preview: "Changes are off in a preview.",
+    close: "Close",
+  },
+
+  // The Project Paper summary's own words (ticket 36; the 36 brief, section 5.8).
+  paper: {
+    scope: (pid: string, agencies: string, agency: string) =>
+      `${pid} has ${agencies} implementing agencies with Procurement Plans. This summary covers ${agency} only.`,
+    parts: { plan: "The Procurement Plan", record: "The implementing agency's track record", ppsd: "Procurement risks in the PPSD" } as Record<string, string>,
+    // The PPSD part's source caption: one sentence per draft it drew on, its title a link.
+    ppsdSource: "From {title}, checked by {checker} on {date}.",
+    ppsdNone:
+      "Your team had no checked PPSD rows for this project's packages when I drafted this, so this part is empty. It is left out of the Word file.",
+    recordNone: (agency: string) =>
+      `I found no past package from ${agency} with both a date in a published plan and a signed contract, so this part is empty. It is left out of the Word file.`,
+    abstain: "I couldn't write this part so that it passed my checks. The sentences I removed are listed above. It is left out of the Word file.",
+    sheetLabel: "Procurement summary for the Project Paper, draft text",
+    writingParts: "The summary's parts, being written",
   },
 
   // The package workspace's frame (the 12 brief): the header, the package's facts in STEP's field
@@ -3163,6 +3287,27 @@ export const copy = {
   // field (its label, its add label and its options) are in the package form schema, config/package_form.toml,
   // which the copy lint checks too, so a field added there needs nothing here.
   packageWorkspace: {
+    // "Suggest {n} PPSD risk rows" (ticket 36; the 36 brief, section 5.1): the workspace's one solid button, in the
+    // sticky header from 768 px and under section 3's risks below that. {n} is your own selection's count.
+    ppsdAction: {
+      button: (count: number, countText: string) => (count === 1 ? "Suggest 1 PPSD risk row" : `Suggest ${countText} PPSD risk rows`),
+      feedforward: "The draft waits in Drafts for you to check. I send nothing.",
+      description:
+        "I write a Risk Description and a Description of mitigation for each risk you selected, for the borrower's " +
+        "Project Procurement Strategy for Development (PPSD).",
+      heldLabel: "Suggest PPSD risk rows",
+      // "section 3" links to the risks section.
+      heldNone: "Select the risks you want in {section} first.",
+      heldNoneLink: "section 3",
+      heldNoneInline: "Select at least one risk above first.",
+      heldSaveFailed: "I couldn't save your selection, so I can't draft from it yet. Try again in section 3.",
+      heldPreview: "This is a preview, so you can't start a draft.",
+      asof: "I draft PPSD rows only from today's records, not from a past date.",
+      existingYou: (date: string) => `You started suggested PPSD rows for this package on ${date}.`,
+      existingTeammate: (author: string, date: string) => `${author} started suggested PPSD rows for this package on ${date}.`,
+      existingLink: "Open the draft",
+      stopped: "I stopped writing the PPSD rows and saved nothing.",
+    },
     titleNew: "New package",
     title: (description: string, country: string) => `${description}, ${country}`,
     documentTitle: (title: string) => `${title} · Packages`,

@@ -24,7 +24,7 @@ import { draftScope, newKey, preloaded, startWriting, stopped, stopWriting, writ
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { DocumentColumn, DraftCrumbs, DraftHeader, subtitleOf } from "./DraftPage";
+import { DocumentColumn, DraftCrumbs, DraftHeader, PackageCrumbs, ppsdSubtitle, subtitleOf } from "./DraftPage";
 import { FOLLOWING_HREF } from "../lib/following";
 import { IdText } from "../components/ProjectId";
 import { SkeletonText } from "../components/Skeleton";
@@ -80,12 +80,21 @@ export function DraftNewPage({ search }: { search: string }) {
   const pid = params.get("pid");
   const agency = params.get("agency");
   const version = params.get("version");
-  // A mission brief (ticket 37) is started from Following, and goes back there.
-  const brief = params.get("kind") === "mission_brief";
-  const planHref = brief ? FOLLOWING_HREF : pid && agency ? `/projects/${pid}/procurement/${agency}${version ? `/${version}` : ""}` : null;
-  const matches = current !== null && current.request.project_id === pid &&
-    (brief ? current.request.kind === "mission_brief" : current.request.agency_id === agency && current.request.plan_date === version);
+  const kindKey = params.get("kind");
+  // A mission brief (ticket 37) is started from Following, and goes back there; suggested PPSD rows (ticket 36) from
+  // the package workspace, and go back there.
+  const brief = kindKey === "mission_brief";
+  const pkg = kindKey === "ppsd_rows" ? params.get("package") : null;
+  const planHref = brief ? FOLLOWING_HREF
+    : pkg ? `/packages/${encodeURIComponent(pkg)}`
+      : pid && agency ? `/projects/${pid}/procurement/${agency}${version ? `/${version}` : ""}` : null;
+  const matches = current !== null && (
+    pkg ? current.request.kind === "ppsd_rows" && current.request.package === pkg
+      : current.request.project_id === pid && (brief ? current.request.kind === "mission_brief"
+        : current.request.kind === (kindKey ?? "review_notes") && current.request.agency_id === agency && current.request.plan_date === version));
   if (!current || !matches) {
+    const back = pkg ? copy.ppsd.backToPackage : brief ? copy.mission.backToFollowing : words.writing.backToPlan;
+    const body = pkg ? copy.ppsd.reloadBody : brief ? copy.mission.reloadBody : words.writing.reloadBody;
     return (
       <DocumentColumn>
         <div data-draft-new="none">
@@ -94,15 +103,199 @@ export function DraftNewPage({ search }: { search: string }) {
           </h1>
           <EmptyState
             title={words.writing.reloadTitle}
-            body={brief ? copy.mission.reloadBody : words.writing.reloadBody}
-            link={planHref ? { href: planHref, text: brief ? copy.mission.backToFollowing : words.writing.backToPlan } : { href: "/drafts", text: words.writing.reloadLink }}
+            body={body}
+            link={planHref ? { href: planHref, text: back } : { href: "/drafts", text: words.writing.reloadLink }}
           />
         </div>
       </DocumentColumn>
     );
   }
   if (brief) return <WritingBriefPage current={current} />;
+  if (current.request.kind === "ppsd_rows" || current.request.kind === "project_paper") {
+    return <WritingKindPage current={current} backHref={planHref!} />;
+  }
   return <WritingPage current={current} planHref={planHref!} />;
+}
+
+// Writing suggested PPSD rows or a Project Paper summary (ticket 36; the 36 brief, sections 5.2, 5.8 and 8.1): the
+// header with the state slot and Stop writing, the steps, and the draft's shape while it is written: a skeleton block
+// for each risk you selected, or the summary's three part headings as real text over body bars. When the draft is
+// saved, this page becomes its page in place; Stop writing goes back to the package or the plan check, which says
+// nothing was saved.
+function WritingKindPage({ current, backHref }: { current: Writing; backHref: string }) {
+  const ppsdKind = current.request.kind === "ppsd_rows";
+  const kind: KindWords = copy.draft.kinds[current.request.kind];
+  const [stillWorking, setStillWorking] = useState(false);
+  const opening = useRef(false);
+  const pkg = current.package;
+  const plan = current.summaryPlan;
+
+  useEffect(() => {
+    setPageTitle(ppsdKind ? kind.pageTitle(pkg?.title ?? "", "") : kind.pageTitle(plan?.implementing_agency ?? "", short(plan?.plan_date ?? "")));
+    draftScope.set(plan?.project_id ?? null);
+    return () => draftScope.set(null);
+  }, [pkg, plan]);
+
+  useEffect(() => {
+    if (current.phase !== "writing") {
+      setStillWorking(false);
+      return;
+    }
+    const timer = setInterval(() => setStillWorking(Date.now() - current.lastEventAt > STILL_WORKING_MS), 1000);
+    return () => clearInterval(timer);
+  }, [current.phase, current.lastEventAt]);
+
+  useEffect(() => {
+    if (current.phase !== "done" || !current.draftId || opening.current) return;
+    opening.current = true;
+    const id = current.draftId;
+    getJson<Draft>(`/api/drafts/${encodeURIComponent(id)}`).then(
+      (draft) => {
+        preloaded.set((all) => ({ ...all, [id]: draft }));
+        navigate(`/drafts/${encodeURIComponent(id)}`, { replace: true, quiet: true });
+      },
+      () => navigate(`/drafts/${encodeURIComponent(id)}`, { replace: true, quiet: true }),
+    );
+  }, [current.phase, current.draftId]);
+
+  const stop = () => {
+    stopWriting();
+    stopped.set(backHref);
+    window.history.back();
+  };
+  const tryAgain = () => startWriting({ ...current.request, idempotency_key: newKey() }, null, [], undefined, { package: pkg, summaryPlan: plan });
+  const failed = current.phase === "failed" || current.phase === "dropped";
+  const message = current.phase === "dropped" ? kind.writeErrors.dropped : kind.writeErrors[current.error ?? "internal"] ?? kind.writeErrors.internal;
+  const retry = current.error !== "permission" && current.error !== "no_agent" && current.error !== "no_selected_risks";
+  const back = ppsdKind ? copy.ppsd.backToPackage : words.writing.backToPlan;
+
+  const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
+  const s = kind.steps;
+  const read = ppsdKind ? formatCount(by.read?.selected ?? pkg?.selected ?? 0) : formatDate(by.read?.plan_date ?? plan?.plan_date ?? "");
+  const steps: Step[] = [{ key: "read", running: s.read.running, done: s.read.done(read), state: by.read?.status ?? "running" }];
+  if (by.write) {
+    const rows = by.write.rows ?? by.write.notes ?? 0;
+    steps.push({
+      key: "write",
+      running: s.write.running(0, ""),
+      done: s.write.done(by.write.sentences ?? 0, formatCount(by.write.sentences ?? 0), rows, formatCount(rows)),
+      state: by.write.status,
+    });
+  }
+  if (by.check) {
+    const checks = by.check.checks ?? 0;
+    steps.push({
+      key: "check",
+      running: words.writing.checkRunning,
+      done: words.writing.checkDone(formatCount(checks), by.check.written ?? 0, formatCount(by.check.written ?? 0), by.check.removed ?? 0,
+        formatCount(by.check.removed ?? 0)),
+      state: by.check.status,
+    });
+  }
+  if (by.save) steps.push({ key: "save", running: s.save.running, done: s.save.done, state: by.save.status });
+
+  return (
+    <DocumentColumn>
+      <div data-draft-new={current.phase} data-writing-kind={current.request.kind} aria-busy={current.phase === "writing"}>
+        {ppsdKind ? (
+          <PackageCrumbs title={pkg?.title ?? ""} href={backHref} last={kind.crumb("")} />
+        ) : (
+          <DraftCrumbs pid={plan?.project_id ?? ""} name={plan?.project_name ?? ""} last={kind.crumb("")} />
+        )}
+        <DraftHeader
+          className="mt-4"
+          title={kind.title}
+          subtitle={ppsdKind ? ppsdSubtitle(pkg?.title ?? "", pkg?.step_reference) : subtitleOf(kind, plan?.implementing_agency ?? "", plan?.plan_date ?? "")}
+          state={
+            current.phase === "writing" && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-small text-ink">{words.writing.state}</p>
+                <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
+                  {words.writing.stop}
+                </Button>
+              </div>
+            )
+          }
+        />
+        <div className="mt-6">
+          <Steps
+            steps={failed ? steps.filter((step) => step.state === "done") : steps}
+            stillWorking={stillWorking}
+            reserveLines={failed || current.phase === "nothing" ? 0 : 4}
+            rail={!failed && current.phase !== "nothing"}
+          />
+        </div>
+        {current.phase === "nothing" ? (
+          <div className="mt-6 max-w-prose" data-nothing-survived>
+            <h2 tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+              {kind.nothingTitle}
+            </h2>
+            <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
+            <div className="mt-4">
+              <RemovedBox removed={removedItems(current, kind)} all />
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button variant="secondary" onClick={tryAgain}>
+                {words.writing.tryAgain}
+              </Button>
+              <TextLink href={backHref}>{back}</TextLink>
+            </div>
+          </div>
+        ) : failed ? (
+          <div className="mt-6 max-w-prose" data-write-error={current.error ?? current.phase}>
+            <Alert
+              state="error"
+              live="alert"
+              action={
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  {retry && (
+                    <Button variant="secondary" onClick={tryAgain}>
+                      {words.writing.tryAgain}
+                    </Button>
+                  )}
+                  <TextLink href={backHref}>{back}</TextLink>
+                </div>
+              }
+            >
+              {message}
+            </Alert>
+            {current.reference && retry && (
+              <p className="mt-2 text-caption text-ink-muted" data-write-reference>
+                <Fill template={copy.service.reference} slots={{ reference: <span className="inline-block max-w-full wrap-anywhere font-mono">{current.reference}</span> }} />
+              </p>
+            )}
+          </div>
+        ) : ppsdKind ? (
+          <ol aria-hidden="true" className="mt-6 flex flex-col gap-3" data-writing-rows>
+            {Array.from({ length: Math.max(pkg?.selected ?? 1, 1) }, (_, index) => (
+              <li key={index} className="h-55 rounded-md border border-line bg-surface p-4">
+                <SkeletonText className="text-small" widths={["w-2/5"]} />
+                <div className="mt-3 flex flex-col gap-2">
+                  <Skeleton className="h-3.5 w-full" />
+                  <Skeleton className="h-3.5 w-11/12" />
+                  <Skeleton className="h-3.5 w-3/5" />
+                </div>
+                <Skeleton className="mt-4 h-8 w-36" radius="rounded-pill" />
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <section aria-label={copy.paper.writingParts} className="mt-6 rounded-md border border-line bg-surface p-4 md:p-8" data-paper-parts="writing">
+            <div className="flex flex-col gap-8">
+              {["plan", "record", "ppsd"].map((part) => (
+                <div key={part}>
+                  <h3 className="text-title text-ink-heading">{copy.paper.parts[part]}</h3>
+                  <div aria-hidden="true" className="mt-2">
+                    <SkeletonText className="text-body" widths={["w-full", "w-[96%]", "w-[90%]", "w-[55%]"]} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </DocumentColumn>
+  );
 }
 
 function WritingPage({ current, planHref }: { current: Writing; planHref: string }) {

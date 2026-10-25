@@ -8,7 +8,7 @@ event: step
 data: {"id": "write", "kind": "write", "status": "running", "count": 4}
 
 event: step
-data: {"id": "write", "kind": "write", "status": "done", "notes": 4, "sentences": 4}
+data: {"id": "write", "kind": "write", "status": "done", "notes": 4, "sentences": 4, "rows": 2}
 
 event: step
 data: {"id": "check", "kind": "check", "status": "running"}

@@ -246,7 +246,8 @@
           "draft_id": "draft-0001",
           "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
           "checked_by": "Ana Example",
-          "checked_at": "2026-10-28T09:04:00Z"
+          "checked_at": "2026-10-28T09:04:00Z",
+          "rows": 2
         }
       ]
     }
@@ -706,6 +707,7 @@
   "choices": [],
   "summary": {
     "agencies_with_plans": 4,
+    "ppsd_rows": 2,
     "parts": [
       {
         "part": "plan",

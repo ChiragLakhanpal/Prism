@@ -170,6 +170,12 @@ def message(facts: Facts, language: str = "en") -> dict:
                      for row in facts.selected]}
 
 
+def written_rows(cells: list[str]) -> int:
+    """How many rows the writer wrote a cell of, for the writing step's "I wrote two rows." Only the cells Strata
+    writes count: a cell key the message never named is dropped."""
+    return len({key.split("/", 1)[0] for key in cells if key.split("/", 1)[-1] in CELLS})
+
+
 def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
     """Every record the builder's tools returned, with the tool that returned it."""
     held = facts.table.facts

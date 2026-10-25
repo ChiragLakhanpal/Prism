@@ -138,8 +138,8 @@ def items(facts: Facts) -> list[dict]:
     plan_ids = [facts.checked["summary"]["evidence_id"], *(row["evidence_id"] for row in facts.checked["rows"])]
     track_ids = [facts.track["summary"]["evidence_id"], *(row["evidence_id"] for row in facts.track["rows"])]
     ppsd_ids = [row["evidence_id"] for row, _ in _ppsd_rows(facts)]
-    drafts = [{key: draft[key] for key in ("draft_id", "package_title", "checked_by", "checked_at")}
-              for draft in facts.ppsd]
+    drafts = [{**{key: draft[key] for key in ("draft_id", "package_title", "checked_by", "checked_at")},
+               "rows": len(draft["rows"])} for draft in facts.ppsd]
     packages = [{key: row[key] for key in ("evidence_id", "step_reference", "first_planned_on", "signed_on", "state")}
                  for row in facts.track["rows"]]
     found = []
@@ -172,6 +172,8 @@ def view(content: dict, fields: dict, words: dict) -> dict:
     """What the summary page adds: each part's reason and, for the PPSD part, the drafts it drew on."""
     notes = {note["key"]: note for note in content["notes"]}
     return {"agencies_with_plans": content["subject"].get("agencies_with_plans"),
+            # How many checked PPSD rows the summary drew on, which its lede states.
+            "ppsd_rows": sum(entry.get("rows", 0) for entry in (notes.get("ppsd") or {}).get("drafts") or ()),
             "parts": [{"part": part, "reason": (notes.get(part) or {}).get("reason"),
                        "state": (notes.get(part) or {}).get("state")} for part in PARTS]}
 

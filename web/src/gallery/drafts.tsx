@@ -32,7 +32,7 @@ const EXPORTED = exported as unknown as Draft;
 const TEAMMATE = teammate as unknown as Draft;
 const DISCARDED = discarded as unknown as Draft;
 // A preview of another view: the server holds both acts with the preview's reason.
-const PREVIEW: Draft = { ...D, may_act: false, holds: [{ key: "preview", copy: "preview" }] };
+const PREVIEW: Draft = { ...D, may_act: false, holds: [{ key: "preview", copy: "preview", left: 1, first_anchor: null }] };
 const MISSING: Draft = { ...EXPORTED, export: { ...EXPORTED.export!, files: [], files_available: false } };
 const day = (iso: string) => formatDate(iso.slice(0, 10));
 const nothing = () => undefined;

@@ -233,6 +233,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
         raise WriteError("agent_output") from error
     claimed = [key for key, note in written.items() if note.get("claims")]
     wrote = {"notes": len(claimed), "sentences": sum(len(written[key]["claims"]) for key in claimed)}
+    if hasattr(module, "written_rows"):  # suggested PPSD rows count rows, two cells each (ticket 36)
+        wrote["rows"] = module.written_rows(claimed)
     yield step("write", "done", **wrote)
 
     yield step("check", "running")
