@@ -199,6 +199,8 @@ const HUB_API: Shot["api"] = {
   "/api/projects/P130164/documents/isr": { recorded: "source-p130164-ambiguous.json" },
   "/api/projects/P130164/documents/not-a-document": { recorded: "source-p130164-not-found.json" },
   "/api/projects/P130164/documents/30152361": { recorded: "source-p130164-doc-unread.json" },
+  "/api/projects/P130164/documents/pad-2013-10-01?page=65": { recorded: "source-pad-p130164-65.json" },
+  "/api/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3": { recorded: "source-plan-p161305-3.json" },
   "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
   "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
 };
@@ -342,6 +344,10 @@ const HUB_SHOTS: Shot[] = [
   hubShot("source--ambiguous", "/projects/P130164/documents/isr"),
   hubShot("source--as-of", `${SOURCE}?page=23&asof=2019-10-01`),
   hubShot("source--reissue", "/projects/P130164/documents/icr-review-2023-05-04?page=1"),
+  // A page with a table read into rows, and a plan's page of STEP rows: below 768 px each scrolls in a frame
+  // that takes focus.
+  hubShot("source--table", "/projects/P130164/documents/pad-2013-10-01?page=65", { widths: [1440, 390, 320] }),
+  hubShot("source--plan-rows", "/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3", { widths: [1440, 390, 320] }),
   hubShot("source--error", `${SOURCE}?page=23&para=54`, {}, { [`/api${SOURCE}?page=23&para=54`]: { status: 503, body: SERVICE_DOWN } }),
   hubShot("source--focus-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440, 390], act: focus("[data-page-bar] a:visible >> nth=-1") }),
   hubShot("source--hover-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440], act: hover("[data-page-bar] a:visible >> nth=-1") }),

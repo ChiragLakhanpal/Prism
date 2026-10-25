@@ -4,6 +4,9 @@ import { recorded } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
+// The Kenya National Highways Authority's plan of September 24, 2026, whose page 3 holds 13 STEP rows.
+export const KENHA_PLAN = "procurement-plan-kenya-national-highways-authority-2026-09-24";
+
 export async function hubApi(): Promise<Record<string, Answer>> {
   const file = async (name: string) => ({ body: await recorded(name) });
   return {
@@ -24,6 +27,8 @@ export async function hubApi(): Promise<Record<string, Answer>> {
     "/api/projects/P130164/documents/isr": await file("source-p130164-ambiguous.json"),
     "/api/projects/P130164/documents/not-a-document": await file("source-p130164-not-found.json"),
     "/api/projects/P130164/documents/30152361": await file("source-p130164-doc-unread.json"),
+    "/api/projects/P130164/documents/pad-2013-10-01?page=65": await file("source-pad-p130164-65.json"),
+    [`/api/projects/P161305/documents/${KENHA_PLAN}?page=3`]: await file("source-plan-p161305-3.json"),
     "/api/evidence": await file("evidence-icr-p130164-54.json"),
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   };

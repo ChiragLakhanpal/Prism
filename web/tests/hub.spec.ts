@@ -9,7 +9,7 @@ import AxeBuilder from "@axe-core/playwright";
 import type { Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
-import { hubApi } from "./hub-api";
+import { hubApi, KENHA_PLAN } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -562,6 +562,26 @@ test("axe finds no WCAG 2.2 AA violations on Summary, Documents and the source v
     }
     await page.setViewportSize({ width: 320, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} at 320 px`).toBeLessThanOrEqual(320);
+  }
+});
+
+test("a source page's table, or a plan's STEP rows, wider than a phone's column scrolls in a frame a keyboard can reach, and axe passes at 390 and 320 px", async ({ page }) => {
+  for (const [path, caption] of [
+    ["/projects/P130164/documents/pad-2013-10-01?page=65", "Annex 4 - Operational Risk Assessment Framework (ORAF), a table on page 65, as I read it into rows."],
+    [`/projects/P161305/documents/${KENHA_PLAN}?page=3`, "The activities on page 3, as I read them from the plan's table."],
+  ] as const) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, path, 390);
+    await expect(page.locator("[data-source-page=read]")).toBeVisible();
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 900 });
+      // The frame is a region named by the table's caption, and takes focus, so Safari's Tab reaches it too.
+      const frame = main(page).getByRole("region", { name: caption });
+      await expect(frame).toHaveAttribute("tabindex", "0");
+      expect(await frame.evaluate((el) => el.scrollWidth > el.clientWidth), `${path} at ${width} px scrolls inside its frame`).toBe(true);
+      expect(await axe(page), `${path} at ${width} px`).toEqual([]);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} at ${width} px`).toBeLessThanOrEqual(width);
+    }
   }
 });
 

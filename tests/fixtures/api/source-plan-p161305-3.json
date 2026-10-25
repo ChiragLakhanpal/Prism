@@ -1,0 +1,168 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P161305",
+    "display_name": "Horn of Africa Gateway Development"
+  },
+  "asked": {
+    "page": 3,
+    "para": null,
+    "passage": null
+  },
+  "document": {
+    "document_id": "40129238",
+    "doc_key": "procurement-plan-kenya-national-highways-authority-2026-09-24",
+    "type": "procurement_plan",
+    "document_type": "Procurement Plan",
+    "document_date": "2026-09-24",
+    "disclosed_on": "2026-09-24",
+    "pdf_pages": 14,
+    "pdf_url": "https://documents.worldbank.org/curated/en/099092426095539747/pdf/P161305-ef1de9ae-5205-4481-b6a2-9178d50906bc.pdf",
+    "language": "en",
+    "sequence": null,
+    "agency": "Kenya National Highways Authority",
+    "replaces": null,
+    "replaced_by": null
+  },
+  "canonical": null,
+  "state": "page",
+  "page": 3,
+  "correction": null,
+  "highlight": null,
+  "page_state": "read",
+  "passages": [],
+  "tables": [],
+  "plan_rows": [
+    {
+      "activity_reference_no": "KE-KENHA-124342-CW-RFB",
+      "description": "Package 1: The upgrading to bitumen standards of section s of the Isiolo – Mandera road ; Lot 1Isiolo - Kulamawe road section 77km and Lot 2 kula mawe - Modogashe 113km",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "290000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-124351-CW-RFB",
+      "description": "Package 2: Upgrading to bitu men standards of sections of the Isiolo – Mandera road; Lo t 1Wajir – Tarbaj (59.5 Km) a nd Lot 2 Tarbaj – Kutulo M (59.5 Km)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "155000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-124352-CW-RFB",
+      "description": "Package 3: Upgrading to bitu men standards of sections of the Isiolo – Mandera road, Co mprising 4 Lots namely; Kutu lo M – Dimu (15.5 Km) , Dimu – Dabasiti (15.5 Km), Dabasit i – Borehole 11 (15.5 Km), Bo rehole 11 – Elwak (15.5 Km)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "60000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-147752-CW-RFB",
+      "description": "NORTH EASTERN TRANSPOR T IMPROVEMENT PROJECT (N ETIP) PACKAGE 1: UPGRADING OF I SIOLO – MODOGASHE ROAD; COMPRISING OF 2 LOTS; LOT 1: ISIOLO – KULAMAWE 77KM LOT 2: KULAMAWE – MODOG ASHE 113KM",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "317000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-199260-CW-RFB",
+      "description": "HORN OF AFRICA GATEWAY DEVELOPMENT PROJECT - Off ice complex for road sector i nstitutions: work environment and green ener gy improvements",
+      "review_type": "Post",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "3480000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-201783-CW-RFB",
+      "description": "(PKG1) HORN OF AFRICA GAT EWAY DEVELOPMENT PROJEC T (HoAGDP): PACKAGE 1: Lot 1 - Isiolo-Kulamawe (A10/ B84) Road section (77km) Lot 2 - Kulamawe-Modogashe (B84) Road Section (127km)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "318180000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-201787-CW-RFB",
+      "description": "(PCKG 2) HORN OF AFRICA G ATEWAY DEVELOPMENT PROJ ECT (HoAGDP): PACKAGE 2 LOT 1: Wajir - Tarbaj road (A 13) (57km) LOT 2: Tarbaj - Kotulo road ( A13) (64km) LOT 3: Kotulo - Kobo road (A13) (38km) LOT 4: Kobo - Elwak road (A13) (26km)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "232524000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-299749-CW-RFB",
+      "description": "PKG 2- HORN OF AFRICA GAT EWAY DEVELOPMENT PROJEC T (HoAGDP): PACKAGE 2: Lot 1 - Wajir-Tarbaj (A13) Road s ection (57km) Lot 2 - Tarbaj-Kotulo (A13) Road Section (64km)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "145000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-299979-CW-RFB",
+      "description": "PKG 3- HORN OF AFRICA GAT EWAY DEVELOPMENT PROJEC T (HoAGDP): PACKAGE 3: Lot 1 - Kotulo-Kobo (A13) Road s ection (38km) Lot 2 - Kobo-El wak (A13) Road Section (26k m)",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "90000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-4313-CW-RFB",
+      "description": "U pgrading of Isiolo - Kula Maw e Road. Approximately 77km",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "77000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-533026-CW-RFB",
+      "description": "Upgrading to Bitumen Stand ards of Selected Link Roads within Meru Town",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "23000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KENHA-533041-CW-DIR",
+      "description": "Relocation of existing Fiber O ptic line and Civil works asso ciated with laying Fibre Optic Cable along the Elwak- Mand era Road Section",
+      "review_type": "Prior",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "5000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    },
+    {
+      "activity_reference_no": "KE-KRA-323784-CW-RFB",
+      "description": "D esign, Build and Install axle l oad control infrastructure inc luding virtual weighbridges: Static ALCS a) Kachuru b) Lafaley c) Rhamu and Virt ual Weighbridge Locations a) Tarbaj b) Habaswein c) Garb atula",
+      "review_type": "Prior",
+      "method": "Request for Bids",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "25000000.00",
+      "actual_amount_usd": null,
+      "process_status": null
+    }
+  ],
+  "page_text": null
+}

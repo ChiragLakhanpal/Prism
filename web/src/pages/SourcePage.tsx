@@ -255,13 +255,14 @@ function RowsTable({
   highlight: string | null;
   blockRef: React.Ref<HTMLDivElement>;
 }) {
+  const captionId = useId();
   const heads: string[] = [];
   for (const row of rows) for (const [head] of row.cells) if (!heads.includes(head)) heads.push(head);
   const marked = rows.some((row) => row.passage_id === highlight);
   const body = (
-    <div className="overflow-x-auto rounded-md border border-line bg-surface">
+    <ScrollFrame captionId={captionId}>
       <table className="w-full border-collapse text-small">
-        <caption className="px-3 py-2 text-left text-caption text-ink-muted">
+        <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
           {title ? fill(words.tableTitled, { title, page: String(page) }) : fill(words.table, { page: String(page) })}
         </caption>
         <thead className="bg-surface-2">
@@ -287,7 +288,7 @@ function RowsTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollFrame>
   );
   return marked ? (
     <Highlighted blockRef={blockRef} caption={words.openedPassage}>
@@ -298,14 +299,28 @@ function RowsTable({
   );
 }
 
+// The frame round a table on the page. In a column narrower than the table (below 768 px) it scrolls
+// sideways, so it is a region named by the table's caption that takes focus, as Table's frame does, and a
+// keyboard can scroll it in every browser (the 21 design review, round 3, B1).
+function ScrollFrame({ captionId, children }: { captionId: string; children: ReactNode }) {
+  return (
+    <div tabIndex={0} role="region" aria-labelledby={captionId} className="overflow-x-auto rounded-md border border-line bg-surface">
+      {children}
+    </div>
+  );
+}
+
 // A Procurement Plan's page: the STEP rows the layout parser read from its table.
 function PlanRows({ answer }: { answer: SourcePageAnswer }) {
+  const captionId = useId();
   const columns = copy.checkPlan.columns;
   const amount = (text: string | null) => (text ? formatNumber(Number(text), { decimals: 2, compact: false }) : copy.notInPlan);
   return (
-    <div className="overflow-x-auto rounded-md border border-line bg-surface">
+    <ScrollFrame captionId={captionId}>
       <table className="w-full border-collapse text-small">
-        <caption className="px-3 py-2 text-left text-caption text-ink-muted">{fill(words.planRows, { page: String(answer.page ?? 1) })}</caption>
+        <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
+          {fill(words.planRows, { page: String(answer.page ?? 1) })}
+        </caption>
         <thead className="bg-surface-2">
           <tr>
             {[columns.activity, columns.method, columns.estimated, columns.status].map((head, index) => (
@@ -329,7 +344,7 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollFrame>
   );
 }
 
