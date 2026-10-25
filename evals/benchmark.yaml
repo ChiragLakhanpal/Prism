@@ -258,3 +258,32 @@ questions:
       (tests/ground_truth/values.toml, icr-para-54), which the ICR Review restates in section 10.b on
       PDF page 13 (icr-review-2023-restates-para-54). P130164's PAD names the January 2011 Guidelines
       (pad-procurement-guidelines).
+
+  # Ticket 31: the check-your-criteria tools. Each takes the comparable packages find_comparables returned,
+  # so a question names the find_comparables call it starts from (comparables_of), and the offline gate
+  # passes that call's STEP references as the tool's comparables argument (tests/test_tools.py).
+  - id: compare-cost-estimates-ke-nwwda-541055
+    kind: estimates
+    tool: compare_cost_estimates
+    question: >-
+      As of October 22, 2026, were comparable packages of KE-NWWDA-541055-CW-RFB signed above or below
+      their own cost estimates, and is that enough packages for a range?
+    comparables_of:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      as_of: "2026-10-22"
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      as_of: "2026-10-22"
+    expected:
+      signed_above: [KE-CWSB-232660-CW-RFB, KE-NWWDA-229129-CW-RFB]
+      signed_below: [KE-CWSB-233052-CW-RFB, KE-KIMAWASCO-141042-CW-RFB, KE-KIMAWASCO-142995-CW-RFB,
+                     KE-KIMAWASCO-158691-CW-RFB, KE-KIMAWASCO-416959-CW-RFB]
+      abstention: [too_few_comparables]
+      own_estimate: ["1230000.00"]
+    source: >-
+      Each package's first plan row with an Estimated Amount (US$) against the sum of its contracts in the
+      awards data: KE-NWWDA-229129-CW-RFB was estimated at US$300,000.00 and signed at US$1,245,092.76
+      (values.toml, plan-229129-estimated and award-229129-signed); KE-CWSB-232660-CW-RFB was estimated at
+      US$10,000,000.00 in the plans of July 31, 2026 and later and signed at US$19,041,934.18 (contract
+      1691287). The other five were signed below their plan rows' amounts. Seven packages have both, under
+      20, so there is no range. The package's own cost estimate is plan-541055-estimated.
