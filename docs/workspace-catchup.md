@@ -1389,6 +1389,8 @@ and `GET /api/packages/KE-NWWDA-541055-CW-RFB/rebidding` on the deployed App ret
 
 ## Ticket 28, step 5 of 6: sync the agent, since rebidding_risk is a new tool
 
+**Ran on October 25, 2026 (orchestrator).** From 23df355. The sync printed "Foundry's agent strata-orchestrator differed from the repo:", a diff with `### rebidding_risk` added to the tools, and "I made version 2 of strata-orchestrator, which matches the repo." The `--check` run exited 0: "Foundry's agent strata-orchestrator, version 2, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed. Step 6 waits for the SQL warehouse, because the agent's tools run their queries there.
+
 The merger parked this step on October 25, 2026, after merge commit 6044bd4. It needs the four Foundry keys in `.env`. Ticket 28 added rebidding_risk to `config/tools.toml`, and the agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from 6044bd4 or later serves every block that names it.
 
 Run this from the main checkout:
