@@ -150,9 +150,13 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Comparable notices on similar experience");
   await expect(drawer.locator("[data-relation=less] li")).toHaveCount(similar.less);
+  await expect(drawer.locator("[data-relation=less] h3")).toContainText(`(${similar.less})`);
   await drawer.getByRole("button", { name: /Open notice OP00077276/ }).click();
   await expect(drawer.getByRole("heading", { level: 2 })).toContainText("OP00077276");
-  await expect(drawer.getByRole("button", { name: copy.criteria.drawer.back.replace("{n}", String(similar.notices.length)) })).toBeVisible();
+  await expect(drawer.getByRole("button", { name: copy.criteria.drawer.back.replace("{n}", String(similar.stated)) })).toBeVisible();
+  // The notice opens with the requirement's words highlighted, as view B quoted them.
+  const requirement = similar.notices.find((notice: any) => notice.notice_id === "OP00077276").requirement.text;
+  await expect(drawer.locator("mark").first()).toContainText(requirement);
   // The evidence-open log gets the ids opened, never the text.
   const logged = asked.filter((request) => request.url().endsWith("/api/evidence/opened") && request.method() === "POST");
   expect(logged.length).toBeGreaterThan(0);
@@ -270,9 +274,10 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   await expect(part.locator("[data-cost-table] tbody tr")).toHaveCount(run.cost.rows.length);
   await expect(part.locator("[data-cost-middle]")).toHaveCount(0);
   await expect(part.locator("[data-cost-dot]")).toHaveCount(run.cost.rows.length);
-  // A difference is written with a plus sign or a true minus sign.
-  await expect(part.locator("[data-cost-table]")).toContainText("+315%");
-  await expect(part.locator("[data-cost-table]")).toContainText("−36.6%");
+  // A difference is written with a plus sign or a true minus sign (U+2212).
+  const diffs: number[] = run.cost.rows.map((row: any) => row.diff_pct);
+  await expect(part.locator("[data-cost-table]")).toContainText(`+${Math.max(...diffs)}%`);
+  await expect(part.locator("[data-cost-table]")).toContainText(`\u2212${Math.abs(Math.min(...diffs))}%`);
 });
 
 test("lessons on cost estimates appear with their citations, including ICR P130164 paragraph 54", async ({ page }) => {
@@ -290,6 +295,43 @@ test("lessons on cost estimates appear with their citations, including ICR P1301
   await expect(card.locator("[data-lesson-excerpt] mark")).toContainText("108 of 328 cases had to go through rebidding");
   await expect(card.getByRole("heading", { level: 4 }).locator("[data-citation]")).toHaveCount(0);
   await expect(card).toHaveAccessibleName(await card.getByRole("heading", { level: 4 }).innerText());
+
+  // Its marker opens the paragraph with the same words highlighted, under the lesson and its IEG line.
+  await card.locator("[data-citation]").click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.locator("mark").first()).toContainText("108 of 328 cases had to go through rebidding");
+  await expect(drawer.locator("[data-lesson-claim]")).toContainText(await card.getByRole("heading", { level: 4 }).innerText());
+  await expect(drawer.locator("[data-ieg-line=restated]")).toContainText("IEG wrote in its ICR Review");
+});
+
+test("every lesson factor in the thresholds file has its group's name in the copy file", async () => {
+  // The summary carries criteria.lesson_factors as the server read them (tests/record_criteria_api.py).
+  const summary = JSON.parse(await recorded("criteria-summary-ke-nwwda-541055.json"));
+  const groups = copy.criteriaLessons.groups as Record<string, string>;
+  expect(summary.limits.lesson_factors.length).toBeGreaterThan(0);
+  for (const factor of summary.limits.lesson_factors) expect(groups[factor], factor).toBeTruthy();
+});
+
+test.describe("on a touch screen", () => {
+  test.use({ hasTouch: true });
+
+  test("a tap in a cluster of cost dots opens the package of the dot nearest the tap", async ({ page }) => {
+    await open(page, WORKS, { width: 390 });
+    await openSection(page);
+    const dots = section(page).locator("[data-cost-dot]");
+    await expect(dots.first()).toBeAttached();
+    for (const index of [0, (await dots.count()) - 1]) {
+      const dot = dots.nth(index);
+      const reference = await dot.getAttribute("data-cost-dot");
+      await dot.scrollIntoViewIfNeeded();
+      const box = (await dot.boundingBox())!;
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      const drawer = page.getByRole("dialog");
+      await expect(drawer.getByRole("heading", { level: 2 })).toContainText(reference!);
+      await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+    }
+  });
 });
 
 test("a failed save is said once, under the field, and any other failure offers Try again", async ({ page }) => {

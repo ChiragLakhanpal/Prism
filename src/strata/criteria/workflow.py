@@ -42,6 +42,7 @@ from strata.config import CriteriaItems, Thresholds, load_criteria_items
 from strata.criteria.store import COMPARISON, PACKAGE_RUN, CriteriaStore
 from strata.dbx import Viewer
 from strata.harness.facts import Facts
+from strata.packages.risks import ieg_quote
 from strata.harness.turn import Event
 
 log = logging.getLogger("strata.criteria")
@@ -214,7 +215,8 @@ def lesson_groups(call_tool: ToolCall, package: Package, per_group: int, factors
             shown.add(row["lesson_id"])
             source = row["evidence"][0]
             lessons.append({"lesson_id": row["lesson_id"], "version": row["version"], "statement": row["statement"],
-                            "ieg_status": row["ieg_status"], "evidence_id": row["evidence_id"],
+                            "ieg_status": row["ieg_status"], "ieg_quote": ieg_quote(row),
+                            "evidence_id": row["evidence_id"],
                             "passage_evidence_id": source["evidence_id"], "passage_id": source["passage_id"],
                             "quote": source["quote"], "document_type": source["document_type"],
                             "doc_short": source["doc_short"], "project_id": source["project_id"],

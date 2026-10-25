@@ -11,6 +11,7 @@ import { cx } from "../lib/cx";
 import { evidenceHref, evidenceIn, openEvidence, visited } from "../lib/evidence";
 import { itemListId, type ComparedItem, type Comparison, type LessonEntry, type LessonGroup, type Rejected, type RejectedRow } from "../lib/criteria";
 import { formatCount, formatDate } from "../lib/format";
+import { LESSONS_HREF } from "../lib/lessons";
 import { excerpt } from "../lib/sources";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
@@ -33,9 +34,10 @@ export function useOpenId(): string | null {
 
 // Opens the drawer at a view the page holds, or at a source; focus goes back to the opener on close, or to the
 // part's heading when a rerun took the opener away.
-export function openFrom(id: string, element: HTMLElement) {
+// highlight is where words the page quotes sit in the source's text, such as a lesson's quote in its paragraph.
+export function openFrom(id: string, element: HTMLElement, highlight: [number, number] | null = null) {
   const part = element.closest("[data-criteria-part]")?.querySelector<HTMLElement>("h3") ?? null;
-  openEvidence(id, { serial: null, sentence: null, marker: element, runId: null, fallback: part });
+  openEvidence(id, { serial: null, sentence: null, marker: element, runId: null, fallback: part, highlight });
 }
 
 // A part's source line (the 31 brief, 6.5, 6.7 and 6.8): its sources by their dataset names, then the day the
@@ -177,9 +179,9 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
           </caption>
           <colgroup>
             <col className="w-[22%]" />
-            <col className="w-[38%]" />
+            <col className="w-[36%]" />
             <col className="w-[18%]" />
-            <col className="w-[22%]" />
+            <col className="w-[24%]" />
           </colgroup>
           <thead className="bg-surface-2">
             <tr>
@@ -501,7 +503,7 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
       )}
       {n === 0 ? (
         <>
-          <p className="text-body text-ink">{words.rejected.noneNext}</p>
+          <p className="text-caption text-ink-muted">{words.rejected.noneNext}</p>
           <p className="text-caption">
             <TextLink href={readinessHref}>{words.rejected.noneLink}</TextLink>
           </p>
@@ -564,7 +566,7 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
           active={active}
           drawerId="evidence-drawer"
           evidenceId={lesson.passage_evidence_id}
-          onOpen={(marker) => openFrom(lesson.passage_evidence_id, marker)}
+          onOpen={(marker) => openFrom(lesson.passage_evidence_id, marker, (lesson.excerpt?.range as [number, number] | null) ?? null)}
         />
       </span>
       {lesson.removed ? (
@@ -609,12 +611,17 @@ export function CriteriaLessons({ groups, numbers }: { groups: LessonGroup[]; nu
     <div className="flex flex-col gap-2" data-criteria-lessons>
       <p className="text-caption text-ink-muted">{lessonWords.intro}</p>
       {groups.length === 0 ? (
-        <p className="text-body text-ink">{lessonWords.none}</p>
+        <>
+          <p className="text-body text-ink">{lessonWords.none}</p>
+          <p className="text-caption">
+            <TextLink href={LESSONS_HREF}>{lessonWords.noneLink}</TextLink>
+          </p>
+        </>
       ) : (
         <div className="mt-2 flex flex-col gap-6">
           {groups.map((group) => (
             <div key={group.factor} data-lesson-group={group.factor}>
-              <h4 className="text-small font-bold text-ink-heading">{lessonWords.groups[group.factor] ?? group.factor}</h4>
+              <h4 className="text-small font-bold text-ink-heading">{lessonWords.groups[group.factor]}</h4>
               <div className="mt-2 flex flex-col gap-4">
                 {group.lessons.map((lesson) => {
                   const firstIcr = !icrSeen && lesson.doc_short === "ICR";

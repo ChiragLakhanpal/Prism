@@ -93,6 +93,7 @@ function Lane({ cost, onOpen, title, width }: {
   const [hidden, setHidden] = useState(false);
   const altId = useId();
   const dots = useRef<(HTMLSpanElement | null)[]>([]);
+  const pointer = useRef("mouse");
   const open = useOpenId();
   const rows = cost.rows;
   const type = chartType(width || 600);
@@ -265,7 +266,19 @@ function Lane({ cost, onOpen, title, width }: {
                 setHidden(false);
               }}
               onPointerLeave={() => setShown((current) => (current === index ? null : current))}
-              onClick={(event) => onOpen(row, event.currentTarget)}
+              onPointerDown={(event) => {
+                pointer.current = event.pointerType;
+              }}
+              onClick={(event) => {
+                // Each dot's target is 8 px wider than the dot, so in a cluster a tap lands on whichever is on top:
+                // on a touch screen, the dot nearest the tap opens (the 31 design review, F6).
+                if (pointer.current !== "touch") return onOpen(row, event.currentTarget);
+                const box = (event.currentTarget.parentElement ?? event.currentTarget).getBoundingClientRect();
+                const at = { x: event.clientX - box.left, y: event.clientY - box.top };
+                const distance = (index: number) => (x(rows[index].diff_pct) - at.x) ** 2 + (centre + offsets[index] - at.y) ** 2;
+                const nearest = rows.reduce((best, _, index) => (distance(index) < distance(best) ? index : best), index);
+                onOpen(rows[nearest], dots.current[nearest] ?? event.currentTarget);
+              }}
               className="pointer-events-auto absolute cursor-pointer rounded-full after:absolute after:-inset-2 after:content-['']"
               style={{ left: x(row.diff_pct) - r, top: centre + offsets[index] - r, width: 2 * r, height: 2 * r }}
             />
@@ -357,7 +370,7 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
           className="relative -my-1 py-1 text-left font-mono text-small text-primary underline hover:text-link-hover"
           data-cost-row={row.step_reference}
         >
-          <MonoWords text={row.step_reference} />
+          <MonoWords text={row.step_reference} className="underline" />
         </button>
       ),
       country: row.country_name ?? "",
@@ -456,6 +469,12 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
       <div ref={root} className="flex flex-col gap-2" data-cost="none">
         <p className="max-w-prose text-body text-ink">{words.none}</p>
         <Coverage cost={cost} readinessHref={readinessHref} />
+        {(cost.records_through || asOf) && (
+          <Source>
+            {partSource({ sources: cost.sources, through: cost.records_through, asOf: asOf ? cost.as_of : null, template: words.source,
+              templateAsOf: words.sourceAsOf })}
+          </Source>
+        )}
       </div>
     );
   }

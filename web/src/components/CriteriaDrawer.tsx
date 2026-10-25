@@ -9,8 +9,9 @@
 import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import type { ComparedItem, CostRow, ItemNotice, PublicEntry, Relation } from "../lib/criteria";
+import type { ComparedItem, CostRow, ItemNotice, LessonEntry, PublicEntry, Relation } from "../lib/criteria";
 import { formatAmountText, formatCount } from "../lib/format";
+import { IegLine } from "./RiskDrawer";
 import { Fill } from "./Fill";
 import { Highlight } from "./Document";
 import { MonoWords } from "./MonoWords";
@@ -21,7 +22,7 @@ const words = copy.criteria.drawer;
 const cost = copy.cost.drawer;
 const PASSAGE = "strata.gold.passage:";
 
-export type OpenEntry = (id: string, list: { id: string; count: number }, element: HTMLElement) => void;
+export type OpenEntry = (id: string, list: { id: string; count: number }, element: HTMLElement, highlight?: [number, number] | null) => void;
 
 export function criteriaTitle(evidence: EvidenceEvent): ReactNode {
   const row = evidence.row;
@@ -60,7 +61,7 @@ function PublicList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent;
             <button
               type="button"
               data-entry={`${PASSAGE}${entry.passage_id}`}
-              onClick={(event) => onOpen(`${PASSAGE}${entry.passage_id}`, { id: evidence.id, count: entries.length }, event.currentTarget)}
+              onClick={(event) => onOpen(`${PASSAGE}${entry.passage_id}`, { id: evidence.id, count: Number(evidence.row.count) }, event.currentTarget)}
               className="flex min-h-11 w-full flex-col items-start rounded-xs text-left hover:bg-tint-hover"
             >
               <span className="font-mono text-small text-primary underline">
@@ -105,12 +106,13 @@ function ItemList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent; o
       {groups.map((group) => (
         <section key={group.relation} aria-labelledby={`criteria-group-${group.relation}`} data-relation={group.relation}>
           <h3 id={`criteria-group-${group.relation}`} tabIndex={-1} className="text-small font-bold text-ink-heading focus:outline-none">
-            <Fill template={words.groupCount} slots={{ label: words.groups[group.relation], count: String(group.notices.length) }} />
+            <Fill template={words.groupCount} slots={{ label: words.groups[group.relation], count: String(item[group.relation]) }} />
           </h3>
           <ul className="mt-2 flex flex-col">
             {group.notices.map((notice) => (
               <NoticeEntry key={notice.step_reference} notice={notice} onOpen={(element) =>
-                onOpen(`${PASSAGE}${notice.passage_id}`, { id: evidence.id, count: notices.length }, element)} />
+                onOpen(`${PASSAGE}${notice.passage_id}`, { id: evidence.id, count: item.stated }, element,
+                  [notice.requirement.start, notice.requirement.end])} />
             ))}
           </ul>
         </section>
@@ -208,11 +210,7 @@ function CostRecords({ evidence }: { evidence: EvidenceEvent }) {
           )}
         </section>
       ))}
-      {row.contracts.length > 1 && (
-        <p className="text-caption text-ink-muted">
-          <Fill template={cost.sum} slots={{ k: formatCount(row.contracts.length) }} />
-        </p>
-      )}
+      {row.contracts.length > 1 && <p className="text-caption text-ink-muted">{cost.sum}</p>}
     </div>
   );
 }
@@ -222,6 +220,20 @@ export function CriteriaDrawerBody({ evidence, onOpen, focusEntry }: { evidence:
   if (evidence.kind === "criteria_item") return <ItemList evidence={evidence} onOpen={onOpen} focusEntry={focusEntry} />;
   if (evidence.kind === "package_cost") return <CostRecords evidence={evidence} />;
   return <Fragment />;
+}
+
+// View F, a lesson's paragraph opened from section 5: the lesson it was opened for, then its IEG line, ticket 30's
+// info badge with IEG's own words, or the sentence that the lesson rests on the completion report alone.
+export function LessonClaim({ lesson }: { lesson: LessonEntry }) {
+  return (
+    <div data-claim data-lesson-claim={lesson.lesson_id} className="flex flex-col gap-3">
+      <div>
+        <p className="text-caption text-ink-muted">{words.fromPage}</p>
+        <p className="mt-1 border-l-2 border-line-strong pl-3 text-small font-semibold text-ink-heading">{lesson.statement}</p>
+      </div>
+      <IegLine status={lesson.ieg_status} quote={lesson.ieg_quote} />
+    </div>
+  );
 }
 
 // The way back from a notice opened from one of the lists above.

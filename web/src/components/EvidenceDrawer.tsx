@@ -42,8 +42,8 @@ import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
 import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
-import { heldOnPage } from "../lib/criteria";
-import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle } from "./CriteriaDrawer";
+import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
+import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
 
 export type DrawerData =
   | { status: "loading" }
@@ -422,6 +422,7 @@ export function EvidenceDrawerView({
   onOpenListEntry,
   onChooseRow,
   onOpenReport,
+  lesson: givenLesson,
 }: {
   id: string;
   data: DrawerData;
@@ -447,11 +448,13 @@ export function EvidenceDrawerView({
   onOpenEntry?: (entry: DotEntry) => void;
   onBack?: (listId: string) => void;
   // A notice in one of section 5's lists was chosen (ticket 31).
-  onOpenListEntry?: (entry: string, list: { id: string; count: number }) => void;
+  onOpenListEntry?: (entry: string, list: { id: string; count: number }, highlight?: [number, number] | null) => void;
   // A switcher tab of a risk's row chose another of its sources, and a report in a risk's list was chosen
   // (ticket 30).
   onChooseRow?: (id: string) => void;
   onOpenReport?: (evidenceId: string) => void;
+  // Section 5's lesson whose paragraph this is, for the design gallery; the page finds it in the section's lessons.
+  lesson?: LessonEntry | null;
 }) {
   const headingId = useId();
   const passageId = useId();
@@ -496,6 +499,9 @@ export function EvidenceDrawerView({
   const riskRow = !claim && evidence?.kind === "passage" ? rowOf(id, rows) : null;
   const rowSwitcher = riskRow && riskRow.sources.length > 1 ? riskRow : null;
   const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : rowSwitcher ? rowSwitcher.sources.map((source) => source.evidence_id) : null;
+  // A lesson's paragraph opened from section 5 (ticket 31, view F): the lesson and its IEG line.
+  const lessons = useStore(pageLessons);
+  const criteriaLesson = !claim && !riskRow && evidence?.kind === "passage" ? (givenLesson ?? criteriaLessonOf(id, lessons)) : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.
@@ -598,6 +604,7 @@ export function EvidenceDrawerView({
             </div>
           )}
           {riskRow && <RowClaim row={riskRow} />}
+          {criteriaLesson && <LessonClaim lesson={criteriaLesson} />}
           {switcherIds && claim && run && (
             <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
@@ -645,7 +652,7 @@ export function EvidenceDrawerView({
               <CriteriaDrawerBody
                 evidence={evidence}
                 focusEntry={from?.id === id ? (from.entry ?? null) : null}
-                onOpen={(entry, list) => onOpenListEntry?.(entry, list)}
+                onOpen={(entry, list, _element, highlight) => onOpenListEntry?.(entry, list, highlight)}
               />
             )}
             {evidence?.kind === "risk-reports" && (
@@ -799,11 +806,12 @@ export function EvidenceDrawer({
           { replace: true, focus: false },
         )
       }
-      // From one of section 5's lists to a notice and back, in place, as from a quantile dot's list (ticket 31).
-      onOpenListEntry={(entry, list) =>
+      // From one of section 5's lists to a notice and back, in place, as from a quantile dot's list (ticket 31),
+      // with the requirement's words highlighted in the notice.
+      onOpenListEntry={(entry, list, highlight) =>
         openEvidence(
           entry,
-          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list },
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list, highlight },
           { replace: true },
         )
       }

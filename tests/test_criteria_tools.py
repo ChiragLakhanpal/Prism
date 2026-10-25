@@ -55,6 +55,22 @@ def cost(engine, comparables):
     return call(engine, "compare_cost_estimates", comparables=",".join(comparables), step_reference=PACKAGE)
 
 
+@pytest.mark.parametrize("as_of", [AS_OF, "2026-03-31"])
+def test_a_package_is_still_open_to_compare_cost_estimates_exactly_when_find_comparables_says_so(engine, as_of):
+    """The rule for signed by the as-of date is written twice in SQL, in find_comparables' candidates.sql and in
+    sql/shared/signed_packages.sql, which compare_cost_estimates reads; this keeps the two from drifting."""
+    found = registry.call("find_comparables", {"as_of": as_of, "step_reference": PACKAGE},
+                          registry.Context(engine=engine, viewer=ANA))
+    refs = [row["step_reference"] for row in found["rows"]]
+    cost = registry.call("compare_cost_estimates", {"as_of": as_of, "comparables": ",".join(refs),
+                                                    "step_reference": PACKAGE}, registry.Context(engine=engine, viewer=ANA))
+
+    still_open = {row["step_reference"] for row in found["rows"] if row["still_open"]}
+    left_open = {evidence.removeprefix("strata.gold.package:") for entry in cost["coverage"]["not_used"]
+                 if entry["reason"] == "still_open" for evidence in entry["evidence_ids"]}
+    assert refs and left_open == still_open
+
+
 def with_both_amounts(engine, references) -> int:
     """How many of the packages have an Estimated Amount in a public plan version and a contract in the awards data."""
     return scalar(engine, """

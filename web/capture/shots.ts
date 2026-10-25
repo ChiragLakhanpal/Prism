@@ -960,6 +960,15 @@ const CRITERIA_SHOTS: Shot[] = [
   criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
   // A reading check 4's judge said does not follow: removed in its place, its reason in the box above.
   criteriaShot("reading-removed", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading.sse"),
+  // View C with the requirement highlighted, and view F with the lesson's words highlighted and its IEG line.
+  criteriaShot("drawer-notice", {
+    api: { "/api/evidence": { recorded: "evidence-passage-op00077276-s3.json" } },
+    act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible"), click("[role=dialog] [data-entry^='strata.gold.passage:']")),
+  }),
+  criteriaShot("drawer-lesson", {
+    api: { "/api/evidence": { recorded: "evidence-icr-p130164-54.json" } },
+    act: then(openCheck, click("[data-lesson-card] [data-citation]")),
+  }, undefined, PACKAGE),
 ];
 
 const PACKAGE_SHOTS: Shot[] = [

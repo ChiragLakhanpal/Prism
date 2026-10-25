@@ -30,6 +30,7 @@ import {
   type Comparison,
   type Cost,
   type CriteriaSummary,
+  type LessonEntry,
   type PackageRun,
 } from "../lib/criteria";
 import { dataReadinessHref } from "../routes";
@@ -127,13 +128,15 @@ function Sample({ label, props }: { label: string; props: ViewProps }) {
   );
 }
 
-function Drawer({ label, evidence, from = null }: { label: string; evidence: EvidenceEvent; from?: Origin | null }) {
+function Drawer({ label, evidence, from = null, lesson = null }: {
+  label: string; evidence: EvidenceEvent; from?: Origin | null; lesson?: LessonEntry | null;
+}) {
   const id = useId();
   return (
     <Labeled label={label}>
       <div className="max-w-[36rem] border border-line">
         <EvidenceDrawerView id={evidence.id} data={{ status: "ready", evidence }} run={null} from={from} narrow={false} preview={false}
-          dialogId={`gallery-${id}`} sample onClose={nothing} onChoose={nothing} onBack={nothing} />
+          dialogId={`gallery-${id}`} sample onClose={nothing} onChoose={nothing} onBack={nothing} lesson={lesson} />
       </div>
     </Labeled>
   );
@@ -143,12 +146,21 @@ const similarItem = SIMILAR.items.find((item) => item.item_key === "similar_expe
 // View C opened from view B: the notice names the list it came from, so the drawer offers the way back.
 const FROM_ITEM_LIST: Origin = {
   id: (noticePassage as unknown as EvidenceEvent).id, serial: null, sentence: null, marker: null, runId: null, top: null,
-  list: { id: itemListId(SIMILAR.check_id, similarItem.item_key), count: similarItem.notices.length },
+  list: { id: itemListId(SIMILAR.check_id, similarItem.item_key), count: similarItem.stated },
+  highlight: (() => {
+    const notice = similarItem.notices.find((entry) => (noticePassage as unknown as EvidenceEvent).id.endsWith(entry.passage_id));
+    return notice ? [notice.requirement.start, notice.requirement.end] as [number, number] : null;
+  })(),
 };
 
 // The parts' other states, each the works package's recorded run with one value changed.
 const firstReason = WORKS_RUN.rejected.rows.find((row) => row.item_key === WORKS_RUN.rejected.groups[0].item_key)!;
 const firstLesson = WORKS_RUN.lessons.groups[0]?.lessons[0];
+// View F opened from the lesson card's marker: the paragraph with the lesson's words highlighted.
+const FROM_LESSON: Origin = {
+  id: (lessonParagraph as unknown as EvidenceEvent).id, serial: null, sentence: null, marker: null, runId: null, top: null,
+  highlight: (firstLesson?.excerpt?.range as [number, number] | undefined) ?? null,
+};
 const RUN_NO_LESSONS: PackageRun = { ...WORKS_RUN, lessons: { state: "none", groups: [] } };
 const RUN_AWAITING: PackageRun = {
   ...WORKS_RUN,
@@ -189,7 +201,7 @@ const YOURS: Comparison = {
   })),
 };
 const NO_ESTIMATE: Cost = { ...WORKS_RUN.cost, package: { ...WORKS_RUN.cost.package, estimated_amount_usd: null } };
-const PUBLIC_LIST = publicListEvent(CONSULTANT.signature, CONSULTANT.public);
+const PUBLIC_LIST = publicListEvent(CONSULTANT.signature, CONSULTANT.public, CONSULTANT.public_criteria_count);
 const ITEM_LIST = itemListEvent(SIMILAR, similarItem);
 const COST_RECORDS = costRecordEvent(WORKS_RUN.cost.rows[0]);
 
@@ -315,7 +327,7 @@ export function criteriaPage(): GalleryPage {
             <Drawer label={cs.drawerNotice} evidence={noticePassage as unknown as EvidenceEvent} from={FROM_ITEM_LIST} />
             <Drawer label={cs.drawerCost} evidence={COST_RECORDS} />
             <Drawer label={cs.drawerAward} evidence={awardNotice as unknown as EvidenceEvent} />
-            <Drawer label={cs.drawerLesson} evidence={lessonParagraph as unknown as EvidenceEvent} />
+            <Drawer label={cs.drawerLesson} evidence={lessonParagraph as unknown as EvidenceEvent} from={FROM_LESSON} lesson={firstLesson ?? null} />
           </div>
         ),
       },

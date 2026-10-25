@@ -419,6 +419,8 @@ def test_the_package_run_finds_the_lessons_on_cost_estimates_with_icr_p130164_pa
                                                                       paragraph["pdf_page"])
     assert lesson["document_date"] == paragraph["date"].isoformat()
     assert paragraph["value"] in lesson["quote"] and lesson["ieg_status"] == "restated" and not lesson["removed"]
+    # IEG's own words that restate it, for the drawer's IEG line, as the risks section gives them.
+    assert lesson["ieg_quote"]["text"] == VALUES["icr-review-2023-restates-para-54"]["quote"]
     # The card quotes its paragraph with the lesson's words highlighted, in the paragraph's language.
     start, end = lesson["excerpt"]["range"]
     assert lesson["excerpt"]["text"][start:end] == lesson["quote"] and lesson["excerpt"]["lang"] == "en"

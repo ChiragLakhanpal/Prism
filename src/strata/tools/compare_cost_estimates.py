@@ -45,11 +45,6 @@ def _date(value) -> dt.date | None:
     return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
 
 
-def _iso(value) -> str | None:
-    day = _date(value)
-    return day.isoformat() if day else None
-
-
 def _money(value) -> Decimal | None:
     return None if value is None or value == "" else Decimal(str(value)).quantize(CENTS)
 
@@ -138,7 +133,7 @@ def compare_cost_estimates(call: Call, comparables: str, step_reference: str | N
             rows.append({
                 "evidence_id": f"{evidence}/cost",
                 "public_from": public.isoformat(),
-                "source": {"plan": {"document_id": str(estimate["document_id"]), "plan_date": _iso(estimate["plan_date"]),
+                "source": {"plan": {"document_id": str(estimate["document_id"]), "plan_date": common.iso(estimate["plan_date"]),
                                     "pdf_page": int(estimate["pdf_page"]),
                                     "implementing_agency": estimate["implementing_agency"]},
                            "contract_ids": [str(row["contract_id"]) for row in mine]},
@@ -151,7 +146,7 @@ def compare_cost_estimates(call: Call, comparables: str, step_reference: str | N
                 "signed_amount_usd": str(total.quantize(CENTS)),
                 "diff_pct": diff_pct(total, estimated),
                 "contracts": [{"contract_id": str(row["contract_id"]), "amount_usd": str(_money(row["contract_amount_usd"])),
-                               "signed_on": _iso(row["contract_signing_date"])} for row in mine],
+                               "signed_on": common.iso(row["contract_signing_date"])} for row in mine],
                 "rank": None,
             })
     rows.sort(key=lambda row: (row["diff_pct"], row["step_reference"]))

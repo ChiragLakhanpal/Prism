@@ -13,6 +13,7 @@
 // server for them.
 import type { EvidenceEvent } from "./answer";
 import { remember } from "./evidence";
+import { createStore } from "./store";
 
 export const CRITERIA_PUBLIC = "criteria-public:";
 export const CRITERIA_ITEM = "criteria-item:";
@@ -113,6 +114,8 @@ export type LessonEntry = {
   version: number;
   statement: string;
   ieg_status: string;
+  // IEG's words that restate the lesson, when its ICR Review did (as the risks section gives them).
+  ieg_quote: { text: string; lang: string | null; doc_short: string; evidence_id: string } | null;
   evidence_id: string;
   passage_evidence_id: string;
   passage_id: string;
@@ -234,14 +237,16 @@ export function costRecordId(stepRef: string): string {
 }
 
 // The drawer's view of each list or record the section holds, as the evidence store keeps it.
-export function publicListEvent(key: string, entries: PublicEntry[]): EvidenceEvent {
+// count is the tool's public_criteria_count, and an item's list counts its stated notices: the drawer counts nothing
+// itself (CLAUDE.md rule 1).
+export function publicListEvent(key: string, entries: PublicEntry[], count: number): EvidenceEvent {
   return { id: publicListId(key), kind: "criteria_public", tool: "compare_criteria", stratum: "What", short_name: null,
-    row: { count: entries.length, entries }, highlights: [] };
+    row: { count, entries }, highlights: [] };
 }
 
 export function itemListEvent(comparison: Comparison, item: ComparedItem): EvidenceEvent {
   return { id: itemListId(comparison.check_id, item.item_key), kind: "criteria_item", tool: "compare_criteria", stratum: "What",
-    short_name: null, row: { ...item, public: comparison.coverage?.n ?? 0, count: item.notices.length }, highlights: [] };
+    short_name: null, row: { ...item, public: comparison.coverage?.n ?? 0, count: item.stated }, highlights: [] };
 }
 
 export function costRecordEvent(row: CostRow): EvidenceEvent {
@@ -249,8 +254,8 @@ export function costRecordEvent(row: CostRow): EvidenceEvent {
     short_name: null, row, highlights: [] };
 }
 
-export function rememberPublic(key: string, entries: PublicEntry[]) {
-  remember(publicListEvent(key, entries));
+export function rememberPublic(key: string, entries: PublicEntry[], count: number) {
+  remember(publicListEvent(key, entries, count));
 }
 
 export function rememberItems(comparison: Comparison) {
@@ -259,4 +264,22 @@ export function rememberItems(comparison: Comparison) {
 
 export function rememberCosts(cost: Cost) {
   for (const row of cost.rows) remember(costRecordEvent(row));
+}
+
+// The lessons section 5 shows, so drawer view F, opened from a lesson's marker or from the address while the
+// section shows, gives the lesson's IEG line (ticket 30's, the 31 brief 6.11 F).
+export const pageLessons = createStore<LessonEntry[]>([]);
+
+export function rememberLessons(groups: LessonGroup[]) {
+  pageLessons.set(groups.flatMap((group) => group.lessons));
+}
+
+export function forgetLessons() {
+  pageLessons.set([]);
+}
+
+// The one lesson whose paragraph this is, or null when none or more than one is.
+export function criteriaLessonOf(id: string, lessons: LessonEntry[] = pageLessons.get()): LessonEntry | null {
+  const holding = lessons.filter((lesson) => lesson.passage_evidence_id === id);
+  return holding.length === 1 ? holding[0] : null;
 }

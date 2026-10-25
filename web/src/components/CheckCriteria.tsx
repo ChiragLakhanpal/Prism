@@ -17,7 +17,7 @@ import { CircleX } from "lucide-react";
 import { copy } from "../copy";
 import { WHAT_I_DONT_DO, dataReadinessHref } from "../routes";
 import type { Checks, Comparison, CriteriaSummary, PackageRun, RemovedEntry } from "../lib/criteria";
-import { publicListId, rememberCosts, rememberItems, rememberPublic } from "../lib/criteria";
+import { forgetLessons, publicListId, rememberCosts, rememberItems, rememberLessons, rememberPublic } from "../lib/criteria";
 import { formatCount, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address } from "../lib/router";
@@ -142,7 +142,7 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
     );
   }
   return (
-    <p data-summary-text>
+    <p data-summary-text className="text-pretty">
       {n === 1 ? words.summaryOne : <Fill template={words.summary} slots={{ n: nNum }} />} {words.summaryAlso}
     </p>
   );
@@ -250,6 +250,8 @@ function PartOne({ comparison, readinessHref, steps, onRetry, asOf }: {
 }) {
   const shown = comparison.status === "ready" ? comparison.result : comparison.status === "running" || comparison.status === "error" ? comparison.previous : null;
   if (comparison.status === "idle") return null;
+  // A save that failed before any comparison is said under the field alone (the 31 brief, 6.5).
+  if (comparison.status === "error" && comparison.code === "store" && !comparison.previous) return null;
   return (
     <Part heading={words.items.heading} busy={comparison.status === "running"} partKey="items">
       {steps}
@@ -272,7 +274,7 @@ function PartOne({ comparison, readinessHref, steps, onRetry, asOf }: {
         <p className="max-w-prose text-body text-ink" data-none-found>{words.items.noneFound}</p>
       )}
       {shown && (!shown.refusal || shown.refusal.partial) && shown.items.length > 0 && (
-        <div className={cx("mt-3", comparison.status === "running" && "opacity-100")} aria-busy={comparison.status === "running" || undefined}>
+        <div className="mt-3" aria-busy={comparison.status === "running" || undefined}>
           <CriteriaTable comparison={shown} />
           <CriteriaNotes comparison={shown} readinessHref={readinessHref} asOf={asOf} />
         </div>
@@ -492,10 +494,11 @@ export function CheckCriteria({ base, version, preview }: {
   useEffect(() => {
     if (!data || seeded.current === data.signature) return;
     seeded.current = data.signature;
-    rememberPublic(summaryKey(data), data.public);
+    rememberPublic(summaryKey(data), data.public, data.public_criteria_count);
     if (data.package_run) {
       setRun({ status: "ready", result: data.package_run });
       rememberCosts(data.package_run.cost);
+      rememberLessons(data.package_run.lessons.groups);
     } else {
       setRun((current) => (current.status === "ready" ? { status: "idle" } : current));
     }
@@ -508,11 +511,14 @@ export function CheckCriteria({ base, version, preview }: {
       setText(saved.pasted_text);
       // When the newest comparison failed after its save, the table is from earlier text: the field says the
       // text changed since the comparison.
-      setComparedText(saved.text_compared === false ? "" : saved.pasted_text);
+      setComparedText(saved.result ? (saved.text_compared ? saved.pasted_text : "") : null);
     }
     setChecks(data.section_checks);
     // The text is the person's own; a new summary never replaces what they typed.
   }, [data]);
+
+  // The lessons leave the drawer's view F with the section.
+  useEffect(() => forgetLessons, []);
 
   // A link to #check-criteria opens the section and moves focus to its heading.
   useEffect(() => {
@@ -536,6 +542,7 @@ export function CheckCriteria({ base, version, preview }: {
         } else if (event.type === "package_run") {
           const result = payload as PackageRun;
           rememberCosts(result.cost);
+          rememberLessons(result.lessons.groups);
           setRun({ status: "ready", result });
           if (result.section_checks) setChecks(result.section_checks);
           setAnnounce(words.runDone);

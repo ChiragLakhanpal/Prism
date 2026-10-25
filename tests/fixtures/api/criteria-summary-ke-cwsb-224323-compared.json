@@ -632,6 +632,12 @@
               "version": 1,
               "statement": "Base works estimates on market rates to avoid rebidding",
               "ieg_status": "restated",
+              "ieg_quote": {
+                "text": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+                "lang": null,
+                "doc_short": "ICR Review",
+                "evidence_id": "strata.gold.passage:34056616/v2/10.b"
+              },
               "evidence_id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
               "passage_evidence_id": "strata.gold.passage:31525018/v1/54",
               "passage_id": "31525018/v1/54",
