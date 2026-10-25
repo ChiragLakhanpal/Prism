@@ -11,6 +11,10 @@ export type Load<T> =
 
 export const SLOW_AFTER_MS = 2000;
 
+// Whether a read failed with this refusal code from the server, such as "not_a_judge".
+export const refusedAs = (load: Load<unknown>, code: string): boolean =>
+  load.status === "error" && (load.error?.body as { code?: string } | undefined)?.code === code;
+
 export function useLoad<T>(path: string): [Load<T>, () => void] {
   const [attempt, setAttempt] = useState(0);
   const [load, setLoad] = useState<Load<T>>({ status: "loading", slow: false });

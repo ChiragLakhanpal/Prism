@@ -23,6 +23,8 @@ import json
 from importlib import resources
 
 from strata.config import load_slice, load_sources
+from strata.knowledge.retrieval.demotion import lowered, rank
+from strata.knowledge.retrieval.kinds import query_kind
 from strata.knowledge.search import Filters, searcher_for
 from strata.reader.passages import NOTICE_TEXT, ROUTE_B
 from strata.reader.templates import template_for
@@ -125,6 +127,16 @@ def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
     return passage_row(rows[0]) if rows else None
 
 
+def read_passages(engine, passage_ids: list[str], as_of: dt.date) -> dict[str, dict]:
+    """Several passages by their ids in one statement, as read_passage reads one: those public on the as-of date
+    and not yet replaced then, by id. A page that shows many passages reads them this way (ticket 32)."""
+    if not passage_ids:
+        return {}
+    result = engine.run(_sql("passages.sql"), {"ids": ",".join(passage_ids), "as_of": as_of})
+    found = (dict(zip(result.columns, row)) for row in result.rows)
+    return {row["passage_id"]: passage_row(row) for row in found}
+
+
 def notice_page(notice_id: str) -> str | None:
     """A notice's own page on the World Bank's site, from config/sources.toml (notices' record_url)."""
     address = load_sources()["notices"].record_url
@@ -143,8 +155,10 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
                       template.document_type if template else document_type,
                       country.strip().upper() if country else None, sector.strip().lower() if sector else None,
                       published_from, published_until)
+    # ranked_lower: the passages a passage reviewer ranked lower for this question's kind (ticket 32).
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "query": query,
-             "filters": filters.as_dict(), "search": None}
+             "filters": filters.as_dict(), "search": None,
+             "ranked_lower": {"query_kind": query_kind(query), "evidence_ids": []}}
     if document_type and template is None:
         return {**empty, "abstention": {"reason": "unknown_document_type", "document_type": document_type}}
     if filters.sector and filters.sector not in load_slice().sectors:
@@ -171,11 +185,18 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
             left_out["prompt_shields_hit"].append(f"{TABLE}:{hit.passage_id}")
         else:
             kept.append((found, hit.score))
-    rows = [_row(found, rank, score) for rank, (found, score) in enumerate(kept[:limit], 1)]
+    # A passage a passage reviewer ranked lower for this kind of question moves below the others, and stays:
+    # it still appears, first when it is the only one (ticket 32).
+    kind = query_kind(query)
+    ranked_lower = lowered(call.engine, kind, call.as_of)
+    kept = rank(kept, lambda pair: pair[0]["passage_id"], ranked_lower)
+    rows = [_row(found, rank_, score) for rank_, (found, score) in enumerate(kept[:limit], 1)]
     not_used = [{"reason": reason, "count": len(ids), "evidence_ids": ids} for reason, ids in left_out.items() if ids]
     below = hits.matched - len(rows) - sum(len(ids) for ids in left_out.values())
     if below > 0:
         not_used.append({"reason": "ranked_below_limit", "count": below, "evidence_ids": []})
     return {"rows": rows, "coverage": {"matched": hits.matched, "used": len(rows), "not_used": not_used},
             "abstention": None if rows else {"reason": "no_match", "query": query}, "query": query,
-            "filters": filters.as_dict(), "search": search}
+            "filters": filters.as_dict(), "search": search,
+            "ranked_lower": {"query_kind": kind, "evidence_ids": [f"{TABLE}:{found['passage_id']}" for found, _ in kept
+                                                                  if found["passage_id"] in ranked_lower]}}

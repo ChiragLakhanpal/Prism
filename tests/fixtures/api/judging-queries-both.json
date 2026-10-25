@@ -1,0 +1,41 @@
+{
+  "total": 3,
+  "mine_done": 1,
+  "other_done": 1,
+  "agreement": {
+    "agree": 20,
+    "pairs": 25,
+    "both_done": 1,
+    "kappa": 0.71,
+    "withheld": false,
+    "min_pairs": 20
+  },
+  "show": "finished_by_both",
+  "counts": {
+    "to_judge": 2,
+    "finished_by_you": 1,
+    "finished_by_both": 1
+  },
+  "next_query": "nq-rural-works-delays",
+  "page": 1,
+  "pages": 1,
+  "from": 1,
+  "to": 1,
+  "queries": [
+    {
+      "query_id": "nq-water-works-readiness",
+      "n": 2,
+      "query_text": "Were the designs and bidding documents for water supply rehabilitation works ready before the project started?",
+      "notice_id": "OP00077752",
+      "notice_ref": "KE-MOWASCO-16769-CW-RFB",
+      "notice_date": "2019-09-20",
+      "query_date": "2019-09-20",
+      "pool": 25,
+      "graded": 25,
+      "my_state": "finished",
+      "other_state": "finished",
+      "agree": 20,
+      "locked": true
+    }
+  ]
+}

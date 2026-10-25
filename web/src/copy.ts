@@ -177,6 +177,28 @@ export const copy = {
       documentTitle: "Waiting for review, Lessons",
       purpose: "One lesson waiting for review, with its evidence, its history and your part in deciding it.",
     },
+    // Lessons > Passage reports and Lessons > Judging (ticket 32): the frame keeps the Lessons h1, and one group's
+    // page and one query's page name themselves once they load.
+    lessonsReports: {
+      title: "Lessons",
+      documentTitle: "Passage reports, Lessons",
+      purpose: LESSONS_PURPOSE,
+    },
+    passageReport: {
+      title: "Passage reports",
+      documentTitle: "Passage reports, Lessons",
+      purpose: "One passage's reports, with the paragraph, what people reported and your decision.",
+    },
+    lessonsJudging: {
+      title: "Lessons",
+      documentTitle: "Judging, Lessons",
+      purpose: LESSONS_PURPOSE,
+    },
+    judgingQuery: {
+      title: "Judging",
+      documentTitle: "Judging, Lessons",
+      purpose: "One query of the labeled set, with each passage to grade on its own.",
+    },
     drafts: {
       title: "Drafts",
       purpose:
@@ -3945,8 +3967,13 @@ export const copy = {
       label: "Lesson pages",
       library: "Lessons",
       queue: "Waiting for review ({waiting})",
+      // Ticket 32's reviewer pages, each shown only to its role.
+      reports: "Passage reports ({waiting})",
+      judging: "Judging ({left})",
       showingLibrary: "Showing Lessons.",
       showingQueue: "Showing Waiting for review.",
+      showingReports: "Showing Passage reports.",
+      showingJudging: "Showing Judging.",
     },
     queueTitle: "Waiting for review",
     // The kinds, stages and risk factors come from config/lessons.toml with the server's answers.
@@ -4352,6 +4379,349 @@ export const copy = {
         itsTheir: { one: "its", many: "their" },
       },
     },
+  },
+
+  // The evidence drawer's feedback row (ticket 32; the 32 brief, section 5.1): "Was this the right passage?"
+  // with "Wrong passage" and "Not useful", for a passage a search found for your question.
+  feedback: {
+    question: "Was this the right passage?",
+    kind: { wrong_passage: "Wrong passage", not_useful: "Not useful" } as Record<string, string>,
+    formLabel: {
+      wrong_passage: "What was wrong with it? (optional)",
+      not_useful: "What did you need that it didn't give? (optional)",
+    } as Record<string, string>,
+    formHelper: "A reviewer sees your question, the sentence that cited this paragraph, the paragraph and your reason.",
+    send: "Send the report",
+    sending: "Sending",
+    cancel: "Cancel",
+    sent: {
+      wrong_passage: "You marked this as the wrong passage.",
+      not_useful: "You marked this as not useful.",
+    } as Record<string, string>,
+    later: {
+      wrong_passage: "You marked this as the wrong passage on {reported}.",
+      not_useful: "You marked this as not useful on {reported}.",
+    } as Record<string, string>,
+    nextPilot: "A person reviews every report before I rank a passage differently.",
+    nextScale:
+      "I rank a passage differently only after a reviewer agrees, or after several people make the same report and " +
+      "nobody disagrees.",
+    yourReason: "Your reason: \"{reason}\"",
+    withdraw: "Withdraw the report",
+    withdrawing: "Withdrawing",
+    withdrawn: "I withdrew your report.",
+    failed: "I couldn't send your report just now. Your text is still here.",
+    withdrawFailed: "I couldn't withdraw your report just now.",
+    withdrawDecided: "A reviewer decided on your report while you had it open, so it can't be withdrawn now.",
+    tryAgain: "Try again",
+    rankedLower:
+      "A reviewer agreed on {decided}, so I now rank this paragraph lower for questions about {kind}. I still show " +
+      "it when it is the only source.",
+    byAgreement:
+      "On {decided}, after {agreeing} people made the same report and nobody disagreed, I ranked this paragraph lower " +
+      "for questions about {kind}. I still show it when it is the only source.",
+    kept: "A reviewer kept its ranking on {decided}.",
+    reviewerReason: "Their reason: \"{reason}\"",
+    preview: "This is a preview, so I'm not recording the sources you open, and you can't report a passage.",
+  },
+
+  // The retrieval loop's words that more than one screen uses (ticket 32).
+  retrieval: {
+    // Each kind of question in config/retrieval.toml, as "For questions about {kind}" names it. A test checks every
+    // kind has one.
+    queryKinds: {
+      rebidding_and_prices: "rebidding and bid prices",
+      delays: "delays",
+      clearances_and_land: "permits, land and safeguards",
+      contract_management: "contracts and their management",
+      capacity: "staff and agency capacity",
+      results: "results and ratings",
+      other: "other topics",
+    } as Record<string, string>,
+    // What a passage report's sender is called on a review page: their role, never their name (the 32 brief,
+    // section 4.2), and "You" for the reviewer's own report.
+    roles: {
+      staff: "A World Bank staff member",
+      piu: "An implementing agency officer",
+      public: "A member of the public",
+      you: "You",
+    } as Record<string, string>,
+    // The per-person sentence on Lessons (ticket 39) and the dashboard's measure (ticket 45), from the counts the
+    // weekly retrieval run stores in strata.ops.retrieval_feedback_viewers. One to nine are words (Num count).
+    sentence: {
+      fixedAndRecited:
+        "You marked {marked} passages as wrong; {fixed} {isAre} fixed, and {recited} answers now cite the right paragraph.",
+      fixed: "You marked {marked} passages as wrong; {fixed} {isAre} fixed.",
+      oneFixed: "You marked one passage as wrong, and it is fixed. {recited} answers now cite the right paragraph.",
+      waiting: "You marked {marked} passages as wrong. A reviewer hasn't decided on {themIt} yet.",
+      kept: "You marked {marked} passages as wrong. Reviewers kept their ranking, and the evidence drawer shows why.",
+      isAre: { one: "is", many: "are" },
+      themIt: { one: "it", many: "them" },
+    },
+    measureName: "Wrong-passage reports per 100 sources opened",
+  },
+
+  // Lessons > Passage reports and one passage's reports (ticket 32; the 32 brief, sections 5.3 and 5.4).
+  passageReports: {
+    title: "Passage reports",
+    purposePilot:
+      "When someone marks a passage as wrong or not useful in the evidence drawer, the report comes here. In this " +
+      "pilot, a person reviews every report before I rank a passage differently, and that person is never one of the " +
+      "people who sent it. Only passage reviewers can open this page.",
+    purposeScale:
+      "When someone marks a passage as wrong or not useful in the evidence drawer, the report comes here, unless {min} " +
+      "or more people made the same report and nobody disagreed. Then I rank the passage lower myself and send one in " +
+      "{every} of those decisions here for a check. Reports about the sender's own project always come here. Only " +
+      "passage reviewers can open this page.",
+    lead: {
+      both: "Reports on {you} {passagesYou} are waiting for you, and {others} {beOthers} waiting for another reviewer.",
+      youOnly: "Reports on {you} {passagesYou} are waiting for you.",
+      othersOnly: "Nothing is waiting for you. Reports on {others} {passagesOthers} are waiting for another reviewer.",
+      none: "Nothing is waiting for review.",
+      oldest: "The oldest came in on {date}.",
+      passages: { one: "passage", many: "passages" },
+      be: { one: "is", many: "are" },
+    },
+    caption:
+      "Ranking a paragraph lower changes only questions like the ones in its reports. I never hide a paragraph, and I " +
+      "still show it when it is the only source.",
+    groups: { you: "Waiting for you", others: "Waiting for another reviewer" } as Record<string, string>,
+    order: "Oldest first.",
+    kindLabel: {
+      wrong_passage: "Wrong passage",
+      not_useful: "Not useful",
+      both: "Wrong passage and not useful",
+      audit: "Audit sample",
+    } as Record<string, string>,
+    status: { you: "{kind} · needs your review", others: "{kind} · needs another reviewer", decided: "{kind} · decided" },
+    rowTitle: "{project}, paragraph {para}",
+    rowTitleSection: "{project}, section {section}",
+    rowSource: "{docType}, {date}, page {page}. For questions about {kind}.",
+    rowCount: "{count} reports, the first on {date}.",
+    rowCountOne: "One report, on {date}.",
+    rowAudit: "I ranked it lower on {date}, after {agreeing} people made the same report.",
+    whyNot: { own_report: "You sent one of these reports, so another reviewer decides." } as Record<string, string>,
+    badgeOwnProject: "About the sender's own project",
+    badgeTheirProject: "About their own project",
+    badgeAudit: "Audit sample",
+    decidedTitle: "Decided in the last {days} days",
+    // The count line's noun: "Showing all 3 decisions, newest first" (copy.table).
+    decidedNoun: "decisions, newest first",
+    decidedNounOne: "decision, newest first",
+    columns: { passage: "Passage", outcome: "Outcome", decided: "Decided", reports: "Reports" },
+    forQuestions: "For questions about {kind}",
+    outcomes: {
+      ranked_lower: "Ranked lower",
+      kept: "Kept its ranking",
+      ranked_lower_by_agreement: "Ranked lower by agreement",
+      left_lower: "Left ranked lower",
+      restored: "Ranking restored",
+    } as Record<string, string>,
+    source: "Strata's passage report records.",
+    emptyTitle: "No one has reported a passage yet.",
+    emptyBody: "When someone marks a passage as wrong or not useful in the evidence drawer, the report appears here for review.",
+    loading: "Loading the passage reports.",
+    error: "I couldn't load the passage reports because the data service didn't answer.",
+    permission:
+      "Your account can't read Strata's tables, so I can't show the passage reports. Ask your workspace admin for read " +
+      "access to the strata catalog.",
+    noAccessTitle: "I show this page only to passage reviewers.",
+    noAccessBody:
+      "Passage reviewers are named in Strata's roles file. Your account isn't one of them, so the reports stay hidden " +
+      "from you.",
+    noAccessLink: "Go to Lessons",
+    // One passage's reports (section 5.4).
+    breadcrumbBack: "Passage reports",
+    pageTitle: "{project}, paragraph {para}, Passage reports",
+    context: "Reported for questions about {kind}. {count} reports, the first on {date}.",
+    contextOne: "Reported for questions about {kind}. One report, on {date}.",
+    auditContext:
+      "I ranked this paragraph lower on {date}, after {agreeing} people made the same report and nobody disagreed. I " +
+      "picked it for a check.",
+    passageTitle: "The passage",
+    reportsTitle: "What people reported",
+    reportsCaption: "Oldest first. I show each sender's role, not their name.",
+    reportFirst: {
+      wrong_passage: "{role} marked it as the wrong passage on {date}.",
+      not_useful: "{role} marked it as not useful on {date}.",
+    } as Record<string, string>,
+    asked: "They asked: \"{question}\"",
+    askedYou: "You asked: \"{question}\"",
+    sentence: "The sentence in my answer: \"{sentence}\"",
+    reason: "Their reason: \"{reason}\"",
+    reasonYou: "Your reason: \"{reason}\"",
+    noReason: "They gave no reason.",
+    noReasonYou: "You gave no reason.",
+    answerId: "Answer ID {id}",
+    showMore: "Show {count} more reports",
+    showFewer: "Show fewer reports",
+    form: {
+      title: "Your decision",
+      reasonLabel: "Your reason",
+      reasonHelper: "The people who sent these reports see your reason. It stays in the record with your name.",
+      rankLower: "Rank it lower",
+      keep: "Keep its ranking",
+      leaveLower: "Leave it ranked lower",
+      restore: "Restore its ranking",
+      feedforward:
+        "Ranking it lower changes only questions about {kind}, and I still show this paragraph when it is the only " +
+        "source. Keeping its ranking changes nothing.",
+      feedforwardAudit:
+        "Restoring its ranking puts it back where it was for questions about {kind}. Leaving it ranked lower ends the check.",
+      noReason: "Write your reason first. The people who sent these reports will see it.",
+      ownReport: "You sent one of these reports, so another passage reviewer decides.",
+      saving: "Saving",
+      failed: "I couldn't save your decision just now. Your reason is still here.",
+      tryAgain: "Try again",
+      stale: "{name} decided on these reports on {date}, while you had them open.",
+      staleBody: "I didn't send your reason. You can copy it from the box below.",
+      staleReason: "Your reason, not sent",
+      lostRole: "Your account is no longer on the list of passage reviewers, so I couldn't save this.",
+    },
+    saved: {
+      rank_lower: { lead: "You ranked this paragraph lower for questions about {kind}.", body: "I still show it when it is the only source. The people who reported it see your decision when they open it again." },
+      keep: { lead: "You kept its ranking.", body: "Nothing changed in how I rank it. The people who reported it see your reason when they open it again." },
+      leave_lower: { lead: "You left this paragraph ranked lower for questions about {kind}.", body: "The check is done." },
+      restore: { lead: "You restored its ranking for questions about {kind}.", body: "I rank it as I did before the reports." },
+    } as Record<string, { lead: string; body: string }>,
+    nextReport: "Open the next report waiting for you",
+    backToReports: "Back to Passage reports",
+    record: {
+      ranked_lower: "Ranked lower for questions about {kind} on {date}, by {name}.",
+      kept: "Kept its ranking on {date}, by {name}.",
+      ranked_lower_by_agreement: "Ranked lower by agreement on {date}, after {agreeing} people made the same report.",
+      left_lower: "Left ranked lower on {date}, by {name}, after a check.",
+      restored: "Ranking restored on {date}, by {name}, after a check.",
+    } as Record<string, string>,
+    recordReason: "Reason: \"{reason}\"",
+    reopen: "Reopen the report",
+    reopenLabel: "Why reopen it?",
+    reopenHelper:
+      "Reopening puts these reports back in the queue and gives the paragraph the ranking it had before. Your reason " +
+      "stays in the record with your name.",
+    reopenNoReason: "Write a reason, so the next reviewer knows what to look at.",
+    reopenFailed: "I couldn't reopen these reports just now. Your reason is still here.",
+    reopenedLead: "You reopened these reports.",
+    reopenedBody: "They are waiting for review again, and the paragraph has its earlier ranking.",
+    loadingOne: "Loading these reports.",
+    notFoundTitle: "I have no passage report with the ID {id}.",
+    notFoundBody: "Check the link, or find it in Passage reports.",
+    notFoundLink: "Go to Passage reports",
+    errorOne: "I couldn't load these reports because the data service didn't answer.",
+  },
+
+  // Lessons > Judging and one query's page (ticket 32; the 32 brief, sections 5.5 and 5.6).
+  judging: {
+    title: "Judging",
+    purpose:
+      "Two judges grade the passages I find for each query, each working alone. The queries were written from award " +
+      "notices, and I show only passages that were public before each notice's date. Your grades make the labeled set " +
+      "I use to measure search, and feedback from the evidence drawer never goes into it. Only query judges can open " +
+      "this page.",
+    leadNone: "You haven't judged any queries yet, and {total} are waiting for you.",
+    leadNoneOne: "You haven't judged any queries yet, and one is waiting for you.",
+    leadSome: "You have judged {done} of {total} queries.",
+    leadAll: "You have judged all {total} queries.",
+    leadOther: "The other judge has finished {done} of {total}.",
+    next: "Judge the next query",
+    agree: "Where you have both finished, your grades matched on {agree} of {pairs} passages. {kappaName}: {kappa}.",
+    agreeCaption:
+      "{kappaName} counts how often you agreed beyond what chance alone would give. 1 means you always agreed, and 0 " +
+      "means no better than chance.",
+    agreeWithheld: "I'll give your agreement once you have both graded {min} passages on the same queries. So far you have {pairs}.",
+    kappaName: "Cohen's kappa",
+    tooltipDone: "Queries where you graded every passage.",
+    tooltipPairs: "Passages you both graded, across {done} queries you both finished.",
+    tooltipKappa: "From {pairs} passages you both graded. I recompute it each time a query is finished by both of you.",
+    show: "Show",
+    filters: {
+      to_judge: "To judge ({count})",
+      finished_by_you: "Finished by you ({count})",
+      finished_by_both: "Finished by both ({count})",
+    } as Record<string, string>,
+    filterNames: { to_judge: "Queries for you to judge", finished_by_you: "Queries you finished", finished_by_both: "Queries you both finished" } as Record<string, string>,
+    countNoun: "queries",
+    countNounOne: "query",
+    columns: { query: "Query", pool: "Passages", poolDefinition: "in pool", progress: "Progress", matched: "Grades matched", matchedDefinition: "once you both finish" },
+    queryCaption: "Query {n}. From award notice {ref}, {date}.",
+    progressYou: { not_started: "You: Not started", started: "You: {graded} of {pool}", finished: "You: Finished" } as Record<string, string>,
+    progressOther: { not_started: "Other judge: Not started", started: "Other judge: Started", finished: "Other judge: Finished" } as Record<string, string>,
+    matched: "{agree} of {pool}",
+    notYet: "Not yet",
+    source: "Strata's labeled set of queries, written from award notices published by the World Bank.",
+    emptyToJudgeTitle: "You have judged every query.",
+    emptyToJudgeBody: "The other judge has finished {done} of {total}.",
+    emptyToJudgeLink: "Show the queries you both finished",
+    emptyYouTitle: "You haven't finished a query yet.",
+    emptyYouBody: "Choose \"Judge the next query\" to start with the first one.",
+    emptyBothTitle: "You haven't both finished a query yet.",
+    emptyBothBody: "I show your agreement here once you have.",
+    noQueriesTitle: "I have no queries for you to judge yet.",
+    noQueriesBody: "They appear here once the search owner loads the queries written from award notices.",
+    loading: "Loading the queries.",
+    error: "I couldn't load the queries because the data service didn't answer.",
+    permission:
+      "Your account can't read Strata's tables, so I can't show the queries. Ask your workspace admin for read access to " +
+      "the strata catalog.",
+    noAccessTitle: "I show this page only to query judges.",
+    noAccessBody:
+      "Query judges are named in Strata's roles file. Your account isn't one of them, so the queries stay hidden from you.",
+    noAccessLink: "Go to Lessons",
+    // One query (section 5.6).
+    breadcrumb: "Query {n}",
+    breadcrumbBack: "Judging",
+    pageTitle: "Query {n}, Judging",
+    header: "Query {n} of {total}. Written from award notice {ref}, published {date}.",
+    meter: "{graded} of {pool} passages graded.",
+    poolNote: "I show only passages that were public before {date}, in a different order for each judge.",
+    mapShow: "Show all {pool} passages",
+    mapHide: "Hide the passage list",
+    mapLabel: "Passages for this query",
+    chipGraded: "Passage {i}, graded",
+    chipNotGraded: "Passage {i}, not graded yet",
+    panel: "Passage {i} of {pool}",
+    grades: { answers: "Answers it", partly: "Partly", not_relevant: "Not relevant" } as Record<string, string>,
+    definitions: {
+      answers: "The paragraph answers the query, or gives a fact that the answer needs.",
+      partly: "The paragraph is on the topic and helps a little, but you would need more to answer.",
+      not_relevant: "The paragraph doesn't help answer the query.",
+    } as Record<string, string>,
+    keys: { answers: "A", partly: "P", not_relevant: "N" } as Record<string, string>,
+    guidance: "Grade each paragraph on its own, as if it were the only one you read.",
+    barLabel: "Your grade for passage {i}",
+    barNote: "Saves and opens the next passage.",
+    barNoteNarrow: "Choosing a grade saves it and opens the next passage.",
+    keysNote: "While you are in this panel, the keys A, P and N choose a grade.",
+    previous: "Previous passage",
+    nextPassage: "Next passage",
+    savedAs: "Saved as {grade}.",
+    saveFailed: "I couldn't save your grade for passage {i}. Your other grades are saved.",
+    finishedLead: "You graded all {pool} passages for this query.",
+    finishedBody: "The other judge hasn't finished, so I'm not showing their grades yet. You can change yours until they finish.",
+    bothLead: "You both finished this query. Your grades matched on {agree} of {pool} passages.",
+    bothBody: "I locked your grades for this query, because I count agreement only on grades you each gave on your own.",
+    differencesShow: "Show where you differed",
+    differencesHide: "Hide where you differed",
+    differencesCaption: "Passages where your grades differed",
+    differencesColumns: { passage: "Passage", yours: "Your grade", theirs: "The other judge's grade" },
+    differencesNone: "Your grades matched on every passage.",
+    passageName: "Passage {i}",
+    lockedYours: "Your grade: {grade}.",
+    lockedTheirs: "The other judge's grade: {grade}.",
+    lockedWhileOpen: "The other judge finished this query while you had it open, so I locked your grades for it.",
+    afterLast: "You have judged all {total} queries.",
+    backToJudging: "Back to Judging",
+    emptyPoolTitle: "I found no passages for this query that were public before {date}.",
+    emptyPoolBody: "I left it out of the labeled set, so there is nothing to grade.",
+    emptyPoolLink: "Go to the next query",
+    notAssignedTitle: "This query already has two judges.",
+    notAssignedBody: "Each query gets two judges, and you aren't one of them for this query.",
+    notAssignedLink: "Go to Judging",
+    notFoundTitle: "I have no query with the ID {id}.",
+    notFoundBody: "Check the link, or find it in Judging.",
+    notFoundLink: "Go to Judging",
+    loadingOne: "Loading this query.",
+    errorOne: "I couldn't load this query because the data service didn't answer.",
   },
 
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts

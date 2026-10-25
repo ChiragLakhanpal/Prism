@@ -13,5 +13,9 @@
   ],
   "role": "accredited procurement specialist",
   "waiting": 3,
-  "limit_days": 10
+  "limit_days": 10,
+  "can_review_reports": false,
+  "reports_waiting": null,
+  "is_judge": false,
+  "queries_left": null
 }

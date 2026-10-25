@@ -1,0 +1,16 @@
+{
+  "signed_in": true,
+  "tabs": [
+    "library",
+    "reports"
+  ],
+  "acts": [],
+  "regions": [],
+  "role": null,
+  "waiting": null,
+  "limit_days": null,
+  "can_review_reports": true,
+  "reports_waiting": 2,
+  "is_judge": false,
+  "queries_left": null
+}

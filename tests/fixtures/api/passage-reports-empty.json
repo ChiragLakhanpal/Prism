@@ -1,0 +1,23 @@
+{
+  "mode": "pilot",
+  "audit_every": 10,
+  "silver_min": 3,
+  "lead": {
+    "you": 0,
+    "others": 0,
+    "oldest_on": null
+  },
+  "groups": {
+    "you": [],
+    "others": []
+  },
+  "decided": {
+    "window_days": 90,
+    "total": 0,
+    "page": 1,
+    "pages": 1,
+    "from": 0,
+    "to": 0,
+    "rows": []
+  }
+}

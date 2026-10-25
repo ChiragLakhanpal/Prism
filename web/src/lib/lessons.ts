@@ -20,13 +20,19 @@ export type Edition = { key: string; name: string; short: string };
 
 export type Me = {
   signed_in: boolean;
-  tabs: ("library" | "review")[];
+  // Ticket 32 adds "reports" (Passage reports) and "judging" (Judging), each only for its role.
+  tabs: ("library" | "review" | "reports" | "judging")[];
   acts: string[];
   regions: string[];
   role: string | null;
   waiting: number | null;
   // The business days a lesson has, so the queue's purpose shows while the queue itself loads.
   limit_days: number | null;
+  // Ticket 32: whether the viewer reviews passage reports and judges queries, and how many wait for them.
+  can_review_reports?: boolean;
+  reports_waiting?: number | null;
+  is_judge?: boolean;
+  queries_left?: number | null;
 };
 
 // One quote a lesson rests on, with what its source line and chip need.

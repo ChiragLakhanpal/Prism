@@ -117,8 +117,10 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
     its abstention, so the verifier can check what a sentence cites against them. The answer loop, check 6's
     get_disagreements call (ticket 24) and the risk-table builder (ticket 30) keep results this way."""
     nested = tools[name].result.nested_rows if name in tools else ()
+    # The kind of question of the search that found these rows, which a passage report on one of them takes (ticket 32).
+    kind = (result.get("ranked_lower") or {}).get("query_kind")
     for row in result["rows"]:
-        facts.record(row["evidence_id"], row, tool=name)
+        facts.record(row["evidence_id"], row, tool=name, kind=kind)
         for record in (inner for field in nested for inner in row.get(field) or ()):
             keep_nested(facts, record, name)
     if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record

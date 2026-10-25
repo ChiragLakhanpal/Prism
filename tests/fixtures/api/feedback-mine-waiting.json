@@ -1,0 +1,14 @@
+{
+  "my_report": {
+    "report_id": "rep-0001",
+    "kind": "wrong_passage",
+    "reason": "It is about estimates in general, not why these contracts were advertised again.",
+    "status": "waiting",
+    "reported_on": "2026-10-23T09:00:03Z",
+    "decided_on": null,
+    "reviewer_reason": null,
+    "agreeing_count": null,
+    "query_kind": "rebidding_and_prices"
+  },
+  "mode": "pilot"
+}

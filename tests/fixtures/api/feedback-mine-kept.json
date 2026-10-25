@@ -1,0 +1,14 @@
+{
+  "my_report": {
+    "report_id": "rep-0003",
+    "kind": "wrong_passage",
+    "reason": null,
+    "status": "kept",
+    "reported_on": "2026-10-23T09:40:05Z",
+    "decided_on": "2026-10-23T11:50:24Z",
+    "reviewer_reason": "Paragraph 55 is the right one for this question.",
+    "agreeing_count": null,
+    "query_kind": "rebidding_and_prices"
+  },
+  "mode": "pilot"
+}

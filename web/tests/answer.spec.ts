@@ -710,7 +710,11 @@ test("an answer asked with ?view=public names no preview, and page alerts sit ab
   expect(alert.y + alert.height).toBeLessThanOrEqual((await panel(page).boundingBox())!.y);
 
   await marker(page, 1).click();
-  await expect(drawer(page)).toContainText("The address asks for a preview, so I'm not recording the sources you open.");
+  // Ticket 32: a passage a search found shows the feedback row, disabled in a preview, and its line replaces brief
+  // 14's preview line (the 32 brief, section 10, item 7).
+  await expect(drawer(page)).toContainText(
+    "This is a preview, so I'm not recording the sources you open, and you can't report a passage.",
+  );
 });
 
 test("the check line never uses the success state", async ({ page }) => {
