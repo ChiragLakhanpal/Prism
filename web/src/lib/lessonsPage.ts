@@ -91,6 +91,8 @@ export type NoticeBody = {
   reason: string;
   between: { version: number; decided_on: string }[];
   anchor: string;
+  // The longest reason the keep route takes (lesson_review.reason_max_chars).
+  reason_max_chars: number;
 };
 
 export type Notice = NoticeBody & { actions: ("versions" | "update" | "remove" | "keep")[]; uses: DraftUse[] };

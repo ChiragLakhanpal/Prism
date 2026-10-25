@@ -364,7 +364,8 @@
           "can_act": true,
           "can_update": true
         }
-      ]
+      ],
+      "reason_max_chars": 500
     }
   ],
   "new_lessons": {

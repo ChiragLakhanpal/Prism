@@ -71,6 +71,7 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, prebuilt: tuple[tuple[P
     found["lessons-page-reviewer.json"] = text(story.page(REVIEWER))
     found["lessons-library-method-rfq.json"] = text(story.get("/api/lessons/library", method="Request for Quotations"))
     found["lessons-library-stage.json"] = text(story.get("/api/lessons/library", stage="contract_award"))
+    found["lessons-library-past-end.json"] = text(story.get("/api/lessons/library", page=99))
     found["lessons-versions.json"] = text(story.get("/api/evidence", id=f"versions:{story_of.REBIDDING_LESSON}:1:2"))
     found["drafts-lesson-notice.json"] = text(story.get("/api/drafts/draft-0001"))
     # Within the same visit, nothing new since the last one: Ana comes back the next week.

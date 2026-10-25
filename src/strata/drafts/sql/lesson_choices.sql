@@ -4,4 +4,4 @@ SELECT draft_id, choice_no, row_key, lesson_id, action, cited_version, current_v
        actor_id, actor_name, chosen_at
 FROM strata.ops.draft_lesson_choices
 WHERE array_contains(split(:ids, ','), draft_id)
-ORDER BY draft_id, choice_no
+ORDER BY draft_id, choice_no, chosen_at

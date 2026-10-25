@@ -701,6 +701,7 @@
         "update",
         "keep"
       ],
+      "reason_max_chars": 500,
       "row_label": {
         "n": 1,
         "risk_label": "Cost estimates below market rates"

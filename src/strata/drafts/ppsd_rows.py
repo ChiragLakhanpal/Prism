@@ -38,6 +38,7 @@ from decimal import Decimal
 
 from strata.config import Thresholds, load_ppsd_templates, load_thresholds
 from strata.drafts.files import written_runs
+from strata.drafts.lesson_choices import CannotRewrite
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 
@@ -449,10 +450,6 @@ class RowRewrite:
 
     def subject(self, facts) -> dict:
         return {}
-
-
-class CannotRewrite(Exception):
-    """The lesson is no longer in the library at a version a row can be rewritten from."""
 
 
 def rewrite_row(engine: Engine, viewer: Viewer, content: dict, row_key: str, lesson_id: str,

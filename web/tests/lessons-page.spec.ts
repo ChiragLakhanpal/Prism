@@ -196,6 +196,15 @@ test("the library's filters change the list at once, keep the address, and the c
   expect(again).toEqual([""]);
 });
 
+test("a page past the end of the library says so and links to the first page, not that nothing matches", async ({ page }) => {
+  const answer = JSON.parse(await recorded("lessons-page.json"));
+  answer.library = JSON.parse(await recorded("lessons-library-past-end.json"));
+  await openLessons(page, "lessons-page.json", { "/api/lessons/page": { body: JSON.stringify(answer) } }, "/lessons?page=99");
+  const library = page.locator("[data-library=ready]");
+  await expect(library.locator("[data-empty-state] h3")).toHaveText("There is no page 99 in the library.");
+  await expect(library.getByRole("link", { name: "Go to the first page" })).toHaveAttribute("href", "/lessons");
+});
+
 // ── The first visit and nothing new ──────────────────────────────────────
 
 test("a first visit says so, and a visit with nothing new says that, with no new or gained-evidence lines", async ({ page }) => {

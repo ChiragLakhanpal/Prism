@@ -12,6 +12,7 @@ import json
 import pytest
 
 import lessons_page_story as story_of
+from strata.config import load_thresholds
 from strata.lakehouse.engine import DuckDBEngine
 
 ICR, ICR_REVIEW = "Implementation Completion and Results Report", "Implementation Completion Report Review"
@@ -188,6 +189,17 @@ def test_a_lesson_retired_as_wrong_holds_the_draft_s_export_with_the_lead_s_reas
     assert story.act("draft-0002", "export", "checked").json()["state"] == "exported"
 
 
+def test_a_lesson_added_and_retired_since_the_last_visit_is_counted_retired_and_not_new(story):
+    """The digest's "new" count and the New cards read one rule: a lesson still current at the end of the window."""
+    retire_ieg_lesson_as_wrong(story)
+
+    page = story.page().json()
+
+    assert page["digest"]["counts"]["new"] == len(page["new_lessons"]["cards"]) == 1
+    assert page["digest"]["counts"]["retired"] == 1
+    assert [card["lesson_id"] for card in page["new_lessons"]["cards"]] == [story_of.REBIDDING_LESSON]
+
+
 def test_a_removed_row_can_be_restored_and_its_notice_and_hold_come_back(story):
     retire_ieg_lesson_as_wrong(story)
     choose(story, "draft-0001", "permits_before_award", lesson_id=story_of.IEG_LESSON, action="remove",
@@ -235,6 +247,14 @@ def query_choices(story):
 # ── Keep version 1, with a reason ────────────────────────────────────────
 
 def test_keeping_the_cited_version_needs_a_reason_and_stores_it_with_the_draft(story):
+    # The keep form counts against the limit the route enforces, which each notice carries.
+    limit = load_thresholds().value("lesson_review.reason_max_chars")
+    [on_draft] = story.get("/api/drafts/draft-0001").json()["lesson_notices"][:1]
+    assert on_draft["reason_max_chars"] == story.page().json()["notices"][0]["reason_max_chars"] == limit
+    too_long = choose(story, "draft-0001", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="keep",
+                      expected_cited_version=1, expected_current_version=2, reason="x" * (limit + 1))
+    assert (too_long.status_code, too_long.json()["code"]) == (422, "reason_too_long")
+
     empty = choose(story, "draft-0001", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="keep",
                    expected_cited_version=1, expected_current_version=2, reason="  ")
     assert (empty.status_code, empty.json()["code"]) == (422, "no_reason")
@@ -340,7 +360,49 @@ def test_when_nothing_passes_the_checks_the_row_is_left_as_it_was(story):
     assert query_choices(story) == []
 
 
+def test_a_choice_made_in_another_tab_while_the_row_is_rewritten_makes_the_update_stale(built, tmp_path):
+    """While "Update the row" waits for the writer, Ana keeps version 1 in another tab. The update then saves nothing
+    and says the draft changed, so the page reloads it."""
+    import shutil
+
+    from strata.agent.scripted import ScriptedAgent
+    from strata.drafts.store import DraftStore
+
+    class TwoTabs(story_of.LessonsStory):
+        def app_options(self, state):
+            story = self
+
+            class KeptMeanwhile(ScriptedAgent):
+                def respond(self, items, previous_response_id):
+                    DraftStore(state).choose("draft-0002", "cost_estimates", story_of.REBIDDING_LESSON, "keep", 1, 2,
+                                             "Kept in the other tab.", None, "checked", "4021@1984", "Ana Example",
+                                             story.at)
+                    return super().respond(items, previous_response_id)
+
+            return {**super().app_options(state), "writers": lambda kind: KeptMeanwhile(story.cases[story.case])}
+
+    database, state = built
+    shutil.copy(database, tmp_path / "fixture.duckdb")
+    shutil.copy(state, tmp_path / "state.duckdb")
+    story = TwoTabs(tmp_path / "fixture.duckdb", tmp_path).at_time(story_of.NEXT_VISIT)
+
+    updated = story.update("draft-0002")
+
+    assert (updated.status_code, updated.json()["code"]) == (409, "stale")
+    assert [(row["action"], row["reason"]) for row in query_choices(story)] == [("keep", "Kept in the other tab.")]
+    assert story.get("/api/drafts/draft-0002").json()["state"] == "checked"
+
+
 # ── Who may choose, and when ─────────────────────────────────────────────
+
+def test_a_discarded_draft_shows_no_version_notice(story):
+    """Nobody can choose on a discarded draft, so its page shows no notice that asks for a choice."""
+    assert story.get("/api/drafts/draft-0001").json()["lesson_notices"]
+
+    story.act("draft-0001", "discard", "draft")
+
+    assert story.get("/api/drafts/draft-0001").json()["lesson_notices"] == []
+
 
 def test_only_the_author_chooses_in_the_staff_view_and_a_stale_choice_is_refused(story):
     body = {"lesson_id": story_of.REBIDDING_LESSON, "action": "keep", "expected_cited_version": 1,

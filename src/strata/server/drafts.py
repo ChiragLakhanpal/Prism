@@ -42,7 +42,7 @@ from pydantic import BaseModel, Field
 
 from strata.agent.answer_check import SixChecks
 from strata.agent.runs import RunLog, run_row
-from strata.config import DraftKinds, load_thresholds
+from strata.config import DraftKinds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts import files as draft_files
 from strata.drafts import runtime
@@ -547,7 +547,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
     # ── A row that cites a changed lesson (ticket 39) ────────────────────
 
-    reason_max = int(load_thresholds().value("lesson_review.reason_max_chars"))
+    reason_max = runtime.reason_max_chars()
 
     def choice_check(viewer: Viewer, draft_id: str, row_key: str, body: LessonChoiceRequest):
         """The draft and what the choice changes, or the refusal: not found, a preview, not the author, a state where
@@ -618,9 +618,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                                                 six_checks, today(), run_id, noted)
             except runtime.WriteError as error:
                 error_code = error.code if error.code in runtime.WRITE_ERRORS else "internal"
-            except Exception as error:  # the kind's own refusal that the row cannot be rewritten
-                if type(error).__name__ != "CannotRewrite":
-                    raise
+            except runtime.CannotRewrite:  # the kind's own refusal that the row cannot be rewritten
                 error_code = "stale"
             finally:
                 if runs is not None and noted:
@@ -642,6 +640,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                                     headers={"Cache-Control": "no-store"})
 
         def save():
+            # A choice made in another tab while the writer rewrote the row, or a change of state, makes this one stale.
+            latest_saved = store.get(draft_id)
+            if latest_saved is None or (len(latest_saved.lesson_choices), latest_saved.state.state) != (
+                    len(saved.lesson_choices), saved.state.state):
+                return refused(409, "stale", state=latest_saved.state.state if latest_saved else None,
+                               draft=shown(latest_saved, viewer, body.view) if latest_saved else None)
             moment = now()
             state = saved.state.state
             store.choose(draft_id, row_key, body.lesson_id, body.action, cited, latest, reason, rewrite, state,

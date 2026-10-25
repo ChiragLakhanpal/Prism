@@ -106,6 +106,13 @@ def in_window(when: dt.datetime | None, since: dt.datetime, until: dt.datetime) 
     return when is not None and since <= when < until
 
 
+def added_in(store: Store, since: dt.datetime, until: dt.datetime) -> list[dict]:
+    """Version 1 of each lesson decided in the window that is still current: the digest's "new" count and the New
+    cards read this one rule, so a lesson added and retired in one window counts only as retired."""
+    return [row for versions in store.versions.values() for row in versions[:1]
+            if in_window(decided_at(store, row), since, until) and store.latest(row["lesson_id"])["state"] == "current"]
+
+
 def current_versions(store: Store) -> list[dict]:
     return [versions[-1] for versions in store.versions.values() if versions[-1]["state"] == "current"]
 
@@ -164,7 +171,7 @@ class LessonsPage:
         reports = self.reports(engine, since, until)
         decided = [(version, decided_at(store, version)) for versions in store.versions.values() for version in versions]
         window = [version for version, when in decided if in_window(when, since, until)]
-        new = {row["lesson_id"]: row for row in window if _int(row["version"]) == 1}
+        new = {row["lesson_id"]: row for row in added_in(store, since, until)}
         changed = {row["lesson_id"]: row for row in sorted(window, key=lambda row: _int(row["version"]))
                    if _int(row["version"]) > 1 and row["change_kind"] != "retired"}
         retired = {row["lesson_id"]: row for row in window if row["change_kind"] == "retired"}
@@ -231,7 +238,8 @@ class LessonsPage:
                     **{name: value for name, value in notice.items() if name not in ("row_key", "anchor", "kept")},
                     "anchor": f"notice-{notice['lesson_id']}-v{notice['a']}",
                     "actions": ["versions", "remove", "keep"] if notice["tier"].startswith("retired")
-                    else ["versions", "update", "keep"], "uses": []})
+                    else ["versions", "update", "keep"], "uses": [],
+                    "reason_max_chars": int(self.review.value("reason_max_chars"))})
                 entry["uses"].append(self.use(draft, notice, True))
                 entry["holds_export"] = entry["holds_export"] or notice["holds_export"]
         found = list(grouped.values())
@@ -293,9 +301,7 @@ class LessonsPage:
         lessons.new_cards_max, then how many more the library holds. None on a first visit or with none new."""
         if visit.first:
             return None
-        added = [row for versions in store.versions.values() for row in versions[:1]
-                 if in_window(decided_at(store, row), visit.previous_started_at, visit.started_at)
-                 and store.latest(row["lesson_id"])["state"] == "current"]
+        added = added_in(store, visit.previous_started_at, visit.started_at)
         if not added:
             return None
         added.sort(key=lambda row: (decided_at(store, row), row["lesson_id"]), reverse=True)

@@ -707,6 +707,7 @@
         "update",
         "keep"
       ],
+      "reason_max_chars": 500,
       "row_label": {
         "n": 1,
         "risk_label": "Cost estimates below market rates"
@@ -739,6 +740,7 @@
         "remove",
         "keep"
       ],
+      "reason_max_chars": 500,
       "row_label": {
         "n": 2,
         "risk_label": "Land, forest and other permits not in place before award"

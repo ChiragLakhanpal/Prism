@@ -402,7 +402,22 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
       <p ref={countRef} tabIndex={-1} role="status" className="mt-4 text-caption text-ink-muted outline-none" data-lead data-numbers>
         {busy ? w.filters.updating : <PageSentence segments={library.count} />}
       </p>
-      {library.lessons.length === 0 ? (
+      {library.lessons.length === 0 && library.total > 0 ? (
+        // A page past the end: lessons match, but not on this page (brief 29's out-of-range card).
+        <EmptyState
+          className="mt-4"
+          level={3}
+          title={fillText(copy.lessons.library.outOfRangeTitle, { page: library.page })}
+          body={
+            library.pages === 1 ? (
+              copy.lessons.library.outOfRangeBodyOne
+            ) : (
+              <Fill template={copy.lessons.library.outOfRangeBody} slots={{ pages: <Num count={library.pages} /> }} />
+            )
+          }
+          link={{ href: libraryHref(library.filters), text: copy.lessons.library.firstPage }}
+        />
+      ) : library.lessons.length === 0 ? (
         <EmptyState
           className="mt-4"
           level={3}

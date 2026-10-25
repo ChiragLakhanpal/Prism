@@ -248,7 +248,7 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
             helper={n.keepHelper}
             value={reason}
             onChange={setReason}
-            max={500}
+            max={notice.reason_max_chars}
             error={form.error}
             disabled={busy === "keep"}
           />

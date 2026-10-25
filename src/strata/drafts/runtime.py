@@ -32,6 +32,7 @@ from strata.agent.verifier import AnswerCheck, Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
 from strata.drafts.holds import Draft as HoldDraft
+from strata.drafts.lesson_choices import CannotRewrite  # noqa: F401  (a kind's rewrite_row raises it)
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -407,7 +408,7 @@ def _who(step, viewer: Viewer) -> dict | None:
 def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) -> dict:
     """The version notices on a draft's rows and what its author chose, for its page (ticket 39): each open notice,
     and each row its author updated, kept or removed. Only the author acts, in Draft or Checked by you, in the staff
-    view; anyone else reads them."""
+    view; anyone else reads them. A discarded draft shows none."""
     state = saved.state.state
     may = is_author(viewer, saved.author_id) and view == STAFF and state in OPEN_STATES
     module = writer_module_for(saved.kind)
@@ -416,10 +417,11 @@ def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) ->
         return {}  # a kind whose rows cite no lesson
     labels = getattr(module, "row_label", None) if kind and kind.row_label else None
     shown = []
-    for notice in notices:
+    # Nobody chooses on a discarded draft, so it shows no notice; what its author chose before stays on record.
+    for notice in ([] if state == "discarded" else notices):
         actions = (["remove", "keep"] if notice["tier"] in ("retired_wrong", "retired_outdated")
                    else (["update", "keep"] if kind and kind.rewrite_row else ["keep"]))
-        shown.append({**notice, "can_act": may, "actions": actions,
+        shown.append({**notice, "can_act": may, "actions": actions, "reason_max_chars": reason_max_chars(),
                       "row_label": labels(saved.content, notice["row_key"]) if labels else None})
     def named(entries: list[dict]) -> list[dict]:
         return [{**entry, "row_label": labels(saved.content, entry["row_key"]) if labels else None} for entry in entries]
@@ -427,6 +429,14 @@ def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) ->
     return {"lesson_notices": shown, "lesson_updated": named(saved.content.get("lesson_updated") or []),
             "lesson_kept": named(saved.content.get("lesson_kept") or []),
             "lesson_removed": named(saved.content.get("lesson_removed") or []), "lesson_can_act": may}
+
+
+def reason_max_chars() -> int:
+    """The longest reason the keep route takes (config/thresholds.toml, lesson_review.reason_max_chars), which each
+    version notice carries so the keep form counts against the same limit."""
+    from strata.config import load_thresholds
+
+    return int(load_thresholds().value("lesson_review.reason_max_chars"))
 
 
 def load_kind(key: str):

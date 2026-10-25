@@ -718,6 +718,7 @@
         "remove",
         "keep"
       ],
+      "reason_max_chars": 500,
       "row_label": null
     }
   ],

@@ -29,6 +29,11 @@ COLUMNS = ("draft_id", "choice_no", "row_key", "lesson_id", "action", "cited_ver
 VERSIONS = "strata.ops.lesson_versions"
 
 
+class CannotRewrite(Exception):
+    """A kind's rewrite_row cannot rewrite the row: the row is gone, or the lesson has no version a row can be
+    rewritten from. The update route answers 409 stale, so the page reloads the draft."""
+
+
 @dataclass(frozen=True)
 class LessonChoice:
     choice_no: int
@@ -71,7 +76,7 @@ def apply(content: dict, choices: list[LessonChoice]) -> dict:
     updates: dict[tuple[str, str], list[LessonChoice]] = {}
     kept: dict[tuple[str, str], LessonChoice] = {}
     removed: dict[str, LessonChoice | None] = {}
-    for choice in sorted(choices, key=lambda one: one.choice_no):
+    for choice in sorted(choices, key=lambda one: (one.choice_no, one.chosen_at)):
         key = (choice.row_key, choice.lesson_id)
         if choice.action == "update":
             updates.setdefault(key, []).append(choice)
