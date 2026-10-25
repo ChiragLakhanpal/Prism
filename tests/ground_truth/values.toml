@@ -1005,6 +1005,17 @@ date = 2026-10-09
 pdf_page = 3
 
 [[value]]
+id = "plan-496786-planned-invitation"
+says = "P161305's September 24, 2026 plan lists KE-KENHA-496786-CS-CDS in its INDIVIDUAL CONSULTANTS table, hired by Direct Selection, with its Invitation to Identified/Selected Consultant planned for June 23, 2025 (the third date, after the Terms of Reference's planned and actual dates). Its Draft Negotiated Contract has no date."
+value = 2025-06-23
+quote = "Prior Direct Selection Direct - International 1,310,000.00 0.00 Signed 2025-06-04 2025-06-12 2025-06-23 2025-10-24"
+document = "documents/P161305/procurement-plan-2026-09-24"
+document_type = "Procurement Plan"
+project = "P161305"
+date = 2026-09-24
+pdf_page = 14
+
+[[value]]
 id = "award-229129-signed"
 says = "The contract awards dataset agrees: KE-NWWDA-229129-CW-RFB was signed on January 3, 2022 at US$1,245,092.76."
 value = 2022-01-03

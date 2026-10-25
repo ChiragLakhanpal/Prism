@@ -75,19 +75,23 @@ function written(num: NumValue, text: string): ReactNode {
 // over the days it rests on ("Apr 1, 2027" over "28 days after the plan's date"). The lines are given already
 // written, each number in them through Num with no check of its own, so one tab stop, one dotted underline and one
 // tooltip cover both, and a click opens the rows behind them. The first line may be words instead of a number, as
-// "Not dated yet" is before a start date, with the second line's days still under it.
+// "Not dated yet" is before a start date, with the second line's days still under it. With no second line it is one
+// checkable line of words with numbers in it, such as the days of a step that needs an earlier step's date. Its
+// lines start on the left; className can set them on the right, as the narrow step list does (items-end text-right).
 export function NumLines({
   first,
   second,
   check,
   firstClassName,
   secondClassName,
+  className = "items-start text-left",
 }: {
   first: ReactNode;
-  second: ReactNode;
+  second?: ReactNode;
   check: NumCheck;
   firstClassName?: string;
   secondClassName?: string;
+  className?: string;
 }) {
   return (
     <Tooltip
@@ -99,10 +103,11 @@ export function NumLines({
           tabIndex={check.tabStop === false ? -1 : undefined}
           aria-label={check.name}
           onClick={check.onOpen}
-          className="group inline-flex cursor-pointer flex-col items-start py-0.5 text-left tabular-nums"
+          // One line of caption text keeps a 24 px target (WCAG 2.5.8), centred in it.
+          className={cx("group inline-flex max-w-full cursor-pointer flex-col py-0.5 tabular-nums", !second && "min-h-6 justify-center", className)}
         >
           <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", firstClassName)}>{first}</span>
-          <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", secondClassName)}>{second}</span>
+          {second && <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", secondClassName)}>{second}</span>}
         </button>
       }
     >

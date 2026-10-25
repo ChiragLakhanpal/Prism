@@ -10,9 +10,18 @@
 // - phrase and stage are Strata's plain English. The copy lint checks them, and every label, like the copy file.
 // - A family's first step has no stage: nothing leads up to it.
 //
-// The family rule: a package belongs to the first family whose categories hold its procurement category and
-// whose methods hold its Method. A package with no category or Method yet has no family; one whose Method fits
-// no family's list is outside the three families. The server reads all of this from its copy,
+// The family rule, in two parts:
+//
+// - A package from a STEP row belongs to the family whose sections hold the STEP table its plan lists it in. STEP
+//   itself splits individual consultants from consulting firms by table, and the same Method, such as Direct
+//   Selection, can sit in either.
+// - A package with no plan row, such as one planned from a sentence, belongs to the first family whose categories
+//   hold its procurement category and whose methods hold its Method. A sentence cannot tell a firm from an
+//   individual, so Consultant Services under Direct Selection goes to consulting firms, the first family that
+//   lists the pair.
+//
+// A package with no category or Method yet has no family; one whose Method fits no family's list is outside the
+// three families. The server reads all of this from its copy,
 // src/strata/estimates/steps.json, which web/lint/server-copy.ts writes from this file; the lint fails when the
 // copy is out of date. Matching is by step name, never by a step's place in a plan's table.
 
@@ -27,6 +36,8 @@ export type StepEntry = {
 export type StepFamily = {
   family_name: string;
   abbreviation_note: string | null;
+  // STEP's plan tables whose packages belong to this family, as src/strata/reader/step.py's SECTIONS name them.
+  sections: string[];
   categories: string[];
   methods: string[];
   // "Ran longest" counts the stages up to this step: the contract's completion measures its work, not its
@@ -63,6 +74,7 @@ export const stepFamilies = {
   goods: {
     family_name: "goods, works and non-consulting services",
     abbreviation_note: "SPN is the specific procurement notice.",
+    sections: ["GOODS", "WORKS", "NON CONSULTING SERVICES"],
     categories: ["Goods", "Works", "Non-consulting Services"],
     methods: ["Request for Bids", "Request for Quotations", "Request for Proposals", "Direct Selection"],
     longest_through: "contract_signed",
@@ -90,6 +102,7 @@ export const stepFamilies = {
   firms: {
     family_name: "consulting firms",
     abbreviation_note: "RFP is the Request for Proposals.",
+    sections: ["CONSULTING FIRMS"],
     categories: ["Consultant Services"],
     methods: [
       "Quality And Cost-Based Selection",
@@ -133,6 +146,7 @@ export const stepFamilies = {
   individuals: {
     family_name: "individual consultants",
     abbreviation_note: null,
+    sections: ["INDIVIDUAL CONSULTANTS"],
     categories: ["Consultant Services"],
     methods: ["Individual Consultant Selection"],
     longest_through: "contract_signed",

@@ -74,12 +74,14 @@ def hand_made_app(tmp_path):
 TARGET = f"/api/packages/{KNOWN['target']}"
 
 
-def test_the_screens_recorded_step_answers_are_what_the_routes_answer(fixture_db, tmp_path):
+@pytest.mark.parametrize("story", ["fixture", "hand-made", "unrecorded"])
+def test_the_screens_recorded_step_answers_are_what_the_routes_answer(story, fixture_db, tmp_path):
     """tests/record_steps_api.py writes the answers section 2's screen tests serve, from the fixture and the
-    hand-made set; the routes must still answer with them word for word."""
-    from record_steps_api import answers
+    hand-made set; the routes must still answer with them word for word. Each story runs on its own, so the
+    workers can share them out."""
+    from record_steps_api import STORIES
 
-    for name, text in answers(tmp_path).items():
+    for name, text in STORIES[story](tmp_path).items():
         assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), f"{name} is out of date"
 
 
@@ -121,3 +123,33 @@ def test_a_package_from_a_sentence_dates_its_steps_from_the_start_date_its_autho
     assert call(app, "GET", f"{path}/steps", ANA).json()["step_dates"]["start_date"] == "2026-11-02"
     assert call(app, "GET", f"{path}/steps", BEN).status_code == 404
     assert call(app, "PUT", f"{path}/step-start", ANA, json={"start_date": "2026-11-03", "view": "piu"}).status_code == 403
+
+
+def test_a_start_date_dates_the_steps_as_of_the_pages_date(hand_made_app):
+    """A page as of January 15, 2021 dates the steps from its comparables then; today's start-date range would
+    refuse March 1, 2021 as five years back."""
+    from test_planned_packages import plan
+
+    _, package = plan(hand_made_app, headers=ANA)
+    path = f"/api/planned-packages/{package['package_id']}/step-start"
+    start = {"start_date": KNOWN["duration_start"].isoformat()}
+
+    as_of = call(hand_made_app, "PUT", f"{path}?asof={KNOWN['as_of']}", ANA, json=start)
+    today = call(hand_made_app, "PUT", path, ANA, json=start)
+
+    assert as_of.status_code == 200, as_of.text
+    later = as_of.json()["step_dates"]["steps"][1:5]
+    assert [step["cautious"]["planned_date"] for step in later] == [day.isoformat() for day in KNOWN["duration_cautious_dates"]]
+    assert (today.status_code, today.json()["code"]) == (422, "bad_request")
+
+
+def test_the_server_refuses_a_choice_for_an_unknown_package_and_a_start_date_its_plan_does_not_need(hand_made_app):
+    unknown = call(hand_made_app, "PUT", "/api/packages/KE-HAND-999999-CW-RFB/plan-dates", ANA, json={"choice": "middle"})
+    dated_by_plan = call(hand_made_app, "PUT", f"{TARGET}/step-start?asof={KNOWN['as_of']}", ANA,
+                         json={"start_date": KNOWN["duration_start"].isoformat()})
+
+    assert (unknown.status_code, unknown.json()["code"]) == (404, "unknown_package")
+    assert (dated_by_plan.status_code, dated_by_plan.json()["code"]) == (409, "no_start_needed")
+    # Nothing was kept: the package's steps still count from its plan, with no start date.
+    steps = call(hand_made_app, "GET", f"{TARGET}/steps?asof={KNOWN['as_of']}", ANA).json()["step_dates"]
+    assert (steps["basis"], steps["start_date"]) == ("delay", None)

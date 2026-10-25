@@ -94,6 +94,17 @@ def test_each_step_lists_its_comparable_packages_shortest_first_for_the_evidence
     assert opening[0]["evidence_id"] == f"strata.gold.package:{step_set.comparable(1)}"
 
 
+def test_the_tool_counts_the_steps_it_dated_and_could_not_date_so_the_screen_counts_nothing(target):
+    """The summary's and the caption's counts are the tool's (CLAUDE.md rule 1): five dated steps in each choice,
+    one, the completion, that no comparable package planned, out of six it could date."""
+    steps = target["step_dates"]
+    dated = len(KNOWN["cautious_dates"])
+
+    assert steps["dated_n"] == {"middle": dated, "cautious": dated}
+    assert (steps["undated_n"], steps["few_n"], steps["dateable_n"]) == (1, 1, len(GOODS))
+    assert steps["none_dated"] is False
+
+
 def test_the_coverage_line_counts_the_comparable_packages_whose_plans_dated_these_steps(target):
     assert target["step_dates"]["coverage"] == {"total": KNOWN["comparables"], "used": KNOWN["comparables"], "missing": 0,
                                                 "reason": "no_plan_dates", "sources": ["notices", "awards", "documents", "projects"]}
@@ -156,6 +167,10 @@ def test_from_a_start_date_each_later_step_counts_from_the_one_before(hand_made)
     assert [entry["middle"]["days"] for entry in later[:4]] == KNOWN["duration_middle_days"]
     # Every comparable was still open at its completion, so the curve never reached half: no date, said in the row.
     assert (later[4]["comparables_n"], later[4]["abstain_reason"]) == (KNOWN["comparables"], "not_reached")
+    assert later[4]["reached_n"] == 0 and later[3]["reached_n"] == KNOWN["comparables"]
+    # The anchor is the person's date: of the five later steps, four are dated and the completion is not.
+    assert (dated["dated_n"], dated["undated_n"], dated["few_n"], dated["dateable_n"]) == (
+        {"middle": 4, "cautious": 4}, 1, 0, 5)
 
 
 def test_a_step_after_one_that_abstains_cannot_be_dated_and_keeps_its_own_days(tmp_path):
@@ -267,3 +282,21 @@ def test_on_the_fixture_every_step_of_the_demo_package_abstains_and_no_stage_ran
     assert all(entry["comparables_n"] < 20 for entry in steps["steps"])
     assert {entry["abstain_reason"] for entry in steps["steps"]} <= {"few_comparables", "not_in_plan"}
     assert steps["longest"] is None
+    # No step has a date or days in either choice, so the screen offers no choice of dates.
+    assert (steps["none_dated"], steps["dated_n"], steps["undated_n"]) == (True, {"middle": 0, "cautious": 0}, 6)
+
+
+def test_an_individual_consultant_hired_by_direct_selection_gets_the_individual_consultants_steps(fixture):
+    """The plan's table decides the family: KE-KENHA-496786-CS-CDS sits in STEP's INDIVIDUAL CONSULTANTS table
+    under Direct Selection, a Method the consulting firms' family lists too, so its category and Method alone
+    would date it as a consulting firm and drop its invitation."""
+    invitation = VALUES["plan-496786-planned-invitation"]
+
+    result = call(fixture, step_reference="KE-KENHA-496786-CS-CDS", as_of=dt.date(2026, 10, 22))
+    steps = by_key(result)
+
+    assert result["step_dates"]["family"] == "individuals"
+    assert list(steps) == ["terms_of_reference", "invitation", "draft_negotiated_contract", "contract_signed",
+                           "contract_completed"]
+    assert steps["invitation"]["plan_first_date"] == invitation["value"].isoformat()
+    assert steps["draft_negotiated_contract"]["plan_first_date"] is None

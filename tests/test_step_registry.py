@@ -21,9 +21,6 @@ BLUEPRINT = (ROOT / "docs" / "blueprint" / "strata-blueprint.html").read_text()
 # The blueprint's three families, by the bold words that open each paragraph, and the registry's key for each.
 BLUEPRINT_FAMILIES = {"Goods, works and non-consulting services": "goods", "Consulting firms": "firms",
                       "Individual consultants": "individuals"}
-# The STEP table each family's steps are copied from in the fixtures.
-FIXTURE_SECTIONS = {"goods": ("WORKS", "GOODS", "NON CONSULTING SERVICES"), "firms": ("CONSULTING FIRMS",),
-                    "individuals": ("INDIVIDUAL CONSULTANTS",)}
 
 
 def blueprint_labels() -> dict[str, list[str]]:
@@ -65,12 +62,33 @@ def test_each_familys_full_names_are_copied_from_the_fixtures_exports_of_its_tab
     """STEP's full names come only from the fixtures' exports: every name a family uses appears as a step of a
     plan table of that family's kind. A family the fixtures hold no table for would fail here."""
     for key, family in step_dates.families().items():
-        sections = FIXTURE_SECTIONS[key]
+        sections = family["sections"]
         exported = {row[0] for row in db.run(
             "SELECT DISTINCT s.step FROM strata.silver.plan_steps AS s JOIN strata.silver.plan_rows AS r"
             " ON r.document_id = s.document_id AND r.activity_reference_no = s.activity_reference_no"
             " WHERE array_contains(split(:sections, ','), r.section)", {"sections": ",".join(sections)}).rows}
         assert {entry["step_name"] for entry in family["steps"]} <= exported, key
+
+
+def test_the_families_split_steps_plan_tables_so_each_table_belongs_to_exactly_one_family():
+    sections = [section for family in step_dates.families().values() for section in family["sections"]]
+
+    assert sorted(sections) == sorted(step.SECTIONS)
+
+
+@pytest.mark.parametrize("section, method, family", [
+    ("INDIVIDUAL CONSULTANTS", "Direct Selection", "individuals"),
+    ("CONSULTING FIRMS", "Direct Selection", "firms"),
+    ("NON CONSULTING SERVICES", "Direct Selection", "goods"),
+    ("INDIVIDUAL CONSULTANTS", "Individual Consultant Selection", "individuals"),
+])
+def test_a_package_in_a_plan_takes_the_family_of_its_step_table_whatever_its_method(section, method, family):
+    assert step_dates.family_for(None, method, section) == (family, None)
+
+
+def test_with_no_plan_row_consultant_services_under_direct_selection_stays_with_consulting_firms():
+    """A sentence cannot tell a firm from an individual, so the first family that lists the pair wins."""
+    assert step_dates.family_for("Consultant Services", "Direct Selection") == ("firms", None)
 
 
 @pytest.mark.parametrize("category, method, family", [

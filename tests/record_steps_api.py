@@ -123,14 +123,31 @@ async def unrecorded_story(app) -> dict[str, str]:
     return {"steps-planned-hand-made-needs-earlier.json": pretty(answer)}
 
 
+def fixture_answers(folder: Path) -> dict[str, str]:
+    return asyncio.run(fixture_story(app_on(FIXTURE_DB, folder, FIXTURE_DAY)))
+
+
+def hand_made_answers(folder: Path) -> dict[str, str]:
+    hand_made = folder / "hand-made.duckdb"
+    step_set.build(hand_made).close()
+    return asyncio.run(hand_made_story(app_on(hand_made, folder, HAND_MADE_DAY)))
+
+
+def unrecorded_answers(folder: Path) -> dict[str, str]:
+    unrecorded = folder / "unrecorded.duckdb"
+    step_set.build(unrecorded, bidding_document_unrecorded=True).close()
+    return asyncio.run(unrecorded_story(app_on(unrecorded, folder, HAND_MADE_DAY)))
+
+
+# Each story on its own, so the test that checks them can run them side by side.
+STORIES = {"fixture": fixture_answers, "hand-made": hand_made_answers, "unrecorded": unrecorded_answers}
+
+
 def answers(folder: Path) -> dict[str, str]:
     """Every recorded answer, by its file name, as the text the file holds."""
-    hand_made, unrecorded = folder / "hand-made.duckdb", folder / "unrecorded.duckdb"
-    step_set.build(hand_made).close()
-    step_set.build(unrecorded, bidding_document_unrecorded=True).close()
-    found = asyncio.run(fixture_story(app_on(FIXTURE_DB, folder, FIXTURE_DAY)))
-    found |= asyncio.run(hand_made_story(app_on(hand_made, folder, HAND_MADE_DAY)))
-    found |= asyncio.run(unrecorded_story(app_on(unrecorded, folder, HAND_MADE_DAY)))
+    found = {}
+    for story in STORIES.values():
+        found |= story(folder)
     return found
 
 

@@ -88,20 +88,38 @@ test("collapsed by default, the summary takes its step count and ran-longest cou
   await expect(disclosure(page)).toHaveText("Show the steps");
 });
 
-test("the steps carry the blueprint's labels for goods, works and non-consulting services, with STEP's full name on focus", async ({ page }) => {
+const FULL_NAME = 'STEP calls this step "Bid Evaluation Report and Recommendation for Award".';
+
+test("the steps carry the blueprint's labels for goods, works and non-consulting services, with STEP's full name on hover and on focus", async ({ page }) => {
   await openPackage(page);
-  await disclosure(page).click();
+  await disclosure(page).focus();
+  await page.keyboard.press("Enter");
 
   await expect(view(page).getByRole("rowheader").locator("[data-term]")).toHaveText(GOODS);
   const report = view(page).getByRole("button", { name: "Bid evaluation report", exact: true });
+  const name = page.getByRole("dialog", { name: "Bid evaluation report" });
   await expect(report).toHaveAccessibleDescription("In STEP: Bid Evaluation Report and Recommendation for Award");
-  await report.focus();
+
+  // Hover alone shows the full name, and it goes when the pointer leaves.
+  await report.hover();
+  await expect(name).toContainText(FULL_NAME);
+  await page.mouse.move(0, 0);
+  await expect(name).toBeHidden();
+
+  // So does Tab, with no Enter: focus stays on the label, and Escape closes the window there.
+  for (let tabs = 0; tabs < 30 && !(await report.evaluate((element) => element === document.activeElement)); tabs++) await page.keyboard.press("Tab");
+  await expect(report).toBeFocused();
+  await expect(name).toContainText(FULL_NAME);
+  await page.keyboard.press("Escape");
+  await expect(name).toBeHidden();
+  await expect(report).toBeFocused();
+
+  // Enter pins it open with focus on its title, and Escape gives focus back to the label without opening it again.
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("dialog", { name: "Bid evaluation report" })).toContainText(
-    'STEP calls this step "Bid Evaluation Report and Recommendation for Award".',
-  );
+  await expect(name.getByRole("heading")).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(report).toBeFocused();
+  await expect(name).toBeHidden();
 });
 
 const row = (page: Page, key: string) => view(page).locator(`[data-step-row='${key}']`);
@@ -114,12 +132,14 @@ test("each step's planned date is the cautious one by default, names its compara
   await expect(section(page).getByRole("radio", { name: "Cautious dates: 2 in 10 ran later" })).toBeChecked();
   expect(await text(row(page, "contract_signed").locator("[data-planned]"))).toBe("Aug 1, 2021 52 days after the plan's date");
   await expect(row(page, "contract_signed").locator("td").last()).toHaveText("25");
-  await expect(row(page, "contract_completed").locator("[data-abstains]")).toHaveText("I'm not dating this step: no comparable package recorded it.");
+  await expect(row(page, "contract_completed").locator("[data-abstains]")).toHaveText("No comparable package recorded this step, so I can't date it.");
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("Cautious dates put the signed contract on August 1, 2021.");
 
   await section(page).getByText("Middle dates: half ran later").click();
   expect(await text(row(page, "contract_signed").locator("[data-planned]"))).toBe("Jul 11, 2021 31 days after the plan's date");
   await expect(view(page).locator("[data-choice-header]")).toContainText("Planned date, middle");
+  // The live region says the choice and the new caption, not every cell.
+  await expect(section(page).getByRole("status")).toHaveText("Showing middle dates. Middle dates put the signed contract on July 11, 2021.");
   await expect.poll(() => puts.map((put) => put.postDataJSON())).toEqual([{ choice: "middle" }]);
 });
 
@@ -172,24 +192,35 @@ test("under 20 comparable packages in all, the section gives the steps and their
   await openPackage(page, { steps: "steps-ke-hand-900000-few.json" });
 
   await expect(section(page).locator("[data-section-summary]")).toContainText(
-    "I'm not giving planned dates: only 12 comparable packages recorded these steps.",
+    "I'm not giving planned dates, because I found only 12 comparable packages.",
   );
   await disclosure(page).click();
+  // The summary above says it, so the intro does not say it again.
+  await expect(section(page).locator("[data-step-intro]")).not.toContainText("I'm not giving planned dates");
   await expect(section(page).locator("[data-choice]")).toHaveCount(0);
   await expect(view(page).locator("[data-choice-header]")).toHaveCount(0);
   await expect(row(page, "contract_signed").locator("td").last()).toHaveText("12");
 });
 
-test("a package from a sentence asks for its first step's date, then dates every later step from it", async ({ page }) => {
-  await serve(page, {
-    [PLANNED]: { body: await recorded("planned-package-hand-made.json") },
-    "/api/comparables": { body: await recorded("comparables-planned-hand-made.json") },
-    [`${PLANNED}/risks`]: { body: await recorded("risks-planned-hand-made.json") },
-    [`${PLANNED}/steps`]: { body: await recorded("steps-planned-hand-made.json") },
-    [`PUT ${PLANNED}/step-start`]: { body: await recorded("steps-planned-hand-made-dated.json") },
-  });
-  await page.goto("/packages/pkg-000000000001");
+async function openSentencePackage(page: Page, width = 1440, address = "/packages/pkg-000000000001") {
+  const puts = await serve(
+    page,
+    {
+      [PLANNED]: { body: await recorded("planned-package-hand-made.json") },
+      "/api/comparables": { body: await recorded("comparables-planned-hand-made.json") },
+      [`${PLANNED}/risks`]: { body: await recorded("risks-planned-hand-made.json") },
+      [`${PLANNED}/steps`]: { body: await recorded("steps-planned-hand-made.json") },
+      [`PUT ${PLANNED}/step-start`]: { body: await recorded("steps-planned-hand-made-dated.json") },
+    },
+    width,
+  );
+  await page.goto(address);
   await disclosure(page).click();
+  return puts;
+}
+
+test("a package from a sentence asks for its first step's date, then dates every later step from it, as of the page's date", async ({ page }) => {
+  const puts = await openSentencePackage(page, 1440, "/packages/pkg-000000000001?asof=2021-01-15");
 
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("How many days each step took in comparable packages.");
   await expect(section(page).locator("[data-planned='undated']:visible").first()).toContainText("Not dated yet");
@@ -198,6 +229,89 @@ test("a package from a sentence asks for its first step's date, then dates every
   await section(page).getByLabel("Date of the bid invitation").fill("2021-03-01");
   await section(page).getByRole("button", { name: "Date the steps" }).click();
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("Cautious dates put the signed contract on July 17, 2021.");
+  await expect(section(page).getByRole("status")).toHaveText("Cautious dates put the signed contract on July 17, 2021.");
+  expect(new URL(puts[0].url()).searchParams.get("asof")).toBe("2021-01-15");
+  // The summary counts the one step the tool could not date, the contract's completion.
+  await expect(section(page).locator("[data-section-summary]")).toContainText("I can't date one of the six steps.");
+});
+
+// Every list item's labels and values, as text boxes: none of a label's boxes may touch its value's.
+async function labelsOverValues(page: Page): Promise<string[]> {
+  return section(page)
+    .locator("[data-step-list]")
+    .evaluate((list) => {
+      const boxes = (element: Element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return [...range.getClientRects()].filter((box) => box.width > 0 && box.height > 0);
+      };
+      const touch = (a: DOMRect, b: DOMRect) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+      const found: string[] = [];
+      for (const label of list.querySelectorAll("dt")) {
+        const value = label.nextElementSibling;
+        if (!value) continue;
+        if (boxes(label).some((a) => boxes(value).some((b) => touch(a, b)))) {
+          found.push(`${label.closest("[data-step-item]")?.getAttribute("data-step-item")}: ${label.textContent}`);
+        }
+      }
+      return found;
+    });
+}
+
+test("below a 768 px page area no label prints over its value, for a dated package from a sentence and a step a later plan moved", async ({ page }) => {
+  await openSentencePackage(page);
+  await section(page).getByLabel("Date of the bid invitation").fill("2021-03-01");
+  await section(page).getByRole("button", { name: "Date the steps" }).click();
+  await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("Cautious dates put the signed contract on July 17, 2021.");
+  for (const width of [390, 360, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(section(page).locator("[data-step-list]")).toBeVisible();
+    expect(await labelsOverValues(page), `at ${width} px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `at ${width} px`).toBe(true);
+  }
+
+  // A made-up later plan re-dates the signed contract, as no recorded plan does: its "Moved to" line is the longest value.
+  const result = JSON.parse(await recorded("steps-ke-hand-900000.json"));
+  const steps = result.step_dates.steps.map((step: { step_key: string }) =>
+    step.step_key === "contract_signed" ? { ...step, plan_latest_date: "2021-07-01", plan_latest_version_date: "2021-01-10" } : step,
+  );
+  await page.unrouteAll();
+  await serve(
+    page,
+    {
+      [API]: { body: await recorded("package-ke-hand-900000.json") },
+      [`${API}/comparables`]: { body: await recorded("comparables-ke-hand-900000.json") },
+      [`${API}/risks`]: { body: await recorded("risks-ke-hand-900000.json") },
+      [`${API}/steps`]: { body: JSON.stringify({ ...result, step_dates: { ...result.step_dates, steps } }) },
+    },
+    390,
+  );
+  await page.goto(`/packages/${REF}`);
+  await disclosure(page).click();
+  await expect(section(page).locator("[data-plan-moved]:visible")).toHaveText("Moved to Jul 1, 2021 in the plan of Jan 10, 2021");
+  for (const width of [390, 360, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await labelsOverValues(page), `at ${width} px`).toEqual([]);
+  }
+});
+
+test("when no step can be dated, as on the fixture's demo package, the section offers no choice of dates and says why", async ({ page }) => {
+  const DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB";
+  await serve(page, {
+    [DEMO]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`${DEMO}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+    [`${DEMO}/risks`]: { body: await recorded("risks-ke-nwwda-541055.json") },
+    [`${DEMO}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
+  });
+  await page.goto("/packages/KE-NWWDA-541055-CW-RFB");
+  await disclosure(page).click();
+
+  await expect(section(page).locator("[data-step-intro]")).toHaveText(
+    "These are the steps STEP uses for goods, works and non-consulting services. I date a step only when 20 or more comparable packages recorded it.",
+  );
+  await expect(section(page).locator("[data-choice]")).toHaveCount(0);
+  await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("I couldn't date any of these steps.");
+  await expect(section(page).locator("[data-section-summary]")).toContainText("I have too few comparable packages to date any of the six.");
 });
 
 test("axe finds no WCAG 2.2 AA violations collapsed and open, and at 390 px the steps are a list with STEP's full names printed", async ({ page }) => {

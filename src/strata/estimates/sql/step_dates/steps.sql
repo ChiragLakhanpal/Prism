@@ -6,9 +6,10 @@
 --
 -- When several versions list an activity, the newest by plan date wins, then the one disclosed last, as
 -- find_comparables' package.sql picks a package's row. A step is matched by STEP's name, never by its place in
--- the table, which moves when a table has prequalification columns.
+-- the table, which moves when a table has prequalification columns. The activity's STEP table (its section) picks
+-- its method family.
 WITH latest AS (
-  SELECT r.document_id, r.activity_reference_no, r.process_status, v.plan_date
+  SELECT r.document_id, r.activity_reference_no, r.section, r.process_status, v.plan_date
   FROM strata.silver.plan_rows AS r
   JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
   WHERE array_contains(split(:references, ','), r.activity_reference_no)
@@ -18,6 +19,7 @@ WITH latest AS (
 )
 SELECT
   l.activity_reference_no,
+  l.section,
   l.process_status,
   l.plan_date,
   d.step,

@@ -168,7 +168,10 @@ const STEP_SHOTS: Shot[] = [
   stepShot("focus-disclosure", DATED_STEPS, { full: false, act: focus(`${SECTION_2} [data-disclosure]`) }),
   stepShot("focus-choice", DATED_STEPS, { full: false, act: inOrder(openSteps, focus(`${SECTION_2} input[type=radio]:checked`)) }),
   stepShot("hover-choice", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, hover(`${SECTION_2} [data-segment=middle]`)) }),
-  stepShot("term-open", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`), async (page) => page.keyboard.press("Enter")) }),
+  // A step label's full STEP name on hover, on keyboard focus with no Enter, and pinned open by Enter (criterion 4).
+  stepShot("term-open", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, hover(`${SECTION_2} [data-step-table] [data-term]`)) }),
+  stepShot("term-focus", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`)) }),
+  stepShot("term-pinned", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`), async (page) => page.keyboard.press("Enter")) }),
   stepShot("focus-date", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-num-lines]`)) }),
   stepShot("focus-count", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] td:last-child button`)) }),
   stepShot("320", DATED_STEPS, { widths: [320], act: openSteps }),
@@ -186,6 +189,8 @@ const STEP_SHOTS: Shot[] = [
   }),
   app("steps--sentence-dated", "/packages/pkg-000000000001", {}, {
     full: true,
+    // 360 and 320 px too: the narrow list's longest values are this package's days captions.
+    widths: [1440, 1024, 390, 360, 320],
     act: inOrder(openSteps, type(`${SECTION_2} input[type=date]`, "2021-03-01"), click(`${SECTION_2} [data-commit-start]`)),
     api: {
       ...app("steps--sentence-dated", "/packages/pkg-000000000001").api,

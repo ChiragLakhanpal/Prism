@@ -9,10 +9,13 @@
   and only its author may open it (404 unknown_package for anyone else).
 - PUT /api/packages/{step_reference}/plan-dates and PUT /api/planned-packages/{package_id}/plan-dates take
   {"choice": "middle"} or {"choice": "eight_in_ten"}: the one stored choice ticket 26's plan-date choice shares
-  (strata.app.plan_date_choices). Section 2 calls eight_in_ten its cautious dates.
+  (strata.app.plan_date_choices). Section 2 calls eight_in_ten its cautious dates. A STEP reference no record
+  holds gets 404 unknown_package, as the GET does, and nothing is kept.
 - PUT /api/packages/{step_reference}/step-start and PUT /api/planned-packages/{package_id}/step-start take
   {"start_date": "2026-11-02"}, keep it for the viewer (strata.app.step_start_dates) and answer with the steps
-  dated from it. A date outside the thresholds file's range gets 422 bad_request.
+  dated from it, as of ?asof= like the GET, so a page as of a past date dates its steps from the comparables of
+  then. A date outside the thresholds file's range gets 422 bad_request, and a package whose plan dates its steps
+  (the delay basis) gets 409 no_start_needed: it has no start date to keep.
 
 Both are written as the app's own service principal; a preview changes nothing (403 preview). A read the store
 cannot answer still answers the dates, with no saved choice or start date, and the failure goes to the log, so
@@ -38,6 +41,7 @@ from strata.packages.store import PackageStore
 from strata.server.engines import EngineFor
 from strata.server.packages import comparables_criteria
 from strata.tools import registry
+from strata.tools.find_comparables import read_package
 
 log = logging.getLogger("strata.server.steps")
 STAFF = "staff"
@@ -135,14 +139,31 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
                       lambda: store.choose_plan_date(viewer.user_id, kind, key, body.choice, now()))
         return failed or {"plan_date_choice": body.choice}
 
-    def start_from(viewer: Viewer, body: StartRequest, criteria: dict, kind: str, key: str):
-        """Date the steps from the viewer's date, which estimate_time checks against the thresholds file's range,
-        and keep the date only when it was in range."""
+    def known(viewer: Viewer, step_reference: str) -> JSONResponse | None:
+        """404 unknown_package for a STEP reference no record holds, or 503 when the data service cannot say."""
+        if engine_for is None:
+            return refused(503, "no_data_service")
+        try:
+            with engine_for(viewer) as engine:
+                found = read_package(engine, step_reference, today())
+        except PermissionDenied:
+            return refused(403, "permission")
+        except EngineError:
+            ref = reference()
+            log.exception("The data service failed on package %s's record, reference %s.", step_reference, ref)
+            return refused(503, "data_service", trace_id=ref)
+        return None if found is not None else refused(404, "unknown_package")
+
+    def start_from(viewer: Viewer, body: StartRequest, asof: dt.date | None, criteria: dict, kind: str, key: str):
+        """Date the steps from the viewer's date, as of the page's date, which estimate_time checks against the
+        thresholds file's range, and keep the date only when it was in range and the package needs one."""
         if body.view != STAFF:
             return refused(403, "preview", capability="save", copy="preview")
-        checked = dates(viewer, STAFF, None, criteria, kind, key, start=body.start_date)
+        checked = dates(viewer, STAFF, asof, criteria, kind, key, start=body.start_date)
         if isinstance(checked, JSONResponse):
             return checked
+        if checked["step_dates"] and checked["step_dates"]["basis"] != "duration":
+            return refused(409, "no_start_needed")
         failed = keep(viewer, body.view, kind, key,
                       lambda: store.choose_step_start(viewer.user_id, kind, key, body.start_date, now()))
         return failed or checked
@@ -157,11 +178,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
     @app.put("/api/packages/{step_reference}/plan-dates")
     def step_row_choice(step_reference: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
-        return choose(viewer, body, STEP_ROW, step_reference)
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        if body.view != STAFF:
+            return refused(403, "preview", capability="save", copy="preview")
+        return known(viewer, step_reference) or choose(viewer, body, STEP_ROW, step_reference)
 
     @app.put("/api/packages/{step_reference}/step-start")
-    def step_row_start(step_reference: str, body: StartRequest, viewer: Viewer = Depends(current_viewer)):
-        return start_from(viewer, body, {"step_reference": step_reference}, STEP_ROW, step_reference)
+    def step_row_start(step_reference: str, body: StartRequest, asof: dt.date | None = None,
+                       viewer: Viewer = Depends(current_viewer)):
+        return start_from(viewer, body, asof, {"step_reference": step_reference}, STEP_ROW, step_reference)
 
     @app.get("/api/planned-packages/{package_id}/steps")
     def planned_steps(package_id: str, asof: dt.date | None = None, view: str = STAFF,
@@ -179,8 +205,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         return choose(viewer, body, PLANNED, package_id)
 
     @app.put("/api/planned-packages/{package_id}/step-start")
-    def planned_start(package_id: str, body: StartRequest, viewer: Viewer = Depends(current_viewer)):
+    def planned_start(package_id: str, body: StartRequest, asof: dt.date | None = None,
+                      viewer: Viewer = Depends(current_viewer)):
         criteria = planned_criteria(viewer, package_id)
         if isinstance(criteria, JSONResponse):
             return criteria
-        return start_from(viewer, body, criteria, PLANNED, package_id)
+        return start_from(viewer, body, asof, criteria, PLANNED, package_id)

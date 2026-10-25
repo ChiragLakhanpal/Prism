@@ -63,6 +63,14 @@
       "to": "2026-01-15"
     },
     "method": "Request for Bids",
+    "dateable_n": 6,
+    "dated_n": {
+      "middle": 5,
+      "cautious": 5
+    },
+    "undated_n": 1,
+    "few_n": 1,
+    "none_dated": false,
     "family": "goods",
     "family_reason": null,
     "basis": "delay",
@@ -73,6 +81,7 @@
         "step_key": "bid_invitation",
         "is_anchor": false,
         "comparables_n": 25,
+        "reached_n": 25,
         "comparables": [
           {
             "step_reference": "KE-HAND-900001-CW-RFB",
@@ -249,6 +258,7 @@
         "step_key": "bidding_document_issued",
         "is_anchor": false,
         "comparables_n": 25,
+        "reached_n": 25,
         "comparables": [
           {
             "step_reference": "KE-HAND-900001-CW-RFB",
@@ -425,6 +435,7 @@
         "step_key": "bid_opening",
         "is_anchor": false,
         "comparables_n": 25,
+        "reached_n": 25,
         "comparables": [
           {
             "step_reference": "KE-HAND-900001-CW-RFB",
@@ -601,6 +612,7 @@
         "step_key": "bid_evaluation_report",
         "is_anchor": false,
         "comparables_n": 25,
+        "reached_n": 25,
         "comparables": [
           {
             "step_reference": "KE-HAND-900001-CW-RFB",
@@ -777,6 +789,7 @@
         "step_key": "contract_signed",
         "is_anchor": false,
         "comparables_n": 25,
+        "reached_n": 25,
         "comparables": [
           {
             "step_reference": "KE-HAND-900001-CW-RFB",
@@ -953,6 +966,7 @@
         "step_key": "contract_completed",
         "is_anchor": false,
         "comparables_n": 0,
+        "reached_n": 0,
         "comparables": [],
         "plan_first_date": "2022-06-10",
         "plan_first_version_date": "2020-12-15",
@@ -1170,6 +1184,14 @@
         "to": "2026-01-15"
       },
       "method": "Request for Bids",
+      "dateable_n": 6,
+      "dated_n": {
+        "middle": 5,
+        "cautious": 5
+      },
+      "undated_n": 1,
+      "few_n": 1,
+      "none_dated": false,
       "family": "goods",
       "family_reason": null,
       "basis": "delay",
@@ -1180,6 +1202,7 @@
           "step_key": "bid_invitation",
           "is_anchor": false,
           "comparables_n": 25,
+          "reached_n": 25,
           "comparables": [
             {
               "step_reference": "KE-HAND-900001-CW-RFB",
@@ -1356,6 +1379,7 @@
           "step_key": "bidding_document_issued",
           "is_anchor": false,
           "comparables_n": 25,
+          "reached_n": 25,
           "comparables": [
             {
               "step_reference": "KE-HAND-900001-CW-RFB",
@@ -1532,6 +1556,7 @@
           "step_key": "bid_opening",
           "is_anchor": false,
           "comparables_n": 25,
+          "reached_n": 25,
           "comparables": [
             {
               "step_reference": "KE-HAND-900001-CW-RFB",
@@ -1708,6 +1733,7 @@
           "step_key": "bid_evaluation_report",
           "is_anchor": false,
           "comparables_n": 25,
+          "reached_n": 25,
           "comparables": [
             {
               "step_reference": "KE-HAND-900001-CW-RFB",
@@ -1884,6 +1910,7 @@
           "step_key": "contract_signed",
           "is_anchor": false,
           "comparables_n": 25,
+          "reached_n": 25,
           "comparables": [
             {
               "step_reference": "KE-HAND-900001-CW-RFB",
@@ -2060,6 +2087,7 @@
           "step_key": "contract_completed",
           "is_anchor": false,
           "comparables_n": 0,
+          "reached_n": 0,
           "comparables": [],
           "plan_first_date": "2022-06-10",
           "plan_first_version_date": "2020-12-15",

@@ -69,9 +69,15 @@ def families() -> dict[str, dict]:
     return json.loads((resources.files("strata.estimates") / "steps.json").read_text())["families"]
 
 
-def family_for(category: str | None, method: str | None) -> tuple[str | None, str | None]:
-    """The registry's family for a package's procurement category and Method, as (family, None), or (None, why):
-    no_family when either is missing, method_not_listed when no family lists the pair."""
+def family_for(category: str | None, method: str | None, section: str | None = None) -> tuple[str | None, str | None]:
+    """The registry's family for a package, as (family, None), or (None, why). A package from a plan row belongs to
+    the family whose sections hold its STEP table, because STEP splits individual consultants from consulting
+    firms by table and the same Method can sit in either. With no plan row, the procurement category and Method
+    decide: no_family when either is missing, method_not_listed when no family lists the pair."""
+    if section:
+        for key, family in families().items():
+            if section in family["sections"]:
+                return key, None
     if not category or not method:
         return None, "no_family"
     for key, family in families().items():
@@ -124,6 +130,7 @@ class Activity:
     """One activity in its newest plan version public on the as-of date, with each step's dates by STEP's name."""
 
     reference: str
+    section: str | None
     process_status: str | None
     plan_date: dt.date | None
     steps: dict[str, StepRow] = field(default_factory=dict)
@@ -136,7 +143,7 @@ def activities(rows: Rows, references: list[str]) -> dict[str, Activity]:
     found: dict[str, Activity] = {}
     for row in rows(sql("steps.sql"), references=",".join(references)):
         activity = found.setdefault(row["activity_reference_no"], Activity(
-            row["activity_reference_no"], row["process_status"], as_date(row["plan_date"])))
+            row["activity_reference_no"], row["section"], row["process_status"], as_date(row["plan_date"])))
         activity.steps.setdefault(row["step"], StepRow(
             as_date(row["planned_on"]), as_date(row["actual_on"]), as_date(row["first_planned_on"]),
             as_date(row["first_planned_plan_date"]), None if row["delay_days"] is None else int(row["delay_days"])))
@@ -283,20 +290,24 @@ def _dated_step(entry: dict, k: int, fitted: StepFit | None, basis: str, own: Ac
     return {"abstain_reason": None if chain[0] else EARLIER, **choices}
 
 
-def step_dates(rows: Rows, *, family_key: str | None, family_reason: str | None, method: str | None,
-               package_reference: str | None, comparables: list[str], as_of: dt.date, start_date: dt.date | None,
-               settings: Settings, track: dict | None, sources: list[str]) -> dict:
-    """Section 2's planned date for each step of one package, with both choices, as estimate_time returns it."""
+def step_dates(rows: Rows, *, category: str | None, method: str | None, package_reference: str | None,
+               comparables: list[str], as_of: dt.date, start_date: dt.date | None, settings: Settings,
+               track: dict | None, sources: list[str]) -> dict:
+    """Section 2's planned date for each step of one package, with both choices, as estimate_time returns it. The
+    package's own plan row, when it has one, picks its family by its STEP table; otherwise its category and
+    Method do."""
     shared = {"min_comparables": settings.min_comparables, "middle_in10": settings.in10("middle"),
               "cautious_in10": settings.in10("cautious"), "start_range": settings.start_range(as_of), "method": method}
     total = len(comparables)
+    own = activities(rows, [package_reference]).get(package_reference) if package_reference else None
+    family_key, family_reason = family_for(category, method, own.section if own else None)
     if family_key is None:
-        return {**shared, "family": None, "family_reason": family_reason, "basis": None, "needs_start_date": False,
+        return {**shared, **_counts([]), "family": None, "family_reason": family_reason, "basis": None,
+                "needs_start_date": False,
                 "start_date": None, "steps": [], "longest": None, "abstain_all": None, "actual_steps_count": None,
                 "track_record": None, "coverage": _coverage(total, total, sources)}
     family = families()[family_key]
     names = [entry["step_name"] for entry in family["steps"]]
-    own = activities(rows, [package_reference]).get(package_reference) if package_reference else None
     found = activities(rows, comparables)
     basis = DELAY if own and any(name in own.steps and own.steps[name].first_planned_on for name in names) else DURATION
     fits = fit(found, family, basis, as_of, settings)
@@ -306,6 +317,7 @@ def step_dates(rows: Rows, *, family_key: str | None, family_reason: str | None,
         fitted = fits[k]
         item = {"step_key": entry["key"], "is_anchor": basis == DURATION and k == 0,
                 "comparables_n": fitted.n if fitted else None,
+                "reached_n": sum(1 for _, _, reached in fitted.observed if reached) if fitted else None,
                 "comparables": [{"step_reference": reference, "evidence_id": f"strata.gold.package:{reference}",
                                  "days": days, "still_open": not reached}
                                 for reference, days, reached in (fitted.observed if fitted else [])],
@@ -319,13 +331,27 @@ def step_dates(rows: Rows, *, family_key: str | None, family_reason: str | None,
     actual = None
     if own is not None:
         actual = sum(1 for name in names if name in own.steps and own.steps[name].actual_on is not None)
-    return {**shared, "family": family_key, "family_reason": None, "basis": basis,
+    return {**shared, **_counts(steps), "family": family_key, "family_reason": None, "basis": basis,
             "needs_start_date": basis == DURATION and start_date is None,
             "start_date": start_date.isoformat() if start_date and basis == DURATION else None,
             "steps": steps, "longest": None if abstain_all else longest(found, family), "abstain_all": abstain_all,
             "actual_steps_count": actual, "track_record": track if basis == DELAY else None,
             "coverage": _coverage(total, len(used & set(comparables)), sources),
             "not_used": sorted(set(comparables) - used)}
+
+
+def _counts(steps: list[dict]) -> dict:
+    """The counts a screen's sentences need, so it counts nothing itself: the steps that can take a date (all but
+    the anchor), how many each choice dated, how many have no date and why (few_n of them for too few comparable
+    packages), and none_dated when no step has a date or days in either choice, so the choice changes nothing."""
+    later = [step for step in steps if not step["is_anchor"]]
+    return {"dateable_n": len(later),
+            "dated_n": {choice: sum(1 for step in later if step[choice] and step[choice]["planned_date"])
+                        for choice in CHOICES},
+            "undated_n": sum(1 for step in later if step["abstain_reason"]),
+            "few_n": sum(1 for step in later if step["abstain_reason"] == FEW),
+            "none_dated": not any(step[choice] and step[choice]["days"] is not None
+                                  for step in later for choice in CHOICES)}
 
 
 def _coverage(total: int, used: int, sources: list[str]) -> dict:
@@ -380,10 +406,12 @@ def track_record(engine, as_of: dt.date, settings: Settings) -> dict | None:
 #
 # Each year is one replay, so each row carries the year's MLflow run id. Every number is a count or a median the
 # backtest worked out; nothing is typed in.
+#
+# A test year scores only the steps that the plans public at its cutoff, January 1, had first planned for that
+# year (sql/step_dates/pending.sql). A package first listed later in the year is not scored, so the backtest never
+# sees a plan from after its cutoff, and the track record covers fewer steps than every step planned in the year.
+# Its tooltip says so ("steps that plans published before {year} had planned for {year}").
 
-# The plan table a STEP row sits in, and the procurement category the registry's family rule reads.
-CATEGORIES = {"WORKS": "Works", "GOODS": "Goods", "NON CONSULTING SERVICES": "Non-consulting Services",
-              "CONSULTING FIRMS": "Consultant Services", "INDIVIDUAL CONSULTANTS": "Consultant Services"}
 MEASURES = ("n", "inside_cautious", "inside_middle", "abstained", "undecided")
 
 
@@ -424,7 +452,7 @@ class StepDatesBacktest:
         errors: dict[str, list[tuple[int, int, int]]] = {key: [] for key in counts}
         for reference in sorted(pending):
             entry = pending[reference]
-            family_key, _ = family_for(CATEGORIES.get(entry["section"]), entry["method"])
+            family_key, _ = family_for(None, entry["method"], entry["section"])
             if family_key is None:
                 continue
             family = families()[family_key]

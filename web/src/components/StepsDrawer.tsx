@@ -7,7 +7,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { DotEntry } from "../lib/packages";
-import type { LongestListRow, StepListRow } from "../lib/steps";
+import type { LongestListRow, StepComparable, StepListRow } from "../lib/steps";
 import { familyStep, stepFamily } from "../steps";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
@@ -15,6 +15,20 @@ import { Source } from "./Source";
 
 const words = copy.stepDates.drawer;
 const number = (value: number) => <Num value={value} options={{ compact: false }} />;
+// About how many in 10 ran later, as the tool counted them; five in 10 is "about half", as the section says it.
+const about = (in10: number | null) =>
+  in10 === 5 ? copy.stepDates.aboutHalf : <Fill template={copy.stepDates.aboutIn10} slots={{ in10: number(in10 ?? 0) }} />;
+
+// One comparable's days at the step: on the delay basis against its own first planned date (late, on it, or early;
+// a still-open one whose date had not come yet is not due), on the duration basis since the step before.
+function entryDays(entry: StepComparable, basis: "delay" | "duration"): ReactNode {
+  const { days } = entry;
+  if (entry.still_open) return days < 0 ? words.entryNotDue : <Fill template={words.entryOpen} slots={{ days: number(days) }} />;
+  if (days < 0) return <Fill template={days === -1 ? words.entryBeforeOne : words.entryBefore} slots={{ days: number(-days) }} />;
+  if (basis === "duration") return <Fill template={days === 1 ? words.entryDay : words.entryDays} slots={{ days: number(days) }} />;
+  if (days === 0) return words.entryOnPlan;
+  return <Fill template={days === 1 ? words.entryLateOne : words.entryLate} slots={{ days: number(days) }} />;
+}
 
 // The drawer's heading for a list.
 export function stepListTitle(evidence: EvidenceEvent): string {
@@ -46,7 +60,8 @@ function Entry({ reference, evidenceId, focus, onOpen, children }: { reference: 
           <span className="sr-only">{words.entryOpens} </span>
           {reference}
         </span>
-        <span className="text-small text-ink-muted tabular-nums">{children}</span>
+        {/* ml-auto keeps the days on the right edge when a long reference pushes them onto a line of their own. */}
+        <span className="ml-auto text-small text-ink-muted tabular-nums">{children}</span>
       </button>
     </li>
   );
@@ -66,8 +81,8 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
       <Fill
         template={row.basis === "delay" ? words.findingDelay : words.findingDuration}
         slots={{
-          longer_c: number(cautious.longer ?? 0), in10_c: number(cautious.in10 ?? 0), days_c: number(cautious.days),
-          longer_m: number(middle.longer ?? 0), in10_m: number(middle.in10 ?? 0), days_m: number(middle.days),
+          longer_c: number(cautious.longer ?? 0), about_c: about(cautious.in10), days_c: number(cautious.days),
+          longer_m: number(middle.longer ?? 0), about_m: about(middle.in10), days_m: number(middle.days),
           n: number(n), step: phrase, previous: previous?.phrase ?? "",
         }}
       />
@@ -83,19 +98,13 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
       <p className="text-body text-ink">{finding}</p>
       {row.records_through && (
         <p className="text-caption text-ink-muted">
-          <Fill template={words.note} slots={{ date: <Num date={row.records_through} /> }} />
+          <Fill template={row.basis === "delay" ? words.noteDelay : words.note} slots={{ date: <Num date={row.records_through} /> }} />
         </p>
       )}
       <ul className="flex flex-col divide-y divide-line border-y border-line">
         {row.step.comparables.map((entry) => (
           <Entry key={entry.step_reference} reference={entry.step_reference} evidenceId={entry.evidence_id} focus={entry.step_reference === focusEntry} onOpen={onOpen}>
-            {entry.still_open ? (
-              <Fill template={words.entryOpen} slots={{ days: number(entry.days) }} />
-            ) : entry.days < 0 ? (
-              <Fill template={entry.days === -1 ? words.entryBeforeOne : words.entryBefore} slots={{ days: number(-entry.days) }} />
-            ) : (
-              <Fill template={entry.days === 1 ? words.entryDay : words.entryDays} slots={{ days: number(entry.days) }} />
-            )}
+            {entryDays(entry, row.basis)}
           </Entry>
         ))}
       </ul>

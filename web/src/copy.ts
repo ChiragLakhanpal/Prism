@@ -2670,9 +2670,13 @@ export const copy = {
       `I have too few comparable packages to date ${abstainWords} of the ${countWords}.`,
     // When every step lacks them, as on the fixture, never "six of the six".
     summaryPartialAll: (countWords: string) => `I have too few comparable packages to date any of the ${countWords}.`,
-    summaryAbstain: "I'm not giving planned dates: only {n} comparable packages recorded these steps.",
-    summaryAbstainOne: "I'm not giving planned dates: only one comparable package recorded these steps.",
-    summaryAbstainNone: "I'm not giving planned dates: no comparable package recorded these steps.",
+    // When some steps have no date for another reason, as the contract's completion when too many comparable
+    // packages were still open: the tool counts every step it could not date, whatever the reason.
+    summaryUndated: (undatedWords: string, countWords: string) => `I can't date ${undatedWords} of the ${countWords} steps.`,
+    summaryUndatedAll: (countWords: string) => `I can't date any of the ${countWords} steps.`,
+    summaryAbstain: "I'm not giving planned dates, because I found only {n} comparable packages.",
+    summaryAbstainOne: "I'm not giving planned dates, because I found only one comparable package.",
+    summaryAbstainNone: "I'm not giving planned dates, because I found no comparable package.",
     summaryNoFamily: "Add the category and method above, and I'll list the steps STEP uses for this kind of package.",
     summaryNotListed: (method: string) => `I don't have STEP's steps for ${method} yet, so I can't date them.`,
     show: "Show the steps",
@@ -2681,9 +2685,14 @@ export const copy = {
     errorCode: "If it fails again, quote this code: {code}.",
     tryAgain: "Try again",
     introDelay: (family: string) =>
-      `These are the steps STEP uses for ${family}. I dated each step from how far comparable packages ran past their planned dates, measured from the dates as first published, because later plans can move them.`,
+      `These are the steps STEP uses for ${family}. I dated each step by how far comparable packages ran past their planned dates. I measured from the dates as first published, because later plans can move them.`,
     introDuration: (family: string) =>
       `These are the steps STEP uses for ${family}. I dated each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
+    // No step has a date or days in either choice, as on the fixture, so no choice of dates is offered. {min} is
+    // the tool's min_comparables.
+    introNoneDated: (family: string) =>
+      `These are the steps STEP uses for ${family}. I date a step only when {min} or more comparable packages recorded it.`,
+    // The summary above already says how few comparable packages there were, so the intro does not repeat it.
     introAbstain: (family: string) =>
       `I give a date only from {min} comparable packages or more, because a date from fewer can mislead. Here are the steps STEP uses for ${family}, with how many comparable packages recorded each.`,
     start: {
@@ -2709,6 +2718,8 @@ export const copy = {
     captionSigned: { cautious: "Cautious dates put the signed contract on {date}.", middle: "Middle dates put the signed contract on {date}." },
     captionPartial: (datedWords: string, countWords: string) => `I dated ${datedWords} of the ${countWords} steps.`,
     captionNone: "I couldn't date any of these steps.",
+    // A package from a sentence whose only date is the one you gave its first step.
+    captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
     captionUndated: "How many days each step took in comparable packages.",
     captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
     count: (countWords: string) => `Showing all ${countWords} steps.`,
@@ -2730,24 +2741,29 @@ export const copy = {
     termBody: (name: string) => `STEP calls this step "${name}".`,
     planMoved: "Moved to {date} in the plan of {plan}",
     planNone: "Not in the plan",
-    // The day captions under a planned date. {days} is a Num.
+    // The day captions under a planned date. {days} is a Num. "plan's date" is joined by a no-break space, so a
+    // narrow column never leaves "date" alone on its last line.
     days: {
       after: "{days} days after {previous}",
       afterOne: "{days} day after {previous}",
-      afterPlan: "{days} days after the plan's date",
-      afterPlanOne: "{days} day after the plan's date",
-      onPlan: "On the plan's date",
-      beforePlan: "{days} days before the plan's date",
-      beforePlanOne: "{days} day before the plan's date",
+      afterPlan: "{days} days after the plan's\u00a0date",
+      afterPlanOne: "{days} day after the plan's\u00a0date",
+      onPlan: "On the plan's\u00a0date",
+      beforePlan: "{days} days before the plan's\u00a0date",
+      beforePlanOne: "{days} day before the plan's\u00a0date",
     },
     yours: "Your date",
     undated: "Not dated yet",
     undatedStart: "Add its date above.",
-    abstain: "I'm not dating this step: only {n} comparable packages recorded it.",
-    abstainOne: "I'm not dating this step: only one comparable package recorded it.",
-    abstainNone: "I'm not dating this step: no comparable package recorded it.",
-    notReached: "I'm not dating this step: too many comparable packages had not reached it yet.",
-    notInPlan: "I'm not dating this step: the plan gives it no date to count from.",
+    abstain: "Only {n} comparable packages recorded this step, too few for me to date it.",
+    abstainOne: "Only one comparable package recorded this step, too few for me to date it.",
+    abstainNone: "No comparable package recorded this step, so I can't date it.",
+    // {reached} of {n} comparable packages had reached the step by {date}, the records' date; the rest were still
+    // open, too many to place the date.
+    notReached: "Only {reached} of {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notReachedOne: "Only one of {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notReachedNone: "None of the {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notInPlan: "The plan gives this step no date to count from, so I can't date it.",
     needsEarlier: (phrase: string) => `I can't date this step without a date for ${phrase}.`,
     comparablesNone: "None",
     comparablesStart: "None used",
@@ -2768,39 +2784,58 @@ export const copy = {
     // The section's live region (the 27 brief, section 8.5).
     loading: "Loading the planned dates.",
     showing: { cautious: "Showing cautious dates.", middle: "Showing middle dates." },
-    // What hover or focus on a number says, and what selecting it opens (the 27 brief, section 7.7).
+    // How many in 10 comparable packages ran later than a date, as the tool counted them. Five in 10 reads "about
+    // half", as the choice and the column header say it.
+    aboutIn10: "about {in10} in 10",
+    aboutHalf: "about half",
+    // What hover or focus on a number says, and what selecting it opens (the 27 brief, section 7.7). {about} is
+    // aboutIn10 or aboutHalf.
     tips: {
       dateDelay:
-        "For {longer} of {n} comparable packages, about {in10} in 10, {step} came more than {days} days after the date first planned for it. I added {days} days to the plan's date. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after the date first planned for it. I added {days} days to the plan's date. Select to see the {n} packages.",
       dateBefore:
-        "For {longer} of {n} comparable packages, about {in10} in 10, {step} came later than {days} days before the date first planned for it. I counted {days} days back from the plan's date. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came less than {days} days ahead of the date first planned for it. I counted {days} days back from the plan's date. Select to see the {n} packages.",
       dateDuration:
-        "For {longer} of {n} comparable packages, about {in10} in 10, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}. Select to see the {n} packages.",
       dateUndated:
-        "For {longer} of {n} comparable packages, about {in10} in 10, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step. Select to see the {n} packages.",
+      // The days of a step that needs an earlier step's date.
+      daysNeedsEarlier:
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I have no date for {previous} to count from. Select to see the {n} packages.",
       count: (phrase: string) => `Comparable packages whose published plans recorded ${phrase}. Select to see them.`,
       longest: "Of the {m} comparable packages whose plans recorded every step up to the signed contract, {stage} ran longest in {n}. Select to see them.",
-      track: "From the backtest for {year}: I dated the steps of packages from {year} using only records public before {year}. Run {run}.",
+      track:
+        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}. Run {run}.",
+      trackNoRun:
+        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}.",
       counted: "Counted from the records behind this section. Data readiness lists them by source.",
     },
     // The evidence drawer's two lists (the 27 brief, section 7.6).
     drawer: {
       title: (phrase: string) => `Comparable packages for ${phrase}`,
       fullName: (name: string) => `In STEP: ${name}.`,
+      // {about_c} and {about_m} are aboutIn10 or aboutHalf.
       findingDelay:
-        "For {longer_c} of {n} packages, about {in10_c} in 10, {step} came more than {days_c} days after the date first planned for it. For {longer_m} of {n}, about {in10_m} in 10, it came more than {days_m} days after.",
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after the date first planned for it. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
       findingDuration:
-        "For {longer_c} of {n} packages, about {in10_c} in 10, {step} came more than {days_c} days after {previous}. For {longer_m} of {n}, about {in10_m} in 10, it came more than {days_m} days after.",
-      findingAbstain: "I'm not dating {step}: only {n} comparable packages recorded it. Here are all {n}.",
-      findingAbstainOne: "I'm not dating {step}: only one comparable package recorded it. Here it is.",
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after {previous}. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+      findingAbstain: "Only {n} comparable packages recorded {step}, too few for me to date it. Here are all {n}.",
+      findingAbstainOne: "Only one comparable package recorded {step}, too few for me to date it. Here it is.",
       findingCounts: "{n} comparable packages recorded {step}. Here are all {n}.",
       note: "Shortest first. Still-open packages had not recorded this step by {date}.",
+      // On the delay basis each entry is days against its own first planned date, early ones first.
+      noteDelay: "Earliest first. Still-open packages had not recorded this step by {date}.",
       entryDays: "{days} days",
       entryDay: "{days} day",
-      // A comparable that reached the step before the date first planned for it (the delay basis).
+      // A comparable that reached the step after, on or before the date first planned for it (the delay basis).
+      entryLate: "{days} days late",
+      entryLateOne: "{days} day late",
+      entryOnPlan: "On the planned date",
       entryBefore: "{days} days early",
       entryBeforeOne: "{days} day early",
       entryOpen: "Still open after {days} days",
+      // A still-open comparable whose first planned date for the step came after the records' date.
+      entryNotDue: "Not due yet",
       // Heard before an entry's reference and days, so its name holds its words on screen (WCAG 2.5.3).
       entryOpens: "Open the records for",
       longestTitle: "Which stage ran longest",

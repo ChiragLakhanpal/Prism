@@ -14,7 +14,7 @@ import { LongestView, StepComparablesView } from "../components/StepsDrawer";
 import { StepsView, type StartField, type StepsState } from "../components/StepsSection";
 import { copy } from "../copy";
 import { formatDate } from "../lib/format";
-import { CHOICES, longestList, stepList, type Choice, type StepDate, type StepDates, type StepsResult } from "../lib/steps";
+import { CHOICES, longestList, stepList, type Choice, type StepDate, type StepDates, type StepsResult, type TrackRecord } from "../lib/steps";
 import { stepFamilies } from "../steps";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -39,6 +39,11 @@ const movedStep = (step: StepDate): StepDate =>
   step.step_key === "contract_signed" ? { ...step, plan_latest_date: "2021-07-01", plan_latest_version_date: "2021-01-10" } : step;
 const moved = changed(DATED, { steps: DATED.step_dates!.steps.map(movedStep) });
 const withActuals = changed(DATED, { actual_steps_count: 3 });
+// The track record line, from the scores tests/test_step_backtest.py stores for 2021 on the hand-made set: five steps
+// scored, four on or before the cautious date and one on or before the middle date, under the offline tracker's first
+// run. The tool shows a track record only from 20 steps scored; the sample shows the line's look.
+const trackRecord = (inside: number, catchIn10: number): TrackRecord => ({ year: 2021, total: 5, inside, run_id: "offline-run-0001", catch_in10: catchIn10 });
+const withTrack = changed(DATED, { track_record: { middle: trackRecord(1, 5), cautious: trackRecord(4, 8) } });
 const noFamily = changed(PLANNED, { family: null, family_reason: "no_family", steps: [], longest: null });
 const notListed = changed(PLANNED, { family: null, family_reason: "method_not_listed", method: st.otherMethod, steps: [], longest: null });
 
@@ -46,7 +51,7 @@ const notListed = changed(PLANNED, { family: null, family_reason: "method_not_li
 function familySteps(family: "firms" | "individuals"): StepsResult {
   const steps = stepFamilies[family].steps.map(
     (entry, index): StepDate => ({
-      step_key: entry.key, is_anchor: index < 0, comparables_n: 0, comparables: [], abstain_reason: "few_comparables",
+      step_key: entry.key, is_anchor: index < 0, comparables_n: 0, reached_n: 0, comparables: [], abstain_reason: "few_comparables",
       middle: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
       cautious: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
       plan_first_date: null, plan_first_version_date: null, plan_latest_date: null, plan_latest_version_date: null,
@@ -55,9 +60,15 @@ function familySteps(family: "firms" | "individuals"): StepsResult {
   return changed(FIXTURE, { family, steps, longest: null });
 }
 
-// A sample as wide as the workspace column at 1440 px, which shows the table there and the list at 390 px.
+// A sample as wide as the workspace column at 1440 px (columns 1 to 7, 53.5rem with the card), which shows the table
+// there and the list at 390 px. The page container spans the gallery's whole width, as the workspace's page area
+// does, so its 48rem breakpoint is the page's, not the card's.
 function Column({ children }: { children: ReactNode }) {
-  return <div className="@container/page flex max-w-[46.5rem] flex-col gap-8">{children}</div>;
+  return (
+    <div className="@container/page w-full">
+      <div className="flex max-w-[53.5rem] flex-col gap-8">{children}</div>
+    </div>
+  );
 }
 
 // The two choices by name, so no sample writes an option's key as a word.
@@ -130,12 +141,14 @@ export function stepsPage(): GalleryPage {
       { id: "collapsed-no-family", title: t.collapsedNoFamily, body: <Section state={ready(noFamily)} kind="planned" /> },
       { id: "collapsed-not-listed", title: t.collapsedNotListed, body: <Section state={ready(notListed)} kind="planned" /> },
       { id: "loading", title: t.loading, body: <Section state={{ status: "loading" }} /> },
+      { id: "loading-open", title: t.loadingOpen, body: <Section state={{ status: "loading" }} open /> },
       { id: "error", title: t.error, body: <Section state={{ status: "error", error: null, onRetry: () => undefined }} /> },
       { id: "cautious", title: t.cautious, body: <Section state={ready(DATED)} open /> },
       { id: "middle", title: t.middle, body: <Section state={ready(DATED)} open choice={MIDDLE} /> },
       { id: "moved", title: t.moved, body: <Section state={ready(moved)} open /> },
       { id: "fixture", title: t.fixture, body: <Section state={ready(FIXTURE)} open /> },
       { id: "actuals", title: t.actuals, body: <Section state={ready(withActuals)} open /> },
+      { id: "track", title: t.track, body: <Section state={ready(withTrack)} open /> },
       { id: "preview", title: t.preview, body: <Section state={ready(DATED)} open preview /> },
       { id: "save-failed", title: t.saveFailed, body: <Section state={ready(DATED)} open saveFailed /> },
       { id: "undated", title: t.undated, body: <Section state={ready(PLANNED)} open kind="planned" /> },

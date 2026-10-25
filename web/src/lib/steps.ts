@@ -29,6 +29,8 @@ export type StepDate = {
   step_key: string;
   is_anchor: boolean;
   comparables_n: number | null;
+  // Of comparables_n, how many had reached the step by the records' date; the rest were still open.
+  reached_n: number | null;
   comparables: StepComparable[];
   abstain_reason: AbstainReason | null;
   middle: StepPoint | null;
@@ -57,6 +59,14 @@ export type StepDates = {
   min_comparables: number;
   middle_in10: number;
   cautious_in10: number;
+  // The tool's counts, so the screen counts nothing (CLAUDE.md rule 1): the steps that can take a date (all but a
+  // package from a sentence's first step), how many each choice dated, how many have no date, how many of those for
+  // too few comparable packages, and none_dated when no step has a date or days in either choice.
+  dateable_n: number;
+  dated_n: Record<Choice, number>;
+  undated_n: number;
+  few_n: number;
+  none_dated: boolean;
   actual_steps_count: number | null;
   track_record: Record<Choice, TrackRecord> | null;
   coverage: { total: number; used: number; missing: number; reason: string; sources: string[] };

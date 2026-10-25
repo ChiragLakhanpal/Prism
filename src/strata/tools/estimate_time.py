@@ -1,11 +1,12 @@
 """estimate_time: the planned date for each STEP step of one package (ticket 27).
 
 The registry (config/tools.toml) defines the tool; this module is its adapter. It finds the package's comparable
-packages with find_comparables' own adapter, for the same criteria, picks the package's method family from the
-step-label registry by its category and Method, and dates each step with strata.estimates.step_dates, which
-holds the model, its thresholds and its rules. The result's step_dates field carries both choices, middle and
-cautious, so a screen switches between them with no second call, and its summary makes every date and count
-citable. Ticket 26 adds the time estimate itself to this tool; the step dates stay in step_dates.
+packages with find_comparables' own adapter, for the same criteria, and dates each step with
+strata.estimates.step_dates, which picks the package's method family from the step-label registry (by its plan's
+STEP table, or with no plan row by its category and Method) and holds the model, its thresholds and its rules. The
+result's step_dates field carries both choices, middle and cautious, so a screen switches between them with no
+second call, and its summary makes every date and count citable. Ticket 26 adds the time estimate itself to this
+tool; the step dates stay in step_dates.
 
 The call's view is returned with the result but not applied until ticket 40.
 """
@@ -52,7 +53,6 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     criteria = found["criteria"] or {}
     category_now = package["category"] if package else criteria.get("category")
     method_now = package["method"] if package else criteria.get("method")
-    family, reason = model.family_for(category_now, method_now)
 
     def rows(sql: str, **params) -> list[dict]:
         result = call.engine.run(sql, {**params, "as_of": call.as_of})
@@ -64,7 +64,7 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     except EngineError:  # a viewer who cannot read strata.ops still gets the dates, with no track record line
         log.warning("I could not read the step backtests' track record for %s.", call.viewer.name, exc_info=True)
         track = None
-    dated = model.step_dates(rows, family_key=family, family_reason=reason, method=method_now,
+    dated = model.step_dates(rows, category=category_now, method=method_now,
                              package_reference=package["step_reference"] if package else None,
                              comparables=comparables, as_of=call.as_of, start_date=start_date, settings=settings,
                              track=track, sources=[source["key"] for source in sources])

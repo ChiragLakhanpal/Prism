@@ -112,6 +112,14 @@
       "to": "2031-10-28"
     },
     "method": "Request for Bids",
+    "dateable_n": 6,
+    "dated_n": {
+      "middle": 0,
+      "cautious": 0
+    },
+    "undated_n": 6,
+    "few_n": 6,
+    "none_dated": true,
     "family": "goods",
     "family_reason": null,
     "basis": "delay",
@@ -122,6 +130,7 @@
         "step_key": "bid_invitation",
         "is_anchor": false,
         "comparables_n": 7,
+        "reached_n": 7,
         "comparables": [
           {
             "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -190,6 +199,7 @@
         "step_key": "bidding_document_issued",
         "is_anchor": false,
         "comparables_n": 0,
+        "reached_n": 0,
         "comparables": [],
         "plan_first_date": null,
         "plan_first_version_date": null,
@@ -215,6 +225,7 @@
         "step_key": "bid_opening",
         "is_anchor": false,
         "comparables_n": 7,
+        "reached_n": 7,
         "comparables": [
           {
             "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -283,6 +294,7 @@
         "step_key": "bid_evaluation_report",
         "is_anchor": false,
         "comparables_n": 7,
+        "reached_n": 7,
         "comparables": [
           {
             "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -351,6 +363,7 @@
         "step_key": "contract_signed",
         "is_anchor": false,
         "comparables_n": 7,
+        "reached_n": 7,
         "comparables": [
           {
             "step_reference": "KE-CWSB-233052-CW-RFB",
@@ -419,6 +432,7 @@
         "step_key": "contract_completed",
         "is_anchor": false,
         "comparables_n": 7,
+        "reached_n": 0,
         "comparables": [
           {
             "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
@@ -523,6 +537,14 @@
         "to": "2031-10-28"
       },
       "method": "Request for Bids",
+      "dateable_n": 6,
+      "dated_n": {
+        "middle": 0,
+        "cautious": 0
+      },
+      "undated_n": 6,
+      "few_n": 6,
+      "none_dated": true,
       "family": "goods",
       "family_reason": null,
       "basis": "delay",
@@ -533,6 +555,7 @@
           "step_key": "bid_invitation",
           "is_anchor": false,
           "comparables_n": 7,
+          "reached_n": 7,
           "comparables": [
             {
               "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -601,6 +624,7 @@
           "step_key": "bidding_document_issued",
           "is_anchor": false,
           "comparables_n": 0,
+          "reached_n": 0,
           "comparables": [],
           "plan_first_date": null,
           "plan_first_version_date": null,
@@ -626,6 +650,7 @@
           "step_key": "bid_opening",
           "is_anchor": false,
           "comparables_n": 7,
+          "reached_n": 7,
           "comparables": [
             {
               "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -694,6 +719,7 @@
           "step_key": "bid_evaluation_report",
           "is_anchor": false,
           "comparables_n": 7,
+          "reached_n": 7,
           "comparables": [
             {
               "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
@@ -762,6 +788,7 @@
           "step_key": "contract_signed",
           "is_anchor": false,
           "comparables_n": 7,
+          "reached_n": 7,
           "comparables": [
             {
               "step_reference": "KE-CWSB-233052-CW-RFB",
@@ -830,6 +857,7 @@
           "step_key": "contract_completed",
           "is_anchor": false,
           "comparables_n": 7,
+          "reached_n": 0,
           "comparables": [
             {
               "step_reference": "KE-KIMAWASCO-416959-CW-RFB",

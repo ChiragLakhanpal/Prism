@@ -3,6 +3,11 @@
     "goods": {
       "family_name": "goods, works and non-consulting services",
       "abbreviation_note": "SPN is the specific procurement notice.",
+      "sections": [
+        "GOODS",
+        "WORKS",
+        "NON CONSULTING SERVICES"
+      ],
       "categories": [
         "Goods",
         "Works",
@@ -63,6 +68,9 @@
     "firms": {
       "family_name": "consulting firms",
       "abbreviation_note": "RFP is the Request for Proposals.",
+      "sections": [
+        "CONSULTING FIRMS"
+      ],
       "categories": [
         "Consultant Services"
       ],
@@ -144,6 +152,9 @@
     "individuals": {
       "family_name": "individual consultants",
       "abbreviation_note": null,
+      "sections": [
+        "INDIVIDUAL CONSULTANTS"
+      ],
       "categories": [
         "Consultant Services"
       ],

@@ -5,7 +5,9 @@
 // and 31 (section 5) reuse it.
 //
 // From a 768 px page area the button sits at the right of the header block, top-aligned with the heading; below it
-// the button sits under the summary, left-aligned. Opening and closing are instant and focus stays on the button.
+// the button sits under the summary, left-aligned. It is a flush ghost button (Button's flush: 8 px side padding,
+// pulled left 8 px), so below 768 px its chevron starts on the summary's text edge, as section 1's "Show the table"
+// does. Opening and closing are instant and focus stays on the button.
 // States: collapsed, open, loading (a summary skeleton; the button still works), error (an alert replaces the
 // summary and the button is hidden) and no content (summary only, button hidden).
 import { useId, type ReactNode, type Ref } from "react";
@@ -63,6 +65,7 @@ export function CollapsedSection({
       aria-controls={bodyId}
       onClick={onToggle}
       data-disclosure
+      flush
       className="self-start"
     >
       {open ? hideLabel : showLabel}
