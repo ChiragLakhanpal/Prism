@@ -89,3 +89,83 @@ def test_the_file_reads_as_plain_yaml_with_one_list_of_questions():
 
     assert list(raw) == ["questions"]
     assert [question["id"] for question in benchmark.load()] == [question["id"] for question in raw["questions"]]
+
+
+# ── Scoring an answer through the answer contract (seam 3) ───────────────
+#
+# The full gate asks each question of the live Foundry agent through /api/ask. Here a stand-in agent plays the
+# agent's part: it calls the question's tool with arguments, then writes one sentence citing what came back, so
+# these tests drive the same route, stream, verifier and scoring the full gate does, with the tools on the fixture.
+
+import pytest  # noqa: E402
+from stand_in_agent import Agrees, StandIn  # noqa: E402
+
+from strata.evals import answer_benchmark  # noqa: E402
+from strata.server.engines import duckdb_file  # noqa: E402
+
+
+def question(qid: str) -> dict:
+    return next(item for item in benchmark.load() if item["id"] == qid)
+
+
+@pytest.fixture(scope="module")
+def engine_for(fixture_db):
+    return duckdb_file(fixture_db)
+
+
+def ask(engine_for, items: list[dict], answers: dict[str, StandIn]):
+    agents = {item["question"]: answers[item["id"]] for item in items}
+    return answer_benchmark.run(items, lambda turn: agents[turn.question], engine_for, judge=Agrees())
+
+
+def test_a_question_whose_tool_gave_the_expected_answer_and_whose_answer_cites_it_passes(engine_for):
+    plan, search = question("check-plan-nwwda-2026-10-09"), question("search-passages-icr-rebidding")
+
+    results = ask(engine_for, [plan, search], {
+        plan["id"]: StandIn("check_plan", plan["arguments"]),
+        search["id"]: StandIn("search_passages", search["arguments"])})
+
+    assert [(scored.id, scored.kind, scored.passed, scored.problems) for _, scored in results] == [
+        (plan["id"], "sql", True, ()), (search["id"], "documents", True, ())]
+
+
+def test_a_tool_called_with_the_wrong_arguments_fails_and_says_so(engine_for):
+    plan = question("check-plan-nwwda-2026-10-09")
+
+    [(_, scored)] = ask(engine_for, [plan], {plan["id"]: StandIn("check_plan", {**plan["arguments"],
+                                                                               "plan_date": "2025-07-21"})})
+
+    assert not scored.passed
+    assert scored.problems[0].startswith("No call of check_plan gave the expected answer.")
+
+
+def test_a_documents_answer_that_does_not_cite_the_expected_passage_fails(engine_for):
+    search = question("search-passages-icr-rebidding")
+
+    [(_, scored)] = ask(engine_for, [search], {search["id"]: StandIn("search_passages", search["arguments"],
+                                                                     cite=(2,))})
+
+    assert scored.problems == ("Its kept sentences do not cite strata.gold.passage:31525018/v1/54.",)
+
+
+def test_a_must_refuse_question_passes_only_when_refused_with_its_key(engine_for):
+    refuse = question("refuse-supplier-scores")
+
+    [(_, held)] = ask(engine_for, [refuse], {refuse["id"]: StandIn(refuse="supplier_scores")})
+    [(_, other)] = ask(engine_for, [refuse], {refuse["id"]: StandIn(refuse="live_tenders")})
+
+    assert (held.kind, held.passed) == ("refusals", True)
+    assert not other.passed and "supplier_scores" in other.problems[0]
+
+
+def test_a_genie_question_passes_when_genie_s_rows_equal_its_ground_truth_on_the_same_data(engine_for):
+    genie = question("genie-joint-venture-1624689")
+    words = genie["arguments"]["question"]
+
+    [(asked, right)] = ask(engine_for, [genie], {genie["id"]: StandIn("ask_genie", {"question": words})})
+    [(_, wrong)] = ask(engine_for, [genie], {genie["id"]: StandIn(
+        "ask_genie", {"question": question("genie-contract-ke-nwwda-229129")["arguments"]["question"]})})
+
+    assert right.passed, right.problems
+    assert asked.reference == {"rows": [["503708", "697972.33"], ["503711", "697972.33"]]}
+    assert not wrong.passed and wrong.problems[0].startswith("No call of ask_genie gave the expected answer.")

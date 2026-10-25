@@ -1,0 +1,45 @@
+# Microsoft Foundry evaluations (ticket 33; docs/PLAN.md section 10; spec, "Evaluation"): the evaluators the full
+# gate runs on the benchmark's answers, after a Microsoft Entra sign-in. strata.config.load_evaluations() reads it.
+#
+# The orchestrator returns tool calls that only the app can run (ADR 0003), so a Foundry run with the agent as its
+# target would stop at the first tool call. Instead the full gate scores the answers it recorded through the answer
+# contract as a dataset, one item per answer: the question, the answer's kept sentences, the passages and records
+# they cite as context, the tool calls the agent made and the tools it was offered (strata.evals.foundry_evaluation).
+#
+# What Foundry needs, from fairshare's docs/limits.md of October 15, 2026 as ticket 33's notes give it: the project
+# key gets 403 from the evaluations API, so the run signs in with an Entra token for FOUNDRY_TENANT_ID; the tenant
+# blocks device-code sign-in, so the sign-in opens a browser; the data source config is "custom" with an
+# item_schema; and the protected_material evaluator is not offered in the region. fairshare never ran task
+# adherence or tool use, so their names and data mappings below are as Foundry's documentation gives them and have
+# not been run yet: the first live run checks them, and a change lands here alone.
+
+# The evaluations API's version, and the model role (config/models.toml) whose deployment the evaluators use as
+# their judge: the draft role, gpt-5.4, as the verifier's judge does.
+api_version = "2025-11-15-preview"
+judge_role = "draft"
+
+# One table per evaluator, in the order the dashboard shows them (the 45 brief, tile 12): key, its label, Foundry's
+# built-in evaluator name, and how each of its inputs maps to a field of a dataset item.
+[[evaluators]]
+key = "groundedness"
+label = "Groundedness"
+builtin = "builtin.groundedness"
+data_mapping = { query = "{{item.query}}", response = "{{item.response}}", context = "{{item.context}}" }
+
+[[evaluators]]
+key = "relevance"
+label = "Relevance"
+builtin = "builtin.relevance"
+data_mapping = { query = "{{item.query}}", response = "{{item.response}}" }
+
+[[evaluators]]
+key = "task_adherence"
+label = "Task adherence"
+builtin = "builtin.task_adherence"
+data_mapping = { query = "{{item.query}}", response = "{{item.response}}", tool_definitions = "{{item.tool_definitions}}" }
+
+[[evaluators]]
+key = "tool_use"
+label = "Tool use"
+builtin = "builtin.tool_call_accuracy"
+data_mapping = { query = "{{item.query}}", tool_calls = "{{item.tool_calls}}", tool_definitions = "{{item.tool_definitions}}" }

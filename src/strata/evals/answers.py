@@ -262,3 +262,33 @@ def expected(question) -> dict[str, list[str]]:
                             "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
+
+
+def arguments_of(question, engine, viewer) -> dict:
+    """A tool question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
+    its comparables come from, and their STEP references become its comparables argument."""
+    from strata.tools import registry
+
+    arguments = dict(question["arguments"])
+    if "comparables_of" in question:
+        found = registry.call("find_comparables", question["comparables_of"],
+                              registry.Context(engine=engine, viewer=viewer))
+        arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
+    return arguments
+
+
+def reference(question, engine, viewer, root: Path = ROOT) -> dict | None:
+    """What a tool question's answer must be on this engine's data: for ask_genie, the rows its ground-truth SQL
+    returns here; for any other tool, the reading of what the tool gives for the question's own arguments. On the
+    fixture both equal the question's expected answer (tests/test_tools.py), so the full gate can score the live
+    agent on the workspace's data with no literal from the fixture. None for a question with no tool."""
+    from strata.tools import registry
+
+    tool = question.get("tool")
+    if not tool:
+        return None
+    if tool == "ask_genie":
+        case = ground_truth.read(root / question["ground_truth"])
+        return {"rows": same_rows(engine.run(case.sql, case.params).rows)}
+    result = registry.call(tool, arguments_of(question, engine, viewer), registry.Context(engine=engine, viewer=viewer))
+    return answered(result, question)

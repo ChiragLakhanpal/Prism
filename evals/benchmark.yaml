@@ -1,16 +1,22 @@
 # The benchmark file: questions with their expected answers or citations (docs/PLAN.md section 10;
-# spec, "Ten single places", item 9). It holds four kinds of question: sql, documents, estimates and
-# refusals. Ticket 33 adds the runner that asks each one through the live answer contract, and the
-# other kinds.
+# spec, "Ten single places", item 9). It holds four kinds of question: sql (with ground-truth SQL),
+# documents (with the citations the answer must carry, cites), estimates (with the range or the
+# abstention expected) and refusals (the must-refuse set, one question per refusal key). It holds at
+# least ten questions of each kind but refusals (config/thresholds.toml, [benchmark]), and
+# src/strata/evals/benchmark.py says what it lacks.
 #
 # Each tool in the tool registry (config/tools.toml) names its question here by id, and changing a
-# tool's contract means updating its question in the same change (CLAUDE.md rule 4). The offline
-# gate calls each tool question's tool with its arguments on the fixture database and checks the
-# expected answer (tests/test_tools.py).
+# tool's contract means updating its question in the same change (CLAUDE.md rule 4); a test fails
+# when a tool has none. The offline gate calls each tool question's tool with its arguments on the
+# fixture database and checks the expected answer (tests/test_tools.py). The full gate
+# (ops/evals/full_gate.py) asks every question here through /api/ask with the live agent and scores
+# the answer (src/strata/evals/scoring.py), so a question added here runs in the next full gate with
+# no other change. The questions ask_genie answers are also the Genie space's benchmark questions.
 #
 # Each question has: id, kind, tool (for a question a tool answers), the question as a person would
 # ask it, the tool's arguments, the expected answer, the ground-truth SQL that checks the same
-# answer, and where the expected answer comes from.
+# answer, and where the expected answer comes from. A question may set as_of and scope, which the
+# full gate asks it with; as_of: null asks it as of the day the full gate runs.
 
 questions:
   - id: check-plan-nwwda-2026-10-09

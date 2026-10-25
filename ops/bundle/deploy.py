@@ -18,7 +18,9 @@ It needs the Databricks CLI 0.287.0 or later on the path. It does these things, 
    dashboard that src/strata/dashboard defines (bundle/dashboard.yml), with the env file's SQL
    warehouse for the dashboard's queries.
 3. It creates the tables from src/strata/lakehouse/tables on the SQL warehouse. Each one is
-   CREATE TABLE IF NOT EXISTS, so a table that holds rows is never replaced.
+   CREATE TABLE IF NOT EXISTS, so a table that holds rows is never replaced. Then it creates or
+   replaces the metric views the Genie space reads, from src/strata/lakehouse/metric_views (ticket 33),
+   which hold no rows.
 4. It lists the same things again and prints what changed. A second run prints "No changes."
    It also checks that fairshare's catalog lists the same as before, and fails if it does not.
 """
@@ -109,6 +111,16 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
         print(f"I could not create the tables. {error}")
         return 1
     print(f"   Each of these exists now: {', '.join(built)}.")
+    engine = workspace.engine()
+    if getattr(engine, "name", "") == "databricks":
+        try:
+            views = catalog.build_metric_views(engine)
+        except (CatalogError, EngineError) as error:
+            print(f"I could not create the metric views Genie reads. {error}")
+            return 1
+        print(f"   The metric views Genie reads exist now: {', '.join(views)}.")
+    else:
+        print("   This engine has no metric views, so I made none of the ones Genie reads.")
 
     print("3. What changed:")
     after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))

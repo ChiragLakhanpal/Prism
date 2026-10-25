@@ -214,14 +214,10 @@ def engine_for(question, engine, library):
 
 
 def arguments_of(question, engine, library) -> dict:
-    """The question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
-    its comparables come from, and their STEP references become its comparables argument."""
-    arguments = dict(question["arguments"])
-    if "comparables_of" in question:
-        found = registry.call("find_comparables", question["comparables_of"],
-                              registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
-        arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
-    return arguments
+    """The question's arguments (strata.evals.answers.arguments_of), on the engine the question needs."""
+    from strata.evals.answers import arguments_of as question_arguments
+
+    return question_arguments(question, engine_for(question, engine, library), ANA)
 
 
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):

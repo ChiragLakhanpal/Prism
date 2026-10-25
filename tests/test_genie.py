@@ -520,3 +520,37 @@ def test_with_no_genie_space_named_ask_genie_says_genie_is_unavailable(engine, m
                                             as_of=dt.date(2026, 10, 23)))
 
     assert (result["rows"], result["abstention"]["reason"]) == ([], "genie_unavailable")
+
+
+# ── The deploy command ───────────────────────────────────────────────────
+
+def load_command(path: Path, name: str):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_deploy_command_makes_strata_s_space_appends_its_id_once_and_then_reports_no_change(tmp_path, capsys):
+    command = load_command(ROOT / "ops" / "genie" / "deploy_space.py", "deploy_space")
+    env = tmp_path / "env-file"
+    env.write_text("DATABRICKS_HOST='https://example.cloud.databricks.com'\nDATABRICKS_TOKEN='not-a-real-key'\n"
+                   f"DATABRICKS_WAREHOUSE_ID='{WAREHOUSE}'\nGENIE_SPACE_ID='{TAXI}'\n")
+    api = FakeSpaces({TAXI: {"title": "Taxi trips", "warehouse_id": WAREHOUSE, "description": "nyctaxi"}})
+
+    first = command.main(["--env-file", str(env)], spaces=api)
+    lines = env.read_text().splitlines()
+    second = command.main(["--env-file", str(env)], spaces=api)
+
+    out = capsys.readouterr().out
+    assert (first, second) == (0, 0)
+    [created] = api.created
+    assert lines[-1] == f"GENIE_SPACE_ID='{created}'" and lines[:-1] == [
+        "DATABRICKS_HOST='https://example.cloud.databricks.com'", "DATABRICKS_TOKEN='not-a-real-key'",
+        f"DATABRICKS_WAREHOUSE_ID='{WAREHOUSE}'", f"GENIE_SPACE_ID='{TAXI}'"]
+    assert env.read_text().splitlines() == lines, "the second run adds nothing"
+    assert f"2. I made the space {created}." in out
+    assert f"2. The space {created} already matches the repo. No change." in out
+    assert api.spaces[TAXI]["title"] == "Taxi trips" and api.updated == []

@@ -348,8 +348,8 @@ def test_the_document_lists_what_the_probes_leave_in_the_workspace():
     section = text.split("## What the probes leave in the workspace", 1)[1].split("\n## ", 1)[0]
     for name in ("`strata`", "`strata-dayone`", "`workspace.strata_dayone`", "`strata-search`"):
         assert name in section, name
-    assert "- A conversation in the Genie space you chose in the wizard, which asks \"How many trips are in the table?\"" \
-        in section
+    assert ("- A conversation in the Genie space that GENIE_SPACE_ID names, which asks "
+            "\"How many contracts were signed in each fiscal year, and for how much in US dollars?\"") in section
     assert ("- Read access for the app `strata` to the secret scope `strata`. The app reads only "
             "`APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
             "holds `AZURE_OPENAI_API_KEY`.") in section

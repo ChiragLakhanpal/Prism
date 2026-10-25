@@ -86,9 +86,11 @@ max_downloads = 6
 min_pages = 120
 search_api = "https://search.worldbank.org/api/v3/wds"
 
-# Test 5: the question the probe asks the Genie space.
+# Test 5: the question the probe asks the Genie space. Strata's own space (config/genie.toml, ticket 33) holds it
+# as trusted SQL, so the probe keeps working once ops/genie/deploy_space.py has added that space's ID to .env. The
+# first run asked the wizard's throwaway space on samples.nyctaxi.trips "How many trips are in the table?"
 [genie]
-question = "How many trips are in the table?"
+question = "How many contracts were signed in each fiscal year, and for how much in US dollars?"
 
 # Each test: its question (the first sentence of its item in PLAN.md section 14), a short
 # title, the command that answers it, the path the build takes when it passes, and the gap
