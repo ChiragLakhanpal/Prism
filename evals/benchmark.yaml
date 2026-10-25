@@ -142,11 +142,14 @@ questions:
     expected:
       top_three_include: [strata.gold.passage:31525018/v1/54]
       left_out: []
+      ranked_lower: []
     ground_truth: tests/ground_truth/icr_paragraph_54_passage.sql
     source: >-
       The ticket's query and its known answer: ICR P130164 paragraph 54, on PDF page 23, "108 of 328
       cases had to go through rebidding" (tests/ground_truth/values.toml, icr-para-54). No passage
-      the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out.
+      the query matches holds a prompt attack or lacks a Prompt Shields result, so none is left out,
+      and no passage reviewer has ranked one lower for questions about rebidding (ticket 32), so none
+      is ranked lower.
 
   - id: search-passages-similar-experience
     kind: documents

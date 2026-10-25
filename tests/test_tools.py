@@ -198,13 +198,17 @@ def marked(result, question) -> dict[str, list[str]]:
 
 
 def in_top_three(result, question) -> dict[str, list[str]]:
-    """search_passages' answer: which of the expected passages are among its first three, and which
-    matched passages it left out because Prompt Shields found an attack or never screened them."""
+    """search_passages' answer: which of the expected passages are among its first three, which matched passages
+    it left out because Prompt Shields found an attack or never screened them, and which a passage reviewer
+    ranked lower for the query's kind of question (ticket 32)."""
     top = {row["evidence_id"] for row in result["rows"][:3]}
     left_out = [evidence for entry in result["coverage"]["not_used"]
                 if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
-    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
-            "left_out": sorted(left_out)}
+    found = {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
+             "left_out": sorted(left_out)}
+    if "ranked_lower" in question["expected"]:
+        found["ranked_lower"] = sorted(result["ranked_lower"]["evidence_ids"])
+    return found
 
 
 def readiness_answer(result, question) -> dict[str, list]:

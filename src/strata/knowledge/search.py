@@ -120,6 +120,9 @@ class FixtureSearch:
         # The models that can embed a query here, with no network: only the offline stand-in.
         self.embedders = embedders if embedders is not None else {HashedWords.name: offline}
         self.setup = setup or load_search().setup
+        # The passages within each set of filters, read once for this searcher: the replay harness asks many
+        # queries with the same filters (ticket 32).
+        self._held: dict[tuple, tuple[list[dict], list[list[str]], object]] = {}
 
     def _query_vector(self, query: str, models: set[str]) -> list[float] | None:
         """The query's vector from the model that made the passages' vectors, when it runs here. When it
@@ -128,17 +131,28 @@ class FixtureSearch:
             return None
         return self.embedders[next(iter(models))]().embed([query])[0]
 
+    def _candidates(self, filters: Filters) -> tuple[list[dict], list[list[str]], object]:
+        """The passages within the filters, the words keyword search reads in each, and their vectors."""
+        key = (tuple(sorted(filter_params(filters).items())), self.setup.header_in_words)
+        if key not in self._held:
+            import numpy  # the fixture search runs only here, never in the app, whose requirements leave numpy out
+
+            result = self.engine.run(CANDIDATES, filter_params(filters))
+            candidates = [dict(zip(result.columns, row)) for row in result.rows]
+            words = [terms(f"{c['header']} {c['text']}" if self.setup.header_in_words else c["text"]) for c in candidates]
+            vectors = numpy.asarray([list(c["embedding"]) for c in candidates], dtype=float) if candidates else None
+            self._held[key] = (candidates, words, vectors)
+        return self._held[key]
+
     def search(self, query: str, filters: Filters, k: int) -> Hits:
-        result = self.engine.run(CANDIDATES, filter_params(filters))
-        candidates = [dict(zip(result.columns, row)) for row in result.rows]
+        candidates, words, vectors = self._candidates(filters)
         if not candidates:
             return Hits(0, [], "No passage is within the filters.")
         setup = self.setup
         wanted = list(dict.fromkeys(terms(query)))
-        words = [terms(f"{c['header']} {c['text']}" if setup.header_in_words else c["text"]) for c in candidates]
         keyword = _bm25(wanted, words)
         vector = self._query_vector(query, {c["embedding_model"] for c in candidates})
-        similarity = [_cosine(vector, c["embedding"]) if vector else 0.0 for c in candidates]
+        similarity = _cosines(vector, vectors) if vector else [0.0] * len(candidates)
         matched = [i for i in range(len(candidates)) if keyword[i] > 0 or similarity[i] >= MIN_SIMILARITY]
         fused = _fuse(matched, keyword, similarity, setup.keyword_weight, setup.vector_weight)
         if setup.rerank:
@@ -173,10 +187,14 @@ def _bm25(wanted: list[str], documents: list[list[str]]) -> list[float]:
     return scores
 
 
-def _cosine(a: list[float], b) -> float:
-    dot = sum(x * y for x, y in zip(a, b, strict=True))
-    size = math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b))
-    return dot / size if size else 0.0
+def _cosines(a: list[float], vectors) -> list[float]:
+    """The cosine of the query's vector with each passage's, as one matrix product."""
+    import numpy
+
+    query = numpy.asarray(a, dtype=float)
+    sizes = numpy.linalg.norm(vectors, axis=1) * numpy.linalg.norm(query)
+    dots = vectors @ query
+    return numpy.divide(dots, sizes, out=numpy.zeros(len(dots)), where=sizes > 0).tolist()
 
 
 def _fuse(matched: list[int], keyword: list[float], similarity: list[float], keyword_weight: float = 1.0,
