@@ -326,8 +326,10 @@ def _backtests(engine, as_of: dt.date, thresholds, viewer) -> tuple[dict | None,
     try:
         years = backtest.stored_years(engine, as_of=as_of)
     except EngineError:  # a viewer who cannot read strata.ops still gets the estimate, with no track record
-        log.warning("I could not read the time estimate's backtests for %s.", viewer.name, exc_info=True)
-        return None, [], None
+        # The user id, never the name, which falls back to the viewer's email when no name header arrives.
+        log.warning("I could not read the time estimate's backtests for %s.", viewer.user_id, exc_info=True)
+        # Not None, which the screen reads as "no backtest results yet": the results may exist unread.
+        return {"year": None, "abstention": {"reason": "not_readable"}}, [], None
     record = model_card.track_record(years, thresholds)
     track = None
     if record is not None:
@@ -378,7 +380,7 @@ def _step_dates(call: Call, found: dict, criteria: dict, start_date: dt.date | N
     try:
         track = steps.track_record(call.engine, call.as_of, settings)
     except EngineError:  # a viewer who cannot read strata.ops still gets the dates, with no track record line
-        log.warning("I could not read the step backtests' track record for %s.", call.viewer.name, exc_info=True)
+        log.warning("I could not read the step backtests' track record for %s.", call.viewer.user_id, exc_info=True)
         track = None
     dated = steps.step_dates(rows, category=category_now, method=method_now,
                              package_reference=package["step_reference"] if package else None,

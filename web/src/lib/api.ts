@@ -453,7 +453,9 @@ export type TrackRecord =
       mlflow_run_id: string | null;
       abstention: null;
     }
-  | { year: number; abstention: { reason: "too_few_unseen_packages"; n: number; min_unseen_packages: number } };
+  | { year: number; abstention: { reason: "too_few_unseen_packages"; n: number; min_unseen_packages: number } }
+  // The viewer can't read strata.ops, so the backtest results may exist unread.
+  | { year: null; abstention: { reason: "not_readable" } };
 export type TestYear = {
   year: number;
   n: number | null;

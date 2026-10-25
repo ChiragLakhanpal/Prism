@@ -3052,6 +3052,7 @@ export const copy = {
       misses: "Of the {misses} that finished outside it, {late} ran late.",
       unavailable: "I have fewer than {min} packages from {year} that I had not seen, so I can't give a track record yet.",
       none: "I have no backtest results yet, so I can't give a track record.",
+      notReadable: "I couldn't read my backtest results, so I can't give a track record.",
       show: "Show each test year",
       hide: "Hide the test years",
     },

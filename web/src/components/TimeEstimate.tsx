@@ -292,6 +292,8 @@ function TrackRecordLine({ result, onTestYears }: { result: EstimateResult; onTe
   const track = result.track_record;
   const t = words.track;
   if (track === null) return <>{t.none}</>;
+  // not_readable, the only answer with no test year: the viewer can't read strata.ops.
+  if (track.year === null) return <>{t.notReadable}</>;
   if (track.abstention !== null) {
     return <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />;
   }

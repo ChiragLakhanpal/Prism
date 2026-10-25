@@ -490,7 +490,9 @@ def test_a_viewer_who_cannot_read_strata_ops_still_gets_the_time_estimate_and_th
                            registry.Context(engine=NoOpsGrant(engine), viewer=ANA))
 
     assert result["abstention"] is None and result["estimate"] is not None
-    assert result["track_record"] is None and result["test_years"] == []
+    # Not "no backtest results yet", which would be false: the results exist and this viewer can't read them.
+    assert result["track_record"] == {"year": None, "abstention": {"reason": "not_readable"}}
+    assert result["test_years"] == []
     assert result["step_dates"] is not None
 
 

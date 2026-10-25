@@ -253,6 +253,18 @@ test("the track record states the backtest's counts, and the plan-date choice st
   await expect(middle).toBeChecked();
 });
 
+test("for a viewer who can't read the backtest results, the track record says so, never that there are none", async ({ page }) => {
+  // The tool's answer when strata.ops refuses this viewer (tests/test_estimate_time.py's NoOpsGrant).
+  const { answer } = await derivedEstimate((body) => {
+    body.track_record = { year: null, abstention: { reason: "not_readable" } };
+    body.test_years = [];
+  });
+  await openWorkspace(page, { estimate: answer });
+  const track = section(page).locator("[data-track-record]");
+  await expect(track).toHaveText("I couldn't read my backtest results, so I can't give a track record.");
+  await expect(track).not.toContainText("no backtest results yet");
+});
+
 test("section 4 opens on demand to at most three approaches, each counted out of the same comparable packages as lane 1", async ({ page }) => {
   const { answer, body } = await derivedEstimate(addOptions);
   await openWorkspace(page, { estimate: answer });
