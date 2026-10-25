@@ -382,3 +382,16 @@ def test_the_backtests_for_2021_to_2025_run_on_the_fixture_and_hold_back_its_tra
     assert backtest.track_record(engine)["abstention"]["reason"] == "too_few_unseen_packages"
     assert (run.version, run.alias) == (1, "champion")
     engine.close()
+
+
+def test_the_live_backtest_stops_with_one_sentence_when_there_is_no_env_file(tmp_path, capsys, monkeypatch):
+    import importlib.util
+    import sys
+
+    monkeypatch.setattr(sys, "path", list(sys.path))  # the script adds ops/ folders to the path; undo that after
+    spec = importlib.util.spec_from_file_location("backtest_live", ROOT / "ops" / "estimates" / "backtest_live.py")
+    live = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(live)
+
+    assert live.main(["--env-file", str(tmp_path / "missing.env")]) == 2
+    assert "There is no env file" in capsys.readouterr().out

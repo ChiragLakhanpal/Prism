@@ -1,5 +1,5 @@
-"""The time estimate's model card: a document, kept in MLflow beside the model and as the registered
-model's description in Unity Catalog.
+"""The time estimate's model card: a document, kept in MLflow as model_card.md beside the model, which the
+registered model's description in Unity Catalog points to.
 
 render() writes it from the stored backtest results (strata.ops.evaluation_result) and the model the
 run trained, so every number in it, the track record's included, comes from a run and none is typed.
@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 from decimal import ROUND_HALF_UP, Decimal
+from fractions import Fraction
 
 from strata.config import Thresholds, TimeEstimateSettings
 
@@ -56,13 +57,18 @@ def _cell(record: dict, key: str) -> str:
     return f"{float(value):.1f}" if key.endswith("_months") else str(value)
 
 
-def _cause(year: int, record: dict, low: float, high: float) -> str:
+# The card names still-open packages as the likely cause of a short range when at least this share of the
+# packages that sized it were still open at the cutoff.
+MANY_STILL_OPEN = Fraction(1, 4)
+
+
+def _cause(year: int, record: dict, high: float) -> str:
     """The likely cause of a year outside the coverage band, from the year's own stored counts."""
     if record["coverage"] > high:
         return (f"the range was wider than it needed to be: packages advertised in {year} took less time than the "
                 "packages before the cutoff that sized it.")
     still_open, sized_on = record.get("calibration_still_open", 0), record.get("calibration_packages", 0)
-    if sized_on and still_open * 4 >= sized_on:
+    if sized_on and Fraction(still_open, sized_on) >= MANY_STILL_OPEN:
         return (f"{still_open} of the {sized_on} packages that sized the range were still open at the cutoff. Kaplan-Meier "
                 "keeps them as not signed yet, but the range still rests mostly on packages that signed quickly, so "
                 "it came out short.")
@@ -92,7 +98,7 @@ def _coverage(years: dict[int, dict], thresholds: Thresholds) -> list[str]:
             lines.append(f"- {year}: {record['m']} of {record['n']} finished inside the 8-in-10 range "
                          f"({_percent(record['coverage'])} percent), outside the band. Shortfall: "
                          f"{abs(_percent(record['coverage']) - _percent(low if record['coverage'] < low else high))} "
-                         f"percentage points. A likely cause: {_cause(year, record, low, high)}")
+                         f"percentage points. A likely cause: {_cause(year, record, high)}")
     return lines
 
 
