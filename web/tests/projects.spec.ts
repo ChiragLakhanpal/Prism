@@ -206,7 +206,7 @@ test("a project's Procurement tab shows each agency's plan versions newest first
   await expect(agencies).toContainText("Implementing agencies: ");
   await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
   const tabs = main.getByRole("navigation", { name: "Project sections" }).getByRole("link");
-  await expect(tabs).toHaveText(["Summary", "Procurement", "Timeline", "Documents"]);
+  await expect(tabs).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Projects");
 

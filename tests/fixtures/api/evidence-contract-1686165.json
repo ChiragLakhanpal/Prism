@@ -1,0 +1,55 @@
+{
+  "id": "strata.gold.contract:1686165",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "1686165",
+    "record_kind": "contract",
+    "fields": [
+      {
+        "key": "contract_reference",
+        "value": "1686165",
+        "kind": "text"
+      },
+      {
+        "key": "signed",
+        "value": "2022-01-03",
+        "kind": "date"
+      },
+      {
+        "key": "supplier",
+        "value": "OSB AFRICA LIMITED",
+        "kind": "supplier"
+      },
+      {
+        "key": "supplier_country",
+        "value": "Kenya",
+        "kind": "text"
+      },
+      {
+        "key": "signed_amount",
+        "value": "1245092.76",
+        "kind": "amount"
+      },
+      {
+        "key": "contract_description",
+        "value": "Drilling and Equipping 4 No. Exploratory Boreholes in Wajir County",
+        "kind": "text"
+      }
+    ],
+    "currency": "USD",
+    "public_from": "2022-01-03",
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+    "source": {
+      "source_key": "awards",
+      "document_type": "Contract award",
+      "project_id": "P156634",
+      "document_date": "2022-01-03"
+    }
+  },
+  "highlights": []
+}

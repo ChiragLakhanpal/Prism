@@ -110,7 +110,7 @@ def test_each_quote_is_word_for_word_where_the_ground_truth_says(value):
 # test shows KE-NWWDA-541055-CW-RFB's Actual Amount 0.00 and status Pending Implementation,
 # and the day-count test counts the days between two dates. A first-listed value is its
 # plan's date, which the first-listed test checks.
-READINGS = {"plan-541055-no-signed-contract", "plan-229129-days-late", "icr-pdf-pages"}
+READINGS = {"plan-541055-no-signed-contract", "plan-229129-days-late", "icr-pdf-pages", "icr-months-after-7431"}
 
 
 def test_a_page_count_is_the_pages_of_its_document():
@@ -145,6 +145,37 @@ def test_each_value_is_written_in_its_own_quote(value):
 def test_a_day_count_matches_the_two_dates_it_was_counted_between(value):
     start, end = (datetime.date.fromisoformat(str(BY_ID[name]["value"])) for name in value["days_between"])
     assert (end - start).days == value["value"]
+
+
+@pytest.mark.parametrize("value", [v for v in VALUES if "months_between" in v], ids=lambda value: value["id"])
+def test_a_month_count_matches_the_two_dates_it_was_counted_between(value):
+    """A month is 365.25 / 12 = 30.4375 days, and the count is rounded to the nearest month (ticket 22)."""
+    start, end = (datetime.date.fromisoformat(str(BY_ID[name]["value"])) for name in value["months_between"])
+    assert round((end - start).days * 12 / 365.25) == value["value"]
+
+
+AWARD_NOTICE_BIDS = TRUTH["award_notice_bids"]
+
+
+@pytest.mark.parametrize("name", sorted(AWARD_NOTICE_BIDS))
+def test_each_bid_of_an_award_notice_is_in_its_notice_in_the_order_the_ground_truth_gives(name):
+    """Each bid's name (with its STEP supplier ID in brackets when it has one), its prices and its reason sit in
+    the recorded notice's HTML after the bid before it, and each section's heading before its first bid."""
+    notice = AWARD_NOTICE_BIDS[name]
+    text = squash(str(resolve(notice["record"], notice["at"])))
+    headings = {"awarded": "AwardedBidder(s):", "evaluated": "EvaluatedBidder(s):", "rejected": "RejectedBidder(s):"}
+    at, section = 0, None
+    for bid in notice["bids"]:
+        if bid["section"] != section:
+            section = bid["section"]
+            at = text.index(headings[section], at)
+        written = bid["name"] + (f" ({bid['id']})" if bid["id"] else "")
+        at = text.index(squash(written), at)
+        for part in (f"BidPriceatOpening<br/>{notice['currency']}{squash(bid['opening'])}<br/>",
+                     f"EvaluatedBidPrice<br/>{notice['currency']}{squash(bid['evaluated'])}<"):
+            at = text.index(part, at)
+        if bid["reason"]:
+            at = text.index(squash(f"Reason for Rejection<br/>{bid['reason']}"), at)
 
 
 FIRST_LISTED = [value for value in VALUES if "first_lists" in value]

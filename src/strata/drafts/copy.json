@@ -152,10 +152,11 @@
     "ieg_ratings": "Independent Evaluation Group (IEG) ratings data, {date}.",
     "award_notices": "World Bank procurement notices, award notice published {date}.",
     "notices": "World Bank procurement notices, notice published {date}.",
+    "awards": "World Bank contract awards data, since fiscal 2020, contract signed {date}.",
+    "awards_fy2001_2016": "World Bank contract awards data, fiscal 2001 to 2016, contract signed {date}.",
     "projects_api_ratings": "World Bank projects API, ratings from the ISR of {date}.",
     "isr_ratings": "The overall ratings table of the ISR of {date}, as I read it.",
     "plan_baseline": "Strata's baseline, saved by World Bank staff on {date}.",
-    "awards": "World Bank contract awards data, contract signed {date}.",
     "plans": "Procurement Plan of {date}, from the World Bank documents API."
   },
   "toolSource": "Strata's totals of this project's records, as of {date}.",

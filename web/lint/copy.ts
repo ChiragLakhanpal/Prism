@@ -1,7 +1,7 @@
 // The copy lint: the words DESIGN.md section 7 and GLOSSARY.md say Strata never writes.
 // It checks one string at a time and returns a plain sentence for each problem it finds.
 import { readFileSync } from "node:fs";
-import { FIXED_TERMS, GLOSSARY_AVOID, REGION_CODES } from "./rules.ts";
+import { CAUSAL_WORDS, FIXED_TERMS, GLOSSARY_AVOID, REGION_CODES } from "./rules.ts";
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
 
@@ -61,6 +61,16 @@ const FIXED_RULES: Rule[] = [
     say: (found: string) => `uses "${found}", a form of "${word}", which GLOSSARY.md says to avoid. Write "${instead}".`,
   })),
 ];
+
+// A link is "appeared together", never a cause (DESIGN.md section 7, rule 32): the causal words, in the copy
+// blocks that write about links.
+export function causalChecker(): CopyChecker {
+  const pattern = new RegExp(`\\b(?:${CAUSAL_WORDS.map((word) => escape(word).replace(/ /g, "\\s+")).join("|")})\\b`, "gi");
+  return (text) =>
+    [...text.matchAll(pattern)].map(
+      (match) => `uses "${match[0]}", which says a cause. DESIGN.md section 7, rule 32 says a link is written "appeared together".`,
+    );
+}
 
 export type CopyChecker = (text: string) => string[];
 

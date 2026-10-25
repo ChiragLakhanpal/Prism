@@ -49,7 +49,7 @@ from pathlib import Path
 from strata.config import load_slice
 from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
-from strata.knowledge import assertions
+from strata.knowledge import assertions, links
 from strata.knowledge.lessons import propose
 from strata.knowledge.retrieval import weekly
 from strata.lakehouse import catalog, nightly, pages, passages, plans
@@ -139,6 +139,9 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 propose.run_on_fixture(engine, RUN_ID, clock)
                 # Assertions and disagreements, once the passages they rest on are read (ticket 20).
                 assertions.run_on_fixture(engine, run_id=RUN_ID, clock=clock)
+                # The nightly job's relink task again, now that the passages are read (ticket 22): the edge
+                # table, with each contract scored against the paragraphs of its project's reports.
+                links.relink(engine, RUN_ID, clock)
                 # The weekly retrieval run, once the passages are read (ticket 32): the labeled set, with
                 # each query set's size, and the loop's measures.
                 weekly.run(engine, now=clock)

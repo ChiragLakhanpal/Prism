@@ -34,9 +34,9 @@ export type Match = {
 };
 
 // A project page's tabs, in the copy file's order (copy.projectPage.tab), and the ones built so far.
-// Ticket 23 added "timeline"; ticket 22 adds "connections" here, and the tab row shows it.
+// Ticket 23 added "timeline" and ticket 22 "connections", and the tab row shows each built tab.
 export type ProjectTab = "summary" | "procurement" | "timeline" | "documents" | "connections";
-export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "timeline", "documents"];
+export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "timeline", "documents", "connections"];
 export const TAB_PATH: Record<ProjectTab, string> = {
   summary: "",
   procurement: "/procurement",

@@ -88,6 +88,7 @@ import { draftsPage } from "./drafts";
 import { followingPage } from "./following";
 import { hubPage } from "./hub";
 import { timelinePage } from "./timeline";
+import { trailPage } from "./trail";
 import { lessonsPage } from "./lessons";
 import { judgingPage, retrievalPage } from "./retrieval";
 import { packagesPage } from "./packages";
@@ -1323,6 +1324,7 @@ export const PAGES: GalleryPage[] = [
   followingPage(),
   hubPage(),
   timelinePage(),
+  trailPage(),
   lessonsPage(),
   retrievalPage(),
   judgingPage(),

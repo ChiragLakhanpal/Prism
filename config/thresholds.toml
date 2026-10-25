@@ -137,10 +137,11 @@ max_plan_months = 60
 # still open, and true here does the same.
 canceled_as_still_open = false
 # A package with this Method, or with a Market Approach that starts with one of these words, has no
-# specific procurement notice, so its procurement cycle time cannot be measured. Source: the
-# Procurement Regulations: a limited market approach and Direct Selection are not advertised.
+# specific procurement notice, so its procurement cycle time cannot be measured, and the contract trail
+# never lists its notice as missing (ticket 22). Source: the Procurement Regulations: a limited or direct
+# market approach and Direct Selection are not advertised.
 no_notice_methods = ["Direct Selection"]
-no_notice_market_approaches = ["Limited"]
+no_notice_market_approaches = ["Limited", "Direct"]
 
 # The time estimate (ticket 25): Strata's own model of procurement cycle time, with ranges for the
 # middle half and 8 in 10, and its backtests (src/strata/estimates/). The backtests and the model card
@@ -354,8 +355,82 @@ min_labeled_pairs_for_precision = 20
 # 97.5th percentile, 1.959964.
 interval_z = 1.959964
 
-# The score a contract and a passage need to be linked as "appeared together" (ticket 22).
+# The score a contract and a passage need to be linked as "appeared together" (ticket 22). The link scorer
+# (src/strata/knowledge/links.py) pairs each contract with each numbered paragraph of its own project's
+# reports and scores the pair on five parts, each worth at most the points below, rounded to two decimals:
+# the same project; the same sector; how close the document's date is to the signing; how many of the words
+# of the contract's description the paragraph shares; and what the paragraph mentions of the contract (its
+# STEP reference or another reference, a place its description names, its description, or its procurement
+# category, such as "works contracts"). It keeps a pair whose total reaches the threshold. Source: docs/PLAN.md
+# section 5 names the five parts; the weights and the threshold are starting values for the owner to confirm,
+# chosen on the fixture so that a paragraph has to share words or a mention with a contract, not only its
+# project and its time, and so that ICR paragraph 54 stays linked to IN-RRSMP-7431-CW-RFB (the ticket's first
+# criterion; its parts give 0.10 + 0.10 + 0.11 + 0.02 + 0.20 = 0.53). Changing a value here means checking
+# the ticket's tests and the Evidence drawer's fixture sentence in the same change (CLAUDE.md rule 4).
 [links]
+threshold = 0.50
+project_points = 0.10
+sector_points = 0.10
+# The time part falls in a straight line from time_points at the month of the signing to nothing at
+# time_window_months apart, either way.
+time_points = 0.20
+time_window_months = 60
+# The wording part is the share of the description's words the paragraph holds, times text_points, counting a
+# description of fewer than text_min_words words as that many, so a two-word description is not a match.
+text_points = 0.20
+text_min_words = 6
+# Each kind of mention the paragraph makes of the contract, added up to mentions_max.
+mention_reference_points = 0.40
+mention_place_points = 0.20
+mention_name_points = 0.20
+mention_category_points = 0.20
+mentions_max = 0.40
+# The words the scorer reads by, kept here so a change to them lands in one place (CLAUDE.md rule 9). A place a
+# contract's description names is the capitalized words after "in" or "at", less a word that only says what kind of
+# place it is ("in Bundi District" names Bundi). Source: the fixture's contract descriptions, read by the builder.
+place_kinds = ["County", "District", "Dist", "Dist.", "Town", "City", "Region", "Province", "State", "Sub",
+               "Municipality", "Village", "Division", "Office", "Offices"]
+# Words that carry no meaning for the wording part, beside every word of fewer than three letters and every number.
+# Source: the common English words in the fixture's contract descriptions.
+stop_words = ["the", "and", "for", "with", "from", "that", "this", "which", "have", "has", "had", "were", "was",
+              "are", "been", "into", "under", "over", "upon", "their", "its", "our", "not", "all", "any", "per", "one",
+              "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "other", "each", "such", "than",
+              "then", "also"]
+
+# How a paragraph writes each procurement category, as gold.contract names it, as regular expressions matched
+# whole-word and in any case: "works contracts" or "civil works" for Works. A category a paragraph mentions is a
+# shared mention of the kind category. Source: the wording of the fixture's ICRs, PADs and ISRs.
+[links.category_words]
+Works = ['works?\s+contracts?', 'civil\s+works']
+Goods = ['goods\s+contracts?', 'supply\s+contracts?']
+"Consultant Services" = ['consultancy\s+(?:contracts?|services)', 'consult(?:ant|ing)\s+(?:contracts?|services)']
+"Non-consulting Services" = ['non-consulting\s+services']
+
+# A project's Connections tab (ticket 22): its one-hop neighbourhood shows at most this many nodes, the
+# project included, and counts the rest by kind. Source: ADR 0004 and the blueprint's "a one-hop
+# neighbourhood of at most about 20 nodes", past which a graph stops being readable.
+[connections]
+max_nodes = 20
+# A document's node shows at most this many paragraph chips, the strongest links first, and says how many more
+# paragraphs appeared together, so the diagram stays near the brief's 30 tab stops. Source: the 22 design brief,
+# section 8.2 ("At most about 30 stops with the chips"); a starting value for the owner to confirm.
+chips_per_document = 3
+# The diagram draws one dashed curve for each package and document that appeared together. When it would draw more
+# than this many, it draws at rest only the curves of the first package with links, and the rest when a package or
+# a chip is pointed at or focused, with a caption that says so. Source: the 22 design review, round 1, F7 (P156634
+# drew about a hundred crossing curves); a starting value for the owner to confirm.
+lines_at_rest = 12
+# "Why this source" lists at most this many other contracts a paragraph appeared together with, strongest first,
+# then counts the rest. Source: the 22 design brief, section 4.2 (why.othersItem).
+other_contracts_listed = 5
+
+# The activity page's contract trail (ticket 22): the paragraphs that appeared together with an activity's
+# contracts come grouped by report, oldest first, each report showing at most this many of its paragraphs in
+# document order, with a button for the rest. Every report is on the page that way, so a report with many links
+# does not push the others out of view. Source: the 22 critique, round 1 (Activity page, Hierarchy); a starting
+# value for the owner to confirm.
+[contract_trail]
+paragraphs_per_report = 3
 
 # How the run tells two assertions apart (ticket 20, src/strata/knowledge/assertions.py).
 [disagreements]

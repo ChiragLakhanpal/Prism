@@ -32,6 +32,7 @@ import { keptQuery, viewOf, withReadParams } from "../lib/view";
 import { staffRole } from "../lib/following";
 import { FollowControl } from "../components/FollowControl";
 import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
+import { ConnectionsTab } from "./project/ConnectionsTab";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
 import { SummaryTab } from "./project/SummaryTab";
@@ -178,6 +179,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         {tab === "procurement" && <ProcurementTab pid={pid} load={load} retry={retry} />}
         {tab === "timeline" && <TimelineTab pid={pid} />}
         {tab === "documents" && <DocumentsTab pid={pid} />}
+        {tab === "connections" && <ConnectionsTab pid={pid} />}
       </div>
       <p role="status" className="sr-only">
         {showing}

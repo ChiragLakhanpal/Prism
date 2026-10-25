@@ -23,8 +23,9 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { copyChecker } from "./copy.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses, termLiterals } from "./source.ts";
+import { causalChecker, copyChecker } from "./copy.ts";
+import { CAUSAL_SCOPES } from "./rules.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, scopedRanges, termLiterals } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
@@ -89,10 +90,14 @@ function main(): number {
   const at = (file: string, line: number) => `${relative(process.cwd(), file) || file}:${line}`;
   const terms = definitions(readFileSync(join(REPO, "GLOSSARY.md"), "utf8"));
 
+  const causal = causalChecker();
   for (const file of copy) {
     const source = readFileSync(file, "utf8");
+    // The blocks that write about links between a contract and a paragraph also refuse causal words (ticket 22).
+    const scoped = scopedRanges(source, file, CAUSAL_SCOPES);
     for (const found of copyStrings(source, file)) {
-      for (const problem of check(found.text)) {
+      const inScope = scoped.some(([start, end]) => found.offset >= start && found.offset < end);
+      for (const problem of [...check(found.text), ...(inScope ? causal(found.text) : [])]) {
         problems.push(`${at(file, lineOf(source, found.offset))}: "${found.text.trim()}" ${problem}`);
       }
     }

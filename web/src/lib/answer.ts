@@ -10,6 +10,7 @@ import { closeDrawerOf, remember } from "./evidence";
 import type { Feedback } from "./retrieval";
 import { StreamError, streamEvents } from "./sse";
 import { createStore } from "./store";
+import type { Why } from "./trail";
 
 export type StepEvent = {
   id: string;
@@ -64,6 +65,10 @@ export type EvidenceEvent = {
   row: Record<string, any>;
   // Where each sentence's quote sits in the paragraph.
   highlights: { sentence: number; start: number; end: number }[];
+  // A passage opened by its id says why it is a source for a contract it appeared together with (ticket 22), or
+  // null when no link was public. A passage an answer or a page sent with it leaves it out (undefined), and the
+  // drawer shows no such block for it.
+  why?: Why | null;
   // Whether the drawer offers "Was this the right passage?" for this source of this answer (ticket 32). Only the
   // answer stream sends it; a source read from a link has none, and the row does not show.
   feedback?: Feedback;

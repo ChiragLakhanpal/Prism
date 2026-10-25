@@ -1409,3 +1409,121 @@ Run this from the main checkout:
     uv run --script ops/agent/refuse_live.py --env-file .env
 
 It worked if it prints one line per question of kind `refusals` in `evals/benchmark.yaml` (11 at 6044bd4) and exits 0, with no refusal problem on any line and no restricted value in any stream.
+
+## Ticket 37, step 1 of 6: deploy the follows table
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 37 adds `strata.ops.follows` (`src/strata/lakehouse/tables/ops/follows.sql`): one row each time a World Bank staff viewer follows or unfollows a project. It is ticket 04's deploy command, and one deploy from 568dbc0 or later serves every block that needs this table. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.ops.follows` as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists `follows`.
+
+## Ticket 37, step 2 of 6: redeploy the App, then a follow survives a restart and a viewer outside the staff role is refused
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. It needs the Databricks keys in `.env`, and the four Foundry keys, because the App reaches the mission brief writer through Foundry. Run it after step 1: this deploy grants the App's own service principal SELECT and MODIFY on `strata.ops.follows`, and a grant on a table that does not exist fails. Ticket 06's step 1 runs the same command, and one deploy from 568dbc0 or later serves every block that names it (criterion 5, workspace half).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.follows` in the SQL editor lists SELECT and MODIFY for the App's service principal. Then, signed in to the App as a World Bank staff viewer:
+
+1. Open `<App url>/projects/P156634` and choose "Follow this project". Open `<App url>/projects/following`: P156634's row shows, with its status first.
+2. Stop the App and start it again from the workspace's Apps page, then open `<App url>/projects/following` again.
+
+It worked if P156634 is still listed after the restart, and `SELECT viewer_id, project_id, following, changed_at FROM strata.ops.follows WHERE project_id = 'P156634'` shows your row with `following` true. The refusal half needs a workspace identity outside `[staff].groups` in `config/roles.toml`. That list is `["users"]` until ticket 38 narrows it (a parked decision), and every workspace user is in `users`, so until then only an identity outside that group can show it. Such an identity must get HTTP 403 with the code `not_staff` from `GET <App url>/api/following` and from `PUT <App url>/api/projects/P156634/follow`.
+
+## Ticket 37, step 3 of 6: sync the mission brief writer and the orchestrator
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. It needs the four Foundry keys in `.env`, and `az` signed in. Ticket 37 adds the Foundry agent `strata-mission-brief-writer` (`config/agents.toml`, `src/strata/agent/instructions/mission_brief_writer.md`). It also adds the tools project_signals and project_records to `config/tools.toml`, and the orchestrator's tool list is generated from that file, so `strata-orchestrator` (version 2, synced from 23df355) is out of date too. The builder named the writer's sync and a plain `--check`, which checks the orchestrator, so this block syncs both. One sync from 568dbc0 or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent mission_brief_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent mission_brief_writer --check
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run ends "I made version N of strata-mission-brief-writer, which matches the repo.", the third ends "I made version N of strata-orchestrator, which matches the repo.", and both `--check` runs exit 0 and print "Foundry's agent ..., version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Exit 1 means `--check` found a difference, and exit 2 means it could not run.
+
+**Ran on October 25, 2026 (orchestrator), from c0a9db0.** All four passed. The first run made version 1 of `strata-mission-brief-writer`, and its `--check` printed that version 1 matches the repo with no difference in its model, instructions, tools, description or guardrail (strata-guardrail). The plain run found that `strata-orchestrator` version 2 differed in its instructions and its tools (the project_signals and project_records sections were missing) and made version 3, which matches the repo; the plain `--check` confirmed version 3 with no difference. Both checks exited 0. Note for the next catch-up: zsh does not split an unquoted variable into words, so pass the script's flags as separate arguments rather than through a loop variable, or argparse sees one unrecognized argument.
+
+## Ticket 37, step 4 of 6: re-record the mission brief from the live writer
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. Run it after steps 1 and 3, and after the nightly job has filled the plans, awards, ISR ratings and loan history on the warehouse, because the writer drafts from project_records' rows, read as you. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in. It re-records every writer case in `tests/fixtures/agent/writers.toml`, so it also serves ticket 35's step 2 (criterion 6, live half).
+
+Run this from the main checkout, then review the diff:
+
+    uv run --script ops/agent/record.py --env-file .env --writers
+    git diff tests/fixtures/agent
+
+It worked if the recording exits 0 and prints a diff for `tests/fixtures/agent/recorded/mission-brief-p156634.json` with the verifier's counts, and that file's `"recorded"` changes from `false` to `true`. Read the diff before you keep it: it must hold the five parts (plans, awards, ratings, disbursement, closing), each sentence citing a record project_records returned, every amount taken from a `_millions` column (such as `signed_millions` or `estimated_millions`), and no sentence removed. The screens play answers made from this recording, so write them again and run the gate:
+
+    uv run --frozen python tests/record_following_api.py
+    git diff tests/fixtures/api
+    uv run --frozen pytest tests/test_mission_brief.py
+    .githooks/pre-commit
+
+`tests/test_mission_brief.py` and the gate must pass. If they pass, commit the recordings on a branch. If a test no longer gets what it expects, the live writer answers differently from the hand-written brief, so tell the orchestrator before you change a test.
+
+## Ticket 37, step 5 of 6: replay the signals on the full slice for the track record
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. It needs the Databricks keys in `.env`. Run it after ticket 25's deploy, which made `strata.ops.evaluation_result`, and after the nightly job has filled the loan history, the plans and the ISRs on the warehouse. It replays project_signals on each of the thresholds file's `signals.track_record_dates`, so it calls the warehouse many times; note how long it took (criterion 4, live half).
+
+Run this from the main checkout:
+
+    uv run --script ops/signals/replay_live.py --env-file .env
+
+It worked if it exits 0, prints "Replayed on <dates>, N projects, MLflow run <id>." and one line per status, "<status>: k of n projects later extended their closing date.", and this query returns that run's rows:
+
+    SELECT run_id, segment_kind, segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'signals_track_record' ORDER BY ran_at DESC
+
+Then, with the App deployed from 568dbc0 or later (step 2), `GET <App url>/api/following` as a staff viewer must return a `track_record` with that run's `run_id` and the same k and n for each status, and the Following page must state them instead of "I haven't replayed these checks on past dates yet". Exit 2 means the replay could not run, and it prints why.
+
+## Ticket 37, step 6 of 6: a mission brief through the live writer on the deployed App
+
+The merger parked this step on October 25, 2026, after merge commit 568dbc0. Run it after steps 2, 3 and 4. It is a check in your own browser, so it has no command.
+
+Signed in to the App as a World Bank staff viewer, open `<App url>/projects/following` and choose "Add to mission brief" on P156634's row.
+
+It worked if the writing page shows its steps, then the draft opens with its five parts in order (plans, awards, ratings, disbursement, closing), each with its sentences, its table and its citation markers, and the check line removes no sentence for a number or date missing from the records. Every number in a sentence must match the record its marker opens. Choose "Mark as checked", then "Export to Word": the Word file must hold a Heading 2 for each part and one footnote per citation. The nightly job's score task does not run the signals replay yet; ticket 43 adds that, and its own block will say how to check it.
+
+## Ticket 22, step 1 of 2: deploy the edge tables, then relink builds strata.gold.edge at a nightly run
+
+The merger parked this step on October 25, 2026, after merge commit d8bdbb7. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 22 adds three tables: `strata.gold.edge` (every link between strata, `src/strata/lakehouse/tables/gold/edge.sql`), `strata.silver.contract_passage_links` and `strata.silver.notice_bids`. The nightly job's `relink` task rebuilds the edge table (`strata.knowledge.links`), so the tables must exist first. Ticket 37's step 1 runs the same deploy command, and one deploy from d8bdbb7 or later serves both. The relink has live inputs only once ticket 43 lands. It scores contracts against passages, so the warehouse must hold P130164's contracts and its ICR's passages (ticket 11's `ops/documents/run_live.py`) before the check below can find the showcase edge. The scorer's word lists moved into `config/thresholds.toml` [links] with the same values, so links already scored do not change.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.gold.edge`, `strata.silver.contract_passage_links` and `strata.silver.notice_bids` as new, and changes no existing table.
+
+Then wait for the next scheduled run of the nightly job (`bundle/nightly.yml`), or start one by hand and check it:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if `relink` succeeded in that run, this query returns a count above 0:
+
+    SELECT count(*) FROM strata.gold.edge WHERE kind = 'appeared_together'
+
+and this one returns 0, because no link may be public before both of its ends are (ADR 0002):
+
+    SELECT count(*) FROM strata.gold.edge AS e
+    JOIN strata.gold.contract AS c ON e.from_id = concat('strata.gold.contract:', c.contract_id)
+    JOIN strata.gold.passage AS p ON e.to_id = concat('strata.gold.passage:', p.passage_id)
+    WHERE e.kind = 'appeared_together' AND (e.public_from < c.public_from OR e.public_from < p.public_from)
+
+On the fixture the first query returns 1,169 and the second returns 0. Once P130164's records are on the warehouse, `SELECT score, score_project, score_sector, score_time, score_text, score_mentions FROM strata.gold.edge WHERE from_id = 'strata.gold.contract:OP00044090' AND to_id = 'strata.gold.passage:31525018/v1/54'` should return one row: 0.53, made of 0.10, 0.10, 0.11, 0.02 and 0.20, as on the fixture.
+
+## Ticket 22, step 2 of 2: the four-hop recursive SQL on the SQL warehouse
+
+The merger parked this step on October 25, 2026, after merge commit d8bdbb7. It needs the Databricks keys in `.env`. Run it after step 1, once `strata.gold.edge` on the warehouse holds the path from AMIT CONSTRUCTION through contract OP00044090 and project P130164 to ICR paragraph 31525018/v1/54. Criterion 2 is already proved on DuckDB in the gate. This step checks that the warehouse runs the same `WITH RECURSIVE` query.
+
+First change line 17 of `tests/ground_truth/four_hop_supplier_to_completion_report.sql` from `-- engines: duckdb` to `-- engines: duckdb, databricks`, so `same-rows` picks it up. Then run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it exits 0 and reports that DuckDB and the SQL warehouse returned the same one row for `four_hop_supplier_to_completion_report.sql`: AMIT CONSTRUCTION, OP00044090, P130164, 31525018, 31525018/v1/54, 4. Then commit the changed engines line on a branch and run the gate. If the warehouse rejects `WITH RECURSIVE`, change the line back to `-- engines: duckdb`, and write the warehouse's error message here and in the file's header comment.

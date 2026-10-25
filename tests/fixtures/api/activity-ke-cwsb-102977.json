@@ -1,0 +1,338 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "activity": {
+    "step_reference": "KE-CWSB-102977-CS-QCBS",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "description": "Consultancy Services for Preparation of Detailed Designs, Tender Documents, Environmental and Social Impact Assessment Report (ESIA), Resettlement Action Plan (RAP) and Construction Supervision of the Baricho - Kakuyuni Second Pipeline Works",
+    "method": "Quality And Cost-Based Selection",
+    "consultants": true,
+    "implementing_agency": null,
+    "href": "/projects/P156634/packages/KE-CWSB-102977-CS-QCBS"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "advertised",
+        "date": "2019-06-25",
+        "evidence_id": "strata.gold.notice:OP00074412",
+        "reference": "OP00074412"
+      },
+      {
+        "kind": "signed",
+        "date": "2020-12-28",
+        "amount": "1416283.06",
+        "currency": "USD",
+        "evidence_id": "strata.gold.contract:1637670",
+        "reference": "1637670",
+        "record_noun": "contract"
+      }
+    ],
+    "no_estimate": false,
+    "missing": null,
+    "bids": [
+      {
+        "count": 6,
+        "notice_id": "OP00112374",
+        "evidence_id": "strata.gold.notice:OP00112374",
+        "proposals": true
+      }
+    ],
+    "many_contracts": false,
+    "paragraphs": 1
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": false,
+      "joined_on": "key",
+      "reason": "not_read",
+      "records": []
+    },
+    {
+      "stage": "notice",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00074412",
+          "public_from": "2019-06-25",
+          "notice_id": "OP00074412",
+          "notice_type": "Request for Expression of Interest",
+          "notice_date": "2019-06-25",
+          "readvertised": false,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00074412",
+          "fields": [
+            {
+              "key": "notice_type",
+              "value": "Request for Expression of Interest",
+              "kind": "text"
+            },
+            {
+              "key": "published",
+              "value": "2019-06-25",
+              "kind": "date"
+            },
+            {
+              "key": "procurement_method",
+              "value": "Quality And Cost-Based Selection",
+              "kind": "text"
+            },
+            {
+              "key": "submission_deadline",
+              "value": "2019-07-15",
+              "kind": "date"
+            },
+            {
+              "key": "bid_description",
+              "value": "Consultancy Services for Preparation of Detailed Designs, Tender Documents, Environmental and Social Impact Assessment Report (ESIA), Resettlement Action Plan (RAP) and Construction Supervision of the Baricho - Kakuyuni Second Pipeline Works",
+              "kind": "text"
+            }
+          ],
+          "source": {
+            "source_key": "notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Request for Expression of Interest",
+            "project_id": "P156634",
+            "document_date": "2019-06-25"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "bids",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00112374",
+          "public_from": "2021-01-12",
+          "notice_id": "OP00112374",
+          "notice_date": "2021-01-12",
+          "currency": "KES",
+          "labels": {
+            "price_at_opening": null,
+            "evaluated_price": "Final Evaluation Price"
+          },
+          "lists_scores": true,
+          "proposals": true,
+          "bids": [
+            {
+              "bid": 1,
+              "outcome": "awarded",
+              "name": null,
+              "is_individual_consultant": false,
+              "is_joint_venture": true,
+              "members": [
+                "GATH CONSULTING ENGINEERS",
+                "SARI CONSULTING LTD",
+                "SGAPI S.R.L"
+              ],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": "102573066.5",
+              "reason": null
+            },
+            {
+              "bid": 2,
+              "outcome": "not_awarded",
+              "name": "EGIS EAU",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "France",
+              "price_at_opening": null,
+              "evaluated_price": "183414330.00",
+              "reason": null
+            },
+            {
+              "bid": 3,
+              "outcome": "not_awarded",
+              "name": null,
+              "is_individual_consultant": false,
+              "is_joint_venture": true,
+              "members": [
+                "KOREA ENGINEERING CONSULTANCY CORPORATION",
+                "GIBB AFRICA"
+              ],
+              "country": "Korea, Republic of",
+              "price_at_opening": null,
+              "evaluated_price": "172291290.20",
+              "reason": null
+            },
+            {
+              "bid": 4,
+              "outcome": "not_awarded",
+              "name": null,
+              "is_individual_consultant": false,
+              "is_joint_venture": true,
+              "members": [
+                "BATCH ASSOCIATES LTD",
+                "CAS CONSULTANTS"
+              ],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": "10727400.00",
+              "reason": null
+            },
+            {
+              "bid": 5,
+              "outcome": "rejected",
+              "name": null,
+              "is_individual_consultant": false,
+              "is_joint_venture": true,
+              "members": [
+                "DESIGN MASTER PLAN LTD",
+                "SGI STUDIO GALLI INGEGNERIA S.R.1(HEREINAFTERSGI)"
+              ],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": null,
+              "reason": "Non Responsive"
+            },
+            {
+              "bid": 6,
+              "outcome": "rejected",
+              "name": "NICHOLAS O'DWYER",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Ireland",
+              "price_at_opening": null,
+              "evaluated_price": null,
+              "reason": "Non Responsive"
+            }
+          ],
+          "bid_count": 6,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00112374",
+          "source": {
+            "source_key": "award_notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P156634",
+            "document_date": "2021-01-12"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "contract",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.contract:1637670",
+          "public_from": "2020-12-28",
+          "contract_id": "1637670",
+          "contract_reference": "1637670",
+          "step_reference": "KE-CWSB-102977-CS-QCBS",
+          "signed_on": "2020-12-28",
+          "amount": "1416283.06",
+          "currency": "USD",
+          "from_notice": false,
+          "record_noun": "contract",
+          "award_notice_id": null,
+          "description": "Designs and Construction Supervision of Second Baricho-Kakuyuni Water Pipeline and Transmission Pipelines to Kilifi and Ganda Tanks",
+          "supplier": {
+            "name": "GATH CONSULTING ENGINEERS / SARI CONSULTING LTD / SGAPI S.R.L",
+            "country": null,
+            "is_individual_consultant": false,
+            "is_joint_venture": true,
+            "members": [
+              "GATH CONSULTING ENGINEERS",
+              "SARI CONSULTING LTD",
+              "SGAPI S.R.L"
+            ]
+          },
+          "source": {
+            "source_key": "awards",
+            "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": null,
+            "document_type": "Contract award",
+            "project_id": "P156634",
+            "document_date": "2020-12-28"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "paragraphs",
+      "found": true,
+      "reason": null,
+      "joined_on": "together",
+      "records": [
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:31451672/v1/s4",
+          "public_from": "2019-10-02",
+          "passage_id": "31451672/v1/s4",
+          "contract_evidence_id": "strata.gold.contract:1637670",
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-02",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "printed_page": "1 of 7",
+          "doc_key": "isr-2019-10-02",
+          "language": "en",
+          "text": "Overall project implementation progress has been slow. However, efforts are been made to expedite implementation. In anticipation of receiving the funds, the counties and their water service providers (WSPs) have completed most of their preparatory activities—including establishment of Project Coordination Units (PCUs), opening of project accounts, and preparation of procurement plans. Adequate funds have been allocated in the Ministry of Water and Sanitation (MoWS) budget for financial year 2019/2020 for both the national and county-level implementing agencies (IAs) benefiting from components 1 and 2. In addition, the IAs have made good progress towards building a pipeline of implementable activities. Many have ready detailed designs and bidding documents for immediate interventions, although the pace of procurement has been slow owing to the uncertainty around the funds flow. Moreover, twelve IAs have initiated procurement of works, consultancy services, goods and non-consultancy services and some have awarded contracts (although no contracts can be signed until the funds expected under the project have been transferred to the WSPs). In addition, all the IAs have made good progress in the procurement of consulting firms to undertake design review and supervision of the immediate works contracts, and to prepare detailed designs for any additional identified medium and long-term interventions. IAs have received significant capacity building and training in financial management, procurement, and safeguards to ensure that once they receive funds, they can implement activities effectively. The MoWS is in an advanced stage of procuring the services of a consulting firm that will provide practical and regular technical assistance on procurement, engineering, safeguards, financial management, and monitoring, evaluation and performance assessment to ensure successful implementation of the project. This contract is expected to be signed soon. In addition, the County Participation Agreements (CPAs) and the Water Service Provider (WSP) Agreements were signed in June 2019, allowing disbursement to counties. Once the funds have been disbursed, implementation is expected to accelerate.",
+          "highlights": [
+            [
+              949,
+              969
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Consultant Services"
+            },
+            {
+              "kind": "sector",
+              "code": "WC",
+              "name": "Water Supply"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P156634",
+            "document_date": "2019-10-02",
+            "pdf_page": 1
+          },
+          "contract_reference": "1637670"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2019-10-02",
+          "count": 1,
+          "shown": 1
+        }
+      ],
+      "threshold": "0.50"
+    }
+  ]
+}
