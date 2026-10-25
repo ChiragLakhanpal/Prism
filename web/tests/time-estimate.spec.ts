@@ -23,7 +23,7 @@ async function json(name: string): Promise<Json> {
 
 async function openWorkspace(
   page: Page,
-  options: { width?: number; ref?: string; estimate?: Answer; comparables?: Answer; reducedMotion?: boolean } = {},
+  options: { width?: number; ref?: string; estimate?: Answer; comparables?: Answer; reducedMotion?: boolean; rebidding?: Answer } = {},
 ) {
   const { width = 1440, ref = SIGNED } = options;
   await page.setViewportSize({ width, height: 900 });
@@ -38,9 +38,12 @@ async function openWorkspace(
     [`${api}/risks`]: { body: await recorded(`risks-${slug}.json`) },
     [`${api}/plan-dates`]: { body: await recorded("plan-dates-saved.json") },
     [`${api}/estimate`]: options.estimate ?? { body: await recorded(`estimate-${slug}.json`) },
+    ...(options.rebidding ? { [`${api}/rebidding`]: options.rebidding } : {}),
   });
   // Sections 2 and 5 and the rebidding block have their own tests; here they stay loading.
-  for (const rest of ["steps", "criteria", "rebidding"]) await page.route(`**${api}/${rest}`, () => new Promise(() => {}));
+  for (const rest of ["steps", "criteria", ...(options.rebidding ? [] : ["rebidding"])]) {
+    await page.route(`**${api}/${rest}`, () => new Promise(() => {}));
+  }
   await page.goto(`/packages/${encodeURIComponent(ref)}`);
   await expect(page.locator("[data-past-range]:not([data-past-range=loading])")).toBeVisible();
   await expect(page.locator("[data-lane2=loading]")).toHaveCount(0);
@@ -138,9 +141,12 @@ test("the sentence on why the lanes differ uses the tool's difference and counts
 
 test("pressing a Compare with segment lights the dots that went with it, counts them, and leaves the estimate as described as a ghost", async ({ page }) => {
   const { answer, body } = await comparing();
-  await openWorkspace(page, { estimate: answer });
+  // "Advertised again" (ticket 28) only needs an answer to show here; the demo package's recorded one stands in.
+  await openWorkspace(page, { estimate: answer, rebidding: { body: await recorded("rebidding-ke-nwwda-541055.json") } });
   const [preq] = body.comparisons;
   const n = body.comparables.n;
+  await expect(page.locator("[data-rebidding]")).toBeVisible();
+  await expect(page.locator("[data-rebid-compare]")).toHaveCount(0);
 
   const segment = compare(page).getByRole("button", { name: "Prequalification" });
   await expect(segment).toHaveAttribute("aria-pressed", "false");
@@ -165,6 +171,8 @@ test("pressing a Compare with segment lights the dots that went with it, counts 
   await expect(section(page)).not.toContainText(/\b(caused|split|splitting)\b/i);
   await expect(page.locator("[data-chart-alt]")).toContainText(`Compared with prequalification: ${preq.k} of ${n} comparable packages went with it`);
   await expect(page.locator("[data-chart-alt]")).toContainText(`A dashed outline shows the time estimate as described: middle half ${one(e.q25)} to ${one(e.q75)} months`);
+  // "Advertised again" says the comparison leaves its count alone (the 28 brief, section 6.5).
+  await expect(page.locator("[data-rebid-compare]")).toHaveText("The comparison above doesn't change this count. It is for this package's own criteria.");
 
   // Pressing it again stops comparing.
   await segment.click();
@@ -172,6 +180,7 @@ test("pressing a Compare with segment lights the dots that went with it, counts 
   await expect(page.locator("[data-lane2-ghost]")).toHaveCount(0);
   await expect(page.locator("[data-chart-drawing] [data-went-with]")).toHaveCount(0);
   await expect(section(page).locator("[data-row-e=middle]")).toHaveText(`Middle half ${one(e.q25)} to ${one(e.q75)}, middle ${one(e.q50)}`);
+  await expect(page.locator("[data-rebid-compare]")).toHaveCount(0);
 });
 
 test("Compare with is one tab stop the arrow keys move through without pressing, and Space presses; too few gives the ghost alone", async ({ page }) => {

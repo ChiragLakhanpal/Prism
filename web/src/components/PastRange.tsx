@@ -148,8 +148,10 @@ export function PastRange({
   // reruns, so the section's own loading status stays silent and nothing is heard twice.
   quiet?: boolean;
   // A block at the end of the card that counts the same comparable packages, such as "Advertised again" (ticket
-  // 28), drawn after the result and never in place of a body such as the plan prompt.
-  after?: ReactNode;
+  // 28), drawn after the result and never in place of a body such as the plan prompt. As a function it learns
+  // whether a "Compare with" segment is pressed (ticket 26), so "Advertised again" can say the comparison leaves
+  // its count alone.
+  after?: ReactNode | ((comparing: boolean) => ReactNode);
 }) {
   const headingId = useId();
   const loading = state.status === "loading";
@@ -271,7 +273,7 @@ export function PastRange({
           say={setAnnounce}
         />
       )}
-      {!body && result && after}
+      {!body && result && (typeof after === "function" ? after(comparison !== null) : after)}
       {loading && !quiet && (
         <p role="status" className="sr-only">
           {words.loading}

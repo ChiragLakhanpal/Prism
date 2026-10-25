@@ -841,12 +841,13 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             lead={lead}
             more={more}
             quiet
-            after={
+            after={(comparing) => (
               <Rebidding
                 path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
                 section={section.status === "ready" && !skeleton ? section.result : null}
+                comparing={comparing}
               />
-            }
+            )}
             estimate={pkg.comparables_query ? estimate : undefined}
             planDate={planDate}
           />

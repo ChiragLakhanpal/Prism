@@ -164,7 +164,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             open={opening}
             estimate={estimate}
             planDate={planDate}
-            after={<Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} />}
+            after={(comparing) => (
+              <Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} comparing={comparing} />
+            )}
           />
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
