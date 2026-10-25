@@ -71,6 +71,11 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   await expect(row.locator("[data-meta]")).toHaveText("Kenya, P156634. It closes on Oct 31, 2026.");
   await expect(row.getByRole("link", { name: "Water and Sanitation Development Project" })).toHaveAttribute("href", "/projects/P156634");
   expect(await table.locator("thead th").first().evaluate((cell) => cell.textContent)).toBe(STATUS_HEADER);
+  // "Status" opens the rules, one status a line.
+  await table.locator("thead [data-term]").click();
+  await expect(page.locator("[data-status-rules] dt")).toHaveText(["Needs a look: ", "Watch: ", "No signals: ", "Not checked: "]);
+  await expect(page.locator("[data-status-rules] dd").first()).toHaveText("Three or more signals, or one strong signal.");
+  await page.keyboard.press("Escape");
   // One action per row, secondary, and the page has no solid button.
   await expect(row.getByRole("button", { name: "Add to mission brief, Water and Sanitation Development Project" })).toBeVisible();
   await expect(page.locator("main [data-button=primary]")).toHaveCount(0);
@@ -295,6 +300,8 @@ test("each source of the brief says which record it is, and the disbursement tab
   await expect(page.locator("[data-brief-part=disbursement]")).toContainText(
     "The loans and credits data reports more disbursed and canceled than committed for this project.");
   await expect(page.getByText("I wrote each part from public records through October 23, 2026")).toBeVisible();
+  // "US$" stays on the line of its amount.
+  await expect(page.locator("[data-brief-part=awards] [data-note] .whitespace-nowrap").filter({ hasText: "US$" }).first()).toHaveText("US$2.5");
   // Each latest plan links to that version's plan check.
   await expect(page.locator("[data-brief-part=plans] [data-brief-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" })).toHaveAttribute(
     "href", "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09");

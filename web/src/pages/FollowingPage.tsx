@@ -323,7 +323,18 @@ function StatusTerm({ thresholds, track, checks }: { thresholds: Thresholds; tra
     : words.statusDefinition.strongNoneMixed;
   return (
     <DefinitionWindow label={words.statusDefinition.title} title={words.statusDefinition.title} triggerClassName="inline-flex min-h-6 items-center">
-      <p>{words.statusDefinition.body(look, formatCount(checks))}</p>
+      <dl className="flex flex-col gap-1" data-status-rules>
+        {words.statusDefinition.rules(look, formatCount(checks)).map(([status, rule]) => (
+          <div key={status}>
+            <dt className="inline font-semibold">
+              {status}
+              {words.headerJoin}
+            </dt>
+            <dd className="inline">{rule}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2">{words.statusDefinition.signalIs}</p>
       <p className="mt-2">{strong.length ? words.statusDefinition.strong(joinedNames) : strongNone}</p>
       <p className="mt-2">{track ? <StatusLead track={track} /> : copy.track.none}</p>
       <p className="mt-2">

@@ -1259,10 +1259,14 @@ export const copy = {
     defEnd: ".",
     statusDefinition: {
       title: "Status",
-      body: (look: string, checks: string) =>
-        `Needs a look: ${look} or more signals, or one strong signal. Watch: at least one signal but fewer than ${look}, and none of them strong. ` +
-        `No signals: none of the ${checks} checks found anything. Not checked: I couldn't run any check, because I don't hold the records. ` +
-        "A signal is a fixed check on public records that gives a reason to look, never a finding.",
+      // Each status and its rule, one line each, so the rule scans.
+      rules: (look: string, checks: string): [string, string][] => [
+        ["Needs a look", `${look.charAt(0).toUpperCase()}${look.slice(1)} or more signals, or one strong signal.`],
+        ["Watch", `At least one signal but fewer than ${look}, and none of them strong.`],
+        ["No signals", `None of the ${checks} checks found anything.`],
+        ["Not checked", "I couldn't run any check, because I don't hold the records."],
+      ],
+      signalIs: "A signal is a fixed check on public records that gives a reason to look, never a finding.",
       // No check is strong by itself; {names} each turn strong from {n} activities (the thresholds file's strong_from).
       strongNone: (names: string, n: string) =>
         `No check is strong on its own. ${names} each become strong when they fire on ${n} activities or more.`,

@@ -82,7 +82,7 @@ questions:
     expected:
       awards: [KE-CWSB-565568-GO-RFQ, KE-CWSB-567630-CW-DIR]
       disbursement: [IDA60290, IDA60300]
-    ground_truth: tests/ground_truth/project_signals_p156634_late_direct_and_moves.sql
+    ground_truth: tests/ground_truth/project_records_p156634_awards_and_loans.sql
     source: >-
       The awards dataset's contracts signed after ISR 19 of June 30, 2026 (tests/ground_truth/values.toml,
       award-567630-signed and award-565568-signed), and the two credits the loan history records for P156634.
