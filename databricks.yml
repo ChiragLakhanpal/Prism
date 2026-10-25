@@ -35,6 +35,11 @@ variables:
   nightly_pause_status:
     description: UNPAUSED runs the nightly job on its schedule. PAUSED leaves only manual runs.
     default: UNPAUSED
+  secret_scope:
+    description: >-
+      The secret scope the nightly job's tasks read their Azure OpenAI, Foundry and AI Search keys from,
+      the one ops/app/deploy_app.py and the wizard save them in (names.secret_scope in ops/dayone/dayone.toml).
+    default: strata
   warehouse_id:
     description: >-
       The SQL warehouse the dashboard's queries run on. ops/bundle/deploy.py passes the env file's

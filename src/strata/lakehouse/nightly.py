@@ -48,7 +48,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass
 from importlib import resources
 
@@ -139,8 +139,8 @@ def _bronze_to_gold(run: Run) -> int:
     supplier, then gold. Ticket 19 resolves suppliers here, since the bundle's task list belongs to
     ticket 43 and docs/PLAN.md section 11. Only a run that fetches from the live APIs asks the live
     model about the uncertain middle of name matching; any other run uses the offline stand-in. On
-    Databricks the job passes no Azure OpenAI keys until ticket 43 wires its tasks, so until then every
-    pair in the middle waits for a person (no_model)."""
+    Databricks each task reads the Azure OpenAI keys from the job's secret scope (keys_from_scope); without
+    them every pair in the middle waits for a person (no_model)."""
     from strata.knowledge.suppliers import bidders, judge, resolve
 
     added = sum(silver.run(run.engine, source) for source in _paged())
@@ -175,10 +175,10 @@ def _relink(run: Run) -> int:
 def _detect_disagreements(run: Run) -> int:
     """The assertions of every project Strata holds documents or a Procurement Plan for, rebuilt, and the
     disagreements between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
-    asks the live batch model to read the reports. On Databricks the job passes no Azure OpenAI keys until
-    ticket 43 wires its tasks, so until then it replays the answers bronze holds from the batch role's
-    deployment, such as those ops/assertions/batch_live.py asked for, and keeps what the live model read.
-    Any other run replays the recorded answers."""
+    asks the live batch model to read the reports, with the keys the task reads from the job's secret scope.
+    Without them it replays the answers bronze holds from the batch role's deployment, such as those
+    ops/assertions/batch_live.py asked for, and keeps what the live model read. Any other run replays the
+    recorded answers."""
     from strata.knowledge import assertions, batch
 
     model = (batch.from_environment() or batch.HeldAnswers()) if run.fetch is fetch_live else batch.RecordedBatch()
@@ -190,9 +190,10 @@ def _detect_disagreements(run: Run) -> int:
 def _propose_lessons(run: Run) -> int:
     """Lessons proposed from the evaluation reports the passage reader holds, then the lesson review writer's
     note on each open item of the review queue (ticket 29). Only a run that fetches from the live APIs sends
-    them to the live batch model and the live writer; any other run replays their recorded answers. On
-    Databricks the job passes no Azure OpenAI or Foundry keys until ticket 43 wires its tasks, so until then
-    the task proposes nothing and changes no rows."""
+    them to the live batch model and the live writer, with the keys the task reads from the job's secret scope;
+    any other run replays their recorded answers. Each document is sent once: tonight's batch is submitted,
+    and the answers of earlier nights' batches are collected, so a rerun never sends a document twice. Without
+    the keys the task proposes nothing and changes no rows."""
     import os
 
     from strata.agent.runner import lesson_writer_from_environment
@@ -308,6 +309,30 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
         })
 
 
+# The keys the tasks read from their environment, which on Databricks the job reads from its secret scope
+# (bundle variable secret_scope; ops/app/deploy_app.py and the wizard save them there under these names).
+SCOPE_KEYS = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "FOUNDRY_PROJECT_ENDPOINT", "FOUNDRY_TENANT_ID",
+              "FOUNDRY_CLIENT_ID", "FOUNDRY_CLIENT_SECRET", "AI_SEARCH_ENDPOINT")
+
+
+def keys_from_scope(get: Callable[[str, str], str], scope: str, environ: MutableMapping[str, str]) -> list[str]:
+    """Each key the tasks read, from the job's secret scope into the task's environment, unless the environment
+    already holds it, so the key never travels with the job's parameters. A key the scope lacks is left out, and
+    the task runs without it. Returns the names of the keys it set, never their values."""
+    found = []
+    for key in SCOPE_KEYS:
+        if (environ.get(key) or "").strip():
+            continue
+        try:
+            value = get(scope, key)
+        except Exception:  # noqa: BLE001 - dbutils raises its own error for a key the scope does not hold
+            continue
+        if value:
+            environ[key] = value
+            found.append(key)
+    return found
+
+
 def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Callable[[], dt.datetime] = _now,
          readers_for: ReadersFor | None = None) -> int:
     """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. Pages and
@@ -317,6 +342,7 @@ def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Call
     parser.add_argument("--task", required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--src", help="the folder that holds the strata package; nightly_task.py uses it")
+    parser.add_argument("--secret-scope", help="the scope nightly_task.py reads the tasks' keys from")
     args = parser.parse_args(argv)
     if args.task not in TASKS:
         raise SystemExit(f"The nightly job has no task called {args.task}. "
@@ -359,6 +385,55 @@ def job_tasks(bundle=None) -> list[Task]:
         ordered.append(ready[0])
         waiting.remove(ready[0])
     return ordered
+
+
+LAST_FINISHED = """
+SELECT max(finished_at) AS finished FROM strata.ops.pipeline_runs WHERE task_key = :task_key AND status = 'succeeded'
+"""
+
+
+@dataclass(frozen=True)
+class Freshness:
+    """When the nightly job last finished every task, with its checks, and whether that is too long ago."""
+
+    finished_at: dt.datetime | None
+    stale: bool
+
+
+def freshness(engine: Engine, now: dt.datetime, bundle=None) -> Freshness:
+    """When a run of the job last finished its last task, after every check before it, and whether more than
+    nightly.stale_after_hours have passed since (config/thresholds.toml), for the freshness stamp's stale marker
+    and the stale alerts (briefs 06, 37 and 41). No finished run is stale."""
+    from strata.config import load_thresholds
+
+    found = engine.run(LAST_FINISHED, {"task_key": job_tasks(bundle)[-1].key}).rows[0][0]
+    if found is not None and not isinstance(found, dt.datetime):
+        found = dt.datetime.fromisoformat(str(found).replace("Z", "+00:00").replace(" ", "T"))
+    if found is not None and found.tzinfo is None:
+        found = found.replace(tzinfo=dt.UTC)
+    hours = float(load_thresholds().value("nightly.stale_after_hours"))
+    return Freshness(found, found is None or now - found > dt.timedelta(hours=hours))
+
+
+def most_at_once(bundle=None) -> int:
+    """The most tasks the job can run at the same moment: the largest set of tasks none of which waits on another,
+    times the runs the job allows at once (max_concurrent_runs). The workspace runs at most five job tasks at once,
+    shared with fairshare (config/thresholds.toml, nightly.max_concurrent_tasks)."""
+    from itertools import combinations
+
+    tasks = job_tasks(bundle)
+    waits_on = {task.key: set(task.depends_on) for task in tasks}
+    for task in tasks:  # in run order, so each task's own waits are complete before a later task reads them
+        for dep in list(waits_on[task.key]):
+            waits_on[task.key] |= waits_on[dep]
+
+    def apart(a: str, b: str) -> bool:
+        return a not in waits_on[b] and b not in waits_on[a]
+
+    keys = [task.key for task in tasks]
+    widest = max(size for size in range(1, len(keys) + 1)
+                 if any(all(apart(a, b) for a, b in combinations(group, 2)) for group in combinations(keys, size)))
+    return widest * int(_job(bundle).get("max_concurrent_runs", 1))
 
 
 def window(bundle=None) -> Window:
