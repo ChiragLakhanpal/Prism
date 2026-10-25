@@ -638,11 +638,12 @@ questions:
       country: KE
       as_of: "2026-10-22"
     expected:
-      comparables: [49]
+      step_comparables: [49]
       dated_steps: []
     source: >-
-      The same 49 comparables as find-comparables-planned-ke-works-rfb (tests/ground_truth/values.toml,
-      [past_range] comparables). No step has 20 comparable packages whose plans recorded it, so no step is dated.
+      The step dates counted the same 49 comparables as find-comparables-planned-ke-works-rfb
+      (tests/ground_truth/values.toml, [past_range] comparables). No step has 20 comparable packages whose plans
+      recorded it, so no step is dated.
 
   # Ticket 33: questions Genie answers through ask_genie, which are also the Genie space's benchmark questions
   # (config/genie.toml). Each one's expected answer is its ground-truth SQL: plain SQL over the gold tables, written
