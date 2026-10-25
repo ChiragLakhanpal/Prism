@@ -213,6 +213,8 @@ Then run the query again. It worked if the job run exits 0 and the count is the 
 
 **Ran on October 24, 2026 (orchestrator):** `awards` had 296 pages before the fourth run and 296 after the fourth, fifth and sixth; no source's newest `fetched_at` is later than the third run (19:28 UTC). Passed.
 
+**Scheduled run on October 25, 2026 (orchestrator):** the 03:00 New York run (873581300211320, 07:00 to 07:38 UTC, every task succeeded) fetched 297 `awards` pages, so the count grew from 296 to 593. `newest_record_on` in the new rows is 2026-10-21 against 2026-10-20 before, and the pages hold 296,098 records against 295,969: Finances One published 129 awards between the runs, which is the case this block allows. Because the API lists newest first with no date filter, 129 new records shift every page, so every page's hash changed and all 297 were stored again; bronze keeps both days' copies. Follow-up for the orchestrator: a daily source whose records shift will add its whole page set to bronze on every day that it changes.
+
 ## Ticket 09, step 1 of 3: turn on user authorization for the App
 
 The merger parked this step on October 23, 2026, after merge commit f9cc969. It needs the Databricks keys in `.env`. Run it after ticket 06 has deployed the App `strata` from `build/strata` at f9cc969 or later, with `DATABRICKS_WAREHOUSE_ID` set in the App's environment. Without that variable, the plan-check routes answer HTTP 503 with the code `no_data_service`.
@@ -438,6 +440,8 @@ Run the job a second night. `coverage_rows` for notices and projects still equal
 It worked if both rows show `count` equal to `denominator`. On the fixture they read 418 of 418 for notices and 93 of 93 for projects. The same-rows check shows the second part, and the table sizes query in step 1 shows the last. If notices or projects read over the total, see ticket 17's third parked decision in its done comment: the job cannot see a record that a search source withdraws after Strata fetched it.
 
 **Ran on October 24, 2026 (orchestrator):** across the fourth, fifth and sixth runs no source added a page (every source's newest `fetched_at` is from the third run): `awards_fy2001_2016` and the monthly loan histories added none, as required, and `awards` added none. `coverage_rows` after the sixth run: projects 28,211 of 28,211; notices 100,500 of 424,135, short by the search API's 100,000 offset cap (ticket 04's step 2 decision), not by a withdrawn record. The same-rows check is recorded under ticket 04's step 3; `strata.ops.table_sizes` marks `strata.gold.passage` and `strata.silver.passage_embeddings` as not structured, at 0 rows until ticket 11's step 1 runs. The second night's run is the scheduled one at 03:00 New York.
+
+**Second night, October 25, 2026 (orchestrator):** the scheduled run at 03:00 New York (873581300211320, 07:00 to 07:38 UTC) succeeded in every task. `fetch_by_watermark` added 297 pages for `awards` (Finances One published 129 awards, newest 2026-10-21; see ticket 07's step 3), 13 for `ieg_ratings` and 1 for `projects`; `awards_fy2001_2016`, `ida_credit_history` and `ibrd_loan_history` added none. `coverage_rows` after the run: projects 28,211 of 28,212 (one project appeared in the API between fetches), notices 100,500 of 424,135 (the 100,000 offset cap, as before), ibrd_loan_history 36,431 of 36,686 (as before). The same-rows check runs again after the documents run finishes, since two of its files wait on that run.
 
 ## Ticket 13, step 1 of 4: the Foundry agent and its guardrail match the repo
 

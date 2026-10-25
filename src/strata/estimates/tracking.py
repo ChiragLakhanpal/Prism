@@ -21,7 +21,8 @@ step (docs/workspace-catchup.md).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from pathlib import PurePosixPath
+from typing import Any, Callable
 
 MODEL_CARD = "model_card.md"
 
@@ -92,15 +93,25 @@ class MlflowTracker:
 
     name = "mlflow"
 
-    def __init__(self, experiment: str):
+    def __init__(self, experiment: str, mkdirs: Callable[[str], Any] | None = None):
+        """experiment is the experiment's workspace path, such as /Shared/strata/time_estimate. MLflow makes
+        the experiment but not its folder, and a fresh workspace has no /Shared/strata, so the folder is
+        made first: with mkdirs(path), or with the Databricks SDK's workspace client when none is given."""
         import mlflow
         from mlflow.tracking import MlflowClient
 
         mlflow.set_tracking_uri("databricks")
         mlflow.set_registry_uri("databricks-uc")
         self.mlflow, self.client = mlflow, MlflowClient()
+        (mkdirs or self._sdk_mkdirs)(str(PurePosixPath(experiment).parent))
         self.experiment_id = mlflow.set_experiment(experiment).experiment_id
         self._models: dict[str, str] = {}  # run id -> the logged model's URI
+
+    @staticmethod
+    def _sdk_mkdirs(path: str) -> None:
+        from databricks.sdk import WorkspaceClient
+
+        WorkspaceClient().workspace.mkdirs(path)
 
     def start_run(self, name: str, params: dict[str, Any]) -> str:
         run = self.client.create_run(self.experiment_id, run_name=name)
