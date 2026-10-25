@@ -1,0 +1,3412 @@
+{
+ "draft_id": "draft-0001",
+ "kind": "mission_brief",
+ "state": "exported",
+ "discarded_from": null,
+ "author": {
+  "name": "Ana Example",
+  "you": true
+ },
+ "created_at": "2026-10-23T14:02:00Z",
+ "checked": {
+  "at": "2026-10-23T14:03:00Z",
+  "by": "Ana Example",
+  "you": true
+ },
+ "discarded": null,
+ "subject": {
+  "project_id": "P156634",
+  "project_name": "Water and Sanitation Development Project",
+  "country": "Kenya",
+  "closing_date": "2026-10-31",
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "isr_date": "2026-06-30",
+  "isr_sequence": 19,
+  "date": "2026-10-23",
+  "signal": null
+ },
+ "counts": {
+  "signal": null,
+  "written": 5
+ },
+ "written": {
+  "notes": 5,
+  "sentences": 11
+ },
+ "notes": [
+  {
+   "key": "plans",
+   "part": "plans",
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "description": null,
+   "mark": null,
+   "state": "written",
+   "refusal": null,
+   "sentences": [
+    {
+     "index": 0,
+     "text": "The Northern Water Works Development Agency's latest Procurement Plan, of October 9, 2026, lists nine activities.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.silver.plan_versions:40132287"
+     ],
+     "numbers": [
+      {
+       "text": "nine",
+       "evidence_id": "strata.silver.plan_versions:40132287"
+      }
+     ],
+     "dates": [
+      {
+       "text": "October 9, 2026",
+       "evidence_id": "strata.silver.plan_versions:40132287"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 1,
+     "text": "In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+     ],
+     "numbers": [],
+     "dates": [
+      {
+       "text": "July 31, 2026",
+       "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 2,
+     "text": "The Coast Water Services Board's latest plan, of August 17, 2026, lists eight activities.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.silver.plan_versions:40122770"
+     ],
+     "numbers": [
+      {
+       "text": "eight",
+       "evidence_id": "strata.silver.plan_versions:40122770"
+      }
+     ],
+     "dates": [
+      {
+       "text": "August 17, 2026",
+       "evidence_id": "strata.silver.plan_versions:40122770"
+      }
+     ],
+     "quote": null
+    }
+   ],
+   "reason": null,
+   "table": [
+    {
+     "evidence_id": "strata.silver.plan_versions:40132287",
+     "public_from": "2026-10-09",
+     "part": "plans",
+     "reference": "Northern Water Works Development Agency",
+     "source": {
+      "source_key": "plans",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-10-09"
+     },
+     "fields": [
+      {
+       "key": "implementing_agency",
+       "value": "Northern Water Works Development Agency",
+       "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "northern-water-works-development-agency",
+       "kind": "key"
+      },
+      {
+       "key": "plan_date",
+       "value": "2026-10-09",
+       "kind": "date"
+      },
+      {
+       "key": "activities",
+       "value": 9,
+       "kind": "count"
+      },
+      {
+       "key": "needs_a_look",
+       "value": 1,
+       "kind": "count"
+      },
+      {
+       "key": "watch",
+       "value": 2,
+       "kind": "count"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.plan_versions:40122770",
+     "public_from": "2026-08-17",
+     "part": "plans",
+     "reference": "Coast Water Services Board",
+     "source": {
+      "source_key": "plans",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-08-17"
+     },
+     "fields": [
+      {
+       "key": "implementing_agency",
+       "value": "Coast Water Services Board",
+       "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "coast-water-services-board",
+       "kind": "key"
+      },
+      {
+       "key": "plan_date",
+       "value": "2026-08-17",
+       "kind": "date"
+      },
+      {
+       "key": "activities",
+       "value": 8,
+       "kind": "count"
+      },
+      {
+       "key": "needs_a_look",
+       "value": 0,
+       "kind": "count"
+      },
+      {
+       "key": "watch",
+       "value": 2,
+       "kind": "count"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.plan_versions:40001676",
+     "public_from": "2025-03-19",
+     "part": "plans",
+     "reference": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+     "source": {
+      "source_key": "plans",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2025-03-19"
+     },
+     "fields": [
+      {
+       "key": "implementing_agency",
+       "value": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+       "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "kilifi-mariakani-water-and-sewerage-company-ltd",
+       "kind": "key"
+      },
+      {
+       "key": "plan_date",
+       "value": "2025-03-19",
+       "kind": "date"
+      },
+      {
+       "key": "activities",
+       "value": 22,
+       "kind": "count"
+      },
+      {
+       "key": "needs_a_look",
+       "value": 0,
+       "kind": "count"
+      },
+      {
+       "key": "watch",
+       "value": 3,
+       "kind": "count"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.plan_versions:31998332",
+     "public_from": "2020-04-30",
+     "part": "plans",
+     "reference": "Ministry of Water and Irrigation",
+     "source": {
+      "source_key": "plans",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-04-30"
+     },
+     "fields": [
+      {
+       "key": "implementing_agency",
+       "value": "Ministry of Water and Irrigation",
+       "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "ministry-of-water-and-irrigation",
+       "kind": "key"
+      },
+      {
+       "key": "plan_date",
+       "value": "2020-04-30",
+       "kind": "date"
+      },
+      {
+       "key": "activities",
+       "value": 7,
+       "kind": "count"
+      },
+      {
+       "key": "needs_a_look",
+       "value": 2,
+       "kind": "count"
+      },
+      {
+       "key": "watch",
+       "value": 2,
+       "kind": "count"
+      }
+     ]
+    }
+   ],
+   "totals": {
+    "agencies": 4,
+    "without_plan": 10
+   },
+   "agencies_without_plans": [
+    "Coast Water Works Development Agency",
+    "Garissa Water and Saniation Company",
+    "Kwale Water and Sewerage Company Ltd.",
+    "Malindi Water and Sewerage Company Ltd",
+    "Ministry of Water, Sanitation and Irrigation",
+    "Mombasa Water and Sanitation Services Company",
+    "Tavevo Water and Sewerage Company Ltd",
+    "Wajir Water and Sewerage Company",
+    "Water Sector Trust Fund",
+    "Water Services Regulatory Board"
+   ]
+  },
+  {
+   "key": "awards",
+   "part": "awards",
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "description": null,
+   "mark": null,
+   "state": "written",
+   "refusal": null,
+   "sentences": [
+    {
+     "index": 3,
+     "text": "Two contracts were signed after the ISR dated June 30, 2026, for US$2.5 million together.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.tools.project_records:P156634@2026-10-23"
+     ],
+     "numbers": [
+      {
+       "text": "Two",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      },
+      {
+       "text": "2.5",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      }
+     ],
+     "dates": [
+      {
+       "text": "June 30, 2026",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 4,
+     "text": "KE-CWSB-567630-CW-DIR was signed on August 28, 2026 at US$2.4 million, against an Estimated Amount of US$2.6 million.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.gold.contract:1901323"
+     ],
+     "numbers": [
+      {
+       "text": "2.4",
+       "evidence_id": "strata.gold.contract:1901323"
+      },
+      {
+       "text": "2.6",
+       "evidence_id": "strata.gold.contract:1901323"
+      }
+     ],
+     "dates": [
+      {
+       "text": "August 28, 2026",
+       "evidence_id": "strata.gold.contract:1901323"
+      }
+     ],
+     "quote": null
+    }
+   ],
+   "reason": null,
+   "table": [
+    {
+     "evidence_id": "strata.gold.contract:1901323",
+     "public_from": "2026-08-28",
+     "part": "awards",
+     "reference": "KE-CWSB-567630-CW-DIR",
+     "source": {
+      "source_key": "awards",
+      "document_type": "Contract Awards in Investment Project Financing (Since FY 2020)",
+      "project_id": "P156634",
+      "document_date": "2026-08-28"
+     },
+     "fields": [
+      {
+       "key": "step_reference",
+       "value": "KE-CWSB-567630-CW-DIR",
+       "kind": "text"
+      },
+      {
+       "key": "contract_description",
+       "value": "Construction of Solar System for the Ukunda Water Supply",
+       "kind": "text"
+      },
+      {
+       "key": "signed_on",
+       "value": "2026-08-28",
+       "kind": "date"
+      },
+      {
+       "key": "supplier",
+       "value": "CHINA INTERNATIONAL WATER & ELECTRIC CORP. (CWE)",
+       "kind": "text"
+      },
+      {
+       "key": "signed_amount_usd",
+       "value": "2432125.50",
+       "kind": "usd"
+      },
+      {
+       "key": "estimated_amount_usd",
+       "value": "2600000.00",
+       "kind": "usd"
+      },
+      {
+       "key": "signed_millions",
+       "value": "2.4",
+       "kind": "millions"
+      },
+      {
+       "key": "estimated_millions",
+       "value": "2.6",
+       "kind": "millions"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.gold.contract:1902413",
+     "public_from": "2026-09-04",
+     "part": "awards",
+     "reference": "KE-CWSB-565568-GO-RFQ",
+     "source": {
+      "source_key": "awards",
+      "document_type": "Contract Awards in Investment Project Financing (Since FY 2020)",
+      "project_id": "P156634",
+      "document_date": "2026-09-04"
+     },
+     "fields": [
+      {
+       "key": "step_reference",
+       "value": "KE-CWSB-565568-GO-RFQ",
+       "kind": "text"
+      },
+      {
+       "key": "contract_description",
+       "value": "SUPPLY AND INSTALLATION OF ADDITIONAL PUMPS AT BARICHO",
+       "kind": "text"
+      },
+      {
+       "key": "signed_on",
+       "value": "2026-09-04",
+       "kind": "date"
+      },
+      {
+       "key": "supplier",
+       "value": "CHINA INTERNATIONAL WATER & ELECTRIC CORP. (CWE)",
+       "kind": "text"
+      },
+      {
+       "key": "signed_amount_usd",
+       "value": "112075.98",
+       "kind": "usd"
+      },
+      {
+       "key": "estimated_amount_usd",
+       "value": "116000.00",
+       "kind": "usd"
+      },
+      {
+       "key": "signed_millions",
+       "value": "0.1",
+       "kind": "millions"
+      },
+      {
+       "key": "estimated_millions",
+       "value": "0.1",
+       "kind": "millions"
+      }
+     ]
+    }
+   ],
+   "totals": {
+    "count": 2,
+    "signed_usd": "2544201.48",
+    "signed_millions": "2.5",
+    "isr_date": "2026-06-30",
+    "isr_sequence": 19
+   }
+  },
+  {
+   "key": "ratings",
+   "part": "ratings",
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "description": null,
+   "mark": null,
+   "state": "written",
+   "refusal": null,
+   "sentences": [
+    {
+     "index": 5,
+     "text": "ISR 19, dated June 30, 2026, rated progress towards achievement of PDO Moderately Satisfactory, as ISR 18 did.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.silver.isr_ratings:P156634/40114539/pdo",
+      "strata.silver.isr_ratings:P156634/40091292/pdo"
+     ],
+     "numbers": [
+      {
+       "text": "19",
+       "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo"
+      },
+      {
+       "text": "18",
+       "evidence_id": "strata.silver.isr_ratings:P156634/40091292/pdo"
+      }
+     ],
+     "dates": [
+      {
+       "text": "June 30, 2026",
+       "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 6,
+     "text": "ISR 19 rated overall implementation progress Moderately Satisfactory.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.silver.isr_ratings:P156634/40114539/implementation"
+     ],
+     "numbers": [
+      {
+       "text": "19",
+       "evidence_id": "strata.silver.isr_ratings:P156634/40114539/implementation"
+      }
+     ],
+     "dates": [],
+     "quote": null
+    }
+   ],
+   "reason": null,
+   "table": [
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/28621250/pdo",
+     "public_from": "2017-11-27",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2017-11-27"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 1,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2017-11-27",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/28621250/implementation",
+     "public_from": "2017-11-27",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2017-11-27"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 1,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2017-11-27",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/29938995/pdo",
+     "public_from": "2018-05-30",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2018-05-30"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 2,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2018-05-30",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/29938995/implementation",
+     "public_from": "2018-05-30",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2018-05-30"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 2,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2018-05-30",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/30657394/pdo",
+     "public_from": "2018-12-04",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2018-12-03"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 3,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2018-12-03",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/30657394/implementation",
+     "public_from": "2018-12-04",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2018-12-03"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 3,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2018-12-03",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31128142/pdo",
+     "public_from": "2019-06-05",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2019-06-04"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 4,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2019-06-04",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31128142/implementation",
+     "public_from": "2019-06-05",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2019-06-04"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 4,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2019-06-04",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31451672/pdo",
+     "public_from": "2019-10-02",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2019-10-02"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 5,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2019-10-02",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31451672/implementation",
+     "public_from": "2019-10-02",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2019-10-02"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 5,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2019-10-02",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31920934/pdo",
+     "public_from": "2020-04-01",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-04-01"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 6,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-04-01",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/31920934/implementation",
+     "public_from": "2020-04-01",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-04-01"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 6,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-04-01",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/32442111/pdo",
+     "public_from": "2020-09-28",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-09-28"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 7,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-09-28",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/32442111/implementation",
+     "public_from": "2020-09-28",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-09-28"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 7,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-09-28",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/32682225/pdo",
+     "public_from": "2020-12-17",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-12-17"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 8,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-12-17",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/32682225/implementation",
+     "public_from": "2020-12-17",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2020-12-17"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 8,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2020-12-17",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33182526/pdo",
+     "public_from": "2021-06-16",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2021-06-16"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 9,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2021-06-16",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33182526/implementation",
+     "public_from": "2021-06-16",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2021-06-16"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 9,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2021-06-16",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Unsatisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33673197/pdo",
+     "public_from": "2021-12-14",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2021-12-14"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 10,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2021-12-14",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33673197/implementation",
+     "public_from": "2021-12-14",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2021-12-14"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 10,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2021-12-14",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33879167/pdo",
+     "public_from": "2022-08-09",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2022-08-09"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 11,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2022-08-09",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33879167/implementation",
+     "public_from": "2022-08-09",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2022-08-09"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 11,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2022-08-09",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33996648/pdo",
+     "public_from": "2023-02-06",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2023-02-06"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 12,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2023-02-06",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/33996648/implementation",
+     "public_from": "2023-02-06",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2023-02-06"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 12,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2023-02-06",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34133893/pdo",
+     "public_from": "2023-08-10",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2023-08-11"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 13,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2023-08-11",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34133893/implementation",
+     "public_from": "2023-08-10",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2023-08-11"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 13,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2023-08-11",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34277278/pdo",
+     "public_from": "2024-03-08",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2024-03-08"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 14,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2024-03-08",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34277278/implementation",
+     "public_from": "2024-03-08",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2024-03-08"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 14,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2024-03-08",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34378949/pdo",
+     "public_from": "2024-08-19",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2024-08-19"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 15,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2024-08-19",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34378949/implementation",
+     "public_from": "2024-08-19",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2024-08-19"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 15,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2024-08-19",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34457596/pdo",
+     "public_from": "2025-02-18",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2025-02-18"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 16,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2025-02-18",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/34457596/implementation",
+     "public_from": "2025-02-18",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2025-02-18"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 16,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2025-02-18",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40038432/pdo",
+     "public_from": "2025-08-18",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2025-08-18"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 17,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2025-08-18",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40038432/implementation",
+     "public_from": "2025-08-18",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2025-08-18"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 17,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2025-08-18",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40091292/pdo",
+     "public_from": "2026-03-12",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-03-12"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 18,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2026-03-12",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40091292/implementation",
+     "public_from": "2026-03-12",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-03-12"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 18,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2026-03-12",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+     "public_from": "2026-06-30",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-06-30"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 19,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2026-06-30",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "pdo",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Progress towards achievement of PDO",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.silver.isr_ratings:P156634/40114539/implementation",
+     "public_from": "2026-06-30",
+     "part": "ratings",
+     "reference": "P156634",
+     "source": {
+      "source_key": "isr_ratings",
+      "document_type": "Documents & Reports: Documents API",
+      "project_id": "P156634",
+      "document_date": "2026-06-30"
+     },
+     "fields": [
+      {
+       "key": "sequence",
+       "value": 19,
+       "kind": "count"
+      },
+      {
+       "key": "isr_date",
+       "value": "2026-06-30",
+       "kind": "date"
+      },
+      {
+       "key": "rating_key",
+       "value": "implementation",
+       "kind": "key"
+      },
+      {
+       "key": "rating_name",
+       "value": "Overall Implementation Progress (IP)",
+       "kind": "text"
+      },
+      {
+       "key": "current_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      },
+      {
+       "key": "previous_rating",
+       "value": "Moderately Satisfactory",
+       "kind": "text"
+      }
+     ]
+    }
+   ],
+   "totals": {
+    "isrs": 19
+   }
+  },
+  {
+   "key": "disbursement",
+   "part": "disbursement",
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "description": null,
+   "mark": null,
+   "state": "written",
+   "refusal": null,
+   "sentences": [
+    {
+     "index": 7,
+     "text": "By September 30, 2026, IDA60300 had disbursed US$275.9 million, with US$183.98 left to disburse.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.gold.loan:P156634/IDA60300"
+     ],
+     "numbers": [
+      {
+       "text": "275.9",
+       "evidence_id": "strata.gold.loan:P156634/IDA60300"
+      },
+      {
+       "text": "183.98",
+       "evidence_id": "strata.gold.loan:P156634/IDA60300"
+      }
+     ],
+     "dates": [
+      {
+       "text": "September 30, 2026",
+       "evidence_id": "strata.gold.loan:P156634/IDA60300"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 8,
+     "text": "IDA60290 had disbursed US$17.6 million, with US$68,157.99 left to disburse and US$19.4 million canceled.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.gold.loan:P156634/IDA60290"
+     ],
+     "numbers": [
+      {
+       "text": "17.6",
+       "evidence_id": "strata.gold.loan:P156634/IDA60290"
+      },
+      {
+       "text": "68,157.99",
+       "evidence_id": "strata.gold.loan:P156634/IDA60290"
+      },
+      {
+       "text": "19.4",
+       "evidence_id": "strata.gold.loan:P156634/IDA60290"
+      }
+     ],
+     "dates": [],
+     "quote": null
+    }
+   ],
+   "reason": null,
+   "table": [
+    {
+     "evidence_id": "strata.gold.loan:P156634/IDA60290",
+     "public_from": "2026-09-30",
+     "part": "disbursement",
+     "reference": "IDA60290",
+     "source": {
+      "source_key": "loans",
+      "document_type": "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot",
+      "project_id": "P156634",
+      "document_date": "2026-09-30"
+     },
+     "fields": [
+      {
+       "key": "loan_number",
+       "value": "IDA60290",
+       "kind": "text"
+      },
+      {
+       "key": "original_principal_usd",
+       "value": "37000000.00",
+       "kind": "usd"
+      },
+      {
+       "key": "disbursed_usd",
+       "value": "17599724.38",
+       "kind": "usd"
+      },
+      {
+       "key": "undisbursed_usd",
+       "value": "68157.99",
+       "kind": "usd"
+      },
+      {
+       "key": "cancelled_usd",
+       "value": "19445255.47",
+       "kind": "usd"
+      },
+      {
+       "key": "original_principal_millions",
+       "value": "37.0",
+       "kind": "millions"
+      },
+      {
+       "key": "disbursed_millions",
+       "value": "17.6",
+       "kind": "millions"
+      },
+      {
+       "key": "undisbursed_millions",
+       "value": "0.1",
+       "kind": "millions"
+      },
+      {
+       "key": "cancelled_millions",
+       "value": "19.4",
+       "kind": "millions"
+      },
+      {
+       "key": "snapshot",
+       "value": "2026-09-30",
+       "kind": "date"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.gold.loan:P156634/IDA60300",
+     "public_from": "2026-09-30",
+     "part": "disbursement",
+     "reference": "IDA60300",
+     "source": {
+      "source_key": "loans",
+      "document_type": "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot",
+      "project_id": "P156634",
+      "document_date": "2026-09-30"
+     },
+     "fields": [
+      {
+       "key": "loan_number",
+       "value": "IDA60300",
+       "kind": "text"
+      },
+      {
+       "key": "original_principal_usd",
+       "value": "263000000.00",
+       "kind": "usd"
+      },
+      {
+       "key": "disbursed_usd",
+       "value": "275912875.34",
+       "kind": "usd"
+      },
+      {
+       "key": "undisbursed_usd",
+       "value": "183.98",
+       "kind": "usd"
+      },
+      {
+       "key": "cancelled_usd",
+       "value": "0.00",
+       "kind": "usd"
+      },
+      {
+       "key": "original_principal_millions",
+       "value": "263.0",
+       "kind": "millions"
+      },
+      {
+       "key": "disbursed_millions",
+       "value": "275.9",
+       "kind": "millions"
+      },
+      {
+       "key": "undisbursed_millions",
+       "value": "0.0",
+       "kind": "millions"
+      },
+      {
+       "key": "cancelled_millions",
+       "value": "0.0",
+       "kind": "millions"
+      },
+      {
+       "key": "snapshot",
+       "value": "2026-09-30",
+       "kind": "date"
+      }
+     ]
+    }
+   ],
+   "totals": {
+    "loans": 2,
+    "commitment_millions": "300.0",
+    "disbursed_millions": "293.5",
+    "undisbursed_millions": "0.1",
+    "canceled_millions": "19.4",
+    "available_millions": "293.6",
+    "disbursed_percent": 99,
+    "amounts_exceed_commitment": true,
+    "as_of_date": "2026-09-30"
+   }
+  },
+  {
+   "key": "closing",
+   "part": "closing",
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "description": null,
+   "mark": null,
+   "state": "written",
+   "refusal": null,
+   "sentences": [
+    {
+     "index": 9,
+     "text": "The project closes on October 31, 2026, in 8 days.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.tools.project_records:P156634@2026-10-23"
+     ],
+     "numbers": [
+      {
+       "text": "8",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      }
+     ],
+     "dates": [
+      {
+       "text": "October 31, 2026",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      }
+     ],
+     "quote": null
+    },
+    {
+     "index": 10,
+     "text": "The loan history shows the closing date moved three times, most recently in November 2025.",
+     "kind": "record",
+     "evidence_ids": [
+      "strata.tools.project_records:P156634@2026-10-23",
+      "strata.gold.project_closing_date:P156634/2025-11-30"
+     ],
+     "numbers": [
+      {
+       "text": "three",
+       "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
+      }
+     ],
+     "dates": [
+      {
+       "text": "November 2025",
+       "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30"
+      }
+     ],
+     "quote": null
+    }
+   ],
+   "reason": null,
+   "table": [
+    {
+     "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+     "public_from": "2022-11-30",
+     "part": "closing",
+     "reference": "P156634",
+     "source": {
+      "source_key": "loan_history",
+      "document_type": "IDA Statement Of Credits, Grants and Guarantees - Historical Data",
+      "project_id": "P156634",
+      "document_date": "2022-11-30"
+     },
+     "fields": [
+      {
+       "key": "closing_date",
+       "value": "2024-04-30",
+       "kind": "date"
+      },
+      {
+       "key": "previous_closing_date",
+       "value": "2022-10-31",
+       "kind": "date"
+      },
+      {
+       "key": "reported_on",
+       "value": "2022-11-30",
+       "kind": "date"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+     "public_from": "2024-04-30",
+     "part": "closing",
+     "reference": "P156634",
+     "source": {
+      "source_key": "loan_history",
+      "document_type": "IDA Statement Of Credits, Grants and Guarantees - Historical Data",
+      "project_id": "P156634",
+      "document_date": "2024-04-30"
+     },
+     "fields": [
+      {
+       "key": "closing_date",
+       "value": "2025-10-31",
+       "kind": "date"
+      },
+      {
+       "key": "previous_closing_date",
+       "value": "2024-04-30",
+       "kind": "date"
+      },
+      {
+       "key": "reported_on",
+       "value": "2024-04-30",
+       "kind": "date"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+     "public_from": "2025-11-30",
+     "part": "closing",
+     "reference": "P156634",
+     "source": {
+      "source_key": "loan_history",
+      "document_type": "IDA Statement Of Credits, Grants and Guarantees - Historical Data",
+      "project_id": "P156634",
+      "document_date": "2025-11-30"
+     },
+     "fields": [
+      {
+       "key": "closing_date",
+       "value": "2026-10-31",
+       "kind": "date"
+      },
+      {
+       "key": "previous_closing_date",
+       "value": "2025-10-31",
+       "kind": "date"
+      },
+      {
+       "key": "reported_on",
+       "value": "2025-11-30",
+       "kind": "date"
+      }
+     ]
+    }
+   ],
+   "totals": {
+    "closing_date": "2026-10-31",
+    "days_to_close": 8,
+    "months_to_close": 0,
+    "moves": 3,
+    "after_closing": 0
+   }
+  }
+ ],
+ "evidence": {
+  "strata.silver.plan_versions:40132287": {
+   "id": "strata.silver.plan_versions:40132287",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.plan_versions:40132287",
+    "public_from": "2026-10-09",
+    "part": "plans",
+    "reference": "Northern Water Works Development Agency",
+    "source": {
+     "source_key": "plans",
+     "document_type": "Documents & Reports: Documents API",
+     "project_id": "P156634",
+     "document_date": "2026-10-09"
+    },
+    "fields": [
+     {
+      "key": "implementing_agency",
+      "value": "Northern Water Works Development Agency",
+      "kind": "text"
+     },
+     {
+      "key": "agency_id",
+      "value": "northern-water-works-development-agency",
+      "kind": "key"
+     },
+     {
+      "key": "plan_date",
+      "value": "2026-10-09",
+      "kind": "date"
+     },
+     {
+      "key": "activities",
+      "value": 9,
+      "kind": "count"
+     },
+     {
+      "key": "needs_a_look",
+      "value": 1,
+      "kind": "count"
+     },
+     {
+      "key": "watch",
+      "value": 2,
+      "kind": "count"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB": {
+   "id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+   "kind": "record",
+   "tool": "check_plan",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+    "public_from": "2026-10-09",
+    "source": {
+     "document_type": "Procurement Plan",
+     "project_id": "P156634",
+     "implementing_agency": "Northern Water Works Development Agency",
+     "plan_date": "2026-10-09",
+     "document_id": "40132287",
+     "pdf_page": 3
+    },
+    "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+    "section": "WORKS",
+    "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+    "review_type": "Post",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "estimated_amount_usd": "1230000.00",
+    "actual_amount_usd": "0.00",
+    "process_status": "Pending Implementation",
+    "signed_on": null,
+    "planned_signing_on": "2026-04-24",
+    "planned_signing_plan_date": "2026-03-05",
+    "days_late": null,
+    "planned_completion_on": "2026-07-31",
+    "planned_completion_plan_date": "2026-03-05",
+    "first_listing_confirmed": false,
+    "actual_to_estimate": null,
+    "marks": [
+     {
+      "mark": "needs_a_look",
+      "reasons": [
+       {
+        "code": "completion_passed_no_contract",
+        "mark": "needs_a_look",
+        "planned_completion_on": "2026-07-31",
+        "planned_completion_plan_date": "2026-03-05",
+        "closing_date": "2026-10-31",
+        "days_to_close": 8,
+        "evidence_ids": [
+         "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+         "strata.gold.project:P156634"
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.silver.plan_versions:40122770": {
+   "id": "strata.silver.plan_versions:40122770",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.plan_versions:40122770",
+    "public_from": "2026-08-17",
+    "part": "plans",
+    "reference": "Coast Water Services Board",
+    "source": {
+     "source_key": "plans",
+     "document_type": "Documents & Reports: Documents API",
+     "project_id": "P156634",
+     "document_date": "2026-08-17"
+    },
+    "fields": [
+     {
+      "key": "implementing_agency",
+      "value": "Coast Water Services Board",
+      "kind": "text"
+     },
+     {
+      "key": "agency_id",
+      "value": "coast-water-services-board",
+      "kind": "key"
+     },
+     {
+      "key": "plan_date",
+      "value": "2026-08-17",
+      "kind": "date"
+     },
+     {
+      "key": "activities",
+      "value": 8,
+      "kind": "count"
+     },
+     {
+      "key": "needs_a_look",
+      "value": 0,
+      "kind": "count"
+     },
+     {
+      "key": "watch",
+      "value": 2,
+      "kind": "count"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.tools.project_records:P156634@2026-10-23": {
+   "id": "strata.tools.project_records:P156634@2026-10-23",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+    "public_from": "2026-10-23",
+    "source": {
+     "tool": "project_records",
+     "sources": [
+      "documents",
+      "projects",
+      "awards",
+      "ida_credits",
+      "ibrd_loans",
+      "ida_credit_history",
+      "ibrd_loan_history"
+     ]
+    },
+    "totals": {
+     "awards": {
+      "count": 2,
+      "signed_usd": "2544201.48",
+      "signed_millions": "2.5",
+      "isr_date": "2026-06-30",
+      "isr_sequence": 19
+     },
+     "plans": {
+      "agencies": 4,
+      "without_plan": 10
+     },
+     "ratings": {
+      "isrs": 19
+     },
+     "disbursement": {
+      "loans": 2,
+      "commitment_millions": "300.0",
+      "disbursed_millions": "293.5",
+      "undisbursed_millions": "0.1",
+      "canceled_millions": "19.4",
+      "available_millions": "293.6",
+      "disbursed_percent": 99,
+      "amounts_exceed_commitment": true,
+      "as_of_date": "2026-09-30"
+     },
+     "closing": {
+      "closing_date": "2026-10-31",
+      "days_to_close": 8,
+      "months_to_close": 0,
+      "moves": 3,
+      "after_closing": 0
+     }
+    }
+   },
+   "highlights": []
+  },
+  "strata.gold.contract:1901323": {
+   "id": "strata.gold.contract:1901323",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.contract:1901323",
+    "public_from": "2026-08-28",
+    "part": "awards",
+    "reference": "KE-CWSB-567630-CW-DIR",
+    "source": {
+     "source_key": "awards",
+     "document_type": "Contract Awards in Investment Project Financing (Since FY 2020)",
+     "project_id": "P156634",
+     "document_date": "2026-08-28"
+    },
+    "fields": [
+     {
+      "key": "step_reference",
+      "value": "KE-CWSB-567630-CW-DIR",
+      "kind": "text"
+     },
+     {
+      "key": "contract_description",
+      "value": "Construction of Solar System for the Ukunda Water Supply",
+      "kind": "text"
+     },
+     {
+      "key": "signed_on",
+      "value": "2026-08-28",
+      "kind": "date"
+     },
+     {
+      "key": "supplier",
+      "value": "CHINA INTERNATIONAL WATER & ELECTRIC CORP. (CWE)",
+      "kind": "text"
+     },
+     {
+      "key": "signed_amount_usd",
+      "value": "2432125.50",
+      "kind": "usd"
+     },
+     {
+      "key": "estimated_amount_usd",
+      "value": "2600000.00",
+      "kind": "usd"
+     },
+     {
+      "key": "signed_millions",
+      "value": "2.4",
+      "kind": "millions"
+     },
+     {
+      "key": "estimated_millions",
+      "value": "2.6",
+      "kind": "millions"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.silver.isr_ratings:P156634/40114539/pdo": {
+   "id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+    "public_from": "2026-06-30",
+    "part": "ratings",
+    "reference": "P156634",
+    "source": {
+     "source_key": "isr_ratings",
+     "document_type": "Documents & Reports: Documents API",
+     "project_id": "P156634",
+     "document_date": "2026-06-30"
+    },
+    "fields": [
+     {
+      "key": "sequence",
+      "value": 19,
+      "kind": "count"
+     },
+     {
+      "key": "isr_date",
+      "value": "2026-06-30",
+      "kind": "date"
+     },
+     {
+      "key": "rating_key",
+      "value": "pdo",
+      "kind": "key"
+     },
+     {
+      "key": "rating_name",
+      "value": "Progress towards achievement of PDO",
+      "kind": "text"
+     },
+     {
+      "key": "current_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     },
+     {
+      "key": "previous_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.silver.isr_ratings:P156634/40091292/pdo": {
+   "id": "strata.silver.isr_ratings:P156634/40091292/pdo",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.isr_ratings:P156634/40091292/pdo",
+    "public_from": "2026-03-12",
+    "part": "ratings",
+    "reference": "P156634",
+    "source": {
+     "source_key": "isr_ratings",
+     "document_type": "Documents & Reports: Documents API",
+     "project_id": "P156634",
+     "document_date": "2026-03-12"
+    },
+    "fields": [
+     {
+      "key": "sequence",
+      "value": 18,
+      "kind": "count"
+     },
+     {
+      "key": "isr_date",
+      "value": "2026-03-12",
+      "kind": "date"
+     },
+     {
+      "key": "rating_key",
+      "value": "pdo",
+      "kind": "key"
+     },
+     {
+      "key": "rating_name",
+      "value": "Progress towards achievement of PDO",
+      "kind": "text"
+     },
+     {
+      "key": "current_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     },
+     {
+      "key": "previous_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.silver.isr_ratings:P156634/40114539/implementation": {
+   "id": "strata.silver.isr_ratings:P156634/40114539/implementation",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.silver.isr_ratings:P156634/40114539/implementation",
+    "public_from": "2026-06-30",
+    "part": "ratings",
+    "reference": "P156634",
+    "source": {
+     "source_key": "isr_ratings",
+     "document_type": "Documents & Reports: Documents API",
+     "project_id": "P156634",
+     "document_date": "2026-06-30"
+    },
+    "fields": [
+     {
+      "key": "sequence",
+      "value": 19,
+      "kind": "count"
+     },
+     {
+      "key": "isr_date",
+      "value": "2026-06-30",
+      "kind": "date"
+     },
+     {
+      "key": "rating_key",
+      "value": "implementation",
+      "kind": "key"
+     },
+     {
+      "key": "rating_name",
+      "value": "Overall Implementation Progress (IP)",
+      "kind": "text"
+     },
+     {
+      "key": "current_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     },
+     {
+      "key": "previous_rating",
+      "value": "Moderately Satisfactory",
+      "kind": "text"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.gold.loan:P156634/IDA60300": {
+   "id": "strata.gold.loan:P156634/IDA60300",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.loan:P156634/IDA60300",
+    "public_from": "2026-09-30",
+    "part": "disbursement",
+    "reference": "IDA60300",
+    "source": {
+     "source_key": "loans",
+     "document_type": "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot",
+     "project_id": "P156634",
+     "document_date": "2026-09-30"
+    },
+    "fields": [
+     {
+      "key": "loan_number",
+      "value": "IDA60300",
+      "kind": "text"
+     },
+     {
+      "key": "original_principal_usd",
+      "value": "263000000.00",
+      "kind": "usd"
+     },
+     {
+      "key": "disbursed_usd",
+      "value": "275912875.34",
+      "kind": "usd"
+     },
+     {
+      "key": "undisbursed_usd",
+      "value": "183.98",
+      "kind": "usd"
+     },
+     {
+      "key": "cancelled_usd",
+      "value": "0.00",
+      "kind": "usd"
+     },
+     {
+      "key": "original_principal_millions",
+      "value": "263.0",
+      "kind": "millions"
+     },
+     {
+      "key": "disbursed_millions",
+      "value": "275.9",
+      "kind": "millions"
+     },
+     {
+      "key": "undisbursed_millions",
+      "value": "0.0",
+      "kind": "millions"
+     },
+     {
+      "key": "cancelled_millions",
+      "value": "0.0",
+      "kind": "millions"
+     },
+     {
+      "key": "snapshot",
+      "value": "2026-09-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.gold.loan:P156634/IDA60290": {
+   "id": "strata.gold.loan:P156634/IDA60290",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.loan:P156634/IDA60290",
+    "public_from": "2026-09-30",
+    "part": "disbursement",
+    "reference": "IDA60290",
+    "source": {
+     "source_key": "loans",
+     "document_type": "IDA Statement of Credits, Grants and Guarantees - Latest Available Snapshot",
+     "project_id": "P156634",
+     "document_date": "2026-09-30"
+    },
+    "fields": [
+     {
+      "key": "loan_number",
+      "value": "IDA60290",
+      "kind": "text"
+     },
+     {
+      "key": "original_principal_usd",
+      "value": "37000000.00",
+      "kind": "usd"
+     },
+     {
+      "key": "disbursed_usd",
+      "value": "17599724.38",
+      "kind": "usd"
+     },
+     {
+      "key": "undisbursed_usd",
+      "value": "68157.99",
+      "kind": "usd"
+     },
+     {
+      "key": "cancelled_usd",
+      "value": "19445255.47",
+      "kind": "usd"
+     },
+     {
+      "key": "original_principal_millions",
+      "value": "37.0",
+      "kind": "millions"
+     },
+     {
+      "key": "disbursed_millions",
+      "value": "17.6",
+      "kind": "millions"
+     },
+     {
+      "key": "undisbursed_millions",
+      "value": "0.1",
+      "kind": "millions"
+     },
+     {
+      "key": "cancelled_millions",
+      "value": "19.4",
+      "kind": "millions"
+     },
+     {
+      "key": "snapshot",
+      "value": "2026-09-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  "strata.gold.project_closing_date:P156634/2025-11-30": {
+   "id": "strata.gold.project_closing_date:P156634/2025-11-30",
+   "kind": "record",
+   "tool": "project_records",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+    "public_from": "2025-11-30",
+    "part": "closing",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "document_type": "IDA Statement Of Credits, Grants and Guarantees - Historical Data",
+     "project_id": "P156634",
+     "document_date": "2025-11-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2026-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2025-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2025-11-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  }
+ },
+ "checks": {
+  "checks_run": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "sentences": {
+   "written": 11,
+   "kept": 11,
+   "removed": 0
+  },
+  "numbers": {
+   "total": 16,
+   "matched": 16
+  },
+  "dates": {
+   "total": 9,
+   "matched": 9
+  },
+  "quotes": {
+   "total": 0,
+   "found": 0
+  },
+  "sources": {
+   "total": 11,
+   "returned": 11
+  },
+  "checked": {
+   "total": 25,
+   "matched": 25
+  },
+  "shown": {
+   "numbers": {
+    "total": 16,
+    "matched": 16
+   },
+   "dates": {
+    "total": 9,
+    "matched": 9
+   },
+   "quotes": {
+    "total": 0,
+    "found": 0
+   },
+   "judged": 0,
+   "proven": 11
+  },
+  "judge": {
+   "called": false,
+   "responded": null,
+   "judged": 0,
+   "followed": 0,
+   "unjudged": 0,
+   "proven": 11
+  },
+  "advice": {
+   "total": 0,
+   "cited": 0
+  },
+  "disagreements": {
+   "disputed": 0,
+   "shown": 0,
+   "attached": 0,
+   "unasked": 0,
+   "warned": 0
+  },
+  "cited_tools": [
+   "check_plan",
+   "project_records"
+  ],
+  "tools": [
+   "project_records"
+  ],
+  "cited_only": []
+ },
+ "checks_count": 6,
+ "removed": [],
+ "sources": [
+  {
+   "evidence_id": "strata.silver.plan_versions:40132287",
+   "number": 1,
+   "cited_in": [
+    "plans"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+   "number": 2,
+   "cited_in": [
+    "plans"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.silver.plan_versions:40122770",
+   "number": 3,
+   "cited_in": [
+    "plans"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
+   "number": 4,
+   "cited_in": [
+    "awards",
+    "closing"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.gold.contract:1901323",
+   "number": 5,
+   "cited_in": [
+    "awards"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+   "number": 6,
+   "cited_in": [
+    "ratings"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.silver.isr_ratings:P156634/40091292/pdo",
+   "number": 7,
+   "cited_in": [
+    "ratings"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.silver.isr_ratings:P156634/40114539/implementation",
+   "number": 8,
+   "cited_in": [
+    "ratings"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.gold.loan:P156634/IDA60300",
+   "number": 9,
+   "cited_in": [
+    "disbursement"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.gold.loan:P156634/IDA60290",
+   "number": 10,
+   "cited_in": [
+    "disbursement"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  },
+  {
+   "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+   "number": 11,
+   "cited_in": [
+    "closing"
+   ],
+   "opened": false,
+   "last_opened_at": null
+  }
+ ],
+ "citations": 13,
+ "opened": {
+  "count": 0,
+  "of": 11
+ },
+ "layout": {
+  "columns": [
+   "plans",
+   "awards",
+   "ratings",
+   "disbursement",
+   "closing"
+  ],
+  "export": "word",
+  "sources_list": true,
+  "removed_box": "always",
+  "not_checked": [
+   "writer_mission_brief"
+  ]
+ },
+ "holds": [],
+ "may_act": false,
+ "export": {
+  "export_id": "draft-0001-export-20261023140400",
+  "exported_at": "2026-10-23T14:04:00Z",
+  "by": "Ana Example",
+  "you": true,
+  "footnotes": 13,
+  "sources": 11,
+  "opened": 0,
+  "disagreements": 0,
+  "files": [
+   {
+    "name": "mission-brief-P156634-2026-10-23-evidence-pack.csv",
+    "media_type": "text/csv",
+    "size": 1599
+   },
+   {
+    "name": "mission-brief-P156634-2026-10-23-evidence-pack.pdf",
+    "media_type": "application/pdf",
+    "size": 24843
+   },
+   {
+    "name": "mission-brief-P156634-2026-10-23.docx",
+    "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "size": 6496
+   }
+  ],
+  "files_available": true
+ },
+ "writer": {
+  "agent": "strata-mission-brief-writer",
+  "version": null,
+  "run_id": "run-0001"
+ }
+}

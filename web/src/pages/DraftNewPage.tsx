@@ -25,6 +25,9 @@ import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { DocumentColumn, DraftCrumbs, DraftHeader, subtitleOf } from "./DraftPage";
+import { FOLLOWING_HREF } from "../lib/following";
+import { IdText } from "../components/ProjectId";
+import { SkeletonText } from "../components/Skeleton";
 
 const words = copy.draft;
 type KindWords = (typeof copy.draft.kinds)[keyof typeof copy.draft.kinds];
@@ -37,7 +40,7 @@ function stepsOf(current: Writing, kind: KindWords): Step[] {
   const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
   const count = by.write?.count ?? 0;
   const lines: Step[] = [
-    { key: "read", running: s.read.running, done: s.read.done(formatDate(by.read?.plan_date ?? current.request.plan_date)), state: by.read?.status ?? "running" },
+    { key: "read", running: s.read.running, done: s.read.done(formatDate(by.read?.plan_date ?? current.request.plan_date ?? "")), state: by.read?.status ?? "running" },
   ];
   if (by.write) {
     lines.push({
@@ -77,9 +80,11 @@ export function DraftNewPage({ search }: { search: string }) {
   const pid = params.get("pid");
   const agency = params.get("agency");
   const version = params.get("version");
-  const planHref = pid && agency ? `/projects/${pid}/procurement/${agency}${version ? `/${version}` : ""}` : null;
-  const matches = current !== null && current.request.project_id === pid && current.request.agency_id === agency &&
-    current.request.plan_date === version;
+  // A mission brief (ticket 37) is started from Following, and goes back there.
+  const brief = params.get("kind") === "mission_brief";
+  const planHref = brief ? FOLLOWING_HREF : pid && agency ? `/projects/${pid}/procurement/${agency}${version ? `/${version}` : ""}` : null;
+  const matches = current !== null && current.request.project_id === pid &&
+    (brief ? current.request.kind === "mission_brief" : current.request.agency_id === agency && current.request.plan_date === version);
   if (!current || !matches) {
     return (
       <DocumentColumn>
@@ -89,13 +94,14 @@ export function DraftNewPage({ search }: { search: string }) {
           </h1>
           <EmptyState
             title={words.writing.reloadTitle}
-            body={words.writing.reloadBody}
-            link={planHref ? { href: planHref, text: words.writing.backToPlan } : { href: "/drafts", text: words.writing.reloadLink }}
+            body={brief ? copy.mission.reloadBody : words.writing.reloadBody}
+            link={planHref ? { href: planHref, text: brief ? copy.mission.backToFollowing : words.writing.backToPlan } : { href: "/drafts", text: words.writing.reloadLink }}
           />
         </div>
       </DocumentColumn>
     );
   }
+  if (brief) return <WritingBriefPage current={current} />;
   return <WritingPage current={current} planHref={planHref!} />;
 }
 
@@ -104,8 +110,8 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
   const ledeId = useId();
   const [stillWorking, setStillWorking] = useState(false);
   const opening = useRef(false);
-  const plan = current.plan.plan!;
-  const project = current.plan.project!;
+  const plan = current.plan!.plan!;
+  const project = current.plan!.project!;
 
   useEffect(() => {
     setPageTitle(kind.pageTitle(plan.implementing_agency, short(plan.plan_date)));
@@ -253,6 +259,169 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
               />
             </div>
           </>
+        )}
+      </div>
+    </DocumentColumn>
+  );
+}
+
+// Writing a mission brief (ticket 37; the 37 brief, section 7.1): the header with the state slot and Stop writing,
+// the steps, and the five part headings as real text, each with two sentence bars and a table's place, until the
+// draft is saved and this page becomes its page in place. "Stop writing" goes back to Following, which says
+// nothing was saved.
+const PARTS = ["plans", "awards", "ratings", "disbursement", "closing"];
+
+function briefSteps(current: Writing): Step[] {
+  const s = copy.draft.kinds.mission_brief.steps;
+  const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
+  const read = by.read ?? {};
+  const counted = (n: number | undefined) => [n ?? 0, formatCount(n ?? 0)] as const;
+  const lines: Step[] = [{
+    key: "read",
+    running: s.read.running,
+    done: s.read.counted(...counted(read.plans), ...counted(read.awards), ...counted(read.isrs)),
+    state: by.read?.status ?? "running",
+  }];
+  if (by.write) {
+    lines.push({
+      key: "write",
+      running: s.write.running(0, ""),
+      state: by.write.status,
+      done: s.write.done(by.write.sentences ?? 0, formatCount(by.write.sentences ?? 0), 0, ""),
+    });
+  }
+  if (by.check) {
+    const checks = by.check.checks ?? 0;
+    lines.push({
+      key: "check",
+      running: words.writing.checkRunning,
+      state: by.check.status,
+      done: words.writing.checkDone(formatCount(checks), by.check.written ?? 0, formatCount(by.check.written ?? 0), by.check.removed ?? 0,
+        formatCount(by.check.removed ?? 0)),
+    });
+  }
+  if (by.save) lines.push({ key: "save", running: s.save.running, done: s.save.done, state: by.save.status });
+  return lines;
+}
+
+function WritingBriefPage({ current }: { current: Writing }) {
+  const kind = copy.draft.kinds.mission_brief;
+  const project = current.project!;
+  const [stillWorking, setStillWorking] = useState(false);
+  const opening = useRef(false);
+
+  useEffect(() => {
+    setPageTitle(kind.pageTitle(project.project_name, project.project_id));
+    draftScope.set(project.project_id);
+    return () => draftScope.set(null);
+  }, [project]);
+
+  useEffect(() => {
+    if (current.phase !== "writing") {
+      setStillWorking(false);
+      return;
+    }
+    const timer = setInterval(() => setStillWorking(Date.now() - current.lastEventAt > STILL_WORKING_MS), 1000);
+    return () => clearInterval(timer);
+  }, [current.phase, current.lastEventAt]);
+
+  useEffect(() => {
+    if (current.phase !== "done" || !current.draftId || opening.current) return;
+    opening.current = true;
+    const id = current.draftId;
+    getJson<Draft>(`/api/drafts/${encodeURIComponent(id)}`).then(
+      (draft) => {
+        preloaded.set((all) => ({ ...all, [id]: draft }));
+        navigate(`/drafts/${encodeURIComponent(id)}`, { replace: true, quiet: true });
+      },
+      () => navigate(`/drafts/${encodeURIComponent(id)}`, { replace: true, quiet: true }),
+    );
+  }, [current.phase, current.draftId]);
+
+  const stop = () => {
+    stopWriting();
+    stopped.set(FOLLOWING_HREF);
+    window.history.back();
+  };
+  const tryAgain = () => startWriting({ ...current.request, idempotency_key: newKey() }, null, [], project);
+  const failed = current.phase === "failed" || current.phase === "dropped";
+  const message = current.phase === "dropped" ? kind.writeErrors.dropped : kind.writeErrors[current.error ?? "internal"] ?? kind.writeErrors.internal;
+  const retry = current.error !== "permission" && current.error !== "no_agent";
+  const steps = briefSteps(current);
+  return (
+    <DocumentColumn>
+      <div data-draft-new={current.phase} aria-busy={current.phase === "writing"}>
+        <DraftCrumbs pid={project.project_id} name={project.project_name} last={kind.title} />
+        <DraftHeader
+          className="mt-4"
+          title={kind.title}
+          subtitle={<Fill template={kind.subtitle} slots={{ name: project.project_name, pid: <IdText id={project.project_id} />, country: project.country ?? "" }} />}
+          state={
+            current.phase === "writing" && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-small text-ink">{words.writing.state}</p>
+                <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
+                  {words.writing.stop}
+                </Button>
+              </div>
+            )
+          }
+        />
+        <div className="mt-6">
+          <Steps
+            steps={failed ? steps.filter((step) => step.state === "done") : steps}
+            stillWorking={stillWorking}
+            reserveLines={failed || current.phase === "nothing" ? 0 : 4}
+            rail={!failed && current.phase !== "nothing"}
+          />
+        </div>
+        {current.phase === "nothing" ? (
+          <div className="mt-6 max-w-prose" data-nothing-survived>
+            <h2 tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+              {kind.nothingTitle}
+            </h2>
+            <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
+            <div className="mt-4">
+              <RemovedBox removed={removedItems(current, kind)} all />
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <Button variant="secondary" onClick={tryAgain}>
+                {words.writing.tryAgain}
+              </Button>
+              <TextLink href={FOLLOWING_HREF}>{copy.mission.backToFollowing}</TextLink>
+            </div>
+          </div>
+        ) : failed ? (
+          <div className="mt-6 max-w-prose" data-write-error={current.error ?? current.phase}>
+            <Alert
+              state="error"
+              live="alert"
+              action={
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  {retry && (
+                    <Button variant="secondary" onClick={tryAgain}>
+                      {words.writing.tryAgain}
+                    </Button>
+                  )}
+                  <TextLink href={FOLLOWING_HREF}>{copy.mission.backToFollowing}</TextLink>
+                </div>
+              }
+            >
+              {message}
+            </Alert>
+          </div>
+        ) : (
+          <section aria-label={copy.mission.writingParts} className="mt-8 flex flex-col gap-12" data-brief-parts="writing">
+            {PARTS.map((part) => (
+              <div key={part}>
+                <h3 className="text-title text-ink-heading">{copy.mission.parts[part]}</h3>
+                <div aria-hidden="true" className="mt-2">
+                  <SkeletonText className="text-body" widths={["w-full", "w-[70%]"]} />
+                  <Skeleton className="mt-4 h-16 w-full" />
+                </div>
+              </div>
+            ))}
+          </section>
         )}
       </div>
     </DocumentColumn>

@@ -32,6 +32,8 @@
 #   not_checked    its own "Not checked" clauses, keys of copy.checkLine.notCheckedClauses, which follow
 #                  the clauses of the checks that did not run and of the tools its writer read
 #   files          the stem of its files' names, filled from the draft's subject
+#   staff_only     true when only viewers with the World Bank staff role (config/roles.toml [staff]) may start
+#                  one; others get 403 not_staff. Leave it out for false.
 #
 # [holds.<key>]
 #   test           the function that says whether the hold applies to a draft in a view, as module:function
@@ -51,6 +53,23 @@ sources_list = true
 removed_box = "always"
 not_checked = ["writer_review_notes"]
 files = "review-notes-{project_id}-{agency_id}-{plan_date}"
+
+# The write-the-mission-brief workflow (ticket 37): a task team leader's brief before a mission, started from a
+# Following row. Five parts, in the ticket's order, each with cited sentences and a table of the records they
+# rest on (project_records); its page and Word file show them as headed parts, not a two-column table.
+[kinds.mission_brief]
+writer = "strata.drafts.mission_brief"
+agent = "mission_brief_writer"
+word = "strata.drafts.mission_brief:word"
+export = "word"
+csv = []
+columns = ["plans", "awards", "ratings", "disbursement", "closing"]
+holds = ["notChecked", "preview"]
+sources_list = true
+removed_box = "always"
+not_checked = ["writer_mission_brief"]
+files = "mission-brief-{project_id}-{date}"
+staff_only = true
 
 [holds.notChecked]
 test = "strata.drafts.holds:not_checked"

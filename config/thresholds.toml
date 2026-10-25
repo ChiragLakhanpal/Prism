@@ -191,9 +191,70 @@ cause_still_open_share = 0.25
 # ("subgroups included") and the 26 design brief, section 6.4, which names the key.
 min_subgroup = 20
 
-# Signals on followed projects: late direct selection, closing-date moves, rating downgrades,
-# disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).
+# Signals on followed projects (ticket 37): project_signals (src/strata/tools/project_signals.py) runs
+# seven fixed checks on a project's public records and returns the values it used, and the Following page
+# fills its column header, its definitions and each check's "What sets it off" sentence from them, so no
+# screen writes one of these numbers itself. One signal is one check that fired: a check that fired on
+# three activities is one signal with a count (the 37 design brief, section 2.1). Two checks reuse the plan
+# check's own thresholds rather than a copy (CLAUDE.md rule 4): an activity past its planned completion
+# with no signed contract is check_plan's completion_passed_no_contract reason, and an amount far above its
+# estimate is its signed_over_estimate or signed_late_over_estimate reason, at
+# [plan_check].actual_to_estimate_ratio. Source: the ticket, the blueprint's Following wireframe and
+# "Signals, not scores"; each value is a starting value for the owner to confirm.
 [signals]
+# Needs a look: at least this many signals, or one strong one. Watch: at least one signal and fewer
+# than this many, none strong. The Status column header names this number in words.
+look_min = 3
+# The checks that are strong whenever they fire, by key. None is, so far: a single check makes a
+# project worth watching, and only many activities on one check make it strong (strong_from below).
+strong = []
+# The plan checks read each implementing agency's latest Procurement Plan only when it is dated within
+# this many months before the as-of date. An agency whose latest plan is older has stopped publishing
+# for this project, and its plan's dates have long passed, so the checks would only repeat old news.
+# On the fixture, the Kilifi - Mariakani plan of March 19, 2025 and the Ministry of Water and
+# Irrigation's plan of April 30, 2020 fall outside it (a parked decision, ticket 37).
+plan_months = 12
+# The three plan checks: an activity past its planned completion with no signed contract, a contract
+# signed far above its estimate, and a direct-selection activity added late. A check that fired on
+# strong_from activities or more is strong.
+completion_passed_strong_from = 3
+above_estimate_strong_from = 3
+# A direct-selection activity is late when it is estimated at late_direct_min_usd or more, and the plan
+# that first lists it was published late_direct_months or fewer months before the closing date, and the
+# same agency's previous plan was read and does not list it. The last rule keeps out an activity that
+# looks new only because its agency's earliest plan is the first one read (the 08 review, round 2: no
+# first listing on the fixture is confirmed).
+late_direct_methods = ["Direct Selection"]
+late_direct_min_usd = 1_000_000
+late_direct_months = 12
+late_direct_strong_from = 3
+# Closing date moved: the loan history shows the closing date moved at least this many times, counted
+# per project, so two credits that move together count once.
+closing_moves_min = 2
+# Restructured: an ISR's restructuring history lists a restructuring of one of these levels approved in
+# the last restructured_months months. Level 2 restructurings, which include closing-date extensions,
+# are left out: the closing date check already counts those moves, and the rest are routine (a parked
+# decision, ticket 37). No structured record holds restructurings, so the check reads the latest ISR.
+restructured_levels = [1]
+restructured_months = 12
+# ISR rating lowered: the latest ISR rated progress towards the development objective or overall
+# implementation progress lower than the ISR before it. The ratings from best to worst, as ISRs write
+# them. Source: the ISR template's six-point scale.
+isr_rating_scale = ["Highly Satisfactory", "Satisfactory", "Moderately Satisfactory", "Moderately Unsatisfactory",
+                    "Unsatisfactory", "Highly Unsatisfactory"]
+# Slow disbursement: less than this share of the money committed and not canceled was paid out (disbursed
+# divided by disbursed plus undisbursed, so a credit committed in another currency is measured against
+# itself), with disbursement_months or fewer months left before the closing date.
+disbursement_max_share = 0.5
+disbursement_months = 12
+# The track record (the replay harness's signals_track_record scorer, strata.estimates.signals_track):
+# the checks are replayed as they would have run on each of these dates, and a project counts as having
+# later extended its closing date when the loan history shows it moved later within
+# track_record_window_months after that date. Below track_record_min projects, a count stays a count
+# and the page says it is too few to read as a rate (DESIGN.md section 7, rules 6 and 15).
+track_record_dates = [2023-06-30, 2024-06-30, 2025-06-30]
+track_record_window_months = 12
+track_record_min = 20
 
 # The review thresholds that compute review type (ticket 15). The package workspace computes a planned
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a

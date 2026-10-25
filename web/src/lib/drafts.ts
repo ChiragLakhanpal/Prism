@@ -19,6 +19,22 @@ export type DraftNote = {
   state: "written" | "abstained" | "refused";
   refusal: string | null;
   sentences: SentenceEvent[];
+  // A mission brief's part (ticket 37): why it has no records, the records its table shows, and its totals.
+  part?: string;
+  reason?: string | null;
+  table?: BriefRecord[];
+  totals?: Record<string, any> | null;
+  agencies_without_plans?: string[];
+};
+
+// One record behind a mission brief's part (project_records): its fields by key, as the evidence drawer shows it.
+export type BriefRecord = {
+  evidence_id: string;
+  public_from: string;
+  part: string;
+  reference: string;
+  source: { source_key: string; document_type: string; project_id: string; document_date: string | null };
+  fields: { key: string; value: any; kind: string }[];
 };
 
 export type DraftSource = {
@@ -38,12 +54,20 @@ export type DraftSubject = {
   document_id: string;
   pdf_url: string | null;
   signal: number;
+  // A mission brief's (ticket 37).
+  country?: string | null;
+  as_of?: string;
+  // The data-freshness day the brief's records run through.
+  data_through?: string | null;
+  isr_date?: string | null;
+  isr_sequence?: number | null;
+  closing_date?: string | null;
 };
 
 export type DraftFile = { name: string; media_type: string; size: number };
 
 // The kinds of draft (config/drafts.toml); each has its words under copy.draft.kinds.<kind>.
-export type DraftKind = "review_notes";
+export type DraftKind = "review_notes" | "mission_brief";
 
 export type Draft = {
   draft_id: string;
@@ -150,6 +174,10 @@ export type WriteStep = {
   id: "read" | "write" | "check" | "save";
   status: "running" | "done";
   plan_date?: string;
+  // What a mission brief's read step read (ticket 37).
+  plans?: number;
+  awards?: number;
+  isrs?: number;
   count?: number;
   notes?: number;
   sentences?: number;
@@ -161,10 +189,13 @@ export type WriteStep = {
 
 // A draft being written: what Check a plan handed over, and the stream's events so far.
 export type Writing = {
-  request: { kind: DraftKind; project_id: string; agency_id: string; plan_date: string; idempotency_key: string };
-  // The plan check the client held when the person asked, for the activity cells that show at once.
-  plan: CheckPlanResult;
+  // A mission brief (ticket 37) names only its project.
+  request: { kind: DraftKind; project_id: string; agency_id?: string; plan_date?: string; idempotency_key: string };
+  // The plan check the client held when the person asked, for the activity cells that show at once; none for a
+  // mission brief, which shows its project and its five part headings instead.
+  plan: CheckPlanResult | null;
   rows: Activity[];
+  project?: { project_id: string; project_name: string; country: string | null };
   phase: "writing" | "done" | "nothing" | "failed" | "dropped";
   steps: WriteStep[];
   draftId: string | null;
@@ -214,13 +245,20 @@ function withEvent(current: Writing, type: string, data: any): Writing {
 
 // Start writing: one request with one idempotency key, so a double click or React's StrictMode never
 // starts two writers. A writing already started for the same key is left alone.
-export function startWriting(request: Writing["request"], plan: CheckPlanResult, rows: Activity[]) {
+export function startWriting(request: Writing["request"], plan: CheckPlanResult | null, rows: Activity[], project?: Writing["project"]) {
   const current = writing.get();
   if (current && current.request.idempotency_key === request.idempotency_key && current.phase === "writing") return;
   stopping?.abort();
   stopping = new AbortController();
-  writing.set({ request, plan, rows, phase: "writing", steps: [], draftId: null, removed: [], checks: null, error: null, reference: null, lastEventAt: Date.now() });
+  writing.set({ request, plan, rows, project, phase: "writing", steps: [], draftId: null, removed: [], checks: null, error: null, reference: null, lastEventAt: Date.now() });
   void run(request, stopping.signal);
+}
+
+// "Add to mission brief" on a Following row (ticket 37): start the writer for the project, and the writing page's
+// address. One key per press, so a double click never starts two writers.
+export function startMissionBrief(project: NonNullable<Writing["project"]>): string {
+  startWriting({ kind: "mission_brief", project_id: project.project_id, idempotency_key: newKey() }, null, [], project);
+  return `/drafts/new?${new URLSearchParams({ kind: "mission_brief", pid: project.project_id }).toString()}`;
 }
 
 async function run(request: Writing["request"], signal: AbortSignal) {

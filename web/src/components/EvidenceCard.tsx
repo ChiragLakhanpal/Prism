@@ -4,6 +4,7 @@
 // excerpt), with the matching words highlighted, and the source line. It
 // holds no links or buttons, so a keyboard never has to enter it; a click on the marker opens the
 // whole paragraph in the evidence drawer.
+import type { ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource, summarySourceKey } from "../lib/sources";
@@ -45,6 +46,8 @@ export function sourceTitle(evidence: EvidenceEvent) {
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {
+    const named = briefRecordTitle(evidence);
+    if (named) return named;
     const text = recordReference(evidence);
     // A project's own ID is a link to its page (ticket 21's ProjectId rule).
     const reference = /^P\d{6}$/.test(text) ? <ProjectId pid={text} /> : <span className="inline-block max-w-full wrap-anywhere font-mono">{text}</span>;
@@ -71,6 +74,26 @@ export function sourceTitle(evidence: EvidenceEvent) {
   ) : (
     <Fill template={copy.evidence.titleSection} slots={{ project: fields.project, section: place.text }} />
   );
+}
+
+// A mission brief's records that a kind and a key would name badly (ticket 37): the totals record ("Record
+// P156634@2026-10-23"), an agency's latest plan (an agency name is no key) and an ISR rating, of which a brief cites
+// several for one project. Null for any other record.
+function briefRecordTitle(evidence: EvidenceEvent): ReactNode | null {
+  const table = evidence.id.split(":")[0];
+  const row = evidence.row;
+  const field = (key: string) => (Array.isArray(row.fields) ? row.fields : []).find((one: { key: string }) => one.key === key)?.value;
+  if (table === "strata.tools.project_records") {
+    const pid = String(evidence.id.split(":")[1] ?? "").split("@")[0];
+    return <Fill template={copy.evidence.totalsTitle} slots={{ pid: <ProjectId pid={pid} /> }} />;
+  }
+  if (table === "strata.silver.plan_versions" && field("implementing_agency")) {
+    return <Fill template={copy.evidence.planVersionTitle} slots={{ agency: String(field("implementing_agency")) }} />;
+  }
+  if (table === "strata.silver.isr_ratings" && field("sequence") !== undefined && field("rating_name")) {
+    return <Fill template={copy.evidence.isrRatingTitle} slots={{ n: String(field("sequence")), rating: String(field("rating_name")) }} />;
+  }
+  return null;
 }
 
 // A record's source line, the same in the evidence card and the drawer (the 14 brief, section 5.11):
@@ -100,6 +123,15 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
     return (
       <Source className={className}>
         <Fill template={words.summaryRecordSources[key]} slots={{ date: source.date ? <Num date={source.date} /> : "" }} />
+      </Source>
+    );
+  }
+  // A tool's totals record, such as a mission brief's (ticket 37): "Strata's totals of the records above, as of ...".
+  const tool = (evidence.row.source ?? {}) as Record<string, unknown>;
+  if (typeof tool.tool === "string") {
+    return (
+      <Source className={className}>
+        <Fill template={words.toolSource} slots={{ date: evidence.row.public_from ? <Num date={String(evidence.row.public_from)} /> : "" }} />
       </Source>
     );
   }

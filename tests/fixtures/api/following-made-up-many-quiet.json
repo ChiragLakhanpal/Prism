@@ -1,0 +1,1493 @@
+{
+ "made_up": "Made up from following-p156634.json: ten quiet projects, for the fold only.",
+ "as_of": "2026-10-22",
+ "checked_on": "2026-10-22",
+ "past": false,
+ "data_through": "2026-10-22",
+ "projects": [
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2026-10-31",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "needs_a_look",
+   "rows": [
+    {
+     "evidence_id": "strata.tools.project_signals:P156634/completion_passed@2026-10-22",
+     "public_from": "2026-10-09",
+     "source": {
+      "source_key": "plans",
+      "project_id": "P156634",
+      "document_id": "40132287",
+      "date": "2026-10-09",
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+     },
+     "check": "completion_passed",
+     "strong": false,
+     "count": 1,
+     "values": {},
+     "items": [
+      {
+       "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+       "public_from": "2026-10-09",
+       "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+       },
+       "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+       "section": "WORKS",
+       "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+       "review_type": "Post",
+       "method": "Request for Bids",
+       "market_approach": "Open - National",
+       "estimated_amount_usd": "1230000.00",
+       "actual_amount_usd": "0.00",
+       "process_status": "Pending Implementation",
+       "signed_on": null,
+       "planned_signing_on": "2026-04-24",
+       "planned_signing_plan_date": "2026-03-05",
+       "days_late": null,
+       "planned_completion_on": "2026-07-31",
+       "planned_completion_plan_date": "2026-03-05",
+       "first_listing_confirmed": false,
+       "actual_to_estimate": null,
+       "marks": [
+        {
+         "mark": "needs_a_look",
+         "reasons": [
+          {
+           "code": "completion_passed_no_contract",
+           "mark": "needs_a_look",
+           "planned_completion_on": "2026-07-31",
+           "planned_completion_plan_date": "2026-03-05",
+           "closing_date": "2026-10-31",
+           "days_to_close": 9,
+           "evidence_ids": [
+            "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+            "strata.gold.project:P156634"
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.tools.project_signals:P156634/above_estimate@2026-10-22",
+     "public_from": "2026-10-09",
+     "source": {
+      "source_key": "plans",
+      "project_id": "P156634",
+      "document_id": "40132287",
+      "date": "2026-10-09",
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"
+     },
+     "check": "above_estimate",
+     "strong": false,
+     "count": 1,
+     "values": {
+      "ratio_min": 4,
+      "ratio_max": 4
+     },
+     "items": [
+      {
+       "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+       "public_from": "2026-10-09",
+       "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+       },
+       "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
+       "section": "WORKS",
+       "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+       "review_type": "Post",
+       "method": "Request for Bids",
+       "market_approach": "Open - National",
+       "estimated_amount_usd": "300000.00",
+       "actual_amount_usd": "1245092.76",
+       "process_status": "Signed",
+       "signed_on": "2022-01-03",
+       "planned_signing_on": "2021-07-01",
+       "planned_signing_plan_date": "2021-04-21",
+       "days_late": 186,
+       "planned_completion_on": "2021-10-15",
+       "planned_completion_plan_date": "2021-04-21",
+       "first_listing_confirmed": false,
+       "actual_to_estimate": "4.15",
+       "marks": [
+        {
+         "mark": "watch",
+         "reasons": [
+          {
+           "code": "signed_late_over_estimate",
+           "mark": "watch",
+           "signed_on": "2022-01-03",
+           "actual_amount_usd": "1245092.76",
+           "estimated_amount_usd": "300000.00",
+           "ratio": 4,
+           "ratio_exact": "4.15",
+           "days_late": 186,
+           "planned_signing_on": "2021-07-01",
+           "planned_signing_plan_date": "2021-04-21",
+           "evidence_ids": [
+            "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"
+           ]
+          }
+         ]
+        }
+       ],
+       "ratio": 4,
+       "ratio_exact": "4.15"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.tools.project_signals:P156634/late_direct@2026-10-22",
+     "public_from": "2026-08-17",
+     "source": {
+      "source_key": "plans",
+      "project_id": "P156634",
+      "document_id": "40122770",
+      "date": "2026-08-17",
+      "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR"
+     },
+     "check": "late_direct",
+     "strong": false,
+     "count": 1,
+     "values": {
+      "total_millions": "2.6"
+     },
+     "items": [
+      {
+       "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+       "public_from": "2026-08-17",
+       "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Coast Water Services Board",
+        "plan_date": "2026-08-17",
+        "document_id": "40122770",
+        "pdf_page": 3
+       },
+       "activity_reference_no": "KE-CWSB-567630-CW-DIR",
+       "section": "WORKS",
+       "description": "Solar System for the Ukunda Water Supply",
+       "review_type": "Post",
+       "method": "Direct Selection",
+       "market_approach": "Direct - National",
+       "estimated_amount_usd": "2600000.00",
+       "actual_amount_usd": "0.00",
+       "process_status": "Pending Implementation",
+       "signed_on": null,
+       "planned_signing_on": "2026-09-01",
+       "planned_signing_plan_date": "2026-08-17",
+       "days_late": null,
+       "planned_completion_on": "2026-10-30",
+       "planned_completion_plan_date": "2026-08-17",
+       "first_listing_confirmed": false,
+       "actual_to_estimate": null,
+       "marks": [
+        {
+         "mark": "watch",
+         "reasons": [
+          {
+           "code": "pending_near_closing",
+           "mark": "watch",
+           "closing_date": "2026-10-31",
+           "days_to_close": 9,
+           "evidence_ids": [
+            "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+            "strata.gold.project:P156634"
+           ]
+          }
+         ]
+        }
+       ],
+       "amount_millions": "2.6",
+       "first_plan_date": "2026-08-17",
+       "first_document_id": "40122770"
+      }
+     ]
+    },
+    {
+     "evidence_id": "strata.tools.project_signals:P156634/closing_moves@2026-10-22",
+     "public_from": "2025-11-30",
+     "source": {
+      "source_key": "loan_history",
+      "project_id": "P156634",
+      "document_id": null,
+      "date": "2025-11-30",
+      "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30"
+     },
+     "check": "closing_moves",
+     "strong": false,
+     "count": 3,
+     "values": {
+      "since_year": 2022
+     },
+     "items": [
+      {
+       "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+       "public_from": "2022-11-30",
+       "closing_date": "2024-04-30",
+       "previous_closing_date": "2022-10-31",
+       "reported_on": "2022-11-30"
+      },
+      {
+       "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+       "public_from": "2024-04-30",
+       "closing_date": "2025-10-31",
+       "previous_closing_date": "2024-04-30",
+       "reported_on": "2024-04-30"
+      },
+      {
+       "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+       "public_from": "2025-11-30",
+       "closing_date": "2026-10-31",
+       "previous_closing_date": "2025-10-31",
+       "reported_on": "2025-11-30"
+      }
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": true,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": true,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": true,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": true,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 4,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900101",
+    "public_from": "2024-04-24",
+    "project_id": "P900101",
+    "project_name": "Made-up Quiet Project 1",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-02-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900102",
+    "public_from": "2024-04-24",
+    "project_id": "P900102",
+    "project_name": "Made-up Quiet Project 2",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-03-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900103",
+    "public_from": "2024-04-24",
+    "project_id": "P900103",
+    "project_name": "Made-up Quiet Project 3",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-04-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900104",
+    "public_from": "2024-04-24",
+    "project_id": "P900104",
+    "project_name": "Made-up Quiet Project 4",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-05-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900105",
+    "public_from": "2024-04-24",
+    "project_id": "P900105",
+    "project_name": "Made-up Quiet Project 5",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-06-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900106",
+    "public_from": "2024-04-24",
+    "project_id": "P900106",
+    "project_name": "Made-up Quiet Project 6",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-07-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900107",
+    "public_from": "2024-04-24",
+    "project_id": "P900107",
+    "project_name": "Made-up Quiet Project 7",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-08-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900108",
+    "public_from": "2024-04-24",
+    "project_id": "P900108",
+    "project_name": "Made-up Quiet Project 8",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-09-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900109",
+    "public_from": "2024-04-24",
+    "project_id": "P900109",
+    "project_name": "Made-up Quiet Project 9",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-01-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P900110",
+    "public_from": "2024-04-24",
+    "project_id": "P900110",
+    "project_name": "Made-up Quiet Project 10",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2028-02-30",
+    "closing_kind": "closes",
+    "days_to_close": 9
+   },
+   "status": "no_signals",
+   "rows": [],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 7,
+    "checks": 7,
+    "not_ran": 0
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 7,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  }
+ ],
+ "counts": {
+  "total": 11,
+  "checked": 11,
+  "needs_a_look": 1,
+  "watch": 0,
+  "not_checked": 0,
+  "no_signals": 10,
+  "closed": 0,
+  "pipeline": 0,
+  "ended": 0,
+  "folded": 10,
+  "shown": 1,
+  "partly": 0,
+  "fully": 11,
+  "partly_folded": 0
+ },
+ "thresholds": {
+  "look_min": 3,
+  "strong": [],
+  "strong_from": {
+   "completion_passed": 3,
+   "above_estimate": 3,
+   "late_direct": 3
+  },
+  "plan_months": 12,
+  "completion_passed_min_estimated_usd": "1000000.00",
+  "completion_passed_min_millions": "1",
+  "actual_to_estimate_ratio": "2.0",
+  "late_direct_min_usd": "1000000.00",
+  "late_direct_min_millions": "1",
+  "late_direct_months": 12,
+  "closing_moves_min": 2,
+  "restructured_levels": [
+   1
+  ],
+  "restructured_months": 12,
+  "disbursement_max_percent": 50,
+  "disbursement_months": 12
+ },
+ "checks": 7,
+ "sources": [
+  "documents",
+  "projects",
+  "ida_credit_history",
+  "ibrd_loan_history",
+  "ida_credits",
+  "ibrd_loans"
+ ],
+ "missing": [],
+ "evidence": [
+  {
+   "id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "reference": "KE-NWWDA-541055-CW-RFB",
+    "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+    "fields": [
+     {
+      "key": "description",
+      "value": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "kind": "text"
+     },
+     {
+      "key": "method",
+      "value": "Request for Bids",
+      "kind": "text"
+     },
+     {
+      "key": "market_approach",
+      "value": "Open - National",
+      "kind": "text"
+     },
+     {
+      "key": "review_type",
+      "value": "Post",
+      "kind": "text"
+     },
+     {
+      "key": "estimated_amount_usd",
+      "value": "1230000.00",
+      "kind": "usd"
+     },
+     {
+      "key": "process_status",
+      "value": "Pending Implementation",
+      "kind": "text"
+     },
+     {
+      "key": "planned_completion_on",
+      "value": "2026-07-31",
+      "kind": "date",
+      "highlight": true
+     },
+     {
+      "key": "planned_completion_plan_date",
+      "value": "2026-03-05",
+      "kind": "date"
+     }
+    ],
+    "public_from": "2026-10-09",
+    "source": {
+     "document_type": "Procurement Plan",
+     "project_id": "P156634",
+     "implementing_agency": "Northern Water Works Development Agency",
+     "plan_date": "2026-10-09",
+     "document_id": "40132287",
+     "pdf_page": 3
+    }
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "reference": "KE-NWWDA-229129-CW-RFB",
+    "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
+    "fields": [
+     {
+      "key": "description",
+      "value": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "kind": "text"
+     },
+     {
+      "key": "method",
+      "value": "Request for Bids",
+      "kind": "text"
+     },
+     {
+      "key": "market_approach",
+      "value": "Open - National",
+      "kind": "text"
+     },
+     {
+      "key": "review_type",
+      "value": "Post",
+      "kind": "text"
+     },
+     {
+      "key": "estimated_amount_usd",
+      "value": "300000.00",
+      "kind": "usd",
+      "highlight": true
+     },
+     {
+      "key": "process_status",
+      "value": "Signed",
+      "kind": "text"
+     },
+     {
+      "key": "signed_on",
+      "value": "2022-01-03",
+      "kind": "date"
+     },
+     {
+      "key": "actual_amount_usd",
+      "value": "1245092.76",
+      "kind": "usd",
+      "highlight": true
+     }
+    ],
+    "public_from": "2026-10-09",
+    "source": {
+     "document_type": "Procurement Plan",
+     "project_id": "P156634",
+     "implementing_agency": "Northern Water Works Development Agency",
+     "plan_date": "2026-10-09",
+     "document_id": "40132287",
+     "pdf_page": 3
+    }
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "reference": "KE-CWSB-567630-CW-DIR",
+    "activity_reference_no": "KE-CWSB-567630-CW-DIR",
+    "fields": [
+     {
+      "key": "description",
+      "value": "Solar System for the Ukunda Water Supply",
+      "kind": "text"
+     },
+     {
+      "key": "method",
+      "value": "Direct Selection",
+      "kind": "text"
+     },
+     {
+      "key": "market_approach",
+      "value": "Direct - National",
+      "kind": "text"
+     },
+     {
+      "key": "review_type",
+      "value": "Post",
+      "kind": "text"
+     },
+     {
+      "key": "estimated_amount_usd",
+      "value": "2600000.00",
+      "kind": "usd",
+      "highlight": true
+     },
+     {
+      "key": "process_status",
+      "value": "Pending Implementation",
+      "kind": "text"
+     },
+     {
+      "key": "first_plan_date",
+      "value": "2026-08-17",
+      "kind": "date",
+      "highlight": true
+     }
+    ],
+    "public_from": "2026-08-17",
+    "source": {
+     "document_type": "Procurement Plan",
+     "project_id": "P156634",
+     "implementing_agency": "Coast Water Services Board",
+     "plan_date": "2026-08-17",
+     "document_id": "40122770",
+     "pdf_page": 3
+    }
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.gold.project_closing_date:P156634/2022-11-30",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+    "public_from": "2022-11-30",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "project_id": "P156634",
+     "document_date": "2022-11-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2024-04-30",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2022-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2022-11-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.gold.project_closing_date:P156634/2024-04-30",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+    "public_from": "2024-04-30",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "project_id": "P156634",
+     "document_date": "2024-04-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2025-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2024-04-30",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2024-04-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.gold.project_closing_date:P156634/2025-11-30",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
+    "public_from": "2025-11-30",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "project_id": "P156634",
+     "document_date": "2025-11-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2026-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2025-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2025-11-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  }
+ ],
+ "track_record": null
+}

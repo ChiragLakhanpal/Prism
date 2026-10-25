@@ -1,0 +1,7 @@
+{
+ "email": "cy.example@worldbank.org",
+ "name": "Cy Example",
+ "signed_in": true,
+ "has_token": true,
+ "staff": false
+}

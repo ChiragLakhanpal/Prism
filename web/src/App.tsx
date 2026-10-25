@@ -24,6 +24,7 @@ import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { draftScope } from "./lib/drafts";
+import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -39,8 +40,10 @@ async function readViewer() {
   try {
     const me = await getJson<Me>("/api/me");
     viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email } : me.signed_in ? { status: "error" } : { status: "signed-out" });
+    staffRole.set(Boolean(me.staff));
   } catch {
     viewer.set({ status: "error" });
+    staffRole.set(false);
   }
 }
 
@@ -88,9 +91,12 @@ function returnFocus() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35)
-// and the Packages tab with its planned packages (ticket 15).
-const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage"]);
+// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35),
+// the Packages tab with its planned packages (ticket 15) and Following (ticket 37).
+const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage", "following"]);
+// The pages that apply an as-of date themselves: Data readiness (data_readiness_for takes one) and Following,
+// whose checks run as of the page's date (ticket 37). Ticket 40's banner replaces this list.
+const AS_OF_PAGES: ReadonlySet<string> = new Set(["data", "following"]);
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
@@ -114,6 +120,7 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
 export function App() {
   const here = useStore(address);
   const who = useStore(viewer);
+  const staff = useStore(staffRole);
   const { freshness, problem } = useStore(stamp);
   const run = useStore(answer);
   const kept = useStore(earlier);
@@ -215,9 +222,8 @@ export function App() {
       key: address.get().key,
     });
 
-  // The Data readiness page applies an as-of date itself (data_readiness_for takes one), so the
-  // alert that says the page shows today's data does not show there.
-  const slot = alerts(problem, here.search, match.key === "data", match.key);
+  // The pages that apply an as-of date themselves do not show the alert that says the page shows today's data.
+  const slot = alerts(problem, here.search, AS_OF_PAGES.has(match.key), match.key);
   return (
     <Frame
       nav={
@@ -226,6 +232,8 @@ export function App() {
           current={match.section}
           home={match.key === "home"}
           viewer={who}
+          // World Bank staff open Following from the Projects tab (ticket 37); a preview, and everyone else, All projects.
+          projectsHref={staff && (view === null || view === "staff") ? FOLLOWING_HREF : undefined}
         />
       }
       band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}
