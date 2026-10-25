@@ -149,6 +149,14 @@ export const NON_COPY_PROPS = new Set([
   "textAnchor",
   "fill",
   "d",
+  // SVG settings in a project's timeline (ticket 23): a line's cap ("round") and a label's vertical
+  // alignment ("central").
+  "strokeLinecap",
+  "dominantBaseline",
+  // The disagreement card's keep action in a design gallery sample (ticket 23): its phase ("open", "saving",
+  // "failed" or "kept") and when the choice was made, an ISO timestamp.
+  "phase",
+  "madeAt",
   // NoteSentences' type size: "small" in a draft, "body" in a lesson review's summary (ticket 29).
   "textSize",
   // The feedback row (ticket 32): the report kind a sample has chosen ("wrong_passage" or "not_useful"), why a

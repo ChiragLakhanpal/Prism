@@ -1,0 +1,41 @@
+{
+  "id": "doc:18381488",
+  "kind": "document",
+  "tool": null,
+  "stratum": "Why",
+  "short_name": null,
+  "row": {
+    "evidence_id": "doc:18381488",
+    "public_from": "2013-11-06",
+    "document_id": "18381488",
+    "project_id": "P130164",
+    "type": "pad",
+    "document_type": "Project Appraisal Document",
+    "report_number": "81594",
+    "version": 1,
+    "document_date": "2013-10-01",
+    "pdf_pages": 100,
+    "doc_key": "pad-2013-10-01",
+    "sequence": null,
+    "reissued": false,
+    "replaced_by": null,
+    "ratings": [
+      {
+        "field_name": "overall risk",
+        "value": "Substantial",
+        "evidence_id": "strata.gold.passage:18381488/v1/49",
+        "doc_key": "pad-2013-10-01",
+        "paragraph": "49",
+        "section": "V",
+        "pdf_page": 26
+      }
+    ],
+    "disagreements": [],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164",
+      "document_date": "2013-10-01"
+    }
+  },
+  "highlights": []
+}

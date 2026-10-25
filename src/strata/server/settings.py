@@ -10,7 +10,8 @@ reads only the environment it is given:
 - DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, which the platform sets for the app's own
   service principal: usage events are written to strata.ops.usage_events, each answer stream's run
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
-  strata.ops.evidence_opened, drafts to strata.ops.drafts and the tables beside it (ticket 35), and
+  strata.ops.evidence_opened, each side of a disagreement a person keeps to strata.ops.disagreement_choices
+  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), and
   each decision or label a person gives a candidate pair of supplier name matching to
   strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
   lesson review tables (ticket 29), with its token. Each row names the viewer the Databricks App
@@ -70,6 +71,7 @@ from strata.agent import judge as answer_judge
 from strata.server.app import create_app
 from strata.knowledge.retrieval.judging import Judging
 from strata.knowledge.retrieval.reports import CitationLog, PassageReports
+from strata.server.choices import ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
@@ -172,6 +174,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       usage=UsageLog(the_app, thresholds.value("app.usage_flush_seconds")) if the_app else None,
                       runs=RunLog(the_app) if the_app else None,
                       opened=OpenedLog(state) if state else None,
+                      choices=ChoiceLog(state) if state else None,
                       drafts=DraftStore(state) if state else None,
                       follows=FollowStore(state) if state else None,
                       packages=PackageStore(app_state) if app_state else None,

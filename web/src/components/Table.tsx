@@ -72,12 +72,15 @@ type Level = 2 | 3 | 4 | 5;
 // then: cards while the frame is under 49rem (784 px, the table-fit container size in app.css). It is
 // for a table whose columns need that much wherever it sits, as the past range's need about 776 px
 // with one line per cell, because a table that keeps to columns 1 to 8 has less room at 1200 px than
-// at 1024 px. The 8 px over leave room for small font differences between systems.
-export type CardsBelow = "md" | "lg" | "fit";
+// at 1024 px. The 8 px over leave room for small font differences between systems. narrow reads its own frame
+// too, with cards under 30rem (480 px): for a table of three short columns, as the evidence drawer's list of a
+// band's ISRs (ticket 23), which stays a table in the 576 px drawer and becomes cards in the 410 px one.
+export type CardsBelow = "md" | "lg" | "fit" | "narrow";
 const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
   md: { table: "@md/page:block", cards: "@md/page:hidden" },
   lg: { table: "@lg/page:block", cards: "@lg/page:hidden" },
   fit: { table: "@table-fit/table:block", cards: "@table-fit/table:hidden" },
+  narrow: { table: "@table-narrow/table:block", cards: "@table-narrow/table:hidden" },
 };
 // The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
 // breakpoint as cardsBelow="lg".
@@ -198,7 +201,7 @@ export function Table({
     <section
       data-table={state.status}
       aria-busy={loading || Boolean(busy) || undefined}
-      className={cx("flex flex-col gap-2", cardsBelow === "fit" && "@container/table")}
+      className={cx("flex flex-col gap-2", (cardsBelow === "fit" || cardsBelow === "narrow") && "@container/table")}
     >
       {loading ? (
         <>
@@ -249,7 +252,8 @@ export function Table({
         <table
           aria-labelledby={loading ? undefined : titleId}
           aria-describedby={count && !loading ? countId : undefined}
-          className="w-full min-w-[40rem] table-fixed border-collapse text-small"
+          // A narrow table shows only from a 30rem frame, so it keeps no wider minimum that would scroll sideways.
+          className={cx("w-full table-fixed border-collapse text-small", cardsBelow === "narrow" ? "min-w-[30rem]" : "min-w-[40rem]")}
         >
           <thead className="bg-surface-2">
             <tr>

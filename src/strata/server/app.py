@@ -22,6 +22,14 @@
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
   unknown_project.
+- GET /api/projects/{project_id}/timeline gives a project's Timeline tab (ticket 23; src/strata/server/timeline.py):
+  its reports, events and records in three lanes, the ISRs' rating bands and the disagreements get_disagreements
+  found, as the viewer, as of ?asof= and in ?view=, whose public view shows no disagreement on an active project.
+- POST /api/disagreements/{id}/choices keeps one side of a disagreement for an answer (run_id) or a draft
+  (draft_id), with a reason when it is the side Strata does not lean on: one new row in
+  strata.ops.disagreement_choices with the forwarded viewer, written as the app's own service principal. A preview
+  records nothing ({"recorded": false}). GET with ?run_id= or ?draft_id= gives the latest choice
+  (src/strata/server/choices.py).
 - GET /api/data/readiness runs the tool registry's data_readiness_for as the viewer, for every
   source or for ?sources= (registry keys, separated by commas) from the coverage line of ?from=, as
   of ?asof=. It answers like the stamp when it cannot: 401, 403 with the code permission, 504 with
@@ -131,8 +139,8 @@ from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
 from strata.server import feedback as feedback_routes
-from strata.server import (baseline, changes, documents, edges, engines, evidence, lookup, projects, summary,
-                           suppliers, tracing, trail)
+from strata.server import (baseline, changes, choices as choice_routes, documents, edges, engines, evidence, lookup,
+                           projects, summary, suppliers, timeline, tracing, trail)
 from strata.server import packages as package_routes
 from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
@@ -142,6 +150,7 @@ from strata.server import following as following_routes
 from strata.server.following import FollowStore
 from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups
+from strata.server.choices import REASON_LIMIT, ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageEvent, UsageLog
@@ -186,6 +195,17 @@ class OpenedRequest(BaseModel):
     evidence_id: str = Field(min_length=1, max_length=512)
     run_id: str | None = Field(default=None, max_length=128)  # the answer it was opened from, if any
     route: str | None = Field(default=None, max_length=512)  # the page it was opened on
+    view: Literal["staff", "piu", "public"] = "staff"
+
+
+class ChoiceRequest(BaseModel):
+    """Keeping one side of a disagreement for an answer or a draft (ticket 23). The person is the forwarded viewer,
+    never a field here."""
+
+    kept_assertion_id: str = Field(min_length=1, max_length=512)
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=REASON_LIMIT)] = ""
+    run_id: str | None = Field(default=None, max_length=128)
+    draft_id: str | None = Field(default=None, max_length=128)
     view: Literal["staff", "piu", "public"] = "staff"
 
 
@@ -262,7 +282,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_check_id: Callable[[], str] = criteria_routes.new_check_id, judge: Judge | None = None,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
-               citations: CitationLog | None = None, follows: FollowStore | None = None) -> FastAPI:
+               citations: CitationLog | None = None, choices: ChoiceLog | None = None,
+               follows: FollowStore | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -305,6 +326,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     connected; package_thresholds and package_form stand in for config/thresholds.toml and
     config/package_form.toml, so a test can change a threshold or a field; new_package_id and new_save_id are
     the ids packages and their saves get.
+
+    choices keeps the side of a disagreement each person kept for an answer or a draft, with their reason
+    (strata.ops.disagreement_choices, ticket 23), written as the app's own service principal; without it, keeping
+    the other report says nothing was recorded.
 
     criteria keeps the runs of "Check your criteria", section 5 of the package workspace (src/strata/criteria/
     store.py), with each person's pasted text readable only by them, written as the app's own service principal;
@@ -462,6 +487,17 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the summary of {project_id}", viewer, read)
 
+    @app.get("/api/projects/{project_id}/timeline")
+    def project_timeline(project_id: str, asof: dt.date | None = None, view: Literal["staff", "piu", "public"] = "staff",
+                         viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            # The page's as-of date, never later than today, by the clock create_app was given (today), so a
+            # recording of the plain page holds still. The date the tab names is the one it read as of.
+            as_of = min(asof, today()) if asof else today()
+            found = timeline.timeline(engine, viewer, project_id, as_of, view, as_of if asof else None)
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the timeline of {project_id}", viewer, read)
+
     documents_shown = int(thresholds.value("app.documents_shown"))
 
     @app.get("/api/projects/{project_id}/packages")
@@ -615,7 +651,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
 
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref)
+            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 
@@ -633,6 +669,46 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         if opened is None or not viewer.user_id:
             return {"opened": []}
         return {"opened": opened.opened(viewer.user_id, evidence_ids)}
+
+    @app.post("/api/disagreements/{disagreement_id}/choices")
+    def keep_a_side(disagreement_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
+        """Keep one side of a disagreement for an answer or a draft (ticket 23): one new row, with the viewer and the
+        reason. Keeping the side Strata does not lean on needs a reason; keeping Strata's side is going back to it.
+        A preview of another view records nothing."""
+        if not viewer.token or not viewer.user_id:
+            return refused(401, "no_identity")
+        if body.view != STAFF:
+            return {"recorded": False}
+        if bool(body.run_id) == bool(body.draft_id):
+            return refused(422, "bad_request", detail="Give the answer's run_id or the draft's draft_id, not both.")
+        found = read_for(f"disagreement {disagreement_id}", viewer,
+                         lambda engine: choice_routes.sides(engine, disagreement_id))
+        if isinstance(found, JSONResponse):
+            return found
+        if found is None:
+            return refused(404, "unknown_disagreement")
+        if body.kept_assertion_id not in found["sides"]:
+            return refused(422, "bad_request", detail="The kept assertion is not a side of this disagreement.")
+        if body.kept_assertion_id != found["leaned"] and not body.reason:
+            return refused(422, "reason_required")
+        if choices is None:
+            return refused(503, "not_recorded")
+        reason = body.reason if body.kept_assertion_id != found["leaned"] else ""
+        choice = choices.record(viewer.user_id, disagreement_id, body.kept_assertion_id, found["leaned"], reason,
+                                body.run_id, body.draft_id)
+        return {"recorded": True, "choice": choice} if choice else refused(503, "not_recorded")
+
+    @app.get("/api/disagreements/{disagreement_id}/choices")
+    def kept_side(disagreement_id: str, run_id: str | None = Query(default=None, max_length=128),
+                  draft_id: str | None = Query(default=None, max_length=128), viewer: Viewer = Depends(current_viewer)):
+        """The latest side this viewer kept for the answer or the draft, so the card shows it again after Back."""
+        if choices is None or not viewer.user_id or bool(run_id) == bool(draft_id):
+            return {"choice": None}
+        try:
+            return {"choice": choices.latest(viewer.user_id, disagreement_id, run_id, draft_id)}
+        except Exception:  # the page shows Strata's choice, as for a new answer
+            log.exception("I could not read %s's choice on disagreement %s.", viewer.user_id, disagreement_id)
+            return {"choice": None}
 
     draft_routes.add_routes(app, engine_for=engine_for, store=drafts,
                             access=access, writers=writers or (lambda kind: None),

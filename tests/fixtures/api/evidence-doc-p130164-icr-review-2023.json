@@ -1,0 +1,78 @@
+{
+  "id": "doc:34056616",
+  "kind": "document",
+  "tool": null,
+  "stratum": "Why",
+  "short_name": null,
+  "row": {
+    "evidence_id": "doc:34056616",
+    "public_from": "2023-05-04",
+    "document_id": "34056616",
+    "project_id": "P130164",
+    "type": "icr_review",
+    "document_type": "Implementation Completion Report Review",
+    "report_number": "ICRR0021929",
+    "version": 2,
+    "document_date": "2023-05-04",
+    "pdf_pages": 14,
+    "doc_key": "icr-review-2023-05-04",
+    "sequence": null,
+    "reissued": true,
+    "replaced_by": null,
+    "ratings": [
+      {
+        "field_name": "Efficiency Rating",
+        "value": "Modest",
+        "evidence_id": "strata.gold.passage:34056616/v2/5",
+        "doc_key": "icr-review-2023-05-04",
+        "paragraph": "5",
+        "section": "5",
+        "pdf_page": 9
+      },
+      {
+        "field_name": "Outcome Rating",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:34056616/v2/6.a",
+        "doc_key": "icr-review-2023-05-04",
+        "paragraph": "6.a",
+        "section": "6",
+        "pdf_page": 9
+      },
+      {
+        "field_name": "Overall Bank Performance Rating",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:34056616/v2/8.b",
+        "doc_key": "icr-review-2023-05-04",
+        "paragraph": "8.b",
+        "section": "8",
+        "pdf_page": 10
+      },
+      {
+        "field_name": "M&E Quality Rating",
+        "value": "Modest",
+        "evidence_id": "strata.gold.passage:34056616/v2/9.c",
+        "doc_key": "icr-review-2023-05-04",
+        "paragraph": "9.c",
+        "section": "9",
+        "pdf_page": 11
+      }
+    ],
+    "disagreements": [
+      {
+        "evidence_id": "disagreement:51ea6e6516c0ea63",
+        "attribute": "efficiency",
+        "period_event": "whole_project",
+        "other": {
+          "type": "icr",
+          "sequence": null
+        }
+      }
+    ],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164",
+      "document_date": "2023-05-04"
+    }
+  },
+  "highlights": []
+}

@@ -51,7 +51,13 @@ export type EvidenceEvent = {
     | "risk-reports"
     | "risk-reports-all"
     | "steps"
-    | "steps-longest";
+    | "steps-longest"
+    // A project timeline's marks (ticket 23): a report's document view, a band's ratings, a year's contracts and a
+    // disagreement's two reports.
+    | "document"
+    | "ratings"
+    | "contracts"
+    | "disagreement";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;
@@ -110,6 +116,9 @@ export type RefusalEvent = { key: string; partial: boolean };
 // One side of a disagreement, as get_disagreements returned it.
 export type DisagreementSide = {
   evidence_id: string;
+  // The assertion keeping a side posts (ticket 23), and the kind of report (config/project_page.toml's groups).
+  assertion_id: string | null;
+  type: string | null;
   document_type: string | null;
   report_number: string | null;
   sequence: number | null;
@@ -121,12 +130,20 @@ export type DisagreementSide = {
   value: string | null;
   value_form: string | null;
   quote: string | null;
+  months_after_event?: number | null;
+  doc_key?: string | null;
   leaned: boolean;
 };
 // A disagreement the verifier's check 6 shows under the sentence it concerns (after), with both sides in the
 // order they were written.
 export type DisagreementEvent = {
   id: string;
+  // The id keeping a side posts to (POST /api/disagreements/{id}/choices), the sentences keeping the other side
+  // would change and how many they are, which the card says as it comes (ticket 23): one shape for both cards.
+  disagreement_id?: string | null;
+  changes_sentence_ids?: number[];
+  changes_count?: number;
+  period_event?: string | null;
   after: number;
   changes_answer: boolean;
   attached_by_verifier: boolean;

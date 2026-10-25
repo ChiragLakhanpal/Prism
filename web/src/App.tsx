@@ -116,7 +116,8 @@ function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView:
   const shown = (view === "piu" || view === "public") && appliesView;
   if (view !== null && view !== "staff" && !shown) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
-  if (asOf !== null && asOfUse !== "page") {
+  // A page that applies the date itself still gets the alert when it can't read it, since it then shows today's data.
+  if (asOf !== null && (asOfUse !== "page" || !isDay(asOf))) {
     const text = !isDay(asOf) ? copy.alerts.asOfUnreadable : asOfUse === "part" ? copy.alerts.asOfPart(formatDate(asOf)) : copy.alerts.asOf(formatDate(asOf));
     found.push({ state: "info", text });
   }
@@ -126,9 +127,13 @@ function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView:
 // What the page at this address does with ?asof= and ?view= (see AsOfUse and VIEW_PAGES).
 function pageUse(match: { key: string; values: Record<string, string> }): { asOf: AsOfUse; view: boolean } {
   const connections = match.key === "project" && match.values.tab === "connections";
-  const asOf: AsOfUse = AS_OF_PAGES.has(match.key) ? "page" : connections ? "part" : "none";
+  // A project's Timeline tab ends its axis at the as-of date (ticket 23), and applies the view too: its server
+  // hides the disagreements of a project still under way in the public preview, and the implementing agency's
+  // preview shows what World Bank staff see (the 23 brief, section 7.3).
+  const timeline = match.key === "project" && match.values.tab === "timeline";
+  const asOf: AsOfUse = AS_OF_PAGES.has(match.key) || timeline ? "page" : connections ? "part" : "none";
   // Every node and link on the Connections tab is public data, so each preview sees the staff view's tab.
-  return { asOf, view: VIEW_PAGES.has(match.key) || connections };
+  return { asOf, view: VIEW_PAGES.has(match.key) || connections || timeline };
 }
 
 export function App() {

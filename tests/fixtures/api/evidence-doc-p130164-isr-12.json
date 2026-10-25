@@ -1,0 +1,59 @@
+{
+  "id": "doc:29794672",
+  "kind": "document",
+  "tool": null,
+  "stratum": "How",
+  "short_name": null,
+  "row": {
+    "evidence_id": "doc:29794672",
+    "public_from": "2018-04-10",
+    "document_id": "29794672",
+    "project_id": "P130164",
+    "type": "isr",
+    "document_type": "Implementation Status and Results Report",
+    "report_number": "ISR31603",
+    "version": 1,
+    "document_date": "2018-04-10",
+    "pdf_pages": 7,
+    "doc_key": "isr-2018-04-10",
+    "sequence": 12,
+    "reissued": false,
+    "replaced_by": null,
+    "ratings": [
+      {
+        "field_name": "Overall Implementation Progress (IP)",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:29794672/v1/s4",
+        "doc_key": "isr-2018-04-10",
+        "paragraph": null,
+        "section": "Overall Ratings",
+        "pdf_page": 1
+      },
+      {
+        "field_name": "Overall Risk Rating",
+        "value": "Substantial",
+        "evidence_id": "strata.gold.passage:29794672/v1/s4",
+        "doc_key": "isr-2018-04-10",
+        "paragraph": null,
+        "section": "Overall Ratings",
+        "pdf_page": 1
+      },
+      {
+        "field_name": "Progress towards achievement of PDO",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:29794672/v1/s4",
+        "doc_key": "isr-2018-04-10",
+        "paragraph": null,
+        "section": "Overall Ratings",
+        "pdf_page": 1
+      }
+    ],
+    "disagreements": [],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164",
+      "document_date": "2018-04-10"
+    }
+  },
+  "highlights": []
+}

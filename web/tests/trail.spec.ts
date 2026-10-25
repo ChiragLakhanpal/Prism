@@ -185,7 +185,7 @@ test("Connections draws at most 20 nodes, counts the rest by kind, and joins pac
   const unrecorded = await open(page, "/projects/P130164/connections");
   await expect(page.locator("[data-connections=ready]")).toBeVisible();
   const tabs = page.getByRole("navigation", { name: "Project sections" }).getByRole("link");
-  await expect(tabs).toHaveText(["Summary", "Procurement", "Documents", "Connections"]);
+  await expect(tabs).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs.last()).toHaveAttribute("aria-current", "page");
 
   // The finding counts every linked contract, those with no STEP reference too, and each paragraph once.

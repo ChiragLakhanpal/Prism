@@ -1,0 +1,37 @@
+{
+  "id": "ratings:P130164:pdo_progress:12-13",
+  "kind": "ratings",
+  "tool": null,
+  "stratum": "How",
+  "short_name": null,
+  "row": {
+    "evidence_id": "ratings:P130164:pdo_progress:12-13",
+    "public_from": "2018-12-28",
+    "project_id": "P130164",
+    "attribute": "pdo_progress",
+    "field_name": "Progress towards achievement of PDO",
+    "rating": "Moderately Unsatisfactory",
+    "first": 12,
+    "last": 13,
+    "count": 2,
+    "rows": [
+      {
+        "sequence": 12,
+        "date": "2018-04-10",
+        "rating": "Moderately Unsatisfactory",
+        "evidence_id": "doc:29794672"
+      },
+      {
+        "sequence": 13,
+        "date": "2018-12-28",
+        "rating": "Moderately Unsatisfactory",
+        "evidence_id": "doc:30730274"
+      }
+    ],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164"
+    }
+  },
+  "highlights": []
+}

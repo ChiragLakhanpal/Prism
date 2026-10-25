@@ -44,6 +44,7 @@ export function Tooltip({
   children,
   width = "max-w-[20rem]",
   quiet = false,
+  side = "bottom",
 }: {
   // One element that can take focus, such as a link or a button.
   trigger: ReactNode;
@@ -51,6 +52,8 @@ export function Tooltip({
   width?: string;
   // Opens on nothing, as a marker whose source the evidence drawer already shows in full.
   quiet?: boolean;
+  // Below the trigger, or above it where text under it must stay in view, as under a title's count (ticket 23).
+  side?: "top" | "bottom";
 }) {
   const [shown, setShown] = useState(false);
   const id = useId();
@@ -99,7 +102,7 @@ export function Tooltip({
         <RadixPopover.Content
           id={id}
           role="tooltip"
-          side="bottom"
+          side={side}
           align="start"
           sideOffset={8}
           collisionPadding={16}

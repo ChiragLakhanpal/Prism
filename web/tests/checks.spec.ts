@@ -146,19 +146,31 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const card = panel(page).getByRole("group", { name: "Two reports disagree: ISR 7 and ICR paragraph 78" });
   await expect(card).toBeVisible();
   const sides = card.locator("[data-side]");
-  await expect(sides.nth(0)).toContainText("Implementation Status and Results Report (ISR) 7, August 26, 2016. Written during the project.");
-  await expect(sides.nth(0)).toContainText("Progress towards achievement of PDO: Satisfactory");
-  await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78, October 10, 2019.");
+  // Ticket 23's anatomy: each side's name, spelled out the first time the answer uses it, then its date and when
+  // it was written, then what it said under the report's own field name.
+  await expect(sides.nth(0)).toContainText("Implementation Status and Results Report (ISR) 7");
+  await expect(sides.nth(0)).toContainText("August 26, 2016. Written during the project.");
+  await expect(sides.nth(0)).toContainText("Progress towards achievement of PDO");
+  await expect(sides.nth(0)).toContainText("Satisfactory");
+  await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78");
+  await expect(sides.nth(1)).toContainText("October 10, 2019. Written after the project closed.");
   await expect(sides.nth(1)).toContainText("Strata leans on this");
-  await expect(sides.nth(1)).toContainText('"it was clearly identified at the MTR that the achievement of part of the PDO was compromised"');
+  // The whole sentence of paragraph 78 that holds the quote (values.toml, icr-para-78), as the drawer's card shows it.
+  await expect(sides.nth(1)).toContainText(
+    '"Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."',
+  );
   await expect(sides.nth(0)).toHaveAttribute("data-side", "other");
   // Equal weight: the same border and fill on both sides.
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
   expect(looks[0]).toEqual(looks[1]);
   // The sentence's own source keeps number 1, and the other side gets the next.
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
-  await expect(card).toContainText("For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78.");
+  await expect(card).toContainText(
+    "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
+  );
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
+  // The stream names the sentence keeping the other report would change (ticket 23).
+  await expect(card).toContainText("That changes one sentence in this answer.");
   // The abbreviation is spelled out the first time "In short" uses it.
   await expect(panel(page).locator("[data-in-short]")).toContainText("project development objective (PDO)");
   // The card follows the sentence it concerns, in the order of the page.
@@ -176,6 +188,12 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(page.getByRole("dialog").locator("[data-claim]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(second).toBeFocused();
+  // Each side also opens its source by name (the 23 brief, section 5.2), and focus comes back to that link.
+  const openIsr = card.getByRole("link", { name: "Open ISR 7" });
+  await openIsr.click();
+  await expect(page.getByRole("dialog")).toContainText("ISR");
+  await page.keyboard.press("Escape");
+  await expect(openIsr).toBeFocused();
 });
 
 test("the disagreement card's sides sit side by side at 1440 px and stack when the card is under 560 px", async ({ page }) => {
