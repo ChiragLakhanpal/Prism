@@ -11,8 +11,9 @@ __pycache__/
 
 # Web
 node_modules/
+# The builds, in web/dist and web/dist-gallery, or in the folders STRATA_WEB_DIST names (web/out-dirs.ts)
 web/dist/
-web/dist-gallery/
+web/dist-*/
 web/screenshots/
 web/test-results/
 web/playwright-report/

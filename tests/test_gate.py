@@ -7,6 +7,7 @@ list of steps, so a step can fail, sleep or plant a key without touching this re
 import fcntl
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -734,6 +735,156 @@ def test_a_second_pytest_step_in_another_lane_fails_both_steps_file_checks(paths
 
     assert steps_that_may_start_before_the_fixture_build(steps) == ["Extra"]
     assert any(count > 1 for count in gate_steps_per_test_folder(steps).values())
+
+
+# A pytest-xdist group keeps its tests on one worker only under --dist loadgroup. Under
+# --dist worksteal, which the gate's pytest steps use, a group mark does nothing.
+GROUP_MARK = re.compile(r"\bmark\.xdist_group\(")
+
+
+def marks_a_group(step):
+    """Whether a test file a pytest step runs marks tests that must share one worker."""
+    files = [file for path in paths_tested(step) for file in
+             ([ROOT / path] if (ROOT / path).is_file() else (ROOT / path).rglob("*.py"))]
+    return any(GROUP_MARK.search(file.read_text()) for file in files)
+
+
+def test_a_pytest_step_whose_tests_must_share_a_worker_runs_with_loadgroup():
+    steps = [step for step in gate_steps() if "pytest" in step["run"]]
+
+    unkept = [step["name"] for step in steps if marks_a_group(step) and "loadgroup" not in step["run"]]
+
+    assert steps and unkept == []
+
+
+def test_the_group_check_finds_a_group_mark_in_a_test_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
+    # Joined here, so this file never holds the mark it looks for and the check above never finds it.
+    mark = "@pytest.mark." + "xdist_group('port')"
+    write(tmp_path, "suite/test_alone.py", f"import pytest\n\n{mark}\ndef test_x():\n    pass\n")
+    write(tmp_path, "other/test_free.py", "def test_y():\n    pass\n")
+
+    assert marks_a_group({"run": ["pytest", "--dist", "worksteal", "suite"]})
+    assert not marks_a_group({"run": ["pytest", "--dist", "worksteal", "other"]})
+
+
+# The web lanes. Each builds the app and the gallery into a folder of its own under web/, which
+# STRATA_WEB_DIST names (web/out-dirs.ts; web/dist when it is unset), and runs its share of the
+# Playwright tests against that build, so no lane serves files that another lane is rebuilding.
+
+def web_script(step):
+    """The script in web/package.json that a step runs with npm, such as "build" or "test", or None."""
+    argv = step["run"]
+    if not {"npm", "run", "--prefix"} <= set(argv) or argv[argv.index("--prefix") + 1] != "web":
+        return None
+    return next((arg for arg in argv[argv.index("run") + 1:] if not arg.startswith("-")), None)
+
+
+def web_folder(step):
+    """The folder under web/ that a web step builds into or serves."""
+    named = [arg.split("=", 1)[1] for arg in step["run"] if arg.startswith("STRATA_WEB_DIST=")]
+    return named[0] if named else "dist"
+
+
+def shard(step):
+    """The share of the Playwright tests a step runs, as (current, total); (1, 1) is every test."""
+    for arg in step["run"]:
+        if arg.startswith("--shard="):
+            current, total = arg.removeprefix("--shard=").split("/")
+            return int(current), int(total)
+    return 1, 1
+
+
+def web_build_problems(steps):
+    """What would let a Playwright run test files it did not build: a lane whose web steps name two
+    folders, a lane that runs the tests before it builds the app and the gallery, or two lanes that
+    build into one folder."""
+    lanes = {}
+    for step in steps:
+        if web_script(step) in ("build", "build:gallery", "test"):
+            lanes.setdefault(step.get("lane"), []).append(step)
+    problems, owner = [], {}
+    for lane, found in lanes.items():
+        folders = sorted({web_folder(step) for step in found})
+        if len(folders) > 1:
+            problems.append(f"the {lane} lane names {', '.join(folders)}")
+        for folder in folders:
+            if folder in owner:
+                problems.append(f"the {owner[folder]} and {lane} lanes both build {folder}")
+            owner[folder] = lane
+        scripts = [web_script(step) for step in found]
+        if "test" in scripts:
+            tests_at = scripts.index("test")
+            problems += [f"the {lane} lane tests before {build}" for build in ("build", "build:gallery")
+                         if build not in scripts[:tests_at]]
+    return problems
+
+
+def shard_problems(steps):
+    """What would leave a Playwright test out or run it twice: shards that do not count 1 to N once
+    each, or two shards in one lane, where they would take turns instead of running side by side."""
+    found = [step for step in steps if web_script(step) == "test"]
+    shards = sorted(shard(step) for step in found)
+    total = shards[-1][1] if shards else 0
+    problems = []
+    if shards != [(current, total) for current in range(1, total + 1)]:
+        problems.append(f"the shards are {', '.join(f'{c}/{t}' for c, t in shards) or 'missing'}")
+    if len({step.get("lane") for step in found}) < len(found):
+        problems.append("two shards share a lane")
+    return problems
+
+
+def test_each_web_lane_tests_the_app_and_gallery_it_built_in_a_folder_of_its_own():
+    steps = gate_steps()
+
+    assert len([step for step in steps if web_script(step) == "test"]) == 2
+    assert web_build_problems(steps) == []
+
+
+def test_the_playwright_shards_run_every_test_once_in_lanes_side_by_side():
+    assert shard_problems(gate_steps()) == []
+
+
+def edit(steps, find, change):
+    """A copy of the steps, with change applied to a copy of each step that find accepts."""
+    return [change(dict(step)) if find(step) else step for step in steps]
+
+
+def is_second_web_lane(step):
+    return step.get("lane") == "web-2"
+
+
+def renamed(folder):
+    return lambda step: step | {"run": [f"STRATA_WEB_DIST={folder}" if arg.startswith("STRATA_WEB_DIST=") else arg
+                                        for arg in step["run"]]}
+
+
+def resharded(spec):
+    return lambda step: step | {"run": [spec if arg.startswith("--shard=") else arg for arg in step["run"]]}
+
+
+# Edits to the steps file that the two checks above must catch.
+BAD_WEB_EDITS = {
+    "both lanes build into one folder": (lambda steps: edit(steps, is_second_web_lane, renamed("dist-1")),
+                                         web_build_problems),
+    "a lane tests another lane's folder": (lambda steps: edit(steps, lambda s: is_second_web_lane(s) and
+                                                              web_script(s) == "test", renamed("dist-1")),
+                                           web_build_problems),
+    "a lane tests before it builds the gallery": (lambda steps: [s for s in steps if not (
+        is_second_web_lane(s) and web_script(s) == "build:gallery")], web_build_problems),
+    "a shard left out": (lambda steps: [s for s in steps if not (is_second_web_lane(s) and web_script(s) == "test")],
+                         shard_problems),
+    "a shard run twice": (lambda steps: edit(steps, is_second_web_lane, resharded("--shard=1/2")), shard_problems),
+    "a third shard that runs nowhere": (lambda steps: edit(steps, is_second_web_lane, resharded("--shard=2/3")),
+                                        shard_problems),
+    "both shards in one lane": (lambda steps: edit(steps, is_second_web_lane, lambda s: s | {"lane": "web-1"}),
+                                shard_problems),
+}
+
+
+@pytest.mark.parametrize("bad, check", BAD_WEB_EDITS.values(), ids=BAD_WEB_EDITS.keys())
+def test_a_bad_edit_to_the_web_lanes_fails_its_check(bad, check):
+    assert check(bad(gate_steps())) != []
 
 
 if __name__ == "__main__":

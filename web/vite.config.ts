@@ -4,13 +4,15 @@
 //
 // The design gallery (web/src/gallery) is built only in development and in the "gallery"
 // mode (npm run build:gallery, into dist-gallery). Every other build, whatever its mode,
-// leaves it out, and web/tests/build.spec.ts checks that on the build output.
+// leaves it out, and web/tests/build.spec.ts checks that on the build output. Both builds go
+// to the folders web/out-dirs.ts names, which STRATA_WEB_DIST can change.
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { freePort } from "./free-port";
+import { appDir, galleryDir, viteCacheDir } from "./out-dirs";
 
 const webRoot = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -25,6 +27,8 @@ export default defineConfig(async ({ command, mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     define: { __GALLERY__: JSON.stringify(mode === "development" || mode === "gallery") },
+    cacheDir: viteCacheDir,
+    build: { outDir: mode === "gallery" ? galleryDir : appDir },
     server: {
       host: "127.0.0.1",
       port: Number(process.env.STRATA_WEB_PORT) || (await freePort()),
