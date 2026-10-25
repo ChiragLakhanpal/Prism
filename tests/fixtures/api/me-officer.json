@@ -1,0 +1,12 @@
+{
+  "email": "amina.example@worldbank.org",
+  "name": "Amina Example",
+  "signed_in": true,
+  "has_token": true,
+  "staff": false,
+  "agency": {
+    "name": "Northern Water Works Development Agency",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "own_view": "piu"
+}

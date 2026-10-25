@@ -77,7 +77,8 @@ def test_the_identity_route_names_the_viewer_the_app_forwarded():
 def test_the_identity_route_says_when_no_one_signed_in():
     response = call(create_app(), "GET", "/api/me")
 
-    assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False}
+    assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False,
+                               "agency": None, "own_view": "staff"}
 
 
 def test_with_no_agent_the_stream_says_so_and_ends():

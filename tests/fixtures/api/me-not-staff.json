@@ -3,5 +3,7 @@
  "name": "Cy Example",
  "signed_in": true,
  "has_token": true,
- "staff": false
+ "staff": false,
+ "agency": null,
+ "own_view": "staff"
 }

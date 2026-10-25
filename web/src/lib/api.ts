@@ -49,7 +49,11 @@ export function deleteJson<T>(path: string): Promise<T> {
 
 // GET /api/me: who the Databricks App says is viewing. The token never leaves the server.
 // staff says whether the viewer has the World Bank staff role (ticket 37): Following and Follow are theirs.
-export type Me = { email: string | null; name: string | null; signed_in: boolean; has_token: boolean; staff?: boolean };
+export type Me = {
+  email: string | null; name: string | null; signed_in: boolean; has_token: boolean; staff?: boolean;
+  // Ticket 38: the implementing agency whose team the viewer is on, and the view the server applies to them.
+  agency?: { name: string; agency_id: string } | null; own_view?: "staff" | "piu";
+};
 
 // One page of a list the server searches and pages (ticket 21): the rows shown, and the range and
 // count the count line states, all the server's, so the screen counts nothing.
@@ -302,7 +306,11 @@ export type Reason = {
 export type Activity = {
   evidence_id: string;
   public_from: string;
+  // An upload's row may have no reference yet (ticket 38); a published plan's always has one.
   activity_reference_no: string;
+  // An upload's row: its place in the officer's file, and whether a published plan of the project lists it.
+  position?: number | null;
+  listed?: boolean | null;
   section: string | null;
   description: string | null;
   review_type: string | null;

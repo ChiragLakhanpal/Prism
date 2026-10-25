@@ -34,9 +34,12 @@ export const SECTIONS: { key: Section; href: string }[] = [
 
 export type Viewer =
   | { status: "loading" }
-  | { status: "signed-in"; email: string }
+  // agency: the implementing agency whose team the viewer is on (ticket 38), whose view the server applies.
+  | { status: "signed-in"; email: string; agency?: string | null }
   | { status: "signed-out" }
   | { status: "error" };
+
+const officerOf = (viewer: Viewer) => (viewer.status === "signed-in" ? (viewer.agency ?? null) : null);
 
 const WIDE = "(min-width: 64rem)";
 
@@ -79,8 +82,12 @@ function ViewLines({ viewer }: { viewer: Viewer }) {
   return (
     <div className="flex flex-col gap-2">
       <WhoLine viewer={viewer} />
-      <p className="text-small text-pretty text-ink">{copy.nav.view.current}</p>
-      <p className="text-caption text-pretty text-ink-muted">{copy.nav.view.notReady}</p>
+      <p className="text-small text-pretty text-ink">
+        {officerOf(viewer) ? copy.nav.view.currentOfficer(officerOf(viewer)!) : copy.nav.view.current}
+      </p>
+      <p className="text-caption text-pretty text-ink-muted">
+        {officerOf(viewer) ? copy.nav.view.notReadyOfficer : copy.nav.view.notReady}
+      </p>
     </div>
   );
 }
@@ -115,7 +122,7 @@ function ViewSwitch({
           "transition-paint duration-150 hover:bg-primary-hover data-[state=open]:bg-primary-hover",
         )}
       >
-        {copy.nav.view.pill}
+        {officerOf(viewer) ? copy.nav.view.pill.officer : copy.nav.view.pill.staff}
         <ChevronDown aria-hidden="true" className={cx("size-4 transition-transform duration-150", open && "rotate-180")} />
       </RadixPopover.Trigger>
       <RadixPopover.Portal>

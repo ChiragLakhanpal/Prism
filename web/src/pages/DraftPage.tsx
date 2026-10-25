@@ -26,6 +26,8 @@ import { PpsdSources } from "../components/PpsdSources";
 import { IdText, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
+import { StepRowsDraft } from "../components/StepRowsDraft";
+import { AccessLabel } from "../components/AccessLabel";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
 import { DraftDisagreements } from "../components/DraftDisagreements";
 import type { Step } from "../components/Steps";
@@ -341,7 +343,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     }
     if (justWritten && draft) {
       const ready = copy.draft.kinds[draft.kind].ready;
-      const timer = setTimeout(() => setAnnounced(ready(draft.counts.written, formatCount(draft.counts.written))), 100);
+      // Planned dates count the steps dated with the draft's choice (ticket 38); every other kind its notes.
+      const done = draft.dates ? draft.dates.counts.dated[draft.dates.choice] : draft.counts.written;
+      const timer = setTimeout(() => setAnnounced(ready(done, formatCount(done))), 100);
       return () => clearTimeout(timer);
     }
   }, [ready]);
@@ -450,7 +454,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
       if (action === "export") {
         setFresh(true);
         focusNext.current = "success";
-        const word = next.export?.files.find((file) => file.name.endsWith(".docx"));
+        // The Word file, or a draft of planned dates' STEP rows (ticket 38), downloads at once; the evidence pack waits.
+        const word = next.export?.files.find((file) => file.name.endsWith(".docx"))
+          ?? next.export?.files.find((file) => file.name.endsWith(".csv") && !file.name.endsWith("-evidence-pack.csv"));
         if (word) download(fileHref(next.draft_id, word.name), word.name);
       } else if (action === "check") {
         focusNext.current = "export";
@@ -502,8 +508,18 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   // kind registered with the same writer (ticket 38's agency variant) gets the same page in its own words.
   const ppsd = d.ppsd ?? null;
   const paper = Boolean(d.summary);
+  // Planned dates (ticket 38), and every draft an implementing agency team makes, which is Official Use Only.
+  const dates = d.dates ?? null;
+  const agencyDraft = d.kind === "step_rows" || d.kind === "ppsd_rows_agency";
   const editable = d.author.you && view !== "piu" && view !== "public" && (d.state === "draft" || d.state === "checked");
-  const lede = ppsd ? (
+  const lede = dates ? (
+    dates.counts.dated[dates.choice] === dates.counts.steps ? (
+      <Fill template={kind.lede(dates.counts.activities)} slots={{ total: formatCount(dates.counts.steps), count: formatCount(dates.counts.activities) }} />
+    ) : (
+      <Fill template={kind.ledePartial} slots={{ written: formatCount(dates.counts.dated[dates.choice]), total: formatCount(dates.counts.steps),
+        count: formatCount(dates.counts.activities) }} />
+    )
+  ) : ppsd ? (
     ppsd.counts.total === ppsd.selected ? (
       <Fill template={kind.lede(ppsd.selected)} slots={{ count: formatCount(ppsd.selected) }} />
     ) : (
@@ -596,7 +612,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         className="mt-8"
         ref={setBar}
         draft={d}
-        words={kind}
+        words={dates ? { ...kind, exportLabel: copy.draft.kinds.step_rows.dates.exportButton, openedLine: copy.draft.kinds.step_rows.dates.barOpened } : kind}
         notice={conflict ? words.conflict : null}
         opened={openedCount}
         busy={busy}
@@ -637,6 +653,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             )
           }
         />
+        {agencyDraft && <AccessLabel className="mt-2" />}
         <div className="mt-6 max-w-[72ch]">
           <h2 id={ledeId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none" data-lede>
             {lede}
@@ -644,7 +661,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           <p className="mt-2 text-body text-ink">
             {brief ? (
               <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
-            ) : paper ? (
+            ) : paper || dates ? (
               kind.method
             ) : (
               <Fill
@@ -671,8 +688,22 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           />
           {showRemoved && <RemovedBox removed={removed} />}
         </div>
-        <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
-        {ppsd ? (
+        {!dates && <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />}
+        {dates ? (
+          <div className="mt-6">
+            <StepRowsDraft
+              view={dates}
+              editable={d.author.you && d.state === "draft" && view !== "piu" && view !== "public"}
+              onChoice={async (choice) => {
+                try {
+                  replace(await setField(d, "", "choice", choice, view));
+                } catch {
+                  setAnnounced(copy.fill.saveFailed);
+                }
+              }}
+            />
+          </div>
+        ) : ppsd ? (
           <div className="mt-6">
             <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} />
           </div>

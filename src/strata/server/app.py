@@ -956,8 +956,13 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def me(viewer: Viewer = Depends(current_viewer)) -> dict:
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
         # Following, and the project page offers Follow.
+        # An implementing agency officer (ticket 38): their agency, and the implementing agency view the server
+        # applies to them, which the pill names.
+        agency = access.agency(viewer)
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
-                "has_token": viewer.token is not None, "staff": access.is_staff(viewer)}
+                "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
+                "agency": {"name": agency, "agency_id": upload_routes.agency_id(agency)} if agency else None,
+                "own_view": "piu" if agency else "staff"}
 
     @app.get("/api/me/warehouse")
     async def me_on_the_warehouse(viewer: Viewer = Depends(current_viewer)):

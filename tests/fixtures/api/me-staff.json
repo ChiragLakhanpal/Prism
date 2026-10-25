@@ -3,5 +3,7 @@
  "name": "Ana Example",
  "signed_in": true,
  "has_token": true,
- "staff": true
+ "staff": true,
+ "agency": null,
+ "own_view": "staff"
 }

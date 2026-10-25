@@ -1,0 +1,797 @@
+{
+  "draft_id": "draft-0002",
+  "kind": "step_rows",
+  "state": "draft",
+  "discarded_from": null,
+  "author": {
+    "name": "Amina Example",
+    "you": true
+  },
+  "created_at": "2021-01-15T10:00:00Z",
+  "checked": null,
+  "discarded": null,
+  "subject": {
+    "source": "upload",
+    "upload_id": "upl-000000000001",
+    "file_name": "team-a-plan.csv",
+    "project_id": "P900003",
+    "project_name": "Hand-made water project",
+    "implementing_agency": "Northern Water Works Development Agency",
+    "agency_id": "northern-water-works-development-agency",
+    "plan_date": "2021-01-15",
+    "official_use_only": true,
+    "as_of": "2021-01-15",
+    "activities": 2
+  },
+  "counts": {
+    "signal": null,
+    "written": 0
+  },
+  "written": {
+    "activities": 2
+  },
+  "notes": [],
+  "evidence": {
+    "steps:upload:upl-000000000001:1:bid_invitation": {
+      "id": "steps:upload:upl-000000000001:1:bid_invitation",
+      "kind": "step_list",
+      "tool": "estimate_time",
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:1:bid_invitation",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bid_invitation",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": "2021-03-01",
+        "middle": {
+          "planned_date": "2021-03-09",
+          "days": 8,
+          "days_relation": "after_plan",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": "2021-03-16",
+          "days": 15,
+          "days_relation": "after_plan",
+          "longer": 5,
+          "in10": 2
+        }
+      }
+    },
+    "steps:upload:upl-000000000001:1:bidding_document_issued": {
+      "id": "steps:upload:upl-000000000001:1:bidding_document_issued",
+      "kind": "step_list",
+      "tool": "estimate_time",
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:1:bidding_document_issued",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bidding_document_issued",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": "2021-03-08",
+        "middle": {
+          "planned_date": "2021-03-16",
+          "days": 8,
+          "days_relation": "after_plan",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": "2021-03-23",
+          "days": 15,
+          "days_relation": "after_plan",
+          "longer": 5,
+          "in10": 2
+        }
+      }
+    },
+    "steps:upload:upl-000000000001:1:bid_opening": {
+      "id": "steps:upload:upl-000000000001:1:bid_opening",
+      "kind": "step_list",
+      "tool": "estimate_time",
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:1:bid_opening",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bid_opening",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": "2021-04-07",
+        "middle": {
+          "planned_date": "2021-04-15",
+          "days": 8,
+          "days_relation": "after_plan",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": "2021-04-22",
+          "days": 15,
+          "days_relation": "after_plan",
+          "longer": 5,
+          "in10": 2
+        }
+      }
+    },
+    "steps:upload:upl-000000000001:1:bid_evaluation_report": {
+      "id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
+      "kind": "step_list",
+      "tool": "estimate_time",
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bid_evaluation_report",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": "2021-04-30",
+        "middle": {
+          "planned_date": "2021-05-31",
+          "days": 31,
+          "days_relation": "after_plan",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": "2021-06-21",
+          "days": 52,
+          "days_relation": "after_plan",
+          "longer": 5,
+          "in10": 2
+        }
+      }
+    },
+    "steps:upload:upl-000000000001:1:contract_signed": {
+      "id": "steps:upload:upl-000000000001:1:contract_signed",
+      "kind": "step_list",
+      "tool": "estimate_time",
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:1:contract_signed",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "contract_signed",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": "2021-06-10",
+        "middle": {
+          "planned_date": "2021-07-11",
+          "days": 31,
+          "days_relation": "after_plan",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": "2021-08-01",
+          "days": 52,
+          "days_relation": "after_plan",
+          "longer": 5,
+          "in10": 2
+        }
+      }
+    }
+  },
+  "checks": {
+    "checks_run": [
+      1,
+      2
+    ],
+    "sentences": {
+      "written": 11,
+      "kept": 11,
+      "removed": 0
+    },
+    "numbers": {
+      "total": 11,
+      "matched": 11
+    },
+    "dates": {
+      "total": 10,
+      "matched": 10
+    },
+    "quotes": {
+      "total": 0,
+      "found": 0
+    },
+    "sources": {
+      "total": 11,
+      "returned": 11
+    },
+    "tools": [
+      "estimate_time"
+    ]
+  },
+  "checks_count": 2,
+  "removed": [],
+  "sources": [
+    {
+      "evidence_id": "steps:upload:upl-000000000001:1:bid_invitation",
+      "number": 1,
+      "cited_in": [
+        "activity-1"
+      ],
+      "opened": false,
+      "last_opened_at": null
+    },
+    {
+      "evidence_id": "steps:upload:upl-000000000001:1:bidding_document_issued",
+      "number": 2,
+      "cited_in": [
+        "activity-1"
+      ],
+      "opened": false,
+      "last_opened_at": null
+    },
+    {
+      "evidence_id": "steps:upload:upl-000000000001:1:bid_opening",
+      "number": 3,
+      "cited_in": [
+        "activity-1"
+      ],
+      "opened": false,
+      "last_opened_at": null
+    },
+    {
+      "evidence_id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
+      "number": 4,
+      "cited_in": [
+        "activity-1"
+      ],
+      "opened": false,
+      "last_opened_at": null
+    },
+    {
+      "evidence_id": "steps:upload:upl-000000000001:1:contract_signed",
+      "number": 5,
+      "cited_in": [
+        "activity-1"
+      ],
+      "opened": false,
+      "last_opened_at": null
+    }
+  ],
+  "citations": 0,
+  "opened": {
+    "count": 0,
+    "of": 5
+  },
+  "layout": {
+    "columns": [
+      "activity",
+      "signed",
+      "dated"
+    ],
+    "export": "step_rows",
+    "sources_list": false,
+    "removed_box": "when_removed",
+    "not_checked": [
+      "writer_step_rows",
+      "upload_dates"
+    ]
+  },
+  "holds": [
+    {
+      "key": "notChecked",
+      "copy": "notChecked",
+      "left": 1,
+      "first_anchor": null
+    }
+  ],
+  "may_act": true,
+  "export": null,
+  "writer": {
+    "agent": null,
+    "version": null,
+    "run_id": "run-0001"
+  },
+  "disagreements": [],
+  "choices": [],
+  "dates": {
+    "choice": "cautious",
+    "activities": [
+      {
+        "key": "activity-1",
+        "position": 1,
+        "reference": "KE-HAND-900000-CW-RFB",
+        "description": "Hand-made works",
+        "section": "WORKS",
+        "fields": {
+          "loan_credit_no": "IDA / 99999",
+          "review_type": "Post",
+          "method": "Request for Bids",
+          "market_approach": "Open - National",
+          "high_sea_sh_risk": "Y",
+          "estimated_amount_usd": "1000000.00",
+          "actual_amount_usd": "0.00",
+          "process_status": "Pending Implementation"
+        },
+        "raw": {
+          "loan_credit_no": "IDA / 99999",
+          "review_type": "Post",
+          "method": "Request for Bids",
+          "market_approach": "Open - National",
+          "high_sea_sh_risk": "Y",
+          "estimated_amount_usd": "1,000,000.00",
+          "actual_amount_usd": "0.00",
+          "process_status": "Pending Implementation"
+        },
+        "family": "goods",
+        "family_reason": null,
+        "basis": "delay",
+        "needs_start_date": false,
+        "abstain_all": null,
+        "actual_steps_count": 1,
+        "estimate_abstention": "no_model",
+        "steps": [
+          {
+            "step_key": "bid_invitation",
+            "label": "Bid invitation (SPN)",
+            "step_name": "Specific Procurement Notice / Invitation",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": "2021-03-01",
+            "middle": {
+              "planned_date": "2021-03-09",
+              "days": 8,
+              "days_relation": "after_plan",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": "2021-03-16",
+              "days": 15,
+              "days_relation": "after_plan",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:1:bid_invitation",
+            "removed": null
+          },
+          {
+            "step_key": "bidding_document_issued",
+            "label": "Bidding document issued",
+            "step_name": "Bidding Documents as Issued",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": "2021-03-08",
+            "middle": {
+              "planned_date": "2021-03-16",
+              "days": 8,
+              "days_relation": "after_plan",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": "2021-03-23",
+              "days": 15,
+              "days_relation": "after_plan",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:1:bidding_document_issued",
+            "removed": null
+          },
+          {
+            "step_key": "bid_opening",
+            "label": "Bid opening",
+            "step_name": "Proposal Submission / Opening / Minutes",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": "2021-04-07",
+            "middle": {
+              "planned_date": "2021-04-15",
+              "days": 8,
+              "days_relation": "after_plan",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": "2021-04-22",
+              "days": 15,
+              "days_relation": "after_plan",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:1:bid_opening",
+            "removed": null
+          },
+          {
+            "step_key": "bid_evaluation_report",
+            "label": "Bid evaluation report",
+            "step_name": "Bid Evaluation Report and Recommendation for Award",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": "2021-04-30",
+            "middle": {
+              "planned_date": "2021-05-31",
+              "days": 31,
+              "days_relation": "after_plan",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": "2021-06-21",
+              "days": 52,
+              "days_relation": "after_plan",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
+            "removed": null
+          },
+          {
+            "step_key": "contract_signed",
+            "label": "Contract signed",
+            "step_name": "Signed Contract",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": "2021-06-10",
+            "middle": {
+              "planned_date": "2021-07-11",
+              "days": 31,
+              "days_relation": "after_plan",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": "2021-08-01",
+              "days": 52,
+              "days_relation": "after_plan",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:1:contract_signed",
+            "removed": null
+          },
+          {
+            "step_key": "contract_completed",
+            "label": "Contract completed",
+            "step_name": "Contract Completion",
+            "is_anchor": false,
+            "comparables_n": 0,
+            "abstain_reason": "few_comparables",
+            "plan_first_date": "2022-06-10",
+            "middle": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "list_id": "steps:upload:upl-000000000001:1:contract_completed",
+            "removed": null
+          }
+        ]
+      },
+      {
+        "key": "activity-2",
+        "position": 2,
+        "reference": null,
+        "description": "New boreholes in the north",
+        "section": "WORKS",
+        "fields": {
+          "loan_credit_no": "IDA / 99999",
+          "review_type": "Post",
+          "method": "Request for Bids",
+          "market_approach": "Open - National",
+          "high_sea_sh_risk": null,
+          "estimated_amount_usd": "400000.00",
+          "actual_amount_usd": null,
+          "process_status": null
+        },
+        "raw": {
+          "loan_credit_no": "IDA / 99999",
+          "review_type": "Post",
+          "method": "Request for Bids",
+          "market_approach": "Open - National",
+          "high_sea_sh_risk": "",
+          "estimated_amount_usd": "400,000.00",
+          "actual_amount_usd": "",
+          "process_status": ""
+        },
+        "family": "goods",
+        "family_reason": null,
+        "basis": "duration",
+        "needs_start_date": true,
+        "abstain_all": null,
+        "actual_steps_count": 0,
+        "estimate_abstention": "no_model",
+        "steps": [
+          {
+            "step_key": "bid_invitation",
+            "label": "Bid invitation (SPN)",
+            "step_name": "Specific Procurement Notice / Invitation",
+            "is_anchor": true,
+            "comparables_n": null,
+            "abstain_reason": null,
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "list_id": "steps:upload:upl-000000000001:2:bid_invitation",
+            "removed": null
+          },
+          {
+            "step_key": "bidding_document_issued",
+            "label": "Bidding document issued",
+            "step_name": "Bidding Documents as Issued",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": 7,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": 7,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "list_id": "steps:upload:upl-000000000001:2:bidding_document_issued",
+            "removed": null
+          },
+          {
+            "step_key": "bid_opening",
+            "label": "Bid opening",
+            "step_name": "Proposal Submission / Opening / Minutes",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": 30,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": 30,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "list_id": "steps:upload:upl-000000000001:2:bid_opening",
+            "removed": null
+          },
+          {
+            "step_key": "bid_evaluation_report",
+            "label": "Bid evaluation report",
+            "step_name": "Bid Evaluation Report and Recommendation for Award",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": 46,
+              "days_relation": "after_previous",
+              "longer": 12,
+              "in10": 5
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": 60,
+              "days_relation": "after_previous",
+              "longer": 5,
+              "in10": 2
+            },
+            "list_id": "steps:upload:upl-000000000001:2:bid_evaluation_report",
+            "removed": null
+          },
+          {
+            "step_key": "contract_signed",
+            "label": "Contract signed",
+            "step_name": "Signed Contract",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": null,
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": 41,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": 41,
+              "days_relation": "after_previous",
+              "longer": 0,
+              "in10": 0
+            },
+            "list_id": "steps:upload:upl-000000000001:2:contract_signed",
+            "removed": null
+          },
+          {
+            "step_key": "contract_completed",
+            "label": "Contract completed",
+            "step_name": "Contract Completion",
+            "is_anchor": false,
+            "comparables_n": 25,
+            "abstain_reason": "not_reached",
+            "plan_first_date": null,
+            "middle": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "cautious": {
+              "planned_date": null,
+              "days": null,
+              "days_relation": null,
+              "longer": null,
+              "in10": null
+            },
+            "list_id": "steps:upload:upl-000000000001:2:contract_completed",
+            "removed": null
+          }
+        ]
+      }
+    ],
+    "counts": {
+      "activities": 2,
+      "steps": 11,
+      "dated": {
+        "middle": 5,
+        "cautious": 5
+      },
+      "lists": 5,
+      "no_family": 0
+    },
+    "min_comparables": 20,
+    "left_to_people": [
+      "Activity Reference No.",
+      "High SEA/SH Risk",
+      "Actual Amount (US$)",
+      "Process Status",
+      "Draft Pre-qualification Documents (Actual)",
+      "Prequalification Evaluation Report (Actual)",
+      "Draft Bidding Document / Justification (Actual)",
+      "Specific Procurement Notice / Invitation (Actual)",
+      "Bidding Documents as Issued (Actual)",
+      "Proposal Submission / Opening / Minutes (Actual)",
+      "Bid Evaluation Report and Recommendation for Award (Actual)",
+      "Terms of Reference (Actual)",
+      "Expression of Interest Notice (Actual)",
+      "Short List and Draft Request for Proposals (Actual)",
+      "Request for Proposals as Issued (Actual)",
+      "Opening of Technical Proposals / Minutes (Actual)",
+      "Evaluation of Technical Proposal (Actual)",
+      "Combined Evaluation Report and Draft Negotiated Contract (Actual)",
+      "Invitation to Identified/Selected Consultant (Actual)",
+      "Draft Negotiated Contract (Actual)",
+      "Signed Contract (Actual)",
+      "Contract Completion (Actual)"
+    ],
+    "cautious_in10": 2,
+    "csv_columns": [
+      "Activity Reference No.",
+      "Description",
+      "Loan / Credit No.",
+      "Component",
+      "Review Type",
+      "Method",
+      "Market Approach",
+      "Procurement Process",
+      "Prequalification (Y/N)",
+      "High SEA/SH Risk",
+      "Procurement Document Type",
+      "Contract Type",
+      "Estimated Amount (US$)",
+      "Actual Amount (US$)",
+      "Process Status",
+      "Draft Pre-qualification Documents (Planned)",
+      "Draft Pre-qualification Documents (Actual)",
+      "Prequalification Evaluation Report (Planned)",
+      "Prequalification Evaluation Report (Actual)",
+      "Draft Bidding Document / Justification (Planned)",
+      "Draft Bidding Document / Justification (Actual)",
+      "Specific Procurement Notice / Invitation (Planned)",
+      "Specific Procurement Notice / Invitation (Actual)",
+      "Bidding Documents as Issued (Planned)",
+      "Bidding Documents as Issued (Actual)",
+      "Proposal Submission / Opening / Minutes (Planned)",
+      "Proposal Submission / Opening / Minutes (Actual)",
+      "Bid Evaluation Report and Recommendation for Award (Planned)",
+      "Bid Evaluation Report and Recommendation for Award (Actual)",
+      "Terms of Reference (Planned)",
+      "Terms of Reference (Actual)",
+      "Expression of Interest Notice (Planned)",
+      "Expression of Interest Notice (Actual)",
+      "Short List and Draft Request for Proposals (Planned)",
+      "Short List and Draft Request for Proposals (Actual)",
+      "Request for Proposals as Issued (Planned)",
+      "Request for Proposals as Issued (Actual)",
+      "Opening of Technical Proposals / Minutes (Planned)",
+      "Opening of Technical Proposals / Minutes (Actual)",
+      "Evaluation of Technical Proposal (Planned)",
+      "Evaluation of Technical Proposal (Actual)",
+      "Combined Evaluation Report and Draft Negotiated Contract (Planned)",
+      "Combined Evaluation Report and Draft Negotiated Contract (Actual)",
+      "Invitation to Identified/Selected Consultant (Planned)",
+      "Invitation to Identified/Selected Consultant (Actual)",
+      "Draft Negotiated Contract (Planned)",
+      "Draft Negotiated Contract (Actual)",
+      "Signed Contract (Planned)",
+      "Signed Contract (Actual)",
+      "Contract Completion (Planned)",
+      "Contract Completion (Actual)"
+    ]
+  }
+}

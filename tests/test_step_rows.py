@@ -239,6 +239,15 @@ def test_an_upload_gets_the_dates_worked_out_by_hand_checked_and_exported_as_ste
     assert all(dict(zip(header, second))[column.name] == "" for column in columns if column.fill == "planned")
 
 
+def test_the_upload_screens_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_path):
+    """The upload and planned-dates screens' tests serve these files; the routes must still answer with them."""
+    from record_uploads_api import answers
+
+    for name, text in answers(tmp_path, fixture_db).items():
+        assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), (
+            f"{name} is out of date: uv run --frozen python tests/record_uploads_api.py")
+
+
 def test_the_draft_kind_registry_makes_planned_dates_an_agency_kind_with_no_model_and_step_rows_as_its_file():
     kind = load_draft_kinds().kinds["step_rows"]
 

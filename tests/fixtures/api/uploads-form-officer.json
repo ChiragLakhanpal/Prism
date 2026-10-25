@@ -1,0 +1,68 @@
+{
+  "officer": true,
+  "agency": {
+    "name": "Northern Water Works Development Agency",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "projects": [
+    {
+      "project_id": "P156634",
+      "project_name": "Water and Sanitation Development Project",
+      "display_name": "Water and Sanitation Development",
+      "latest_plan": {
+        "plan_date": "2026-10-09",
+        "disclosed_on": "2026-10-09",
+        "agency_id": "northern-water-works-development-agency"
+      }
+    }
+  ],
+  "earlier": 0,
+  "preview": false,
+  "columns": {
+    "needed": [
+      "Activity Reference No. / Description",
+      "Method"
+    ],
+    "optional": [
+      "Loan / Credit No.",
+      "Component",
+      "Review Type",
+      "Market Approach",
+      "Procurement Process",
+      "Prequalification (Y/N)",
+      "High SEA/SH Risk",
+      "Procurement Document Type",
+      "Contract Type",
+      "Estimated Amount (US$)",
+      "Actual Amount (US$)",
+      "Process Status",
+      "Draft Pre-qualification Documents",
+      "Prequalification Evaluation Report",
+      "Draft Bidding Document / Justification",
+      "Specific Procurement Notice / Invitation",
+      "Bidding Documents as Issued",
+      "Proposal Submission / Opening / Minutes",
+      "Bid Evaluation Report and Recommendation for Award",
+      "Terms of Reference",
+      "Expression of Interest Notice",
+      "Short List and Draft Request for Proposals",
+      "Request for Proposals as Issued",
+      "Opening of Technical Proposals / Minutes",
+      "Evaluation of Technical Proposal",
+      "Combined Evaluation Report and Draft Negotiated Contract",
+      "Invitation to Identified/Selected Consultant",
+      "Draft Negotiated Contract",
+      "Signed Contract",
+      "Contract Completion"
+    ]
+  },
+  "limits": {
+    "accept": [
+      ".xlsx",
+      ".csv"
+    ],
+    "max_size_bytes": 5000000,
+    "max_rows": 500
+  },
+  "format": "published_tables"
+}

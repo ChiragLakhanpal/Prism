@@ -37,7 +37,7 @@ from strata.agent.claims import Claim
 from strata.agent.verifier import Verdict, check
 from strata.config import load_thresholds
 from strata.dbx import Viewer
-from strata.estimates.step_dates import CHOICES, families
+from strata.estimates.step_dates import CHOICES, Settings, families
 from strata.harness.facts import Facts as Seen
 from strata.lakehouse.engine import Engine
 from strata.reader.step_columns import DESCRIPTION, REFERENCE, registry as step_columns
@@ -267,6 +267,7 @@ def view(content: dict, fields: dict, words: dict) -> dict:
     columns = step_columns()
     return {"choice": chosen(fields), "activities": content["activities"], "counts": content["counts"],
             "min_comparables": content.get("min_comparables"), "left_to_people": columns.left_to_people(),
+            "cautious_in10": Settings.read(load_thresholds()).in10("cautious"),
             "csv_columns": [column.name for column in columns.csv_columns()]}
 
 
