@@ -32,7 +32,7 @@ import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { notCheckedFor, type Removed } from "./Checks";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
-import { changesLine, ruleSentence, sideFull, sideMeta, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
+import { changesLine, ruleSentence, sideFull, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -339,7 +339,7 @@ export function AnswerSentences({
     const cards = run.disagreements.filter((found) => found.after === sentence.index);
     if (cards.length === 0) return;
     close(`sentence${sentence.index}`);
-    for (const found of cards) blocks.push(<AnswerDisagreement key={found.id} found={found} run={run} markerFor={markerFor} />);
+    for (const found of cards) blocks.push(<AnswerDisagreement key={found.id} found={found} run={run} markerFor={markerFor} onOpen={open} />);
   });
   close("end");
   return <div className="flex flex-col gap-3">{blocks}</div>;
@@ -352,10 +352,13 @@ function AnswerDisagreement({
   found,
   run,
   markerFor,
+  onOpen,
 }: {
   found: DisagreementEvent;
   run: Run;
   markerFor: (id: string, sentence: number, active: boolean) => ReactNode;
+  // Opens a side's source in the drawer, as its marker does, from the side's "Open ISR 7" link.
+  onOpen: (id: string, sentence: number, element: HTMLElement) => void;
 }) {
   const words = copy.disagreement;
   const sides = found.sides as SideData[];
@@ -369,6 +372,7 @@ function AnswerDisagreement({
     assertionId: side.assertion_id ?? undefined,
     said: <SideSaid side={side} />,
     marker: markerFor(side.evidence_id, found.after, false),
+    open: { label: sideOpen(side), href: evidenceHref(side.evidence_id), onOpen: (element: HTMLElement) => onOpen(side.evidence_id, found.after, element) },
   })) as [CardSide, CardSide];
   const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
   const id = found.disagreement_id ?? found.id.split(":").pop() ?? found.id;

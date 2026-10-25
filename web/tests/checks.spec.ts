@@ -188,6 +188,12 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(page.getByRole("dialog").locator("[data-claim]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(second).toBeFocused();
+  // Each side also opens its source by name (the 23 brief, section 5.2), and focus comes back to that link.
+  const openIsr = card.getByRole("link", { name: "Open ISR 7" });
+  await openIsr.click();
+  await expect(page.getByRole("dialog")).toContainText("ISR");
+  await page.keyboard.press("Escape");
+  await expect(openIsr).toBeFocused();
 });
 
 test("the disagreement card's sides sit side by side at 1440 px and stack when the card is under 560 px", async ({ page }) => {
