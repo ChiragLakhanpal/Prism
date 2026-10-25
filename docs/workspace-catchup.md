@@ -1875,3 +1875,93 @@ Then, in the SQL editor, with the run id the command printed:
     SELECT * FROM strata.ops.evaluation_result WHERE run_id = :run_id
 
 It worked if the rows include the `genie_benchmark` pass rate (questions, passed, share, target, gap and met; criterion 1's other half), and, for each of `groundedness`, `relevance`, `task_adherence` and `tool_use`, the columns `scored`, `met`, `share`, `mean_score` and `foundry_run` (criterion 6). This run also checks the task_adherence and tool_use evaluators' names and data mappings, which fairshare never ran.
+
+## Ticket 42, step 1 of 6: add the plan rows' three method columns, then deploy the two new tables
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit at 10:33 UTC that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 42 adds three columns to `strata.silver.plan_rows`: `method_original` (the plan's own words for the method), `method_original_lang` (their language) and `method_mapped` (whether `config/method_names.toml` mapped them to the current Regulations' name). It also adds two tables, `strata.ops.passage_language_checks` and `strata.ops.viewer_settings`. Ticket 08's deploy already made `plan_rows`, and `CREATE TABLE IF NOT EXISTS` adds no columns to a table that exists, so the `ALTER TABLE` comes first. One deploy from 3422fff or later serves every block that names the deploy.
+
+Run this on the SQL warehouse, in the SQL editor:
+
+    ALTER TABLE strata.silver.plan_rows ADD COLUMNS (method_original STRING, method_original_lang STRING, method_mapped BOOLEAN)
+
+Then run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the `ALTER TABLE` succeeds (if it says a column already exists, a deploy made the table with them, so go on), the first deploy exits 0 and lists `strata.ops.passage_language_checks` and `strata.ops.viewer_settings` as new, and the second prints "No changes.". Both print "workspace's catalog lists the same before and after the deploy".
+
+## Ticket 42, step 2 of 6: the live document run sets and checks every passage's language (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff, while the warehouse's daily limit held. Run it after step 1. It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN, AI_SEARCH_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`. The run now sets each passage's language with py3langid (`src/strata/knowledge/language.py`), checks a sample of 50 against the detector reading only the words, and writes two data readiness measures. Ticket 11's block for the same command still holds; one run from 3422fff or later serves both.
+
+Run this from the main checkout:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+
+Then, in the SQL editor:
+
+    SELECT measure, count, denominator, detail FROM strata.ops.data_readiness WHERE measure IN ('passages_language_set', 'passage_language_sample_agrees') AND subject = 'all' ORDER BY measured_at DESC
+    SELECT agrees, count(*) FROM strata.ops.passage_language_checks GROUP BY agrees
+
+It worked if the run exits 0, `passages_language_set` has its count equal to its denominator, `passage_language_sample_agrees` reads 50 of 50 (or its detail names each passage that disagreed), and `passage_language_checks` holds the sampled passages with `agrees` true for nearly all of them. Criterion 1 asks for this across the whole slice, so check the same two rows again after the next nightly `parse_and_embed` task (`bundle/nightly.yml`, which now installs `py3langid==0.3.0`).
+
+## Ticket 42, step 3 of 6: sync the changed orchestrator and writer instructions
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff, while the header above held workspace steps back during a merge. The sync needs only Foundry, not the warehouse. It needs FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_TENANT_ID in `.env`, and `az` signed in. Ticket 42 changed the orchestrator's instructions (`src/strata/agent/orchestrator.md`: write in the working language, keep quotes word for word in their own language) and four draft writers' instructions. The orchestrator sync that ran for ticket 33 on October 25 came from 3b8c15aa, before this merge, so it does not cover these changes. One sync from 3422fff or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run's diff shows the working-language lines and ends "I made version N of strata-orchestrator, which matches the repo." (and a new version for each changed writer), and the `--check` run exits 0.
+
+Then, to check that the new instructions still refuse, run ticket 24's check:
+
+    uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if it exits 0. This asks the must-refuse questions in English only: `evals/benchmark.yaml` has no question typed in French yet, so a live refusal check in French (the verifier's parked item 5) needs French must-refuse questions added first.
+
+## Ticket 42, step 4 of 6: re-record the hand-written French and English answers, the judge and the French review notes (criterion 3, live)
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff, while the header above held workspace steps back during a merge. Run it after steps 2 and 3, since the recordings ask the synced agents about the live passages. It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in `.env`, and `az` signed in. The builder wrote these recordings by hand, so they say `"recorded": false`: `p127203-fr-procurement-delays` and `p127203-en-procurement-delays` (with their judge answers in `tests/fixtures/agent/judged/`), and `review-notes-nwwda-2026-10-09-fr` (a writer case). The commands rewrite files under `tests/fixtures/agent/`, so run the gate by hand afterwards, when no other gate is running, and commit the new recordings on `build/strata`.
+
+Run this from the main checkout, in this order:
+
+    uv run --script ops/agent/record.py --env-file .env
+    uv run --script ops/agent/record.py --env-file .env --writers
+    uv run --script ops/agent/record.py --env-file .env --judge
+    .githooks/pre-commit
+
+It worked if each run prints its diff, the three cases above now say `"recorded": true`, and the gate still passes, so the replayed French answer and draft keep all their sentences through checks 1 to 6 with nothing removed.
+
+## Ticket 42, step 5 of 6: recall at 20 across languages on AI Search (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff, while the warehouse's daily limit held. Run it after step 2 and after the weekly retrieval job has rebuilt the labeled set, which now holds the bilingual query set (`evals/bilingual_queries.toml`, built by `src/strata/knowledge/retrieval/labels.py`). It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`. This is criterion 2's real finding: the offline numbers (0.51 for English queries over French passages, 0.0 the other way) only show that the harness works, because the offline hashed-words search cannot match across languages.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env
+
+Then, in the SQL editor, with the run id it printed:
+
+    SELECT * FROM strata.ops.evaluation_result WHERE run_id = :run_id
+
+It worked if the run prints a `bilingual_en_fr` line with 25 queries and a recall at 20, and a `bilingual_fr_en` line with 5 queries, and the run's rows in `strata.ops.evaluation_result` include `recall_at_20` for both sets, from text-embedding-3-large. The French-to-English value should be above the offline 0.0.
+
+## Ticket 42, step 6 of 6: deploy the App with the language detector, then save a language as a viewer
+
+The merger parked this step on October 25, 2026, after merge commit 3422fff, while the warehouse's daily limit held. Run it after step 1, so `strata.ops.viewer_settings` exists. It needs the Databricks keys in `.env`. The App package now carries `py3langid` and `numpy` (`ops/app/requirements.txt`, beside ticket 33's `pyyaml`). It is ticket 06's deploy command, and one deploy from 3422fff or later serves every block that names it.
+
+The deploy does not yet grant the App's service principal anything on `strata.ops.viewer_settings` (review follow-up 1 on ticket 42: `grants()` in `ops/app/deploy_app.py` leaves it out). Until that follow-up lands, add the grant by hand after the deploy, or `PUT /api/me/working-language` returns 503.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Then, in the SQL editor, with the App's service principal (its application id, shown on the App's page in the workspace):
+
+    GRANT SELECT, MODIFY ON TABLE strata.ops.viewer_settings TO `<the App's application id>`
+
+It worked if the deploy exits 0 with the last line `Strata is running at https://...`, `GET /api/me` returns a `language` block, and, signed in as a viewer, choosing French in the view popover saves it: `PUT /api/me/working-language` returns 204, a reload of `/api/me` gives `source: saved`, and `strata.ops.viewer_settings` holds a new row for that viewer.
