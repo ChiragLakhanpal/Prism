@@ -632,3 +632,13 @@ scope = "P127203"
 as_of = 2026-10-23
 recording = "p127203-fr-procurement-delays"
 language = "fr"
+
+[[cases]]
+id = "p127203-en-procurement-delays"
+says = """Asked in English, the agent searches the French completion report of P127203 and answers in English: a summary \
+a model judges against the French paragraph, the report's French words quoted word for word, and the report's date. \
+Every check passes, and the check line says the judged sentence cites a source in another language (ticket 42)."""
+question = "What delayed procurement in P127203, according to its completion report?"
+scope = "P127203"
+as_of = 2026-10-23
+recording = "p127203-en-procurement-delays"

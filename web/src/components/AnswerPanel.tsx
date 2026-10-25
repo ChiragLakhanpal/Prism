@@ -235,7 +235,30 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,
 // a tooltip naming the source, and a click that opens it. Numbers are not tab stops; the markers carry
 // the keyboard to the same sources.
-export function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
+export function sentenceText(
+  sentence: SentenceEvent,
+  evidence: Record<string, EvidenceEvent>,
+  open: (id: string) => void,
+  // The language the sentence is written in: the words it quotes from a source in another language keep that source's
+  // lang (ticket 42; the 42 brief, section 6.5).
+  around: string = ENGLISH,
+): ReactNode[] {
+  const quoteLang = sentence.quote ? (evidence[sentence.quote.evidence_id]?.row?.language as string | undefined) : undefined;
+  const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
+  const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
+  // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
+  const plain = (start: number, end: number): ReactNode[] => {
+    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return [sentence.text.slice(start, end)];
+    const from = Math.max(start, quoteStart);
+    const to = Math.min(end, quoteEnd);
+    return [
+      sentence.text.slice(start, from),
+      <Lang key={`quote-${from}`} code={quoteLang}>
+        {sentence.text.slice(from, to)}
+      </Lang>,
+      sentence.text.slice(to, end),
+    ].filter((piece) => piece !== "");
+  };
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before
   // the numbers, so each list keeps its own place in the text.
@@ -260,7 +283,7 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
     // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount).
     const before = sentence.text.slice(at, mention.start);
     const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
-    parts.push(before.slice(0, before.length - sign.length));
+    parts.push(...plain(at, mention.start - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     const num = (
       <Num
@@ -287,7 +310,7 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
     at = mention.end + stop.length;
   }
   // The sentence's last characters stay with its marker (CitationMarker's word joiner).
-  parts.push(sentence.text.slice(at));
+  parts.push(...plain(at, sentence.text.length));
   return parts;
 }
 
@@ -340,7 +363,7 @@ export function AnswerSentences({
       <Fragment key={sentence.index}>
         {paragraph.length > 0 && " "}
         <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null))}
+          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null), run.lang)}
           {/* A marker is the copy file's words, read in English inside an answer in another language. */}
           <Lang code={ENGLISH}>{sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}</Lang>
         </span>
@@ -566,7 +589,9 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       numbers: shown.numbers,
       dates: shown.dates,
       quotes: shown.quotes,
-      judged: checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined,
+      judged: checks.shown
+        ? { judged: checks.shown.judged, proven: checks.shown.proven, crossLanguage: checks.shown.cross_language }
+        : undefined,
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),

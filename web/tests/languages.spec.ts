@@ -200,3 +200,21 @@ test("Sources and licenses lists the Procurement Plan template in French under i
     "Plan de passation de marchés (Partie Textuelle), published by the World Bank, as the Procurement Plan template in French, from the World Bank's Documents & Reports.",
   );
 });
+
+test("an English answer keeps the French words it quotes in French, and its check line says a model judged across languages", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/ask": { body: await recorded("ask-p127203-en-cites-french.sse") } });
+  await page.goto("/projects/P130164");
+  await expect(page.locator("main h1")).toBeVisible();
+  await askFromTheBox(page, "What delayed procurement in P127203, according to its completion report?");
+  await landed(page);
+
+  await expect(panel(page).locator("[data-asked]")).toHaveText("Asked within P130164.");
+  const quoted = panel(page).locator("[data-sentence-text] [lang=fr]");
+  await expect(quoted).toHaveText("des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés");
+  expect(await readIn(page, "[data-sentence-text='0']")).toBe("en");
+  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
+    "Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because everything they stated matched a record or a page. It cites a source written in another language.",
+  );
+  expect(await axe(page, "[data-answer-panel]")).toEqual([]);
+});

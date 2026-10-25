@@ -90,6 +90,8 @@ export type ChecksEvent = {
     quotes: { total: number; found: number };
     judged: number;
     proven: number;
+    // The judged sentences that cite a source in another language than theirs, when any do (ticket 42).
+    cross_language?: number;
   };
   // Numbers and dates together, over every sentence written, for check 1's item in the steps.
   checked?: { total: number; matched: number };

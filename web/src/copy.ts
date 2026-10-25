@@ -398,6 +398,12 @@ export const copy = {
       one: "{part} of {whole} sentence follows from its sources",
       many: "{part} of {whole} sentences follow from their sources",
     },
+    // Judged sentences that cite a source written in another language (ticket 42; the 42 brief, section 5.5).
+    crossLanguage: {
+      one: "It cites a source written in another language.",
+      all: "All of them cite a source written in another language.",
+      some: (count: string) => `${count.charAt(0).toUpperCase()}${count.slice(1)} of them cite a source written in another language.`,
+    },
     // {count} is a word from one to nine, then numerals.
     provenOthers: {
       one: "The other one needed no model, because everything it stated matched a record or a page.",

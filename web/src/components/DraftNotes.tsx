@@ -65,7 +65,7 @@ export function NoteSentences({
           <Fragment key={sentence.index}>
             {index > 0 && " "}
             <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-              {sentenceText(sentence, evidence, (id) => show(id, sentence.index, null))}
+              {sentenceText(sentence, evidence, (id) => show(id, sentence.index, null), writtenIn)}
               <Lang code="en">
               {sentence.evidence_ids.map((id) => {
                 const n = numbers.get(id)!;

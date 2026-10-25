@@ -527,6 +527,9 @@ class Verdict:
     judge_responded: bool | None = None  # None when the judge was not called
     advice: tuple[int, int] = (0, 0)  # sentences that gave advice, and those that cited a lesson or comparable
     cited_tools: tuple[str, ...] = ()  # the tools whose evidence the kept sentences cite
+    # The judged sentences on screen that cite a source written in another language than theirs (ticket 42): a model
+    # judged them across two languages, a weaker kind of checking than an exact match, which the check line says.
+    cross_language_judged: int = 0
 
     @property
     def kept(self) -> list[Checked]:
@@ -574,7 +577,9 @@ class Verdict:
                           "quotes": {"total": len(shown_quotes),
                                      "found": sum(sentence.quote_found for sentence in shown_quotes)},
                           "judged": sum(sentence.judged for sentence in kept),
-                          "proven": sum(sentence.proven for sentence in kept)},
+                          "proven": sum(sentence.proven for sentence in kept),
+                          # Only when some do, so an answer in one language sends what it always sent (ticket 42).
+                          **({"cross_language": self.cross_language_judged} if self.cross_language_judged else {})},
                 "judge": {"called": self.judge_called, "responded": self.judge_responded, "judged": len(judged),
                           "followed": sum(sentence.kept for sentence in judged), "unjudged": len(unjudged),
                           "proven": sum(sentence.proven for sentence in self.sentences)},
@@ -822,6 +827,7 @@ class AnswerCheck:
         # What the agent's tools could not answer, as checks 1 to 3 saw it: check 6's own question adds nothing here.
         self.abstentions = facts.abstentions()
         sentences = verify(claims, facts, language).sentences if checked is None else tuple(checked)
+        self.language = language
         self.sentences = {sentence.index: sentence for sentence in sentences}
         # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
         self.disagreements: dict[str, Mapping] = {
@@ -925,8 +931,10 @@ class AnswerCheck:
             attached.append(Attached(resting[0].index, row, bool(changed), not both, changed))
         attached.sort(key=lambda found: found.after)  # stable, so a sentence's cards keep their date order
         tools = [self.facts.tool(evidence) for sentence in kept for evidence in sentence.claim.evidence_ids]
+        cross = sum(1 for sentence in kept if sentence.judged and any(
+            _language_of(self.facts.get(evidence)) != self.language for evidence in sentence.claim.evidence_ids))
         return Verdict(sentences, ALL_CHECKS, tuple(attached), self.judge_called, self.judge_responded, self.advice,
-                       cited_tools=tuple(sorted({tool for tool in tools if tool})))
+                       cited_tools=tuple(sorted({tool for tool in tools if tool})), cross_language_judged=cross)
 
 
 # ── The answer's events ──────────────────────────────────────────────────

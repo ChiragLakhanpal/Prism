@@ -235,6 +235,7 @@ RECORDED_STREAMS = {
     "refuses-part-supplier-scores": "ask-refuses-part-supplier-scores.sse",
     # Ticket 42: an answer asked for in French.
     "p127203-fr-procurement-delays": "ask-p127203-fr.sse",
+    "p127203-en-procurement-delays": "ask-p127203-en-cites-french.sse",
     **_refusal_streams(),
 }
 

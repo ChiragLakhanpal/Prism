@@ -303,3 +303,20 @@ def test_choosing_a_language_takes_only_a_working_language_and_a_signed_in_viewe
     assert call(app, "PUT", "/api/me/working-language", ANA, json={"code": "FR"}).status_code == 400
     assert call(app, "PUT", "/api/me/working-language", {}, json={"code": "fr"}).status_code == 401
     assert call(create_app(), "PUT", "/api/me/working-language", ANA, json={"code": "fr"}).status_code == 503
+
+
+def test_an_english_answer_judged_against_a_french_paragraph_says_so_in_its_check_line(fixture_db):
+    """A model judged the summary across two languages, which is weaker than an exact match, so the checks say how many
+    judged sentences on screen cite a source in another language (the 42 brief, section 5.5). The quote keeps the
+    report's French words, and an English answer to an English question sends no language event."""
+    parsed = ask_scripted(fixture_db, "p127203-en-procurement-delays")
+
+    assert of(parsed, "removed") == [] and of(parsed, "language") == []
+    checks = of(parsed, "checks")[0]
+    assert (checks["shown"]["judged"], checks["shown"]["cross_language"]) == (1, 1)
+    quoted = [sentence for sentence in of(parsed, "sentence") if sentence["quote"]]
+    [cited] = [item for item in of(parsed, "evidence") if item["id"] == quoted[0]["quote"]["evidence_id"]]
+    assert cited["row"]["language"] == "fr" and quoted[0]["quote"]["text"] in cited["row"]["text"]
+    # An answer in one language with nothing judged across languages sends what it always sent.
+    english = ask_scripted(fixture_db, "p130164-rebidding")
+    assert "cross_language" not in of(english, "checks")[0]["shown"]
