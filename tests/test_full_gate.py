@@ -361,3 +361,21 @@ def test_the_command_asks_genie_only_when_the_env_file_names_a_space():
 
     assert without.genie is None and callable(with_space.genie)
     assert (store.name, store.warehouse_id) == ("databricks", "wh-1")
+
+
+def test_a_live_stage_that_cannot_run_fails_the_gate_naming_it_and_the_rest_is_still_stored(engine, store):
+    from strata.evals.foundry_evaluation import EvaluationError
+
+    def no_foundry(items):
+        raise EvaluationError("Foundry did not finish evaluation run run-1 within 1800 seconds.")
+
+    broken = stages(engine)
+    broken.foundry = no_foundry
+
+    report = full_gate.run(benchmark.load(), broken, store, now=lambda: RAN_AT, say=lambda line: None)
+
+    assert report.exit_code == 1
+    assert report.missed == ["Foundry evaluations could not run: Foundry did not finish evaluation run run-1 "
+                             "within 1800 seconds."]
+    assert measures(stored(store, "full_gate"), "stage", "foundry_evaluation") == {"ran": 0.0}
+    assert measures(stored(store, "benchmark"), "kind", "all")["questions"] == len(benchmark.load())

@@ -72,16 +72,30 @@ def run(questions: list[dict], stages: Stages, store: Engine | None, thresholds:
             results.write(store, written)
         say(OFFLINE_FAILED)
         return Report(run_id, 1, [OFFLINE_FAILED], written)
+    failed: list[str] = []
+
+    def attempt(name: str, stage: Callable[[], object]):
+        """A live stage, or None with a sentence for the report when it could not run: the stages that did run
+        are still stored, and the gate fails naming the one that did not."""
+        try:
+            return stage()
+        except Exception as error:  # a timeout, a refused sign-in or a service that is down
+            failed.append(f"{name} could not run: {error}")
+            say(f"   {failed[-1]}")
+            return None
+
     say("2. The Genie benchmark.")
-    genie = stages.genie() if stages.genie else None
-    if genie is None:
+    genie = attempt("The Genie benchmark", stages.genie) if stages.genie else None
+    if stages.genie is None:
         say("   No Genie space was given, so I asked Genie nothing.")
     say("3. The benchmark through the answer contract.")
     asked = stages.answers(questions)
     say("4. Foundry evaluations.")
     items = foundry_evaluation.dataset([answer for answer, _ in asked])
-    evaluation = stages.foundry(items) if stages.foundry and items else None
-    if evaluation is None:
+    if stages.foundry and items:
+        evaluation = attempt("Foundry evaluations", lambda: stages.foundry(items))
+    else:
+        evaluation = None
         say("   Foundry evaluated nothing: no Foundry project was given, or no answer kept a sentence.")
     scored = [score for _, score in asked]
     found = results.tallies(scored, genie, evaluation, limits)
@@ -96,7 +110,7 @@ def run(questions: list[dict], stages: Stages, store: Engine | None, thresholds:
     for item in [*scored, *(genie or [])]:
         if not item.passed:
             say(f"   {item.id} did not pass. {' '.join(item.problems)}")
-    missed = results.missed(found)
+    missed = failed + results.missed(found)
     for line in missed:
         say(line)
     return Report(run_id, 1 if missed else 0, missed, written)
