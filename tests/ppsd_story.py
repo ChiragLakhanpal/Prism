@@ -62,7 +62,7 @@ class Story:
     """The app on a library, with app state in a DuckDB file, the scripted writer and judge of the case now
     writing, a clock that moves a minute at a time and fixed ids."""
 
-    def __init__(self, database: Path, folder: Path, kinds=None):
+    def __init__(self, database: Path, folder: Path, kinds=None, access: Access | None = None):
         self.state_db = folder / "state.duckdb"
         with DuckDBEngine.open(self.state_db) as engine:
             catalog.build(engine)
@@ -93,7 +93,8 @@ class Story:
         self.app = create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=self.clock),
                               choices=ChoiceLog(state, now=self.clock, new_id=lambda: next(choice_ids)),
                               packages=PackageStore(state), writers=lambda kind: ScriptedAgent(self.cases[self.case]),
-                              judge=Judge(), access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY,
+                              judge=Judge(), access=access or Access(load_roles(), StaticGroups(GROUPS)),
+                              today=lambda: TODAY,
                               now=self.clock, new_draft_id=lambda: next(ids), new_run_id=lambda: next(runs), kinds=kinds)
 
     def clock(self) -> dt.datetime:

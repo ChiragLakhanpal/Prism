@@ -11,6 +11,13 @@
 #   name     the team's name
 #   groups   the workspace groups whose members are on the team. The server reads a viewer's groups
 #            with their own token. A viewer in the groups of two teams is on the first one in this file.
+#   agency   only for an implementing agency's team (ticket 38): the agency, as the projects API's records
+#            name it, such as "Northern Water Works Development Agency". Its members are implementing
+#            agency officers: they upload their agency's plans for the projects whose records name it, draft
+#            planned dates and PPSD rows for it, and are not World Bank staff, whatever [staff] says.
+#            Everything the team makes is Official Use Only and seen by no other team. No agency team is
+#            named here until the owner names its workspace group (a parked decision, ticket 38);
+#            tests/fixtures/roles.toml names two for the offline tests.
 #
 # A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
 # when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the

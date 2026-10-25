@@ -204,6 +204,17 @@ def test_an_upload_gets_the_dates_worked_out_by_hand_checked_and_exported_as_ste
     assert sorted(file["name"] for file in exported["export"]["files"]) == sorted(
         f"{stem}{ending}" for ending in (".csv", "-evidence-pack.pdf", "-evidence-pack.csv"))
 
+    from pypdf import PdfReader
+
+    pack = call(app, "GET", f"/api/drafts/{draft_id}/files/{stem}-evidence-pack.pdf", AMINA).content
+    first = PdfReader(io.BytesIO(pack)).pages[0].extract_text()
+    # The evidence pack carries Official Use Only first, and lists each dated step's list of comparable packages.
+    assert first.startswith("Official Use Only")
+    lists = list(csv.reader(io.StringIO(call(app, "GET", f"/api/drafts/{draft_id}/files/{stem}-evidence-pack.csv",
+                                             AMINA).text)))
+    assert [row[1] for row in lists[1:]] == [f"steps:upload:{upload_id}:1:{step}" for step in (
+        "bid_invitation", "bidding_document_issued", "bid_opening", "bid_evaluation_report", "contract_signed")]
+
     data = call(app, "GET", f"/api/drafts/{draft_id}/files/{stem}.csv", AMINA).content
     assert data.startswith("﻿".encode())
     text = data.decode("utf-8-sig")
