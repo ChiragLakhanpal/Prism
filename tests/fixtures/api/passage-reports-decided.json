@@ -5,7 +5,7 @@
   "lead": {
     "you": 1,
     "others": 0,
-    "oldest_on": "2026-10-23T09:40:04Z"
+    "oldest_on": "2026-10-23T09:40:05Z"
   },
   "groups": {
     "you": [
@@ -27,7 +27,7 @@
         "pages": 66,
         "query_kind": "rebidding_and_prices",
         "report_count": 1,
-        "first_on": "2026-10-23T09:40:04Z",
+        "first_on": "2026-10-23T09:40:05Z",
         "own_project": false,
         "decided_on": null,
         "agreeing": null,
@@ -55,7 +55,7 @@
         "section": "III.B",
         "query_kind": "rebidding_and_prices",
         "outcome": "ranked_lower",
-        "decided_on": "2026-10-23T11:40:18Z",
+        "decided_on": "2026-10-23T11:40:16Z",
         "report_count": 2
       }
     ]

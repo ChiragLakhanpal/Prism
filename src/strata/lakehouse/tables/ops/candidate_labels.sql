@@ -19,7 +19,8 @@
 -- sentence_index the answer's sentence that cited it
 -- sentence       that sentence, as the answer wrote it
 -- question       the question the answer answered
--- query_kind     the question's kind (config/retrieval.toml), which a decision ranks it lower for
+-- query_kind     the kind of question (config/retrieval.toml) of the search that found the passage, which a
+--                decision ranks it lower for
 -- kind           wrong_passage or not_useful
 -- reason         the reason the person gave, as they wrote it, or empty
 -- as_of          the as-of date the answer was read as of

@@ -7,8 +7,9 @@
 //   a check; current: tint with an inset 1 px primary shadow. A chip never shows which grade you gave.
 // - GradeBar: the Draft bar's frame for judging. From a page area of 1024 px it sticks to the bottom of the window,
 //   on surface with a 1 px line on top, held to the column: the label and its note on the left, three equal-width
-//   secondary toggle buttons with key hints on the right. Below 1024 px it sits under the passage, its buttons
-//   stacked full width. The page's bottom scroll padding follows its height while it sticks (DESIGN.md section 10).
+//   secondary toggle buttons with key hints on the right. Below 1024 px it sits right under the passage, before the
+//   grade definitions, its buttons stacked full width (the 32 brief, section 2.9). An alert about the grades sits at
+//   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md section 10).
 import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { copy } from "../copy";
@@ -90,7 +91,7 @@ export function PassageMap({ open, onToggle, count, current, graded, href, onCho
   );
 }
 
-export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, theirs, sample = false }: {
+export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, theirs, sample = false, notice }: {
   n: number;
   chosen: Grade | null;
   // Both judges finished: the buttons give way to the two grades.
@@ -101,6 +102,8 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
   theirs?: Grade | null;
   // A design gallery sample: it never sticks, so several can sit on one page.
   sample?: boolean;
+  // An alert about the grades, such as a save that failed: at the top of the bar, so it sticks with it.
+  notice?: ReactNode;
 }) {
   const bar = useRef<HTMLDivElement>(null);
   const id = useId();
@@ -131,6 +134,7 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
       data-grade-bar={locked ? "locked" : "ready"}
       className={cx("border-t border-line bg-surface py-4", !sample && "@lg/page:sticky @lg/page:bottom-0 @lg/page:z-10")}
     >
+      {notice && <div className="mb-4">{notice}</div>}
       <div role="group" aria-labelledby={labelId} aria-describedby={locked ? undefined : noteId} className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-center @lg/page:justify-between">
         <div className="min-w-0">
           <p id={labelId} className="text-small font-bold text-ink-heading">
@@ -160,7 +164,8 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
                 aria-keyshortcuts={words.keys[grade]}
                 onClick={() => onGrade(grade)}
                 data-grade={grade}
-                className="w-full px-4 whitespace-nowrap"
+                inText
+                className="w-full whitespace-nowrap"
               >
                 {words.grades[grade]}
               </ToggleButton>

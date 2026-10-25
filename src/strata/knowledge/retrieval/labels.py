@@ -97,6 +97,16 @@ def rows(engine: Engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
 
 
+def utc_now() -> dt.datetime:
+    """Now, in UTC: the clock the retrieval loop's writes take unless a test gives its own."""
+    return dt.datetime.now(dt.UTC)
+
+
+def new_id(prefix: str) -> str:
+    """A new id for a report, a decision or a grade, from its prefix, such as "rep-3f9c0a1b2d4e"."""
+    return f"{prefix}-{uuid.uuid4().hex[:12]}"
+
+
 def as_date(value) -> dt.date:
     if isinstance(value, dt.datetime):
         return value.date()

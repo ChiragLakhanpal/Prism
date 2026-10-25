@@ -42,6 +42,13 @@ const HELD_GHOST =
   "cursor-not-allowed border-transparent bg-transparent text-ink-muted hover:bg-transparent active:bg-transparent " +
   "active:text-ink-muted";
 
+// A link that looks like the primary button, such as Judging's "Judge the next query": it goes to another page, so
+// it stays an <a> (buttons act, links navigate), with the primary button's shape, fill, hover and press.
+export const PRIMARY_LINK = cx(
+  "inline-flex h-11 items-center justify-center rounded-pill border-2 px-6 text-button transition-paint duration-150",
+  VARIANTS.primary,
+);
+
 export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   variant?: ButtonVariant;
   icon?: LucideIcon;

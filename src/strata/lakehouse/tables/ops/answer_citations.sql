@@ -7,7 +7,8 @@
 -- run_id          the answer (strata.ops.agent_runs)
 -- viewer_id       who asked: the user id the Databricks App forwarded
 -- question        what they asked
--- query_kind      the question's kind (config/retrieval.toml)
+-- query_kind      the kind of question (config/retrieval.toml) of the search that found the source, for a passage
+--                 search_passages found; otherwise the kind of the person's question
 -- as_of           the date the answer read its sources as of
 -- view            the view it was asked in: staff, piu or public
 -- sentence_index  the sentence's index in the answer

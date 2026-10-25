@@ -127,6 +127,16 @@ def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
     return passage_row(rows[0]) if rows else None
 
 
+def read_passages(engine, passage_ids: list[str], as_of: dt.date) -> dict[str, dict]:
+    """Several passages by their ids in one statement, as read_passage reads one: those public on the as-of date
+    and not yet replaced then, by id. A page that shows many passages reads them this way (ticket 32)."""
+    if not passage_ids:
+        return {}
+    result = engine.run(_sql("passages.sql"), {"ids": ",".join(passage_ids), "as_of": as_of})
+    found = (dict(zip(result.columns, row)) for row in result.rows)
+    return {row["passage_id"]: passage_row(row) for row in found}
+
+
 def notice_page(notice_id: str) -> str | None:
     """A notice's own page on the World Bank's site, from config/sources.toml (notices' record_url)."""
     address = load_sources()["notices"].record_url

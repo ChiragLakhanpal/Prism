@@ -160,6 +160,10 @@ _Avoid_: Flag, feedback flag
 A person the roles file names to decide whether a passage people reported is ranked lower for a kind of question. A passage reviewer never decides on a report they sent.
 _Avoid_: Moderator, approver
 
+**Audit sample**:
+At scale, one in ten of the passages Strata ranked lower on its own, because several people made the same passage report and nobody disagreed, sent to a passage reviewer to leave it ranked lower or restore its ranking. It checks Strata's own decisions on passage reports; a cross-check is about lesson decisions, read in another region.
+_Avoid_: Spot check, audit (alone), cross-check (for passages)
+
 **Query judge**:
 One of two people who grade, each on their own, the passages pooled for a query in the labeled set Strata measures search on.
 _Avoid_: Rater, annotator (in user-facing copy)

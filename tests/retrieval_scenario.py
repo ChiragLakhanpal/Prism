@@ -73,7 +73,7 @@ class ReadsOnly:
 class Loop:
     """A writable copy of the fixture database and an app over it, with a clock the test moves."""
 
-    def __init__(self, fixture_db: Path, folder: Path, mode: str = "pilot"):
+    def __init__(self, fixture_db: Path, folder: Path, mode: str = "pilot", case: str = CASE):
         folder.mkdir(parents=True, exist_ok=True)
         self.path = folder / "retrieval.duckdb"
         shutil.copy(fixture_db, self.path)
@@ -90,7 +90,8 @@ class Loop:
         self.ids: dict[str, int] = {}
         self.reports = PassageReports(ROLES, now=self.now, thresholds=thresholds, new_id=self.new_id)
         self.judging = Judging(ROLES, now=self.now, thresholds=thresholds, new_id=self.new_id)
-        case = load_cases()[CASE]
+        self.case = case
+        case = load_cases()[case]
 
         @contextmanager
         def engine_for(_viewer):
@@ -132,8 +133,9 @@ class Loop:
         return asyncio.run(go())
 
     def ask(self, who: dict, view: str = "staff") -> str:
-        """Ask the showcase question, as the box would, and return the answer's run id."""
-        case = load_cases()[CASE]
+        """Ask the case's question (the showcase's unless the loop was given another), as the box would, and return
+        the answer's run id."""
+        case = load_cases()[self.case]
         response = self.request("POST", "/api/ask", who, {"question": case.question, "scope": case.scope,
                                                           "asof": case.as_of.isoformat(), "view": view})
         assert response.status_code == 200, response.text

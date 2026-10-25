@@ -809,15 +809,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         finally:
             row = run_row(turn, outcome["verdict"], outcome["error_code"], started, dt.datetime.now(dt.UTC))
             log.info("Run %s ended: %s.", turn.run_id, row["error_code"] or row["status"])
-            if runs is not None:  # its own thread, so a dropped connection cannot stop the write
-                writer = threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}")
-                writer.start()
-                await asyncio.to_thread(writer.join, 60)
-            if citations is not None and outcome["verdict"] is not None:  # the sources the answer cited (ticket 32)
+            # Each write in its own thread, so a dropped connection cannot stop it. The run row and the sources the
+            # answer cited (ticket 32) are written side by side, so a report sent right after the answer finds them.
+            writers = []
+            if runs is not None:
+                writers.append(threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}"))
+            if citations is not None and outcome["verdict"] is not None:
                 cited = cited_rows(turn, outcome["verdict"], row["as_of"], row["finished_at"])
-                keeper = threading.Thread(target=citations.record, args=(cited,), name=f"strata-cited-{turn.run_id}")
-                keeper.start()
-                await asyncio.to_thread(keeper.join, 60)
+                writers.append(threading.Thread(target=citations.record, args=(cited,), name=f"strata-cited-{turn.run_id}"))
+            for writer in writers:
+                writer.start()
+            for writer in writers:
+                await asyncio.to_thread(writer.join, 60)
 
     def cited_rows(turn: Turn, verdict: Verdict, as_of: dt.date, at: dt.datetime) -> list[tuple]:
         def project_of(evidence: str):
@@ -826,7 +829,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return passage_reports.citation_rows(
             turn.run_id, turn.viewer.user_id, turn.question, as_of, turn.scope.view,
             [(sentence.index, sentence.claim.sentence, list(sentence.claim.evidence_ids)) for sentence in verdict.kept],
-            turn.facts.tool, project_of, at)
+            turn.facts.tool, project_of, at, kind_of=turn.facts.kind)
 
     def as_of_of(turn: Turn) -> dt.date:
         return turn.notes.as_of or min(turn.scope.as_of or today(), today())

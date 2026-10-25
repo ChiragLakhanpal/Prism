@@ -30,7 +30,7 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { ApiError, postJson } from "../lib/api";
-import { useLoad, type Load } from "../lib/load";
+import { refusedAs, useLoad, type Load } from "../lib/load";
 import { LESSONS_HREF, pageHref } from "../lib/lessons";
 import {
   REPORTS_HREF,
@@ -41,6 +41,7 @@ import {
   type ReportsQueue,
   type SentReport,
 } from "../lib/retrieval";
+import { shortProjectName } from "../lib/sources";
 import { setPageTitle } from "../lib/title";
 import { DocumentColumn } from "./DraftPage";
 import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
@@ -52,8 +53,10 @@ const SHOWN = 5; // reports shown before "Show {n} more reports"
 // A count in words from one to nine, as the copy file's number words give them.
 const countWord = (count: number) => <Num count={count} />;
 
+// A passage's name, with its project named as the evidence drawer's meta line names it, so the queue, the review page
+// and the drawer use one name for one thing (DESIGN.md section 7).
 export function passageTitle(fields: Pick<PassageFields, "project_name" | "para" | "paragraph_numbered" | "section">): string {
-  const project = fields.project_name ?? "";
+  const project = shortProjectName(fields.project_name ?? "");
   return fields.paragraph_numbered && fields.para
     ? fillText(w.rowTitle, { project, para: fields.para })
     : fillText(w.rowTitleSection, { project, section: fields.section ?? "" });
@@ -232,7 +235,7 @@ export function ReportsBody({ queue }: { queue: ReportsQueue }) {
 
 export function ReportsSkeleton() {
   return (
-    <div aria-busy="true" data-reports="loading" className="flex flex-col">
+    <div aria-busy="true" data-reports="loading" className="flex min-h-svh flex-col">
       <p role="status" className="clip-visually">
         {w.loading}
       </p>
@@ -258,9 +261,6 @@ export function ReportsSkeleton() {
 function NoAccess() {
   return <EmptyState title={w.noAccessTitle} body={w.noAccessBody} link={{ href: LESSONS_HREF, text: w.noAccessLink }} />;
 }
-
-const refusedAs = (load: Load<unknown>, code: string) =>
-  load.status === "error" && (load.error?.body as { code?: string } | undefined)?.code === code;
 
 function pageOf(search: string): number {
   const asked = Number(new URLSearchParams(search).get("page") ?? "1");
@@ -292,6 +292,10 @@ export function PassageReportsPage({ search }: { search: string }) {
 
 // ── One passage's reports ────────────────────────────────────────────────
 
+// Text a report line quotes in double quotes, with its own double quotes made single, so a quote inside a quote
+// never ends in two marks together ('rebidding'".).
+const inner = (text: string) => text.replace(/["\u201c\u201d]/g, (mark) => (mark === "\u201c" ? "\u2018" : mark === "\u201d" ? "\u2019" : "'"));
+
 function roleSentence(report: SentReport): string {
   return copy.retrieval.roles[report.is_you ? "you" : report.role] ?? copy.retrieval.roles.staff;
 }
@@ -308,10 +312,10 @@ export function ReportItem({ report }: { report: SentReport }) {
           <StatusBadge kind="their-project" />
         </div>
       )}
-      <p className="text-small text-ink">{fillText(you ? w.askedYou : w.asked, { question: report.question })}</p>
-      {report.sentence && <p className="text-small text-ink">{fillText(w.sentence, { sentence: report.sentence })}</p>}
+      <p className="text-small text-ink">{fillText(you ? w.askedYou : w.asked, { question: inner(report.question) })}</p>
+      {report.sentence && <p className="text-small text-ink">{fillText(w.sentence, { sentence: inner(report.sentence) })}</p>}
       <p className="text-small text-ink">
-        {report.reason ? fillText(you ? w.reasonYou : w.reason, { reason: report.reason }) : you ? w.noReasonYou : w.noReason}
+        {report.reason ? fillText(you ? w.reasonYou : w.reason, { reason: inner(report.reason) }) : you ? w.noReasonYou : w.noReason}
       </p>
       <p className="text-caption text-ink-muted">
         <Fill template={w.answerId} slots={{ id: <span className="font-mono wrap-anywhere">{report.run_id}</span> }} />
@@ -431,12 +435,20 @@ function DecisionForm({ group, onSaved, onGaveWay, initial }: {
   );
 }
 
-function Record({ group, onReopened, initialOpen = false }: { group: ReportGroup; onReopened: (item: ReportGroup) => void; initialOpen?: boolean }) {
+function Record({ group, onReopened, initialOpen = false, initialFailed = false }: {
+  group: ReportGroup;
+  onReopened: (item: ReportGroup) => void;
+  initialOpen?: boolean;
+  // A gallery sample: a reopening that failed and can be tried again.
+  initialFailed?: boolean;
+}) {
   const outcome = group.outcome!;
   const [open, setOpen] = useState(initialOpen);
   const [reason, setReason] = useState("");
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
+  // A reopening the server did not save: "failed" can be tried again, "lost" (no longer a passage reviewer) cannot.
+  const [failed, setFailed] = useState<"failed" | "lost" | null>(initialFailed ? "failed" : null);
   const field = useRef<HTMLTextAreaElement>(null);
   const kind = kindOf(group.query_kind);
   const lead = (
@@ -457,11 +469,14 @@ function Record({ group, onReopened, initialOpen = false }: { group: ReportGroup
       return;
     }
     setSaving(true);
+    setFailed(null);
     try {
       const found = await postJson<{ item: ReportGroup }>(`/api/passage-reports/${encodeURIComponent(group.group_id)}/reopen`, { reason: reason.trim() });
       onReopened(found.item);
-    } catch {
+    } catch (thrown) {
       setSaving(false);
+      const code = thrown instanceof ApiError ? (thrown.body as { code?: string } | null)?.code : null;
+      setFailed(code === "not_a_passage_reviewer" ? "lost" : "failed");
     }
   }
 
@@ -486,10 +501,15 @@ function Record({ group, onReopened, initialOpen = false }: { group: ReportGroup
           }}
           className="flex animate-fade-in flex-col gap-4 rounded-md border border-line bg-surface p-4 motion-reduce:animate-none @md/page:p-6"
         >
+          {failed && (
+            <Alert state="error" live="alert">
+              {failed === "lost" ? w.form.lostRole : w.reopenFailed}
+            </Alert>
+          )}
           <ReasonField ref={field} label={w.reopenLabel} helper={w.reopenHelper} value={reason} onChange={setReason} max={group.limits.reason_max_chars} error={error && !reason.trim() ? w.reopenNoReason : null} disabled={saving} />
           <div className="flex flex-col gap-3 @md/page:flex-row">
-            <Button variant="secondary" loading={saving} busyLabel={w.form.saving} onClick={() => void reopen()} className="w-full @md/page:w-auto">
-              {w.reopen}
+            <Button variant="secondary" loading={saving} busyLabel={w.form.saving} held={failed === "lost"} onClick={() => void reopen()} className="w-full @md/page:w-auto">
+              {failed === "failed" ? w.form.tryAgain : w.reopen}
             </Button>
             <Button variant="ghost" onClick={() => setOpen(false)} disabled={saving}>
               {copy.feedback.cancel}
@@ -503,7 +523,7 @@ function Record({ group, onReopened, initialOpen = false }: { group: ReportGroup
 
 export function ReportGroupView({ group: loaded, initial, sample = false }: {
   group: ReportGroup;
-  initial?: { saved?: Saved; gaveWay?: GaveWay; form?: Parameters<typeof DecisionForm>[0]["initial"]; reopenOpen?: boolean; reopened?: boolean };
+  initial?: { saved?: Saved; gaveWay?: GaveWay; form?: Parameters<typeof DecisionForm>[0]["initial"]; reopenOpen?: boolean; reopened?: boolean; reopenFailed?: boolean };
   // A design gallery sample: its title is an h3, under the gallery page's own h1, and it names no browser tab.
   sample?: boolean;
 }) {
@@ -522,7 +542,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
     if (!sample && (document.activeElement === document.body || document.activeElement === null)) heading.current?.focus({ preventScroll: true });
   }, []);
   useEffect(() => {
-    if (!sample) setPageTitle(fillText(w.pageTitle, { project: group.passage.project_name ?? "", para: group.passage.para ?? "" }));
+    if (!sample) setPageTitle(fillText(w.pageTitle, { project: shortProjectName(group.passage.project_name ?? ""), para: group.passage.para ?? "" }));
   }, [group.passage.project_name, group.passage.para]);
   useEffect(() => {
     if (saved || reopened || gaveWay) panel.current?.focus();
@@ -550,6 +570,10 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
           <Fill template={w.form.stale} slots={{ name: gaveWay.name ?? "", date: gaveWay.time ? <Num date={gaveWay.time} /> : "" }} /> {w.form.staleBody}
         </Alert>
         <ReasonField label={w.form.staleReason} value={gaveWay.reason} max={group.limits.reason_max_chars} readOnly />
+        {/* What the other reviewer decided, and why: the refusal returned the group as it is now. */}
+        {group.stage === "decided" && group.outcome && (
+          <Record group={group} onReopened={(item) => { setGroup(item); setGaveWay(null); setReopened(true); void refreshLessonsMe(); }} />
+        )}
       </div>
     );
   } else if (gaveWay?.kind === "lost") {
@@ -561,7 +585,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
       </div>
     );
   } else if (group.stage === "decided" && group.outcome) {
-    action = <Record group={group} initialOpen={initial?.reopenOpen} onReopened={(item) => { setGroup(item); setReopened(true); void refreshLessonsMe(); }} />;
+    action = <Record group={group} initialOpen={initial?.reopenOpen || initial?.reopenFailed} initialFailed={initial?.reopenFailed ?? false} onReopened={(item) => { setGroup(item); setReopened(true); void refreshLessonsMe(); }} />;
   } else if (group.can.decide) {
     action = (
       <DecisionForm
@@ -632,11 +656,15 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
 
 export function ReportGroupSkeleton() {
   return (
-    <div aria-busy="true" data-report-page="loading" className="flex flex-col">
+    <div aria-busy="true" data-report-page="loading" className="flex min-h-svh flex-col">
       <p role="status" className="clip-visually">
         {w.loadingOne}
       </p>
-      <SkeletonLine className="mt-4 text-small" width="w-[30%]" />
+      {/* The status line wraps to two lines below 48rem, as "Wrong passage and not useful · needs your review" does. */}
+      <span className="mt-4 flex flex-col text-small">
+        <SkeletonLine width="w-[60%] @md/page:w-[30%]" />
+        <SkeletonLine className="@md/page:hidden" width="w-[30%]" />
+      </span>
       <span className="mt-2 flex flex-col text-h1">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-1/2" />

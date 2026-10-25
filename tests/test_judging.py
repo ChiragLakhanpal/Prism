@@ -94,3 +94,79 @@ def test_two_judges_grade_a_query_alone_and_strata_records_their_agreement(loop)
     judged = [label for label in labels.latest(loop.database.cursor()) if label.query_set == "notice_queries"]
     assert {label.query_id for label in judged} == {QUERY} and len(judged) == 15
     assert {label.origin for label in judged} == {"judged"}
+    # The weekly run records the two judges' agreement as it was that day.
+    [agreement] = loop.rows("SELECT judge_a, judge_b, both_done, pairs, agree, kappa FROM strata.ops.retrieval_agreement")
+    assert agreement == {"judge_a": "mei.tanaka@worldbank.example", "judge_b": "tomas.rivera@worldbank.example",
+                         "both_done": 1, "pairs": 25, "agree": 20, "kappa": 0.71}
+
+
+def test_a_query_keeps_its_two_judges_once_one_grades_it_when_another_judge_joins(loop, tmp_path):
+    """The fixture's queries were loaded before the roles file named any judges, so each takes its pair from the
+    roster. Once a judge grades one, its pair is written down: a third judge joining later changes no earlier pair,
+    so no one loses a half-graded query."""
+    from retrieval_scenario import ROLES, ROOT
+    from strata.config import load_roles
+    from strata.dbx import Viewer
+    from strata.knowledge.retrieval.judging import Judging
+
+    passage = loop.request("GET", f"/api/judging/queries/{QUERY}", MEI).json()["passages"][0]["passage_id"]
+    assert loop.request("PUT", f"/api/judging/queries/{QUERY}/passages/{passage}", MEI, {"grade": "partly"}).status_code == 200
+    before = Judging(ROLES).desk(loop.database.cursor()).queries[QUERY].judges
+
+    joined = tmp_path / "roles.toml"
+    joined.write_text((ROOT / "tests" / "fixtures" / "roles.toml").read_text() + '\n[[people]]\n'
+                      'email = "ines.costa@worldbank.example"\nname = "Ines Costa"\ngroups = ["query_judge"]\n'
+                      'regions = []\nprojects = []\n')
+    three = Judging(load_roles(joined), now=loop.now, thresholds=loop.thresholds)
+    desk = three.desk(loop.database.cursor())
+
+    assert sorted(before) == ["mei.tanaka@worldbank.example", "tomas.rivera@worldbank.example"]
+    assert desk.queries[QUERY].judges == before
+    mine = three.query(loop.database.cursor(), Viewer(email="mei.tanaka@worldbank.example", token="not-a-real-token"), QUERY)
+    assert next(found for found in mine["passages"] if found["passage_id"] == passage)["my_grade"] == "partly"
+    # A query nobody has graded takes its pair from the roster as it is now.
+    assert "ines.costa@worldbank.example" in desk.queries["nq-sanitation-equipment"].judges
+
+
+class OnTheWorkspace:
+    """The fixture copy's engine, named as the workspace's SparkEngine is, so a search there would need AI Search."""
+
+    name = "databricks"
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def __getattr__(self, attribute):
+        return getattr(self.engine, attribute)
+
+
+def test_on_the_workspace_the_weekly_run_loads_no_queries_without_a_searcher_and_still_builds_and_measures(
+        loop, tmp_path, monkeypatch):
+    """The weekly job runs as its own identity, which has no AI Search token: it leaves new queries for
+    ops/retrieval/evaluate_live.py --load-queries, and still builds the labeled set and writes the loop's measures."""
+    from retrieval_scenario import ROLES
+    from strata.knowledge import search
+    from strata.knowledge.retrieval import judging, weekly
+
+    written = tmp_path / "retrieval_queries.toml"
+    written.write_text(judging.QUERIES_FILE.read_text() + '\n[[query]]\nid = "nq-new-on-the-workspace"\n'
+                       'notice_id = "OP00044090"\ntext = "How long did the rural road works take to award?"\n')
+    monkeypatch.setattr(judging, "QUERIES_FILE", written)
+
+    def no_token(*_args, **_kwargs):
+        raise KeyError("AZURE_OPENAI_ENDPOINT")
+
+    assert loop.report(ANA, loop.ask(ANA)).status_code == 200  # a report this week, for the measures to count
+    monkeypatch.setattr(search, "searcher_for", no_token)
+    count = lambda sql: loop.rows(sql)[0]["n"]  # noqa: E731
+    before = {"builds": count("SELECT count(DISTINCT build_id) AS n FROM strata.ops.retrieval_label_builds"),
+              "weekly": count("SELECT count(*) AS n FROM strata.ops.retrieval_feedback_weekly"),
+              "queries": count("SELECT count(*) AS n FROM strata.ops.retrieval_queries")}
+
+    done = weekly.run(OnTheWorkspace(loop.database.cursor()), now=loop.now, thresholds=loop.thresholds, roles=ROLES,
+                      new_id=loop.new_id)
+
+    assert done["queries_loaded"] is None
+    assert count("SELECT count(DISTINCT build_id) AS n FROM strata.ops.retrieval_label_builds") == before["builds"] + 1
+    assert count("SELECT count(*) AS n FROM strata.ops.retrieval_feedback_weekly") > before["weekly"]
+    assert count("SELECT count(*) AS n FROM strata.ops.retrieval_queries") == before["queries"]

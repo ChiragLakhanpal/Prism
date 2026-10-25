@@ -16,6 +16,11 @@ a clock that starts on Friday, October 23, 2026 (tests/retrieval_scenario.py):
   paragraph 55's ranking, then reopens it.
 - Mei and Tomas, the two query judges, both grade query 2; Mei starts on query 1.
 - In scale mode, Ana, Kofi and Sara agree on paragraph 54, and the weekly run picks the agreement for an audit.
+
+Each list is recorded with the frame's counts (/api/lessons/me) from the same moment, as retrieval-me-*.json, so a
+screen that serves the two together shows the counts the server gave together: the start of the story for the
+empty and not-started states, then "-waiting" once the reports are in, "-decided" after Daniel's decision, "-after"
+once the judges have graded, and "-audit" in scale mode.
 """
 
 import json
@@ -78,6 +83,8 @@ def answers(folder: Path) -> dict[str, str]:
 
         # Passage reports, as Daniel and as Priya see them.
         pilot.later(hours=2)
+        found["retrieval-me-passage-reviewer-waiting.json"] = get("/api/lessons/me", DANIEL)
+        found["retrieval-me-both-waiting.json"] = get("/api/lessons/me", PRIYA)
         queue = pilot.request("GET", "/api/passage-reports", DANIEL).json()
         found["passage-reports.json"] = get("/api/passage-reports", DANIEL)
         found["passage-reports-own-report.json"] = get("/api/passage-reports", PRIYA)
@@ -94,6 +101,7 @@ def answers(folder: Path) -> dict[str, str]:
         found["feedback-mine-ranked-lower.json"] = get("/api/feedback", ANA, evidence_id=PARAGRAPH_54, run_id=ana)
         found["passage-report-decided.json"] = get(f"/api/passage-reports/{rebidding}", DANIEL)
         found["passage-reports-decided.json"] = get("/api/passage-reports", DANIEL)
+        found["retrieval-me-passage-reviewer-decided.json"] = get("/api/lessons/me", DANIEL)
         pilot.later(minutes=10)
         pilot.decide(DANIEL, clearances, outcome="keep", reason="Paragraph 55 is the right one for this question.")
         found["feedback-mine-kept.json"] = get("/api/feedback", PRIYA, evidence_id=PARAGRAPH_55, run_id=priya)
@@ -120,6 +128,7 @@ def answers(folder: Path) -> dict[str, str]:
         found["judging-grade-locked.json"] = text(pilot.request(
             "PUT", f"/api/judging/queries/{QUERY_2}/passages/{sorted(pool)[0]}", MEI, {"grade": "not_relevant"}))
         found["judging-queries.json"] = get("/api/judging/queries", MEI)
+        found["retrieval-me-judge-after.json"] = get("/api/lessons/me", MEI)
         found["judging-queries-both.json"] = get("/api/judging/queries", MEI, show="finished_by_both")
         found["judging-query-not-found.json"] = get("/api/judging/queries/nq-nothing", MEI)
     finally:
@@ -137,6 +146,7 @@ def answers(folder: Path) -> dict[str, str]:
         scale.later(days=3)
         scale.weekly()
         found["passage-reports-audit.json"] = text(scale.request("GET", "/api/passage-reports", DANIEL))
+        found["retrieval-me-passage-reviewer-audit.json"] = text(scale.request("GET", "/api/lessons/me", DANIEL))
         [audit] = scale.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
         found["passage-report-audit.json"] = text(scale.request("GET", f"/api/passage-reports/{audit['group_id']}", DANIEL))
         found["feedback-mine-by-agreement.json"] = text(scale.request(

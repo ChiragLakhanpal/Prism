@@ -88,6 +88,10 @@ def test_a_preview_or_a_source_the_answer_did_not_cite_is_refused_and_nothing_is
     missing = loop.report(ANA, run, evidence_id="strata.gold.passage:31525018/v1/71")
     assert (missing.status_code, missing.json()["code"]) == (404, "not_in_answer")
     assert loop.report(ANA, "run-9999").json()["code"] == "not_in_answer"
+    # An answer asked in a preview stays a preview, whatever the browser says when it sends the report.
+    previewed = loop.ask(ANA, view="piu")
+    refused = loop.report(ANA, previewed, view="staff")
+    assert (refused.status_code, refused.json()["code"]) == (403, "preview")
     assert loop.rows("SELECT * FROM strata.ops.candidate_labels") == []
 
 
@@ -130,6 +134,27 @@ def test_ranking_changes_only_once_a_passage_reviewer_accepts_the_label(loop):
     # Only that kind of question: a question of another kind ranks it as before.
     other = search(loop, "rating outcome indicator for the project")
     assert other["ranked_lower"] == {"query_kind": "results", "evidence_ids": []}
+
+
+def test_a_report_takes_the_kind_of_the_search_that_found_the_passage_so_ranking_lower_reaches_that_search(
+        fixture_db, tmp_path):
+    """The summaries case asks "In a few words, what went wrong with the works contracts in P130164?", a question
+    about contracts and their management, but its agent searched for "works contracts advertised again rebidding",
+    a question about rebidding and bid prices (tests/fixtures/agent/recorded/p130164-summaries.json). The report,
+    its group and the reviewer's decision take the search's kind, so the same search then ranks the paragraph lower."""
+    summaries = Loop(fixture_db, tmp_path, case="p130164-summaries")
+    try:
+        run = summaries.ask(ANA)
+        assert summaries.report(ANA, run).status_code == 200
+        [label] = summaries.rows("SELECT question, query_kind FROM strata.ops.candidate_labels")
+        assert label == {"question": "In a few words, what went wrong with the works contracts in P130164?",
+                         "query_kind": "rebidding_and_prices"}
+        [row] = summaries.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
+        assert summaries.decide(DANIEL, row["group_id"]).status_code == 200
+
+        assert search(summaries)["ranked_lower"] == {"query_kind": "rebidding_and_prices", "evidence_ids": [PARAGRAPH_54]}
+    finally:
+        summaries.close()
 
 
 def test_reports_on_one_passage_and_kind_of_question_are_one_group_that_its_own_reporter_cannot_decide(loop):

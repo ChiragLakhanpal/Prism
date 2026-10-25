@@ -71,6 +71,10 @@ test("Wrong passage and Not useful sit together at the end of the drawer, after 
   expect(Math.round(notUseful.x - (wrong.x + wrong.width))).toBe(8);
   const link = (await drawer(page).getByRole("link", { name: "Open at page 23", exact: true }).boundingBox())!;
   expect(wrong.y).toBeGreaterThan(link.y + link.height);
+  // The first label starts on the heading's edge, as a flush ghost button's does; only its 2 px border is between.
+  const heading = (await row(page).getByRole("heading", { level: 3 }).boundingBox())!;
+  const label = (await kind(page, "Wrong passage").locator("span").last().boundingBox())!;
+  expect(Math.abs(label.x - heading.x)).toBeLessThanOrEqual(2);
   expect(await row(page).evaluate((el) => getComputedStyle(el).position)).toBe("static");
   expect(await axe(page)).toEqual([]);
 });
@@ -141,6 +145,13 @@ for (const width of [1024, 390]) {
     expect(form.x + form.width).toBeLessThanOrEqual(sheet.x + sheet.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     expect(await axe(page)).toEqual([]);
+    if (width === 390) {
+      // Down to 320 px the two buttons stay on one line (the 32 brief, section 2.9).
+      await page.setViewportSize({ width: 320, height: 900 });
+      const narrowWrong = (await kind(page, "Wrong passage").boundingBox())!;
+      const narrowNotUseful = (await kind(page, "Not useful").boundingBox())!;
+      expect(Math.abs(narrowWrong.y - narrowNotUseful.y)).toBeLessThan(1);
+    }
   });
 }
 
@@ -152,6 +163,9 @@ test("in a preview the row shows with both buttons disabled and says why, and a 
       "This is a preview, so I'm not recording the sources you open, and you can't report a passage.",
     );
   }
+  // Held, each is a bare label in the caption's ink-muted, so neither looks pressable.
+  const muted = await row(page).getByText("This is a preview, so I'm not recording").evaluate((el) => getComputedStyle(el).color);
+  expect(await kind(page, "Wrong passage").evaluate((el) => getComputedStyle(el).color)).toBe(muted);
   // A disabled button stays focusable and does nothing when pressed.
   await kind(page, "Wrong passage").focus();
   await page.keyboard.press("Enter");

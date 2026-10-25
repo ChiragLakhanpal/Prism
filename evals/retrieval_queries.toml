@@ -3,9 +3,11 @@
 #
 # The search owner writes each query as a procurement specialist would ask it, reading one Contract Award
 # notice (strata.gold.notice) and asking what a specialist planning a package like it would want the project
-# documents to say. The weekly retrieval run loads each query not yet loaded into strata.ops.retrieval_queries,
-# with its two query judges from the roles file, and pools the passages several search setups find for it
-# that were public before the notice's date (strata.knowledge.retrieval.judging). The judges grade the pool on
+# documents to say. Each query not yet loaded goes into strata.ops.retrieval_queries with its two query judges
+# from the roles file, and its pool holds the passages several search setups find for it that were public
+# before the notice's date (strata.knowledge.retrieval.judging). The fixture build loads them with the fixture
+# search; on the workspace, ops/retrieval/evaluate_live.py --load-queries loads them with AI Search, because the
+# weekly job's own identity has no AI Search token. The judges grade the pool on
 # Lessons > Judging, and once both have finished a query, its grades join the labeled set.
 #
 # [[query]]

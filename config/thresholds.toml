@@ -390,7 +390,7 @@ page_size = 20
 # statistic on fewer than 20 cases).
 min_pairs = 20
 # Each notice query's pool: the best this many passages of each search setup the pool draws on
-# (strata.knowledge.retrieval.judging.POOL_SETUPS), public before the query's date. Source: the spec's
+# (strata.knowledge.retrieval.judging.pool_setups()), public before the query's date. Source: the spec's
 # retrieval evaluation, so the pool holds every passage recall at 20 can count.
 pool_depth = 20
 # The measures the replay harness reports for retrieval (spec, seam 5): precision at precision_k, recall

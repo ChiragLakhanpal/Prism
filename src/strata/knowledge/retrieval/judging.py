@@ -2,7 +2,7 @@
 
 The search owner writes queries from award notices in evals/retrieval_queries.toml. load() appends each new one
 to strata.ops.retrieval_queries with its two query judges from the roles file, in turn, and pools for it the
-best pool_depth passages of each setup in POOL_SETUPS, public before the notice's date, in strata.ops.retrieval_pool.
+best pool_depth passages of each setup pool_setups() gives, public before the notice's date, in strata.ops.retrieval_pool.
 
 Each judge grades every pooled passage on their own, in an order of their own: the pool shuffled with a seed made
 of the judge and the query, so the two judges' orders differ and stay the same each time. A judge never sees a
@@ -13,7 +13,12 @@ they matched. Cohen's kappa over every passage both judges graded on queries the
 its count from min_pairs passages, and withheld below it (config/thresholds.toml).
 
 Once both judges finish a query, its labels join the labeled set (labels()): each passage at the lower of the two
-grades, so a passage counts as relevant only as far as both judges said so.
+grades, so a passage counts as relevant only as far as both judges said so. The weekly run records each pair of
+judges' agreement as it was that day (measure(), strata.ops.retrieval_agreement).
+
+A query loaded before the roles file named two judges takes its pair from the roster in turn. The first grade on it
+writes that pair down (a new strata.ops.retrieval_queries row), so a judge joining or leaving later changes no pair
+that has grades, and no one loses a half-graded query.
 """
 
 from __future__ import annotations
@@ -23,16 +28,19 @@ import hashlib
 import json
 import random
 import tomllib
-import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 from pathlib import Path
 
 from strata.config import Person, Roles, SearchSetup, Thresholds, load_search, load_thresholds
 from strata.dbx import Viewer
 from strata.knowledge.lessons.review import Refused
-from strata.knowledge.retrieval.labels import Label, as_date, rows
+from strata.knowledge.retrieval.labels import Label, as_date, new_id, rows, utc_now
 from strata.lakehouse.engine import Engine
+
+if TYPE_CHECKING:
+    from strata.knowledge.search import Searcher
 
 PAGE = "judging"  # the roles file's name for the Judging pages
 QUERIES_FILE = Path(__file__).resolve().parents[4] / "evals" / "retrieval_queries.toml"
@@ -41,7 +49,10 @@ QUERY_COLUMNS = ("query_id", "n", "query_text", "notice_id", "notice_ref", "noti
                  "loaded_at", "public_from")
 POOL_COLUMNS = ("query_id", "passage_id", "pooled_at", "public_from")
 GRADE_COLUMNS = ("grade_id", "query_id", "passage_id", "judge_email", "judge_name", "grade", "graded_at", "public_from")
+AGREEMENT_COLUMNS = ("judge_a", "judge_b", "both_done", "pairs", "agree", "kappa", "computed_at", "public_from")
 DAY = dt.timedelta(days=1)
+# The search a pool setup runs on an engine: strata.knowledge.search's FixtureSearch or AiSearch.
+SearcherFor = Callable[[Engine, SearchSetup], "Searcher"]
 
 
 def pool_setups(current: SearchSetup) -> tuple[SearchSetup, ...]:
@@ -49,10 +60,6 @@ def pool_setups(current: SearchSetup) -> tuple[SearchSetup, ...]:
     search alone, so the judges grade what any of them would rank, not only what production finds."""
     return (current, SearchSetup(current.keyword_weight or 1.0, 0.0, False, current.rerank_depth, current.header_in_words),
             SearchSetup(0.0, current.vector_weight or 1.0, False, current.rerank_depth, current.header_in_words))
-
-
-def _now() -> dt.datetime:
-    return dt.datetime.now(dt.UTC)
 
 
 def _iso(value) -> str | None:
@@ -95,6 +102,8 @@ class Query:
     project_id: str | None
     judges: list[str]
     pool: list[str] = field(default_factory=list)
+    # Whether its judges were written down in its row; False while it takes its pair from the roster.
+    kept: bool = True
     grades: dict[str, dict[str, str]] = field(default_factory=dict)  # judge email, then passage id: the latest grade
 
     def finished(self, judge: str) -> bool:
@@ -139,14 +148,10 @@ class Desk:
         return sorted(self.queries.values(), key=lambda query: query.n)
 
 
-def new_id(prefix: str) -> str:
-    return f"{prefix}-{uuid.uuid4().hex[:12]}"
-
-
 @dataclass
 class Judging:
     roles: Roles
-    now: Callable[[], dt.datetime] = _now
+    now: Callable[[], dt.datetime] = utc_now
     thresholds: Thresholds | None = None
     new_id: Callable[[str], str] = new_id  # a grade's id, from its prefix
 
@@ -171,8 +176,18 @@ class Judging:
         desk = Desk(engine)
         for query in desk.queries.values():
             if len(query.judges) < 2:
-                query.judges = self.pair(query.n)
+                query.judges, query.kept = self.pair(query.n), False
         return desk
+
+    def _keep_pair(self, query: Query, writer: Engine) -> None:
+        """Write down the pair a query took from the roster, as its latest row, once it has two judges."""
+        if query.kept or len(query.judges) < 2:
+            return
+        at = self.now()
+        writer.insert_rows("strata.ops.retrieval_queries", QUERY_COLUMNS, [(
+            query.query_id, query.n, query.text, query.notice_id, query.notice_ref, query.notice_date, query.project_id,
+            json.dumps(query.judges), at, at.astimezone(dt.UTC).date())])
+        query.kept = True
 
     def judge(self, viewer: Viewer) -> Person | None:
         person = self.roles.person(viewer.email)
@@ -186,20 +201,23 @@ class Judging:
 
     # ── Loading the queries and their pools ──────────────────────────────
 
-    def load(self, engine: Engine, writer: Engine, path: Path = QUERIES_FILE, setup: SearchSetup | None = None) -> int:
-        """Load each query in the file not yet loaded, with its two judges and its pool. Returns how many."""
-        from types import SimpleNamespace
+    def load(self, engine: Engine, writer: Engine, searcher: SearcherFor, path: Path | None = None,
+             setup: SearchSetup | None = None) -> int:
+        """Load each query in the file not yet loaded, with its two judges and its pool. Returns how many.
 
-        from strata.estimates.harness import HARNESS
-        from strata.knowledge.search import Filters, searcher_for
+        searcher gives the search each pool setup runs: the fixture search over the fixture database, or on the
+        workspace AI Search as a person's token (ops/retrieval/evaluate_live.py --load-queries), since the weekly
+        job's own identity has none."""
+        from strata.knowledge.search import Filters
 
-        written = tomllib.loads(path.read_text()).get("query", [])
+        written = tomllib.loads((path or QUERIES_FILE).read_text()).get("query", [])
         desk = self.desk(engine)
         depth = int(self.value("pool_depth"))
         setups = pool_setups(setup or load_search().setup)
         at, loaded = self.now(), 0
         for number, entry in enumerate(written, 1):
             if entry["id"] in desk.queries:
+                self._keep_pair(desk.queries[entry["id"]], writer)
                 continue
             [notice] = rows(engine, "notice", notice_id=entry["notice_id"]) or [None]
             if notice is None:
@@ -208,8 +226,7 @@ class Judging:
             pair = self.pair(number)
             pooled: list[str] = []
             for each in setups:
-                searcher = searcher_for(SimpleNamespace(engine=engine, viewer=HARNESS), setup=each)
-                for hit in searcher.search(entry["text"], Filters(date - DAY, project_id=notice["project_id"]), depth).hits:
+                for hit in searcher(engine, each).search(entry["text"], Filters(date - DAY, project_id=notice["project_id"]), depth).hits:
                     if hit.passage_id not in pooled:
                         pooled.append(hit.passage_id)
             day = at.astimezone(dt.UTC).date()
@@ -275,7 +292,7 @@ class Judging:
                 "to": (page - 1) * size + len(on_page), "queries": [self._summary(query, person) for query in on_page]}
 
     def query(self, engine: Engine, viewer: Viewer, wanted: str) -> dict:
-        from strata.tools.search_passages import read_passage
+        from strata.tools.search_passages import read_passages
 
         person = self._require(viewer)
         desk = self.desk(engine)
@@ -287,9 +304,14 @@ class Judging:
         mine = query.grades.get(person.email.lower(), {})
         other = query.other(person.email)
         theirs = query.grades.get(other.lower(), {}) if other and query.locked else {}
+        # Each passage as it was the day before the query's date, or as it is now when a re-issue replaced it: two
+        # statements for the whole pool, not one per passage.
+        held = read_passages(engine, query.pool, query.notice_date - DAY)
+        missing = [passage for passage in query.pool if passage not in held]
+        held |= read_passages(engine, missing, self.now().date()) if missing else {}
         passages = []
         for passage in order_for(person.email, query.query_id, query.pool):
-            found = read_passage(engine, passage, query.notice_date - DAY) or read_passage(engine, passage, self.now().date())
+            found = held.get(passage)
             if found is None:
                 continue
             # Never a rank, a score, a setup's name, a report or a demotion (the 32 brief, section 4.4).
@@ -316,6 +338,7 @@ class Judging:
             raise Refused(404, "unknown_passage")
         if query.locked:
             raise Refused(409, "locked")
+        self._keep_pair(query, writer)
         at = self.now()
         writer.insert_rows("strata.ops.retrieval_grades", GRADE_COLUMNS, [(
             self.new_id("grd"), query.query_id, passage, person.email, person.name, grade, at,
@@ -323,6 +346,25 @@ class Judging:
         query.grades.setdefault(person.email.lower(), {})[passage] = grade
         return {"saved": True, "graded": sum(1 for p in query.pool if p in query.grades[person.email.lower()]),
                 "pool": len(query.pool), "my_state": query.state(person.email), "locked": query.locked}
+
+    # ── The weekly run: each pair of judges' agreement ──────────────────
+
+    def measure(self, engine: Engine, writer: Engine) -> int:
+        """Append each pair of judges' agreement over the queries both finished, as worked out now. Returns how
+        many pairs."""
+        desk, at = self.desk(engine), self.now()
+        by_pair: dict[tuple[str, str], list[Query]] = {}
+        for query in desk.ordered():
+            if query.locked:
+                by_pair.setdefault(tuple(sorted(judge.lower() for judge in query.judges)), []).append(query)
+        minimum = int(self.value("min_pairs"))
+        found = []
+        for (first, second), queries in sorted(by_pair.items()):
+            pairs = [pair for query in queries for pair in query.pairs()]
+            found.append((first, second, len(queries), len(pairs), sum(1 for a, b in pairs if a == b),
+                          kappa(pairs) if len(pairs) >= minimum else None, at, at.astimezone(dt.UTC).date()))
+        writer.insert_rows("strata.ops.retrieval_agreement", AGREEMENT_COLUMNS, found)
+        return len(found)
 
     # ── The labeled set ──────────────────────────────────────────────────
 

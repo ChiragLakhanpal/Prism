@@ -9,8 +9,14 @@ Run it from the main checkout, after the deploy (ops/bundle/deploy.py) has made 
 weekly retrieval job (bundle/retrieval.yml) has built the labeled set, and ops/documents/run_live.py has synced
 the AI Search index:
 
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env --load-queries
     uv run --script ops/retrieval/evaluate_live.py --env-file .env
     uv run --script ops/retrieval/evaluate_live.py --env-file .env --gate --no-rerank
+
+With --load-queries it loads each query in evals/retrieval_queries.toml not yet in strata.ops.retrieval_queries,
+with its two query judges and its pool, which AI Search finds as the env file's token. The weekly job cannot,
+because its own identity has no AI Search token, so run this whenever the search owner adds queries. It prints how
+many it loaded; the rows are in strata.ops.retrieval_queries and strata.ops.retrieval_pool.
 
 The first scores each evaluation set of the labeled set (the ICR Reviews' citations, the PADs' lessons sections and
 the judged notice queries) through the replay harness with the live adapters: AI Search's hybrid query with its
@@ -53,6 +59,8 @@ EXPERIMENT = "/Shared/strata/retrieval"
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="ops/retrieval/evaluate_live.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--env-file", help="the env file with the workspace's address, warehouse, token and keys")
+    parser.add_argument("--load-queries", action="store_true",
+                        help="load the new queries written from award notices, with their judges and pools")
     parser.add_argument("--gate", action="store_true", help="run the tuning gate on a candidate setup")
     parser.add_argument("--no-rerank", action="store_true", help="the candidate turns the reranker off")
     args = parser.parse_args(argv)
@@ -70,7 +78,7 @@ def main(argv=None) -> int:
 
     from bundle_live import cli_env  # the Databricks SDK, which only the live run needs
 
-    from strata.config import load_search
+    from strata.config import load_roles, load_search
     from strata.dbx import Viewer
     from strata.estimates import retrieval
     from strata.estimates.tracking import MlflowTracker
@@ -85,6 +93,14 @@ def main(argv=None) -> int:
     run_id = f"retrieval-{ran_at:%Y%m%dT%H%M%SZ}-{uuid.uuid4().hex[:8]}"
     current = load_search().setup
     try:
+        if args.load_queries:
+            from strata.knowledge.retrieval.judging import Judging
+
+            loaded = Judging(load_roles()).load(
+                engine, engine, lambda e, setup: searcher_for(SimpleNamespace(engine=e, viewer=viewer), setup=setup))
+            print(f"I loaded {loaded} new queries into strata.ops.retrieval_queries, with their pools in "
+                  "strata.ops.retrieval_pool.")
+            return 0
         tracker = MlflowTracker(EXPERIMENT)
         if not args.gate:
             found = retrieval.evaluate(engine, tracker, run_id, ran_at, engine, setup=current,

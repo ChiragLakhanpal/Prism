@@ -65,7 +65,7 @@
     }
   },
   "report_count": 2,
-  "first_on": "2026-10-23T09:00:02Z",
+  "first_on": "2026-10-23T09:00:03Z",
   "own_project": true,
   "audit": null,
   "reports": [
@@ -74,7 +74,7 @@
       "role": "staff",
       "is_you": false,
       "kind": "wrong_passage",
-      "reported_on": "2026-10-23T09:00:02Z",
+      "reported_on": "2026-10-23T09:00:03Z",
       "question": "Why were works contracts in P130164 advertised again?",
       "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".",
       "reason": "It is about estimates in general, not why these contracts were advertised again.",
@@ -86,7 +86,7 @@
       "role": "staff",
       "is_you": false,
       "kind": "not_useful",
-      "reported_on": "2026-10-23T09:20:03Z",
+      "reported_on": "2026-10-23T09:20:04Z",
       "question": "Why were works contracts in P130164 advertised again?",
       "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".",
       "reason": null,
@@ -101,7 +101,7 @@
   },
   "outcome": {
     "outcome": "ranked_lower",
-    "decided_on": "2026-10-23T11:40:18Z",
+    "decided_on": "2026-10-23T11:40:16Z",
     "reviewer_name": "Daniel Okafor",
     "reason": "The paragraph is about estimates in general. Questions about these contracts need paragraph 55.",
     "agreeing": null

@@ -25,6 +25,7 @@ import { ApiError } from "../lib/api";
 import { Button } from "./Button";
 import { ReasonField } from "./DecisionForm";
 import { Fill } from "./Fill";
+import { Num } from "./Num";
 import { fillText } from "./LessonParts";
 import { OutcomePanel } from "./LessonReview";
 import { ToggleButton } from "./ToggleButton";
@@ -173,9 +174,12 @@ export function FeedbackRow({
       ) : (
         <>
           <div className="mt-2 flex flex-wrap gap-2" onKeyDown={chosen ? onFormKey : undefined}>
-            {KINDS.map((kind) => (
+            {/* The first label starts on the heading's edge, as a flush ghost button's does. */}
+            {KINDS.map((kind, index) => (
               <ToggleButton
                 key={kind}
+                inText
+                className={index === 0 ? "-ml-4" : undefined}
                 ref={(element) => {
                   buttons.current[kind] = element;
                 }}
@@ -278,7 +282,7 @@ function Outcome({
     const body =
       report.status === "ranked_lower"
         ? fillText(words.rankedLower, { decided, kind })
-        : <Fill template={words.byAgreement} slots={{ decided, kind, agreeing: copy.num.words[(report.agreeing_count ?? 0) - 1] ?? String(report.agreeing_count ?? "") }} />;
+        : <Fill template={words.byAgreement} slots={{ decided, kind, agreeing: <Num count={report.agreeing_count ?? 0} /> }} />;
     return (
       <OutcomePanel ref={panelRef} state="success" lead={lead} body={body}>
         {reviewer}

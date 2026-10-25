@@ -32,7 +32,6 @@ import datetime as dt
 import hashlib
 import json
 import math
-import uuid
 from collections import Counter
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
@@ -42,7 +41,7 @@ from strata.dbx import Viewer
 from strata.knowledge.lessons.review import Refused
 from strata.knowledge.retrieval.demotion import LOWERING, RESTORING
 from strata.knowledge.retrieval.kinds import query_kind
-from strata.knowledge.retrieval.labels import as_date, rows
+from strata.knowledge.retrieval.labels import as_date, new_id, rows, utc_now
 from strata.lakehouse.engine import Engine
 
 PAGE = "passage_reports"  # the roles file's name for the Passage reports pages
@@ -72,10 +71,6 @@ OUTCOMES = {"accepted": "ranked_lower", "declined": "kept", "accepted_by_agreeme
 ACTS = {"rank_lower": "accepted", "keep": "declined", "leave_lower": "left_lower", "restore": "restored"}
 WAITING_OUTCOMES, AUDIT_OUTCOMES = ("rank_lower", "keep"), ("leave_lower", "restore")
 STAFF = "staff"
-
-
-def _now() -> dt.datetime:
-    return dt.datetime.now(dt.UTC)
 
 
 def group_id(passage_id: str, kind: str) -> str:
@@ -276,14 +271,10 @@ def share_cap(batch: int, share: float) -> int:
 
 # ── The reads and acts ───────────────────────────────────────────────────
 
-def new_id(prefix: str) -> str:
-    return f"{prefix}-{uuid.uuid4().hex[:12]}"
-
-
 @dataclass
 class PassageReports:
     roles: Roles
-    now: Callable[[], dt.datetime] = _now
+    now: Callable[[], dt.datetime] = utc_now
     thresholds: Thresholds | None = None
     lists: RetrievalLists | None = None
     new_id: Callable[[str], str] = new_id  # a report's or decision's id, from its prefix
@@ -381,6 +372,8 @@ class PassageReports:
         if not chosen:
             raise Refused(404, "not_in_answer")
         citation = chosen[0]
+        if citation["view"] != STAFF:  # the view the answer was asked in, as the server stored it
+            raise Refused(403, "preview")
         passage = passage_of(evidence_id)
         if passage is None or citation["tool"] != SEARCH_TOOL:
             raise Refused(403, "no_question")
@@ -419,9 +412,17 @@ class PassageReports:
 
     def citation_rows(self, run_id: str, viewer_id: str | None, question: str, as_of: dt.date, view: str,
                       sentences: Iterable[tuple[int, str, list[str]]], tool_of: Callable[[str], str | None],
-                      project_of: Callable[[str], str | None], at: dt.datetime) -> list[tuple]:
-        kind = query_kind(question, self.lists)
-        return [(run_id, viewer_id, question, kind, as_of, view, index, text, evidence, tool_of(evidence),
+                      project_of: Callable[[str], str | None], at: dt.datetime,
+                      kind_of: Callable[[str], str | None] = lambda _evidence: None) -> list[tuple]:
+        """One row per source each kept sentence cited. A passage search_passages found keeps the kind of question of
+        that search (kind_of, from the turn's Facts), since search ranks lower by the kind of its own query, which can
+        differ from the person's question's; any other source takes the kind of the question."""
+        asked = query_kind(question, self.lists)
+
+        def kind(evidence: str) -> str:
+            return (kind_of(evidence) if tool_of(evidence) == SEARCH_TOOL else None) or asked
+
+        return [(run_id, viewer_id, question, kind(evidence), as_of, view, index, text, evidence, tool_of(evidence),
                  project_of(evidence), at, at.astimezone(dt.UTC).date())
                 for index, text, evidence_ids in sentences for evidence in evidence_ids]
 
@@ -438,10 +439,19 @@ class PassageReports:
     def _open(self, ledger: Ledger) -> list[Group]:
         return [group for group in ledger.groups.values() if ledger.waiting(group) or ledger.audit(group)]
 
-    def _passage(self, engine: Engine, passage_id: str) -> dict:
-        from strata.tools.search_passages import read_passage
+    def _passages(self, engine: Engine, passage_ids: Iterable[str]) -> dict[str, dict]:
+        """The passages a page shows, read in one statement, by id."""
+        from strata.tools.search_passages import read_passages
 
-        found = read_passage(engine, passage_id, self.now().date()) or {}
+        wanted = sorted(set(passage_ids))
+        held = read_passages(engine, wanted, self.now().date())
+        return {passage_id: self._fields(passage_id, held.get(passage_id) or {}) for passage_id in wanted}
+
+    def _passage(self, engine: Engine, passage_id: str) -> dict:
+        return self._passages(engine, [passage_id])[passage_id]
+
+    @staticmethod
+    def _fields(passage_id: str, found: dict) -> dict:
         source = found.get("source") or {}
         return {"passage_id": passage_id, "evidence_id": f"{PASSAGE_PREFIX}{passage_id}",
                 "project_name": source.get("project_name"), "pid": source.get("project_id"),
@@ -457,12 +467,12 @@ class PassageReports:
         kinds = {report.kind for report in reports}
         return "both" if kinds == set(KINDS) else next(iter(kinds), "wrong_passage")
 
-    def row(self, engine: Engine, ledger: Ledger, group: Group, viewer: Viewer) -> dict:
+    def row(self, ledger: Ledger, group: Group, viewer: Viewer, passages: dict[str, dict]) -> dict:
         audit = ledger.audit(group)
         reports = ledger.waiting(group) or (group.reports if audit else [])
         can = self.can(ledger, group, viewer)
         agreement = audit
-        passage = {key: value for key, value in self._passage(engine, group.passage_id).items() if key != "row"}
+        passage = {key: value for key, value in passages[group.passage_id].items() if key != "row"}
         return {"group_id": group.group_id, "kind_label": self.kind_label(reports, audit is not None),
                 "group": "you" if can["decide"] else "others", "audit": audit is not None,
                 **passage, "query_kind": group.query_kind,
@@ -475,10 +485,14 @@ class PassageReports:
     def queue(self, engine: Engine, viewer: Viewer, page: int = 1) -> dict:
         self._require(viewer)
         ledger = Ledger(engine)
-        open_rows = sorted((self.row(engine, ledger, group, viewer) for group in self._open(ledger)),
+        waiting, since = self._open(ledger), self._since()
+        decided_groups = [group for group in ledger.groups.values()
+                          if (act := ledger.decided(group)) is not None and act.decided_at >= since]
+        passages = self._passages(engine, [group.passage_id for group in waiting + decided_groups])
+        open_rows = sorted((self.row(ledger, group, viewer, passages) for group in waiting),
                            key=lambda row: (row["first_on"] or row["decided_on"] or "", row["group_id"]))
         groups = {key: [row for row in open_rows if row["group"] == key] for key in ("you", "others")}
-        decided = self._decided(engine, ledger)
+        decided = self._decided(ledger, decided_groups, passages)
         size = int(self.value("page_size"))
         pages = max(1, -(-len(decided) // size))
         page = min(max(page, 1), pages)
@@ -492,14 +506,14 @@ class PassageReports:
                             "pages": pages, "from": (page - 1) * size + 1 if shown else 0,
                             "to": (page - 1) * size + len(shown), "rows": shown}}
 
-    def _decided(self, engine: Engine, ledger: Ledger) -> list[dict]:
-        since = self.now() - dt.timedelta(days=int(self.value("decided_days")))
+    def _since(self) -> dt.datetime:
+        return self.now() - dt.timedelta(days=int(self.value("decided_days")))
+
+    def _decided(self, ledger: Ledger, decided: list[Group], passages: dict[str, dict]) -> list[dict]:
         found = []
-        for group in ledger.groups.values():
+        for group in decided:
             act = ledger.decided(group)
-            if act is None or act.decided_at < since:
-                continue
-            passage = self._passage(engine, group.passage_id)
+            passage = passages[group.passage_id]
             found.append({"group_id": group.group_id, "project_name": passage["project_name"], "pid": passage["pid"],
                           "para": passage["para"], "paragraph_numbered": passage["paragraph_numbered"],
                           "section": passage["section"], "query_kind": group.query_kind,

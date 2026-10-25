@@ -41,38 +41,43 @@ async function axe(page: Page) {
 
 const subTabs = (page: Page) => page.getByRole("navigation", { name: "Lesson pages" });
 
-test("a passage reviewer sees Lessons and Passage reports, and a query judge Lessons and Judging", async ({ page }) => {
+test("a passage reviewer sees Lessons and Passage reports, and a query judge Lessons and Judging, each with the page's own count", async ({ page }) => {
   await serve(page, {
-    "/api/lessons/me": await file("retrieval-me-passage-reviewer.json"),
+    "/api/lessons/me": await file("retrieval-me-passage-reviewer-waiting.json"),
     "/api/lessons": await file("lessons-library-empty.json"),
     "/api/passage-reports": await file("passage-reports.json"),
   });
   await page.goto("/lessons/reports");
-  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Passage reports (0)"]);
-  await expect(subTabs(page).getByRole("link", { name: "Passage reports (0)" })).toHaveAttribute("aria-current", "page");
+  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Passage reports (2)"]);
+  await expect(subTabs(page).getByRole("link", { name: "Passage reports (2)" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("[data-reports-lead]")).toContainText("Reports on two passages are waiting for you.");
 
   await page.unrouteAll();
   await serve(page, {
-    "/api/lessons/me": await file("retrieval-me-judge.json"),
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
     "/api/judging/queries": await file("judging-queries.json"),
   });
   await page.goto("/lessons/judging");
-  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Judging (3)"]);
+  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Judging (2)"]);
+  await expect(page.getByRole("radio", { name: "To judge (2)" })).toBeVisible();
 });
 
 test("Passage reports lists the groups waiting, oldest first, and the decisions of the last 90 days", async ({ page }) => {
   await serve(page, {
-    "/api/lessons/me": await file("retrieval-me-both.json"),
+    "/api/lessons/me": await file("retrieval-me-passage-reviewer-decided.json"),
     "/api/passage-reports": await file("passage-reports-decided.json"),
   });
   await page.goto("/lessons/reports");
   await expect(page.locator("[data-reports-lead]")).toHaveText("Reports on one passage are waiting for you. The oldest came in on October 23, 2026.");
+  // The sub-tab counts what the lead says is waiting for you.
+  await expect(subTabs(page).getByRole("link", { name: "Passage reports (1)" })).toBeVisible();
   await expect(page.getByText("Ranking a paragraph lower changes only questions like the ones in its reports. I never hide a paragraph, and I still show it when it is the only source.")).toBeVisible();
   const row = page.locator("[data-report-row]").first();
   await expect(row).toContainText("Wrong passage · needs your review");
-  await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization Project, paragraph 55");
+  await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 55");
   await expect(page.getByRole("heading", { name: "Decided in the last 90 days" })).toBeVisible();
   await expect(page.locator("[data-reports-decided]")).toContainText("Ranked lower");
+  await expect(page.locator("[data-reports-decided]")).toContainText("Showing 1 decision, newest first");
   expect(await axe(page)).toEqual([]);
 });
 
@@ -80,10 +85,12 @@ test("one passage's reports name each sender by role, and Rank it lower needs a 
   const sent = await serve(page, {
     "/api/passage-reports/grp-6fa04e510789": await file("passage-report.json"),
     "POST /api/passage-reports/grp-6fa04e510789/decide": await file("passage-report-saved.json"),
-    "/api/lessons/me": await file("retrieval-me-passage-reviewer.json"),
+    "/api/lessons/me": await file("retrieval-me-passage-reviewer-waiting.json"),
   });
   await page.goto("/lessons/reports/grp-6fa04e510789");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization Project, paragraph 54");
+  // The project is named as the evidence drawer's meta line names it, in the title and the passage block alike.
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(page.locator("[data-passage]").first()).toBeVisible();
   await expect(page.locator("[data-status]")).toHaveText("Wrong passage and not useful · needs your review");
   const reports = page.locator("[data-report-item]");
   await expect(reports).toHaveCount(2);
@@ -108,11 +115,13 @@ test("one passage's reports name each sender by role, and Rank it lower needs a 
 
 test("Judging shows your progress, your agreement with Cohen's kappa, and the queries to judge", async ({ page }) => {
   await serve(page, {
-    "/api/lessons/me": await file("retrieval-me-judge.json"),
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
     "/api/judging/queries": await file("judging-queries.json"),
   });
   await page.goto("/lessons/judging");
   await expect(page.locator("[data-judging-lead]")).toHaveText("You have judged 1 of 3 queries.");
+  // Each query names the award notice it was written from, as a link to that notice's record in the drawer.
+  await expect(page.locator("[data-notice-link]").first()).toHaveAttribute("href", /\?evidence=strata\.gold\.notice%3AOP\d+$/);
   await expect(page.locator("[data-agreement=shown]")).toContainText("Where you have both finished, your grades matched on 20 of 25 passages. Cohen's kappa: 0.71.");
   await expect(page.getByRole("radiogroup", { name: "Show" }).getByRole("radio")).toHaveText(["To judge (2)", "Finished by you (1)", "Finished by both (1)"]);
   await expect(page.getByRole("radio", { name: "To judge (2)" })).toHaveAttribute("aria-checked", "true");
@@ -152,6 +161,83 @@ for (const width of [1440, 390]) {
     } else {
       expect(await page.locator("[data-grade-bar]").evaluate((el) => getComputedStyle(el).position)).toBe("static");
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+      // Below 1024 px the grade buttons come right after the passage, before the definitions, and the page scrolled
+      // so the next passage's heading is at the top of the window.
+      expect(await panel.evaluate((el) => [...el.querySelectorAll("[data-grade-bar], dl")].map((node) => node.tagName))).toEqual(["DIV", "DL"]);
+      expect((await panel.getByRole("heading", { level: 2 }).boundingBox())!.y).toBeLessThan(8);
     }
   });
 }
+
+test("a grade that fails to save says so on the grade bar, and Try again saves it and counts it again", async ({ page }) => {
+  await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") });
+  const saved = await file("judging-grade-saved.json");
+  let tries = 0;
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => {
+    tries += 1;
+    return tries === 1
+      ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "data_service" }) })
+      : route.fulfill({ contentType: "application/json", body: saved.body });
+  });
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  await page.locator("[data-judging-panel]").click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("a");
+  const bar = page.locator("[data-grade-bar]");
+  await expect(bar.getByRole("alert")).toContainText("I couldn't save your grade for passage 1. Your other grades are saved.");
+  await expect(page.locator("[data-progress]")).toContainText("0 of 40 passages graded.");
+  await bar.getByRole("button", { name: "Try again" }).click();
+  await expect(page.locator("[data-progress]")).toContainText("1 of 40 passages graded.");
+  await expect(bar.getByRole("alert")).toHaveCount(0);
+});
+
+test("grading the last passage moves focus to the panel that says you graded them all", async ({ page }) => {
+  // The recorded query with every passage but the first in Mei's order already graded.
+  const query = JSON.parse((await file("judging-query.json")).body);
+  query.passages = query.passages.map((passage: { my_grade: string | null }, index: number) => ({ ...passage, my_grade: index === 0 ? null : "partly" }));
+  await serve(page, { "/api/judging/queries/nq-rural-works-delays": { body: JSON.stringify(query) } });
+  const saved = await file("judging-grade-saved.json");
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => route.fulfill({ contentType: "application/json", body: saved.body }));
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  await page.locator("[data-judging-panel]").click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("n");
+  const finished = page.locator("[data-judging-finished=mine] [data-outcome-panel]");
+  await expect(finished).toBeFocused();
+  await expect(finished).toContainText("You graded all 40 passages for this query.");
+});
+
+test("when the other judge finishes while the query is open, the refused grade says the grades are locked, with no retry", async ({ page }) => {
+  const start = await file("judging-query.json");
+  const locked = await file("judging-query-locked.json");
+  const refused = await file("judging-grade-locked.json");
+  await serve(page, {});
+  let reads = 0;
+  await page.route("**/api/judging/queries/nq-rural-works-delays", (route) => {
+    reads += 1;
+    return route.fulfill({ contentType: "application/json", body: reads === 1 ? start.body : locked.body });
+  });
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) =>
+    route.fulfill({ status: refused.status ?? 409, contentType: "application/json", body: refused.body }),
+  );
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  await page.locator("[data-judging-panel]").click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("a");
+  const notice = page.locator("[data-locked-while-open]");
+  await expect(notice).toBeFocused();
+  await expect(notice).toHaveText("The other judge finished this query while you had it open, so your grades for it are now locked.");
+  await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
+});
+
+test("choosing another filter with the arrow keys keeps focus on the filter while its queries load", async ({ page }) => {
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
+    "/api/judging/queries": await file("judging-queries.json"),
+    "/api/judging/queries?show=finished_by_both": await file("judging-queries-both.json"),
+  });
+  await page.goto("/lessons/judging");
+  await page.getByRole("radio", { name: "To judge (2)" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(/show=finished_by_both/);
+  await expect(page.locator("[data-judging=ready] [aria-busy]")).toHaveCount(0);
+  await expect(page.getByRole("radio", { name: "Finished by both (1)" })).toBeFocused();
+});

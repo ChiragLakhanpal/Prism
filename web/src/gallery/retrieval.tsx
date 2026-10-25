@@ -33,7 +33,7 @@ import { ToggleButton } from "../components/ToggleButton";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { Feedback, JudgingList, JudgingQuery, MyReport, ReportGroup, ReportsQueue } from "../lib/retrieval";
-import { JudgingBody, JudgingDesk, JudgingSkeleton } from "../pages/JudgingPages";
+import { JudgingBody, JudgingDesk, JudgingQuerySkeleton, JudgingSkeleton } from "../pages/JudgingPages";
 import { ReportGroupSkeleton, ReportGroupView, ReportsBody, ReportsSkeleton } from "../pages/PassageReportsPages";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -274,6 +274,9 @@ export function judgingPage(): GalleryPage {
             <Labeled label={s.reportReopen}>
               <ReportGroupView sample group={group(reportDecided)} initial={{ reopenOpen: true }} />
             </Labeled>
+            <Labeled label={s.reportReopenFailed}>
+              <ReportGroupView sample group={group(reportDecided)} initial={{ reopenFailed: true }} />
+            </Labeled>
           </Column>
         ),
       },
@@ -293,6 +296,9 @@ export function judgingPage(): GalleryPage {
             </Labeled>
             <Labeled label={s.judgingLoading}>
               <JudgingSkeleton />
+            </Labeled>
+            <Labeled label={s.judgingBusy}>
+              <JudgingBody list={LIST} busy onShow={() => undefined} />
             </Labeled>
           </Column>
         ),
@@ -332,6 +338,12 @@ export function judgingPage(): GalleryPage {
             </Labeled>
             <Labeled label={s.deskLocked}>
               <JudgingDesk sample query={LOCKED} initial={{ at: 1 }} />
+            </Labeled>
+            <Labeled label={s.deskLockedWhileOpen}>
+              <JudgingDesk sample query={LOCKED} initial={{ at: 1, lockedWhileOpen: true }} />
+            </Labeled>
+            <Labeled label={s.deskLoading}>
+              <JudgingQuerySkeleton sample />
             </Labeled>
           </Column>
         ),

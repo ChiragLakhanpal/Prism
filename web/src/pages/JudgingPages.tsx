@@ -9,9 +9,10 @@
 //   is blind: the page never shows a passage's rank, score or search setup, highlighted words, live feedback, or
 //   the other judge's grades before both finish.
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb } from "../components/Breadcrumb";
-import { Button } from "../components/Button";
+import { Button, PRIMARY_LINK } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { PassageBlock } from "../components/EvidenceDrawer";
 import { Fill } from "../components/Fill";
@@ -27,13 +28,15 @@ import { Table, type Row as TableRow } from "../components/Table";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { getJson, putJson } from "../lib/api";
+import { ApiError, getJson, putJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { useLoad, type Load } from "../lib/load";
+import { evidenceHref, openEvidence } from "../lib/evidence";
+import { refusedAs, useLoad, type Load } from "../lib/load";
 import { LESSONS_HREF } from "../lib/lessons";
 import { navigate } from "../lib/router";
 import { JUDGING_HREF, queryHref, type Grade, type JudgingList, type JudgingQuery, type PooledPassage, type QuerySummary } from "../lib/retrieval";
 import { setPageTitle } from "../lib/title";
+import { usePageAtLeast } from "../lib/usePageAtLeast";
 import { DocumentColumn } from "./DraftPage";
 import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
 
@@ -43,12 +46,8 @@ const SETTLE_MS = 300; // a grade key within this long after an advance is ignor
 const SHOWS = ["to_judge", "finished_by_you", "finished_by_both"] as const;
 type Show = (typeof SHOWS)[number];
 
-const PRIMARY_LINK =
-  "inline-flex h-11 items-center justify-center rounded-pill border-2 border-primary bg-primary px-6 text-button text-surface " +
-  "transition-paint duration-150 hover:border-primary-hover hover:bg-primary-hover";
-
-const refusedAs = (load: Load<unknown>, code: string) =>
-  load.status === "error" && (load.error?.body as { code?: string } | undefined)?.code === code;
+// An award notice's evidence id: its record view in the evidence drawer (brief 14).
+const NOTICE = "strata.gold.notice:";
 
 const listHref = (show: Show, page = 1) => {
   const query = new URLSearchParams();
@@ -59,6 +58,25 @@ const listHref = (show: Show, page = 1) => {
 };
 
 // ── The list of queries ──────────────────────────────────────────────────
+
+// The award notice a query was written from, as a Roboto Mono link that opens its record in the evidence drawer, so a
+// judge can check the query against it (the 32 brief, sections 2.6 and 2.7).
+function NoticeLink({ query }: { query: { notice_id: string; notice_ref: string | null } }) {
+  const id = `${NOTICE}${query.notice_id}`;
+  return (
+    <TextLink
+      href={evidenceHref(id)}
+      onClick={(event) => {
+        event.preventDefault();
+        openEvidence(id, null);
+      }}
+      className="font-mono wrap-anywhere"
+      data-notice-link
+    >
+      {query.notice_ref ?? query.notice_id}
+    </TextLink>
+  );
+}
 
 function Agreement({ list }: { list: JudgingList }) {
   const a = list.agreement;
@@ -76,10 +94,10 @@ function Agreement({ list }: { list: JudgingList }) {
         <Fill
           template={w.agree}
           slots={{
-            agree: <Num value={a.agree} options={{ compact: false }} />,
-            pairs: <Num value={a.pairs} options={{ compact: false }} />,
+            agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
+            pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
             kappaName: w.kappaName,
-            kappa: <Num value={a.kappa} options={{ decimals: 2, compact: false }} />,
+            kappa: <Num value={a.kappa} options={{ decimals: 2, compact: false }} check={{ tooltip: fillText(w.tooltipKappa, { pairs: a.pairs }) }} />,
           }}
         />
       </p>
@@ -104,7 +122,7 @@ function QueryCell({ query }: { query: QuerySummary }) {
       <span className="text-caption text-ink-muted">
         <Fill
           template={w.queryCaption}
-          slots={{ n: <Num value={query.n} options={{ compact: false }} />, ref: <span className="font-mono wrap-anywhere">{query.notice_ref ?? query.notice_id}</span>, date: <Num date={query.notice_date} style="table" /> }}
+          slots={{ n: <Num value={query.n} options={{ compact: false }} />, ref: <NoticeLink query={query} />, date: <Num date={query.notice_date} style="table" /> }}
         />
       </span>
     </span>
@@ -125,11 +143,42 @@ function emptyFor(list: JudgingList): ReactNode {
   return <EmptyState title={w.emptyBothTitle} body={w.emptyBothBody} />;
 }
 
-export function JudgingBody({ list, onShow }: { list: JudgingList; onShow?: (show: Show) => void }) {
+const COLUMNS = [
+  { key: "query", header: w.columns.query, width: "w-[46%]" },
+  {
+    key: "pool",
+    header: (
+      <span className="flex flex-col">
+        <span>{w.columns.pool}</span>
+        <span className="text-caption font-normal text-ink-muted">{w.columns.poolDefinition}</span>
+      </span>
+    ),
+    cardHeader: w.columns.pool,
+    numeric: true,
+    width: "w-[12%]",
+  },
+  { key: "progress", header: w.columns.progress, width: "w-[24%]" },
+  {
+    key: "matched",
+    header: (
+      <span className="flex flex-col">
+        <span>{w.columns.matched}</span>
+        <span className="text-caption font-normal text-ink-muted">{w.columns.matchedDefinition}</span>
+      </span>
+    ),
+    cardHeader: w.columns.matched,
+    numeric: true,
+    width: "w-[18%]",
+  },
+];
+
+// busy: another filter's or page's queries are on their way, so this list stays on screen, marked busy, and the
+// filter keeps focus (selection follows focus, briefs 26 and 27).
+export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList; onShow?: (show: Show) => void; busy?: boolean }) {
   const total = <Num value={list.total} options={{ compact: false }} />;
   const lead =
     list.mine_done === 0 ? (
-      <Fill template={w.leadNone} slots={{ total: <Num value={list.total} options={{ compact: false }} /> }} />
+      <Fill template={w.leadNone} slots={{ total: <Num count={list.total} /> }} />
     ) : list.mine_done >= list.total ? (
       <Fill template={w.leadAll} slots={{ total }} />
     ) : (
@@ -169,7 +218,7 @@ export function JudgingBody({ list, onShow }: { list: JudgingList; onShow?: (sho
             <SegmentedControl
               label={w.show}
               value={list.show}
-              onChange={(key) => (onShow ? onShow(key as Show) : navigate(listHref(key as Show)))}
+              onChange={(key) => (onShow ? onShow(key as Show) : navigate(listHref(key as Show), { quiet: true }))}
               choices={SHOWS.map((key) => ({ key, label: fillText(w.filters[key], { count: list.counts[key] }) }))}
             />
           </div>
@@ -184,35 +233,9 @@ export function JudgingBody({ list, onShow }: { list: JudgingList; onShow?: (sho
               level={2}
               title={<span className="clip-visually">{w.filterNames[list.show]}</span>}
               count={{ noun: w.countNoun, one: w.countNounOne, total: list.counts[list.show], from: list.from, to: list.to }}
+              busy={busy ? w.loading : undefined}
               rowHeader="query"
-              columns={[
-                { key: "query", header: w.columns.query, width: "w-[46%]" },
-                {
-                  key: "pool",
-                  header: (
-                    <span className="flex flex-col">
-                      <span>{w.columns.pool}</span>
-                      <span className="text-caption font-normal text-ink-muted">{w.columns.poolDefinition}</span>
-                    </span>
-                  ),
-                  cardHeader: w.columns.pool,
-                  numeric: true,
-                  width: "w-[12%]",
-                },
-                { key: "progress", header: w.columns.progress, width: "w-[24%]" },
-                {
-                  key: "matched",
-                  header: (
-                    <span className="flex flex-col">
-                      <span>{w.columns.matched}</span>
-                      <span className="text-caption font-normal text-ink-muted">{w.columns.matchedDefinition}</span>
-                    </span>
-                  ),
-                  cardHeader: w.columns.matched,
-                  numeric: true,
-                  width: "w-[18%]",
-                },
-              ]}
+              columns={COLUMNS}
               state={{ status: "ready", rows }}
               source={w.source}
             />
@@ -228,18 +251,54 @@ export function JudgingBody({ list, onShow }: { list: JudgingList; onShow?: (sho
   );
 }
 
+// The list's loading state (the 32 brief, section 5.5): the lead and its caption, the button, the filter's frame,
+// the count line, the real table header and eight rows, as tall as the page they stand for, so nothing moves when it
+// loads.
 export function JudgingSkeleton() {
   return (
-    <div aria-busy="true" data-judging="loading" className="flex flex-col">
+    <div aria-busy="true" data-judging="loading" className="flex min-h-svh flex-col">
       <p role="status" className="clip-visually">
         {w.loading}
       </p>
       <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
       <SkeletonLine className="mt-6 text-title @md/page:text-h3" width="w-[60%]" />
       <SkeletonLine className="mt-2 text-caption" width="w-[40%]" />
-      <Skeleton className="mt-4 h-11 w-50" radius="rounded-pill" />
-      <SkeletonText className="mt-8 text-small" widths={["w-full", "w-1/2"]} />
+      <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-pill" />
+      <SkeletonText className="mt-6 text-small @md/page:mt-8" widths={["w-full", "w-1/2"]} />
+      <div className="mt-6 flex flex-col gap-1 @md/page:mt-8 @md/page:flex-row @md/page:items-center @md/page:gap-3" aria-hidden="true">
+        <span className="text-small font-bold text-ink-heading">{w.show}</span>
+        <SegmentFrame />
+      </div>
+      <div className="mt-4">
+        <Table
+          level={2}
+          title={<span className="clip-visually">{w.filterNames.to_judge}</span>}
+          rowHeader="query"
+          columns={COLUMNS}
+          state={{
+            status: "loading",
+            rows: 8,
+            header: (
+              <span className="flex flex-col gap-1">
+                <SkeletonLine className="text-small" width="w-[80%]" />
+                <SkeletonLine className="text-caption" width="w-1/2" />
+              </span>
+            ),
+          }}
+        />
+      </div>
     </div>
+  );
+}
+
+// The filter's frame while the list loads: three segments, with no counts yet.
+function SegmentFrame() {
+  return (
+    <span className="flex flex-col gap-2 @md/page:flex-row">
+      {SHOWS.map((key) => (
+        <Skeleton key={key} className="h-11 w-full @md/page:h-8 @md/page:w-36" radius="rounded-pill" />
+      ))}
+    </span>
   );
 }
 
@@ -247,8 +306,8 @@ function NoAccess() {
   return <EmptyState title={w.noAccessTitle} body={w.noAccessBody} link={{ href: LESSONS_HREF, text: w.noAccessLink }} />;
 }
 
-export function JudgingView({ load, retry }: { load: Load<JudgingList>; retry: () => void }) {
-  if (load.status === "loading") return <JudgingSkeleton />;
+export function JudgingView({ load, retry, last = null }: { load: Load<JudgingList>; retry: () => void; last?: JudgingList | null }) {
+  if (load.status === "loading") return last ? <JudgingBody list={last} busy /> : <JudgingSkeleton />;
   if (load.status === "error") {
     if (refusedAs(load, "not_a_judge")) return <NoAccess />;
     return <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />;
@@ -262,13 +321,16 @@ export function JudgingPage({ search }: { search: string }) {
   const show = (SHOWS as readonly string[]).includes(params.get("show") ?? "") ? (params.get("show") as Show) : "to_judge";
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
   const [load, retry] = useLoad<JudgingList>(`/api/judging/queries?show=${show}&page=${page}`);
+  // The list on screen stays while another filter's or page's loads, so the filter keeps focus.
+  const last = useRef<JudgingList | null>(null);
+  if (load.status === "ready") last.current = load.data;
   const denied = refusedAs(load, "not_a_judge");
   useEffect(() => {
     if (denied) setPageTitle(copy.pages.lessons.title);
   }, [denied]);
   return (
     <LessonsFrame tabKey="judging" me={me}>
-      <JudgingView load={load} retry={retry} />
+      <JudgingView load={load} retry={retry} last={last.current} />
     </LessonsFrame>
   );
 }
@@ -291,7 +353,7 @@ function Differences({ query }: { query: JudgingQuery }) {
   return (
     <div className="flex flex-col gap-3" data-differences>
       <div>
-        <Button variant="ghost" flush onPage aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Button variant="ghost" flush onPage icon={ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? w.differencesHide : w.differencesShow}
         </Button>
       </div>
@@ -327,7 +389,7 @@ function Differences({ query }: { query: JudgingQuery }) {
 
 export function JudgingDesk({ query: loaded, initial, sample = false }: {
   query: JudgingQuery;
-  initial?: { at?: number; mapOpen?: boolean; failed?: number; grades?: Record<string, Grade> };
+  initial?: { at?: number; mapOpen?: boolean; failed?: number; grades?: Record<string, Grade>; lockedWhileOpen?: boolean };
   // A design gallery sample: neither the header nor the grade bar sticks, so it sits inside the gallery page.
   sample?: boolean;
 }) {
@@ -344,18 +406,30 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   }));
   const [unsaved, setUnsaved] = useState<{ passage: string; grade: Grade }[]>([]);
   const [failed, setFailed] = useState<number | null>(initial?.failed ?? null);
+  // The other judge finished this query while it was open, so a grade sent then was refused as locked.
+  const [lockedWhileOpen, setLockedWhileOpen] = useState(initial?.lockedWhileOpen ?? false);
   const [mapOpen, setMapOpen] = useState(initial?.mapOpen ?? false);
   const [announced, setAnnounced] = useState("");
-  const lastAdvance = useRef(0);
+  // Whether the header is stuck to the top of the window, so it takes its 1 px line (the 32 brief, section 2.7).
+  const [stuck, setStuck] = useState(false);
+  // No advance yet, so a key pressed as soon as the page opens grades.
+  const lastAdvance = useRef(Number.NEGATIVE_INFINITY);
+  const desk = useRef<HTMLDivElement>(null);
+  const top = useRef<HTMLDivElement>(null);
   const h1 = useRef<HTMLHeadingElement>(null);
   const panelHeading = useRef<HTMLHeadingElement>(null);
   const outcome = useRef<HTMLDivElement>(null);
+  const lockedAlert = useRef<HTMLDivElement>(null);
   const panelId = useId();
+  // From a 1024 px page area the grade bar sticks to the bottom of the window and comes last; below it, the grade
+  // buttons come right after the passage, before the definitions (the 32 brief, section 2.9).
+  const wide = usePageAtLeast(desk, 64) && !sample;
   const pool = query.passages.length;
   const passage = query.passages[at - 1];
   const graded = query.passages.map((p) => Boolean(grades[p.passage_id]));
   const done = graded.filter(Boolean).length;
   const finished = pool > 0 && done === pool && unsaved.length === 0 && failed === null;
+  const wasFinished = useRef(finished);
 
   useEffect(() => setQuery(loaded), [loaded]);
   useEffect(() => {
@@ -364,20 +438,53 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   useEffect(() => {
     if (!sample && (document.activeElement === document.body || document.activeElement === null)) h1.current?.focus({ preventScroll: true });
   }, []);
+  // The last grade saved: the panel that says so takes focus, so it is heard (the 32 brief, section 6.2).
+  useEffect(() => {
+    if (finished && !wasFinished.current && !sample) outcome.current?.focus();
+    wasFinished.current = finished;
+  }, [finished]);
+  useEffect(() => {
+    if (lockedWhileOpen && !sample) lockedAlert.current?.focus();
+  }, [lockedWhileOpen]);
+  useEffect(() => {
+    const element = top.current;
+    if (!element || sample) return;
+    const watch = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting));
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [sample]);
 
   function show(n: number, focus = true) {
     setAt(n);
     if (!sample) navigate(queryHref(query.query_id, n), { replace: true, quiet: true });
-    if (focus) requestAnimationFrame(() => panelHeading.current?.focus({ preventScroll: false }));
+    if (!focus) return;
+    requestAnimationFrame(() => {
+      const heading = panelHeading.current;
+      if (!heading) return;
+      // Nothing sticks below a 1024 px page area, so the page scrolls, instantly, to put the next passage's heading
+      // at the top of the window. From it, the sticky header's scroll padding keeps the heading below the header.
+      if (!wide) heading.scrollIntoView({ block: "start", behavior: "instant" });
+      heading.focus({ preventScroll: !wide });
+    });
   }
 
   async function save(entries: { passage: string; grade: Grade }[]) {
     for (const entry of entries) {
       try {
         const saved = await putJson<{ locked: boolean }>(`/api/judging/queries/${encodeURIComponent(query.query_id)}/passages/${encodeURIComponent(entry.passage)}`, { grade: entry.grade });
-        setUnsaved((all) => all.filter((item) => item !== entry));
         if (saved.locked) await reload();
-      } catch {
+        setUnsaved((all) => all.filter((item) => item !== entry));
+        // A grade saved on "Try again" counts again: its failed save took it off the meter and the map.
+        setGrades((all) => (all[entry.passage] ? all : { ...all, [entry.passage]: entry.grade }));
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 409 && (error.body as { code?: string } | null)?.code === "locked") {
+          // The other judge finished while this page was open: the grades are locked, so no retry could save one.
+          setUnsaved([]);
+          setFailed(null);
+          await reload();
+          setLockedWhileOpen(true);
+          return;
+        }
         const n = query.passages.findIndex((p) => p.passage_id === entry.passage) + 1;
         setFailed(n);
         setGrades((all) => {
@@ -409,11 +516,10 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     setAnnounced(fillText(w.savedAs, { grade: w.grades[choice] }));
     lastAdvance.current = performance.now();
     void save([entry]);
-    // The next ungraded passage after this one, or the finished panel when none is left.
+    // The next ungraded passage after this one. When none is left, the finished panel takes focus once the save is in.
     const order = [...query.passages.slice(at), ...query.passages.slice(0, at)];
     const following = order.find((p) => !next[p.passage_id]);
     if (following) show(query.passages.indexOf(following) + 1);
-    else requestAnimationFrame(() => outcome.current?.focus());
   }
 
   // A, P and N choose a grade while focus is inside the panel or the bar: no modifier, no text field, no repeat, and
@@ -429,14 +535,22 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   };
 
   const header = (
-    <div className={cx("flex flex-col gap-1 bg-page", !sample && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10 @lg/page:border-b @lg/page:border-line @lg/page:pb-3")} data-judging-header>
+    <div
+      className={cx(
+        "flex flex-col gap-1 bg-page",
+        !sample && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10 @lg/page:border-b @lg/page:pb-3",
+        !sample && (stuck ? "@lg/page:border-line" : "@lg/page:border-transparent"),
+      )}
+      data-judging-header
+      data-stuck={stuck || undefined}
+    >
       <p className="text-caption text-ink-muted">
         <Fill
           template={w.header}
           slots={{
             n: <Num value={query.n} options={{ compact: false }} />,
             total: <Num value={query.total} options={{ compact: false }} />,
-            ref: <span className="font-mono wrap-anywhere">{query.notice_ref ?? query.notice_id}</span>,
+            ref: <NoticeLink query={query} />,
             date: <Num date={query.notice_date} />,
           }}
         />
@@ -462,25 +576,38 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
       />
     );
   } else {
+    // A failed save sits at the top of the grade bar, so it sticks with it and stays in view after the advance.
+    const failedAlert = failed !== null && (
+      <Alert
+        state="error"
+        live="alert"
+        action={
+          <Button variant="secondary" onClick={() => { setFailed(null); void save(unsaved); }}>
+            {copy.feedback.tryAgain}
+          </Button>
+        }
+      >
+        {fillText(w.saveFailed, { i: failed })}
+      </Alert>
+    );
+    const gradeBar = passage && !(finished && !query.locked) && (
+      <GradeBar
+        sample={sample}
+        n={at}
+        chosen={grades[passage.passage_id] ?? null}
+        locked={query.locked}
+        mine={passage.my_grade ?? grades[passage.passage_id] ?? null}
+        theirs={passage.other_grade}
+        onGrade={grade}
+        notice={failedAlert || undefined}
+      />
+    );
     main = (
       <>
         <p className="text-caption text-ink-muted">
           <Fill template={w.poolNote} slots={{ date: <Num date={query.query_date} /> }} />
         </p>
         <PassageMap open={mapOpen} onToggle={() => setMapOpen(!mapOpen)} count={pool} current={at} graded={graded} href={(n) => queryHref(query.query_id, n)} onChoose={(n) => show(n)} />
-        {failed !== null && (
-          <Alert
-            state="error"
-            live="alert"
-            action={
-              <Button variant="secondary" onClick={() => { setFailed(null); void save(unsaved); }}>
-                {copy.feedback.tryAgain}
-              </Button>
-            }
-          >
-            {fillText(w.saveFailed, { i: failed })}
-          </Alert>
-        )}
         {finished && !query.locked ? (
           <div className="flex flex-col gap-4" data-judging-finished="mine">
             <OutcomePanel ref={outcome} state="info" lead={fillText(w.finishedLead, { pool })} body={w.finishedBody} />
@@ -489,6 +616,13 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         ) : null}
         {query.locked && (
           <div className="flex flex-col gap-4" data-judging-finished="both">
+            {lockedWhileOpen && (
+              <div ref={lockedAlert} tabIndex={-1} className="outline-none" data-locked-while-open>
+                <Alert state="info" live="status">
+                  {w.lockedWhileOpen}
+                </Alert>
+              </div>
+            )}
             <OutcomePanel ref={outcome} state="info" lead={fillText(w.bothLead, { agree: query.agree ?? 0, pool })} body={w.bothBody} />
             <Differences query={query} />
             <Next query={query} />
@@ -506,6 +640,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
               {fillText(w.panel, { i: at, pool })}
             </h2>
             <PassageBlock evidence={evidenceOf(passage)} />
+            {!wide && gradeBar}
             <dl className="mt-3 grid gap-x-4 gap-y-2 text-caption text-ink @md/page:grid-cols-[auto_1fr]">
               {(["answers", "partly", "not_relevant"] as Grade[]).map((key) => (
                 <div key={key} className="contents">
@@ -532,17 +667,9 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             <div className="hidden h-24 @lg/page:block" aria-hidden="true" />
           </section>
         )}
-        {passage && !(finished && !query.locked) && (
+        {wide && gradeBar && (
           <div onKeyDown={onKey} className="contents">
-            <GradeBar
-              sample={sample}
-              n={at}
-              chosen={grades[passage.passage_id] ?? null}
-              locked={query.locked}
-              mine={passage.my_grade ?? grades[passage.passage_id] ?? null}
-              theirs={passage.other_grade}
-              onGrade={grade}
-            />
+            {gradeBar}
           </div>
         )}
       </>
@@ -550,12 +677,14 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   }
 
   return (
-    <div data-judging-query={query.query_id} className="flex flex-col gap-4">
+    <div ref={desk} data-judging-query={query.query_id} className="flex flex-col gap-4">
       <Breadcrumb
         held
         trail={[{ text: copy.lessons.tabs.library, href: LESSONS_HREF }, { text: w.title, href: JUDGING_HREF }, { text: fillText(w.breadcrumb, { n: query.n }) }]}
         back={{ text: w.breadcrumbBack, href: JUDGING_HREF }}
       />
+      {/* Scrolls out of view as the header sticks, which then takes its line. */}
+      <div ref={top} aria-hidden="true" className="-mb-4 h-0" />
       {header}
       {main}
       <p role="status" className="clip-visually">
@@ -581,9 +710,11 @@ function Next({ query }: { query: JudgingQuery }) {
   );
 }
 
-export function JudgingQuerySkeleton() {
+// One query's loading state (the 32 brief, section 5.6): the header, the panel's heading and a passage block's frame,
+// and the grade bar with its buttons held until the pool arrives, all as tall as the page they stand for.
+export function JudgingQuerySkeleton({ n = 1, sample = false }: { n?: number; sample?: boolean }) {
   return (
-    <div aria-busy="true" data-judging-query="loading" className="flex flex-col gap-3">
+    <div aria-busy="true" data-judging-query="loading" className={cx("flex flex-col gap-3", !sample && "min-h-svh")}>
       <p role="status" className="clip-visually">
         {w.loadingOne}
       </p>
@@ -598,6 +729,7 @@ export function JudgingQuerySkeleton() {
         <Skeleton className="h-8 w-full rounded-b-none" />
         <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />
       </div>
+      <GradeBar sample={sample} n={n} chosen={null} locked={false} disabled onGrade={() => undefined} />
     </div>
   );
 }
@@ -618,7 +750,7 @@ export function JudgingQueryPage({ queryId, search }: { queryId: string; search:
       <EmptyState className="mt-6" title={title} body={text} link={link} />
     </>
   );
-  if (load.status === "loading") body = <>{trail}<JudgingQuerySkeleton /></>;
+  if (load.status === "loading") body = <>{trail}<JudgingQuerySkeleton n={asked >= 1 ? asked : 1} /></>;
   else if (load.status === "error") {
     if (refusedAs(load, "unknown_query")) body = empty(<Fill template={w.notFoundTitle} slots={{ id: <span className="font-mono font-medium wrap-anywhere">{queryId}</span> }} />, w.notFoundBody, { href: JUDGING_HREF, text: w.notFoundLink });
     else if (refusedAs(load, "not_assigned")) body = empty(w.notAssignedTitle, w.notAssignedBody, { href: JUDGING_HREF, text: w.notAssignedLink });

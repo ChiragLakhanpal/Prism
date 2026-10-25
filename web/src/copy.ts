@@ -4311,10 +4311,9 @@ export const copy = {
     badgeTheirProject: "About their own project",
     badgeAudit: "Audit sample",
     decidedTitle: "Decided in the last {days} days",
-    decidedCaption: "Passage reports decided in the last {days} days",
-    decidedNoun: "decisions",
-    decidedNounOne: "decision",
-    decidedOrder: "newest first",
+    // The count line's noun: "Showing all 3 decisions, newest first" (copy.table).
+    decidedNoun: "decisions, newest first",
+    decidedNounOne: "decision, newest first",
     columns: { passage: "Passage", outcome: "Outcome", decided: "Decided", reports: "Reports" },
     forQuestions: "For questions about {kind}",
     outcomes: {
@@ -4325,7 +4324,6 @@ export const copy = {
       restored: "Ranking restored",
     } as Record<string, string>,
     source: "Strata's passage report records.",
-    sourceLabel: "Source:",
     emptyTitle: "No one has reported a passage yet.",
     emptyBody: "When someone marks a passage as wrong or not useful in the evidence drawer, the report appears here for review.",
     loading: "Loading the passage reports.",
@@ -4347,7 +4345,6 @@ export const copy = {
       "I ranked this paragraph lower on {date}, after {agreeing} people made the same report and nobody disagreed. I " +
       "picked it for a check.",
     passageTitle: "The passage",
-    passageCaption: "The whole paragraph, word for word.",
     reportsTitle: "What people reported",
     reportsCaption: "Oldest first. I show each sender's role, not their name.",
     reportFirst: {
@@ -4383,7 +4380,7 @@ export const copy = {
       failed: "I couldn't save your decision just now. Your reason is still here.",
       tryAgain: "Try again",
       stale: "{name} decided on these reports on {date}, while you had them open.",
-      staleBody: "Your reason was not sent. You can copy it from the box below.",
+      staleBody: "I didn't send your reason. You can copy it from the box below.",
       staleReason: "Your reason, not sent",
       lostRole: "Your account is no longer on the list of passage reviewers, so I couldn't save this.",
     },
@@ -4409,6 +4406,7 @@ export const copy = {
       "Reopening puts these reports back in the queue and gives the paragraph the ranking it had before. Your reason " +
       "stays in the record with your name.",
     reopenNoReason: "Write a reason, so the next reviewer knows what to look at.",
+    reopenFailed: "I couldn't reopen these reports just now. Your reason is still here.",
     reopenedLead: "You reopened these reports.",
     reopenedBody: "They are waiting for review again, and the paragraph has its earlier ranking.",
     loadingOne: "Loading these reports.",
@@ -4426,7 +4424,7 @@ export const copy = {
       "notices, and I show only passages that were public before each notice's date. Your grades make the labeled set " +
       "I use to measure search, and feedback from the evidence drawer never goes into it. Only query judges can open " +
       "this page.",
-    leadNone: "You haven't judged any queries yet. {total} are waiting for you.",
+    leadNone: "You haven't judged any queries yet, and {total} are waiting for you.",
     leadSome: "You have judged {done} of {total} queries.",
     leadAll: "You have judged all {total} queries.",
     leadOther: "The other judge has finished {done} of {total}.",
@@ -4460,7 +4458,7 @@ export const copy = {
     emptyToJudgeBody: "The other judge has finished {done} of {total}.",
     emptyToJudgeLink: "Show the queries you both finished",
     emptyYouTitle: "You haven't finished a query yet.",
-    emptyYouBody: "Choose Judge the next query to start with the first one.",
+    emptyYouBody: "Choose \"Judge the next query\" to start with the first one.",
     emptyBothTitle: "You haven't both finished a query yet.",
     emptyBothBody: "I show your agreement here once you have.",
     noQueriesTitle: "I have no queries for you to judge yet.",
@@ -4506,7 +4504,7 @@ export const copy = {
     finishedLead: "You graded all {pool} passages for this query.",
     finishedBody: "The other judge hasn't finished, so I'm not showing their grades yet. You can change yours until they finish.",
     bothLead: "You both finished this query. Your grades matched on {agree} of {pool} passages.",
-    bothBody: "Your grades for this query are now locked, because I count agreement only on grades you each gave on your own.",
+    bothBody: "I locked your grades for this query, because I count agreement only on grades you each gave on your own.",
     differencesShow: "Show where you differed",
     differencesHide: "Hide where you differed",
     differencesCaption: "Passages where your grades differed",

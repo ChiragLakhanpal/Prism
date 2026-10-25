@@ -1,10 +1,11 @@
 # The weekly retrieval run (ticket 32; docs/PLAN.md section 11: the retrieval loop labels weekly and tunes
 # search at most monthly).
 #
-# Each Monday it runs src/strata/knowledge/retrieval/retrieval_task.py on serverless compute, which loads the new
-# queries written from award notices (evals/retrieval_queries.toml) with their pools, applies the rules for
-# scale to the week's passage reports when config/thresholds.toml says retrieval.mode = "scale", builds the
-# labeled set again, and writes the loop's measures to strata.ops (strata.knowledge.retrieval.weekly). It runs at
+# Each Monday it runs src/strata/knowledge/retrieval/retrieval_task.py on serverless compute, which applies the
+# rules for scale to the week's passage reports when config/thresholds.toml says retrieval.mode = "scale", builds
+# the labeled set again, and writes the loop's measures to strata.ops (strata.knowledge.retrieval.weekly). It
+# loads no new queries written from award notices: their pools need AI Search, and the job's own identity has no
+# token for it, so ops/retrieval/evaluate_live.py --load-queries loads them. It runs at
 # 06:30 in Washington, after the nightly job's window and before review hours, and takes seconds.
 
 resources:
