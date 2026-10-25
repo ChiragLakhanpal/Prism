@@ -22,7 +22,8 @@ import { NoteSentences } from "../components/DraftNotes";
 import { highlighted } from "../components/Document";
 import { Fill } from "../components/Fill";
 import { LessonCard, LessonSources } from "../components/LessonCard";
-import { EvidenceBadge, fillText, ProjectIdLink, Tag } from "../components/LessonParts";
+import { EvidenceBadge, fillText, Tag } from "../components/LessonParts";
+import { ProjectId } from "../components/ProjectId";
 import { ClockLine, HistoryList, OutcomePanel, statusOf } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
@@ -111,7 +112,7 @@ function Tags({ item }: { item: ReviewItem }) {
     [t.stage, item.tags.stage?.label ?? ""],
     [t.kind, item.tags.kind?.label ?? ""],
     [t.rules, item.tags.edition ? item.tags.edition.short : words.card.rulesUnknown],
-    [t.project, <Fill key="p" template={words.queue.project} slots={{ name: item.project.name ?? "", pid: <ProjectIdLink pid={item.project.pid} /> }} />],
+    [t.project, <Fill key="p" template={words.queue.project} slots={{ name: item.project.name ?? "", pid: <ProjectId pid={item.project.pid} /> }} />],
     [t.sector, item.tags.sector ?? ""],
   ];
   return (
@@ -356,7 +357,7 @@ function CannotAct({ code, values, item }: { code: string; values: Record<string
         template={template}
         slots={{
           name: values.project_name ?? item.project.name ?? "",
-          pid: <ProjectIdLink pid={values.pid ?? item.project.pid} />,
+          pid: <ProjectId pid={values.pid ?? item.project.pid} />,
           region: values.region ?? values.decided_region ?? item.region,
         }}
       />

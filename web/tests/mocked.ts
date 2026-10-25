@@ -29,14 +29,33 @@ export const test = base.extend<Fixtures>({
   ],
 });
 
+// The recording an address answers with. A key may carry a query, such as "/api/projects?q=india&page=2"
+// (ticket 21): it matches when the path matches and each of its parameters has that value in the address,
+// and the key with the most parameters wins. A key with no query matches its path whatever the query is,
+// as every key did before ticket 21, so the tests written then still hold.
+export function recordingFor<T>(responses: Record<string, T>, url: URL): T | undefined {
+  let best: T | undefined;
+  let most = -1;
+  for (const [key, response] of Object.entries(responses)) {
+    const [path, query = ""] = key.split("?");
+    if (path !== url.pathname) continue;
+    const params = [...new URLSearchParams(query)];
+    if (params.every(([name, value]) => url.searchParams.get(name) === value) && params.length > most) {
+      best = response;
+      most = params.length;
+    }
+  }
+  return best;
+}
+
 // Serve /api from recorded responses. An /api call with no recording fails the test that made it.
 export async function mockApi(page: Page, responses: Record<string, { status?: number; body: string }>) {
   const unrecorded: string[] = [];
   await page.route("**/api/**", (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const response = responses[path];
+    const url = new URL(route.request().url());
+    const response = recordingFor(responses, url);
     if (!response) {
-      unrecorded.push(path);
+      unrecorded.push(url.pathname + url.search);
       return route.fulfill({ status: 404, json: { detail: "Not Found" } });
     }
     return route.fulfill({ status: response.status ?? 200, contentType: "application/json", body: response.body });

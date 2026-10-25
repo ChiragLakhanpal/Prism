@@ -17,7 +17,8 @@
     "status": "Active",
     "closing_date": "2026-10-31",
     "record_date": "2024-04-24",
-    "days_to_close": 9
+    "days_to_close": 9,
+    "display_name": "Water and Sanitation Development"
   },
   "checks_run": [],
   "thresholds": {
@@ -26,6 +27,7 @@
     "actual_to_estimate_ratio": "2.0"
   },
   "counts": null,
+  "baseline": null,
   "abstention": {
     "reason": "no_plan_from_agency",
     "implementing_agency": "wajir-water-and-sewerage-company",

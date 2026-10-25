@@ -69,7 +69,9 @@ export const copy = {
     // these titles name the browser tab, and the purposes are the pages' own.
     projects: {
       title: "Projects",
-      purpose: "These are the projects I have records for. Open a project ID to see its Procurement Plans.",
+      purpose:
+        "Find a World Bank-financed project by its name, project ID or country. Open a project ID to see the " +
+        "project's summary, Procurement Plans and documents.",
     },
     project: {
       title: "Project {pid}",
@@ -77,6 +79,8 @@ export const copy = {
     },
     checkPlan: {
       title: "Plan check, {pid}",
+      // Once the check names the plan: "Northern Water Works Development Agency, plan of Oct 9, 2026".
+      windowTitle: "{agency}, plan of {date}",
       purpose: "I check every activity in one implementing agency's Procurement Plan.",
     },
     activity: {
@@ -87,12 +91,11 @@ export const copy = {
         "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
       link: "Go to project {pid}",
     },
+    // The source view (ticket 21) has its own words below; this title names the browser tab until the
+    // document loads.
     document: {
       title: "Document",
       purpose: "This page opens one project document at the page and paragraph a citation points to.",
-      emptyTitle: "I can't open this document here yet.",
-      emptyBody: "When I can, each citation opens here at its paragraph and page.",
-      link: "Go to project {pid}",
     },
     lessons: {
       title: "Lessons",
@@ -506,7 +509,11 @@ export const copy = {
     }),
     highlightStarts: "Highlight starts.",
     highlightEnds: "Highlight ends.",
+    // What a PDF's private-use character, such as a Wingdings bullet, shows as: one character for one.
+    privateGlyph: "\u2022",
     openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
+    // Ticket 21: the drawer's link opens the in-app source view at the page, in the same tab.
+    openAtPageHere: (page: string) => `Open at page ${page}`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
     missing: "I have no source with this ID. The link may be incomplete.",
@@ -535,6 +542,61 @@ export const copy = {
       "strata.ops.lesson_versions": "Lesson",
     } as Record<string, string>,
     recordKindOther: "Record",
+    // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
+    // project ID or loan number follows in Roboto Mono.
+    summaryRecordKinds: {
+      "strata.gold.project": "Project record",
+      "strata.gold.loan": "Loan or credit",
+      "strata.gold.project_closing_date": "Loan history of",
+      "strata.gold.ieg_rating": "IEG ratings of",
+      "strata.gold.project_isr_rating": "ISR rating of",
+      "strata.silver.isr_ratings": "ISR rating of",
+      "strata.ops.plan_baselines": "Baseline for",
+    } as Record<string, string>,
+    // Each Summary record's source line, by its source_key. {date} is the record's date.
+    summaryRecordSources: {
+      projects_api: "World Bank projects API, record of {date}.",
+      loans: "World Bank loans and credits data, as of {date}.",
+      loan_history: "World Bank monthly loan history, reported {date}.",
+      ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
+      projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
+      isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
+      plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
+    } as Record<string, string>,
+    // The fields of a Summary record, by their key, as the projects API and the loans data name them.
+    summaryRecordFields: {
+      project_name: "Project name",
+      country: "Country",
+      status: "Status",
+      approval_date: "Approval date",
+      closing_date: "Closing date",
+      previous_closing_date: "Closing date before",
+      reported_on: "Reported",
+      region: "Region",
+      implementing_agency: "Implementing agency",
+      original_principal_usd: "Original principal (US$)",
+      disbursed_usd: "Disbursed (US$)",
+      cancelled_usd: "Canceled (US$)",
+      snapshot: "As of",
+      evaluation_type: "Evaluation",
+      evaluation_fy: "Fiscal year",
+      outcome: "Outcome",
+      bank_performance: "Bank performance",
+      rating_name: "Rating",
+      value: "Value",
+      current_rating: "Rating in this ISR",
+      previous_rating: "Rating in the ISR before",
+      sequence: "ISR number",
+      pdf_page: "PDF page",
+      isr_date: "ISR date",
+      esf_risk: "Environmental and social risk",
+      ea_category: "Environmental Assessment Category",
+      sector_name: "Sector, as Strata groups it",
+      sector_share: "Sector and share",
+      total_commitment_usd: "Total commitment (US$)",
+      plan_date: "Plan date",
+      saved_on: "Saved on",
+    } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
     // other permits in place before awarding contracts").
@@ -740,6 +802,9 @@ export const copy = {
   // The title, count and source lines show only with the rows. While the rows load, skeleton
   // lines hold their places; an empty or failed table shows only its own card or alert.
   table: {
+    // A fact table's units after a stacked row's label below 768 px, where the column heads are hidden:
+    // "Commitment (US$, millions)".
+    stackedUnit: " ({unit})",
     showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
     showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
     showingOne: (noun: string) => `Showing 1 ${noun}`,
@@ -759,14 +824,6 @@ export const copy = {
   notInRecord: "Not in the record",
 
   // The trail above a project's pages (the 10 brief, sections 2 and 3).
-  // Pagination (the 21 design brief; built early by ticket 29): links that move a list a page at a time.
-  pagination: {
-    label: "Pages",
-    previous: "Previous page",
-    next: "Next page",
-    page: "Page {page} of {pages}",
-  },
-
   breadcrumb: {
     label: "Breadcrumb",
     projects: "Projects",
@@ -787,10 +844,18 @@ export const copy = {
   projectsPage: {
     tableTitle: "All projects",
     noun: "projects",
+    nounOne: "project",
     loading: "Loading projects.",
+    // While a search waits more than 400 ms for its answer, in the count line's place.
+    searching: "Searching projects.",
     columns: { project: "Project", country: "Country", status: "Status" },
-    // The page size, from PAGE_SIZE in web/src/pages/ProjectsPage.tsx.
-    more: (count: string) => `Show ${count} more`,
+    search: { label: "Search projects", hint: "Type part of a project's name, its project ID or its country." },
+    pages: "Pages of the project list",
+    noMatchTitle: "I found no projects that match your search.",
+    noMatchBody:
+      "I search project names, project IDs and country names. Check the spelling, or search for the country by the " +
+      "name the World Bank uses, such as Türkiye.",
+    noMatchLink: "Show all projects",
     source: "World Bank projects API, records through {date}.",
     sourceUndated: "World Bank projects API.",
     emptyTitle: "I don't have any project records yet.",
@@ -802,16 +867,47 @@ export const copy = {
     permission: "Your account can't read Strata's tables, so I can't list the projects.",
   },
 
-  // A project's page and its Procurement tab (the 10 brief, section 3).
+  // List search (the 21 brief, section 10): a list that filters on the server as you type.
+  listSearch: {
+    empty: "Empty the search box",
+  },
+  // Pagination (the 21 brief, section 10; built first by ticket 29): links that move a list a page at a
+  // time, because they change the address. The source view's page links shorten on screen below 360 px,
+  // and their names stay whole.
+  pagination: {
+    label: "Pages",
+    previous: "Previous page",
+    next: "Next page",
+    previousShort: "Previous",
+    nextShort: "Next",
+    page: "Page {page} of {pages}",
+  },
+
+  // A project's page (the 10 and 21 briefs): the header's one line, the agency line and the tabs.
   projectPage: {
     label: { id: "Project ID", country: "Country", status: "Status", agency: "Implementing agency", agencies: "Implementing agencies" },
+    // The h1's line: "{name} · {pid} · {country} · {status}". The dot and the item after it never part.
+    dot: "· ",
+    // The status inside the header's line, by the projects API's value. Tables keep the API's own word.
+    statusInline: { Active: "active", Closed: "closed", Pipeline: "in the pipeline", Dropped: "dropped" } as Record<string, string>,
+    agencyLine: "Implementing agency: {agencies}",
+    agenciesLine: "Implementing agencies: {agencies}",
+    noAgency: "The project record names no implementing agency.",
+    // The browser tab's title: "Rajasthan Road Sector Modernization (P130164), Summary".
+    documentTitle: (name: string, pid: string, tab: string) => `${name} (${pid}), ${tab}`,
+    // Said once when a tab inside the project opens and focus stays on its link.
+    showing: (tab: string) => `Showing ${tab}.`,
+    headerError: "I couldn't load this project because the data service didn't answer.",
     // Two agency names hold commas, so the agencies are set apart with semicolons.
     agencyJoin: "; ",
     // The agencies keep to two lines; these open and close the rest.
     allAgencies: "Show all agencies",
     fewerAgencies: "Show fewer agencies",
     sections: "Project sections",
-    tab: { procurement: "Procurement" },
+    // Every tab a project page will have, in the order the row shows them (the 21 brief, section 1). The
+    // row shows only the tabs that are built (BUILT_TABS in web/src/routes.ts), so ticket 22's Connections
+    // and ticket 23's Timeline join it with no change to the frame.
+    tab: { summary: "Summary", procurement: "Procurement", timeline: "Timeline", documents: "Documents", connections: "Connections" },
     loading: "Loading this project.",
     error: "I couldn't load this project's Procurement Plans because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't show this project.",
@@ -833,17 +929,455 @@ export const copy = {
     unreadNote:
       "I read the latest version, the one before it and the earliest version that lists each activity. I list the " +
       "other versions but haven't read them.",
-    source: "World Bank documents and reports API, Procurement Plans for {pid}, through {date}.",
-    sourceUndated: "World Bank documents and reports API, Procurement Plans for {pid}.",
+    // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId).
+    source: "World Bank documents and reports API, Procurement Plans listed for this project, through {date}.",
+    sourceUndated: "World Bank documents and reports API, Procurement Plans listed for this project.",
     agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
     // Two or more agencies with no plan share one block after the agencies with plans.
     otherAgencies: "Other implementing agencies",
     othersEmpty: "I don't have a Procurement Plan from these agencies yet:",
-    projectEmptyTitle: "I don't have a Procurement Plan for this project yet.",
+    // True whether the World Bank has disclosed no plan or I haven't read the ones it has (the 21 critique, round 3).
+    projectEmptyTitle: "I haven't read a Procurement Plan for this project yet.",
     projectEmptyBody:
       "I can check a plan only after the World Bank discloses it and I have read it. Data readiness shows how much of " +
       "each source I have read.",
     projectEmptyLink: "Data readiness",
+    // Ticket 21: what changed in each agency's latest plan, the Baseline mark and the fold.
+    changes: {
+      // Two sentences with long dates, so neither is dense (DESIGN.md section 7 rule 13; unslop rule 28).
+      lead: "The latest plan is the plan of {plan_date}. Compared with the plan of {prev_date}, it {change_list}.",
+      same: "The latest plan is the plan of {plan_date}. It lists the same activities, dates and estimates as the plan of {prev_date}.",
+      link: "See what changed",
+      earliest: "The only plan I have from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
+      prevUnread: "I haven't read the plan of {prev_date}, the version before the latest, so I can't say what changed.",
+    },
+    baselineMark: "Baseline",
+    versionsMore: (count: string) => `Show all ${count} versions`,
+    versionsLess: "Show fewer versions",
+    versionsShowing: (shown: string, total: string) => `Showing ${shown} of ${total} versions`,
+    changesLoading: "Loading this project's Procurement Plans.",
+  },
+
+  // A project's Packages, on its Procurement tab (the 21 brief, section 4).
+  packages: {
+    title: "Packages",
+    purpose:
+      "Every activity in each implementing agency's latest Procurement Plan, with its reference from " +
+      STEP_SPELLED +
+      ". Open a reference to see its row in the plan check.",
+    searchLabel: "Search packages",
+    searchHint: "Type part of a STEP reference or a description.",
+    noun: "packages",
+    caption: "Packages in each agency's latest Procurement Plan",
+    pages: "Pages of the package list",
+    columns: {
+      activity: "Activity",
+      agency: "Implementing agency",
+      method: "Method · market approach",
+      estimated: "Estimated (US$)",
+      status: "Process status",
+    },
+    source: "the latest Procurement Plan from each implementing agency, from the World Bank documents and reports API, read {date}.",
+    sourceUndated: "the latest Procurement Plan from each implementing agency, from the World Bank documents and reports API.",
+    noMatchTitle: "I found no packages that match your search.",
+    noMatchBody:
+      "I search the STEP references and descriptions in each agency's latest plan. Check the reference, or search for a " +
+      "word from the description.",
+    noMatchLink: "Show all packages",
+    none: "I haven't read a Procurement Plan for this project yet, so I can't list its packages.",
+    error: "I couldn't load this project's packages because the data service didn't answer.",
+    searching: "Searching packages.",
+  },
+
+  // What changed in a plan since the version before it (the 21 brief, sections 4.2 and 5.4). The counts are
+  // the route's; changeList writes them as "added two activities and re-dated three".
+  changes: {
+    // One part per kind of change above zero, in this order. The first carries the noun; the rest leave it out.
+    changeList: (parts: { kind: "added" | "dropped" | "redated" | "reestimated"; count: string; one: boolean }[]) => {
+      const verbs = { added: "added", dropped: "dropped", redated: "re-dated", reestimated: "re-estimated" };
+      const written = parts.map((part, index) =>
+        index === 0 ? `${verbs[part.kind]} ${part.count} ${part.one ? "activity" : "activities"}` : `${verbs[part.kind]} ${part.count}`,
+      );
+      return written.length <= 1 ? written.join("") : `${written.slice(0, -1).join(", ")} and ${written.at(-1)}`;
+    },
+    // "No activity was dropped or re-dated." for the kinds with no change, joined as "A, B or C".
+    unchanged: (kinds: ("added" | "dropped" | "redated" | "reestimated")[]) => {
+      const words = { added: "added", dropped: "dropped", redated: "re-dated", reestimated: "re-estimated" };
+      const named = kinds.map((kind) => words[kind]);
+      const joined = named.length <= 1 ? named.join("") : `${named.slice(0, -1).join(", ")} or ${named.at(-1)}`;
+      return `No activity was ${joined}.`;
+    },
+    title: "What changed since the plan of {prev_date}",
+    // The section's heading when the comparison failed, so the version before is not known.
+    titleUnknown: "What changed in this plan",
+    lead: "This version {change_list}.",
+    // The page spells STEP out once, in "Not visible to Strata", above this note.
+    matchNote: "I match activities on their STEP reference. If an activity's reference changed, it shows here as dropped and added.",
+    overlapNote: "An activity can appear in more than one table.",
+    tableTitle: {
+      added: (count: number, text: string) => (count === 1 ? "One activity was added." : `${text} activities were added.`),
+      dropped: (count: number, text: string) => (count === 1 ? "One activity was dropped." : `${text} activities were dropped.`),
+      redated: (count: number, text: string) => (count === 1 ? "One activity was re-dated." : `${text} activities were re-dated.`),
+      reestimated: (count: number, text: string) => (count === 1 ? "One activity was re-estimated." : `${text} activities were re-estimated.`),
+    },
+    caption: {
+      added: (date: string) => `Activities added in the plan of ${date}`,
+      dropped: (date: string) => `Activities dropped since the plan of ${date}`,
+      redated: (date: string) => `Planned dates moved since the plan of ${date}`,
+      reestimated: (date: string) => `Estimates changed since the plan of ${date}`,
+    },
+    col: {
+      step: "Step",
+      was: "Was",
+      now: "Now",
+      moved: "Moved (days)",
+      wasUsd: "Was (US$)",
+      nowUsd: "Now (US$)",
+      changeUsd: "Change (US$)",
+      lastStatus: "Last process status",
+    },
+    later: "{n} later",
+    earlier: "{n} earlier",
+    more: "{amount} more",
+    less: "{amount} less",
+    noDate: "No date",
+    // A card's moved step below 1024 px: "Was Mar 9, 2026, now Apr 9, 2026", or two sentences when the new
+    // version gives no date.
+    wasNow: "Was {was}, now {now}",
+    wasNoDate: "Was {was}. Now no date.",
+    // A Moved cell when either date is missing: empty on screen, and this for a screen reader.
+    notMeasured: "Not measured",
+    movedDays: (days: string, later: boolean) => `${days} days ${later ? "later" : "earlier"}`,
+    explainMoved: "Was {was} in the plan of {prev}. Now {now} in the plan of {plan}. Days between them: {days}.",
+    explainAmount: "Was US${was} in the plan of {prev}. Now US${now} in the plan of {plan}.",
+    cell: {
+      added: "Added in this version",
+      redated: "Re-dated in this version",
+      reestimated: "Re-estimated in this version",
+      both: "Re-dated and re-estimated in this version",
+    },
+    source:
+      "Procurement Plans of {agency}, versions of {prev_date} and {plan_date}, compared row by row on their STEP references.",
+    error: "I couldn't load what changed in this plan because the data service didn't answer.",
+  },
+
+  // A project's Summary tab (the 21 brief, section 3): facts from precomputed records, each with its source.
+  // No model writes it. Dates are "October 31, 2026" in sentences and "Oct 31, 2026" in tables; amounts arrive
+  // already written by the route, in US$ millions to one decimal.
+  summary: {
+    heading: "Summary",
+    lead: {
+      closed:
+        "The project closed on {closing_date}{closing_moves}. The World Bank committed US${commitment} million to it. Of " +
+        "that, US${disbursed} million was disbursed and US${canceled} million was canceled.",
+      closedNoCancel:
+        "The project closed on {closing_date}{closing_moves}. The World Bank committed US${commitment} million to it, and " +
+        "US${disbursed} million of that was disbursed. None was canceled.",
+      closedNoMoney: "The project closed on {closing_date}{closing_moves}.",
+      active:
+        "The project is active and closes on {closing_date}{closing_moves}. By {disbursed_as_of}, US${disbursed} million of " +
+        "the US${commitment} million that the World Bank committed was disbursed.",
+      activeCancel: "US${canceled} million was canceled.",
+      activeNoMoney: "The project is active and closes on {closing_date}{closing_moves}.",
+      pipeline: "The project record lists this project as in the pipeline, so it has no closing date yet.",
+      dropped: "The project record lists this project as dropped.",
+    },
+    closingMoves: {
+      none: ", its original closing date",
+      one: ", after its closing date moved once",
+      many: ", after its closing date moved {n} times",
+    },
+    madeBy: "I built this summary from World Bank records as of {as_of_date}. No model wrote it.",
+    group: { dates: "Dates", money: "Money", ratings: "Ratings", who: "Sectors and implementing agencies" },
+    col: { label: "Fact", date: "Date", money: "US$, millions", rating: "Rating", detail: "Detail", source: "Source" },
+    caption: {
+      dates: (name: string) => `Dates for ${name}`,
+      money: (name: string) => `Money for ${name}, in US$ millions`,
+      ratings: (name: string) => `Ratings for ${name}`,
+      who: (name: string) => `Sectors and implementing agencies for ${name}`,
+      history: (name: string) => `Closing date history for ${name}`,
+    },
+    label: {
+      approval_date: "Approval date",
+      original_closing_date: "Original closing date",
+      closing_date: "Closing date",
+      commitment: "Commitment",
+      disbursed: "Disbursed",
+      canceled: "Canceled",
+      pdo: "Progress towards achievement of the project development objective (PDO)",
+      implementation: "Overall implementation progress",
+      procurement: "Procurement",
+      icr_outcome: "Outcome, in the Implementation Completion and Results Report (ICR)",
+      ieg_outcome: "Outcome, in the ICR Review by the Independent Evaluation Group (IEG)",
+      ieg_bank_performance: "Bank performance, in IEG's ICR Review",
+      esf_rating: "Environmental and social risk",
+      ea_category: "Environmental Assessment Category",
+      region: "Region",
+      sector: "Sector, as Strata groups it",
+      sectors: "Sectors in the project record",
+      agency: "Implementing agency",
+      agencies: "Implementing agencies",
+    } as Record<string, string>,
+    // A source cell: the record's short name and date, then its citation marker.
+    source: {
+      projects_api: "Projects API, {date}",
+      loans: "Loans and credits, {date}",
+      loan_history: "Loan history, {date}",
+      isr: "ISR {sequence}, {date}",
+      isrUnnumbered: "ISR of {date}",
+      projects_api_ratings: "Projects API, ISR of {date}",
+      icr: "ICR, {date}",
+      ieg_ratings: "IEG ratings, {date}",
+    } as Record<string, string>,
+    // A citation marker's name: "Source 1: World Bank projects API, record of August 1, 2023".
+    markerSource: {
+      projects_api: "World Bank projects API, record of {date}",
+      loans: "World Bank loans and credits data, as of {date}",
+      // One marker for each loan or credit an amount sums.
+      loan: "World Bank loans and credits data for {loan}, as of {date}",
+      loan_history: "World Bank monthly loan history, reported {date}",
+      isr: "Implementation Status and Results Report {sequence}, {date}",
+      isrUnnumbered: "Implementation Status and Results Report of {date}",
+      projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}",
+      icr: "Implementation Completion and Results Report, {date}",
+      ieg_ratings: "Independent Evaluation Group ratings, {date}",
+    } as Record<string, string>,
+    // Under the Money table, when the loans data reports more disbursed and canceled than committed.
+    money: {
+      exceeds:
+        "The loans and credits data reports more disbursed and canceled than committed for this project. I show each " +
+        "amount as it reports it.",
+    },
+    // The commitment's tooltip: each loan or credit, then the total the route summed.
+    loanLine: "{loan}: US${amount} million",
+    loanTotal: "Total: US${amount} million",
+    movesExplain: "The monthly loan history showed a new closing date this many times after approval.",
+    history: {
+      title: "Closing date history",
+      col: { first: "First recorded", before: "Closing date before", after: "Closing date after", source: "Source" },
+      none: "The closing date did not change after approval.",
+      unknown:
+        "I don't have this project's monthly loan history, so I can't show how its closing date changed. I read that " +
+        "history only for the projects whose documents I read.",
+    },
+    notInRecord: "Not in the record",
+    eaNote:
+      "The project record has no risk rating under the Environmental and Social Framework (ESF), so I show its " +
+      "Environmental Assessment Category.",
+    noRatings:
+      "I haven't read an ISR, an Implementation Completion and Results Report (ICR) or an ICR Review for this project, " +
+      "so I have no ratings to show.",
+    loading: "Loading this summary.",
+    error: "I couldn't load this summary because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this summary.",
+  },
+
+  // A project's Documents tab (the 21 brief, section 6): one table grouped by type, in the order a project
+  // produces its documents, newest first in each group.
+  documents: {
+    heading: "Documents",
+    purpose:
+      "These are the documents the World Bank published for this project, grouped by type. Open one to read it page by " +
+      "page, with its paragraphs numbered as the document numbers them.",
+    noun: "documents",
+    // The count line: the rows the list shows, of every document listed. Both counts are the route's.
+    showing: (shown: string, total: string) => `Showing ${shown} of ${total} documents`,
+    caption: (name: string) => `Documents for ${name}, by type`,
+    col: { document: "Document", dated: "Dated", disclosed: "Disclosed", pages: "Pages read", pdf: "PDF" },
+    def: {
+      dated: "The date printed on the document.",
+      disclosed:
+        "The date the World Bank made the document public. When you view a past date, I use only the documents disclosed " +
+        "by then.",
+      pages:
+        "How many of the document's pages I turned into numbered paragraphs and table rows. Partial means some pages were " +
+        "scans, figures or tables I couldn't read.",
+    },
+    group: {
+      pad: "Project Appraisal Document (PAD)",
+      project_paper: "Project Papers",
+      isr: "Implementation Status and Results Reports (ISRs)",
+      procurement_plan: "Procurement Plans",
+      icr: "Implementation Completion and Results Report (ICR)",
+      icr_review: "ICR Reviews by the Independent Evaluation Group (IEG)",
+      ppar: "Project Performance Assessment Reports (PPARs)",
+      other: "Other documents",
+    } as Record<string, string>,
+    groupCount: (count: number, text: string) => (count === 1 ? "1 document" : `${text} documents`),
+    // A document's name in the list, by its type. {date} is the table form, such as Oct 1, 2013.
+    name: {
+      pad: "Project Appraisal Document",
+      project_paper: "Project Paper of {date}",
+      isr: "ISR {sequence}",
+      isrUndated: "ISR of {date}",
+      procurement_plan: "{agency}, plan of {date}",
+      procurementPlanUnnamed: "Procurement Plan of {date}",
+      // A listed document whose type the documents API leaves blank.
+      untyped: "Document of {date}",
+      untypedUndated: "Document with no type or date",
+      icr: "Implementation Completion and Results Report",
+      icr_review: "ICR Review",
+      ppar: "Project Performance Assessment Report",
+    } as Record<string, string>,
+    reissueNote: "The re-issue replaces the version of {date}.",
+    reissueLink: "Open the version of {date}",
+    reissueDated: "Re-issued {date}",
+    notRead: "Not read",
+    pagesOf: "{read} of {pages}",
+    notReadNote: "\"Not read\" means I list the document but haven't read its pages. {link} shows which documents I read.",
+    notReadLink: "Data readiness",
+    pdf: "PDF",
+    // The PDF link's name says the document's date once: after a name with none, or inside one that holds it.
+    pdfName: (name: string, date: string) =>
+      date ? `Open the PDF of ${name}, ${date}, on the World Bank's site (opens in a new tab)` : `Open the PDF of ${name}, on the World Bank's site (opens in a new tab)`,
+    pdfOf: {
+      project_paper: "the Project Paper of {date}",
+      isrUndated: "the ISR of {date}",
+      procurement_plan: "{agency}, plan of {date}",
+      procurementPlanUnnamed: "the Procurement Plan of {date}",
+      untyped: "the document of {date}",
+    },
+    more: (count: string) => `Show all ${count}`,
+    less: "Show fewer",
+    source: "World Bank documents and reports API, documents listed for this project, through {date}.",
+    sourceUndated: "World Bank documents and reports API, documents listed for this project.",
+    emptyTitle: "I don't have any documents for this project yet.",
+    emptyBody:
+      "I list a project's documents once I fetch them from the World Bank's documents and reports API. Data readiness " +
+      "shows which projects' documents I hold.",
+    emptyLink: "Data readiness",
+    // A project outside the set of projects whose documents I fetch (config/slice.toml).
+    outsideTitle: "I don't list documents for this project.",
+    outsideBody:
+      "I fetch and read documents only for a set of projects chosen for this demo, and this project isn't one of them. " +
+      "Data readiness lists that set.",
+    outsideLink: "Data readiness",
+    loading: "Loading this project's documents.",
+    error: "I couldn't load this project's documents because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't list this project's documents.",
+  },
+
+  // The source view (the 21 brief, section 7): one page of a document's own words, at a page and paragraph.
+  sourceView: {
+    // The h1: the document type's full name.
+    typeName: {
+      pad: "Project Appraisal Document",
+      project_paper: "Project Paper",
+      isr: "Implementation Status and Results Report",
+      procurement_plan: "Procurement Plan",
+      icr: "Implementation Completion and Results Report",
+      icr_review: "Implementation Completion and Results Report Review",
+      ppar: "Project Performance Assessment Report",
+    } as Record<string, string>,
+    // The last crumb: "ICR of Oct 10, 2019".
+    short: {
+      pad: "PAD",
+      project_paper: "Project Paper",
+      isr: "ISR",
+      procurement_plan: "Procurement Plan",
+      icr: "ICR",
+      icr_review: "ICR Review",
+      ppar: "PPAR",
+      other: "Document",
+    } as Record<string, string>,
+    crumb: "{doc} of {date}",
+    documentsCrumb: "Documents",
+    meta: { project: "Project", dated: "Dated", disclosed: "Disclosed", pages: "Pages", language: "Language" },
+    projectValue: "{name} ({pid})",
+    ownWords:
+      "This page shows the document's own words, divided into the paragraphs the document numbers. I don't change or " +
+      "summarize them.",
+    pdf: "Open page {page} in the World Bank's PDF",
+    pages: {
+      label: "Pages of this document",
+      position: (page: string, pages: string) => `Page ${page} of ${pages}`,
+      // While the page loads, no tool has returned the document's page count yet.
+      positionOnly: (page: string) => `Page ${page}`,
+      goLabel: "Go to page",
+      goButton: "Open page",
+    },
+    section: "Section {section}",
+    opened: "You opened this page at paragraph {para}.",
+    openedPassage: "You opened this page at the passage marked below.",
+    table: "A table on page {page}, as I read it into rows.",
+    tableTitled: "{title}, a table on page {page}, as I read it into rows.",
+    planRows: "The activities on page {page}, as I read them from the plan's table.",
+    rowField: "Column",
+    rowValue: "Value",
+    reissueCurrent: "This is the re-issue of {reissue_date}. It replaces the version of {original_date}.",
+    reissueCurrentLink: "Open the version of {date}",
+    reissueOld: "A re-issue of {reissue_date} replaced this version, and current answers cite the re-issue.",
+    reissueOldLink: "Open the re-issue",
+    moved: "Paragraph {para} is on page {page}, so I opened that page.",
+    noPara: "I don't have a paragraph {para} in this document, so I opened page {page} without a highlight.",
+    pageRange: "This document has {pages} pages, so I opened page {pages}.",
+    pageUnreadTitle: "I couldn't read page {page}.",
+    pageUnreadBody: "The page may be a scan, a figure or a table that I couldn't turn into text. The World Bank's PDF has it.",
+    pageFrontTitle: "Page {page} is front matter that I don't read.",
+    pageFrontBody: "The front matter holds the report's cover, contents and abbreviations. The World Bank's PDF has it.",
+    pageEmptyTitle: "Page {page} has no text I could read.",
+    docUnreadTitle: "I haven't read this document.",
+    docUnreadBody: "I list it, but I haven't read its pages. The World Bank's PDF has the full text.",
+    docUnreadLink: "Open the World Bank's PDF",
+    notFoundTitle: "I don't have this document for this project.",
+    notFoundBody: "The link may be incomplete. This project's documents are listed on its Documents tab.",
+    notFoundLink: "This project's documents",
+    ambiguousTitle: (count: string, plural: string) => `This project has ${count} ${plural}, so the link doesn't say which one to open.`,
+    ambiguousPlural: {
+      pad: "Project Appraisal Documents",
+      project_paper: "Project Papers",
+      isr: "ISRs",
+      procurement_plan: "Procurement Plans",
+      icr: "ICRs",
+      icr_review: "ICR Reviews",
+      ppar: "PPARs",
+    } as Record<string, string>,
+    ambiguousBody: "Open the one you want from the project's Documents tab.",
+    asofTitle: "I can't show this document as of {date}.",
+    asofBody: "The World Bank disclosed it on {date}, after that date.",
+    loading: (page: string) => `Loading page ${page}.`,
+    error: "I couldn't load this page because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this document.",
+    documentTitle: "{doc}, page {page}",
+  },
+
+  // The baseline panel on Check a plan (the 21 brief, section 5.2): one shared baseline per project and agency.
+  baseline: {
+    label: "Baseline for delay",
+    none:
+      "No plan from this agency is saved as the baseline yet. If this is the plan agreed at negotiations, save it as " +
+      "the baseline. Later checks of this agency's plans then also measure delay from its dates.",
+    save: "Save as the baseline",
+    saving: "Saving the baseline",
+    justSaved: "I saved the plan of {plan_date} as the baseline. The reasons below now also give delay against it.",
+    undo: "Undo",
+    thisPlan:
+      "This plan is the baseline. {saved_by} saved it on {saved_date} as the plan agreed at negotiations. I measure delay " +
+      "from its dates as well as from the first published planned dates.",
+    remove: "Remove the baseline",
+    removing: "Removing the baseline",
+    justRemoved: "I removed the baseline. Checks of this agency's plans now measure delay only from the first published planned dates.",
+    another:
+      "The baseline is the plan of {baseline_date}, saved by {saved_by} on {saved_date}. I measure delay from its dates as " +
+      "well as from the first published planned dates.",
+    anotherLink: "Plan of {date}",
+    make: "Make this plan the baseline",
+    confirm: "This replaces the plan of {baseline_date} as the baseline for everyone who checks {agency}'s plans.",
+    replace: "Replace the baseline",
+    replacing: "Replacing the baseline",
+    keep: "Keep the plan of {date}",
+    justReplaced: "I made the plan of {plan_date} the baseline in place of the plan of {old_date}.",
+    // Undo saves that plan again, so the saver is now the person who pressed Undo (the 21 review, round 2).
+    undone: "I undid that change. The baseline is the plan of {date}, now saved by you.",
+    undoneNone: "I undid that change. No plan from this agency is saved as the baseline.",
+    // After a failed write the panel reads the check again, so the sentence above it says what holds now.
+    failed: "I couldn't make that change because the data service didn't answer.",
+    tryAgain: "Try again",
+    permission:
+      "Your account can't save to Strata's tables, so I can't save the baseline. Ask your workspace admin for write " +
+      "access to the strata catalog.",
+    piuSet: "The baseline is the plan of {baseline_date}, saved on {saved_date} as the plan agreed at negotiations. Only World Bank staff can change it.",
+    piuNone: "No plan from this agency is saved as the baseline.",
   },
 
   // Check a plan (the 10 brief, section 2). Counts are the tool's; the screen counts nothing.
@@ -878,6 +1412,21 @@ export const copy = {
         ? "I couldn't fully check {count} activity; its row says why."
         : "I couldn't fully check {count} activities; their rows say why.",
     noClosingDate: "I didn't check any activity against the project's closing date, because the project record has none.",
+    // Ticket 21: the method's second sentence when a baseline is saved for this agency's plans.
+    methodBaseline:
+      "I checked every activity against {checks}. I measure delay two ways: from the first published planned date, " +
+      "because each plan update can move the planned dates, and from the baseline, the plan of {baseline_date}.",
+    // The change line under the method sentence, and its link to the change list below.
+    changes: {
+      line: "Compared with the plan of {prev_date}, this version {change_list}.",
+      link: "See what changed",
+      // When only the comparison failed: the line says so and links the section, whose alert has Try again.
+      error: "I couldn't load what changed in this plan.",
+      errorLink: "Go to that section",
+      same: "This version lists the same activities, dates and estimates as the plan of {prev_date}.",
+      earliest: "This is the earliest plan I have from this agency, so I have no earlier version to compare it with.",
+      prevUnread: "I haven't read the plan of {prev_date}, the version before this one, so I can't say what changed.",
+    },
     countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities`,
     noun: "activities",
     caption: (agency: string, date: string) => `Activities in the ${agency} plan of ${date}, marked activities first`,
@@ -914,7 +1463,9 @@ export const copy = {
     },
     notVisible:
       "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
-      "Those stay in STEP.",
+      "Those stay in " +
+      STEP_SPELLED +
+      ".",
     source: {
       plan: "Procurement Plan, {agency}, {pid}, version of {date}, disclosed {disclosed}.",
       closing: "Project closing date from the World Bank's projects API, record of {date}.",
@@ -942,6 +1493,8 @@ export const copy = {
       closingRecord: "{date}, from the projects API record of {record}",
       asOf: "Checked as of",
       counted: "The activities I counted:",
+      baselineSigning: "Planned date in the baseline, the plan of {plan}",
+      baselineCompletion: "Planned completion in the baseline, the plan of {plan}",
     },
     // One sentence per reason code check_plan returns (config/tools.toml, [tools.check_plan.result]).
     reason: {
@@ -956,6 +1509,24 @@ export const copy = {
         (days === 1 ? "Signed {date}, {days} day after its planned date, " : "Signed {date}, {days} days after its planned date, ") +
         "at US${actual}, about {ratio} times its estimate.",
       signed_over_estimate: "Signed {date} at US${actual}, about {ratio} times its estimate.",
+      // Ticket 21: with a baseline, the signing delay names the first published planned date, and a second
+      // sentence gives the delay from the baseline's date.
+      signed_late_first: (days: number) =>
+        (days === 1
+          ? "Signed {date}, {days} day after its first published planned date, "
+          : "Signed {date}, {days} days after its first published planned date, ") + "at US${actual}, about {ratio} times its estimate.",
+      baseline: {
+        late: (days: number) => (days === 1 ? "That was {days} day after its baseline date of {date}." : "That was {days} days after its baseline date of {date}."),
+        early: (days: number) => (days === 1 ? "That was {days} day before its baseline date of {date}." : "That was {days} days before its baseline date of {date}."),
+        on_date: "That was on its baseline date.",
+        past: (days: number) =>
+          days === 1
+            ? "In the baseline, its planned completion was {date}, {days} day before {as_of}."
+            : "In the baseline, its planned completion was {date}, {days} days before {as_of}.",
+        ahead: "In the baseline, its planned completion is {date}, which has not passed.",
+        not_in_baseline: "It was not in the baseline plan, so I measure its delay only from its first published planned date.",
+        no_date: "The baseline plan gives no date for this step, so I can't measure delay against it.",
+      },
       method_differs_from_reference:
         "The reference ends in {code} ({referenceMethod}), but the Method column says {method}. I use the Method column.",
       actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
@@ -2154,9 +2725,15 @@ export const copy = {
       notRead: "Not read yet. The next document run reads it.",
       // The Page cell: the link, then where it lands.
       pageLink: "Open at page {page}",
-      // The rest of the link's name, after its words on screen, so five "Open at page" links are told
-      // apart: "Open at page 65 of the Project Appraisal Document for P130164 in the World Bank's PDF".
-      pageLinkMore: (docType: string, pid: string) => ` of the ${docType} for ${pid} in the World Bank's PDF`,
+      // The link's whole name, starting with its words on screen, so five "Open at page" links are told
+      // apart: "Open at page 65 of the Project Appraisal Document for P130164". Ticket 21 points it at the
+      // in-app source view, in the same tab, where the World Bank's PDF is linked at the same page.
+      pageLinkName: (page: string, docType: string, pid: string) => `Open at page ${page} of the ${docType} for ${pid}`,
+      // Under it, the World Bank's PDF at the same page, since the source view shows the page's passages and
+      // tables but not its picture (the 21 design review, round 2, F16). The name goes on with
+      // pdfLinkName, then ", opens in a new tab".
+      pdfLink: "Open page {page} in the World Bank's PDF",
+      pdfLinkName: (docType: string, pid: string) => ` of the ${docType} for ${pid}`,
       pageLines: {
         scan_annex: "where the {part} starts",
         longest_pad: "the first page I sent to the parser",

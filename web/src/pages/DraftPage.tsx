@@ -19,6 +19,7 @@ import { DraftNotes, NoteSentences, type NoteRow } from "../components/DraftNote
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
@@ -193,7 +194,8 @@ export function DraftCrumbs({ pid, name, last }: { pid: string; name: ReactNode;
       held
       trail={[
         drafts,
-        { text: <Fill template={copy.breadcrumb.project} slots={{ name, pid: <span className="font-mono font-medium">{pid}</span> }} />, href: `/projects/${pid}` },
+        // The crumb is the link to the project, so its ID is plain mono inside it, never a link inside a link.
+        { text: <Fill template={copy.breadcrumb.project} slots={{ name, pid: <ProjectIdText pid={pid} /> }} />, href: `/projects/${pid}` },
         { text: last },
       ]}
     />

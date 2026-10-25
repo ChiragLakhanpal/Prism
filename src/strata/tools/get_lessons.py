@@ -87,7 +87,7 @@ def _report(row: dict) -> dict:
     return {"project_id": row["project_id"], "project_name": row["project_name"],
             "document_id": str(row["document_id"]), "version": _int(row["version"]),
             "document_type": row["document_type"], "doc_short": template.short_name if template else row["document_type"],
-            "date": _iso(row["document_date"]), "public_from": _iso(row["public_from"])}
+            "doc_key": row["doc_key"], "date": _iso(row["document_date"]), "public_from": _iso(row["public_from"])}
 
 
 def reports(call: Call, packages: str, lists) -> dict:

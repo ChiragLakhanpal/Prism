@@ -4,9 +4,9 @@
 // already says what to do, and their one link follows it.
 //
 // All projects, a project's page and Check a plan (ticket 10), the package workspace (ticket 12), the
-// Data tab's three pages (ticket 16), the Drafts tab's pages (ticket 35) and the Lessons tab's pages
-// (ticket 29) are built, so they render their
-// own pages.
+// Data tab's three pages (ticket 16), the Drafts tab's pages (ticket 35), the Lessons tab's pages
+// (ticket 29), and a project's Summary, Documents and the source view (ticket 21) are built, so
+// they render their own pages.
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
@@ -23,12 +23,14 @@ import { PackagesPage } from "./pages/PackagesPage";
 import { PlannedPackagePage } from "./pages/PlannedPackagePage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
-import type { Match } from "./routes";
+import { SourcePage } from "./pages/SourcePage";
+import type { Match, ProjectTab } from "./routes";
 
 export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
   const { pid, agencyId, version } = match.values;
   if (match.key === "projects") return <ProjectsPage />;
-  if (match.key === "project") return <ProjectPage pid={pid} />;
+  if (match.key === "project") return <ProjectPage pid={pid} tab={match.values.tab as ProjectTab} />;
+  if (match.key === "document") return <SourcePage pid={pid} doc={match.values.doc} search={search} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
   if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
   if (match.key === "drafts") return <DraftsPage search={search} />;

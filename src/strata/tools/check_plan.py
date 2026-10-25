@@ -31,8 +31,17 @@ number "about" rounds it to. The screen and the agent never compute them. Each r
 each abstention's reason is listed in the registry's [tools.check_plan.result], and the registry
 refuses one it does not list.
 
-The call's view (staff, piu or public) is returned with the result but not yet applied: until
-ticket 40 applies each view's rules, every view gets the World Bank staff result.
+The baseline (ticket 21): when a World Bank staff member saved one of this agency's versions as the
+plan agreed at negotiations (strata.ops.plan_baselines), and saved it by the as-of date, the result
+names it, and each reason that states a delay also gives the delay from the baseline's planned date
+(the reason's baseline values): a signing before, on or after the baseline's date, a planned completion
+that has or has not passed in the baseline, an activity the baseline did not list, or a step it gave no
+date. A baseline adds a measure and never changes the marks, which come from the first published
+planned date.
+
+The call's view (staff, piu or public) is returned with the result. Until ticket 40 applies each view's
+rules, every view gets the World Bank staff result, except the baseline, which a preview can only take
+away from: the implementing agency view gets it without who saved it, and the public view not at all.
 """
 
 from __future__ import annotations
@@ -49,6 +58,7 @@ CONTRACT_STATUSES = ("Signed", "Completed")  # STEP's Process Status once a cont
 PENDING_STATUSES = ("Pending Implementation", "Under Implementation", "Under Review", "Draft")
 CHECKS = ("own_dates", "estimate", "closing_date")  # what the screen's method sentence names
 SIGNALS = ("needs_a_look", "watch")  # the marks that are signals; a data note describes the record
+SIGNING, COMPLETION = "Signed Contract", "Contract Completion"  # STEP's steps the delay reasons measure
 CENTS, WHOLE = Decimal("0.01"), Decimal("1")
 
 
@@ -217,6 +227,72 @@ def _plan(version: dict, project_id: str) -> dict:
     }
 
 
+# ── The baseline ─────────────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Baseline:
+    record: dict  # what the result's baseline field gives
+    dates: dict[str, dict[str, dt.date | None]]  # each listed activity's planned dates, by step
+
+
+def read_baseline(engine, project_id: str, agency: str, as_of: dt.date, view: str) -> Baseline | None:
+    """The baseline saved for this agency's plans by the as-of date, as the view may see it, or None."""
+    if view == "public":
+        return None
+    result = engine.run(_sql("baseline.sql"), {"project_id": project_id, "agency_id": agency, "as_of": as_of})
+    rows = [dict(zip(result.columns, row)) for row in result.rows]
+    if not rows:
+        return None
+    first = rows[0]
+    dates: dict[str, dict[str, dt.date | None]] = {}
+    for row in rows:
+        if row["activity_reference_no"]:
+            dates.setdefault(row["activity_reference_no"], {})[row["step"]] = _date(row["planned_on"])
+    saved_on = _iso(_date(first["public_from"]))
+    return Baseline({"plan_date": _iso(_date(first["plan_date"])), "document_id": first["document_id"],
+                     "saved_by": first["saved_by_name"] if view == "staff" else None, "saved_on": saved_on,
+                     "evidence_id": f"strata.ops.plan_baselines:{project_id}/{agency}", "public_from": saved_on},
+                    dates)
+
+
+def _against(baseline: Baseline, reference: str, step: str) -> tuple[str | None, dt.date | None]:
+    """Whether the baseline listed the activity, and its planned date for the step."""
+    listed = baseline.dates.get(reference)
+    if listed is None:
+        return "not_in_baseline", None
+    planned = listed.get(step)
+    return (None, planned) if planned else ("no_date", None)
+
+
+def _baseline_values(reason: dict, row: dict, baseline: Baseline, as_of: dt.date) -> dict | None:
+    """The delay from the baseline for a reason that states a delay, or None for one that states none."""
+    if reason["code"] == "signed_late_over_estimate":
+        state, planned = _against(baseline, row["activity_reference_no"], SIGNING)
+        days = (row["signed_on"] - planned).days if planned else None
+        if planned:
+            state = "late" if days > 0 else "early" if days < 0 else "on_date"
+    elif reason["code"] == "completion_passed_no_contract":
+        state, planned = _against(baseline, row["activity_reference_no"], COMPLETION)
+        days = (as_of - planned).days if planned and planned < as_of else None
+        if planned:
+            state = "past" if planned < as_of else "ahead"
+    else:
+        return None
+    return {"state": state, "planned_on": _iso(planned), "days": abs(days) if days else days,
+            "plan_date": baseline.record["plan_date"]}
+
+
+def _with_baseline(signals: list[dict], row: dict, baseline: Baseline | None, as_of: dt.date) -> list[dict]:
+    if baseline is None:
+        return signals
+    for reason in signals:
+        values = _baseline_values(reason, row, baseline, as_of)
+        if values is not None:
+            reason["baseline"] = values
+            reason["evidence_ids"] = [*reason["evidence_ids"], baseline.record["evidence_id"]]
+    return signals
+
+
 # ── The checks ───────────────────────────────────────────────────────────
 
 def _reason(code: str, mark: str, evidence_ids: list[str], **values) -> dict:
@@ -321,13 +397,15 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     limits = Thresholds.read(call)
     project, record_agencies = _project(call, project_id)
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "plan": None, "project": project,
-             "checks_run": [], "thresholds": limits.as_values(), "counts": None}
+             "checks_run": [], "thresholds": limits.as_values(), "counts": None, "baseline": None}
     if project is None:
         return {**empty, "abstention": {"reason": "unknown_project", "project_id": project_id}}
     version, abstention = _choose(call, project_id, implementing_agency, plan_date, record_agencies)
     if abstention:
         return {**empty, "abstention": abstention}
     plan = _plan(version, project_id)
+    baseline = read_baseline(call.engine, project_id, plan["agency_id"], call.as_of, call.view)
+    empty["baseline"] = baseline.record if baseline else None
 
     params = {"document_id": version["document_id"], "as_of": call.as_of}
     found = [_typed(raw) for raw in _rows(call, "activities.sql", **params)]
@@ -341,6 +419,7 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     for activity in found:
         evidence_id = f"strata.silver.plan_rows:{plan['document_id']}/{activity['activity_reference_no']}"
         signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
+        signals = _with_baseline(signals, activity, baseline, call.as_of)
         written = [_note(note, [evidence_id]) for note in notes.get(activity["activity_reference_no"], [])]
         marks = []
         if signals:
@@ -366,6 +445,7 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
         "project": project,
         "checks_run": [check for check in CHECKS if check != "closing_date" or project["closing_date"]],
         "thresholds": limits.as_values(),
+        "baseline": empty["baseline"],
         "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
                    "not_fully_checked": len(partly),
                    "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),

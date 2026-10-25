@@ -23,6 +23,7 @@ export function ExternalLink({
   href,
   children,
   name,
+  label,
   className,
 }: {
   href: string;
@@ -31,15 +32,20 @@ export function ExternalLink({
   // its words alone would be ambiguous on the page, as five "Open at page" links are in one table. The
   // name starts with the words on screen (WCAG 2.2 SC 2.5.3).
   name?: string;
+  // The link's whole name, when its words on screen are too short to stand alone, such as "PDF" in a
+  // documents table (ticket 21). It holds the words on screen and ends with "(opens in a new tab)".
+  label?: string;
   className?: string;
 }) {
   return (
-    <TextLink href={href} target="_blank" rel="noopener noreferrer" className={cx("text-small", className)}>
+    <TextLink href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className={cx("text-small", className)}>
       {children}
-      <span className="sr-only">
-        {name}
-        {copy.document.newTab}
-      </span>
+      {!label && (
+        <span className="sr-only">
+          {name}
+          {copy.document.newTab}
+        </span>
+      )}
       {/* The icon sits after the last word, tied to it by a word joiner, so the two wrap together; both
           are left out of the link's name. */}
       <span aria-hidden="true" className="whitespace-nowrap">

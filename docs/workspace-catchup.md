@@ -249,7 +249,9 @@ It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/chec
 
 ## Ticket 11, step 1 of 4: read the first 20 documents into passages and sync the AI Search index
 
-**First run on October 25, 2026 (orchestrator):** started at 00:01 UTC, right after the UTC day rolled, so the page cap was fresh. The script first runs the plan reader for every slice project, then the passage reader. P130164's plans went first: run `plans-P130164-20261025T000129723756` parsed 23 pages from 00:01 to 00:16 UTC, and `strata.ops.parse_runs` holds its row with `pages_parsed` 23, `pages_failed` 0 and `pages_waiting` 23. P156634's plans went on from page 6 of document 30374121 and parsed 102 more pages, so 602 of its 695 Route B pages are now in `strata.bronze.layout_pages` and 93 wait. At 01:50 UTC documents.worldbank.org answered "HTTP Error 403: Forbidden" for document 29750379's PDF (Plan-Archive-5.pdf), and the script stopped with urllib's traceback before the passage reader began. Since then the host's Cloudflare front answers 403 to every request from this computer, whatever the user agent, including a PDF it served minutes earlier, while search.worldbank.org still answers 200: a rate block after some hundreds of PDF and text requests, which Strata waits out rather than works around. The 125 pages parsed stay in bronze and count against the day's cap, so 375 pages are left for today. Two fixes: `AiParseDocument.parse` in `src/strata/reader/layout.py` now raises `NotFetched` naming the PDF, and `ops/documents/run_live.py` prints "The run stopped before it finished: ..." and exits 2, as `ops/plans/run_live.py` already did (`tests/test_plans.py`). The run is recorded again below when the host answers and it finishes. Follow-up for the orchestrator: a run over P156634 asks the host for about 240 plan texts and some hundreds of PDFs, and fetches the five oversized texts (about 190 million characters) again every run; a cached copy of each fetched PDF in the bronze files volume, or a pause between fetches, would keep the host from blocking.
+**First run on October 25, 2026 (orchestrator):** started at 00:01 UTC, right after the UTC day rolled, so the page cap was fresh. The script first runs the plan reader for every slice project, then the passage reader. P130164's plans went first: run `plans-P130164-20261025T000129723756` parsed 23 pages from 00:01 to 00:16 UTC, and `strata.ops.parse_runs` holds its row with `pages_parsed` 23, `pages_failed` 0 and `pages_waiting` 23. P156634's plans went on from page 6 of document 30374121 and parsed 102 more pages, so 602 of its 695 Route B pages are now in `strata.bronze.layout_pages` and 93 wait. At 01:50 UTC documents.worldbank.org answered "HTTP Error 403: Forbidden" for document 29750379's PDF (Plan-Archive-5.pdf), and the script stopped with urllib's traceback before the passage reader began. Since then the host's Cloudflare front answers 403 to every request from this computer, whatever the user agent, including a PDF it served minutes earlier, while search.worldbank.org still answers 200: a rate block after some hundreds of PDF and text requests, which Strata waits out rather than works around. The 125 pages parsed stay in bronze and count against the day's cap, so 375 pages are left for today. Two fixes: `AiParseDocument.parse` in `src/strata/reader/layout.py` now raises `NotFetched` naming the PDF, and `ops/documents/run_live.py` prints "The run stopped before it finished: ..." and exits 2, as `ops/plans/run_live.py` already did (`tests/test_plans.py`). The run is recorded again below when the host answers and it finishes. Follow-up for the orchestrator (now in ticket 43): a run over P156634 asks the host for about 240 plan texts and some hundreds of PDFs, and fetches the five oversized texts (about 190 million characters) again every run; a cached copy of each fetched PDF in the bronze files volume, or a pause between fetches, would keep the host from blocking.
+
+**Second run on October 25, 2026 (orchestrator):** started at 02:05 UTC, a minute after the host answered a probe with 302 again (it had answered 403 at 01:53 and 302 at 02:03, so the block lasted under 15 minutes). The plan reader spent until 02:43 UTC fetching P156634's plan texts again, then parsed 87 more pages of 24 versions, until the host answered 403 at 03:25 UTC for document 27677290's PDF (Plan-Archive-2.pdf). The script printed "The run stopped before it finished: I could not fetch https://documents.worldbank.org/curated/en/313111498489351105/pdf/Plan-Archive-2.pdf: HTTP Error 403: Forbidden. The pages it parsed are kept, and the next run goes on from there." and exited 2, as a688a81 intended. A probe at 03:26 UTC got 302 again, so each block is a short burst after about 80 minutes of fetching. P156634 now has 689 of its 695 Route B pages in `strata.bronze.layout_pages`; the 6 left are in four versions from June 2017 (27677290, 27677163, 27677200, 27669055). 212 pages were tried today, under the cap of 500. The passage reader has still not started. A third run began at 03:26 UTC and is recorded below.
 
 The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
 
@@ -670,6 +672,8 @@ It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeed
 
 ## Ticket 18, step 2 of 5: read the document slice on the warehouse
 
+**Second run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there: it stopped at 03:25 UTC, again in P156634's plan reader, when the host answered 403 once more. The passage reader has still not started. A third run began at 03:26 UTC.
+
 **First run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there. It stopped at 01:50 UTC, in P156634's plan reader, when documents.worldbank.org began answering 403 to every request from this computer. The passage reader did not start, so the stress shelf, `strata.ops.documents_read` and the slice measures have no row yet. Recorded again below when the host answers and the run finishes.
 
 The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, a token or a service principal, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. At 08:24 on October 24, `.env` held the host, the warehouse and the AI Search endpoint, but no Databricks token and no Azure OpenAI keys, and day-one test 7 had just failed. It is the same command as ticket 11's step 1.
@@ -969,7 +973,7 @@ It worked if:
 
 ## Ticket 15, step 1 of 4: the Foundry package reader matches the repo
 
-**Ran on October 25, 2026 (orchestrator).** Both runs exited 0. The first printed "Foundry's agent strata-package-reader differed from the repo:", the diff, and "I made version 1 of strata-package-reader, which matches the repo." The second printed "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed.
+**Ran on October 25, 2026 (orchestrator).** Both runs exited 0. The first printed "Foundry's agent strata-package-reader differed from the repo:", the diff, and "I made version 1 of strata-package-reader, which matches the repo." The second printed "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed. After step 2 changed the instructions, the same pair of runs made version 2 and confirmed it.
 
 The merger parked this step on October 24, 2026, after merge commit d356ba7. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys that ticket 14's step 1 names, and the `az` command line signed in to the subscription that holds the Foundry resource. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 15 adds the agent `package_reader` to `config/agents.toml`, with its instructions in `package_reader.md`.
 
@@ -982,6 +986,8 @@ It worked if both runs exit 0. The first run prints what differed and ends "I ma
 ## Ticket 15, step 2 of 4: re-record the package reader's cases from the live reader
 
 **Ran on October 25, 2026 (orchestrator):** the record command exited 0 and printed a diff for each of the three recordings, each now `"recorded": true` with `"recorded_on": "2026-10-25"` and agent version 1. `package-no-package` and `package-dividing` came back with the same answers as the hand-written ones, down to the fields. `package-rural-roads-kenya` came back without the guess: the live reader answered category Works, description "Rural roads", estimated amount 15,000,000 (approximate) and country KE, and no `lots` field, where the hand-written answer guessed `lots` 2 with `stated` false. Five tests in `tests/test_planned_packages.py` then failed, among them `test_the_sentence_yields_the_wireframe_s_chips_with_two_computed_and_one_guess`: the first (`test_the_screens_recorded_package_answers_are_what_the_routes_answer`) because `tests/fixtures/api/package-plan-rural-roads.sse` carries "count": 5, "guesses": 1 and the live answer gives 4 and 0. As this block asks, nothing was changed by hand: the three tracked recordings were restored, the live recordings and their diff are kept in the orchestrator's scratchpad (`recorded15/`), and strata-eb was told. Decision for the orchestrator: either the reader's instructions (`package_reader.md`) should ask for a guessed lot count when the sentence gives none, so the wireframe's "two computed and one guess" holds, or the fixture, the SSE recording and the five tests follow the live answer with no guess. Not passed yet.
+
+**Second run on October 25, 2026 (orchestrator):** strata-eb chose the first path: keep the wireframe's one guess. `src/strata/agent/instructions/package_reader.md` now tells the reader to guess a field marked may_guess from the amount and the category when the sentence does not give it, with `stated` false and a `basis` clause, and gives the rule of thumb for lots (about one lot for each US$5 to 10 million of works, so "about US$15 million" of roads reads as 2 lots; goods or services 1 lot unless the sentence names several items or places). The sync then made version 2 of strata-package-reader, and the second sync run reported no difference. The record command exited 0 again; the rural-roads recording now answers `lots` 2 with `stated` false and `basis` "the amount and the category", the other two are unchanged in substance, and all 30 tests in `tests/test_planned_packages.py` pass with `"recorded": true` on each file. The prompt and the recordings are committed together. Passed.
 
 The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the four Foundry keys. Run it after step 1. The three package reader recordings in `tests/fixtures/agent/recorded/` were written by hand (`"recorded": false`), because no live reader existed when the ticket was built (criterion 1, live half).
 
@@ -1049,3 +1055,64 @@ It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with
       AND measure IN ('coverage', 'width_80_months', 'error_past_range_months', 'error_plan_months')
 
 must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.
+
+## Ticket 21, step 1 of 4: deploy the baseline tables and the Summary's two silver tables
+
+The merger parked this step on October 24, 2026, after merge commit d596000. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from d596000 or later also serves ticket 25's step 1, which needs a deploy from e7c6e38 or later.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if both runs exit 0. The first run lists these four tables as new and changes no existing table: `strata.ops.plan_baselines` and `strata.ops.plan_baseline_steps` (the baseline), and `strata.silver.project_sectors` and `strata.silver.project_environment` (the Summary's sectors and its environmental category or ESF risk). The second run prints "No changes." Then run this in the workspace's SQL editor:
+
+    SELECT table_schema, table_name FROM strata.information_schema.columns
+    WHERE column_name = 'public_from'
+      AND table_name IN ('plan_baselines', 'plan_baseline_steps', 'project_sectors', 'project_environment')
+
+It must return four rows (ADR 0002). The builder named `ops/bundle/check.py same-rows` as the proof, but that command compares ground-truth queries and lists no tables, so this query takes its place. After the next nightly run (ticket 04's `uv run --script ops/bundle/check.py job-run --env-file .env`), `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` must return more than 0, because the bronze_to_gold task's projects transform fills both silver tables. If it returns 0, tell the orchestrator before anyone shows the Summary on the App.
+
+## Ticket 21, step 2 of 4: a staff viewer saves a baseline on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the Databricks keys in `.env`. Run it after step 1, and after ticket 09's step 1 has turned on user authorization, because the App writes the baseline with the viewer's own token (`src/strata/server/baseline.py`; criterion 7, live half). Viewers already read `strata.ops` through the bundle's `USE_SCHEMA, SELECT` grant to `account users`. Saving also needs MODIFY on the two tables, and no file grants it yet (ticket 21's done comment names this), so run this once in the workspace's SQL editor, as a user who owns the `strata` catalog:
+
+    GRANT MODIFY ON TABLE strata.ops.plan_baselines TO `account users`;
+    GRANT MODIFY ON TABLE strata.ops.plan_baseline_steps TO `account users`;
+    SHOW GRANTS ON TABLE strata.ops.plan_baselines;
+
+It worked if `SHOW GRANTS` lists MODIFY for `account users`. Run `SHOW GRANTS` again after any later bundle deploy. Then deploy the App from d596000 or later, so it serves ticket 21's routes. Ticket 06's step 1 and ticket 15's step 3 run the same command, and one deploy from d596000 or later serves them all:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App in a browser as a World Bank staff viewer:
+
+1. Open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21` to check NWWDA's plan of July 21, 2025.
+2. Choose "Save as the baseline".
+3. Open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09`.
+
+It worked if the panel says "I saved the plan of July 21, 2025 as the baseline. The reasons below now also give delay against it."; the October 9, 2026 check names the plan of July 21, 2025 as the baseline and gives a late activity's delay both ways, each labeled ("... days after its first published planned date" and "That was ... days after its baseline date of ..."); and this query returns one row, with `plan_date` 2025-07-21 and your own user id in `saved_by`:
+
+    SELECT project_id, agency_id, plan_date, saved_by, saved_at FROM strata.ops.plan_baselines
+    WHERE project_id = 'P156634' AND agency_id = 'northern-water-works-development-agency'
+
+If the save answers 403 with the code `permission`, the grant above did not reach your account.
+
+## Ticket 21, step 3 of 4: the Summary's Fast 3G budget through the Databricks Apps proxy
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the App deployed from d596000 or later (step 2). It is a measurement in your own browser, so it has no command (criterion 9, live half). On the local server the verifier measured 3.50 s cold, 0.80 s from another tab and a 10,087-byte Summary; the proxy adds its own time.
+
+In Chrome, signed in to the App:
+
+1. Open DevTools, then its Network tab. Set throttling to "Fast 3G" and tick "Disable cache".
+2. Open `<App url>/projects/P130164` and note the time until the Summary's facts show. That is the cold load.
+3. Untick "Disable cache", keep "Fast 3G", and open the same address in a new tab. Note the time again. That is the load from another tab.
+
+It worked if the Summary showed in 5 s or less cold and in 2 s or less from another tab, and the Network tab shows `GET /api/projects/P130164/summary` once, with at most 15 KB transferred, and no request to `POST /api/ask`. If a budget is missed, note both times and tell the orchestrator. The budgets are brief 21's decision 11.
+
+## Ticket 21, step 4 of 4: time All projects' search on the workspace
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the App deployed from d596000 or later (step 2). All projects filters the project list in Python on each search (`src/strata/server/projects.py`), and the fixture holds only 93 projects, so how fast it is on the workspace's full list is not known yet (review round 3, item 9).
+
+In Chrome, signed in to the App, with no throttling, open `<App url>/api/projects?q=ind` three times and read each request's time in DevTools' Network tab.
+
+It worked if each answer took under 1 s and counts the projects whose name, ID or country holds "ind", India's among them. If any took 1 s or more, tell the orchestrator, who files a ticket to move the search into a SQL filter in `src/strata/server/sql/projects/`.

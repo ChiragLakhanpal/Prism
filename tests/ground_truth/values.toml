@@ -96,6 +96,118 @@ date = 2019-10-10
 pdf_page = 1
 
 [[value]]
+id = "icr-pdf-pages"
+says = "The ICR's PDF has 66 pages; its last prints page 62 of 62, after four pages of front matter."
+value = 66
+quote = "Page 62 of 62"
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+pdf_page = 66
+
+[[value]]
+id = "pad-date"
+says = "P130164's Project Appraisal Document is dated October 1, 2013."
+value = 2013-10-01
+quote = "2013-10-01T04:00:00Z"
+record = "api/documents/P130164.json"
+at = "documents.D18381488.docdt"
+
+[[value]]
+id = "pad-disclosed"
+says = "P130164's Project Appraisal Document became public on November 6, 2013."
+value = 2013-11-06
+quote = "2013-11-06T05:00:00Z"
+record = "api/documents/P130164.json"
+at = "documents.D18381488.disclosure_date"
+
+[[value]]
+id = "project-p130164-name"
+says = "The projects API names P130164 Rajasthan Road Sector Modernization Project."
+value = "Rajasthan Road Sector Modernization Project"
+quote = "Rajasthan Road Sector Modernization Project"
+record = "api/projects/P130164.json"
+at = "projects.P130164.project_name"
+
+[[value]]
+id = "project-p130164-country"
+says = "P130164's country is India, as the projects API's countryshortname gives it."
+value = "India"
+quote = "India"
+record = "api/projects/P130164.json"
+at = "projects.P130164.countryshortname"
+
+[[value]]
+id = "project-p130164-status"
+says = "P130164's status is Closed."
+value = "Closed"
+quote = "Closed"
+record = "api/projects/P130164.json"
+at = "projects.P130164.status"
+
+[[value]]
+id = "project-p130164-agency"
+says = "P130164's implementing agency is the Rajasthan State Public Works Department."
+value = "Rajasthan State Public Works Department"
+quote = "Rajasthan State Public Works Department"
+record = "api/projects/P130164.json"
+at = "projects.P130164.impagency"
+
+[[value]]
+id = "project-p130164-approval"
+says = "The World Bank approved P130164 on October 29, 2013, the projects API's boardapprovaldate."
+value = 2013-10-29
+quote = "2013-10-29T00:00:00Z"
+record = "api/projects/P130164.json"
+at = "projects.P130164.boardapprovaldate"
+
+[[value]]
+id = "project-p130164-closing"
+says = "P130164's closing date is December 31, 2018."
+value = 2018-12-31
+quote = "2018-12-31"
+record = "api/projects/P130164.json"
+at = "projects.P130164.closingdate"
+
+[[value]]
+id = "credit-ida53100-principal"
+says = "P130164's credit IDA53100 committed US$160,000,000."
+value = 160000000
+quote = "160000000"
+record = "api/credits/P156634-P130164.json"
+at = "data[credit_number=IDA53100].original_principal_amount_us_"
+
+[[value]]
+id = "credit-ida53100-disbursed"
+says = "US$121,630,912.89 of credit IDA53100 was disbursed."
+value = 121630912.89
+quote = "121630912.89"
+record = "api/credits/P156634-P130164.json"
+at = "data[credit_number=IDA53100].disbursed_amount_us_"
+
+[[value]]
+id = "credit-ida53100-canceled"
+says = "US$30,696,577.26 of credit IDA53100 was canceled."
+value = 30696577.26
+quote = "30696577.26"
+record = "api/credits/P156634-P130164.json"
+at = "data[credit_number=IDA53100].cancelled_amount_us_"
+
+[[value]]
+id = "icr-outcome-p130164"
+says = "The ICR rated P130164's overall outcome Moderately Unsatisfactory (paragraph 45), the rating a project's Summary shows beside IEG's."
+value = "Moderately Unsatisfactory"
+quote = "45. Based on the ratings for PDOs’ Relevance, Efficacy, and Efficiency, the overall outcome is rated Moderately Unsatisfactory (Table 4)."
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+section = "II.D"
+paragraph = 45
+pdf_page = 21
+
+[[value]]
 id = "icr-disclosed"
 says = "The ICR became public on November 2, 2019."
 value = 2019-11-02
@@ -712,6 +824,39 @@ document = "documents/P156634/procurement-plan-2026-10-09"
 document_type = "Procurement Plan"
 project = "P156634"
 date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541055-estimated-2026-03-05"
+says = "In the agency's plan of March 5, 2026, the version before October 9, 2026, KE-NWWDA-541055-CW-RFB was estimated at US$1,200,000.00."
+value = 1200000.00
+quote = "1,200,000.00 0.00 Pending Implementation 2026-03-09"
+document = "documents/P156634/procurement-plan-2026-03-05"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-03-05
+pdf_page = 3
+
+[[value]]
+id = "plan-541062-estimated"
+says = "KE-NWWDA-541062-CW-RFQ is estimated at US$295,000.00 in the plan of October 9, 2026."
+value = 295000.00
+quote = "Request for Quotations (Non Bank-SPD) 295,000.00 0.00 Pending Implementation 2026-03-11"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
+[[value]]
+id = "plan-541062-estimated-2026-03-05"
+says = "In the plan of March 5, 2026, KE-NWWDA-541062-CW-RFQ was estimated at US$280,000.00."
+value = 280000.00
+quote = "Request for Quotations (Non Bank-SPD) 280,000.00 0.00 Pending Implementation 2026-03-11"
+document = "documents/P156634/procurement-plan-2026-03-05"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-03-05
 pdf_page = 3
 
 [[value]]

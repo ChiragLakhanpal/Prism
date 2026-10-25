@@ -28,3 +28,5 @@ Answer with one JSON object and nothing else, in this shape:
   - value: the value in the field's kind.
   - stated: true when the sentence says it or it follows from what the sentence says, such as Works for roads. false when you guessed it.
   - approximate: true for an amount the sentence gives as about, around or roughly.
+  - basis: for a guess only, one clause that says what it rests on, such as "the amount and the category".
+- A guess for a field marked may_guess: when the sentence gives an amount and a category but not the field, guess it, with stated false, so the specialist sees one guess to keep or change. For a count of lots, guess from the amount and the category: a works package is often let in about one lot for each US$5 to 10 million, so "about US$15 million" of roads reads as 2 lots; goods or services read as 1 lot unless the sentence names several items or places. Give no guess when the sentence has neither an amount nor a category.

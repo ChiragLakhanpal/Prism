@@ -28,3 +28,16 @@ export function Joined({ items }: { items: ReactNode[] }) {
     </>
   );
 }
+
+// Words such as "re-dated" and "re-estimated" kept whole on one line: a browser may break a line after a
+// hyphen, which reads as "re- / dated" (the 21 design review, round 2, F5). Each word with a hyphen inside
+// sits in a span that does not wrap. The non-breaking hyphen would do the same, but Open Sans's Latin subset
+// has no glyph for it, so it would draw from another font.
+export function Unbroken({ text }: { text: string }) {
+  const parts = text.split(/([A-Za-z]+-[A-Za-z]+)/);
+  return (
+    <>
+      {parts.map((part, index) => (index % 2 === 1 ? <span key={index} className="whitespace-nowrap">{part}</span> : <Fragment key={index}>{part}</Fragment>))}
+    </>
+  );
+}

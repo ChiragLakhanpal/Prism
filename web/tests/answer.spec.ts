@@ -133,9 +133,10 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
   await expect(drawer(page).locator("[data-passage] mark")).toContainText("108 of 328 cases had to go through rebidding");
   await expect(drawer(page).locator("[data-claim]")).toContainText("From the answer");
-  await expect(drawer(page).getByRole("link", { name: /Open at page 23 in the World Bank's PDF/ })).toHaveAttribute(
+  // Ticket 21: "Open at page 23" opens the in-app source view at the page, with paragraph 54 to highlight.
+  await expect(drawer(page).getByRole("link", { name: "Open at page 23", exact: true })).toHaveAttribute(
     "href",
-    /#page=23$/,
+    "/projects/P130164/documents/icr-2019-10-10?page=23&para=54",
   );
   expect(new URL(page.url()).searchParams.get("evidence")).toBe(ICR_54);
   await expect(marker(page, 1)).toHaveAttribute("aria-expanded", "true");
@@ -425,12 +426,15 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
       "Section Project Development Objective Indicators · PDF page 2 of 4",
   );
   // The project's name keeps its ID beside it: the line never breaks between "Modernization" and "(P130164)".
+  // The ID is a link to its project page (ticket 21), padded above and below for its hit area, so the two
+  // are compared by the middles of their boxes.
   const sameLine = await drawer(page)
     .locator("[data-meta-part]")
     .nth(1)
     .evaluate((part) => {
+      const middle = (box: DOMRect) => Math.round((box.top + box.bottom) / 2);
       const name = part.querySelector(":scope > span:not(.font-mono)")!.getClientRects();
-      return Math.round(name[name.length - 1].top) === Math.round(part.querySelector(".font-mono")!.getClientRects()[0].top);
+      return middle(name[name.length - 1]) === middle(part.querySelector(".font-mono")!.getClientRects()[0]);
     });
   expect(sameLine).toBe(true);
   // The drawer marks the quote in the whole section and scrolls it into view.

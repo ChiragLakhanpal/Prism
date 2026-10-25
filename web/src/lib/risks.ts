@@ -38,6 +38,8 @@ export type RiskReport = {
   version: number | null;
   document_type: string;
   doc_short: string;
+  // The document's key in the source view's address (/projects/{pcode}/documents/{doc_key}).
+  doc_key: string | null;
   date: string | null;
   public_from: string | null;
   evidence_id?: string;

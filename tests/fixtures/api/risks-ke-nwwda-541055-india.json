@@ -66,6 +66,7 @@
           "version": 1,
           "document_type": "Implementation Completion and Results Report",
           "doc_short": "ICR",
+          "doc_key": "icr-2019-10-10",
           "date": "2019-10-10",
           "public_from": "2019-11-02",
           "evidence_id": "strata.gold.passage:31525018/v1/54",
@@ -120,6 +121,7 @@
           "version": 1,
           "document_type": "Implementation Completion and Results Report",
           "doc_short": "ICR",
+          "doc_key": "icr-2019-10-10",
           "date": "2019-10-10",
           "public_from": "2019-11-02",
           "evidence_id": "strata.gold.passage:31525018/v1/55",
@@ -159,6 +161,7 @@
       "version": 1,
       "document_type": "Implementation Completion and Results Report",
       "doc_short": "ICR",
+      "doc_key": "icr-2019-10-10",
       "date": "2019-10-10",
       "public_from": "2019-11-02"
     }

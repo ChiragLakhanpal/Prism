@@ -1,0 +1,133 @@
+{
+  "as_of": "2026-10-23",
+  "query": "",
+  "total": 93,
+  "page": 2,
+  "pages": 5,
+  "page_size": 20,
+  "first": 21,
+  "last": 40,
+  "rows": [
+    {
+      "project_id": "P167814",
+      "project_name": "Second Kenya Informal Settlements Improvement Project",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P504218",
+      "project_name": "Second Kenya Social and Economic Inclusion Project",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P177048",
+      "project_name": "Second Kenya Urban Support Program",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P180287",
+      "project_name": "Second Program for Strengthening Governance for Enabling Service Delivery and Public Investment in Kenya",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P175017",
+      "project_name": "Supporting Access to Finance and Enterprise Recovery (SAFER)",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P156634",
+      "project_name": "Water and Sanitation Development Project",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P175251",
+      "project_name": "Accelerating Reforms for an Inclusive and Resilient Recovery DPF",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P176903",
+      "project_name": "Accelerating Reforms for an Inclusive and Resilient Recovery DPF 2",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P130785",
+      "project_name": "Accelerating Rural Women's Access to Markets and Trade",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P146161",
+      "project_name": "Additional Financing for Cash Transfers for Orphans and Vulnerable Children",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P161179",
+      "project_name": "Additional Financing for the National Safety Net Program for Results",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P153179",
+      "project_name": "Additional Financing: Kenya Electricity Expansion Project",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P151660",
+      "project_name": "Addl Financing - Kenya Water Security and Climate Resilience Project",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P120959",
+      "project_name": "Arid and Semi-Arid Lands Sector-Wide Program",
+      "country": "Kenya",
+      "status": "Dropped"
+    },
+    {
+      "project_id": "P175188",
+      "project_name": "COVID-19 HEALTH EMERGENCY RESPONSE PROJECT",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P164301",
+      "project_name": "Case Study on Integrated Delivery of Selected Non-Communicable Diseases in Kenya",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P156466",
+      "project_name": "Digital Entrepreneurship Kenya",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P161562",
+      "project_name": "Disaster Risk Management Development Policy Credit with a Catastrophe Deferred Drawdown Option (Cat DDO)",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P148853",
+      "project_name": "EA Regional Transport , Trade and Development Facilitation Project (Second Phase of Program)",
+      "country": "Kenya",
+      "status": "Closed"
+    },
+    {
+      "project_id": "P151816",
+      "project_name": "Financial Sector Support Project",
+      "country": "Kenya",
+      "status": "Closed"
+    }
+  ],
+  "records_through": "2026-10-23"
+}

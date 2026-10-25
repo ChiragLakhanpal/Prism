@@ -114,6 +114,13 @@ export const galleryCopy = {
       purpose:
         "The package workspace's header and facts, and section 1 with lane 1 of the range chart in each of its states. Hover a dot or focus the chart to see a package. The page's own states, with real comparables, are captured from the production build.",
     },
+    // Ticket 21's project hub. Each sample is an answer the server wrote on the fixture, recorded in
+    // tests/fixtures/api, so its words and numbers are a real project's.
+    hub: {
+      title: "Project page parts",
+      purpose:
+        "The project page's header, the fact tables of its Summary, the list search and pages, the change tables and the baseline panel of Check a plan, the grouped document list and the source page. The pages' own states are captured from the production build.",
+    },
     "planned-packages": {
       title: "Planning a package from a sentence",
       purpose:
@@ -153,6 +160,11 @@ export const galleryCopy = {
     withoutLink: "Without a link",
     withGap: "With a gap",
     withoutGap: "With nothing missing",
+    firstPage: "The first page",
+    middlePage: "A middle page",
+    lastPage: "The last page",
+    currentPage: "On the project's own page",
+    otherPage: "On another page",
     french: "A passage in French",
     hint: "Focused and empty: the hint",
     project: "A project ID",
@@ -185,6 +197,7 @@ export const galleryCopy = {
     cardSection: "Evidence card, for a quote from an ISR section",
     cardRecord: "Evidence card, for a record",
     record: "A record",
+    recordIsrRating: "A record: an ISR rating as the passage reader read it, which a Summary cites when no passage prints it",
     unknown: "An ID no source has",
     unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",
@@ -258,6 +271,27 @@ export const galleryCopy = {
     rangeNone: "No comparable package",
     rangeUnmeasured: "Packages matched, but none could be measured",
     rangeNotMeasurable: "No public notice to measure from",
+    projectHeader: "Project header: the h1's one line and the implementing agency line",
+    projectHeaderMany: "A project with many implementing agencies, kept to two lines",
+    projectId: "ProjectId: a link to the project page, and the same link on its own page",
+    listSearch: "List search",
+    pagination: "Pagination",
+    factTable: "Fact tables: the Summary of a closed project",
+    factMissing: "A fact table with a value missing from its record",
+    factLoading: "Fact tables while the summary loads",
+    changesAddedRedated: "Change tables: one activity added and one re-dated, with a step that lost its date",
+    changesReestimated: "Change tables: two activities re-estimated",
+    changesDropped: "Change tables: an activity dropped",
+    baselineNone: "Baseline line: no plan saved as the baseline",
+    baselineThis: "Baseline line: this plan is the baseline",
+    baselineAnother: "Baseline line: another plan is the baseline",
+    baselinePiu: "Baseline line in the implementing agency view, with and without a baseline",
+    documentList: "Document list, grouped by type, with a re-issued report",
+    documentLoading: "Document list while it loads",
+    sourcePage: "Source page: the page bar and the passages, with paragraph 54 highlighted",
+    pageBarLoading: "Page bar while the page loads: the page from the address, with no total",
+    documentUntyped: "Document list with a document whose type the documents API leaves blank, named by its date",
+    changesError: "Check a plan's change line and section when only the comparison fails",
   },
   // The Lessons page's sections and state labels (ticket 29).
   lessonSections: {

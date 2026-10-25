@@ -1,8 +1,9 @@
 -- get_lessons: the completion reports of the projects of the comparable packages a call names, as of a date
 -- (ticket 30). Each project of the packages (strata.gold.package, public on or before the as-of date) comes
--- with its newest ICR public by then that no re-issue had replaced, and how many of that ICR's passages
--- Strata read by then. A project with no such ICR comes back with an empty document_id. :packages holds the
--- STEP references, joined by commas; :icr is the documents API's type for an ICR.
+-- with its newest ICR public by then that no re-issue had replaced, its key in the source view's address, and
+-- how many of that ICR's passages Strata read by then. A project with no such ICR comes back with an empty
+-- document_id. :packages holds the STEP references, joined by commas; :icr is the documents API's type for an
+-- ICR.
 WITH projects AS (
   SELECT DISTINCT p.project_id
   FROM strata.gold.package AS p
@@ -10,7 +11,7 @@ WITH projects AS (
     AND p.public_from <= :as_of
 ),
 reports AS (
-  SELECT d.project_id, d.document_id, d.version, d.document_type, d.document_date, d.public_from
+  SELECT d.project_id, d.document_id, d.version, d.document_type, d.document_date, d.doc_key, d.public_from
   FROM strata.silver.documents AS d
   WHERE d.document_type = :icr
     AND d.public_from <= :as_of
@@ -24,6 +25,7 @@ SELECT
   r.version,
   r.document_type,
   r.document_date,
+  r.doc_key,
   r.public_from,
   (SELECT count(*)
    FROM strata.gold.passage AS s

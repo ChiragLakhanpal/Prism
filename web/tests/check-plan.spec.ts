@@ -85,7 +85,8 @@ test("the plan check finds every activity, states the finding, and folds the act
   await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(1);
   await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(2);
   await expect(table.locator("[data-badge=data-note]:visible")).toHaveCount(3);
-  await expect(page.getByRole("link", { name: "Water and Sanitation Development Project (P156634)" }).first()).toHaveAttribute(
+  // The crumb names the project as its page header does, by the server's rule (the 21 critique, round 3).
+  await expect(page.getByRole("link", { name: "Water and Sanitation Development (P156634)" }).first()).toHaveAttribute(
     "href",
     "/projects/P156634",
   );
@@ -227,7 +228,9 @@ test("the page says what Strata cannot see, as the wireframe does", async ({ pag
   await openPlan(page);
 
   await expect(page.locator("[data-not-visible]")).toHaveText(
-    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in STEP.",
+    // The first time the page names STEP, so it is spelled out here (DESIGN.md section 7 rule 10).
+    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
+      "Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
   );
 });
 
@@ -506,6 +509,7 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
   });
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -513,7 +517,7 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
     await held;
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
   });
-  await page.goto("/projects/P156634");
+  await page.goto("/projects/P156634/procurement");
   await page.locator("[data-agency=northern-water-works-development-agency] [data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   const h1 = page.getByRole("main").getByRole("heading", { level: 1 });
   await expect(h1).toBeFocused();

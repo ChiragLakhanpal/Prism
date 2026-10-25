@@ -8,8 +8,8 @@
 //   completion report alone, because IEG's review is still to come or did not restate it. A lesson IEG wrote
 //   itself has no line here: the 30 brief gives none (a gap the report names).
 // - The completion reports behind a row's count, newest first, each a button that opens its paragraph with a
-//   way back to the list; and every report counted, each a link to its document's page, since ticket 23's
-//   document view has not landed.
+//   way back to the list; and every report counted, each a link to its document in the source view (ticket 21),
+//   since ticket 23's document view in the drawer has not landed.
 import { useEffect, useRef, type KeyboardEvent } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
@@ -176,7 +176,7 @@ export function AllReportsView({ evidence }: { evidence: EvidenceEvent }) {
       <ul className="flex flex-col divide-y divide-line border-y border-line">
         {row.entries.map((entry) => (
           <li key={entry.document_id} className="flex min-h-11 flex-col gap-1 px-2 py-2">
-            <TextLink href={`/projects/${entry.project_id}/documents/${entry.document_id}`} className="text-small">
+            <TextLink href={`/projects/${entry.project_id}/documents/${encodeURIComponent(entry.doc_key ?? entry.document_id)}`} className="text-small">
               {entry.project_name ?? entry.project_id} (<span className="font-mono">{entry.project_id}</span>)
             </TextLink>
             <span className="text-caption text-ink-muted">

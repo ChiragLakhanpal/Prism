@@ -1,0 +1,233 @@
+{
+  "as_of": "2026-10-23",
+  "query": "",
+  "total": 46,
+  "page": 1,
+  "pages": 3,
+  "page_size": 20,
+  "first": 1,
+  "last": 20,
+  "rows": [
+    {
+      "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
+      "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "300000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-503455-CW-RFQ",
+      "description": "Drilling 4 No. New Explorato ry Boreholes in Arbajahan an d Sarman in Wajir County",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "220000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+      "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "1230000.00",
+      "process_status": "Pending Implementation"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-541061-CW-RFQ",
+      "description": "Equipping of Exploratory Bo reholes Project - Lot 2- Nurgo ws Water Supply",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "290000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-541062-CW-RFQ",
+      "description": "Equipping of Exploratory Bo reholes project- Lot 3- Qaras Water Supply",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "295000.00",
+      "process_status": "Pending Implementation"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-199461-GO-RFB",
+      "description": "Supply and Delivery 1 No. 4 x 4 Wheel drive, manual tran smission of engine capacity 4,100 - 4,200 cc",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "95000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-199471-GO-RFQ",
+      "description": "supply and delivery of Lapt ops, desktops and photocopi er.",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "15000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "NWWDA-WSDP-03-2019-2020",
+      "description": "Consultancy Services for Comparison of Water Supply Options, Preparation of Detail ed Designs, Tender Documen ts, Safeguards Documents an d Construction Supervision of Wajir Water Supply",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "2000000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-NWWDA-207796-CS-INDV",
+      "description": "consultancy services for e nvironmental safeguards exp ert",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "method": "Individual Consultant Selection",
+      "market_approach": "Open",
+      "estimated_amount_usd": "60000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-232660-CW-RFB",
+      "description": "Construction of 30km Second Baricho Kakuyuni Pipeline",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "10000000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-233052-CW-RFB",
+      "description": "Construction of Baricho Emer gency Protection Works",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "14000000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-506334-CW-DIR",
+      "description": "Baricho Plant Solarization",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "4900000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-567630-CW-DIR",
+      "description": "Solar System for the Ukunda Water Supply",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "2600000.00",
+      "process_status": "Pending Implementation"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-565568-GO-RFQ",
+      "description": "Supply and installation of Ad ditional Pumps at Baricho",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "116000.00",
+      "process_status": "Under Implementation"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-224323-CS-QCBS",
+      "description": "Consultancy Services for Det ailed ESIA & RAP Studies for t he Mwache Transmission Pip elines",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "500000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-MOWI-30792-CS-QCBS",
+      "description": "Construction Supervision for Program for the Improvemen t of Water Services in Momba sa West and North (Nyali) Ma inland",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "875500.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-466875-CS-INDV",
+      "description": "Project Communication Speci alist",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "method": "Individual Consultant Selection",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "70000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-141042-CW-RFB",
+      "description": "Water works distributio n system for Mtwapa Town",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "10500000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-142995-CW-RFB",
+      "description": "Water Works distributio n for Kilifi Town",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "5870000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-KIMAWASCO-149448-CW-RFB",
+      "description": "Construction of 12No.A blution blocks and 2No. Slud ge Handling Facilities",
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "3000000.00",
+      "process_status": "Canceled"
+    }
+  ],
+  "read_through": "2026-10-23"
+}

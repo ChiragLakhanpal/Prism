@@ -6,11 +6,12 @@
 // whole paragraph in the evidence drawer.
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource } from "../lib/sources";
+import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource, summarySourceKey } from "../lib/sources";
 import { dotTitle } from "./ComparableRecords";
 import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
+import { ProjectId } from "./ProjectId";
 import { DocumentSource, Source } from "./Source";
 
 // A static pill with the marker's number, as the card and the drawer's claim block show it.
@@ -41,7 +42,9 @@ export function sourceTitle(evidence: EvidenceEvent) {
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {
-    const reference = <span className="inline-block max-w-full wrap-anywhere font-mono">{recordReference(evidence)}</span>;
+    const text = recordReference(evidence);
+    // A project's own ID is a link to its page (ticket 21's ProjectId rule).
+    const reference = /^P\d{6}$/.test(text) ? <ProjectId pid={text} /> : <span className="inline-block max-w-full wrap-anywhere font-mono">{text}</span>;
     return <Fill template={copy.evidence.recordTitle} slots={{ kind: recordKind(evidence), reference }} />;
   }
   const fields = passageFields(evidence);
@@ -87,8 +90,18 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
       </Source>
     );
   }
+  // A record a project's Summary cites names its source by its key: "World Bank projects API, record of
+  // August 1, 2023." Its project is the page's, so the line leaves the project ID out.
+  const key = summarySourceKey(evidence);
+  if (key && words.summaryRecordSources[key]) {
+    return (
+      <Source className={className}>
+        <Fill template={words.summaryRecordSources[key]} slots={{ date: source.date ? <Num date={source.date} /> : "" }} />
+      </Source>
+    );
+  }
   const date = source.date ? <Num date={source.date} /> : null;
-  const pid = <span className="font-mono">{source.pcode}</span>;
+  const pid = <ProjectId pid={source.pcode} />;
   return (
     <Source className={className}>
       {source.agency && source.page && date ? (
