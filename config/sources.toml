@@ -360,11 +360,15 @@ dataset_name = "Procurement Notices"
 endpoint = "https://search.worldbank.org/api/v2/procnotices?format=json"
 api = "search"
 records = "procnotices"
-scope = "every country"
-page_size = 500
 # The search API refuses an offset above 100,000 ("Value must be between 0 and 100000. Parameter
-# name: $skip"), and on October 24, 2026 it reported 424,135 notices. One fetch reaches the newest
-# 100,000; the nightly watermark then adds what is newer each night.
+# name: $skip"), and on October 24, 2026 it reported 424,135 notices, so one fetch for every country
+# reached only the newest 100,000. The job asks for each slice country's notices on its own instead
+# (ticket 43): Kenya had 7,238 on October 25, 2026, each country fits under the cap, and the readiness
+# measures count every notice each request reported. max_offset stays as the guard for a country that
+# ever passes it. Notices of countries outside the slice are left out.
+scope = "slice countries"
+country_filter = "project_ctry_code={iso2}"
+page_size = 500
 max_offset = 100000
 watermark_field = "submission_date"
 fixture_dataset = "notices"
@@ -375,7 +379,7 @@ stratum = "What"
 # Each notice's own page on the World Bank's site, which the evidence drawer's "Open this notice on the
 # World Bank's site" opens (ticket 18). {id} is the notice's id, such as OP00118817.
 record_url = "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
-limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total.", "The search API pages through at most the newest 100,000 notices, so older notices are out of reach until a later fetch reaches them."]
+limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total.", "I fetch the notices of the slice's countries only, each country on its own, because the search API pages through at most 100,000 notices for one request."]
 
 data_source = "Systematic Tracking of Exchanges in Procurement (STEP)"
 catalog_url = "https://projects.worldbank.org/en/projects-operations/procurement"
@@ -493,14 +497,23 @@ fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", 
 # and 18) lists the same way and fetches the slice's PADs, ISRs, ICRs and ICR Reviews with the plan
 # reader's fetcher, and both send pages to the layout parser under one daily page cap.
 #
-# The plan reader does not filter the list by disclosure_date yet: it fetches the whole list on each
-# run, keeps it in bronze when it changed, and skips each plan whose document id bronze already
-# holds. Its second silver transform is src/strata/lakehouse/sql/plans/plan_data_notes.sql, which
-# runs after plan_step_delays.sql.
+# The nightly job's parse_and_embed task runs both readers (ticket 43). Each night it asks the documents
+# API for each project's list, newest first, and keeps the list in bronze only when it changed. The
+# watermark is the document itself: a document whose id bronze already holds is never fetched again,
+# so only documents disclosed since the last run, or never fetched, reach the document host, and only
+# their pages go to the layout parser and the embedder. The list is not asked by disclosure_date,
+# because nobody has checked that the documents API filters on it (a follow-up for the workspace).
+# Its second silver transform is src/strata/lakehouse/sql/plans/plan_data_notes.sql, which runs after
+# plan_step_delays.sql.
 [sources.documents]
 dataset_name = "Documents & Reports: Documents API"
 endpoint = "https://search.worldbank.org/api/v3/wds"
 watermark_field = "disclosure_date"
+# The seconds the job waits between two requests to documents.worldbank.org, which refused every request from
+# one computer on October 25, 2026 after some hundreds of PDFs asked for back to back. Each answer is also kept in
+# the bronze files volume, so no document is asked for twice. A value for the owner to confirm. The night's
+# requests stop when its reading time, ingestion.document_host_minutes in config/thresholds.toml, is spent.
+pause_seconds = 3
 cadence = "daily"
 license = "CC BY 4.0"
 silver_transform = "src/strata/lakehouse/sql/plans/plan_step_delays.sql"

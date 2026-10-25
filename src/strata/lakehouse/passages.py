@@ -185,6 +185,26 @@ class Chosen:
     with_contacts: dict[str, tuple[int, int]]
 
 
+HELD_WITH_CONTACTS = """
+SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id AND text LIKE :marker
+"""
+
+
+def with_contacts_held(engine: Engine, chosen: list[Held]) -> dict[str, tuple[int, int]]:
+    """For each project, the chosen documents whose text bronze keeps with contact details taken out, and the
+    chosen documents. Bronze fetches a document once, so counting what this run fetched would read 0 of 0 on
+    every run after the first (ticket 11's review, P1); counting what bronze holds gives the same share each night."""
+    from strata.lakehouse.contacts import REMOVED
+
+    found: dict[str, tuple[int, int]] = {}
+    for project_id in dict.fromkeys(held.listed.project_id for held in chosen):
+        ids = {held.listed.document_id for held in chosen if held.listed.project_id == project_id}
+        marked = {str(row[0]) for row in engine.run(HELD_WITH_CONTACTS, {"project_id": project_id,
+                                                                        "marker": f"%{REMOVED}%"}).rows}
+        found[project_id] = (len(ids & marked), len(ids))
+    return found
+
+
 def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[str], cap: int) -> Chosen:
     """The documents to read, fetched into bronze: up to cap whose text Route A can read, and any
     scan met on the way, whose pages wait for Route B."""
@@ -692,8 +712,8 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
             "This counts the passages that have a vector and can be searched, out of every passage read.")
         per("documents_fresh", "fresh", None, None, cadence, as_of=max(item.held.public_from for item in items))
         per("contact_details_removed", "stripped", stripped, fetched,
-            "This counts the documents fetched this run that had emails or phone numbers removed before they "
-            "were kept, out of the documents fetched this run.")
+            "This counts the documents read that had emails or phone numbers removed before they were kept, out "
+            "of the documents read.")
         results = scanned.get(project_id, [])
         per("passages_screened", "screened", sum(result is not None for result in results), len(results),
             f"This counts the passages that have a stored result from {shield}, out of every passage read.")
@@ -731,6 +751,7 @@ class Report:
     slice_projects: int = 0  # the projects the slice criteria selected
     notice_passages: int = 0
     shelf: tuple = ()  # each stress shelf entry's outcome (stress_shelf.Outcome)
+    synced: int = 0  # rows of strata.gold.passage the run added, changed or removed
 
 
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
@@ -758,15 +779,15 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     isr_ratings.write(engine, projects)
     scanned = screen(engine, shield, clock)
     embedded = embed(engine, embedder, clock)
-    gold.sync(engine, "passage")
+    synced = gold.sync(engine, "passage")
     when = clock()
-    measure(engine, run_id, found, picked.with_contacts, shield.name, when, selection, chosen)
+    measure(engine, run_id, found, with_contacts_held(engine, picked.documents), shield.name, when, selection, chosen)
     documents_read(engine, run_id, found, when)
     shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when,
                                 selection.selected)
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.passages) for item in found), scanned, embedded, len(selection.selected), notices,
-                  tuple(shelf))
+                  tuple(shelf), synced)
 
 
 def default_projects(engine: Engine | None = None) -> list[str]:
@@ -784,7 +805,7 @@ def run_on_fixture(engine: Engine, manifest=None, **options) -> Report:
     from strata.fixture import recorded as fmt
     from strata.knowledge.embed import offline
     from strata.knowledge.shields import PatternShield
-    from strata.reader.documents import NotFetched, RecordedDocuments
+    from strata.reader.documents import RecordedDocuments
     from strata.reader.layout import RecordedLayout
 
     manifest = manifest or fmt.load_manifest()
@@ -793,14 +814,23 @@ def run_on_fixture(engine: Engine, manifest=None, **options) -> Report:
     options.setdefault("layout", RecordedLayout(manifest))
     documents = RecordedDocuments(manifest)
     endpoint = options.get("endpoint") or load_sources()[SOURCE].endpoint
-    recorded = []
-    for project_id in options.pop("projects", None) or default_projects(engine):
+    return run(engine, documents, listed_projects(documents, options.pop("projects", None) or default_projects(engine),
+                                                  endpoint), **options)
+
+
+def listed_projects(documents: Documents, projects: list[str], endpoint: str | None = None) -> list[str]:
+    """The projects whose document list the source gives: offline, those the fixture records."""
+    from strata.reader.documents import NotFetched
+
+    endpoint = endpoint or load_sources()[SOURCE].endpoint
+    found = []
+    for project_id in projects:
         try:
             documents.listing(list_url(endpoint, project_id))
-            recorded.append(project_id)
+            found.append(project_id)
         except NotFetched:
             continue
-    return run(engine, documents, recorded, **options)
+    return found
 
 
 def print_measures(engine: Engine, run_id: str) -> None:

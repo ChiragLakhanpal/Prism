@@ -670,3 +670,17 @@ def test_the_nightly_jobs_serverless_environment_installs_the_splink_that_pyproj
     [environment] = bundle.load().resources("jobs")["nightly"]["environments"]
 
     assert pinned in environment["spec"].get("dependencies", [])
+
+
+def test_the_nightly_jobs_environment_installs_the_pypdf_and_pyyaml_the_live_readers_pin():
+    """parse_and_embed reads each PDF's pages and cuts Route B's pages with pypdf, and every task reads the bundle's
+    YAML for its night and window, so the job lists the pins the live readers' scripts run with (review B5)."""
+    import re
+
+    from strata.lakehouse import bundle
+
+    [environment] = bundle.load().resources("jobs")["nightly"]["environments"]
+    for script in ("ops/plans/run_live.py", "ops/documents/run_live.py"):
+        header = (ROOT / script).read_text().split("# ///")[1]
+        for name in ("pypdf", "pyyaml"):
+            assert re.search(rf'"({name}==[^"]+)"', header).group(1) in environment["spec"]["dependencies"]

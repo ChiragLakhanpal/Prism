@@ -171,21 +171,17 @@ def test_every_assertion_from_a_field_keeps_a_field_name_the_evidence_ladder_lis
     assert [row for row in found if row["field_name"] not in ladder.attribute(row["attribute"]).names] == []
 
 
-def test_the_run_reads_the_records_of_the_projects_whose_documents_or_plan_it_read_and_no_others(engine):
-    """A project's records are read when Strata has read its documents or its Procurement Plan. A project with
-    records alone is not read: the workspace holds about 16,000 of them and the run queries each project on
-    its own (sql/assertions/projects.sql), so their contract-against-notice disagreements wait on a set-based
-    rewrite (the catch-up notes under ticket 04's step 2, October 24, 2026)."""
+def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine):
+    """A project's records are read whether or not Strata has read its documents (ticket 43 brought the
+    record-only projects back, once each family is read with one query for every project)."""
     with_records = {row["project_id"] for row in rows(
         engine, "SELECT DISTINCT project_id FROM strata.gold.contract WHERE step_reference IS NOT NULL "
                 "AND contract_signing_date IS NOT NULL AND source <> :notices", notices="notices")}
     asserted = {row["project_id"] for row in rows(
         engine, "SELECT DISTINCT project_id FROM strata.gold.assertion WHERE form = :form", form="contract_record")}
-    read = set(assertions.default_projects(engine))
 
-    assert with_records & read == {"P156634"}
-    assert with_records & read <= asserted
-    assert with_records - read and not (with_records - read) & asserted
+    assert len(with_records) > 1
+    assert with_records <= asserted
 
 
 def test_the_source_registry_names_the_datasets_whose_rows_are_records_of_a_signed_contract(engine):
@@ -369,12 +365,59 @@ def test_a_batch_still_running_keeps_the_rest_of_the_run_and_is_waited_for_on_th
     assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
 
 
-def test_the_run_s_projects_are_those_with_documents_or_a_plan_read_and_not_those_with_records_alone(engine):
-    """The workspace holds about 16,000 projects with a contract, a notice or an IEG rating, and the run reads
-    each project with its own queries, so the records alone do not bring a project in. The fixture's P176758
-    and P170941 have contracts and no document."""
+def test_the_run_s_projects_are_every_project_with_documents_or_records(engine):
+    """The fixture's P176758 and P170941 have contracts and no document, and the run reads them too."""
     projects = assertions.default_projects(engine)
+    with_contracts = {row[0] for row in engine.run("SELECT DISTINCT project_id FROM strata.gold.contract", {}).rows}
 
-    assert projects == ["P127203", "P130164", "P156634", "P161305"]
-    assert engine.run("SELECT count(DISTINCT project_id) FROM strata.gold.contract", {}).rows[0][0] > len(projects)
+    assert {"P127203", "P130164", "P156634", "P161305", "P176758", "P170941"} <= set(projects)
+    assert with_contracts <= set(projects)
+
+
+class Counting:
+    """The fixture's engine, counting the queries a run sends."""
+
+    def __init__(self, engine):
+        self.engine, self.queries, self.deletes = engine, 0, []
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+    def run(self, sql, params=None):
+        self.queries += 1
+        if sql.lstrip().upper().startswith("DELETE"):
+            self.deletes.append((sql.split()[2], dict(params or {})))
+        return self.engine.run(sql, params)
+
+
+def test_the_run_reads_each_family_with_one_query_for_every_project(copy_db, monkeypatch):
+    """Ticket 43: the fifth live run read each of 15,933 projects with about seven queries of its own, about
+    eleven hours against the job's 150-minute stop. Now the queries a run sends do not grow with the projects
+    it reads: a run over every project the fixture holds sends no more queries than a run over one project with
+    records alone, beyond the reports whose text the batch model reads."""
+    import time
+
+    from strata import config
+
+    monkeypatch.setattr(assertions, "NAMED_MAX", 2)  # the fixture's eight projects take the workspace's path
+    projects = assertions.default_projects(copy_db)
+    one, every = Counting(copy_db), Counting(copy_db)
+    assertions.run(one, ["P176758"], model=batch.RecordedBatch())
+    held = copy_db.run("SELECT count(*) FROM strata.gold.assertion", {}).rows[0][0]
+    copy_db.run("DELETE FROM strata.gold.assertion WHERE assertion_id = (SELECT min(assertion_id) "
+                "FROM strata.gold.assertion WHERE project_id = 'P176758')", {})  # so the run over every project writes
+    started = time.perf_counter()
+    report = assertions.run(every, projects, model=batch.RecordedBatch())
+    took = time.perf_counter() - started
+
+    with_text = {row[0] for row in copy_db.run("SELECT DISTINCT project_id FROM strata.silver.documents", {}).rows}
+    assert len(projects) == 8  # every project with a document, a contract, a notice, a plan or an IEG rating
+    reports = sum(len(assertions.reports(copy_db, project_id, config.load_ladder())) for project_id in with_text)
+    assert every.queries <= one.queries + 3 * len(with_text) + reports  # per report: its passages; per project: its answers
+    assert report.assertions > 0 and took < 30
+    # Review B2: the rewrite sends one DELETE a table, for only the projects whose rows differ, not three a project.
+    assert report.changed == 1
+    assert copy_db.run("SELECT count(*) FROM strata.gold.assertion", {}).rows[0][0] == held
+    assert every.deletes == [(table, {"projects": "P176758"}) for table in
+                             ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections")]
 

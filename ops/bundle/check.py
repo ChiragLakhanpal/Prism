@@ -12,8 +12,10 @@ Run each check from the main checkout, after the deploy (ops/bundle/deploy.py):
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
 job-run    Starts the nightly job by hand, waits for it, and checks that strata.ops.pipeline_runs
-           holds one row per task for that run, in the order bundle/nightly.yml gives. Pass
-           --run-id to check a run that already finished instead.
+           holds one row per task for that run, in the order bundle/nightly.yml gives, that each task
+           recorded its quality checks in strata.ops.quality_checks, and that the run finished inside
+           the job's window. It prints each task's duration, rows changed and checks passed and failed.
+           Pass --run-id to check a run that already finished instead, such as a scheduled one.
 same-rows  Runs each ground-truth query marked for databricks (tests/ground_truth) on DuckDB and
            on the SQL warehouse, and checks that both return the rows the file expects. DuckDB
            reads the fixture database, or, without it, builds the catalog's tables in memory, reads
@@ -55,10 +57,16 @@ NOTES = REPO / "bundle" / "README.md"
 FIXTURE_DB = REPO / "data" / "out" / "fixture.duckdb"
 BLOCK = re.compile(r"(<!-- bundle:schedules -->\n).*?(<!-- /bundle:schedules -->)", re.S)
 RUNS = """
-SELECT task_key, status, started_at
+SELECT task_key, status, started_at, finished_at, rows_changed
 FROM strata.ops.pipeline_runs
 WHERE run_id = :run_id
 ORDER BY started_at
+"""
+CHECKS = """
+SELECT task_key, count_if(passed) AS passed, count_if(NOT passed) AS failed
+FROM strata.ops.quality_checks
+WHERE run_id = :run_id
+GROUP BY task_key
 """
 
 
@@ -77,15 +85,20 @@ def job_run(workspace, run_id: str | None) -> int:
         if state != "SUCCESS":
             print(f"The run ended {state}, so it did not finish every task. Open the run's page to see why.")
             return 1
-    rows = workspace.engine().run(RUNS, {"run_id": run_id}).as_text()
+    engine = workspace.engine()
+    rows = engine.run(RUNS, {"run_id": run_id}).rows
+    checks = {str(task): (int(passed or 0), int(failed or 0))
+              for task, passed, failed in engine.run(CHECKS, {"run_id": run_id}).rows}
     expected = [task.key for task in nightly.job_tasks()]
-    for number, (task, status, started) in enumerate(rows, 1):
-        print(f"  {number:>2}. {task}: {status}, started {started}")
+    for number, (task, status, started, finished, changed) in enumerate(rows, 1):
+        passed, failed = checks.get(str(task), (0, 0)) if status == "succeeded" else (0, 0)
+        print(f"  {number:>2}. {task}: {status}, started {started}, took {_minutes(started, finished):.1f} minutes, "
+              f"{changed} rows changed, {passed} quality checks passed and {failed} failed")
     # Databricks tries a task again when it fails, and each try writes its own row. A task counts by its
     # last try, in the order of the last tries; the failed tries before it are reported, not held against it.
     last = {}
     tries = {}
-    for task, status, _ in rows:
+    for task, status, *_ in rows:
         tries.setdefault(task, []).append(status)
         last[task] = status
     found = list(last)
@@ -99,6 +112,13 @@ def job_run(workspace, run_id: str | None) -> int:
                 problems.append(f"Row {number} is {task}, where the bundle's order has {wanted}.")
                 break
     problems += [f"{task} ended {status}." for task, status in last.items() if status != "succeeded"]
+    problems += [f"{task} recorded no quality checks in strata.ops.quality_checks." for task, status in last.items()
+                 if status == "succeeded" and task in expected and sum(checks.get(task, (0, 0))) == 0]
+    if rows:
+        took = _minutes(rows[0][2], max(row[3] for row in rows))
+        allowed = nightly.window().minutes
+        if took > allowed:
+            problems.append(f"The run took {took:.0f} minutes, longer than the job's window of {allowed} minutes.")
     retried = [f"{task} was tried {len(tries[task])} times; the first {len(tries[task]) - 1} failed and the last succeeded."
                for task in found if len(tries[task]) > 1 and last[task] == "succeeded"
                and set(tries[task][:-1]) == {"failed"}]
@@ -111,7 +131,14 @@ def job_run(workspace, run_id: str | None) -> int:
         print(f"  {line}")
     print(f"Run {run_id} wrote one row per task to strata.ops.pipeline_runs, in the bundle's order"
           + (", counting each task by its last try." if retried else "."))
+    passed, failed = (sum(counts[n] for counts in checks.values()) for n in (0, 1))
+    print(f"Its tasks recorded {passed + failed} quality checks in strata.ops.quality_checks: {passed} passed and "
+          f"{failed} failed, and it finished inside the job's window of {nightly.window().minutes} minutes.")
     return 0
+
+
+def _minutes(started, finished) -> float:
+    return (schedule.as_utc(finished) - schedule.as_utc(started)).total_seconds() / 60
 
 
 # ── same-rows ────────────────────────────────────────────────────────────
@@ -129,7 +156,7 @@ def _local_engine() -> DuckDBEngine:
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
-    nightly.run_locally(engine, run_id="fixture")
+    nightly.run_locally(engine, run_id="fixture", readers_for=nightly.no_documents)  # the readers run around it
     passages.run_on_fixture(engine, run_id="fixture")
     assertions.run_on_fixture(engine, run_id="fixture")
     return engine

@@ -40,6 +40,7 @@ from pathlib import Path
 from strata.agent.verifier import find_quote
 from strata.config import Editions, LessonLists, load_editions, load_lesson_lists, load_thresholds
 from strata.knowledge.lessons.batch import Batch, RecordedBatch
+from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import split_pages
 from strata.reader.templates import ICR, ICR_REVIEW, PPAR
@@ -222,10 +223,9 @@ def _document(engine: Engine, document_id: str) -> dict:
 
 
 def rebuild(engine: Engine, project_id: str, answered: list[dict], lists: LessonLists, editions: Editions) -> int:
-    """A project's proposals, restatements and evidence, from its answered requests. Returns the proposals."""
-    for table in LESSON_TABLES:
-        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
-                   {"project_id": project_id})
+    """A project's proposals, restatements and evidence, from its answered requests, written again only when they
+    differ from the ones held (strata.lakehouse.rewrites), so a night with nothing new changes no row. Returns the
+    proposals it added or removed."""
     edition = next((found.key for found in (editions.named_in(row["text"])
                                             for row in _rows(engine, "pad_passages", project_id=project_id))
                     if found), None)
@@ -273,14 +273,23 @@ def rebuild(engine: Engine, project_id: str, answered: list[dict], lists: Lesson
                 "quote_check": check_quote(pages, passage, found.get("page"), found.get("quote")),
                 "batch_id": state["batch_id"], "found_on": day, "public_from": _date(document["public_from"]),
                 "document_date": _date(document["document_date"])})
-    engine.insert_rows("strata.silver.lesson_proposals", PROPOSAL_COLUMNS,
-                       [tuple(row[column] for column in PROPOSAL_COLUMNS) for row in proposals])
-    engine.insert_rows("strata.silver.lesson_restatements", RESTATEMENT_COLUMNS,
-                       [tuple(row[column] for column in RESTATEMENT_COLUMNS) for row in restatements])
-    engine.insert_rows("strata.silver.lesson_evidence", EVIDENCE_COLUMNS,
-                       [tuple(row[column] for column in EVIDENCE_COLUMNS)
-                        for row in _evidence(engine, proposals, restatements)])
-    return len(proposals)
+    new = {"lesson_proposals": (PROPOSAL_COLUMNS, [tuple(row[c] for c in PROPOSAL_COLUMNS) for row in proposals]),
+           "lesson_restatements": (RESTATEMENT_COLUMNS,
+                                   [tuple(row[c] for c in RESTATEMENT_COLUMNS) for row in restatements]),
+           "lesson_evidence": (EVIDENCE_COLUMNS, [tuple(row[c] for c in EVIDENCE_COLUMNS)
+                                                 for row in _evidence(engine, proposals, restatements)])}
+    differs = {table: rewrites.differing(
+        rewrites.comparable(rewrites.held(engine, f"strata.silver.{table}", columns, "project_id = :project_id",
+                                          {"project_id": project_id})),
+        rewrites.comparable(rows)) for table, (columns, rows) in new.items()}
+    if not any(differs.values()):
+        return 0
+    for table in LESSON_TABLES:
+        engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
+                   {"project_id": project_id})
+    for table, (columns, rows) in new.items():
+        engine.insert_rows(f"strata.silver.{table}", columns, rows)
+    return differs["lesson_proposals"]
 
 
 def _evidence(engine: Engine, proposals: list[dict], restatements: list[dict]) -> list[dict]:

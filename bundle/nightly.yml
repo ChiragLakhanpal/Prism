@@ -1,10 +1,13 @@
 # The nightly job: ten tasks in docs/PLAN.md section 11's order, one at a time.
 #
-# Each task runs src/strata/lakehouse/nightly_task.py on serverless compute, which calls
-# strata.lakehouse.nightly with the task's own name, and records its run in strata.ops.pipeline_runs.
-# fetch_by_watermark, bronze_to_gold and measure_data_readiness have their work (ticket 07); ticket 43
-# gives the other seven theirs. The fetch reaches the World Bank's public APIs. The tasks form one chain,
-# so the job never runs more than one task at a time, well inside the workspace's limit of five.
+# Each task runs src/strata/lakehouse/nightly_task.py on serverless compute, which reads the tasks' keys
+# from the secret scope the variable secret_scope names, calls strata.lakehouse.nightly with the task's
+# own name and the AI Search endpoint the variable ai_search_endpoint names (no secret, so a parameter), runs the task's quality checks (config/quality_checks.toml) and records its run in
+# strata.ops.pipeline_runs and strata.ops.quality_checks. Every task has its work (ticket 43): the fetch
+# reaches the World Bank's public APIs, and parse_and_embed its document host, pausing between requests.
+# The tasks form one chain and the job allows one run at a time, so it never runs more than one task at
+# a time, well inside the workspace's limit of five (tests/test_nightly.py, most_at_once). A repair run
+# reruns a failed task and the ones after it under the same run id, and each try keeps its own rows.
 #
 # The window, 03:00 to 05:30 in Washington, and the reasons for it are in bundle/README.md. The job
 # stops at 05:30 at the latest (timeout_seconds), ninety minutes before fairshare's job starts at
@@ -29,74 +32,86 @@ resources:
             # on the first live run (October 24, 2026).
             environment_version: "4"
             # bronze_to_gold matches supplier names with Splink, on DuckDB inside the task (ticket 19). The
-            # pin is pyproject.toml's, and tests/test_suppliers.py keeps the two the same.
-            dependencies: ["splink==5.0.0"]
+            # pin is pyproject.toml's. parse_and_embed reads PDF pages and cuts Route B's pages with pypdf,
+            # and every task reads this bundle's YAML for its night and window, with the pins the live
+            # readers' scripts use. tests/test_suppliers.py keeps all three the same.
+            dependencies: ["splink==5.0.0", "pypdf==6.21.2", "pyyaml==6.0.3"]
       tasks:
         - task_key: fetch_by_watermark
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: bronze_to_gold
           depends_on: [{task_key: fetch_by_watermark}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: parse_and_embed
           depends_on: [{task_key: bronze_to_gold}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: sync_index
           depends_on: [{task_key: parse_and_embed}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: relink
           depends_on: [{task_key: sync_index}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: propose_lessons
           depends_on: [{task_key: relink}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: detect_disagreements
           depends_on: [{task_key: propose_lessons}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: score
           depends_on: [{task_key: detect_disagreements}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: measure_data_readiness
           depends_on: [{task_key: score}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]
 
         - task_key: refresh_drafts
           depends_on: [{task_key: measure_data_readiness}]
           environment_key: default
           spark_python_task:
             python_file: ../src/strata/lakehouse/nightly_task.py
-            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src"]
+            parameters: [--task, "{{task.name}}", --run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src",
+                         --secret-scope, "${var.secret_scope}", --search-endpoint, "${var.ai_search_endpoint}"]

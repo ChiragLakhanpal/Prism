@@ -79,6 +79,13 @@ MOBILE_LABELLED = re.compile(
     r"(?P<numbers>(?:\+?91[ \t-]?)?[6-9]\d{4}[ \t-]?\d{5})(?!\d)", re.I)
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
+# The nightly job's check for contact details that ingestion missed (strata.lakehouse.quality, contacts_left):
+# a plain email address, or a number of seven digits or more written after a phone label. They are simpler than
+# the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read them the same way,
+# and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
+LEFT_EMAIL = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
+LEFT_PHONE = r"(?i)\b(tel|telephone|phone|mobile|cell|fax)\b[^0-9\n]{0,12}\+?[0-9][0-9 ()-]{5,}[0-9]"
+
 
 def _phone(candidate: str) -> bool:
     first = candidate.split("/")[0].strip()
