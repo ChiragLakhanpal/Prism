@@ -213,6 +213,23 @@ def masks(principal: str, owner: str) -> list[str]:
                         for table, columns in MASKED.items() for column in columns]]
 
 
+def plan() -> list[tuple[str, str]]:
+    """What a first deploy makes, read from the repo alone, as (what, name) pairs, with the Foundry agent's and the
+    judge's keys in the env file, as the wizard fills it. The demo-ready command's dry run prints it
+    (ops/demo/ready.py --fresh-workspace), so its list cannot drift from this deploy."""
+    names = dayone.load_config()["names"]
+    scope, instance = names["secret_scope"], names["app_state_instance"]
+    filled = {"DATABRICKS_WAREHOUSE_ID": "the env file's", **dict.fromkeys((*FOUNDRY, *JUDGE), "set")}
+    example = "00000000-0000-0000-0000-000000000000"  # the app's service principal, known only once it exists
+    return ([("The app", f"{names['app']} ({DESCRIPTION})"), ("Its code", f"/Workspace/Users/<you>/{FOLDER}"),
+             ("The Lakebase instance", instance)]
+            + [("The app resource", resource["name"]) for resource in resources(filled, scope, instance)]
+            + [("The user authorization scope", name) for name in SCOPES]
+            + [("The secret", f"{scope}/{key}") for key in (*FOUNDRY, *JUDGE)]
+            + [("The grants to the app's service principal", f"{len(grants(example))} grants on strata.ops"),
+               ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
+
+
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:
     names = dayone.load_config()["names"]
     name = names["app"]

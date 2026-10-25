@@ -102,6 +102,26 @@ def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_p
     assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
 
 
+def test_the_plan_names_from_the_repo_alone_what_a_first_deploy_makes(tmp_path, capsys):
+    """The demo-ready command's dry run (ops/demo/ready.py --fresh-workspace) prints this plan, so it cannot drift
+    from what the deploy makes."""
+    workspace = FakeWorkspace()
+    code, _ = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
+    planned = deploy_app.plan()
+
+    def named(label):
+        return {name for kind, name in planned if kind == label}
+
+    [(name, description, resources, scopes)] = workspace.configured
+    assert code == 0
+    assert named("The app") == {f"{name} ({description})"}
+    assert {resource["name"] for resource in resources} == named("The app resource")
+    assert set(scopes) == named("The user authorization scope")
+    assert {f"{scope}/{key}" for scope, key in workspace.secrets} == named("The secret")
+    assert set(workspace.databases) == named("The Lakebase instance")
+    assert {workspace.uploaded["folder"].replace("owner@example.org", "<you>")} == named("Its code")
+
+
 def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_token(tmp_path, capsys):
     workspace = FakeWorkspace()
 

@@ -802,3 +802,19 @@ targets = { groundedness = 0.8, relevance = 0.8, task_adherence = 0.8, tool_use 
 # fairshare's evaluation runs on 40 answers took minutes, not hours. Starting values for the owner to confirm.
 poll_seconds = 10
 wait_seconds = 1800
+
+# The demo-ready command (ticket 48; ops/demo/ready.py; docs/PLAN.md section 16, "The app stops 24 hours after a
+# deploy" and "Genie stalls on a cold warehouse").
+[demo_ready]
+# How long the command waits, after it starts the app, for GET /api/health to answer. Source: ops/dayone/live.py's
+# call_app gives a freshly started app six tries 15 seconds apart, 90 seconds; the platform's start already waits
+# up to 20 minutes for the app's compute (apps.start_and_wait), so five minutes covers a slow first container. A
+# starting value for the owner to confirm.
+health_timeout_seconds = 300
+# How often the command asks the health route again while it waits.
+health_poll_seconds = 5
+# After the command warms the warehouse and Genie, the next Genie call must answer within this many seconds.
+# Source: [genie] above allows 90 seconds for a cold warehouse to start and 150 for Genie's answer; with the
+# warehouse running only the answer remains, and a panel waits about a minute for a table of counts. A starting
+# value for the owner to confirm.
+genie_first_call_seconds = 60
