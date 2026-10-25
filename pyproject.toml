@@ -14,7 +14,9 @@ dependencies = [
     "opentelemetry-api>=1.45.1",
     "fpdf2==2.8.9",
     "splink==5.0.0",
-    "xgboost==3.4.1",
+    # XGBoost's CPU-only build on Linux: the full one pulls in a 305 MB GPU library there.
+    "xgboost==3.4.1; sys_platform != 'linux'",
+    "xgboost-cpu==3.4.1; sys_platform == 'linux'",
     "numpy>=2.3",
 ]
 

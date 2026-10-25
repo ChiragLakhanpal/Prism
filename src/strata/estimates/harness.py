@@ -4,8 +4,9 @@ against what became public later.
 Given a cutoff and a scorer, replay() hands the scorer two readers: one frozen at the cutoff, for
 every input, and one at the outcomes date, for what happened. Each reader binds its date to every query
 as the :as_of parameter and refuses any row whose public_from is later than that date, so an input
-made public after the cutoff can never reach a scorer by mistake (ADR 0002). It also calls a registry
-tool, such as find_comparables, with its date as the as-of date. The scorer returns its scores; the
+made public after the cutoff can never reach a scorer by mistake (ADR 0002). A query must select
+public_from, or the reader refuses it, since it could not check its rows. It also calls a registry
+tool, such as find_comparables, with its date as the as-of date, and checks the rows it returns. The scorer returns its scores; the
 harness logs them to the tracker (MLflow on the workspace, strata.estimates.tracking) and appends them
 to strata.ops.evaluation_result under the run's id with the tracker's run id.
 
@@ -26,6 +27,7 @@ from typing import Any, Protocol
 
 from strata.config import Thresholds, load_thresholds
 from strata.dbx import Viewer
+from strata.estimates.past_range import as_date
 from strata.lakehouse.engine import Engine
 
 TABLE = "strata.ops.evaluation_result"
@@ -95,12 +97,15 @@ class Reader:
             raise ValueError("The reader sets :as_of itself, to the date it was frozen at.")
         bound = {**params, "as_of": self.as_of} if ":as_of" in sql else params
         result = self.engine.run(sql, bound)
+        if "public_from" not in result.columns:
+            raise LeakageError(f"A query for a scorer frozen at {self.as_of} left out public_from, so its rows "
+                               f"cannot be checked: {' '.join(sql.split())[:200]}")
         return self.checked([dict(zip(result.columns, row)) for row in result.rows])
 
     def checked(self, rows: list[dict]) -> list[dict]:
         """Rows read some other way, checked like the reader's own."""
         for row in rows:
-            public = _date(row.get("public_from"))
+            public = as_date(row.get("public_from"))
             if public is not None and public > self.as_of:
                 raise LeakageError(f"A row public on {public} reached a scorer frozen at {self.as_of}: {row}")
         return rows
@@ -117,7 +122,9 @@ class Reader:
         from strata.tools import registry
 
         context = registry.Context(engine=self.engine, viewer=HARNESS, as_of=self.as_of, thresholds=self.thresholds)
-        return registry.call(tool, arguments, context)
+        result = registry.call(tool, arguments, context)
+        self.checked(result["rows"])
+        return result
 
 
 @dataclass(frozen=True)
@@ -135,14 +142,6 @@ class Scorer(Protocol):
     model: str | None
 
     def score(self, replay: Replay) -> Scored: ...
-
-
-def _date(value) -> dt.date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, dt.datetime):
-        return value.date()
-    return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
 
 
 def new_run_id(scorer: str, ran_at: dt.datetime) -> str:
@@ -168,13 +167,13 @@ def replay(engine: Engine, scorer: Scorer, window: Window, tracker, run_id: str,
     return scored
 
 
-def row(run_id: str, scorer: Scorer, window: Window | None, score: Score, mlflow_run: str | None,
-        ran_at: dt.datetime, segment_kind: str | None = None, segment: str | None = None) -> dict:
-    return {"run_id": run_id, "scorer": scorer.name, "model": scorer.model,
-            "segment_kind": segment_kind or window.segment_kind, "segment": segment or window.segment,
-            "measure": score.measure, "value": None if score.value is None else float(score.value),
-            "value_text": score.text, "cutoff": window.cutoff if window else None,
-            "outcomes_through": window.outcomes_through if window else None, "mlflow_run_id": mlflow_run,
+def row(run_id: str, scorer: Scorer, window: Window, score: Score, mlflow_run: str | None,
+        ran_at: dt.datetime) -> dict:
+    """One stored score: a row of strata.ops.evaluation_result, public from the day it ran."""
+    return {"run_id": run_id, "scorer": scorer.name, "model": scorer.model, "segment_kind": window.segment_kind,
+            "segment": window.segment, "measure": score.measure,
+            "value": None if score.value is None else float(score.value), "value_text": score.text,
+            "cutoff": window.cutoff, "outcomes_through": window.outcomes_through, "mlflow_run_id": mlflow_run,
             "ran_at": ran_at, "public_from": ran_at.astimezone(dt.UTC).date()}
 
 
@@ -200,8 +199,8 @@ def segments(rows: list[dict]) -> dict[tuple[str, str], dict[str, Any]]:
     found: dict[tuple[str, str], dict[str, Any]] = {}
     for item in rows:
         record = found.setdefault((item["segment_kind"], item["segment"]), {
-            "run_id": item["run_id"], "model": item["model"], "cutoff": _date(item["cutoff"]),
-            "outcomes_through": _date(item["outcomes_through"]), "mlflow_run_id": item["mlflow_run_id"],
+            "run_id": item["run_id"], "model": item["model"], "cutoff": as_date(item["cutoff"]),
+            "outcomes_through": as_date(item["outcomes_through"]), "mlflow_run_id": item["mlflow_run_id"],
             "ran_at": item["ran_at"]})
         value = item["value"]
         if value is None:

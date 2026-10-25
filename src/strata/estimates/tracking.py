@@ -6,9 +6,10 @@ they have:
 
 - start_run(name, params) opens a run and returns its id; log_metrics, log_text, log_model and end_run
   fill it.
-- register(run_id, name, card) registers the run's model under a three-part Unity Catalog name, with a
-  description that points to its model card and gives the track record, and returns the new version; set_alias and alias_version move and read an alias such as
-  champion.
+- register(run_id, name, card, summary) registers the run's model under a three-part Unity Catalog
+  name, with a description that points to its model card and gives summary, the track-record
+  sentence the card was written with, and returns the new version; set_alias and alias_version move
+  and read an alias such as champion.
 
 OfflineTracker keeps everything in memory with run ids such as offline-run-0001, so a test can read
 back what was logged. MlflowTracker is the live adapter: it imports MLflow only when it is made, logs
@@ -40,6 +41,7 @@ class OfflineVersion:
     version: int
     run_id: str
     card: str
+    summary: str
 
 
 class OfflineTracker:
@@ -69,9 +71,9 @@ class OfflineTracker:
     def end_run(self, run_id: str) -> None:
         self.runs[run_id].ended = True
 
-    def register(self, run_id: str, name: str, card: str) -> int:
+    def register(self, run_id: str, name: str, card: str, summary: str) -> int:
         versions = self.models.setdefault(name, [])
-        versions.append(OfflineVersion(len(versions) + 1, run_id, card))
+        versions.append(OfflineVersion(len(versions) + 1, run_id, card, summary))
         return versions[-1].version
 
     def set_alias(self, name: str, alias: str, version: int) -> None:
@@ -129,12 +131,12 @@ class MlflowTracker:
     def end_run(self, run_id: str) -> None:
         self.client.set_terminated(run_id)
 
-    def register(self, run_id: str, name: str, card: str) -> int:
+    def register(self, run_id: str, name: str, card: str, summary: str) -> int:
         """The run's model as a new version. The card itself is the run's model_card.md, which the
-        backtest logged; Unity Catalog's descriptions point to it, whatever its length."""
+        backtest logged; Unity Catalog's descriptions point to it, whatever its length, and give the
+        track-record sentence."""
         version = self.mlflow.register_model(self._models[run_id], name)
-        pointer = (f"Strata's time estimate. The model card is {MODEL_CARD} in MLflow run {run_id}. "
-                   + next((line for line in card.splitlines() if line.startswith("Of ") or line.startswith("Strata has")), ""))
+        pointer = f"Strata's time estimate. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
         self.client.update_registered_model(name, description=pointer)
         self.client.update_model_version(name, version.version, description=pointer)
         return int(version.version)

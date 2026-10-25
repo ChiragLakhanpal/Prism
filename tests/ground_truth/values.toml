@@ -1680,12 +1680,26 @@ signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 # open then and had already run past its 8-in-10 point; the one still open short of it is left out.
 # Months are days divided by 30.4375, rounded to one decimal, half up; "in 10" figures are rounded
 # half up.
+#
+# The two middles the model card compares when a year falls outside the coverage band were computed
+# the same way, with lifelines 0.30.3's median_survival_time_: calibration_middle_days over the 20
+# calibration packages as of the cutoff (the 3 still open counted as not signed yet), and
+# unseen_middle_days over the n = 23 packages it scored, as of June 30, 2022 (the 2 still open then
+# counted as not signed yet: j = 20 at 269 days and j = 21 at 255 days so far). coverage_percent is
+# coverage as a whole percent, and band_gap_points is its distance from the band's low end, 75.
 [time_estimate_backtest]
 cutoff = 2021-01-01
 outcomes_through = 2022-06-30
 training_packages = 80
 calibration_packages = 20
+proper_packages = 60
 calibration_still_open = 3
+calibration_middle_days = 133
+calibration_middle_months = 4.4
+unseen_middle_days = 202
+unseen_middle_months = 6.6
+coverage_percent = 61
+band_gap_points = 14
 e25_days = 69
 e50_days = 133
 e75_days = 186

@@ -36,13 +36,12 @@ import json
 import math
 import statistics
 from dataclasses import dataclass, field
-from decimal import ROUND_HALF_UP, Decimal
 from fractions import Fraction
 from importlib import resources
 from typing import Any
 
 from strata.config import Thresholds, TimeEstimateSettings
-from strata.estimates.past_range import QUARTERS, Observation, months, quantile, survival
+from strata.estimates.past_range import QUARTERS, Observation, as_date, months, quantile, survival, whole
 from strata.lakehouse import governance
 from strata.tools.find_comparables import CATEGORIES
 
@@ -54,17 +53,6 @@ NUMERIC = ("estimated_amount_usd", "planned_days", "agency_packages", "agency_me
 
 def _sql(name: str) -> str:
     return (resources.files("strata.estimates") / "sql" / "time_estimate" / name).read_text()
-
-
-def _date(value) -> dt.date | None:
-    if value is None or value == "":
-        return None
-    return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
-
-
-def whole(value) -> int:
-    """A number rounded to a whole number, half up."""
-    return int(Decimal(str(value)).quantize(Decimal(1), ROUND_HALF_UP))
 
 
 def agency(step_reference: str) -> str:
@@ -96,13 +84,13 @@ def packages_as_of(reader, settings: TimeEstimateSettings) -> dict[str, Package]
     histories: dict[str, list[tuple[dt.date, int]]] = {}
     for row in measured.values():
         if not row["still_open"]:
-            histories.setdefault(agency(row["step_reference"]), []).append((_date(row["public_from"]), row["days"]))
+            histories.setdefault(agency(row["step_reference"]), []).append((as_date(row["public_from"]), row["days"]))
     scores = _Governance(reader, settings.governance_indicators)
     found = {}
     for row in reader.rows(_sql("features.sql")):
-        reference, day = row["step_reference"], _date(row["feature_date"])
+        reference, day = row["step_reference"], as_date(row["feature_date"])
         history = [days for public, days in histories.get(agency(reference), []) if public <= day]
-        notice_on, signing_on = _date(row["planned_notice_on"]), _date(row["planned_signing_on"])
+        notice_on, signing_on = as_date(row["planned_notice_on"]), as_date(row["planned_signing_on"])
         planned = (signing_on - notice_on).days if notice_on and signing_on and signing_on >= notice_on else None
         amount = row["estimated_amount_usd"]
         features = {
@@ -119,7 +107,7 @@ def packages_as_of(reader, settings: TimeEstimateSettings) -> dict[str, Package]
             "agency_median_days": float(statistics.median(history)) if history else None,
             **{f"governance:{code}": scores.on(row["country_code"], code, day) for code in settings.governance_indicators},
         }
-        package = Package(reference, day, _date(row["notice_date"]), row["plan_document_id"] is not None, features)
+        package = Package(reference, day, as_date(row["notice_date"]), row["plan_document_id"] is not None, features)
         if reference in measured:
             package.days, package.signed = measured[reference]["days"], not measured[reference]["still_open"]
         found[reference] = package
@@ -137,7 +125,7 @@ class _Governance:
         if indicators:
             for row in reader.rows(_sql("governance_dates.sql")):
                 if row["indicator_id"] in indicators:
-                    self.days.setdefault((row["country_code"], row["indicator_id"]), []).append(_date(row["public_from"]))
+                    self.days.setdefault((row["country_code"], row["indicator_id"]), []).append(as_date(row["public_from"]))
 
     def on(self, country: str | None, indicator: str, day: dt.date) -> float | None:
         changes = [change for change in self.days.get((country, indicator), []) if change <= day]
@@ -154,7 +142,7 @@ class _Governance:
 
 class XGBoostAFT:
     """XGBoost's accelerated failure time model: it learns log days from the features, with a package
-    still open as an interval from its days so far to forever. Its prediction is the middle in days."""
+    still open as an interval from its days so far to forever. It gives the middle in days."""
 
     name = "xgboost_aft"
 
@@ -221,6 +209,10 @@ class TimeEstimateModel:
     feature_names: tuple[str, ...] = field(default=())
     listed_packages: int = 0  # training packages a Procurement Plan listed by their feature date
     governance_packages: int = 0  # training packages with a governance score public by their feature date
+    proper_packages: int = 0  # training packages the learner learned from: those that did not size the ranges
+    # The day by which half of the calibration packages were signed (Kaplan-Meier, the still-open ones
+    # counted as not signed yet), which the model card compares with the packages it had not seen.
+    calibration_middle_days: int | None = None
 
     def columns(self, features: dict[str, Any]) -> list[float]:
         row = []
@@ -308,7 +300,10 @@ def fit(training: list[Package], settings: TimeEstimateSettings, thresholds: Thr
                               len(ordered), len(calibration), sum(1 for item in calibration if not item.signed), names,
                               sum(1 for item in ordered if item.listed),
                               sum(1 for item in ordered if any(item.features.get(f"governance:{code}") is not None
-                                                               for code in settings.governance_indicators)))
+                                                               for code in settings.governance_indicators)),
+                              len(proper),
+                              quantile(survival([Observation(item.days, bool(item.signed)) for item in calibration]),
+                                       QUARTERS["q50"]))
     lower = [float(max(item.days, 1)) for item in proper]
     learner.fit([model.columns(item.features) for item in proper], lower,
                 [low if item.signed else math.inf for low, item in zip(lower, proper)])

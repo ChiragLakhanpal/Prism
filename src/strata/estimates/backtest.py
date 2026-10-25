@@ -11,16 +11,22 @@ holds that alias yet, else as challenger, which must win its backtest before it 
 What a test year stores in strata.ops.evaluation_result, one measure per row (the 26 design brief,
 section 6.6):
 
-- training_packages, calibration_packages, calibration_still_open, listed_packages (those a plan
-  listed), governance_packages (those with a governance score public by then), training_through and
+- training_packages, calibration_packages, proper_packages (the others, which the learner learned
+  from), calibration_still_open, calibration_middle_days and _months (the day by which half of the
+  calibration packages were signed, Kaplan-Meier), listed_packages (those a plan listed),
+  governance_packages (those with a governance score public by then), training_through and
   feature_ranges, for the model the year learned; or abstention, a code, when it could not size ranges.
 - ranges_given and abstained: the test packages that got a range, and those that got an abstention
   instead (fewer than time_estimate.min_comparables comparables, outside the training range).
 - n, the packages it had not seen that it gave a range and whose outcome is known: signed by the
   outcomes date, or still open then and already past their 8-in-10 point. still_open_undecided counts
   the packages still open short of it, which are left out. m: those signed within their 8-in-10 point.
-  expected: what a well-sized range catches, 8 in 10 of n, whole. coverage, m / n to three decimals,
-  and in_band, 1 when it falls in the thresholds file's coverage band.
+  expected: what a well-sized range catches, 8 in 10 of n, whole. coverage, m / n to three decimals;
+  coverage_percent, the same as a whole percent; in_band, 1 when coverage falls in the thresholds
+  file's coverage band; and band_gap_points, for a year outside it, the percentage points between
+  coverage_percent and the nearer end of the band. unseen_middle_days and _months: the day by which
+  half of the n packages were signed (Kaplan-Meier, those still open counted as not signed yet), which
+  the model card compares with calibration_middle_days when it names a cause.
 - e25_days to e80_days: the middle of each point over the ranges given; width_80_months, the middle
   8-in-10 point, since the range runs from the notice to it; width_50_months, the middle half's width.
 - error_estimate_months, error_past_range_months and error_plan_months: the median distance from each
@@ -39,13 +45,13 @@ from __future__ import annotations
 import datetime as dt
 import statistics
 from dataclasses import dataclass
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from fractions import Fraction
 
 from strata.config import Thresholds, TimeEstimateSettings, load_thresholds, load_time_estimate
 from strata.estimates import harness, model_card
 from strata.estimates.harness import Reader, Replay, Score, Scored, Window
-from strata.estimates.past_range import QUARTERS, months
+from strata.estimates.past_range import QUARTERS, Observation, months, quantile, rounded, survival, whole
 from strata.estimates.time_estimate import NoModel, Package, fit, packages_as_of
 from strata.estimates.tracking import MODEL_CARD
 
@@ -53,14 +59,6 @@ SCORER = "time_estimate_backtest"
 TEST_YEAR = "test_year"
 REGISTERED = "registered_model"
 CHAMPION, CHALLENGER = "champion", "challenger"
-
-
-def _whole(value: Fraction) -> int:
-    return int((Decimal(value.numerator) / Decimal(value.denominator)).quantize(Decimal(1), ROUND_HALF_UP))
-
-
-def _share(value: Fraction) -> float:
-    return float((Decimal(value.numerator) / Decimal(value.denominator)).quantize(Decimal("0.001"), ROUND_HALF_UP))
 
 
 def _months(days) -> float:
@@ -72,9 +70,15 @@ def window(year: int, outcomes_through: dt.date) -> Window:
     return Window(dt.date(year, 1, 1), outcomes_through, TEST_YEAR, str(year))
 
 
+def _middle(name: str, days: int | None) -> list[Score]:
+    """A Kaplan-Meier middle in days and in months, or nothing when the curve never reached half."""
+    return [] if days is None else [Score(f"{name}_days", days), Score(f"{name}_months", _months(days))]
+
+
 def _model_scores(model) -> list[Score]:
     return [Score("training_packages", model.training_packages), Score("calibration_packages", model.calibration_packages),
-            Score("calibration_still_open", model.calibration_still_open),
+            Score("proper_packages", model.proper_packages), Score("calibration_still_open", model.calibration_still_open),
+            *_middle("calibration_middle", model.calibration_middle_days),
             Score("listed_packages", model.listed_packages), Score("governance_packages", model.governance_packages),
             Score("training_through", text=model.training_through.isoformat()),
             Score("feature_ranges", text=harness.as_json(model.feature_ranges))]
@@ -119,7 +123,7 @@ class TimeEstimateBacktest:
 
 def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, thresholds: Thresholds) -> list[Score]:
     cutoff = replay.window.cutoff
-    given, abstained, undecided, n, m, ran_longer_middle, errors = [], 0, 0, 0, 0, 0, []
+    given, abstained, undecided, n, m, ran_longer_middle, errors, scored = [], 0, 0, 0, 0, 0, [], []
     for item in unseen:
         found = replay.inputs.call("find_comparables", step_reference=item.step_reference)
         estimate = model.estimate(item.features, len(found["rows"]), cutoff, thresholds)
@@ -131,10 +135,12 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
         if outcome["still_open"]:
             if outcome["days"] > days["q80"]:  # still open past its 8-in-10 point: a known miss
                 n, ran_longer_middle = n + 1, ran_longer_middle + 1
+                scored.append(Observation(outcome["days"], False))
             else:
                 undecided += 1
             continue
         actual = outcome["days"]
+        scored.append(Observation(actual, True))
         n, m, ran_longer_middle = n + 1, m + (actual <= days["q80"]), ran_longer_middle + (actual > days["q50"])
         past = ((found.get("past_range") or {}).get("days") or {}).get("q50")
         planned = item.features["planned_days"]
@@ -142,19 +148,23 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
             errors.append((abs(actual - days["q50"]), abs(actual - past), abs(actual - planned)))
     fewest = int(thresholds.value("time_estimate.min_unseen_packages"))
     scores = [Score("ranges_given", len(given)), Score("abstained", abstained), Score("still_open_undecided", undecided),
-              Score("n", n), Score("m", m), Score("expected", _whole(QUARTERS["q80"] * n)),
+              Score("n", n), Score("m", m), Score("expected", whole(QUARTERS["q80"] * n)),
               Score("misses_early", 0), Score("misses_late", n - m),
               Score("middle_ran_longer", ran_longer_middle), Score("middle_total", n),
               Score("eight_in_ten_ran_longer", n - m), Score("eight_in_ten_total", n),
               Score("error_packages", len(errors))]
     if n:
-        coverage = _share(Fraction(m, n))
-        low, high = (float(thresholds.value("time_estimate.coverage_low")),
-                     float(thresholds.value("time_estimate.coverage_high")))
-        scores += [Score("coverage", coverage), Score("in_band", int(low <= coverage <= high))]
+        share = Fraction(m, n)
+        low, high = (Fraction(str(thresholds.value("time_estimate.coverage_low"))),
+                     Fraction(str(thresholds.value("time_estimate.coverage_high"))))
+        scores += [Score("coverage", float(rounded(share, 3))), Score("coverage_percent", whole(100 * share)),
+                   Score("in_band", int(low <= share <= high))]
+        if not low <= share <= high:
+            scores.append(Score("band_gap_points", whole(100 * abs(share - (low if share < low else high)))))
+        scores += _middle("unseen_middle", quantile(survival(scored), QUARTERS["q50"]))
     if n >= fewest:
-        scores += [Score("middle_in10", _whole(Fraction(10 * ran_longer_middle, n))),
-                   Score("eight_in_ten_in10", _whole(Fraction(10 * (n - m), n)))]
+        scores += [Score("middle_in10", whole(Fraction(10 * ran_longer_middle, n))),
+                   Score("eight_in_ten_in10", whole(Fraction(10 * (n - m), n)))]
     if given:
         scores += [Score(f"e{name[1:]}_days", statistics.median(point[name] for point in given)) for name in QUARTERS]
         scores += [Score("width_80_months", _months(statistics.median(point["q80"] for point in given))),
@@ -201,14 +211,16 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
         champion, no_model = train(engine, through, settings, thresholds), None
     except NoModel as no:
         champion, no_model = None, no
-    card = model_card.render(stored_years(store, run_id), champion, no_model, settings, thresholds, through)
+    years_stored = stored_years(store, run_id)
+    card = model_card.render(years_stored, champion, no_model, settings, thresholds, through)
     mlflow_run = tracker.start_run("time_estimate model", {**scorer.params(), "run_id": run_id,
                                                            "training_through": through.isoformat()})
     tracker.log_text(mlflow_run, card, MODEL_CARD)
     version = alias = None
     if champion is not None:
         tracker.log_model(mlflow_run, champion)
-        version = tracker.register(mlflow_run, settings.registered_model, card)
+        summary = model_card.sentence(model_card.track_record(years_stored, thresholds))
+        version = tracker.register(mlflow_run, settings.registered_model, card, summary)
         alias = CHAMPION if tracker.alias_version(settings.registered_model, CHAMPION) is None else CHALLENGER
         tracker.set_alias(settings.registered_model, alias, version)
         rows = [Score("version", version), Score("alias", text=alias), *_model_scores(champion)]

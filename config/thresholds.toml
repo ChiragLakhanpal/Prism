@@ -156,6 +156,12 @@ min_unseen_packages = 20
 # and the 45 design brief's dashboard target lines read these two values, so the band is set once.
 coverage_low = 0.75
 coverage_high = 0.85
+# For a test year short of the band, the model card names still-open packages as a likely cause when
+# at least this share of the packages that sized the range were still open at the cutoff, and the
+# stored middles do not already show that the year's packages took longer. Source: the ticket 25
+# review, round 2 (a quarter: enough still-open packages to pull a range sized on the rest short); a
+# starting value for the owner to confirm.
+cause_still_open_share = 0.25
 
 # What-ifs (tickets 25 and 26): a range for the comparables that went with one option, such as
 # prequalification or 3 lots.

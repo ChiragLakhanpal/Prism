@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from strata.estimates import backtest, harness
+from strata.estimates import backtest, harness, model_card
 from strata.estimates.tracking import OfflineTracker
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
@@ -135,6 +135,14 @@ def hand_made(tmp_path) -> DuckDBEngine:
     return engine
 
 
+@pytest.fixture
+def hand_made_engine(tmp_path):
+    """The hand-made set for one test, closed after it."""
+    engine = hand_made(tmp_path)
+    yield engine
+    engine.close()
+
+
 def run_2021(engine, tracker=None):
     return backtest.run(engine, tracker or OfflineTracker(), years=(2021,), outcomes_through=KNOWN["outcomes_through"])
 
@@ -150,9 +158,11 @@ def ran_2021(tmp_path_factory):
 
 # ── The known answer ─────────────────────────────────────────────────────
 
-KNOWN_SCORES = ("training_packages", "calibration_packages", "calibration_still_open", "e25_days", "e50_days",
-                "e75_days", "e80_days", "ranges_given", "abstained", "still_open_undecided", "n", "m", "expected",
-                "coverage", "width_80_months", "width_50_months", "error_packages", "error_estimate_months",
+KNOWN_SCORES = ("training_packages", "calibration_packages", "proper_packages", "calibration_still_open",
+                "calibration_middle_days", "calibration_middle_months", "e25_days", "e50_days", "e75_days",
+                "e80_days", "ranges_given", "abstained", "still_open_undecided", "n", "m", "expected", "coverage",
+                "coverage_percent", "band_gap_points", "unseen_middle_days", "unseen_middle_months",
+                "width_80_months", "width_50_months", "error_packages", "error_estimate_months",
                 "error_past_range_months", "error_plan_months", "middle_ran_longer", "middle_in10",
                 "eight_in_ten_ran_longer", "eight_in_ten_in10")
 
@@ -194,8 +204,8 @@ def publish_after_the_cutoff(engine):
         "procurement_category": "Works", "procurement_method": "Request for Bids", "public_from": dt.date(2021, 1, 20)}])
 
 
-def test_rows_made_public_after_the_cutoff_change_none_of_the_scores(tmp_path):
-    engine = hand_made(tmp_path)
+def test_rows_made_public_after_the_cutoff_change_none_of_the_scores(hand_made_engine):
+    engine = hand_made_engine
     publish_after_the_cutoff(engine)
 
     run_2021(engine)
@@ -222,14 +232,42 @@ class ReadsEveryContract:
         return harness.Scored([])
 
 
-def test_the_harness_refuses_a_row_a_scorer_reads_from_after_its_cutoff(tmp_path):
-    engine = hand_made(tmp_path)
+def test_the_harness_refuses_a_row_a_scorer_reads_from_after_its_cutoff(hand_made_engine):
+    engine = hand_made_engine
     window = harness.Window(KNOWN["cutoff"], KNOWN["outcomes_through"], "test_year", "2021")
 
     with pytest.raises(harness.LeakageError, match="frozen at 2021-01-01"):
         harness.replay(engine, ReadsEveryContract(), window, OfflineTracker(), "run-1",
                        dt.datetime(2026, 10, 24, tzinfo=dt.UTC))
     assert harness.latest_run(engine, ReadsEveryContract.name) is None
+
+
+class LeavesOutPublicFrom:
+    """A scorer whose query leaves out public_from, so the harness could not check its rows."""
+
+    name, model = "unchecked_scorer", None
+
+    def score(self, replay):
+        replay.inputs.rows("SELECT contract_id FROM strata.gold.contract WHERE contract_signing_date <= :as_of")
+        return harness.Scored([])
+
+
+def test_the_harness_refuses_a_query_whose_rows_it_cannot_check(hand_made_engine):
+    window = harness.Window(KNOWN["cutoff"], KNOWN["outcomes_through"], "test_year", "2021")
+
+    with pytest.raises(harness.LeakageError, match="public_from"):
+        harness.replay(hand_made_engine, LeavesOutPublicFrom(), window, OfflineTracker(), "run-1",
+                       dt.datetime(2026, 10, 24, tzinfo=dt.UTC))
+    assert harness.latest_run(hand_made_engine, LeavesOutPublicFrom.name) is None
+
+
+def test_the_past_range_the_errors_are_measured_against_is_find_comparables_as_of_the_cutoff(ran_2021):
+    engine, _, _ = ran_2021
+
+    found = harness.Reader(engine, KNOWN["cutoff"], backtest.load_thresholds()).call(
+        "find_comparables", step_reference="KE-S01-200001-CW-RFB")
+
+    assert found["past_range"]["days"]["q50"] == KNOWN["past_range_middle_days"]
 
 
 # ── MLflow, Unity Catalog and the model card ─────────────────────────────
@@ -255,6 +293,10 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     assert (run.version, run.alias, tracker.alias_version(MODEL, "champion")) == (1, "champion", 1)
     card = tracker.models[MODEL][0].card
     assert card == run.card == tracker.runs[tracker.models[MODEL][0].run_id].texts["model_card.md"]
+    # Unity Catalog's description gives the track-record sentence the card was written with.
+    assert tracker.models[MODEL][0].summary == backtest.track_record_sentence(engine) == (
+        "Of 23 packages from 2021 that Strata had not seen, 14 finished inside its 8-in-10 range, where a "
+        "well-sized range catches about 18.")
     for section in ("## Data", "## Features", "## What it never reads", "## Backtests", "## Coverage",
                     "## Track record", "## When it gives no range"):
         assert section in card
@@ -262,15 +304,18 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     assert (f"| 2021 | {KNOWN['n']} | {KNOWN['m']} | {KNOWN['expected']} | {KNOWN['width_80_months']:.1f} | "
             f"{KNOWN['width_50_months']:.1f} | {KNOWN['error_estimate_months']:.1f} | "
             f"{KNOWN['error_past_range_months']:.1f} | {KNOWN['error_plan_months']:.1f} | {year['mlflow_run_id']} |") in card
-    # 14 of 23 is 61 percent, under the 75 to 85 percent band: the card says so and why.
-    assert (f"2021: {KNOWN['m']} of {KNOWN['n']} finished inside the 8-in-10 range (61 percent), outside the band. "
-            "Shortfall: 14 percentage points. A likely cause:") in card
+    # 14 of 23 is 61 percent, under the 75 to 85 percent band: the card says so, and gives the cause the
+    # stored middles show, in months: the packages it had not seen took longer than those that sized the range.
+    assert (f"- 2021: {KNOWN['m']} of {KNOWN['n']} finished inside the 8-in-10 range (61 percent), outside the band. "
+            "Short of the band by 14 percentage points. A likely cause: half of the packages from 2021 that Strata "
+            "had not seen were signed within 6.6 months, against 4.4 months for the 20 packages that sized the "
+            "range. A range sized on earlier years is short when cycle times grow.") in card
     assert "Fewer than 20 comparable packages, subgroups included" in card
     assert "Signed amounts" in card and "ICR" in card and "Revised dates" in card and "Later ratings" in card
 
 
-def test_a_second_run_is_appended_and_its_model_waits_as_challenger(tmp_path):
-    engine, tracker = hand_made(tmp_path), OfflineTracker()
+def test_a_second_run_is_appended_and_its_model_waits_as_challenger(hand_made_engine):
+    engine, tracker = hand_made_engine, OfflineTracker()
     first = run_2021(engine, tracker)
 
     second = run_2021(engine, tracker)
@@ -283,11 +328,12 @@ def test_a_second_run_is_appended_and_its_model_waits_as_challenger(tmp_path):
 
 # ── The track record ─────────────────────────────────────────────────────
 
-def store_a_test_year(engine, year, n, m, ran_at=dt.datetime(2030, 1, 1, tzinfo=dt.UTC)):
-    """A run's stored counts for one test year, written as any scorer's results are."""
+def store_a_test_year(engine, year, n, m, ran_at=dt.datetime(2030, 1, 1, tzinfo=dt.UTC), **measures):
+    """A run's stored counts for one test year, and any other measures, written as any scorer's results are."""
     window = harness.Window(dt.date(year, 1, 1), dt.date(year + 1, 6, 30), "test_year", str(year))
     scores = [harness.Score("n", n), harness.Score("m", m), harness.Score("expected", round(0.8 * n)),
-              harness.Score("misses_early", 0), harness.Score("misses_late", n - m)]
+              harness.Score("misses_early", 0), harness.Score("misses_late", n - m),
+              *(harness.Score(measure, value) for measure, value in measures.items())]
     harness.write(engine, [harness.row(f"run-{ran_at:%Y}", backtest.TimeEstimateBacktest(backtest.load_time_estimate()),
                                        window, score, f"mlflow-run-{ran_at:%Y}", ran_at) for score in scores])
 
@@ -302,8 +348,8 @@ def test_the_track_record_comes_from_the_stored_backtest(ran_2021):
         "mlflow_run_id": backtest.stored_years(engine)[2021]["mlflow_run_id"], "abstention": None}
 
 
-def test_the_track_record_is_read_from_the_latest_stored_run_never_typed(tmp_path):
-    engine = hand_made(tmp_path)
+def test_the_track_record_is_read_from_the_latest_stored_run_never_typed(hand_made_engine):
+    engine = hand_made_engine
     store_a_test_year(engine, 2024, n=40, m=30)
 
     store_a_test_year(engine, 2025, n=31, m=25, ran_at=dt.datetime(2031, 1, 1, tzinfo=dt.UTC))
@@ -315,14 +361,45 @@ def test_the_track_record_is_read_from_the_latest_stored_run_never_typed(tmp_pat
         "well-sized range catches about 25.")
 
 
-def test_the_track_record_abstains_when_the_latest_test_year_has_fewer_than_20_unseen_packages(tmp_path):
-    engine = hand_made(tmp_path)
+def test_the_track_record_abstains_when_the_latest_test_year_has_fewer_than_20_unseen_packages(hand_made_engine):
+    engine = hand_made_engine
     store_a_test_year(engine, 2025, n=19, m=15)
 
     assert backtest.track_record(engine) == {"year": 2025, "abstention": {
         "reason": "too_few_unseen_packages", "n": 19, "min_unseen_packages": 20}}
     assert backtest.track_record_sentence(engine) == (
         "Strata has fewer than 20 packages from 2025 that it had not seen, so it gives no track record yet.")
+
+
+# ── Coverage in the model card ───────────────────────────────────────────
+
+def test_a_year_outside_the_band_names_only_a_cause_its_stored_results_show(hand_made_engine):
+    engine, sized = hand_made_engine, {"calibration_packages": 20, "calibration_middle_months": 4.4}
+    outside = {"in_band": 0, "band_gap_points": 15, "coverage": 0.6, "coverage_percent": 60}
+    store_a_test_year(engine, 2022, n=7, m=5)
+    # Short of the band, but these packages were signed no later than those that sized the range, and
+    # only two of those were still open: nothing stored shows why.
+    store_a_test_year(engine, 2023, n=20, m=12, **sized, **outside, calibration_still_open=2, unseen_middle_months=4.0)
+    # Short of the band, with six of the 20 that sized the range still open at the cutoff.
+    store_a_test_year(engine, 2024, n=20, m=12, **sized, **outside, calibration_still_open=6, unseen_middle_months=4.0)
+    # Above the band, and these packages were signed sooner than those that sized the range.
+    store_a_test_year(engine, 2025, n=20, m=19, **sized, in_band=0, band_gap_points=10, coverage=0.95,
+                      coverage_percent=95, calibration_still_open=6, unseen_middle_months=3.1)
+
+    lines = model_card.coverage(backtest.stored_years(engine), backtest.load_thresholds())
+
+    assert lines[2:] == [
+        "- 2022: Strata could score only seven packages it had not seen, and it needs 20 to judge coverage.",
+        "- 2023: 12 of 20 finished inside the 8-in-10 range (60 percent), outside the band. Short of the band by 15 "
+        "percentage points. The stored results do not show the cause.",
+        "- 2024: 12 of 20 finished inside the 8-in-10 range (60 percent), outside the band. Short of the band by 15 "
+        "percentage points. A likely cause: six of the 20 packages that sized the range were still open at the "
+        "cutoff. Kaplan-Meier keeps them as not signed yet, but the range still rests mostly on packages that "
+        "signed quickly, so it came out short.",
+        "- 2025: 19 of 20 finished inside the 8-in-10 range (95 percent), outside the band. Above the band by 10 "
+        "percentage points. A likely cause: half of the packages from 2025 that Strata had not seen were signed "
+        "within 3.1 months, against 4.4 months for the 20 packages that sized the range, so the range was wider "
+        "than it needed to be."]
 
 
 # ── When the time estimate abstains ──────────────────────────────────────
@@ -335,8 +412,8 @@ def frozen_2021(engine):
     return model, backtest.packages_as_of(reader, settings), thresholds
 
 
-def test_a_package_with_fewer_than_20_comparables_or_a_subgroup_under_20_gets_an_abstention(tmp_path):
-    model, packages, thresholds = frozen_2021(hand_made(tmp_path))
+def test_a_package_with_fewer_than_20_comparables_or_a_subgroup_under_20_gets_an_abstention(hand_made_engine):
+    model, packages, thresholds = frozen_2021(hand_made_engine)
     features, cutoff = packages["KE-S01-200001-CW-RFB"].features, KNOWN["cutoff"]
 
     assert model.estimate(features, 19, cutoff, thresholds)["abstention"] == {
@@ -349,8 +426,8 @@ def test_a_package_with_fewer_than_20_comparables_or_a_subgroup_under_20_gets_an
             KNOWN["e25_months"], KNOWN["e50_months"], KNOWN["e75_months"], KNOWN["e80_months"])
 
 
-def test_the_time_estimate_abstains_before_its_training_date_and_outside_what_it_learned_from(tmp_path):
-    model, packages, thresholds = frozen_2021(hand_made(tmp_path))
+def test_the_time_estimate_abstains_before_its_training_date_and_outside_what_it_learned_from(hand_made_engine):
+    model, packages, thresholds = frozen_2021(hand_made_engine)
     features = packages["KE-S01-200001-CW-RFB"].features
 
     assert model.estimate(features, 40, dt.date(2020, 12, 31), thresholds)["abstention"] == {
