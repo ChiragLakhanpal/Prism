@@ -9,7 +9,7 @@
 import { createElement, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import { ApiError, postJson } from "../lib/api";
-import { draftHref } from "../lib/drafts";
+import { draftHref, type Draft } from "../lib/drafts";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import type { Change, ChoiceAnswer, DraftUse, NoticeBody, Tier, VersionBlock, VersionsView as VersionsViewData } from "../lib/lessonsPage";
 import { choiceUrl, draftTitle, rowLabel, versionsId } from "../lib/lessonsPage";
@@ -386,6 +386,7 @@ export function RowChoice<D>({
   canAct,
   onDone,
   earlierText,
+  partName,
 }: {
   record: { row_key: string; lesson_id: string; action: string; cited_version: number; current_version: number; reason: string | null; at: string; row_label: { n: number; risk_label: string } | null };
   kind: "updated" | "kept" | "removed";
@@ -393,6 +394,8 @@ export function RowChoice<D>({
   canAct: boolean;
   onDone: (answer: ChoiceAnswer<D>) => void;
   earlierText?: ReactNode;
+  // A part of a draft whose kind has no rows, by its heading, in place of the row label.
+  partName?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -431,7 +434,11 @@ export function RowChoice<D>({
         ) : kind === "kept" ? (
           <Fill template={n.keptCaption} slots={{ a: <Num value={record.cited_version} />, date, reason: record.reason ?? "" }} />
         ) : (
-          <Fill template={n.removedCaption} slots={{ n: String(record.row_label?.n ?? ""), risk: record.row_label?.risk_label ?? "", date }} />
+          record.row_label ? (
+            <Fill template={n.removedCaption} slots={{ n: String(record.row_label.n), risk: record.row_label.risk_label, date }} />
+          ) : (
+            <Fill template={n.removedPartCaption} slots={{ part: partName ?? "", date }} />
+          )
         )}
       </p>
       {kind === "updated" && earlierText && (
@@ -553,6 +560,34 @@ export function VersionsView({ view }: { view: VersionsViewData }) {
         </p>
       ))}
       {block(view.versions[1], true)}
+    </div>
+  );
+}
+
+// Under a part of a draft whose kind has no rows of its own, such as the Project Paper summary's PPSD part, which cites
+// the lessons its checked rows cite (ticket 39): the part's version notice, or the choice its author kept. A removed
+// part has left the notes, so the page lists it after them with RemovedParts.
+export function NoteLesson({ draft, noteKey, onDone }: { draft: Draft; noteKey: string; onDone: (draft: Draft) => void }) {
+  const canAct = Boolean(draft.lesson_can_act);
+  const notice = (draft.lesson_notices ?? []).find((one) => one.row_key === noteKey);
+  if (notice) {
+    const title = draftTitle(draft.kind, draft.subject as unknown as Record<string, string | null>);
+    return (
+      <DraftRowNotice<Draft> notice={notice} draftId={draft.draft_id} draftState={draft.state} title={title} canAct={canAct && notice.can_act} author={draft.author.name} onDone={(answer) => onDone(answer.draft)} />
+    );
+  }
+  const kept = (draft.lesson_kept ?? []).find((one) => one.row_key === noteKey);
+  return kept ? <RowChoice<Draft> record={kept} kind="kept" draftId={draft.draft_id} canAct={canAct} onDone={(answer) => onDone(answer.draft)} /> : null;
+}
+
+export function RemovedParts({ draft, names, onDone }: { draft: Draft; names: Record<string, string>; onDone: (draft: Draft) => void }) {
+  const removed = draft.lesson_removed ?? [];
+  if (removed.length === 0) return null;
+  return (
+    <div className="flex flex-col" data-removed-parts>
+      {removed.map((entry) => (
+        <RowChoice<Draft> key={`${entry.row_key}-${entry.lesson_id}`} record={entry} kind="removed" draftId={draft.draft_id} canAct={Boolean(draft.lesson_can_act)} partName={names[entry.row_key]} onDone={(answer) => onDone(answer.draft)} />
+      ))}
     </div>
   );
 }

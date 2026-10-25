@@ -180,7 +180,20 @@ test("the library's filters change the list at once, keep the address, and the c
   await expect(library.locator("#method-caption")).toHaveText("Lessons that name no method are included, because they apply to every method.");
   await expect(library.locator("[data-lesson-card]")).toHaveCount(1);
   expect(asked.some((call) => call.call === "GET /api/lessons/library" && call.search === "?method=Request+for+Quotations")).toBe(true);
-  await expect(library.getByRole("button", { name: "Reset the filters" })).toBeVisible();
+
+  // Going back to the starting filters asks again, so the list, the select and the address all follow.
+  const unfiltered = await recorded("lessons-library.json");
+  const again: string[] = [];
+  await page.route("**/api/lessons/library**", (route) => {
+    again.push(new URL(route.request().url()).search);
+    return route.fulfill({ contentType: "application/json", body: unfiltered });
+  });
+  await library.getByRole("button", { name: "Reset the filters" }).click();
+  await expect(library.locator("[data-lead]")).toHaveText("Showing all two current lessons, newest first.");
+  await expect(page).toHaveURL(/\/lessons$/);
+  await expect(library.getByLabel("Method")).toHaveValue("");
+  await expect(library.locator("[data-lesson-card]")).toHaveCount(2);
+  expect(again).toEqual([""]);
 });
 
 // ── The first visit and nothing new ──────────────────────────────────────
@@ -243,4 +256,15 @@ test("a lesson retired as wrong holds the draft's export, and the hold line link
   const hold = page.locator("[data-hold-line]");
   await expect(hold).toContainText("remove or keep, with a reason, one row that cites a lesson retired as wrong");
   await expect(hold.locator("[data-hold-link=lessonRetiredWrong]")).toHaveAttribute("href", "#notice-permits_before_award");
+});
+
+test("on a Project Paper summary, the PPSD part that cites a lesson retired as wrong shows its notice, and the hold links to it", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "GET /api/drafts/draft-0003": await file("drafts-paper-lesson-retired.json") });
+  await page.goto("/drafts/draft-0003");
+  const part = page.locator("[data-paper-part=ppsd]");
+  await expect(part.locator("#notice-ppsd[data-row-notice=retired_wrong]")).toContainText("retired as wrong");
+  await expect(part.getByRole("button", { name: /^Remove the row/ })).toBeVisible();
+  const hold = page.locator("[data-hold-line]");
+  await expect(hold.locator("[data-hold-link=lessonRetiredWrong]")).toHaveAttribute("href", "#notice-ppsd");
 });

@@ -54,9 +54,14 @@ class LessonsStory(ppsd_story.Story):
         self.cases |= load_cases(ROW_UPDATES)
 
     def app_options(self, state) -> dict:
+        # A copy of a built story already holds its drafts, so a draft written later takes the next free id.
+        with DuckDBEngine.open(self.state_db, read_only=True) as engine:
+            [(taken,)] = engine.run("SELECT count(DISTINCT draft_id) FROM strata.ops.drafts").rows
+        ids = iter(f"draft-{number:04d}" for number in range(int(taken) + 1, 100))
         # The weekly retrieval run's per-person counts are read from the app state's strata.ops, as the app's own.
         return {"lessons": LessonReview(ROLES, today=lambda: self.at.date(), now=lambda: self.at),
-                "visits": LessonVisits(state), "today": lambda: self.at.date(), "feedback_record": state}
+                "visits": LessonVisits(state), "today": lambda: self.at.date(), "feedback_record": state,
+                "new_draft_id": lambda: next(ids)}
 
     def update(self, draft_id: str, case: str = "ppsd-row-update-cost-estimates", headers=ANA, **body):
         """"Update the row" on a draft's cost estimates row, with the scripted writer replaying a row update."""

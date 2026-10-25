@@ -90,6 +90,15 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, prebuilt: tuple[tuple[P
         json={"lesson_id": story_of.IEG_LESSON, "action": "remove", "expected_cited_version": 1,
               "expected_current_version": 3}))
 
+    # A Project Paper summary drawn from the checked rows cites the rebidding lesson in its PPSD part, so retiring that
+    # lesson as wrong holds the summary's export too.
+    story = fresh("paper")
+    _, paper = story.summarize()
+    story_of.scenario.recheck(story.database, story_of.REBIDDING_LESSON, dt.date(2026, 10, 30), "retire_wrong",
+                              reason=WRONG)
+    story.act(paper, "check", "draft")
+    found["drafts-paper-lesson-retired.json"] = text(story.get(f"/api/drafts/{paper}"))
+
     # Keeping version 1, and updating the row, on the changed lesson.
     story = fresh("choices")
     found["lessons-choice-kept.json"] = text(story.call(

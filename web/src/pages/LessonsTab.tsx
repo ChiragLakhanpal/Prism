@@ -334,28 +334,39 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   const [library, setLibrary] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const first = useRef(search);
+  // The query the list shows, and the one last asked for: the page's own answer serves the first, so only a later
+  // change asks again, including a change back to the starting filters or to page 1.
+  const shown = useRef(libraryQuery(search));
+  const asked = useRef(shown.current);
   const countRef = useRef<HTMLParagraphElement>(null);
   const here = useStore(address);
   const seen = useStore(visitedStore);
   const query = libraryQuery(search);
   useEffect(() => {
-    if (query === libraryQuery(first.current)) return;
+    if (query === asked.current) return;
+    asked.current = query;
     const controller = new AbortController();
     setBusy(true);
     getJson<LibraryAnswer>(`/api/lessons/library${query}`, { signal: controller.signal }).then(
       (found) => {
+        shown.current = query;
         setLibrary(found);
         setBusy(false);
         setFailed(false);
       },
       () => {
         if (controller.signal.aborted) return;
+        asked.current = shown.current;
         setBusy(false);
         setFailed(true);
       },
     );
-    return () => controller.abort();
+    return () => {
+      // A request cut short, by a newer change or by StrictMode's second run, is asked again next time.
+      if (asked.current !== shown.current) asked.current = shown.current;
+      controller.abort();
+      setBusy(false);
+    };
   }, [query]);
   const change = (next: Filters) => navigate(libraryHref(next), { replace: true, quiet: true });
   const noun = server.count.nouns[library.status][library.of === 1 ? "one" : "many"];

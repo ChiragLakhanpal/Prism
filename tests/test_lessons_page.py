@@ -205,6 +205,28 @@ def test_a_removed_row_can_be_restored_and_its_notice_and_hold_come_back(story):
                                                                  ("restore", "permits_before_award")]
 
 
+def test_a_project_paper_summary_that_cites_a_lesson_retired_as_wrong_is_held_until_its_part_is_removed(story):
+    """The summary's PPSD part cites the rows' lesson at its version, so a retirement as wrong holds its export too."""
+    _, paper = story.summarize()
+    story_of.scenario.recheck(story.database, story_of.REBIDDING_LESSON, dt.date(2026, 10, 30), "retire_wrong",
+                              reason=WRONG)
+    story.act(paper, "check", "draft")
+
+    draft = story.get(f"/api/drafts/{paper}").json()
+    assert [(notice["row_key"], notice["tier"], notice["actions"]) for notice in draft["lesson_notices"]] == [
+        ("ppsd", "retired_wrong", ["remove", "keep"])]
+    assert [(hold["key"], hold["first_anchor"]) for hold in draft["holds"]] == [("lessonRetiredWrong", "notice-ppsd")]
+    held = story.act(paper, "export", "checked")
+    assert (held.status_code, held.json()["code"], held.json()["holds"]) == (409, "held", ["lessonRetiredWrong"])
+
+    removed = choose(story, paper, "ppsd", lesson_id=story_of.REBIDDING_LESSON, action="remove",
+                     expected_cited_version=1, expected_current_version=3)
+
+    assert removed.status_code == 200 and removed.json()["draft"]["holds"] == []
+    assert [note["key"] for note in removed.json()["draft"]["notes"]] == ["plan", "record"]
+    assert story.act(paper, "export", "checked").json()["state"] == "exported"
+
+
 def query_choices(story):
     return rows(story.state_db, "SELECT action, row_key, reason, draft_state, actor_id FROM "
                                 "strata.ops.draft_lesson_choices ORDER BY draft_id, choice_no")

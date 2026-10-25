@@ -6110,6 +6110,7 @@ export const copy = {
     goneBack: "The row cites version {a} again.",
     keptCaption: "This row cites version {a}. You kept it on {date}. Your reason: \"{reason}\"",
     removedCaption: "You removed row {n}, {risk}, on {date}. It stays on record, and the Word file leaves it out.",
+    removedPartCaption: "You removed the part \"{part}\" on {date}. It stays on record, and the Word file leaves it out.",
     restore: "Restore the row",
     restored: "I restored the row.",
     teammate: "Only {name} can choose what happens to this row.",

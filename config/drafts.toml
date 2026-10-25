@@ -55,7 +55,7 @@ word = "strata.drafts.review_notes:word"
 export = "word"
 csv = []
 columns = ["activity", "note"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_review_notes"]
@@ -71,7 +71,7 @@ word = "strata.drafts.mission_brief:word"
 export = "word"
 csv = []
 columns = ["plans", "awards", "ratings", "disbursement", "closing"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_mission_brief"]
@@ -111,7 +111,7 @@ word = "strata.drafts.project_paper:word"
 export = "word"
 csv = []
 columns = ["plan", "record", "ppsd"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_project_paper"]
@@ -146,6 +146,8 @@ capability = "export"
 
 # Ticket 39: a row that cites a lesson a lead retired as wrong, until its author removes the row or keeps it with a
 # reason. A change of wording or a retirement as out of date holds nothing; its notice on the row is the reminder.
+# Every kind lists it, because any note can cite a lesson version: the Project Paper summary's PPSD part cites the
+# lessons its checked rows cite. On a draft that cites no lesson it holds nothing.
 [holds.lessonRetiredWrong]
 test = "strata.drafts.holds:lesson_retired_wrong"
 copy = "lessonRetiredWrong"
