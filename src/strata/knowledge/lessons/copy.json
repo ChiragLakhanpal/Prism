@@ -83,6 +83,11 @@
     "lastJoin": ", and ",
     "pairJoin": " and "
   },
+  "newMore": {
+    "one": "{count} more new lesson is in {link}, which lists the newest first.",
+    "many": "{count} more new lessons are in {link}, which lists the newest first."
+  },
+  "newMoreLink": "the library below",
   "count": {
     "all": "Showing all {m} {noun}, newest first.",
     "range": "Showing {from}–{to} of {m} {noun}, newest first.",
@@ -118,6 +123,7 @@
     "fixedAndRecited": "You marked {marked} passages as wrong; {fixed} {isAre} fixed, and {recited} answers now cite the right paragraph.",
     "fixed": "You marked {marked} passages as wrong; {fixed} {isAre} fixed.",
     "oneFixed": "You marked one passage as wrong, and it is fixed. {recited} answers now cite the right paragraph.",
+    "oneFixedOnly": "You marked one passage as wrong, and it is fixed.",
     "waiting": "You marked {marked} passages as wrong. A reviewer hasn't decided on {themIt} yet.",
     "kept": "You marked {marked} passages as wrong. Reviewers kept their ranking, and the evidence drawer shows why.",
     "isAre": {

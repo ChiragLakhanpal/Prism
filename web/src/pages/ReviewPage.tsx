@@ -111,6 +111,9 @@ function Tags({ item }: { item: ReviewItem }) {
     [t.risk_factors, <span key="f" className="flex flex-wrap gap-2">{(item.tags.risk_factors ?? []).map((factor) => <Tag key={factor.key}>{factor.label}</Tag>)}</span>],
     [t.stage, item.tags.stage?.label ?? ""],
     [t.kind, item.tags.kind?.label ?? ""],
+    // Ticket 39: procurement categories and selection methods; none means every one.
+    [t.categories, (item.tags.categories ?? []).map((tag) => tag.label).join(copy.list.comma) || t.none],
+    [t.methods, (item.tags.methods ?? []).map((tag) => tag.label).join(copy.list.comma) || t.none],
     [t.rules, item.tags.edition ? item.tags.edition.short : words.card.rulesUnknown],
     [t.project, <Fill key="p" template={words.queue.project} slots={{ name: item.project.name ?? "", pid: <ProjectId pid={item.project.pid} /> }} />],
     [t.sector, item.tags.sector ?? ""],

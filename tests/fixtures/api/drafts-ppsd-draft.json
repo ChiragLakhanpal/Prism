@@ -641,6 +641,7 @@
   "lesson_updated": [],
   "lesson_kept": [],
   "lesson_removed": [],
+  "lesson_can_act": true,
   "ppsd": {
     "form": "short",
     "forms": {

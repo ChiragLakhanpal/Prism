@@ -36,6 +36,7 @@ from strata.agent.verifier import find_quote
 from strata.config import (Editions, LessonLists, Person, Roles, Thresholds, load_editions, load_lesson_lists,
                            load_thresholds)
 from strata.dbx import Viewer
+from strata.knowledge.lessons import tags as lesson_tags
 from strata.knowledge.lessons.propose import IEG_TYPES, PASSED, item_id
 from strata.lakehouse.engine import Engine
 from strata.reader.templates import template_for
@@ -64,6 +65,7 @@ ITEM_COLUMNS = ("item_id", "kind", "proposal_id", "lesson_id", "version", "decid
                 "decided_region", "origin", "origin_by", "origin_by_name", "origin_reason", "origin_item_id",
                 "entered_on", "due_on", "created_at", "public_from")
 TAGS = ("statement", "risk_factors", "stage", "kind")
+TAG_COLUMNS = ("lesson_id", "version", "categories", "methods", "public_from")  # strata.ops.lesson_version_tags
 
 
 @cache
@@ -389,6 +391,9 @@ class LessonReview:
                              if (item := self.lists.risk_factor(key))],
             "stage": self._item(self.lists.stage(row["stage"])), "kind": self._item(self.lists.kind(row["kind"])),
             "edition": self._edition(row.get("edition_key")),
+            # Ticket 39: procurement categories and selection methods, from the package form's lists.
+            "categories": [{"key": key, "label": lesson_tags.label("categories", key)} for key in _json(row.get("categories"), [])],
+            "methods": [{"key": key, "label": lesson_tags.label("methods", key)} for key in _json(row.get("methods"), [])],
         }
 
     @staticmethod
@@ -616,7 +621,7 @@ class LessonReview:
                        "next_version": self._next_version(store, item["lesson_id"]) if item["kind"] == "recheck" else None},
             "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item),
             "history": self.history(store, item),
-            "outcome": self.outcome(store, item), "lists": self.lists.as_dict(),
+            "outcome": self.outcome(store, item), "lists": {**self.lists.as_dict(), **lesson_tags.as_dict()},
             "limits": {"reason_max_chars": int(self.value("reason_max_chars")),
                        "statement_max_chars": int(self.value("statement_max_chars")),
                        "sample_percent": round(float(self.value("cross_check_share")) * 100),
@@ -737,8 +742,10 @@ class LessonReview:
     # ── The library ──────────────────────────────────────────────────────
 
     def card(self, store: Store, lesson_id: str) -> dict:
-        """One lesson card, naming roles and never people (the 29 brief, section 4.1)."""
+        """One lesson card, naming roles and never people (the 29 brief, section 4.1). A retired lesson's card says
+        when and why a lead retired it, by role (ticket 39)."""
         latest = store.latest(lesson_id)
+        retired = latest["state"] in RETIRED.values()
         evidence = self._proposal_evidence(store, store.lesson_proposals(lesson_id))
         project = store.projects.get(latest["project_id"]) or {}
         recheck = store.open_recheck(lesson_id)
@@ -747,33 +754,101 @@ class LessonReview:
             "lesson_id": lesson_id, "version": _int(latest["version"]), "statement": latest["statement"],
             **self.tags(latest), "sector": project.get("sector_name"), "pid": latest["project_id"],
             **self.ieg(store,evidence, latest["project_id"]), "decided_on": _iso(latest["decided_on"]),
-            "state": "rechecking" if recheck else "current",
+            "state": latest["state"] if retired else "rechecking" if recheck else "current",
             "rechecking_since": _iso(recheck["entered_on"]) if recheck else None,
+            "retired": {"as": latest["state"], "on": _iso(latest["decided_on"]), "reason": latest["reason"]}
+            if retired else None,
             "region": project.get("region"),
             "quote": first["quote"] if first else None,
             "evidence": [self.evidence_row(store,row) for row in evidence],
         }
 
-    def library(self, engine: Engine, viewer: Viewer, page: int = 1) -> dict:
-        """The library's current lessons, and those being re-checked, newest decision first. Retired lessons
-        are left out. The order is by date, never by use."""
-        store = self._load(engine)
-        current = [versions[-1] for versions in store.versions.values() if versions[-1]["state"] == "current"]
+    # Ticket 39: the library's filters. Status sets the population; stage, method and sector narrow it.
+    STATUSES = ("current", "rechecking", "retired")
+    NARROWING = ("stage", "method", "sector")
+
+    def library(self, engine: Engine, viewer: Viewer, page: int = 1, filters: dict | None = None,
+                show: str | None = None, store: Store | None = None) -> dict:
+        """The library, newest decision first, by date and never by use, eight cards a page (the 39 brief, section
+        4.8). Status sets the population: current (the default, with lessons being re-checked), being re-checked, or
+        retired, which only that status shows. Stage, method and sector narrow it; a lesson that names no method
+        applies to every method, so each method keeps it. A proposed lesson is never in the library, for anyone.
+        show opens the page that holds a lesson, under the status that holds it and no other filter. A filter value
+        no closed list holds is left out, and unknown_filter says so. The count line is built here, with each
+        count's form, so "N of M" always compares like with like."""
+        store = store or self._load(engine)
+        asked = {key: (value or None) for key, value in (filters or {}).items()}
+        latest = {lesson_id: versions[-1] for lesson_id, versions in store.versions.items()}
+
+        def status_of(row: dict) -> str:
+            if row["state"] != "current":
+                return "retired"
+            return "rechecking" if store.open_recheck(row["lesson_id"]) else "current"
 
         def decided_at(row: dict) -> str:
             act = store.act(store.items.get(row["item_id"]) or {"item_id": row["item_id"]}, "decide")
             return str(act["acted_at"]) if act else ""
-        current.sort(key=lambda row: (_iso(row["decided_on"]), decided_at(row), row["lesson_id"]), reverse=True)
+
+        ordered = sorted(latest.values(), key=lambda row: (_iso(row["decided_on"]), decided_at(row), row["lesson_id"]),
+                         reverse=True)
+        sectors = sorted({(store.projects.get(row["project_id"]) or {}).get("sector_name") for row in ordered} - {None})
+        options = {"stage": [item.key for item in self.lists.stages], "method": [key for key, _ in lesson_tags.options("methods")],
+                   "sector": sectors, "status": list(self.STATUSES)}
+        unknown = any(value is not None and value not in options[key] for key, value in asked.items() if key in options)
+        chosen = {key: asked.get(key) if asked.get(key) in options[key] else None for key in options}
+        shown_id = show if show in latest else None
+        if shown_id:
+            chosen = {key: None for key in options}
+            chosen["status"] = "retired" if status_of(latest[shown_id]) == "retired" else "current"
+        status = chosen["status"] or "current"
+
+        def in_status(row: dict) -> bool:
+            found = status_of(row)
+            return found == "retired" if status == "retired" else found == "rechecking" if status == "rechecking" \
+                else found in ("current", "rechecking")
+
+        def narrowed(row: dict) -> bool:
+            methods = _json(row.get("methods"), [])
+            sector = (store.projects.get(row["project_id"]) or {}).get("sector_name")
+            return ((chosen["stage"] is None or row["stage"] == chosen["stage"])
+                    and (chosen["method"] is None or not methods or chosen["method"] in methods)
+                    and (chosen["sector"] is None or sector == chosen["sector"]))
+
+        population = [row for row in ordered if in_status(row)]
+        matching = [row for row in population if narrowed(row)]
         size = int(self.value("library_page_size"))
-        pages = max(1, -(-len(current) // size))
-        shown = current[(page - 1) * size: page * size] if 1 <= page <= pages else []
+        pages = max(1, -(-len(matching) // size))
+        if shown_id:
+            page = next(index // size + 1 for index, row in enumerate(matching) if row["lesson_id"] == shown_id)
+        shown = matching[(page - 1) * size: page * size] if 1 <= page <= pages else []
         person = self.reviewer(viewer)
+        first, last = ((page - 1) * size + 1 if shown else 0), (page - 1) * size + len(shown)
         return {"as_of": self.today().isoformat(), "page": page, "pages": pages, "page_size": size,
-                "total": len(current), "from": (page - 1) * size + 1 if shown else 0,
-                "to": (page - 1) * size + len(shown), "can_recheck": person is not None,
+                "total": len(matching), "of": len(population), "from": first, "to": last,
+                "status": status, "filters": chosen, "narrowed": any(chosen[key] for key in self.NARROWING),
+                "unknown_filter": unknown, "shown": shown_id,
+                "options": {key: ([{"key": item.key, "label": item.label} for item in self.lists.stages] if key == "stage"
+                                  else [{"key": value, "label": label} for value, label in lesson_tags.options("methods")]
+                                  if key == "method" else [{"key": value, "label": value} for value in sectors]
+                                  if key == "sector" else [{"key": value} for value in self.STATUSES])
+                            for key in options},
+                "count": self.count_line(status, len(matching), len(population), first, last, pages,
+                                         any(chosen[key] for key in self.NARROWING)),
+                "can_recheck": person is not None,
                 "limits": {"reason_max_chars": int(self.value("reason_max_chars"))},
                 "waiting": self._waiting(store, person) if person else None,
                 "lessons": [self.card(store, row["lesson_id"]) for row in shown]}
+
+    @staticmethod
+    def count_line(status: str, n: int, m: int, first: int, last: int, pages: int, narrowed: bool) -> list[dict]:
+        """The library's count line as segments (the 39 brief, section 5.6): status sets M, the other filters N."""
+        found = lesson_words()["count"]
+        noun = found["nouns"][status]["one" if m == 1 else "many"]
+        numeral = {"from": {"number": first, "numeral": True}, "to": {"number": last, "numeral": True}}
+        if narrowed:
+            template = found["narrowedRange"] if pages > 1 else found["narrowed"]
+            return fill(template, {"n": {"number": n, "capital": pages > 1}, "m": {"number": m}, "noun": noun, **numeral})
+        return fill(found["range"] if pages > 1 else found["all"], {"m": {"number": m}, "noun": noun, **numeral})
 
     # ── Writes ───────────────────────────────────────────────────────────
     #
@@ -793,7 +868,14 @@ class LessonReview:
             raise Refused(422, "bad_change", {"field": "risk_factors"})
         if self.lists.stage(stage) is None or self.lists.kind(kind) is None:
             raise Refused(422, "bad_change", {"field": "stage" if self.lists.stage(stage) is None else "kind"})
-        return {"statement": statement, "risk_factors": factors, "stage": stage, "kind": kind}
+        found = {"statement": statement, "risk_factors": factors, "stage": stage, "kind": kind}
+        # Ticket 39: procurement categories and selection methods, from the package form's closed lists.
+        for name in lesson_tags.LISTS:
+            value = given.get(name, _json(base.get(name), []))
+            if not lesson_tags.valid(name, value):
+                raise Refused(422, "bad_change", {"field": name})
+            found[name] = list(value)
+        return found
 
     def act(self, engine: Engine, viewer: Viewer, wanted: str, verb: str, body: dict, writer: Engine) -> dict:
         """One recommendation, decision or cross-check by the viewer, or the reason it is refused. It reads as
@@ -887,6 +969,7 @@ class LessonReview:
                    if published else None})])
             engine.insert_rows("strata.ops.lesson_sources", SOURCE_COLUMNS,
                                [(lesson_id, 1, item["proposal_id"], item["item_id"], today)])
+            self._tag(engine, lesson_id, 1, final, today)
         elif item["kind"] == "new" and outcome == "repeat":
             target = store.latest(act["repeat_of"])
             before = self._proposal_evidence(store, store.lesson_proposals(act["repeat_of"]))
@@ -897,20 +980,34 @@ class LessonReview:
                 now=json.dumps(_counts(after)), **who)])
             engine.insert_rows("strata.ops.lesson_sources", SOURCE_COLUMNS,
                                [(act["repeat_of"], version, item["proposal_id"], item["item_id"], today)])
+            self._tag(engine, act["repeat_of"], version, target, today)
         elif item["kind"] == "recheck" and outcome != "keep":
             target = store.latest(item["lesson_id"])
             version = _int(target["version"]) + 1
             if outcome == "change":
                 was = {key: target[key] if key != "risk_factors" else _json(target[key], []) for key in TAGS}
+                was |= {name: _json(target.get(name), []) for name in lesson_tags.LISTS}
                 engine.insert_rows("strata.ops.lesson_versions", VERSION_COLUMNS, [self._version_row(
                     target, version=version, statement=change["statement"],
                     risk_factors=json.dumps(change["risk_factors"]), stage=change["stage"], kind=change["kind"],
                     change_kind="wording" if change["statement"] != target["statement"] else "tags",
                     was=json.dumps(was), now=json.dumps(change), **who)])
+                self._tag(engine, item["lesson_id"], version, change, today)
             else:
                 engine.insert_rows("strata.ops.lesson_versions", VERSION_COLUMNS, [self._version_row(
                     target, version=version, state=RETIRED[outcome], change_kind="retired",
                     was=json.dumps({"state": target["state"]}), now=json.dumps({"state": RETIRED[outcome]}), **who)])
+                self._tag(engine, item["lesson_id"], version, target, today)
+
+    @staticmethod
+    def _tag(engine: Engine, lesson_id: str, version: int, source: dict, today: dt.date) -> None:
+        """Keep the categories and methods a new version names, from the change or the version it follows. A version
+        that names none writes no row, so it applies to every category and method (ticket 39)."""
+        found = {name: source.get(name) for name in lesson_tags.LISTS}
+        found = {name: value if isinstance(value, list) else _json(value, []) for name, value in found.items()}
+        if any(found.values()):
+            engine.insert_rows("strata.ops.lesson_version_tags", TAG_COLUMNS, [(
+                lesson_id, version, json.dumps(found["categories"]), json.dumps(found["methods"]), today)])
 
     def _disagreed(self, engine: Engine, store: Store, item: dict, person: Person, reason: str,
                    now: dt.datetime) -> None:

@@ -57,7 +57,9 @@ export type EvidenceEvent = {
     | "document"
     | "ratings"
     | "contracts"
-    | "disagreement";
+    | "disagreement"
+    // Two versions of a lesson (ticket 39): versions:{lesson_id}:{a}:{b}.
+    | "versions";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

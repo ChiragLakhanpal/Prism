@@ -674,7 +674,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
         {ppsd ? (
           <div className="mt-6">
-            <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} />
+            <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} onLesson={replace} />
           </div>
         ) : paper ? (
           <div className="mt-6">

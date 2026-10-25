@@ -1,0 +1,1015 @@
+{
+  "outcome": "nothing_passed",
+  "draft": {
+    "draft_id": "draft-0001",
+    "kind": "ppsd_rows",
+    "state": "draft",
+    "discarded_from": null,
+    "author": {
+      "name": "Ana Example",
+      "you": true
+    },
+    "created_at": "2026-10-28T09:02:00Z",
+    "checked": null,
+    "discarded": null,
+    "subject": {
+      "package_id": null,
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "package_slug": "equipping-of-exploratory-bo-reholes-project-lot-1-sarma-n-ta",
+      "project_id": "P156634",
+      "project_name": "Water and Sanitation Development Project",
+      "category": "Works",
+      "estimated_amount_usd": "1230000.00",
+      "as_of": "2026-10-28",
+      "created_date": "2026-10-28",
+      "agency_id": null,
+      "implementing_agency": null,
+      "plan_date": null,
+      "signal": null
+    },
+    "counts": {
+      "signal": null,
+      "written": 4
+    },
+    "written": {
+      "notes": 4,
+      "sentences": 4,
+      "rows": 2
+    },
+    "notes": [
+      {
+        "key": "cost_estimates/risk_description",
+        "cell_key": "cost_estimates/risk_description",
+        "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+        "description": "Cost estimates below market rates",
+        "mark": null,
+        "state": "written",
+        "refusal": null,
+        "sentences": [
+          {
+            "index": 0,
+            "text": "Cost estimates set below market rates can force rebidding of works contracts.",
+            "kind": "summary",
+            "evidence_ids": [
+              "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB"
+            ],
+            "numbers": [],
+            "dates": [],
+            "quote": null
+          }
+        ],
+        "row_key": "cost_estimates",
+        "cell": "risk_description"
+      },
+      {
+        "key": "cost_estimates/mitigation",
+        "cell_key": "cost_estimates/mitigation",
+        "evidence_id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+        "description": "Cost estimates below market rates",
+        "mark": null,
+        "state": "written",
+        "refusal": null,
+        "sentences": [
+          {
+            "index": 1,
+            "text": "Base the works cost estimates on market rates before the contracts go to bid.",
+            "kind": "advice",
+            "evidence_ids": [
+              "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+              "strata.gold.passage:31525018/v1/54",
+              "strata.gold.passage:34056616/v2/10.b"
+            ],
+            "numbers": [],
+            "dates": [],
+            "quote": null
+          }
+        ],
+        "row_key": "cost_estimates",
+        "cell": "mitigation"
+      },
+      {
+        "key": "permits_before_award/risk_description",
+        "cell_key": "permits_before_award/risk_description",
+        "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+        "description": "Land, forest and other permits not in place before award",
+        "mark": null,
+        "state": "written",
+        "refusal": null,
+        "sentences": [
+          {
+            "index": 2,
+            "text": "Land, forest and other permits that are not in place before award can hold up the works.",
+            "kind": "summary",
+            "evidence_ids": [
+              "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB"
+            ],
+            "numbers": [],
+            "dates": [],
+            "quote": null
+          }
+        ],
+        "row_key": "permits_before_award",
+        "cell": "risk_description"
+      },
+      {
+        "key": "permits_before_award/mitigation",
+        "cell_key": "permits_before_award/mitigation",
+        "evidence_id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+        "description": "Land, forest and other permits not in place before award",
+        "mark": null,
+        "state": "written",
+        "refusal": null,
+        "sentences": [
+          {
+            "index": 3,
+            "text": "Put forest and other permits in place before the contracts are awarded.",
+            "kind": "advice",
+            "evidence_ids": [
+              "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+              "strata.gold.passage:34056616/v2/12"
+            ],
+            "numbers": [],
+            "dates": [],
+            "quote": null
+          }
+        ],
+        "row_key": "permits_before_award",
+        "cell": "mitigation"
+      }
+    ],
+    "evidence": {
+      "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB": {
+        "id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+          "public_from": "2026-10-28",
+          "source": {
+            "tool": "get_lessons",
+            "sources": [
+              "documents",
+              "projects"
+            ]
+          },
+          "reports": {
+            "projects": 1,
+            "read": 1,
+            "missing": [],
+            "counted": [
+              {
+                "project_id": "P130164",
+                "project_name": "Rajasthan Road Sector Modernization Project",
+                "document_id": "31525018",
+                "version": 1,
+                "document_type": "Implementation Completion and Results Report",
+                "doc_short": "ICR",
+                "doc_key": "icr-2019-10-10",
+                "date": "2019-10-10",
+                "public_from": "2019-11-02"
+              }
+            ],
+            "risk_factors": [
+              {
+                "key": "cost_estimates",
+                "label": "Cost estimates below market rates",
+                "k": 1,
+                "reports": [
+                  {
+                    "project_id": "P130164",
+                    "project_name": "Rajasthan Road Sector Modernization Project",
+                    "document_id": "31525018",
+                    "version": 1,
+                    "document_type": "Implementation Completion and Results Report",
+                    "doc_short": "ICR",
+                    "doc_key": "icr-2019-10-10",
+                    "date": "2019-10-10",
+                    "public_from": "2019-11-02",
+                    "evidence_id": "strata.gold.passage:31525018/v1/54",
+                    "passage_id": "31525018/v1/54",
+                    "paragraph": "54",
+                    "page": 23
+                  }
+                ]
+              },
+              {
+                "key": "permits_before_award",
+                "label": "Land, forest and other permits not in place before award",
+                "k": 1,
+                "reports": [
+                  {
+                    "project_id": "P130164",
+                    "project_name": "Rajasthan Road Sector Modernization Project",
+                    "document_id": "31525018",
+                    "version": 1,
+                    "document_type": "Implementation Completion and Results Report",
+                    "doc_short": "ICR",
+                    "doc_key": "icr-2019-10-10",
+                    "date": "2019-10-10",
+                    "public_from": "2019-11-02",
+                    "evidence_id": "strata.gold.passage:31525018/v1/55",
+                    "passage_id": "31525018/v1/55",
+                    "paragraph": "55",
+                    "page": 23
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "highlights": []
+      },
+      "strata.ops.lesson_versions:lesson-e903b07ad1/v1": {
+        "id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+          "public_from": "2026-10-27",
+          "source": {
+            "table": "strata.ops.lesson_versions",
+            "lesson_id": "lesson-e903b07ad1",
+            "version": 1,
+            "decided_on": "2026-10-27",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project"
+          },
+          "lesson_id": "lesson-e903b07ad1",
+          "version": 1,
+          "statement": "Base works estimates on market rates to avoid rebidding",
+          "risk_factors": [
+            {
+              "key": "cost_estimates",
+              "label": "Cost estimates below market rates"
+            }
+          ],
+          "stage": {
+            "key": "procurement_planning",
+            "label": "Procurement planning"
+          },
+          "kind": {
+            "key": "did_not_work",
+            "label": "What didn't work"
+          },
+          "edition": {
+            "key": "guidelines_2011",
+            "name": "the World Bank's Procurement Guidelines of January 2011",
+            "short": "Procurement Guidelines, January 2011"
+          },
+          "ieg_status": "restated",
+          "review_date": null,
+          "evidence": [
+            {
+              "evidence_id": "strata.gold.passage:31525018/v1/54",
+              "passage_id": "31525018/v1/54",
+              "role": "source",
+              "document_type": "Implementation Completion and Results Report",
+              "doc_short": "ICR",
+              "document_id": "31525018",
+              "project_id": "P130164",
+              "report_number": "ICR4803",
+              "document_date": "2019-10-10",
+              "paragraph": "54",
+              "locator": "paragraph",
+              "page": 23,
+              "quote": "108 of 328 cases had to go through rebidding.",
+              "restated_by_ieg": false,
+              "public_from": "2019-11-02"
+            },
+            {
+              "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+              "passage_id": "34056616/v2/10.b",
+              "role": "restatement",
+              "document_type": "Implementation Completion Report Review",
+              "doc_short": "ICR Review",
+              "document_id": "34056616",
+              "project_id": "P130164",
+              "report_number": "ICRR0021929",
+              "document_date": "2023-05-04",
+              "paragraph": "10.b",
+              "locator": "section",
+              "page": 13,
+              "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+              "restated_by_ieg": true,
+              "public_from": "2023-05-04"
+            }
+          ],
+          "project": {
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "country": "India",
+            "region": "South Asia",
+            "sector": "Transportation"
+          },
+          "decided_on": "2026-10-27",
+          "fit": 0.08,
+          "rank": 1
+        },
+        "highlights": []
+      },
+      "strata.gold.passage:31525018/v1/54": {
+        "id": "strata.gold.passage:31525018/v1/54",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.gold.passage:31525018/v1/54",
+          "passage_id": "31525018/v1/54",
+          "role": "source",
+          "document_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "document_id": "31525018",
+          "project_id": "P130164",
+          "report_number": "ICR4803",
+          "document_date": "2019-10-10",
+          "paragraph": "54",
+          "locator": "paragraph",
+          "page": 23,
+          "quote": "108 of 328 cases had to go through rebidding.",
+          "restated_by_ieg": false,
+          "public_from": "2019-11-02"
+        },
+        "highlights": []
+      },
+      "strata.gold.passage:34056616/v2/10.b": {
+        "id": "strata.gold.passage:34056616/v2/10.b",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+          "passage_id": "34056616/v2/10.b",
+          "role": "restatement",
+          "document_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "document_id": "34056616",
+          "project_id": "P130164",
+          "report_number": "ICRR0021929",
+          "document_date": "2023-05-04",
+          "paragraph": "10.b",
+          "locator": "section",
+          "page": 13,
+          "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+          "restated_by_ieg": true,
+          "public_from": "2023-05-04"
+        },
+        "highlights": []
+      },
+      "strata.ops.lesson_versions:lesson-cfdf000a46/v1": {
+        "id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+          "public_from": "2026-10-27",
+          "source": {
+            "table": "strata.ops.lesson_versions",
+            "lesson_id": "lesson-cfdf000a46",
+            "version": 1,
+            "decided_on": "2026-10-27",
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project"
+          },
+          "lesson_id": "lesson-cfdf000a46",
+          "version": 1,
+          "statement": "Put forest and other permits in place before awarding contracts",
+          "risk_factors": [
+            {
+              "key": "permits_before_award",
+              "label": "Land, forest and other permits not in place before award"
+            }
+          ],
+          "stage": {
+            "key": "contract_award",
+            "label": "Contract award"
+          },
+          "kind": {
+            "key": "did_not_work",
+            "label": "What didn't work"
+          },
+          "edition": {
+            "key": "guidelines_2011",
+            "name": "the World Bank's Procurement Guidelines of January 2011",
+            "short": "Procurement Guidelines, January 2011"
+          },
+          "ieg_status": "ieg_lesson",
+          "review_date": null,
+          "evidence": [
+            {
+              "evidence_id": "strata.gold.passage:34056616/v2/12",
+              "passage_id": "34056616/v2/12",
+              "role": "source",
+              "document_type": "Implementation Completion Report Review",
+              "doc_short": "ICR Review",
+              "document_id": "34056616",
+              "project_id": "P130164",
+              "report_number": "ICRR0021929",
+              "document_date": "2023-05-04",
+              "paragraph": "12",
+              "locator": "section",
+              "page": 14,
+              "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+              "restated_by_ieg": true,
+              "public_from": "2023-05-04"
+            }
+          ],
+          "project": {
+            "project_id": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "country": "India",
+            "region": "South Asia",
+            "sector": "Transportation"
+          },
+          "decided_on": "2026-10-27",
+          "fit": 0.0,
+          "rank": 1
+        },
+        "highlights": []
+      },
+      "strata.gold.passage:34056616/v2/12": {
+        "id": "strata.gold.passage:34056616/v2/12",
+        "kind": "record",
+        "tool": "get_lessons",
+        "stratum": "What",
+        "short_name": null,
+        "row": {
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
+          "role": "source",
+          "document_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "document_id": "34056616",
+          "project_id": "P130164",
+          "report_number": "ICRR0021929",
+          "document_date": "2023-05-04",
+          "paragraph": "12",
+          "locator": "section",
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true,
+          "public_from": "2023-05-04"
+        },
+        "highlights": []
+      }
+    },
+    "checks": {
+      "checks_run": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "sentences": {
+        "written": 4,
+        "kept": 4,
+        "removed": 0
+      },
+      "numbers": {
+        "total": 0,
+        "matched": 0
+      },
+      "dates": {
+        "total": 0,
+        "matched": 0
+      },
+      "quotes": {
+        "total": 0,
+        "found": 0
+      },
+      "sources": {
+        "total": 6,
+        "returned": 6
+      },
+      "checked": {
+        "total": 0,
+        "matched": 0
+      },
+      "shown": {
+        "numbers": {
+          "total": 0,
+          "matched": 0
+        },
+        "dates": {
+          "total": 0,
+          "matched": 0
+        },
+        "quotes": {
+          "total": 0,
+          "found": 0
+        },
+        "judged": 4,
+        "proven": 0
+      },
+      "judge": {
+        "called": true,
+        "responded": true,
+        "judged": 4,
+        "followed": 4,
+        "unjudged": 0,
+        "proven": 0
+      },
+      "advice": {
+        "total": 2,
+        "cited": 2
+      },
+      "disagreements": {
+        "disputed": 0,
+        "shown": 0,
+        "attached": 0,
+        "unasked": 0,
+        "warned": 0
+      },
+      "cited_tools": [
+        "get_lessons"
+      ],
+      "tools": [
+        "find_comparables",
+        "get_lessons"
+      ],
+      "cited_only": []
+    },
+    "checks_count": 6,
+    "removed": [],
+    "sources": [
+      {
+        "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+        "number": 1,
+        "cited_in": [
+          "cost_estimates/risk_description",
+          "permits_before_award/risk_description"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      },
+      {
+        "evidence_id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+        "number": 2,
+        "cited_in": [
+          "cost_estimates/mitigation"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      },
+      {
+        "evidence_id": "strata.gold.passage:31525018/v1/54",
+        "number": 3,
+        "cited_in": [
+          "cost_estimates/mitigation"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      },
+      {
+        "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+        "number": 4,
+        "cited_in": [
+          "cost_estimates/mitigation"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      },
+      {
+        "evidence_id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+        "number": 5,
+        "cited_in": [
+          "permits_before_award/mitigation"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      },
+      {
+        "evidence_id": "strata.gold.passage:34056616/v2/12",
+        "number": 6,
+        "cited_in": [
+          "permits_before_award/mitigation"
+        ],
+        "opened": false,
+        "last_opened_at": null
+      }
+    ],
+    "citations": 4,
+    "opened": {
+      "count": 0,
+      "of": 6
+    },
+    "layout": {
+      "columns": [
+        "risk_description",
+        "mitigation",
+        "risk_owner"
+      ],
+      "export": "word",
+      "sources_list": true,
+      "removed_box": "always",
+      "not_checked": [
+        "writer_ppsd_rows"
+      ]
+    },
+    "holds": [
+      {
+        "key": "notChecked",
+        "copy": "notChecked",
+        "left": 1,
+        "first_anchor": null
+      },
+      {
+        "key": "owners",
+        "copy": "owners",
+        "left": 2,
+        "first_anchor": "fill-cost_estimates-risk_owner"
+      }
+    ],
+    "may_act": true,
+    "export": null,
+    "writer": {
+      "agent": "strata-ppsd-rows-writer",
+      "version": null,
+      "run_id": "run-0001"
+    },
+    "disagreements": [],
+    "choices": [],
+    "lesson_notices": [
+      {
+        "row_key": "cost_estimates",
+        "lesson_id": "lesson-e903b07ad1",
+        "tier": "narrowed",
+        "holds_export": false,
+        "anchor": "notice-cost_estimates",
+        "kept": null,
+        "a": 1,
+        "b": 2,
+        "statement_a": "Base works estimates on market rates to avoid rebidding",
+        "statement_b": "Base works cost estimates on current market rates to avoid rebidding",
+        "changes": [
+          {
+            "field": "statement",
+            "was": "Base works estimates on market rates to avoid rebidding",
+            "now": "Base works cost estimates on current market rates to avoid rebidding",
+            "was_ranges": [],
+            "now_ranges": [
+              [
+                11,
+                15
+              ],
+              [
+                29,
+                36
+              ]
+            ]
+          },
+          {
+            "field": "categories",
+            "was": "",
+            "now": "Works",
+            "was_ranges": [],
+            "now_ranges": [
+              [
+                0,
+                5
+              ]
+            ]
+          },
+          {
+            "field": "methods",
+            "was": "",
+            "now": "Request for Bids (RFB)",
+            "was_ranges": [],
+            "now_ranges": [
+              [
+                0,
+                22
+              ]
+            ]
+          }
+        ],
+        "decided_on": "2026-10-29",
+        "retired_on": null,
+        "retired_as": null,
+        "reason": "Current market rates is what the 2025 rules ask for.",
+        "between": [],
+        "can_act": true,
+        "actions": [
+          "update",
+          "keep"
+        ],
+        "row_label": {
+          "n": 1,
+          "risk_label": "Cost estimates below market rates"
+        }
+      }
+    ],
+    "lesson_updated": [],
+    "lesson_kept": [],
+    "lesson_removed": [],
+    "lesson_can_act": true,
+    "ppsd": {
+      "form": "short",
+      "forms": {
+        "short": {
+          "name": "Short Form",
+          "columns": [
+            {
+              "key": "risk_description",
+              "header": "Risk Description",
+              "letter": null,
+              "filled_by": "strata",
+              "control": null,
+              "hold": null,
+              "max_length": null
+            },
+            {
+              "key": "mitigation",
+              "header": "Description of mitigation",
+              "letter": null,
+              "filled_by": "strata",
+              "control": null,
+              "hold": null,
+              "max_length": null
+            },
+            {
+              "key": "risk_owner",
+              "header": "Risk Owner",
+              "letter": null,
+              "filled_by": "people",
+              "control": "text",
+              "hold": "owners",
+              "max_length": 120
+            }
+          ]
+        },
+        "long": {
+          "name": "Long Form",
+          "columns": [
+            {
+              "key": "risk_description",
+              "header": "Risk Description",
+              "letter": null,
+              "filled_by": "strata",
+              "control": null,
+              "hold": null,
+              "max_length": null
+            },
+            {
+              "key": "likelihood",
+              "header": "Likelihood Rating",
+              "letter": "A",
+              "filled_by": "people",
+              "control": "rating",
+              "hold": "ratings",
+              "max_length": null
+            },
+            {
+              "key": "impact",
+              "header": "Impact Rating",
+              "letter": "B",
+              "filled_by": "people",
+              "control": "rating",
+              "hold": "ratings",
+              "max_length": null
+            },
+            {
+              "key": "score",
+              "header": "Overall Risk Score (A*B)",
+              "letter": null,
+              "filled_by": "people",
+              "control": "score",
+              "hold": "ratings",
+              "max_length": null
+            },
+            {
+              "key": "mitigation",
+              "header": "Description of proposed mitigation through the procurement process",
+              "letter": null,
+              "filled_by": "strata",
+              "control": null,
+              "hold": null,
+              "max_length": null
+            },
+            {
+              "key": "risk_owner",
+              "header": "Risk Owner",
+              "letter": null,
+              "filled_by": "people",
+              "control": "text",
+              "hold": "owners",
+              "max_length": 120
+            },
+            {
+              "key": "stage",
+              "header": "Procurement Process Stage",
+              "letter": null,
+              "filled_by": "people",
+              "control": "stage",
+              "hold": null,
+              "max_length": 80
+            }
+          ]
+        }
+      },
+      "ratings": [
+        {
+          "value": 1,
+          "label": "Very Low",
+          "short": "VL"
+        },
+        {
+          "value": 2,
+          "label": "Low",
+          "short": "L"
+        },
+        {
+          "value": 3,
+          "label": "Medium",
+          "short": "M"
+        },
+        {
+          "value": 4,
+          "label": "High",
+          "short": "H"
+        },
+        {
+          "value": 5,
+          "label": "Very High",
+          "short": "VH"
+        }
+      ],
+      "score": {
+        "definition": "A*B",
+        "minimum": 1,
+        "maximum": 25
+      },
+      "stages": [
+        "Market engagement",
+        "Prequalification",
+        "Specification",
+        "Procurement Arrangements",
+        "Evaluation",
+        "Contract Management"
+      ],
+      "table_i": {
+        "applies": false,
+        "amount": "1230000.00",
+        "threshold": "50000000.00",
+        "currency": "USD",
+        "category": "Works",
+        "risk_level": "High"
+      },
+      "selected": 2,
+      "rows": [
+        {
+          "row_key": "cost_estimates",
+          "risk_key": "cost_estimates",
+          "risk_label": "Cost estimates below market rates",
+          "k": 1,
+          "m": 1,
+          "counts_evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+          "lesson": {
+            "id": "lesson-e903b07ad1",
+            "evidence_id": "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+            "version": 1,
+            "decided_on": "2026-10-27"
+          },
+          "sources": [
+            {
+              "evidence_id": "strata.gold.passage:31525018/v1/54",
+              "doc_short": "ICR",
+              "doc_type": "Implementation Completion and Results Report",
+              "pcode": "P130164",
+              "locator": {
+                "kind": "paragraph",
+                "text": "54"
+              },
+              "page": 23,
+              "date": "2019-10-10"
+            },
+            {
+              "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+              "doc_short": "ICR Review",
+              "doc_type": "Implementation Completion Report Review",
+              "pcode": "P130164",
+              "locator": {
+                "kind": "section",
+                "text": "10.b"
+              },
+              "page": 13,
+              "date": "2023-05-04"
+            }
+          ],
+          "cells": {
+            "risk_description": "cost_estimates/risk_description",
+            "mitigation": "cost_estimates/mitigation"
+          }
+        },
+        {
+          "row_key": "permits_before_award",
+          "risk_key": "permits_before_award",
+          "risk_label": "Land, forest and other permits not in place before award",
+          "k": 1,
+          "m": 1,
+          "counts_evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+          "lesson": {
+            "id": "lesson-cfdf000a46",
+            "evidence_id": "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+            "version": 1,
+            "decided_on": "2026-10-27"
+          },
+          "sources": [
+            {
+              "evidence_id": "strata.gold.passage:34056616/v2/12",
+              "doc_short": "ICR Review",
+              "doc_type": "Implementation Completion Report Review",
+              "pcode": "P130164",
+              "locator": {
+                "kind": "section",
+                "text": "12"
+              },
+              "page": 14,
+              "date": "2023-05-04"
+            }
+          ],
+          "cells": {
+            "risk_description": "permits_before_award/risk_description",
+            "mitigation": "permits_before_award/mitigation"
+          }
+        }
+      ],
+      "values": [
+        {
+          "row_key": "cost_estimates",
+          "field": "risk_owner",
+          "value": null
+        },
+        {
+          "row_key": "permits_before_award",
+          "field": "risk_owner",
+          "value": null
+        }
+      ],
+      "counts": {
+        "total": 2,
+        "owners_set": 0,
+        "rated": 0
+      }
+    },
+    "footnotes": [
+      {
+        "number": 1,
+        "evidence_ids": [
+          "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB"
+        ],
+        "text": "Seen in 1 of 1 comparable completion reports.",
+        "row_key": "cost_estimates",
+        "cell": "risk_description",
+        "sentence": 0,
+        "position": 0
+      },
+      {
+        "number": 2,
+        "evidence_ids": [
+          "strata.ops.lesson_versions:lesson-e903b07ad1/v1",
+          "strata.gold.passage:31525018/v1/54",
+          "strata.gold.passage:34056616/v2/10.b"
+        ],
+        "text": "ICR P130164 ¶54, page 23; ICR Review 10.b.",
+        "row_key": "cost_estimates",
+        "cell": "mitigation",
+        "sentence": 1,
+        "position": 0
+      },
+      {
+        "number": 3,
+        "evidence_ids": [
+          "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB"
+        ],
+        "text": "Seen in 1 of 1 comparable completion reports.",
+        "row_key": "permits_before_award",
+        "cell": "risk_description",
+        "sentence": 2,
+        "position": 0
+      },
+      {
+        "number": 4,
+        "evidence_ids": [
+          "strata.ops.lesson_versions:lesson-cfdf000a46/v1",
+          "strata.gold.passage:34056616/v2/12"
+        ],
+        "text": "ICR Review P130164 12.",
+        "row_key": "permits_before_award",
+        "cell": "mitigation",
+        "sentence": 3,
+        "position": 0
+      }
+    ]
+  }
+}

@@ -159,7 +159,7 @@ def resources(env: dict, scope: str, app_state: str | None = None) -> list[dict]
 
 # Ticket 29's lesson review record, which the app writes as itself with the reviewer named in each row.
 LESSON_REVIEW_TABLES = ("lesson_review_acts", "lesson_review_items", "lesson_versions", "lesson_sources",
-                        "lesson_review_notes")
+                        "lesson_review_notes", "lesson_version_tags")
 # Ticket 32's retrieval loop: passage reports (candidate labels), the passage reviewers' decisions, the sources
 # each answer cited, the query judges' grades, and the pair of judges a query keeps at its first grade, which the
 # app writes as itself with the person in each row. tests/test_judging.py checks that a grade writes only these.
@@ -176,8 +176,10 @@ def grants(principal: str) -> list[str]:
     # (ticket 23): the report each person kept on a disagreement, for an answer or a draft, which the drafts' hold
     # reads too (ticket 36). draft_fields (ticket 36): the values people set on a draft's fields, read through its
     # latest-value view.
+    # lesson_visits and draft_lesson_choices (ticket 39): each reader's visits to Lessons, and what a draft's author
+    # chose for a row whose lesson changed, both kept as the app.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows", "disagreement_choices", "draft_fields")
+              "draft_files", "follows", "disagreement_choices", "draft_fields", "lesson_visits", "draft_lesson_choices")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
@@ -186,7 +188,9 @@ def grants(principal: str) -> list[str]:
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in LESSON_REVIEW_TABLES],
-            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in RETRIEVAL_TABLES]]
+            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in RETRIEVAL_TABLES],
+            # Ticket 39: the Lessons page reads each reader's own counts from the weekly retrieval run.
+            f"GRANT SELECT ON TABLE strata.ops.retrieval_feedback_viewers TO `{principal}`"]
 
 
 def masks(principal: str, owner: str) -> list[str]:

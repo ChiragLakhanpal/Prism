@@ -44,6 +44,11 @@ export function sourceTitle(evidence: EvidenceEvent) {
   if (evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.allTitle;
   // Section 2's lists: one step's comparable packages, and the packages behind "ran longest" (ticket 27).
   if (evidence.kind === "steps" || evidence.kind === "steps-longest") return stepListTitle(evidence);
+  // Two versions of a lesson (ticket 39), or a retired lesson.
+  if (evidence.kind === "versions") {
+    const view = evidence.row as { a: number; b: number; retired_as: string | null };
+    return view.retired_as ? copy.versions.retiredTitle : fillText(copy.versions.title, { a: view.a, b: view.b });
+  }
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   // A passage a lesson rests on, as get_lessons returns it inside its row (ticket 36): "ICR P130164 paragraph 54,
@@ -175,6 +180,7 @@ export function eyebrow(evidence: EvidenceEvent): string {
   // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
   if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
   if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
+  if (evidence.kind === "versions") return copy.versions.eyebrow;
   // A quantile dot's list of packages is no record, so it names only its stratum.
   if (evidence.kind === "dot") return copy.evidence.package.dot.eyebrow;
   if (evidence.kind === "risk-reports" || evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.reportsEyebrow;

@@ -18,6 +18,7 @@ import type { DraftGroup, DraftList, DraftRow as Row } from "../lib/drafts";
 import { draftHref, storeFailed } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
+import { draftTitle } from "../lib/lessonsPage";
 
 const words = copy.draft.tab;
 const page = copy.pages.drafts;
@@ -26,7 +27,6 @@ const PREVIEW = copy.draft.kinds.review_notes;
 const GROUPS: DraftGroup[] = ["to_check", "checked", "exported"];
 const PAGE_SIZE = 20;
 const whole = (value: number) => formatNumber(value, { compact: false });
-const short = (iso: string) => formatDate(iso.slice(0, 10), { style: "table" });
 const day = (iso: string) => formatDate(iso.slice(0, 10));
 
 // Who acted, and when: the check and the export each keep their own time, so a restored draft still says
@@ -53,11 +53,7 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
   return (
     <li className="border-t border-line p-4 first:border-t-0" data-draft-row={row.draft_id}>
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
-        {row.kind === "mission_brief"
-          ? kind.rowTitle(subject.project_name, "")
-          : row.kind === "ppsd_rows"
-            ? kind.rowTitle(subject.package_title ?? "", "")
-            : kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
+        {draftTitle(row.kind, subject as unknown as Record<string, string | null>)}
       </TextLink>
       <p className="mt-1 text-small text-ink-muted">
         {row.kind === "mission_brief" ? (

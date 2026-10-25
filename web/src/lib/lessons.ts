@@ -71,11 +71,15 @@ export type LessonCard = {
   ieg_status: IegStatus;
   review_date: string | null;
   decided_on: string;
-  state: "current" | "rechecking";
+  state: "current" | "rechecking" | "retired_wrong" | "retired_outdated";
   rechecking_since: string | null;
   region: string | null;
   quote: string | null;
   evidence: LessonEvidence[];
+  // Ticket 39: procurement categories and selection methods, and a retired lesson's date and the lead's reason.
+  categories?: Item[];
+  methods?: Item[];
+  retired?: { as: string; on: string; reason: string } | null;
 };
 
 export type Library = {
@@ -184,7 +188,7 @@ export type ReviewItem = QueueRow & {
   read_only: boolean;
   evidence: LessonEvidence[];
   ieg_note: { kind: "awaiting" } | { kind: "alone"; review_date: string } | null;
-  tags: { risk_factors?: Item[]; stage?: Item | null; kind?: Item | null; edition?: Edition | null; sector: string | null };
+  tags: { risk_factors?: Item[]; stage?: Item | null; kind?: Item | null; edition?: Edition | null; sector: string | null; categories?: Item[]; methods?: Item[] };
   // next_version: the version a re-check's change would write now, which the server counts.
   lesson: { lesson_id: string | null; version: number | null; next_version: number | null };
   summary: Summary;
@@ -192,7 +196,7 @@ export type ReviewItem = QueueRow & {
   repeats: (LessonCard & { sentences: SentenceEvent[]; next_version: number | null })[];
   history: HistoryEvent[];
   outcome: Outcome | null;
-  lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] };
+  lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[]; categories?: Item[]; methods?: Item[] };
   limits: { reason_max_chars: number; statement_max_chars: number; sample_percent: number; summary_poll_seconds: number; summary_poll_minutes: number };
 };
 
@@ -205,7 +209,8 @@ export type Refusal = { code: string; values: Record<string, string>; item?: Rev
 export const LESSONS_HREF = "/lessons";
 export const QUEUE_HREF = "/lessons/review";
 export const itemHref = (itemId: string) => `${QUEUE_HREF}/${encodeURIComponent(itemId)}`;
-export const lessonHref = (lessonId: string) => `${LESSONS_HREF}#lesson-${encodeURIComponent(lessonId)}`;
+// Ticket 39: the library has pages and filters, so a lesson's own link opens the page that holds it.
+export const lessonHref = (lessonId: string) => `${LESSONS_HREF}?show=${encodeURIComponent(lessonId)}`;
 export const pageHref = (base: string, page: number) => (page > 1 ? `${base}?page=${page}` : base);
 
 // The removed sentences, each with its first reason that has a sentence in the copy file, as an answer's are.

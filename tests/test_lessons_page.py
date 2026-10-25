@@ -7,6 +7,7 @@ words from the reviewers' acts in the story.
 """
 
 import datetime as dt
+import json
 
 import pytest
 
@@ -17,8 +18,16 @@ ICR, ICR_REVIEW = "Implementation Completion and Results Report", "Implementatio
 
 
 @pytest.fixture(scope="module")
-def built(fixture_db, tmp_path_factory):
-    return story_of.build(fixture_db, tmp_path_factory.mktemp("lessons-page"))
+def prebuilt(fixture_db, tmp_path_factory):
+    """The story, built once for this module, and Ana's first visit's answer, which the recorded answers hold."""
+    from record_lessons_page_api import built_story
+
+    return built_story(fixture_db, tmp_path_factory.mktemp("lessons-page"))
+
+
+@pytest.fixture(scope="module")
+def built(prebuilt):
+    return prebuilt[0]
 
 
 @pytest.fixture
@@ -101,7 +110,8 @@ def test_a_lesson_whose_wording_changed_after_the_version_a_draft_cites_shows_wa
     assert (notice["lesson_id"], notice["tier"], notice["a"], notice["b"]) == (story_of.REBIDDING_LESSON, "narrowed", 1, 2)
     assert notice["statement_a"] == "Base works estimates on market rates to avoid rebidding"
     assert [(change["field"], change["was"], change["now"]) for change in notice["changes"]] == [
-        ("statement", "Base works estimates on market rates to avoid rebidding", story_of.NARROWED)]
+        ("statement", "Base works estimates on market rates to avoid rebidding", story_of.NARROWED),
+        ("categories", "", "Works"), ("methods", "", "Request for Bids (RFB)")]
     assert notice["decided_on"] == "2026-10-29"
     assert notice["reason"] == "Current market rates is what the 2025 rules ask for."
     # The changed words, as character ranges the page marks in each line.
@@ -224,6 +234,21 @@ def test_keeping_the_cited_version_needs_a_reason_and_stores_it_with_the_draft(s
     assert [use["draft_id"] for use in notice["uses"]] == ["draft-0002"]
 
 
+def test_the_kept_version_and_its_reason_go_into_the_evidence_pack_at_export(story):
+    choose(story, "draft-0002", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="keep",
+           expected_cited_version=1, expected_current_version=2, reason="The borrower's estimates already use current rates.")
+    set_owners(story, "draft-0002")
+
+    exported = story.act("draft-0002", "export", "checked")
+
+    assert exported.json()["state"] == "exported"
+    [snapshot] = rows(story.state_db, "SELECT snapshot FROM strata.ops.draft_exports WHERE draft_id = 'draft-0002'")
+
+    assert json.loads(snapshot["snapshot"])["lessons"] == [{
+        "row": "Cost estimates below market rates", "cited": 1, "current": 2,
+        "choice": "Kept version 1: The borrower's estimates already use current rates."}]
+
+
 def test_a_kept_row_shows_a_notice_again_only_for_a_later_change(story):
     choose(story, "draft-0001", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="keep",
            expected_cited_version=1, expected_current_version=2, reason="It still holds for this package.")
@@ -307,3 +332,159 @@ def test_only_the_author_chooses_in_the_staff_view_and_a_stale_choice_is_refused
     assert (stale.status_code, stale.json()["code"]) == (409, "stale")
     assert stale.json()["draft"]["lesson_notices"][0]["b"] == 2
     assert query_choices(story) == []
+
+
+# ── New, and the evidence badges ─────────────────────────────────────────
+
+def test_new_lessons_show_their_evidence_badge_and_who_decided_them_by_role(story):
+    page = story.page().json()
+
+    cards = {card["lesson_id"]: card for card in page["new_lessons"]["cards"]}
+    assert set(cards) == {story_of.REBIDDING_LESSON, story_of.IEG_LESSON}
+    # ICR paragraph 54's lesson rests on the ICR, and IEG's ICR Review restated it; section 12 is IEG's own words.
+    assert cards[story_of.REBIDDING_LESSON]["ieg_status"] == "restated"
+    assert cards[story_of.IEG_LESSON]["ieg_status"] == "ieg_lesson"
+    assert [tag["label"] for tag in cards[story_of.REBIDDING_LESSON]["methods"]] == ["Request for Bids (RFB)"]
+    assert page["new_lessons"]["more"] == 0
+    assert "decided_by" not in cards[story_of.REBIDDING_LESSON]  # roles, never names
+
+
+def test_a_lesson_resting_on_an_icr_with_no_icr_review_yet_awaits_ieg_review():
+    """Brief 29's rule (section 4.4), which "New" and the library show: no ICR Review of the project in the store."""
+    from strata.knowledge.lessons.review import ieg_status
+
+    icr_only = [{"role": "source", "restated_by_ieg": False}]
+    assert ieg_status(icr_only, None) == {"ieg_status": "awaiting", "review_date": None}
+    assert ieg_status(icr_only, "2020-03-27")["ieg_status"] == "not_restated"
+
+
+# ── The library ──────────────────────────────────────────────────────────
+
+def library(story, **filters):
+    return story.get("/api/lessons/library", **filters).json()
+
+
+def test_the_library_filters_by_stage_method_sector_and_status_with_a_count_line(story):
+    everything = library(story)
+    by_stage = library(story, stage="contract_award")
+    by_method = library(story, method="Request for Quotations")
+    rfb = library(story, method="Request for Bids")
+    by_sector = library(story, sector="Transportation")
+    retired = library(story, status="retired")
+
+    assert (everything["total"], everything["of"]) == (2, 2)
+    assert text(everything["count"]) == "Showing all 2 current lessons, newest first."
+    assert [card["lesson_id"] for card in by_stage["lessons"]] == [story_of.IEG_LESSON]
+    assert text(by_stage["count"]) == "Showing 1 of 2 current lessons, newest first."
+    # The rebidding lesson names Request for Bids; IEG's lesson names no method, so every method keeps it.
+    assert [card["lesson_id"] for card in by_method["lessons"]] == [story_of.IEG_LESSON]
+    assert (rfb["total"], by_sector["total"]) == (2, 2)
+    assert (retired["total"], retired["of"], retired["lessons"]) == (0, 0, [])
+    assert [option["key"] for option in everything["options"]["status"]] == ["current", "rechecking", "retired"]
+
+
+def test_a_retired_lesson_shows_only_under_retired_with_the_lead_s_reason(story):
+    retire_ieg_lesson_as_wrong(story)
+
+    current, retired = library(story), library(story, status="retired")
+
+    assert [card["lesson_id"] for card in current["lessons"]] == [story_of.REBIDDING_LESSON]
+    [card] = retired["lessons"]
+    assert (card["lesson_id"], card["retired"]) == (story_of.IEG_LESSON,
+                                                    {"as": "retired_wrong", "on": "2026-10-29", "reason": WRONG})
+    shown = library(story, show=story_of.IEG_LESSON, stage="procurement_planning")
+    assert (shown["status"], shown["shown"], shown["filters"]["stage"]) == ("retired", story_of.IEG_LESSON, None)
+
+
+def test_no_proposed_lesson_appears_in_the_library_for_anyone(story):
+    with DuckDBEngine.open(story.database, read_only=True) as engine:
+        proposals = [row[0] for row in engine.run("SELECT statement FROM strata.silver.lesson_proposals", {}).rows]
+        decided = {row[0] for row in engine.run("SELECT statement FROM strata.ops.lesson_versions", {}).rows}
+    reviewer = story_of.ppsd_story.viewer(31, "Asha")
+    listed = {card["statement"] for who in (story_of.ANA, reviewer)
+              for status in ("current", "rechecking", "retired")
+              for card in story.get("/api/lessons/library", who, status=status).json()["lessons"]}
+
+    assert listed <= decided
+    assert not listed & (set(proposals) - decided)
+    assert "Get land and forest permits before awarding works contracts" not in listed
+
+
+def test_a_filter_the_server_does_not_know_is_left_out_and_said(story):
+    found = library(story, stage="not-a-stage")
+
+    assert found["unknown_filter"] and found["filters"]["stage"] is None and found["total"] == 2
+
+
+# ── Your reports ─────────────────────────────────────────────────────────
+
+def test_the_feedback_line_reads_the_retrieval_loop_s_per_person_counts(story):
+    with DuckDBEngine.open(story.state_db) as engine:
+        engine.insert_rows("strata.ops.retrieval_feedback_viewers",
+                           ("viewer_id", "marked", "fixed", "waiting", "kept", "recited", "computed_at", "public_from"),
+                           [("4021@1984", 2, 1, 1, 0, 14, dt.datetime(2026, 10, 26, 6, tzinfo=dt.UTC),
+                             dt.date(2026, 10, 26))])
+
+    feedback = story.page().json()["feedback"]
+    never = story.page(story_of.ppsd_story.BEN).json()["feedback"]
+
+    assert text(feedback["segments"]) == ("You marked two passages as wrong; one is fixed, and 14 answers now cite the "
+                                          "right paragraph.")
+    assert feedback["counts"] == {"marked": 2, "fixed": 1, "waiting": 1, "kept": 0, "recited": 14}
+    assert never == {"never": True, "segments": None, "counts": None}
+
+
+# ── Two versions of a lesson (the evidence drawer) ───────────────────────
+
+def test_see_both_versions_returns_each_version_with_its_evidence_and_the_change_between(story):
+    found = story.get(f"/api/lessons/{story_of.REBIDDING_LESSON}/versions", **{"from": 1, "to": 2}).json()
+
+    assert found["evidence_id"] == f"versions:{story_of.REBIDDING_LESSON}:1:2"
+    assert [(block["version"], block["statement"], block["decided_on"]) for block in found["versions"]] == [
+        (1, "Base works estimates on market rates to avoid rebidding", "2026-10-27"),
+        (2, story_of.NARROWED, "2026-10-29")]
+    assert [row["evidence_id"] for row in found["versions"][0]["evidence"]] == [
+        "strata.gold.passage:31525018/v1/54", "strata.gold.passage:34056616/v2/10.b"]
+    assert found["versions"][1]["reason"] == "Current market rates is what the 2025 rules ask for."
+    assert [change["field"] for change in found["changes"]] == ["statement", "categories", "methods"]
+    missing = story.get(f"/api/lessons/{story_of.REBIDDING_LESSON}/versions", **{"from": 1, "to": 9})
+    assert (missing.status_code, missing.json()["code"]) == (404, "unknown_version")
+    # The evidence drawer opens the same view by its evidence id.
+    drawer = story.get("/api/evidence", id=f"versions:{story_of.REBIDDING_LESSON}:1:2").json()
+    assert (drawer["kind"], drawer["row"]["versions"][1]["statement"]) == ("versions", story_of.NARROWED)
+
+
+# ── The screens' recorded answers ────────────────────────────────────────
+
+def test_the_screens_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_path, prebuilt):
+    """tests/record_lessons_page_api.py writes the answers the Lessons page's screen tests and the gallery serve, from
+    tests/lessons_page_story.py; the routes must still answer with them word for word."""
+    from pathlib import Path
+
+    from record_lessons_page_api import answers
+
+    recorded = Path(__file__).resolve().parent / "fixtures" / "api"
+    for name, written in answers(tmp_path, fixture_db, prebuilt).items():
+        assert written == (recorded / name).read_text(), (
+            f"{name} is out of date: uv run --frozen python tests/record_lessons_page_api.py")
+
+
+# ── Previews and as-of views ─────────────────────────────────────────────
+
+def test_a_preview_leaves_out_the_reader_and_the_proposed_count_and_records_no_visit(story):
+    before = rows(story.state_db, "SELECT count(*) AS n FROM strata.ops.lesson_visits")[0]["n"]
+
+    page = story.page(view="piu").json()
+
+    assert page["notices"] == [] and page["feedback"] is None and page["digest"]["strengthened"] is None
+    assert page["digest"]["counts"]["proposed"] is None
+    assert rows(story.state_db, "SELECT count(*) AS n FROM strata.ops.lesson_visits")[0]["n"] == before
+
+
+def test_as_of_a_date_the_library_shows_each_lesson_at_the_version_current_then(story):
+    page = story.page(asof="2026-10-28").json()
+
+    assert page["digest"] is None and page["notices"] == []
+    statements = [card["statement"] for card in page["library"]["lessons"]]
+    assert "Base works estimates on market rates to avoid rebidding" in statements
+    assert story_of.NARROWED not in statements

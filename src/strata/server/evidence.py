@@ -68,6 +68,24 @@ def _plan_row(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return found
 
 
+def _versions(engine: Engine, key: str, as_of: dt.date) -> dict | None:
+    """Two versions of a lesson (versions:{lesson_id}:{a}:{b}; ticket 39's "See both versions"), as the Lessons
+    page's server builds them (strata.knowledge.lessons.page.LessonsPage.versions)."""
+    from strata.config import load_roles
+    from strata.knowledge.lessons.page import LessonsPage
+    from strata.knowledge.lessons.review import LessonReview, Refused
+
+    lesson_id, _, versions = key.partition(":")
+    first, _, last = versions.partition(":")
+    if not (first.isdigit() and last.isdigit()):
+        return None
+    try:
+        found = LessonsPage(LessonReview(load_roles())).versions(engine, lesson_id, int(first), int(last))
+    except Refused:
+        return None
+    return {"kind": "versions", "row": found}
+
+
 # The reader for each kind of evidence id, by the table its id names before the colon: a passage, a
 # comparable package from the range chart (ticket 15), each record a project's Summary cites, an
 # agency's baseline, which check_plan's baseline reasons cite (ticket 21), an award notice, which a
@@ -86,6 +104,8 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     # The timeline's marks (ticket 23): a report's document view (doc:), a band's ratings (ratings:), a year's
     # contracts (contracts:) and a disagreement's two sides (disagreement:).
     **timeline.READERS,
+    # Two versions of a lesson (ticket 39).
+    "versions": _versions,
 }
 
 

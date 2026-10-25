@@ -151,7 +151,18 @@
         "Set on (UTC)"
       ],
       "fieldsRemoved": "Removed",
-      "fieldsForm": "Risk table form"
+      "fieldsForm": "Risk table form",
+      "lessonsTitle": "Lesson versions",
+      "lessonsColumns": [
+        "Row",
+        "Lesson version cited",
+        "Current version at export",
+        "Your choice and reason"
+      ],
+      "choiceUpdated": "Updated on {date}",
+      "choiceKept": "Kept version {a}: {reason}",
+      "choiceRemoved": "Removed on {date}",
+      "choiceNone": "No choice yet"
     }
   },
   "holds": {

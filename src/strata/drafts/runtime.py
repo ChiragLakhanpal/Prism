@@ -419,9 +419,12 @@ def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) ->
                    else (["update", "keep"] if kind and kind.rewrite_row else ["keep"]))
         shown.append({**notice, "can_act": may, "actions": actions,
                       "row_label": labels(saved.content, notice["row_key"]) if labels else None})
-    return {"lesson_notices": shown, "lesson_updated": saved.content.get("lesson_updated") or [],
-            "lesson_kept": saved.content.get("lesson_kept") or [],
-            "lesson_removed": saved.content.get("lesson_removed") or []}
+    def named(entries: list[dict]) -> list[dict]:
+        return [{**entry, "row_label": labels(saved.content, entry["row_key"]) if labels else None} for entry in entries]
+
+    return {"lesson_notices": shown, "lesson_updated": named(saved.content.get("lesson_updated") or []),
+            "lesson_kept": named(saved.content.get("lesson_kept") or []),
+            "lesson_removed": named(saved.content.get("lesson_removed") or []), "lesson_can_act": may}
 
 
 def load_kind(key: str):

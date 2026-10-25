@@ -12,6 +12,8 @@ import { ChevronLeft, X } from "lucide-react";
 import { copy } from "../copy";
 import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
+import type { VersionsView as VersionsViewData } from "../lib/lessonsPage";
+import { VersionsView } from "./VersionNotice";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import {
@@ -804,6 +806,7 @@ export function EvidenceDrawerView({
               />
             )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {evidence?.kind === "versions" && <VersionsView view={evidence.row as VersionsViewData} />}
             {evidence && timelineView && <TimelineView evidence={evidence} renderSide={(sideId) => <SidePassage id={sideId} asOf={asOf} />} />}
             {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
             {evidence?.kind === "dot" && (

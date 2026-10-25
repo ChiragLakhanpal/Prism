@@ -237,6 +237,9 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.disagreement_choices TO `{PRINCIPAL}`",
         # Ticket 36: the values people set on a draft's fields, and their latest values.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_fields TO `{PRINCIPAL}`",
+        # Ticket 39: each reader's visits to Lessons, and the choices on rows whose lesson changed.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_visits TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_lesson_choices TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
@@ -248,6 +251,8 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_versions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_sources TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_notes TO `{PRINCIPAL}`",
+        # Ticket 39: the categories and methods each lesson version names.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_version_tags TO `{PRINCIPAL}`",
         # Ticket 32's retrieval loop: passage reports, the decisions on them, each answer's sources, the query
         # judges' grades and each query's pair of judges. No one may write them outside the app.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.candidate_labels TO `{PRINCIPAL}`",
@@ -256,6 +261,8 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_grades TO `{PRINCIPAL}`",
         # The pair of judges a query loaded before the roles file named any keeps at its first grade.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_queries TO `{PRINCIPAL}`",
+        # Ticket 39: the Lessons page's "Your reports" reads each reader's own counts.
+        f"GRANT SELECT ON TABLE strata.ops.retrieval_feedback_viewers TO `{PRINCIPAL}`",
     ]
 
 

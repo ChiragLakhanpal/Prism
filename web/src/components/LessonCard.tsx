@@ -197,6 +197,8 @@ export function LessonCard({
   open = null,
   visited = new Set(),
   children,
+  focus = false,
+  anchor = true,
 }: {
   card: Card;
   level?: 2 | 3;
@@ -211,27 +213,47 @@ export function LessonCard({
   visited?: ReadonlySet<string>;
   // The lesson review writer's sentences about this lesson, under "This may repeat a lesson".
   children?: ReactNode;
+  // Ticket 39: the card the library's ?show= opened, whose heading takes focus; and whether the card carries the
+  // lesson's anchor, which "New" leaves to the library's card so the page holds one.
+  focus?: boolean;
+  anchor?: boolean;
 }) {
   const headingId = useId();
+  const heading = useRef<HTMLHeadingElement>(null);
   const [rechecking, setRechecking] = useState(card.rechecking_since);
+  const retired = card.retired ?? null;
+  useEffect(() => {
+    if (focus) heading.current?.focus();
+  }, [focus]);
   return (
     <article
-      id={compact ? undefined : `lesson-${card.lesson_id}`}
+      id={compact || !anchor ? undefined : `lesson-${card.lesson_id}`}
       aria-labelledby={headingId}
       data-lesson-card={compact ? "compact" : "full"}
+      data-retired={retired?.as}
       className={cx("flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6", compact && "@md/page:p-4")}
     >
       <p className="text-label text-ink-muted uppercase">{eyebrowOf(card)}</p>
-      {createElement(`h${level}`, { id: headingId, className: "-mt-1 text-title text-balance text-ink-heading" }, card.statement)}
+      {createElement(
+        `h${level}`,
+        { id: headingId, ref: heading, tabIndex: focus ? -1 : undefined, className: "-mt-1 text-title text-balance text-ink-heading outline-none" },
+        card.statement,
+      )}
       {children}
       {!compact && card.quote && <p className="max-w-prose text-body text-ink">{fillText(words.card.quote, { quote: card.quote })}</p>}
       <Chips evidence={card.evidence} open={open} visited={visited} />
       <div className="flex flex-wrap gap-2">
+        {retired && <StatusBadge kind={retired.as === "retired_wrong" ? "retired-wrong" : "retired-outdated"} />}
         <EvidenceBadge status={card.ieg_status} />
         {rechecking && <StatusBadge kind="rechecking" />}
       </div>
       {!compact && (
         <ul className="flex flex-wrap gap-2" aria-label={words.card.tags}>
+          {[...(card.categories ?? []), ...(card.methods ?? [])].map((tag) => (
+            <li key={tag.key}>
+              <Tag>{tag.label}</Tag>
+            </li>
+          ))}
           {card.risk_factors.map((factor) => (
             <li key={factor.key}>
               <Tag>{factor.label}</Tag>
@@ -260,11 +282,16 @@ export function LessonCard({
               </p>
             )}
             <p>{card.edition ? fillText(words.card.rules, { edition: card.edition.name }) : words.card.rulesUnknown}</p>
+            {retired && (
+              <p data-retired-line>
+                <Fill template={copy.lessonsPage.retiredLine} slots={{ date: <Num date={retired.on} />, reason: retired.reason }} />
+              </p>
+            )}
           </>
         )}
       </div>
       {!compact && <LessonSources evidence={card.evidence} className="max-w-prose" />}
-      {!compact && canRecheck && reasonMax !== undefined && !card.rechecking_since && (
+      {!compact && canRecheck && reasonMax !== undefined && !card.rechecking_since && !retired && (
         <RecheckForm
           card={card}
           max={reasonMax}

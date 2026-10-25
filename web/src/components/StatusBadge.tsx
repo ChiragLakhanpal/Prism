@@ -36,7 +36,10 @@ export type BadgeKind =
   | "own-project"
   | "their-project"
   | "audit-sample"
-  | "experimental";
+  | "experimental"
+  | "changed"
+  | "retired-wrong"
+  | "retired-outdated";
 
 const lessons = copy.lessons.badges;
 
@@ -71,6 +74,11 @@ const KINDS: Record<BadgeKind, Kind> = {
   "own-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeOwnProject },
   "their-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeTheirProject },
   "audit-sample": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeAudit },
+  // A version notice's change badges (ticket 39): Changed is information; Retired as wrong holds the draft's export,
+  // so it is amber, never red, since the draft is out of date and nothing failed; Retired as out of date is neutral.
+  changed: { state: "info", Icon: Info, dashed: false, text: lessons.changed },
+  "retired-wrong": { state: "warning", Icon: TriangleAlert, dashed: false, text: lessons.retiredWrong },
+  "retired-outdated": { state: "neutral", Icon: CircleDashed, dashed: false, text: lessons.retiredOutdated },
   // Quiet: its 1px border is transparent, so it keeps every badge's height, and its icon sits 8 px from the word.
   experimental: { state: "neutral", Icon: FlaskConical, dashed: false, text: copy.badge.experimental, quiet: true },
 };

@@ -23,7 +23,7 @@ import datetime as dt
 from functools import cache
 from importlib import resources
 
-from strata.knowledge.lessons.propose import IEG_TYPES
+
 from strata.knowledge.lessons.review import LessonReview, Store, _date, _int, _iso, lesson_words
 from strata.knowledge.lessons.visits import Visit
 from strata.lakehouse.engine import Engine
@@ -286,12 +286,105 @@ class LessonsPage:
 
     # ── The whole page ───────────────────────────────────────────────────
 
-    def build(self, engine: Engine, *, visit: Visit, preview: bool, drafts: list = ()) -> dict:
+    # ── New ──────────────────────────────────────────────────────────────
+
+    def new_lessons(self, store: Store, visit: Visit) -> dict | None:
+        """Lessons that became current at version 1 in the window, newest first, as library cards: at most
+        lessons.new_cards_max, then how many more the library holds. None on a first visit or with none new."""
+        if visit.first:
+            return None
+        added = [row for versions in store.versions.values() for row in versions[:1]
+                 if in_window(decided_at(store, row), visit.previous_started_at, visit.started_at)
+                 and store.latest(row["lesson_id"])["state"] == "current"]
+        if not added:
+            return None
+        added.sort(key=lambda row: (decided_at(store, row), row["lesson_id"]), reverse=True)
+        most = int(self.review.thresholds.value("lessons.new_cards_max"))
+        more = len(added) - most
+        return {"cards": [self.review.card(store, row["lesson_id"]) for row in added[:most]],
+                "more": max(more, 0),
+                "more_segments": fill(form(words()["newMore"], more),
+                                      {"count": count(more, capital=True),
+                                       "link": {"link": words()["newMoreLink"], "href": "#library"}})
+                if more > 0 else None}
+
+    # ── Two versions of a lesson ─────────────────────────────────────────
+
+    def versions(self, engine: Engine, lesson_id: str, a: int, b: int) -> dict:
+        """Version a of a lesson beside version b, for the evidence drawer's "Two versions of a lesson" (evidence id
+        versions:{lesson_id}:{a}:{b}): each with its statement, tags, the quotes it rests on and its decision by role,
+        the change between them with the changed words, the lead's reason on the later one, and the versions that came
+        between. A retired lesson's last block says when and why."""
+        from strata.knowledge.lessons.notices import describe, tier
+        from strata.knowledge.lessons.review import Refused
+
         store = self.review._load(engine)
+        rows = store.versions.get(lesson_id) or []
+        numbers = {_int(row["version"]): row for row in rows}
+        if a not in numbers or b not in numbers or a >= b:
+            raise Refused(404, "unknown_version", {"lesson_id": lesson_id, "version": b if a in numbers else a})
+        project = store.projects.get(numbers[b]["project_id"]) or {}
+
+        def block(version: int) -> dict:
+            row = numbers[version]
+            evidence = self.review._proposal_evidence(store, store.lesson_proposals(lesson_id, version))
+            return {"version": version, "statement": row["statement"], **self.review.tags(row),
+                    "sector": project.get("sector_name"), "decided_on": _iso(row["decided_on"]),
+                    "state": row["state"], "change_kind": row["change_kind"],
+                    "reason": row["reason"] if version != 1 else None,
+                    "evidence": [self.review.evidence_row(store, item) for item in evidence],
+                    **self.review.ieg(store, evidence, row["project_id"])}
+
+        later = [row for row in rows if a < _int(row["version"]) <= b]
+        return {"evidence_id": f"versions:{lesson_id}:{a}:{b}", "lesson_id": lesson_id,
+                "current": _int(rows[-1]["version"]), "tier": tier(later), "versions": [block(a), block(b)],
+                **describe(rows, a, b)}
+
+    # ── Your reports ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def feedback(counts: dict | None) -> dict:
+        """What the reader's "Wrong passage" reports did, from the counts the weekly retrieval run stores (ticket 32's
+        strata.ops.retrieval_feedback_viewers), in brief 32's sentence, with each count's word. None marked: the
+        line that says where reporting lives."""
+        if not counts or not int(counts.get("marked") or 0):
+            return {"never": True, "segments": None, "counts": None}
+        found = words()["feedback"]
+        marked, fixed, waiting = int(counts["marked"]), int(counts["fixed"]), int(counts["waiting"])
+        recited = int(counts["recited"])
+        slots = {"marked": count(marked, "marked"), "fixed": count(fixed, "fixed"), "recited": count(recited, "recited"),
+                 "isAre": form(found["isAre"], fixed), "themIt": form(found["themIt"], waiting)}
+        if marked == 1 and fixed == 1:
+            slots["recited"] = count(recited, "recited", capital=True)
+            template = found["oneFixed"] if recited else found["oneFixedOnly"]
+        elif fixed:
+            template = found["fixedAndRecited"] if recited else found["fixed"]
+        else:
+            template = found["waiting"] if waiting else found["kept"]
+        segments = fill(template, slots)
+        return {"never": False, "segments": segments,
+                "counts": {key: int(counts[key]) for key in ("marked", "fixed", "waiting", "kept", "recited")}}
+
+    # ── The whole page ───────────────────────────────────────────────────
+
+    def build(self, engine: Engine, viewer, *, visit: Visit, preview: bool, drafts: list = (),
+              feedback: dict | None = None, filters: dict | None = None, page: int = 1, show: str | None = None,
+              as_of: dt.date | None = None) -> dict:
+        """The whole Lessons tab in one answer. A preview leaves out what is about the signed-in person; an as-of view
+        shows only the library (the 39 brief, section 4.9)."""
+        store = self.review._load(engine)
+        if as_of is not None:  # each lesson at the version current then; a lesson decided later is not there yet
+            store.versions = {lesson_id: kept for lesson_id, versions in store.versions.items()
+                              if (kept := [row for row in versions if _date(row["decided_on"]) <= as_of])}
+        library = self.review.library(engine, viewer, page, filters, show, store=store)
+        if as_of is not None:
+            return {"view": "preview" if preview else "staff", "as_of": as_of.isoformat(), "visit": None,
+                    "digest": None, "notices": [], "new_lessons": None, "feedback": None, "library": library}
         drafts = [] if preview else list(drafts)
         digest = self.digest(engine, store, visit, preview)
-        digest["strengthened"] = self.strengthened(store, drafts, visit)
+        digest["strengthened"] = None if preview else self.strengthened(store, drafts, visit)
         for item in (digest.get("items") or {}).get("retired") or []:
             item["exported_uses"] = self.exported_uses(store, drafts, item["lesson_id"])
-        return {"view": "preview" if preview else "staff", "visit": visit.as_dict(), "digest": digest,
-                "notices": self.changed_where_used(store, drafts)}
+        return {"view": "preview" if preview else "staff", "as_of": None, "visit": visit.as_dict(), "digest": digest,
+                "notices": self.changed_where_used(store, drafts), "new_lessons": self.new_lessons(store, visit),
+                "feedback": None if preview else self.feedback(feedback), "library": library}

@@ -4,8 +4,24 @@
 import type { ChecksEvent, DisagreementEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
 import { ApiError, postJson, putJson } from "./api";
 import type { Activity, CheckPlanResult } from "./api";
+import type { RowNotice } from "./lessonsPage";
 import { streamEvents, StreamError } from "./sse";
 import { createStore } from "./store";
+
+// A choice a draft's author made for a row whose lesson changed (ticket 39), with the row's label and, for an
+// update, the row's earlier notes.
+export type LessonChoiceRecord = {
+  row_key: string;
+  lesson_id: string;
+  action: string;
+  cited_version: number;
+  current_version: number;
+  reason: string | null;
+  at: string;
+  by: string | null;
+  row_label: { n: number; risk_label: string } | null;
+  earlier?: DraftNote[];
+};
 
 export type DraftState = "draft" | "checked" | "exported" | "discarded";
 export type Who = { at: string; by: string | null; you: boolean };
@@ -176,6 +192,12 @@ export type Draft = {
   choices?: { disagreement_id: string; kept: "lean" | "other"; reason: string | null; at: string | null; by: string | null }[];
   // A state made up for layout only (tests/record_ppsd_api.py), never a finding.
   made_up?: string;
+  // Ticket 39: the version notices on its rows, and what its author chose for rows whose lesson changed.
+  lesson_notices?: RowNotice[];
+  lesson_updated?: LessonChoiceRecord[];
+  lesson_kept?: LessonChoiceRecord[];
+  lesson_removed?: LessonChoiceRecord[];
+  lesson_can_act?: boolean;
   may_act: boolean;
   export: {
     export_id: string;

@@ -54,8 +54,9 @@ class LessonsStory(ppsd_story.Story):
         self.cases |= load_cases(ROW_UPDATES)
 
     def app_options(self, state) -> dict:
+        # The weekly retrieval run's per-person counts are read from the app state's strata.ops, as the app's own.
         return {"lessons": LessonReview(ROLES, today=lambda: self.at.date(), now=lambda: self.at),
-                "visits": LessonVisits(state), "today": lambda: self.at.date()}
+                "visits": LessonVisits(state), "today": lambda: self.at.date(), "feedback_record": state}
 
     def update(self, draft_id: str, case: str = "ppsd-row-update-cost-estimates", headers=ANA, **body):
         """"Update the row" on a draft's cost estimates row, with the scripted writer replaying a row update."""
@@ -72,11 +73,14 @@ class LessonsStory(ppsd_story.Story):
         return self.get("/api/lessons/page", headers, **params)
 
 
-def build(fixture_db: Path, folder: Path) -> tuple[Path, Path]:
-    """The story up to October 29, in folder: the lessons database and the app state's database."""
+def build(fixture_db: Path, folder: Path, first_visit=None) -> tuple[Path, Path]:
+    """The story up to October 29, in folder: the lessons database and the app state's database. first_visit, when
+    given, receives Ana's answer on her first visit, while the library is still empty."""
     database = scenario.copy_of(fixture_db, folder)
     story = LessonsStory(database, folder)
-    story.at_time(FIRST_VISIT).page()
+    answer = story.at_time(FIRST_VISIT).page()
+    if first_visit is not None:
+        first_visit(answer)
     for passage in (scenario.REBIDDING, scenario.IEG_LESSON):
         scenario.decide(database, passage, DECIDED)
     story.at_time(dt.datetime.combine(WRITTEN, dt.time(9), tzinfo=dt.UTC))
@@ -84,7 +88,8 @@ def build(fixture_db: Path, folder: Path) -> tuple[Path, Path]:
     story.suggest(key="ppsd-1")
     story.suggest(key="ppsd-2")
     story.act("draft-0002", "check", "draft")
-    scenario.recheck(database, REBIDDING_LESSON, CHANGED, "change", change={"statement": NARROWED},
+    scenario.recheck(database, REBIDDING_LESSON, CHANGED, "change",
+                     change={"statement": NARROWED, "categories": ["Works"], "methods": ["Request for Bids"]},
                      reason="Current market rates is what the 2025 rules ask for.")
     with DuckDBEngine.open(database) as engine:
         writer.run(engine, writer.recorded_agent_for(),
