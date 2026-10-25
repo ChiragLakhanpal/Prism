@@ -1445,6 +1445,8 @@ class Team:
     key: str
     name: str
     groups: tuple[str, ...]
+    # The language its members get answers and drafts in when they have chosen none (ticket 42), or None for English.
+    working_language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1479,10 +1481,14 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
-        entry.only({"name", "groups"})
+        entry.only({"name", "groups", "working_language"})
         if not entry.texts("groups"):
             entry._fail("groups", "must name at least one workspace group")
-        teams.append(Team(key, entry.text("name"), entry.texts("groups")))
+        working = entry.text("working_language", required=False)
+        if working is not None and working not in {language.code for language in load_languages().working}:
+            entry._fail("working_language", f"names {working!r}, which is not a working language in "
+                                            "config/languages.toml")
+        teams.append(Team(key, entry.text("name"), entry.texts("groups"), working))
     groups = {}
     for key, table in (data.get("groups") or {}).items():
         entry = _Entry(path, f"groups.{key}", table)

@@ -3,5 +3,13 @@
  "name": "Ana Example",
  "signed_in": true,
  "has_token": true,
- "staff": true
+ "staff": true,
+ "language": {
+  "code": "en",
+  "source": "default",
+  "saved": null,
+  "team": null,
+  "link": null,
+  "saved_readable": true
+ }
 }

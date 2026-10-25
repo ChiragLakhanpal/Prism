@@ -114,7 +114,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from starlette.middleware.gzip import GZipMiddleware
 from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
@@ -149,6 +149,7 @@ from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
+from strata.server.viewer_settings import SettingsStore, working_language
 from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups
 from strata.server.choices import REASON_LIMIT, ChoiceLog
@@ -190,6 +191,12 @@ class AskRequest(BaseModel):
     asof: dt.date | None = None
     view: Literal["staff", "piu", "public"] = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
+
+
+class LanguageRequest(BaseModel):
+    """The language of answers and drafts a viewer chose in the view popover (ticket 42)."""
+
+    code: str = Field(min_length=1, max_length=16)
 
 
 class OpenedRequest(BaseModel):
@@ -284,7 +291,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
                citations: CitationLog | None = None, choices: ChoiceLog | None = None,
-               follows: FollowStore | None = None) -> FastAPI:
+               follows: FollowStore | None = None, settings: SettingsStore | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -927,12 +934,46 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def health() -> dict:
         return {"status": "ok"}
 
+    def saved_language(viewer: Viewer) -> tuple[str | None, bool]:
+        """The viewer's saved language of answers and drafts, and whether it could be read."""
+        if settings is None or not viewer.user_id:
+            return None, True
+        try:
+            return settings.saved_language(viewer.user_id), True
+        except EngineError:
+            log.exception("I could not read the saved language of %s.", viewer.email or viewer.user_id)
+            return None, False
+
     @app.get("/api/me")
-    def me(viewer: Viewer = Depends(current_viewer)) -> dict:
+    def me(lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
-        # Following, and the project page offers Follow.
+        # Following, and the project page offers Follow. The language of answers and drafts in effect, and where it
+        # came from (ticket 42): the page's ?lang=, which the app passes on, the saved choice, the team's, English.
+        saved, readable = saved_language(viewer)
+        language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
-                "has_token": viewer.token is not None, "staff": access.is_staff(viewer)}
+                "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
+                "language": {**language.as_dict(), "saved_readable": readable}}
+
+    @app.put("/api/me/working-language")
+    def choose_language(body: LanguageRequest, viewer: Viewer = Depends(current_viewer)):
+        """Save the language of answers and drafts the viewer chose (ticket 42): a new row in
+        strata.ops.viewer_settings, written as the app's own service principal."""
+        from strata import languages
+
+        code = languages.from_link(body.code)
+        if code is None or code != body.code:
+            return refused(400, "unknown_language")
+        if not viewer.user_id:
+            return refused(401, "not_signed_in")
+        if settings is None:
+            return refused(503, "no_data_service")
+        try:
+            settings.save_language(viewer.user_id, code, now())
+        except EngineError:
+            log.exception("I could not save the language %s chose.", viewer.email or viewer.user_id)
+            return refused(503, "data_service")
+        return Response(status_code=204)
 
     @app.get("/api/me/warehouse")
     async def me_on_the_warehouse(viewer: Viewer = Depends(current_viewer)):

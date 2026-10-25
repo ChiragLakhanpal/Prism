@@ -1,1 +1,1 @@
-{"email": "ana.example@worldbank.org", "name": "Ana Example", "signed_in": true, "has_token": true, "staff": false}
+{"email": "ana.example@worldbank.org", "name": "Ana Example", "signed_in": true, "has_token": true, "staff": false, "language": {"code": "en", "source": "default", "saved": null, "team": null, "link": null, "saved_readable": true}}

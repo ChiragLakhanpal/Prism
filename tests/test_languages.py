@@ -238,3 +238,66 @@ def drafting_app(fixture_db, tmp_path, case):
                       writers=lambda kind: ScriptedAgent(written), runs=RunLog(state),
                       access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY, now=clock,
                       new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001")
+
+
+# ── Where the language of answers and drafts comes from (the 42 brief, section 6.1) ──
+
+def identity(app, headers, address=""):
+    from test_drafts import call
+
+    return call(app, "GET", f"/api/me{address}", headers).json()["language"]
+
+
+def settings_app(tmp_path, groups=None, roles=None):
+    from strata.config import load_roles
+    from strata.lakehouse import catalog
+    from strata.server.access import Access, StaticGroups
+    from strata.server.viewer_settings import SettingsStore
+    from test_drafts import GROUPS, Clock
+
+    state_db = tmp_path / "state.duckdb"
+    with DuckDBEngine.open(state_db) as engine:
+        catalog.build(engine)
+    clock = Clock(dt.datetime(2026, 10, 23, 14, 0, tzinfo=dt.UTC))
+    return create_app(settings=SettingsStore(lambda: DuckDBEngine.open(state_db)), now=clock,
+                      access=Access(roles or load_roles(), StaticGroups(groups or GROUPS)))
+
+
+def test_a_link_s_language_comes_first_then_the_saved_choice_then_the_team_s_then_english(tmp_path):
+    """A link never changes the saved choice; a value no working language matches is named unknown, and the language
+    in effect falls back to the saved choice."""
+    import dataclasses
+
+    from strata.config import load_roles
+    from test_drafts import ANA, BEN, call
+
+    roles = load_roles()
+    kenya = next(team for team in roles.teams if "strata-team-kenya-water" in team.groups)
+    french_team = dataclasses.replace(roles, teams=tuple(dataclasses.replace(team, working_language="fr")
+                                                         if team.key == kenya.key else team for team in roles.teams))
+    app = settings_app(tmp_path, roles=french_team)
+
+    assert identity(app, ANA) == {"code": "fr", "source": "team", "saved": None, "team": "fr", "link": None,
+                                  "saved_readable": True}
+    assert call(app, "PUT", "/api/me/working-language", ANA, json={"code": "es"}).status_code == 204
+    assert identity(app, ANA) | {"team": None} == {"code": "es", "source": "saved", "saved": "es", "team": None,
+                                                   "link": None, "saved_readable": True}
+    assert identity(app, ANA, "?lang=PT_br")["code"] == "pt"
+    linked = identity(app, ANA, "?lang=fra")
+    assert (linked["code"], linked["source"], linked["saved"], linked["link"]) == ("fr", "link", "es", "fr")
+    unknown = identity(app, ANA, "?lang=xx")
+    assert (unknown["code"], unknown["source"], unknown["link"]) == ("es", "saved", "unknown")
+    # A link never saved anything, and Ben, on the same team, has his own choice: none yet.
+    assert identity(app, ANA)["saved"] == "es"
+    assert identity(app, BEN)["code"] == "fr"
+
+
+def test_choosing_a_language_takes_only_a_working_language_and_a_signed_in_viewer(tmp_path):
+    from test_drafts import ANA, call
+
+    app = settings_app(tmp_path)
+
+    assert call(app, "PUT", "/api/me/working-language", ANA, json={"code": "de"}).json() == {"code": "unknown_language"}
+    assert call(app, "PUT", "/api/me/working-language", ANA, json={"code": "FR"}).status_code == 400
+    assert call(app, "PUT", "/api/me/working-language", {}, json={"code": "fr"}).status_code == 401
+    assert call(create_app(), "PUT", "/api/me/working-language", ANA, json={"code": "fr"}).status_code == 503

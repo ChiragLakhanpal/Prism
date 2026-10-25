@@ -157,3 +157,18 @@ def _value(words: list[str], small: dict, scales: dict, times: dict) -> Decimal:
             else:
                 current = (current or 1) * scales[word]
     return Decimal(total + current)
+
+
+# The three-letter codes a link may use for a working language (ISO 639-2, both forms).
+THREE_LETTER = {"eng": "en", "fra": "fr", "fre": "fr", "spa": "es", "por": "pt"}
+
+
+def from_link(raw: str | None) -> str | None:
+    """The working language a link's ?lang= asks for, in any case, with a region ("fr-CA", "pt_BR") or as a three-letter
+    code ("fra"), or None for a value no working language matches (the 42 design brief, section 5.2)."""
+    if not raw:
+        return None
+    first = raw.strip().lower().replace("_", "-").split("-")[0]
+    code = THREE_LETTER.get(first, first)
+    found = registry().get(code)
+    return found.code if found is not None and found.working else None
