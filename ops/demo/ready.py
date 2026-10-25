@@ -17,8 +17,9 @@ the app's health route needs. It lists the workspace first, then, in order:
 2. The SQL warehouse and Genie. It asks the ask_genie question that config/slice.toml's [demo_plan] names, through
    the tool registry as the env file's token, which starts a stopped warehouse first (ticket 33). Then it asks again,
    and that call must answer within [demo_ready] genie_first_call_seconds.
-3. The smoke question. It asks the documents question [demo_plan] names through /api/ask with the Foundry agent and
-   the live tools, as ticket 33's benchmark runner does (strata.evals.answer_benchmark), and passes it only when the
+3. The smoke question. It asks the documents question [demo_plan] names through the app's /api/ask route, run in
+   this process as ticket 33's benchmark runner runs it (strata.evals.answer_benchmark), with the Foundry agent, the
+   SQL warehouse and the live tools, and passes it only when the
    verifier's own events say so: all six checks ran, no sentence was removed, and the kept sentences cite what the
    benchmark file expects.
 4. The P156634 recheck. It runs project_signals for the demo plan's project twice through the tool registry, on the
@@ -31,8 +32,9 @@ the app's health route needs. It lists the workspace first, then, in order:
    ticket 41 merges, it says that neither is built.
 6. It lists the workspace again and prints what changed. A second run prints "No changes."
 
-Then it prints one line per step and exits 0 when every step passed, with the last line "Strata is ready for the
-demo.", 1 naming each step that failed, and 2 when the env file is not ready.
+Then it prints one line per step and exits 0 when no step failed, with the last line "Strata is ready for the
+demo.", 1 naming each step that failed, and 2 when the env file is not ready. A step that is not built yet is not
+a failure.
 
 With --fresh-workspace it changes nothing and needs no env file. It prints, from code alone, every resource a fresh
 workspace needs to reach the demo state, in order, with the command that makes each one: each deployer's own plan

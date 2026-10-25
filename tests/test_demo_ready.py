@@ -430,11 +430,13 @@ def test_the_dry_run_lists_every_resource_from_code_alone_with_the_command_that_
                 names["ai_search_endpoint"], tomllib.loads((ROOT / "config" / "models.toml").read_text())["search"]["index"],
                 tomllib.loads((ROOT / "config" / "genie.toml").read_text())["space"]["title"],
                 *(agent["name"] for agent in agents.values())]
+    # The order that works: the Genie space before the app, because the space deploy saves Strata's space id in the
+    # env file and the app deploy writes that id into app.yaml (ops/genie/deploy_space.py, ops/app/deploy_app.py).
     commands = ["uv run --script ops/bundle/deploy.py --env-file .env",
                 "uv run --script ops/dayone/probe_ai_search.py --env-file .env",
+                "uv run python ops/genie/deploy_space.py --env-file .env",
                 "uv run --script ops/app/deploy_app.py --env-file .env",
                 "uv run --script ops/bundle/check.py job-run --env-file .env",
-                "uv run python ops/genie/deploy_space.py --env-file .env",
                 *(f"uv run --script ops/agent/sync.py --env-file .env --agent {key}" for key in agents)]
     assert out.startswith("How a fresh workspace reaches the demo state, from code alone. I changed nothing.")
     assert [name for name in expected + commands if name not in out] == []

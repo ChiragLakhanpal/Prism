@@ -153,14 +153,14 @@ It needs the env file the wizard filled, `az` signed in for the Foundry agent, a
 
 1. It restarts the app, because an app stops 24 hours after each start or deploy, and waits for `GET /api/health` to answer within `demo_ready.health_timeout_seconds` in `config/thresholds.toml`. It never starts or stops an app that does not run Strata's code.
 2. It warms the SQL warehouse and Genie with the Genie question that `config/slice.toml`'s `[demo_plan]` names, then asks again. The second call must answer within `demo_ready.genie_first_call_seconds`.
-3. It asks one smoke question, the documents question `[demo_plan]` names in `evals/benchmark.yaml`, through `/api/ask` with the Foundry agent. It passes when the verifier ran all six checks, removed no sentence, and the answer cites what the benchmark file expects.
+3. It asks one smoke question, the documents question `[demo_plan]` names in `evals/benchmark.yaml`, through the app's `/api/ask` route, run in this process as the benchmark runner runs it, with the Foundry agent and the SQL warehouse. It passes when the verifier ran all six checks, removed no sentence, and the answer cites what the benchmark file expects.
 4. It rechecks the `P156634` signals on the fixture and on the workspace, prints each check's state and what changed since the fixture was recorded, and lists the activities whose plan row shows no signed contract while the awards dataset holds one. A closed project or a plan that disagrees with the awards is reported, never failed; what the demo says about them is the user's choice (`docs/STATUS.md`, decisions 4 and 7).
 5. It runs ticket 41's seed command for the reviewing panel's group and checks Home's briefing window against the demo plan's Disclosed date. Until ticket 41 merges, it says that neither is built.
 6. It lists the workspace again and prints what changed. A second run prints `No changes.` Genie keeps the conversations it started, and the warehouse its query history.
 
-Then it prints one line per step. When every step passed, its last line is `Strata is ready for the demo.` and it exits 0. Otherwise its last line names each step that failed, such as `Strata is not ready for the demo. This step failed: the smoke question.`, and it exits 1.
+Then it prints one line per step. When no step failed, its last line is `Strata is ready for the demo.` and it exits 0. Otherwise its last line names each step that failed, such as `Strata is not ready for the demo. This step failed: the smoke question.`, and it exits 1.
 
-To see how a fresh workspace reaches the demo state from code alone, run it with `--fresh-workspace`. It changes nothing and needs no env file. It prints each resource, in the order to make them, with the command that makes it: the bundle, the AI Search endpoint, the app, the nightly job's first run, the Genie space, the Foundry agents and the examples for the reviewing panel.
+To see how a fresh workspace reaches the demo state from code alone, run it with `--fresh-workspace`. It changes nothing and needs no env file. It prints each resource, in the order to make them, with the command that makes it: the bundle, the AI Search endpoint, the Genie space, the app, the nightly job's first run, the Foundry agents and the examples for the reviewing panel. The Genie space comes before the app because its deploy saves Strata's space id in the env file, and the app deploy writes that id into `app.yaml`.
 
     uv run python ops/demo/ready.py --fresh-workspace
 

@@ -14,8 +14,10 @@ resource comes from its own deployer's plan, so this list cannot drift from them
 - the examples for the reviewing panel: ticket 41's seed command, python -m strata.seed_examples, through its plan()
   once it has one
 
-The order is the order to run them in: the bundle first, since everything else reads its catalog; the app before the
-nightly job's first run, because the app deploy saves the Azure keys the job's tasks read from the secret scope.
+The order is the order to run them in: the bundle first, since everything else reads its catalog; the Genie space
+before the app, because the space deploy saves Strata's space id in the env file and the app deploy writes that id
+into app.yaml; the app before the nightly job's first run, because the app deploy saves the Azure keys the job's
+tasks read from the secret scope.
 """
 
 from __future__ import annotations
@@ -132,7 +134,7 @@ def examples(seeds: list[tuple[str, str]] | None) -> Planned:
 
 
 def show(say: Callable[[str], None] = print, seeds: list[tuple[str, str]] | None = None) -> int:
-    planned = [bundle(), endpoint(), app(), first_run(), genie(), *agents(),
+    planned = [bundle(), endpoint(), genie(), app(), first_run(), *agents(),
                examples(seeds if seeds is not None else seed_plan())]
     say("How a fresh workspace reaches the demo state, from code alone. I changed nothing.")
     say("First the wizard fills the env file, because tokens and sign-ins are yours: bash ops/wizard/strata-setup.sh")
