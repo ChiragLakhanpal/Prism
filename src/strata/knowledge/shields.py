@@ -10,6 +10,11 @@ carries instructions for a model must be caught before any answer cites it.
 
 A hit is never dropped: the passage stays, its result says an attack was found, the data readiness
 measures count it, and search_passages leaves it out and says why.
+
+held_back() is the one rule for a tool that would hand a passage's words to the agent: a passage with a
+stored attack, or with no stored result at all, is kept from the agent, under the reason code its coverage
+line counts it by (LEFT_OUT; config/tools.toml lists the codes under each tool's reasons). search_passages
+leaves such a passage out; get_disagreements gives a side that rests on one without its words (ticket 64).
 """
 
 from __future__ import annotations
@@ -37,6 +42,28 @@ class Shield(Protocol):
 
 class ShieldError(RuntimeError):
     """The shield could not scan, so the run stops rather than keep passages with no result."""
+
+
+# ── What a stored result means to a tool ─────────────────────────────────
+
+ATTACK_FOUND, NOT_SCREENED = "prompt_shields_hit", "not_screened"
+LEFT_OUT = (ATTACK_FOUND, NOT_SCREENED)  # in the order a coverage line lists them
+
+
+def held_back(attack_detected) -> str | None:
+    """Why a passage's words are kept from the agent, as a coverage line's reason code, or None when Prompt Shields
+    screened it and found no attack. The stored result arrives typed from DuckDB and as text from the SQL warehouse."""
+    if attack_detected is None or attack_detected == "":
+        return NOT_SCREENED
+    found = attack_detected if isinstance(attack_detected, bool) else str(attack_detected).lower() == "true"
+    return ATTACK_FOUND if found else None
+
+
+def coverage_entries(left_out: dict[str, list[str]]) -> list[dict]:
+    """The coverage line's entries for the passages a tool kept from the agent, by reason code, each with its count
+    and its passages' evidence ids, in LEFT_OUT's order; a reason with no passage gives no entry."""
+    return [{"reason": reason, "count": len(left_out[reason]), "evidence_ids": left_out[reason]}
+            for reason in LEFT_OUT if left_out.get(reason)]
 
 
 # ── Offline ──────────────────────────────────────────────────────────────

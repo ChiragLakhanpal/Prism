@@ -1619,3 +1619,45 @@ The merger parked this step on October 25, 2026, after merge commit f5b445f. The
         SELECT viewer, kept_assertion_id, reason, run_id FROM strata.ops.disagreement_choices ORDER BY made_at DESC LIMIT 1
 
     `DESCRIBE HISTORY strata.ops.disagreement_choices LIMIT 1` must also show that the App's service principal wrote the row, not your own user.
+
+## Ticket 64, step 1 of 3: redeploy the App, which masks who sent each passage report and who asked each question
+
+Ticket 64's builder parked this step on October 25, 2026, on the branch `strata/64-viewer-emails-and-unshielded-disagreement-text`. The Free Edition SQL warehouse reached its free daily limit on October 25, so run it only once the warehouse answers again, and after ticket 32's step 1, which makes `strata.ops.candidate_labels` and `strata.ops.answer_citations`. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from this ticket's merge or later serves every block that names it. From this merge on, the deploy's step 7 makes the mask function `strata.ops.mask_viewer` and puts it on `candidate_labels.viewer_id`, `candidate_labels.viewer_email` and `answer_citations.viewer_id` (`src/strata/lakehouse/masks.py`). The mask gives the values only to the App's service principal and to you, the user who runs the deploy, whose identity also runs the weekly retrieval job. Every other reader reads NULL, though `bundle/catalog.yml` lets them read all of `strata.ops`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, prints "7. Masking who sent each passage report and who asked each question from everyone but the app and you.", and its last line is `Strata is running at https://...`. Then, in the SQL editor, this returns three rows, each with the mask `mask_viewer`: `answer_citations.viewer_id`, `candidate_labels.viewer_email` and `candidate_labels.viewer_id`:
+
+    SELECT table_name, column_name, mask_name FROM system.information_schema.column_masks
+    WHERE table_catalog = 'strata' AND table_schema = 'ops' ORDER BY table_name, column_name
+
+`DESCRIBE TABLE EXTENDED strata.ops.candidate_labels` shows the same two masks under "Column Masks". The proof that a reader sees no email (criterion 1, workspace half): signed in as anyone in `account users` other than you, such as a panel member, run these two queries. Each must return 0, even after people have sent reports on the App:
+
+    SELECT count(*) AS reporters_a_reader_sees FROM strata.ops.candidate_labels
+    WHERE viewer_email IS NOT NULL OR viewer_id IS NOT NULL
+
+    SELECT count(*) AS askers_a_reader_sees FROM strata.ops.answer_citations WHERE viewer_id IS NOT NULL
+
+Run as you, the same two queries count every report and every cited source that has a sender, which shows the mask lets the owner through. If the workspace has no second person to sign in as, `DESCRIBE FUNCTION EXTENDED strata.ops.mask_viewer` must show a body that names only the App's service principal and your user name. If the warehouse refuses `SET MASK`, the deploy stops at step 7 with the warehouse's message; tell the orchestrator, since the fallback is to move the two tables to a schema without the readers' grant.
+
+## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
+
+Ticket 64's builder parked this step on October 25, 2026. It needs the four Foundry keys in `.env`. The description of `get_disagreements` in `config/tools.toml` now tells the agent that a side whose passage Prompt Shields flagged or never screened comes without its text and its quote. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from this ticket's merge or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run's diff shows the new sentence in `### get_disagreements` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
+
+## Ticket 64, step 3 of 3: the showcase disagreement's sides keep their words once Prompt Shields has screened them
+
+Ticket 64's builder parked this step on October 25, 2026. It has no command of its own. Run it after ticket 11's step 4 of 4, which stores a Prompt Shields result for every passage. Until then, `get_disagreements` on the warehouse gives every side that rests on a passage without its text, under `not_screened`, as `search_passages` leaves such passages out. In the SQL editor:
+
+    SELECT passage_id, attack_detected FROM strata.gold.passage
+    WHERE passage_id IN ('26733307/v1/s4', '31525018/v1/78')
+
+It worked if it returns both passages with `attack_detected` false: ISR 7's side and paragraph 78's side then keep their words, and a claim can quote paragraph 78 (criterion 2, workspace half). A NULL means the passage was never screened, and true means Prompt Shields found an attack; either way the side comes without its words. Read that passage before the demo.
