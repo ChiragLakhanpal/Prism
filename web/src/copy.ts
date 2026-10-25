@@ -486,6 +486,8 @@ export const copy = {
     }),
     highlightStarts: "Highlight starts.",
     highlightEnds: "Highlight ends.",
+    // What a PDF's private-use character, such as a Wingdings bullet, shows as: one character for one.
+    privateGlyph: "\u2022",
     openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
     // Ticket 21: the drawer's link opens the in-app source view at the page, in the same tab.
     openAtPageHere: (page: string) => `Open at page ${page}`,
@@ -566,7 +568,7 @@ export const copy = {
       isr_date: "ISR date",
       esf_risk: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
-      sector_name: "Sector, in Strata's taxonomy",
+      sector_name: "Sector, as Strata groups it",
       sector_share: "Sector and share",
       total_commitment_usd: "Total commitment (US$)",
       plan_date: "Plan date",
@@ -1015,7 +1017,7 @@ export const copy = {
       esf_rating: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
       region: "Region",
-      sector: "Sector, in Strata's taxonomy",
+      sector: "Sector, as Strata groups it",
       sectors: "Sectors in the project record",
       agency: "Implementing agency",
       agencies: "Implementing agencies",

@@ -21,6 +21,7 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { ExternalLink, pdfPageHref } from "../components/ExternalLink";
+import { drawable } from "../components/Document";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
@@ -208,7 +209,7 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
         const id = passage.numbered ? `para-${passage.paragraph}` : `passage-${passage.passage_id}`;
         const text = (
           <p id={id} lang={passage.language ?? undefined} className="text-body wrap-anywhere text-ink" data-passage-id={passage.passage_id}>
-            {linkProjectIds(passage.text)}
+            {linkProjectIds(drawable(passage.text))}
           </p>
         );
         const marked = highlight?.passage_id === passage.passage_id;
@@ -281,7 +282,7 @@ function RowsTable({
                 // Each column keeps room for a short word, and words break only when one is longer than its
                 // column, so "Stakeholder" never splits into "Stak / ehol / der" (the 21 design review, F18).
                 <td key={head} className="min-w-[8ch] px-3 py-2 wrap-break-word text-ink">
-                  {row.cells.find(([name]) => name === head)?.[1] ?? ""}
+                  {drawable(row.cells.find(([name]) => name === head)?.[1] ?? "")}
                 </td>
               ))}
             </tr>

@@ -199,6 +199,13 @@ test("P156634's Summary gives every value a marker and lists its agencies and se
     await expect(fact.locator("[data-fact-source] [data-citation]"), key!).toHaveCount(["commitment", "disbursed", "canceled"].includes(key!) ? 2 : 1);
   }
   await expect(summary.locator("[data-fact=pdo] [data-fact-source]")).toHaveText(/^ISR 19, Jun 30, 2026\u2060\[\d+\]$/);
+  // The passage prints a Wingdings bullet (U+F06C), which Open Sans can't draw, so it shows as a bullet
+  // rather than an empty box (the 21 design review, round 3, F3).
+  await summary.locator("[data-fact=pdo] [data-citation]").click();
+  const passage = page.getByRole("dialog").locator("[data-passage]");
+  await expect(passage).toContainText("\u2022Moderately Satisfactory \u2022Moderately Satisfactory");
+  expect(await passage.textContent()).not.toMatch(/[\uE000-\uF8FF]/);
+  await page.keyboard.press("Escape");
   for (const key of ["agencies", "sectors"]) {
     const gaps = await summary.locator(`[data-fact=${key}] li`).evaluateAll((items) =>
       items.slice(1).map((item, index) => Math.round(item.getBoundingClientRect().top - items[index].getBoundingClientRect().bottom)),
@@ -240,7 +247,7 @@ test("the Summary's record marker shows the value it cites, and the lead says ho
   await summary.locator("[data-fact=ea_category] [data-citation]").click();
   const record = page.getByRole("dialog").locator("[data-record]");
   await expect(record).toContainText("Environmental Assessment CategoryB");
-  await expect(record).toContainText("Sector, in Strata's taxonomyTransportation");
+  await expect(record).toContainText("Sector, as Strata groups itTransportation");
   await expect(record).toContainText("Sector and shareRural and Inter-Urban Roads: 97%");
   await page.keyboard.press("Escape");
 
