@@ -35,6 +35,7 @@ import { rebiddingPath } from "../lib/rebidding";
 import { useScrollPadding } from "../lib/useScrollPadding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
+import { staffRole } from "../lib/following";
 import { viewOf } from "../lib/view";
 
 const words = copy.packagePage;
@@ -53,6 +54,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
   const [selection, setSelection] = useState<RiskSelection | null>(null);
   const preview = viewOf(here.search) !== "staff";
+  // Suggested PPSD rows are a World Bank staff draft (config/drafts.toml, staff_only): a viewer without the role gets
+  // no action, and ticket 38's agency variant gives the implementing agency its own.
+  const staff = useStore(staffRole) !== false;
   const asOf = new URLSearchParams(here.search).has("asof");
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
@@ -147,7 +151,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           headerRef={header}
           title={facts.description ?? mono(facts.step_reference)}
           reference={mono(facts.step_reference)}
-          action={<PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} />}
+          action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}
         />
         <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
         <div className="mt-4">
@@ -173,7 +177,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             packageKey={facts.step_reference}
             kind="step"
             onSelection={setSelection}
-            action={<PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline />}
+            action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline /> : undefined}
           />
         </div>
         {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}

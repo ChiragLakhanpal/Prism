@@ -67,9 +67,11 @@ async function axe(page: Page) {
 
 // ── The package workspace's action ───────────────────────────────────────
 
-async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-541055-india-selected.json" } = {}) {
+async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-541055-india-selected.json", me = "" } = {}) {
   await page.setViewportSize({ width, height: 900 });
   const asked = await serve(page, {
+    // Suggested PPSD rows are a World Bank staff draft, so the workspace offers them to staff only.
+    "/api/me": { body: me || (await recorded("me-staff.json")) },
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
     [`${API}/risks`]: { body: await recorded(risks) },
@@ -218,7 +220,7 @@ test("Check a plan ends on Drafts from this check, which counts your team's chec
   await page.setViewportSize({ width: 1440, height: 900 });
   const asked = await serve(page, {
     [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
-    "/api/me": { body: JSON.stringify({ ...JSON.parse(await recorded("me.json")), staff: true }) },
+    "/api/me": { body: await recorded("me-staff.json") },
     "/api/drafts/project-paper-inputs": { body: await recorded("drafts-pp-inputs.json") },
     "POST /api/drafts": { body: await recorded("drafts-write-pp.sse"), delay: 300 },
     [`GET /api${PAPER}`]: { body: await recorded("drafts-pp-draft.json") },
@@ -255,4 +257,21 @@ test("the Project Paper summary for P156634 is a sheet in three parts, cites its
     "Source: Implementation Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23.",
   );
   expect(await axe(page)).toEqual([]);
+});
+
+test("a viewer without the World Bank staff role gets no action to suggest PPSD rows", async ({ page }) => {
+  await openPackage(page, { me: await recorded("me.json") });
+  await expect(page.locator("[data-ppsd-action]")).toHaveCount(0);
+});
+
+test("the Drafts tab names each new kind and counts a rows draft's owners set, from the server's counts", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/drafts": { body: await recorded("drafts-list-ppsd.json") } });
+  await page.goto("/drafts");
+  const rows = page.locator("[data-draft-row=draft-0003]");
+  await expect(rows.getByRole("link").first()).toHaveText(/^Suggested PPSD risk rows for /);
+  await expect(rows.locator("[data-numbers]")).toContainText("0 of 2 risk owners set.");
+  await expect(page.locator("[data-draft-row=draft-0005]").getByRole("link").first()).toHaveText(
+    "Project Paper summary for the Northern Water Works Development Agency plan of Oct 9, 2026",
+  );
 });

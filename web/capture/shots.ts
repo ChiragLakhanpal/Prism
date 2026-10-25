@@ -1697,6 +1697,7 @@ const PPSD_SHOTS: Shot[] = [
     api: {
       ...packageShot("ppsd--package-action", comparables(COMPARABLES)).api,
       [`/api${PACKAGE}/risks`]: { recorded: "risks-ke-nwwda-541055-india-selected.json" },
+      "/api/me": { recorded: "me-staff.json" },
       "/api/drafts/existing": { body: '{"draft":null}' },
     },
   },
