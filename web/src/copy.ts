@@ -843,7 +843,8 @@ export const copy = {
     // Two or more agencies with no plan share one block after the agencies with plans.
     otherAgencies: "Other implementing agencies",
     othersEmpty: "I don't have a Procurement Plan from these agencies yet:",
-    projectEmptyTitle: "I don't have a Procurement Plan for this project yet.",
+    // True whether the World Bank has disclosed no plan or I haven't read the ones it has (the 21 critique, round 3).
+    projectEmptyTitle: "I haven't read a Procurement Plan for this project yet.",
     projectEmptyBody:
       "I can check a plan only after the World Bank discloses it and I have read it. Data readiness shows how much of " +
       "each source I have read.",

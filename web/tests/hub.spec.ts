@@ -6,7 +6,7 @@
 // icr-review-reissue-date, icr-para-54 and icr-pdf-pages), copied here so the screen is checked against an
 // independent source.
 import AxeBuilder from "@axe-core/playwright";
-import type { Page, Request } from "@playwright/test";
+import type { Locator, Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
 import { hubApi, KENHA_PLAN } from "./hub-api";
@@ -168,6 +168,16 @@ test("P130164's Summary renders from records with no request to a route that cal
   const icr = summary.locator("[data-fact=icr_outcome]");
   await expect(icr.getByRole("rowheader")).toHaveText("Outcome, in the Implementation Completion and Results Report (ICR)");
   await expect(icr.getByRole("cell").first()).toHaveText("Moderately Unsatisfactory");
+  // At 1440 px the value column holds the rating on one line, and the longest source cell keeps to one line
+  // too (the 21 critique, round 3, item 4). A cell is as tall as its row, so the words' own lines are counted.
+  const lines = (cell: Locator) =>
+    cell.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Math.round(range.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight));
+    });
+  expect(await lines(icr.getByRole("cell").first()), "the rating at 1440 px").toBe(1);
+  expect(await lines(summary.locator("[data-fact=procurement] [data-fact-source]")), "the source at 1440 px").toBe(1);
   await expect(icr.locator("[data-fact-source]")).toHaveText(/^ICR, Oct 10, 2019⁠\[\d\]$/);
   await expect(icr.locator("[data-citation]")).toHaveAccessibleName(/^Source \d: Implementation Completion and Results Report, October 10, 2019$/);
   const order = await summary.locator("[data-fact]").evaluateAll((rows) => rows.map((row) => row.getAttribute("data-fact")));

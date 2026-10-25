@@ -161,8 +161,10 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
           // has them, so the tabs below never move down when the project arrives; with fewer they move up.
           <div aria-hidden="true" className="mt-2 max-w-prose">
             <SkeletonText className="text-body" widths={["w-full", "w-3/5"]} />
-            <span className="mt-1 flex h-11 items-center text-body">
-              <Skeleton className="h-[1em] w-32" />
+            <span className="-mt-2 block pt-0.5">
+              <span className="flex h-11 items-center text-body">
+                <Skeleton className="h-[1em] w-32" />
+              </span>
             </span>
           </div>
         )}

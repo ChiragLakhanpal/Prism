@@ -22,8 +22,12 @@ export type FactRow = {
   source: ReactNode;
 };
 
-// The table's three columns: 38, 24 and 38 percent, as the brief sets them.
-const WIDTHS = ["@md/page:w-[38%]", "@md/page:w-[24%]", "@md/page:w-[38%]"];
+// The table's three columns: 38, 24 and 38 percent, as the brief sets them; and in a frame of 45rem or more,
+// as the Summary's 7 columns are at 1440 px, 33, 31 and 36, so a rating such as "Moderately Unsatisfactory"
+// and a source such as "Projects API, ISR of Dec 28, 2018" each keep to one line (the 21 critique, round 3,
+// item 4). The frame is the section, a size container. The widths sit on the column heads, which are hidden
+// below 768 px, where the rows stack.
+const WIDTHS = ["w-[38%] @fact-wide/facts:w-[33%]", "w-[24%] @fact-wide/facts:w-[31%]", "w-[38%] @fact-wide/facts:w-[36%]"];
 const CELL = "block @md/page:table-cell px-3 @md/page:py-3 align-top";
 const STACK = "block @md/page:table-row";
 
@@ -56,7 +60,7 @@ export function FactTable({
   const loading = loadingRows !== undefined;
   const value = cx(CELL, "pb-3 text-body text-ink @md/page:pb-3", numeric && "@md/page:text-right @md/page:tabular-nums");
   return (
-    <section data-fact-table data-loading={loading || undefined} aria-busy={loading || undefined}>
+    <section data-fact-table data-loading={loading || undefined} aria-busy={loading || undefined} className="@container/facts">
       {createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
       {loading && <LoadingLabel />}
       <div className="mt-2 overflow-hidden rounded-md border border-line bg-surface">

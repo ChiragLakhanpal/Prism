@@ -305,6 +305,15 @@ test("a long list of implementing agencies keeps to two lines until you show the
   await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
   const lineHeight = await agencies.evaluate((element) => parseFloat(getComputedStyle(element).lineHeight));
   expect(await agencies.evaluate((element) => element.clientHeight)).toBeLessThanOrEqual(2 * lineHeight + 1);
+  // The button's label line sits 4 px under the agencies' last line, as a flush ghost button's label does
+  // (the 21 review, round 3, item 8).
+  // The label's line box is centred in the 44 px button.
+  const labelTop = await show.evaluate((button) => {
+    const box = button.getBoundingClientRect();
+    return box.top + (box.height - parseFloat(getComputedStyle(button).lineHeight)) / 2;
+  });
+  const agenciesBottom = await agencies.evaluate((element) => element.getBoundingClientRect().bottom);
+  expect(Math.round(labelTop - agenciesBottom)).toBe(4);
 
   await show.click();
 
@@ -352,7 +361,9 @@ test("a project with no plans says so, and a project with no record is not found
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization · P130164 · India · closed");
   // With no plans there are no packages to list, so Packages says so in one sentence.
   await expect(page.locator("[data-packages=none]")).toContainText("I haven't read a Procurement Plan for this project yet, so I can't list its packages.");
-  await expect(page.locator("[data-empty-state]")).toContainText("I don't have a Procurement Plan for this project yet.");
+  // P130164's Documents tab lists 15 Procurement Plans I haven't read, so the title says I haven't read one,
+  // as the Packages line does, rather than that I have none (the 21 critique, round 3, item 7).
+  await expect(page.locator("[data-empty-state] h3")).toHaveText("I haven't read a Procurement Plan for this project yet.");
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "no plans at 390 px").toEqual([]);
 
