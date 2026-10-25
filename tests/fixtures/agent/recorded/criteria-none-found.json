@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-criteria-reader, written by hand in the Responses API's shape: text that sets no qualification criteria. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --criteria",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Deliver the pipes to the Kisumu store by March 31, and send the invoice to the finance office.",
+ "scope": "KE-CWSB-224323-CS-QCBS",
+ "as_of": "2026-10-22",
+ "agent": {
+  "name": "strata-criteria-reader",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_criteria_none_found_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_criteria_none_found_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"refusal\": null, \"items\": [], \"unplaced\": []}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

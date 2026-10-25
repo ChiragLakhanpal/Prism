@@ -1,0 +1,575 @@
+{
+  "tool": "find_comparables",
+  "as_of": "2026-10-25",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.gold.package:KE-WAJWASCO-80857-NC-RFB",
+      "public_from": "2020-09-23",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00088588",
+        "contract_id": "1628003",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WAJWASCO-80857-NC-RFB",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00088588",
+      "notice_date": "2020-05-11",
+      "signed_on": "2020-09-23",
+      "still_open": false,
+      "days": 135,
+      "months": 4.4,
+      "rank": 1
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WAJWASCO-179682-CS-QCBS",
+      "public_from": "2021-03-26",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00104404",
+        "contract_id": "1663541",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WAJWASCO-179682-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00104404",
+      "notice_date": "2020-11-09",
+      "signed_on": "2021-03-26",
+      "still_open": false,
+      "days": 137,
+      "months": 4.5,
+      "rank": 2
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WAJWASCO-80986-CS-QCBS",
+      "public_from": "2020-05-28",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00077276",
+        "contract_id": "1663579",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WAJWASCO-80986-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00077276",
+      "notice_date": "2019-09-11",
+      "signed_on": "2020-05-28",
+      "still_open": false,
+      "days": 260,
+      "months": 8.5,
+      "rank": 3
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-KWAWASCO-105286-CS-QCBS",
+      "public_from": "2021-11-17",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00118816",
+        "contract_id": "1680004",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-KWAWASCO-105286-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00118816",
+      "notice_date": "2021-02-26",
+      "signed_on": "2021-11-17",
+      "still_open": false,
+      "days": 264,
+      "months": 8.7,
+      "rank": 4
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-MOWI-200359-CS-QCBS",
+      "public_from": "2021-11-15",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00118097",
+        "contract_id": "1678445",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-MOWI-200359-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00118097",
+      "notice_date": "2021-02-23",
+      "signed_on": "2021-11-15",
+      "still_open": false,
+      "days": 265,
+      "months": 8.7,
+      "rank": 5
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-MOWI-246482-CS-QCBS",
+      "public_from": "2022-06-25",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00144545",
+        "contract_id": "1862454",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-MOWI-246482-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00144545",
+      "notice_date": "2021-08-31",
+      "signed_on": "2022-06-25",
+      "still_open": false,
+      "days": 298,
+      "months": 9.8,
+      "rank": 6
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-GAWASCO-154426-CS-QCBS",
+      "public_from": "2021-05-28",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00089216",
+        "contract_id": "1668521",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-GAWASCO-154426-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00089216",
+      "notice_date": "2020-05-20",
+      "signed_on": "2021-05-28",
+      "still_open": false,
+      "days": 373,
+      "months": 12.3,
+      "rank": 7
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-GAWASCO-67428-CS-QCBS",
+      "public_from": "2021-05-28",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00089036",
+        "contract_id": "1668539",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-GAWASCO-67428-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00089036",
+      "notice_date": "2020-05-18",
+      "signed_on": "2021-05-28",
+      "still_open": false,
+      "days": 375,
+      "months": 12.3,
+      "rank": 8
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-GAWASCO-67429-CS-QCBS",
+      "public_from": "2021-05-28",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00089137",
+        "contract_id": "1668540",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-GAWASCO-67429-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00089137",
+      "notice_date": "2020-05-19",
+      "signed_on": "2021-05-28",
+      "still_open": false,
+      "days": 374,
+      "months": 12.3,
+      "rank": 9
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WASREB-235524-CS-QCBS",
+      "public_from": "2022-08-03",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00139034",
+        "contract_id": "1709357",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WASREB-235524-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00139034",
+      "notice_date": "2021-07-22",
+      "signed_on": "2022-08-03",
+      "still_open": false,
+      "days": 377,
+      "months": 12.4,
+      "rank": 10
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WASREB-236373-CS-QCBS",
+      "public_from": "2022-08-05",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00139035",
+        "contract_id": "1709354",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WASREB-236373-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00139035",
+      "notice_date": "2021-07-22",
+      "signed_on": "2022-08-05",
+      "still_open": false,
+      "days": 379,
+      "months": 12.5,
+      "rank": 11
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-KWAWASCO-161466-CS-CDS",
+      "public_from": "2021-09-07",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00094782",
+        "contract_id": "1671779",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-KWAWASCO-161466-CS-CDS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00094782",
+      "notice_date": "2020-08-20",
+      "signed_on": "2021-09-07",
+      "still_open": false,
+      "days": 383,
+      "months": 12.6,
+      "rank": 12
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WAJWASCO-154020-CS-QCBS",
+      "public_from": "2021-05-18",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00085723",
+        "contract_id": "1663748",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WAJWASCO-154020-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00085723",
+      "notice_date": "2020-03-11",
+      "signed_on": "2021-05-18",
+      "still_open": false,
+      "days": 433,
+      "months": 14.2,
+      "rank": 13
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-GAWASCO-67425-CS-QCBS",
+      "public_from": "2021-08-19",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00088350",
+        "contract_id": "1668347",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-GAWASCO-67425-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00088350",
+      "notice_date": "2020-05-05",
+      "signed_on": "2021-08-19",
+      "still_open": false,
+      "days": 471,
+      "months": 15.5,
+      "rank": 14
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WASREB-134249-CS-QCBS",
+      "public_from": "2021-07-26",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00084586",
+        "contract_id": "1658197",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-WASREB-134249-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00084586",
+      "notice_date": "2020-02-17",
+      "signed_on": "2021-07-26",
+      "still_open": false,
+      "days": 525,
+      "months": 17.2,
+      "rank": 15
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-WASREB-229126-CS-QCBS",
+      "public_from": "2021-07-22",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00139033",
+        "contract_id": null,
+        "award_notice_id": null,
+        "signed_in": null
+      },
+      "step_reference": "KE-WASREB-229126-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00139033",
+      "notice_date": "2021-07-22",
+      "signed_on": null,
+      "still_open": true,
+      "days": 1921,
+      "months": 63.1,
+      "rank": 16
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-GAWASCO-202394-CS-QCBS",
+      "public_from": "2021-03-17",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00121376",
+        "contract_id": null,
+        "award_notice_id": null,
+        "signed_in": null
+      },
+      "step_reference": "KE-GAWASCO-202394-CS-QCBS",
+      "project_id": "P156634",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "OP00121376",
+      "notice_date": "2021-03-17",
+      "signed_on": null,
+      "still_open": true,
+      "days": 2048,
+      "months": 67.3,
+      "rank": 17
+    }
+  ],
+  "coverage": {
+    "matched": 41,
+    "used": 17,
+    "not_used": [
+      {
+        "reason": "no_step_reference",
+        "count": 2,
+        "evidence_ids": [
+          "strata.gold.contract:1645770",
+          "strata.gold.contract:1673597"
+        ]
+      },
+      {
+        "reason": "no_notice",
+        "count": 22,
+        "evidence_ids": [
+          "strata.gold.package:KE-ICTA-388468-CS-QCBS",
+          "strata.gold.package:KE-ICTA-388525-CS-QCBS",
+          "strata.gold.package:KE-ICTA-388921-CS-QCBS",
+          "strata.gold.package:KE-ICTA-392524-CS-QCBS",
+          "strata.gold.package:KE-ICTA-392791-CS-QCBS",
+          "strata.gold.package:KE-ICTA-393199-CS-QCBS",
+          "strata.gold.package:KE-ICTA-393208-CS-QCBS",
+          "strata.gold.package:KE-ICTA-395930-CS-QCBS",
+          "strata.gold.package:KE-ICTA-396381-CS-QCBS",
+          "strata.gold.package:KE-ICTA-401465-CS-QCBS",
+          "strata.gold.package:KE-ICTA-402012-CS-QCBS",
+          "strata.gold.package:KE-ICTA-410949-CS-QCBS",
+          "strata.gold.package:KE-ICTA-411201-CS-QCBS",
+          "strata.gold.package:KE-ICTA-411692-CS-QCBS",
+          "strata.gold.package:KE-ICTA-422440-CS-QCBS",
+          "strata.gold.package:KE-ICTA-458284-CS-QCBS",
+          "strata.gold.package:KE-ICTA-458646-CS-QCBS",
+          "strata.gold.package:KE-ICTA-459498-CS-QCBS",
+          "strata.gold.package:KE-MOALF-388893-CS-QCBS",
+          "strata.gold.package:KE-MOALF-420467-CS-QCBS",
+          "strata.gold.package:KE-MOALF-457201-CS-QCBS",
+          "strata.gold.package:KE-MOWASCO-79877-CS-QCBS"
+        ]
+      }
+    ]
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-224323-CS-QCBS",
+    "public_from": "2026-08-17",
+    "step_reference": "KE-CWSB-224323-CS-QCBS",
+    "description": "Consultancy Services for Det ailed ESIA & RAP Studies for t he Mwache Transmission Pip elines",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "CONSULTING FIRMS",
+    "category": "Consultant Services",
+    "method": "Quality And Cost-Based Selection",
+    "market_approach": "Open - International",
+    "review_type": "Prior",
+    "estimated_amount_usd": "500000.00",
+    "process_status": "Completed",
+    "planned_notice_on": null,
+    "planned_signing_on": "2021-10-07",
+    "plan": {
+      "document_id": "40122770",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "disclosed_on": "2026-08-17",
+      "pdf_page": 3
+    }
+  },
+  "criteria": {
+    "method": "Quality And Cost-Based Selection",
+    "category": "Consultant Services",
+    "market_approach": null,
+    "review_type": null,
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2026-08-17",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "category",
+      "country",
+      "notice_to"
+    ],
+    "country_name": "Kenya"
+  },
+  "counts": {
+    "comparables": 17,
+    "signed": 15,
+    "still_open": 2,
+    "canceled": 0,
+    "canceled_as_still_open": false
+  },
+  "past_range": null,
+  "plan": null,
+  "frequencies": null,
+  "quantile_dots": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "quantile_dots_above": 60,
+    "quantile_dots": 20,
+    "max_plan_months": 60,
+    "canceled_as_still_open": false
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "too_few_comparables",
+    "count": 17,
+    "min_comparables": 20
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-CWSB-224323-CS-QCBS@2026-10-25",
+    "public_from": "2026-10-25",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "frequencies": null,
+    "counts": {
+      "comparables": 17,
+      "signed": 15,
+      "still_open": 2,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 41,
+      "used": 17,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 2,
+          "evidence_ids": [
+            "strata.gold.contract:1645770",
+            "strata.gold.contract:1673597"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 22,
+          "evidence_ids": [
+            "strata.gold.package:KE-ICTA-388468-CS-QCBS",
+            "strata.gold.package:KE-ICTA-388525-CS-QCBS",
+            "strata.gold.package:KE-ICTA-388921-CS-QCBS",
+            "strata.gold.package:KE-ICTA-392524-CS-QCBS",
+            "strata.gold.package:KE-ICTA-392791-CS-QCBS",
+            "strata.gold.package:KE-ICTA-393199-CS-QCBS",
+            "strata.gold.package:KE-ICTA-393208-CS-QCBS",
+            "strata.gold.package:KE-ICTA-395930-CS-QCBS",
+            "strata.gold.package:KE-ICTA-396381-CS-QCBS",
+            "strata.gold.package:KE-ICTA-401465-CS-QCBS",
+            "strata.gold.package:KE-ICTA-402012-CS-QCBS",
+            "strata.gold.package:KE-ICTA-410949-CS-QCBS",
+            "strata.gold.package:KE-ICTA-411201-CS-QCBS",
+            "strata.gold.package:KE-ICTA-411692-CS-QCBS",
+            "strata.gold.package:KE-ICTA-422440-CS-QCBS",
+            "strata.gold.package:KE-ICTA-458284-CS-QCBS",
+            "strata.gold.package:KE-ICTA-458646-CS-QCBS",
+            "strata.gold.package:KE-ICTA-459498-CS-QCBS",
+            "strata.gold.package:KE-MOALF-388893-CS-QCBS",
+            "strata.gold.package:KE-MOALF-420467-CS-QCBS",
+            "strata.gold.package:KE-MOALF-457201-CS-QCBS",
+            "strata.gold.package:KE-MOWASCO-79877-CS-QCBS"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -84,6 +84,18 @@ export function formatAmountText(value: number): string {
   return unit.words(grouped(Math.abs(mantissa) < 100 ? 1 : 0).format(mantissa).replace(/\.0$/, ""));
 }
 
+// A package's own difference from its cost estimate (ticket 31): a measurement of one package, not a share of a
+// group, so DESIGN.md section 7's rule 6 does not stop it under 20 cases (rule 11). The tool rounded it (one
+// decimal up to 100, none above); this writes it with a plus sign above zero and a true minus sign (U+2212)
+// below: "+21.4%" in charts and tables, or "21.4 percent above" in sentences.
+export function formatSignedPercent(value: number, options: { style?: "short" | "words" } = {}): string {
+  const text = grouped(Number.isInteger(value) ? 0 : 1).format(Math.abs(value));
+  if (options.style === "words") {
+    return value > 0 ? copy.num.percentAbove(text) : value < 0 ? copy.num.percentBelow(text) : copy.num.percentAtZero;
+  }
+  return copy.num.signedPercent(value > 0 ? copy.num.plus : value < 0 ? copy.num.minus : "", text);
+}
+
 // Years have no comma.
 export function formatYear(year: number): string {
   return String(year);

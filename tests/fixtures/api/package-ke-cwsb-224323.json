@@ -1,0 +1,30 @@
+{
+  "as_of": "2026-10-25",
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-224323-CS-QCBS",
+    "public_from": "2026-08-17",
+    "step_reference": "KE-CWSB-224323-CS-QCBS",
+    "description": "Consultancy Services for Det ailed ESIA & RAP Studies for t he Mwache Transmission Pip elines",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "CONSULTING FIRMS",
+    "category": "Consultant Services",
+    "method": "Quality And Cost-Based Selection",
+    "market_approach": "Open - International",
+    "review_type": "Prior",
+    "estimated_amount_usd": "500000.00",
+    "process_status": "Completed",
+    "planned_notice_on": null,
+    "planned_signing_on": "2021-10-07",
+    "plan": {
+      "document_id": "40122770",
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "disclosed_on": "2026-08-17",
+      "pdf_page": 3
+    }
+  }
+}

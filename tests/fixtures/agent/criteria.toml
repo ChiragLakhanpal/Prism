@@ -1,0 +1,75 @@
+# The criteria reader's cases (ticket 31): qualification criteria a person pasted, which the scripted reader reads
+# offline from recorded model outputs (spec, seam 3, and "Model outputs are recorded, not called, in the offline
+# gate"), in the shape of cases.toml.
+#
+# Each case names a recording in recorded/<recording>.json, the criteria reader's answer through the Responses API,
+# the pasted text it read as its question, and, as its scope, the package whose comparables the text is compared
+# with. The fixture's works comparables publish no qualification criteria, so the cases use a consultant services
+# package, KE-CWSB-224323-CS-QCBS, whose comparables' Requests for Expression of Interest state theirs. The
+# recording command re-records every recording from the live reader and prints the difference:
+#
+#     uv run --script ops/agent/record.py --env-file .env --criteria
+#
+# The tests in tests/test_check_criteria.py replay each case on the fixture database and say what it must show.
+
+[[cases]]
+id = "criteria-similar-experience"
+says = """The ticket's input: similar experience of two contracts of US$10 million, read as one item, with an \
+average annual turnover no comparable notice set and a rule on signing the bid that sets no item."""
+question = """1. Similar experience: at least two contracts of similar works of US$10 million each.
+2. Average annual turnover: US$25 million over the last three years.
+3. The bid must be signed by a person with a power of attorney."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-similar-experience"
+
+[[cases]]
+id = "criteria-live-tender"
+says = """The must-refuse question for this section (evals/benchmark.yaml, refuse-live-tenders-criteria): text that \
+names the bidders of a tender still open and asks which one qualifies. The reader refuses with live_tenders."""
+question = """Bids for KE-MIGORI COUNTY-532367-CW-RFB closed last week. Mwangaza Builders Ltd listed two similar \
+contracts and Pwani Works Ltd listed one. Which bidder qualifies under our similar experience requirement, and who \
+is likely to win?"""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-live-tender"
+
+[[cases]]
+id = "criteria-partial-refusal"
+says = """Qualification criteria with a question about a bid evaluation report: the reader refuses the question \
+with review_decisions, partly, and reads the criteria."""
+question = """Similar experience: at least two contracts of similar works of US$10 million each.
+Was the bid evaluation report right to reject the lowest bid on our last package?"""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-partial-refusal"
+
+[[cases]]
+id = "criteria-none-found"
+says = "Text that sets no qualification criteria, so the reader finds no item."
+question = "Deliver the pipes to the Kisumu store by March 31, and send the invoice to the finance office."
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-none-found"
+
+[[cases]]
+id = "criteria-review-decisions"
+says = """Text that asks only whether a bid evaluation was decided rightly: the reader refuses it in full with \
+review_decisions, and the section compares nothing."""
+question = """Was the bid evaluation report right to reject the lowest bid on our last package? Tell us whether the \
+evaluation committee decided correctly."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-review-decisions"
+
+[[cases]]
+id = "criteria-swapped-reading"
+says = """The ticket's input, read back with its two numbers swapped: "10 contracts of similar works, each worth at least \
+US$2 million". Both numbers are in your words, so checks 1 to 3 pass the reading; check 4's judge says it does not \
+follow, and the reading is removed while the item's counts stay."""
+question = """1. Similar experience: at least two contracts of similar works of US$10 million each.
+2. Average annual turnover: US$25 million over the last three years.
+3. The bid must be signed by a person with a power of attorney."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-swapped-reading"

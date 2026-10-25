@@ -125,6 +125,25 @@ def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_a
     assert '+ "recorded": true,' in text.splitlines()
 
 
+def test_the_recording_command_re_records_the_judge_for_each_criteria_case_whose_readings_ask_it(copied, fixture_db):
+    """Ticket 31: each criteria reader case is replayed through section 5's comparison and its six checks, and the
+    live judge's answer about the readings is kept. A case the reader refuses in full, or that sets no item, asks
+    the judge nothing and keeps no file."""
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    report = record.record_judged({}, live_judge(), engine_for, today=dt.date(2026, 10, 24),
+                                  criteria=load_cases(copied / "criteria.toml"))
+
+    assert {done.recording for done in report} == {"criteria-similar-experience", "criteria-partial-refusal",
+                                                   "criteria-swapped-reading"}
+    swapped = json.loads((copied / "judged" / "criteria-swapped-reading.json").read_text())
+    assert (swapped["recorded"], swapped["asked"][0]) == (
+        True, "I read this as 10 contracts of similar works, each worth at least US$2 million.")
+
+
 class LiveWriter:
     """Writes the recorded notes, except that the first note's first sentence is worded anew, and checks it
     was handed the plan's rows with a signal as data."""
@@ -218,5 +237,52 @@ def test_the_recording_command_re_records_each_package_reader_case_from_the_mess
     assert any(line.startswith("+") and '\\"lots\\": {\\"value\\": 3' in line for line in text.splitlines())
     written = json.loads((copied / "recorded" / "package-rural-roads-kenya.json").read_text())
     assert (written["recorded"], written["agent"]) == (True, {"name": "strata-package-reader", "version": "2"})
+    for case in cases.values():
+        assert ScriptedAgent(case).responses
+
+
+class LiveCriteriaReader:
+    """Answers each pasted text as its recording does, with every reading worded anew."""
+
+    name, version = "strata-criteria-reader", "1"
+
+    def __init__(self, recordings):
+        self.recordings, self.asked = recordings, []
+
+    def respond(self, items, previous_response_id):
+        message = json.loads(items[0]["content"])
+        self.asked.append(message)
+        answer = copy.deepcopy(next(r for r in self.recordings if r["question"] == message["text"])["responses"][0])
+        content = answer["output"][0]["content"][0]
+        read = json.loads(content["text"])
+        for item in read["items"]:
+            item["reading"] = item["reading"].replace("I read this as", "I read this item as")
+        content["text"] = json.dumps(read)
+        return {**answer, "usage": {"total_tokens": 300}}
+
+
+def test_the_recording_command_re_records_each_criteria_reader_case_from_the_message_the_workflow_sends(copied, fixture_db):
+    """Ticket 31's criteria reader cases (criteria.toml): the live reader is sent each pasted text with the item
+    registry's items, as the check-your-criteria workflow sends it, and the diff shows what it read differently."""
+    cases = load_cases(copied / "criteria.toml")
+    recordings = [json.loads((copied / "recorded" / f"{case.recording}.json").read_text()) for case in cases.values()]
+    reader = LiveCriteriaReader(recordings)
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    report = record.record_criteria(cases, lambda: reader, engine_for, Viewer(name="the env file's token"),
+                                    today=dt.date(2026, 10, 24))
+
+    assert sorted(case for done in report for case in done.cases) == sorted(cases)
+    assert {message["text"] for message in reader.asked} == {case.question for case in cases.values()}
+    assert {item["key"] for item in reader.asked[0]["items"]} >= {"similar_experience", "turnover", "key_staff"}
+    assert "bid_security" not in {item["key"] for item in reader.asked[0]["items"]}
+    text = record.report_text(report, copied.parent)
+    assert any(line.startswith("+") and "I read this item as" in line for line in text.splitlines())
+    written = json.loads((copied / "recorded" / "criteria-similar-experience.json").read_text())
+    assert (written["recorded"], written["agent"]) == (True, {"name": "strata-criteria-reader", "version": "1"})
     for case in cases.values():
         assert ScriptedAgent(case).responses
