@@ -53,6 +53,14 @@ export function draftsCopy(): string {
     // A record a mission brief cites names its source by its key, and its totals record by the tool (ticket 37).
     summaryRecordSources: copy.evidence.summaryRecordSources,
     toolSource: copy.evidence.toolSource,
+    // A passage, the counts of comparable completion reports and a lesson version, as the pack names them (ticket 36).
+    passageSource: copy.evidence.passageSource,
+    passageParagraph: copy.evidence.passageParagraph,
+    passageSection: copy.evidence.passageSection,
+    countsSource: copy.evidence.countsSource,
+    lessonSource: copy.evidence.lessonSource,
+    // A suggested PPSD row's passage footnote writes each source as its pill does (ticket 36).
+    pill: { pill: copy.packageRisks.pill, pillNoProject: copy.packageRisks.pillNoProject, pillParagraph: copy.packageRisks.pillParagraph },
     checkLine: copy.checkLine,
     removed: { reasons: copy.removed.reasons, unknownReason: copy.removed.unknownReason },
     notVisible: copy.checkPlan.notVisible,

@@ -50,11 +50,13 @@ from strata.drafts.store import DraftStore, NewExport, Saved, Stale
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event, Scope, TraceIds, Turn
 from strata.lakehouse.engine import EngineError, PermissionDenied
+from strata.packages.store import PackageStore
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 
 log = logging.getLogger("strata.server.drafts")
 STAFF = "staff"
+PLANNED_PREFIX = "pkg-"  # a planned package's id (src/strata/server/packages.py, new_package_id); a STEP reference never starts so
 VIEWS = Literal["staff", "piu", "public"]
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 GROUPS = {"draft": "to_check", "checked": "checked", "exported": "exported"}
@@ -63,10 +65,17 @@ KEEP_ALIVE = ": keep-alive\n\n"
 
 class DraftRequest(BaseModel):
     kind: str = Field(min_length=1, max_length=64)
-    project_id: str = Field(pattern=r"^P\d{6}$")
-    # The plan version review notes are written on; a mission brief (ticket 37) names only its project.
+    # Suggested PPSD rows (ticket 36) name a package, which may have no project yet.
+    project_id: str | None = Field(default=None, pattern=r"^P\d{6}$")
+    # The plan version review notes and a Project Paper summary are written on; a mission brief (ticket 37) names
+    # only its project.
     agency_id: str | None = Field(default=None, min_length=1, max_length=200)
     plan_date: dt.date | None = None
+    # Suggested PPSD rows (ticket 36): the package, by its STEP reference or a planned package's id, and for a
+    # package from a STEP row, section 1's criteria as find_comparables' own parameter names. The server reads the
+    # risks selected in section 3 itself; the request never carries risk keys.
+    package: str | None = Field(default=None, min_length=1, max_length=128)
+    criteria: dict[str, str | int | float] | None = None
     idempotency_key: str | None = Field(default=None, max_length=128)
     view: VIEWS = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
@@ -74,6 +83,30 @@ class DraftRequest(BaseModel):
 
 class ActRequest(BaseModel):
     expected_state: Literal["draft", "checked", "exported", "discarded"]
+    view: VIEWS = "staff"
+
+
+class FieldRequest(BaseModel):
+    """A value a person sets on a field only people fill (ticket 36), or its removal (value null)."""
+
+    row_key: str = Field(max_length=128)
+    field: str = Field(min_length=1, max_length=64)
+    value: str | None = Field(default=None, max_length=500)
+    view: VIEWS = "staff"
+
+
+class FormRequest(BaseModel):
+    form: str = Field(min_length=1, max_length=32)
+    view: VIEWS = "staff"
+
+
+class ChoiceRequest(BaseModel):
+    """The report a draft's author keeps on a disagreement card: the one the draft rests on, or the other, which
+    needs a reason (brief 23's keep form; ticket 36)."""
+
+    disagreement_id: str = Field(min_length=1, max_length=512)
+    kept: Literal["lean", "other"]
+    reason: str | None = Field(default=None, max_length=500)
     view: VIEWS = "staff"
 
 
@@ -91,8 +124,11 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                writers: Callable[[str], object | None], kinds: DraftKinds, today: Callable[[], dt.date],
                now: Callable[[], dt.datetime], new_draft_id: Callable[[], str], new_run_id: Callable[[], str],
                runs: RunLog | None, trace_ids: Callable[[], TraceIds], reference: Callable[[], str],
-               heartbeat_seconds: float, six_checks: SixChecks) -> None:
-    """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does."""
+               heartbeat_seconds: float, six_checks: SixChecks, packages: PackageStore | None = None,
+               planned_view: Callable[[object], dict] | None = None) -> None:
+    """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does.
+    packages keeps planned packages and each viewer's risk selection (ticket 30), which suggested PPSD rows read;
+    planned_view shows a planned package as the package workspace does (strata.packages.workflow.package_view)."""
     running: set[tuple[str, str]] = set()  # (author, idempotency key) of the drafts being written now
     lock = threading.Lock()
 
@@ -154,9 +190,80 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                 running.add((viewer.user_id, key))
         request = {"kind": body.kind, "project_id": body.project_id, "agency_id": body.agency_id,
                    "plan_date": body.plan_date.isoformat() if body.plan_date else None}
+        prepared = prepare(body, viewer)
+        if isinstance(prepared, JSONResponse):
+            if key:
+                with lock:
+                    running.discard((viewer.user_id, key))
+            return prepared
+        request |= prepared
         writing = runtime.Writing(kinds.kinds[body.kind], request, viewer, access.team(viewer).key, key,
                                   new_run_id(), body.lang)
         return StreamingResponse(_stream(writing, trace_ids()), media_type="text/event-stream", headers=STREAM_HEADERS)
+
+    def prepare(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
+        """What a kind's workflow reads beside the viewer's tables: for suggested PPSD rows, the package and the risks
+        the viewer selected in section 3, from the package store; for a Project Paper summary, the PPSD rows the
+        viewer's team checked for the project's packages, from the drafts store (ticket 36)."""
+        if body.kind == "ppsd_rows":
+            return ppsd_request(body, viewer)
+        if body.kind == "project_paper":
+            if not body.project_id or not body.agency_id or not body.plan_date:
+                return refused(422, "no_plan")
+            found = guarded("the team's checked PPSD rows", lambda: checked_ppsd_rows(viewer, body.project_id))
+            return found if isinstance(found, JSONResponse) else {"ppsd": found}
+        if not body.project_id:
+            return refused(422, "no_project")
+        return {}
+
+    def ppsd_request(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
+        if not body.package:
+            return refused(422, "no_package")
+        if packages is None:
+            return JSONResponse({"code": "no_data_service"}, status_code=503)
+        try:
+            saved = packages.get(body.package) if body.package.startswith(PLANNED_PREFIX) else None
+            if body.package.startswith(PLANNED_PREFIX) and (saved is None or saved.author_id != viewer.user_id):
+                return refused(404, "unknown_package")
+            kind, key = ("planned", body.package) if saved else ("step_reference", body.package)
+            selected = packages.selected_risks(viewer.user_id, kind, key)
+        except Exception:  # Lakebase or the network: nothing is drafted from a selection I can't read
+            ref = reference()
+            log.exception("I could not read %s's risk selection for %s, reference %s.", viewer.user_id, body.package, ref)
+            return JSONResponse({"code": "data_service", "trace_id": ref}, status_code=503)
+        if saved is None:
+            return {"package": {"step_reference": body.package}, "criteria": dict(body.criteria or {}),
+                    "selected": selected, "words": None, "missing": []}
+        shown = planned_view(saved) if planned_view else {"fields": [], "comparables_query": None, "missing": []}
+        values = {entry["key"]: entry["value"] for entry in shown["fields"]}
+        title = values.get("description") or saved.sentence
+        return {"package": {"package_id": saved.package_id, "step_reference": None, "title": title,
+                            "project_id": None, "project_name": None, "category": values.get("category"),
+                            "country": values.get("country"), "estimated_amount_usd": values.get("estimated_amount_usd")},
+                "criteria": shown["comparables_query"], "words": title, "missing": shown["missing"],
+                "selected": selected}
+
+    def checked_ppsd_rows(viewer: Viewer, project_id: str) -> list[dict]:
+        """The suggested PPSD rows the viewer's team checked or exported for this project's packages, each draft with
+        its rows' kept sentences and the records they cite (the 36 brief, 5.7). A draft still in Draft is left out."""
+        found = []
+        for draft in store.for_team(access.team(viewer).key, viewer.user_id):
+            subject = draft.content["subject"]
+            if (draft.kind != "ppsd_rows" or draft.state.state not in ("checked", "exported")
+                    or subject.get("project_id") != project_id):
+                continue
+            checked = draft.last("checked")
+            notes = {note["key"]: note for note in draft.content["notes"]}
+            rows = [{"risk_label": row["risk_label"], "row_key": row["row_key"],
+                     "sentences": [sentence for cell in row["cells"].values()
+                                   for sentence in (notes.get(cell) or {}).get("sentences") or ()]}
+                    for row in draft.content["ppsd"]["rows"]]
+            cited = {evidence for row in rows for sentence in row["sentences"] for evidence in sentence["evidence_ids"]}
+            found.append({"draft_id": draft.draft_id, "package_title": subject.get("package_title"),
+                          "checked_by": checked.actor_name if checked else None,
+                          "checked_at": runtime.iso(checked.changed_at) if checked else None, "rows": rows,
+                          "evidence": {key: value for key, value in draft.content["evidence"].items() if key in cited}})
+        return found
 
     async def _already(draft_id: str, run_id: str) -> AsyncIterator[str]:
         yield frame(Event("draft", {"draft_id": draft_id}))
@@ -237,18 +344,34 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         return guarded("the team's drafts", read)
 
     @app.get("/api/drafts/existing")
-    def existing_draft(kind: str = Query(max_length=64), project_id: str = Query(max_length=16),
-                       agency_id: str = Query(max_length=200), plan_date: dt.date | None = Query(None),
-                       viewer: Viewer = Depends(current_viewer)):
+    def existing_draft(kind: str = Query(max_length=64), project_id: str | None = Query(None, max_length=16),
+                       agency_id: str | None = Query(None, max_length=200), plan_date: dt.date | None = Query(None),
+                       package: str | None = Query(None, max_length=128), viewer: Viewer = Depends(current_viewer)):
         """The newest open draft of that kind on that plan version, or, with no plan date, on each version of
         that agency's plans, by its date: the plan check with no version in its address asks before it knows
-        which version it shows, so the answer is there by the time the check is (the 35 review)."""
+        which version it shows, so the answer is there by the time the check is (the 35 review). With a package,
+        the newest open draft of suggested PPSD rows on that package (ticket 36)."""
         if not viewer.user_id:
             return refused(401, "no_identity")
 
         def named(draft: Saved) -> dict:
             return {"draft_id": draft.draft_id, "created_at": runtime.iso(draft.created_at),
                     "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)}}
+
+        def on_package():
+            found = None
+            for draft in store.for_team(access.team(viewer).key, viewer.user_id):
+                subject = draft.content["subject"]
+                if (draft.kind == kind and draft.state.state in runtime.OPEN_STATES
+                        and package in (subject.get("package_id"), subject.get("step_reference"))
+                        and (found is None or draft.created_at > found.created_at)):
+                    found = draft
+            return {"draft": named(found) if found else None}
+
+        if package is not None:
+            return guarded("an open draft", on_package)
+        if not project_id or not agency_id:
+            return refused(422, "no_plan")
 
         def read():
             newest: dict[str, Saved] = {}
@@ -265,6 +388,35 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             found = newest.get(plan_date.isoformat())
             return {"draft": named(found) if found else None}
         return guarded("an open draft", read)
+
+    @app.get("/api/drafts/project-paper-inputs")
+    def project_paper_inputs(project_id: str = Query(pattern=r"^P\d{6}$"), viewer: Viewer = Depends(current_viewer)):
+        """What the "Drafts from this check" panel says before the click (the 36 brief, 3.6 and 5.7): how many PPSD
+        rows the viewer's team checked for this project's packages, in which drafts, and how many of the project's
+        implementing agencies published a Procurement Plan Strata read."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        if not access.is_staff(viewer):
+            return refused(403, "not_staff")
+        drafts = guarded("the team's checked PPSD rows", lambda: checked_ppsd_rows(viewer, project_id))
+        if isinstance(drafts, JSONResponse):
+            return drafts
+        agencies = None
+        if engine_for is not None:
+            from strata.drafts.project_paper import agencies_with_plans
+
+            try:
+                with engine_for(viewer) as engine:
+                    agencies = agencies_with_plans(engine, project_id, today())
+            except PermissionDenied:
+                return refused(403, "permission")
+            except EngineError:
+                ref = reference()
+                log.exception("The data service failed on the agencies of %s, reference %s.", project_id, ref)
+                return JSONResponse({"code": "data_service", "trace_id": ref}, status_code=503)
+        return {"qualifying_ppsd_rows": {"count": sum(len(draft["rows"]) for draft in drafts),
+                                         "draft_ids": [draft["draft_id"] for draft in drafts]},
+                "agencies_with_plans": agencies}
 
     # ── One draft ────────────────────────────────────────────────────────
 
@@ -316,14 +468,86 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         return guarded(f"{action} on draft {draft_id}", act)
 
     def _export(saved: Saved, viewer: Viewer, moment: dt.datetime) -> NewExport:
-        """The export record and its three files, from the stored draft and the author's opened sources."""
+        """The export record and its three files, from the stored draft and the author's opened sources, with every
+        value a person set on its fields, which the evidence pack records (ticket 36)."""
         kind = kinds.kinds[saved.kind]
         opened = store.opened_since(saved.author_id, [entry["evidence_id"] for entry in runtime.sources(saved.content)],
                                     saved.created_at)
         draft = runtime.draft_view(saved, viewer, STAFF, kinds, opened)
+        draft["field_history"] = store.field_history(saved.draft_id) if "ppsd" in draft else []
         made = draft_files.make(kind, draft, exporter=viewer.name, exported_at=moment)
         return NewExport(f"{saved.draft_id}-export-{moment:%Y%m%d%H%M%S}", moment, viewer.user_id, viewer.name,
                          made.footnotes, len(draft["sources"]), draft["opened"]["count"], made.snapshot, made.files)
+
+    # ── What people fill, and the reports they keep (ticket 36) ──────────
+
+    def fillable(viewer: Viewer, draft_id: str, view: str, capability: str):
+        """The draft its author may change now, or the refusal: a preview (403), not the author (403), or a state
+        where nothing changes (409: exported, discarded). Owners, ratings and the form stay open in Draft and in
+        Checked by you, and lock at export (the 36 brief, 6.2)."""
+        saved = readable(viewer, draft_id)
+        if saved is None:
+            return JSONResponse({"code": "unknown_draft"}, status_code=404)
+        if view != STAFF:
+            return refused(403, "preview", capability=capability, copy="preview")
+        if not is_author(viewer, saved.author_id):
+            return refused(403, "not_author")
+        if saved.state.state not in runtime.OPEN_STATES:
+            return refused(409, "draft_state", state=saved.state.state)
+        return saved
+
+    def set_value(viewer: Viewer, draft_id: str, view: str, row_key: str, name: str, value: str | None):
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+
+        def act():
+            saved = fillable(viewer, draft_id, view, "fill")
+            if isinstance(saved, JSONResponse):
+                return saved
+            module = runtime.writer_module(kinds.kinds[saved.kind])
+            if not hasattr(module, "check_value"):
+                return refused(422, "unknown_field")
+            text = value.strip() if isinstance(value, str) else None
+            problem = module.check_value(saved.content, row_key, name, text)
+            if problem:
+                return refused(422, problem)
+            store.set_field(draft_id, row_key, name, text or None, viewer.user_id, viewer.name, now())
+            return shown(store.get(draft_id), viewer, view)
+        return guarded(f"a field of draft {draft_id}", act)
+
+    @app.put("/api/drafts/{draft_id}/fields")
+    def set_field(draft_id: str, body: FieldRequest, viewer: Viewer = Depends(current_viewer)):
+        """A person's own value on a field only people fill, from the author's session: a risk owner, or in the Long
+        Form a rating, the overall risk score or the stage. Strata never writes one (CLAUDE.md rule 1)."""
+        if body.field == "form":
+            return refused(422, "unknown_field")
+        return set_value(viewer, draft_id, body.view, body.row_key, body.field, body.value)
+
+    @app.put("/api/drafts/{draft_id}/form")
+    def set_form(draft_id: str, body: FormRequest, viewer: Viewer = Depends(current_viewer)):
+        """The risk table form the draft uses: the Short Form, or the Long Form where Table I offers it."""
+        return set_value(viewer, draft_id, body.view, "", "form", body.form)
+
+    @app.put("/api/drafts/{draft_id}/choices")
+    def keep_report(draft_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
+        """The report the author keeps on one of the draft's disagreement cards. Keeping the other report needs a
+        reason, which the evidence pack records; going back to Strata's choice is a new choice of lean."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+
+        def act():
+            saved = fillable(viewer, draft_id, body.view, "keep")
+            if isinstance(saved, JSONResponse):
+                return saved
+            if body.disagreement_id not in {found["id"] for found in saved.content.get("disagreements") or ()}:
+                return refused(404, "unknown_disagreement")
+            reason = (body.reason or "").strip() or None
+            if body.kept == "other" and not reason:
+                return refused(422, "reason_required")
+            store.set_choice(draft_id, body.disagreement_id, body.kept, reason if body.kept == "other" else None,
+                             viewer.user_id, viewer.name, now())
+            return shown(store.get(draft_id), viewer, body.view)
+        return guarded(f"a choice on draft {draft_id}", act)
 
     @app.get("/api/drafts/{draft_id}/files/{name}")
     def download(draft_id: str, name: str, viewer: Viewer = Depends(current_viewer)):

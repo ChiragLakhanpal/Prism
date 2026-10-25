@@ -431,6 +431,10 @@ export const copy = {
       project_records: "whether the project's published records are complete",
       project_signals: "whether the project's published records are complete",
       writer_mission_brief: "whether this brief covers what your mission needs",
+      // Ticket 36: suggested PPSD rows and the Project Paper summary, and the agency's track record.
+      writer_ppsd_rows: "whether these rows are what the borrower should put in the PPSD",
+      agency_track_record: "whether the agency's past packages are like the ones in this plan",
+      writer_project_paper: "whether this summary is what you would write in the Project Paper",
     },
   },
 
@@ -951,6 +955,12 @@ export const copy = {
     recordSourceShort: "{doc}, {pid}, {date}.",
     // A tool's totals record, such as the mission brief's totals (ticket 37), as a footnote names it.
     toolSource: "Strata's totals of this project's records, as of {date}.",
+    // Ticket 36: a passage a lesson rests on, the count of comparable completion reports, and a lesson version, as
+    // the evidence pack and a Word footnote name them.
+    passageSource: "{doc}, {pid}, {date}, {place}, page {page}.",
+    passageParagraph: "paragraph {para}",
+    passageSection: "section {section}",
+    countsSource: "Strata's count of comparable completion reports, as of {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
     visited: "You have opened this source.",
@@ -2318,6 +2328,9 @@ export const copy = {
         barLead: "A working draft of your review notes on the borrower's Procurement Plan.",
         barLeadTeammate: (author: string) => `A working draft of ${author}'s review notes on the borrower's Procurement Plan.`,
         holdNotChecked: "Mark the notes as checked before you export them.",
+        // The composed hold line's first clause, and its frame, once a disagreement can hold too (ticket 36).
+        holdClause: "mark the notes as checked",
+        holdCompose: "Before you export them, {clauses}.",
         readOnly: (author: string) => `Only ${author} can mark these notes as checked or export them.`,
         markedChecked: "You marked these notes as checked. You can export them now.",
         discarded: "You discarded these review notes, so your team no longer sees them in Drafts.",
@@ -2396,6 +2409,8 @@ export const copy = {
         barLead: "A working draft of your mission brief.",
         barLeadTeammate: (author: string) => `A working draft of ${author}'s mission brief.`,
         holdNotChecked: "Mark the brief as checked before you export it.",
+        holdClause: "mark the brief as checked",
+        holdCompose: "Before you export it, {clauses}.",
         readOnly: (author: string) => `Only ${author} can mark this brief as checked or export it.`,
         markedChecked: "You marked this brief as checked. You can export it now.",
         discarded: "I discarded this mission brief, and your team no longer sees it in Drafts.",
@@ -2449,6 +2464,172 @@ export const copy = {
         previewPiuTitle: "I don't show mission briefs in this preview, because they are a World Bank staff draft.",
         previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
       },
+      // Suggested risk rows for the borrower's PPSD (ticket 36; the 36 brief, sections 5.2 to 5.5). Its keys match
+      // review_notes' so the draft page, the bar and the Drafts tab read every kind the same way; copy.ppsd holds what
+      // only this kind says. Ticket 38's agency variant swaps these words and keeps the column names.
+      ppsd_rows: {
+        title: "Suggested risk rows for the borrower's PPSD",
+        crumb: (_date: string) => "Suggested PPSD risk rows",
+        rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+        pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+        // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
+        subtitle: "{title}. {reference}",
+        lede: (count: number) =>
+          count === 1 ? "I drafted a row for the one risk you selected." : "I drafted a row for each of the {count} risks you selected.",
+        ledePartial: "I drafted rows for {written} of the {count} risks you selected.",
+        // PPSD is spelled out here, once on the page (the 36 brief, section 5).
+        method:
+          "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for the " +
+          "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
+          "beside the row.",
+        methodLink: "the risks you selected",
+        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
+        columns: {} as Record<string, string>,
+        tableCaption: (form: string, _date: string) =>
+          `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
+        // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
+        abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
+        refused: {
+          out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
+        } as Record<string, string>,
+        refusedOther: "I didn't write this cell.",
+        metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
+        barLead: "A working draft of suggested rows for the borrower's PPSD.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
+        holdNotChecked: "Mark the rows as checked before you export them.",
+        // The composed hold line's first clause, and its frame (section 4.5).
+        holdClause: "mark the rows as checked",
+        holdCompose: "Before you export them, {clauses}.",
+        readOnly: (author: string) => `Only ${author} can set owners, mark these rows as checked or export them.`,
+        markedChecked: "You marked these rows as checked.",
+        discarded: "You discarded these suggested rows, so your team no longer sees them in Drafts.",
+        removedReasons: {
+          id_not_returned: {
+            item: "It cited a source other than this risk's records.",
+            joined: "it cited a source other than this risk's records",
+          },
+        } as Record<string, { item: string; joined: string }>,
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One row." : `${countText} rows.`),
+        steps: {
+          read: {
+            running: "I'm reading the risks you selected.",
+            // {count} is the selected risks' count as a word from one to nine, then numerals.
+            done: (count: string) =>
+              count === "one" ? "I read the one risk you selected and its lesson." : `I read the ${count} risks you selected and their lessons.`,
+          },
+          write: {
+            running: (_count: number, _countText: string) => "I'm writing a row for each risk.",
+            // notes are the rows written.
+            done: (_sentences: number, _sentencesText: string, rows: number, rowsText: string) =>
+              rows === 1 ? "I wrote one row." : `I wrote ${rowsText} rows.`,
+          },
+          save: { running: "I'm saving the draft.", done: "I saved the draft." },
+        },
+        ready: (count: number, countText: string) =>
+          count === 1 ? "The draft is ready. I wrote one row." : `The draft is ready. I wrote ${countText} rows.`,
+        writeErrors: {
+          no_agent: "I can't write PPSD rows yet, because the model that writes my drafts isn't connected. I saved nothing.",
+          agent_unavailable:
+            "I couldn't write the PPSD rows, because the model that writes my drafts did not respond. I saved nothing.",
+          content_filter: "I couldn't write the PPSD rows, because a content filter stopped the writer. I saved nothing.",
+          agent_output: "I wrote PPSD rows I couldn't check, so I saved nothing.",
+          data_service: "I couldn't read the package's risks, because the data service didn't answer. I saved nothing.",
+          draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+          no_package: "I couldn't find this package, so I wrote nothing and saved nothing.",
+          no_selected_risks: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+          no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
+          nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+          permission:
+            "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+            "workspace admin for read access to the strata catalog.",
+          internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
+          dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
+        } as Record<string, string>,
+        nothingTitle: "I couldn't write a row that passed my checks, so I saved no draft.",
+        nothingBody: "The sentences I removed are below, with the reason for each.",
+        previewPiuTitle: "I don't show these suggested rows in this preview, because they are a World Bank staff draft.",
+        previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+      },
+      // The procurement summary for the Project Paper (ticket 36; the 36 brief, section 5.8). copy.paper holds what
+      // only this kind says.
+      project_paper: {
+        title: "Procurement summary for the Project Paper",
+        crumb: (_date: string) => "Project Paper summary",
+        rowTitle: (agency: string, date: string) => `Project Paper summary for the ${agency} plan of ${date}`,
+        pageTitle: (agency: string, date: string) => `Project Paper summary for the ${agency} plan of ${date}`,
+        subtitle: "{agency}, Procurement Plan of {date}",
+        // {count} is the checked PPSD rows it drew on, from one to nine in words.
+        lede: (count: number) =>
+          count === 0
+            ? "I drafted the summary from my check of the plan and the agency's track record."
+            : count === 1
+              ? "I drafted the summary from my check of the plan, the agency's track record and one checked PPSD row."
+              : "I drafted the summary from my check of the plan, the agency's track record and {count} checked PPSD rows.",
+        ledePartial: "I drafted {written} of the summary's three parts. Each other part says why it is empty.",
+        method:
+          "I wrote every sentence from a tool's counts or a record, and I cited each one. I don't rate the agency's " +
+          "procurement risk. That rating is yours.",
+        methodLink: "my check of the plan",
+        countLine: (_count: number, _countText: string) => "",
+        columns: {} as Record<string, string>,
+        tableCaption: (agency: string, _date: string) => `Procurement summary for the Project Paper, ${agency}`,
+        abstain: "I couldn't write this part so that it passed my checks. The sentences I removed are listed above. It is left out of the Word file.",
+        refused: {
+          out_of_scope: "I didn't write this part, because it would need more than the records show. It is left out of the Word file.",
+        } as Record<string, string>,
+        refusedOther: "I didn't write this part. It is left out of the Word file.",
+        metaYou: (date: string) => `I drafted this summary for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted this summary for ${author} on ${date}.`,
+        barLead: "A working draft of the procurement summary for the Project Paper.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s procurement summary for the Project Paper.`,
+        holdNotChecked: "Mark the summary as checked before you export it.",
+        holdClause: "mark the summary as checked",
+        holdCompose: "Before you export it, {clauses}.",
+        readOnly: (author: string) => `Only ${author} can mark this summary as checked or export it.`,
+        markedChecked: "You marked this summary as checked.",
+        discarded: "You discarded this summary, so your team no longer sees it in Drafts.",
+        removedReasons: {
+          id_not_returned: {
+            item: "It cited a source from another part of the summary.",
+            joined: "it cited a source from another part of the summary",
+          },
+        } as Record<string, { item: string; joined: string }>,
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One part." : `${countText} parts.`),
+        steps: {
+          read: {
+            running: "I'm reading my check of the plan, the agency's track record and the PPSD rows your team checked.",
+            done: (date: string) => `I read my check of the plan of ${date}, the agency's track record and the PPSD rows your team checked.`,
+          },
+          write: {
+            running: (_count: number, _countText: string) => "I'm writing the summary.",
+            done: (sentences: number, sentencesText: string, parts: number, partsText: string) =>
+              `I wrote ${sentences === 1 ? "one sentence" : `${sentencesText} sentences`} in ${parts === 1 ? "one part" : `${partsText} parts`}.`,
+          },
+          save: { running: "I'm saving the draft.", done: "I saved the draft." },
+        },
+        ready: (_count: number, _countText: string) => "The draft is ready.",
+        writeErrors: {
+          no_agent: "I can't write a Project Paper summary yet, because the model that writes my drafts isn't connected. I saved nothing.",
+          agent_unavailable:
+            "I couldn't write the Project Paper summary, because the model that writes my drafts did not respond. I saved nothing.",
+          content_filter: "I couldn't write the Project Paper summary, because a content filter stopped the writer. I saved nothing.",
+          agent_output: "I wrote a Project Paper summary I couldn't check, so I saved nothing.",
+          data_service: "I couldn't read my check of the plan, because the data service didn't answer. I saved nothing.",
+          draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+          no_plan: "I couldn't find this version of the plan, so I wrote nothing and saved nothing.",
+          nothing_marked: "I found nothing to write about, so I saved nothing.",
+          permission:
+            "Your account can't read this plan's check in Strata's tables, so I can't write a Project Paper summary. Ask " +
+            "your workspace admin for read access to the strata catalog.",
+          internal: "Something went wrong on my side, so I couldn't write the Project Paper summary. I saved nothing.",
+          dropped: "The connection dropped before I finished the Project Paper summary. I saved nothing.",
+        } as Record<string, string>,
+        nothingTitle: "I couldn't write a sentence that passed my checks, so I saved no draft.",
+        nothingBody: "The sentences I removed are below, with the reason for each.",
+        previewPiuTitle: "I don't show the Project Paper summary in this preview, because it is a World Bank staff draft.",
+        previewPiuBody: "Leave the preview to see it. Nothing about the draft changed.",
+      },
     },
     // The writing page (`/drafts/new`).
     writing: {
@@ -2500,7 +2681,21 @@ export const copy = {
       // own (copy.draft.kinds.<kind>.holdNotChecked); tests/test_drafts.py checks every key has a line.
       hold: {
         preview: "This is a preview, so you can't mark drafts as checked or export them.",
-      } as Record<string, string>,
+        // Ticket 36: each hold's clause in the composed line "Before you export them, {clauses}." (the 36 brief, 4.5),
+        // by how many items are left: {count} is a word from one to nine, then numerals. Each links to the first
+        // unfinished item.
+        owners: { one: "set one more risk owner", many: "set {count} more risk owners" },
+        ratings: { one: "fill in the ratings for one more row", many: "fill in the ratings for {count} more rows" },
+        disagreements: {
+          one: "choose which report to keep in one disagreement",
+          many: "choose which report to keep in {count} disagreements",
+        },
+      } as Record<string, string | { one: string; many: string }>,
+      // Two clauses join with " and "; three or more take commas, with ", and " before the last (the 24 brief's
+      // serial comma).
+      holdJoin: " and ",
+      holdComma: ", ",
+      holdLastComma: ", and ",
       discard: "Discard",
       export: "Export to Word",
       check: "Mark as checked",
@@ -2657,6 +2852,43 @@ export const copy = {
           total: "Total",
           moved: "Closing date moved",
         },
+        // Suggested PPSD rows' Word file (the 36 brief, section 6.6): the template's table for the form chosen, in its
+        // column names from config/ppsd_templates.toml, with one footnote per marker.
+        ppsd_rows: {
+          heading: "Suggested risk rows for the borrower's PPSD",
+          // "{package_title}. {reference}." then the project, when the package has one, then the form's name.
+          line: "{package_title}. {reference}.",
+          noReference: "No STEP reference yet",
+          project: "{project_name} ({project_id}).",
+          form: "{form_name}.",
+          origin:
+            "Drafted with Strata on {created} and checked by {checker} on {checked}. {author} set the {set_what}. " +
+            "Strata is an independent demo built on World Bank open data. These are suggested rows for the borrower's " +
+            "PPSD and are not a World Bank review, clearance or no-objection.",
+          setOwners: "risk owners",
+          setOwnersRatings: "risk owners and ratings",
+          // A footnote's text, built once on the server and shown on the page as its "In Word:" line. A passage
+          // footnote is each source's pill (copy.packageRisks.pill), joined, ending with a period.
+          footnote: {
+            count: "Seen in {k} of {m} comparable completion reports.",
+            page: ", page {page}",
+            join: "; ",
+            end: ".",
+          },
+        },
+        // The Project Paper summary's Word file: a Heading 2 and its paragraph per part with sentences.
+        project_paper: {
+          heading: "Procurement summary for the Project Paper",
+          line: "{project_name} ({project_id}). {agency}, Procurement Plan of {date}.",
+          origin:
+            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "built on World Bank open data. This summary is not a World Bank review, clearance or no-objection.",
+          parts: {
+            plan: "The Procurement Plan",
+            record: "The implementing agency's track record",
+            ppsd: "Procurement risks in the PPSD",
+          },
+        },
       },
       pack: {
         title: "Evidence pack",
@@ -2677,6 +2909,11 @@ export const copy = {
         moment: "{date}, {time}",
         citedJoin: ", ",
         dataCaveat: "The World Bank does not guarantee the accuracy of the data.",
+        // Suggested PPSD rows add who set each owner and rating, and when, one line per save (ticket 36).
+        fieldsTitle: "Fields you set",
+        fieldsColumns: ["Row", "Field", "Value", "Set by", "Set on (UTC)"],
+        fieldsRemoved: "Removed",
+        fieldsForm: "Risk table form",
       },
     },
   },

@@ -528,31 +528,32 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
 # ── The draft-kind registry and the roles file (ticket 35) ───────────────
 
 def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
-    # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and two holds,
-    # not yet checked and a preview, with the hold line for not yet checked named first.
+    # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and its holds, not yet
+    # checked first and a preview last; ticket 36 adds a warning disagreement left without a choice between them.
     kind = config.load_draft_kinds().kinds["review_notes"]
 
     assert (kind.key, kind.agent, kind.export) == ("review_notes", "review_notes_writer", "word")
     assert kind.columns == ("activity", "note")
-    assert kind.holds == ("notChecked", "preview")
+    assert kind.holds == ("notChecked", "disagreements", "preview")
     assert (kind.sources_list, kind.removed_box) == (True, "always")
 
 
 def test_adding_a_draft_kind_is_one_entry(tmp_path):
     path = copy("drafts.toml", tmp_path, old="[holds.notChecked]", new=(
-        '[kinds.ppsd_rows]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
-        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["risk"]\n'
+        '[kinds.ppsd_rows_agency]\nwriter = "strata.drafts.ppsd_rows"\nagent = "ppsd_rows_writer"\n'
+        'word = "strata.drafts.ppsd_rows:word"\nexport = "word"\ncsv = []\ncolumns = ["risk_description"]\n'
         'holds = ["notChecked"]\nsources_list = true\nremoved_box = "always"\nnot_checked = []\n'
-        'files = "ppsd-rows-{project_id}"\n\n[holds.notChecked]'))
+        'files = "ppsd-rows-{package_slug}"\n\n[holds.notChecked]'))
 
-    # Ticket 37 added the mission brief the same way.
-    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief", "ppsd_rows"]
+    # Ticket 37 added the mission brief the same way, and ticket 36 suggested PPSD rows and the Project Paper summary.
+    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief", "ppsd_rows", "project_paper",
+                                                         "ppsd_rows_agency"]
 
 
 def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):
-    path = copy("drafts.toml", tmp_path, old='holds = ["notChecked", "preview"]', new='holds = ["owners"]')
+    path = copy("drafts.toml", tmp_path, old='holds = ["notChecked", "disagreements", "preview"]', new='holds = ["retired"]')
 
-    with pytest.raises(ConfigError, match=r"kinds\.review_notes\.holds names owners"):
+    with pytest.raises(ConfigError, match=r"kinds\.review_notes\.holds names retired"):
         config.load_draft_kinds(path)
 
 

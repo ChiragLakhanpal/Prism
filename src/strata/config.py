@@ -1234,12 +1234,16 @@ class DraftKind:
 class DraftKinds:
     kinds: dict[str, DraftKind]
     holds: dict[str, Hold]
+    # Whether the draft page shows disagreement cards, so a warning card holds export ([disagreements]).
+    cards_on_drafts: bool = False
 
 
 def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     """The draft-kind registry, with every hold a kind names defined below it."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"kinds", "holds"})
+    _Entry(path, "the file", data).only({"kinds", "holds", "disagreements"})
+    cards = _Entry(path, "disagreements", data.get("disagreements", {"cards_on_drafts": False}))
+    cards.only({"cards_on_drafts"})
     holds = {}
     for key, table in (data.get("holds") or {}).items():
         entry = _Entry(path, f"holds.{key}", table)
@@ -1273,7 +1277,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
                                entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
-    return DraftKinds(kinds, holds)
+    return DraftKinds(kinds, holds, cards.boolean("cards_on_drafts"))
 
 
 # ── The PPSD template registry ───────────────────────────────────────────

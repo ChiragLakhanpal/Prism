@@ -184,3 +184,131 @@ request = { kind = "mission_brief", project_id = "P156634" }
 [[cases.plant_notes]]
 part = "disbursement"
 refusal = "out_of_scope"
+
+# The suggest-PPSD-rows workflow's writer (ticket 36). Each case runs on a copy of the fixture with the three proposed
+# lessons decided (tests/lesson_scenario.py), for KE-NWWDA-541055-CW-RFB with section 1's country set to India and
+# notices from 2013, whose comparables reach P130164's ICR: the risk table's two rows, cost estimates and permits,
+# which Ana selected. A planted note is named by its cell_key, a risk key and a cell.
+
+[[cases]]
+id = "ppsd-rows-ke-nwwda-541055"
+says = """The writer fills the Risk Description and the Description of mitigation of both selected rows, the first citing \
+the counts record and the second the lesson and its passages, and every sentence passes the checks."""
+question = "Write suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "ppsd-rows-ke-nwwda-541055"
+request = { kind = "ppsd_rows", package = { step_reference = "KE-NWWDA-541055-CW-RFB" }, criteria = { country = "IN", notice_from = "2013-01-01" }, selected = ["cost_estimates", "permits_before_award"], missing = [] }
+
+[[cases]]
+id = "ppsd-rows-one-cell-fails"
+says = """The permits row's mitigation states a number of days no record holds. The verifier removes it, and the row \
+stays with its Risk Description and an empty mitigation cell."""
+question = "Write suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "ppsd-rows-ke-nwwda-541055"
+request = { kind = "ppsd_rows", package = { step_reference = "KE-NWWDA-541055-CW-RFB" }, criteria = { country = "IN", notice_from = "2013-01-01" }, selected = ["cost_estimates", "permits_before_award"], missing = [] }
+
+[[cases.plant_notes]]
+cell_key = "permits_before_award/mitigation"
+claims = [
+  { sentence = "Put forest permits in place 90 days before the contracts are awarded.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-cfdf000a46/v1", "strata.gold.passage:34056616/v2/12"], numbers = ["90"], dates = [] },
+]
+
+[[cases]]
+id = "ppsd-rows-a-row-removed"
+says = """Both cells of the permits row cite a record the risk table did not return. The verifier removes both \
+sentences, and the row is left out of the draft, its sentences in the removed box."""
+question = "Write suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "ppsd-rows-ke-nwwda-541055"
+request = { kind = "ppsd_rows", package = { step_reference = "KE-NWWDA-541055-CW-RFB" }, criteria = { country = "IN", notice_from = "2013-01-01" }, selected = ["cost_estimates", "permits_before_award"], missing = [] }
+
+[[cases.plant_notes]]
+cell_key = "permits_before_award/risk_description"
+claims = [
+  { sentence = "Permits not in place before award can hold up the works.", kind = "summary", evidence_ids = ["strata.gold.passage:99999999/v1/1"], numbers = [], dates = [] },
+]
+
+[[cases.plant_notes]]
+cell_key = "permits_before_award/mitigation"
+claims = [
+  { sentence = "Put permits in place before the contracts are awarded.", kind = "advice", evidence_ids = ["strata.gold.passage:99999999/v1/2"], numbers = [], dates = [] },
+]
+
+[[cases]]
+id = "ppsd-rows-writer-sets-an-owner"
+says = """The writer also answers with a risk owner, a likelihood and an actual date for the cost estimates row, in a \
+cell the message never asked for and in fields of a cell it did. The draft keeps only the two cells Strata writes, and \
+no field a person fills holds a value."""
+question = "Write suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "ppsd-rows-ke-nwwda-541055"
+request = { kind = "ppsd_rows", package = { step_reference = "KE-NWWDA-541055-CW-RFB" }, criteria = { country = "IN", notice_from = "2013-01-01" }, selected = ["cost_estimates", "permits_before_award"], missing = [] }
+
+[[cases.plant_notes]]
+cell_key = "cost_estimates/risk_owner"
+risk_owner = "Implementing agency, procurement unit"
+claims = [
+  { sentence = "The implementing agency's procurement unit owns this risk.", kind = "summary", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v1"], numbers = [], dates = [] },
+]
+
+[[cases.plant_notes]]
+cell_key = "cost_estimates/mitigation"
+risk_owner = "Implementing agency, procurement unit"
+likelihood = 4
+actual_date = "2026-11-30"
+reference = "KE-NWWDA-541055-CW-RFB"
+claims = [
+  { sentence = "Base the works cost estimates on market rates before the contracts go to bid.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v1", "strata.gold.passage:31525018/v1/54", "strata.gold.passage:34056616/v2/10.b"], numbers = [], dates = [] },
+]
+
+[[cases]]
+id = "ppsd-rows-three-risks"
+says = """Three selected risks, for the shape of the draft only: tests/test_ppsd_rows.py adds a third row to the risk \
+table, made up from the permits row with its records, since the fixture's completion reports raise two risks. The \
+writer fills the third row's two cells from those records too, and every sentence passes the checks."""
+question = "Write suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "ppsd-rows-ke-nwwda-541055"
+request = { kind = "ppsd_rows", package = { step_reference = "KE-NWWDA-541055-CW-RFB" }, criteria = { country = "IN", notice_from = "2013-01-01" }, selected = ["cost_estimates", "permits_before_award", "contract_management"], missing = [] }
+
+[[cases.plant_notes]]
+cell_key = "contract_management/risk_description"
+claims = [
+  { sentence = "Contracts can be held up when permits are not in place before award.", kind = "summary", evidence_ids = ["strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB"], numbers = [], dates = [] },
+]
+
+[[cases.plant_notes]]
+cell_key = "contract_management/mitigation"
+claims = [
+  { sentence = "Have the permits in hand before the contracts are signed.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-cfdf000a46/v1", "strata.gold.passage:34056616/v2/12"], numbers = [], dates = [] },
+]
+
+# The Project Paper summary's writer (ticket 36), on the Northern Water Works Development Agency's plan of October 9,
+# 2026, as of October 28, 2026, on the same copy of the fixture.
+
+[[cases]]
+id = "project-paper-p156634"
+says = """The writer writes the plan's counts from check_plan's summary, the agency's track record from \
+agency_track_record's summary and rows, and the PPSD's risk from the checked rows' lesson, and every sentence passes \
+the checks."""
+question = "Write the procurement summary for the Project Paper from the Northern Water Works Development Agency's Procurement Plan of 2026-10-09 for P156634."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "project-paper-p156634"
+request = { kind = "project_paper", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases]]
+id = "project-paper-p156634-no-ppsd"
+says = """The team checked no PPSD rows for the project, so the writer writes the plan and the track record, and no \
+PPSD part."""
+question = "Write the procurement summary for the Project Paper from the Northern Water Works Development Agency's Procurement Plan of 2026-10-09 for P156634."
+scope = "P156634"
+as_of = 2026-10-28
+recording = "project-paper-p156634-no-ppsd"
+request = { kind = "project_paper", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }

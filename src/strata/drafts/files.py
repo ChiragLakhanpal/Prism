@@ -50,6 +50,13 @@ def _fill(template: str, **values) -> str:
     return template
 
 
+def iso_moment(value) -> str | None:
+    """A moment as ISO text in UTC, whether it came as a datetime or as text."""
+    if value is None or isinstance(value, str):
+        return value
+    return value.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
+
+
 def _day(value) -> dt.date:
     return value if isinstance(value, dt.date) and not isinstance(value, dt.datetime) else \
         dt.datetime.fromisoformat(str(value).replace("Z", "+00:00")).date()
@@ -81,6 +88,20 @@ class Say:
         row = draft["evidence"][evidence_id]["row"]
         source = row.get("source") or {}
         date = source.get("plan_date") or source.get("document_date")
+        if row.get("passage_id") and row.get("document_type"):
+            # A passage a lesson rests on (ticket 36): "Implementation Completion and Results Report, P130164,
+            # October 10, 2019, paragraph 54, page 23."
+            locator = row.get("locator") or "paragraph"
+            place = _fill(words()["passageSection" if locator == "section" else "passageParagraph"],
+                          para=row.get("paragraph"), section=row.get("paragraph"))
+            return _fill(words()["passageSource"], doc=row["document_type"], pid=row.get("project_id"),
+                         date=self.date(row["document_date"]) if row.get("document_date") else "", place=place,
+                         page=row.get("page") or row.get("pdf_page") or "")
+        if source.get("table") == "strata.ops.lesson_versions":
+            return _fill(words()["lessonSource"], version=source.get("version"),
+                         date=self.date(source["decided_on"]) if source.get("decided_on") else "")
+        if source.get("tool") == "get_lessons":
+            return _fill(words()["countsSource"], date=self.date(row["public_from"]))
         # A record a project's Summary or a mission brief cites names its source by its key (ticket 37).
         # The file is about one project, which its heading names, so the line adds no project ID.
         keyed = words()["summaryRecordSources"].get(source.get("source_key") or "")
@@ -155,16 +176,18 @@ class Word:
         """A bold Normal paragraph, such as a table's title."""
         self.body.append(self._paragraph([text], bold=True))
 
-    def table(self, header: list[str], rows: list[list[list[list]]], widths: tuple[int, ...]) -> None:
+    def table(self, header: list[str | list[str]], rows: list[list[list[list]]], widths: tuple[int, ...]) -> None:
         """A Table Grid table: a header row repeated on each page, then rows of cells, each a list of
-        paragraphs, each a list of runs (text, or a footnote)."""
+        paragraphs, each a list of runs (text, or a footnote). A header cell is its text, or its lines, as the PPSD
+        Long Form template puts "A" above "Likelihood Rating" (ticket 36)."""
         grid = "".join(f'<w:gridCol w:w="{width}"/>' for width in widths)
 
         def cell(paragraphs: list[list], width: int, bold: bool = False) -> str:
             inside = "".join(self._paragraph(paragraph, bold=bold) for paragraph in paragraphs) or "<w:p/>"
             return f'<w:tc><w:tcPr><w:tcW w:w="{width}" w:type="dxa"/></w:tcPr>{inside}</w:tc>'
 
-        head = "".join(cell([[text]], width, bold=True) for text, width in zip(header, widths, strict=True))
+        head = "".join(cell([[text]] if isinstance(text, str) else [[line] for line in text], width, bold=True)
+                       for text, width in zip(header, widths, strict=True))
         body = "".join("<w:tr>" + "".join(cell(paragraphs, width) for paragraphs, width in zip(row, widths, strict=True))
                        + "</w:tr>" for row in rows)
         self.body.append(f'<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/>'
@@ -318,12 +341,29 @@ def check_line(checks: dict, kind: DraftKind) -> str:
     return f"{text} {line['notChecked']} {joined or line['notCheckedFallback']}{line['end']}"
 
 
+def _cited_in(draft: dict) -> dict[str, str]:
+    """Where a suggested PPSD row's cell is, as the pack names it: the risk, then the template's column (ticket 36)."""
+    shown = draft.get("ppsd")
+    if not shown:
+        return {}
+    headers = {column["key"]: column["header"] for column in shown["forms"][shown["form"]]["columns"]}
+    return {key: f"{row['risk_label']}, {headers.get(cell, cell)}" for row in shown["rows"]
+            for cell, key in row["cells"].items()}
+
+
 def snapshot(draft: dict, say: Say) -> dict:
-    """The evidence pack's rows: every source the draft cites, where, and whether its author opened it."""
+    """The evidence pack's rows: every source the draft cites, where, and whether its author opened it, and the
+    reason its author gave for keeping another report on a disagreement it rests on (ticket 36)."""
+    named = _cited_in(draft)
+    kept = {choice["disagreement_id"]: choice for choice in draft.get("choices") or () if choice["kept"] == "other"}
+    sides = {side["evidence_id"]: found["id"] for found in draft.get("disagreements") or ()
+             for side in found.get("sides") or () if not side.get("leaned")}
     return {"sources": [{
         "number": entry["number"], "evidence_id": entry["evidence_id"], "source": say.source(draft, entry["evidence_id"]),
-        "cited_in": entry["cited_in"], "opened": entry["opened"], "last_opened_at": entry["last_opened_at"],
-        "kept_another": None, "reason": None} for entry in draft["sources"]]}
+        "cited_in": [named.get(key, key) for key in entry["cited_in"]], "opened": entry["opened"],
+        "last_opened_at": entry["last_opened_at"],
+        "kept_another": sides.get(entry["evidence_id"]) in kept or None,
+        "reason": (kept.get(sides.get(entry["evidence_id"])) or {}).get("reason")} for entry in draft["sources"]]}
 
 
 def pack_csv(rows: list[dict]) -> bytes:
@@ -424,6 +464,29 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
             for value in (pack["yes"] if row["opened"] else pack["no"], Say.moment(row["last_opened_at"]),
                           row["reason"] or ""):
                 cells.cell(value)
+    saves = draft.get("field_history") or []
+    if saves:
+        # Suggested PPSD rows (ticket 36): who set each owner and rating, and when, one line per save, so the pack
+        # records that people set them and Strata did not.
+        pdf.ln(16)
+        text(pack["fieldsTitle"], 13, "B", "ink_heading", 6)
+        pdf.set_font("OpenSans", "", 9)
+        pdf.set_text_color(*STATE_COLORS["ink"])
+        labels = {row["row_key"]: row["risk_label"] for row in (draft.get("ppsd") or {}).get("rows", [])}
+        headers = {column["key"]: column["header"] for form in (draft.get("ppsd") or {}).get("forms", {}).values()
+                   for column in form["columns"]}
+        with pdf.table(col_widths=(26, 20, 22, 16, 16), headings_style=heading, line_height=13, text_align="LEFT",
+                       padding=4) as table:
+            header = table.row()
+            for name in pack["fieldsColumns"]:
+                header.cell(name)
+            for save in saves:
+                cells = table.row()
+                cells.cell(labels.get(save["row_key"], ""))
+                cells.cell(pack["fieldsForm"] if save["field"] == "form" else headers.get(save["field"], save["field"]))
+                cells.cell(save["value"] or pack["fieldsRemoved"])
+                cells.cell(save["set_by_name"] or "")
+                cells.cell(Say.moment(iso_moment(save["set_at"])))
     pdf.ln(16)
     text(copy["footer"], 9, color="ink_muted", gap=2)
     text(pack["dataCaveat"], 9, color="ink_muted", gap=0)

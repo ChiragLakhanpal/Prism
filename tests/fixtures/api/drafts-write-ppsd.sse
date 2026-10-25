@@ -1,0 +1,30 @@
+event: step
+data: {"id": "read", "kind": "read", "status": "running"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "done", "selected": 2}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running", "count": 4}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "notes": 4, "sentences": 4}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "checks_run": [1, 2, 3, 4, 5, 6], "checks": 6, "written": 4, "removed": 0}
+
+event: step
+data: {"id": "save", "kind": "save", "status": "running"}
+
+event: step
+data: {"id": "save", "kind": "save", "status": "done"}
+
+event: draft
+data: {"draft_id": "draft-0001"}
+
+event: done
+data: {"run_id": "run-0001"}
+

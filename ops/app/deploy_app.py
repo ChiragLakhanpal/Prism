@@ -33,7 +33,8 @@ It needs npm, which builds the web app. It does these things, in order:
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
    strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports,
-   draft_files and follows, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
+   draft_files, follows, draft_fields and draft_choices, SELECT on their views draft_fields_latest and
+   draft_choices_latest, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
    lesson_review_notes, and ticket 32's candidate_labels, label_decisions, answer_citations,
@@ -163,12 +164,16 @@ def grants(principal: str) -> list[str]:
     lesson review record (ticket 29), which it writes for every reviewer."""
     if not PRINCIPAL.fullmatch(principal):
         raise ValueError(f"{principal!r} is not a service principal's application id.")
-    # follows (ticket 37): the projects each World Bank staff viewer follows, kept as the app.
+    # follows (ticket 37): the projects each World Bank staff viewer follows, kept as the app. draft_fields and
+    # draft_choices (ticket 36): the values people set on a draft's fields and the reports they kept, read through
+    # their latest-value views.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows")
+              "draft_files", "follows", "draft_fields", "draft_choices")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
+            *[f"GRANT SELECT ON TABLE strata.ops.{view} TO `{principal}`" for view in ("draft_fields_latest",
+                                                                                    "draft_choices_latest")],
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`",
