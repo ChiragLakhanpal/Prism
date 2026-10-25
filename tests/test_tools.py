@@ -296,20 +296,29 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
-def step_dates_answer(result, question) -> dict[str, list]:
-    """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
-    the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
-    tool counts as undated, and one named comparable's delay at the signed contract."""
+def estimate_time_answer(result, question) -> dict[str, list]:
+    """estimate_time's answer, from the summary record the agent cites it by. The time estimate (ticket 26): why it
+    gives no time estimate, and for which feature; how many comparable packages it counted; and why there is no
+    track record, if there is none. The planned dates for each step (ticket 27): the method family, the basis, the
+    steps that got a cautious date, how many steps the tool counts as undated, and one named comparable's delay at
+    the signed contract. Section 4's counts: the comparable packages whose records give their whole approach, those
+    of them the thresholds rule out for this package, and those whose records don't give it."""
+    abstention = result["abstention"] or {}
+    track = result["summary"]["track_record"] or {}
+    options = result["summary"]["options"] or {}
     steps = result["summary"]["step_dates"]
     signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
     named = {reference for reference, _ in question["expected"]["signed_delay"]}
-    return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
+    return {"abstention": [abstention.get("reason")], "feature": [abstention.get("feature")],
+            "comparables": [result["summary"]["comparables"]["n"]], "cited_as": [result["summary"]["evidence_id"]],
+            "track_record": [(track.get("abstention") or {}).get("reason")],
+            "family": [steps["family"]], "basis": [steps["basis"]], "step_comparables": [steps["coverage"]["total"]],
             "dated_steps": [entry["step_key"] for entry in steps["steps"]
                             if entry["cautious"] and entry["cautious"]["planned_date"]],
             "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
                              if entry["step_reference"] in named],
-            "cited_as": [result["summary"]["evidence_id"]]}
+            "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]]}
 
 
 def cost_answer(result, question) -> dict[str, list]:
@@ -383,7 +392,7 @@ def track_answer(result, question) -> dict[str, list]:
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "agency_track_record": track_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
+           "get_lessons": lessons_answer, "estimate_time": estimate_time_answer, "compare_cost_estimates": cost_answer,
            "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
            "rebidding_risk": rebidding_answer,
            "project_records": lambda result, question: {
@@ -397,9 +406,9 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk",
-                            "agency_track_record"):
+    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "estimate_time",
+                            "compare_cost_estimates", "rejected_bids", "compare_criteria", "project_signals",
+                            "project_records", "rebidding_risk", "agency_track_record"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 

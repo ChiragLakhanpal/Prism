@@ -76,10 +76,10 @@ class Package:
     signed: bool | None = None
 
 
-def packages_as_of(reader, settings: TimeEstimateSettings) -> dict[str, Package]:
+def packages_as_of(reader, settings: TimeEstimateSettings, only: str | None = None) -> dict[str, Package]:
     """Every package Strata knew of on the reader's date, with its features and, where it could be
     measured then, its days. The reader is the replay harness's (strata.estimates.harness.Reader), so
-    nothing public after its date can reach the model."""
+    nothing public after its date can reach the model. only keeps one package, by its STEP reference."""
     measured = {row["step_reference"]: row for row in reader.packages()}
     histories: dict[str, list[tuple[dt.date, int]]] = {}
     for row in measured.values():
@@ -87,7 +87,7 @@ def packages_as_of(reader, settings: TimeEstimateSettings) -> dict[str, Package]
             histories.setdefault(agency(row["step_reference"]), []).append((as_date(row["public_from"]), row["days"]))
     scores = _Governance(reader, settings.governance_indicators)
     found = {}
-    for row in reader.rows(_sql("features.sql")):
+    for row in reader.rows(_sql("features.sql"), only=only):
         reference, day = row["step_reference"], as_date(row["feature_date"])
         history = [days for public, days in histories.get(agency(reference), []) if public <= day]
         notice_on, signing_on = as_date(row["planned_notice_on"]), as_date(row["planned_signing_on"])
@@ -112,6 +112,27 @@ def packages_as_of(reader, settings: TimeEstimateSettings) -> dict[str, Package]
             package.days, package.signed = measured[reference]["days"], not measured[reference]["still_open"]
         found[reference] = package
     return found
+
+
+def described_features(reader, values: dict[str, Any], settings: TimeEstimateSettings) -> dict[str, Any]:
+    """The features of a package described by its criteria rather than a plan row, such as a package planned
+    from a sentence (ticket 26): the Method, category, Market Approach, Review Type, Prequalification,
+    estimated amount and country it was described with. It has no plan dates and no implementing agency yet,
+    so those features are missing to the model, and its country's region and governance scores are those
+    public on the reader's date."""
+    country = values.get("country_code")
+    regions = reader.rows(_sql("region.sql"), country_code=country) if country else []
+    scores = _Governance(reader, settings.governance_indicators)
+    amount = values.get("estimated_amount_usd")
+    return {
+        "method": values.get("method"), "category": values.get("category"),
+        "market_approach": values.get("market_approach"), "review_type": values.get("review_type"),
+        "prequalification": values.get("prequalification"), "country_code": country,
+        "region": regions[0]["region"] if regions else None,
+        "estimated_amount_usd": None if amount is None else float(amount), "planned_days": None,
+        "agency_packages": None, "agency_median_days": None,
+        **{f"governance:{code}": scores.on(country, code, reader.as_of) for code in settings.governance_indicators},
+    }
 
 
 class _Governance:
@@ -240,6 +261,30 @@ class TimeEstimateModel:
                            "training_through": self.training_through.isoformat(), "feature_ranges": self.feature_ranges,
                            "feature_names": list(self.feature_names), "training_packages": self.training_packages,
                            "calibration_packages": self.calibration_packages}, sort_keys=True)
+
+    @classmethod
+    def from_state(cls, state_json: str, booster_json: str, learner: str = "portable") -> TimeEstimateModel:
+        """A registered model as strata.gold.time_estimate_model keeps it (ticket 26). The portable learner
+        scores with no XGBoost, as the app does (strata.estimates.portable); learner="xgboost" loads the same
+        JSON into XGBoost, which the nightly score task uses for every package at once."""
+        from strata.estimates.portable import PortableLearner
+
+        state = json.loads(state_json)
+        names = tuple(state["feature_names"])
+        if learner == "xgboost":
+            import xgboost
+
+            fitted = XGBoostAFT({}, names, tuple("c" if name in state["vocabularies"] else "q" for name in names))
+            fitted.booster = xgboost.Booster()
+            fitted.booster.load_model(bytearray(booster_json.encode()))
+        else:
+            fitted = PortableLearner(booster_json)
+        return cls(fitted, state["vocabularies"], state["offsets"], dt.date.fromisoformat(state["training_through"]),
+                   state["feature_ranges"], state["training_packages"], state["calibration_packages"], 0, names)
+
+    def learned(self, feature: str, value) -> bool:
+        """Whether the model learned from a package with this value of a categorical feature."""
+        return value is not None and str(value) in self.vocabularies.get(feature, [])
 
     def outside(self, features: dict[str, Any]) -> dict | None:
         for name, bounds in self.feature_ranges.items():

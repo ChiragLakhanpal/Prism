@@ -207,34 +207,52 @@ questions:
       for the 49 default comparables, is in tests/ground_truth/values.toml ([past_range]
       quantile_dot_packages).
 
-  # Ticket 27: the planned date for each STEP step of the demo package. The fixture's plans record the steps of
-  # only a few comparable packages, so no step has 20 and none is dated, while the 49 comparables keep the
-  # whole section from abstaining. Each comparable's delay counts from its first published planned date.
+  # Tickets 26 and 27: the time estimate and the planned date for each STEP step of the demo package, from one
+  # estimate_time call. The champion the fixture's nightly run trained learned only from packages whose plans it
+  # read, the largest estimated at US$300,000, so it gives the US$1,230,000.00 demo package no time estimate and
+  # says so, while it still counts the comparable packages. The fixture's plans record the steps of only a few
+  # comparable packages, so no step has 20 and none is dated, while the 49 comparables keep section 2 from
+  # abstaining. Each comparable's delay counts from its first published planned date.
   - id: estimate-time-ke-nwwda-541055
     kind: estimates
     tool: estimate_time
     question: >-
-      As of October 22, 2026, what planned date should KE-NWWDA-541055-CW-RFB put on each STEP step, and how
+      As of October 23, 2026, what is Strata's time estimate for KE-NWWDA-541055-CW-RFB, from its notice to a
+      signed contract, and what is its track record? What planned date should it put on each STEP step, and how
       late did comparable packages sign their contracts against their first published plans?
     arguments:
       step_reference: KE-NWWDA-541055-CW-RFB
-      as_of: "2026-10-22"
+      as_of: "2026-10-23"
     expected:
+      abstention: [outside_training]
+      feature: [estimated_amount_usd]
+      comparables: [49]
+      cited_as: ["strata.tools.estimate_time:KE-NWWDA-541055-CW-RFB@2026-10-23"]
+      track_record: [too_few_unseen_packages]
       family: [goods]
       basis: [delay]
-      comparables: [49]
+      step_comparables: [49]
       dated_steps: []
       undated_steps: [6]
       signed_delay: [[KE-NWWDA-229129-CW-RFB, 186]]
-      cited_as: ["strata.tools.estimate_time:KE-NWWDA-541055-CW-RFB@2026-10-22"]
-    ground_truth: tests/ground_truth/delay_from_first_published_planned_date.sql
+      approach_counts: [[3, 0, 46]]
+    ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
-      The 49 comparables are find-comparables-ke-nwwda-541055's (tests/ground_truth/values.toml, [past_range]
-      comparables). KE-NWWDA-229129-CW-RFB, one of them, was first listed in the plan of April 21, 2021 with its
-      signed contract planned for July 1, 2021, and signed January 3, 2022, 186 days later (values.toml,
+      The demo package's estimated amount, US$1,230,000.00, is on PDF page 3 of the October 9, 2026 plan
+      (tests/ground_truth/values.toml, plan-541055-estimated); the largest package the model learned from is
+      KE-NWWDA-229129-CW-RFB at US$300,000 (plan-229129-estimated), so the package lies outside what it learned
+      from. The comparable packages are find-comparables-ke-nwwda-541055's 49. The fixture holds a few plans,
+      so no test year has 20 packages the model had not seen, and there is no track record yet.
+      KE-NWWDA-229129-CW-RFB, one of the 49, was first listed in the plan of April 21, 2021 with its signed
+      contract planned for July 1, 2021, and signed January 3, 2022, 186 days later (values.toml,
       plan-229129-first-planned-signing, plan-229129-signed and plan-229129-days-late). No step of the demo
       package has 20 comparable packages whose plans recorded it, so each abstains in its own row, and the tool
-      counts all six of the goods family's steps as undated (undated_n), which the screen's summary reads.
+      counts all six of the goods family's steps as undated (undated_n), which the screen's summary reads. The
+      step delays' ground truth is tests/ground_truth/delay_from_first_published_planned_date.sql.
+      For section 4, three of the 49 have a market approach and qualification in a plan and contracts in the
+      awards dataset to count their lots, all three Open - National; the thresholds leave Kenya's works under
+      US$15 million free to go national (config/thresholds.toml, market_approach), so none is ruled out, and the
+      other 46 record no whole approach.
 
   - id: search-passages-icr-rebidding
     kind: documents

@@ -44,6 +44,14 @@ ORDER BY ran_at DESC, run_id DESC
 LIMIT 1
 """
 
+LATEST_RUN_AS_OF = """
+SELECT run_id
+FROM strata.ops.evaluation_result
+WHERE scorer = :scorer AND public_from <= :as_of
+ORDER BY ran_at DESC, run_id DESC
+LIMIT 1
+"""
+
 RUN_ROWS = """
 SELECT run_id, scorer, model, segment_kind, segment, measure, value, value_text, cutoff, outcomes_through,
   mlflow_run_id, ran_at, public_from
@@ -182,9 +190,10 @@ def write(engine: Engine, rows: list[dict]) -> int:
     return engine.insert_rows(TABLE, COLUMNS, [tuple(item[column] for column in COLUMNS) for item in rows]) if rows else 0
 
 
-def latest_run(engine: Engine, scorer: str) -> str | None:
-    """The newest run of a scorer, or None when it has never run."""
-    result = engine.run(LATEST_RUN, {"scorer": scorer})
+def latest_run(engine: Engine, scorer: str, as_of: dt.date | None = None) -> str | None:
+    """The newest run of a scorer, or the newest public on as_of (ADR 0002), or None when there is none."""
+    result = (engine.run(LATEST_RUN, {"scorer": scorer}) if as_of is None
+              else engine.run(LATEST_RUN_AS_OF, {"scorer": scorer, "as_of": as_of}))
     return result.rows[0][0] if result.rows else None
 
 
