@@ -969,6 +969,8 @@ It worked if:
 
 ## Ticket 15, step 1 of 4: the Foundry package reader matches the repo
 
+**Ran on October 25, 2026 (orchestrator).** Both runs exited 0. The first printed "Foundry's agent strata-package-reader differed from the repo:", the diff, and "I made version 1 of strata-package-reader, which matches the repo." The second printed "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed.
+
 The merger parked this step on October 24, 2026, after merge commit d356ba7. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys that ticket 14's step 1 names, and the `az` command line signed in to the subscription that holds the Foundry resource. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 15 adds the agent `package_reader` to `config/agents.toml`, with its instructions in `package_reader.md`.
 
 Run this from the main checkout, twice:
@@ -978,6 +980,8 @@ Run this from the main checkout, twice:
 It worked if both runs exit 0. The first run prints what differed and ends "I made version 1 of strata-package-reader, which matches the repo." The second run reports no difference: "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
 
 ## Ticket 15, step 2 of 4: re-record the package reader's cases from the live reader
+
+**Ran on October 25, 2026 (orchestrator):** the record command exited 0 and printed a diff for each of the three recordings, each now `"recorded": true` with `"recorded_on": "2026-10-25"` and agent version 1. `package-no-package` and `package-dividing` came back with the same answers as the hand-written ones, down to the fields. `package-rural-roads-kenya` came back without the guess: the live reader answered category Works, description "Rural roads", estimated amount 15,000,000 (approximate) and country KE, and no `lots` field, where the hand-written answer guessed `lots` 2 with `stated` false. Five tests in `tests/test_planned_packages.py` then failed, among them `test_the_sentence_yields_the_wireframe_s_chips_with_two_computed_and_one_guess`: the first (`test_the_screens_recorded_package_answers_are_what_the_routes_answer`) because `tests/fixtures/api/package-plan-rural-roads.sse` carries "count": 5, "guesses": 1 and the live answer gives 4 and 0. As this block asks, nothing was changed by hand: the three tracked recordings were restored, the live recordings and their diff are kept in the orchestrator's scratchpad (`recorded15/`), and strata-eb was told. Decision for the orchestrator: either the reader's instructions (`package_reader.md`) should ask for a guessed lot count when the sentence gives none, so the wireframe's "two computed and one guess" holds, or the fixture, the SSE recording and the five tests follow the live answer with no guess. Not passed yet.
 
 The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the four Foundry keys. Run it after step 1. The three package reader recordings in `tests/fixtures/agent/recorded/` were written by hand (`"recorded": false`), because no live reader existed when the ticket was built (criterion 1, live half).
 
