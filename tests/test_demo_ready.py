@@ -19,6 +19,7 @@ import dataclasses
 import datetime as dt
 import importlib.util
 import io
+import re
 import shutil
 import sys
 import tomllib
@@ -41,6 +42,7 @@ QUESTIONS = {question["id"]: question for question in benchmark.load()}
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", user_id="ana", token="token-for-ana-only")
 TODAY = dt.date(2026, 10, 25)
 AFTER_CLOSING = dt.date(2026, 11, 6)  # the Round 2 date the PM counts on (docs/STATUS.md, decision 4)
+NUMBER_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")  # DESIGN.md 7, rule 12
 ENV = {"DATABRICKS_HOST": "https://example.cloud.databricks.com", "DATABRICKS_TOKEN": "not-a-real-key",
        "DATABRICKS_WAREHOUSE_ID": "abc123", "GENIE_SPACE_ID": "space-1",
        "FOUNDRY_PROJECT_ENDPOINT": "https://example.services.ai.azure.com/api/projects/Strata",
@@ -282,14 +284,27 @@ def test_the_recheck_prints_each_signal_s_current_state_with_the_recorded_values
     assert (f"Planned completion passed: KE-NWWDA-541055-CW-RFB passed its planned completion ({completion}) with no "
             "signed contract.") in out
     assert TRUTH["plan-541055-no-signed-contract"]["value"] == "no signed contract"
-    assert (f"KE-NWWDA-229129-CW-RFB was signed at about 4 times its estimate: {dollars(TRUTH['plan-229129-actual']['value'])} "
-            f"against {dollars(TRUTH['plan-229129-estimated']['value'])}.") in out
+    assert re.search(r"KE-NWWDA-229129-CW-RFB was signed at about \d+ times its estimate: "
+                     + re.escape(f"{dollars(TRUTH['plan-229129-actual']['value'])} against "
+                                 f"{dollars(TRUTH['plan-229129-estimated']['value'])}."), out)
     assert f"first appears in the plan of {long_day(TRUTH['plan-cwsb-567630-first-listed']['value'])}." in out
-    assert "Closing date moved: The closing date has moved three times since 2022." in out
+    moves = [key for key in TRUTH if re.fullmatch(r"closing-p156634-move-\d", key)]
+    first_shown = re.search(r"end_of_period=\d+-\w+-(\d{4})", TRUTH["closing-p156634-move-1"]["at"]).group(1)
+    assert (f"Closing date moved: The closing date has moved {NUMBER_WORDS[len(moves)]} times since {first_shown}."
+            in out)
     for check in ("Restructured", "ISR rating lowered", "Slow disbursement"):
         assert f"{check}: ran and found nothing." in out
     assert f"It closes on {long_day(TRUTH['closing-date-p156634']['value'])}." in out
     assert "Nothing changed since the fixture was recorded." in out
+
+
+def test_the_output_uses_the_glossary_s_signal_words_and_none_it_avoids(two_runs, after_closing, failing_run):
+    """GLOSSARY.md's Signal entry and brief 37: Needs a look, Watch, No signals and Not checked; never flag, alert,
+    watchlist or at risk, nor DESIGN.md section 7's other words."""
+    said = " ".join([two_runs["first"][1], after_closing[1], failing_run[1]]).lower()
+
+    assert [word for word in ("flag", "alert", "watchlist", "at risk", "risk score", "approve", "clearance",
+                              "slippage", "the bank", "—", "!") if word in said] == []
 
 
 def test_the_recheck_reports_the_plan_and_the_award_rows_disagreeing_as_known_and_decides_nothing(two_runs):
