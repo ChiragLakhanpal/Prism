@@ -23,7 +23,9 @@ import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
-import type { View } from "../lib/view";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
+import { viewOf, type View } from "../lib/view";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
@@ -394,21 +396,24 @@ const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolea
 ];
 const CELL = "px-2 py-3 @xl/page:px-3";
 
-// Each activity's link to its package workspace (the 12 brief). Its accessible name adds the
-// reference, so a list of links tells the activities apart, and starts with the visible words
-// (WCAG 2.5.3). Every row gets it: a row with no public notice opens the workspace's "not
-// measurable" state, which says why.
-// In a card it sits 12 px under the last field, so it doesn't read as part of the Process status value.
-function PastRangeLink({ reference, inCard = false }: { reference: string; inCard?: boolean }) {
+// Each activity's links (ticket 22; the 22 brief, section 5.1): "Open the activity" to its contract trail, then
+// "See the past range" to its package workspace (the 12 brief), 16 px apart and wrapping. Each accessible name
+// adds the reference, so a list of links tells the activities apart, and starts with the visible words (WCAG
+// 2.5.3). Every row gets both: a row with no public notice opens the workspace's "not measurable" state, which
+// says why. The public view has no Packages tab, so it shows only the first. In a card they sit 12 px under the
+// last field, so they don't read as part of the Process status value.
+function ActivityLinks({ reference, pid, inCard = false }: { reference: string; pid: string; inCard?: boolean }) {
+  const isPublic = viewOf(useStore(address).search) === "public";
   return (
-    <span className={cx(inCard ? "mt-3" : "mt-1", "block text-small font-normal")}>
-      <TextLink
-        href={`/packages/${encodeURIComponent(reference)}`}
-        aria-label={words.pastRangeLabel(reference)}
-        data-past-range-link={reference}
-      >
-        {words.pastRangeLink}
+    <span className={cx(inCard ? "mt-3" : "mt-1", "flex flex-wrap gap-x-4 text-small font-normal")}>
+      <TextLink href={`/projects/${pid}/packages/${encodeURIComponent(reference)}`} aria-label={words.openActivityLabel(reference)} data-activity-link={reference}>
+        {words.openActivity}
       </TextLink>
+      {!isPublic && (
+        <TextLink href={`/packages/${encodeURIComponent(reference)}`} aria-label={words.pastRangeLabel(reference)} data-past-range-link={reference}>
+          {words.pastRangeLink}
+        </TextLink>
+      )}
     </span>
   );
 }
@@ -434,7 +439,7 @@ function TableRow({ row, result, fresh, named, change }: { row: Activity; result
         <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
         <ChangedLine change={change} />
-        <PastRangeLink reference={ref} />
+        <ActivityLinks reference={ref} pid={result.plan.project_id} />
       </th>
       <td className={CELL}>{methodText(row)}</td>
       <td className={CELL}>{row.review_type ?? blank}</td>
@@ -497,7 +502,7 @@ function ActivityCard({ row, result, fresh, named, change }: { row: Activity; re
           {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
           {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
-        <PastRangeLink reference={ref} inCard />
+        <ActivityLinks reference={ref} pid={result.plan.project_id} inCard />
       </article>
     </li>
   );

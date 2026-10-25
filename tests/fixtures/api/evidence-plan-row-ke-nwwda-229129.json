@@ -1,0 +1,30 @@
+{
+  "id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "KE-NWWDA-229129-CW-RFB",
+    "record_kind": "activity",
+    "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "300000.00",
+    "process_status": "Signed",
+    "public_from": "2026-10-09",
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+    "agency_id": "northern-water-works-development-agency",
+    "source": {
+      "document_type": "Procurement Plan",
+      "project_id": "P156634",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "plan_date": "2026-10-09",
+      "pdf_page": 3
+    }
+  },
+  "highlights": []
+}

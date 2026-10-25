@@ -1,0 +1,55 @@
+{
+  "id": "strata.gold.contract:OP00044090",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP00044090",
+    "record_kind": "contract",
+    "fields": [
+      {
+        "key": "contract_reference",
+        "value": "OP00044090",
+        "kind": "text"
+      },
+      {
+        "key": "signed",
+        "value": "2017-06-15",
+        "kind": "date"
+      },
+      {
+        "key": "supplier",
+        "value": "AMIT CONSTRUCTION",
+        "kind": "supplier"
+      },
+      {
+        "key": "supplier_country",
+        "value": "India",
+        "kind": "text"
+      },
+      {
+        "key": "signed_amount",
+        "value": "69826127.64",
+        "kind": "amount"
+      },
+      {
+        "key": "contract_description",
+        "value": "Construction and Maintenance of Civil works in Bundi District under Cost Effective Technology (Package No. RJ-09-WB-RRSMP-CET-01)",
+        "kind": "text"
+      }
+    ],
+    "currency": "INR",
+    "public_from": "2017-07-19",
+    "step_reference": "IN-RRSMP-7431-CW-RFB",
+    "project_id": "P130164",
+    "activity_href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+    "source": {
+      "source_key": "award_notices",
+      "document_type": "Contract Award",
+      "project_id": "P130164",
+      "document_date": "2017-07-19"
+    }
+  },
+  "highlights": []
+}

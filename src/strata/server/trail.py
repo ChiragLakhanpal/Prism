@@ -33,6 +33,7 @@ from pathlib import Path
 
 from strata.config import load_sources, load_thresholds
 from strata.lakehouse.engine import Engine
+from strata.reader.templates import template_for
 from strata.server import documents
 from strata.server.projects import display_name
 from strata.server.viewer_sql import data_through
@@ -119,7 +120,7 @@ def _plan_stage(engine: Engine, reference: str, as_of: dt.date) -> tuple[dict, d
     package = read_package(engine, reference, as_of)
     if package is None:
         later = read_package(engine, reference, LATEST) is not None
-        return {"stage": "plan", "found": False, "reason": "after_asof" if later else "not_read", "records": []}, None
+        return {"stage": "plan", "found": False, "joined_on": "key", "reason": "after_asof" if later else "not_read", "records": []}, None
     plan = package["plan"]
     steps = [{"step": row["step"], "first_planned_on": _iso(row["first_planned_on"]), "actual_on": _iso(row["actual_on"])}
              for row in _rows(engine, "plan_steps", document_id=plan["document_id"], reference=reference)]
@@ -175,7 +176,7 @@ def _notice_stage(notices: list[dict], method: str | None, approach: str | None)
         reason = "approach_no_notice"
     else:
         reason = "none_found"
-    return {"stage": "notice", "found": False, "reason": reason, "records": [], "method": method,
+    return {"stage": "notice", "found": False, "joined_on": "key", "reason": reason, "records": [], "method": method,
             "market_approach": approach}
 
 
@@ -184,10 +185,10 @@ def _bids_stage(engine: Engine, notices: list[dict], method: str | None, consult
     shown = [row for row in awards if _true(row["public_then"])]
     individual = method == INDIVIDUAL or reference.upper().endswith("-INDV") or "-CS-INDV" in reference.upper()
     if individual:
-        return {"stage": "bids", "found": False, "reason": "individual_consultant", "records": []}
+        return {"stage": "bids", "found": False, "joined_on": "key", "reason": "individual_consultant", "records": []}
     if not shown:
         reason = "after_asof" if awards else "direct_selection" if method == "Direct Selection" else "none_found"
-        return {"stage": "bids", "found": False, "reason": reason, "records": []}
+        return {"stage": "bids", "found": False, "joined_on": "key", "reason": reason, "records": []}
     bids_by_notice: dict[str, list[dict]] = {}
     for row in _rows(engine, "bids", notices=",".join(row["notice_id"] for row in shown)):
         bids_by_notice.setdefault(row["notice_id"], []).append(row)
@@ -252,7 +253,7 @@ def _contract_stage(contracts: list[dict]) -> dict:
     if shown:
         return {"stage": "contract", "found": True, "reason": None, "joined_on": "key",
                 "records": [_contract_record(row) for row in shown]}
-    return {"stage": "contract", "found": False, "reason": "after_asof" if contracts else "none_found", "records": []}
+    return {"stage": "contract", "found": False, "joined_on": "key", "reason": "after_asof" if contracts else "none_found", "records": []}
 
 
 def topics(category: str | None, sector_code: str | None, sector_name: str | None, mentions: list[dict]) -> list[dict]:
@@ -278,9 +279,17 @@ def _coverage(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     return {"read": sum(1 for entry in entries if entry["read"]), "total": len(entries), "source_key": "documents"}
 
 
+def document_labels(document_type: str | None) -> dict:
+    """A document's stratum and short name, from the reader's templates: Why and ICR for a completion report."""
+    template = template_for(document_type or "")
+    return {"stratum": template.stratum if template else "Why",
+            "short_name": template.short_name if template else (document_type or None)}
+
+
 def passage_card(row: dict) -> dict:
     mentions = json.loads(row["mentions"] or "[]")
     return {
+        **document_labels(row["document_type"]),
         "evidence_id": row["evidence_id"], "public_from": _iso(row["public_from"]), "passage_id": row["passage_id"],
         "contract_evidence_id": row["contract_evidence_id"], "document_type": row["document_type"],
         "document_date": _iso(row["document_date"]), "paragraph": row["paragraph"],
@@ -426,15 +435,18 @@ def read_contract(engine: Engine, key: str, as_of: dt.date) -> dict | None:
                      _field("supplier", "individual_consultant" if supplier["is_individual_consultant"]
                             else supplier["name"], "supplier"),
                      _field("supplier_country", supplier["country"]),
-                     _field(f"signed_amount_{record['currency'].lower()}" if record["currency"] else "signed_amount",
-                            record["amount"], "amount"),
+                     _field("signed_amount", record["amount"], "amount"),
                      _field("contract_description", record["description"]))
+    # A contract from an award notice cites the notice, published on its public date; one from an awards dataset
+    # cites the dataset on its signing date.
+    source_key, dated = (("award_notices", record["public_from"]) if record["from_notice"]
+                         else (found[0]["source"], record["signed_on"]))
     return {"kind": "record", "row": {
         "reference": record["contract_reference"], "record_kind": "contract", "fields": fields,
         "currency": record["currency"], "public_from": record["public_from"], "step_reference": record["step_reference"],
         "project_id": found[0]["project_id"], "activity_href": activity_href(found[0]["project_id"], record["step_reference"]),
-        "source": {"source_key": found[0]["source"], "document_type": record["source"]["document_type"],
-                   "project_id": found[0]["project_id"], "document_date": record["signed_on"]}}}
+        "source": {"source_key": source_key, "document_type": record["source"]["document_type"],
+                   "project_id": found[0]["project_id"], "document_date": dated}}}
 
 
 def read_plan_row(engine: Engine, key: str, as_of: dt.date) -> dict | None:

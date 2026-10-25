@@ -72,6 +72,7 @@
     "project_state": "closed",
     "document": {
       "type": "Project Appraisal Document",
+      "short_name": "PAD",
       "date": "2013-10-01"
     },
     "months": 4,

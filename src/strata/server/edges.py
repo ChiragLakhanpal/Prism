@@ -25,7 +25,7 @@ from pathlib import Path
 from strata.config import Thresholds, load_thresholds
 from strata.lakehouse.engine import Engine
 from strata.server import documents
-from strata.server.trail import activity_href, topics
+from strata.server.trail import activity_href, document_labels, topics
 from strata.server.viewer_sql import data_through
 
 SQL = Path(__file__).resolve().parent / "sql" / "edges"
@@ -95,7 +95,7 @@ def why(engine: Engine, passage: dict, step_ref: str | None, as_of: dt.date, lim
         "topics": topics(chosen["category"], chosen["sector_code"], chosen["sector_name"], mentions),
         "project_id": chosen["project_id"],
         "project_state": project_state(chosen["project_status"], _day(chosen["project_closing_date"]), as_of),
-        "document": {"type": passage["document_type"],
+        "document": {"type": passage["document_type"], "short_name": document_labels(passage["document_type"])["short_name"],
                      "date": _iso(passage.get("document_date") or (passage.get("source") or {}).get("document_date"))},
         "months": chosen["months_apart"], "direction": chosen["time_direction"],
         "components": [{"part": part, "matched": matched[part], "points": _points(chosen[f"score_{part}"])} for part in PARTS],
@@ -113,6 +113,7 @@ def why(engine: Engine, passage: dict, step_ref: str | None, as_of: dt.date, lim
 def _document_node(entry: dict, pid: str) -> dict:
     return {"document_id": entry["document_id"], "doc_key": entry["doc_key"], "type": entry["type"],
             "document_type": entry["document_type"], "document_date": entry["document_date"],
+            "short_name": document_labels(entry["document_type"])["short_name"] if entry["type"] != PLANS else None,
             "sequence": entry["sequence"], "agency": entry["agency"],
             "href": f"/projects/{pid}/documents/{entry['doc_key']}", "chips": [], "more_chips": 0}
 
@@ -237,9 +238,14 @@ def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thres
         "finding": {"contracts": len(contracts), "paragraphs": len(paragraphs), "documents": len(documents_linked),
                     "contract_items": contracts,
                     "paragraph_items": [{"document_type": about[key]["document_type"],
+                                         "short_name": document_labels(about[key]["document_type"])["short_name"],
                                          "document_date": _iso(about[key]["document_date"]),
-                                         "paragraph": about[key]["paragraph"]} for key in paragraphs],
-                    "document_items": [next({"document_type": row["document_type"], "document_date": _iso(row["document_date"])}
+                                         "paragraph": about[key]["paragraph"],
+                                         "paragraph_numbered": bool(about[key]["paragraph_numbered"]),
+                                         "section_path": about[key]["section_path"]} for key in paragraphs],
+                    "document_items": [next({"document_type": row["document_type"],
+                                             "short_name": document_labels(row["document_type"])["short_name"],
+                                             "document_date": _iso(row["document_date"])}
                                             for row in all_links if row["document_id"] == key) for key in documents_linked]},
         "shown": 1 + len(shown_packages) + len(shown_documents), "total": total,
         "threshold": _points(limits.value("links.threshold")),

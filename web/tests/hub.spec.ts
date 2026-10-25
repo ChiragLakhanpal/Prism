@@ -49,9 +49,9 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   expect(copy.projectPage.statusInline.Closed).toBe("closed");
 
   // The built tabs, in the copy file's order, which is the wireframe's: Summary, Procurement, Timeline,
-  // Documents, Connections. Timeline and Connections join when their tickets land.
+  // Documents, Connections. Connections joined with ticket 22; Timeline joins when ticket 23 lands.
   expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections"]);
-  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Documents"]);
+  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Documents", "Connections"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Strata");
   // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
@@ -741,7 +741,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
   await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
-  await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#KE-NWWDA-229129-CW-RFB`);
+  await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB");
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
   await expect(packages.getByRole("navigation", { name: "Pages of the package list" })).toContainText("Page 1 of 3");
 

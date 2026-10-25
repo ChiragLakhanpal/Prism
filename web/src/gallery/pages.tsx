@@ -86,6 +86,7 @@ import { HowStrataWorks } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { hubPage } from "./hub";
+import { trailPage } from "./trail";
 import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
 import { risksPage } from "./risks";
@@ -1316,6 +1317,7 @@ export const PAGES: GalleryPage[] = [
   },
   draftsPage(planSample),
   hubPage(),
+  trailPage(),
   lessonsPage(),
   {
     // Ticket 12's package workspace (web/src/components/PackageFacts.tsx, PastRange.tsx and

@@ -36,18 +36,8 @@ export const ROUTES: Route[] = [
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
   // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it. The Packages tab and a
   // package planned from a sentence are built in ticket 15; web/tests/planned-package.spec.ts tests them. The
-  // source view at /projects/:pid/documents/:doc is built in ticket 21; web/tests/hub.spec.ts tests it.
-  {
-    path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
-    h1: "Activity IN-RRSMP-7431-CW-RFB",
-    tab: "Projects",
-    purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
-    empty: {
-      title: "I can't trace activity IN-RRSMP-7431-CW-RFB on this page yet.",
-      body: "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
-      link: ["Go to project P130164", "/projects/P130164"],
-    },
-  },
+  // source view at /projects/:pid/documents/:doc is built in ticket 21; web/tests/hub.spec.ts tests it. The activity
+  // page at /projects/:pid/packages/:stepRef is built in ticket 22; web/tests/trail.spec.ts tests it.
   {
     path: "/lessons",
     h1: "Lessons",

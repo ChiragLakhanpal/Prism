@@ -119,6 +119,12 @@ export const galleryCopy = {
       purpose:
         "The package workspace's header and facts, and section 1 with lane 1 of the range chart in each of its states. Hover a dot or focus the chart to see a package. The page's own states, with real comparables, are captured from the production build.",
     },
+    // Ticket 22's contract trail, one-hop neighbourhood and "Why this source", from the server's own answers.
+    trail: {
+      title: "Contract trail and connections",
+      purpose:
+        "The activity page's contract trail with every stage found, with stages missing, as of a date before its contract, and for an individual consultant; a project's one-hop neighbourhood as a diagram, as a list and with no links; and Why this source with one contract and with others. The pages' own states are captured from the production build.",
+    },
     // Ticket 21's project hub. Each sample is an answer the server wrote on the fixture, recorded in
     // tests/fixtures/api, so its words and numbers are a real project's.
     hub: {
@@ -292,6 +298,16 @@ export const galleryCopy = {
   },
 
   sections: {
+    // Ticket 22's samples.
+    trailKenya: "Contract trail with every stage found: KE-NWWDA-229129-CW-RFB",
+    trailShowcase: "Contract trail with two stages missing and a contract from its award notice: IN-RRSMP-7431-CW-RFB",
+    trailAsOf: "Contract trail as of the day before its contract was signed",
+    trailIndividual: "Contract trail of an individual consultant",
+    neighbourhood: "One-hop neighbourhood as a diagram: P130164",
+    neighbourhoodList: "One-hop neighbourhood as a list",
+    neighbourhoodNone: "One-hop neighbourhood with no links: P127203",
+    whyOne: "Why this source, naming one contract",
+    whyOthers: "Why this source, with other contracts",
     header: "A page with an ID in its title, and its empty state",
     notFound: "Not found",
     pageAlerts: "The alert slot, with every alert a page can show",

@@ -220,6 +220,19 @@
   }
 }
 
+/* The contract trail's rail (ticket 22; DESIGN.md section 5, Contract trail): the 2 px segment from a stage's
+   marker to the next stage, in line-strong, solid for records joined on a shared key and dashed 4/4 for a scored
+   "appeared together" link. It is drawn as a background, so the dash is exact and the segment takes no space. */
+@utility trail-rail {
+  position: absolute;
+  width: 2px;
+  background-color: var(--color-line-strong);
+  &[data-join="together"] {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(to bottom, var(--color-line-strong) 0 4px, transparent 4px 8px);
+  }
+}
+
 /* Text that screen readers skip but a copy keeps, such as the brackets around "[1]". */
 @utility clip-visually {
   position: absolute;

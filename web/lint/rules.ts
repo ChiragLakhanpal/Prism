@@ -20,6 +20,26 @@ export const FIXED_TERMS = [
   "the Bank's no-objection",
 ];
 
+// DESIGN.md section 7, rule 28 (ticket 22; the 22 brief, section 11): a link between a contract and a paragraph is
+// always "appeared together", never a cause. These words and phrases are banned, whole and in any case, in the copy
+// blocks CAUSAL_SCOPES names: the activity page, its trail, a project's Connections tab, "Why this source", and the
+// two words the Data readiness page says those pages are. "because" is on the list on purpose, so an error there is
+// written as two sentences.
+export const CAUSAL_WORDS = [
+  "cause", "caused", "causes", "causing", "because", "due to", "led to", "leads to", "lead to", "resulted in",
+  "results in", "as a result", "drove", "driven by", "influenced", "informed", "informed by", "shaped",
+  "contributed to", "explains why", "thanks to", "impact of", "effect of", "triggered", "owing to",
+];
+// Each a dotted path from the copy object, such as "why" or "dataReadiness.server.fromNouns.connections".
+export const CAUSAL_SCOPES = [
+  "activity",
+  "trail",
+  "connections",
+  "why",
+  "dataReadiness.server.fromNouns.contract_trail",
+  "dataReadiness.server.fromNouns.connections",
+];
+
 // DESIGN.md section 7, rule 8: never the regional codes; spell the region out.
 export const REGION_CODES = ["AFR", "EAP", "ECA", "LAC", "MNA", "SAR"];
 

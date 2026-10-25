@@ -63,7 +63,6 @@ const NARROW = [390];
 // workspace (ticket 12) and the Packages tab (ticket 15).
 const ROUTES: [string, string][] = [
   ["home", "/"],
-  ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
   ["not-found", "/nowhere"],
@@ -361,6 +360,70 @@ const longVersions = derived("project-p156634-baseline.json", (body) => {
   }
   Object.assign(nwwda, { version_count: 7, shown_count: 5 });
 });
+
+// Ticket 22: the activity page's contract trail and a project's Connections tab, in every state the 22 brief's
+// section 14 lists, with /api answered from the server's own answers on the fixture (tests/record_api.py).
+const KENYA_ACTIVITY = "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB";
+const SHOWCASE_ACTIVITY = "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB";
+const TRAIL_ICR_54 = "strata.gold.passage:31525018/v1/54";
+const TRAIL_API: Shot["api"] = {
+  "/api/projects/P130164": { recorded: "project-p130164.json" },
+  "/api/projects/P156634": { recorded: "project-p156634.json" },
+  "/api/projects/P127203": { recorded: "project-p130164.json" },
+  [`/api${KENYA_ACTIVITY}`]: { recorded: "activity-ke-nwwda-229129.json" },
+  [`/api${KENYA_ACTIVITY}?asof=2022-01-02`]: { recorded: "activity-ke-nwwda-229129-before-signing.json" },
+  [`/api${SHOWCASE_ACTIVITY}`]: { recorded: "activity-in-rrsmp-7431.json" },
+  "/api/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV": { recorded: "activity-ke-mawasco-501974-indv.json" },
+  "/api/projects/P156634/packages/KE-NWWDA-000000-CW-RFB": { status: 404, recorded: "activity-unknown.json" },
+  "/api/projects/P130164/connections": { recorded: "connections-p130164.json" },
+  "/api/projects/P156634/connections": { recorded: "connections-p156634.json" },
+  "/api/projects/P127203/connections": { recorded: "connections-p127203.json" },
+  "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+  [`/api/evidence?id=${TRAIL_ICR_54}&step_ref=IN-RRSMP-7431-CW-RFB`]: { recorded: "evidence-icr-p130164-54-why.json" },
+  "/api/evidence?id=strata.gold.notice:OP00164589": { recorded: "evidence-award-notice-op00164589.json" },
+  "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+};
+const trailShot = (name: string, path: string, rest: Partial<Shot> = {}, answers: Shot["api"] = {}): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...TRAIL_API, ...answers } });
+const TRAIL_SHOTS: Shot[] = [
+  trailShot("activity--loading", KENYA_ACTIVITY, { pending: [`/api${KENYA_ACTIVITY}`] }),
+  trailShot("activity--full-trail", SHOWCASE_ACTIVITY),
+  trailShot("activity--kenya", KENYA_ACTIVITY),
+  trailShot("activity--individual-consultant", "/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV"),
+  trailShot("activity--before-signing", `${KENYA_ACTIVITY}?asof=2022-01-02`),
+  trailShot("activity--public", `${KENYA_ACTIVITY}?view=public`),
+  trailShot("activity--not-found", "/projects/P156634/packages/KE-NWWDA-000000-CW-RFB"),
+  trailShot("activity--error", KENYA_ACTIVITY, {}, { [`/api${KENYA_ACTIVITY}`]: { status: 503, body: SERVICE_DOWN } }),
+  trailShot("activity--permission", KENYA_ACTIVITY, {}, { [`/api${KENYA_ACTIVITY}`]: { status: 403, body: '{"code":"permission"}' } }),
+  trailShot("activity--drawer-why", `${SHOWCASE_ACTIVITY}?evidence=${TRAIL_ICR_54}`, { full: false, act: async (page) => {
+    await page.locator("[data-why]").waitFor();
+  } }),
+  trailShot("activity--drawer-why-score", `${SHOWCASE_ACTIVITY}?evidence=${TRAIL_ICR_54}`, { full: false, act: click("[data-why] button[aria-expanded]") }),
+  trailShot("activity--drawer-award-notice", `${KENYA_ACTIVITY}?evidence=strata.gold.notice:OP00164589`, { full: false, act: async (page) => {
+    await page.locator("[data-record]").first().waitFor();
+  } }),
+  trailShot("activity--focus-pill", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-stage=bids] [data-citation]") }),
+  trailShot("activity--focus-crumb", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-breadcrumb] a") }),
+  trailShot("activity--320", KENYA_ACTIVITY, { widths: [320] }),
+  trailShot("connections--loading", "/projects/P130164/connections", { pending: ["/api/projects/P130164/connections"] }),
+  trailShot("connections--populated", "/projects/P130164/connections"),
+  trailShot("connections--over-the-cap", "/projects/P156634/connections"),
+  trailShot("connections--no-links", "/projects/P127203/connections"),
+  trailShot("connections--empty", "/projects/P130164/connections", {}, {
+    "/api/projects/P130164/connections": { body: derived("connections-p130164.json", (body) => Object.assign(body, { packages: [], documents: [], edges: [], more: [] })) },
+  }),
+  trailShot("connections--error", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 503, body: SERVICE_DOWN } }),
+  trailShot("connections--permission", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 403, body: '{"code":"permission"}' } }),
+  trailShot("connections--list", "/projects/P130164/connections", { widths: [1440], act: click("[data-connections] button[aria-pressed]"), full: true }),
+  trailShot("connections--hover-package", "/projects/P130164/connections", { widths: [1440], act: hover("[data-package] a[data-node-link]") }),
+  trailShot("connections--focus-package", "/projects/P130164/connections", { widths: [1440, 390], act: focus("[data-package] a[data-node-link]") }),
+  trailShot("connections--hover-chip", "/projects/P130164/connections", { widths: [1440], act: hover("[data-node=document] [data-chip]") }),
+  trailShot("connections--focus-toggle", "/projects/P130164/connections", { widths: [1440], act: focus("[data-connections] button[aria-pressed]") }),
+  trailShot("connections--drawer", `/projects/P130164/connections?evidence=${TRAIL_ICR_54}`, { widths: [1440, 1024], full: false, act: async (page) => {
+    await page.locator("[data-why]").waitFor();
+  } }),
+  trailShot("connections--320", "/projects/P130164/connections", { widths: [320] }),
+];
 
 const PROJECT_SHOTS: Shot[] = [
   // Ticket 21: a project's address opens its Summary, so the plan versions are on /procurement.
@@ -1502,4 +1565,5 @@ export const SHOTS: Shot[] = [
   ...STEP_SHOTS,
   ...RISK_SHOTS,
   ...CRITERIA_SHOTS,
+  ...TRAIL_SHOTS,
 ];

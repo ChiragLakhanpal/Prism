@@ -1,0 +1,56 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "scored_date": null,
+  "project": {
+    "project_id": "P127203",
+    "display_name": "Rebuilding Energy Infrastructure and Access"
+  },
+  "packages": [],
+  "documents": [
+    {
+      "document_id": "33407968",
+      "doc_key": "icr-2021-07-29",
+      "type": "icr",
+      "document_type": "Implementation Completion and Results Report",
+      "document_date": "2021-07-29",
+      "short_name": "ICR",
+      "sequence": null,
+      "agency": null,
+      "href": "/projects/P127203/documents/icr-2021-07-29",
+      "chips": [],
+      "more_chips": 0
+    }
+  ],
+  "edges": [],
+  "more": [
+    {
+      "kind": "isrs",
+      "count": 12
+    },
+    {
+      "kind": "plans",
+      "count": 5
+    },
+    {
+      "kind": "documents",
+      "count": 24
+    }
+  ],
+  "finding": {
+    "contracts": 0,
+    "paragraphs": 0,
+    "documents": 0,
+    "contract_items": [],
+    "paragraph_items": [],
+    "document_items": []
+  },
+  "shown": 2,
+  "total": 43,
+  "threshold": "0.50",
+  "coverage": {
+    "read": 1,
+    "total": 42,
+    "source_key": "documents"
+  }
+}

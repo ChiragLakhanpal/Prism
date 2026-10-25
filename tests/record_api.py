@@ -120,6 +120,29 @@ HUB = {
     "check-plan-p156634-nwwda-2025-07-21.json": f"{NWWDA}/2025-07-21?{DAY}",
     "check-plan-p156634-nwwda-2026-10-10-not-found.json": f"{NWWDA}/2026-10-10?asof=2026-10-22",
     "check-plan-p156634-wajir-no-plan.json": "/api/projects/P156634/procurement/wajir-water-and-sewerage-company?asof=2026-10-22",
+    # The contract trail (ticket 22): the ticket's activity with every stage, the showcase with two stages missing
+    # and its contract from an award notice, an individual consultant, the ticket's activity the day before its
+    # contract was signed, and an activity opened under the wrong project.
+    "activity-ke-nwwda-229129.json": f"/api/projects/P156634/packages/KE-NWWDA-229129-CW-RFB?{DAY}",
+    "activity-in-rrsmp-7431.json": f"/api/projects/P130164/packages/IN-RRSMP-7431-CW-RFB?{DAY}",
+    "activity-ke-mawasco-501974-indv.json": f"/api/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV?{DAY}",
+    "activity-ke-nwwda-229129-before-signing.json": "/api/projects/P156634/packages/KE-NWWDA-229129-CW-RFB?asof=2022-01-02",
+    "activity-ke-nwwda-229129-moved.json": f"/api/projects/P130164/packages/KE-NWWDA-229129-CW-RFB?{DAY}",
+    # The Connections tab (ticket 22): the showcase, a project with more than the cap, one with no links, and the
+    # showcase before its contracts' links were public.
+    "connections-p130164.json": f"/api/projects/P130164/connections?{DAY}",
+    "connections-p156634.json": f"/api/projects/P156634/connections?{DAY}",
+    "connections-p127203.json": f"/api/projects/P127203/connections?{DAY}",
+    # "Why this source" for the ticket's showcase link, on the activity page and from a link with no activity, and
+    # the drawer's views of the trail's records.
+    "evidence-icr-p130164-54-why.json": f"/api/evidence?id=strata.gold.passage:31525018/v1/54&step_ref=IN-RRSMP-7431-CW-RFB&{DAY}",
+    # A paragraph of P156634's ISR of February 18, 2025 that appeared together with several contracts.
+    "evidence-isr-p156634-s4-why.json": f"/api/evidence?id=strata.gold.passage:34457596/v1/s4&{DAY}",
+    "evidence-notice-op00146683.json": f"/api/evidence?id=strata.gold.notice:OP00146683&{DAY}",
+    "evidence-award-notice-op00164589.json": f"/api/evidence?id=strata.gold.notice:OP00164589&{DAY}",
+    "evidence-contract-1686165.json": f"/api/evidence?id=strata.gold.contract:1686165&{DAY}",
+    "evidence-contract-op00044090.json": f"/api/evidence?id=strata.gold.contract:OP00044090&{DAY}",
+    "evidence-plan-row-ke-nwwda-229129.json": f"/api/evidence?id=strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB&{DAY}",
 }
 # The baseline's answers, from a copy of the fixture in which Ana saved the plan of July 21, 2025 as the
 # baseline on October 23, 2026.
@@ -140,6 +163,8 @@ ERRORS = {
     "data-readiness-error.json": {"code": "unreadable"},
     "data-readiness-timeout.json": {"code": "timeout",
                                     "timeout_seconds": load_thresholds().value("app.stamp_timeout_seconds")},
+    # An activity no record holds (ticket 22).
+    "activity-unknown.json": {"code": "unknown_activity"},
 }
 
 

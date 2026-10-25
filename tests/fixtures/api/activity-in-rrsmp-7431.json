@@ -1,0 +1,2381 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "activity": {
+    "step_reference": "IN-RRSMP-7431-CW-RFB",
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "description": "Construction and Maintenance of Civil works in Bundi District under Cost Effective Technology (Package No. RJ-09-WB-RRSMP-CET-01)",
+    "method": "Request for Bids",
+    "consultants": false,
+    "implementing_agency": null,
+    "href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "signed",
+        "date": "2017-06-15",
+        "amount": "69826127.64",
+        "currency": "INR",
+        "evidence_id": "strata.gold.contract:OP00044090",
+        "reference": "OP00044090",
+        "record_noun": "award notice"
+      }
+    ],
+    "no_estimate": false,
+    "missing": "notice",
+    "bids": {
+      "count": 3,
+      "notice_id": "OP00044090",
+      "evidence_id": "strata.gold.notice:OP00044090",
+      "proposals": false
+    },
+    "paragraphs": 53
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": false,
+      "joined_on": "key",
+      "reason": "not_read",
+      "records": []
+    },
+    {
+      "stage": "notice",
+      "found": false,
+      "joined_on": "key",
+      "reason": "none_found",
+      "records": [],
+      "method": "Request for Bids",
+      "market_approach": null
+    },
+    {
+      "stage": "bids",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00044090",
+          "public_from": "2017-07-19",
+          "notice_id": "OP00044090",
+          "notice_date": "2017-07-19",
+          "currency": "INR",
+          "labels": {
+            "price_at_opening": "Bid Price at Opening",
+            "evaluated_price": "Evaluated Bid Price"
+          },
+          "lists_scores": false,
+          "proposals": false,
+          "bids": [
+            {
+              "bid": 1,
+              "outcome": "awarded",
+              "name": "AMIT CONSTRUCTION",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "India",
+              "price_at_opening": "69,826,127.64",
+              "evaluated_price": "69,826,127.64",
+              "reason": null
+            },
+            {
+              "bid": 2,
+              "outcome": "not_awarded",
+              "name": "BRAHM PRAKASH MODI",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "India",
+              "price_at_opening": "71,068,526.66",
+              "evaluated_price": "71,068,526.66",
+              "reason": null
+            },
+            {
+              "bid": 3,
+              "outcome": "not_awarded",
+              "name": "SHIV SHAKTI ENTERPRISES",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "India",
+              "price_at_opening": "75,610,293.78",
+              "evaluated_price": "75,610,293.78",
+              "reason": null
+            }
+          ],
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00044090",
+          "source": {
+            "source_key": "award_notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P130164",
+            "document_date": "2017-07-19"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "contract",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.contract:OP00044090",
+          "public_from": "2017-07-19",
+          "contract_id": "OP00044090",
+          "contract_reference": "OP00044090",
+          "step_reference": "IN-RRSMP-7431-CW-RFB",
+          "signed_on": "2017-06-15",
+          "amount": "69826127.64",
+          "currency": "INR",
+          "from_notice": true,
+          "record_noun": "award notice",
+          "award_notice_id": "OP00044090",
+          "description": "Construction and Maintenance of Civil works in Bundi District under Cost Effective Technology (Package No. RJ-09-WB-RRSMP-CET-01)",
+          "supplier": {
+            "name": "AMIT CONSTRUCTION",
+            "country": "India",
+            "is_individual_consultant": false,
+            "is_joint_venture": false
+          },
+          "source": {
+            "source_key": "notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P130164",
+            "document_date": "2017-06-15"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "paragraphs",
+      "found": true,
+      "reason": null,
+      "joined_on": "together",
+      "records": [
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/23",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/23",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "23",
+          "paragraph_numbered": true,
+          "section_path": "III.A",
+          "pdf_page": 20,
+          "printed_page": "8",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "23. Component A: Rural Connectivity Improvement (USD 197 million, including IDA credit USD 138 million; civil works): This component would support construction of about 2500 km rural roads to provide connectivity to about 1,300 revenue villages with population between 250 and 499 people in the areas of the state not covered by PMGSY and introduce good practices of cost effective low volume technologies. The roads will predominantly be built to a bitumen surface standard and will include all necessary bridges and cross drainage works to maintain year round connectivity. Contracts for civil works worth US$ 51 million have been already awarded, bids worth US$ 21 million is finalized for award, and contracts worth US$ 59 million are expected to be awarded soon.",
+          "highlights": [
+            [
+              104,
+              115
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 20
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/27",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/27",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "27",
+          "paragraph_numbered": true,
+          "section_path": "III.B",
+          "pdf_page": 22,
+          "printed_page": "10",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "27. The total cost of the project is estimated at the equivalent of US$ 227 million. The Bank share is estimated at US$ 160 million. The IDA Credit will be used to finance various civil work contracts, goods and TA service up to 70 percent of the total project cost. The table below presents the detailed project costs for each component. Table 1: Project Cost & Financing (US$ million) Costs Component including Bn Bn O Cotntuing Financing Financing Financing Contingency A - Rural Connectivity Improvement 197.00 138.00 70% 59.00 a) Civil Works (2500 km) 195.00 136.60 70% 58.40 b) Project Management and Audit Services 2.00 1.40 70% 0.60 B - Road Sector Modernization 11.00 7.75 70% 3.25 C - Road Safety Management 15.00 10.55 70% 4.45 Incremental Operating Costs 1.00 0.70 70% 0.30 Sub-total Project Cost 224.00 157.00 70% 67.00 Re-financing preparation advance* 3.00 3.00 NA 0.00 Total Project Cost 227.00 160.00 70% 67.00",
+          "highlights": [
+            [
+              186,
+              200
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 22
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/46",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/46",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "46",
+          "paragraph_numbered": true,
+          "section_path": "IV.C",
+          "pdf_page": 25,
+          "printed_page": "13",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "46. The project will ensure sustainability of investments through good quality of construction works and adequate maintenance to prevent premature failure of roads. Quality will be verified by regular technical audits, and five-year performance based maintenance is to be included in the civil works contracts for all project roads making maintenance an integral part of the construction contractor's responsibilities as well as instituting routine maintenance eventually as part of road management. In addition, the financing study will explore options for sustainable financing of the network. The project will strive to achieve sustainability through enhancing project and contract management practices.",
+          "highlights": [
+            [
+              294,
+              309
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 25
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/70",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/70",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "70",
+          "paragraph_numbered": true,
+          "section_path": "VI.F",
+          "pdf_page": 32,
+          "printed_page": "20",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "70. Diversion of some forest land may also be required for widening/spot improvement in case of sub-projects involving safety interventions. More so, as part of Component B (Road Sector Modernization and Performance Enhancement), various sector level initiatives would be supported under the project. These include improving policy framework, strengthening of existing road sector policies and strategies, modernization of engineering practices and business procedures and creating asset management system to prepare prioritized plans for both construction and maintenance of state roads. While no civil works will be financed under the project on roads passing through designated protected areas, the larger institutional development plan for the road sector in Rajasthan would need to address the issues of biodiversity management in the interest of road user safety, environmental sustainability and tourism related reasons. Appropriate strategies and mechanisms will have to be built into the institutional systems to ensure that the over-all network planning/development and road selection/construction takes into account such factors. Accordingly, the operational policies on Natural Habitats (OP/BP 4.04) and Forests (OP/BP 4.36) have also been triggered for the project.",
+          "highlights": [
+            [
+              598,
+              609
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 32
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/annex2.2",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/annex2.2",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "2",
+          "paragraph_numbered": true,
+          "section_path": "Annex 2",
+          "pdf_page": 37,
+          "printed_page": "25",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "2. Component A: Rural Connectivity Improvement (USD 197 million, including IDA credit USD 138 million; civil works): This component would support construction of about 2,500 km rural roads to provide connectivity to about 1,300 revenue villages with population from 250 and 499 in the areas of the state not covered by PMGSY and introduce good practices of cost effective low volume technologies. The roads will predominantly be built using a bitumen surface and will include all necessary bridges and cross drainage works to maintain year round connectivity. Contracts for civil works worth US$ 51 million have been already awarded, bids worth US$ 21 million is finalized for award, and contracts worth US$ 59 million are expected to be awarded soon.",
+          "highlights": [
+            [
+              103,
+              114
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 37
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/annex2.7",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/annex2.7",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "7",
+          "paragraph_numbered": true,
+          "section_path": "Annex 2",
+          "pdf_page": 38,
+          "printed_page": "26",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "7. Component C: Road Safety Management (USD 15 million, including IDA credit USD 10.55 million; civil works, technical assistance and goods): This component will support the strengthening of road safety management systems in Rajasthan with the objective of reducing the By building on the initiatives underway in PMGSY 30 Rural Roads Project. Actual maintenance works will be funded by GOR through its own maintenance funds Through implementation of a Human Resources Development Strategy 31 number of fatalities and serious injuries from traffic accidents in the state. This will be accomplished through establishing and implementing a multi-sector demonstration activity approach on selected corridor(s), iRAP surveys financed by GOR, on high-risk, high-volume state highways, support to the state on select policy reviews, capacity building of PWD and other agencies in road safety engineering and integration of road safety into asset and project management, road safety audits on project roads, road safety education and awareness programs, and possible support to procure equipment for ongoing safety programs of the state's Transport and/or Police Departments. These interventions have been designed based on a detailed Road Safety Management Capacity Review (RSMCR), which followed established guidelines to assess the preparedness of the state's agencies in tackling the state's road safety challenges. Details of the main sub-components are as follows (and summarized in Table 2):",
+          "highlights": [
+            [
+              96,
+              107
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 38
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/annex3.27",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/annex3.27",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "27",
+          "paragraph_numbered": true,
+          "section_path": "Annex 3.B",
+          "pdf_page": 50,
+          "printed_page": "38",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "27. Procurement Setup in the Project Management Unit of CE (PMGSY): All Procurement matters are finalized in accordance with the powers delegated in the Schedule of Power (Annexure XIII) of PWF & AR. Under the project, for rural road civil works contracts, the IFBs are invited by PMU based on the model bidding document cleared with the Bank. The bidding documents for specific contract packages are reviewed by the PMU before the same are uploaded by the respective circle offices. The bids are electronically received at respective zonal offices headed by Additional Chief Engineer, evaluated by the evaluation committee at respective Zonal offices. 100% of the Bid Evaluation Reports are reviewed at the PMU before the award can be issued to the contractors. The contract awards are made in accordance the delegation of powers, as follows: i) Executive Engineer at Divisional level up to Rs. 3 million ii) Superintending Engineer at Circle level up to Rs. 12 million iii) Additional CE at Zonal level upto Rs. 25 million iv) Chief Engineer at headquarters Jaipur upto Rs. 50 million v) Empowered Board for beyond Rs. 50 million For single bid received under any bidding process, the next higher level accepts the bid for award.",
+          "highlights": [
+            [
+              240,
+              255
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 50
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/annex3.63/1",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/annex3.63/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "63",
+          "paragraph_numbered": true,
+          "section_path": "Annex 3.B",
+          "pdf_page": 59,
+          "printed_page": "47",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "63. Environmental Issues. The rural road works and road safety interventions on selected road corridors are likely to create some adverse environmental impacts, particularly during the construction stage. While the adverse impacts are likely to be fairly limited in the local context, the exact nature and magnitude of impacts will vary in accordance to the location and type of engineering intervention. Deficiencies in planning and design of sub-projects can lead to insufficient arrangements to conserve natural drainage pattern leading to impairment to or worsening of the local/regional drainage. On the whole, the typical key likely impacts from the operation include: i) felling of some limited number of roadside trees; (ii) adverse impacts on water resources, including from silt flow during execution of works; (iii) soil erosion; (iv) construction phase impacts, including those related to camp site operation, dust generation, and pollution from plants, machinery, and vehicles and disposal of debris/other construction wastes; (v) appropriate management of materials (such as aggregates, sand, water, earth); (vi) safety concerns during construction works and due to increased traffic speeds during operation for both road-users and road-side residents and; (vii) the potential for poorly planned or managed development induced by the improved roads. In view of the project's potential impacts on the environment, the Bank's OP 4.01 on Environmental Assessment and OP 4.11 on Physical Cultural Resources have been triggered, and the project is designated as Category B. 63. Diversion of some forest land may also be required for widening/spot improvement in case of sub-projects involving safety interventions. More so, as part of Component B (Road Sector Modernization and Performance Enhancement), various sector level initiatives would be supported under the project. These include improving policy framework, strengthening of existing road sector policies and strategies, modernization of engineering practices and business procedures and creating asset management system to prepare prioritized plans for both construction and maintenance of state roads. While no civil works will be financed under the project on roads passing through designated protected areas, the larger institutional development plan for the road sector in Rajasthan would need to address the issues of biodiversity management in the interest of road user safety, environmental sustainability and tourism related reasons. Appropriate strategies and mechanisms will have to be built into the institutional systems to ensure that the over-all network planning/development and road selection/construction takes into account such factors.",
+          "highlights": [
+            [
+              2181,
+              2192
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 59
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/s25",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/s25",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "s25",
+          "paragraph_numbered": false,
+          "section_path": "Annex 3.B",
+          "pdf_page": 52,
+          "printed_page": "40",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "Table 8: Procurement Thresholds, Methods and Value thresholds for Civil Works Expenditure Value* (Threshold per Procurement Contracts subjected to Prior Category contract) Method Review/Post Review Civil Works (a) Civil Works estimated to Shopping (Minimum cost equivalent to US$ 100,000 3 quotations) Post review only or less per contract. Force Account, if any Post review only (b) Rural roads Civil Works National Competitive First NCB works contract regardless estimated to cost more than the Bidding (NCB) of value. All other contracts are equivalent to US$ 100,000 per subject to post review. contract and less than US$ 2.5 Million. (c) Civil Works (other than National Competitive First NCB works contract regardless Rural Roads) estimated to cost Bidding (NCB) of value and all contracts above US$ more than the equivalent to 15 Million equivalent each will be US$ 100,000 per contract and prior reviewed by the Bank. less than US$ 40 Million. All other contracts are subject to post review. (d) Civil Works estimated to International All ICB contracts irrespective of cost more than US$ 40 Million Competitive Bidding value will be subject to prior review. I (ICB) I_I If a transaction comprises several packages, lots or slices, the aggregate estimated value of contracts determines the applicable * threshold amount. # Irrespective of the prior review thresholds, first NCB contract for works and goods from procuring entity will be subjected to prior review by Bank.",
+          "highlights": [
+            [
+              439,
+              453
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 52
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/s34",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/s34",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "s34",
+          "paragraph_numbered": false,
+          "section_path": "Annex 6.A",
+          "pdf_page": 77,
+          "printed_page": "65",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "Table 13: District wise Distribution of Rural Roads Si. District No. of Roads Average Average Average Average No. Population Length of Cost (INR Cost (INR coverage / Road in Km Million/ Million/ Kin) Road / Road Road) 1 Ajmer 12 375 1.65 4.553 2.762781 2 Alwar 11 417 1.38 4.159 3.019406 3 Baran 19 2.54 9.007 3.546736 366 4 Bharatpur 25 372 1.74 6.574 3.783526 5 Bhilwara 93 363 2.28 7.672 3.363843 6 Bundi 14 413 2.72 9.679 3.554230 7 Chittorgarh 84 348 2.36 9.169 3.878997 8 Dausa 4 351 1.68 4.698 2.791976 9 Dholpur 13 386 1.96 5.155 2.632842 10 Hanumangarh 3 399 3.58 9.297 2.594419 11 Jaipur 34 336 2.02 7.468 3.702267 12 Jhalawar 28 385 2.54 8.840 3.482372 13 KARAULI 4 374 2.19 6.855 3.124900 14 Kota 12 345 2.51 9.993 3.982630 15 Rajsamand 21 364 2.01 6.304 3.142504 16 Sriganganagar 40 339 3.38 8.587 2.544311 17 Sirohi 1 318 3.40 16.155 4.751471 Sawai 18 Madhopur 17 376 2.65 11.156 4.212171 19 Tonk 45 372 2.38 8.259 3.471945 20 Udaipur 33 351 3.17 9.779 3.082818 Source: PWD, Rajasthan; INR-Indian Rupee",
+          "highlights": [
+            [
+              402,
+              407
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            },
+            {
+              "kind": "place",
+              "text": "Bundi"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 77
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/s39/2",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/s39/2",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "s39",
+          "paragraph_numbered": false,
+          "section_path": "Annex 6.C",
+          "pdf_page": 81,
+          "printed_page": "69",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "District Base Case Results Sensitivity Results for EIRR No EIRR MIRR @ NPV 12 20% 20% 20% decrease Combined (INR) increase in increase in in project effect (Worst Constructi O&M Cost benefit Scenario) on Cost 1 Ajmer 31.75% 18.90% 4,495,615 25.02% 28.50% 22.07% 17.21% 2 Alwar 39.07% 20.93% 5,849,020 30.59% 35.23% 27.75% 22.28% 3 Baran 12.25% 12.10% 93,338 9.91% 9.42% 5.28% 1.40% 4 Bharatpur 20.37% 15.15% 2,518,298 16.11% 17.51% 12.55% 8.45% 5 Bhilwara 15.85% 13.49% 1,284,299 10.66% 10.43% 6.20% 2.31% 6 Bundi 13.41% 12.55% 574,421 8.84% 7.94% 3.93% 0.04% 7 Chittorgarh 10.75% 11.50% -465,789 8.84% 7.94% 3.93% 0.04% 8 Dausa 28.59% 17.95% 3,808,853 22.63% 25.58% 19.58% 14.96% 9 Dholpur 28.58% 17.94% 4,186,642 22.49% 25.42% 19.43% 14.82% 10 Hanumangarh 13.54% 12.60% 603,712 10.79% 10.61% 6.37% 2.48% 11 Jaipur 14.59% 13.01% 831,359 11.77% 11.91% 7.54% 3.64% 12 Jhalawar 13.84% 12.72% 692,631 11.06% 10.97% 6.70% 2.81% 13 KARAULI 19.48% 14.83% 2,320,108 15.42% 16.64% 11.77% 7.71% 14 Kota 8.63% 10.65% -1,329,108 7.30% 5.73% 1.88% -2.06% 15 Rajsamand 20.90% 15.34% 2,582,178 16.55% 18.06% 13.03% 8.91%",
+          "highlights": [
+            [
+              508,
+              513
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            },
+            {
+              "kind": "place",
+              "text": "Bundi"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 81
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/s62/1",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/s62/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Project Appraisal Document",
+          "document_date": "2013-10-01",
+          "paragraph": "s62",
+          "paragraph_numbered": false,
+          "section_path": "Annex 8.II",
+          "pdf_page": 94,
+          "printed_page": "82",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "1. Procurement Thresholds, Methods and Value thresholds (a) Civil Works Expenditu Value* (Threshold per contract) Procuremen Contracts subjected to Prior re t Method Review/Post Review Category Civil (a) Civil Works estimated to cost [i] Shopping [i] Post review only Works equivalent to US$ 100,000 or less (Minimum [ii] Force Account method shall be per contract. 3 followed, if included in the approved quotations) Procurement Plan. Bank will provide [ii] Force prior no objection to the use of Force Account account for the works proposed if justified in terms of Para 3.9 of the Procurement Guidelines. (b) Rural roads Civil Works National First NCB works contract regardless of estimated to cost more than the Competitiv value. All other contracts are subject equivalent to US$ 100,000 per e Bidding to post review. contract and less than US$ 2.5 (NCB) Million. (c) Civil Works (other than Rural National First NCB works contract regardless of Roads) estimated to cost more Competitiv value and all contracts above US$ 15 than the equivalent to US$ e Bidding Million equivalent each will be prior 100,000 per contract and less than (NCB) reviewed by the Bank. US$ 40 Million. All other contracts are subject to post review. (d) Civil Works estimated to cost International All ICB contracts irrespective of value more than US$ 40 Million Competitiv will be subject to prior review. e Bidding (ICB) If a transaction comprises several contracts, lots or slices, the aggregate * estimated value of all contracts, lots or slices will determine the applicable threshold amount. # Irrespective of the prior review thresholds, first NCB contract for works and goods will be subject to Bank's prior review. (b) Goods, IT Systems and Non-Consulting Services Goods Value Threshold Methods Review Arrangements Equipment, (i) US$ 100,000 equivalent or Shopping Post review only Machinery, less per contract. (Minimum 3 Vehicles, Furniture, quotations) Learning Materials, DGS&D rate IT Systems and Non- contracts# Consulting Services etc. (ii) Proprietary equipment; Direct Prior review for all software; print, audio or Contracting contracts valued US visual educational $10,000 and above Goods Value Threshold Methods Review Arrangements publications; and other with justification as per learning resources Para 3.7 of irrespective of value.",
+          "highlights": [
+            [
+              655,
+              669
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 94
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:19901331/v1/s3",
+          "public_from": "2014-07-30",
+          "passage_id": "19901331/v1/s3",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2014-07-30",
+          "paragraph": "s3",
+          "paragraph_numbered": false,
+          "section_path": "Overall Ratings",
+          "pdf_page": 1,
+          "printed_page": "1 of 4",
+          "doc_key": "isr-2014-07-30",
+          "language": "en",
+          "text": "Previous Rating Current Rating Progress towards achievement of PDO Satisfactory Satisfactory Overall Implementation Progress (IP) Satisfactory Moderately Satisfactory Overall Risk Rating Substantial Substantial Implementation Status Overview The credit has been made effective on March 10, 2014. Taking advantage of the retroactive financing provision of the credit agreement, the project has made good progress in civil works; awarded 832 roads (1930km) out of the total 1043 roads (2521 km) - 73% achievement. 94 roads have been substantially completed thereby connecting 94 villages to the network. The total value of civil works completed and certified is equivalent to $34 million (25%). Actual expenditure of the project as of May 19, 2014 stands at approximately $28 million which equates to 20 % financial progress. Preparatory activities for procurement of consultants for institutional development and road safety demonstration corridor are delayed. Locations Country First Administrative Division Location Planned Actual India Rajasthan State of Rajasthan ✔",
+          "highlights": [
+            [
+              415,
+              426
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2014-07-30",
+            "pdf_page": 1
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:23868309/v1/s5",
+          "public_from": "2015-01-23",
+          "passage_id": "23868309/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2015-01-23",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 8",
+          "doc_key": "isr-2015-01-23",
+          "language": "en",
+          "text": "The credit has been made effective on March 10, 2014.The project has made good progress in civil works; awarded 974 roads (2340km) out of the total 1043 roads (2521 km) - 93% achievement. 383 roads have been substantially completed thereby connecting 392 villages to the network. Actual expenditure of the project as of November 28, 2014 stands at approximately $66 million which equates to 34 %. Disbursement from the Credit 5310-IN as of November 28, 2014 stands at approx. US$ 23.33 million (i.e. 14.32% of the allocated amount). While the overall implementation pace of civil works is generally satisfactory, the quality of the construction of some contracts visited raises some concerns. Also, the component C, related to Road Safety Management has shown encouraging steps for the essential activities, while others activities are behind. On the other hands, the component B related to the implementation of the sector Modernization which is a key success for the project development objectives is delayed and remains at procurement stage for most of the activities. In addition, there is a need to improve the overall project management mainly data collection, monitoring and reporting, construction quality assurance and contract management is critical for a successful implementation. The following are immediate actions: 1. the recruitment of the Project Management Consultancy firm, 2. the functionality of the sector modernization task force, which are both legal covenant, yet to be complied with, 3. the operationalization and use of the on-line monitoring and management system, and 4. Appointment of dedicated and qualified PMU and PIU staff to ensure monitoring and quality control contract implementation.",
+          "highlights": [
+            [
+              91,
+              102
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2015-01-23",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:24589049/v1/s5",
+          "public_from": "2015-06-04",
+          "passage_id": "24589049/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2015-06-04",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 8",
+          "doc_key": "isr-2015-06-04",
+          "language": "en",
+          "text": "The credit has been made effective on March 10, 2014.The project has made good progress in civil works; awarded 1004 roads (2340km) out of the total 1043 roads (2521 km) - 96% achievement. 672 roads have been substantially completed thereby connecting 681 villages to the network. Actual expenditure of the project as of May 8, 2015 stands at approximately $116 million which equates to 66 %. Disbursement from the Credit 5310-IN as of May 8, 2015 stands at approx. US$ 64.9 million (43% of the allocated amount). While the overall implementation pace of civil works is generally satisfactory, the quality of the construction of some contracts visited raises some concerns. Both component B and C, related to Road Sector Modernization and Road Safety Management have shown encouraging steps for the essential activities, while others key activities are behind and yet at procurement stage. The following are immediate actions: 1. Functionality of the sector modernization task force, which are both legal covenant, yet to be complied with,",
+          "highlights": [
+            [
+              91,
+              102
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2015-06-04",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:25814564/v1/s5",
+          "public_from": "2016-01-21",
+          "passage_id": "25814564/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2016-01-21",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 7",
+          "doc_key": "isr-2016-01-21",
+          "language": "en",
+          "text": "Overall the project is moving at a different pace. Component A, related to the construction of rural roads is moving satisfactorily by completing a substantial number of civil works contracts whilst the ongoing contracts are expected to be completed in a reasonable time. Also, Component C, related to Road Safety Management continued to show encouraging steps for the essential activities, while others are delayed. Component B related to the implementation of the sector Modernization activities, has moved faster than the previous periods in procurement but needs more effort to make up for the delays encountered in the past. To that effect, a strong focus in the project management and supervision is required.",
+          "highlights": [
+            [
+              176,
+              191
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2016-01-21",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:27243340/v1/s5",
+          "public_from": "2017-03-06",
+          "passage_id": "27243340/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2017-03-05",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 9",
+          "doc_key": "isr-2017-03-05",
+          "language": "en",
+          "text": "Overall the project activities are moving at a better pace. Component A, related to the construction of rural roads is progressing satisfactorily by completing about 94% (awarded 96%) of civil works contracts whilst the ongoing contracts are expected to be completed well within the project completion timeline. Some contracts relating to traditional roads and cost effective roads are yet to be awarded but also planned to be completed within the project completion period. Component B related to the implementation of the sector Modernization activities, are making progress with most of the consultancies now awarded and in implementation phase. Also, Component C, related to Road Safety Management is also progressing satisfactorily with almost all procurement completed. Any further delay in the activities/ procurement of the Road Sector Modernization component and Road Safety component will risk achievement of the PDO within the project implementation period. Therefore, a strong focus on project management and supervision is required to complete all remaining activities in the next 24 months i.e. by credit closing date of December 31, 2018.",
+          "highlights": [
+            [
+              193,
+              208
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2017-03-05",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:27490469/v1/s5",
+          "public_from": "2017-05-23",
+          "passage_id": "27490469/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2017-05-23",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 8",
+          "doc_key": "isr-2017-05-23",
+          "language": "en",
+          "text": "Overall the project activities are moving at a satisfactory pace. Component A, related to the construction of rural roads is progressing satisfactorily by completing about 94% (awarded 96%) of civil works contracts whilst the ongoing contracts are expected to be completed well within the project completion timeline. Some contracts relating to traditional roads and cost effective roads are yet to be awarded but also planned to be completed within the project completion timeline. Component B related to the implementation of the sector Modernization activities, are making progress with most of the consultancies now awarded and in implementation phase. Also, Component C, related to Road Safety Management is also progressing satisfactorily with almost all procurement completed. Any further delay in the activities/ procurement of the Road Sector Modernization component and Road Safety component will risk achievement of the PDO within the project implementation period. Therefore, a strong focus on project management and supervision is required to complete all remaining activities in the next 24 months i.e. by credit closing date of December 31, 2018.",
+          "highlights": [
+            [
+              199,
+              214
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2017-05-23",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:27490469/v1/s8/1",
+          "public_from": "2017-05-23",
+          "passage_id": "27490469/v1/s8/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2017-05-23",
+          "paragraph": "s8",
+          "paragraph_numbered": false,
+          "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "printed_page": "4 of 8",
+          "doc_key": "isr-2017-05-23",
+          "language": "en",
+          "text": " Roads constructed, Rural (Kilometers, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 0.00 2,203.00 2,203.00 2,500.00 Date 01-Sep-2013 09-Dec-2016 09-Dec-2016 31-Dec-2015 990 villages have been connected and a BT length of 2222 km has been constructed under the project.  Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads (Kilometers, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 0.00 0.00 0.00 100.00 Date 31-Jan-2014 09-Dec-2016 09-Dec-2016 31-Dec-2015 Tender under process.  Computerization of key business processes in PWD (Yes/No, Custom) Baseline Actual (Previous) Actual (Current) End Target Value N N N Y Date 06-Aug-2013 09-Dec-2016 09-Dec-2016 31-Dec-2015 End target has been revised. E-tendering is already in place. For monitoring of works, online monitoring system, RWOMS is launched and data entry is almost complete. However, minor bugs are being fixed. Integrated Financial Management System (IFMS) is now implemented for the state as a whole.",
+          "highlights": [],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2017-05-23",
+            "pdf_page": 4
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:27853466/v1/s5",
+          "public_from": "2017-07-26",
+          "passage_id": "27853466/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2017-07-26",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 8",
+          "doc_key": "isr-2017-07-26",
+          "language": "en",
+          "text": "The project is moving at an intermittent pace. Component A is progressing well with 94% (awarded 98%) of civil works completed and those ongoing or under procurement are expected to be completed within the project completion timeline of December 31, 2018. The activities in Component B are making progress but the quality of deliverables requires improvement. The procurement of the ‘System Provider Consultant’ has been substantially delayed and needs to be taken ahead promptly. In Component C almost all procurement is complete with the exception of the Demo Corridor and the Road Safety equipment for Police and Transport. A strong focus on project management and supervision is required to complete all remaining activities in the next 18 months i.e. by credit closing of December 31, 2018.",
+          "highlights": [
+            [
+              105,
+              116
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2017-07-26",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:27853466/v1/s8/1",
+          "public_from": "2017-07-26",
+          "passage_id": "27853466/v1/s8/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2017-07-26",
+          "paragraph": "s8",
+          "paragraph_numbered": false,
+          "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "printed_page": "4 of 8",
+          "doc_key": "isr-2017-07-26",
+          "language": "en",
+          "text": " Roads constructed, Rural (Kilometers, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 0.00 2,203.00 2,225.00 2,500.00 Date 01-Sep-2013 09-Dec-2016 30-May-2017 31-Dec-2015 Comments 1021 villages have been connected and a BT length of 2250 km has been constructed under the project.  Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads (Kilometers, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 0.00 0.00 0.00 100.00 Date 31-Jan-2014 09-Dec-2016 30-May-2017 31-Dec-2015 Comments Tender under process.  Computerization of key business processes in PWD (Yes/No, Custom) Baseline Actual (Previous) Actual (Current) End Target Value N N N Y Date 06-Aug-2013 09-Dec-2016 30-May-2017 31-Dec-2015 Comments End target has been revised. E-tendering is already in place. For monitoring of works, online monitoring system, RWOMS is launched and data entry is almost complete. However, minor bugs are being fixed. Integrated Financial Management System (IFMS) is now implemented for the state as a whole.",
+          "highlights": [],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2017-07-26",
+            "pdf_page": 4
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:29794672/v1/s5",
+          "public_from": "2018-04-10",
+          "passage_id": "29794672/v1/s5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2018-04-10",
+          "paragraph": "s5",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "printed_page": "2 of 7",
+          "doc_key": "isr-2018-04-10",
+          "language": "en",
+          "text": "The Component A related to civil works has been successful achieving for the main part the targets for civil works with 10 months remaining in the project. Achievements of about 99% of the (i) the number of rural villages connected; (ii) number of rural people with access to all weather roads, connecting 1008 villages representing 96%. The focus now however is on the asset management and enhancing maintenance management system. Although most of the activities under components B & C, have been completed, other critical activities under both components remain at early stage of procurement as far as RAMS and RSDC related activities.",
+          "highlights": [
+            [
+              27,
+              38
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2018-04-10",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:30730274/v1/s4",
+          "public_from": "2018-12-28",
+          "passage_id": "30730274/v1/s4",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2018-12-28",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "printed_page": "1 of 6",
+          "doc_key": "isr-2018-12-28",
+          "language": "en",
+          "text": "Overall the project is moving at a slower pace, with some progress noted since the last mission in February 2018. Implementation of Component A, Rural Connectivity Improvement progressed reasonably well, by completing about 97% of civil works under conventional design, including some progress in the ongoing pilot cost-effective technology works. It has been reported that 8 roads have been completed without obtaining the necessary forest clearances and there are also serious delays in processing forest clearances for another 7 roads, which is still pending with the forest department, and this is likely to impact completion of these works. The mission advised that without diligent coordination and urgent follow-up with forest department, these roads might not be completed by project closing. In Component B, Road Sector Modernization and Performance Enhancement, there has been progress in some activities while a substantial delay encountered in the most important subcomponent - Development of a Sustainable Road Asset Management System (RAMS). It is noted that the system providing consultant (SPC) is now appointed to develop RAMS. Out of the four activities under this component, two have successfully been completed namely: (i) Preparatory works to Improving Engineering Practices and Business Procedures, and (ii) Developing a Strategy for Human Resources Development. While these outputs demonstrate a good progress, the key outcomes PDO outcomes namely approval of Road Sector Policy and operationalization of RAMS are substantially delayed. Though the (i) study report to Improving Road Sector Policy, Strategy and Financing Framework has been finalized, is yet to be approved by the cabinet; (ii) SPC consultant has been mobilized, RAMS is yet to be completed and operational both activities will not be completed within the current credit closing period. In Component C, Road Safety Management, there has been a very little progress with regards to the Safe Corridor Demonstration Program (SCDP) since last mission in February 2018. Although preparatory activities are completed, there are significant delays in the procurement process of civil works and road safety equipment due to poor bid response and the resulting rebidding. These activities, especially SCDP civil works, are related to key outcome indicators attributed to the PDO, are substantially delayed and will not be completed within the current credit closing period. The road Safety Education and Awareness Program reached out to approximately 81% of the Gram Panchayats.",
+          "highlights": [
+            [
+              231,
+              242
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2018-12-28",
+            "pdf_page": 1
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:30730274/v1/s6/1",
+          "public_from": "2018-12-28",
+          "passage_id": "30730274/v1/s6/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Status and Results Report",
+          "document_date": "2018-12-28",
+          "paragraph": "s6",
+          "paragraph_numbered": false,
+          "section_path": "Results",
+          "pdf_page": 2,
+          "printed_page": "2 of 6",
+          "doc_key": "isr-2018-12-28",
+          "language": "en",
+          "text": "PDO Indicators by Objectives / Outcomes To improve rural connectivity, enhance road safety & strengthen road sector management capacity IN00629304 ►A reduction in annual average fatality count of road users on model road safety corridors (Number, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 46.00 61.00 61.00 30.00 Date 31-Mar-2014 16-Feb-2018 20-Aug-2018 31-Dec-2018 The civil works for demo corridor and other countermeasure procurement will be done, but implementation Comments: may go beyond the project period. IN00629309 ►Size of total classified network (Kilometers, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 133,435.00 135,725.00 135,739.00 135,935.00 Date 31-Mar-2014 16-Feb-2018 20-Aug-2018 31-Dec-2018 IN00629269 ►Share of rural population with access to an all-season road (Percentage, Custom) Baseline Actual (Previous) Actual (Current) End Target Value 67.00 80.42 80.79 81.00 Date 01-Sep-2013 -- 20-Aug-2018 31-Dec-2018 IN00629311 Number of rural people with access to an all-season road (Number, Custom Supplement) Baseline Actual (Previous) Actual (Current) End Target Value 33,115,250.00 33,481,714.00 33,487,461.00 33,489,250.00 IN00629310 ►Road Asset Management System Operational (Text, Custom) Baseline Actual (Previous) Actual (Current) End Target System Defining Consultant (SDC) Contract Agreement was signed on 28 December 2015 and REOIs for System mobilized on 13 Road Asset Existing system not user- Value Provider Consultant January 2016. Management System friendly and not in use (SPC) on Feb 22, 2018 Contract for SPC was developed and in use signed on August 02, 2018. Procurement for services for data collection is still to be procured. Date 31-Mar-2014 16-Feb-2018 16-Feb-2018 31-Dec-2018 Implementation will start. However, PDO Indicator not likely to be achieved within the project period, if not Comments: extended.",
+          "highlights": [
+            [
+              397,
+              408
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P130164",
+            "document_date": "2018-12-28",
+            "pdf_page": 2
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/11",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/11",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "11",
+          "paragraph_numbered": true,
+          "section_path": "I.B",
+          "pdf_page": 13,
+          "printed_page": "9 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "11. The project was approved on October 29, 2013 and planned to close on December 31, 2018. The project was restructured once on July 27, 2017. Disbursement under the project as of May 31, 2017, was XDR 63.95 million (approximately US$88.5 million), which was 60.56 percent of the total loan amount of XDR 105.60 million. At that time, around 90 percent of the civil works were completed. The disbursement was lagging at about six months equivalent to around US$17 million. The main delays in project implementation were related to the implementation of both institutional strengthening components, Components B and C.",
+          "highlights": [
+            [
+              361,
+              372
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 13
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/15",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/15",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "15",
+          "paragraph_numbered": true,
+          "section_path": "I.B",
+          "pdf_page": 14,
+          "printed_page": "10 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "15. In addition to the Results Framework (RF) revisions, other changes were made related to the financing plan, that is, the World Bank share of financing in the civil works component, and to the budget allocation between disbursement categories (and associated disbursement estimates per component).",
+          "highlights": [
+            [
+              162,
+              173
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 14
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/17",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/17",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "17",
+          "paragraph_numbered": true,
+          "section_path": "I.B",
+          "pdf_page": 14,
+          "printed_page": "10 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "17. As identified during the Midterm Review (MTR) (end of May 2016), the need for restructuring was identified in three areas: (a) Adjusting the share of the World Bank’s financing for expenditures related to civil works by retroactively increasing the World Bank’s financing percentage from 70 percent to 80 percent; (b) Revising monitoring and evaluation (M&E) indicators; (c) Reallocating funds between categories.",
+          "highlights": [
+            [
+              209,
+              220
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 14
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/18",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/18",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "18",
+          "paragraph_numbered": true,
+          "section_path": "I.B",
+          "pdf_page": 14,
+          "printed_page": "10 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "18. The rationale for restructuring was as follows: (a) Increased World Bank share of financing in works components. The costs of civil works included the agency fees, which were not eligible for World Bank financing. The World Bank’s share of financing at 70 percent of civil works was applied only on the construction cost minus the agency fees, which yielded the actual World Bank’s share to be only 62 percent versus what was planned at 70 percent. Therefore, the restructuring suggested the increase of the World Bank’s financing percentage to 80 percent for civil works retroactively to ensure that the overall World Bank’s share of financing was indeed kept at 70 percent. (b) Revising the RF to reflect some changes proposed to the outcome and intermediate indicators to (i) improve rural connectivity, (ii) enhance road safety, and (iii) strengthen road sector management capacity of the state of Rajasthan. This meant adding three PDO-level indicators and dropping one PDO-level indicator; adding two intermediate indicators to properly monitor the achievements of the three sub-objectives; and ensuring links between the outcomes, activities, outputs of the three components. The project was indeed initially approved without a relevant outcome indicator capturing the third dimension of the PDO. Changes made to the indicators also allowed to remove indicators that proved to be difficult to measure (for example, share of roads in good/fair condition). (c) Reallocation between categories. At the time of project preparation, the project received US$3 million as a Project Preparation Advance (PPA). Since the PPA was not fully used (disbursement of US$2,277) at the time of restructuring, the allocation in the loan to refinance it (Category 2) remained unused. Therefore, the GOR proposed to reallocate the remaining amount to Category 1 activities.",
+          "highlights": [
+            [
+              130,
+              141
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 14
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/26",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/26",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "26",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 16,
+          "printed_page": "12 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "26. The outcome indicator ‘Share of rural population with access to an all-season road - with the number of rural people with access to an all-season road’ was satisfactorily achieved, reaching actual values of 80.8 percent and 33,490,396, respectively, compared with a target of 81 percent and 33,489,250. Besides, the indicator ‘Size of total classified network’ was achieved, with a final value of 135,788 km against a target of 135,935 km. About 70 percent of civil works were completed by January 2015, that is, within one year after contract signature, and about 90 percent of civil works were completed by March 2016, within a little over two years of project implementation.",
+          "highlights": [
+            [
+              464,
+              475
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 16
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/27",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/27",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "27",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 16,
+          "printed_page": "12 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "27. The intermediate indicator ‘Roads constructed’ was mostly achieved, with 2,334 km of roads built compared to an initial target of 2,500 km. In Rajasthan, out of 19,945 unconnected villages in rural areas as identified during the preparation of the Eleventh Five Year Plan of India, 55 percent (10,995 villages) are eligible to be covered by the PMGSY program, and the remaining 8,950 unconnected habitations fall under the Mukhya Mantri Gram Sadak Yojana (MMGSY) program. Civil works completed under this project provided connectivity to around 1,300 habitations, thus having an actual impact on connectivity of remote rural areas as it represents a share of about 15% of the entire MMGSY program. The intermediate indicator ‘Cost effective technologies piloted for road design and construction and upgradation/maintenance of existing gravel roads’ was partially achieved with a result of 61 km completed at project closure, and 67 km completed at the time of the ICR, instead of 100 km.",
+          "highlights": [
+            [
+              476,
+              487
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 16
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/28",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/28",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "28",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 16,
+          "printed_page": "12 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "28. Overall, it can be noted that almost all civil works under the project were completed as planned. The quality of civil works kept on improving throughout the duration of project implementation. The introduction of the Performance Assessment Tool (PAT) with relevant training for the Project Management Consultant (PMC) and PWD engineers was beneficial in getting management’s attention toward better quality of works and in increasing frequency of senior engineers’ site visits. The PAT also helped in ensuring better management of environmental and social safeguards and the health and safety of workers on site. The successful implementation of this component, in addition to the implementation of the rest of the MMGSY program funded by the state of Rajasthan and of the PMGSY program, led to a significant increase in connectivity of rural areas in the state. Outcome 2: Road safety enhanced Outcome not achieved - rated Negligible",
+          "highlights": [
+            [
+              45,
+              56
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 16
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/32",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/32",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "32",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 17,
+          "printed_page": "13 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "32. The intermediate indicator ‘Road safety policy and action plan approved and implemented’ was achieved. The Road Safety Policy was prepared by the Road Safety Cell created under the project and comprised representatives from different sectors/departments, including the Transport, Police, Medical, PWD, and Local Self Government Departments. It is worth underlining here that the political context with the existence of a Supreme Court Directive on Road Safety was a key factor driving the development and approval of the Road Safety Policy and action plan under the project. Efforts were thus made in developing the Road Safety Policy and implementing some of the priority actions highlighted in the action plan. A Road Safety Fund was set up allowing to channel more financing toward the implementation of road safety measures. Road safety audits were carried out for 1,025 km of project roads and roads of higher category linking the project roads. Awareness campaigns managed by the Transport Department targeting road users were successfully implemented by hired nongovernmental organizations (NGOs) in different subregions (Jaipur, Udaipur, and so on) a few months before project closure. More than 100,000 people participated in the campaigns. Training sessions related to accidents investigations were provided to the police. There was unfortunately no outcome indicator indicating the resulting trend in fatalities on project rural roads after completion of civil works and safety training or measures. 1 Times of India.",
+          "highlights": [
+            [
+              1470,
+              1481
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 17
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/33",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/33",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "33",
+          "paragraph_numbered": true,
+          "section_path": "II",
+          "pdf_page": 18,
+          "printed_page": "14 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "33. Despite the proven efforts in executing part of the Road Safety action plan, the lack of commitment to ensure (a) the implementation of strategic road safety measures/works along the selected corridor and (b) the provision of adequate road safety equipment (with the introduction of ITS and enforcement equipment) for the Police and Transport Department services, under the SCDP, may explain the increase in road fatalities on the selected corridor. The SCDP was one of the key project activities aiming at demonstrating the positive impact of adequate and site-specific road safety measures to reduce road accidents and fatalities. As per the progress made at project closure and after project closure, the associated works and goods are yet to be procured and implemented. The PWD decided to take up and finance the implementation of the SCDP using state funds and has determined implementation arrangements. To avoid issues faced in 2018 during the bidding process, it is recommended that the civil works and the ITS equipment be procured separately considering the different expertise and contract period required for the maintenance phase. At the time of this ICR, PWD reported that some budget was allocated, and arrangements made to acquire mobile road safety equipment for the Police Department. Outcome 3: Road sector management capacity of the state of Rajasthan strengthened Outcome not achieved - rated Negligible",
+          "highlights": [
+            [
+              1000,
+              1011
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 18
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/43",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/43",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "43",
+          "paragraph_numbered": true,
+          "section_path": "II.C",
+          "pdf_page": 21,
+          "printed_page": "17 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "43. Components 2 and 3 - qualitative assessment. Components 2 and 3 accounted for 12 percent of the total project cost at approval. While civil works were successfully achieved, it is important to note that the expected outcomes from the investments made in improving road safety management and in strengthening the institutional framework to modernize the sector were not achieved, negatively affecting the overall efficiency of the project.",
+          "highlights": [
+            [
+              138,
+              149
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 21
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/45",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/45",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "45",
+          "paragraph_numbered": true,
+          "section_path": "II.D",
+          "pdf_page": 21,
+          "printed_page": "17 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "45. Based on the ratings for PDOs’ Relevance, Efficacy, and Efficiency, the overall outcome is rated Moderately Unsatisfactory (Table 4). This overall outcome rating is in line with the assessment made in the last Implementation Support Mission. Despite achieving many successes, primarily with the completion of all civil works, the overall project outcome is still considered Moderately Unsatisfactory nine months after project closure, considering that issues or activities identified as pending at project closure have not been all satisfactorily addressed at the time of the ICR.",
+          "highlights": [
+            [
+              317,
+              328
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 21
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/54",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/54",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "54",
+          "paragraph_numbered": true,
+          "section_path": "III.B",
+          "pdf_page": 23,
+          "printed_page": "19 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+          "highlights": [
+            [
+              49,
+              63
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 23
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/56",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/56",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "56",
+          "paragraph_numbered": true,
+          "section_path": "III.B",
+          "pdf_page": 23,
+          "printed_page": "19 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "56. The critical environmental safeguard issue, which was the need for forest clearance for 26 roads (around 3 percent of total project roads), affected project performance. In total, 26 roads under the project were passing through forest areas. Stage 1 forest clearances for 13 roads (category C3) had been received, and 2 roads had already moved to Stage 2 clearances by the closure of the project, the remaining are being processed as of now. Civil works for 8 roads (category C1) were completed without completing the forest clearance process, which remains a non-compliance under the Government of India and World Bank’s safeguards requirements. As of October 2019, the Borrower has reported that Stage 1 clearance for one road has been received, the remaining roads are still under process. For the 7 roads (category C2) which had not started due to impending clearances, Stage 1 clearance for 4 roads has been processed, one road is under process, and the pending two roads have been de-sanctioned. PWD is in the process of getting all relevant clearances, depositing the compensatory afforestation funds and implementing compensatory tree planting works. The state of Rajasthan assured that all forest clearances would be completed in the coming months.",
+          "highlights": [
+            [
+              446,
+              457
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 23
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/58",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/58",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "58",
+          "paragraph_numbered": true,
+          "section_path": "III.B",
+          "pdf_page": 24,
+          "printed_page": "20 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "58. The World Bank experience in implementing the PMGSY proved helpful in supporting the GOR, particularly when it comes to the preparation of rural roads works DPRs, civil works management, and implementation of new construction technologies.",
+          "highlights": [
+            [
+              167,
+              178
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 24
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/74",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/74",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "74",
+          "paragraph_numbered": true,
+          "section_path": "IV.C",
+          "pdf_page": 26,
+          "printed_page": "22 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "74. The World Bank team prepared an important project with activities including civil works as well as institutional strengthening activities that were planned to support the Government of India’s priorities and met all World Bank requirements. The project civil works, as designed, were essential to upgrade the existing road infrastructure to reinforce rural road connectivity in Rajasthan by connecting smaller villages in areas not targeted by the PMGSY program. The PAD was especially articulate regarding the background analysis and rationale behind the project. Preparation was carried out with adequate technical and financial resources, being fully consistent with the World Bank’s fiduciary and safeguards requirements.",
+          "highlights": [
+            [
+              80,
+              91
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 26
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/77",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/77",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "77",
+          "paragraph_numbered": true,
+          "section_path": "IV.C",
+          "pdf_page": 27,
+          "printed_page": "23 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "77. Rural roads upgrading, or construction works are generally difficult to supervise, considering the large number of contracts and worksites. The World Bank team decision to introduce the PAT in Rajasthan, with relevant training, to frequently monitor the implementation and quality of civil works completed proved to be highly beneficial to the client and well received by the different PIUs.",
+          "highlights": [
+            [
+              288,
+              299
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 27
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex4.1",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex4.1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "1",
+          "paragraph_numbered": true,
+          "section_path": "Annex 4",
+          "pdf_page": 40,
+          "printed_page": "36 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "1. In 2013, the project was originally approved with three key components in which the World Bank financing constituted 70 percent of the project cost: (a) Rural Connectivity Improvement • Civil Works (2,500 km) • Project Management and Audit Services (b) Road Sector Modernization and Performance Enhancement (c) Road Safety Management",
+          "highlights": [
+            [
+              189,
+              200
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 40
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex4.3",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex4.3",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "3",
+          "paragraph_numbered": true,
+          "section_path": "Annex 4",
+          "pdf_page": 40,
+          "printed_page": "36 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "3. In 2017, the project was restructured. The restructuring covered the changes of: (a) Increased World Bank share of financing in works components for expenditures related to civil works by retroactively increasing the World Bank’s financing percentage from 70 percent to 80 percent; (b) Revision of the results monitoring framework of M&E indicators; and (c) Reallocation between categories.",
+          "highlights": [
+            [
+              176,
+              187
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 40
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex4.9",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex4.9",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "9",
+          "paragraph_numbered": true,
+          "section_path": "Annex 4",
+          "pdf_page": 41,
+          "printed_page": "37 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "9. Capital costs. The capital cost for the RRSMP included costs for civil works, project management, and audit services. Table 4.1. Total RRSMP Disbursement - Component Costs (World Bank Financing) (US$, millions) % Disbursed (with PAD Restructuring ICR devaluation) (2013) (2017) (2019) Financial cost 160 158.9 121.7 83",
+          "highlights": [
+            [
+              68,
+              79
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 41
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.1",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "1",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 54,
+          "printed_page": "50 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "1. The World Bank (“the Bank”) has been extensively involved in the Indian transport sector over the past 70 years. By the end of 2018, it had closed 62 projects (loans and credits) totalling $11.1 billion to the sector, or about 15 percent of the Bank portfolios of loans and credits closed this far in the country. Roads and highways accounted for 63% (active and closed projects combined) of the total investments in the transport sector. The Bank has successfully implemented and closed 29 road projects including National Highways, State Highways and rural roads in India worth US$ 8.77 billion and has an active portfolio of 11 projects (one NH, 7 SHs and 3 rural roads) worth US$3.2 billion across nine states of India including two centrally funded projects of national highways and rural roads where civil works are also being implemented in additional nine states. In addition, four projects worth US$989 million in the state of Meghalaya, Himachal Pradesh, Tamil Nadu and including one National Highways project are under preparation and scheduled to be delivered in the current fiscal year i.e. FY20.",
+          "highlights": [
+            [
+              809,
+              820
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 54
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.5",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "5",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 55,
+          "printed_page": "51 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "5. All three projects were designed as investment project finance (IPF) operations with institutional strengthening components complementing primarily infrastructure projects. The civil works focused on the investment and maintenance requirements of the state’s core road network. The investment support 7Independent Evaluation Group: A Decade of Action in Transport - An Evaluation of World Bank Assistance to the Transport Sector: 1995-2005, IEG (2007), The World Bank. was combined with strengthening institutional capacity of the road departments at the state level through introduction of sound strategic and regulatory framework, organisational reforms, modernisation of business and engineering practices and human resource development through training of staff, contractors and consultants. The engagement also provided support to reduce maintenance backlog by funding periodic maintenance in the state of Andhra Pradesh and Karnataka with introduction of modern maintenance equipment replacing manual operations and piloting alternative contracting methods based on performance. Further, the investment components were also designed to aid institutional strengthening: the Karnataka and Andhra Pradesh projects included important pilots/demonstrations for private sector participation for infrastructure development and innovations in contractual arrangements to increase operational efficiency and the implementation capacity of state institutions.",
+          "highlights": [
+            [
+              180,
+              191
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 55
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.6",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.6",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "6",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 56,
+          "printed_page": "52 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "6. Focusing on Institutional Strengthening through Road Sector Modernisation. In case of Rajasthan, though the civil works were mainly on rural roads, however, the road sector modernisation agenda including road safety was designed to focus on transformation of the entire Public Works Department into a modern road agency by adopting best practices and strengthen institutional effectiveness. The key elements of this road sector modernization approach were like the Institutional Development Action Plan prepared in KSHIP II and APTRSP. Project Interventions:",
+          "highlights": [
+            [
+              111,
+              122
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 56
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.7",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.7",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "7",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 56,
+          "printed_page": "52 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "7. The civil works in all three projects focused on improving the quality of core road network through upgradation, widening and maintenance of priority roads in Andhra Pradesh, Telangana as well as in Karnataka whereas in Rajasthan, the works were focusing on providing all-weather road connectivity to the rural population of the state. In Andhra Pradesh & Telangana, the focus was to improve riding quality and capacity of the network by reducing the maintenance backlog through adoption of long-term output and performance-based maintenance contracts on a significant part of the core road network and pilot transactions to increase states capacity to engage private sector to finance, develop and manage two road concessions on public-private partnership (PPP) basis. In Karnataka, project activities mainly focused towards highway financing modernization and strengthen the capacity of the government to attract private sector financing through adoption of PPP– Design, Build, Finance, Operate, Maintain and Transfer (DBFOMT) contracts and commercial financing through domestic financial institutions. In addition, the project interventions were focusing on enhancing the institutional effectiveness in all states through structured institutional strengthening and development action plans in Andhra Pradesh, Telangana and Karnataka and road sector modernisation plan in Rajasthan. The road safety demonstration corridor approach was adopted in all four states. A snapshot of project interventions in provided in the table one below and a detailed comparison of the design and interventions is at Appendix-1.",
+          "highlights": [
+            [
+              7,
+              18
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 56
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s42",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s42",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s42",
+          "paragraph_numbered": false,
+          "section_path": "Annex 1.I",
+          "pdf_page": 35,
+          "printed_page": "31 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Objective/Outcome 2 - To enhance road safety 1. A reduction in annual average fatality count of road users on Outcome Indicators model road safety corridors 1. Model road safety corridor(s) developed Intermediate Results Indicators 2. Average star rating achieved on model road safety corridor(s) 3. Road safety policy and action plan approved and implemented 1. Model road safety civil works implemented on selected corridors (state level major road) Key Outputs by Component 2. Star rating of 3 achieved on selected corridors (linked to the achievement of the Objective/Outcome 2) 3. Road Safety Policy and action plan approved and implemented",
+          "highlights": [
+            [
+              381,
+              392
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 35
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s51/1",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s51/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s51",
+          "paragraph_numbered": false,
+          "section_path": "Annex 4",
+          "pdf_page": 42,
+          "printed_page": "38 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Table 4.4. District-wise Cost Distribution of Rural Roads Average Average Length Average Cost Average Cost S. No. of Roads Population of Road (INR, (INR, District Coverage/Road (km/Road) millions/Road) millions/km) No. 2013 2019 2013 2019 2013 2019 2013 2019 2013 2019 1 Ajmer 12 14 375 341 1.65 1.78 4.553 5.76 2.7628 3.23 2 Alwar 11 23 417 378 1.38 1.53 4.159 5.21 3.0194 3.39 3 Baran 19 72 366 385 2.54 2.57 9.007 14.32 3.5467 5.57 4 Bharatpur 25 38 372 417 1.74 1.77 6.574 7.17 3.7835 4.05 5 Bhilwara 93 147 363 364 2.28 2.26 7.672 8.66 3.3638 3.78 6 Bundi 14 24 413 368 2.72 2.46 9.679 13.28 3.5542 5.41 7 Chittorgarh 84 175 348 352 2.36 2.25 9.169 9.90 3.879 4.40 8 Dausa 4 47 351 467 1.68 2.21 4.698 8.55 2.792 3.87 9 Dholpur 13 26 386 387 1.96 2.38 5.155 8.38 2.6328 3.52 10 Hanumangarh 3 10 399 377 3.58 2.67 9.297 9.37 2.5944 3.50 11 Jaipur 34 34 336 342 2.02 2.00 7.468 8.04 3.7023 4.01 12 Jhalawar 28 106 385 398 2.54 2.25 8.840 11.24 3.4824 5.00 13 Karauli 4 4 374 374 2.19 2.20 6.855 10.20 3.1249 4.65 14 Kota 12 10 345 299 2.51 2.31 9.993 11.46 3.9826 4.97 15 Pratapgarh n.a. 8 n.a. 365 n.a. 2.61 n.a. 10.02 n.a.",
+          "highlights": [
+            [
+              555,
+              560
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            },
+            {
+              "kind": "place",
+              "text": "Bundi"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 42
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s61",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s61",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s61",
+          "paragraph_numbered": false,
+          "section_path": "Annex 5",
+          "pdf_page": 48,
+          "printed_page": "44 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "91. The Borrower’s comments are attached below. 92. The World Bank thanks the state of Rajasthan for the comprehensive comments on this ICR. First, it is important to note that the World Bank policy requires that project rating be based on achievements at project closing (December 31, 2018). In the case of the present ICR, all progress made until December 31, 2018 and the progress made until June 30, 2019 was reflected in the ICR, based on the inputs provided in the Borrower’s ICR and further communication with the project team and the Client. The final ICR thus emphasizes and recognizes post-closing date efforts and further progress made by the Borrower, as the World Bank had agreed that the progress made post-closing date to address remaining issues such as road safety works, forest clearance, etc., would be considered to some extent in the final evaluation. 93. The World Bank has discussed and taken note of the Borrower’s opinion regarding the rating. Achievements made related to the civil works at project closure were rated positively. Considering the works completed within 6 months after project closure, the rating related to the first outcome remains positive. Yet, some of the remaining issues or activities under the two other components are either not implemented, not completed or are not fully resolved at the time of this ICR despite the noted progress. The proposed ratings will thus remain the same. The World Bank encourages the Borrower to pursue these efforts and is committed to provide the necessary support.",
+          "highlights": [
+            [
+              1002,
+              1013
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 48
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s64",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s64",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s64",
+          "paragraph_numbered": false,
+          "section_path": "Annex 8",
+          "pdf_page": 56,
+          "printed_page": "52 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Table 1: Summary of Project Interventions AP Telangana Karnataka Rajasthan Civil Works – Upgradation/ Widening/ Maintenance/ connectivity     Highway Financing Modernisation     Institutional Strengthening & Road Sector Modernization     Road Safety Management – Demo Corridor     Road Safety Management – Policy & Institutional Actions     Note:  - substantially done;  - partly done;  - yet to be done Results Achieved:",
+          "highlights": [
+            [
+              75,
+              86
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 56
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s69/1",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s69/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s69",
+          "paragraph_numbered": false,
+          "section_path": "Annex 8",
+          "pdf_page": 64,
+          "printed_page": "60 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Core Areas APTRSP KSHIP II RRSMP Civil Works upgrade and maintain the Core Improvement & maintenance Increasing share of rural Road Network (CRN): works of selected priority population with access to • 429 km upgraded efficiently core road network an all-season road in an environmental and • 269 km upgraded through • Construction of 2500 socially sustainable way. traditional item-rate contracts km of rural roads • 6,241 km of roads under • 562 km to be upgraded & Long-term performance-based O&M through PPP- DBFOMT maintenance contract concession Highway Technical assistance to • KRDCL to generate --- Financing strengthen the capacity of the additional road user revenue Modernisation/ GOAP to attract private sector and commit them for PPP facilitation participation: mobilising debt financing • RDC manages concession of and/or making payments for three roads of those selected PPP transactions for PPP transactions • Upgrading and O&M of 400 km through co-financing arrangements Road Safety • Multi-sectoral Demonstration • Multi-sectoral • Multi-sectoral projects carried out in at least Demonstration projects on Demonstration projects on two road corridors two road corridors two road corridors • Comprehensive GOAP road • Lead Agency established • Star rating for Model safety functions, capacity and • Policy and Institutional Corridor action plan(s) put in place Actions • Road Safety Policy and • Black-spot improvements Action Plan initiated • Road Safety Awareness Campaign Institutional Institutional Strengthening Institutional Development Implementation of a Road Development Action Plan and Strengthening Action Sector Modernisation Plan: and Road Plan • Sector Policy & Sector • Strategic & Regulatory financing framework Modernisation Framework • Business Process • Engineering practices • Organisation, Effectiveness and key procedures Management & Systems • Performance and modernized • Human Resources Accountability • Road Asset Development • Asset Sustainability Management System & • Human Resources innovative forms of contracting • Training Plan and HR policy & Procedures developed Appendix-2 Comparison of Institutional Development/Strengthening/ Road Sector Modernization Plan Themes APTRSP KSHIP II RRSMP Strategic & Regulatory • AP Road Act • Road Sector Policy • Road Sector Policy Framework (Policy & • State Level Road • Karnataka State • Financing Framework for financing) Network Master Plan Highway Act -tolling the Network – • Core Road Network powers for both public construction and • Road Fund and PPP roads maintenance • Encouraging PPP & • New Road Asset • Encouraging private performance-based CRN Maintenance Policy participation maintenance contracts • Establishing Core Road • Road Safety Action Network Program • Financing Strategy & • Black spot rectification Institutional Measures program for CRN • Road Fund • Increase private sector participation • Finalise and roll out of State Level Road Master Plan Modernisation of Key • Revised Departmental • Revised Departmental • Modern",
+          "highlights": [
+            [
+              33,
+              44
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 64
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s7",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s7",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_type": "Implementation Completion and Results Report",
+          "document_date": "2019-10-10",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "I.A",
+          "pdf_page": 13,
+          "printed_page": "9 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Table 1. Project Cost Table at Approval (US$, millions) Costs Including % Bank Component Bank Financing GOR Financing Contingency Financing A - Rural Connectivity Improvement 197 138.00 70 59.00 (a) Civil Works (2,500 km) 195 136.60 70 58.40 (b) Project Management and Audit Services 2 1.40 70 0.60 B - Road Sector Modernization 11 7.75 70 3.25 C - Road Safety Management 15 10.55 70 4.45 Incremental Operating Costs 1 0.70 70 0.30 Subtotal Project Cost 224 157.00 70 67.00 Refinancing preparation advance 3 3.00 n.a. 0.00 Total Project Cost 227 160.00 70 67.00",
+          "highlights": [
+            [
+              199,
+              210
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 13
+          },
+          "contract_reference": "OP00044090"
+        }
+      ],
+      "threshold": "0.50"
+    }
+  ]
+}

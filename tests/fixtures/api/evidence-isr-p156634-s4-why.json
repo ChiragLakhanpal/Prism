@@ -1,0 +1,180 @@
+{
+  "id": "strata.gold.passage:34457596/v1/s4",
+  "kind": "passage",
+  "tool": null,
+  "stratum": "How",
+  "short_name": "ISR",
+  "row": {
+    "evidence_id": "strata.gold.passage:34457596/v1/s4",
+    "public_from": "2025-02-18",
+    "source": {
+      "document_type": "Implementation Status and Results Report",
+      "project_id": "P156634",
+      "project_name": "Water and Sanitation Development Project",
+      "document_id": "34457596",
+      "document_date": "2025-02-18",
+      "report_number": "ISR03244",
+      "version": 1,
+      "section_path": "4.1",
+      "paragraph": "s4",
+      "paragraph_numbered": false,
+      "pdf_page": 2,
+      "pdf_pages": 10,
+      "pdf_url": "https://documents.worldbank.org/curated/en/099021825152023663/pdf/P156634-4d4973f9-046e-4522-8d7c-e09e3a2f7612.pdf",
+      "doc_key": "isr-2025-02-18",
+      "notice_id": null,
+      "notice_url": null
+    },
+    "passage_id": "34457596/v1/s4",
+    "document_id": "34457596",
+    "document_type": "Implementation Status and Results Report",
+    "project_id": "P156634",
+    "version": 1,
+    "section_path": "4.1",
+    "paragraph": "s4",
+    "paragraph_numbered": false,
+    "part": 1,
+    "parts": 1,
+    "pdf_page": 2,
+    "last_pdf_page": 2,
+    "printed_page": "2 of 10",
+    "language": "en",
+    "parse_route": "A",
+    "kind": "paragraph",
+    "route": "published_text",
+    "scanned": false,
+    "table_title": null,
+    "table_row": null,
+    "cells": null,
+    "notice_id": null,
+    "header": "ISR, P156634, Kenya, sanitation, 4.1, p.2",
+    "text": "This ISR is done following an Implementation Support Mission conducted between January 14 to February 6, 2025. The overall progress has revealed marked improvement, with the mission noting that many contracts were in the close-out stages. Of a total of 45 contracts, 12 of them are now complete and intended populations have started to benefit. Some of these completed works already benefitting the people include sewer connections in Mombasa, water kiosks in Garissa, ablution blocks in Ukunda and Kwale town, and the office blocks in Kwale and Wajir counties that are providing improved working environment for staff and customer experience for the public. A further 25 works contracts are expected to be completed by August 2025. Some counties, however, posted mixed results. Construction of Fecal Sludge Treatment Facilities in Wajir and Kilifi and other contracts with a completion rate of less than 50 per cent are being closely monitored to ensure results are achieved within the project timeline. Due to delays in fund flows over the past three years and the limited financial capacity of some contractors, several Implementing Agencies have faced challenges resulting in slow progress of works and abandoned project sites. The County Government Additional Allocation Bill (CGAAB) for Financial Year 24/25 is yet to re-introduced for debate in Parliament as of February 10, 2024. Should the impasse continue, and funds not flow to the counties before April 2025, then the Project will be at very high risk of not completing works. The project completion date remains October 31, 2025, with no anticipated extension of the Project completion date."
+  },
+  "highlights": [],
+  "why": {
+    "reference": "KE-KIMAWASCO-416959-CW-RFB",
+    "record_noun": "contract",
+    "signed_on": "2024-11-08",
+    "href": "/projects/P156634/packages/KE-KIMAWASCO-416959-CW-RFB",
+    "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+    "topics": [
+      {
+        "kind": "category",
+        "code": "Works"
+      },
+      {
+        "kind": "sector",
+        "code": "WC",
+        "name": "Water Supply"
+      },
+      {
+        "kind": "place",
+        "text": "Kilifi"
+      }
+    ],
+    "project_id": "P156634",
+    "project_state": "active",
+    "document": {
+      "type": "Implementation Status and Results Report",
+      "short_name": "ISR",
+      "date": "2025-02-18"
+    },
+    "months": 3,
+    "direction": "after",
+    "components": [
+      {
+        "part": "project",
+        "matched": "P156634",
+        "points": "0.10"
+      },
+      {
+        "part": "sector",
+        "matched": "Water Supply",
+        "points": "0.10"
+      },
+      {
+        "part": "time",
+        "matched": 3,
+        "points": "0.19"
+      },
+      {
+        "part": "text",
+        "matched": [
+          "construction",
+          "sludge",
+          "treatment",
+          "facilities",
+          "kilifi"
+        ],
+        "points": "0.17"
+      },
+      {
+        "part": "mentions",
+        "matched": [
+          "works contracts",
+          "Kilifi"
+        ],
+        "points": "0.40"
+      }
+    ],
+    "score": "0.96",
+    "threshold": "0.50",
+    "mentions": [
+      {
+        "kind": "category",
+        "code": "Works",
+        "text": "works contracts",
+        "start": 672,
+        "end": 687
+      },
+      {
+        "kind": "place",
+        "code": "Kilifi",
+        "text": "Kilifi",
+        "start": 842,
+        "end": 848
+      }
+    ],
+    "activity_href": "/projects/P156634/packages/KE-KIMAWASCO-416959-CW-RFB",
+    "others": [
+      {
+        "reference": "KE-KIMAWASCO-459000-CW-DIR",
+        "record_noun": "contract",
+        "signed_on": "2024-11-22",
+        "href": "/projects/P156634/packages/KE-KIMAWASCO-459000-CW-DIR",
+        "step_reference": "KE-KIMAWASCO-459000-CW-DIR"
+      },
+      {
+        "reference": "KE-GAWASCO-436012-CW-RFB",
+        "record_noun": "contract",
+        "signed_on": "2024-11-18",
+        "href": "/projects/P156634/packages/KE-GAWASCO-436012-CW-RFB",
+        "step_reference": "KE-GAWASCO-436012-CW-RFB"
+      },
+      {
+        "reference": "KE-NWWDA-541055-CW-RFB",
+        "record_noun": "contract",
+        "signed_on": "2026-06-22",
+        "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
+        "step_reference": "KE-NWWDA-541055-CW-RFB"
+      },
+      {
+        "reference": "KE-KIMAWASCO-142995-CW-RFB",
+        "record_noun": "contract",
+        "signed_on": "2021-03-30",
+        "href": "/projects/P156634/packages/KE-KIMAWASCO-142995-CW-RFB",
+        "step_reference": "KE-KIMAWASCO-142995-CW-RFB"
+      },
+      {
+        "reference": "KE-NWWDA-229129-CW-RFB",
+        "record_noun": "contract",
+        "signed_on": "2022-01-03",
+        "href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+        "step_reference": "KE-NWWDA-229129-CW-RFB"
+      }
+    ],
+    "others_count": 41,
+    "others_more": 36,
+    "connections_href": "/projects/P156634/connections"
+  }
+}

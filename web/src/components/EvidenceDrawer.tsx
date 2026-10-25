@@ -25,6 +25,7 @@ import {
   takeFocusRequest,
   type Origin,
 } from "../lib/evidence";
+import { address } from "../lib/router";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
@@ -45,6 +46,7 @@ import { isStepList } from "../lib/steps";
 import { LongestView, StepComparablesView } from "./StepsDrawer";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
+import { routeStepRef, useWhy, WhyThisSource } from "./WhyThisSource";
 import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
 
 export type DrawerData =
@@ -59,6 +61,8 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const [fetched, setFetched] = useState<{ id: string; data: DrawerData } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
+  // On an activity page, a passage's "Why this source" names the page's own activity (ticket 22).
+  const stepRef = routeStepRef(useStore(address).pathname);
   useEffect(() => {
     // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
     // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
@@ -66,7 +70,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
     if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
-    const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
+    const query =
+      `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}` +
+      (stepRef ? `&step_ref=${encodeURIComponent(stepRef)}` : "");
     getJson<EvidenceEvent>(query, { signal: controller.signal }).then(
       (evidence) => setFetched({ id, data: { status: "ready", evidence } }),
       (error: unknown) => {
@@ -76,7 +82,7 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
       },
     );
     return () => controller.abort();
-  }, [id, held, asOf, attempt]);
+  }, [id, held, asOf, attempt, stepRef]);
   if (held) return { status: "ready", evidence: held };
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
@@ -207,7 +213,12 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
   const fields = passageFields(evidence);
   const place = placeOf(fields);
   const section = place.kind === "section";
-  const ranges = given ?? highlightsFor(evidence, sentence);
+  // Ticket 22: a passage that appeared together with a contract highlights the words they share, unless a
+  // sentence or a card opened it at its own quote.
+  const why = useWhy(evidence);
+  const shared = why ? why.mentions.map((mention) => [mention.start, mention.end] as [number, number]) : [];
+  const quoted = highlightsFor(evidence, sentence);
+  const ranges = given ?? (quoted.length > 0 || fromAnswer ? quoted : shared);
   const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
   // Ticket 21: "Open at page N" opens the in-app source view at the page, in the same tab, with the
   // paragraph highlighted, or the passage when it has no paragraph number. The PDF link lives there.
@@ -251,6 +262,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         )}
       </div>
       {note && <p className="text-caption text-ink-muted">{note}</p>}
+      {why && <WhyThisSource why={why} />}
       {notice && fields.noticeUrl ? (
         <p>
           <ExternalLink href={fields.noticeUrl}>{copy.evidence.openNotice}</ExternalLink>
@@ -286,11 +298,20 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   // label on the left and the amount on the list's right edge, so a loan's three amounts line up and the
   // date after them starts its own line at the left (the 21 design review, round 2, F19).
   for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string; highlight?: boolean }[]) {
-    const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
+    const currency = typeof row.currency === "string" ? row.currency : null;
+    // A contract's signed amount carries its currency in its label (ticket 22): "Signed amount (INR)".
+    const label =
+      field.key === "signed_amount"
+        ? !currency || currency === "USD"
+          ? copy.trail.contract.field.signedAmountUsd
+          : copy.trail.contract.field.signedAmount(currency)
+        : (copy.evidence.summaryRecordFields[field.key] ?? field.key);
     if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
-    else if (field.kind === "usd") {
+    else if (field.kind === "usd" || field.kind === "amount") {
       fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true, ledger: true });
     }
+    // A contract signed by an individual consultant names no one (ticket 22).
+    else if (field.kind === "supplier" && field.value === "individual_consultant") fields.push({ label, value: copy.trail.bids.individual, wide: true });
     // The field a sentence or a row quoted, such as an award notice's Reason for Rejection (ticket 31), is highlighted.
     else if (field.highlight) fields.push({ label, value: <Highlight>{String(field.value)}</Highlight>, wide: true });
     else fields.push({ label, value: linkProjectIds(String(field.value)), wide: String(field.value).length > 24 });
@@ -321,6 +342,15 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </dl>}
       <RecordSourceLine evidence={evidence} />
+      {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22). */}
+      {typeof row.activity_href === "string" && (
+        <p>
+          <TextLink href={row.activity_href} className="inline-flex min-h-6 items-center text-small" data-record-activity>
+            {copy.evidence.openActivity}
+            <span className="clip-visually">{copy.evidence.openActivityFor(String(row.step_reference ?? ""))}</span>
+          </TextLink>
+        </p>
+      )}
     </div>
   );
 }

@@ -39,6 +39,38 @@ export function lineOf(source: string, offset: number): number {
 
 const isString = (node: Node) => node.type === "Literal" && typeof node.value === "string";
 
+// Where each of these dotted paths sits in a copy file's exported copy object, as [start, end] offsets, such as
+// "why" or "dataReadiness.server.fromNouns.connections" (ticket 22's causal-wording rule). A path the file does not
+// have is left out.
+export function scopedRanges(source: string, file: string, paths: string[]): [number, number][] {
+  let root: Node | null = null;
+  walk(parse(source, file), (node) => {
+    if (root || node.type !== "VariableDeclarator" || (node.id as Node).type !== "Identifier" || (node.id as Node).name !== "copy") return;
+    let init = node.init as Node | null;
+    while (init && (init.type === "TSAsExpression" || init.type === "TSSatisfiesExpression")) init = init.expression as Node;
+    if (init?.type === "ObjectExpression") root = init;
+    return false;
+  });
+  const found: [number, number][] = [];
+  for (const path of paths) {
+    let at: Node | null = root;
+    for (const part of path.split(".")) {
+      let object: Node | null = at;
+      while (object && (object.type === "TSAsExpression" || object.type === "TSSatisfiesExpression")) object = object.expression as Node;
+      if (!object || object.type !== "ObjectExpression") {
+        at = null;
+        break;
+      }
+      const property = (object.properties as Node[]).find(
+        (entry) => entry.type === "Property" && ((entry.key as Node).name === part || (entry.key as Node).value === part),
+      );
+      at = property ? (property.value as Node) : null;
+    }
+    if (at) found.push([at.start, at.end]);
+  }
+  return found;
+}
+
 // Every string a copy file holds: string literals, and the text between a template's slots.
 // Object keys and import paths are names, not copy, so they are skipped.
 export function copyStrings(source: string, file: string): Found[] {

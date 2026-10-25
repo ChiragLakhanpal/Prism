@@ -30,6 +30,7 @@ import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { keptQuery, withReadParams } from "../lib/view";
 import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
+import { ConnectionsTab } from "./project/ConnectionsTab";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
 import { SummaryTab } from "./project/SummaryTab";
@@ -169,6 +170,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         {tab === "summary" && <SummaryTab pid={pid} />}
         {tab === "procurement" && <ProcurementTab pid={pid} load={load} retry={retry} />}
         {tab === "documents" && <DocumentsTab pid={pid} />}
+        {tab === "connections" && <ConnectionsTab pid={pid} />}
       </div>
       <p role="status" className="sr-only">
         {showing}

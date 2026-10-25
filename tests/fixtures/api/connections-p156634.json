@@ -1,0 +1,2326 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "scored_date": "2026-10-23",
+  "project": {
+    "project_id": "P156634",
+    "display_name": "Water and Sanitation Development"
+  },
+  "packages": [
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "description": "Consultancy Services (Design Review, Implementation of ESIA/RAP and Construction Supervision for the Works) for both Water and Sanitation Works in Malindi, Watamu & Gongoni",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2020-01-15",
+      "date": "2020-01-15",
+      "href": "/projects/P156634/packages/KE-MAWASCO-69995-CS-QCBS",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "description": "Construction of GAWASCO office block in Garissa Town & Admin/Laboratory in Dadaab Town",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2020-07-21",
+      "date": "2020-07-21",
+      "href": "/projects/P156634/packages/KE-GAWASCO-54775-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-GAWASCO-67422-CS-QCBS",
+      "description": "CONSULTANCY SERVICES FOR DESIGN REVIEW & SUPERVISION OF IMMEDIATE WATER AND SANITATION WORKS; AND PREPARATION OF DETAILED DESIGNS, BIDDING DOCUMENTS AND ENVIRONMENTAL AND SOCIAL SAFEGUARDS INSTRUMENTS",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2021-02-15",
+      "date": "2021-02-15",
+      "href": "/projects/P156634/packages/KE-GAWASCO-67422-CS-QCBS",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "description": "Program for improvement of water services in Mombasa county, North Mainland Nyali Phase 1",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2021-03-23",
+      "date": "2021-03-23",
+      "href": "/projects/P156634/packages/KE-MOWI-47509-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/82"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "description": "Water Works distributio n for Kilifi Town",
+      "process_status": "Signed",
+      "contracts": 1,
+      "first_signed_on": "2021-03-30",
+      "date": "2021-03-30",
+      "href": "/projects/P156634/packages/KE-KIMAWASCO-142995-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "process_status": "Signed",
+      "contracts": 1,
+      "first_signed_on": "2022-01-03",
+      "date": "2022-01-03",
+      "href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "description": "Construction of Sludge treatment facilities in Kilifi an d Mtwapa towns",
+      "process_status": "Signed",
+      "contracts": 1,
+      "first_signed_on": "2024-11-08",
+      "date": "2024-11-08",
+      "href": "/projects/P156634/packages/KE-KIMAWASCO-416959-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "description": "Construction of office block in Garissa and a laboratory/administration building in Dadaab.",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2024-11-18",
+      "date": "2024-11-18",
+      "href": "/projects/P156634/packages/KE-GAWASCO-436012-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s7/3"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "description": "Construction of 12Nr Ab lution Blocks in Kilifi, Mtwapa and Mariakani Towns",
+      "process_status": "Signed",
+      "contracts": 1,
+      "first_signed_on": "2024-11-22",
+      "date": "2024-11-22",
+      "href": "/projects/P156634/packages/KE-KIMAWASCO-459000-CW-DIR",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "description": "Construction of 1No.Feacal Sludge Treatment Plant in Wajir Town.",
+      "process_status": null,
+      "contracts": 1,
+      "first_signed_on": "2025-01-24",
+      "date": "2025-01-24",
+      "href": "/projects/P156634/packages/KE-WAJWASCO-456993-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        }
+      ]
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "process_status": "Pending Implementation",
+      "contracts": 1,
+      "first_signed_on": "2026-06-22",
+      "date": "2026-06-22",
+      "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
+      "linked": [
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s7/3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4"
+        }
+      ]
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "27348420",
+      "doc_key": "pad-2017-04-05",
+      "type": "pad",
+      "document_type": "Project Appraisal Document",
+      "document_date": "2017-04-05",
+      "short_name": "PAD",
+      "sequence": null,
+      "agency": null,
+      "href": "/projects/P156634/documents/pad-2017-04-05",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+          "passage_id": "27348420/v1/annex3.62/1",
+          "paragraph": "62",
+          "paragraph_numbered": true,
+          "section_path": "Annex 3.C",
+          "packages": [
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-MOWI-47509-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-WAJWASCO-456993-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4",
+          "passage_id": "27348420/v1/annex3.62/4",
+          "paragraph": "62",
+          "paragraph_numbered": true,
+          "section_path": "Annex 3.C",
+          "packages": [
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/82",
+          "passage_id": "27348420/v1/82",
+          "paragraph": "82",
+          "paragraph_numbered": true,
+          "section_path": "VI.E",
+          "packages": [
+            "KE-MOWI-47509-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 65
+    },
+    {
+      "document_id": "31128142",
+      "doc_key": "isr-2019-06-04",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2019-06-04",
+      "short_name": "ISR",
+      "sequence": 4,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2019-06-04",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:31128142/v1/s4",
+          "passage_id": "31128142/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "packages": [
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-MOWI-47509-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "31451672",
+      "doc_key": "isr-2019-10-02",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2019-10-02",
+      "short_name": "ISR",
+      "sequence": 5,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2019-10-02",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:31451672/v1/s4",
+          "passage_id": "31451672/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "packages": [
+            "KE-MAWASCO-69995-CS-QCBS",
+            "KE-GAWASCO-67422-CS-QCBS",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-MOWI-47509-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "34277278",
+      "doc_key": "isr-2024-03-08",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2024-03-08",
+      "short_name": "ISR",
+      "sequence": 14,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2024-03-08",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+          "passage_id": "34277278/v1/s6/2",
+          "paragraph": "s6",
+          "paragraph_numbered": false,
+          "section_path": "Results",
+          "packages": [
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-MAWASCO-69995-CS-QCBS"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/3",
+          "passage_id": "34277278/v1/s6/3",
+          "paragraph": "s6",
+          "paragraph_numbered": false,
+          "section_path": "Results",
+          "packages": [
+            "KE-GAWASCO-436012-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:34277278/v1/s4",
+          "passage_id": "34277278/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "Implementation Status and Key Decisions",
+          "packages": [
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-WAJWASCO-456993-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-MOWI-47509-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "34457596",
+      "doc_key": "isr-2025-02-18",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2025-02-18",
+      "short_name": "ISR",
+      "sequence": 16,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2025-02-18",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s4",
+          "passage_id": "34457596/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "4.1",
+          "packages": [
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-WAJWASCO-456993-CW-RFB",
+            "KE-MOWI-47509-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/2",
+          "passage_id": "34457596/v1/s7/2",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "6.2",
+          "packages": [
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-WAJWASCO-456993-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:34457596/v1/s7/3",
+          "passage_id": "34457596/v1/s7/3",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "6.2",
+          "packages": [
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "40038432",
+      "doc_key": "isr-2025-08-18",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2025-08-18",
+      "short_name": "ISR",
+      "sequence": 17,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2025-08-18",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s4",
+          "passage_id": "40038432/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "4.1",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-MOWI-47509-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-WAJWASCO-456993-CW-RFB",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-KIMAWASCO-142995-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:40038432/v1/s7/2",
+          "passage_id": "40038432/v1/s7/2",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "6.2",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "40091292",
+      "doc_key": "isr-2026-03-12",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2026-03-12",
+      "short_name": "ISR",
+      "sequence": 18,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2026-03-12",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s4",
+          "passage_id": "40091292/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "4.1",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB",
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-MOWI-47509-CW-RFB",
+            "KE-WAJWASCO-456993-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:40091292/v1/s7/1",
+          "passage_id": "40091292/v1/s7/1",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "6.2",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    },
+    {
+      "document_id": "40114539",
+      "doc_key": "isr-2026-06-30",
+      "type": "isr",
+      "document_type": "Implementation Status and Results Report",
+      "document_date": "2026-06-30",
+      "short_name": "ISR",
+      "sequence": 19,
+      "agency": null,
+      "href": "/projects/P156634/documents/isr-2026-06-30",
+      "chips": [
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s4",
+          "passage_id": "40114539/v1/s4",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "4.1",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-KIMAWASCO-416959-CW-RFB",
+            "KE-KIMAWASCO-459000-CW-DIR",
+            "KE-GAWASCO-436012-CW-RFB",
+            "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:40114539/v1/s7/3",
+          "passage_id": "40114539/v1/s7/3",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "6.2",
+          "packages": [
+            "KE-NWWDA-541055-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB"
+          ]
+        }
+      ],
+      "more_chips": 0
+    }
+  ],
+  "edges": [
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-67422-CS-QCBS",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/82"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s7/3"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/3"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s7/3"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4"
+    },
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4"
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
+    }
+  ],
+  "more": [
+    {
+      "kind": "packages",
+      "count": 265
+    },
+    {
+      "kind": "isrs",
+      "count": 12
+    },
+    {
+      "kind": "plans",
+      "count": 240
+    },
+    {
+      "kind": "documents",
+      "count": 91
+    }
+  ],
+  "finding": {
+    "contracts": 144,
+    "paragraphs": 116,
+    "documents": 16,
+    "contract_items": [
+      "KE-CWSB-102977-CS-QCBS",
+      "KE-CWSB-150896-CW-RFB",
+      "KE-CWSB-224323-CS-QCBS",
+      "KE-CWSB-232660-CW-RFB",
+      "KE-CWSB-233052-CW-RFB",
+      "KE-CWSB-506334-CW-DIR",
+      "KE-CWSB-565568-GO-RFQ",
+      "KE-CWSB-567630-CW-DIR",
+      "KE-CWSB-67355-CS-QCBS",
+      "KE-CWSB-87234-CS-QCBS",
+      "KE-GAWASCO-154426-CS-QCBS",
+      "KE-GAWASCO-266383-CW-RFB",
+      "KE-GAWASCO-436012-CW-RFB",
+      "KE-GAWASCO-461024-GO-RFQ",
+      "KE-GAWASCO-461026-GO-RFQ",
+      "KE-GAWASCO-461477-GO-RFQ",
+      "KE-GAWASCO-461493-GO-RFQ",
+      "KE-GAWASCO-502993-GO-RFQ",
+      "KE-GAWASCO-505407-GO-RFQ",
+      "KE-GAWASCO-54759-CW-RFB",
+      "KE-GAWASCO-54761-CW-RFB",
+      "KE-GAWASCO-54763-CW-RFB",
+      "KE-GAWASCO-54775-CW-RFB",
+      "KE-GAWASCO-67422-CS-QCBS",
+      "KE-GAWASCO-67425-CS-QCBS",
+      "KE-GAWASCO-67428-CS-QCBS",
+      "KE-GAWASCO-67429-CS-QCBS",
+      "KE-KIMAWASCO-141042-CW-RFB",
+      "KE-KIMAWASCO-142995-CW-RFB",
+      "KE-KIMAWASCO-158691-CW-RFB",
+      "KE-KIMAWASCO-372126-GO-RFQ",
+      "KE-KIMAWASCO-372128-GO-RFQ",
+      "KE-KIMAWASCO-372408-GO-RFQ",
+      "KE-KIMAWASCO-372410-GO-RFQ",
+      "KE-KIMAWASCO-416959-CW-RFB",
+      "KE-KIMAWASCO-459000-CW-DIR",
+      "KE-KIMAWASCO-481608-GO-RFB",
+      "KE-KIMAWASCO-74960-CS-QCBS",
+      "KE-KWAWASCO-105286-CS-QCBS",
+      "KE-KWAWASCO-161466-CS-CDS",
+      "KE-KWAWASCO-201675-CW-RFB",
+      "KE-KWAWASCO-203531-CW-RFB",
+      "KE-KWAWASCO-203535-CW-RFB",
+      "KE-KWAWASCO-203571-CW-RFB",
+      "KE-KWAWASCO-206973-CW-RFB",
+      "KE-KWAWASCO-358910-GO-RFQ",
+      "KE-KWAWASCO-382643-GO-RFQ",
+      "KE-KWAWASCO-382951-GO-RFQ",
+      "KE-KWAWASCO-384019-GO-RFQ",
+      "KE-KWAWASCO-74622-CS-LCS",
+      "KE-MAWASCO-149056-CW-RFB",
+      "KE-MAWASCO-156444-CW-RFB",
+      "KE-MAWASCO-178688-CW-RFB",
+      "KE-MAWASCO-236797-CW-RFB",
+      "KE-MAWASCO-236802-CW-RFB",
+      "KE-MAWASCO-374466-GO-RFQ",
+      "KE-MAWASCO-374469-GO-RFQ",
+      "KE-MAWASCO-374471-GO-RFQ",
+      "KE-MAWASCO-374475-GO-RFQ",
+      "KE-MAWASCO-466270-GO-RFQ",
+      "KE-MAWASCO-501962-CS-INDV",
+      "KE-MAWASCO-501974-CS-INDV",
+      "KE-MAWASCO-69899-CW-RFB",
+      "KE-MAWASCO-69995-CS-QCBS",
+      "KE-MOWASCO-113723-CW-RFB",
+      "KE-MOWASCO-136307-CS-INDV",
+      "KE-MOWASCO-16769-CW-RFB",
+      "KE-MOWASCO-16771-CW-RFB",
+      "KE-MOWASCO-16772-CW-RFB",
+      "KE-MOWASCO-228804-CW-RFB",
+      "KE-MOWASCO-307349-GO-RFB",
+      "KE-MOWASCO-307378-GO-RFB",
+      "KE-MOWASCO-307384-GO-RFB",
+      "KE-MOWASCO-307387-GO-RFQ",
+      "KE-MOWASCO-318293-GO-RFB",
+      "KE-MOWASCO-318332-GO-RFQ",
+      "KE-MOWASCO-79877-CS-QCBS",
+      "KE-MOWI-200359-CS-QCBS",
+      "KE-MOWI-228006-CS-INDV",
+      "KE-MOWI-246482-CS-QCBS",
+      "KE-MOWI-249824-CS-INDV",
+      "KE-MOWI-253591-CS-CDS",
+      "KE-MOWI-30792-CS-QCBS",
+      "KE-MOWI-47509-CW-RFB",
+      "KE-MOWI-476113-GO-RFQ",
+      "KE-NWWDA-207796-CS-INDV",
+      "KE-NWWDA-229129-CW-RFB",
+      "KE-NWWDA-541055-CW-RFB",
+      "KE-NWWDA-541062-CW-RFQ",
+      "KE-TAVEVO-104736-CS-QCBS",
+      "KE-TAVEVO-151304-CW-RFB",
+      "KE-TAVEVO-151330-CW-RFB",
+      "KE-TAVEVO-170154-CW-RFB",
+      "KE-TAVEVO-175703-CW-RFB",
+      "KE-TAVEVO-338455-CW-RFB",
+      "KE-TAVEVO-370761-GO-RFB",
+      "KE-TAVEVO-408447-GO-RFQ",
+      "KE-TAVEVO-409883-GO-RFQ",
+      "KE-TAVEVO-449427-CW-RFB",
+      "KE-TAVEVO-451075-CW-RFB",
+      "KE-TAVEVO-462185-GO-RFQ",
+      "KE-TAVEVO-466579-GO-RFB",
+      "KE-TAVEVO-472192-GO-RFQ",
+      "KE-TAVEVO-482974-GO-RFQ",
+      "KE-TAVEVO-506028-GO-RFQ",
+      "KE-TAVEVO-528767-CW-DIR",
+      "KE-THIWASCO-18892-CS-QCBS",
+      "KE-WAJWASCO-154020-CS-QCBS",
+      "KE-WAJWASCO-168515-GO-RFB",
+      "KE-WAJWASCO-179682-CS-QCBS",
+      "KE-WAJWASCO-205491-CW-RFB",
+      "KE-WAJWASCO-220077-CW-RFB",
+      "KE-WAJWASCO-226565-CW-RFB",
+      "KE-WAJWASCO-228215-GO-RFQ",
+      "KE-WAJWASCO-24562-GO-RFB-2",
+      "KE-WAJWASCO-26664-CW-RFB",
+      "KE-WAJWASCO-356661-GO-RFQ",
+      "KE-WAJWASCO-356671-CW-RFB",
+      "KE-WAJWASCO-372776-CW-RFB",
+      "KE-WAJWASCO-373196-GO-RFQ",
+      "KE-WAJWASCO-373202-GO-RFQ",
+      "KE-WAJWASCO-373886-GO-RFB",
+      "KE-WAJWASCO-380641-GO-RFQ",
+      "KE-WAJWASCO-380648-GO-RFQ",
+      "KE-WAJWASCO-380658-CW-RFQ",
+      "KE-WAJWASCO-418543-GO-RFQ",
+      "KE-WAJWASCO-456993-CW-RFB",
+      "KE-WAJWASCO-503126-CW-RFQ",
+      "KE-WAJWASCO-80857-NC-RFB",
+      "KE-WAJWASCO-80986-CS-QCBS",
+      "KE-WAJWASCO-86091-CS-QCBS",
+      "KE-WAJWASCO-89504-CS-QCBS",
+      "KE-WASREB-134249-CS-QCBS",
+      "KE-WASREB-236373-CS-QCBS",
+      "KE-WASREB-250787-CS-INDV",
+      "KE-WASREB-37529-CS-QCBS",
+      "KE-WSTF-207239-CS-CDS",
+      "KE-WSTF-207294-CS-INDV",
+      "KE-WSTF-207303-CS-INDV",
+      "KE-WSTF-324279-CS-INDV",
+      "KE-WSTF-381008-CS-INDV-FIN MGT CONS",
+      "KE-WSTF-430295-GO-RFB-ELDOWAS",
+      "KE-WSTF-430943-GO-RFB-NCWSC01",
+      "KE-WSTF-430946-GO-RFB-NCWSC02"
+    ],
+    "paragraph_items": [
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "4.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-03-12",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "4.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2019-06-04",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "4.1"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2019-10-02",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-06-30",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "4.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-09-28",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2021-06-16",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2022-08-09",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "82",
+        "paragraph_numbered": true,
+        "section_path": "VI.E"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-03-12",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-12-17",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Project Paper",
+        "short_name": "Project Paper",
+        "document_date": "2021-05-24",
+        "paragraph": "s12",
+        "paragraph_numbered": false,
+        "section_path": "IV"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-06-30",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-04-01",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Paper",
+        "short_name": "Project Paper",
+        "document_date": "2021-05-24",
+        "paragraph": "s12",
+        "paragraph_numbered": false,
+        "section_path": "IV"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "32",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "11",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2023-08-11",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s61",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2022-08-09",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "37",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "39",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08",
+        "paragraph": "s4",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "33",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "70",
+        "paragraph_numbered": true,
+        "section_path": "VI.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "13",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s34",
+        "paragraph_numbered": false,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "60",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s24",
+        "paragraph_numbered": false,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "12",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "13",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "45",
+        "paragraph_numbered": true,
+        "section_path": "IV.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "79",
+        "paragraph_numbered": true,
+        "section_path": "VI.D"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "38",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "46",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s57",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s61",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s64",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "17",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s24",
+        "paragraph_numbered": false,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "61",
+        "paragraph_numbered": true,
+        "section_path": "V.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "74",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Annex 1"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "17",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "19",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "22",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "28",
+        "paragraph_numbered": true,
+        "section_path": "II.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "18",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "28",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "34",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "4",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "11",
+        "paragraph_numbered": true,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s81",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "67",
+        "paragraph_numbered": true,
+        "section_path": "VI.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "25",
+        "paragraph_numbered": true,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.1"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s82",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s82",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-06-30",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "65",
+        "paragraph_numbered": true,
+        "section_path": "VI.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "2",
+        "paragraph_numbered": true,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s2",
+        "paragraph_numbered": false,
+        "section_path": "VI.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s80",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s87",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "24",
+        "paragraph_numbered": true,
+        "section_path": "I.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "12",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s47",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.A"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08",
+        "paragraph": "s2",
+        "paragraph_numbered": false,
+        "section_path": "Project Development Objectives"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "6.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-03-12",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-03-12",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "14",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "16",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "32",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "33",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "41",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Annex 1"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "14",
+        "paragraph_numbered": true,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s83",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s83",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "15",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2023-08-11",
+        "paragraph": "s2",
+        "paragraph_numbered": false,
+        "section_path": "Project Development Objectives"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2023-08-11",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19",
+        "paragraph": "s2",
+        "paragraph_numbered": false,
+        "section_path": "2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2023-08-11",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-06-30",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "6.1"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18",
+        "paragraph": "s7",
+        "paragraph_numbered": false,
+        "section_path": "6.2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "5"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2019-10-02",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "4",
+        "paragraph_numbered": true,
+        "section_path": "I.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "9",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "44",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s81",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s81",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s86",
+        "paragraph_numbered": false,
+        "section_path": "Annex 5"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-12-17",
+        "paragraph": "s2",
+        "paragraph_numbered": false,
+        "section_path": "Project Development Objectives"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-12-17",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08",
+        "paragraph": "s6",
+        "paragraph_numbered": false,
+        "section_path": "Results"
+      }
+    ],
+    "document_items": [
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-02-18"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-03-12"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2019-06-04"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2025-08-18"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2019-10-02"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-03-08"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2026-06-30"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-09-28"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2021-06-16"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2022-08-09"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-12-17"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2024-08-19"
+      },
+      {
+        "document_type": "Project Paper",
+        "short_name": "Project Paper",
+        "document_date": "2021-05-24"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2020-04-01"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2023-08-11"
+      }
+    ]
+  },
+  "shown": 20,
+  "total": 628,
+  "threshold": "0.50",
+  "coverage": {
+    "read": 32,
+    "total": 351,
+    "source_key": "documents"
+  }
+}

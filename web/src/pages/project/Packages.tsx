@@ -1,8 +1,8 @@
 // A project's Packages (the 21 brief, section 4.1), at the end of its Procurement tab: every activity in
 // each implementing agency's latest Procurement Plan, by STEP reference, 20 a page, with a List search
 // that filters on the server as you type. ?packages_q= and ?packages_page= keep the search and the page in
-// the address. A reference links to its row in that agency's latest plan check, which brief 10 and ticket
-// 14 support (…/:agencyId/:version#{reference}). Rows keep the order the route gives: agencies with the
+// the address. A reference links to its activity page, the contract trail (ticket 22; the 22 brief, section 5.2),
+// at /projects/:pid/packages/:stepRef. Rows keep the order the route gives: agencies with the
 // newest plan first, then each plan's own row order. Below a page area of 1024 px the rows are cards.
 //
 // A reference can be listed by two agencies' latest plans, such as NWWDA-WSDP-03-2019-2020, so each row is
@@ -105,8 +105,8 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
         activity: (
           <>
             <TextLink
-              href={`/projects/${pid}/procurement/${row.agency_id}/${row.plan_date}#${encodeURIComponent(row.activity_reference_no)}`}
-              className="font-mono font-medium wrap-anywhere"
+              href={`/projects/${pid}/packages/${encodeURIComponent(row.activity_reference_no)}`}
+              className="inline-flex min-h-6 items-center font-mono font-medium wrap-anywhere"
             >
               {row.activity_reference_no}
             </TextLink>
