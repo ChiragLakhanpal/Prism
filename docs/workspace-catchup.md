@@ -1653,6 +1653,8 @@ Run this from the main checkout:
 
 It worked if the first run's diff shows the new sentence in `### get_disagreements` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
 
+**Ran on October 25, 2026 (orchestrator), from 933f3a5.** Both passed. The first run found that `strata-orchestrator` version 3 differed from the repo in its instructions and its tools, with the diff in `### get_disagreements`, and made version 4, which matches the repo. The `--check` run exited 0: version 4 matches the repo with no difference in its model, instructions, tools, description or guardrail (strata-guardrail).
+
 ## Ticket 64, step 3 of 3: the showcase disagreement's sides keep their words once Prompt Shields has screened them
 
 The merger parked this step on October 25, 2026, after merge commit 6c17261, while the warehouse's daily limit held. It has no command of its own. Run it after ticket 11's step 4 of 4, which stores a Prompt Shields result for every passage. Until then, `get_disagreements` on the warehouse gives every side that rests on a passage without its text, under `not_screened`, as `search_passages` leaves such passages out. In the SQL editor:
