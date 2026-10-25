@@ -365,8 +365,8 @@ export const copy = {
     },
     // {count} is a word from one to nine, then numerals.
     provenOthers: {
-      one: "The other one needed no model, because its numbers and quotes matched.",
-      many: "The other {count} needed no model, because their numbers and quotes matched.",
+      one: "The other one needed no model, because everything it stated matched a record or a page.",
+      many: "The other {count} needed no model, because everything they stated matched a record or a page.",
     },
     // When no clause below applies.
     notCheckedFallback: "whether the sources themselves are right",
@@ -592,9 +592,16 @@ export const copy = {
             : `A model judged ${judgedText} sentences, and ${followed} of ${judged} followed from their sources.`,
         proven: (count: number, countText: string) =>
           count === 1
-            ? "The other one needed no model, because its numbers and quotes matched."
-            : `The other ${countText} needed no model, because their numbers and quotes matched.`,
-        notJudged: "No sentence needed a model, because the numbers and quotes in each one matched.",
+            ? "The other one needed no model, because everything it stated matched a record or a page."
+            : `The other ${countText} needed no model, because everything they stated matched a record or a page.`,
+        // When no model was asked: every sentence I kept was proven by checks 1 to 3, since each other sentence
+        // that stood went to the judge, and a sentence the earlier checks removed is never counted here.
+        notJudged: (kept: number, keptText: string) =>
+          kept === 0
+            ? "No sentence was left for a model to judge."
+            : kept === 1
+              ? "The sentence I kept needed no model, because everything it stated matched a record or a page."
+              : `The ${keptText} sentences I kept needed no model, because everything they stated matched a record or a page.`,
         judgeSilent: (count: number, countText: string) =>
           count === 1
             ? "The model that judges sentences did not respond, so I removed the one sentence it had to judge."

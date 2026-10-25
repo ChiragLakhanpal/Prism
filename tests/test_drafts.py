@@ -204,9 +204,28 @@ def test_a_note_sentence_its_row_does_not_support_and_advice_with_no_lesson_are_
     assert files.check_line(checks, load_draft_kinds().kinds["review_notes"]) == (
         "Checked: 6 of 6 numbers match records; 4 of 4 dates match records. "
         "Judged by a model: 1 of 1 sentence follows from its sources. "
-        "The other five needed no model, because their numbers and quotes matched. "
+        "The other five needed no model, because everything they stated matched a record or a page. "
         "Not checked: whether the plan's published records are complete, "
         "or whether these notes are what you would tell the borrower.")
+
+
+def test_a_note_sentence_that_cites_nothing_is_removed_and_never_saved(drafting):
+    """Ticket 24's verify F1, round 2, on a draft: a summary that cites nothing has nothing to be checked against, so
+    check 2 removes it before the judge, and the judge is not called, because checks 1 to 3 prove the rest."""
+    case = load_cases(WRITER_CASES)["review-notes-uncited-summary"]
+    judge = ScriptedJudge(case)
+    app = drafting(case.id, judge=judge)
+
+    _, draft_id = draft_review_notes(app)
+
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+    assert [(item["key"], item["sentence"], item["reason"]) for item in draft["removed"]] == [
+        (MARKED[2], "The agency was to blame for the delay.", "no_source")]
+    [note] = [note for note in draft["notes"] if note["activity_reference_no"] == MARKED[2]]
+    assert [sentence["text"] for sentence in note["sentences"]] == [
+        "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00."]
+    assert judge.calls == []
+    assert draft["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
 
 
 def test_with_no_judge_connected_a_note_sentence_that_needs_one_is_removed_and_never_saved_unchecked(drafting):

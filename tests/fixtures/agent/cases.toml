@@ -179,6 +179,24 @@ as_of = 2026-10-01
 recording = "p156634-plan-not-yet-public"
 
 [[cases]]
+id = "p156634-uncited-blame"
+says = """The agent answers as in p156634-plan-not-yet-public, and adds a second summary that cites nothing and blames \
+the agency (ticket 24's verify F1, round 2). check_plan abstained, so both summaries go to the judge in one call, \
+each against that abstention alone: the first says no more than the abstention and stands, and the second does not \
+follow, so it is removed."""
+question = "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-01
+recording = "p156634-plan-not-yet-public"
+
+[[cases.plant_claims]]
+sentence = "The agency was late in publishing its plan."
+kind = "summary"
+evidence_ids = []
+numbers = []
+dates = []
+
+[[cases]]
 id = "p130164-fourth-round"
 says = """The agent asks for a fourth round of tool calls, which never runs, then cites ICR paragraph 88, which \
 only that round would have found. The answer keeps what the first three rounds support."""
@@ -398,6 +416,23 @@ recording = "p130164-rebidding"
 sentence = "The completion report blamed the contractors for the rebidding."
 kind = "summary"
 evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = []
+dates = []
+
+[[cases]]
+id = "p130164-uncited-summary"
+says = """The agent adds a summary that cites nothing and blames the contractors (ticket 24's verify F1, round 2). No \
+tool abstained in this turn, so the sentence has nothing it could rest on: check 2 removes it (no_source) before \
+the judge, and the judge is never called, because checks 1 to 3 prove the other three sentences."""
+question = "Why were works contracts in P130164 advertised again?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-rebidding"
+
+[[cases.plant_claims]]
+sentence = "The contractors were to blame for the rebidding."
+kind = "summary"
+evidence_ids = []
 numbers = []
 dates = []
 

@@ -91,7 +91,7 @@ export function sixChecks(checks: ChecksEvent): string[] {
       ? [six.judgeSilent(judge.unjudged, formatCount(judge.unjudged))]
       : judge.called
         ? [six.judged(judge.judged, formatCount(judge.judged), judge.followed), ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : [])]
-        : [six.notJudged];
+        : [six.notJudged(judge.proven, formatCount(judge.proven))];
   const disputed = checks.disagreements?.disputed ?? 0;
   const sixth =
     disputed === 0

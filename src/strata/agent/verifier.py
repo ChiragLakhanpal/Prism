@@ -20,7 +20,10 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    dates, such as its report's date: its text is never a value, and its page, paragraph and version
    numbers say where it is, not what the report counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
-   must cite at least one.
+   must cite at least one. So must a summary, unless a tool abstained this turn: a summary that cites nothing
+   may only say what a tool could not answer ("That version of the plan was not yet public..."), and check 4
+   judges it against those abstentions. Any other sentence that cites nothing is removed (no_source), since
+   nothing could show it is true (ticket 24's verify F1).
 3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation and
    whether a quote mark is curly or straight, and starts and ends where the page's words and numbers
    do: "10" is not a quote from "108 of 328", nor "334 km" from "2,334 km".
@@ -34,8 +37,10 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    is proven when it states at least one number, date or quote, every one of them matched, and every run
    of quoted words holds a word, not only a number: 'Only "108" works contracts were signed' quotes a
    number that backs any meaning, so it goes to the judge. Advice and summary sentences always go to the
-   judge, except a summary that cites nothing, which has nothing to be judged against. A sentence the judge
-   says does not follow is removed (not_supported). When the judge does not respond, every sentence it
+   judge. A summary that cites nothing goes with the turn's abstentions as its only sources (each named
+   "<tool>:abstention", as the agent read it, with no date after the as-of date), so it follows only when it
+   says no more than what a tool could not answer. A sentence the judge says does not follow is removed
+   (not_supported, or no_source when it cites nothing). When the judge does not respond, every sentence it
    had to judge is removed (judge_unavailable), so none is shown unchecked.
 5. A sentence of kind advice cites at least one lesson or comparable package: evidence from a tool whose
    registry entry says its rows back advice (config/tools.toml, backs_advice).
@@ -615,7 +620,9 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     # Check 2: every cited id came back this turn.
     returned = [evidence for evidence in claim.evidence_ids if facts.came_back(evidence)]
     reasons += [Reason(2, NOT_RETURNED, evidence) for evidence in claim.evidence_ids if evidence not in returned]
-    if not claim.evidence_ids and claim.kind in MUST_CITE:
+    # A summary that cites nothing may only say what a tool could not answer this turn, so it stands for check 4
+    # only when a tool abstained; any other sentence that cites nothing has nothing to be checked against.
+    if not claim.evidence_ids and (claim.kind in MUST_CITE or not facts.abstentions()):
         reasons.append(Reason(2, NO_SOURCE))
     records = [(evidence, facts.get(evidence)) for evidence in returned if not _is_passage(facts.get(evidence))]
     # Check 3: the words in the sentence's quote marks are its quote, and its quote is on its page. Words
@@ -685,6 +692,7 @@ def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
 
 PROJECT = re.compile(r"^P\d{6}$")
 DISAGREEMENTS_TOOL = "get_disagreements"
+ABSTENTION = "abstention"  # what the judge calls a tool's abstention among a sentence's sources: check_plan:abstention
 
 
 def proven(sentence: Checked) -> bool:
@@ -744,6 +752,13 @@ def _project(row: Mapping | None) -> str | None:
         if isinstance(value, str) and PROJECT.match(value):
             return value
     return None
+
+
+def _abstention_text(tool: str, abstention: Mapping, limit: int) -> str:
+    """What the judge reads of one abstention: the tool and what it said it could not answer."""
+    import json
+
+    return json.dumps(_plain({"tool": tool, "abstention": abstention}), ensure_ascii=False)[:limit]
 
 
 def _source_text(row: Mapping | None, limit: int) -> str:
@@ -822,7 +837,9 @@ class AnswerCheck:
                 if any(_rests_on(sentence, row) for sentence in self.standing())]
 
     def questions(self) -> list[Question]:
-        """Check 4's questions: each standing sentence that checks 1 to 3 did not prove and that cites a source."""
+        """Check 4's questions: every standing sentence that checks 1 to 3 did not prove, each with the sources it
+        cites, or, for a summary that cites nothing (which check 2 lets stand only when a tool abstained), with the
+        turn's abstentions alone, so it follows only when it says no more than what a tool could not answer."""
         asked = []
         for sentence in self.standing():
             if proven(sentence):
@@ -831,10 +848,16 @@ class AnswerCheck:
                 asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
                     Source(evidence, _source_text(self.facts.get(evidence), self.source_chars))
                     for evidence in sentence.claim.evidence_ids)))
+            else:
+                asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
+                    Source(f"{tool}:{ABSTENTION}", _abstention_text(tool, abstention, self.source_chars))
+                    for tool, abstention in self.facts.abstentions())))
         return asked
 
     def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
-        """The judge's answers to the questions, or None when it did not respond."""
+        """The judge's answers to the questions, or None when it did not respond. A sentence that cites nothing
+        and does not follow from what the tools could not answer is removed because it cited no source; the
+        judge's reason is kept with it for the run log."""
         self.judge_called, self.judge_responded = True, judgements is not None
         said = {judgement.index: judgement for judgement in judgements or []}
         for question in questions:
@@ -842,7 +865,10 @@ class AnswerCheck:
             if judgements is None:
                 self._fail(question.index, Reason(4, JUDGE_UNAVAILABLE))
             elif not said[question.index].follows:
-                self._fail(question.index, Reason(4, NOT_SUPPORTED, said[question.index].reason))
+                uncited = not self.sentences[question.index].claim.evidence_ids
+                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED,
+                                                  said[question.index].reason))
+
 
     def verdict(self) -> Verdict:
         sentences = tuple(self.sentences[index] for index in sorted(self.sentences))

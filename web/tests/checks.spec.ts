@@ -42,7 +42,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 1 of 1 sentence follows from its sources. The other three needed no model, because their numbers and quotes matched.",
+    "Judged by a model: 1 of 1 sentence follows from its sources. The other three needed no model, because everything they stated matched a record or a page.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
@@ -52,7 +52,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
     "6 of 6 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
     "2 of 2 quotes were word for word on their pages.",
-    "A model judged one sentence, and 1 of 1 followed from its sources. The other three needed no model, because their numbers and quotes matched.",
+    "A model judged one sentence, and 1 of 1 followed from its sources. The other three needed no model, because everything they stated matched a record or a page.",
     "1 of 1 sentence that gave advice cited a lesson or a comparable package.",
     "No sentence rested on a report that another report disagrees with.",
   ]);

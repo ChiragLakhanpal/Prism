@@ -112,9 +112,9 @@ def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
 
 
 def remember(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -> None:
-    """Keep every row a tool returned in the turn's Facts, with its summary of derived figures when it has one
-    and the records inside its rows that the registry names (nested_rows, such as each side of a disagreement),
-    so the verifier can check the answer against them."""
+    """Keep every row a tool returned in the turn's Facts, with its summary of derived figures when it has one,
+    the records inside its rows that the registry names (nested_rows, such as each side of a disagreement) and
+    its abstention, so the verifier can check the answer against them."""
     nested = tools[name].result.nested_rows if name in tools else ()
     for row in result["rows"]:
         facts.record(row["evidence_id"], row, tool=name)
@@ -122,6 +122,8 @@ def remember(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -
             keep_nested(facts, record, name)
     if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
         facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+    if result.get("abstention"):  # what the tool could not answer, which a summary citing nothing may say
+        facts.abstained(name, result["abstention"])
 
 
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
@@ -156,9 +158,12 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             return {"error": "permission"}, note
         except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
             raise AgentError("data_service", str(error)) from error
-        remember(turn.facts, name, result, tools_held)
+        shown = for_agent(result, as_of)
+        # The turn keeps what the agent got: the same rows, and an abstention with no date after the as-of date, so
+        # the judge reads a summary that cites nothing against what the agent read (src/strata/agent/verifier.py).
+        remember(turn.facts, name, shown, tools_held)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
-        return for_agent(result, as_of), note
+        return shown, note
 
     async def run(turn: Turn) -> AsyncIterator[Event]:
         agent = agent_for(turn)

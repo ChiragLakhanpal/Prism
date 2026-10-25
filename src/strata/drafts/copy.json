@@ -73,8 +73,8 @@
       "many": "{part} of {whole} sentences follow from their sources"
     },
     "provenOthers": {
-      "one": "The other one needed no model, because its numbers and quotes matched.",
-      "many": "The other {count} needed no model, because their numbers and quotes matched."
+      "one": "The other one needed no model, because everything it stated matched a record or a page.",
+      "many": "The other {count} needed no model, because everything they stated matched a record or a page."
     },
     "notCheckedFallback": "whether the sources themselves are right",
     "numbers": {

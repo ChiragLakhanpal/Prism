@@ -7,6 +7,7 @@ values come from the ICR of October 10, 2019 and ISR 7 (tests/ground_truth/value
 under test.
 """
 
+import json
 import re
 import tomllib
 from pathlib import Path
@@ -53,6 +54,59 @@ def test_the_judge_is_not_called_when_checks_1_to_3_prove_every_sentence(fixture
     assert checks["judge"] == {"called": False, "responded": None, "judged": 0, "followed": 0, "unjudged": 0,
                                "proven": 3}
     assert [step for step in asked.of("step") if step["kind"] == "judge"] == []
+
+
+def test_a_summary_that_cites_nothing_where_no_tool_abstained_is_removed_with_no_source_and_never_shown(fixture_db):
+    """Ticket 24's verify F1, round 2: a summary that cites nothing used to skip check 4 and reach the screen. No
+    tool abstained in this turn, so nothing could back it: check 2 removes it, with its copy-file reason, and the
+    judge is still not called, because checks 1 to 3 prove the other three sentences."""
+    asked = ask(fixture_db, "p130164-uncited-summary")
+
+    assert [(item["sentence"], item["reason"], item["reasons"][0]["check"]) for item in asked.of("removed")] == [
+        ("The contractors were to blame for the rebidding.", "no_source", 2)]
+    assert copy_reason("no_source") == {"item": "It cited no source.", "joined": "it cited no source"}
+    assert "The contractors were to blame for the rebidding." not in [item["text"] for item in asked.of("sentence")]
+    assert len(asked.of("sentence")) == 3
+    assert asked.judge.calls == []
+    judge = asked.of("checks")[0]["judge"]
+    assert (judge["called"], judge["judged"], judge["proven"]) == (False, 0, 3)
+
+
+NOT_PUBLIC = "That version of the plan was not yet public on the date you chose, so I did not check it."
+
+
+def test_a_summary_that_cites_nothing_is_judged_once_against_the_abstention_a_tool_returned(fixture_db):
+    """check_plan abstained (version_not_public), so the summary that says so may cite nothing: it goes to the
+    judge, with that abstention as its only source, and stands when it says no more than the abstention."""
+    asked = ask(fixture_db, "p156634-plan-not-yet-public")
+
+    [call] = asked.judge.calls
+    assert [question.sentence for question in call] == [NOT_PUBLIC]
+    [source] = call[0].sources
+    assert source.evidence_id == "check_plan:abstention"
+    # The judge reads the abstention the agent got, with no date after the as-of date (ADR 0002): the plan became
+    # public on October 9, 2026 (values.toml, the demo plan's plan_date), after October 1.
+    got = json.loads(asked.agent.received[1]["input"][0]["output"])["abstention"]
+    assert json.loads(source.text) == {"tool": "check_plan", "abstention": got}
+    assert got["reason"] == "version_not_public" and "2026-10-09" not in source.text
+    assert [item["text"] for item in asked.of("sentence")] == [NOT_PUBLIC]
+    assert asked.of("removed") == []
+    judge = asked.of("checks")[0]["judge"]
+    assert (judge["called"], judge["judged"], judge["followed"], judge["proven"]) == (True, 1, 1, 0)
+
+
+def test_a_summary_that_cites_nothing_and_says_more_than_the_abstention_is_removed_in_the_same_call(fixture_db):
+    asked = ask(fixture_db, "p156634-uncited-blame")
+
+    assert len(asked.judge.calls) == 1
+    assert [question.sentence for question in asked.judge.calls[0]] == [
+        NOT_PUBLIC, "The agency was late in publishing its plan."]
+    # It cites nothing, so its reason says so; the judge's own sentence is kept with it for the run log.
+    [removed] = asked.of("removed")
+    assert (removed["sentence"], removed["reason"], removed["reasons"][0]["check"]) == (
+        "The agency was late in publishing its plan.", "no_source", 4)
+    assert "says nothing about the agency being late" in removed["reasons"][0]["text"]
+    assert [item["text"] for item in asked.of("sentence")] == [NOT_PUBLIC]
 
 
 def test_a_quote_of_only_a_number_and_an_ordinal_go_to_the_judge_which_removes_them(fixture_db):

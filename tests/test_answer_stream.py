@@ -395,14 +395,25 @@ class Answers:
             {"type": "output_text", "text": json.dumps({"claims": self.claims})}]}]}
 
 
+def check_1(parsed):
+    """How check 1 read each sentence the agent wrote, in order: the reasons it gave for the sentences it failed, and
+    the sentences it let through. These tests write summaries that cite nothing, and no tool abstained, so check 2
+    removes every one of them too (no_source, ticket 24's verify F1): only check 1's reasons say how the numbers in a
+    sentence were read."""
+    written = sorted([(item["index"], item["text"], []) for item in of(parsed, "sentence")] + [
+        (item["index"], item["sentence"], [(reason["code"], reason["text"]) for reason in item["reasons"]
+                                           if reason["check"] == 1]) for item in of(parsed, "removed")])
+    return [reasons for _, _, reasons in written if reasons], [text for _, text, reasons in written if not reasons]
+
+
 def test_numbers_and_dates_the_agent_lists_but_does_not_write_are_checked_too():
     unwritten = {"sentence": "Bids took a while to open.", "kind": "summary", "evidence_ids": [],
                  "numbers": [], "dates": ["45", "March 3, 2015"], "quote": None}
 
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(unwritten), no_engine))))
 
-    assert [reason["code"] for reason in of(parsed, "removed")[0]["reasons"]] == [
-        "number_not_in_records", "date_not_in_records"]
+    assert [[code for code, _ in reasons] for reasons in check_1(parsed)[0]] == [
+        ["number_not_in_records", "date_not_in_records"]]
 
 
 def test_a_fiscal_year_is_a_number_a_record_must_hold():
@@ -411,8 +422,7 @@ def test_a_fiscal_year_is_a_number_a_record_must_hold():
 
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(fiscal), no_engine))))
 
-    assert [(reason["code"], reason["text"]) for reason in of(parsed, "removed")[0]["reasons"]] == [
-        ("number_not_in_records", "FY2019")]
+    assert check_1(parsed)[0] == [[("number_not_in_records", "FY2019")]]
 
 
 def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
@@ -435,12 +445,13 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         claim("The works slowed in the second half.")),
         no_engine))))
 
-    assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
+    failed, passed = check_1(parsed)
+    assert failed == [
         [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")],
         [("number_not_in_records", "One")], [("number_not_in_records", "one")], [("number_not_in_records", "One")],
         [("number_not_in_records", "Zero")], [("number_not_in_records", "one")], [("number_not_in_records", "half")],
         [("number_not_in_records", "one")], [("number_not_in_records", "FY2019")]]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+    assert passed == [
         "No one said why.", "Each one was signed late.", "The works started in the first half of the year.",
         "The contractors' bids came late, and the World Bank's review followed.",
         "The works slowed in the second half."]
@@ -462,9 +473,8 @@ def test_the_middle_half_and_the_middle_one_name_parts_of_a_past_range_not_amoun
         claim("Half of the packages were late."), claim("Only one bid came in for the middle half.")),
         no_engine))))
 
-    assert removed_reasons(parsed) == [[("number_not_in_records", "Half")], [("number_not_in_records", "one")]]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
-        "The middle half of these packages took a while.", "The middle one took longer."]
+    assert check_1(parsed) == ([[("number_not_in_records", "Half")], [("number_not_in_records", "one")]], [
+        "The middle half of these packages took a while.", "The middle one took longer."])
 
 
 def removed_reasons(parsed):
@@ -497,7 +507,8 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         claim("The IDA 2019 funds came late."),
     ), no_engine))))
 
-    assert removed_reasons(parsed) == [
+    failed, passed = check_1(parsed)
+    assert failed == [
         [("number_not_in_records", "45")],
         [("number_not_in_records", "1.2")],
         [("number_not_in_records", "10"), ("number_not_in_records", "15")],
@@ -511,7 +522,7 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         [("number_not_in_records", "45")],
         [("date_not_in_records", "2019")],
     ]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+    assert passed == [
         "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b.",
         "IDA 51030KE paid for NWWDA-WSDP-03-2019-2020 and MWI-WSDP-001.",
         "It was financed by IDA / 60300.",
