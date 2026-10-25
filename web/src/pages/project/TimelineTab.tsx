@@ -296,7 +296,7 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
 
 // The chart card's loading look: the title's two bars, then the 352 px box with the real lane labels and bars for
 // each row of marks, and two caption bars for the notes. Below 768 px, five list items.
-export function TimelineSkeleton({ wide }: { wide: boolean }) {
+function TimelineSkeleton({ wide }: { wide: boolean }) {
   if (!wide) {
     return (
       <div aria-hidden="true" className="mt-4 flex flex-col gap-2">
@@ -322,7 +322,7 @@ export function TimelineSkeleton({ wide }: { wide: boolean }) {
 
 // The chart card while the timeline loads. Its title placeholder has the finding's size and its likely number of
 // lines at this card's width, so the subtitle and the chart stay where they are when the data arrive.
-function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }) {
+export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }) {
   const [box, width] = useWidth<HTMLDivElement>();
   const chart = wide && width >= CHART_MIN;
   const lines = titleLines(chart, width);

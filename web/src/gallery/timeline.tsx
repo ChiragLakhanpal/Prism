@@ -24,7 +24,7 @@ import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { sideShort, type SideData } from "../lib/disagreement";
 import type { Item, Timeline } from "../lib/timeline";
-import { TimelineCard, TimelineSkeleton } from "../pages/project/TimelineTab";
+import { TimelineCard, TimelineLoading } from "../pages/project/TimelineTab";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
 
@@ -126,11 +126,8 @@ export function timelinePage(): GalleryPage {
       {
         id: "loading",
         title: s.loading,
-        body: (
-          <div className="rounded-md border border-line bg-surface p-6">
-            <TimelineSkeleton wide />
-          </div>
-        ),
+        // The card as the tab draws it while the timeline loads, its title placeholder sized to the finding.
+        body: <TimelineLoading wide slow={false} />,
       },
       {
         id: "empty",
