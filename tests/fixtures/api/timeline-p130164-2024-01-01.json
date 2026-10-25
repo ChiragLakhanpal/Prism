@@ -1,0 +1,897 @@
+{
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "status": "Closed"
+  },
+  "as_of": "2024-01-01",
+  "asked_as_of": "2024-01-01",
+  "view": "staff",
+  "items": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:1-9",
+      "kind": "band",
+      "lane": "how",
+      "date": "2014-02-22",
+      "end": "2017-07-26",
+      "public_from": "2017-05-23",
+      "evidence_id": "ratings:P130164:pdo_progress:1-9",
+      "rating": "Satisfactory",
+      "first": 1,
+      "last": 9,
+      "count": 9
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "doc:26733307",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "doc:26733307",
+      "document_id": "26733307",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR24046",
+      "version": 1,
+      "doc_key": "isr-2016-08-26",
+      "sequence": 7,
+      "rating": "Satisfactory",
+      "replaced_by": null,
+      "reissued": false,
+      "disagrees_with": [
+        "disagreement:437378890475ef48"
+      ]
+    },
+    {
+      "id": "record:IN-RRSMP-7431-CW-RFB",
+      "kind": "record",
+      "type": "contract",
+      "lane": "what",
+      "date": "2017-06-15",
+      "public_from": "2017-07-19",
+      "evidence_id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "signed_in": "award notice",
+      "award_notice_id": "OP00044090",
+      "signed_amount_usd": null,
+      "project_id": "P130164"
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:10-11",
+      "kind": "band",
+      "lane": "how",
+      "date": "2017-07-26",
+      "end": "2018-04-10",
+      "public_from": "2017-12-18",
+      "evidence_id": "ratings:P130164:pdo_progress:10-11",
+      "rating": "Moderately Satisfactory",
+      "first": 10,
+      "last": 11,
+      "count": 2
+    },
+    {
+      "id": "event:restructuring",
+      "kind": "event",
+      "type": "restructuring",
+      "lane": "how",
+      "date": "2017-07-27",
+      "public_from": "2019-11-02",
+      "evidence_id": "strata.gold.passage:31525018/v1/11",
+      "source": {
+        "type": "icr",
+        "sequence": null,
+        "date": "2019-10-10"
+      }
+    },
+    {
+      "id": "doc:29794672",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2018-04-10",
+      "public_from": "2018-04-10",
+      "evidence_id": "doc:29794672",
+      "document_id": "29794672",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR31603",
+      "version": 1,
+      "doc_key": "isr-2018-04-10",
+      "sequence": 12,
+      "rating": "Moderately Unsatisfactory",
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:12-13",
+      "kind": "band",
+      "lane": "how",
+      "date": "2018-04-10",
+      "end": "2018-12-28",
+      "public_from": "2018-12-28",
+      "evidence_id": "ratings:P130164:pdo_progress:12-13",
+      "rating": "Moderately Unsatisfactory",
+      "first": 12,
+      "last": 13,
+      "count": 2
+    },
+    {
+      "id": "doc:31525018",
+      "kind": "report",
+      "type": "icr",
+      "lane": "why",
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "doc:31525018",
+      "document_id": "31525018",
+      "document_type": "Implementation Completion and Results Report",
+      "report_number": "ICR4803",
+      "version": 1,
+      "doc_key": "icr-2019-10-10",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false,
+      "disagrees_with": [
+        "disagreement:437378890475ef48",
+        "disagreement:51ea6e6516c0ea63"
+      ]
+    },
+    {
+      "id": "disagreement:437378890475ef48",
+      "kind": "disagreement",
+      "lane": null,
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "disagreement:437378890475ef48",
+      "disagreement_id": "437378890475ef48",
+      "attribute": "pdo_progress",
+      "rule_id": "outcome",
+      "sides": [
+        {
+          "item_id": "doc:26733307",
+          "evidence_id": "strata.gold.passage:26733307/v1/s4",
+          "assertion_id": "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
+          "type": "isr",
+          "sequence": 7,
+          "document_type": "Implementation Status and Results Report",
+          "paragraph": null,
+          "made_at": "2016-08-26",
+          "public_from": "2016-08-26",
+          "lane": "how",
+          "doc_key": "isr-2016-08-26",
+          "leaned": false
+        },
+        {
+          "item_id": "doc:31525018",
+          "evidence_id": "strata.gold.passage:31525018/v1/78",
+          "assertion_id": "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+          "type": "icr",
+          "sequence": null,
+          "document_type": "Implementation Completion and Results Report",
+          "paragraph": "78",
+          "made_at": "2019-10-10",
+          "public_from": "2019-11-02",
+          "lane": "why",
+          "doc_key": "icr-2019-10-10",
+          "leaned": true
+        }
+      ],
+      "after": "doc:31525018"
+    },
+    {
+      "id": "doc:31906731",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2020-03-27",
+      "public_from": "2020-03-27",
+      "evidence_id": "doc:31906731",
+      "document_id": "31906731",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 1,
+      "doc_key": "icr-review-2020-03-27",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": {
+        "evidence_id": "doc:34056616",
+        "date": "2023-05-04"
+      },
+      "reissued": false
+    },
+    {
+      "id": "doc:34056616",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "doc:34056616",
+      "document_id": "34056616",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 2,
+      "doc_key": "icr-review-2023-05-04",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": true,
+      "disagrees_with": [
+        "disagreement:51ea6e6516c0ea63"
+      ]
+    },
+    {
+      "id": "disagreement:51ea6e6516c0ea63",
+      "kind": "disagreement",
+      "lane": null,
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "disagreement:51ea6e6516c0ea63",
+      "disagreement_id": "51ea6e6516c0ea63",
+      "attribute": "efficiency",
+      "rule_id": "outcome",
+      "sides": [
+        {
+          "item_id": "doc:31525018",
+          "evidence_id": "strata.gold.passage:31525018/v1/44",
+          "assertion_id": "strata.gold.passage:31525018/v1/44#P130164/efficiency",
+          "type": "icr",
+          "sequence": null,
+          "document_type": "Implementation Completion and Results Report",
+          "paragraph": "44",
+          "made_at": "2019-10-10",
+          "public_from": "2019-11-02",
+          "lane": "why",
+          "doc_key": "icr-2019-10-10",
+          "leaned": false
+        },
+        {
+          "item_id": "doc:34056616",
+          "evidence_id": "strata.gold.passage:34056616/v2/5",
+          "assertion_id": "strata.gold.passage:34056616/v2/5#P130164/efficiency",
+          "type": "icr_review",
+          "sequence": null,
+          "document_type": "Implementation Completion Report Review",
+          "paragraph": "5",
+          "made_at": "2023-05-04",
+          "public_from": "2023-05-04",
+          "lane": "why",
+          "doc_key": "icr-review-2023-05-04",
+          "leaned": true
+        }
+      ],
+      "after": "doc:34056616"
+    }
+  ],
+  "table": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:1-9",
+      "kind": "band",
+      "lane": "how",
+      "date": "2014-02-22",
+      "end": "2017-07-26",
+      "public_from": "2017-05-23",
+      "evidence_id": "ratings:P130164:pdo_progress:1-9",
+      "rating": "Satisfactory",
+      "first": 1,
+      "last": 9,
+      "count": 9
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "doc:26733307",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "doc:26733307",
+      "document_id": "26733307",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR24046",
+      "version": 1,
+      "doc_key": "isr-2016-08-26",
+      "sequence": 7,
+      "rating": "Satisfactory",
+      "replaced_by": null,
+      "reissued": false,
+      "disagrees_with": [
+        "disagreement:437378890475ef48"
+      ]
+    },
+    {
+      "id": "record:IN-RRSMP-7431-CW-RFB",
+      "kind": "record",
+      "type": "contract",
+      "lane": "what",
+      "date": "2017-06-15",
+      "public_from": "2017-07-19",
+      "evidence_id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "signed_in": "award notice",
+      "award_notice_id": "OP00044090",
+      "signed_amount_usd": null,
+      "project_id": "P130164"
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:10-11",
+      "kind": "band",
+      "lane": "how",
+      "date": "2017-07-26",
+      "end": "2018-04-10",
+      "public_from": "2017-12-18",
+      "evidence_id": "ratings:P130164:pdo_progress:10-11",
+      "rating": "Moderately Satisfactory",
+      "first": 10,
+      "last": 11,
+      "count": 2
+    },
+    {
+      "id": "event:restructuring",
+      "kind": "event",
+      "type": "restructuring",
+      "lane": "how",
+      "date": "2017-07-27",
+      "public_from": "2019-11-02",
+      "evidence_id": "strata.gold.passage:31525018/v1/11",
+      "source": {
+        "type": "icr",
+        "sequence": null,
+        "date": "2019-10-10"
+      }
+    },
+    {
+      "id": "doc:29794672",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2018-04-10",
+      "public_from": "2018-04-10",
+      "evidence_id": "doc:29794672",
+      "document_id": "29794672",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR31603",
+      "version": 1,
+      "doc_key": "isr-2018-04-10",
+      "sequence": 12,
+      "rating": "Moderately Unsatisfactory",
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:12-13",
+      "kind": "band",
+      "lane": "how",
+      "date": "2018-04-10",
+      "end": "2018-12-28",
+      "public_from": "2018-12-28",
+      "evidence_id": "ratings:P130164:pdo_progress:12-13",
+      "rating": "Moderately Unsatisfactory",
+      "first": 12,
+      "last": 13,
+      "count": 2
+    },
+    {
+      "id": "doc:31525018",
+      "kind": "report",
+      "type": "icr",
+      "lane": "why",
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "doc:31525018",
+      "document_id": "31525018",
+      "document_type": "Implementation Completion and Results Report",
+      "report_number": "ICR4803",
+      "version": 1,
+      "doc_key": "icr-2019-10-10",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false,
+      "disagrees_with": [
+        "disagreement:437378890475ef48",
+        "disagreement:51ea6e6516c0ea63"
+      ]
+    },
+    {
+      "id": "disagreement:437378890475ef48",
+      "kind": "disagreement",
+      "lane": null,
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "disagreement:437378890475ef48",
+      "disagreement_id": "437378890475ef48",
+      "attribute": "pdo_progress",
+      "rule_id": "outcome",
+      "sides": [
+        {
+          "item_id": "doc:26733307",
+          "evidence_id": "strata.gold.passage:26733307/v1/s4",
+          "assertion_id": "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
+          "type": "isr",
+          "sequence": 7,
+          "document_type": "Implementation Status and Results Report",
+          "paragraph": null,
+          "made_at": "2016-08-26",
+          "public_from": "2016-08-26",
+          "lane": "how",
+          "doc_key": "isr-2016-08-26",
+          "leaned": false
+        },
+        {
+          "item_id": "doc:31525018",
+          "evidence_id": "strata.gold.passage:31525018/v1/78",
+          "assertion_id": "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+          "type": "icr",
+          "sequence": null,
+          "document_type": "Implementation Completion and Results Report",
+          "paragraph": "78",
+          "made_at": "2019-10-10",
+          "public_from": "2019-11-02",
+          "lane": "why",
+          "doc_key": "icr-2019-10-10",
+          "leaned": true
+        }
+      ],
+      "after": "doc:31525018"
+    },
+    {
+      "id": "doc:31906731",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2020-03-27",
+      "public_from": "2020-03-27",
+      "evidence_id": "doc:31906731",
+      "document_id": "31906731",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 1,
+      "doc_key": "icr-review-2020-03-27",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": {
+        "evidence_id": "doc:34056616",
+        "date": "2023-05-04"
+      },
+      "reissued": false
+    },
+    {
+      "id": "doc:34056616",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "doc:34056616",
+      "document_id": "34056616",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 2,
+      "doc_key": "icr-review-2023-05-04",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": true,
+      "disagrees_with": [
+        "disagreement:51ea6e6516c0ea63"
+      ]
+    },
+    {
+      "id": "disagreement:51ea6e6516c0ea63",
+      "kind": "disagreement",
+      "lane": null,
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "disagreement:51ea6e6516c0ea63",
+      "disagreement_id": "51ea6e6516c0ea63",
+      "attribute": "efficiency",
+      "rule_id": "outcome",
+      "sides": [
+        {
+          "item_id": "doc:31525018",
+          "evidence_id": "strata.gold.passage:31525018/v1/44",
+          "assertion_id": "strata.gold.passage:31525018/v1/44#P130164/efficiency",
+          "type": "icr",
+          "sequence": null,
+          "document_type": "Implementation Completion and Results Report",
+          "paragraph": "44",
+          "made_at": "2019-10-10",
+          "public_from": "2019-11-02",
+          "lane": "why",
+          "doc_key": "icr-2019-10-10",
+          "leaned": false
+        },
+        {
+          "item_id": "doc:34056616",
+          "evidence_id": "strata.gold.passage:34056616/v2/5",
+          "assertion_id": "strata.gold.passage:34056616/v2/5#P130164/efficiency",
+          "type": "icr_review",
+          "sequence": null,
+          "document_type": "Implementation Completion Report Review",
+          "paragraph": "5",
+          "made_at": "2023-05-04",
+          "public_from": "2023-05-04",
+          "lane": "why",
+          "doc_key": "icr-review-2023-05-04",
+          "leaned": true
+        }
+      ],
+      "after": "doc:34056616"
+    }
+  ],
+  "ratings": {
+    "attribute": "pdo_progress",
+    "field_name": "Progress towards achievement of PDO",
+    "bands": [
+      {
+        "id": "ratings:P130164:pdo_progress:1-9",
+        "kind": "band",
+        "lane": "how",
+        "date": "2014-02-22",
+        "end": "2017-07-26",
+        "public_from": "2017-05-23",
+        "evidence_id": "ratings:P130164:pdo_progress:1-9",
+        "rating": "Satisfactory",
+        "first": 1,
+        "last": 9,
+        "count": 9
+      },
+      {
+        "id": "ratings:P130164:pdo_progress:10-11",
+        "kind": "band",
+        "lane": "how",
+        "date": "2017-07-26",
+        "end": "2018-04-10",
+        "public_from": "2017-12-18",
+        "evidence_id": "ratings:P130164:pdo_progress:10-11",
+        "rating": "Moderately Satisfactory",
+        "first": 10,
+        "last": 11,
+        "count": 2
+      },
+      {
+        "id": "ratings:P130164:pdo_progress:12-13",
+        "kind": "band",
+        "lane": "how",
+        "date": "2018-04-10",
+        "end": "2018-12-28",
+        "public_from": "2018-12-28",
+        "evidence_id": "ratings:P130164:pdo_progress:12-13",
+        "rating": "Moderately Unsatisfactory",
+        "first": 12,
+        "last": 13,
+        "count": 2
+      }
+    ],
+    "points": [
+      {
+        "sequence": 1,
+        "date": "2014-02-22",
+        "rating": "Satisfactory",
+        "document_id": "19095337",
+        "evidence_id": "doc:19095337"
+      },
+      {
+        "sequence": 2,
+        "date": "2014-07-30",
+        "rating": "Satisfactory",
+        "document_id": "19901331",
+        "evidence_id": "doc:19901331"
+      },
+      {
+        "sequence": 3,
+        "date": "2015-01-23",
+        "rating": "Satisfactory",
+        "document_id": "23868309",
+        "evidence_id": "doc:23868309"
+      },
+      {
+        "sequence": 4,
+        "date": "2015-06-04",
+        "rating": "Satisfactory",
+        "document_id": "24589049",
+        "evidence_id": "doc:24589049"
+      },
+      {
+        "sequence": 5,
+        "date": "2015-11-20",
+        "rating": "Satisfactory",
+        "document_id": "25481343",
+        "evidence_id": "doc:25481343"
+      },
+      {
+        "sequence": 6,
+        "date": "2016-01-21",
+        "rating": "Satisfactory",
+        "document_id": "25814564",
+        "evidence_id": "doc:25814564"
+      },
+      {
+        "sequence": 7,
+        "date": "2016-08-26",
+        "rating": "Satisfactory",
+        "document_id": "26733307",
+        "evidence_id": "doc:26733307"
+      },
+      {
+        "sequence": 8,
+        "date": "2017-03-05",
+        "rating": "Satisfactory",
+        "document_id": "27243340",
+        "evidence_id": "doc:27243340"
+      },
+      {
+        "sequence": 9,
+        "date": "2017-05-23",
+        "rating": "Satisfactory",
+        "document_id": "27490469",
+        "evidence_id": "doc:27490469"
+      },
+      {
+        "sequence": 10,
+        "date": "2017-07-26",
+        "rating": "Moderately Satisfactory",
+        "document_id": "27853466",
+        "evidence_id": "doc:27853466"
+      },
+      {
+        "sequence": 11,
+        "date": "2017-12-18",
+        "rating": "Moderately Satisfactory",
+        "document_id": "29280184",
+        "evidence_id": "doc:29280184"
+      },
+      {
+        "sequence": 12,
+        "date": "2018-04-10",
+        "rating": "Moderately Unsatisfactory",
+        "document_id": "29794672",
+        "evidence_id": "doc:29794672"
+      },
+      {
+        "sequence": 13,
+        "date": "2018-12-28",
+        "rating": "Moderately Unsatisfactory",
+        "document_id": "30730274",
+        "evidence_id": "doc:30730274"
+      }
+    ],
+    "first_rating": "Satisfactory",
+    "last_rating": "Moderately Unsatisfactory",
+    "direction": "fell",
+    "isr_count": 13
+  },
+  "disagreements": {
+    "status": "ok",
+    "count": 2
+  },
+  "disagreement_line_state": "info",
+  "rejected": {
+    "count": 1
+  },
+  "counts": {
+    "why": 4,
+    "how": 4,
+    "what": 1
+  },
+  "finding": [
+    {
+      "number": 2,
+      "capital": true
+    },
+    {
+      "text": " pairs of reports disagree"
+    },
+    {
+      "text": ", and "
+    },
+    {
+      "text": "ISR ratings of progress fell from "
+    },
+    {
+      "text": "Satisfactory"
+    },
+    {
+      "text": " to "
+    },
+    {
+      "text": "Moderately Unsatisfactory"
+    },
+    {
+      "text": "."
+    }
+  ],
+  "alt": [
+    {
+      "text": "Timeline of "
+    },
+    {
+      "text": "P130164"
+    },
+    {
+      "text": " from "
+    },
+    {
+      "year": 2013
+    },
+    {
+      "text": " to "
+    },
+    {
+      "year": 2023
+    },
+    {
+      "text": " in three lanes: "
+    },
+    {
+      "number": 4
+    },
+    {
+      "text": " evaluations"
+    },
+    {
+      "text": ", "
+    },
+    {
+      "number": 4
+    },
+    {
+      "text": " operations items"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "number": 1
+    },
+    {
+      "text": " record"
+    },
+    {
+      "text": "."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "ISR ratings of progress went from "
+    },
+    {
+      "text": "Satisfactory"
+    },
+    {
+      "text": " to "
+    },
+    {
+      "text": "Moderately Unsatisfactory"
+    },
+    {
+      "text": " over "
+    },
+    {
+      "number": 13
+    },
+    {
+      "text": " ISRs."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "A dashed line joins "
+    },
+    {
+      "text": "ISR 7"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "text": "the ICR"
+    },
+    {
+      "text": ", which disagree."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "A dashed line joins "
+    },
+    {
+      "text": "the ICR"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "text": "the ICR Review"
+    },
+    {
+      "text": ", which disagree."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "It shows what was public on "
+    },
+    {
+      "date": "2024-01-01"
+    },
+    {
+      "text": "."
+    }
+  ],
+  "sources": [
+    "documents",
+    "notices",
+    "awards"
+  ],
+  "data_through": "2026-10-23"
+}

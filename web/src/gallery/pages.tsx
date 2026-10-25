@@ -87,6 +87,7 @@ import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { followingPage } from "./following";
 import { hubPage } from "./hub";
+import { timelinePage } from "./timeline";
 import { trailPage } from "./trail";
 import { lessonsPage } from "./lessons";
 import { judgingPage, retrievalPage } from "./retrieval";
@@ -1322,6 +1323,7 @@ export const PAGES: GalleryPage[] = [
   draftsPage(planSample),
   followingPage(),
   hubPage(),
+  timelinePage(),
   trailPage(),
   lessonsPage(),
   retrievalPage(),

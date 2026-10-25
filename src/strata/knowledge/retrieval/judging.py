@@ -80,13 +80,16 @@ def order_for(judge: str, query_id: str, passages: list[str]) -> list[str]:
 
 
 def kappa(pairs: list[tuple[str, str]]) -> float | None:
-    """Cohen's kappa for two judges' grades on the same passages, at two decimals, a tool column."""
+    """Cohen's kappa for two judges' grades on the same passages, at two decimals, a tool column. The hindsight
+    test's coders (ticket 34) use it too, with "blamed" and "not_blamed" for answers: a label neither person gave
+    adds nothing to chance agreement, so counting over the labels given is the same as counting over GRADES."""
     if not pairs:
         return None
     total = len(pairs)
     observed = sum(1 for a, b in pairs if a == b) / total
+    labels = dict.fromkeys([*GRADES, *(label for pair in pairs for label in pair)])
     expected = sum((sum(1 for a, _ in pairs if a == grade) / total) * (sum(1 for _, b in pairs if b == grade) / total)
-                   for grade in GRADES)
+                   for grade in labels)
     if expected >= 1:
         return 1.0 if observed >= 1 else 0.0
     return round((observed - expected) / (1 - expected), 2)

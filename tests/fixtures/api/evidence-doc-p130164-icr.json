@@ -1,0 +1,96 @@
+{
+  "id": "doc:31525018",
+  "kind": "document",
+  "tool": null,
+  "stratum": "Why",
+  "short_name": null,
+  "row": {
+    "evidence_id": "doc:31525018",
+    "public_from": "2019-11-02",
+    "document_id": "31525018",
+    "project_id": "P130164",
+    "type": "icr",
+    "document_type": "Implementation Completion and Results Report",
+    "report_number": "ICR4803",
+    "version": 1,
+    "document_date": "2019-10-10",
+    "pdf_pages": 66,
+    "doc_key": "icr-2019-10-10",
+    "sequence": null,
+    "reissued": false,
+    "replaced_by": null,
+    "ratings": [
+      {
+        "field_name": "efficiency rating",
+        "value": "Substantial",
+        "evidence_id": "strata.gold.passage:31525018/v1/44",
+        "doc_key": "icr-2019-10-10",
+        "paragraph": "44",
+        "section": "II.C",
+        "pdf_page": 21
+      },
+      {
+        "field_name": "overall outcome",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:31525018/v1/45",
+        "doc_key": "icr-2019-10-10",
+        "paragraph": "45",
+        "section": "II.D",
+        "pdf_page": 21
+      },
+      {
+        "field_name": "quality of M&E",
+        "value": "Modest",
+        "evidence_id": "strata.gold.passage:31525018/v1/67",
+        "doc_key": "icr-2019-10-10",
+        "paragraph": "67",
+        "section": "IV.A",
+        "pdf_page": 25
+      },
+      {
+        "field_name": "World Bank performance",
+        "value": "Moderately Unsatisfactory",
+        "evidence_id": "strata.gold.passage:31525018/v1/79",
+        "doc_key": "icr-2019-10-10",
+        "paragraph": "79",
+        "section": "IV.C",
+        "pdf_page": 27
+      },
+      {
+        "field_name": "achievement of part of the PDO",
+        "value": "unsatisfactory",
+        "evidence_id": "strata.gold.passage:31525018/v1/78",
+        "doc_key": "icr-2019-10-10",
+        "paragraph": "78",
+        "section": "IV.C",
+        "pdf_page": 27
+      }
+    ],
+    "disagreements": [
+      {
+        "evidence_id": "disagreement:437378890475ef48",
+        "attribute": "pdo_progress",
+        "period_event": "mid_term_review",
+        "other": {
+          "type": "isr",
+          "sequence": 7
+        }
+      },
+      {
+        "evidence_id": "disagreement:51ea6e6516c0ea63",
+        "attribute": "efficiency",
+        "period_event": "whole_project",
+        "other": {
+          "type": "icr_review",
+          "sequence": null
+        }
+      }
+    ],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164",
+      "document_date": "2019-10-10"
+    }
+  },
+  "highlights": []
+}

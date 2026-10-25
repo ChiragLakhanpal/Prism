@@ -220,7 +220,7 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
 
     deploy(workspace, tmp_path, capsys)
 
-    assert workspace.statements == [
+    assert [statement for statement in workspace.statements if statement.startswith("GRANT")] == [
         f"GRANT USE CATALOG ON CATALOG strata TO `{PRINCIPAL}`",
         f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.usage_events TO `{PRINCIPAL}`",
@@ -233,6 +233,8 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_files TO `{PRINCIPAL}`",
         # Ticket 37: the projects each World Bank staff viewer follows.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.follows TO `{PRINCIPAL}`",
+        # Ticket 23: the side of a disagreement each person kept, with their reason, for the evidence pack.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.disagreement_choices TO `{PRINCIPAL}`",
         # Ticket 36: the values people set on a draft's fields and the reports they kept, and their latest values.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_fields TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_choices TO `{PRINCIPAL}`",
@@ -257,6 +259,33 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         # The pair of judges a query loaded before the roles file named any keeps at its first grade.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_queries TO `{PRINCIPAL}`",
     ]
+
+
+def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_each_question_from_every_reader(
+        tmp_path, capsys):
+    """Ticket 64. The readers group may read all of strata.ops (bundle/catalog.yml), so the deploy puts one column mask
+    on each column that says who (strata.lakehouse.masks): the app's own principal, which reads the reports back, and
+    the user who deploys, whose identity runs the weekly retrieval job, read the value; everyone else reads NULL."""
+    workspace = FakeWorkspace()
+
+    deploy(workspace, tmp_path, capsys)
+
+    grants = len(deploy_app.grants(PRINCIPAL))
+    function, *columns = workspace.statements[grants:]
+    assert function.startswith("CREATE OR REPLACE FUNCTION strata.ops.mask_viewer(value STRING) RETURNS STRING")
+    assert function.endswith(f"RETURN CASE WHEN current_user() IN ('{PRINCIPAL}', 'owner@example.org') THEN value END")
+    assert columns == [
+        "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_email SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.answer_citations ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
+    ]
+
+
+@pytest.mark.parametrize("owner", ["o'brien@example.org", "owner@example.org') OR (1 = 1", ""])
+def test_the_masks_name_only_a_principal_and_an_owner_the_deploy_could_check(owner):
+    """The mask's two names are written into its SQL, as the grants write the principal, so each is checked first."""
+    with pytest.raises(ValueError, match="not a user name"):
+        deploy_app.masks(PRINCIPAL, owner)
 
 
 def test_the_deploy_replaces_the_day_one_probe_app_and_starts_a_stopped_app(tmp_path, capsys):

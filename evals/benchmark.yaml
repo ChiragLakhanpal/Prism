@@ -328,6 +328,9 @@ questions:
       # Each side is a record of its own, and a side that rests on a passage carries its words, so a claim
       # can quote paragraph 78 from it.
       quotable_sides: [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
+      # The sides whose passage's words the tool kept from the agent, because Prompt Shields found a prompt
+      # attack in it or never screened it, as search_passages leaves such passages out (ticket 64).
+      left_out: []
       # The trajectory and the count of left-out assertions come back in the result's summary record,
       # which an answer cites by this evidence id.
       cited_as: ["strata.tools.get_disagreements:P130164@2026-10-23?attribute=pdo_progress"]
@@ -344,7 +347,8 @@ questions:
       the PDO compromised. Progress towards the PDO is an outcome judgment, so the evidence ladder leans
       on the ICR. The ISRs' ratings are a trajectory (tests/ground_truth/values.toml, isr-1-rating to
       isr-13-rating). The recording plants one rating whose quote is not on paragraph 45's page, which
-      the run left out and counts.
+      the run left out and counts. Prompt Shields screened both sides' passages and found no attack in
+      either, so both keep their words and none is left out.
   - id: get-lessons-cost-estimates
     kind: documents
     tool: get_lessons

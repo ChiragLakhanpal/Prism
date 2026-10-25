@@ -31,6 +31,8 @@ export type BadgeKind =
   | "ieg-restates"
   | "two-reports-disagree"
   | "sources-differ"
+  | "chip-warning"
+  | "chip-info"
   | "own-project"
   | "their-project"
   | "audit-sample"
@@ -61,6 +63,10 @@ const KINDS: Record<BadgeKind, Kind> = {
   // A disagreement card's (ticket 24): warning only when it changes the answer.
   "two-reports-disagree": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.twoReportsDisagree },
   "sources-differ": { state: "info", Icon: Info, dashed: false, text: copy.badge.sourcesDiffer },
+  // A project timeline's disagreement line, as its list item names it below 768 px (ticket 23): the label the
+  // ticket fixes, in the state its card takes.
+  "chip-warning": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.timeline.chip },
+  "chip-info": { state: "info", Icon: Info, dashed: false, text: copy.timeline.chip },
   // Passage reports (ticket 32): information for a reviewer, never a warning.
   "own-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeOwnProject },
   "their-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeTheirProject },

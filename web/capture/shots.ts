@@ -1526,6 +1526,80 @@ const SUMMARIES = CASE_QUESTIONS.summaries;
 const ISR_7 = CASE_QUESTIONS.isr7;
 const BOTH_SIDES = CASE_QUESTIONS.bothSides;
 const PARTIAL = REFUSED.partial;
+// Ticket 23: a project's Timeline tab, as the 23 brief's section 13 lists it, against the answers the server wrote on
+// the fixture (tests/record_timeline_api.py): loading, populated, the drawer on the disagreement and on a mark and a
+// band (at 1440 and 1024 the chart redraws at 718 and 524 px beside it), the table open, as of August 26, 2016, the
+// public view of an active project, an error, hover and focus on a mark and the chip, and at 390 px the list and the
+// sheet. The card's states and the drawer's views are also in the gallery (/gallery/timeline); the card under an
+// answer is above (checks--disagreement-*), with its keep form and a kept choice here.
+const PDO_DISAGREEMENT = "disagreement:437378890475ef48";
+const TIMELINE = "/projects/P130164/timeline";
+const TIMELINE_API: Shot["api"] = {
+  ...HUB_API,
+  "/api/projects/P130164/timeline": { recorded: "timeline-p130164.json" },
+  "/api/projects/P130164/timeline?asof=2016-08-26": { recorded: "timeline-p130164-2016-08-26.json" },
+  "/api/projects/P130164/timeline?asof=2024-01-01": { recorded: "timeline-p130164-2024-01-01.json" },
+  "/api/projects/P156634/timeline": { recorded: "timeline-p156634.json" },
+  "/api/projects/P156634/timeline?view=public": { recorded: "timeline-p156634-public.json" },
+  [`/api/evidence?id=${PDO_DISAGREEMENT}`]: { recorded: "evidence-disagreement-p130164-pdo.json" },
+  "/api/evidence?id=doc:26733307": { recorded: "evidence-doc-p130164-isr-7.json" },
+  "/api/evidence?id=doc:31525018": { recorded: "evidence-doc-p130164-icr.json" },
+  "/api/evidence?id=ratings:P130164:pdo_progress:1-9": { recorded: "evidence-ratings-p130164-1-9.json" },
+  "/api/evidence?id=strata.gold.passage:31525018/v1/78": { recorded: "evidence-icr-p130164-78.json" },
+  "/api/evidence?id=strata.gold.passage:26733307/v1/s4": { recorded: "evidence-isr-p130164-7-s4.json" },
+};
+const timelineShot = (name: string, path: string, rest: Partial<Shot> = {}): Shot => hubShot(name, path, rest, TIMELINE_API);
+const mark = (id: string) => `[data-evidence-trail] [data-item="${id}"]`;
+const KEPT_CHOICE = JSON.stringify({
+  recorded: true,
+  choice: {
+    choice_id: "choice-0000000000000001",
+    kept_assertion_id: "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
+    leaned_assertion_id: "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+    reason: galleryCopy.timelineReason,
+    run_id: "run-0001",
+    draft_id: null,
+    made_at: "2026-10-23T15:00:00+00:00",
+    kept_other: true,
+  },
+});
+const TIMELINE_SHOTS: Shot[] = [
+  timelineShot("project-timeline", TIMELINE),
+  timelineShot("project-timeline--loading", TIMELINE, { pending: ["/api/projects/P130164/timeline"] }),
+  // hubShot takes the answers as its last argument: an api in the shot's options would be replaced by them.
+  hubShot("project-timeline--error", TIMELINE, {}, {
+    ...TIMELINE_API,
+    "/api/projects/P130164/timeline": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' },
+  }),
+  timelineShot("project-timeline--drawer-disagreement", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`),
+  timelineShot("project-timeline--drawer-side", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`, { act: click("[role=tab]:has-text('78')"), full: true }),
+  timelineShot("project-timeline--drawer-document", `${TIMELINE}?evidence=doc:26733307`),
+  timelineShot("project-timeline--drawer-band", `${TIMELINE}?evidence=ratings:P130164:pdo_progress:1-9`, { widths: WIDE }),
+  timelineShot("project-timeline--table", TIMELINE, { widths: WIDE, act: click("[data-timeline-card] button[aria-controls]"), full: true }),
+  timelineShot("project-timeline--as-of", `${TIMELINE}?asof=2016-08-26`),
+  // After the ICR Review's re-issue: the second dashed line ends near the as-of date's label (round 2's B1).
+  timelineShot("project-timeline--as-of-late", `${TIMELINE}?asof=2024-01-01`, { widths: WIDE }),
+  // get_disagreements did not answer: the server's own recorded answer (tests/record_timeline_api.py, FAILED).
+  hubShot("project-timeline--disagreements-failed", TIMELINE, { widths: WIDE }, { ...TIMELINE_API, "/api/projects/P130164/timeline": { recorded: "timeline-p130164-failed.json" } }),
+  timelineShot("project-timeline--public-active", "/projects/P156634/timeline?view=public", { widths: WIDE }),
+  timelineShot("project-timeline--crowded", "/projects/P156634/timeline", { widths: WIDE }),
+  timelineShot("project-timeline--hover-mark", TIMELINE, { widths: WIDE, act: hover(mark("doc:26733307")) }),
+  timelineShot("project-timeline--focus-mark", TIMELINE, { widths: WIDE, act: focus(mark("doc:18381488")) }),
+  timelineShot("project-timeline--hover-band", TIMELINE, { widths: WIDE, act: hover(mark("ratings:P130164:pdo_progress:1-9")) }),
+  timelineShot("project-timeline--hover-chip", TIMELINE, { widths: WIDE, act: hover(mark(PDO_DISAGREEMENT)) }),
+  timelineShot("project-timeline--focus-list-item", TIMELINE, { widths: NARROW, act: focus("[data-timeline-list] a") }),
+  timelineShot("project-timeline--320", TIMELINE, { widths: [320] }),
+  answerShot("checks--disagreement-keep-form", "ask-p130164-isr-7-rating.sse", {
+    widths: WIDE,
+    act: then(askInBox(ISR_7), click("[data-answer-panel] [data-disagreement] [data-keep] button")),
+  }),
+  answerShot("checks--disagreement-kept", "ask-p130164-isr-7-rating.sse", {
+    widths: WIDE,
+    api: { "/api/disagreements/437378890475ef48/choices": { body: KEPT_CHOICE } },
+    act: askInBox(ISR_7),
+  }),
+];
+
 const CHECK_SHOTS: Shot[] = [
   answerShot("checks--ticket-form", "ask-ke-nwwda-541055-past-range.sse", { act: askInBox(PAST_RANGE) }, "/"),
   answerShot("checks--judged", "ask-ke-nwwda-541055-advice.sse", { act: askInBox(PAST_RANGE) }, "/"),
@@ -1763,5 +1837,6 @@ export const SHOTS: Shot[] = [
   ...RETRIEVAL_SHOTS,
   ...REBID_SHOTS,
   ...CRITERIA_SHOTS,
+  ...TIMELINE_SHOTS,
   ...TRAIL_SHOTS,
 ];

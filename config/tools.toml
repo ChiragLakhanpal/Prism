@@ -738,7 +738,8 @@ a trajectory, not a disagreement, and come back under trajectories. A report re-
 replaces its earlier version, unless the as-of date comes before the re-issue. It also counts the assertions \
 read from the project's reports that were left out because their quote was not word for word on the cited page. \
 Cite a disagreement by its row's evidence id, and each side by the side's own evidence id: quote a side's words \
-from its text. The trajectories and the count of left-out assertions come back in the result's summary, which \
+from its text. When Prompt Shields found a prompt attack in a side's passage as it was read in, or never screened \
+it, the side comes without its text and its quote, and the coverage line says how many passages. The trajectories and the count of left-out assertions come back in the result's summary, which \
 you cite for them. When an answer rests on one side of a disagreement, show both sides."""
 adapter = "strata.tools.get_disagreements:get_disagreements"
 benchmark = "get-disagreements-p130164"
@@ -774,13 +775,16 @@ row_fields = ["evidence_id", "public_from", "source", "disagreement_id", "subjec
               "if_you_keep"]
 source_fields = ["table", "project_id", "subject_id", "evidence_ids"]
 fields = ["subject", "trajectories", "rejected"]
-reasons = ["replaced_by_later_version"]
+# prompt_shields_hit and not_screened count passages, not disagreements: the sides whose passage's words the tool
+# kept from the agent (strata.knowledge.shields), as search_passages counts the passages it leaves out.
+reasons = ["replaced_by_later_version", "prompt_shields_hit", "not_screened"]
 abstentions = ["unknown_subject", "unknown_attribute", "no_assertions"]
 # The ratings of each trajectory, its runs and the count of left-out assertions are figures the agent may
 # state, so they come back as one citable record too.
 summary_fields = ["trajectories", "rejected"]
 # Each side is the assertion as its source made it, under the evidence id of the passage or record it rests
-# on, with the passage's text when it rests on one, so a claim can cite it or quote from it.
+# on, with the passage's text when it rests on one, so a claim can cite it or quote from it. A side whose passage
+# Prompt Shields flagged or never screened has no text or quote, and its text_left_out names the reason.
 nested_rows = ["sides"]
 
 # The check-your-criteria tools (ticket 31): section 5 of the package workspace. Each takes the comparable

@@ -2,7 +2,7 @@
 // wireframe's one line in the h1, "Rajasthan Road Sector Modernization · P130164 · India · closed", with
 // the project ID as a ProjectId link and the status lowercased from the copy file, then the implementing
 // agency line. Under it the tab row shows the built tabs in the copy file's order: Summary, Procurement and
-// Documents (Timeline and Connections join when tickets 23 and 22 land).
+// Timeline and Documents (Connections joins when ticket 22 lands).
 //
 // The app keeps this page in place while you move between its tabs (Match.frame), so the header and the
 // tab row never redraw; a tab opened from the row keeps focus on its link and says "Showing Procurement."
@@ -36,6 +36,7 @@ import { ConnectionsTab } from "./project/ConnectionsTab";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
 import { SummaryTab } from "./project/SummaryTab";
+import { TimelineTab } from "./project/TimelineTab";
 
 const words = copy.projectPage;
 
@@ -176,6 +177,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
       <div className="col-span-12 mt-8 min-h-svh">
         {tab === "summary" && <SummaryTab pid={pid} />}
         {tab === "procurement" && <ProcurementTab pid={pid} load={load} retry={retry} />}
+        {tab === "timeline" && <TimelineTab pid={pid} />}
         {tab === "documents" && <DocumentsTab pid={pid} />}
         {tab === "connections" && <ConnectionsTab pid={pid} />}
       </div>

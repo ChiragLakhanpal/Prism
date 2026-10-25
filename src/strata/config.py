@@ -1944,21 +1944,70 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
 
 # ── The project page's lists (ticket 21) ─────────────────────────────────
 
+LINE_STATES = ("info", "warning")
+KEY_DATE = "key_date"  # an event dated by the assertions reader's own key-date pattern (KEY_DATE_LABELS)
+
+
+@dataclass(frozen=True)
+class TimelineEvent:
+    """An event the timeline's How lane draws (ticket 23): the words a passage must hold, and the pattern whose one
+    group reads the event's date in date_format, or key_date for the assertions reader's pattern for this kind."""
+    kind: str
+    words: tuple[str, ...]
+    pattern: str
+    date_format: str
+
+
+@dataclass(frozen=True)
+class TimelineSettings:
+    """A project timeline's settings (ticket 23): the state a dashed line takes when no answer or draft open on the
+    page depends on it, and the events the How lane draws, in file order."""
+    disagreement_line_state: str
+    events: tuple[TimelineEvent, ...]
+
+
 @dataclass(frozen=True)
 class ProjectPage:
     """The project page's lists: the documents API's type for each Documents group, in project-cycle
-    order; the groups re-issued under one report number; and the Summary's ISR ratings and the projects
-    API's Procurement rating code."""
+    order; the groups re-issued under one report number; the Summary's ISR ratings and the projects
+    API's Procurement rating code; and the Timeline tab's settings."""
     document_groups: dict[str, str]
     reissued: frozenset[str]
     isr_ratings: dict[str, str]
     procurement_rating_code: str
+    timeline: TimelineSettings
+
+
+def _timeline(path: Path, data: dict) -> TimelineSettings:
+    timeline = _Entry(path, "timeline", data.get("timeline", {}))
+    timeline.only({"disagreement_line_state", "events"})
+    state = timeline.text("disagreement_line_state")
+    if state not in LINE_STATES:
+        timeline._fail("disagreement_line_state", f"must be info or warning, not {state!r}")
+    events: list[TimelineEvent] = []
+    for entry in _tables(path, timeline.table, "events"):
+        entry.only({"kind", "words", "pattern", "date_format"})
+        pattern = entry.text("pattern")
+        if pattern != KEY_DATE:
+            try:
+                groups = re.compile(pattern).groups
+            except re.error:
+                groups = 0
+            if groups != 1:
+                entry._fail("pattern", "must be key_date or a pattern with one group, which reads the date")
+        event = TimelineEvent(entry.text("kind"), entry.texts("words"), pattern, entry.text("date_format"))
+        if not event.words:
+            entry._fail("words", "must name at least one phrase a passage holds")
+        if any(other.kind == event.kind for other in events):
+            entry._fail("kind", f"repeats {event.kind!r}. Each event is listed once")
+        events.append(event)
+    return TimelineSettings(state, tuple(events))
 
 
 def load_project_page(path: Path = CONFIG_DIR / "project_page.toml") -> ProjectPage:
     """The project page's lists, in file order, which is the order the page shows them in."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"documents", "summary"})
+    _Entry(path, "the file", data).only({"documents", "summary", "timeline"})
     documents = _Entry(path, "documents", data.get("documents", {}))
     documents.only({"groups", "reissued"})
     groups: dict[str, str] = {}
@@ -1977,7 +2026,7 @@ def load_project_page(path: Path = CONFIG_DIR / "project_page.toml") -> ProjectP
     for entry in _tables(path, summary.table, "isr_ratings"):
         entry.only({"name", "key"})
         ratings[entry.text("name")] = entry.text("key")
-    return ProjectPage(groups, reissued, ratings, summary.text("procurement_rating_code"))
+    return ProjectPage(groups, reissued, ratings, summary.text("procurement_rating_code"), _timeline(path, data))
 
 # ── The package form schema (ticket 15) ──────────────────────────────────
 

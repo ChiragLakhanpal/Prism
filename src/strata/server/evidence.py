@@ -23,7 +23,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
-from strata.server import baseline, edges, summary, trail
+from strata.server import baseline, edges, summary, timeline, trail
 from strata.estimates.rebidding import NOTICE_TABLE, PLAN_ROW_TABLE
 from strata.tools import find_comparables, rebidding_risk, rejected_bids, search_passages
 
@@ -43,9 +43,11 @@ def _passage(engine: Engine, key: str, as_of: dt.date) -> dict | None:
 
 
 def _comparable(engine: Engine, key: str, as_of: dt.date) -> dict | None:
-    """A comparable package from the range chart (ticket 15): its months, its notice and its contract award."""
+    """A comparable package from the range chart (ticket 15): its months, its notice and its contract award. A
+    package the range chart does not read, such as one signed only in its award notice, opens as the record of its
+    signing, as a contract mark on a project's timeline opens it (ticket 23)."""
     row = find_comparables.read_comparable(engine, key, as_of)
-    return None if row is None else {"kind": "package", "row": row}
+    return {"kind": "package", "row": row} if row is not None else timeline.read_signing(engine, key, as_of)
 
 
 def _notice(engine: Engine, key: str, as_of: dt.date) -> dict | None:
@@ -81,11 +83,16 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     baseline.TABLE: baseline.read_record,
     NOTICE_TABLE: rebidding_risk.read_notice,
     PLAN_ROW_TABLE: _plan_row,
+    # The timeline's marks (ticket 23): a report's document view (doc:), a band's ratings (ratings:), a year's
+    # contracts (contracts:) and a disagreement's two sides (disagreement:).
+    **timeline.READERS,
 }
 
 
-def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True) -> dict | None:
-    """The source this evidence id names, as the viewer could see it on the as-of date, or None. A passage also
+def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True,
+         view: str = "staff") -> dict | None:
+    """The source this evidence id names, as the viewer could see it on the as-of date and in the page's view, or
+    None. The public view of a project still under way shows no disagreement (timeline.in_view). A passage also
     says why it is a source for a contract it appeared together with (ticket 22): for the route's activity when the
     page names one (step_ref), otherwise for the strongest link, or null when no link was public then. A page that
     embeds passages in its own answer, such as a project's Summary, leaves it out (why=False) to keep its answer
@@ -95,10 +102,13 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None 
     if reader is None or not key or "," in key:
         return None
     found = reader(engine, key, as_of)
+    found = None if found is None else timeline.in_view(engine, found, view, as_of)
     if found is None:
         return None
-    event = {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), "row": found["row"],
-             "highlights": []}
+    # A reader may name the stratum itself, as the timeline's views do, since their rows are no passage.
+    named = {key: found[key] for key in ("stratum", "short_name") if key in found}
+    event = {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), **named,
+             "row": found["row"], "highlights": []}
     if found["kind"] == "passage" and why:
         event["why"] = edges.why(engine, found["row"], step_ref, as_of)
     if found["kind"] == "record" and step_ref:

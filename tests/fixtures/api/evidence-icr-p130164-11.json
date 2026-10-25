@@ -1,0 +1,129 @@
+{
+  "id": "strata.gold.passage:31525018/v1/11",
+  "kind": "passage",
+  "tool": null,
+  "stratum": "Why",
+  "short_name": "ICR",
+  "row": {
+    "evidence_id": "strata.gold.passage:31525018/v1/11",
+    "public_from": "2019-11-02",
+    "source": {
+      "document_type": "Implementation Completion and Results Report",
+      "project_id": "P130164",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "document_id": "31525018",
+      "document_date": "2019-10-10",
+      "report_number": "ICR4803",
+      "version": 1,
+      "section_path": "I.B",
+      "paragraph": "11",
+      "paragraph_numbered": true,
+      "pdf_page": 13,
+      "pdf_pages": 66,
+      "pdf_url": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+      "doc_key": "icr-2019-10-10",
+      "notice_id": null,
+      "notice_url": null
+    },
+    "passage_id": "31525018/v1/11",
+    "document_id": "31525018",
+    "document_type": "Implementation Completion and Results Report",
+    "project_id": "P130164",
+    "version": 1,
+    "section_path": "I.B",
+    "paragraph": "11",
+    "paragraph_numbered": true,
+    "part": 1,
+    "parts": 1,
+    "pdf_page": 13,
+    "last_pdf_page": 13,
+    "printed_page": "9 of 62",
+    "language": "en",
+    "parse_route": "A",
+    "kind": "paragraph",
+    "route": "published_text",
+    "scanned": false,
+    "table_title": null,
+    "table_row": null,
+    "cells": null,
+    "notice_id": null,
+    "header": "ICR, P130164, India, roads, I.B, ¶11, p.13",
+    "text": "11. The project was approved on October 29, 2013 and planned to close on December 31, 2018. The project was restructured once on July 27, 2017. Disbursement under the project as of May 31, 2017, was XDR 63.95 million (approximately US$88.5 million), which was 60.56 percent of the total loan amount of XDR 105.60 million. At that time, around 90 percent of the civil works were completed. The disbursement was lagging at about six months equivalent to around US$17 million. The main delays in project implementation were related to the implementation of both institutional strengthening components, Components B and C."
+  },
+  "highlights": [],
+  "why": {
+    "reference": "IN-RRSMP-7431-CW-RFB",
+    "record_noun": "award notice",
+    "signed_on": "2017-06-15",
+    "href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+    "step_reference": "IN-RRSMP-7431-CW-RFB",
+    "topics": [
+      {
+        "kind": "category",
+        "code": "Works"
+      },
+      {
+        "kind": "sector",
+        "code": "TI",
+        "name": "Rural and Inter-Urban Roads"
+      }
+    ],
+    "project_id": "P130164",
+    "project_state": "closed",
+    "document": {
+      "type": "Implementation Completion and Results Report",
+      "short_name": "ICR",
+      "date": "2019-10-10"
+    },
+    "months": 28,
+    "direction": "after",
+    "components": [
+      {
+        "part": "project",
+        "matched": "P130164",
+        "points": "0.10"
+      },
+      {
+        "part": "sector",
+        "matched": "Rural and Inter-Urban Roads",
+        "points": "0.10"
+      },
+      {
+        "part": "time",
+        "matched": 28,
+        "points": "0.11"
+      },
+      {
+        "part": "text",
+        "matched": [
+          "civil",
+          "works"
+        ],
+        "points": "0.03"
+      },
+      {
+        "part": "mentions",
+        "matched": [
+          "civil works"
+        ],
+        "points": "0.20"
+      }
+    ],
+    "score": "0.54",
+    "threshold": "0.50",
+    "mentions": [
+      {
+        "kind": "category",
+        "code": "Works",
+        "text": "civil works",
+        "start": 361,
+        "end": 372
+      }
+    ],
+    "activity_href": "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
+    "others": [],
+    "others_count": 0,
+    "others_more": 0,
+    "connections_href": "/projects/P130164/connections"
+  }
+}

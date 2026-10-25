@@ -1527,3 +1527,137 @@ First change line 17 of `tests/ground_truth/four_hop_supplier_to_completion_repo
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if it exits 0 and reports that DuckDB and the SQL warehouse returned the same one row for `four_hop_supplier_to_completion_report.sql`: AMIT CONSTRUCTION, OP00044090, P130164, 31525018, 31525018/v1/54, 4. Then commit the changed engines line on a branch and run the gate. If the warehouse rejects `WITH RECURSIVE`, change the line back to `-- engines: duckdb`, and write the warehouse's error message here and in the file's header comment.
+
+## Ticket 34, step 1 of 4: deploy the hindsight test's four tables
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 34 adds four tables under `src/strata/lakehouse/tables/ops/`: `strata.ops.hindsight_codings` (each coder's reading of an ICR or ICR Review), `strata.ops.hindsight_blamed` (each project's reconciled blamed risks), `strata.ops.hindsight_agreement` (each pair of coders' agreement) and `strata.ops.exposed_projects` (empty until ticket 44 writes it). Tickets 37 and 22 run the same deploy command, and one deploy from 2b5e5f9 or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.ops.hindsight_codings`, `strata.ops.hindsight_blamed`, `strata.ops.hindsight_agreement` and `strata.ops.exposed_projects` as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists all four.
+
+## Ticket 34, step 2 of 4: see the hindsight test's gate set
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`. Run it after step 1, and after a nightly run has filled gold and silver with the pilot projects' documents. It only reads.
+
+Run this from the main checkout:
+
+    uv run --script ops/hindsight/code.py --env-file .env status
+
+It worked if it exits 0 and prints "Pilot projects with an ICR on <date>: N. The hindsight test replays 0.", with N near PLAN.md's 49, then lists each project as waiting ("not coded yet" or "ICR not read yet"), and lists any project left out with its reason (an extraction example, or exposed to Strata).
+
+## Ticket 34, step 3 of 4: two people code the blamed risks (a human step)
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`, and two people. It waits on docs/STATUS.md decision 5 (labeling time), which must name the two coders, or accept model-drafted codings that you spot-check. Run it after step 2. N in the hindsight test rises above zero only after this step.
+
+For each project that step 2 lists, each of the two coders reads the ICR on their own and runs this from the main checkout, with the blamed risk factors' keys from the closed list in `config/lessons.toml`:
+
+    uv run --script ops/hindsight/code.py --env-file .env code --project P123456 --coder <email> --name "<name>" --blamed <keys, separated by commas>
+
+Where the two differ, one person reads the ICR Review on the factors they differ on and runs:
+
+    uv run --script ops/hindsight/code.py --env-file .env review --project P123456 --coder <email> --name "<name>" --blamed <keys>
+
+Then:
+
+    uv run --script ops/hindsight/code.py --env-file .env reconcile
+
+It worked if each `code` and `review` run exits 0, and `reconcile` exits 0 and prints "Reconciled N projects", one line per project still waiting, and one agreement line per pair of coders, with Cohen's kappa once they have 20 pairs of answers (`retrieval.min_pairs` in `config/thresholds.toml`). A project with no ICR Review keeps only what both coders blamed (a parked decision).
+
+## Ticket 34, step 4 of 4: run the release gate live (criteria 6 and 7, live)
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`, and MLflow on the workspace. Run it after step 1. Before step 3 it exits 3, because there are no blamed risks to compare yet; run it again after step 3, when it exits 0 or 1.
+
+Run this from the main checkout:
+
+    uv run --script ops/hindsight/release_gate.py --env-file .env --release 2026.11
+
+It worked if it prints the gate-set line, one line per replayed project with its MLflow run id, the report sentence ("I expected 49 pilot projects ... and could use N" when it found fewer), the gate's verdict, and "Run hindsight_test-... is in strata.ops.evaluation_result, with the release's MLflow run ...". The runs must appear in the `/Shared/strata/hindsight_test` experiment, and this query, with the run id it printed, must return the release's rows, including `hindsight_recall` with its "X of Y" text (criterion 7):
+
+    SELECT segment_kind, segment, measure, value, value_text, mlflow_run_id FROM strata.ops.evaluation_result WHERE scorer = 'hindsight_test' AND run_id = '<run id>' ORDER BY segment_kind, segment, measure
+
+Before step 3, N is reported as 0 of 49 and the command exits 3 ("no blamed risks to compare yet"). After step 3 it exits 0 when the run passed and became the champion, or 1 when the gate blocks the release.
+
+## Ticket 23, step 1 of 3: deploy strata.ops.disagreement_choices
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 23 adds one table, `strata.ops.disagreement_choices` (`src/strata/lakehouse/tables/ops/disagreement_choices.sql`). It holds the side a viewer kept when two reports disagree, with the viewer, the reason, and the answer (`run_id`) or draft (`draft_id`) it was kept for. Tickets 22, 34 and 37 run the same deploy command, and one deploy from f5b445f or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, `catalog.build` lists `strata.ops.disagreement_choices` as new with its `public_from` column, it changes no existing table, and this query runs without error on the SQL warehouse:
+
+    SELECT * FROM strata.ops.disagreement_choices LIMIT 1
+
+## Ticket 23, step 2 of 3: redeploy the App with the timeline and the keep-a-side routes
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. Run it after step 1, so the table exists to grant, and after ticket 20's steps, so ISR 7 and ICR paragraph 78 are on the workspace. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from f5b445f or later serves every block that names it. From this merge on, the deploy grants the App's service principal SELECT and MODIFY on `strata.ops.disagreement_choices` (`ops/app/deploy_app.py`, `grants`), and the App serves `GET /api/projects/{id}/timeline` and `POST /api/disagreements/{id}/choices`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.disagreement_choices` lists SELECT and MODIFY for the App's service principal. Then, signed in to the App as a staff viewer, `GET <App url>/api/projects/P130164/timeline` must answer 200 with two disagreement items (ISR 7 against ICR paragraph 78 on `pdo_progress`, and the ICR against the ICR Review on `efficiency`). A POST to `<App url>/api/disagreements/437378890475ef48/choices` with a reason and a run id (the body the card sends: `kept_assertion_id`, `reason`, `run_id`, `view`) must answer `recorded: true` and add one row to `strata.ops.disagreement_choices`.
+
+## Ticket 23, step 3 of 3: the timeline, the warning card and a kept side on the deployed App (criteria 4 and 5, live)
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. The verifier proved all three checks offline and parked their live halves. It needs the Databricks keys, the four Foundry keys, and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after step 2 and after ticket 24's step 4.
+
+1. **The timeline route on the SQL warehouse.** Signed in as a staff viewer, save `<App url>/api/projects/P130164/timeline?asof=2026-10-23` as `timeline-live.json`, then run this from the main checkout:
+
+        python3 -c "import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:]); [d.pop('data_through',None) for d in (a,b)]; sys.exit(a!=b)" timeline-live.json tests/fixtures/api/timeline-p130164.json
+
+    It worked if it exits 0: the live answer equals the recording apart from `data_through`, which proves the route's SQL runs through `WarehouseEngine` and `transpile()`.
+
+2. **Criterion 4 with the live Foundry agent.** In the App, scoped to P130164, ask "How did the status reports rate P130164's progress towards its development objective in 2016?" It worked if DevTools' Network tab shows the `/api/ask` stream's `disagreement` event carrying `"changes_sentence_ids": [0]`, and the card under ISR 7's sentence shows the warning state, the badge "Two reports disagree" and "That changes one sentence in this answer." It must never show the error state.
+
+3. **Criterion 5, live half.** On that answer's card, choose "Keep ISR 7 instead", write a reason and save. It worked if the card says "You kept ISR 7 on ..." with your reason, and this query on the SQL warehouse shows one row with your user id and the answer's run id:
+
+        SELECT viewer, kept_assertion_id, reason, run_id FROM strata.ops.disagreement_choices ORDER BY made_at DESC LIMIT 1
+
+    `DESCRIBE HISTORY strata.ops.disagreement_choices LIMIT 1` must also show that the App's service principal wrote the row, not your own user.
+
+## Ticket 64, step 1 of 3: redeploy the App, which masks who sent each passage report and who asked each question
+
+The merger parked this step on October 25, 2026, after merge commit 6c17261. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again, and after ticket 32's step 1, which makes `strata.ops.candidate_labels` and `strata.ops.answer_citations`. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from 6c17261 or later serves every block that names it. From this merge on, the deploy's step 7 makes the mask function `strata.ops.mask_viewer` and puts it on `candidate_labels.viewer_id`, `candidate_labels.viewer_email` and `answer_citations.viewer_id` (`src/strata/lakehouse/masks.py`). The mask gives the values only to the App's service principal and to you, the user who runs the deploy, whose identity also runs the weekly retrieval job. Every other reader reads NULL, though `bundle/catalog.yml` lets them read all of `strata.ops`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, prints "7. Masking who sent each passage report and who asked each question from everyone but the app and you.", and its last line is `Strata is running at https://...`. Then, in the SQL editor, this returns three rows, each with the mask `mask_viewer`: `answer_citations.viewer_id`, `candidate_labels.viewer_email` and `candidate_labels.viewer_id`:
+
+    SELECT table_name, column_name, mask_name FROM system.information_schema.column_masks
+    WHERE table_catalog = 'strata' AND table_schema = 'ops' ORDER BY table_name, column_name
+
+`DESCRIBE TABLE EXTENDED strata.ops.candidate_labels` shows the same two masks under "Column Masks". The proof that a reader sees no email (criterion 1, workspace half): signed in as anyone in `account users` other than you, such as a panel member, run these two queries. Each must return 0, even after people have sent reports on the App:
+
+    SELECT count(*) AS reporters_a_reader_sees FROM strata.ops.candidate_labels
+    WHERE viewer_email IS NOT NULL OR viewer_id IS NOT NULL
+
+    SELECT count(*) AS askers_a_reader_sees FROM strata.ops.answer_citations WHERE viewer_id IS NOT NULL
+
+Run as you, the same two queries count every report and every cited source that has a sender, which shows the mask lets the owner through. If the workspace has no second person to sign in as, `DESCRIBE FUNCTION EXTENDED strata.ops.mask_viewer` must show a body that names only the App's service principal and your user name. If the warehouse refuses `SET MASK`, the deploy stops at step 7 with the warehouse's message; tell the orchestrator, since the fallback is to move the two tables to a schema without the readers' grant.
+
+## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
+
+The merger parked this step on October 25, 2026, after merge commit 6c17261, while the warehouse's daily limit held. It needs the four Foundry keys in `.env`. The description of `get_disagreements` in `config/tools.toml` now tells the agent that a side whose passage Prompt Shields flagged or never screened comes without its text and its quote. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from 6c17261 or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run's diff shows the new sentence in `### get_disagreements` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
+
+## Ticket 64, step 3 of 3: the showcase disagreement's sides keep their words once Prompt Shields has screened them
+
+The merger parked this step on October 25, 2026, after merge commit 6c17261, while the warehouse's daily limit held. It has no command of its own. Run it after ticket 11's step 4 of 4, which stores a Prompt Shields result for every passage. Until then, `get_disagreements` on the warehouse gives every side that rests on a passage without its text, under `not_screened`, as `search_passages` leaves such passages out. In the SQL editor:
+
+    SELECT passage_id, attack_detected FROM strata.gold.passage
+    WHERE passage_id IN ('26733307/v1/s4', '31525018/v1/78')
+
+It worked if it returns both passages with `attack_detected` false: ISR 7's side and paragraph 78's side then keep their words, and a claim can quote paragraph 78 (criterion 2, workspace half). A NULL means the passage was never screened, and true means Prompt Shields found an attack; either way the side comes without its words. Read that passage before the demo.

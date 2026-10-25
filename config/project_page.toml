@@ -20,6 +20,20 @@
 #                            key its row on the Summary.
 #   procurement_rating_code  the projects API's code for the Procurement rating.
 #
+# [timeline] (ticket 23; the 23 brief, sections 4.2 and 10)
+#   disagreement_line_state  the state a disagreement's dashed line takes when no answer or draft open on the page
+#                            depends on it: info (blue), the brief's choice, or warning (amber), as the ticket's
+#                            text first had it. A line an open answer depends on is amber either way.
+#   events                   one [[timeline.events]] table per event the How lane draws, in this order: kind is
+#                            the event's key (its words are copy.timeline's in web/src/copy.ts), words the phrases
+#                            a passage that dates it must hold, pattern the pattern whose one group reads the date
+#                            (or key_date, the assertions reader's own pattern for this kind, so a disagreement's
+#                            moment and the diamond on the chart are dated the same way; the reader has one
+#                            only for mid_term_review, and the server will not start with key_date on another
+#                            kind), and date_format how that date is written, in Python's strptime codes. A new
+#                            kind also needs its label in copy.timeline.label (web/src/copy.ts), or the chart
+#                            shows its raw key.
+#
 # Source: the documents and projects APIs' records in data/fixture/recorded (docty, the ISRs' overall
 # ratings tables and the projects API's rating codes).
 
@@ -64,3 +78,20 @@ key = "pdo"
 [[summary.isr_ratings]]
 name = "Overall Implementation Progress (IP)"
 key = "implementation"
+
+[timeline]
+disagreement_line_state = "info"
+
+# ISRs print "Actual Mid-Term Review Date: 16-May-2016" in their key dates (ISR 7 of P130164).
+[[timeline.events]]
+kind = "mid_term_review"
+words = ["mid-term review date", "mid term review date"]
+pattern = "key_date"
+date_format = "%d-%b-%Y"
+
+# The ICR of P130164: "restructured once on July 27, 2017".
+[[timeline.events]]
+kind = "restructuring"
+words = ["restructured"]
+pattern = 'restructured(?: once)? on ([A-Z][a-z]+ \d{1,2}, \d{4})'
+date_format = "%B %d, %Y"

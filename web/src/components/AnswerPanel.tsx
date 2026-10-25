@@ -31,7 +31,8 @@ import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { notCheckedFor, type Removed } from "./Checks";
-import { DisagreementCard } from "./DisagreementCard";
+import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
+import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -287,15 +288,6 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
   return parts;
 }
 
-// A side of a disagreement, named in full ("Implementation Status and Results Report (ISR) 7") and short
-// ("ISR 7"), from its document type and the short name its evidence event carries.
-function sideNames(side: DisagreementEvent["sides"][number], evidence: EvidenceEvent | undefined) {
-  const short = evidence?.short_name ?? null;
-  const paragraph = side.paragraph_numbered ? side.paragraph : null;
-  const words = copy.disagreement;
-  const full = words.sourceFull(side.document_type ?? recordKind({ id: side.evidence_id } as EvidenceEvent), short, side.sequence, paragraph);
-  return { full, short: short ? words.sourceShort(short, side.sequence, paragraph) : full };
-}
 
 export function AnswerSentences({
   run,
@@ -352,56 +344,68 @@ export function AnswerSentences({
     const cards = run.disagreements.filter((found) => found.after === sentence.index);
     if (cards.length === 0) return;
     close(`sentence${sentence.index}`);
-    for (const found of cards) blocks.push(<AnswerDisagreement key={found.id} found={found} run={run} markerFor={markerFor} />);
+    for (const found of cards) blocks.push(<AnswerDisagreement key={found.id} found={found} run={run} markerFor={markerFor} onOpen={open} />);
   });
   close("end");
   return <div className="flex flex-col gap-3">{blocks}</div>;
 }
 
 // A disagreement check 6 shows under its sentence: both sides, the rule and what changes if you keep
-// the other, every word from the copy file and the stream's values.
+// the other, every word from the copy file and the stream's values. Once the answer is done, the card offers to
+// keep the other report for this answer's run (ticket 23).
 function AnswerDisagreement({
   found,
   run,
   markerFor,
+  onOpen,
 }: {
   found: DisagreementEvent;
   run: Run;
   markerFor: (id: string, sentence: number, active: boolean) => ReactNode;
+  // Opens a side's source in the drawer, as its marker does, from the side's "Open ISR 7" link.
+  onOpen: (id: string, sentence: number, element: HTMLElement) => void;
 }) {
   const words = copy.disagreement;
-  const named = found.sides.map((side) => sideNames(side, run.evidence[side.evidence_id]));
-  const leaned = found.sides.findIndex((side) => side.leaned);
-  const other = leaned === 0 ? 1 : 0;
-  const rules = words.rule as Record<string, string>;
-  const rule = (rules[found.rule_id ?? ""] ?? "").replace("{lean}", named[leaned]?.short ?? "").replace("{other}", named[other]?.short ?? "");
-  const keep = found.if_you_keep;
-  const written = words.written as Record<string, string>;
-  const sides = found.sides.map((side, index) => ({
-    meta: words.meta
-      .replace("{source}", named[index].full)
-      .replace("{date}", side.made_at ? formatDate(side.made_at) : "")
-      .replace("{written}", written[side.evidence_tier ?? "record"] ?? written.record),
+  const sides = found.sides as SideData[];
+  const lean = sides.find((side) => side.leaned);
+  const other = sides.find((side) => !side.leaned);
+  const cardSides = sides.map((side) => ({
+    title: sideFull(side),
+    titleText: sideFull(side),
+    meta: sideMeta(side),
     leaned: side.leaned,
-    said: (
-      <>
-        {side.quote ? copy.removed.quoted(side.quote) : words.rated(side.field_name ?? "", side.value ?? "")}
-        {markerFor(side.evidence_id, found.after, false)}
-      </>
-    ),
-  })) as [{ meta: string; leaned: boolean; said: ReactNode }, { meta: string; leaned: boolean; said: ReactNode }];
+    assertionId: side.assertion_id ?? undefined,
+    said: <SideSaid side={side} />,
+    marker: markerFor(side.evidence_id, found.after, false),
+    open: { label: sideOpen(side), href: evidenceHref(side.evidence_id), onOpen: (element: HTMLElement) => onOpen(side.evidence_id, found.after, element) },
+  })) as [CardSide, CardSide];
   const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
+  const id = found.disagreement_id ?? found.id.split(":").pop() ?? found.id;
+  const view = run.asked.view;
   return (
     <DisagreementCard
       warning={found.changes_answer}
-      name={words.groupName(badge, named[0].short, named[1].short)}
-      leanTag={words.lean}
-      sides={sides}
-      rule={rule}
-      whatChanges={keep && keep.field_name && keep.value && leaned >= 0 ? words.whatChanges(named[other].short, keep.field_name, keep.value) : undefined}
+      name={words.groupName(badge, sideShort(sides[0]), sideShort(sides[1]))}
+      subject={subjectOf(found.attribute, found.period_event ?? null)}
+      level={4}
+      sides={cardSides}
+      rule={ruleSentence(found.rule_id, sides)}
+      whatChanges={whatChanges(sides, found.if_you_keep)}
+      changes={found.changes_count != null ? changesLine(found.changes_count, "answer") : undefined}
+      keep={
+        lean && other && lean.assertion_id && other.assertion_id && run.runId
+          ? {
+              other: sideInSentence(other),
+              otherAssertionId: other.assertion_id,
+              leanAssertionId: lean.assertion_id,
+              target: { disagreementId: id, runId: run.runId, draftId: null, preview: view === "piu" || view === "public" },
+            }
+          : undefined
+      }
     />
   );
 }
+
 
 // ── The panel ──────────────────────────────────────────────────────────
 
