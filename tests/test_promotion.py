@@ -47,7 +47,8 @@ def store_backtest(engine, run_id, version, errors, n=40, m=32, editions=None, r
     found = []
     for year, error in zip((2024, 2025), errors):
         window = harness.Window(dt.date(year, 1, 1), dt.date(2026, 4, 30), backtest.TEST_YEAR, str(year))
-        scores = [harness.Score("n", n), harness.Score("m", m), harness.Score("error_estimate_months", error)]
+        scores = [harness.Score("n", n), harness.Score("m", m), harness.Score("expected", round(0.8 * n)),
+                  harness.Score("error_estimate_months", error)]
         scores += [harness.Score(f"edition.{key}.{measure}", value) for key, counts in (editions or {}).items()
                    for measure, value in zip(("n", "m"), counts)]
         found += [harness.row(run_id, scorer, window, score, f"mlflow-{run_id}", ran_at) for score in scores]
@@ -141,6 +142,34 @@ def test_with_all_four_the_challenger_is_promoted_and_the_champion_alias_moves(r
     assert stored == ((True, "[]", 1),)
     assert decision.evidence["shadow"]["packages"] == 20
     assert decision.evidence["editions"][EDITION] == {"n": 30, "m": 24, "judged": True, "inside": True}
+
+
+def track_record_shown(engine) -> dict:
+    """The track record the time estimate reports beside its answer, as of the day after DECIDED."""
+    from strata.dbx import Viewer
+    from strata.tools import registry
+
+    viewer = Viewer(email="ana.example@worldbank.org", name="Ana Example", token="token-for-ana-only")
+    result = registry.call("estimate_time", {"method": "Request for Bids", "category": "Works", "country": "KE",
+                                             "as_of": (DECIDED + DAY).date().isoformat()},
+                           registry.Context(engine=engine, viewer=viewer))
+    return result["track_record"]
+
+
+def test_the_time_estimate_reports_the_champions_track_record_until_the_challenger_is_promoted(ready):
+    tracker = registry()
+    with DuckDBEngine.open(ready) as engine:
+        # The challenger's backtest is newer than the champion's and counted 50 unseen packages, not 40.
+        engine.run("DELETE FROM strata.ops.evaluation_result WHERE run_id = :run_id", {"run_id": "backtest-2"})
+        store_backtest(engine, "backtest-2", 2, (2.6, 2.8), n=50, m=40, editions={EDITION: (15, 12), "none": (35, 28)})
+        before = track_record_shown(engine)
+        sign_both(engine)
+        promoted = promotion.promote(engine, tracker, MODEL, 2, DECIDED, roles=roles()).promoted
+        after = track_record_shown(engine)
+
+    assert (before["n"], before["m"], before["mlflow_run_id"]) == (40, 32, "mlflow-backtest-1")
+    assert promoted
+    assert (after["n"], after["m"], after["mlflow_run_id"]) == (50, 40, "mlflow-backtest-2")
 
 
 def worse_backtest(engine):

@@ -278,12 +278,31 @@ def stored_years(engine, run_id: str | None = None, as_of: dt.date | None = None
             if kind == TEST_YEAR}
 
 
-def track_record(engine, thresholds: Thresholds | None = None) -> dict | None:
-    """The latest test year's track record from the latest run (model_card.track_record): what the
-    estimate_time tool and the model card read. None before any run."""
-    return model_card.track_record(stored_years(engine), thresholds or load_thresholds())
+def registered_run(engine, version: int, as_of: dt.date | None = None) -> str | None:
+    """The backtest run that registered this version, public on as_of when given, or None."""
+    result = engine.run(_sql("registered_by.sql"), {"scorer": SCORER, "segment_kind": REGISTERED,
+                                                    "version": str(int(version)), "measure": "version",
+                                                    "as_of": as_of or dt.date.max})
+    return result.rows[0][0] if result.rows else None
+
+
+def version_years(engine, version: int | None, as_of: dt.date | None = None) -> dict[int, dict]:
+    """The test years of the run that registered a version, public on as_of: the track record of the model an
+    estimate came from, so a challenger's newer backtest changes nothing until it is promoted. With no version, or
+    no run that registered it, the latest run's."""
+    run_id = registered_run(engine, version, as_of) if version is not None else None
+    return stored_years(engine, run_id, as_of)
+
+
+def track_record(engine, thresholds: Thresholds | None = None, as_of: dt.date | None = None,
+                 settings: TimeEstimateSettings | None = None) -> dict | None:
+    """The latest test year's track record of the champion on as_of (model_card.track_record), from the run that
+    registered it: what the estimate_time tool reports. None before any run."""
+    name = (settings or load_time_estimate()).registered_model
+    version = portable.version_on(engine, name, as_of or dt.date.max)
+    return model_card.track_record(version_years(engine, version, as_of), thresholds or load_thresholds())
 
 
 def track_record_sentence(engine, thresholds: Thresholds | None = None) -> str:
-    """The model card's track-record sentence, filled from the latest stored run."""
+    """The model card's track-record sentence, filled from the champion's backtest run."""
     return model_card.sentence(track_record(engine, thresholds))

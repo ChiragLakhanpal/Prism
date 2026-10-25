@@ -138,13 +138,12 @@ def sign_off_check(engine: Engine, roles: Roles, model: str, version: int) -> di
 
 # ── The backtest, each edition, and the shadow quarter ──────────────────
 
-def backtest_years(engine: Engine, version: int) -> dict[int, dict]:
-    """The test years of the backtest run that registered a version, or none."""
+def backtest_years(engine: Engine, version: int, as_of: dt.date | None = None) -> dict[int, dict]:
+    """The test years of the backtest run that registered a version, public on as_of when given, or none."""
     from strata.estimates import backtest
 
-    found = _rows(engine, "registered_by", scorer=backtest.SCORER, segment_kind=backtest.REGISTERED,
-                  version=str(int(version)), measure="version")
-    return backtest.stored_years(engine, found[0]["run_id"]) if found else {}
+    run_id = backtest.registered_run(engine, version, as_of)
+    return backtest.stored_years(engine, run_id) if run_id else {}
 
 
 def _typical(years: dict[int, dict], shared: Iterable[int]) -> float | None:
@@ -238,8 +237,8 @@ def promote(engine: Engine, tracker, model: str, version: int, decided_at: dt.da
     roles = roles or load_roles()
     today = decided_at.astimezone(dt.UTC).date()
     champion = tracker.alias_version(model, CHAMPION)
-    mine = backtest_years(engine, version)
-    theirs = backtest_years(engine, champion) if champion is not None else {}
+    mine = backtest_years(engine, version, today)
+    theirs = backtest_years(engine, champion, today) if champion is not None else {}
     won_backtest, backtest = backtest_check(mine, theirs, settings)
     won_shadow, shadow = shadow_check(engine, model, version, champion, today, settings)
     editions_hold, editions = edition_check(mine, settings)

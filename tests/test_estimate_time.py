@@ -432,10 +432,11 @@ def test_on_the_fixture_the_latest_test_year_has_too_few_unseen_packages_for_a_t
     assert plan_dates["middle"]["in10"] is None and plan_dates["eight_in_ten"]["in10"] is None
 
 
-def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_latest_backtest_public_then(
+def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_newest_public_run_that_registered_the_version(
         fixture_db, tmp_path):
-    """A later backtest run, stored as the replay harness stores one, gives the track record and the plan dates'
-    counts; as of a day before it was public, the fixture's own run still answers."""
+    """A later backtest run that registered the version the estimate came from, stored as the replay harness stores
+    one, gives the track record and the plan dates' counts; as of a day before it was public, the fixture's own run
+    still answers. A run that registered another version, a challenger's, changes nothing (tests/test_promotion.py)."""
     import shutil
 
     from strata.estimates import backtest, harness
@@ -450,8 +451,12 @@ def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_lat
     scorer = backtest.TimeEstimateBacktest(backtest.load_time_estimate())
     window = harness.Window(dt.date(2025, 1, 1), dt.date(2026, 10, 30), "test_year", "2025")
     with DuckDBEngine.open(target) as engine:
+        version = estimate(engine, as_of=dt.date(2026, 10, 29))["estimate"]["model_version"]
+        registered = harness.Window(ran_at.date(), ran_at.date(), backtest.REGISTERED, str(version))
         harness.write(engine, [harness.row("later-run", scorer, window, harness.Score(name, value), "mlflow-later", ran_at)
-                               for name, value in measures.items()])
+                               for name, value in measures.items()]
+                      + [harness.row("later-run", scorer, registered, harness.Score("version", version), "mlflow-later",
+                                     ran_at)])
         later = estimate(engine, as_of=dt.date(2026, 10, 30))
         before = estimate(engine, as_of=dt.date(2026, 10, 29))
 

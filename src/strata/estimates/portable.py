@@ -136,6 +136,12 @@ def keep(engine, name: str, version: int, alias: str, model, mlflow_run_id: str 
                                          model.state_json(), mlflow_run_id, registered_at, registered_at.date())])
 
 
+def version_on(engine, name: str, as_of, alias: str = "champion") -> int | None:
+    """The newest version registered with an alias and public on a day, without reading its trees, or None."""
+    result = engine.run(LATEST, {"model": name, "alias": alias, "as_of": as_of})
+    return int(dict(zip(result.columns, result.rows[0]))["version"]) if result.rows else None
+
+
 def latest(engine, name: str, as_of, alias: str = "champion", learner: str = "portable") -> Kept | None:
     """The newest version registered with an alias and public on a day, or None when there is none. The app
     scores with the portable learner; the score task asks for XGBoost's (TimeEstimateModel.from_state)."""
