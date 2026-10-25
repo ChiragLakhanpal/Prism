@@ -25,7 +25,9 @@ export type BadgeKind =
   | "may-repeat"
   | "rechecking"
   | "overdue"
-  | "ieg-restates";
+  | "ieg-restates"
+  | "two-reports-disagree"
+  | "sources-differ";
 
 const lessons = copy.lessons.badges;
 
@@ -45,6 +47,9 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   overdue: { state: "warning", Icon: TriangleAlert, dashed: false, text: lessons.overdue },
   // The evidence drawer's IEG line on a risk's lesson (ticket 30): an info badge, as Watch is.
   "ieg-restates": { state: "info", Icon: Info, dashed: false, text: copy.packageRisks.drawer.iegRestates },
+  // A disagreement card's (ticket 24): warning only when it changes the answer.
+  "two-reports-disagree": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.twoReportsDisagree },
+  "sources-differ": { state: "info", Icon: Info, dashed: false, text: copy.badge.sourcesDiffer },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {

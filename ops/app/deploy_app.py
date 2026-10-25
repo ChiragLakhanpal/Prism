@@ -23,7 +23,9 @@ It needs npm, which builds the web app. It does these things, in order:
    agent's four keys (FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and
    FOUNDRY_CLIENT_SECRET), it saves them in the secret scope and gives the app each one (READ),
    so /api/ask answers through the agent. Without all four, it leaves them out of the app.yaml it
-   uploads, and /api/ask says there is no agent.
+   uploads, and /api/ask says there is no agent. It does the same with the two keys of the judge that
+   checks each sentence (AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY, src/strata/agent/judge.py);
+   without them, the app removes every sentence that needs the judge.
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it.
@@ -78,6 +80,8 @@ APPINSIGHTS_NAME = "APPLICATIONINSIGHTS_CONNECTION_STRING"
 # name and given to the app as the resource app.yaml reads it from.
 FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": "foundry-tenant",
            "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
+# The judge of the verifier's check 4 (src/strata/agent/judge.py): its two Azure OpenAI keys, kept the same way.
+JUDGE = {"AZURE_OPENAI_ENDPOINT": "azure-openai-endpoint", "AZURE_OPENAI_API_KEY": "azure-openai-key"}
 PRINCIPAL = re.compile(r"[0-9a-fA-F-]{36}")
 # The app state database's resource (ADR 0005). The platform sets PGHOST, PGPORT, PGDATABASE, PGUSER and
 # PGSSLMODE from it, which src/strata/server/settings.py reads; the database is the instance's own.
@@ -97,14 +101,15 @@ def _files(root: Path, under: str) -> dict[str, bytes]:
             if path.is_file() and not any(part in SKIPPED for part in path.parts)}
 
 
-def app_yaml(foundry: bool) -> bytes:
-    """ops/app/app.yaml as it is, or without the Foundry agent's keys when the app has no secrets for them,
-    because an env entry whose resource the app lacks would stop it from starting."""
+def app_yaml(foundry: bool, judge: bool = True) -> bytes:
+    """ops/app/app.yaml as it is, or without the Foundry agent's keys, or the judge's, when the app has no secrets
+    for them, because an env entry whose resource the app lacks would stop it from starting."""
     text = (HERE / "app.yaml").read_bytes()
-    if foundry:
+    if foundry and judge:
         return text
+    left_out = ([] if foundry else list(FOUNDRY.values())) + ([] if judge else list(JUDGE.values()))
     started = yaml.safe_load(text)
-    started["env"] = [entry for entry in started["env"] if entry.get("valueFrom") not in FOUNDRY.values()]
+    started["env"] = [entry for entry in started["env"] if entry.get("valueFrom") not in left_out]
     return yaml.safe_dump(started, sort_keys=False).encode()
 
 
@@ -112,9 +117,13 @@ def has_foundry(env: dict) -> bool:
     return all((env.get(key) or "").strip() for key in FOUNDRY)
 
 
-def package(dist: Path, foundry: bool = True) -> dict[str, bytes]:
+def has_judge(env: dict) -> bool:
+    return all((env.get(key) or "").strip() for key in JUDGE)
+
+
+def package(dist: Path, foundry: bool = True, judge: bool = True) -> dict[str, bytes]:
     """The app's files, by their path in the app's folder."""
-    return {"app.yaml": app_yaml(foundry), "requirements.txt": (HERE / "requirements.txt").read_bytes(),
+    return {"app.yaml": app_yaml(foundry, judge), "requirements.txt": (HERE / "requirements.txt").read_bytes(),
             **_files(REPO / "src" / "strata", "src/strata"),
             **{f"config/{path.name}": path.read_bytes() for path in sorted((REPO / "config").glob("*.toml"))},
             **_files(dist, "web/dist")}
@@ -131,6 +140,9 @@ def resources(env: dict, scope: str, app_state: str | None = None) -> list[dict]
     if has_foundry(env):
         found += [{"name": name, "secret": {"scope": scope, "key": key, "permission": "READ"}}
                   for key, name in FOUNDRY.items()]
+    if has_judge(env):
+        found += [{"name": name, "secret": {"scope": scope, "key": key, "permission": "READ"}}
+                  for key, name in JUDGE.items()]
     return found
 
 
@@ -189,6 +201,15 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     else:
         missing = ", ".join(key for key in FOUNDRY if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no Foundry agent and /api/ask says there is no agent.")
+    judge = has_judge(env)
+    if judge:
+        for key in JUDGE:
+            workspace.put_secret(names["secret_scope"], key, env[key].strip())
+        print("   I saved the two Azure OpenAI keys in the secret scope, so the model that judges sentences checks "
+              "each answer.")
+    else:
+        missing = ", ".join(key for key in JUDGE if not (env.get(key) or "").strip())
+        print(f"   .env has no {missing}, so the app gets no judge and removes every sentence that needs one.")
     instance = names["app_state_instance"]
     try:
         workspace.app_state_database(instance)
@@ -201,7 +222,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     workspace.configure_app(name, DESCRIPTION, resources(env, names["secret_scope"], instance), SCOPES)
 
     folder = f"/Workspace/Users/{workspace.me()}/{FOLDER}"
-    files = package(dist, foundry)
+    files = package(dist, foundry, judge)
     print(f"4. Uploading {len(files)} files to {folder}.")
     workspace.upload(folder, files)
 

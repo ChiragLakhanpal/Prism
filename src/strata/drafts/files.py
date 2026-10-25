@@ -262,24 +262,41 @@ STYLES = (
 
 # ── The evidence pack ────────────────────────────────────────────────────
 
+COUNT_WORDS = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def _count(value: int) -> str:
+    """A count standing alone, as the page writes it: a word from one to nine, then numerals (DESIGN.md section 7)."""
+    return COUNT_WORDS[value - 1] if 1 <= value <= 9 else f"{value:,}"
+
+
 def check_line(checks: dict, kind: DraftKind) -> str:
-    """The check line, word for word as the page writes it (web/src/components/Checks.tsx)."""
+    """The check line, word for word as the page writes it (web/src/components/Checks.tsx): its counts over the
+    sentences on screen, the model's part when a sentence on screen was judged (check 4), and what was not
+    checked."""
     line = words()["checkLine"]
 
     def ratio(forms: dict, part: int, whole: int) -> str:
         return _fill(forms["one"] if whole == 1 else forms["many"], part=f"{part:,}", whole=f"{whole:,}")
 
-    parts = [ratio(line[name], checks[name][found], checks[name]["total"])
+    shown = checks.get("shown") or checks
+    parts = [ratio(line[name], shown[name][found], shown[name]["total"])
              for name, found in (("numbers", "matched"), ("dates", "matched"), ("quotes", "found"))
-             if checks[name]["total"] > 0]
+             if shown[name]["total"] > 0]
     clauses = [key for key in ([] if 4 in checks["checks_run"] else ["sentences"])]
     clauses += [key for key in line["notCheckedClauses"] if key in checks["tools"]]
     clauses += [key for key in kind.not_checked if key in line["notCheckedClauses"]]
     said = [line["notCheckedClauses"][key] for key in clauses]
     joined = line["notCheckedJoin"].join(said) if len(said) <= 2 else \
         line["notCheckedComma"].join(said[:-1]) + line["notCheckedJoin"] + said[-1]
-    checked = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else line['sourcesOnly']}{line['end']}"
-    return f"{checked} {line['notChecked']} {joined}{line['end']}" if said else checked
+    text = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else line['sourcesOnly']}{line['end']}"
+    judged, proven = shown.get("judged", 0), shown.get("proven", 0)
+    if judged:
+        text += f" {line['judged']} {ratio(line['judgedSentences'], judged, judged)}{line['end']}"
+        if proven:
+            others = line["provenOthers"]
+            text += " " + (others["one"] if proven == 1 else _fill(others["many"], count=_count(proven)))
+    return f"{text} {line['notChecked']} {joined or line['notCheckedFallback']}{line['end']}"
 
 
 def snapshot(draft: dict, say: Say) -> dict:

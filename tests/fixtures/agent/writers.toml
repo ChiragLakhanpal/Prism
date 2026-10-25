@@ -102,3 +102,41 @@ claims = [
   { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"], numbers = ["0.00"], dates = [] },
   { sentence = "The plan records an Actual Amount of 1,245,092.76.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"], numbers = ["1,245,092.76"], dates = [] },
 ]
+
+[[cases]]
+id = "review-notes-checks-4-and-5"
+says = """The note on KE-NWWDA-541062-CW-RFQ keeps a sentence its row proves, and adds two claims with no number, \
+date or quote, which only the judge can check: one its row does not support (check 4) and one it does. It also adds \
+advice that cites no lesson or comparable package (check 5). The judge is asked once, about the two claims only."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
+claims = [
+  { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = ["0.00"], dates = [] },
+  { sentence = "The agency has stopped working on this activity.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+  { sentence = "The plan records no signed contract for this activity.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+  { sentence = "Ask the agency to publish a new planned signing date.", kind = "advice", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+]
+
+[[cases]]
+id = "review-notes-uncited-summary"
+says = """The note on KE-NWWDA-541062-CW-RFQ keeps a sentence its row proves, and adds a summary that cites nothing and \
+blames the agency (ticket 24's verify F1, round 2). No tool abstained, so check 2 removes it (no_source), and the \
+judge is never called, because checks 1 to 3 prove every other sentence."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
+claims = [
+  { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = ["0.00"], dates = [] },
+  { sentence = "The agency was to blame for the delay.", kind = "summary", evidence_ids = [], numbers = [], dates = [] },
+]

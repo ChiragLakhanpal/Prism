@@ -18,9 +18,11 @@ from pathlib import Path
 import httpx
 import pytest
 
+from strata.agent.judge import Judgement
 from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
-from strata.agent.scripted import ScriptedAgent, failed_stream_text, load_cases, stream_text
+from strata.agent.scripted import (RECORDED_STREAMS, ScriptedAgent, ScriptedJudge, failed_stream_text, load_cases,
+                                   stream_text)
 from strata.config import load_tools
 from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
@@ -77,8 +79,8 @@ def ask_case(fixture_db):
             with DuckDBEngine.open(fixture_db, read_only=True) as engine:
                 yield engine
 
-        app = create_app(runner=answer_runner(agent_for, engine_for, today=lambda: today),
-                         new_run_id=lambda: "run-0001", **app_options)
+        app = create_app(runner=answer_runner(agent_for, engine_for, today=lambda: today), engine_for=engine_for,
+                         judge=ScriptedJudge(case), new_run_id=lambda: "run-0001", **app_options)
 
         async def go():
             transport = httpx.ASGITransport(app=app)
@@ -393,14 +395,25 @@ class Answers:
             {"type": "output_text", "text": json.dumps({"claims": self.claims})}]}]}
 
 
+def check_1(parsed):
+    """How check 1 read each sentence the agent wrote, in order: the reasons it gave for the sentences it failed, and
+    the sentences it let through. These tests write summaries that cite nothing, and no tool abstained, so check 2
+    removes every one of them too (no_source, ticket 24's verify F1): only check 1's reasons say how the numbers in a
+    sentence were read."""
+    written = sorted([(item["index"], item["text"], []) for item in of(parsed, "sentence")] + [
+        (item["index"], item["sentence"], [(reason["code"], reason["text"]) for reason in item["reasons"]
+                                           if reason["check"] == 1]) for item in of(parsed, "removed")])
+    return [reasons for _, _, reasons in written if reasons], [text for _, text, reasons in written if not reasons]
+
+
 def test_numbers_and_dates_the_agent_lists_but_does_not_write_are_checked_too():
     unwritten = {"sentence": "Bids took a while to open.", "kind": "summary", "evidence_ids": [],
                  "numbers": [], "dates": ["45", "March 3, 2015"], "quote": None}
 
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(unwritten), no_engine))))
 
-    assert [reason["code"] for reason in of(parsed, "removed")[0]["reasons"]] == [
-        "number_not_in_records", "date_not_in_records"]
+    assert [[code for code, _ in reasons] for reasons in check_1(parsed)[0]] == [
+        ["number_not_in_records", "date_not_in_records"]]
 
 
 def test_a_fiscal_year_is_a_number_a_record_must_hold():
@@ -409,8 +422,7 @@ def test_a_fiscal_year_is_a_number_a_record_must_hold():
 
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(fiscal), no_engine))))
 
-    assert [(reason["code"], reason["text"]) for reason in of(parsed, "removed")[0]["reasons"]] == [
-        ("number_not_in_records", "FY2019")]
+    assert check_1(parsed)[0] == [[("number_not_in_records", "FY2019")]]
 
 
 def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
@@ -433,12 +445,13 @@ def test_a_number_written_as_a_word_is_a_number_a_record_must_hold():
         claim("The works slowed in the second half.")),
         no_engine))))
 
-    assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
+    failed, passed = check_1(parsed)
+    assert failed == [
         [("number_not_in_records", "Six")], [("number_not_in_records", "one"), ("number_not_in_records", "37")],
         [("number_not_in_records", "One")], [("number_not_in_records", "one")], [("number_not_in_records", "One")],
         [("number_not_in_records", "Zero")], [("number_not_in_records", "one")], [("number_not_in_records", "half")],
         [("number_not_in_records", "one")], [("number_not_in_records", "FY2019")]]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+    assert passed == [
         "No one said why.", "Each one was signed late.", "The works started in the first half of the year.",
         "The contractors' bids came late, and the World Bank's review followed.",
         "The works slowed in the second half."]
@@ -460,9 +473,8 @@ def test_the_middle_half_and_the_middle_one_name_parts_of_a_past_range_not_amoun
         claim("Half of the packages were late."), claim("Only one bid came in for the middle half.")),
         no_engine))))
 
-    assert removed_reasons(parsed) == [[("number_not_in_records", "Half")], [("number_not_in_records", "one")]]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
-        "The middle half of these packages took a while.", "The middle one took longer."]
+    assert check_1(parsed) == ([[("number_not_in_records", "Half")], [("number_not_in_records", "one")]], [
+        "The middle half of these packages took a while.", "The middle one took longer."])
 
 
 def removed_reasons(parsed):
@@ -495,7 +507,8 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         claim("The IDA 2019 funds came late."),
     ), no_engine))))
 
-    assert removed_reasons(parsed) == [
+    failed, passed = check_1(parsed)
+    assert failed == [
         [("number_not_in_records", "45")],
         [("number_not_in_records", "1.2")],
         [("number_not_in_records", "10"), ("number_not_in_records", "15")],
@@ -509,7 +522,7 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         [("number_not_in_records", "45")],
         [("date_not_in_records", "2019")],
     ]
-    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+    assert passed == [
         "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b.",
         "IDA 51030KE paid for NWWDA-WSDP-03-2019-2020 and MWI-WSDP-001.",
         "It was financed by IDA / 60300.",
@@ -562,14 +575,24 @@ def with_two_envelopes(call, **arguments):
     return result
 
 
-def ask_with_tools(fixture_db, agent, tools):
+class EverySentenceFollows:
+    """A judge for check 4 that finds every sentence follows from its sources, for the tests of checks 1 to 3,
+    so check 4 never stands in their way. tests/test_six_checks.py tests check 4 with recorded judges."""
+
+    name = "every sentence follows"
+
+    def judge(self, questions):
+        return [Judgement(question.index, True, "It follows.") for question in questions]
+
+
+def ask_with_tools(fixture_db, agent, tools, judge=None):
     @contextmanager
     def engine_for(viewer):
         with DuckDBEngine.open(fixture_db, read_only=True) as engine:
             yield engine
 
     return events(ask_with(create_app(runner=answer_runner(lambda turn: agent, engine_for, tools=tools,
-                                                           today=lambda: TODAY))))
+                                                           today=lambda: TODAY), engine_for=engine_for, judge=judge)))
 
 
 def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
@@ -629,7 +652,7 @@ def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fi
         "project_id": "P156634", "implementing_agency": "Northern Water Works Development Agency",
         "plan_date": "2026-10-09", "as_of": "2026-10-23"})], answer)
 
-    parsed = ask_with_tools(fixture_db, agent, with_adapter("check_plan", "with_two_envelopes"))
+    parsed = ask_with_tools(fixture_db, agent, with_adapter("check_plan", "with_two_envelopes"), EverySentenceFollows())
 
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
         'Its market approach was "Single Stage - Two Envelope".', "It went to market as Single Stage - Two Envelope."]
@@ -674,6 +697,32 @@ def test_a_past_range_the_agent_states_in_strata_s_words_is_backed_by_find_compa
     [evidence] = of(parsed, "evidence")
     assert evidence["id"] == "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"
     assert (evidence["tool"], evidence["row"]["public_from"]) == ("find_comparables", "2026-10-22")
+
+
+def test_a_number_that_equals_a_value_of_another_unit_or_rounding_is_not_backed_by_it(fixture_db):
+    """Ticket 12's verify V1: a number matched any value in a cited record, so "45 months" passed on the plan's
+    45 days, "34 months" on a comparable's 34 days, and "8.0" on the 8 of "8 in 10". A number written with a
+    unit no longer matches a value whose field names another unit, and a number written with decimals no
+    longer matches a whole number. tests/ground_truth/values.toml's past_range gives the plan's 45 days and 1.5
+    months and the middle half's 3.3 to 7.9 months; KE-WAJWASCO-372776-CW-RFB took 34 days, 1.1 months."""
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        wajwasco = "strata.gold.package:KE-WAJWASCO-372776-CW-RFB"
+        return [claim(sentence, kind="record", evidence_ids=[cited]) for sentence, cited in (
+            ("The plan allows 45 months.", summary), ("KE-WAJWASCO-372776-CW-RFB took 34 months.", wajwasco),
+            ("The middle half took 3.3 to 8.0 months.", summary), ("The plan allows 45 days, or 1.5 months.", summary),
+            ("KE-WAJWASCO-372776-CW-RFB took 34 days.", wajwasco), ("The middle half took 3.3 to 7.9 months.", summary))]
+
+    agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "45")], [("number_not_in_records", "34")],
+                                       [("number_not_in_records", "8.0")]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        "The plan allows 45 days, or 1.5 months.", "KE-WAJWASCO-372776-CW-RFB took 34 days.",
+        "The middle half took 3.3 to 7.9 months."]
 
 
 def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajectory_and_the_rejected_count(fixture_db):
@@ -776,13 +825,7 @@ def ask_with(app, question="Why were works contracts in P130164 advertised again
     return asyncio.run(go()).text
 
 
-@pytest.mark.parametrize("case_id, recorded", [("p130164-rebidding", "ask-p130164-rebidding.sse"),
-                                               ("p130164-number-with-no-record", "ask-p130164-removed-number.sse"),
-                                               ("p130164-nothing-found", "ask-p130164-nothing-found.sse"),
-                                               ("p130164-before-the-icr", "ask-p130164-before-the-icr.sse"),
-                                               ("p130164-isr-section", "ask-p130164-isr-section.sse"),
-                                               ("p130164-number-from-a-table-summary", "ask-p130164-table-summary.sse"),
-                                               ("p130164-rating-from-a-table-row", "ask-p130164-table-row.sse")])
+@pytest.mark.parametrize("case_id, recorded", sorted(RECORDED_STREAMS.items()))
 def test_the_server_sends_the_streams_the_screen_tests_serve(fixture_db, case_id, recorded):
     sent = stream_text(load_cases()[case_id], fixture_db)
 
@@ -877,7 +920,7 @@ def copy_reasons():
     removed = re.search(r"\n  removed: \{(.*?)\n  \},", text, re.S).group(1)
     reasons = re.search(r"reasons: \{(.*?)\n    \}", removed, re.S).group(1)
     return {code: {"item": item, "joined": joined} for code, item, joined in re.findall(
-        r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?\s*\}', reasons)}
+        r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?[^}]*\}', reasons)}
 
 
 def test_a_claim_whose_number_rests_only_on_a_table_summary_passage_is_removed_with_its_own_reason(ask_case):

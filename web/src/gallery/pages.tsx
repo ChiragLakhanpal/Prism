@@ -18,7 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Answer } from "../components/Answer";
-import { AnswerPanel } from "../components/AnswerPanel";
+import { AnswerPanel, stepsOf } from "../components/AnswerPanel";
 import { EvidenceCard } from "../components/EvidenceCard";
 import { EvidenceDrawerView, type DrawerData } from "../components/EvidenceDrawer";
 import { boxList } from "../components/IntentBox";
@@ -42,6 +42,8 @@ import {
   RISK_ROW,
   RISK_SUMMARY,
   RUNS,
+  CHECK_RUNS,
+  REFUSAL_RUNS,
   SCANNED,
   SECTION_SWITCHER_RUN,
   STEP_REF,
@@ -80,6 +82,7 @@ import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
+import { HowStrataWorks } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { hubPage } from "./hub";
@@ -1130,6 +1133,11 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   {
+    // Ticket 24: the six checks and the refusals, each panel playing its scripted case's recorded stream.
+    slug: "six-checks",
+    sections: sixChecksSections(),
+  },
+  {
     // Ticket 14's evidence card and drawer, at ICR P130164 paragraph 54 as the stream sent it.
     slug: "evidence",
     sections: [
@@ -1391,6 +1399,83 @@ export const PAGES: GalleryPage[] = [
     ],
   },
 ];
+
+// Ticket 24's states. The check line samples are made up, as the citations page's are; every panel plays a
+// recorded stream.
+function sixChecksSections(): GalleryPage["sections"] {
+  const words = galleryCopy.sixChecks;
+  const titles = words.sections;
+  const label = words.labels;
+  const panels = (Object.keys(CHECK_RUNS) as (keyof typeof CHECK_RUNS)[]).filter((key) => key !== "partial" && key !== "judging");
+  return [
+    {
+      id: "check-line",
+      title: titles.checkLine,
+      body: (
+        <div className="flex max-w-prose flex-col gap-4">
+          <Labeled label={label.acceptance}>
+            <CheckLine numbers={{ matched: 5, total: 5 }} quotes={{ found: 2, total: 2 }} notChecked={["find_comparables"]} />
+          </Labeled>
+          <Labeled label={label.judged}>
+            <CheckLine numbers={{ matched: 5, total: 5 }} quotes={{ found: 2, total: 2 }} judged={{ judged: 1, proven: 3 }} notChecked={["find_comparables"]} />
+          </Labeled>
+          <Labeled label={label.allJudged}>
+            <CheckLine judged={{ judged: 2, proven: 0 }} notChecked={["search_passages"]} />
+          </Labeled>
+          <Labeled label={label.numbersOnly}>
+            <CheckLine numbers={{ matched: 1, total: 1 }} notChecked={["search_passages"]} />
+          </Labeled>
+          <Labeled label={label.quotesOnly}>
+            <CheckLine quotes={{ found: 3, total: 3 }} judged={{ judged: 1, proven: 1 }} notChecked={["search_passages"]} />
+          </Labeled>
+          <Labeled label={label.twoClauses}>
+            <CheckLine numbers={{ matched: 4, total: 4 }} notChecked={["find_comparables", "search_passages"]} />
+          </Labeled>
+          <Labeled label={label.threeClauses}>
+            <CheckLine numbers={{ matched: 4, total: 4 }} judged={{ judged: 2, proven: 1 }} notChecked={["find_comparables", "search_passages", "get_lessons"]} />
+          </Labeled>
+          <Labeled label={label.fallback}>
+            <CheckLine numbers={{ matched: 2, total: 2 }} notChecked={[]} />
+          </Labeled>
+        </div>
+      ),
+    },
+    {
+      id: "six-checks",
+      title: titles.sixChecks,
+      body: (
+        <div className="flex max-w-prose flex-col gap-6">
+          <Labeled label={label.sixAll}>
+            <Steps steps={stepsOf(CHECK_RUNS.advice)} />
+          </Labeled>
+          <Labeled label={label.sixAttached}>
+            <Steps steps={stepsOf(CHECK_RUNS.isr7)} />
+          </Labeled>
+          <Labeled label={label.sixNone}>
+            <Steps steps={stepsOf(CHECK_RUNS.pastRange)} />
+          </Labeled>
+          <Labeled label={label.judging}>
+            <Steps steps={stepsOf(CHECK_RUNS.judging)} announce={false} />
+          </Labeled>
+        </div>
+      ),
+    },
+    ...panels.map((key) => ({ id: key, title: titles[key], body: <PanelSample run={CHECK_RUNS[key]} /> })),
+    {
+      id: "refusals",
+      title: titles.refusals,
+      body: (
+        <div className="flex flex-col gap-4">
+          {Object.entries(REFUSAL_RUNS).map(([key, run]) => (
+            <PanelSample key={key} run={run} />
+          ))}
+        </div>
+      ),
+    },
+    { id: "partial", title: titles.partial, body: <PanelSample run={CHECK_RUNS.partial} /> },
+    { id: "what-i-dont-do", title: titles.dontDo, body: <HowStrataWorks /> },
+  ];
+}
 
 // The Data readiness page in each state, from the gallery's made-up sample.
 function readinessSections(): GalleryPage["sections"] {

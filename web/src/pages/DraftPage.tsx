@@ -551,7 +551,15 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </p>
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
-          <CheckLine numbers={d.checks.numbers} dates={d.checks.dates} quotes={d.checks.quotes} notChecked={notCheckedFor(d.checks, d.layout.not_checked)} />
+          {/* Counts over the notes' sentences on screen, and the model's part when one was judged (ticket 24), as
+              src/strata/drafts/files.py writes the evidence pack's line. A draft saved before then has no shown counts. */}
+          <CheckLine
+            numbers={(d.checks.shown ?? d.checks).numbers}
+            dates={(d.checks.shown ?? d.checks).dates}
+            quotes={(d.checks.shown ?? d.checks).quotes}
+            judged={d.checks.shown ? { judged: d.checks.shown.judged, proven: d.checks.shown.proven } : undefined}
+            notChecked={notCheckedFor(d.checks, d.layout.not_checked)}
+          />
           {showRemoved && <RemovedBox removed={removed} />}
         </div>
         <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
@@ -633,9 +641,9 @@ function DraftSkeleton() {
           {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
-          {/* The check line, seven lines of small text in its box below 48rem and four from it, and the
+          {/* The check line, six lines of small text in its box below 48rem and three from it, and the
               one-line removed box. */}
-          <Skeleton className="h-40 w-full md:h-24" radius="rounded-sm" />
+          <Skeleton className="h-34 w-full md:h-19" radius="rounded-sm" />
           <Skeleton className="h-11 w-full" radius="rounded-sm" />
         </div>
         <div className="mt-4 flex h-11 items-center">

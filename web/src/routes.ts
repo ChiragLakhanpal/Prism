@@ -58,6 +58,8 @@ export function isDay(text: string): boolean {
 // The Data tab's sub-pages under /data (the 16 design brief, section 2): Data readiness is /data.
 export const DATA_PAGES = { dataSources: "sources", dataHow: "how-strata-works" } as const;
 export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow: "/data/how-strata-works" } as const;
+// How Strata works' "What I don't do" (ticket 24), where the link under every refusal goes.
+export const WHAT_I_DONT_DO = { id: "what-i-dont-do", href: `${DATA_HREF.dataHow}#what-i-dont-do` } as const;
 
 // Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
 // the answer, by their source registry keys, and the tool that wrote the line, such as

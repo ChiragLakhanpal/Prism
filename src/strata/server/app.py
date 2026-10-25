@@ -10,12 +10,14 @@
   viewer, 504 when the warehouse takes longer than the thresholds file's
   app.stamp_timeout_seconds, and 502 when it fails, with the details only in the server log.
 - POST /api/ask takes a question, with the page's scope chip, as-of date, view and language, and
-  streams a run's events as text/event-stream: steps, then the answer's sentences with their
-  evidence ids, the evidence they cite, the check counts and the removed sentences, then a final
-  done event with the run id and its trace ids. The verifier runs here, in the stream, on every
-  answer the runner hands over, so no runner can send a sentence the checks did not see. A run that
-  breaks ends with an error event whose details stay in the server log. Each run is written to
-  strata.ops.agent_runs (src/strata/agent/runs.py).
+  streams a run's events as text/event-stream: steps, then the refusal when the agent turned the
+  request down, the answer's sentences with their evidence ids, the evidence they cite, the
+  disagreements check 6 shows, the check counts and the removed sentences, then a final done event
+  with the run id and its trace ids. The verifier's six checks run here, in the stream, on every
+  answer the runner hands over, so no runner can send a sentence the checks did not see: checks 1 to
+  3 and 5 at once, check 6 with get_disagreements asked as the viewer, and check 4 with one call to
+  the judge (src/strata/agent/judge.py). A run that breaks ends with an error event whose details
+  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py).
 - GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
@@ -103,9 +105,11 @@ from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
 
 from strata.agent import traces
+from strata.agent.answer_check import Asker, SixChecks
+from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
-from strata.agent.verifier import answer_events, verify
-from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds
+from strata.agent.verifier import Verdict, answer_events
+from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
 from strata.knowledge.lessons.review import LessonReview, Refused
@@ -133,7 +137,7 @@ log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 # Only the verifier writes these, from the claims a runner hands over.
-ANSWER_EVENTS = {"sentence", "evidence", "disagreement", "checks", "removed", "done"}
+ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
@@ -236,7 +240,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
                new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
-               lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
+               lesson_record: Callable[[], Engine] | None = None, judge: Judge | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -254,6 +258,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     recorded. web_dist is
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
+
+    judge answers the verifier's check 4 for every answer (src/strata/agent/judge.py; app_from_env gives
+    the draft role's deployment). Without it, every sentence that needed the judge is removed, never shown
+    unchecked. Check 6 asks get_disagreements with engine_for, as the viewer.
 
     drafts keeps the drafts (src/strata/drafts/store.py), written as the app's own service principal;
     without it, the draft routes say there is no data service. writers gives each draft kind's writer
@@ -299,6 +307,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # brief, section 3.5). Starlette leaves text/event-stream alone, so /api/ask still streams.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     thresholds = load_thresholds()
+    tools = load_tools()
+    six_checks = SixChecks(engine_for, judge, tools, thresholds)
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
     labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))
     tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
@@ -575,7 +585,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             access=access or Access(load_roles(), NoGroups()), writers=writers or (lambda kind: None),
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
-                            heartbeat_seconds=heartbeat_seconds)
+                            heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
                               form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
@@ -745,6 +755,24 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 writer.start()
                 await asyncio.to_thread(writer.join, 60)
 
+    def as_of_of(turn: Turn) -> dt.date:
+        return turn.notes.as_of or min(turn.scope.as_of or today(), today())
+
+    async def verified(claims: list, turn: Turn) -> AsyncIterator[Event | Verdict]:
+        """The six checks on the claims (src/strata/agent/answer_check.py), inside the verifier's step, with the two
+        steps it may take inside it: getting the other side of a disagreement, and asking the judge. Ends with the
+        verdict."""
+        yield Event("step", {"id": "check", "kind": "check", "status": "running"})
+        verdict = None
+        asker = Asker(turn.viewer, turn.scope.view, as_of_of(turn), turn.run_id)
+        async for item in six_checks.finish(six_checks.check(claims, turn.facts), turn.facts, asker):
+            if isinstance(item, Verdict):
+                verdict = item
+            else:
+                yield item
+        yield Event("step", {"id": "check", "kind": "check", "status": "done", "removed": len(verdict.removed)})
+        yield verdict
+
     async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
         verdict, error_code = None, None
         try:
@@ -752,12 +780,23 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 if item is HEARTBEAT:
                     yield KEEP_ALIVE
                 elif item.type == "claims":  # the verifier, with its own step, then the answer's events
-                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "running"}))
-                    verdict = verify(item.data["claims"], turn.facts)
-                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "done",
-                                               "removed": len(verdict.removed)}))
+                    refusal = item.data.get("refusal")
+                    if refusal is not None:
+                        yield frame(Event("refusal", {"key": refusal.key, "partial": refusal.partial}))
+                    if refusal is not None and not refusal.partial:
+                        verdict = Verdict((), ())  # nothing was written, so no check ran
+                    else:
+                        # Checks 6 and 4 can wait on the data service and the judge, so the stream keeps the
+                        # connection alive while they run, as it does while the agent works.
+                        async for event in with_heartbeats(verified(item.data["claims"], turn), heartbeat_seconds):
+                            if event is HEARTBEAT:
+                                yield KEEP_ALIVE
+                            elif isinstance(event, Verdict):
+                                verdict = event
+                            else:
+                                yield frame(event)
                     ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
-                    for event in answer_events(verdict, turn.facts, ran):
+                    for event in answer_events(verdict, turn.facts, ran, six_checks.cited_only):
                         yield frame(event)
                 elif item.type in ANSWER_EVENTS:
                     raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")

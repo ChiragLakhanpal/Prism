@@ -4,15 +4,22 @@
 // success green, because a green banner reads as "safe". Its text starts on the removed box's text
 // edge, 48 px in (the box's 4 px border, 16 px padding, 16 px icon and 12 px gap), so the two read
 // as one column, with no check-mark icon (ticket 02's round 7 review). Dates the verifier matched
-// get their own clause, so "numbers" never counts a date (ticket 14).
+// get their own clause, so "numbers" never counts a date (ticket 14). Three labeled parts, each on
+// its own line, from the firmest kind of checking to none (the 24 brief, section 4.1): "Checked:"
+// (exact matches, counted), "Judged by a model:" (check 4, only when a sentence on screen was
+// judged) and "Not checked:" (a clause per tool that leaves a gap, or the fallback). It is still one
+// paragraph, so a screen reader reads it straight through.
 // Coverage line: a sentence with its denominator, linked to Data readiness. The gap sentence
 // ends the first sentence when some cases lacked what the count needs; a period ends it when
 // none did.
-// Removed box: the sentences the checks removed, with their reasons, open under "In short".
-import type { ReactNode } from "react";
+// Removed box: the sentences the checks removed, with their reasons, open under "In short". Every
+// one is listed, the first in the lead and the others below, all visible, as plain text with no
+// dotted numbers and no markers (the 24 brief, section 4.3).
+import { useId, type ReactNode } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
-import { formatNumber } from "../lib/format";
+import { formatCount, formatNumber } from "../lib/format";
+import { Button } from "./Button";
 import { Num, numText, type NumCheck } from "./Num";
 import { TextLink } from "./TextLink";
 
@@ -26,15 +33,23 @@ function ratio(forms: { one: string; many: string }, part: number, whole: number
 }
 
 // What the line says was not checked, from the verifier's checks event: whether each sentence follows
-// from its sources until ticket 24 runs the fourth check, then a clause for each tool that ran and
-// has one, then a draft kind's own clauses (config/drafts.toml). src/strata/drafts/runtime.py writes
-// the evidence pack's line by the same rule.
-export function notCheckedFor(checks: { checks_run: number[]; tools: string[] }, own: string[] = []): NotChecked[] {
+// from its sources where the fourth check did not run (an answer saved before ticket 24), then a clause
+// for each tool that ran and has one, then a draft kind's own clauses (config/drafts.toml). A tool the
+// event lists under cited_only (config/tools.toml, not_checked_when = "cited") has its clause only once a
+// sentence on screen cites it: a lesson cited is not a lesson that fits, which check 5 cannot tell (the
+// 24 brief, section 5.2). src/strata/drafts/files.py writes the evidence pack's line by the same rule.
+// With none, the line gives the fallback.
+export function notCheckedFor(
+  checks: { checks_run: number[]; tools: string[]; cited_tools?: string[]; cited_only?: string[] },
+  own: string[] = [],
+): NotChecked[] {
   const clauses = copy.checkLine.notCheckedClauses;
   const keys = Object.keys(clauses) as NotChecked[];
+  const cited = checks.cited_tools ?? [];
+  const citedOnly = checks.cited_only ?? [];
   return [
     ...(checks.checks_run.includes(4) ? [] : (["sentences"] as NotChecked[])),
-    ...keys.filter((key) => checks.tools.includes(key)),
+    ...keys.filter((key) => (citedOnly.includes(key) ? cited.includes(key) : checks.tools.includes(key))),
     ...own.filter((key): key is NotChecked => key in clauses),
   ];
 }
@@ -50,11 +65,15 @@ export function CheckLine({
   numbers,
   dates,
   quotes,
+  judged,
   notChecked,
 }: {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
+  // Check 4 on the sentences on screen: how many a model judged, all of which follow, since a sentence
+  // that does not is removed, and how many needed no model. No part when none was judged.
+  judged?: { judged: number; proven: number };
   notChecked: NotChecked[];
 }) {
   const words = copy.checkLine;
@@ -64,17 +83,31 @@ export function CheckLine({
     quotes && quotes.total > 0 && ratio(words.quotes, quotes.found, quotes.total),
   ].filter((clause): clause is string => Boolean(clause));
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
+  const gaps = notChecked.map((clause) => words.notCheckedClauses[clause]);
   return (
     <p data-check-line data-numbers className="rounded-md bg-neutral-bg py-2 pr-4 pl-12 text-small text-neutral">
-      <span className="font-semibold">{words.checked}</span> {checked}
-      {words.end}{" "}
-      {notChecked.length > 0 && (
+      <span data-check-part="checked" className="block">
+        <strong className="font-semibold">{words.checked}</strong> {checked}
+        {words.end}
+      </span>{" "}
+      {judged && judged.judged > 0 && (
         <>
-          <span className="font-semibold">{words.notChecked}</span>{" "}
-          {joinClauses(notChecked.map((clause) => words.notCheckedClauses[clause]))}
-          {words.end}
+          <span data-check-part="judged" className="block">
+            <strong className="font-semibold">{words.judged}</strong> {ratio(words.judgedSentences, judged.judged, judged.judged)}
+            {words.end}
+            {judged.proven > 0 && (
+              <>
+                {" "}
+                {(judged.proven === 1 ? words.provenOthers.one : words.provenOthers.many).replace("{count}", formatCount(judged.proven))}
+              </>
+            )}
+          </span>{" "}
         </>
       )}
+      <span data-check-part="not-checked" className="block">
+        <strong className="font-semibold">{words.notChecked}</strong> {gaps.length ? joinClauses(gaps) : words.notCheckedFallback}
+        {words.end}
+      </span>
     </p>
   );
 }
@@ -121,6 +154,9 @@ export type Removed = {
   // supports that number"), from the copy file's verifier reasons.
   reason: string;
   reasonJoined: string;
+  // It gave advice: the lead quotes it whole, with the list item's reason, rather than report it, since
+  // advice is often an order that does not read as reported speech.
+  quoted?: boolean;
 };
 
 // "It said bids were usually opened within 45 days": the sentence without its final period,
@@ -135,14 +171,22 @@ export function asReported(sentence: string, names: string[] = []): string {
 
 // The removed box's lead in another unit than sentences, such as the risks section's rows (ticket 30): "I
 // removed one risk."
-export type RemovedLead = { none: string; one: string; several: (count: string) => string; all: (count: string) => string; allOne: string };
+// "all" takes the count and its text, since two is "both", never "all two" (ticket 24).
+export type RemovedLead = {
+  none: string;
+  one: string;
+  several: (count: string) => string;
+  all: (count: number, countText: string) => string;
+  allOne: string;
+};
 
 export function RemovedBox({
   removed,
   all = false,
   names,
   lead: leads = copy.removed,
-  item = copy.removed.item,
+  item,
+  retry,
 }: {
   removed: Removed[];
   // Every sentence the agent wrote failed a check.
@@ -150,10 +194,16 @@ export function RemovedBox({
   // Words that stay capitalized when a sentence is reported, from the answer and its passages.
   names?: string[];
   lead?: RemovedLead;
-  // One removed item after the first, from what it said and its reason.
+  // One removed item after the first, from what it said and its reason, as plain text (the risks section,
+  // ticket 30). Without it, each item quotes its sentence in its own quote element, then gives its reason.
   item?: (sentence: string, reason: string) => string;
+  // A service a check needs did not answer (the judge, or get_disagreements), so "Try again" follows the
+  // lead and asks the question again, after a note on how many it could not check when other sentences
+  // were removed for other reasons (the 24 brief, section 5.4).
+  retry?: { onRetry: () => void; note?: string };
 }) {
   const words = copy.removed;
+  const othersId = useId();
   const count = removed.length;
   const lead =
     count === 0
@@ -161,7 +211,7 @@ export function RemovedBox({
       : all
         ? count === 1
           ? leads.allOne
-          : leads.all(numText({ count }))
+          : leads.all(count, numText({ count }))
         : count === 1
           ? leads.one
           : leads.several(numText({ count }));
@@ -175,17 +225,50 @@ export function RemovedBox({
           {first && !all && (
             <>
               {" "}
-              {(count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)}
+              {first.quoted ? (
+                <>
+                  {count === 1 ? words.itSaidQuoted : words.firstSaidQuoted}{" "}
+                  <q className="text-ink [quotes:none]">{words.quoted(first.sentence)}</q> {first.reason}
+                </>
+              ) : (
+                (count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)
+              )}
             </>
           )}
         </p>
+        {retry && (
+          <>
+            {retry.note && (
+              <p data-unjudged className="mt-2">
+                {retry.note}
+              </p>
+            )}
+            <div className="mt-2">
+              <Button variant="secondary" onClick={retry.onRetry}>
+                {copy.answer.tryAgain}
+              </Button>
+            </div>
+          </>
+        )}
         {(all ? removed : others).length > 0 && (
           <>
-            {!all && <p className="mt-2">{others.length === 1 ? words.other : words.others}</p>}
-            <ul className="mt-2 flex list-disc flex-col gap-1 pl-4">
-              {(all ? removed : others).map((entry, index) => (
-                <li key={index}>{item(entry.sentence, entry.reason)}</li>
-              ))}
+            {!all && (
+              <p id={othersId} className="mt-2">
+                {others.length === 1 ? words.other : words.others}
+              </p>
+            )}
+            <ul aria-labelledby={all ? undefined : othersId} className="mt-2 flex list-disc flex-col gap-1 pl-4">
+              {(all ? removed : others).map((entry, index) =>
+                item ? (
+                  <li key={index}>{item(entry.sentence, entry.reason)}</li>
+                ) : (
+                  <li key={index}>
+                    {/* The sentence in its own quote element, in ink, so a screen reader and the eye can tell
+                        it from its reason. Its straight quote marks are the copy file's, so the browser adds none. */}
+                    <q className="text-ink [quotes:none]">{words.quoted(entry.sentence)}</q> {entry.reason}
+                  </li>
+                ),
+              )}
             </ul>
           </>
         )}

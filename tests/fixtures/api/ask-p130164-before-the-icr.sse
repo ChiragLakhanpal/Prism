@@ -17,16 +17,16 @@ event: step
 data: {"id": "check", "kind": "check", "status": "done", "removed": 3}
 
 event: checks
-data: {"checks_run": [1, 2, 3], "sentences": {"written": 3, "kept": 0, "removed": 3}, "numbers": {"total": 2, "matched": 0}, "dates": {"total": 1, "matched": 0}, "quotes": {"total": 2, "found": 0}, "sources": {"total": 2, "returned": 0}, "tools": ["search_passages"]}
+data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 3, "kept": 0, "removed": 3}, "numbers": {"total": 2, "matched": 0}, "dates": {"total": 1, "matched": 0}, "quotes": {"total": 2, "found": 0}, "sources": {"total": 2, "returned": 0}, "checked": {"total": 3, "matched": 0}, "shown": {"numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "judged": 0, "proven": 0}, "judge": {"called": false, "responded": null, "judged": 0, "followed": 0, "unjudged": 0, "proven": 0}, "advice": {"total": 0, "cited": 0}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0, "unasked": 0, "warned": 0}, "cited_tools": [], "tools": ["search_passages"], "cited_only": ["get_lessons"]}
 
 event: removed
-data: {"index": 0, "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/54"}]}
+data: {"index": 0, "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".", "kind": "quote", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/54"}]}
 
 event: removed
-data: {"index": 1, "sentence": "It also says \"forest and other administrative clearances should have been in place prior to awarding contracts\".", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/55"}]}
+data: {"index": 1, "sentence": "It also says \"forest and other administrative clearances should have been in place prior to awarding contracts\".", "kind": "quote", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/55"}]}
 
 event: removed
-data: {"index": 2, "sentence": "The completion report is dated October 10, 2019.", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/54"}, {"check": 1, "code": "date_not_in_records", "text": "October 10, 2019"}]}
+data: {"index": 2, "sentence": "The completion report is dated October 10, 2019.", "kind": "record", "reason": "id_not_returned", "reasons": [{"check": 2, "code": "id_not_returned", "text": "strata.gold.passage:31525018/v1/54"}, {"check": 1, "code": "date_not_in_records", "text": "October 10, 2019"}]}
 
 event: done
 data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}
