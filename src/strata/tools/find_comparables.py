@@ -48,8 +48,8 @@ from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
-from strata.config import load_sources, load_tools
-from strata.estimates.past_range import QUARTERS, Observation, months, quantile_dots, quartiles
+from strata.config import load_sources, load_thresholds, load_tools
+from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
 from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
 
@@ -158,9 +158,14 @@ def _open(value: str | None) -> str | None:
     return None if value is None or value.strip().lower() == ANY else value.strip()
 
 
-def _criteria(package: dict, limits: Limits, asked: dict) -> dict:
-    defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"],
-                "notice_from": limits.period_from, "notice_to": _date(package["plan"]["plan_date"])}
+def _criteria(package: dict | None, limits: Limits, asked: dict, as_of: dt.date) -> dict:
+    """The criteria the call gave, with the rest from the package's plan row. A package with no plan row yet
+    gives none: its criteria stay open unless the call gives them, and its notices run to the as-of date."""
+    if package is None:
+        defaults = {"notice_from": limits.period_from, "notice_to": as_of}
+    else:
+        defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"],
+                    "notice_from": limits.period_from, "notice_to": _date(package["plan"]["plan_date"])}
     criteria, from_package = {}, []
     for name in ("method", "category", "market_approach", "review_type", "country"):
         given = asked.get(name)
@@ -174,7 +179,7 @@ def _criteria(package: dict, limits: Limits, asked: dict) -> dict:
             criteria[name] = _open(given)
     for name in ("notice_from", "notice_to"):
         criteria[name] = asked.get(name) or defaults[name]
-        if asked.get(name) is None and name == "notice_to":
+        if asked.get(name) is None and name == "notice_to" and package is not None:
             from_package.append(name)
     criteria["size_from_usd"] = asked.get("size_from_usd")
     criteria["size_to_usd"] = asked.get("size_to_usd")
@@ -340,10 +345,98 @@ def _past_range(rows: list[dict]) -> dict:
 
 
 def _quantile_dots(rows: list[dict], count: int) -> list[dict]:
+    """The quantile dots, each with the packages it stands for (ticket 15: a dot opens the evidence drawer at
+    them), their count, how many are still open, and their shortest and longest months. Packages on the same
+    day are taken in STEP reference order."""
     observations = [Observation(row["days"], not row["still_open"]) for row in rows]
     last = max(row["days"] for row in rows)  # a dot the curve never reaches sits at the last follow-up
-    return [{"k": k, "days": day if day is not None else last, "months": _as_float(months(day if day is not None else last)),
-             "reached": day is not None} for k, day in quantile_dots(observations, count)]
+    ordered = sorted(rows, key=lambda row: (row["days"], row["step_reference"]))
+    members = dot_packages([Observation(row["days"], not row["still_open"]) for row in ordered], count)
+    dots = []
+    for (k, day), indexes in zip(quantile_dots(observations, count), members):
+        standing = [ordered[index] for index in indexes]
+        dots.append({"k": k, "days": day if day is not None else last,
+                     "months": _as_float(months(day if day is not None else last)), "reached": day is not None,
+                     "step_references": [row["step_reference"] for row in standing], "count": len(standing),
+                     "still_open": sum(1 for row in standing if row["still_open"]),
+                     "low_months": min(row["months"] for row in standing),
+                     "high_months": max(row["months"] for row in standing)})
+    return dots
+
+
+def _record(row: dict | None, money: tuple[str, ...] = (), days: tuple[str, ...] = ()) -> dict | None:
+    """A notice's or a contract's fields, with dates as ISO days and amounts at their cents, as text."""
+    if row is None:
+        return None
+    shown = {}
+    for key, value in row.items():
+        if key in money:
+            amount = _money(value)
+            shown[key] = str(amount) if amount is not None else None
+        elif key in days or key == "public_from":
+            shown[key] = _iso(_date(value))
+        elif isinstance(value, Decimal):
+            shown[key] = int(value) if value == int(value) else float(value)
+        else:
+            shown[key] = value
+    return shown
+
+
+def _datasets() -> dict:
+    """How the World Bank credits the notices and the awards, for the drawer's source lines."""
+    registry = load_sources()
+    found = {}
+    for key in ("notices", "awards"):
+        source = registry[key]
+        found[key] = {"dataset_name": source.dataset_name, "license": source.license,
+                      "data_source": source.attribution.data_source if source.attribution else None,
+                      "record_url": source.record_url}
+    return found
+
+
+def read_comparable(engine, step_reference: str, as_of: dt.date) -> dict | None:
+    """One comparable package as the evidence drawer shows it: its procurement cycle time, counted as
+    find_comparables counts it, its specific procurement notice and its contract award (or the award notice
+    that gives its signing date), each as public on the as-of date, or None when no package has the
+    reference by then. A still-open package's months run to the as-of date (counted_to); a canceled one that
+    find_comparables leaves out says so (canceled), as _select's rule decides."""
+    found = _rows(engine, "candidates.sql", as_of=as_of, only=step_reference.strip(), step_reference="",
+                  country=None, method=None, category=None, notice_from=dt.date(1900, 1, 1), notice_to=as_of)
+    if not found or found[0]["notice_date"] is None:
+        return None
+    candidate = found[0]
+    row = _comparable(candidate, as_of)
+
+    def one(name: str, **params) -> dict | None:
+        rows = _rows(engine, name, as_of=as_of, **params)
+        return rows[0] if rows else None
+
+    notice = _record(one("notice.sql", notice_id=candidate["notice_id"]), ("signed_contract_price",),
+                     ("notice_date", "submission_deadline", "contract_signature_date"))
+    contract = _record(one("contract.sql", contract_id=row["source"]["contract_id"]), ("contract_amount_usd",),
+                       ("contract_signing_date",)) if row["source"]["contract_id"] else None
+    award = _record(one("notice.sql", notice_id=row["source"]["award_notice_id"]), ("signed_contract_price",),
+                    ("notice_date", "submission_deadline", "contract_signature_date")) \
+        if row["source"]["award_notice_id"] else None
+    named = _rows(engine, "project.sql", project_id=candidate["project_id"])
+    through = _rows(engine, "records_through.sql", as_of=as_of)
+    amount = _money(candidate["amount_usd"])
+    left_out = not load_thresholds().value("past_range.canceled_as_still_open")
+    return {**row,
+            "counted_to": _iso(as_of) if row["still_open"] else None,
+            "canceled": left_out and row["still_open"] and candidate["process_status"] == "Canceled",
+            "evidence_id": f"strata.gold.package:{candidate['step_reference']}",
+            "description": (notice or {}).get("bid_description"),
+            "project_name": named[0]["project_name"] if named else None,
+            "method": candidate["procurement_method"], "category": candidate["procurement_category"],
+            "market_approach": (candidate["plan_market_approach"] or candidate["contract_market_approach"]
+                                or candidate["notice_market_approach"]),
+            "review_type": candidate["review_type"] or candidate["plan_review_type"],
+            "amount_usd": str(amount) if amount is not None else None,
+            "process_status": candidate["process_status"],
+            "notice": notice, "contract": contract, "award_notice": award,
+            "records_through": _iso(_date(through[0]["records_through"])) if through else None,
+            "datasets": _datasets()}
 
 
 def _sources() -> list[dict]:
@@ -351,24 +444,26 @@ def _sources() -> list[dict]:
     return [{"key": key, "dataset_name": registry[key].dataset_name} for key in load_tools()[TOOL].sources]
 
 
-def find_comparables(call: Call, step_reference: str, method: str | None = None, category: str | None = None,
+def find_comparables(call: Call, step_reference: str | None = None, method: str | None = None,
+                     category: str | None = None,
                      market_approach: str | None = None, review_type: str | None = None,
                      size_from_usd: float | None = None, size_to_usd: float | None = None,
                      country: str | None = None, notice_from: dt.date | None = None,
                      notice_to: dt.date | None = None) -> dict:
-    """The comparables for one package and their past range, as of call.as_of."""
+    """The comparables for one package and their past range, as of call.as_of. With no step_reference, for a
+    package someone is planning that has no plan row yet, the criteria are only those the call gives."""
     limits = Limits.read(call)
-    package = read_package(call.engine, step_reference, call.as_of)
+    package = read_package(call.engine, step_reference, call.as_of) if step_reference else None
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "package": package,
              "criteria": None, "counts": None, "past_range": None, "plan": None, "frequencies": None,
              "quantile_dots": None,
              "thresholds": limits.as_values(), "sources": _sources(), "records_through": None}
-    if package is None:
+    if step_reference and package is None:
         return {**empty, "abstention": {"reason": "unknown_package", "step_reference": step_reference.strip()}}
     asked = {"method": method, "category": category, "market_approach": market_approach, "review_type": review_type,
              "country": country, "notice_from": notice_from, "notice_to": notice_to,
              "size_from_usd": size_from_usd, "size_to_usd": size_to_usd}
-    criteria = _criteria(package, limits, asked)
+    criteria = _criteria(package, limits, asked, call.as_of)
     through = _rows(call.engine, "records_through.sql", as_of=call.as_of)
     records_through = _iso(_date(through[0]["records_through"])) if through else None
     country_name = None
@@ -378,15 +473,19 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
     found = {**empty, "criteria": {**{key: _iso(value) if isinstance(value, dt.date) else value
                                       for key, value in criteria.items()}, "country_name": country_name},
              "records_through": records_through}
-    no_notice = _no_notice(package, limits)
+    no_notice = _no_notice(package or {"method": criteria["method"], "market_approach": criteria["market_approach"]},
+                           limits)
     if no_notice:
         return {**found, "abstention": no_notice}
 
-    params = {"as_of": call.as_of, "step_reference": package["step_reference"], "country": criteria["country"],
+    # A package with no plan row has no STEP reference to leave out of its own comparables.
+    params = {"as_of": call.as_of, "only": None, "step_reference": package["step_reference"] if package else "",
+              "country": criteria["country"],
               "method": criteria["method"], "category": criteria["category"],
               "notice_from": criteria["notice_from"], "notice_to": criteria["notice_to"]}
     candidates = _rows(call.engine, "candidates.sql", **params)
-    unlinked = _rows(call.engine, "unlinked.sql", **{k: v for k, v in params.items() if k != "step_reference"})
+    unlinked = _rows(call.engine, "unlinked.sql",
+                     **{k: v for k, v in params.items() if k not in ("step_reference", "only")})
     rows, left_out, canceled = _select(candidates, unlinked, criteria, limits, call.as_of)
     coverage = _coverage(rows, left_out)
     still_open = sum(1 for row in rows if row["still_open"])
@@ -397,10 +496,10 @@ def find_comparables(call: Call, step_reference: str, method: str | None = None,
         reason = "none_measurable" if coverage["matched"] else "no_comparables"
         return {**found, "abstention": {"reason": reason, "matched": coverage["matched"]}}
     if len(rows) < limits.min_comparables:
-        return {**found, "rows": rows, "plan": _plan(package, rows, ranged=False),
+        return {**found, "rows": rows, "plan": _plan(package, rows, ranged=False) if package else None,
                 "abstention": {"reason": "too_few_comparables", "count": len(rows),
                                "min_comparables": limits.min_comparables}}
     dots = _quantile_dots(rows, limits.quantile_dots) if len(rows) > limits.quantile_dots_above else None
-    plan, past_range = _plan(package, rows, ranged=True), _past_range(rows)
+    plan, past_range = _plan(package, rows, ranged=True) if package else None, _past_range(rows)
     return {**found, "rows": rows, "plan": plan, "frequencies": _frequencies(plan, past_range, len(rows)),
             "past_range": past_range, "quantile_dots": dots, "abstention": None}

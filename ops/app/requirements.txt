@@ -26,3 +26,8 @@ typing-inspection==0.4.4
 # app (ops/dayone/workspace/probe_app) sends its trace with the same version. Its own packages
 # are not in uv.lock, so the App resolves them when it installs.
 azure-monitor-opentelemetry==1.8.11
+# Postgres's driver, imported only when the app has its Lakebase database (ADR 0005; src/strata/appstate),
+# at the version the Lakebase probe (ops/app/probe_lakebase.py) timed. It is not in uv.lock, because the
+# gate reaches no database through it; the binary package carries its C library.
+psycopg==3.3.6
+psycopg-binary==3.3.6

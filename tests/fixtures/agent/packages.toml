@@ -1,0 +1,34 @@
+# The package reader's cases: sentences the scripted reader reads offline from recorded model outputs (spec,
+# seam 3, and "Model outputs are recorded, not called, in the offline gate"), in the shape of cases.toml
+# (ticket 15).
+#
+# Each case names a recording in recorded/<recording>.json, the package reader's answer through the
+# Responses API, and the sentence it read as its question. The recording command re-records every
+# recording from the live reader and prints the difference:
+#
+#     uv run --script ops/agent/record.py --env-file .env --packages
+#
+# The tests in tests/test_planned_packages.py replay each case on the fixture database and say what it must show.
+
+[[cases]]
+id = "package-rural-roads-kenya"
+says = """The ticket's sentence: works for rural roads in Kenya, about US$15 million, read as four criteria from the \
+sentence and a guess of two lots."""
+question = "rural roads, Kenya, about US$15 million"
+as_of = 2026-10-23
+recording = "package-rural-roads-kenya"
+
+[[cases]]
+id = "package-no-package"
+says = "A sentence that describes nothing to buy, so the reader finds no package and nothing is saved."
+question = "what is the weather like in Nairobi"
+as_of = 2026-10-23
+recording = "package-no-package"
+
+[[cases]]
+id = "package-dividing"
+says = """A sentence that asks for lots to stay under prior review. The reader marks it and guesses no lots, and \
+review type is computed from the whole package."""
+question = "rural roads, Kenya, about US$15 million, in lots small enough to stay under prior review"
+as_of = 2026-10-23
+recording = "package-dividing"

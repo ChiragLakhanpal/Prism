@@ -1,0 +1,86 @@
+{
+  "id": "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+  "kind": "package",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+    "public_from": "2022-04-21",
+    "source": {
+      "project_id": "P156634",
+      "notice_id": "OP00160523",
+      "contract_id": null,
+      "award_notice_id": "OP00175878",
+      "signed_in": "award notice"
+    },
+    "step_reference": "KE-GAWASCO-54771-CW-RFB",
+    "project_id": "P156634",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "notice_id": "OP00160523",
+    "notice_date": "2022-01-03",
+    "signed_on": "2022-04-19",
+    "still_open": false,
+    "days": 106,
+    "months": 3.5,
+    "rank": null,
+    "counted_to": null,
+    "canceled": false,
+    "description": "Dadaab Pipeline Extension",
+    "project_name": "Water and Sanitation Development Project",
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "amount_usd": null,
+    "process_status": null,
+    "notice": {
+      "notice_id": "OP00160523",
+      "notice_type": "Invitation for Bids",
+      "notice_date": "2022-01-03",
+      "bid_reference_no": "KE-GAWASCO-54771-CW-RFB",
+      "bid_description": "Dadaab Pipeline Extension",
+      "procurement_category": "Works",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "submission_deadline": "2022-02-03",
+      "contract_signature_date": null,
+      "signed_contract_price": null,
+      "signed_contract_currency": null,
+      "public_from": "2022-01-03"
+    },
+    "contract": null,
+    "award_notice": {
+      "notice_id": "OP00175878",
+      "notice_type": "Contract Award",
+      "notice_date": "2022-04-21",
+      "bid_reference_no": "KE-GAWASCO-54771-CW-RFB",
+      "bid_description": "Dadaab Pipeline Extension",
+      "procurement_category": "Works",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "submission_deadline": null,
+      "contract_signature_date": "2022-04-19",
+      "signed_contract_price": "143993558.21",
+      "signed_contract_currency": "KES",
+      "public_from": "2022-04-21"
+    },
+    "records_through": "2026-10-13",
+    "datasets": {
+      "notices": {
+        "dataset_name": "Procurement Notices",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
+      },
+      "awards": {
+        "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": null
+      }
+    }
+  },
+  "highlights": []
+}

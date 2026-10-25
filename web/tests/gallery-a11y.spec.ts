@@ -19,6 +19,9 @@ async function open(page: Page, path: string, width: number) {
   await page.waitForFunction(() =>
     document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity),
   );
+  // Measure in the web fonts, as a reader sees the page: under load, a P-code in a caption could still be in
+  // the fallback mono font, whose shorter line made its link 23 px tall instead of 25 (ticket 15's drawer).
+  await page.evaluate(() => document.fonts.ready);
 }
 
 async function violations(page: Page) {

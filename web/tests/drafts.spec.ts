@@ -389,9 +389,18 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
   const scrollY = () => page.evaluate(() => window.scrollY);
   // Put a marker at a height in the window, open its source, and say where the marker shown now sits: the
   // same one in the Sources list, or in the cards if the notes turned into cards.
+  // Scroll until the element sits at a height in the window. When the whole gate runs at once, the page can
+  // still be settling when the test first scrolls, so each look scrolls again by what is left.
+  const scrollTo = async (element: ReturnType<Page["locator"]>, at: number) =>
+    expect
+      .poll(async () => {
+        const off = (await element.boundingBox())!.y - at;
+        if (Math.abs(off) > 2) await page.evaluate((by) => window.scrollBy(0, by), off);
+        return Math.abs(off);
+      })
+      .toBeLessThanOrEqual(2);
   const openFrom = async (marker: ReturnType<Page["locator"]>, shown: ReturnType<Page["locator"]>, at: number, how = "click") => {
-    await page.evaluate((by) => window.scrollBy(0, by), (await marker.boundingBox())!.y - at);
-    await expect.poll(async () => Math.abs((await marker.boundingBox())!.y - at)).toBeLessThanOrEqual(2);
+    await scrollTo(marker, at);
     const before = await scrollY();
     if (how === "click") await marker.click();
     else {
@@ -401,6 +410,9 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
     await page.waitForFunction(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true)))));
+    // When the whole gate runs at once, the page's own two frames can come after the test's, so wait for the
+    // marker to be put back before measuring it.
+    await expect.poll(async () => Math.abs((await shown.boundingBox())!.y - at)).toBeLessThanOrEqual(8);
     const [box, edge] = [(await shown.boundingBox())!, (await bar(page).boundingBox())!];
     return { y: box.y, clear: box.y + box.height <= edge.y, moved: Math.abs((await scrollY()) - before) };
   };
@@ -432,8 +444,7 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
 
   // With the drawer open, the next note's source opens in it without moving the window either.
   const next = notes(page).locator("[data-citation='3']").first();
-  await page.evaluate((by) => window.scrollBy(0, by), (await next.boundingBox())!.y - 400);
-  await expect.poll(async () => Math.abs((await next.boundingBox())!.y - 400)).toBeLessThanOrEqual(2);
+  await scrollTo(next, 400);
   const before = await scrollY();
   await next.click();
   await expect(page.getByRole("dialog")).toContainText("KE-NWWDA-541062-CW-RFQ");

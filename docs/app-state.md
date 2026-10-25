@@ -22,6 +22,17 @@ Run it from the main checkout after the wizard:
 
 `--dry-run` prints what a run would write, with canned times, and writes nothing.
 
+## How the app reaches Lakebase
+
+The probe chose Lakebase (ADR 0005), so ticket 15, which writes the first app state, set up how the app reaches it. `src/strata/appstate` holds the code.
+
+- **One definition per table.** Each app state table is one `CREATE TABLE IF NOT EXISTS strata.app.<table>` statement in `src/strata/appstate/tables/app/`, in Databricks SQL like every other table. On the App, `LakebaseEngine` rewrites each statement for Postgres, drops the catalog part and binds each `:name` value as a parameter. On this computer and in the gate, the same statements run on a DuckDB file. The tables so far are `planned_packages`, `planned_package_saves` and `plan_checks_opened`.
+- **The app signs in as itself.** `ops/app/deploy_app.py` makes or starts the Lakebase instance `strata-state` (`names.app_state_instance` in `ops/dayone/dayone.toml`) and gives the app its database as a resource, with CAN_CONNECT_AND_CREATE. The platform then sets `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` and `PGSSLMODE`, and the server signs in as the app's own service principal, with the app's own OAuth token as the password. A viewer's token never reaches Lakebase.
+- **Each person sees only their own rows.** Every read and write names the viewer it is for, bound per request, and the routes show a package only to the person who made it, as the drafts' routes do. The uploader's team rule (CLAUDE.md rule 8) will filter by team the same way when uploads arrive.
+- **The app makes its tables.** The first time the server needs app state, it runs the definitions, which leave a table that exists as it is. A deploy needs to give the app only its database.
+
+The drafts (ticket 35) were built before the probe ran, so they still live in `strata.ops`. Moving them to Lakebase is a follow-up.
+
 ## Result
 
 Only the probe changes this block.

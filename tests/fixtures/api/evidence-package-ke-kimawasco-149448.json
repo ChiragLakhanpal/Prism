@@ -1,0 +1,72 @@
+{
+  "id": "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
+  "kind": "package",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
+    "public_from": "2020-02-04",
+    "source": {
+      "project_id": "P156634",
+      "notice_id": "OP00083890",
+      "contract_id": null,
+      "award_notice_id": null,
+      "signed_in": null
+    },
+    "step_reference": "KE-KIMAWASCO-149448-CW-RFB",
+    "project_id": "P156634",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "notice_id": "OP00083890",
+    "notice_date": "2020-02-04",
+    "signed_on": null,
+    "still_open": true,
+    "days": 2453,
+    "months": 80.6,
+    "rank": null,
+    "counted_to": "2026-10-23",
+    "canceled": true,
+    "description": "Construction of 12No.Ablution blocks and 2No. Sludge Handling Facilities",
+    "project_name": "Water and Sanitation Development Project",
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "amount_usd": null,
+    "process_status": "Canceled",
+    "notice": {
+      "notice_id": "OP00083890",
+      "notice_type": "Invitation for Bids",
+      "notice_date": "2020-02-04",
+      "bid_reference_no": "KE-KIMAWASCO-149448-CW-RFB",
+      "bid_description": "Construction of 12No.Ablution blocks and 2No. Sludge Handling Facilities",
+      "procurement_category": "Works",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "submission_deadline": "2020-03-06",
+      "contract_signature_date": null,
+      "signed_contract_price": null,
+      "signed_contract_currency": null,
+      "public_from": "2020-02-04"
+    },
+    "contract": null,
+    "award_notice": null,
+    "records_through": "2026-10-13",
+    "datasets": {
+      "notices": {
+        "dataset_name": "Procurement Notices",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
+      },
+      "awards": {
+        "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": null
+      }
+    }
+  },
+  "highlights": []
+}

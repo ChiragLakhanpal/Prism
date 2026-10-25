@@ -13,9 +13,13 @@ It needs npm, which builds the web app. It does these things, in order:
 1. It builds the web app into web/dist (npm --prefix web run build).
 2. It finds the app that ops/dayone/dayone.toml names (names.app), or makes it. It replaces the
    day-one probe app that ran there, but it leaves an app that someone else made alone.
-3. It gives the app its resources: the SQL warehouse in .env (CAN_USE) and the Application
-   Insights connection string in the secret scope (READ), and the "sql" user authorization
-   scope, so the App forwards each viewer's own token for the warehouse. When .env has the Foundry
+3. It gives the app its resources: the SQL warehouse in .env (CAN_USE), the Application
+   Insights connection string in the secret scope (READ), the "sql" user authorization
+   scope, so the App forwards each viewer's own token for the warehouse, and the Lakebase database
+   that holds app state (ADR 0005), on the instance names.app_state_instance in
+   ops/dayone/dayone.toml, which it makes or starts first (CAN_CONNECT_AND_CREATE, so the app's own
+   service principal makes its tables there when it first needs them). If the workspace cannot make
+   or start the instance, it says why and deploys the app without app state, so no packages are kept. When .env has the Foundry
    agent's four keys (FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID and
    FOUNDRY_CLIENT_SECRET), it saves them in the secret scope and gives the app each one (READ),
    so /api/ask answers through the agent. Without all four, it leaves them out of the app.yaml it
@@ -75,6 +79,10 @@ APPINSIGHTS_NAME = "APPLICATIONINSIGHTS_CONNECTION_STRING"
 FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": "foundry-tenant",
            "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
 PRINCIPAL = re.compile(r"[0-9a-fA-F-]{36}")
+# The app state database's resource (ADR 0005). The platform sets PGHOST, PGPORT, PGDATABASE, PGUSER and
+# PGSSLMODE from it, which src/strata/server/settings.py reads; the database is the instance's own.
+APP_STATE = "app-state"
+APP_STATE_DATABASE = "databricks_postgres"
 SKIPPED = ("__pycache__", ".DS_Store")
 
 
@@ -112,11 +120,14 @@ def package(dist: Path, foundry: bool = True) -> dict[str, bytes]:
             **_files(dist, "web/dist")}
 
 
-def resources(env: dict, scope: str) -> list[dict]:
+def resources(env: dict, scope: str, app_state: str | None = None) -> list[dict]:
     found = [
         {"name": "sql-warehouse", "sql_warehouse": {"id": env["DATABRICKS_WAREHOUSE_ID"], "permission": "CAN_USE"}},
         {"name": "appinsights", "secret": {"scope": scope, "key": APPINSIGHTS_NAME, "permission": "READ"}},
     ]
+    if app_state:
+        found.append({"name": APP_STATE, "database": {"instance_name": app_state, "database_name": APP_STATE_DATABASE,
+                                                      "permission": "CAN_CONNECT_AND_CREATE"}})
     if has_foundry(env):
         found += [{"name": name, "secret": {"scope": scope, "key": key, "permission": "READ"}}
                   for key, name in FOUNDRY.items()]
@@ -168,7 +179,8 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
               "to a free app name.")
         return 1
 
-    print("3. Giving it the SQL warehouse, the Application Insights connection string and each viewer's SQL token.")
+    print("3. Giving it the SQL warehouse, the Application Insights connection string, each viewer's SQL token "
+          "and the app state database.")
     foundry = has_foundry(env)
     if foundry:
         for key in FOUNDRY:
@@ -177,7 +189,16 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     else:
         missing = ", ".join(key for key in FOUNDRY if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no Foundry agent and /api/ask says there is no agent.")
-    workspace.configure_app(name, DESCRIPTION, resources(env, names["secret_scope"]), SCOPES)
+    instance = names["app_state_instance"]
+    try:
+        workspace.app_state_database(instance)
+        print(f"   The Lakebase instance {instance} is running, so the app keeps app state there.")
+    except Exception as error:  # a workspace without Lakebase, a quota, or an instance that would not start
+        reason = " ".join(str(error).split()) or type(error).__name__
+        print(f"   I could not make or start the Lakebase instance {instance}: {reason}. The app gets no app state "
+              "database, so it keeps no packages.")
+        instance = None
+    workspace.configure_app(name, DESCRIPTION, resources(env, names["secret_scope"], instance), SCOPES)
 
     folder = f"/Workspace/Users/{workspace.me()}/{FOLDER}"
     files = package(dist, foundry)

@@ -8,12 +8,12 @@
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
-import { X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { copy } from "../copy";
 import { citationNumbers, type EvidenceEvent, type Run } from "../lib/answer";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { formatDate, formatNumber } from "../lib/format";
+import { formatCount, formatDate, formatNumber } from "../lib/format";
 import {
   closeEvidence,
   evidenceIn,
@@ -34,6 +34,8 @@ import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
+import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
+import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 
 export type DrawerData =
@@ -49,7 +51,8 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
   useEffect(() => {
-    if (held) return;
+    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15).
+    if (held || id.startsWith(DOT)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
     const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
@@ -373,6 +376,8 @@ export function EvidenceDrawerView({
   headingRef,
   onClose,
   onChoose,
+  onOpenEntry,
+  onBack,
 }: {
   id: string;
   data: DrawerData;
@@ -394,6 +399,9 @@ export function EvidenceDrawerView({
   onClose: () => void;
   // A switcher tab chose another source of the same sentence.
   onChoose: (id: string) => void;
+  // A package in a quantile dot's list was chosen, or the way back to that list (ticket 15).
+  onOpenEntry?: (entry: DotEntry) => void;
+  onBack?: (listId: string) => void;
 }) {
   const headingId = useId();
   const passageId = useId();
@@ -421,13 +429,22 @@ export function EvidenceDrawerView({
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
   const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
+  // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
+  // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
+  // opened from that list has a way back to it above its title.
+  const comparable = id.startsWith(COMPARABLE);
+  const comparableRef = comparable ? id.slice(COMPARABLE.length) : null;
+  const dotList = id.startsWith(DOT);
+  const backTo = comparable && from?.id === id && from.list ? from.list : null;
+  const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
 
   return (
     <div
       role="dialog"
       id={dialogId}
       aria-modal={narrow}
-      aria-labelledby={headingId}
+      aria-labelledby={region ? undefined : headingId}
+      aria-label={region}
       data-evidence-drawer={narrow ? "sheet" : "drawer"}
       className={cx(
         "bg-surface",
@@ -450,15 +467,35 @@ export function EvidenceDrawerView({
           className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}
         >
           <div className="min-w-0 flex-1">
+            {backTo && onBack && (
+              <Button variant="ghost" icon={ChevronLeft} onClick={() => onBack(backTo.id)} className="-mt-2 mb-2 -ml-3">
+                {backTo.count === 1 ? copy.evidence.package.dot.backOne : copy.evidence.package.dot.back(formatCount(backTo.count))}
+              </Button>
+            )}
             {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
-              {evidence ? sourceTitle(evidence) : data.status === "loading" ? <LoadingLabel /> : copy.evidence.untitled}
+              {evidence ? (
+                sourceTitle(evidence)
+              ) : data.status === "loading" ? (
+                <LoadingLabel />
+              ) : comparableRef ? (
+                // A comparable package that could not load is still titled by its STEP reference (brief 7.8).
+                <span className="font-mono">{comparableRef}</span>
+              ) : (
+                copy.evidence.untitled
+              )}
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
           </div>
-          <Button variant="ghost" icon={X} iconOnly onClick={onClose} className="-mt-2 -mr-2">
-            {copy.evidence.close}
+          <Button
+            variant="ghost"
+            icon={X}
+            iconOnly
+            onClick={onClose}
+            className="-mt-2 -mr-2"
+          >
+            {dotList ? copy.evidence.package.dot.close : comparable ? copy.evidence.package.close : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -501,7 +538,7 @@ export function EvidenceDrawerView({
                   </Button>
                 }
               >
-                {copy.document.failed}
+                {comparable ? copy.evidence.package.error : copy.document.failed}
               </Alert>
             )}
             {evidence?.kind === "passage" && (
@@ -513,6 +550,16 @@ export function EvidenceDrawerView({
               />
             )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
+            {evidence?.kind === "dot" && (
+              <ComparableDotList evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
+            {data.status === "loading" && comparable && (
+              <div aria-hidden="true" className="flex flex-col gap-4">
+                <Skeleton className="h-48 w-full rounded-md" />
+                <Skeleton className="h-48 w-full rounded-md" />
+              </div>
+            )}
           </div>
           {preview && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
         </div>
@@ -548,6 +595,7 @@ export function EvidenceDrawer({
 
   // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
   useEffect(() => {
+    if (id.startsWith(DOT)) return;
     recordOpened(id, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
@@ -584,7 +632,11 @@ export function EvidenceDrawer({
     const element = panel.current;
     return () => {
       if (evidenceIn(window.location.search) !== null) return;
-      onClosedRef.current(Boolean(element && document.activeElement && element.contains(document.activeElement)));
+      // Focus on the page's body counts as inside: a Tab past the sheet's last link reaches the browser, and
+      // closing from there would otherwise leave focus nowhere (ticket 15's design review, round 2, F7).
+      const active = document.activeElement;
+      const lost = active === null || active === document.body;
+      onClosedRef.current(Boolean(element && (lost || element.contains(active))));
     };
   }, []);
 
@@ -624,6 +676,23 @@ export function EvidenceDrawer({
       onClose={closeEvidence}
       onChoose={(next) =>
         from && openEvidence(next, { serial: from.serial, sentence: from.sentence, marker: from.marker, runId: from.runId }, { replace: true, focus: false })
+      }
+      // From a quantile dot's list to one of its packages and back, in place: the dot stays the drawer's
+      // opener, so closing gives focus back to it.
+      onOpenEntry={(entry) => {
+        const count = data.status === "ready" ? Number(data.evidence.row.count) : 0;
+        openEvidence(
+          entry.evidence_id,
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list: { id, count } },
+          { replace: true },
+        );
+      }}
+      onBack={(listId) =>
+        openEvidence(
+          listId,
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, entry: id.slice(COMPARABLE.length) },
+          { replace: true, focus: false },
+        )
       }
     />
   );
