@@ -1527,3 +1527,55 @@ First change line 17 of `tests/ground_truth/four_hop_supplier_to_completion_repo
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if it exits 0 and reports that DuckDB and the SQL warehouse returned the same one row for `four_hop_supplier_to_completion_report.sql`: AMIT CONSTRUCTION, OP00044090, P130164, 31525018, 31525018/v1/54, 4. Then commit the changed engines line on a branch and run the gate. If the warehouse rejects `WITH RECURSIVE`, change the line back to `-- engines: duckdb`, and write the warehouse's error message here and in the file's header comment.
+
+## Ticket 34, step 1 of 4: deploy the hindsight test's four tables
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 34 adds four tables under `src/strata/lakehouse/tables/ops/`: `strata.ops.hindsight_codings` (each coder's reading of an ICR or ICR Review), `strata.ops.hindsight_blamed` (each project's reconciled blamed risks), `strata.ops.hindsight_agreement` (each pair of coders' agreement) and `strata.ops.exposed_projects` (empty until ticket 44 writes it). Tickets 37 and 22 run the same deploy command, and one deploy from 2b5e5f9 or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.ops.hindsight_codings`, `strata.ops.hindsight_blamed`, `strata.ops.hindsight_agreement` and `strata.ops.exposed_projects` as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists all four.
+
+## Ticket 34, step 2 of 4: see the hindsight test's gate set
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`. Run it after step 1, and after a nightly run has filled gold and silver with the pilot projects' documents. It only reads.
+
+Run this from the main checkout:
+
+    uv run --script ops/hindsight/code.py --env-file .env status
+
+It worked if it exits 0 and prints "Pilot projects with an ICR on <date>: N. The hindsight test replays 0.", with N near PLAN.md's 49, then lists each project as waiting ("not coded yet" or "ICR not read yet"), and lists any project left out with its reason (an extraction example, or exposed to Strata).
+
+## Ticket 34, step 3 of 4: two people code the blamed risks (a human step)
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`, and two people. It waits on docs/STATUS.md decision 5 (labeling time), which must name the two coders, or accept model-drafted codings that you spot-check. Run it after step 2. N in the hindsight test rises above zero only after this step.
+
+For each project that step 2 lists, each of the two coders reads the ICR on their own and runs this from the main checkout, with the blamed risk factors' keys from the closed list in `config/lessons.toml`:
+
+    uv run --script ops/hindsight/code.py --env-file .env code --project P123456 --coder <email> --name "<name>" --blamed <keys, separated by commas>
+
+Where the two differ, one person reads the ICR Review on the factors they differ on and runs:
+
+    uv run --script ops/hindsight/code.py --env-file .env review --project P123456 --coder <email> --name "<name>" --blamed <keys>
+
+Then:
+
+    uv run --script ops/hindsight/code.py --env-file .env reconcile
+
+It worked if each `code` and `review` run exits 0, and `reconcile` exits 0 and prints "Reconciled N projects", one line per project still waiting, and one agreement line per pair of coders, with Cohen's kappa once they have 20 pairs of answers (`retrieval.min_pairs` in `config/thresholds.toml`). A project with no ICR Review keeps only what both coders blamed (a parked decision).
+
+## Ticket 34, step 4 of 4: run the release gate live (criteria 6 and 7, live)
+
+The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`, and MLflow on the workspace. Run it after step 1. Before step 3 it exits 3, because there are no blamed risks to compare yet; run it again after step 3, when it exits 0 or 1.
+
+Run this from the main checkout:
+
+    uv run --script ops/hindsight/release_gate.py --env-file .env --release 2026.11
+
+It worked if it prints the gate-set line, one line per replayed project with its MLflow run id, the report sentence ("I expected 49 pilot projects ... and could use N" when it found fewer), the gate's verdict, and "Run hindsight_test-... is in strata.ops.evaluation_result, with the release's MLflow run ...". The runs must appear in the `/Shared/strata/hindsight_test` experiment, and this query, with the run id it printed, must return the release's rows, including `hindsight_recall` with its "X of Y" text (criterion 7):
+
+    SELECT segment_kind, segment, measure, value, value_text, mlflow_run_id FROM strata.ops.evaluation_result WHERE scorer = 'hindsight_test' AND run_id = '<run id>' ORDER BY segment_kind, segment, measure
+
+Before step 3, N is reported as 0 of 49 and the command exits 3 ("no blamed risks to compare yet"). After step 3 it exits 0 when the run passed and became the champion, or 1 when the gate blocks the release.
